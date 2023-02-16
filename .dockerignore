@@ -1,4 +1,42 @@
-*/build
-*/*/build
-*/*/*/build
-.gradle
+############ COPIED FORM .gitignore
+
+# Globally ignored directories and files
+# Exceptions can always be manually added
+
+# Build/test output and itermediate dirs
+**/build
+crates/**/target
+/target
+**/captures
+**/node_modules
+# Something in android studio is generating this. Probably related to
+# https://github.com/gradle/gradle/issues/23032
+*/bin
+
+# Cache dirs
+**/.gradle
+**/.terraform
+**/.terragrunt-cache
+
+# User settings dirs
+**/.idea
+**/.vscode
+**/local.properties
+
+#Other
+/crates/figma_import/plugin-extended-layout/code.js
+/crates/figma_import/features/*.json
+/crates/figma_import/features/*.png
+**/*.rs.bk
+**/.DS_Store
+**/.externalNativeBuild
+**/.cxx
+**/.settings
+**/.classpath
+**/.project
+
+##### Additional ignores
+
+/kokoro/docker
+**/.git
+# reference-apps

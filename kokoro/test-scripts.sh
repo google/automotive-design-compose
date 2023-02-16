@@ -35,7 +35,7 @@ mkdir -p "${KOKORO_ARTIFACTS_DIR}/artifacts"
 export GRADLE_TEST_RESULT_DIRS=()
 
 # Kokoro VM's don't have hardware graphics so we need to set them to use SwiftShader
-export GRADLE_TESTOPTIONS_OPTS=-Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+export GRADLE_TESTOPTIONS_OPTS="-Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect"
 
 ###### Utility and Setup functions
 
@@ -51,12 +51,12 @@ dc_organize_gradle_test_results() (
     shopt -s dotglob     # Wildcards match dotfiles ("*.sh" => ".foo.sh")
     shopt -s globstar    # Allow ** for recursive matches ('lib/**/*.rb' => 'lib/a/b/c.rb')
 
-    # Sponge can parse our test results, but only if they're XML and their name ends with 
+    # Sponge can parse our test results, but only if they're XML and their name ends with
     # "_sponge_log.xml". The below copies the results that we want to a test log directory
     # and appends "_sponge_log.xml"
     TEST_LOG_DIR="${KOKORO_ARTIFACTS_DIR}/gradle-test-results"
     mkdir -p "${TEST_LOG_DIR}"
-    
+
     for dir in "${GRADLE_TEST_RESULT_DIRS[@]}"; do
         cd "$dir" || exit
         for result in **/build/{outputs/androidTest-results,reports}/**/*.xml; do
@@ -105,7 +105,7 @@ ANY FAILURE SHOULD BE REPORTED ABOVE HERE
 BEGINNING TEST WRAP UP
 *****************************************
 "
-    # If you want the VM to stay up after test completion so that you can SSH into it 
+    # If you want the VM to stay up after test completion so that you can SSH into it
     # then uncomment the below:
 
     # if [ -n "$KOKORO_DEBUG_ACCESS_KEY" ]; then sleep 30m; fi
@@ -113,7 +113,7 @@ BEGINNING TEST WRAP UP
     # Prep the test results for Sponge parsing
     dc_organize_gradle_test_results
 
-    # Delete everything that we don't want to upload, to avoid spending time 
+    # Delete everything that we don't want to upload, to avoid spending time
     # transferring things we don't want
     # Put this behind a var that should only be set in an actual Kokoro run
     if [ -n "$KOKORO_BUILD_ID" ]; then
@@ -129,11 +129,13 @@ dc_test_designcompose() {
     GRADLE_TEST_RESULT_DIRS+=("$DESIGNCOMPOSE_DIR")
     cd "$DESIGNCOMPOSE_DIR" || exit
 
-    # Run linting first, then tests, then the full build (which runs all non-instrumented tests and checks). 
-    # Takes a bit longer, but 
+    # Run linting first, then tests, then the full build (which runs all non-instrumented tests and checks).
+    # Takes a bit longer, but
     # I think failures should probably happen most likely in linting, then testing, then build
     ./gradlew lint ktfmtCheck
-    ./gradlew tabletAtdApi30Setup test tabletAtdApi30DebugAndroidTest "$GRADLE_TESTOPTIONS_OPTS" 
+    ./gradlew tabletAtdApi30Setup test "$GRADLE_TESTOPTIONS_OPTS"
+    # The new kokoro Docker host can't handle multiple Gradle managed device tests running at once, so disable parallelization while running them.
+    ./gradlew -Porg.gradle.parallel=false tabletAtdApi30DebugAndroidTest "$GRADLE_TESTOPTIONS_OPTS"
     ./gradlew build
 }
 
@@ -153,7 +155,7 @@ dc_test_aaos_reference_apps() {
     cd "$DESIGNCOMPOSE_DIR/reference-apps/aaos-unbundled" || exit
 
     ./gradlew lint ktfmtCheck
-    ./gradlew test 
+    ./gradlew test
     ./gradlew build
 }
 
@@ -174,7 +176,8 @@ dc_test_validation_standalone() {
     mv validation validation-standalone
 
     cd validation-standalone || exit
-    ./gradlew tabletAtdApi30Setup build tabletAtdApi30DebugAndroidTest  "$GRADLE_TESTOPTIONS_OPTS"
+    ./gradlew tabletAtdApi30Setup build "$GRADLE_TESTOPTIONS_OPTS"
+    ./gradlew -Porg.gradle.parallel=false tabletAtdApi30DebugAndroidTest "$GRADLE_TESTOPTIONS_OPTS"
 
 }
 
@@ -199,7 +202,7 @@ dc_build_designcompose_m2repo() {
     cd "$DESIGNCOMPOSE_DIR" || exit
     ./gradlew publishAllPublicationsToLocalDirRepository
 
-    tar czvf "${KOKORO_ARTIFACTS_DIR}/artifacts/designcompose_m2repo.tgz" -C "$TMP_DCM2_DIR" designcompose_m2repo/ 
+    tar czvf "${KOKORO_ARTIFACTS_DIR}/artifacts/designcompose_m2repo.tgz" -C "$TMP_DCM2_DIR" designcompose_m2repo/
 }
 
 # Build the Tutorial App
@@ -269,5 +272,5 @@ dc_test_release_job() {
     mv mediacompose mediacompose-standalone
 
     cd mediacompose-standalone || exit
-    ./gradlew build "$GRADLE_TESTOPTIONS_OPTS" 
+    ./gradlew build "$GRADLE_TESTOPTIONS_OPTS"
 }

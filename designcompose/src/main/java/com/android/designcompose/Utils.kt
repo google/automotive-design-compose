@@ -63,6 +63,7 @@ import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.serdegen.WindingRule
+import java.util.Optional
 import kotlin.math.roundToInt
 
 /** Convert a serialized color to a Compose color */
@@ -545,6 +546,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.pointer_events
         }
+    style.meter_data =
+        if (override.meter_data.isPresent) {
+            override.meter_data
+        } else {
+            base.meter_data
+        }
     return style.build()
 }
 
@@ -900,6 +907,7 @@ internal constructor(
         return "RelativeImageFill"
     }
 }
+
 /**
  * Convert a LayoutTransform to a Compose transformation matrix, adjusted to operate on pixels at
  * the given display density.

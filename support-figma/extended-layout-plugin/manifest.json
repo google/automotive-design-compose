@@ -7,6 +7,7 @@
   "editorType": ["figma"],
   "menu": [
     { "name": "Live text format", "command": "extended-layout-text" },
+    { "name": "Dials and Gauges", "command": "meters" },
     { "separator": true },
     { "name": "Check document for errors", "command": "clippy" },
     { "name": "Check/update keywords", "command": "check-keywords" },

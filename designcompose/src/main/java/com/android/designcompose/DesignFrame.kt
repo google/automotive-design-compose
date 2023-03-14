@@ -17,7 +17,6 @@
 package com.android.designcompose
 
 import android.graphics.Bitmap
-import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,38 +30,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.graphics.ClipOp
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.asAndroidPath
-import androidx.compose.ui.graphics.asComposePath
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.android.designcompose.serdegen.BoxShadow
+import androidx.core.graphics.minus
+import androidx.core.graphics.plus
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.NodeQuery
-import com.android.designcompose.serdegen.Overflow
-import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
-import kotlin.math.roundToInt
 
 @Composable
 internal fun DesignFrame(
@@ -266,7 +249,7 @@ internal fun DesignFrame(
             // item based on node name and variant properties, and return its span
             fun getSpan(
                 gridSpanContent: List<GridSpan>,
-                getDesignNodeData: GetDesignNodeData
+                getDesignNodeData: GetDesignNodeData,
             ): LazyContentSpan {
                 val nodeData = getDesignNodeData()
                 val cachedSpan = SpanCache.getSpan(nodeData)
@@ -408,7 +391,7 @@ internal fun DesignFrame(
             fun calculateCellsCrossAxisSizeImpl(
                 gridSize: Int,
                 slotCount: Int,
-                spacing: Int
+                spacing: Int,
             ): List<Int> {
                 val gridSizeWithoutSpacing = gridSize - spacing * (slotCount - 1)
                 val slotSize = gridSizeWithoutSpacing / slotCount
@@ -451,7 +434,7 @@ internal fun DesignFrame(
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(
                                 availableSize: Int,
-                                spacing: Int
+                                spacing: Int,
                             ): List<Int> {
                                 val mainAxisSize = (availableSize.toFloat() / density).toInt()
                                 setGridMainAxisSize(mainAxisSize)
@@ -481,7 +464,7 @@ internal fun DesignFrame(
                                 totalSize: Int,
                                 sizes: IntArray,
                                 layoutDirection: LayoutDirection,
-                                outPositions: IntArray
+                                outPositions: IntArray,
                             ) {
                                 // Apparently this function does not get called
                                 println(
@@ -516,7 +499,7 @@ internal fun DesignFrame(
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(
                                 availableSize: Int,
-                                spacing: Int
+                                spacing: Int,
                             ): List<Int> {
                                 val mainAxisSize = (availableSize.toFloat() / density).toInt()
                                 setGridMainAxisSize(mainAxisSize)
@@ -546,7 +529,7 @@ internal fun DesignFrame(
                             override fun Density.arrange(
                                 totalSize: Int,
                                 sizes: IntArray,
-                                outPositions: IntArray
+                                outPositions: IntArray,
                             ) {
                                 println("verticalArrangement arrange")
                             }
@@ -568,335 +551,22 @@ internal fun DesignFrame(
 
 internal fun Modifier.frameRender(
     style: ViewStyle,
-    shape: ViewShape,
+    frameShape: ViewShape,
     customImageWithContext: Bitmap?,
     document: DocContent,
     name: String,
-    customizations: CustomizationContext
+    customizations: CustomizationContext,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
-            drawContext.canvas.save()
-
-            // Push any transforms
-            val transform = style.transform.asComposeTransform(density)
-            if (transform != null) drawContext.transform.transform(transform)
-
-            // Blend mode
-            val blendMode = style.blend_mode.asComposeBlendMode()
-            val useBlendMode = style.blend_mode.useLayer()
-            val opacity = style.opacity.orElse(1.0f)
-
-            // Either use a graphicsLayer to apply the opacity effect, or use saveLayer if
-            // we have a blend mode.
-            if (!useBlendMode && opacity < 1.0f) {
-                alpha(opacity)
-            }
-            if (useBlendMode) {
-                val paint = Paint()
-                paint.alpha = opacity
-                paint.blendMode = blendMode
-                drawContext.canvas.saveLayer(Rect(Offset.Zero, drawContext.size), paint)
-            }
-
-            // Fill then stroke.
-            val (fills, precomputedStrokes) =
-                when (shape) {
-                    is ViewShape.RoundRect -> {
-                        val path = Path()
-                        path.addRoundRect(
-                            RoundRect(
-                                0.0f,
-                                0.0f,
-                                drawContext.size.width,
-                                drawContext.size.height,
-                                CornerRadius(
-                                    shape.corner_radius[0] * density,
-                                    shape.corner_radius[0] * density
-                                ),
-                                CornerRadius(
-                                    shape.corner_radius[1] * density,
-                                    shape.corner_radius[1] * density
-                                ),
-                                CornerRadius(
-                                    shape.corner_radius[2] * density,
-                                    shape.corner_radius[2] * density
-                                ),
-                                CornerRadius(
-                                    shape.corner_radius[3] * density,
-                                    shape.corner_radius[3] * density
-                                )
-                            )
-                        )
-                        Pair(listOf(path), listOf<Path>())
-                    }
-                    is ViewShape.Path -> {
-                        Pair(
-                            shape.path.map { path -> path.asPath(density) },
-                            shape.stroke.map { path -> path.asPath(density) }
-                        )
-                    }
-                    else -> {
-                        val path = Path()
-                        path.addRect(
-                            Rect(0.0f, 0.0f, drawContext.size.width, drawContext.size.height)
-                        )
-                        Pair(listOf(path), listOf<Path>())
-                    }
-                }
-            // XXX: drawContext.size is wrong; we need the node size.
-            val fillBrush =
-                style.background.mapNotNull { background ->
-                    val p = Paint()
-                    val b = background.asBrush(document, density)
-                    if (b != null) {
-                        val (brush, opacity) = b
-                        brush.applyTo(drawContext.size, p, opacity)
-                        p
-                    } else {
-                        null
-                    }
-                }
-            val strokeBrush =
-                style.stroke.strokes.mapNotNull { background ->
-                    val p = Paint()
-                    val b = background.asBrush(document, density)
-                    if (b != null) {
-                        val (brush, opacity) = b
-                        brush.applyTo(drawContext.size, p, opacity)
-                        p
-                    } else {
-                        null
-                    }
-                }
-            // We need to make the stroke path if there is any stroke.
-            // * Center stroke -> just use the stroke width.
-            // * Outer stroke -> double the stroke width, clip out the inner bit
-            // * Inner stroke -> double the stroke width, clip out the outer bit.
-            val rawStrokeWidth =
-                when (style.stroke.stroke_align) {
-                    is StrokeAlign.Center -> style.stroke.stroke_weight * density
-                    is StrokeAlign.Inside -> style.stroke.stroke_weight * 2.0f * density
-                    is StrokeAlign.Outside -> style.stroke.stroke_weight * 2.0f * density
-                    else -> style.stroke.stroke_weight * density
-                }
-            val shadowStrokeWidth =
-                when (style.stroke.stroke_align) {
-                    is StrokeAlign.Center -> style.stroke.stroke_weight * density
-                    is StrokeAlign.Outside -> style.stroke.stroke_weight * 2.0f * density
-                    else -> 0.0f
-                }
-            // Build a list of stroke paths, and also build a set of filled paths for shadow
-            // painting.
-            val strokePaint = android.graphics.Paint()
-            strokePaint.style = android.graphics.Paint.Style.STROKE
-            strokePaint.strokeWidth = rawStrokeWidth
-
-            val strokes =
-                if (fills.isEmpty()) {
-                    // Sometimes an object has no fill at all (it has no area, because it is
-                    // just a stroke or line), in which case we use the strokes from the shape.
-                    precomputedStrokes
-                } else {
-                    // Normally we generate the stroke from the fill path. This lets us have
-                    // runtime determined width/height for things we're stroking.
-                    fills.map { fill ->
-                        val strokePath = android.graphics.Path()
-                        strokePaint.getFillPath(fill.asAndroidPath(), strokePath)
-                        when (style.stroke.stroke_align) {
-                            is StrokeAlign.Outside ->
-                                strokePath.op(
-                                    fill.asAndroidPath(),
-                                    android.graphics.Path.Op.DIFFERENCE
-                                )
-                            is StrokeAlign.Inside ->
-                                strokePath.op(
-                                    fill.asAndroidPath(),
-                                    android.graphics.Path.Op.INTERSECT
-                                )
-                            else -> {}
-                        }
-                        strokePath.asComposePath()
-                    }
-                }
-
-            // XXX: handle mask layers
-
-            val shadowBoundsPaint = android.graphics.Paint()
-            shadowBoundsPaint.style = android.graphics.Paint.Style.FILL_AND_STROKE
-            shadowBoundsPaint.strokeWidth = shadowStrokeWidth
-            val shadowPaths =
-                fills.map { fill ->
-                    val shadowPath = android.graphics.Path()
-                    shadowBoundsPaint.getFillPath(fill.asAndroidPath(), shadowPath)
-                    shadowPath.asComposePath()
-                }
-
-            // Outset shadows
-            // XXX: only do this if there are shadows.
-            drawContext.canvas.save()
-            // Don't draw shadows under objects.
-            shadowPaths.forEach { path -> drawContext.canvas.clipPath(path, ClipOp.Difference) }
-
-            // Now paint the outset shadows.
-            style.box_shadow.forEach { shadow ->
-                // Only outset.
-                if (shadow !is BoxShadow.Outset) return@forEach
-
-                // To calculate the outset path, we must inflate our outer bounds (our fill
-                // path plus the stroke width) plus the shadow spread. Since Skia always
-                // centers strokes, we do this by adding double the spread to the shadow
-                // stroke width.
-                shadowBoundsPaint.strokeWidth =
-                    shadowStrokeWidth + shadow.spread_radius * 2.0f * density
-                val shadowOutlines =
-                    fills.map { fill ->
-                        val shadowPath = android.graphics.Path()
-                        shadowBoundsPaint.getFillPath(fill.asAndroidPath(), shadowPath)
-                        shadowPath.asComposePath()
-                    }
-
-                // Make an appropriate paint.
-                val shadowPaint = Paint().asFrameworkPaint()
-                shadowPaint.color = convertColor(shadow.color).toArgb()
-                if (shadow.blur_radius > 0.0f) {
-                    shadowPaint.maskFilter =
-                        BlurMaskFilter(
-                            shadow.blur_radius * density * blurFudgeFactor,
-                            BlurMaskFilter.Blur.NORMAL
-                        )
-                }
-                drawContext.canvas.translate(shadow.offset[0] * density, shadow.offset[1] * density)
-                shadowOutlines.forEach { shadowPath ->
-                    drawContext.canvas.nativeCanvas.drawPath(
-                        shadowPath.asAndroidPath(),
-                        shadowPaint
-                    )
-                }
-            }
-            drawContext.canvas.restore()
-
-            // Now draw the actual shape, or fill it with an image if we have an image
-            // replacement; we might want to do image replacement as a Brush in the
-            // future.
-            var customImage = customImageWithContext
-            if (customImage == null) customImage = customizations.getImage(name)
-            if (customImage != null) {
-                // Apply custom image as background
-                drawContext.canvas.save()
-                for (fill in fills) {
-                    drawContext.canvas.clipPath(fill)
-                }
-                drawImage(
-                    customImage.asImageBitmap(),
-                    dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt())
-                )
-                drawContext.canvas.restore()
-            } else {
-                for (fill in fills) {
-                    for (paint in fillBrush) {
-                        drawContext.canvas.drawPath(fill, paint)
-                    }
-                }
-            }
-
-            // Now do inset shadows
-            drawContext.canvas.save()
-            // Don't draw inset shadows outside of the stroke bounds.
-            shadowPaths.forEach { path -> drawContext.canvas.clipPath(path) }
-            val shadowOutlinePaint = android.graphics.Paint()
-            shadowOutlinePaint.style = android.graphics.Paint.Style.FILL_AND_STROKE
-            val shadowSpreadPaint = android.graphics.Paint()
-            shadowSpreadPaint.style = android.graphics.Paint.Style.STROKE
-
-            style.box_shadow.forEach { shadow ->
-                // Only inset.
-                if (shadow !is BoxShadow.Inset) return@forEach
-
-                // Inset shadows are applied to the "stroke bounds", not the fill bounds. So we
-                // must inflate our fill bounds out to the stroke bounds by applying a stroke and
-                // taking the fill path.
-                //
-                // We then invert the fill path so that we're filling the area that's not the stroke
-                // bounds. Then we offset it and blur it to make the inset shadow.
-                //
-                // If we have a spread that's larger than what we use to expand to make the fill
-                // then we stroke the excess spread and subtract it from the fill to make the path.
-
-                val spreadWidth = shadow.spread_radius * 2.0f * density
-                val needSpreadStroke = spreadWidth > shadowStrokeWidth
-                if (!needSpreadStroke)
-                    shadowOutlinePaint.strokeWidth = shadowStrokeWidth - spreadWidth
-                else shadowSpreadPaint.strokeWidth = spreadWidth - shadowStrokeWidth
-
-                val shadowOutlines =
-                    fills.map { fill ->
-                        val shadowPath = android.graphics.Path()
-                        if (!needSpreadStroke) {
-                            shadowOutlinePaint.getFillPath(fill.asAndroidPath(), shadowPath)
-                        } else {
-                            val spreadStroke = android.graphics.Path()
-                            shadowSpreadPaint.getFillPath(fill.asAndroidPath(), spreadStroke)
-                            shadowPath.op(
-                                fill.asAndroidPath(),
-                                spreadStroke,
-                                android.graphics.Path.Op.DIFFERENCE
-                            )
-                        }
-
-                        shadowPath.toggleInverseFillType()
-
-                        shadowPath.asComposePath()
-                    }
-
-                // Make an appropriate paint.
-                val shadowPaint = Paint().asFrameworkPaint()
-                shadowPaint.color = convertColor(shadow.color).toArgb()
-                if (shadow.blur_radius > 0.0f) {
-                    shadowPaint.maskFilter =
-                        BlurMaskFilter(
-                            shadow.blur_radius * density * blurFudgeFactor,
-                            BlurMaskFilter.Blur.NORMAL
-                        )
-                }
-                drawContext.canvas.translate(shadow.offset[0] * density, shadow.offset[1] * density)
-                shadowOutlines.forEach { shadowPath ->
-                    drawContext.canvas.nativeCanvas.drawPath(
-                        shadowPath.asAndroidPath(),
-                        shadowPaint
-                    )
-                }
-            }
-            drawContext.canvas.restore()
-
-            val shouldClip = style.overflow is Overflow.Hidden
-            if (shouldClip) {
-                // Clip children, and paint our stroke on top of them.
-                drawContext.canvas.save()
-                for (fill in fills) {
-                    drawContext.canvas.clipPath(fill)
-                }
-                drawContent()
-                drawContext.canvas.restore()
-                for (stroke in strokes) {
-                    for (paint in strokeBrush) {
-                        drawContext.canvas.drawPath(stroke, paint)
-                    }
-                }
-            } else {
-                // No clipping; paint our stroke first and then paint
-                // our children.
-                for (stroke in strokes) {
-                    for (paint in strokeBrush) {
-                        drawContext.canvas.drawPath(stroke, paint)
-                    }
-                }
-                drawContent()
-            }
-
-            if (useBlendMode) {
-                drawContext.canvas.restore()
-            }
-            drawContext.canvas.restore()
+            render(
+                this@frameRender,
+                style,
+                frameShape,
+                customImageWithContext,
+                document,
+                name,
+                customizations
+            )
         }
     )

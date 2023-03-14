@@ -23,13 +23,34 @@ use crate::reaction_schema::Reaction;
 use crate::toolkit_style::{StyledTextRun, ViewStyle};
 
 pub use crate::figma_schema::OverflowDirection;
+pub use crate::figma_schema::StrokeCap;
 
 /// Shape of a view, either a rect or a path of some kind.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ViewShape {
     Rect,
-    RoundRect { corner_radius: [f32; 4], corner_smoothing: f32 },
-    Path { path: Vec<crate::vector_schema::Path>, stroke: Vec<crate::vector_schema::Path> },
+    RoundRect {
+        corner_radius: [f32; 4],
+        corner_smoothing: f32,
+    },
+    Path {
+        path: Vec<crate::vector_schema::Path>,
+        stroke: Vec<crate::vector_schema::Path>,
+    },
+    Arc {
+        path: Vec<crate::vector_schema::Path>,
+        stroke: Vec<crate::vector_schema::Path>,
+        stroke_cap: StrokeCap,
+        start_angle_degrees: f32,
+        sweep_angle_degrees: f32,
+        inner_radius: f32,
+        corner_radius: f32,
+    },
+    VectorRect {
+        path: Vec<crate::vector_schema::Path>,
+        stroke: Vec<crate::vector_schema::Path>,
+        corner_radius: [f32; 4],
+    },
 }
 
 /// Details that are unique to each view type.

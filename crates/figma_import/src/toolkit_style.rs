@@ -458,6 +458,46 @@ impl Default for GridLayoutType {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RotationMeterData {
+    pub enabled: bool,
+    pub start: f32,
+    pub end: f32,
+    pub discrete: bool,
+    pub discrete_value: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ArcMeterData {
+    pub enabled: bool,
+    pub start: f32,
+    pub end: f32,
+    pub discrete: bool,
+    pub discrete_value: f32,
+    pub corner_radius: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressBarMeterData {
+    pub enabled: bool,
+    pub start: f32,
+    pub end: f32,
+    pub discrete: bool,
+    pub discrete_value: f32,
+    pub vertical: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum MeterData {
+    ArcData(ArcMeterData),
+    RotationData(RotationMeterData),
+    ProgressBarData(ProgressBarMeterData),
+}
+
 /// ToolkitStyle contains all of the styleable parameters accepted by the Rect and Text components.
 ///
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -519,6 +559,7 @@ pub struct ViewStyle {
     pub max_height: Dimension,
     pub aspect_ratio: Number,
     pub pointer_events: PointerEvents,
+    pub meter_data: Option<MeterData>,
 }
 impl Default for ViewStyle {
     fn default() -> ViewStyle {
@@ -579,6 +620,7 @@ impl Default for ViewStyle {
             max_height: Dimension::default(),
             aspect_ratio: Number::default(),
             pointer_events: PointerEvents::default(),
+            meter_data: None,
         }
     }
 }
@@ -751,6 +793,9 @@ impl ViewStyle {
         }
         if self.pointer_events != other.pointer_events {
             delta.pointer_events = other.pointer_events;
+        }
+        if self.meter_data != other.meter_data {
+            delta.meter_data = other.meter_data.clone();
         }
         delta
     }

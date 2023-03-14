@@ -747,6 +747,29 @@ pub struct FrameCommon {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ArcData {
+    pub starting_angle: f32,
+    pub ending_angle: f32,
+    pub inner_radius: f32,
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum StrokeCap {
+    None,
+    Round,
+    Square,
+    LineArrow,
+    TriangleArrow,
+    CircleFilled,
+}
+
+fn default_stroke_cap() -> StrokeCap {
+    StrokeCap::None
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum NodeData {
     Document {},
@@ -789,6 +812,8 @@ pub enum NodeData {
     Ellipse {
         #[serde(flatten)]
         vector: VectorCommon,
+        #[serde(rename = "arcData")]
+        arc_data: ArcData,
     },
     Star {
         #[serde(flatten)]
@@ -860,6 +885,8 @@ pub struct Node {
     pub size: Option<Vector>,
     pub fill_geometry: Option<Vec<Path>>,
     pub stroke_geometry: Option<Vec<Path>>,
+    #[serde(default = "default_stroke_cap")]
+    pub stroke_cap: StrokeCap,
 }
 
 impl Node {

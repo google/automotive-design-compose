@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 // Warning component.
 interface ClippyWarningRun {
   // The text for the warning text run.
@@ -615,71 +614,6 @@ else if (figma.command === "move-plugin-data") {
   // of the currently selected node, and its type.
   figma.showUI(__html__, { width: 360, height: 480 });
 
-  // Recursively parse the Figma document looking for nodes that match nodes in contentNodes.
-  // If any of the nodes added are COMPONENT_SET nodes, find and add their variant children instead.
-  // If any of the nodes are COMPONENT or FRAME nodes, just fill in their node IDs
-  function findContentNodes(node: BaseNode, contentNodes: Map<string, string>) {
-    if (!node) return;
-    if (contentNodes.has(node.name)) {
-      if (node.type == 'COMPONENT_SET') {
-        // Delete the COMPONENT_SET in contentNodes and replace with all the variant children
-        contentNodes.delete(node.name);
-        if ((node as any).children) {
-          let parent: ChildrenMixin = node as ChildrenMixin;
-          for (const child of parent.children) {
-            if (child.type == "COMPONENT")
-              contentNodes.set(child.name, child.id);
-          }
-        }
-        return;
-      }
-      else if (node.type == "FRAME" || node.type == "COMPONENT") {
-        // Update contentNodes with the node ID if there isn't one already set
-        let nodeId = contentNodes.get(node.name);
-        if (nodeId.length == 0)
-          contentNodes.set(node.name, node.id);
-      }
-    }
-
-    if ((node as any).children) {
-      let parent: ChildrenMixin = node as ChildrenMixin;
-      for (const child of parent.children) {
-        findContentNodes(child, contentNodes);
-      }
-    }
-  }
-
-  // Returns a map of replacement content nodes with the content types they hold formatted as:
-  // <container frame node name> -> { content node name -> content node id }
-  function loadNodeContentData(): Map<string, Map<string,string>> {
-    let clippyData = loadClippy();
-    if (!clippyData) {
-      return null;
-    }
-
-    // Parse the JSON to find content replacement nodes that have content data.
-    let contentData: Map<string, Map<string, string>> = new Map();
-    for (const component of clippyData.components) {
-      for (const c of component.customizations) {
-        let contentNode = c as DesignCustomizationContentReplacement;
-        if (contentNode != null && contentNode.content != null) {
-          let contentNodes: Map<string, string> = new Map();
-          for (const node of contentNode.content) {
-            contentNodes.set(node, "");
-          }
-          // Look through the Figma document and fill in the node IDs
-          findContentNodes(figma.root, contentNodes);
-          contentData.set(c.node, contentNodes);
-        }
-      }
-    }
-
-    return contentData;
-  }
-
-  // Load accompanying JSON file to get content data about the nodes 
-  let nodeContentData = loadNodeContentData();
-
   function onSelectionChange() {
     let selection = figma.currentPage.selection;
 
@@ -691,27 +625,12 @@ else if (figma.command === "move-plugin-data") {
     let node = selection[0];
     let extendedLayoutData = node.type == 'TEXT' ? node.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-extended-text-layout') : null;
     let extendedLayout = (extendedLayoutData && extendedLayoutData.length) ? JSON.parse(extendedLayoutData) : {};
-    let layoutMode = 'NONE';
-    let overflowDirection = 'NONE';
-    let content = [];
-    if (nodeContentData && nodeContentData.has(node.name)) {
-      for (const [nodeName, nodeId] of nodeContentData.get(node.name).entries()) {
-        content.push({ nodeName: nodeName, nodeId: nodeId });
-      }
-    }
 
     if (node.type == 'TEXT' || node.type == 'FRAME') {
-      figma.ui.postMessage({ 
+      figma.ui.postMessage({
         msg: 'selection',
         extendedLayout,
         nodeType: node.type,
-        nodeWidth: node.width,
-        layoutMode: layoutMode,
-        overflowDirection: overflowDirection,
-        nodeName: node.name,
-        nodeId: node.id,
-        content: content,
-        hasKeywordData: nodeContentData != null,
         pluginMode: pluginMode,
       });
     } else {
@@ -736,6 +655,266 @@ else if (figma.command === "move-plugin-data") {
     if (msg.msg == 'show-node')
       showNode(msg.node);
   };
+} else if (figma.command == "meters") {
+  figma.showUI(__html__, { width: 400, height: 400 });
+  figma.ui.postMessage({
+    msg: 'meters',
+  });
+
+  function clamp(num: number, min: number, max: number): number {
+    return Math.min(Math.max(num, min), max);
+  }
+
+  function percentToValue(percent: number, min: number, max: number) {
+    let range = max - min;
+    return min + (percent / 100) * range;
+  }
+
+  function radiansToDegrees(radians: number) {
+    return radians * 180 / Math.PI;
+  }
+
+  function degreesToRadians(degrees: number) {
+    return degrees * Math.PI / 180;
+  }
+
+  function transformMultiply(m: Transform, n: Transform): Transform {
+    return [
+      [
+        m[0][0] * n[0][0] + m[0][1] * n[1][0],
+        m[0][0] * n[0][1] + m[0][1] * n[1][1],
+        m[0][0] * n[0][2] + m[0][1] * n[1][2] + m[0][2]
+      ],
+      [
+        m[1][0] * n[0][0] + m[1][1] * n[1][0],
+        m[1][0] * n[0][1] + m[1][1] * n[1][1],
+        m[1][0] * n[0][2] + m[1][1] * n[1][2] + m[1][2]
+      ],
+    ];
+  }
+
+  function moveTransform(x: number, y: number): Transform {
+    return [
+      [1, 0, x],
+      [0, 1, y]
+    ]
+  }
+
+  function rotateTransform(angleRadians: number): Transform {
+    return [
+      [Math.cos(angleRadians), Math.sin(angleRadians), 0],
+      [-Math.sin(angleRadians), Math.cos(angleRadians), 0]
+    ]
+  }
+
+  function getMeterData(node: SceneNode) {
+    let meterDataStr = node.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-meter-data');
+    return (meterDataStr && meterDataStr.length) ? JSON.parse(meterDataStr) : {};
+  }
+
+  function saveMeterData(meterData) {
+    let node = figma.currentPage.selection[0];
+    node.setSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-meter-data', JSON.stringify(meterData));
+  }
+
+  function onSelectionChangeMeters() {
+    let selection = figma.currentPage.selection;
+
+    // We don't support multiple selections.
+    if (!selection || selection.length != 1 || !selection[0]) {
+      figma.ui.postMessage({ msg: 'meters-selection-cleared' });
+      return;
+    }
+
+    let node = selection[0];
+    let meterData = getMeterData(node);
+    let ellipseAngle = 0;
+    let rotation = 0;
+    let progress = 0;
+
+    // Get angle/arc data if this is an ellipse
+    if (node.type == "ELLIPSE")
+      ellipseAngle = radiansToDegrees((node as EllipseNode).arcData.endingAngle);
+
+    // Get rotation data if this is any type of node. Case to FrameNode in order to
+    // access the `rotation` field, which works even for other types of nodes
+    rotation = (node as FrameNode).rotation;
+
+    if (node.type == "FRAME" || node.type == "RECTANGLE") {
+      if (meterData && meterData.progressBarData && meterData.progressBarData.vertical)
+        progress = node.height;
+      else
+        progress = node.width;
+    }
+
+    // If we just selected a node with arc data, save the corner radius if it has changed
+    saveArcCornerRadius();
+
+    figma.ui.postMessage({
+      msg: 'meters-selection',
+      nodeType: node.type,
+      meterData,
+      ellipseAngle,
+      rotation,
+      progress
+    });
+  }
+
+  function onDocumentChangedMeters(event: DocumentChangeEvent) {
+    // Whenever the document has changed, save the corner radius if it has changed
+    saveArcCornerRadius();
+  }
+
+  // Since the corner radius of an ellipse is not exposed in Figma's REST API but it is in the
+  // plugin API, save it whenever we detect it has changed.
+  function saveArcCornerRadius() {
+    let selection = figma.currentPage.selection;
+    if (selection && selection.length == 1 && selection[0]) {
+      let node = selection[0];
+      let meterData = getMeterData(node);
+      if (meterData && meterData.arcData) {
+        let eNode = node as EllipseNode;
+        if (meterData.arcData.cornerRadius != eNode.cornerRadius) {
+          meterData.arcData.cornerRadius = eNode.cornerRadius;
+          saveMeterData(meterData);
+        }
+      }
+    }
+  }
+
+  function arcChanged(msg: any) {
+    let startAngle = msg.start;
+    let endAngle = msg.end;
+    let value = percentToValue(msg.value, startAngle, endAngle);
+    if (msg.discrete)
+      value = value - (value % msg.discreteValue);
+    value = degreesToRadians(value);
+
+    let eNode = figma.currentPage.selection[0] as EllipseNode;
+    eNode.arcData = {
+      startingAngle: degreesToRadians(startAngle),
+      endingAngle: value,
+      innerRadius: eNode.arcData.innerRadius,
+    }
+
+    let arcData = {
+      enabled: msg.enabled,
+      start: msg.start,
+      end: msg.end,
+      discrete: msg.discrete,
+      discreteValue: msg.discreteValue,
+      cornerRadius: eNode.cornerRadius,
+    }
+
+    let meterData: any = {};
+    meterData.arcData = arcData;
+    saveMeterData(meterData);
+  }
+
+  function rotationChanged(msg: any) {
+    // Calculate rotation around center, not origin (top left), so we need to calculate
+    // a transformation matrix to translates the center to the origin, rotates, then
+    // translates back. Furthermore, the node may already be offset from its parent, so
+    // we need to calculate that offset as well.
+    let startAngle = msg.start;
+    let endAngle = msg.end;
+    let rotation = percentToValue(msg.value, startAngle, endAngle);
+    if (msg.discrete)
+      rotation = rotation - (rotation % msg.discreteValue);
+    let a = degreesToRadians(rotation);
+
+    // Calculate the x and y offset of the top left corner from its parent when the
+    // rotation is 0. These values will be needed in a translate matrix after the
+    // rotation is performed.
+    let node = figma.currentPage.selection[0] as FrameNode;
+    let r = Math.sqrt(node.width * node.width + node.height * node.height) / 2;
+    let topLeftAngle = radiansToDegrees(Math.atan(node.height / -node.width));
+    let angleFromTopLeft = degreesToRadians(node.rotation) + degreesToRadians(topLeftAngle);
+    let cos = Math.abs(Math.cos(angleFromTopLeft));
+    let sin = Math.abs(Math.sin(angleFromTopLeft));
+
+    let xOffset = node.x - node.width / 2;
+    if (node.rotation >= -90 - topLeftAngle && node.rotation < 90 - topLeftAngle)
+      xOffset += r * cos;
+    else
+      xOffset -= r * cos;
+
+    let yOffset = node.y - node.height / 2;
+    if (node.rotation <= -topLeftAngle && node.rotation >= -topLeftAngle - 180) {
+      yOffset += r * sin;
+    }
+    else {
+      yOffset -= r * sin;
+    }
+
+    // Calculate the transformation matrix:
+    // 1. Translate left and up by half the width and height to center the origin
+    // 2. Rotate
+    // 3. Translate right and down by half the width and height plus xOffset and yOffset
+    //    to restore the node's offset from its parent
+    let x = node.width / 2;
+    let y = node.height / 2;
+    let moveFinal = moveTransform(x + xOffset, y + yOffset);
+    let rotate = transformMultiply(moveFinal, rotateTransform(a));
+    let totalTransform = transformMultiply(rotate, moveTransform(-x, -y));
+    node.relativeTransform = totalTransform;
+
+    let rotationData = {
+      enabled: msg.enabled,
+      start: msg.start,
+      end: msg.end,
+      discrete: msg.discrete,
+      discreteValue: msg.discreteValue,
+    }
+
+    let meterData: any = {};
+    meterData.rotationData = rotationData;
+    saveMeterData(meterData);
+  }
+
+  function barChanged(msg: any) {
+    let start = clamp(msg.start, 0.01, msg.end);
+    let end = clamp(msg.end, 0.01, msg.end);
+    let value = percentToValue(msg.value, start, end);
+    if (msg.discrete)
+      value = clamp(value - (value % msg.discreteValue), 0.01, msg.end);
+
+    let node = figma.currentPage.selection[0] as FrameNode;
+    if (msg.vertical) {
+      node.resize(node.width, value);
+      node.y = msg.end - value;
+    }
+    else {
+      node.resize(value, node.height);
+    }
+
+    let progressBarData = {
+      enabled: msg.enabled,
+      start: msg.start,
+      end: msg.end,
+      discrete: msg.discrete,
+      discreteValue: msg.discreteValue,
+      vertical: msg.vertical,
+    }
+
+    let meterData: any = {};
+    meterData.progressBarData = progressBarData;
+    saveMeterData(meterData);
+  }
+
+  onSelectionChangeMeters();
+  figma.on('selectionchange', onSelectionChangeMeters);
+  figma.on('documentchange', onDocumentChangedMeters);
+
+  figma.ui.onmessage = msg => {
+    if (msg.msg == 'arc-changed') {
+      arcChanged(msg);
+    } else if (msg.msg == 'rotation-changed') {
+      rotationChanged(msg);
+    } else if (msg.msg == 'bar-changed') {
+      barChanged(msg);
+    }
+  }
 } else if (figma.command === "clippy") {
   figma.showUI(__html__, { width: 400, height: 600 });
   clippyRefresh();

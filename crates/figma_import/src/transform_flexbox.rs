@@ -24,7 +24,7 @@ use crate::toolkit_layout_style::{
 use crate::toolkit_schema::ViewShape;
 use crate::toolkit_style::{
     Background, FilterOp, FontFeature, GridLayoutType, GridSpan, ItemSpacing, LayoutTransform,
-    LineHeight, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
+    LineHeight, MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
 };
 
 use crate::figma_schema::TextAutoResize;
@@ -1136,14 +1136,32 @@ fn visit_node(
     };
 
     // Figure out the ViewShape from the node type.
-    let view_shape = match node.data {
+    let view_shape = match &node.data {
         NodeData::BooleanOperation { .. }
-        | NodeData::Ellipse { .. }
         | NodeData::Line { .. }
-        | NodeData::Rectangle { .. }
         | NodeData::RegularPolygon { .. }
         | NodeData::Star { .. }
         | NodeData::Vector { .. } => ViewShape::Path { path: fill_paths, stroke: stroke_paths },
+        // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
+        // to support progress bars. If this node is set up as a progress bar, the renderer will
+        // construct the rectangle, modified by progress bar parameters. Otherwise it will be
+        // rendered as a ViewShape::Path.
+        NodeData::Rectangle { .. } => {
+            ViewShape::VectorRect { path: fill_paths, stroke: stroke_paths, corner_radius }
+        }
+        // Ellipses get turned into an Arc in order to support dials/gauges with an arc type
+        // meter customization. If this node is setup as an arc type meter, the renderer will
+        // construct the ellipse, modified by the arc parameters. Otherwise it will be rendered
+        // as a ViewShape::Path.
+        NodeData::Ellipse { arc_data, .. } => ViewShape::Arc {
+            path: fill_paths,
+            stroke: stroke_paths,
+            stroke_cap: node.stroke_cap.clone(),
+            start_angle_degrees: arc_data.starting_angle,
+            sweep_angle_degrees: arc_data.ending_angle,
+            inner_radius: arc_data.inner_radius,
+            corner_radius: 0.0, // corner radius is only exposed in the plugin data
+        },
         _ => {
             if has_corner_radius {
                 ViewShape::RoundRect {
@@ -1195,6 +1213,15 @@ fn visit_node(
             EffectType::BackgroundBlur => {
                 style.backdrop_filter.push(FilterOp::Blur(effect.radius / 2.0));
             }
+        }
+    }
+
+    // Check to see if there is additional plugin data to set this node up as
+    // a type of meter (dials/gauges/progress bars)
+    if let Some(vsw_data) = plugin_data {
+        if let Some(data) = vsw_data.get("vsw-meter-data") {
+            let meter_data: Option<MeterData> = serde_json::from_str(data.as_str()).ok();
+            style.meter_data = meter_data;
         }
     }
 

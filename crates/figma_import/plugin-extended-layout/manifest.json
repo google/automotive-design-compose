@@ -1,0 +1,15 @@
+{
+  "name": "DesignCompose",
+  "id": "1088970643606098101",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "menu": [
+    { "name": "Live text format", "command": "extended-layout-text" },
+    { "separator": true },
+    { "name": "Check document for errors", "command": "clippy" },
+    { "name": "Check/update keywords", "command": "check-keywords" },
+    { "name": "Sync Prototype changes", "command": "sync" }
+  ]
+}

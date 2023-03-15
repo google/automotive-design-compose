@@ -1,0 +1,1000 @@
+// Copyright 2023 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::{HashMap, HashSet},
+    iter::FromIterator,
+    time::Duration,
+};
+
+use crate::{
+    component_context::ComponentContext,
+    error::Error,
+    extended_layout_schema::ExtendedAutoLayout,
+    figma_schema::{
+        Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse,
+        ImageResponse, Node, NodeData, NodesResponse, ProjectFilesResponse,
+    },
+    image_context::{
+        EncodedImageMap, ImageContext, ImageContextSession, ImageKey, VectorImageIdBuilder,
+    },
+    svg::render_svg_without_clip,
+    toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
+    transform_flexbox::{
+        always_imaged_nodes, create_component_flexbox, find_unrenderable_nodes,
+        try_generate_line_svg,
+    },
+};
+
+const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
+const BASE_FILE_URL: &str = "https://api.figma.com/v1/files/";
+const BASE_IMAGE_URL: &str = "https://api.figma.com/v1/images/";
+const BASE_COMPONENT_URL: &str = "https://api.figma.com/v1/components/";
+const BASE_PROJECT_URL: &str = "https://api.figma.com/v1/projects/";
+
+#[cfg(not(feature = "http_mock"))]
+fn http_fetch(api_key: &str, url: String) -> Result<String, Error> {
+    let body = ureq::get(url.as_str())
+        .set(FIGMA_TOKEN_HEADER, api_key)
+        .timeout(Duration::from_secs(90))
+        .call()?
+        .into_string()?;
+    Ok(body)
+}
+
+#[cfg(feature = "http_mock")]
+use crate::figma_v1_document_mocks::http_fetch;
+
+/// Document update requests return this value to indicate if an update was
+/// made or not.
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum UpdateStatus {
+    Updated,
+    NotUpdated,
+}
+
+/// We can fetch nodes either by ID or by their name.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Serialize, Deserialize)]
+pub enum NodeQuery {
+    /// Find the node by ID
+    NodeId(String),
+    /// Find the node by name
+    NodeName(String),
+    /// Node by name that is a variant, so the name may have multiple properties
+    /// The first string is the node name and the second is its parent's name
+    NodeVariant(String, String),
+}
+// Helper methods for NodeQuery construction.
+impl NodeQuery {
+    /// Construct a NodeQuery::NodeId from the given ID string.
+    pub fn id(id: impl ToString) -> NodeQuery {
+        NodeQuery::NodeId(id.to_string())
+    }
+
+    /// Construct a NodeQuery::NodeName from the given ID string.
+    pub fn name(name: impl ToString) -> NodeQuery {
+        NodeQuery::NodeName(name.to_string())
+    }
+
+    /// Construct a NodeQuery::NodeVariant from the given node name
+    pub fn variant(name: impl ToString, parent: impl ToString) -> NodeQuery {
+        NodeQuery::NodeVariant(name.to_string(), parent.to_string())
+    }
+}
+
+/// We can fetch figma documents in a project or from branches of another document.
+/// We store each as a name and ID
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Serialize, Deserialize)]
+pub struct FigmaDocInfo {
+    pub name: String,
+    pub id: String,
+}
+impl FigmaDocInfo {
+    pub(crate) fn new(name: String, id: String) -> FigmaDocInfo {
+        FigmaDocInfo { name, id }
+    }
+}
+
+fn get_branches(document_root: &FileResponse) -> Vec<FigmaDocInfo> {
+    let mut branches = vec![];
+    if let Some(doc_branches) = &document_root.branches {
+        for hash in doc_branches {
+            if let (Some(Some(id)), Some(Some(name))) = (hash.get("key"), hash.get("name")) {
+                branches.push(FigmaDocInfo::new(name.clone(), id.clone()));
+            }
+        }
+    }
+    branches
+}
+
+/// Document is used to access and maintain an entire Figma document, including
+/// components and image resources. It can be updated if the source document
+/// has changed since this structure was created.
+pub struct Document {
+    api_key: String,
+    document_id: String,
+
+    document_root: FileResponse,
+    image_context: ImageContext,
+    variant_nodes: Vec<Node>,
+    component_sets: HashMap<String, String>,
+    pub branches: Vec<FigmaDocInfo>,
+}
+impl Document {
+    /// Fetch a document from Figma and return a Document instance that can be used
+    /// to extract toolkit nodes.
+    pub fn new(
+        api_key: &str,
+        document_id: String,
+        image_session: Option<ImageContextSession>,
+    ) -> Result<Document, Error> {
+        // Fetch the document...
+        let document_url = format!(
+            "{}{}?plugin_data=shared&geometry=paths&branch_data=true",
+            BASE_FILE_URL, document_id,
+        );
+        let document_root: FileResponse =
+            serde_json::from_str(http_fetch(api_key, document_url)?.as_str())?;
+
+        // ...and the mapping from imageRef to URL
+        let image_ref_url = format!("{}{}/images", BASE_FILE_URL, document_id);
+        let image_refs: ImageFillResponse =
+            serde_json::from_str(http_fetch(api_key, image_ref_url)?.as_str())?;
+
+        let mut image_context = ImageContext::new(image_refs.meta.images);
+        if let Some(session) = image_session {
+            image_context.add_session_info(session);
+        }
+
+        let branches = get_branches(&document_root);
+
+        Ok(Document {
+            api_key: api_key.to_string(),
+            document_id,
+            document_root,
+            image_context,
+            variant_nodes: vec![],
+            component_sets: HashMap::new(),
+            branches,
+        })
+    }
+
+    /// Fetch a document from Figma only if it has changed since the given last
+    /// modified time.
+    pub fn new_if_changed(
+        api_key: &str,
+        document_id: String,
+        last_modified: String,
+        version: String,
+        image_session: Option<ImageContextSession>,
+    ) -> Result<Option<Document>, Error> {
+        let document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, document_id);
+        let document_head: FileHeadResponse =
+            serde_json::from_str(http_fetch(api_key, document_head_url)?.as_str())?;
+
+        if document_head.last_modified == last_modified && document_head.version == version {
+            return Ok(None);
+        }
+
+        Document::new(api_key, document_id, image_session).map(|doc| Some(doc))
+    }
+
+    /// Ask Figma if an updated document is available, and then fetch the updated document
+    /// if so.
+    pub fn update(&mut self) -> Result<UpdateStatus, Error> {
+        // Fetch just the top level of the document. (depth=0 causes an internal server error).
+        let document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, self.document_id);
+        let document_head: FileHeadResponse =
+            serde_json::from_str(http_fetch(self.api_key.as_str(), document_head_url)?.as_str())?;
+
+        // Now compare the version and modification times and bail out if they're the same.
+        // Figma docs include a "version" field, but that doesn't always change when the document
+        // changes (but the mtime always seems to change). The version does change (and mtime does
+        // not) when a branch is created.
+        if document_head.last_modified == self.document_root.last_modified
+            && document_head.version == self.document_root.version
+        {
+            return Ok(UpdateStatus::NotUpdated);
+        }
+
+        // Fetch the updated document in its entirety and replace our document root...
+        let document_url = format!(
+            "{}{}?plugin_data=shared&geometry=paths&branch_data=true",
+            BASE_FILE_URL, self.document_id,
+        );
+        let document_root: FileResponse =
+            serde_json::from_str(http_fetch(self.api_key.as_str(), document_url)?.as_str())?;
+
+        // ...and the mapping from imageRef to URL
+        let image_ref_url = format!("{}{}/images", BASE_FILE_URL, self.document_id);
+        let image_refs: ImageFillResponse =
+            serde_json::from_str(http_fetch(self.api_key.as_str(), image_ref_url)?.as_str())?;
+
+        self.branches = get_branches(&document_root);
+        self.document_root = document_root;
+        self.image_context.update_images(image_refs.meta.images);
+
+        Ok(UpdateStatus::Updated)
+    }
+
+    /// Return the last modified time of this document. This seems to update whenever the doc
+    /// is changed (but the version number does not).
+    pub fn last_modified(&self) -> &String {
+        &self.document_root.last_modified
+    }
+
+    /// Find all nodes whose data is of type NodeData::Instance, which means could be a
+    /// component with variants. Find its parent, and if it is of type NodeData::ComponentSet,
+    /// then add all of its children to self.variant_nodes. Also fill out node_doc_hash,
+    /// which hashes node ids to the document id they come from.
+    fn fetch_component_variants<'a>(
+        &self,
+        node: &Node,
+        node_doc_hash: &mut HashMap<String, String>,
+        variant_nodes: &mut Vec<Node>,
+        id_index: &HashMap<String, &'a Node>,
+        component_hash: &HashMap<String, Component>,
+        parent_tree: &mut Vec<String>,
+        error_list: &mut Vec<String>,
+        error_hash: &mut HashSet<String>,
+    ) -> Result<(), Error> {
+        // Ignore hidden nodes
+        if !node.visible {
+            return Ok(());
+        }
+        fn add_node_doc_hash(
+            node: &Node,
+            node_doc_hash: &mut HashMap<String, String>,
+            doc_id: &String,
+        ) {
+            // Add the node id, doc id to the hash and recurse on all children
+            node_doc_hash.insert(node.id.clone(), doc_id.clone());
+            for child in &node.children {
+                add_node_doc_hash(child, node_doc_hash, doc_id);
+            }
+        }
+
+        if let NodeData::Instance {
+            frame: _,
+            component_id,
+        } = &node.data
+        {
+            // If the component_id is in id_index, we know it's in this document so we don't
+            // need to do anything. If it isn't, it's in a different doc, so proceed to
+            // download data for it
+            if !id_index.contains_key(component_id) {
+                // Find the component info for the component_id
+                let component = component_hash.get(component_id);
+                if let Some(component) = component {
+                    // Fetch the component from the figma api given its key
+                    let file_key = component.key.clone();
+                    // If we already retrieved this component instance but got an error, don't try again
+                    if error_hash.contains(&file_key) {
+                        return Ok(());
+                    }
+                    let component_url = format!("{}{}", BASE_COMPONENT_URL, file_key);
+                    let component_http_response =
+                        match http_fetch(self.api_key.as_str(), component_url.clone()) {
+                            Ok(str) => str,
+                            Err(e) => {
+                                let fetch_error = if let Error::HttpError(ureq_error) = &e {
+                                    if let ureq::Error::Status(code, _response) = ureq_error {
+                                        format!("HTTP {} at {}", code, component_url)
+                                    } else {
+                                        ureq_error.to_string()
+                                    }
+                                } else {
+                                    e.to_string()
+                                };
+                                let error_string = format!(
+                                    "Fetch component error {}: {} -> {}",
+                                    fetch_error,
+                                    parent_tree.join(" -> "),
+                                    node.name
+                                );
+                                error_hash.insert(file_key);
+                                error_list.push(error_string);
+                                return Ok(());
+                            }
+                        };
+
+                    // Deserialize into a ComponentKeyResponse
+                    let component_key_response: ComponentKeyResponse =
+                        serde_json::from_str(component_http_response.as_str())?;
+                    // If this variant points to a file_key different than this document, fetch it
+                    let maybe_parent_node_id = component_key_response.parent_id();
+                    if let Some(parent_node_id) = maybe_parent_node_id {
+                        let variant_document_id = component_key_response.meta.file_key;
+                        if variant_document_id != self.document_id {
+                            let nodes_url = format!(
+                                "{}{}/nodes?ids={}",
+                                BASE_FILE_URL, variant_document_id, parent_node_id
+                            );
+                            let http_str = http_fetch(self.api_key.as_str(), nodes_url.clone())?;
+                            let nodes_response: NodesResponse =
+                                serde_json::from_str(http_str.as_str())?;
+                            // The response is a list of nodes, but we only requested one so this loop
+                            // should only go through one time
+                            for (node_id, node_response_data) in nodes_response.nodes {
+                                if node_id != parent_node_id {
+                                    continue; // We only care about parent_node_id
+                                }
+                                // If the parent is a COMPONENT_SET, then we want to get the parent's children
+                                // and add them to our list of nodes
+                                if let NodeData::ComponentSet { frame: _ } =
+                                    node_response_data.document.data
+                                {
+                                    for node in node_response_data.document.children {
+                                        add_node_doc_hash(
+                                            &node,
+                                            node_doc_hash,
+                                            &variant_document_id,
+                                        );
+                                        // Recurse on all children
+                                        for child in &node.children {
+                                            parent_tree.push(node.name.clone());
+                                            self.fetch_component_variants(
+                                                child,
+                                                node_doc_hash,
+                                                variant_nodes,
+                                                id_index,
+                                                &node_response_data.components,
+                                                parent_tree,
+                                                error_list,
+                                                error_hash,
+                                            )?;
+                                            parent_tree.pop();
+                                        }
+                                        variant_nodes.push(node);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        let error_string = format!(
+                            "Fetch component unable to find component parent for: {} -> {}",
+                            parent_tree.join(" -> "),
+                            node.name
+                        );
+                        error_list.push(error_string);
+                        return Ok(());
+                    }
+                }
+            }
+        }
+        // Recurse on all children
+        for child in &node.children {
+            parent_tree.push(node.name.clone());
+            self.fetch_component_variants(
+                child,
+                node_doc_hash,
+                variant_nodes,
+                id_index,
+                component_hash,
+                parent_tree,
+                error_list,
+                error_hash,
+            )?;
+            parent_tree.pop();
+        }
+        Ok(())
+    }
+
+    /// Find all of the Component Instance views and see which style and text properties are
+    /// overridden in the instance compared to the reference component. If we then render a
+    /// different variant of the component (due to an interaction) we can apply these delta
+    /// styles to get the correct output.
+    fn compute_component_overrides(&self, nodes: &mut HashMap<NodeQuery, View>) {
+        // XXX: Would be nice to avoid cloning here. Do we need to? We need to mutate the
+        //      instance views in place. And we can't hold a ref and a mutable ref to nodes
+        //      at the same time.
+        let reference_components = nodes.clone();
+
+        // This function finds all of the Component Instances (views with a populated
+        // component_info field) in the given view tree, and looks up which component
+        // they are an instance of. If the component is found, then the "action" function
+        // is run with a mutable reference to the Component Instance view and a reference
+        // to the component.
+        //
+        // These two pieces of information (the instance and the component) can then be
+        // used to figure out which properties of the component have been customized in
+        // the instance. Then we can be sure to apply those customized properties to other
+        // variants (where Figma just gives us the variant definition, but not filled out
+        // instance with overrides applied).
+        fn for_each_component_instance(
+            reference_components: &HashMap<NodeQuery, View>,
+            view: &mut View,
+            action: &impl Fn(&mut View, &View),
+        ) {
+            if let Some(info) = &view.component_info {
+                // See if we can find the target component. If not then don't look up
+                // references. Try searching by id, name, and variant
+                if let Some(reference_component) =
+                    reference_components.get(&NodeQuery::NodeId(info.id.clone()))
+                {
+                    action(view, reference_component);
+                } else if let Some(reference_component) =
+                    reference_components.get(&NodeQuery::NodeName(info.name.clone()))
+                {
+                    action(view, reference_component);
+                } else if let Some(reference_component) = reference_components.get(
+                    &NodeQuery::NodeVariant(info.name.clone(), info.component_set_name.clone()),
+                ) {
+                    action(view, reference_component);
+                }
+            }
+            if let ViewData::Rect { children } = &mut view.data {
+                for child in children {
+                    for_each_component_instance(reference_components, child, action);
+                }
+            }
+        }
+
+        for view in nodes.values_mut() {
+            for_each_component_instance(&reference_components, view, &|view, component| {
+                // Currently we are only computing the override style for the root of a component.
+                // We should expand this to traverse the tree, matching up nodes from each side
+                // and determining deltas.
+                //
+                // This is the same algorithm we'll have to make to do Smart Animate (including
+                // determining delta styles).
+                if view.style == component.style {
+                    return;
+                }
+                view.component_info = view.component_info.take().map(|mut info| {
+                    info.overrides = Some(ComponentOverrides {
+                        style: Some(component.style.difference(&view.style)),
+                        data: ComponentContentOverride::None,
+                    });
+                    info
+                });
+            });
+        }
+    }
+
+    /// Convert the nodes with the given names to a structure that's closer to a toolkit
+    /// View. This method doesn't use the toolkit itself.
+    pub fn nodes(
+        &mut self,
+        node_names: &Vec<NodeQuery>,
+        ignored_images: &Vec<(NodeQuery, Vec<String>)>,
+        node_customizations: &Vec<String>,
+        always_imaged: &Vec<String>,
+        error_list: &mut Vec<String>,
+    ) -> Result<HashMap<NodeQuery, View>, Error> {
+        // First we gather all of nodes that we're going to convert and find all of the
+        // child nodes that can't be rendered. Then we ask Figma to do a batch render on
+        // them. Finally we convert and return the set of toolkit nodes.
+        fn index_node<'a>(
+            node: &'a Node,
+            parent_node: Option<&'a Node>,
+            name_index: &mut HashMap<String, &'a Node>,
+            id_index: &mut HashMap<String, &'a Node>,
+            variant_index: &mut HashMap<(String, String), &'a Node>,
+            component_set_index: &mut HashMap<String, &'a Node>,
+        ) {
+            // Ignore hidden nodes
+            if !node.visible {
+                return;
+            }
+
+            // If we have a parent that is a component set, add to the variant index
+            let mut is_variant = false;
+            if let Some(parent) = parent_node {
+                if let NodeData::ComponentSet { .. } = parent.data {
+                    is_variant = true;
+                    variant_index.insert((node.name.clone(), parent.name.clone()), node);
+                }
+            }
+
+            if !is_variant {
+                // If there's already a node with the same name, then only replace it if
+                // we're a component.
+                if let Some(_) = name_index.get(&node.name) {
+                    if let NodeData::Component { .. } = node.data {
+                        name_index.insert(node.name.clone(), node);
+                    }
+                } else {
+                    name_index.insert(node.name.clone(), node);
+                }
+            }
+            id_index.insert(node.id.clone(), node);
+            for child in &node.children {
+                index_node(
+                    child,
+                    Some(node),
+                    name_index,
+                    id_index,
+                    variant_index,
+                    component_set_index,
+                );
+            }
+            if let NodeData::ComponentSet { .. } = node.data {
+                for child in &node.children {
+                    component_set_index.insert(child.id.clone(), node);
+                }
+            }
+        }
+
+        // For each node that is a component set, add all of its children (which are variants)
+        // into the node name hash so that we retrieve those nodes. Also add them to the
+        // component_set_hash, which hashes a component set node name to all of its children.
+        fn add_variant_node_names<'a>(
+            node: &'a Node,
+            node_name_hash: &mut HashSet<NodeQuery>,
+            component_set_hash: &mut HashMap<String, Vec<String>>,
+        ) {
+            if let NodeData::ComponentSet { .. } = &node.data {
+                // Add the component set's children to node_name_has if either the component set itself
+                // is in the node_name_hash, or one of the child variants is in node_name_hash
+                let mut add_children =
+                    node_name_hash.contains(&NodeQuery::NodeName(node.name.clone()));
+                if !add_children {
+                    'outer: for child in &node.children {
+                        let child_name_parts = child.name.split(",");
+                        for variant_name in child_name_parts {
+                            let variant_name = variant_name.to_string();
+                            let variant_parts: Vec<&str> = variant_name.split("=").collect();
+                            if variant_parts.len() == 2 {
+                                // Format is property_name=value, so check if the property_name is in node_name_hash
+                                if node_name_hash
+                                    .contains(&NodeQuery::NodeName(variant_parts[0].to_string()))
+                                {
+                                    add_children = true;
+                                    break 'outer;
+                                }
+                            }
+                        }
+                    }
+                }
+                if add_children {
+                    for child in &node.children {
+                        let child_node_query =
+                            NodeQuery::NodeVariant(child.name.clone(), node.name.clone());
+                        if !node_name_hash.contains(&child_node_query) {
+                            node_name_hash.insert(child_node_query);
+                        }
+                    }
+                }
+                let mut variant_list: Vec<String> = vec![];
+                for child in &node.children {
+                    variant_list.push(child.name.clone());
+                }
+                component_set_hash.insert(node.name.clone(), variant_list);
+            }
+            // Recurse on all children
+            for child in &node.children {
+                add_variant_node_names(child, node_name_hash, component_set_hash);
+            }
+        }
+
+        // Search the node hierarchy for nodes that have plugin data that specifies an overflow
+        // node. Add these nodes to node_name_hash so that we fetch them.
+        fn add_overflow_nodes<'a>(node: &'a Node, node_name_hash: &mut HashSet<NodeQuery>) {
+            if node.shared_plugin_data.contains_key("designcompose") {
+                let plugin_data = node.shared_plugin_data.get("designcompose");
+                if let Some(vsw_data) = plugin_data {
+                    if let Some(plugin_layout) = vsw_data.get("vsw-extended-auto-layout") {
+                        let extended_auto_layout: Option<ExtendedAutoLayout> =
+                            serde_json::from_str(plugin_layout.as_str()).ok();
+                        if let Some(extended_auto_layout) = extended_auto_layout {
+                            if extended_auto_layout.limit_content {
+                                let lcd = extended_auto_layout.limit_content_data;
+                                node_name_hash
+                                    .insert(NodeQuery::NodeId(lcd.overflow_node_id.clone()));
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Recurse on all children
+            for child in &node.children {
+                add_overflow_nodes(child, node_name_hash);
+            }
+        }
+
+        let mut name_index = HashMap::new();
+        let mut id_index = HashMap::new();
+        let mut variant_index = HashMap::new();
+        // If a component belongs to a component set (there are "variants" in the Figma UI)
+        // then we want to know which component set it belongs to so that if the component
+        // set has bindings then we can use them for the instance.
+        //
+        // (For example, we might encounter an instance of a PRNDL component; the component
+        // itself has no bindings, but the component set binds to the "vehicle gear" signal
+        // and selects a different variant/component based on the gear; in the Figma JSON we
+        // will find a component instance, like "Gear=P", and then need to find the component
+        // set "PRNDL", and then look at its bindings. If we find the component set and find
+        // the bindings then we know we should replace the instance with special node that
+        // knows to subscribe to the Gear signal).
+        //
+        // This map goes from "component id" -> "component set node", so there will be one
+        // entry for each component in a component set.
+        let mut component_set_index = HashMap::new();
+        index_node(
+            &self.document_root.document,
+            None,
+            &mut name_index,
+            &mut id_index,
+            &mut variant_index,
+            &mut component_set_index,
+        );
+
+        // Fetch component variant nodes
+        // doc_nodes is a hash that that hashes document_id -> list of node IDs from that
+        // document that we need, so that we can retrieve images from the correct document
+        let mut node_doc_hash: HashMap<String, String> = HashMap::new();
+        let mut variant_nodes: Vec<Node> = vec![];
+        let mut parent_tree: Vec<String> = vec![];
+        let mut error_hash: HashSet<String> = HashSet::new();
+        self.fetch_component_variants(
+            &self.document_root.document,
+            &mut node_doc_hash,
+            &mut variant_nodes,
+            &id_index,
+            &self.document_root.components,
+            &mut parent_tree,
+            error_list,
+            &mut error_hash,
+        )?;
+        self.variant_nodes = variant_nodes;
+
+        // Index the variant nodes that we pulled from other documents
+        for node in &self.variant_nodes {
+            index_node(
+                &node,
+                None, // TODO this is untested -- we may need to get the parent of node and pass it in here
+                &mut name_index,
+                &mut id_index,
+                &mut variant_index,
+                &mut component_set_index,
+            );
+        }
+
+        // Convert node_names into a HashSet. Then, for any node names that are a component set,
+        // add all of its children (which are variants) into the node name hash.
+        // Also add all component sets to component_set_hash, mapping the component set name to
+        // a list of all their variant children.
+        let mut node_name_hash: HashSet<NodeQuery> = HashSet::from_iter(node_names.iter().cloned());
+        let mut component_set_hash: HashMap<String, Vec<String>> = HashMap::new();
+        add_variant_node_names(
+            &self.document_root.document,
+            &mut node_name_hash,
+            &mut component_set_hash,
+        );
+
+        // Some nodes may have additional plugin data that specifies an overflow node. Look for these
+        // and add them to node_name_hash
+        add_overflow_nodes(&self.document_root.document, &mut node_name_hash);
+
+        // Find the initial list of nodes we want to convert. This list excludes nodes that are hidden
+        let mut nodes: Vec<(NodeQuery, &Node)> = node_name_hash
+            .into_iter()
+            .map(|name| {
+                // Look up the node if it's defined.
+                let maybe_node = match &name {
+                    NodeQuery::NodeId(id) => id_index.get(id),
+                    NodeQuery::NodeName(node_name) => name_index.get(node_name),
+                    NodeQuery::NodeVariant(node_name, parent_name) => {
+                        variant_index.get(&(node_name.clone(), parent_name.clone()))
+                    }
+                };
+
+                // Yield up both the query and the node so that we can return the
+                // query with the converted node.
+                (name, maybe_node)
+            })
+            .filter(|(_, maybe_node)| maybe_node.is_some())
+            .map(|(k, node)| (k, *node.unwrap())) // safe to unwrap
+            .collect();
+
+        // We use ComponentContext to track all of the nodes that need to be converted to
+        // satisfy reactions.
+        let mut component_context = ComponentContext::new(&nodes);
+        let mut views = HashMap::new();
+
+        loop {
+            // Accumulate all of the unrenderable nodes.
+            let mut unrenderable: HashSet<String> = HashSet::new();
+            for (_, node) in &nodes {
+                find_unrenderable_nodes(node, &node_customizations, &mut unrenderable, true);
+            }
+
+            if !always_imaged.is_empty() {
+                for (_, node) in &nodes {
+                    always_imaged_nodes(node, &mut unrenderable, always_imaged.clone())
+                }
+            }
+
+            // Calculate hashes for these unrenderable nodes; we do this with another recursion
+            // into the nodes because it's much simpler to do after having identified the top-level
+            // nodes that we want to image (opposed to tracking the hash state as we recurse and
+            // attempt to identify the top-level node to image).
+            fn node_hash(node: &Node, hasher: &mut VectorImageIdBuilder) {
+                hasher.add_node(node);
+                for child in &node.children {
+                    node_hash(child, hasher);
+                }
+            }
+
+            let mut unrenderable_hashes = HashMap::new();
+            for node_id in &unrenderable {
+                let mut builder = VectorImageIdBuilder::new();
+                if let Some(node) = id_index.get(node_id) {
+                    node_hash(node, &mut builder);
+                    unrenderable_hashes.insert(node_id.clone(), builder.build());
+                }
+            }
+
+            // Ask Figma to render all of those nodes which are unrenderable. We filter out
+            // the items we've already asked Figma to render for us so it doesn't have to do
+            // so much work.
+            let unrenderable_ids: Vec<String> = unrenderable
+                .iter()
+                .filter(|node_id| {
+                    !self
+                        .image_context
+                        .image_hash_match(node_id, unrenderable_hashes.get(*node_id))
+                })
+                .cloned()
+                .collect();
+
+            self.image_context.update_image_hash(&unrenderable_hashes);
+
+            // Group the images by document id. Then for each document id, request all images
+            // that we need from that document
+            let mut unrenderable_doc_hash: HashMap<String, Vec<String>> = HashMap::new();
+            for id in unrenderable_ids {
+                let maybe_doc_id = node_doc_hash.get(&id);
+                let doc_id = maybe_doc_id.unwrap_or(&self.document_id);
+                let node_ids = unrenderable_doc_hash.get_mut(doc_id);
+                if let Some(node_ids) = node_ids {
+                    node_ids.push(id);
+                } else {
+                    unrenderable_doc_hash.insert(doc_id.clone(), vec![id]);
+                }
+            }
+
+            // The api to request images requires one document id with a list of node ids, so
+            // loop through the doc ids and request all images under that doc.
+            //
+            // We've already filtered out the images we know about, so here we ideally want to
+            // fetch every single unrenderable image here.
+            //
+            // We fetch them as SVG, and then rasterize them ourselves to different sizes to
+            // support different display densities. Figma also supports PNG format (where it
+            // rasterizes the vectors itself), but we don't use that because:
+            //
+            //  * It clips the edges off of vectors that go outside of their bounds (due to an
+            //    outset stroke).
+            //  * It's quite slow, and supporting multiple display densities multiplies out the
+            //    slowness.
+            //  * Figma seem to assign a high "cost" to each PNG rasterization request, so we can
+            //    easily exhaust an access token's quota/rate limit and get 409 errors with PNG
+            //    requests.
+            //
+            // Using SVG requires us to implement SVG rasterization, which we're doing with a
+            // third party crate (which is safe and has high performance).
+            //
+            for (doc_id, node_ids) in unrenderable_doc_hash {
+                if node_ids.is_empty() {
+                    continue;
+                }
+                // Request the URLs for the SVG files. Figma goes and generates all of the SVGs
+                // from this call, and then we fetch them individually.
+                // NOTE: We sort the node IDs before dispatching them to the server to ensure
+                // they're always in a known order. This helps mock known requests.
+                let mut node_ids = node_ids.clone();
+                node_ids.sort();
+                let figma_svg_request_url = format!(
+                    "{}{}?ids={}&format=svg&use_absolute_bounds=true",
+                    BASE_IMAGE_URL,
+                    doc_id,
+                    node_ids.join(",")
+                );
+
+                let figma_svg_request = http_fetch(self.api_key.as_str(), figma_svg_request_url)?;
+                let figma_svg_response: ImageResponse =
+                    serde_json::from_str(figma_svg_request.as_str())?;
+
+                // Map from Node ID to SVG URL.
+                let mut node_to_svg = figma_svg_response.images;
+                self.image_context.add_node_urls(node_to_svg.clone());
+
+                for (node_id, svg_url) in node_ids
+                    .iter()
+                    .map(|node_id| (node_id, node_to_svg.remove(node_id).unwrap_or(None)))
+                {
+                    let svg_node_ref = id_index.get(node_id);
+                    // First fetch the generated SVG content.
+                    let maybe_svg_content = if let Some(url) = svg_url {
+                        http_fetch(self.api_key.as_str(), url.clone())
+                    } else if let Some(svg_node) = svg_node_ref {
+                        // Attempt to synthesize some SVG ourselves since perhaps this is a case where
+                        // Figma has not emitted SVG for a zero-width/height line which has a thickness
+                        // and is unclipped.
+                        if let Some(svg) = try_generate_line_svg(svg_node) {
+                            Ok(svg)
+                        } else {
+                            println!("No SVG content generated for vector node {:#?}", node_id);
+                            continue;
+                        }
+                    } else {
+                        println!("No SVG content generated for vector node {:#?}", node_id);
+                        continue;
+                    };
+
+                    // Extract bounds information from the SVG, and rasterize it.
+                    let maybe_vector_image = match maybe_svg_content {
+                        Ok(svg_content) => render_svg_without_clip(&svg_content),
+                        Err(e) => {
+                            println!(
+                                "Unable to fetch SVG content for vector node {:#?}: {}",
+                                node_id, e
+                            );
+                            continue;
+                        }
+                    };
+
+                    // Now update our image context with the rasterized SVG, and the extracted
+                    // bounds information.
+                    match maybe_vector_image {
+                        Ok(vector_image) => {
+                            self.image_context
+                                .add_rasterized_vector(node_id, vector_image);
+                        }
+                        Err(e) => {
+                            println!("Unable to extract bounds and rasterize SVG content for vector node {:#?}: {}", node_id, e);
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            // XXX: Very silly cloning here; why doesn't DocumentKey do this once?
+
+            // Add the ignored images into a hash map for easier access
+            let mut ignored_image_hash: HashMap<NodeQuery, HashSet<String>> = HashMap::new();
+            for (node_name, node_images) in ignored_images {
+                let mut img_set: HashSet<String> = HashSet::new();
+                for img in node_images {
+                    img_set.insert(img.to_string());
+                }
+                ignored_image_hash.insert(node_name.clone(), img_set);
+
+                // If node_name is a component set, all its variant children use the same set of ignored images
+                if let NodeQuery::NodeName(name) = node_name {
+                    let variant_list = component_set_hash.get(name);
+                    if let Some(variant_list) = variant_list {
+                        for variant_name in variant_list {
+                            let mut img_set: HashSet<String> = HashSet::new();
+                            for img in node_images {
+                                img_set.insert(img.to_string());
+                            }
+                            ignored_image_hash.insert(NodeQuery::name(variant_name), img_set);
+                        }
+                    }
+                }
+            }
+            // Now we can transform from the Figma schema to the toolkit schema.
+            for (query, node) in nodes {
+                // Set the set of images to ignore for this node
+                let ignored_image_set = ignored_image_hash.get(&NodeQuery::name(node.name.clone()));
+                self.image_context.set_ignored_images(ignored_image_set);
+
+                views.insert(
+                    query,
+                    create_component_flexbox(
+                        node,
+                        &self.document_root.components,
+                        &self.document_root.component_sets,
+                        &mut component_context,
+                        &mut unrenderable_hashes,
+                        &mut self.image_context,
+                    ),
+                );
+            }
+
+            // If we have no more nodes then we can break out.
+            nodes = component_context.referenced_list(&id_index);
+
+            // We use a hashset inside of ComponentContext to ensure that we don't request the same
+            // nodes over and over.
+            if nodes.is_empty() {
+                break;
+            }
+        }
+
+        // Populate the override data for components.
+        self.compute_component_overrides(&mut views);
+
+        // Update our mapping from instance to component set.
+        self.component_sets = component_set_index
+            .iter()
+            .map(|(component_id, component_set_node)| {
+                (component_id.clone(), component_set_node.id.clone())
+            })
+            .collect();
+
+        // If there are nodes that were referenced that we weren't able to convert then we can report them
+        // here. Ideally we'd log this so that a customer could see it and figure out what's going on and
+        // why an action isn't working.
+        let missing_nodes = component_context.missing_nodes();
+        if !missing_nodes.is_empty() {
+            println!(
+                "Figma: Unable to find nodes referenced by interactions: {:?}",
+                missing_nodes
+            );
+            println!("       These interactions won't work.");
+        }
+        Ok(views)
+    }
+
+    /// Return the EncodedImageMap containing the mapping from ImageKey references in Nodes returned by this document
+    /// to encoded image bytes. EncodedImageMap can be serialized and deserialized, and transformed into an ImageMap.
+    pub fn encoded_image_map(&self) -> EncodedImageMap {
+        self.image_context.encoded_image_map()
+    }
+
+    /// Return the ImageContextSession so that subsequent requests can avoid fetching the same images. We also return
+    /// the list of all images referenced by this document, so that a client knows which images to copy from the old
+    /// document (if it requested an incremental update).
+    pub fn image_session(&self) -> ImageContextSession {
+        self.image_context.as_session()
+    }
+
+    /// Return the mapping from Component node ID to Component Set node ID.
+    pub fn component_sets(&self) -> &HashMap<String, String> {
+        &self.component_sets
+    }
+
+    /// Get all the Figma documents in the given project ID
+    pub fn get_projects(&self, project_id: &str) -> Result<Vec<FigmaDocInfo>, Error> {
+        let url = format!("{}{}/files", BASE_PROJECT_URL, project_id);
+        let project_files: ProjectFilesResponse =
+            serde_json::from_str(http_fetch(self.api_key.as_str(), url)?.as_str())?;
+
+        let mut figma_docs: Vec<FigmaDocInfo> = vec![];
+        for file_hash in &project_files.files {
+            if let Some(doc_id) = file_hash.get("key") {
+                if let Some(name) = file_hash.get("name") {
+                    figma_docs.push(FigmaDocInfo::new(name.clone(), doc_id.clone()));
+                }
+            }
+        }
+
+        Ok(figma_docs)
+    }
+
+    /// Get the name of the document
+    pub fn get_name(&self) -> String {
+        self.document_root.name.clone()
+    }
+
+    /// Get the document ID of the document
+    pub fn get_document_id(&self) -> String {
+        self.document_id.clone()
+    }
+
+    /// Get the version string in the document's file response
+    pub fn get_version(&self) -> String {
+        self.document_root.version.clone()
+    }
+
+    pub fn cache(&self) -> HashMap<String, Option<ImageKey>> {
+        self.image_context.cache()
+    }
+}

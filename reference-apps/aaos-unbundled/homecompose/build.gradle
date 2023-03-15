@@ -1,0 +1,57 @@
+/*
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+buildscript {
+
+    ext.kotlin_version = "1.7.10"
+    ext.compose_version = '1.4.0-alpha02'
+    ext.compose_compiler_version = '1.3.2'
+
+    // car_platform_path is the path to the directory that holds "R-QPR2/*.aar"
+    // or similar, relative to the path of the non-root project (app, etc.)'s build.gradle
+    if (!rootProject.hasProperty("car_platform_path")) {
+        ext.car_platform_path = "../car_platform/R-QPR2"
+    }
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+    
+    dependencies {
+        classpath "com.android.tools.build:gradle:7.1.3"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.google.android.gms:oss-licenses-plugin:0.10.5"
+        classpath 'com.google.android.gms:strict-version-matcher-plugin:1.2.4'
+    }
+}
+
+plugins {
+    id 'com.google.devtools.ksp' version "1.7.20-1.0.7"
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+

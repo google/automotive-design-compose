@@ -1,0 +1,39 @@
+/*
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.designcompose.common
+
+class DocumentServerParams(
+    private val nodeQueries: ArrayList<String>? = null,
+    private val nodeCustomizations: Array<String>? = null,
+    private val ignoredImages: HashMap<String, Array<String>>? = null
+) {
+    fun toJsonSnippet(): String {
+        val queriesStr = nodeQueries?.joinToString(",") { "\"$it\"" } ?: ""
+        val nodeCustomizationsStr = nodeCustomizations?.joinToString(",") { "\"$it\"" } ?: ""
+        val ignoredImagesStr =
+            ignoredImages?.keys?.joinToString(",") { node ->
+                val images = ignoredImages[node]?.joinToString(",") { "\"$it\"" }
+                "{ \"node\": \"$node\", \"images\": [$images] }"
+            }
+                ?: ""
+
+        var jsonStr = "\"ignored_images\": [$ignoredImagesStr], "
+        jsonStr += "\"queries\": [$queriesStr], "
+        jsonStr += "\"node_customizations\": [$nodeCustomizationsStr]"
+        return jsonStr
+    }
+}

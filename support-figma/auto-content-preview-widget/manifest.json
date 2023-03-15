@@ -1,0 +1,12 @@
+{
+  "name": "Auto content preview for DesignCompose",
+  "id": "1124100520827492306",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": [
+    "figma"
+  ],
+  "containsWidget": true,
+  "widgetApi": "1.0.0"
+}

@@ -1,0 +1,1608 @@
+<!--
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css"/>
+<style>
+  .button-hover {
+    border-color:#FFFFFF;
+    border-width:1px
+  }
+
+  .button-hover:hover {
+    border-color:#000000;
+    border-width:1px
+  }
+
+  .button-overflow {
+    display: flex;
+    background-color: white;
+    border: 1px solid #D7D7D7;
+    align-items: center;
+    padding: 10;
+  }
+
+  .button-overflow:hover {
+    border-color:#000000;
+  }
+
+  .button-blue {
+    background-color: #66B5FF;
+  }
+
+  .label {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 18px;
+  }
+
+  .link {
+    font-size: 11px;
+    color: rgba(0, 178, 255, 255);
+    text-decoration: underline;
+  }
+
+  .separator-large {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  .separator-medium {
+    margin-left: 20px;
+    margin-right: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  .separator-small {
+    margin-left: 50px;
+    margin-right: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px; 
+    color: #D7D7D7;
+    size: 1;
+  }
+
+  .switch__label {
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .grid-cell {
+    width: 22px;
+    height: 26px;
+  }
+  .grid-cell-bg {
+    background-color: rgba(255, 211, 211)
+  }
+  .grid-cell-gradient-horizontal {
+    background-image: linear-gradient(to right, #ffd3d3 , white)
+  }
+  .grid-cell-gradient-vertical {
+    background-image: linear-gradient(rgba(255, 211, 211) , white)
+  }
+  .grid-square {
+    width: 17;
+    height: 17;
+    margin-left: 2;
+    border: 1px dashed rgb(161, 113, 240);
+    border-radius: 3px;
+  }
+  .grid-square-bg {
+    background-color: rgb(196, 196, 196);
+  }
+  .grid-square-gradient-horizontal {
+    background-image: linear-gradient(to right, rgba(196, 196, 196) , white);
+  }
+  .grid-square-gradient-vertical {
+    background-image: linear-gradient(rgba(196, 196, 196) , white);
+  }
+
+  /* The Modal (background) */
+  .modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.76); /* Black w/ opacity */
+  }
+
+  /* Modal Content */
+  .modal-content {
+    margin: auto;
+    padding: 20px;
+    width: 80%;
+  }
+
+  /* The Close Button */
+  .close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  .close:hover,
+  .close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  /* 3x3 Alignment UI background */
+  .alignment-table-bg {
+    background-image: url("data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='1' y='1' width='62' height='62' stroke='%23E6E6E6' stroke-width='2'/%3E%3Crect x='11' y='11' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='11' y='31' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='11' y='51' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='31' y='11' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='31' y='31' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='31' y='51' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='51' y='11' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='51' y='31' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='51' y='51' width='2' height='2' fill='%23C2C2C2'/%3E%3C/svg%3E");
+  }
+  /* When not selected, show clear stroke */
+  .alignment-svg {
+    stroke: #00000000 !important;
+  }
+  /* When hovering, show grey stroke */
+  .alignment-svg-hover {
+    stroke: #00000050 !important;
+  }
+  /* When selected, show black stroke */
+  .alignment-svg-selected {
+    stroke: #000000FF !important;
+  }
+
+  /* Alignment tooltip container */
+  .alignment-tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Alignment tooltip text */
+  .alignment-tooltip .alignment-tooltiptext {
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    font-size: 12;
+    padding: 5px 10px;
+    border-radius: 1px;
+    width: max-content;
+    bottom: 150%;
+    left: 20%;
+    transform:translateX(-20%);
+    position: absolute;
+    z-index: 1;
+  }
+
+  /* Alignment tooltip arrow */
+  .alignment-tooltip .alignment-tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 20%;
+    margin-left: 0px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+  }
+
+  /* Show the tooltip text when you mouse over the tooltip container */
+  .alignment-tooltip:hover .alignment-tooltiptext {
+    visibility: visible;
+  }
+
+</style>
+
+<svg style="display: none">
+  <defs>
+    <symbol id="sectionExpanded" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4.66667 6L0.0478635 -8.70043e-07L9.28547 -6.24663e-08L4.66667 6Z" fill="#BEBEBE"/>
+    </symbol>
+  </defs>
+</svg>
+
+<svg style="display: none">
+  <defs>
+    <symbol id="sectionCollapsed" width="7" height="10" viewBox="0 0 7 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.33325 5.00001L0.333252 9.61881L0.333252 0.381203L6.33325 5.00001Z" fill="#BEBEBE"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ADD PARENT SECTION -->
+
+<div id="parentFrameSection" style="margin-left: 20; margin-right: 10; margin-top: 10; display: none">
+  <span class="label" style="justify-content: center; font-size: 14px; font-weight: bold; color: black">Move the widget into a frame</span>
+  <img style="margin-top: 20; margin-left: 10" src="data:image/png;base64,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">
+  <span class="label" style="margin-top: 30">
+    Drag the widget into a frame or select the button below to place it. Resize the parent frame to resize the widget, then click the refresh size icon (on the widget) to update.
+  </span>
+  <input type="button" style="margin-top: 30; margin-left: 90; display: flex; justify-content: center; color:rgba(0, 0, 0, 0.8); font-size: 12; color: white; width:180" class="button button-blue button-hover" value="Select frame" onClick="onClickSetParentFrame()">
+</div>
+
+<!-- NO KEYWORDS SOURCES FOUND -->
+
+<div id="noKeywordSourceSection" style="text-align: center; margin-top: 50; margin-left: 20; margin-right: 20; display: none">
+  <span class="header">No keyword source found</span>
+  <br><br>
+  <span style="font-size: 12; color: rgba(0, 0, 0, 0.6);">Auto content preview needs a .json file with the latest keywords to run. Reach out to the DesignCompose developer at your company if you need help locating this file.</span>
+  <br><br><br>
+  <input id="jsonInputFile" type="button" style="display: inline; justify-content: center; color:rgba(0, 0, 0, 0.8); font-size: 12; width:180" class="button button-hover" value="Upload keyword file" onClick="onClickUploadKeywordsFile()">  
+</div>
+
+<div id="hasKeywordSection">
+    
+  <!-- AUTO CONTENT FRAME SECTION -->
+
+  <script>
+    function autoContentFrameCollapsedClicked() {
+      document.getElementById('autoContentFrameCollapsed').style.display = 'none';
+      document.getElementById('autoContentFrameExpanded').style.display = 'flex';
+      document.getElementById('autoContentFrame').style.display = 'block';
+    }
+    function autoContentFrameExpandedClicked() {
+      document.getElementById('autoContentFrameCollapsed').style.display = 'flex';
+      document.getElementById('autoContentFrameExpanded').style.display = 'none';
+      document.getElementById('autoContentFrame').style.display = 'none';
+    }
+  </script>
+
+  <div id="autoContentSection">
+    <div id="autoContentFrameCollapsed" style="margin-left: 10; display: none; align-items: center">
+      <svg width="10" height="10" onClick="autoContentFrameCollapsedClicked()"><use href="#sectionCollapsed"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Auto content frame</span>
+    </div>
+    <div id="autoContentFrameExpanded" style="margin-left: 10; display: flex; align-items: center">
+      <svg width="10" height="6" onClick="autoContentFrameExpandedClicked()"><use href="#sectionExpanded"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Auto content frame</span>
+    </div>
+    <div id="autoContentFrame" style="display: block; margin-left: 20; margin-top: 16">        
+      <span class="label">This defines how content will be displayed in the live view. Resize the parent frame to resize the widget, then click the refresh size icon (on the widget) to update.</span>
+      <table style="margin-top: 10; margin-left: 6">
+        <tr>
+          <td rowspan="2">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="14" height="14" stroke="#7F7F7F" stroke-width="2" stroke-dasharray="4 4"/>
+            </svg>
+          </td>
+          <td><div style="height: 18"><span class="label" style="margin-left: 10">Auto content frame:</span></div></td>
+        </tr>
+        <tr>
+          <td>
+            <select id="contentNodeName" style="margin-left: 4; width: 200;" class="select-menu__button">
+              <option value="">--Select an option--
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="2">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#clip0_1025_822)">
+              <path d="M-3 17V14.5667H13V17H-3ZM-3 10.2333V7.76667H21V10.2333H-3ZM-3 3.43333V0.999998H21V3.43333H-3Z" fill="#7F7F7F"/>
+              </g>
+              <defs>
+              <clipPath id="clip0_1025_822">
+              <rect width="16" height="16" fill="white" transform="translate(1 1)"/>
+              </clipPath>
+              </defs>
+            </svg>              
+          </td>
+          <td><div style="height: 18"><span class="label" style="margin-left: 10">Preview content in frame:</span></div></td>
+        </tr>
+        <tr>
+          <td>
+            <select id="previewPage" style="margin-left: 4px; width: 200;" class="select-menu__button"></select>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <hr class="separator-large" color="#D7D7D7" size="1">
+  </div>
+
+  <!-- FORMATTING SECTION -->
+
+  <script>
+    function formattingContentCollapsedClicked() {
+      document.getElementById('formattingContentCollapsed').style.display = 'none';
+      document.getElementById('formattingContentExpanded').style.display = 'flex';
+      document.getElementById('formattingContent').style.display = 'block';
+    }
+    function formattingContentExpandedClicked() {
+      document.getElementById('formattingContentCollapsed').style.display = 'flex';
+      document.getElementById('formattingContentExpanded').style.display = 'none';
+      document.getElementById('formattingContent').style.display = 'none';
+    }
+  </script>
+
+  <div id="formattingSection">
+    <div id="formattingContentCollapsed" style="margin-left: 10; display: none; align-items: center">
+      <svg width="10" height="10" onClick="formattingContentCollapsedClicked()"><use href="#sectionCollapsed"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Formatting</span>
+    </div>
+    <div id="formattingContentExpanded" style="margin-left: 10; display: flex; align-items: center">
+      <svg width="10" height="6" onClick="formattingContentExpandedClicked()"><use href="#sectionExpanded"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Formatting</span>
+    </div>
+    <div id="formattingContent" style="margin-left: 10">  
+      <div id="gridSection">
+        <div style="margin-left: 16px; display: flex; justify-content:left; align-items: center">
+          <svg id="iconFormatHorizontal" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="7" width="4" height="4" fill="#7F7F7F"/>
+            <rect x="7" y="7" width="4" height="4" fill="#7F7F7F"/>
+            <rect x="13" y="7" width="4" height="4" fill="#7F7F7F"/>
+          </svg>
+          <svg id="iconFormatVertical" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="7" y="17" width="4" height="4" transform="rotate(-90 7 17)" fill="#7F7F7F"/>
+            <rect x="7" y="11" width="4" height="4" transform="rotate(-90 7 11)" fill="#7F7F7F"/>
+            <rect x="7" y="5" width="4" height="4" transform="rotate(-90 7 5)" fill="#7F7F7F"/>
+          </svg>
+          <svg id="iconFormatColumnsStretch" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M1.64645 9.03553C1.45118 8.84027 1.45118 8.52369 1.64645 8.32843L4.82843 5.14645C5.02369 4.95118 5.34027 4.95118 5.53553 5.14645C5.7308 5.34171 5.7308 5.65829 5.53553 5.85355L3.20711 8.18198H14.7929L12.4645 5.85355C12.2692 5.65829 12.2692 5.34171 12.4645 5.14645C12.6597 4.95118 12.9763 4.95118 13.1716 5.14645L16.3536 8.32843C16.5488 8.52369 16.5488 8.84027 16.3536 9.03553L13.1716 12.2175C12.9763 12.4128 12.6597 12.4128 12.4645 12.2175C12.2692 12.0223 12.2692 11.7057 12.4645 11.5104L14.7929 9.18198H3.20711L5.53553 11.5104C5.7308 11.7057 5.7308 12.0223 5.53553 12.2175C5.34027 12.4128 5.02369 12.4128 4.82843 12.2175L1.64645 9.03553Z" fill="#C0C0C0"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M1 1H5V3.50826C4.55044 3.54913 4.11207 3.74163 3.76792 4.08579L1 6.8537V1ZM1 10.5103V17H5V13.8557C4.55044 13.8148 4.11207 13.6223 3.76792 13.2782L1 10.5103ZM7 12.6991V17H11V12.6985C10.7576 12.1701 10.7576 11.5578 11 11.0294V10.682H7V11.0288C7.24284 11.5575 7.24284 12.1704 7 12.6991ZM7 6.68198H11V6.33452C10.7576 5.80615 10.7576 5.19385 11 4.66548V1H7V4.66482C7.24284 5.19356 7.24284 5.80644 7 6.33518V6.68198ZM13 13.8557V17H17V10.5106L14.2324 13.2782C13.8882 13.6224 13.4497 13.8149 13 13.8557ZM17 6.8534L14.2324 4.08579C13.8882 3.74156 13.4497 3.54904 13 3.50823V1H17V6.8534Z" fill="#7F7F7F"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M1.64645 9.03553C1.45118 8.84027 1.45118 8.52369 1.64645 8.32843L4.82843 5.14645C5.02369 4.95118 5.34027 4.95118 5.53553 5.14645C5.7308 5.34171 5.7308 5.65829 5.53553 5.85355L3.20711 8.18198H14.7929L12.4645 5.85355C12.2692 5.65829 12.2692 5.34171 12.4645 5.14645C12.6597 4.95118 12.9763 4.95118 13.1716 5.14645L16.3536 8.32843C16.5488 8.52369 16.5488 8.84027 16.3536 9.03553L13.1716 12.2175C12.9763 12.4128 12.6597 12.4128 12.4645 12.2175C12.2692 12.0223 12.2692 11.7057 12.4645 11.5104L14.7929 9.18198H3.20711L5.53553 11.5104C5.7308 11.7057 5.7308 12.0223 5.53553 12.2175C5.34027 12.4128 5.02369 12.4128 4.82843 12.2175L1.64645 9.03553Z" fill="#444746"/>
+          </svg>
+          <svg id="iconFormatColumnsAuto" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M13 3.5V2.5H14V3.5H13ZM13 2H13.5V1.5H14V1H13V2ZM15.5 1H14.5V2H15.5V1ZM13 16V17H14V16.5H13.5V16H13ZM16 17H17V16H16.5V16.5H16V17ZM17 2V1H16V1.5H16.5V2H17ZM17 2.5H16V3.5H17V2.5ZM17 4.5H16V5.5H17V4.5ZM17 6.5H16V7.5H17V6.5ZM17 8.5H16V9.5H17V8.5ZM17 10.5H16V11.5H17V10.5ZM17 12.5H16V13.5H17V12.5ZM17 14.5H16V15.5H17V14.5ZM15.5 17V16H14.5V17H15.5ZM13 15.5H14V14.5H13V15.5ZM13 13.5H14V12.5H13V13.5ZM13 5.5H14V4.5H13V5.5Z" fill="#7F7F7F"/>
+            <rect x="16" y="1" width="1" height="1" fill="#7F7F7F"/>
+            <rect x="13" y="1" width="1" height="1" fill="#7F7F7F"/>
+            <rect x="13" y="16" width="1" height="1" fill="#7F7F7F"/>
+            <rect x="16" y="16" width="1" height="1" fill="#7F7F7F"/>
+            <rect x="13" y="11" width="2" height="1" fill="#FAF6F6"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M1 1H5V6.68198H1V1ZM1 10.682V17H5V10.682H1ZM7 10.682V17H11V13.4777C10.2175 14.0523 9.11146 13.9858 8.4038 13.2782C7.69615 12.5705 7.62965 11.4645 8.20431 10.682H7ZM11 3.88629V1H7V6.68198H8.20431C7.62965 5.89946 7.69615 4.79344 8.4038 4.08579C9.11146 3.37813 10.2175 3.31163 11 3.88629Z" fill="#7F7F7F"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M10.6716 5.14645L13.8536 8.32843C14.0488 8.52369 14.0488 8.84027 13.8536 9.03553L10.6716 12.2175C10.4763 12.4128 10.1597 12.4128 9.96447 12.2175C9.7692 12.0223 9.7692 11.7057 9.96447 11.5104L12.2929 9.18198L1.5 9.18198C1.22386 9.18198 1 8.95812 1 8.68198C1 8.40584 1.22386 8.18198 1.5 8.18198L12.2929 8.18198L9.96447 5.85355C9.7692 5.65829 9.7692 5.34171 9.96447 5.14645C10.1597 4.95118 10.4763 4.95118 10.6716 5.14645Z" fill="#444746"/>
+          </svg>
+          <svg id="iconFormatRowsStretch" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M17 1L17 5L14.4917 5C14.4509 4.55044 14.2584 4.11207 13.9142 3.76792L11.1463 1L17 1ZM7.48974 1L1 0.999999L1 5L4.1443 5C4.18516 4.55044 4.37767 4.11207 4.72183 3.76792L7.48974 1ZM5.30086 7L1 7L1 11L5.30152 11C5.82989 10.7576 6.44219 10.7576 6.97056 11L7.31802 11L7.31802 7L6.97122 7C6.44248 7.24284 5.8296 7.24284 5.30086 7ZM11.318 7L11.318 11L11.6655 11C12.1939 10.7576 12.8061 10.7576 13.3345 11L17 11L17 7L13.3352 7C12.8064 7.24284 12.1936 7.24284 11.6648 7L11.318 7ZM4.14427 13L0.999999 13L0.999999 17L7.48944 17L4.72183 14.2324C4.3776 13.8882 4.18508 13.4497 4.14427 13ZM11.1466 17L13.9142 14.2324C14.2584 13.8882 14.451 13.4497 14.4918 13L17 13L17 17L11.1466 17Z" fill="#7F7F7F"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M8.96447 1.64645C9.15973 1.45118 9.47631 1.45118 9.67157 1.64645L12.8536 4.82843C13.0488 5.02369 13.0488 5.34027 12.8536 5.53553C12.6583 5.7308 12.3417 5.7308 12.1464 5.53553L9.81802 3.20711L9.81802 14.7929L12.1464 12.4645C12.3417 12.2692 12.6583 12.2692 12.8536 12.4645C13.0488 12.6597 13.0488 12.9763 12.8536 13.1716L9.67157 16.3536C9.47631 16.5488 9.15973 16.5488 8.96447 16.3536L5.78248 13.1716C5.58722 12.9763 5.58722 12.6597 5.78249 12.4645C5.97775 12.2692 6.29433 12.2692 6.48959 12.4645L8.81802 14.7929L8.81802 3.20711L6.48959 5.53553C6.29433 5.7308 5.97775 5.7308 5.78249 5.53553C5.58722 5.34027 5.58722 5.02369 5.78249 4.82843L8.96447 1.64645Z" fill="#444746"/>
+          </svg>
+          <svg id="iconFormatRowsAuto" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M14.5 13L15.5 13L15.5 14L14.5 14L14.5 13ZM16 13L16 13.5L16.5 13.5L16.5 14L17 14L17 13L16 13ZM17 15.5L17 14.5L16 14.5L16 15.5L17 15.5ZM2 13L1 13L1 14L1.5 14L1.5 13.5L2 13.5L2 13ZM1 16L1 17L2 17L2 16.5L1.5 16.5L1.5 16L1 16ZM16 17L17 17L17 16L16.5 16L16.5 16.5L16 16.5L16 17ZM15.5 17L15.5 16L14.5 16L14.5 17L15.5 17ZM13.5 17L13.5 16L12.5 16L12.5 17L13.5 17ZM11.5 17L11.5 16L10.5 16L10.5 17L11.5 17ZM9.5 17L9.5 16L8.5 16L8.5 17L9.5 17ZM7.5 17L7.5 16L6.5 16L6.5 17L7.5 17ZM5.5 17L5.5 16L4.5 16L4.5 17L5.5 17ZM3.5 17L3.5 16L2.5 16L2.5 17L3.5 17ZM1 15.5L2 15.5L2 14.5L1 14.5L1 15.5ZM2.5 13L2.5 14L3.5 14L3.5 13L2.5 13ZM4.5 13L4.5 14L5.5 14L5.5 13L4.5 13ZM12.5 13L12.5 14L13.5 14L13.5 13L12.5 13Z" fill="#7F7F7F"/>
+            <rect x="17" y="16" width="1" height="1" transform="rotate(90 17 16)" fill="#7F7F7F"/>
+            <rect x="17" y="13" width="1" height="1" transform="rotate(90 17 13)" fill="#7F7F7F"/>
+            <rect x="2" y="13" width="1" height="1" transform="rotate(90 2 13)" fill="#7F7F7F"/>
+            <rect x="2" y="16" width="1" height="1" transform="rotate(90 2 16)" fill="#7F7F7F"/>
+            <rect x="7" y="13" width="2" height="1" transform="rotate(90 7 13)" fill="#FAF6F6"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M17 1L17 5L11.318 5L11.318 1L17 1ZM7.31802 1L1 0.999999L1 5L7.31802 5L7.31802 1ZM7.31802 7L1 7L1 11L4.52233 11C3.94767 10.2175 4.01417 9.11146 4.72183 8.4038C5.42948 7.69615 6.5355 7.62965 7.31802 8.20431L7.31802 7ZM14.1137 11L17 11L17 7L11.318 7L11.318 8.20431C12.1005 7.62965 13.2066 7.69615 13.9142 8.4038C14.6219 9.11146 14.6884 10.2175 14.1137 11Z" fill="#7F7F7F"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12.8536 10.6716L9.67157 13.8536C9.47631 14.0488 9.15973 14.0488 8.96447 13.8536L5.78249 10.6716C5.58722 10.4763 5.58722 10.1597 5.78249 9.96447C5.97775 9.7692 6.29433 9.7692 6.48959 9.96447L8.81802 12.2929L8.81802 1.5C8.81802 1.22386 9.04188 1 9.31802 1C9.59416 1 9.81802 1.22386 9.81802 1.5L9.81802 12.2929L12.1464 9.96447C12.3417 9.7692 12.6583 9.7692 12.8536 9.96447C13.0488 10.1597 13.0488 10.4763 12.8536 10.6716Z" fill="#444746"/>
+          </svg>
+          <select id="gridColumnsOrRows" style="margin-left:8px; width:150" class="select-menu__button">
+            <optgroup label="Basic">
+              <option value="horizontal" class="select-menu__label">Align horizontally</option>
+              <option value="vertical" class="select-menu__label">Align vertically</option>
+            </optgroup>
+            <optgroup label = "Grid Columns">
+              <option value="fixedColumns" class="select-menu__label">Stretch columns</option>
+              <option value="autoColumns" class="select-menu__label">Auto columns</option>
+            </optgroup>
+            <optgroup label="Grid Rows">
+              <option value="fixedRows" class="select-menu__label">Stretch rows</option>
+              <option value="autoRows" class="select-menu__label">Auto rows</option>
+            </optgroup>
+          </select>
+          <select id="basicSizePolicy" style="margin-left:40; width:120" class="select-menu__button">
+            <option value="hug" class="select-menu__label">Hug contents</option>
+            <option value="fixed" class="select-menu__label">Fixed</option>
+          </select>
+          <span id="gridColumnsRowsLabel" class="label" style="width: 80; height: 15; text-align: right">Columns</span>
+          <input id="gridColumnsRows" type="input" style="margin-right: 10px; width: 40; font-size: 14; font-weight: bold;" class="input__field" value="1"> 
+          <span id="adaptiveMinSizeLabel" class="label" style="width: 120; height: 15; text-align: right">Min Column Width</span>
+          <input id="adaptiveMinSize" type="input" style="margin-right: 10px; width: 40; font-size: 14; font-weight: bold;" class="input__field" value="50"> 
+        </div>
+        <span id="gridLayoutDescription" class="label" style="margin-left: 12">Width of columns expands with parent frame</span>
+        <hr class="separator-medium" color="#D7D7D7" size="1">
+        <div class="button" style="margin-left: 0px;">
+          <input id="layoutButton" type="button" style="color: #000000; background-color:#E5E5E5;" class="button button-hover" value="Layout" onClick="onClickLayoutButton()">
+          <input id="spacingButton" type="button" style="color: #8A8A8A; background-color: #FFFFFF; color:rgba(0, 0, 0, 0.8); margin-left: 20px" class="button button-hover" value="Spacing" onClick="onClickSpacingButton()">
+        </div>
+        <hr class="separator-medium" color="#D7D7D7" size="1">
+
+        <!-- The "Layout" tab for grid layout -->
+        <div id="gridLayoutSection" style="display: block">  
+          <table id="gridDiagram" style="margin-left: 22px; margin-top: 10px; margin-bottom: 10px; border-spacing: 0px; border: dashed 1px #000000; border-radius: 5px;">
+          </table>
+          <hr class="separator-medium" color="#D7D7D7" size="1" style="margin-top: 20; margin-bottom: 2">
+          <table id="gridSpanTable" style="display: block; margin-left: 20px; border-collapse: collapse" width="340">
+            <tr>
+              <td width="90%"><span class="label" style="padding: 0">Element</span></td>
+              <td colspan="2"><span class="label" id="gridTableHeaderText">Column span</span></td> 
+            </tr>
+          </table>
+          <div id="gridMissingKeywords" style="display: none; margin-left: 20px;">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAhGVYSWZNTQAqAAAACAAFARIAAwAAAAEAAQAAARoABQAAAAEAAABKARsABQAAAAEAAABSASgAAwAAAAEAAgAAh2kABAAAAAEAAABaAAAAAAAAAEgAAAABAAAASAAAAAEAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAFKADAAQAAAABAAAAFAAAAABB553+AAAACXBIWXMAAAsTAAALEwEAmpwYAAABWWlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNi4wLjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyI+CiAgICAgICAgIDx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgIDwvcmRmOkRlc2NyaXB0aW9uPgogICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgoZXuEHAAAEk0lEQVQ4EW2UW2hcRRjH/3M55+zlbJKmuW1tq5gYL8Wi0AfjBRqLikhB0NYXhaRIQUwflFKfiosv1uuLFNQnKbZg1eIFixcwqZeCINWESGtNm4tpQrpuNpuc3T17LjN+c5JoEYc95+zMfPOb/3/mmwH+U/TwTrnW5NA3Y/5rvVMOA+vta93UfhLin8raH3ZNA9Mn93C298PYBL78afuZL3/2e2/fLKZeHOpobXIlVKSLPNZjjXL8WfNTf3xhxhoBrH8kWuckQA0wmBe9a+/3PK6bxOuZNuv6iHq//mmFOhke3tUMRBQU0ENFlaPx2nx4IDc4MWIEsL2ITfsqsADOClDe8Z4j2S3OC8gKXJj047lixPr7XB1Bs5jCj31U0hMzgZacYd/uDbKnQ2J5KhhqHpg4OlzYKfsLIxFbl+y9130we1P6tUiysBoofviNknjrEw8/nOjEPXc3IajF8KoKS+UI3kqMwNfRHd0pIWuKedP+Y7nBy6c0QbnxXzm6uYe3iFd940ZA2BkulAypUkNTK+0F/eycwHwpwqGDZcwuhNixw5URmFJpAebyt4v7kGOkkBvfosUZSucdxi0WKg6eznEcPtSF8W96se2WNMJAJdBz4zV8PFbE6ZEVhJGimSGIEGQ3Oe32XZsGDCsBspR40FQgtCAozGZ0dtnYti0NLhksi8JoH++/L4fDz7Th6YE2WBkOLSiQkSebVLhyt0Gw4itbNmVvzV6UHTILm2mWYow5HMIhcKixSGvGiddmrNNAUJvZyrihoX1Fj1ZWzPjK9Mr0n3sme2XK5c2wkCFTyUBNwZJUXp5s4PgHJSwsRCiVYnTmJYb2t6OnO4WIUodSLPFH8Uwxqgvkmh6CK2Uu5ZPoUFjMNjCTc1AaaVK5f7ALra0CQUPh0uU6TbCI/WQ3n7cTqLFowhlZpwni4CvEslqZdJzmGyS8CLLFSmBxLGgQ2atVECwqpFIZbL8zi5t7UghInaYEZzF9yRbxNAGZiqO/uoEKrxwIavbWLT63N0I1ApqJI14qojYl0Qj7IPKPolHpRWNhCZbgcFNGioESiZJda6bINOKV2jkjmBN1hkXxj3a+Dd6vF1R9qgol+pC+bRes9i5EpRLFz0NYaShKHwMzG6NDkkdfDlrAsg9/unTCAJMbRIWNS2h3H3DvfUKLlk5KRAeNmSvwx84itZWUtV5HiijUeDQLTWus6WGcNyRXTvni1ZF8Aad1gbLMUK0WSyGqw+5waQpSUV0Gz2Qg2zZCZF2oGq3n6tkni8nloLjgocW0szQ6v1j9vvKk4ZiSALlF2kMP2osUswNwLSjPPCMjjukM012yGm1ygIplDkAYOIujC79XR8uPbD2GK8MFSLpgjA8qjdrnJOBZxgLKhzA2yS9UXbjao0uQ1LFk9cmqgqqGWF70ZsPi1Xd+ex5H+ukMGVg/wQyKkQNOOaT87258Tjjpl2Rzhnxz+HPVsD618KZaLs0xK9NNWxqpoD4XL+OX8wWcJZBvANfehQkwaTSJT5frNLCh6V1sVwHs+rc4v/kUZk3//xU9TMvVD3JjruZ/y983khpFhT+H0QAAAABJRU5ErkJggg==">
+            <span style="font-size: 12">Hmm... content data not found.<br>This usually means that either this frame has not been configured for live data, or the keyword document is missing or out of data. Run the "Check keyword definitions" plugin to upload a keyword document.</span>
+          </div>
+        </div>
+
+        <!-- The "Layout" tab for auto layout -->
+        <div id="autoLayoutSection" style="display: flex">
+          <!-- The alignment table that mimics Figma's 3x3 alignment grid UI for vertical alignment -->
+          <table id="autoLayoutAlignmentTableVertical" style="margin-left: 20; width: 64; height: 64;" class="alignment-table-bg">
+            <tr>
+              <td>
+                <div id="alignmentTopLeft" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentTopLeftPathH" class="alignment-svg" d="M8 0L8 16M2 0V7M14 0L14 10" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentTopLeftPathV" class="alignment-svg" d="M0 8L16 8M0 14L7 14M0 2L10 2" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Top left alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentTopCenter" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentTopCenterPathH" class="alignment-svg" d="M8 0L8 16M2 0V7M14 0L14 10" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentTopCenterPathV" class="alignment-svg" d="M16 8L0 8M12 2H5M13 14L3 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Top Center alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentTopRight" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentTopRightPathH" class="alignment-svg" d="M8 0L8 16M2 0V7M14 0L14 10" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentTopRightPathV" class="alignment-svg" d="M16 8L0 8M16 2L9 2M16 14L6 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Top right alignment</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div id="alignmentLeft" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentLeftPathH" class="alignment-svg" d="M8 16L8 0M14 12V5M2 13L2 3" fill="0000FFFF" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentLeftPathV" class="alignment-svg" d="M0 8L16 8M0 14L7 14M0 2L10 2" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Left alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentCenter" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentCenterPathH" class="alignment-svg" d="M8 16L8 0M14 12V5M2 13L2 3" fill="0000FFFF" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentCenterPathV" class="alignment-svg" d="M16 8L0 8M12 2H5M13 14L3 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Center alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentRight" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentRightPathH" class="alignment-svg" d="M8 16L8 0M14 12V5M2 13L2 3" fill="0000FFFF" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentRightPathV" class="alignment-svg" d="M16 8L0 8M16 2L9 2M16 14L6 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Right alignment</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div id="alignmentBottomLeft" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentBottomLeftPathH" class="alignment-svg" d="M8 16L8 0M14 16V9M2 16L2 6" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentBottomLeftPathV" class="alignment-svg" d="M0 8L16 8M0 14L7 14M0 2L10 2" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Bottom left alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentBottomCenter" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentBottomCenterPathH" class="alignment-svg" d="M8 16L8 0M14 16V9M2 16L2 6" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentBottomCenterPathV" class="alignment-svg" d="M16 8L0 8M12 2H5M13 14L3 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Bottom center alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentBottomRight" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentBottomRightPathH" class="alignment-svg" d="M8 16L8 0M14 16V9M2 16L2 6" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentBottomRightPathV" class="alignment-svg" d="M16 8L0 8M16 2L9 2M16 14L6 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Bottom right alignment</span>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- The "Spacing" tab for grid layout -->
+        <div id="gridSpacingSection" style="display: none;">
+          <div id="edgeToEdgeSpacingSection" style="margin-left: 12">
+            <div class="switch">
+              <input id="autoSpacing" type="checkbox" class="switch__toggle">
+              <label for="autoSpacing" class="switch__label">Enable edge-to-edge spacing</label>
+            </div>
+            <span class="label" style="padding-left: 50; margin-top: 2; margin-bottom: 20">Columns or rows will space out evenly. Note that this may not work when used with items of different sizes that have the same span.</span>
+            <hr class="separator-medium" color="#D7D7D7" size="1">
+          </div>
+          <div style="margin-left: 24; margin-bottom: 10; width: 350; display: flex;">
+            <div style="width: 100; display: flex; justify-content:left; align-items:center">
+              <svg width="21" height="16" viewBox="0 0 21 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2.75 13.5001V2.50006H17.75V13.5001H2.75Z" stroke="#FFDFAF" stroke-width="3"/>
+                <path d="M0.25 3.55556V1.77778H0.75V0.5H2.47222V0H4.69444V0.5H9.13889V0H11.3611V0.5H15.8056V0H18.0278V0.5H19.75V1.77778H20.25V3.55556H19.75V7.11111H20.25V8.88889H19.75V12.4444H20.25V14.2222H19.75V15.5H18.0278V16H15.8056V15.5H11.3611V16H9.13889V15.5H4.69444V16H2.47222V15.5H0.75V14.2222H0.25V12.4444H0.75V8.88889H0.25V7.11111H0.75V3.55556H0.25Z" stroke="black" stroke-dasharray="4 2"/>
+              </svg>
+              <input id="gridMarginsAll" type="input" style="width: 40; font-size: 14; font-weight: bold; align-self: flex-start;" class="input__field" value="0">
+              <svg id="gridMarginsExpandButton" onClick="onClickGridMarginsExpand()" width="9" height="15" viewBox="0 0 9 6" fill="none">
+                <path d="M0.5 0.5L4.5 4.5L8.5 0.5" stroke="#B2B2B2"/>
+              </svg>
+              <svg id="gridMarginsCollapseButton" style="display: none" onClick="onClickGridMarginsCollapse()" width="16" height="15" viewBox="0 0 16 15" fill="none">
+                <rect x="0.5" width="15" height="15" rx="5" fill="#E5E5E5"/>
+                <path d="M11.5 9.5L7.5 5.5L3.5 9.5" stroke="#7F7F7F"/>
+              </svg>  
+            </div>
+            <div id="horizontalSpacingSection" style="width: 80; display: flex; justify-content:left; align-items:center">
+              <svg width="23" height="11" viewBox="0 0 23 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.5 0L11.5 11" stroke="#A3E3B1" stroke-width="4"/>
+                <rect x="1" y="2.5" width="6" height="6" stroke="#7F7F7F"/>
+                <rect x="16" y="2.5" width="6" height="6" stroke="#7F7F7F"/>
+              </svg>
+              <input id="gridHorizontalSpacing" type="input" style="width: 40; font-size: 14; font-weight: bold; align-self: flex-start;" class="input__field" value="0">
+            </div>
+            <div id="verticalSpacingSection" style="width: 70; display: flex; justify-content:left; align-items:center">
+              <svg width="12" height="22" viewBox="0 0 12 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0.5 11L11.5 11" stroke="#CFF0FF" stroke-width="4"/>
+                <rect x="3" y="6.5" width="6" height="6" transform="rotate(-90 3 6.5)" stroke="#7F7F7F"/>
+                <rect x="3" y="21.5" width="6" height="6" transform="rotate(-90 3 21.5)" stroke="#7F7F7F"/>
+              </svg>
+              <input id="gridVerticalSpacing" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+            </div>
+            <div id="spaceBetweenSection" class="switch">
+              <input id="spaceBetween" type="checkbox" class="switch__toggle">
+              <label for="spaceBetween" class="switch__label" style="margin-left: -26">Space between</label>
+            </div>
+          </div>
+          <svg id="gridSpacingDiagram" width="111" height="71" viewBox="0 0 111 71" fill="none" style="margin-left: 24px">
+            <rect x="26.25" y="10" width="9" height="52" fill="#A3E3B1"/>
+            <path d="M5.5 5H105.5V66H5.5L5.5 5Z" stroke="#FFDFAF" stroke-width="10"/>
+            <rect x="51.25" y="11" width="9" height="51" fill="#A3E3B1"/>
+            <rect x="77.25" y="10" width="9" height="52" fill="#A3E3B1"/>
+            <rect opacity="0.5" x="103.25" y="27" width="9" height="94" transform="rotate(90 103.25 27)" fill="#9EE2FF"/>
+            <rect opacity="0.5" x="101.25" y="53" width="9" height="92" transform="rotate(90 101.25 53)" fill="#9EE2FF"/>
+            <path d="M2.7496 70.3309C1.99084 69.8918 1.35815 69.2592 0.919142 68.5004L1.35192 68.25C0.969205 67.5885 0.75 66.8206 0.75 66V63.9667H0.25V61.9333H0.75V57.8667H0.25V55.8333H0.75V51.7667H0.25V49.7333H0.75V45.6667H0.25V43.6333H0.75V39.5667H0.25V37.5333H0.75V33.4667H0.25V31.4333H0.75V27.3667H0.25V25.3333H0.75V21.2667H0.25V19.2333H0.75V15.1667H0.25V13.1333H0.75V9.06667H0.25V7.03333H0.75V5C0.75 4.17937 0.969205 3.41147 1.35192 2.75L0.919142 2.4996C1.35815 1.74084 1.99084 1.10815 2.7496 0.669142L3 1.10192C3.66147 0.719205 4.42938 0.5 5.25 0.5H7.21077V0H9.17156V0.5H13.0931V0H15.0539V0.5H18.9755V0H20.9363V0.5H24.8578V0H26.8186V0.5H30.7402V0H32.701V0.5H36.6225V0H38.5833V0.5H42.5049V0H44.4657V0.5H48.3872V0H50.348V0.5H54.2696V0H56.2304V0.5H60.152V0H62.1127V0.5H66.0343V0H67.9951V0.5H71.9167V0H73.8774V0.5H77.799V0H79.7598V0.5H83.6814V0H85.6422V0.5H89.5637V0H91.5245V0.5H95.4461V0H97.4069V0.5H101.328V0H103.289V0.5H105.25C106.071 0.5 106.839 0.719205 107.5 1.10192L107.75 0.669141C108.509 1.10815 109.142 1.74084 109.581 2.4996L109.148 2.75C109.531 3.41147 109.75 4.17938 109.75 5V7.03335H110.25V9.06668H109.75V13.1333H110.25V15.1667H109.75V19.2333H110.25V21.2667H109.75V25.3333H110.25V27.3667H109.75V31.4333H110.25V33.4667H109.75V37.5333H110.25V39.5667H109.75V43.6333H110.25V45.6667H109.75V49.7333H110.25V51.7667H109.75V55.8333H110.25V57.8667H109.75V61.9333H110.25V63.9667H109.75V66C109.75 66.8206 109.531 67.5885 109.148 68.25L109.581 68.5004C109.142 69.2592 108.509 69.8918 107.75 70.3309L107.5 69.8981C106.839 70.2808 106.071 70.5 105.25 70.5H103.289V71H101.328V70.5H97.4069V71H95.4461V70.5H91.5245V71H89.5637V70.5H85.6422V71H83.6814V70.5H79.7598V71H77.799V70.5H73.8775V71H71.9167V70.5H67.9951V71H66.0343V70.5H62.1128V71H60.152V70.5H56.2304V71H54.2696V70.5H50.348V71H48.3873V70.5H44.4657V71H42.5049V70.5H38.5833V71H36.6226V70.5H32.701V71H30.7402V70.5H26.8186V71H24.8578V70.5H20.9363V71H18.9755V70.5H15.0539V71H13.0931V70.5H9.17157V71H7.21079V70.5H5.25C4.42938 70.5 3.66147 70.2808 3.00001 69.8981L2.7496 70.3309Z" stroke="black" stroke-dasharray="4 2"/>
+            <rect x="9.25" y="10.5734" width="16.156" height="16.156" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="10.25" y="36.5" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="35.25" y="36.5" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="35.25" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="60.7913" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="86.25" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+          </svg>
+          <svg id="horizontalSpacingDiagram" width="110" height="38" viewBox="0 0 110 38" fill="none" style="margin-left: 24px" xmlns="http://www.w3.org/2000/svg">
+            <rect x="26" y="10" width="9" height="17" fill="#A3E3B1"/>
+            <path d="M5 5H105V32H5V5Z" stroke="#FFDFAF" stroke-width="10"/>
+            <rect x="51" y="10" width="9" height="17" fill="#A3E3B1"/>
+            <rect x="77" y="10" width="9" height="17" fill="#A3E3B1"/>
+            <path d="M5 37.5C4.17938 37.5 3.41147 37.2808 2.75001 36.8981L2.4996 37.3309C1.74084 36.8918 1.10816 36.2592 0.669143 35.5004L1.10192 35.25C0.719205 34.5885 0.5 33.8206 0.5 33V31.1333H0V29.2667H0.5V25.5333H0V23.6667H0.5V19.9333H0V18.0667H0.5V14.3333H0V12.4667H0.5V8.73333H0V6.86667H0.5V5C0.5 4.17937 0.719205 3.41146 1.10192 2.75L0.669142 2.4996C1.10815 1.74084 1.74084 1.10815 2.4996 0.669142L2.75 1.10192C3.41147 0.719205 4.17938 0.5 5 0.5H6.96078V0H8.92157V0.5H12.8431V0H14.8039V0.5H18.7255V0H20.6863V0.5H24.6078V0H26.5686V0.5H30.4902V0H32.451V0.5H36.3726V0H38.3333V0.5H42.2549V0H44.2157V0.5H48.1373V0H50.098V0.5H54.0196V0H55.9804V0.5H59.902V0H61.8628V0.5H65.7843V0H67.7451V0.5H71.6667V0H73.6275V0.5H77.549V0H79.5098V0.5H83.4314V0H85.3922V0.5H89.3137V0H91.2745V0.5H95.1961V0H97.1569V0.5H101.078V0H103.039V0.5H105C105.821 0.5 106.589 0.719205 107.25 1.10192L107.5 0.669143C108.259 1.10816 108.892 1.74084 109.331 2.4996L108.898 2.75C109.281 3.41147 109.5 4.17938 109.5 5V6.86667H110V8.73333H109.5V12.4667H110V14.3333H109.5V18.0667H110V19.9333H109.5V23.6667H110V25.5333H109.5V29.2667H110V31.1333H109.5V33C109.5 33.8206 109.281 34.5885 108.898 35.25L109.331 35.5004C108.892 36.2592 108.259 36.8918 107.5 37.3309L107.25 36.8981C106.589 37.2808 105.821 37.5 105 37.5H103.039V38H101.078V37.5H97.1569V38H95.1961V37.5H91.2745V38H89.3137V37.5H85.3922V38H83.4314V37.5H79.5098V38H77.549V37.5H73.6274V38H71.6667V37.5H67.7451V38H65.7843V37.5H61.8627V38H59.902V37.5H55.9804V38H54.0196V37.5H50.098V38H48.1372V37.5H44.2157V38H42.2549V37.5H38.3333V38H36.3725V37.5H32.451V38H30.4902V37.5H26.5686V38H24.6078V37.5H20.6863V38H18.7255V37.5H14.8039V38H12.8431V37.5H8.92156V38H6.96077V37.5H5Z" stroke="black" stroke-dasharray="4 2"/>
+            <rect x="9" y="10.5734" width="16.156" height="16.156" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="35" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="60.5413" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="86" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+          </svg>
+          <svg id="horizontalSpacingDiagramSpaceBetween" width="110" height="38" viewBox="0 0 110 38" fill="none" style="margin-left: 24px" xmlns="http://www.w3.org/2000/svg">
+            <rect x="26" y="10" width="9" height="17" fill="#FFFFFF"/>
+            <path d="M5 5H105V32H5V5Z" stroke="#FFDFAF" stroke-width="10"/>
+            <rect x="51" y="10" width="9" height="17" fill="#FFFFFF"/>
+            <rect x="77" y="10" width="9" height="17" fill="#FFFFFF"/>
+            <path d="M5 37.5C4.17938 37.5 3.41147 37.2808 2.75001 36.8981L2.4996 37.3309C1.74084 36.8918 1.10816 36.2592 0.669143 35.5004L1.10192 35.25C0.719205 34.5885 0.5 33.8206 0.5 33V31.1333H0V29.2667H0.5V25.5333H0V23.6667H0.5V19.9333H0V18.0667H0.5V14.3333H0V12.4667H0.5V8.73333H0V6.86667H0.5V5C0.5 4.17937 0.719205 3.41146 1.10192 2.75L0.669142 2.4996C1.10815 1.74084 1.74084 1.10815 2.4996 0.669142L2.75 1.10192C3.41147 0.719205 4.17938 0.5 5 0.5H6.96078V0H8.92157V0.5H12.8431V0H14.8039V0.5H18.7255V0H20.6863V0.5H24.6078V0H26.5686V0.5H30.4902V0H32.451V0.5H36.3726V0H38.3333V0.5H42.2549V0H44.2157V0.5H48.1373V0H50.098V0.5H54.0196V0H55.9804V0.5H59.902V0H61.8628V0.5H65.7843V0H67.7451V0.5H71.6667V0H73.6275V0.5H77.549V0H79.5098V0.5H83.4314V0H85.3922V0.5H89.3137V0H91.2745V0.5H95.1961V0H97.1569V0.5H101.078V0H103.039V0.5H105C105.821 0.5 106.589 0.719205 107.25 1.10192L107.5 0.669143C108.259 1.10816 108.892 1.74084 109.331 2.4996L108.898 2.75C109.281 3.41147 109.5 4.17938 109.5 5V6.86667H110V8.73333H109.5V12.4667H110V14.3333H109.5V18.0667H110V19.9333H109.5V23.6667H110V25.5333H109.5V29.2667H110V31.1333H109.5V33C109.5 33.8206 109.281 34.5885 108.898 35.25L109.331 35.5004C108.892 36.2592 108.259 36.8918 107.5 37.3309L107.25 36.8981C106.589 37.2808 105.821 37.5 105 37.5H103.039V38H101.078V37.5H97.1569V38H95.1961V37.5H91.2745V38H89.3137V37.5H85.3922V38H83.4314V37.5H79.5098V38H77.549V37.5H73.6274V38H71.6667V37.5H67.7451V38H65.7843V37.5H61.8627V38H59.902V37.5H55.9804V38H54.0196V37.5H50.098V38H48.1372V37.5H44.2157V38H42.2549V37.5H38.3333V38H36.3725V37.5H32.451V38H30.4902V37.5H26.5686V38H24.6078V37.5H20.6863V38H18.7255V37.5H14.8039V38H12.8431V37.5H8.92156V38H6.96077V37.5H5Z" stroke="black" stroke-dasharray="4 2"/>
+            <rect x="9" y="10.5734" width="16.156" height="16.156" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="35" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="60.5413" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="86" y="10.5734" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+          </svg>
+          <svg id="verticalSpacingDiagram" width="38" height="110" viewBox="0 0 38 110" fill="none" style="margin-left: 24px" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="84" width="9" height="17" transform="rotate(-90 10 84)" fill="#A3E3B1"/>
+            <path d="M5 105L5 5H32L32 105H5Z" stroke="#FFDFAF" stroke-width="10"/>
+            <rect x="10" y="59" width="9" height="17" transform="rotate(-90 10 59)" fill="#A3E3B1"/>
+            <rect x="10" y="33" width="9" height="17" transform="rotate(-90 10 33)" fill="#A3E3B1"/>
+            <path d="M37.5 105C37.5 105.821 37.2808 106.589 36.8981 107.25L37.3309 107.5C36.8918 108.259 36.2592 108.892 35.5004 109.331L35.25 108.898C34.5885 109.281 33.8206 109.5 33 109.5H31.1333V110H29.2667V109.5H25.5333V110H23.6667V109.5H19.9333V110H18.0667V109.5H14.3333V110H12.4667V109.5H8.73333V110H6.86667V109.5H5C4.17937 109.5 3.41146 109.281 2.75 108.898L2.4996 109.331C1.74084 108.892 1.10815 108.259 0.669142 107.5L1.10192 107.25C0.719205 106.589 0.5 105.821 0.5 105L0.5 103.039H0L0 101.078H0.5L0.5 97.1569H0L0 95.1961H0.5L0.5 91.2745H0L0 89.3137H0.5L0.5 85.3922H0L0 83.4314H0.5L0.5 79.5098H0L0 77.549H0.5L0.5 73.6274H0L0 71.6667H0.5L0.5 67.7451H0L0 65.7843H0.5L0.5 61.8627H0L0 59.902H0.5L0.5 55.9804H0L0 54.0196H0.5L0.5 50.098H0L0 48.1372H0.5L0.5 44.2157H0L0 42.2549H0.5L0.5 38.3333H0L0 36.3725H0.5L0.5 32.451H0L0 30.4902H0.5L0.5 26.5686H0L0 24.6078H0.5L0.5 20.6863H0L0 18.7255H0.5L0.5 14.8039H0L0 12.8431H0.5L0.5 8.92155H0L0 6.96077H0.5L0.5 5C0.5 4.17937 0.719205 3.41147 1.10192 2.75L0.669143 2.4996C1.10816 1.74084 1.74084 1.10815 2.4996 0.669144L2.75 1.10192C3.41147 0.7192 4.17938 0.5 5 0.5H6.86667V0H8.73333V0.5H12.4667V0H14.3333V0.5H18.0667V0H19.9333V0.5H23.6667V0H25.5333V0.5H29.2667V0H31.1333V0.5H33C33.8206 0.5 34.5885 0.7192 35.25 1.10192L35.5004 0.669144C36.2592 1.10815 36.8918 1.74084 37.3309 2.4996L36.8981 2.75C37.2808 3.41146 37.5 4.17937 37.5 5V6.96078H38V8.92157H37.5V12.8431H38V14.8039H37.5V18.7255H38V20.6863H37.5V24.6078H38V26.5686H37.5V30.4902H38V32.451H37.5V36.3726H38V38.3333H37.5V42.2549H38V44.2157H37.5V48.1373H38V50.098H37.5L37.5 54.0196H38V55.9804H37.5V59.902H38V61.8628H37.5V65.7843H38V67.7451H37.5V71.6667H38V73.6275H37.5V77.549H38V79.5098H37.5V83.4314H38V85.3922H37.5V89.3137H38V91.2745H37.5V95.1961H38V97.1569H37.5V101.078H38V103.039H37.5V105Z" stroke="black" stroke-dasharray="4 2"/>
+            <rect x="10.5734" y="101" width="16.156" height="16.156" rx="2.5" transform="rotate(-90 10.5734 101)" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="10.5734" y="75" width="16" height="16" rx="2.5" transform="rotate(-90 10.5734 75)" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="10.5734" y="49.4587" width="16" height="16" rx="2.5" transform="rotate(-90 10.5734 49.4587)" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="10.5734" y="24" width="16" height="16" rx="2.5" transform="rotate(-90 10.5734 24)" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+          </svg>
+          <svg id="verticalSpacingDiagramSpaceBetween" width="38" height="110" viewBox="0 0 38 110" fill="none" style="margin-left: 24px" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="84" width="9" height="17" transform="rotate(-90 10 84)" fill="#FFFFFF"/>
+            <path d="M5 105L5 5H32L32 105H5Z" stroke="#FFDFAF" stroke-width="10"/>
+            <rect x="10" y="59" width="9" height="17" transform="rotate(-90 10 59)" fill="#FFFFFF"/>
+            <rect x="10" y="33" width="9" height="17" transform="rotate(-90 10 33)" fill="#FFFFFF"/>
+            <path d="M37.5 105C37.5 105.821 37.2808 106.589 36.8981 107.25L37.3309 107.5C36.8918 108.259 36.2592 108.892 35.5004 109.331L35.25 108.898C34.5885 109.281 33.8206 109.5 33 109.5H31.1333V110H29.2667V109.5H25.5333V110H23.6667V109.5H19.9333V110H18.0667V109.5H14.3333V110H12.4667V109.5H8.73333V110H6.86667V109.5H5C4.17937 109.5 3.41146 109.281 2.75 108.898L2.4996 109.331C1.74084 108.892 1.10815 108.259 0.669142 107.5L1.10192 107.25C0.719205 106.589 0.5 105.821 0.5 105L0.5 103.039H0L0 101.078H0.5L0.5 97.1569H0L0 95.1961H0.5L0.5 91.2745H0L0 89.3137H0.5L0.5 85.3922H0L0 83.4314H0.5L0.5 79.5098H0L0 77.549H0.5L0.5 73.6274H0L0 71.6667H0.5L0.5 67.7451H0L0 65.7843H0.5L0.5 61.8627H0L0 59.902H0.5L0.5 55.9804H0L0 54.0196H0.5L0.5 50.098H0L0 48.1372H0.5L0.5 44.2157H0L0 42.2549H0.5L0.5 38.3333H0L0 36.3725H0.5L0.5 32.451H0L0 30.4902H0.5L0.5 26.5686H0L0 24.6078H0.5L0.5 20.6863H0L0 18.7255H0.5L0.5 14.8039H0L0 12.8431H0.5L0.5 8.92155H0L0 6.96077H0.5L0.5 5C0.5 4.17937 0.719205 3.41147 1.10192 2.75L0.669143 2.4996C1.10816 1.74084 1.74084 1.10815 2.4996 0.669144L2.75 1.10192C3.41147 0.7192 4.17938 0.5 5 0.5H6.86667V0H8.73333V0.5H12.4667V0H14.3333V0.5H18.0667V0H19.9333V0.5H23.6667V0H25.5333V0.5H29.2667V0H31.1333V0.5H33C33.8206 0.5 34.5885 0.7192 35.25 1.10192L35.5004 0.669144C36.2592 1.10815 36.8918 1.74084 37.3309 2.4996L36.8981 2.75C37.2808 3.41146 37.5 4.17937 37.5 5V6.96078H38V8.92157H37.5V12.8431H38V14.8039H37.5V18.7255H38V20.6863H37.5V24.6078H38V26.5686H37.5V30.4902H38V32.451H37.5V36.3726H38V38.3333H37.5V42.2549H38V44.2157H37.5V48.1373H38V50.098H37.5L37.5 54.0196H38V55.9804H37.5V59.902H38V61.8628H37.5V65.7843H38V67.7451H37.5V71.6667H38V73.6275H37.5V77.549H38V79.5098H37.5V83.4314H38V85.3922H37.5V89.3137H38V91.2745H37.5V95.1961H38V97.1569H37.5V101.078H38V103.039H37.5V105Z" stroke="black" stroke-dasharray="4 2"/>
+            <rect x="10.5734" y="101" width="16.156" height="16.156" rx="2.5" transform="rotate(-90 10.5734 101)" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="10.5734" y="75" width="16" height="16" rx="2.5" transform="rotate(-90 10.5734 75)" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="10.5734" y="49.4587" width="16" height="16" rx="2.5" transform="rotate(-90 10.5734 49.4587)" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+            <rect x="10.5734" y="24" width="16" height="16" rx="2.5" transform="rotate(-90 10.5734 24)" fill="#C4C4C4" stroke="#A171F1" stroke-dasharray="2 2"/>
+          </svg>
+          <table id="gridMarginsSection" style="margin-left: 20px; width:300px; display: none">
+            <tr>
+              <td width="100">
+                <div style="display: flex; justify-content:left; align-items:center">
+                  <svg width="21" height="16" viewBox="0 0 21 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.25 0V15" stroke="#FFDFAF" stroke-width="8"/>
+                    <path d="M0.25 3.55556V1.77778H0.75V0.5H2.47222V0H4.69444V0.5H9.13889V0H11.3611V0.5H15.8056V0H18.0278V0.5H19.75V1.77778H20.25V3.55556H19.75V7.11111H20.25V8.88889H19.75V12.4444H20.25V14.2222H19.75V15.5H18.0278V16H15.8056V15.5H11.3611V16H9.13889V15.5H4.69444V16H2.47222V15.5H0.75V14.2222H0.25V12.4444H0.75V8.88889H0.25V7.11111H0.75V3.55556H0.25Z" stroke="black" stroke-dasharray="4 2"/>
+                  </svg>
+                  <input id="gridMarginLeft" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; justify-content:left; align-items:center">
+                  <svg width="21" height="16" viewBox="0 0 21 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18.25 0V15" stroke="#FFDFAF" stroke-width="8"/>
+                    <path d="M0.25 3.55556V1.77778H0.75V0.5H2.47222V0H4.69444V0.5H9.13889V0H11.3611V0.5H15.8056V0H18.0278V0.5H19.75V1.77778H20.25V3.55556H19.75V7.11111H20.25V8.88889H19.75V12.4444H20.25V14.2222H19.75V15.5H18.0278V16H15.8056V15.5H11.3611V16H9.13889V15.5H4.69444V16H2.47222V15.5H0.75V14.2222H0.25V12.4444H0.75V8.88889H0.25V7.11111H0.75V3.55556H0.25Z" stroke="black" stroke-dasharray="4 2"/>
+                  </svg>
+                  <input id="gridMarginRight" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display: flex; justify-content:left; align-items:center">
+                  <svg width="21" height="16" viewBox="0 0 21 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18.25 2L0.25 2" stroke="#FFDFAF" stroke-width="8"/>
+                    <path d="M0.25 3.55556V1.77778H0.75V0.5H2.47222V0H4.69444V0.5H9.13889V0H11.3611V0.5H15.8056V0H18.0278V0.5H19.75V1.77778H20.25V3.55556H19.75V7.11111H20.25V8.88889H19.75V12.4444H20.25V14.2222H19.75V15.5H18.0278V16H15.8056V15.5H11.3611V16H9.13889V15.5H4.69444V16H2.47222V15.5H0.75V14.2222H0.25V12.4444H0.75V8.88889H0.25V7.11111H0.75V3.55556H0.25Z" stroke="black" stroke-dasharray="4 2"/>
+                  </svg>
+                  <input id="gridMarginTop" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; justify-content:left; align-items:center">
+                  <svg width="21" height="16" viewBox="0 0 21 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18.25 14L0.25 14" stroke="#FFDFAF" stroke-width="8"/>
+                    <path d="M0.25 3.55556V1.77778H0.75V0.5H2.47222V0H4.69444V0.5H9.13889V0H11.3611V0.5H15.8056V0H18.0278V0.5H19.75V1.77778H20.25V3.55556H19.75V7.11111H20.25V8.88889H19.75V12.4444H20.25V14.2222H19.75V15.5H18.0278V16H15.8056V15.5H11.3611V16H9.13889V15.5H4.69444V16H2.47222V15.5H0.75V14.2222H0.25V12.4444H0.75V8.88889H0.25V7.11111H0.75V3.55556H0.25Z" stroke="black" stroke-dasharray="4 2"/>
+                  </svg>  
+                  <input id="gridMarginBottom" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <hr class="separator-medium" color="#D7D7D7" size="1">
+      </div>
+
+      <div id="scrollingSection" style="margin-left: 12">
+        <div class="switch" >
+          <input id="gridScrolling" type="checkbox" class="switch__toggle">
+          <label for="gridScrolling" class="switch__label">Enable overflow scrolling</label>
+        </div>
+        <span class="label" style="padding-left: 50; margin-top: -6">Content will scroll vertically for column formatting and horizontally for row formatting</span>
+        <hr class="separator-medium" color="#D7D7D7" size="1">
+      </div>
+
+      <div id="gridLimitContentSection" style="margin-left: 12">
+        <div class="switch" >
+          <input id="limitContent" type="checkbox" class="switch__toggle">
+          <label for="limitContent" class="switch__label">Limit elements</label>
+        </div>
+        <span class="label" style="padding-left: 50px; margin-top: -12">Number of elements before cutting off</span>
+        <div style="margin-left: 43px; margin-top: -4; margin-bottom: 4" id="maxNumItemsSection">
+          <input id="maxNumItems" type="input" style="width: 40;" class="input__field" value="1">
+          <div style="margin-top: -10">
+            <span class="label" style="font-weight: bold; color: #000000">Replace last element with overflow frame</span>
+            <span class="label" style="height:60; margin-top: -10; font-style: italic;">
+              You can add an icon inside this frame, such as an ellipses or menu. Connect this frame to the full overflow view in the Prototype tab.
+            </span>
+            <svg width="109" height="31" viewBox="0 0 109 31" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-left:8; margin-top: 8">
+              <path d="M0 4.65V1.55H0.5V0.5H1.51387V0H4.54165V0.5H7.56943V0H10.5972V0.5H13.625V0H16.6528V0.5H19.6805V0H22.7083V0.5H25.7361V0H28.7639V0.5H31.7917V0H34.8194V0.5H37.8472V0H40.875V0.5H43.9028V0H46.9305V0.5H49.9583V0H52.9861V0.5H56.0139V0H59.0417V0.5H62.0694V0H65.0972V0.5H68.125V0H71.1528V0.5H74.1806V0H77.2083V0.5H80.2361V0H83.2639V0.5H86.2917V0H89.3195V0.5H92.3472V0H95.375V0.5H98.4028V0H101.431V0.5H104.458V0H107.486V0.5H108.5V1.55H109V4.65H108.5V7.75H109V10.85H108.5V13.95H109V17.05H108.5V20.15H109V23.25H108.5V26.35H109V29.45H108.5V30.5H107.486V31H104.458V30.5H101.431V31H98.4028V30.5H95.375V31H92.3472V30.5H89.3195V31H86.2917V30.5H83.2639V31H80.2361V30.5H77.2083V31H74.1806V30.5H71.1528V31H68.125V30.5H65.0972V31H62.0695V30.5H59.0417V31H56.0139V30.5H52.9861V31H49.9583V30.5H46.9306V31H43.9028V30.5H40.875V31H37.8472V30.5H34.8195V31H31.7917V30.5H28.7639V31H25.7361V30.5H22.7083V31H19.6806V30.5H16.6528V31H13.625V30.5H10.5972V31H7.56944V30.5H4.54167V31H1.51389V30.5H0.5V29.45H0V26.35H0.5V23.25H0V20.15H0.5V17.05H0V13.95H0.5V10.85H0V7.75H0.5V4.65H0Z" stroke="black" stroke-dasharray="3 3"/>
+              <rect x="8.5" y="8.5" width="16" height="16" rx="2.5" fill="#C4C4C4" stroke="black" stroke-dasharray="2 2"/>
+              <rect x="34.5" y="8.5" width="15" height="16" rx="2.5" fill="#C4C4C4" stroke="black" stroke-dasharray="2 2"/>
+              <rect x="59.5" y="8.5" width="15" height="16" rx="2.5" fill="#C4C4C4" stroke="black" stroke-dasharray="2 2"/>
+              <path d="M83.8911 18C83.371 18 82.9245 17.8047 82.5516 17.4142C82.1839 17.0181 82 16.5439 82 15.9916C82 15.4449 82.1839 14.9763 82.5516 14.5858C82.9245 14.1953 83.371 14 83.8911 14C84.3954 14 84.8366 14.1953 85.2148 14.5858C85.593 14.9763 85.7822 15.4449 85.7822 15.9916C85.7822 16.3598 85.6929 16.6973 85.5143 17.0042C85.3409 17.3054 85.1124 17.5481 84.8287 17.7322C84.5451 17.9107 84.2325 18 83.8911 18Z" fill="#00B2FF"/>
+              <path d="M90.5 18C89.98 18 89.5334 17.8047 89.1605 17.4142C88.7928 17.0181 88.6089 16.5439 88.6089 15.9916C88.6089 15.4449 88.7928 14.9763 89.1605 14.5858C89.5334 14.1953 89.98 14 90.5 14C91.0043 14 91.4455 14.1953 91.8238 14.5858C92.202 14.9763 92.3911 15.4449 92.3911 15.9916C92.3911 16.3598 92.3018 16.6973 92.1232 17.0042C91.9498 17.3054 91.7213 17.5481 91.4377 17.7322C91.154 17.9107 90.8414 18 90.5 18Z" fill="#00B2FF"/>
+              <path d="M97.1089 18C96.5889 18 96.1424 17.8047 95.7694 17.4142C95.4017 17.0181 95.2178 16.5439 95.2178 15.9916C95.2178 15.4449 95.4017 14.9763 95.7694 14.5858C96.1424 14.1953 96.5889 14 97.1089 14C97.6132 14 98.0545 14.1953 98.4327 14.5858C98.8109 14.9763 99 15.4449 99 15.9916C99 16.3598 98.9107 16.6973 98.7321 17.0042C98.5587 17.3054 98.3302 17.5481 98.0466 17.7322C97.7629 17.9107 97.4504 18 97.1089 18Z" fill="#00B2FF"/>
+            </svg>
+          </div>
+          <div id="overflowNodePreview" style="margin-left: 8; margin-top: 16; margin-bottom: 20; padding: 5; width: 300; height: 30; background-color: #F0F0F0; display: flex; align-items: center">
+            <img id="overflowNodePreviewImg">
+            <span class="label link" id="overflowNodeName" style="font-size: 12;" onclick="onClickOverflowNode()"></span>
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg" onClick="onClickClearOverflowNode()">
+              <path d="M1 1L9.68889 9.68889M9.68893 1.00001L1.00004 9.6889" stroke="#707070"/>
+            </svg>
+          </div>
+          <div class="button-overflow" style="margin-left: 8; margin-top: 16px; margin-bottom: 20; width: 300; height: 30; display: flex" id="overflowButtonSection" onClick="onClickSelectOverflowNode()">
+            <span id="overflowButton" class="label" style="color:rgba(0, 0, 0, 0.8);">Select element</span>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0.200439 6.34692H12.4884" stroke="#707070"/>
+              <path d="M6.34448 0.202881V12.4908" stroke="#707070"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr id="formattingSeparator" class="separator-large" color="#D7D7D7" size="1">
+  </div>
+
+  <!-- Modal dialog when selecting overflow node -->
+  <div id="overflowModal" class="modal">
+    <div class="modal-content">
+      <p style="text-align: center; color:#FFFFFF">
+        Select a frame in the layers panel to use as an overflow indicator
+      </p>
+      <div style="text-align: center">
+        <center>
+          <input type="button" class="button button-hover" style="color:rgba(0, 0, 0, 0.8); font-weight: bold;" value="Cancel" onClick="onClickOverflowModalClose()">
+        </center>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOURCE SECTION -->
+
+  <script>
+    function sourceContentCollapseClicked() {
+      document.getElementById('sourceContentCollapsed').style.display = 'none';
+      document.getElementById('sourceContentExpanded').style.display = 'flex';
+      document.getElementById('sourceContent').style.display = 'block';
+    }
+    function sourceContentExpandedClicked() {
+      document.getElementById('sourceContentCollapsed').style.display = 'flex';
+      document.getElementById('sourceContentExpanded').style.display = 'none';
+      document.getElementById('sourceContent').style.display = 'none';
+    }
+  </script>
+
+  <div id="sourceSection">
+    <div id="sourceContentCollapsed" style="margin-left: 10; display: flex; align-items: center">
+      <svg width="10" height="10" onClick="sourceContentCollapseClicked()"><use href="#sectionCollapsed"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Keyword source</span>
+    </div>
+    <div id="sourceContentExpanded" style="margin-left: 10; display: none; align-items: center">
+      <svg width="10" height="6" onClick="sourceContentExpandedClicked()"><use href="#sectionExpanded"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Keyword source</span>
+    </div>
+    <div id="sourceContent" style="margin-left: 20; display: none">
+      <div style="display: flex; padding-left:0px; justify-content:left; align-items:center;">
+        <span class="label" style="width: 80">File:</span> 
+        <span class="label" id="keywordsFilename" style="font-weight: bold; color: black">Media.json</span> 
+      </div>
+      <div style="display: flex; padding-left:0px; justify-content:left; align-items:center">
+        <span class="label" style="width: 80">Name:</span> 
+        <span class="label" id="keywordsName" style="font-weight: bold; color: black">Media</span> 
+      </div>
+      <div style="display: flex; padding-left:0px; justify-content:left; align-items:center">
+        <span class="label" style="width: 80">Version:</span> 
+        <span class="label" id="keywordsVersion" style="font-weight: bold; color: black">1.0</span> 
+      </div>
+
+      <div style="margin-left: 70px; margin-top:10px">
+        <input id="jsonInputFile" type="button" style="justify-content: center; color:rgba(0, 0, 0, 0.8); font-size: 12; width:180" class="button button-hover" value="Update keyword file" onClick="onClickUploadKeywordsFile()">
+        <input id="clearInputFile" type="button" style="justify-content: center; color:rgba(0, 0, 0, 0.8); font-size: 12; width:180" class="button button-hover" value="Clear keyword file" onClick="onClickClearKeywordsFile()">
+      </div>
+      <br>
+    </div>
+  </div>
+
+  <!-- Modal dialog to indicate parent selection mode -->
+  <div id="selectParentModal" class="modal">
+    <div class="modal-content">
+      <p style="text-align: center; color:#FFFFFF">Select a frame to place this Auto content preview widget into.</p>
+      <div style="text-align: center">
+        <center>
+          <input type="button" class="button button-hover" style="color:rgba(0, 0, 0, 0.8); font-weight: bold;" value="Cancel" onClick="onClickSelectParentModalClose()">
+        </center>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let contentNodeName = document.getElementById('contentNodeName');
+  let previewPage = document.getElementById('previewPage');
+  let gridSection = document.getElementById('gridSection')
+  let gridLayoutSection = document.getElementById('gridLayoutSection');
+  let gridSpacingSection = document.getElementById('gridSpacingSection');
+  let gridSpanExpandButton = document.getElementById('gridSpanExpandButton');
+  let gridSpanCollapseButton = document.getElementById('gridSpanCollapseButton');
+  let gridScrolling = document.getElementById('gridScrolling');
+  let gridColumnsOrRows = document.getElementById('gridColumnsOrRows');
+  let gridColumnsRows = document.getElementById('gridColumnsRows');
+  let gridColumnsRowsLabel = document.getElementById('gridColumnsRowsLabel');
+  let gridLayoutDescription = document.getElementById('gridLayoutDescription');
+  let adaptiveMinSize = document.getElementById('adaptiveMinSize');
+  let adaptiveMinSizeLabel = document.getElementById('adaptiveMinSizeLabel');
+  let gridMarginsExpandButton = document.getElementById('gridMarginsExpandButton');
+  let gridMarginsCollapseButton = document.getElementById('gridMarginsCollapseButton');
+  let gridMarginsAll = document.getElementById('gridMarginsAll');
+  let gridMarginsSection = document.getElementById('gridMarginsSection');
+  let gridMarginLeft = document.getElementById('gridMarginLeft');
+  let gridMarginRight = document.getElementById('gridMarginRight');
+  let gridMarginTop = document.getElementById('gridMarginTop');
+  let gridMarginBottom = document.getElementById('gridMarginBottom');
+  let autoSpacing = document.getElementById('autoSpacing');
+  let gridVerticalSpacing = document.getElementById('gridVerticalSpacing');
+  let gridHorizontalSpacing = document.getElementById('gridHorizontalSpacing');
+  let gridSpanTable = document.getElementById('gridSpanTable');
+
+  let limitContent = document.getElementById('limitContent');
+  let maxNumItemsSection = document.getElementById('maxNumItemsSection');
+  let maxNumItems = document.getElementById('maxNumItems');
+  let overflowButtonSection = document.getElementById('overflowButtonSection');
+  let overflowNodePreview = document.getElementById('overflowNodePreview');
+  let overflowNodePreviewImg = document.getElementById('overflowNodePreviewImg');
+  let overflowNodeName = document.getElementById('overflowNodeName');
+  let overflowNodeId = "";
+  let overflowModal = document.getElementById("overflowModal");
+
+  let jsonInputFile = document.getElementById('jsonInputFile');
+  let currentSelection = null;
+  let autolayoutAlignmentId = "alignmentTopLeft";
+  let autolayoutAlignment = "topleft";
+  let formatTab = "layout";
+
+  window.onclick = function(event) {
+    if (event.target == overflowModal) {
+      overflowModal.style.display = "none";
+    }
+    else if (event.target == selectParentModal) {
+      selectParentModal.style.display = "none";
+    }
+  }
+
+  function isGridLayout() {
+    let layoutType = gridColumnsOrRows.value;
+    return layoutType != "horizontal" && layoutType != "vertical";
+  }
+
+  function isHorizontalLayout() {
+    return gridColumnsOrRows.value == "horizontal";
+  }
+
+  function isVerticalLayout() {
+    return gridColumnsOrRows.value == "vertical";
+  }
+
+  function onClickSetParentFrame() {
+    selectParentModal.style.display = "block";
+    parent.postMessage({ pluginMessage: {
+      msg: 'set-parent-frame',
+    }}, '*');
+  }
+
+  function onClickLayoutButton() {
+    formatTab = "layout";
+    gridSpacingSection.style.display = 'none';
+    gridLayoutSection.style.display = isGridLayout() ? 'block' : 'none';
+    autoLayoutSection.style.display = isGridLayout() ? 'none' : 'flex';
+
+    let layoutButton = document.getElementById('layoutButton')
+    let spacingButton = document.getElementById('spacingButton')
+    layoutButton.style.backgroundColor = "#E5E5E5";
+    layoutButton.style.color = "000000"
+    spacingButton.style.backgroundColor = "#FFFFFF";
+    spacingButton.style.color = "#8A8A8A";
+  }
+
+  function onClickSpacingButton() {
+    formatTab = "spacing";
+    gridLayoutSection.style.display = 'none';
+    autoLayoutSection.style.display = 'none';
+    gridSpacingSection.style.display = 'block';
+    gridSpacingDiagram.style.display = isGridLayout() ? 'block' : 'none';
+    edgeToEdgeSpacingSection.style.display = isGridLayout() ? 'block' : 'none';
+
+    let spaceBetweenOn = !isGridLayout() && spaceBetween.checked;
+    horizontalSpacingDiagram.style.display = isHorizontalLayout() && !spaceBetweenOn ? 'block' : 'none';
+    horizontalSpacingDiagramSpaceBetween.style.display = isHorizontalLayout() && spaceBetweenOn ? 'block' : 'none';
+    verticalSpacingDiagram.style.display = isVerticalLayout() && !spaceBetweenOn ? 'block' : 'none';
+    verticalSpacingDiagramSpaceBetween.style.display = isVerticalLayout() && spaceBetweenOn ? 'block' : 'none';
+    horizontalSpacingSection.style.display = isVerticalLayout() ? 'none' : 'flex';
+    verticalSpacingSection.style.display = isHorizontalLayout() ? 'none' : 'flex';
+    spaceBetweenSection.style.display = isGridLayout() ? 'none' : 'flex';
+    gridHorizontalSpacing.disabled = spaceBetweenOn;
+    gridVerticalSpacing.disabled = spaceBetweenOn;
+
+    let layoutButton = document.getElementById('layoutButton')
+    let spacingButton = document.getElementById('spacingButton')
+    layoutButton.style.backgroundColor = "#FFFFFF";
+    layoutButton.style.color = "8A8A8A"
+    spacingButton.style.backgroundColor = "#E5E5E5";
+    spacingButton.style.color = "#000000";
+  }
+
+  function onClickGridMarginsExpand() {
+    gridMarginsExpandButton.style.display = 'none';
+    gridMarginsCollapseButton.style.display = 'block';
+    gridMarginsSection.style.display = 'block';
+  }
+
+  function onClickGridMarginsCollapse() {
+    gridMarginsExpandButton.style.display = 'block';
+    gridMarginsCollapseButton.style.display = 'none';
+    gridMarginsSection.style.display = 'none';
+  }
+
+  function onClickOverflowNode() {
+    parent.postMessage({ pluginMessage: {
+      msg: 'show-node',
+      key: 'vsw-show-node',
+      node: overflowNodeId
+    }}, '*');
+  }
+
+  function onClickSelectOverflowNode() {
+    overflowModal.style.display = "block";
+
+    parent.postMessage({ pluginMessage: {
+      msg: 'overflow-node-clicked',
+    }}, '*');
+  }
+
+  function onClickClearOverflowNode() {
+    overflowNodePreview.style.display = 'none';
+    overflowNodeName.textContent = "";
+    overflowNodeId = "";
+    frameFormUpdated();
+  }
+
+  function onClickOverflowModalClose() {
+    overflowModal.style.display = "none";
+
+    parent.postMessage({ pluginMessage: {
+      msg: 'overflow-node-closed',
+    }}, '*');
+  }
+
+  function onClickSelectParentModalClose() {
+    selectParentModal.style.display = "none";
+
+    parent.postMessage({ pluginMessage: {
+      msg: 'set-parent-frame-closed',
+    }}, '*');
+  }
+
+  function onClickUploadKeywordsFile() {
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = _ => {
+      let selectedFile = input.files[0];
+      const reader = new FileReader();
+      reader.addEventListener("loadend", e => {
+        parent.postMessage({ pluginMessage: {
+          msg: 'clippy-file-selected',
+          fileName: selectedFile.name,
+          contents: reader.result.toString()
+        }}, '*');
+      })
+      reader.readAsText(selectedFile);
+    };
+    input.click();
+  }
+
+  function onClickClearKeywordsFile() {
+    parent.postMessage({ pluginMessage: {
+        msg: 'clippy-file-cleared',
+      }}, '*');
+  }
+
+  function toNumber(str, def) {
+    let num = parseInt(str, 10);
+    if (isNaN(num)) {
+      return def;
+    }
+    return num;
+  }
+
+  function setGridMarginsSummary() {
+    let valuesEqual = 
+      gridMarginLeft.value == gridMarginRight.value &&
+      gridMarginLeft.value == gridMarginTop.value &&
+      gridMarginLeft.value == gridMarginBottom.value;
+    gridMarginsAll.value = valuesEqual ? gridMarginLeft.value : "...";
+    gridMarginsAll.disabled = !valuesEqual;
+    gridMarginsCollapseButton.onclick = valuesEqual ? onClickGridMarginsCollapse : null;
+    if (!valuesEqual)
+      onClickGridMarginsExpand();
+  }
+  
+  function updateGridSpanUI(gridSpanContent) {
+    let content = currentSelection ? currentSelection.content : null;
+    while (gridSpanTable.rows.length > 1)
+      gridSpanTable.deleteRow(1);
+
+    if (!isGridLayout() || !content)
+      return;
+    
+    let index = 0;
+    for (const node of content) {
+      let nodeHtml = document.createElement('span');
+      nodeHtml.classList.add("label", "link");
+      nodeHtml.textContent = node.nodeName;
+      nodeHtml.onclick = () => {
+        console.log("click " + node.nodeId);
+        parent.postMessage({ pluginMessage: {
+          msg: 'show-node',
+          key: 'vsw-show-node',
+          node: node.nodeId
+        }}, '*');
+      };
+
+      let bgColor = "#FFFFFF";
+      if (index % 2 == 1)
+        bgColor = "#F8F7F7"
+
+      let row = gridSpanTable.insertRow(index + 1);
+      row.style.height = "36px";
+      row.style.backgroundColor = bgColor;
+      
+      let nodeNameCell = row.insertCell(0);
+      nodeNameCell.appendChild(nodeHtml);
+      
+      let span = 1;
+      let maxSpan = false;
+      if (gridSpanContent && gridSpanContent.length > index) {
+        span = toNumber(gridSpanContent[index].span, 1);
+        maxSpan = gridSpanContent[index].maxSpan;
+      }
+      let displayAll = " display: " + (maxSpan ? "block" : "none");
+      let displayInput = " display: " + (maxSpan ? "none" : "block");
+        
+      let maxSpanSwitch = row.insertCell(1);
+      maxSpanSwitch.style.width = "80px";
+      maxSpanSwitch.style.textAlign = "right";
+      maxSpanSwitch.innerHTML = 
+        "<span id=\"spanSelect" + index + "All\" class=\"label\" style=\"width: 30; font-size: 13; font-weight: bold; height: 15;" + displayAll + "\">All</span>" +
+        "<input id=\"spanSelect" + index + "Input\" type=\"input\" style=\"width: 30; font-size: 13; font-weight: bold;" + displayInput + "\" class=\"input__field\" value=\"" + span + "\">";
+
+      let spanInput = row.insertCell(2);
+      spanInput.style.width = "20px";
+      spanInput.innerHTML =
+        "<select class=\"select-menu__button\" id=\"spanSelect" + index + "\" style=\"height:15px\">" +
+        "  <option value=\"Number\" " + (maxSpan ? "" : "selected") + ">Number</option>" + 
+        "  <option value=\"All\" " + (maxSpan ? "selected" : "") + ">All</option>" +
+        "</select>";
+      index += 1;
+    }
+  }
+
+  function onHoverAlignment(element) {
+    if (element.id != autolayoutAlignmentId) {
+      let suffix = isHorizontalLayout() ? "PathH" : "PathV";
+      let path = document.getElementById(element.id + suffix);
+      path.classList.remove("alignment-svg");
+      path.classList.add("alignment-svg-hover");
+    }
+    //alignmentTopLeftPathH.classList.add("alignment-svg-selected");
+  }
+
+  function onLeaveAlignment(element) {
+    if (element.id != autolayoutAlignmentId) {
+      let suffix = isHorizontalLayout() ? "PathH" : "PathV";
+      let path = document.getElementById(element.id + suffix);
+      path.classList.remove("alignment-svg-hover");
+      path.classList.add("alignment-svg");
+    }
+  }
+
+  function clearAlignmentSelected() {
+    alignmentTopLeftPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopCenterPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopRightPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentLeftPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentCenterPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentRightPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomLeftPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomCenterPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomRightPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopLeftPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopCenterPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopRightPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentLeftPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentCenterPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentRightPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomLeftPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomCenterPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomRightPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+
+    alignmentTopLeftPathV.classList.add("alignment-svg");
+    alignmentTopCenterPathV.classList.add("alignment-svg");
+    alignmentTopRightPathV.classList.add("alignment-svg");
+    alignmentLeftPathV.classList.add("alignment-svg");
+    alignmentCenterPathV.classList.add("alignment-svg");
+    alignmentRightPathV.classList.add("alignment-svg");
+    alignmentBottomLeftPathV.classList.add("alignment-svg");
+    alignmentBottomCenterPathV.classList.add("alignment-svg");
+    alignmentBottomRightPathV.classList.add("alignment-svg");
+    alignmentTopLeftPathH.classList.add("alignment-svg");
+    alignmentTopCenterPathH.classList.add("alignment-svg");
+    alignmentTopRightPathH.classList.add("alignment-svg");
+    alignmentLeftPathH.classList.add("alignment-svg");
+    alignmentCenterPathH.classList.add("alignment-svg");
+    alignmentRightPathH.classList.add("alignment-svg");
+    alignmentBottomLeftPathH.classList.add("alignment-svg");
+    alignmentBottomCenterPathH.classList.add("alignment-svg");
+    alignmentBottomRightPathH.classList.add("alignment-svg");
+  }
+
+  function onAlignmentClick(alignment) {
+    setAlignment(alignment);
+    frameFormUpdated();
+  }
+
+  function setAlignment(alignment) {
+    clearAlignmentSelected();
+      let suffix = isHorizontalLayout() ? "PathH" : "PathV";
+    let pathElement = document.getElementById(alignment.id + suffix);
+    pathElement.classList.remove("alignment-svg");
+    pathElement.classList.add("alignment-svg-selected");
+
+    autolayoutAlignmentId = alignment.id;
+    switch (alignment.id) {
+      case "alignmentTopLeft":
+        autolayoutAlignment = "topleft";
+        break;
+      case "alignmentTopCenter":
+        autolayoutAlignment = "topcenter";
+        break;
+      case "alignmentTopRight":
+        autolayoutAlignment = "topright";
+        break;
+      case "alignmentLeft":
+        autolayoutAlignment = "left";
+        break;
+      case "alignmentCenter":
+        autolayoutAlignment = "center";
+        break;
+      case "alignmentRight":
+        autolayoutAlignment = "right";
+        break;
+      case "alignmentBottomLeft":
+        autolayoutAlignment = "bottomleft";
+        break;
+      case "alignmentBottomCenter":
+        autolayoutAlignment = "bottomcenter";
+        break;
+      case "alignmentBottomRight":
+        autolayoutAlignment = "bottomright";
+        break;
+      default:
+      console.log("Unknown alignment: " + alignment.id);
+        break;
+    }
+  }
+
+  function getHorizontalAlignment() {
+    switch (autolayoutAlignment) {
+      case "topleft":
+      case "left":
+      case "bottomleft":
+        return "start";
+      case "topcenter":
+      case "center":
+      case "bottomcenter":
+        return "center";
+      case "topright":
+      case "right":
+      case "bottomright":
+        return "end";
+    }
+  }
+
+  function getVerticalAlignment() {
+    switch (autolayoutAlignment) {
+      case "topleft":
+      case "topcenter":
+      case "topright":
+        return "start";
+      case "left":
+      case "center":
+      case "right":
+        return "center";
+      case "bottomleft":
+      case "bottomcenter":
+      case "bottomright":
+        return "end";
+    }
+  }
+
+  // Show the alignment UI for single Horizontal/Vertical Row/Column layout
+  function updateAutolayoutAlignmentUI(autolayout) {
+    if (!autolayout)
+      return;
+
+    let h = autolayout.horizontalAlignment;
+    let v = autolayout.verticalAlignment;
+    if (h == "start" && v == "start")
+      setAlignment(alignmentTopLeft);
+    else if (h == "center" && v == "start")
+      setAlignment(alignmentTopCenter);
+    else if (h == "end" && v == "start")
+      setAlignment(alignmentTopRight);
+    else if (h == "start" && v == "center")
+      setAlignment(alignmentLeft);
+    else if (h == "center" && v == "center")
+      setAlignment(alignmentCenter);
+    else if (h == "end" && v == "center")
+      setAlignment(alignmentRight);
+    else if (h == "start" && v == "end")
+      setAlignment(alignmentBottomLeft);
+    else if (h == "center" && v == "end")
+      setAlignment(alignmentBottomCenter);
+    else if (h == "end" && v == "end")
+      setAlignment(alignmentBottomRight);
+
+    spaceBetween.checked = autolayout.spaceBetween;
+  }
+
+  // Create the grid diagram showing the number of rows or columns selected
+  function createGridDiagram() {
+    let diagram = document.getElementById('gridDiagram');
+    diagram.innerHTML = "";
+
+    function createCell(row, index, showSquare, showGradient, horizontal) {
+      // Create a table cell with a pink background, padding, and a optional grey square in the center
+      let cell = row.insertCell(index++);
+      cell.className = "grid-cell";
+      let direction = horizontal ? "horizontal" : "vertical";
+      cell.className += showGradient ? " grid-cell-gradient-" + direction : " grid-cell-bg";
+      if (showSquare) {
+        let squareClass = "grid-square";
+        squareClass += showGradient ? " grid-square-gradient-" + direction : " grid-square-bg";
+        cell.innerHTML = "<div class=\"" + squareClass + "\"></div>"
+      }
+    }
+
+    let layoutType = gridColumnsOrRows.value;
+    if (layoutType == "fixedColumns" || layoutType == "autoColumns") {
+      // Create the specified number of columns and three rows
+      let maxShown = 10;
+      let count = toNumber(gridColumnsRows.value);
+      let countShown = Math.min(count, maxShown);
+      let row = diagram.insertRow(0);
+      let index = 0;
+      for (i = 0; i < countShown; ++i) {
+        let padding = row.insertCell(index++);
+        padding.width = "4";
+        createCell(row, index, true, i == maxShown - 1 && count > maxShown, true);
+        index++;
+      }
+      let padding = row.insertCell(index++);
+      padding.width = "4";
+
+      row = diagram.insertRow(1);
+      index = 0;
+      for (i = 0; i < countShown; ++i) {
+        let padding = row.insertCell(index++);
+        padding.width = "4";
+        createCell(row, index, true, i == maxShown - 1 && count > maxShown, true);
+        index++;
+      }
+
+      row = diagram.insertRow(2);
+      index = 0;
+      for (i = 0; i < countShown; ++i) {
+        let padding = row.insertCell(index++);
+        padding.width = "4";
+        createCell(row, index, i < 2, i == maxShown - 1 && count > maxShown, true);
+        index++;
+      }
+    } else if (layoutType == "fixedRows" || layoutType == "autoRows") {
+      // Create the specified number of rows and three columns
+      let maxShown = 6;
+      let count = toNumber(gridColumnsRows.value);
+      let countShown = Math.min(count, maxShown);
+      let index = 0;
+      for (i = 0; i < countShown; ++i) {
+        let paddingRow = diagram.insertRow(index++);
+        let paddingCell = paddingRow.insertCell(0);
+        paddingCell.height = "4";
+        let row = diagram.insertRow(index++);
+        createCell(row, 0, true, i == maxShown - 1 && count > maxShown, false);
+        createCell(row, 1, true, i == maxShown - 1 && count > maxShown, false);
+        createCell(row, 2, i < 2, i == maxShown - 1 && count > maxShown, false);
+      }
+      let paddingRow = diagram.insertRow(index++);
+      let paddingCell = paddingRow.insertCell(0);
+      paddingCell.height = "4";
+    }
+  }
+
+  // Hide/show/enable/disable elements based on the form state.
+  function ensureFrameFormState() {
+    createGridDiagram();
+
+    let layoutType = gridColumnsOrRows.value;
+    let columns = layoutType == "fixedColumns" || layoutType == "autoColumns";
+    let headerText = (columns ? "Column" : "Row") + " span";
+    document.getElementById("gridTableHeaderText").innerHTML = headerText;
+
+    iconFormatHorizontal.style.display = 'none';
+    iconFormatVertical.style.display = 'none';
+    iconFormatColumnsAuto.style.display = 'none';
+    iconFormatColumnsStretch.style.display = 'none';
+    iconFormatRowsAuto.style.display = 'none';
+    iconFormatRowsStretch.style.display = 'none';
+
+    // Depending on the layout type, hide/show the appropriate input field and adjust the text
+    if (layoutType == "fixedColumns") {
+      gridColumnsRows.style.display = 'block';
+      gridColumnsRowsLabel.style.display = 'block';
+      adaptiveMinSize.style.display = 'none';
+      adaptiveMinSizeLabel.style.display = 'none';
+      gridColumnsRowsLabel.innerHTML = "Columns";
+      gridLayoutDescription.innerHTML = "Width of columns expands with parent frame";
+      iconFormatColumnsStretch.style.display = 'block';
+      basicSizePolicy.style.display = 'none';
+    } else if (layoutType == "fixedRows") {
+      gridColumnsRows.style.display = 'block';
+      gridColumnsRowsLabel.style.display = 'block';
+      adaptiveMinSize.style.display = 'none';
+      adaptiveMinSizeLabel.style.display = 'none';
+      gridColumnsRowsLabel.innerHTML = "Rows";
+      gridLayoutDescription.innerHTML = "Height of rows expands with parent frame";
+      iconFormatRowsStretch.style.display = 'block';
+      basicSizePolicy.style.display = 'none';
+    } else if (layoutType == "autoColumns") {
+      gridColumnsRows.style.display = 'none';
+      gridColumnsRowsLabel.style.display = 'none';
+      adaptiveMinSize.style.display = 'block';
+      adaptiveMinSizeLabel.style.display = 'block';
+      adaptiveMinSizeLabel.innerHTML = "Min column width";
+      gridLayoutDescription.innerHTML = "Frame width determines number of columns";
+      iconFormatColumnsAuto.style.display = 'block';
+      basicSizePolicy.style.display = 'none';
+    } else if (layoutType == "autoRows") {
+      gridColumnsRows.style.display = 'none';
+      gridColumnsRowsLabel.style.display = 'none';
+      adaptiveMinSize.style.display = 'block';
+      adaptiveMinSizeLabel.style.display = 'block';
+      adaptiveMinSizeLabel.innerHTML = "Min row height";
+      gridLayoutDescription.innerHTML = "Frame height determines number of rows";
+      iconFormatRowsAuto.style.display = 'block';
+      basicSizePolicy.style.display = 'none';
+    } else if (layoutType == "horizontal") {
+      gridColumnsRows.style.display = 'none';
+      gridColumnsRowsLabel.style.display = 'none';
+      adaptiveMinSize.style.display = 'none';
+      adaptiveMinSizeLabel.style.display = 'none';
+      gridLayoutDescription.innerHTML = "Align elements in a single row";
+      iconFormatHorizontal.style.display = 'block';
+      basicSizePolicy.style.display = 'block';
+    } else if (layoutType == "vertical") {
+      gridColumnsRows.style.display = 'none';
+      gridColumnsRowsLabel.style.display = 'none';
+      adaptiveMinSize.style.display = 'none';
+      adaptiveMinSizeLabel.style.display = 'none';
+      gridLayoutDescription.innerHTML = "Align elements in a single column";
+      iconFormatVertical.style.display = 'block';
+      basicSizePolicy.style.display = 'block';
+    }
+
+    let isScrollingDisabled = (!isGridLayout() && basicSizePolicy.value == 'hug');
+    gridScrolling.disabled = isScrollingDisabled;
+    if (isScrollingDisabled)
+      gridScrolling.checked = false;
+
+    document.getElementById('gridMissingKeywords').style.display = currentSelection.hasKeywordData ? 'none' : 'block';
+    document.getElementById('gridSpanTable').style.display = currentSelection.hasKeywordData ? 'block' : 'none';
+
+    maxNumItemsSection.style.display = limitContent.checked ? 'disabled' : 'none';
+  }
+
+  // Use the extended layout data to set values in the UI
+  function setFrameFormData(el) {
+    gridColumnsOrRows.value = el ? el.layout : "horizontal";
+
+    let common = el.commonData;
+    gridMarginLeft.value = common ? toNumber(common.marginLeft, 0) : 0;
+    gridMarginRight.value = common ? toNumber(common.marginRight, 0) : 0;
+    gridMarginTop.value = common ? toNumber(common.marginTop, 0) : 0;
+    gridMarginBottom.value = common ? toNumber(common.marginBottom, 0) : 0;
+    gridScrolling.checked = common ? common.scrolling : false;
+
+    let grid = el.gridLayoutData;
+    gridColumnsRows.value = grid ? toNumber(grid.columnsRows, 1) : 1;
+    adaptiveMinSize.value = grid ? toNumber(grid.adaptiveMinSize, 50) : 50;
+    gridVerticalSpacing.value = grid ? toNumber(grid.verticalSpacing, 0) : 0;
+    gridHorizontalSpacing.value = grid ? toNumber(grid.horizontalSpacing, 0) : 0;
+    autoSpacing.checked = grid && grid.autoSpacing;
+
+    let auto = el.autoLayoutData;
+    if (isHorizontalLayout())
+      gridHorizontalSpacing.value = auto ? toNumber(auto.itemSpacing, 0) : 0;
+    if (isVerticalLayout())
+      gridVerticalSpacing.value = auto ? toNumber(auto.itemSpacing, 0) : 0;
+    basicSizePolicy.value = auto && auto.sizePolicy ? auto.sizePolicy : "fixed";
+
+    limitContent.checked = el && el.limitContent;
+    let lcd = el.limitContentData;
+    maxNumItems.value = lcd ? toNumber(lcd.maxNumItems, 1) : 1;
+    overflowNodeName.textContent = lcd ? lcd.overflowNodeName : "";
+    overflowNodeId = lcd ? lcd.overflowNodeId : "";
+    let hasOverflowNode = (lcd && lcd.overflowNodeName.length > 0);
+    overflowNodePreview.style.display = hasOverflowNode ? 'flex' : 'none';
+    if (lcd && lcd.overflowNodePreviewData)
+      overflowNodePreviewImg.src = lcd.overflowNodePreviewData;
+    overflowButtonSection.style.display = hasOverflowNode ? 'none' : 'flex';
+
+    gridLayoutSection.style.display = isGridLayout() ? "block" : "none";
+    autoLayoutSection.style.display = isGridLayout() ? "none" : "flex";
+
+    if (formatTab == "layout")
+      onClickLayoutButton();
+    else
+      onClickSpacingButton();
+
+    updateGridSpanUI(grid ? grid.spanContent : null);
+    updateAutolayoutAlignmentUI(auto);
+    setGridMarginsSummary();
+    ensureFrameFormState();
+  }
+
+  function autoContentFrameChanged() {
+    parent.postMessage({ pluginMessage: {
+      msg: 'set-widget-content',
+      widgetContent: {
+        contentNodeName: contentNodeName.value,
+        previewPage: previewPage.value
+      }
+    }}, '*');
+
+    // Set a default layout if one has not been selected yet
+    if (gridColumnsOrRows.value == "") {
+      gridColumnsOrRows.value = "horizontal";
+      frameFormUpdated();
+    }
+  }
+
+  function gridMarginsAllChanged() {
+    let value = gridMarginsAll.value;
+    gridMarginLeft.value = value;
+    gridMarginRight.value = value;
+    gridMarginTop.value = value;
+    gridMarginBottom.value = value;
+  }
+
+  function frameFormUpdated() {
+    let gridSpanContent = []
+    for (let i = 0; i < gridSpanTable.rows.length - 1; ++i) {
+      let spanSelect = document.getElementById("spanSelect" + i);
+      let spanInput = document.getElementById("spanSelect" + i + "Input");
+      
+      gridSpanContent.push({
+        nodeName: currentSelection.content[i].nodeName,
+        nodeId: currentSelection.content[i].nodeId,
+        span: toNumber(spanInput.value, 1),
+        maxSpan: spanSelect.value == "All"
+      });
+    }
+
+    let commonData = {
+      marginLeft: toNumber(gridMarginLeft.value, 0),
+      marginRight: toNumber(gridMarginRight.value, 0),
+      marginTop: toNumber(gridMarginTop.value, 0),
+      marginBottom: toNumber(gridMarginBottom.value, 0),
+      scrolling: gridScrolling.checked,
+    }
+    let autoLayoutData = !isGridLayout() ? {
+      itemSpacing: isHorizontalLayout() ? toNumber(gridHorizontalSpacing.value, 0) : toNumber(gridVerticalSpacing.value, 0),
+      spaceBetween: spaceBetween.checked,
+      horizontalAlignment: getHorizontalAlignment(),
+      verticalAlignment: getVerticalAlignment(),
+      sizePolicy: basicSizePolicy.value,
+    } : {};
+
+    let gridLayoutData = isGridLayout() ? {
+      columnsRows: toNumber(gridColumnsRows.value, 1),
+      adaptiveMinSize: toNumber(adaptiveMinSize.value, 1),
+      autoSpacing: autoSpacing.checked ? true : false,
+      verticalSpacing: toNumber(gridVerticalSpacing.value, 0),
+      horizontalSpacing: toNumber(gridHorizontalSpacing.value, 0),
+      spanContent: gridSpanContent
+    } : {};
+
+    let limitContentData = {
+        maxNumItems: toNumber(maxNumItems.value, 0),
+        overflowNodeName: overflowNodeName.textContent,
+        overflowNodeId: overflowNodeId,
+        overflowNodePreviewData: overflowNodePreviewImg.src
+    }
+
+    // Make a message and send it back to the plugin to save in the node.
+    parent.postMessage({ pluginMessage: {
+      msg: 'save-extended-layout',
+      extendedLayout: {
+        layout: gridColumnsOrRows.value,
+        commonData,
+        gridLayoutData,
+        autoLayoutData,
+        limitContent: limitContent.checked || false,
+        limitContentData,
+      }
+    }}, '*');
+  }
+
+  function showInitialUI(needsParent, hasPreview) {
+    parentFrameSection.style.display = needsParent ? 'block' : 'none';
+    autoContentSection.style.display = needsParent ? 'none' : 'block';
+    formattingSection.style.display = (needsParent || !hasPreview) ? 'none' : 'block';
+    sourceSection.style.display = needsParent ? 'none' : 'block';
+  }
+
+  document.getElementById('autoContentFrame').addEventListener('change', autoContentFrameChanged, false);
+  document.getElementById('formattingSection').addEventListener('change', frameFormUpdated, false);
+  gridMarginsAll.addEventListener('change', gridMarginsAllChanged, false);
+
+  // Update the form from a selection change.
+  window.onmessage = function(event) {
+    let msg = event.data.pluginMessage;
+
+    if (msg.msg == 'init') {
+      hasKeywordFile = msg.file != ""
+      document.getElementById('noKeywordSourceSection').style.display = hasKeywordFile ? 'none' : 'block';
+      document.getElementById('hasKeywordSection').style.display = hasKeywordFile ? 'block' : 'none';
+      if (!hasKeywordFile)
+        return;
+
+      currentSelection = {
+        extendedLayout: msg.extendedLayout,
+        content: msg.content,
+        hasKeywordData: msg.hasKeywordData
+      };
+
+      // Populate the content node name option dropdown with available node names
+      while (contentNodeName.options.length > 0) {                
+        contentNodeName.remove(0);
+      }
+      let selectOptions = msg.contentNodeNameOptions;
+      for (const option of selectOptions) {
+        var opt = document.createElement('option');
+        opt.value = option;
+        opt.innerHTML = option;
+        contentNodeName.appendChild(opt);
+      }
+
+      // Populate the preview page option dropdown
+      while (previewPage.options.length > 0) {
+        previewPage.remove(0);
+      }
+      let previewSelectOptions = msg.previewPageOptions;
+      for (const option of previewSelectOptions) {
+        var opt = document.createElement('option');
+        opt.value = option;
+        opt.innerHTML = option;
+        previewPage.appendChild(opt);
+      }
+
+      let widgetContent = msg.widgetContent;
+      contentNodeName.value = widgetContent.contentNodeName;
+      previewPage.value = widgetContent.previewPage;
+      
+      // Hide the formatting section until a preview page has been selected
+      let hasPreview = widgetContent.contentNodeName != null;
+      showInitialUI(false, hasPreview);
+      selectParentModal.style.display = "none";
+
+      let keywordsFilename = document.getElementById('keywordsFilename');
+      let keywordsName = document.getElementById('keywordsName');
+      let keywordsVersion = document.getElementById('keywordsVersion');
+      
+      keywordsFilename.textContent = msg.file ? msg.file : ""
+      keywordsName.textContent = msg.name ? msg.name : ""
+      keywordsVersion.textContent = msg.version ? msg.version : ""
+
+      setFrameFormData(msg.extendedLayout);
+    }
+    else if (msg.msg == 'overflow-node-selected') {
+      overflowModal.style.display = "none";
+      overflowNodeName.textContent = msg.name;
+      overflowNodeId = msg.id;
+      overflowNodePreviewImg.src = "data:image/png;base64," + msg.data;
+      
+      frameFormUpdated();
+    }
+    else if (msg.msg == 'need-parent') {
+      // The widget needs a parent, so hide all UI except for the parentFrameSection UI
+      showInitialUI(true, false);
+    }
+  }
+</script>

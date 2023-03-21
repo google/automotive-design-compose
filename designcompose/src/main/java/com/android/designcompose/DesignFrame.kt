@@ -27,25 +27,22 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
@@ -62,15 +59,16 @@ import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.StrokeAlign
+import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
-import kotlin.math.max
 import kotlin.math.roundToInt
 
 @Composable
 internal fun DesignFrame(
     modifier: Modifier = Modifier,
     style: ViewStyle,
+    shape: ViewShape,
     name: String,
     variantParentName: String,
     layoutInfo: SimplifiedLayoutInfo,
@@ -106,7 +104,7 @@ internal fun DesignFrame(
 
     var m =
         Modifier.layoutStyle(name, style)
-            .frameRender(style, customImage, document, name, customizations)
+            .frameRender(style, shape, customImage, document, name, customizations)
             .then(modifier)
 
     val customModifier = customizations.getModifier(name)
@@ -570,6 +568,7 @@ internal fun DesignFrame(
 
 internal fun Modifier.frameRender(
     style: ViewStyle,
+    shape: ViewShape,
     customImageWithContext: Bitmap?,
     document: DocContent,
     name: String,
@@ -600,327 +599,301 @@ internal fun Modifier.frameRender(
                 drawContext.canvas.saveLayer(Rect(Offset.Zero, drawContext.size), paint)
             }
 
-            // Compute fill and stroke shapes
-            var shape = RectangleShape
-            if (
-                style.border_radius[0] > 0.1 ||
-                    style.border_radius[1] > 0.1 ||
-                    style.border_radius[2] > 0.1 ||
-                    style.border_radius[3] > 0.1
-            ) {
-                shape =
-                    RoundedCornerShape(
-                        style.border_radius[0] * density,
-                        style.border_radius[1] * density,
-                        style.border_radius[3] * density,
-                        style.border_radius[2] * density
-                    )
-            }
-            val outline = shape.createOutline(size, layoutDirection, this)
-            val outlinePath = Path()
-            outlinePath.addOutline(outline)
-
-            // To compute the stroke shape, we might have to offset rounded corners.
-            val strokeOutset =
+            // Fill then stroke.
+            val (fills, precomputedStrokes) =
+                when (shape) {
+                    is ViewShape.RoundRect -> {
+                        val path = Path()
+                        path.addRoundRect(
+                            RoundRect(
+                                0.0f,
+                                0.0f,
+                                drawContext.size.width,
+                                drawContext.size.height,
+                                CornerRadius(
+                                    shape.corner_radius[0] * density,
+                                    shape.corner_radius[0] * density
+                                ),
+                                CornerRadius(
+                                    shape.corner_radius[1] * density,
+                                    shape.corner_radius[1] * density
+                                ),
+                                CornerRadius(
+                                    shape.corner_radius[2] * density,
+                                    shape.corner_radius[2] * density
+                                ),
+                                CornerRadius(
+                                    shape.corner_radius[3] * density,
+                                    shape.corner_radius[3] * density
+                                )
+                            )
+                        )
+                        Pair(listOf(path), listOf<Path>())
+                    }
+                    is ViewShape.Path -> {
+                        Pair(
+                            shape.path.map { path -> path.asPath(density) },
+                            shape.stroke.map { path -> path.asPath(density) }
+                        )
+                    }
+                    else -> {
+                        val path = Path()
+                        path.addRect(
+                            Rect(0.0f, 0.0f, drawContext.size.width, drawContext.size.height)
+                        )
+                        Pair(listOf(path), listOf<Path>())
+                    }
+                }
+            // XXX: drawContext.size is wrong; we need the node size.
+            val fillBrush =
+                style.background.mapNotNull { background ->
+                    val p = Paint()
+                    val b = background.asBrush(document, density)
+                    if (b != null) {
+                        val (brush, opacity) = b
+                        brush.applyTo(drawContext.size, p, opacity)
+                        p
+                    } else {
+                        null
+                    }
+                }
+            val strokeBrush =
+                style.stroke.strokes.mapNotNull { background ->
+                    val p = Paint()
+                    val b = background.asBrush(document, density)
+                    if (b != null) {
+                        val (brush, opacity) = b
+                        brush.applyTo(drawContext.size, p, opacity)
+                        p
+                    } else {
+                        null
+                    }
+                }
+            // We need to make the stroke path if there is any stroke.
+            // * Center stroke -> just use the stroke width.
+            // * Outer stroke -> double the stroke width, clip out the inner bit
+            // * Inner stroke -> double the stroke width, clip out the outer bit.
+            val rawStrokeWidth =
                 when (style.stroke.stroke_align) {
-                    is StrokeAlign.Inside -> style.stroke.stroke_weight * density / 2.0f
-                    is StrokeAlign.Center -> 0.0f
-                    // The 0.5f is a fudge factor to try to mask conflation errors in
-                    // Skia.
-                    is StrokeAlign.Outside -> -style.stroke.stroke_weight * density / 2.0f + 0.5f
+                    is StrokeAlign.Center -> style.stroke.stroke_weight * density
+                    is StrokeAlign.Inside -> style.stroke.stroke_weight * 2.0f * density
+                    is StrokeAlign.Outside -> style.stroke.stroke_weight * 2.0f * density
+                    else -> style.stroke.stroke_weight * density
+                }
+            val shadowStrokeWidth =
+                when (style.stroke.stroke_align) {
+                    is StrokeAlign.Center -> style.stroke.stroke_weight * density
+                    is StrokeAlign.Outside -> style.stroke.stroke_weight * 2.0f * density
                     else -> 0.0f
                 }
-            // Adjust the radius to fit the adjusted bounds
-            fun offsetRadius(radius: Float, offset: Float): Float {
-                if (radius <= 0.0f) {
-                    // Hard corners always remain hard corners
-                    return 0.0f
+            // Build a list of stroke paths, and also build a set of filled paths for shadow
+            // painting.
+            val strokePaint = android.graphics.Paint()
+            strokePaint.style = android.graphics.Paint.Style.STROKE
+            strokePaint.strokeWidth = rawStrokeWidth
+
+            val strokes =
+                if (fills.isEmpty()) {
+                    // Sometimes an object has no fill at all (it has no area, because it is
+                    // just a stroke or line), in which case we use the strokes from the shape.
+                    precomputedStrokes
+                } else {
+                    // Normally we generate the stroke from the fill path. This lets us have
+                    // runtime determined width/height for things we're stroking.
+                    fills.map { fill ->
+                        val strokePath = android.graphics.Path()
+                        strokePaint.getFillPath(fill.asAndroidPath(), strokePath)
+                        when (style.stroke.stroke_align) {
+                            is StrokeAlign.Outside ->
+                                strokePath.op(
+                                    fill.asAndroidPath(),
+                                    android.graphics.Path.Op.DIFFERENCE
+                                )
+                            is StrokeAlign.Inside ->
+                                strokePath.op(
+                                    fill.asAndroidPath(),
+                                    android.graphics.Path.Op.INTERSECT
+                                )
+                            else -> {}
+                        }
+                        strokePath.asComposePath()
+                    }
                 }
-                // If the offset is negative then we're growing outwards and so the radius
-                // must grow. If it's positive then we're shrinking the radius down to 0.0.
-                return max(radius - offset, 0.0f)
-            }
-            var strokeShape = RectangleShape
-            if (
-                style.border_radius[0] > 0.1 ||
-                    style.border_radius[1] > 0.1 ||
-                    style.border_radius[2] > 0.1 ||
-                    style.border_radius[3] > 0.1
-            ) {
-                strokeShape =
-                    RoundedCornerShape(
-                        offsetRadius(style.border_radius[0] * density, strokeOutset),
-                        offsetRadius(style.border_radius[1] * density, strokeOutset),
-                        offsetRadius(style.border_radius[3] * density, strokeOutset),
-                        offsetRadius(style.border_radius[2] * density, strokeOutset)
+
+            // XXX: handle mask layers
+
+            val shadowBoundsPaint = android.graphics.Paint()
+            shadowBoundsPaint.style = android.graphics.Paint.Style.FILL_AND_STROKE
+            shadowBoundsPaint.strokeWidth = shadowStrokeWidth
+            val shadowPaths =
+                fills.map { fill ->
+                    val shadowPath = android.graphics.Path()
+                    shadowBoundsPaint.getFillPath(fill.asAndroidPath(), shadowPath)
+                    shadowPath.asComposePath()
+                }
+
+            // Outset shadows
+            // XXX: only do this if there are shadows.
+            drawContext.canvas.save()
+            // Don't draw shadows under objects.
+            shadowPaths.forEach { path -> drawContext.canvas.clipPath(path, ClipOp.Difference) }
+
+            // Now paint the outset shadows.
+            style.box_shadow.forEach { shadow ->
+                // Only outset.
+                if (shadow !is BoxShadow.Outset) return@forEach
+
+                // To calculate the outset path, we must inflate our outer bounds (our fill
+                // path plus the stroke width) plus the shadow spread. Since Skia always
+                // centers strokes, we do this by adding double the spread to the shadow
+                // stroke width.
+                shadowBoundsPaint.strokeWidth =
+                    shadowStrokeWidth + shadow.spread_radius * 2.0f * density
+                val shadowOutlines =
+                    fills.map { fill ->
+                        val shadowPath = android.graphics.Path()
+                        shadowBoundsPaint.getFillPath(fill.asAndroidPath(), shadowPath)
+                        shadowPath.asComposePath()
+                    }
+
+                // Make an appropriate paint.
+                val shadowPaint = Paint().asFrameworkPaint()
+                shadowPaint.color = convertColor(shadow.color).toArgb()
+                if (shadow.blur_radius > 0.0f) {
+                    shadowPaint.maskFilter =
+                        BlurMaskFilter(
+                            shadow.blur_radius * density * blurFudgeFactor,
+                            BlurMaskFilter.Blur.NORMAL
+                        )
+                }
+                drawContext.canvas.translate(shadow.offset[0] * density, shadow.offset[1] * density)
+                shadowOutlines.forEach { shadowPath ->
+                    drawContext.canvas.nativeCanvas.drawPath(
+                        shadowPath.asAndroidPath(),
+                        shadowPaint
                     )
-            }
-            val strokeOutline =
-                strokeShape.createOutline(
-                    Size(size.width - strokeOutset * 2.0f, size.height - strokeOutset * 2.0f),
-                    layoutDirection,
-                    this
-                )
-            val strokePath = Path()
-            strokePath.addOutline(strokeOutline)
-            strokePath.translate(Offset(strokeOutset, strokeOutset))
-
-            // If we have any outset shadows then clip out our own shape, so we don't fill shadow
-            // behind
-            // it (Figma recently added the option to fill behind a shape or not for a given shadow,
-            // but
-            // we're not propagating that information yet).
-            val hasOutsetShadows =
-                style.box_shadow.find { shadow -> shadow is BoxShadow.Outset } != null
-            if (hasOutsetShadows) {
-                drawContext.canvas.save()
-                drawContext.canvas.clipPath(outlinePath, ClipOp.Difference)
-
-                // We can render outset shadows at this point. We do this by creating a path that
-                // corresponds
-                // to the solid part of the object (taking shadow spread into account, which expands
-                // the
-                // solid
-                // region) and then render it applying the blur.
-                //
-                // This is a fairly low-level way to render a shadow, and we also have to clip out
-                // the
-                // region
-                // of the shape itself, but Skia doesn't provide any high level interface for
-                // creating
-                // shadows.
-                for (shadow in style.box_shadow) {
-                    if (shadow is BoxShadow.Outset) {
-                        // We only care about the stroke outset when it's outset (center or
-                        // outside), otherwise
-                        // it doesn't change the shadow.
-                        val shadowStrokeOutset = strokeOutset.coerceAtMost(0.0f)
-                        val spreadOffset = shadow.spread_radius * density - shadowStrokeOutset
-                        var outsetShadowShape = RectangleShape
-                        if (
-                            style.border_radius[0] > 0.1 ||
-                                style.border_radius[1] > 0.1 ||
-                                style.border_radius[2] > 0.1 ||
-                                style.border_radius[3] < 0.1
-                        ) {
-                            outsetShadowShape =
-                                RoundedCornerShape(
-                                    offsetRadius(style.border_radius[0] * density, -spreadOffset),
-                                    offsetRadius(style.border_radius[1] * density, -spreadOffset),
-                                    offsetRadius(style.border_radius[3] * density, -spreadOffset),
-                                    offsetRadius(style.border_radius[2] * density, -spreadOffset)
-                                )
-                        }
-                        val outsetShadowOutline =
-                            outsetShadowShape.createOutline(
-                                Size(
-                                    size.width + spreadOffset * 2.0f - shadowStrokeOutset * 2.0f,
-                                    size.height + spreadOffset * 2.0f - shadowStrokeOutset * 2.0f
-                                ),
-                                layoutDirection,
-                                this
-                            )
-                        val outsetShadowPath = Path()
-                        outsetShadowPath.addOutline(outsetShadowOutline)
-                        outsetShadowPath.translate(
-                            Offset(
-                                -spreadOffset + shadowStrokeOutset + shadow.offset[0] * density,
-                                -spreadOffset + shadowStrokeOutset + shadow.offset[1] * density
-                            )
-                        )
-
-                        // Ok, now we need to draw this shape, and have it cast a blurry shadow the
-                        // appropriate size.
-                        val shadowPaint = Paint().asFrameworkPaint()
-                        shadowPaint.color = convertColor(shadow.color).toArgb()
-                        if (shadow.blur_radius > 0.0f) {
-                            shadowPaint.maskFilter =
-                                BlurMaskFilter(
-                                    shadow.blur_radius * density * blurFudgeFactor,
-                                    BlurMaskFilter.Blur.NORMAL
-                                )
-                        }
-
-                        drawContext.canvas.nativeCanvas.drawPath(
-                            outsetShadowPath.asAndroidPath(),
-                            shadowPaint
-                        )
-                    }
                 }
-
-                // Restore the clip
-                drawContext.canvas.restore()
             }
+            drawContext.canvas.restore()
 
-            /*
-            // Color filters, blur, background blur (unsupported)
-            for (filterOp in style.filter) {
-                when (filterOp) {
-                    is FilterOp.Blur -> {
-                        // Only supported on Android 12, and not supported on this version
-                        // of Jetpack.
-                    }
-                    is FilterOp.Brightness -> {
-
-                    }
-                    is FilterOp.Contrast -> {
-
-
-                    }
-                    is FilterOp.Grayscale -> {
-
-                    }
-                }
-            }*/
-
-            // Probably this is where we should do save or saveLayer depending on
-            // blend modes, filters, etc. We need to pass our current blend mode down
-            // to our children, too, so they can break out if they're not doing Passthru.
-
-            // Now we can do the fill
-
+            // Now draw the actual shape, or fill it with an image if we have an image
+            // replacement; we might want to do image replacement as a Brush in the
+            // future.
             var customImage = customImageWithContext
             if (customImage == null) customImage = customizations.getImage(name)
             if (customImage != null) {
                 // Apply custom image as background
                 drawContext.canvas.save()
-                drawContext.canvas.clipPath(outlinePath)
+                for (fill in fills) {
+                    drawContext.canvas.clipPath(fill)
+                }
                 drawImage(
                     customImage.asImageBitmap(),
                     dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt())
                 )
                 drawContext.canvas.restore()
             } else {
-                for (fill in style.background) {
-                    val brushAndOpacity = fill.asBrush(document, density)
-                    if (brushAndOpacity != null) {
-                        val (brush, opacity) = brushAndOpacity
-                        drawOutline(outline, brush, alpha = opacity)
+                for (fill in fills) {
+                    for (paint in fillBrush) {
+                        drawContext.canvas.drawPath(fill, paint)
                     }
                 }
             }
 
-            // Paint inset shadows after painting the background, before painting children
-            // and before painting the stroke (regardless of which order children and stroke
-            // are in).
-            //
-            // This logic is very similar to the outset shadow logic, except we create an inverted
-            // path, and we worry about inset strokes (center and inside).
-            val hasInsetShadows =
-                style.box_shadow.find { shadow -> shadow is BoxShadow.Inset } != null
-            if (hasInsetShadows) {
-                drawContext.canvas.save()
-                drawContext.canvas.clipPath(outlinePath)
+            // Now do inset shadows
+            drawContext.canvas.save()
+            // Don't draw inset shadows outside of the stroke bounds.
+            shadowPaths.forEach { path -> drawContext.canvas.clipPath(path) }
+            val shadowOutlinePaint = android.graphics.Paint()
+            shadowOutlinePaint.style = android.graphics.Paint.Style.FILL_AND_STROKE
+            val shadowSpreadPaint = android.graphics.Paint()
+            shadowSpreadPaint.style = android.graphics.Paint.Style.STROKE
 
-                for (shadow in style.box_shadow) {
-                    if (shadow is BoxShadow.Inset) {
-                        // Only inset strokes change the inset shadow bounds.
-                        val shadowStrokeOutset = strokeOutset.coerceAtLeast(0.0f)
-                        val spreadOffset =
-                            shadow.spread_radius * density / 2.0f + shadowStrokeOutset
-                        var outsetShadowShape = RectangleShape
-                        if (
-                            style.border_radius[0] > 0.1 ||
-                                style.border_radius[1] > 0.1 ||
-                                style.border_radius[2] > 0.1 ||
-                                style.border_radius[3] > 0.1
-                        ) {
-                            outsetShadowShape =
-                                RoundedCornerShape(
-                                    offsetRadius(style.border_radius[0] * density, spreadOffset),
-                                    offsetRadius(style.border_radius[1] * density, spreadOffset),
-                                    offsetRadius(style.border_radius[3] * density, spreadOffset),
-                                    offsetRadius(style.border_radius[2] * density, spreadOffset)
-                                )
-                        }
-                        val outsetShadowOutline =
-                            outsetShadowShape.createOutline(
-                                Size(
-                                    size.width - spreadOffset * 2.0f - shadowStrokeOutset * 2.0f,
-                                    size.height - spreadOffset * 2.0f - shadowStrokeOutset * 2.0f
-                                ),
-                                layoutDirection,
-                                this
+            style.box_shadow.forEach { shadow ->
+                // Only inset.
+                if (shadow !is BoxShadow.Inset) return@forEach
+
+                // Inset shadows are applied to the "stroke bounds", not the fill bounds. So we
+                // must inflate our fill bounds out to the stroke bounds by applying a stroke and
+                // taking the fill path.
+                //
+                // We then invert the fill path so that we're filling the area that's not the stroke
+                // bounds. Then we offset it and blur it to make the inset shadow.
+                //
+                // If we have a spread that's larger than what we use to expand to make the fill
+                // then we stroke the excess spread and subtract it from the fill to make the path.
+
+                val spreadWidth = shadow.spread_radius * 2.0f * density
+                val needSpreadStroke = spreadWidth > shadowStrokeWidth
+                if (!needSpreadStroke)
+                    shadowOutlinePaint.strokeWidth = shadowStrokeWidth - spreadWidth
+                else shadowSpreadPaint.strokeWidth = spreadWidth - shadowStrokeWidth
+
+                val shadowOutlines =
+                    fills.map { fill ->
+                        val shadowPath = android.graphics.Path()
+                        if (!needSpreadStroke) {
+                            shadowOutlinePaint.getFillPath(fill.asAndroidPath(), shadowPath)
+                        } else {
+                            val spreadStroke = android.graphics.Path()
+                            shadowSpreadPaint.getFillPath(fill.asAndroidPath(), spreadStroke)
+                            shadowPath.op(
+                                fill.asAndroidPath(),
+                                spreadStroke,
+                                android.graphics.Path.Op.DIFFERENCE
                             )
-                        val outsetShadowPath = Path()
-                        outsetShadowPath.addOutline(outsetShadowOutline)
-                        outsetShadowPath.translate(
-                            Offset(
-                                spreadOffset + shadowStrokeOutset + shadow.offset[0] * density,
-                                spreadOffset + shadowStrokeOutset + shadow.offset[1] * density
-                            )
-                        )
-                        outsetShadowPath.asAndroidPath().toggleInverseFillType()
-
-                        // Ok, now we need to draw this shape, and have it cast a blurry shadow the
-                        // appropriate size.
-                        val shadowPaint = Paint().asFrameworkPaint()
-                        shadowPaint.color = convertColor(shadow.color).toArgb()
-                        if (shadow.blur_radius > 0.0f) {
-                            shadowPaint.maskFilter =
-                                BlurMaskFilter(
-                                    shadow.blur_radius * density * blurFudgeFactor,
-                                    BlurMaskFilter.Blur.NORMAL
-                                )
                         }
-                        drawContext.canvas.nativeCanvas.drawPath(
-                            outsetShadowPath.asAndroidPath(),
-                            shadowPaint
-                        )
+
+                        shadowPath.toggleInverseFillType()
+
+                        shadowPath.asComposePath()
                     }
-                }
 
-                drawContext.canvas.restore()
-            }
-
-            val shouldClip =
-                when (style.overflow) {
-                    is Overflow.Hidden -> true
-                    else -> false
-                }
-
-            // We paint the stroke before we paint the content if we're not clipping, and we paint
-            // it
-            // after the content if we are clipping. Visually this makes sense, but it's a bit messy
-            // logically.
-            if (!shouldClip) {
-                for (stroke in style.stroke.strokes) {
-                    val brushAndOpacity = stroke.asBrush(document, density)
-                    if (brushAndOpacity != null) {
-                        val (brush, opacity) = brushAndOpacity
-                        drawPath(
-                            strokePath,
-                            brush = brush,
-                            style = Stroke(width = style.stroke.stroke_weight * density),
-                            alpha = opacity
+                // Make an appropriate paint.
+                val shadowPaint = Paint().asFrameworkPaint()
+                shadowPaint.color = convertColor(shadow.color).toArgb()
+                if (shadow.blur_radius > 0.0f) {
+                    shadowPaint.maskFilter =
+                        BlurMaskFilter(
+                            shadow.blur_radius * density * blurFudgeFactor,
+                            BlurMaskFilter.Blur.NORMAL
                         )
-                    }
+                }
+                drawContext.canvas.translate(shadow.offset[0] * density, shadow.offset[1] * density)
+                shadowOutlines.forEach { shadowPath ->
+                    drawContext.canvas.nativeCanvas.drawPath(
+                        shadowPath.asAndroidPath(),
+                        shadowPaint
+                    )
                 }
             }
+            drawContext.canvas.restore()
+
+            val shouldClip = style.overflow is Overflow.Hidden
             if (shouldClip) {
+                // Clip children, and paint our stroke on top of them.
                 drawContext.canvas.save()
-                drawContext.canvas.clipPath(outlinePath)
-            }
-
-            drawContent()
-
-            if (shouldClip) {
+                for (fill in fills) {
+                    drawContext.canvas.clipPath(fill)
+                }
+                drawContent()
                 drawContext.canvas.restore()
-                for (stroke in style.stroke.strokes) {
-                    val brushAndOpacity = stroke.asBrush(document, density)
-                    if (brushAndOpacity != null) {
-                        val (brush, opacity) = brushAndOpacity
-                        drawPath(
-                            strokePath,
-                            brush = brush,
-                            style = Stroke(width = style.stroke.stroke_weight * density),
-                            alpha = opacity
-                        )
+                for (stroke in strokes) {
+                    for (paint in strokeBrush) {
+                        drawContext.canvas.drawPath(stroke, paint)
                     }
                 }
+            } else {
+                // No clipping; paint our stroke first and then paint
+                // our children.
+                for (stroke in strokes) {
+                    for (paint in strokeBrush) {
+                        drawContext.canvas.drawPath(stroke, paint)
+                    }
+                }
+                drawContent()
             }
 
-            // Restore the layer if we have a blend mode.
             if (useBlendMode) {
                 drawContext.canvas.restore()
             }

@@ -21,7 +21,6 @@ pub enum Error {
     HttpError(ureq::Error),
     ImageError(image::ImageError),
     JsonError(serde_json::Error),
-    SvgParseError(usvg::Error),
     BincodeError(bincode::Error),
 }
 impl From<std::io::Error> for Error {
@@ -44,11 +43,6 @@ impl From<serde_json::Error> for Error {
         Error::JsonError(serde_error)
     }
 }
-impl From<usvg::Error> for Error {
-    fn from(usvg_error: usvg::Error) -> Self {
-        Error::SvgParseError(usvg_error)
-    }
-}
 impl From<bincode::Error> for Error {
     fn from(bincode_error: bincode::Error) -> Self {
         Error::BincodeError(bincode_error)
@@ -61,7 +55,6 @@ impl std::error::Error for Error {
             Error::HttpError(e) => Some(e),
             Error::ImageError(e) => Some(e),
             Error::JsonError(e) => Some(e),
-            Error::SvgParseError(e) => Some(e),
             Error::BincodeError(e) => Some(e),
         }
     }

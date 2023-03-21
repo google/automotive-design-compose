@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema, NodeQuery};
 
-static CURRENT_VERSION: u32 = 11;
+static CURRENT_VERSION: u32 = 12;
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]

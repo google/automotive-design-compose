@@ -117,6 +117,17 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace TransitionDirection");
 
     tracer
+        .trace_type::<crate::vector_schema::WindingRule>(&samples)
+        .expect("couldn't trace WindingRule");
+    tracer.trace_type::<crate::vector_schema::Path>(&samples).expect("couldn't trace Path");
+    tracer
+        .trace_type::<crate::vector_schema::RenderStyle>(&samples)
+        .expect("couldn't trace RenderStyle");
+    tracer
+        .trace_type::<crate::vector_schema::RenderCommand>(&samples)
+        .expect("couldn't trace RenderCommand");
+
+    tracer
         .trace_type::<crate::toolkit_schema::OverflowDirection>(&samples)
         .expect("couldn't trace OverflowDirection");
     tracer
@@ -125,6 +136,9 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::toolkit_schema::ComponentInfo>(&samples)
         .expect("couldn't trace ComponentInfo");
+    tracer
+        .trace_type::<crate::toolkit_schema::ViewShape>(&samples)
+        .expect("couldn't trace ViewShape");
     tracer
         .trace_type::<crate::toolkit_schema::ViewData>(&samples)
         .expect("couldn't trace ViewData");

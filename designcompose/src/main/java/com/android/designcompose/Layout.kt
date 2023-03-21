@@ -606,7 +606,7 @@ internal fun calcLayoutInfo(
 
     var isAbsolute = false
 
-    if (viewData != null && viewData is ViewData.Rect) {
+    if (viewData != null && viewData is ViewData.Container) {
         for (child in viewData.children) {
             if (child.style.position_type is PositionType.Absolute) isAbsolute = true
         }

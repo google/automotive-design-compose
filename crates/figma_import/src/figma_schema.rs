@@ -16,6 +16,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::vector_schema::WindingRule;
+
 // We use serde to decode Figma's JSON documents into Rust structures.
 // These structures were derived from Figma's public API documentation, which has more information
 // on what each field means: https://www.figma.com/developers/api#files
@@ -244,8 +246,10 @@ pub struct Size {
 pub type Transform = [[Option<f32>; 3]; 2];
 
 #[derive(Deserialize, Serialize, Debug, Clone, Hash)]
+#[serde(rename_all = "camelCase")]
 pub struct Path {
     pub path: String,
+    pub winding_rule: WindingRule,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -675,7 +679,7 @@ fn default_effects() -> Vec<Effect> {
     Vec::new()
 }
 fn default_clips_content() -> bool {
-    true
+    false
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -900,13 +904,6 @@ impl Node {
             Some(&vector.constraints)
         } else {
             None
-        }
-    }
-    pub fn is_text(&self) -> bool {
-        if let NodeData::Text { .. } = &self.data {
-            true
-        } else {
-            false
         }
     }
 }

@@ -138,7 +138,8 @@ val EXAMPLES: ArrayList<Pair<String, @Composable () -> Unit>> =
         Pair("Fill Container", { FillTest() }),
         Pair("CrossAxis Fill", { CrossAxisFillTest() }),
         Pair("Grid Layout Documentation", { GridLayoutDocumentation() }),
-        Pair("Blend Modes", { BlendModeTest() })
+        Pair("Blend Modes", { BlendModeTest() }),
+        Pair("Vector Rendering", { VectorRenderingTest() }),
     )
 
 // TEST Basic Hello World example
@@ -1519,7 +1520,19 @@ fun BlendModeTest() {
     BlendModeTestDoc.MainFrame()
 }
 
-// Main Activity class. Setup access token and font, then build the UI with buttons for each test
+// TEST vector rendering
+@DesignDoc(id = "Z3ucY0wMAbIwZIa6mLEWIK")
+interface VectorRenderingTest {
+    @DesignComponent(node = "#stage") fun MainFrame()
+}
+
+// Test page for vector rendering support
+@Composable
+fun VectorRenderingTest() {
+    VectorRenderingTestDoc.MainFrame()
+}
+
+// Main Activity class. Setup auth token and font, then build the UI with buttons for each test
 // on the left and the currently selected test on the right.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

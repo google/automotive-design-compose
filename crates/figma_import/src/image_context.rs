@@ -13,18 +13,17 @@
 // limitations under the License.
 
 use std::{
-    collections::{hash_map::DefaultHasher, HashMap, HashSet},
+    collections::{HashMap, HashSet},
     io::{Cursor, Read},
     sync::Arc,
     time::Duration,
 };
 
-use crate::figma_schema::{Node, Paint, Transform};
-use crate::{error::Error, svg::RasterizedVector};
+use crate::error::Error;
+use crate::figma_schema::{Paint, Transform};
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
-use std::hash::{Hash, Hasher};
-use usvg::Rect;
+use std::hash::Hash;
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct VectorImageId {
@@ -32,57 +31,6 @@ pub struct VectorImageId {
     fill_hash: u64,
     transforms: Vec<Option<Transform>>,
     paints: Vec<Paint>,
-}
-
-pub struct VectorImageIdBuilder {
-    stroke_hasher: DefaultHasher,
-    fill_hasher: DefaultHasher,
-    transforms: Vec<Option<Transform>>,
-    paints: Vec<Paint>,
-}
-
-impl VectorImageIdBuilder {
-    pub fn new() -> VectorImageIdBuilder {
-        VectorImageIdBuilder {
-            stroke_hasher: DefaultHasher::new(),
-            fill_hasher: DefaultHasher::new(),
-            paints: Vec::new(),
-            transforms: Vec::new(),
-        }
-    }
-
-    pub fn add_node(&mut self, node: &Node) {
-        if let Some(fills) = &node.fill_geometry {
-            for fill in fills {
-                fill.hash(&mut self.fill_hasher);
-            }
-        }
-
-        if let Some(strokes) = &node.stroke_geometry {
-            for stroke in strokes {
-                stroke.hash(&mut self.stroke_hasher);
-            }
-        }
-
-        for paint_fill in &node.fills {
-            self.paints.push(paint_fill.clone());
-        }
-
-        for paint_stroke in &node.strokes {
-            self.paints.push(paint_stroke.clone());
-        }
-
-        self.transforms.push(node.relative_transform.clone());
-    }
-
-    pub fn build(&mut self) -> VectorImageId {
-        VectorImageId {
-            stroke_hash: self.stroke_hasher.finish(),
-            fill_hash: self.fill_hasher.finish(),
-            transforms: self.transforms.clone(),
-            paints: self.paints.clone(),
-        }
-    }
 }
 
 fn http_fetch_image(url: impl ToString) -> Result<(DynamicImage, Vec<u8>), Error> {
@@ -182,8 +130,6 @@ pub struct ImageContext {
     ignored_images: HashSet<String>,
     // URL -> Vector Hash
     image_hash: HashMap<String, VectorImageId>,
-    // Bounding box overrides for clipped vectors
-    bounding_boxes: HashMap<String, Rect>,
     // Images that a remote client has, which we will not bother to fetch again. This is
     // only populated when we're running the web server configuration.
     client_images: HashSet<String>,
@@ -209,7 +155,6 @@ impl ImageContext {
             decoded_image_sizes: HashMap::new(),
             ignored_images: HashSet::new(),
             image_hash: HashMap::new(),
-            bounding_boxes: HashMap::new(),
             client_images: HashSet::new(),
             client_used_images: HashSet::new(),
             referenced_images: HashSet::new(),
@@ -242,59 +187,6 @@ impl ImageContext {
         }
     }
 
-    /// Fetch and decode the image associated with the given Figma node
-    /// that we previously identified as needing to be rendered by Figma to an image,
-    /// returning an ImageKey to use at render time to identify the image, and the
-    /// bounds of the decoded image.
-    ///
-    /// * `node_id`: the Figma node ID to fetch the rendering of.
-    ///
-    /// If we didn't previously identify this node as needing to be rendered to image
-    /// or can't perform the fetch then None is returned.
-    pub fn vector_image(&mut self, node_id: impl ToString, node_name: &String) -> Option<ImageKey> {
-        if self.ignored_images.contains(node_name) {
-            None
-        } else {
-            // Since we rasterize vectors locally, we don't need to do any fetching here.
-            let node_id = node_id.to_string();
-            if self.vectors.contains(&node_id) {
-                self.referenced_images.insert(node_id.clone());
-                self.referenced_images.insert(format!("{}@2x", node_id));
-                self.referenced_images.insert(format!("{}@3x", node_id));
-
-                // Remember that the document still references this image (if the client happens
-                // to already have it). This also ensures that the vector hash for this node will
-                // be sent back to the client and persisted in its image session, which means we
-                // will avoid asking Figma for the SVG on the next iteration (since the client
-                // already has the rasterized result).
-                if self.client_images.contains(&node_id) {
-                    self.client_used_images.insert(node_id.clone());
-                }
-                Some(ImageKey(node_id))
-            } else {
-                None
-            }
-        }
-    }
-
-    /// Add a rasterized vector to this image context
-    pub fn add_rasterized_vector(&mut self, node_id: &String, vector: RasterizedVector) {
-        self.vectors.insert(node_id.clone());
-        self.network_bytes.insert(node_id.clone(), vector.encoded_bytes_1x);
-        self.network_bytes.insert(format!("{}@2x", node_id), vector.encoded_bytes_2x);
-        self.network_bytes.insert(format!("{}@3x", node_id), vector.encoded_bytes_3x);
-
-        self.decoded_image_sizes.insert(node_id.clone(), (vector.width, vector.height));
-        self.bounding_boxes.insert(node_id.clone(), vector.content_box);
-    }
-
-    /// Add node_urls.
-    pub fn add_node_urls(&mut self, node_urls: HashMap<String, Option<String>>) {
-        for (k, v) in node_urls {
-            self.node_urls.insert(k, v);
-        }
-    }
-
     //Return a copy of the current vector map
     // TODO: we shouldn't have HashMap values which are Option<>,
     // The correct approach would be just just not have entries for those keys.
@@ -310,30 +202,9 @@ impl ImageContext {
 
         map.clone()
     }
-
-    pub fn get_bbox(&self, id: &String) -> Option<&Rect> {
-        self.bounding_boxes.get(id)
-    }
-
     /// Update the mapping of Figma imageRefs to URLs
     pub fn update_images(&mut self, images: HashMap<String, Option<String>>) {
         self.images = images;
-    }
-
-    //Add any new vector hashes to the hashmap.
-    pub fn update_image_hash(&mut self, image_hash: &HashMap<String, VectorImageId>) {
-        for (node_id, hash) in image_hash {
-            self.image_hash.insert(node_id.clone(), hash.clone());
-        }
-    }
-
-    //Check if the node has a hash, and if it does check for a match.
-    pub fn image_hash_match(
-        &self,
-        node_id: &String,
-        vector_image_id: Option<&VectorImageId>,
-    ) -> bool {
-        vector_image_id.is_some() && vector_image_id == self.image_hash.get(node_id)
     }
 
     /// Create a EncodedImageMap.
@@ -377,9 +248,6 @@ pub struct ImageContextSession {
     vectors: HashSet<String>,
     // URL -> Vector Hash
     image_hash: HashMap<String, VectorImageId>,
-    // Bounding box overrides for clipped vectors (Rect -> (x, y, width, height))
-    //  since Rect doesn't implement serialization.
-    bounding_boxes: HashMap<String, (f64, f64, f64, f64)>,
     // Decoded image bounds.
     #[serde(default)]
     image_bounds: HashMap<String, (u32, u32)>,
@@ -424,13 +292,6 @@ impl ImageContext {
                 .into_iter()
                 .filter(|(k, _)| client_images.contains(k))
                 .collect(),
-            bounding_boxes: self
-                .bounding_boxes
-                .clone()
-                .into_iter()
-                .filter(|(k, _)| client_images.contains(k))
-                .map(|(k, v)| (k.clone(), (v.x(), v.y(), v.width(), v.height())))
-                .collect(),
             image_bounds,
             client_images: client_images,
         }
@@ -448,11 +309,6 @@ impl ImageContext {
         }
         for (k, v) in session.image_hash {
             self.image_hash.insert(k, v);
-        }
-        for (k, v) in session.bounding_boxes {
-            if let Some(r) = Rect::new(v.0, v.1, v.2, v.3) {
-                self.bounding_boxes.insert(k, r);
-            }
         }
         for k in session.client_images {
             self.client_images.insert(k);

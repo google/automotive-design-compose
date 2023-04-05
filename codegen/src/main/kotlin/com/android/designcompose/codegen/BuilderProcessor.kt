@@ -703,6 +703,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             val defaultOpenLink = if (override) "" else " = null"
             args.add(Pair("openLinkCallback", "OpenLinkCallback?$defaultOpenLink"))
 
+            // Add an optional callback function to be called when the doc is ready to be rendered
+            val defaultDocReady = if (override) "" else " = null"
+            args.add(Pair("designDocReadyCallback", "(() -> Unit)?$defaultDocReady"))
+
             // Add optional key that can be used to uniquely identify this particular instance
             val keyDefault = if (override) "" else " = null"
             args.add(Pair("key", "String?$keyDefault"))
@@ -897,6 +901,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 if (hideDesignSwitcher) "DesignSwitcherPolicy.HIDE"
                 else "DesignSwitcherPolicy.SHOW_IF_ROOT"
             out.appendText("                designSwitcherPolicy = $switchPolicy,\n")
+            out.appendText("                designDocReadyCallback = designDocReadyCallback,\n")
             out.appendText("            )\n")
             out.appendText("        }\n")
             out.appendText("    }\n\n")

@@ -17,9 +17,10 @@
 plugins {
     kotlin("android")
     id("com.android.library")
-    id("org.jetbrains.dokka")
     id("org.mozilla.rust-android-gradle.rust-android")
-    `maven-publish`
+    // Plugins from our buildSrc
+    id("designcompose.conventions.publish.android")
+    id("designcompose.conventions.android-test-devices")
 }
 
 // Seems like everything in the Android Gradle Plugin is incubating so just suppress it all
@@ -47,28 +48,14 @@ android {
             add("META-INF/LGPL2.1")
         }
     }
-    publishing { singleVariant("release") { withJavadocJar() } }
-}
-
-publishing {
-    publications {
-        register<MavenPublication>("release") { afterEvaluate { from(components["release"]) } }
-    }
-    repositories {
-        val DesignComposeMavenRepo: String? by project
-        maven {
-            name = "localDir"
-            url = uri(DesignComposeMavenRepo ?: File(rootProject.buildDir, "designcompose_m2repo"))
-        }
-    }
 }
 
 // Syntax: https://github.com/mozilla/rust-android-gradle
 // Defines the configuation for the Rust JNI build
 cargo {
-    module = "../crates/figma_import"
+    module = "../crates/live_update"
     targetDirectory = "../target"
-    targetIncludes = arrayOf("libfigma_import.so")
+    targetIncludes = arrayOf("liblive_update.so")
     libname = "figma_import"
     targets =
         listOf(
@@ -77,7 +64,11 @@ cargo {
             "x86", // Older Emulated devices, including the ATD Android Test device
             "x86_64", // Most Emulated Android Devices
         )
-    features { defaultAnd(arrayOf("android")) }
+
+    if (hasProperty("liveUpdateJNIReleaseBuild")) {
+        println("Building the release profile of the Live Update JNI")
+        profile = "release"
+    }
 }
 
 android.sourceSets.getByName("androidTest") { jniLibs.srcDir("$buildDir/rustJniLibs/android") }
@@ -92,10 +83,8 @@ tasks.withType<com.android.build.gradle.tasks.MergeSourceSetFolders>().configure
 dependencies {
     api(project(":common"))
     api(project(":annotation"))
-    implementation(libs.androidx.security.crypto.ktx)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.security.crypto.datastore.preferences)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)

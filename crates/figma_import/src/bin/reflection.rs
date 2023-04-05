@@ -38,15 +38,9 @@ fn main() {
             .with_encodings(vec![serde_generate::Encoding::Bincode]);
 
     let installer = serde_generate::java::Installer::new(args.out_dir);
-    installer
-        .install_module(&config, &registry)
-        .expect("couldn't write java sources");
-    installer
-        .install_serde_runtime()
-        .expect("couldn't write runtime");
-    installer
-        .install_bincode_runtime()
-        .expect("couldn't write runtime");
+    installer.install_module(&config, &registry).expect("couldn't write java sources");
+    installer.install_serde_runtime().expect("couldn't write runtime");
+    installer.install_bincode_runtime().expect("couldn't write runtime");
 }
 
 #[cfg(not(feature = "reflection"))]

@@ -51,10 +51,3 @@ mod figma_v1_document_mocks;
 /// languages
 #[cfg(feature = "reflection")]
 pub mod reflection;
-
-#[cfg(feature = "android")]
-mod jni;
-
-#[cfg(debug_assertions)]
-#[cfg(feature = "android")]
-mod test_jni;

@@ -54,9 +54,10 @@ readonly KVM_GID="$(getent group kvm | cut -d: -f3)"
 sudo chown "$USER:$KVM_GID" /dev/kvm
 
 # Install rust
-sudo apt-get install -y curl
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-export PATH="${HOME}/.cargo/bin:${PATH}"
+wget -q https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init
+chmod +x rustup-init
+./rustup-init -q -y
+source "$HOME/.cargo/env"
 
 # Install the rust toolchains needed for the JNI library
 "$DESIGNCOMPOSE_DIR"/install-rust-toolchains.sh

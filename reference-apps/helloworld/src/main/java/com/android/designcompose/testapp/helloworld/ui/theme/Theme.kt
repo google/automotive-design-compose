@@ -39,7 +39,7 @@ private val LightColorPalette =
         onBackground = Color.Black,
         onSurface = Color.Black,
         */
-        )
+    )
 
 @Composable
 fun helloworldTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {

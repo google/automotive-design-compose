@@ -48,9 +48,6 @@ import com.android.designcompose.annotation.PreviewNode
 import com.android.designcompose.reference.media.BrowseItemType
 import com.android.designcompose.reference.media.CurrentlyPlaying
 import com.android.designcompose.reference.media.MediaAdapter
-import com.android.designcompose.reference.media.MediaBrowse
-import com.android.designcompose.reference.media.MediaNowPlaying
-import com.android.designcompose.reference.media.MediaSearch
 import com.android.designcompose.reference.media.NavButtonType
 import com.android.designcompose.reference.media.PlayState
 import com.android.designcompose.reference.media.SourceButtonType
@@ -77,20 +74,7 @@ val notosansFont =
         Font(R.font.notosans_thin, FontWeight.Thin, FontStyle.Normal),
     )
 
-// copybara:strip_begin
-// Media Polestar Y1RCDl5lM55cufMHOGDWsB
-// Aubrey's Polestar Copy 7EK1b6kY4O8hm9yZVobCIu
-// 1 Play & Browse Toggle LFBTnQ2Q6Q73uquPTFf1QK
-// 2 Play & Browse Slide Up OVLxzDqcG4DDUlBNBQHra2
-// 4 One screen fly up wixpXBTwlVD3z2uxQfdSkz
-// 5 Source Tabs l1b6oSUot87HAdOeeRDDJ5
-// 6 Source Left Tabs Pz6BxaRV3LDMrYH4TF3oHM
-// Ralph Media Day Mode Demo AzalfYS8eiyUJ6ILiLygTC
-// MediaGrid Rob Grid Test qTRqxCiCveI8vFrnjlSjMN
 @DesignDoc(id = "7rvM6aVWe0jZCm7jhO9ITx", version = "0.1")
-/* copybara:strip_end_and_replace
-@DesignDoc(id = "REPLACE_WITH_DOCUMENT_ID", version = "0.1")
-*/
 interface CenterDisplay : com.android.designcompose.reference.media.MediaInterface {
     @DesignComponent(node = "#stage", isRoot = true)
     fun MainFrame(
@@ -409,77 +393,3 @@ class MainActivity : ComponentActivity() {
         )
     }
 }
-
-// copybara:strip_begin
-// Stripping the whole preview code out since it's non-functional without the deserialized doc
-// @Preview(widthDp=900, heightDp=1080)
-@Composable
-fun PreviewMediaCompose() {
-    val browse = MediaBrowse()
-    val nowPlaying = MediaNowPlaying()
-    nowPlaying.title = "Times Like These"
-    nowPlaying.artist = "Foo Fighters"
-    nowPlaying.albumArt = { null }
-    nowPlaying.showNext = true
-    nowPlaying.showPause = true
-    nowPlaying.showPrev = true
-    nowPlaying.upNextTitle = "Making A Fire"
-
-    val progress = MediaAdapter.MediaNowPlayingProgress()
-    progress.currentTimeText = "0:66"
-    progress.maxTimeText = "4:25"
-    progress.progressWidth = 0.3F
-
-    val search = MediaSearch()
-
-    CenterDisplayDoc.MainFrame(
-        modifier = Modifier.fillMaxSize().background(Color.Black),
-        title = nowPlaying.title,
-        artist = nowPlaying.artist,
-        album = nowPlaying.album,
-        albumArt = nowPlaying.albumArt,
-        appIcon = null,
-        appName = "Compose Preview",
-        timeElapsed = { progress.currentTimeText },
-        timeDuration = { progress.maxTimeText },
-        progress = { context ->
-            val progressWidth =
-                if (progress.progressWidth.isFinite()) {
-                    progress.progressWidth
-                } else {
-                    0.0f
-                }
-            Row(Modifier.fillMaxHeight().fillMaxWidth(progressWidth)) { context.Content() }
-        },
-        playState = PlayState.Play,
-        onPlayPauseTap = { nowPlaying.playController?.play() },
-        onPrevTap = { nowPlaying.playController?.skipToPrevious() },
-        onNextTap = { nowPlaying.playController?.skipToNext() },
-        showPrev = nowPlaying.showPrev,
-        showNext = nowPlaying.showNext,
-        customActions = nowPlaying.customActions,
-        upNextTitle = nowPlaying.upNextTitle,
-        upNextList = nowPlaying.upNextList,
-        showUpNext = nowPlaying.showUpNext,
-        showErrorFrame = nowPlaying.hasError,
-        errorFrameContents = nowPlaying.errorFrame,
-        nav = browse.navContent,
-        browseSourceList = browse.sourceButtons,
-        browseHeader = browse.headerContent,
-        browseTitle = browse.title,
-        onTapBackBrowse = browse.onTapBack,
-        browseContent = browse.content,
-        showSearch = browse.supportsSearch,
-        showSettings = browse.showSettings,
-        onTapSettings = browse.onTapSettings,
-        searchField = search.searchField,
-        showSearchHelp = search.query.isEmpty(),
-        onClearSearch = { search.searchFunc("") },
-        showClearSearch = search.query.isNotEmpty(),
-        searchShowHeader = search.showHeader,
-        searchTitle = search.title,
-        onTapBackSearch = search.onTapBack,
-        searchResultsContent = search.resultsContent,
-    )
-}
-// copybara:strip_end

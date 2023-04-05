@@ -57,10 +57,7 @@ impl ComponentContext {
             // Some actions (like Back and Close) don't have a destination ID, so we don't do
             // anything with those.
             let destination_node_id = match &reaction.action {
-                Action::Node {
-                    destination_id: Some(id),
-                    ..
-                } => id,
+                Action::Node { destination_id: Some(id), .. } => id,
                 _ => continue,
             };
 

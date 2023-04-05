@@ -20,10 +20,7 @@ struct ConvertError(String);
 impl From<figma_import::Error> for ConvertError {
     fn from(e: figma_import::Error) -> Self {
         eprintln!("Error during Figma conversion: {:?}", e);
-        ConvertError(format!(
-            "Internal Server Error during Figma conversion: {:?}",
-            e
-        ))
+        ConvertError(format!("Internal Server Error during Figma conversion: {:?}", e))
     }
 }
 impl From<bincode::Error> for ConvertError {
@@ -64,11 +61,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     let mut error_list = Vec::new();
     // Convert the requested nodes from the Figma doc.
     let nodes = doc.nodes(
-        &args
-            .nodes
-            .iter()
-            .map(|name| NodeQuery::name(name))
-            .collect(),
+        &args.nodes.iter().map(|name| NodeQuery::name(name)).collect(),
         &Vec::new(),
         &Vec::new(),
         &Vec::new(),

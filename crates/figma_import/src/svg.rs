@@ -121,13 +121,7 @@ pub struct RasterizedVector {
 /// which contains a translation from the clipped SVG to the unclipped image is also
 /// returned.
 pub fn render_svg_without_clip(svg_content: &str) -> Result<RasterizedVector, Error> {
-    let tree = usvg::Tree::from_str(
-        svg_content,
-        &usvg::Options {
-            ..Default::default()
-        }
-        .to_ref(),
-    )?;
+    let tree = usvg::Tree::from_str(svg_content, &usvg::Options { ..Default::default() }.to_ref())?;
 
     let svg_node = tree.svg_node();
 

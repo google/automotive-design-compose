@@ -122,10 +122,7 @@ pub struct FontFeature {
 }
 impl FontFeature {
     pub fn new(tag: &[u8; 4]) -> Self {
-        FontFeature {
-            tag: *tag,
-            enabled: true,
-        }
+        FontFeature { tag: *tag, enabled: true }
     }
 }
 
@@ -169,66 +166,36 @@ pub struct StyledTextRun {
 }
 impl StyledTextRun {
     pub fn new(label: impl ToString) -> StyledTextRun {
-        StyledTextRun {
-            text: label.to_string(),
-            style: Default::default(),
-        }
+        StyledTextRun { text: label.to_string(), style: Default::default() }
     }
     pub fn bold(self) -> Self {
         StyledTextRun {
-            style: TextStyle {
-                font_weight: FontWeight::BOLD,
-                ..self.style
-            },
+            style: TextStyle { font_weight: FontWeight::BOLD, ..self.style },
             text: self.text,
         }
     }
     pub fn italic(self) -> Self {
         StyledTextRun {
-            style: TextStyle {
-                font_style: FontStyle::Italic,
-                ..self.style
-            },
+            style: TextStyle { font_style: FontStyle::Italic, ..self.style },
             text: self.text,
         }
     }
     pub fn size(self, size: f32) -> Self {
-        StyledTextRun {
-            style: TextStyle {
-                font_size: size,
-                ..self.style
-            },
-            text: self.text,
-        }
+        StyledTextRun { style: TextStyle { font_size: size, ..self.style }, text: self.text }
     }
     pub fn fill(self, text_color: Background) -> Self {
-        StyledTextRun {
-            style: TextStyle {
-                text_color,
-                ..self.style
-            },
-            text: self.text,
-        }
+        StyledTextRun { style: TextStyle { text_color, ..self.style }, text: self.text }
     }
     pub fn family(self, family_name: impl ToString) -> Self {
         StyledTextRun {
-            style: TextStyle {
-                font_family: Some(family_name.to_string()),
-                ..self.style
-            },
+            style: TextStyle { font_family: Some(family_name.to_string()), ..self.style },
             text: self.text,
         }
     }
     pub fn feature(self, feature: FontFeature) -> Self {
         let mut font_features = self.style.font_features;
         font_features.push(feature);
-        StyledTextRun {
-            style: TextStyle {
-                font_features,
-                ..self.style
-            },
-            text: self.text,
-        }
+        StyledTextRun { style: TextStyle { font_features, ..self.style }, text: self.text }
     }
 }
 
@@ -398,11 +365,7 @@ pub struct Stroke {
 }
 impl Default for Stroke {
     fn default() -> Self {
-        Stroke {
-            stroke_align: StrokeAlign::Center,
-            stroke_weight: 0.0,
-            strokes: Vec::new(),
-        }
+        Stroke { stroke_align: StrokeAlign::Center, stroke_weight: 0.0, strokes: Vec::new() }
     }
 }
 

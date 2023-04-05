@@ -657,6 +657,7 @@ fun DesignDoc(
     serverParams: DocumentServerParams = DocumentServerParams(),
     setDocId: (String) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
+    designDocReadyCallback: (() -> Unit)? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) =
     DesignDocInternal(
@@ -669,6 +670,7 @@ fun DesignDoc(
         serverParams = serverParams,
         setDocId = setDocId,
         designSwitcherPolicy = designSwitcherPolicy,
+        designDocReadyCallback = designDocReadyCallback,
         parentComponents = parentComponents,
     )
 
@@ -684,6 +686,7 @@ internal fun DesignDocInternal(
     setDocId: (String) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
+    designDocReadyCallback: (() -> Unit)? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) {
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
@@ -743,6 +746,7 @@ internal fun DesignDocInternal(
     if (doc != null) {
         val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)
         if (startFrame != null) {
+            LaunchedEffect(Unit) { if (designDocReadyCallback != null) designDocReadyCallback() }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
                 DesignView(
                     modifier,
@@ -765,9 +769,9 @@ internal fun DesignDocInternal(
                     for (overlay in interactionState.rootOverlays(doc)) {
                         DesignOverlay(overlay.frame_extras.get(), interactionState) {
                             DesignView(
-                                Modifier.clickable {
-                                }, // Consume clicks inside the overlay so that it doesn't close the
+                                // Consume clicks inside the overlay so that it doesn't close the
                                 // overlay
+                                Modifier.clickable {},
                                 overlay,
                                 "",
                                 docId,

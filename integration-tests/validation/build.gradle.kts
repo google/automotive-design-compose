@@ -20,6 +20,8 @@ plugins {
     id("com.google.android.gms.oss-licenses-plugin")
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
+    id("designcompose.conventions.android-test-devices")
+    id("designcompose.features.figma-token-task")
 }
 
 var applicationID = "com.android.designcompose.testapp.validation"
@@ -75,42 +77,6 @@ android {
     }
 
     packagingOptions { resources { excludes.add("/META-INF/*") } }
-
-    testOptions {
-        managedDevices {
-            devices {
-                maybeCreate<com.android.build.api.dsl.ManagedVirtualDevice>("tabletAtdApi30")
-                    .apply {
-                        device = "Nexus 10"
-                        // ATDs currently support only API level 30.
-                        apiLevel = 30
-                        systemImageSource = "aosp-atd"
-                    }
-            }
-            val tabletAllApisGroup = groups.maybeCreate("tabletAllApis")
-            tabletAllApisGroup.targetDevices.add(devices["tabletAtdApi30"])
-            arrayOf(31, 32, 33).forEach { thisApiLevel ->
-                val device =
-                    devices
-                        .maybeCreate<com.android.build.api.dsl.ManagedVirtualDevice>(
-                            "tabletApi${thisApiLevel}"
-                        )
-                        .apply {
-                            device = "Nexus 10"
-                            apiLevel = thisApiLevel
-                            systemImageSource = "google"
-                        }
-                tabletAllApisGroup.targetDevices.add(device)
-            }
-        }
-    }
-}
-
-project.afterEvaluate {
-    tasks.named("tabletAtdApi30DebugAndroidTest").configure { group = "DesignCompose Developer" }
-    tasks.named("tabletAllApisGroupDebugAndroidTest").configure {
-        group = "DesignCompose Developer"
-    }
 }
 
 dependencies {

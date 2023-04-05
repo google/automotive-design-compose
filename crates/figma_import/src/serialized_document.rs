@@ -27,9 +27,7 @@ pub struct SerializedFigmaDocHeader {
 }
 impl SerializedFigmaDocHeader {
     pub fn current() -> SerializedFigmaDocHeader {
-        SerializedFigmaDocHeader {
-            version: CURRENT_VERSION,
-        }
+        SerializedFigmaDocHeader { version: CURRENT_VERSION }
     }
 }
 

@@ -67,7 +67,7 @@ internal class LiveDocSubscriptions(
 object DesignSettings {
     internal var liveUpdatesEnabled = false
     private var parentActivity = WeakReference<ComponentActivity>(null)
-    internal var liveUpdateSettings: LiveUpdateSettings? = null
+    internal var liveUpdateSettings: LiveUpdateSettingsRepository? = null
     private var figmaApiKeyFlow: Flow<String?>? = null
     internal var figmaApiKeyStateFlow: StateFlow<String?>? = null
     internal var isDocumentLive: Flow<Boolean>? = null
@@ -90,7 +90,8 @@ object DesignSettings {
         // LiveUpdateSettings uses androidx.datastore to store the ApiKey. Datastore uses coroutines
         // to store the data, and notifies users of the data via a Kotlin Flows.
         // This sets that all up.
-        liveUpdateSettings = LiveUpdateSettings.getInstance(activity.applicationContext)
+        liveUpdateSettings =
+            LiveUpdateSettingsRepository(activity.applicationContext.liveUpdateSettings)
         figmaApiKeyFlow = liveUpdateSettings!!.settingsUpdateFlow
         figmaApiKeyStateFlow =
             figmaApiKeyFlow!!.stateIn(activity.lifecycleScope, SharingStarted.Eagerly, null)
@@ -120,7 +121,7 @@ object DesignSettings {
                         activity.lifecycleScope.launch(defaultIODispatcher) {
                             // Grab an instance and set the key
                             activity.applicationContext.let {
-                                LiveUpdateSettings.getInstance(it).setFigmaApiKey(newKey)
+                                liveUpdateSettings?.setFigmaApiKey(newKey)
                             }
                         }
                     }
@@ -424,7 +425,7 @@ internal fun DocServer.doc(
             }
         setLiveDoc(targetDoc)
 
-        // Subscribe to live updates, if we have an authentication token.
+        // Subscribe to live updates, if we have an access token.
         var subscription: LiveDocSubscription? = null
         if (!disableLiveMode) {
             subscription = LiveDocSubscription(id, docId, setLiveDoc)
@@ -450,7 +451,7 @@ internal fun DocServer.doc(
         Feedback.assetLoadFail(id, docId)
     }
 
-    // We didn't manage to load the doc. Hopefully there's an auth token
+    // We didn't manage to load the doc. Hopefully there's an access token
     // and it'll get loaded live.
     return null
 }

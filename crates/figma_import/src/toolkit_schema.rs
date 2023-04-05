@@ -72,10 +72,7 @@ pub struct ScrollInfo {
 }
 impl Default for ScrollInfo {
     fn default() -> Self {
-        ScrollInfo {
-            overflow: OverflowDirection::None,
-            paged_scrolling: false,
-        }
+        ScrollInfo { overflow: OverflowDirection::None, paged_scrolling: false }
     }
 }
 
@@ -139,9 +136,7 @@ impl View {
             style,
             frame_extras: None,
             scroll_info: ScrollInfo::default(),
-            data: ViewData::Text {
-                content: text.into(),
-            },
+            data: ViewData::Text { content: text.into() },
             design_absolute_bounding_box,
         }
     }

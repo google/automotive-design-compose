@@ -12,7 +12,6 @@ reflection = ["serde-reflection", "serde-generate", "clap"]
 webserver = ["rocket"]
 http_mock = ["phf"]
 fetch = ["clap"]
-android = ["jni"]
 
 [dependencies]
 "ureq" = "2"
@@ -41,16 +40,9 @@ rocket = { version = "0.5.0-rc.1", features = ["json"], optional = true }
 # logging
 log = "0.4"
 
-# Java interface
-"jni" = { version = "0.20.0", optional = true }
-
 [build-dependencies]
 vergen = { version = "7", default-features = false, features = ["build", "git"] }
 anyhow = "1.0"
-
-
-[lib]
-crate-type = ["rlib", "cdylib"]
 
 [[bin]]
 name = "reflection"

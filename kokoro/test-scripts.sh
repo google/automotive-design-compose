@@ -210,6 +210,19 @@ dc_build_tutorial() {
     cp "$DESIGNCOMPOSE_DIR/reference-apps/tutorial/build/outputs/apk/release/tutorial-release.apk" "${KOKORO_ARTIFACTS_DIR}/artifacts/"
 }
 
+dc_build_figma_tool() {
+    TOOL_NAME="$1"
+    cd "$DESIGNCOMPOSE_DIR/support-figma/$TOOL_NAME"|| exit
+    npm install
+    npm run build
+    tar czvf "${KOKORO_ARTIFACTS_DIR}/artifacts/figma-$TOOL_NAME.tgz" manifest.json ui.html code.js
+}
+
+dc_build_figma_tools() {
+    dc_build_figma_tool extended-layout-plugin
+    dc_build_figma_tool auto-content-preview-widget
+}
+
 ###### Scripts for the individual jobs. Each of the below are called by different Kokoro Jobs
 
 # Tests for the main project, does not use AAOS Unbundled
@@ -227,9 +240,13 @@ dc_aaos_apps_job() {
 
 # The release job
 dc_release_job() {
+    export ORG_GRADLE_PROJECT_liveUpdateJNIReleaseBuild=true
+    dc_build_figma_tools
     dc_build_designcompose_m2repo
     dc_build_mediacompose_standalone
     dc_build_tutorial
+    cp "$DESIGNCOMPOSE_DIR/reference-apps/tutorial/DesignComposeTutorial.fig" "${KOKORO_ARTIFACTS_DIR}/artifacts"
+    unset ORG_GRADLE_PROJECT_liveUpdateJNIReleaseBuild
 }
 
 # Test the results release job

@@ -270,48 +270,13 @@ impl From<TriggerJson> for Trigger {
 impl From<EasingJson> for Bezier {
     fn from(json: EasingJson) -> Self {
         match json {
-            EasingJson::EaseIn => Self {
-                x1: 0.12,
-                y1: 0.0,
-                x2: 0.39,
-                y2: 0.0,
-            },
-            EasingJson::EaseOut => Self {
-                x1: 0.61,
-                y1: 1.0,
-                x2: 0.88,
-                y2: 1.0,
-            },
-            EasingJson::EaseInAndOut => Self {
-                x1: 0.37,
-                y1: 0.0,
-                x2: 0.63,
-                y2: 1.0,
-            },
-            EasingJson::Linear => Self {
-                x1: 0.0,
-                y1: 0.0,
-                x2: 1.0,
-                y2: 1.0,
-            },
-            EasingJson::EaseInBack => Self {
-                x1: 0.36,
-                y1: 0.0,
-                x2: 0.66,
-                y2: -0.56,
-            },
-            EasingJson::EaseOutBack => Self {
-                x1: 0.34,
-                y1: 1.56,
-                x2: 0.64,
-                y2: 1.0,
-            },
-            EasingJson::EaseInAndOutBack => Self {
-                x1: 0.68,
-                y1: -0.6,
-                x2: 0.32,
-                y2: 1.6,
-            },
+            EasingJson::EaseIn => Self { x1: 0.12, y1: 0.0, x2: 0.39, y2: 0.0 },
+            EasingJson::EaseOut => Self { x1: 0.61, y1: 1.0, x2: 0.88, y2: 1.0 },
+            EasingJson::EaseInAndOut => Self { x1: 0.37, y1: 0.0, x2: 0.63, y2: 1.0 },
+            EasingJson::Linear => Self { x1: 0.0, y1: 0.0, x2: 1.0, y2: 1.0 },
+            EasingJson::EaseInBack => Self { x1: 0.36, y1: 0.0, x2: 0.66, y2: -0.56 },
+            EasingJson::EaseOutBack => Self { x1: 0.34, y1: 1.56, x2: 0.64, y2: 1.0 },
+            EasingJson::EaseInAndOutBack => Self { x1: 0.68, y1: -0.6, x2: 0.32, y2: 1.6 },
             EasingJson::CustomCubicBezier { bezier } => bezier,
         }
     }
@@ -321,48 +286,14 @@ impl From<EasingJson> for Bezier {
 /// https://www.figma.com/plugin-docs/api/Transition/
 #[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq)]
 pub enum Transition {
-    Dissolve {
-        easing: Bezier,
-        duration: f32,
-    },
-    SmartAnimate {
-        easing: Bezier,
-        duration: f32,
-    },
-    ScrollAnimate {
-        easing: Bezier,
-        duration: f32,
-    },
-    MoveIn {
-        easing: Bezier,
-        duration: f32,
-        direction: TransitionDirection,
-        match_layers: bool,
-    },
-    MoveOut {
-        easing: Bezier,
-        duration: f32,
-        direction: TransitionDirection,
-        match_layers: bool,
-    },
-    Push {
-        easing: Bezier,
-        duration: f32,
-        direction: TransitionDirection,
-        match_layers: bool,
-    },
-    SlideIn {
-        easing: Bezier,
-        duration: f32,
-        direction: TransitionDirection,
-        match_layers: bool,
-    },
-    SlideOut {
-        easing: Bezier,
-        duration: f32,
-        direction: TransitionDirection,
-        match_layers: bool,
-    },
+    Dissolve { easing: Bezier, duration: f32 },
+    SmartAnimate { easing: Bezier, duration: f32 },
+    ScrollAnimate { easing: Bezier, duration: f32 },
+    MoveIn { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
+    MoveOut { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
+    Push { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
+    SlideIn { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
+    SlideOut { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
 }
 impl Transition {
     /// Return the duration of the transiton (in seconds) (XXX: Make a Duration?)
@@ -395,73 +326,30 @@ impl Transition {
 impl From<TransitionJson> for Transition {
     fn from(json: TransitionJson) -> Self {
         match json {
-            TransitionJson::Dissolve { easing, duration } => Self::Dissolve {
-                easing: easing.into(),
-                duration,
-            },
-            TransitionJson::SmartAnimate { easing, duration } => Self::SmartAnimate {
-                easing: easing.into(),
-                duration,
-            },
-            TransitionJson::ScrollAnimate { easing, duration } => Self::ScrollAnimate {
-                easing: easing.into(),
-                duration,
-            },
-            TransitionJson::MoveIn {
-                easing,
-                duration,
-                direction,
-                match_layers,
-            } => Self::MoveIn {
-                easing: easing.into(),
-                duration,
-                direction,
-                match_layers,
-            },
-            TransitionJson::MoveOut {
-                easing,
-                duration,
-                direction,
-                match_layers,
-            } => Self::MoveOut {
-                easing: easing.into(),
-                duration,
-                direction,
-                match_layers,
-            },
-            TransitionJson::Push {
-                easing,
-                duration,
-                direction,
-                match_layers,
-            } => Self::Push {
-                easing: easing.into(),
-                duration,
-                direction,
-                match_layers,
-            },
-            TransitionJson::SlideIn {
-                easing,
-                duration,
-                direction,
-                match_layers,
-            } => Self::SlideIn {
-                easing: easing.into(),
-                duration,
-                direction,
-                match_layers,
-            },
-            TransitionJson::SlideOut {
-                easing,
-                duration,
-                direction,
-                match_layers,
-            } => Self::SlideOut {
-                easing: easing.into(),
-                duration,
-                direction,
-                match_layers,
-            },
+            TransitionJson::Dissolve { easing, duration } => {
+                Self::Dissolve { easing: easing.into(), duration }
+            }
+            TransitionJson::SmartAnimate { easing, duration } => {
+                Self::SmartAnimate { easing: easing.into(), duration }
+            }
+            TransitionJson::ScrollAnimate { easing, duration } => {
+                Self::ScrollAnimate { easing: easing.into(), duration }
+            }
+            TransitionJson::MoveIn { easing, duration, direction, match_layers } => {
+                Self::MoveIn { easing: easing.into(), duration, direction, match_layers }
+            }
+            TransitionJson::MoveOut { easing, duration, direction, match_layers } => {
+                Self::MoveOut { easing: easing.into(), duration, direction, match_layers }
+            }
+            TransitionJson::Push { easing, duration, direction, match_layers } => {
+                Self::Push { easing: easing.into(), duration, direction, match_layers }
+            }
+            TransitionJson::SlideIn { easing, duration, direction, match_layers } => {
+                Self::SlideIn { easing: easing.into(), duration, direction, match_layers }
+            }
+            TransitionJson::SlideOut { easing, duration, direction, match_layers } => {
+                Self::SlideOut { easing: easing.into(), duration, direction, match_layers }
+            }
         }
     }
 }
@@ -526,10 +414,7 @@ pub struct Reaction {
 }
 impl From<ReactionJson> for Reaction {
     fn from(json: ReactionJson) -> Self {
-        Reaction {
-            action: json.action.into(),
-            trigger: json.trigger.into(),
-        }
+        Reaction { action: json.action.into(), trigger: json.trigger.into() }
     }
 }
 
@@ -618,25 +503,14 @@ fn parse_frame_extras() {
     assert_eq!(def.number_of_fixed_children, 0);
     assert_eq!(def.overlay_position_type, OverlayPositionType::Center);
     assert_eq!(def.overlay_background, OverlayBackground { color: None });
-    assert_eq!(
-        def.overlay_background_interaction,
-        OverlayBackgroundInteraction::None
-    );
+    assert_eq!(def.overlay_background_interaction, OverlayBackgroundInteraction::None);
 
     assert_eq!(click_to_close.number_of_fixed_children, 0);
-    assert_eq!(
-        click_to_close.overlay_position_type,
-        OverlayPositionType::BottomCenter
-    );
+    assert_eq!(click_to_close.overlay_position_type, OverlayPositionType::BottomCenter);
     assert_eq!(
         click_to_close.overlay_background,
         OverlayBackground {
-            color: Some(figma_schema::FigmaColor {
-                r: 0.0,
-                g: 0.0,
-                b: 0.0,
-                a: 0.25
-            })
+            color: Some(figma_schema::FigmaColor { r: 0.0, g: 0.0, b: 0.0, a: 0.25 })
         }
     );
     assert_eq!(
@@ -644,10 +518,7 @@ fn parse_frame_extras() {
         OverlayBackgroundInteraction::CloseOnClickOutside
     );
 
-    assert_eq!(
-        def,
-        bincode::deserialize(bincode::serialize(&def).unwrap().as_slice()).unwrap()
-    );
+    assert_eq!(def, bincode::deserialize(bincode::serialize(&def).unwrap().as_slice()).unwrap());
     assert_eq!(
         click_to_close,
         bincode::deserialize(bincode::serialize(&click_to_close).unwrap().as_slice()).unwrap()

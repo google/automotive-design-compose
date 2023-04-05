@@ -358,11 +358,7 @@ fn compute_background(
         // Figma's image transform is inverted from what most graphics APIs expect, so invert
         // it here to avoid doing matrix inversions at render time.
         let mut transform = image_transform
-            .map(|tx| {
-                convert_transform(&tx)
-                    .inverse()
-                    .unwrap_or(LayoutTransform::identity())
-            })
+            .map(|tx| convert_transform(&tx).inverse().unwrap_or(LayoutTransform::identity()))
             .unwrap_or(LayoutTransform::identity());
 
         // Figma has already applied the rotation in "stretch" mode.
@@ -719,11 +715,7 @@ fn visit_node(
     // Apply the extra auto layout properties.
     if let Some(extended_auto_layout) = extended_auto_layout {
         let layout = extended_auto_layout.layout;
-        style.flex_wrap = if extended_auto_layout.wrap {
-            FlexWrap::Wrap
-        } else {
-            FlexWrap::NoWrap
-        };
+        style.flex_wrap = if extended_auto_layout.wrap { FlexWrap::Wrap } else { FlexWrap::NoWrap };
         if layout.is_grid() {
             let cld = &extended_auto_layout.common_data;
             let gld = &extended_auto_layout.grid_layout_data;
@@ -873,11 +865,7 @@ fn visit_node(
 
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {
-        style.overflow = if frame.clips_content {
-            Overflow::Hidden
-        } else {
-            Overflow::Visible
-        };
+        style.overflow = if frame.clips_content { Overflow::Hidden } else { Overflow::Visible };
         // Don't overwrite scroll behavior if it was already set from grid layout
         if scroll_info.overflow == OverflowDirection::None {
             scroll_info.overflow = frame.overflow_direction;
@@ -922,11 +910,7 @@ fn visit_node(
             // It's an absolute value in pixels.
             LineHeightUnit::Pixels => LineHeight::Pixels(text_style.line_height_px),
         };
-        style.opacity = if node.opacity < 1.0 {
-            Some(node.opacity)
-        } else {
-            None
-        };
+        style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
         let convert_opentype_flags = |flags: &HashMap<String, u32>| -> Vec<FontFeature> {
             let mut font_features = Vec::new();
             for (flag, value) in flags {
@@ -934,10 +918,7 @@ fn visit_node(
                 let flag_bytes = flag_ascii.as_bytes();
                 if flag_bytes.len() == 4 {
                     let tag = [flag_bytes[0], flag_bytes[1], flag_bytes[2], flag_bytes[3]];
-                    font_features.push(FontFeature {
-                        tag: tag,
-                        enabled: *value == 1,
-                    });
+                    font_features.push(FontFeature { tag: tag, enabled: *value == 1 });
                 } else {
                     println!("Unsupported OpenType flag: {}", flag)
                 }
@@ -1025,9 +1006,7 @@ fn visit_node(
                 }
 
                 let sub_style = last_style.map_or(&sub_style, |id| {
-                    style_override_table
-                        .get(&id.to_string())
-                        .unwrap_or(&sub_style)
+                    style_override_table.get(&id.to_string()).unwrap_or(&sub_style)
                 });
 
                 // Use the color from the substyle fills, or fall back to the style color. This is pretty clunky.
@@ -1181,24 +1160,15 @@ fn visit_node(
     }
 
     for fill in node.fills.iter().filter(|paint| paint.visible) {
-        style
-            .background
-            .push(compute_background(fill, images, &node.name));
+        style.background.push(compute_background(fill, images, &node.name));
     }
 
     for stroke in node.strokes.iter().filter(|paint| paint.visible) {
-        style
-            .stroke
-            .strokes
-            .push(compute_background(stroke, images, &node.name));
+        style.stroke.strokes.push(compute_background(stroke, images, &node.name));
     }
 
     // Copy out the common styles from frames and supported content.
-    style.opacity = if node.opacity < 1.0 {
-        Some(node.opacity)
-    } else {
-        None
-    };
+    style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
     if let Some(stroke_weight) = node.stroke_weight {
         style.stroke.stroke_weight = stroke_weight;
     }
@@ -1212,12 +1182,7 @@ fn visit_node(
         style.border_radius = [border_radius, border_radius, border_radius, border_radius];
     }
     if let Some(border_radii) = node.rectangle_corner_radii {
-        style.border_radius = [
-            border_radii[0],
-            border_radii[1],
-            border_radii[3],
-            border_radii[2],
-        ];
+        style.border_radius = [border_radii[0], border_radii[1], border_radii[3], border_radii[2]];
     }
 
     for effect in &node.effects {
@@ -1226,44 +1191,38 @@ fn visit_node(
         }
         match effect.effect_type {
             EffectType::DropShadow => {
-                style
-                    .box_shadow
-                    .push(crate::toolkit_style::BoxShadow::Outset {
-                        blur_radius: effect.radius,
-                        spread_radius: effect.spread,
-                        color: crate::Color::from_f32s(
-                            effect.color.r,
-                            effect.color.g,
-                            effect.color.b,
-                            effect.color.a,
-                        ),
-                        offset: (effect.offset.x(), effect.offset.y()),
-                        shadow_box: ShadowBox::StrokeBox,
-                    });
+                style.box_shadow.push(crate::toolkit_style::BoxShadow::Outset {
+                    blur_radius: effect.radius,
+                    spread_radius: effect.spread,
+                    color: crate::Color::from_f32s(
+                        effect.color.r,
+                        effect.color.g,
+                        effect.color.b,
+                        effect.color.a,
+                    ),
+                    offset: (effect.offset.x(), effect.offset.y()),
+                    shadow_box: ShadowBox::StrokeBox,
+                });
             }
             EffectType::InnerShadow => {
-                style
-                    .box_shadow
-                    .push(crate::toolkit_style::BoxShadow::Inset {
-                        blur_radius: effect.radius,
-                        spread_radius: effect.spread,
-                        color: crate::Color::from_f32s(
-                            effect.color.r,
-                            effect.color.g,
-                            effect.color.b,
-                            effect.color.a,
-                        ),
-                        offset: (effect.offset.x(), effect.offset.y()),
-                        shadow_box: ShadowBox::StrokeBox,
-                    });
+                style.box_shadow.push(crate::toolkit_style::BoxShadow::Inset {
+                    blur_radius: effect.radius,
+                    spread_radius: effect.spread,
+                    color: crate::Color::from_f32s(
+                        effect.color.r,
+                        effect.color.g,
+                        effect.color.b,
+                        effect.color.a,
+                    ),
+                    offset: (effect.offset.x(), effect.offset.y()),
+                    shadow_box: ShadowBox::StrokeBox,
+                });
             }
             EffectType::LayerBlur => {
                 style.filter.push(FilterOp::Blur(effect.radius / 2.0));
             }
             EffectType::BackgroundBlur => {
-                style
-                    .backdrop_filter
-                    .push(FilterOp::Blur(effect.radius / 2.0));
+                style.backdrop_filter.push(FilterOp::Blur(effect.radius / 2.0));
             }
         }
     }
@@ -1351,11 +1310,8 @@ pub fn find_unrenderable_nodes(
     // "must_be_imaged": true for vector nodes. If a child is "must_be_imaged" and a parent is "cant_be_imaged" then
     // the child gets added to the list to be imaged.
     let mut cant_be_imaged = {
-        let has_layout = if let Some(frame) = component.frame() {
-            !frame.layout_mode.is_none()
-        } else {
-            false
-        };
+        let has_layout =
+            if let Some(frame) = component.frame() { !frame.layout_mode.is_none() } else { false };
 
         let mut has_customization = false;
         for node_name in node_customizations {
@@ -1462,16 +1418,14 @@ pub fn try_generate_line_svg(node: &Node) -> Option<String> {
     if node.fills.iter().filter(|fill| fill.visible).count() > 0 {
         return None;
     }
-    let (opacity, color) = if let Some(Paint {
-        opacity,
-        data: PaintData::Solid { color },
-        ..
-    }) = node.strokes.iter().filter(|stroke| stroke.visible).next()
-    {
-        (*opacity, *color)
-    } else {
-        return None;
-    };
+    let (opacity, color) =
+        if let Some(Paint { opacity, data: PaintData::Solid { color }, .. }) =
+            node.strokes.iter().filter(|stroke| stroke.visible).next()
+        {
+            (*opacity, *color)
+        } else {
+            return None;
+        };
 
     // Only do this when we have stroke geometry.
     let path = if let Some(stroke_geometry) = &node.stroke_geometry {

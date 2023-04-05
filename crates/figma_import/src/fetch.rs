@@ -77,10 +77,7 @@ pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate:
         // a new copy.
         let mut error_list: Vec<String> = vec![];
         let nodes = doc.nodes(
-            &rq.queries
-                .iter()
-                .map(|name| NodeQuery::name(name))
-                .collect(),
+            &rq.queries.iter().map(|name| NodeQuery::name(name)).collect(),
             &rq.ignored_images
                 .iter()
                 .map(|imgref| (NodeQuery::name(imgref.node), imgref.images.clone()))

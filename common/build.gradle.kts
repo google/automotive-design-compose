@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     `java-library`
-    `maven-publish`
+    id("designcompose.conventions.publish.jvm")
 }
 
 // Serdegen related code
@@ -59,19 +59,6 @@ tasks.withType<KtfmtCheckTask> { dependsOn(genCodeTask) }
 project.afterEvaluate { serdeGenDir.get().asFile.mkdirs() }
 
 sourceSets { main { java { srcDir(serdeGenDir) } } }
-
-publishing {
-    publications {
-        register<MavenPublication>("release") { afterEvaluate { from(components["kotlin"]) } }
-    }
-    repositories {
-        val DesignComposeMavenRepo: String? by project
-        maven {
-            name = "localDir"
-            url = uri(DesignComposeMavenRepo ?: File(rootProject.buildDir, "designcompose_m2repo"))
-        }
-    }
-}
 
 dependencies {
     api(libs.javax.annotationApi)

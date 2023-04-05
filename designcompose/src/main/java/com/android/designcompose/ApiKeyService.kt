@@ -29,13 +29,15 @@ import kotlinx.coroutines.launch
 // To set a key:
 // adb shell am startservice -a setFigmaKey -n \
 // <YOUR_PACKAGE_NAME/com.android.designcompose.ApiKeyService -e ApiKey \
-// $FIGMA_AUTH_TOKEN
+// $FIGMA_ACCESS_TOKEN
 
 // Example for HelloWorld:
 // adb shell am startservice -a setFigmaKey -n
 // com.android.designcompose.testapp.helloworld/com.android.designcompose.ApiKeyService -e ApiKey
-// $FIGMA_AUTH_TOKEN
+// $FIGMA_ACCESS_TOKEN
 
+// Need to rename all of this to use "Access Token" instead of "Auth Key". This will match Figma's
+// terminology: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens
 public var ACTION_SET_API_KEY = "setApiKey"
 public var EXTRA_SET_API_KEY = "ApiKey"
 

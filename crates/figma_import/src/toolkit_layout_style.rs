@@ -217,9 +217,6 @@ impl Default for Rect<Dimension> {
 
 impl Default for Size<Dimension> {
     fn default() -> Self {
-        Self {
-            width: Dimension::Auto,
-            height: Dimension::Auto,
-        }
+        Self { width: Dimension::Auto, height: Dimension::Auto }
     }
 }

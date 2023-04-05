@@ -88,9 +88,7 @@ impl VectorImageIdBuilder {
 fn http_fetch_image(url: impl ToString) -> Result<(DynamicImage, Vec<u8>), Error> {
     let url = url.to_string();
 
-    let body = ureq::get(url.as_str())
-        .timeout(Duration::from_secs(90))
-        .call()?;
+    let body = ureq::get(url.as_str()).timeout(Duration::from_secs(90)).call()?;
 
     let mut response_bytes: Vec<u8> = Vec::new();
     body.into_reader().read_to_end(&mut response_bytes)?;
@@ -125,10 +123,8 @@ fn lookup_or_fetch(
                 Ok((dynamic_image, fetched_bytes)) => {
                     decoded_image_sizes
                         .insert(url.clone(), (dynamic_image.width(), dynamic_image.height()));
-                    network_bytes.insert(
-                        url.clone(),
-                        Arc::new(serde_bytes::ByteBuf::from(fetched_bytes)),
-                    );
+                    network_bytes
+                        .insert(url.clone(), Arc::new(serde_bytes::ByteBuf::from(fetched_bytes)));
                     return true;
                 }
                 Err(e) => {
@@ -239,9 +235,7 @@ impl ImageContext {
                 &mut self.network_bytes,
                 url,
             ) {
-                url.unwrap_or(&None)
-                    .as_ref()
-                    .map(|url_string| ImageKey(url_string.clone()))
+                url.unwrap_or(&None).as_ref().map(|url_string| ImageKey(url_string.clone()))
             } else {
                 None
             }
@@ -286,17 +280,12 @@ impl ImageContext {
     /// Add a rasterized vector to this image context
     pub fn add_rasterized_vector(&mut self, node_id: &String, vector: RasterizedVector) {
         self.vectors.insert(node_id.clone());
-        self.network_bytes
-            .insert(node_id.clone(), vector.encoded_bytes_1x);
-        self.network_bytes
-            .insert(format!("{}@2x", node_id), vector.encoded_bytes_2x);
-        self.network_bytes
-            .insert(format!("{}@3x", node_id), vector.encoded_bytes_3x);
+        self.network_bytes.insert(node_id.clone(), vector.encoded_bytes_1x);
+        self.network_bytes.insert(format!("{}@2x", node_id), vector.encoded_bytes_2x);
+        self.network_bytes.insert(format!("{}@3x", node_id), vector.encoded_bytes_3x);
 
-        self.decoded_image_sizes
-            .insert(node_id.clone(), (vector.width, vector.height));
-        self.bounding_boxes
-            .insert(node_id.clone(), vector.content_box);
+        self.decoded_image_sizes.insert(node_id.clone(), (vector.width, vector.height));
+        self.bounding_boxes.insert(node_id.clone(), vector.content_box);
     }
 
     /// Add node_urls.

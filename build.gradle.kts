@@ -87,9 +87,6 @@ subprojects {
         sourceCompatibility = JavaVersion.VERSION_1_8.toString()
         targetCompatibility = JavaVersion.VERSION_1_8.toString()
     }
-    afterEvaluate {
-        group = "com.android.designcompose"
-        version = libs.versions.designcompose.get()
-    }
+
     tasks.withType<KspTask>() { group = "DesignCompose Developer" }
 }

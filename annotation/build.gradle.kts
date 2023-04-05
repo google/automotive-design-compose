@@ -17,18 +17,5 @@
 plugins {
     kotlin("jvm")
     `java-library`
-    `maven-publish`
-}
-
-publishing {
-    publications {
-        register<MavenPublication>("release") { afterEvaluate { from(components["kotlin"]) } }
-    }
-    repositories {
-        val DesignComposeMavenRepo: String? by project
-        maven {
-            name = "localDir"
-            url = uri(DesignComposeMavenRepo ?: File(rootProject.buildDir, "designcompose_m2repo"))
-        }
-    }
+    id("designcompose.conventions.publish.jvm")
 }

@@ -35,6 +35,6 @@ internal object LiveUpdateJni {
     }
 
     init {
-        System.loadLibrary("figma_import")
+        System.loadLibrary("live_update")
     }
 }

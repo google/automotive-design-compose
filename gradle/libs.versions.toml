@@ -4,26 +4,28 @@ android-car-ui = "2.3.0"
 android-gms-ossLicenses = "17.0.0"
 android-gms-ossLicensesPlugin = "0.10.6"
 android-gms-strictVersionMatcher = "1.2.4"
+# @keep Issue with Rust Android Gradle plugin
 android-gradlePlugin = "7.3.1"
 androidx-activity-compose = "1.6.1"
 androidx-appcompat = "1.6.1"
 androidx-compose-bom = "2023.01.00"
-androidx-compose-compiler = "1.4.0"
+# @keep Non-`dependency` constant
+androidx-compose-compiler = "1.4.3"
 androidx-constraintlayout = "2.1.4"
 androidx-legacy-support-v4 = "1.0.0"
 androidx-lifecycle = "2.6.0"
 androidx-media = "1.6.0"
 androidx-test-espresso = "3.5.1"
 androidx-test-ext-junit = "1.1.5"
-# @keep SDK Version
+# @keep Non-`dependency` constant
 appMinSdk = "30"
 appauth = "0.11.1"
-# @keep SDK Version
+# @keep Non-`dependency` constant
 compileSdk = "33"
 datastoreCore = "1.0.0"
 datastorePreferences = "1.0.0"
 designcompose = "0.18.0"
-dokka = "1.7.20"
+dokka = "1.8.10"
 google-cloud-sql = "1.4.4"
 google-crypto-tink = "1.7.0"
 google-httpClient = "1.42.3"
@@ -35,13 +37,13 @@ hikariCP = "5.0.1"
 javax-annotation = "1.3.2"
 junit = "4.13.2"
 # @pin - Compose Compiler doesn't support the latest Kotlin version yet
-kotlin = "1.8.0"
+kotlin = "1.8.10"
 kotlinxCoroutinesTest = "1.6.4"
 # @pin - KSP version depends on  Kotlin version
-ksp = "1.8.0-1.0.9"
-ktfmt = "0.11.0"
+ksp = "1.8.10-1.0.9"
+ktfmt = "0.12.0"
 material = "1.8.0"
-# @keep SDK Version
+# @keep Non-`dependency` constant
 minSdk = "26"
 mockito = "5.1.1"
 mockkAgent = "1.13.4"
@@ -53,12 +55,10 @@ protobuf-javalite = "3.0.0"
 protobufGradlePlugin = "0.8.19"
 rules = "1.5.0"
 rustAndroidGradle = "0.9.3"
-# @keep SDK Version
-securityCryptoDatastorePreferences = "1.0.0-beta01"
-securityCryptoKtx = "1.1.0-alpha05"
+# @keep Non-`dependency` constant
 targetSdk = "33"
-versionCataLogUpdatePlugin = "0.7.0"
-versionsPlugin = "0.45.0"
+versionCataLogUpdatePlugin = "0.8.0"
+versionsPlugin = "0.46.0"
 
 [libraries]
 accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanist" }
@@ -91,7 +91,6 @@ androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-kt
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-media = { module = "androidx.media:media", version.ref = "androidx-media" }
 androidx-rules = { module = "androidx.test:rules", version.ref = "rules" }
-androidx-security-crypto-ktx = { module = "androidx.security:security-crypto-ktx", version.ref = "securityCryptoKtx" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
 appauth = { module = "net.openid:appauth", version.ref = "appauth" }
@@ -123,13 +122,11 @@ mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockkAndroid
 mysql-connectorJava = { module = "mysql:mysql-connector-java", version.ref = "mysql" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 protobuf-protocGenJavalite = { module = "com.google.protobuf:protoc-gen-javalite", version.ref = "protobuf-javalite" }
-security-crypto-datastore-preferences = { module = "io.github.osipxd:security-crypto-datastore-preferences", version.ref = "securityCryptoDatastorePreferences" }
 zaxxer-hikariCP = { module = "com.zaxxer:HikariCP", version.ref = "hikariCP" }
 
 [plugins]
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
-protobuf = { id = "com.google.protobuf", version.ref = "protobufGradlePlugin" }
 rustAndroidGradle = { id = "org.mozilla.rust-android-gradle.rust-android", version.ref = "rustAndroidGradle" }
 strictVersionMatcher = { id = "com.google.android.gms.strict-version-matcher-plugin", version.ref = "android-gms-strictVersionMatcher" }
 versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCataLogUpdatePlugin" }

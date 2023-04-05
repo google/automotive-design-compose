@@ -266,11 +266,7 @@ impl Document {
             }
         }
 
-        if let NodeData::Instance {
-            frame: _,
-            component_id,
-        } = &node.data
-        {
+        if let NodeData::Instance { frame: _, component_id } = &node.data {
             // If the component_id is in id_index, we know it's in this document so we don't
             // need to do anything. If it isn't, it's in a different doc, so proceed to
             // download data for it
@@ -745,9 +741,7 @@ impl Document {
             let unrenderable_ids: Vec<String> = unrenderable
                 .iter()
                 .filter(|node_id| {
-                    !self
-                        .image_context
-                        .image_hash_match(node_id, unrenderable_hashes.get(*node_id))
+                    !self.image_context.image_hash_match(node_id, unrenderable_hashes.get(*node_id))
                 })
                 .cloned()
                 .collect();
@@ -853,8 +847,7 @@ impl Document {
                     // bounds information.
                     match maybe_vector_image {
                         Ok(vector_image) => {
-                            self.image_context
-                                .add_rasterized_vector(node_id, vector_image);
+                            self.image_context.add_rasterized_vector(node_id, vector_image);
                         }
                         Err(e) => {
                             println!("Unable to extract bounds and rasterize SVG content for vector node {:#?}: {}", node_id, e);
@@ -934,10 +927,7 @@ impl Document {
         // why an action isn't working.
         let missing_nodes = component_context.missing_nodes();
         if !missing_nodes.is_empty() {
-            println!(
-                "Figma: Unable to find nodes referenced by interactions: {:?}",
-                missing_nodes
-            );
+            println!("Figma: Unable to find nodes referenced by interactions: {:?}", missing_nodes);
             println!("       These interactions won't work.");
         }
         Ok(views)

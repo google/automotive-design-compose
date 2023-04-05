@@ -45,9 +45,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::toolkit_layout_style::Display>(&samples)
         .expect("couldn't trace Display");
-    tracer
-        .trace_type::<crate::toolkit_style::FilterOp>(&samples)
-        .expect("couldn't trace FilterOp");
+    tracer.trace_type::<crate::toolkit_style::FilterOp>(&samples).expect("couldn't trace FilterOp");
     tracer
         .trace_type::<crate::toolkit_layout_style::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
@@ -100,12 +98,8 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::ViewStyle>(&samples)
         .expect("couldn't trace ViewStyle");
 
-    tracer
-        .trace_type::<crate::reaction_schema::Action>(&samples)
-        .expect("couldn't trace Action");
-    tracer
-        .trace_type::<crate::reaction_schema::Trigger>(&samples)
-        .expect("couldn't trace Trigger");
+    tracer.trace_type::<crate::reaction_schema::Action>(&samples).expect("couldn't trace Action");
+    tracer.trace_type::<crate::reaction_schema::Trigger>(&samples).expect("couldn't trace Trigger");
     tracer
         .trace_type::<crate::reaction_schema::Transition>(&samples)
         .expect("couldn't trace transition");
@@ -134,28 +128,20 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::toolkit_schema::ViewData>(&samples)
         .expect("couldn't trace ViewData");
-    tracer
-        .trace_type::<crate::toolkit_schema::View>(&samples)
-        .expect("couldn't trace View");
+    tracer.trace_type::<crate::toolkit_schema::View>(&samples).expect("couldn't trace View");
 
     tracer
         .trace_type::<crate::image_context::EncodedImageMap>(&samples)
         .expect("couldn't trace EncodedImageMap");
-    tracer
-        .trace_type::<crate::NodeQuery>(&samples)
-        .expect("couldn't trace NodeQuery");
+    tracer.trace_type::<crate::NodeQuery>(&samples).expect("couldn't trace NodeQuery");
     tracer
         .trace_type::<crate::SerializedFigmaDocHeader>(&samples)
         .expect("couldn't trace SerializedFigmaDocHeader");
     tracer
         .trace_type::<crate::SerializedFigmaDoc>(&samples)
         .expect("couldn't trace SerializedFigmaDoc");
-    tracer
-        .trace_type::<crate::ServerFigmaDoc>(&samples)
-        .expect("couldn't trace ServerFigmaDoc");
-    tracer
-        .trace_type::<crate::ConvertResponse>(&samples)
-        .expect("couldn't trace ConvertResponse");
+    tracer.trace_type::<crate::ServerFigmaDoc>(&samples).expect("couldn't trace ServerFigmaDoc");
+    tracer.trace_type::<crate::ConvertResponse>(&samples).expect("couldn't trace ConvertResponse");
 
     tracer.registry()
 }

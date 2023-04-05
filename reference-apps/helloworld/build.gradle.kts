@@ -20,6 +20,7 @@ plugins {
     id("com.google.android.gms.oss-licenses-plugin")
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
+    id("designcompose.features.figma-token-task")
 }
 
 var applicationID = "com.android.designcompose.testapp.helloworld"

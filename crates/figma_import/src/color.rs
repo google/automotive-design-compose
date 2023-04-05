@@ -22,18 +22,14 @@ pub struct Color {
 
 impl Color {
     pub fn from_u8s(r: u8, g: u8, b: u8, a: u8) -> Color {
-        Color {
-            color: (r, g, b, a),
-        }
+        Color { color: (r, g, b, a) }
     }
     pub fn from_u8_tuple(color: (u8, u8, u8, u8)) -> Color {
         Color { color }
     }
     pub fn from_f32s(r: f32, g: f32, b: f32, a: f32) -> Color {
         let tou8 = |c| (c * 255.0) as u8;
-        Color {
-            color: (tou8(r), tou8(g), tou8(b), tou8(a)),
-        }
+        Color { color: (tou8(r), tou8(g), tou8(b), tou8(a)) }
     }
     /// 0xAARRGGBB
     pub fn from_u32(c: u32) -> Color {
@@ -48,9 +44,7 @@ impl Color {
     }
     pub fn from_f32_tuple(color: (f32, f32, f32, f32)) -> Color {
         let tou8 = |c| (c * 255.0) as u8;
-        Color {
-            color: (tou8(color.0), tou8(color.1), tou8(color.2), tou8(color.3)),
-        }
+        Color { color: (tou8(color.0), tou8(color.1), tou8(color.2), tou8(color.3)) }
     }
 
     /// Returns the H,S,V (Hue, Saturation, Value) representation
@@ -110,12 +104,7 @@ impl Color {
     }
     pub fn as_f32_tuple(&self) -> (f32, f32, f32, f32) {
         let tof32 = |c| c as f32 / 255.0;
-        (
-            tof32(self.color.0),
-            tof32(self.color.1),
-            tof32(self.color.2),
-            tof32(self.color.3),
-        )
+        (tof32(self.color.0), tof32(self.color.1), tof32(self.color.2), tof32(self.color.3))
     }
     pub fn as_f32_array(&self) -> [f32; 4] {
         let c = self.as_f32_tuple();
@@ -152,36 +141,16 @@ impl Color {
         self.color.3
     }
 
-    pub const WHITE: Color = Color {
-        color: (255, 255, 255, 255),
-    };
-    pub const BLACK: Color = Color {
-        color: (0, 0, 0, 255),
-    };
-    pub const RED: Color = Color {
-        color: (255, 0, 0, 255),
-    };
-    pub const GREEN: Color = Color {
-        color: (0, 255, 0, 255),
-    };
-    pub const BLUE: Color = Color {
-        color: (0, 0, 255, 255),
-    };
-    pub const YELLOW: Color = Color {
-        color: (255, 255, 0, 255),
-    };
-    pub const MAGENTA: Color = Color {
-        color: (255, 0, 255, 255),
-    };
-    pub const CYAN: Color = Color {
-        color: (0, 255, 255, 255),
-    };
-    pub const GRAY: Color = Color {
-        color: (128, 128, 128, 255),
-    };
-    pub const HOT_PINK: Color = Color {
-        color: (255, 105, 180, 255),
-    };
+    pub const WHITE: Color = Color { color: (255, 255, 255, 255) };
+    pub const BLACK: Color = Color { color: (0, 0, 0, 255) };
+    pub const RED: Color = Color { color: (255, 0, 0, 255) };
+    pub const GREEN: Color = Color { color: (0, 255, 0, 255) };
+    pub const BLUE: Color = Color { color: (0, 0, 255, 255) };
+    pub const YELLOW: Color = Color { color: (255, 255, 0, 255) };
+    pub const MAGENTA: Color = Color { color: (255, 0, 255, 255) };
+    pub const CYAN: Color = Color { color: (0, 255, 255, 255) };
+    pub const GRAY: Color = Color { color: (128, 128, 128, 255) };
+    pub const HOT_PINK: Color = Color { color: (255, 105, 180, 255) };
 }
 
 #[test]

@@ -149,7 +149,10 @@ interface HelloWorld {
 
 @Composable
 fun HelloWorld() {
-    HelloWorldDoc.Main(name = "World")
+    HelloWorldDoc.Main(
+        name = "World",
+        designDocReadyCallback = { Log.i("DesignCompose", "HelloWorld Ready!") },
+    )
 }
 
 // TEST Image Update Test. After this loads, rename #Stage in the Figma doc. After the app
@@ -1516,7 +1519,7 @@ fun BlendModeTest() {
     BlendModeTestDoc.MainFrame()
 }
 
-// Main Activity class. Setup auth token and font, then build the UI with buttons for each test
+// Main Activity class. Setup access token and font, then build the UI with buttons for each test
 // on the left and the currently selected test on the right.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

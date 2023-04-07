@@ -23,6 +23,12 @@ export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
 export ANDROID_AVD_HOME=/tmpfs/tmp/.android/avd
 
 case "$KOKORO_JOB_CLUSTER" in
+  "GCP_UBUNTU_DOCKER")
+    # Allow git pulls into the designcompose directory. Required
+    # by Rust compilation
+    git config --global --add safe.directory "$DESIGNCOMPOSE_DIR"
+    ;;
+
   "GCP_UBUNTU")
     # If the job was started with a debug SSH key (go/kokoro-ssh-vm) then report our IP address
     # so we can find the VM. (This isn't available on the Docker host)
@@ -49,12 +55,6 @@ case "$KOKORO_JOB_CLUSTER" in
     # Set the permissions so that KVM is owned by the `kvm` group
     readonly KVM_GID="$(getent group kvm | cut -d: -f3)"
     sudo chown "$USER:$KVM_GID" /dev/kvm
-    ;;
-
-  "GCP_UBUNTU_DOCKER")
-    # Allow git pulls into the designcompose directory. Required
-    # by Rust compilation
-    git config --global --add safe.directory "$DESIGNCOMPOSE_DIR"
     ;;
 
   *)

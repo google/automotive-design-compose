@@ -14,6 +14,8 @@
   - [Source Layout](#source-layout)
   - [Get in touch](#get-in-touch)
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose/badge)](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose)
+
 ## Introduction
 
 Automotive Design for Compose (also called DesignCompose in the source) is an extension to [Jetpack Compose](https://developer.android.com/jetpack/compose) that allows every screen, component, and overlay of your Android App to be defined in [Figma](https://www.figma.com), and lets you see the latest changes to your Figma design in your app, immediately!

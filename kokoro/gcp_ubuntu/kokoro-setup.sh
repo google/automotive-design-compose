@@ -22,46 +22,14 @@ export ANDROID_USER_HOME=/tmpfs/tmp/.android
 export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
 export ANDROID_AVD_HOME=/tmpfs/tmp/.android/avd
 
-case "$KOKORO_JOB_CLUSTER" in
-  "GCP_UBUNTU_DOCKER")
-    # Allow git pulls into the designcompose directory. Required
-    # by Rust compilation
-    git config --global --add safe.directory "$DESIGNCOMPOSE_DIR"
-    ;;
+# Allow git pulls into the designcompose directory. Required
+# by Rust compilation
+git config --global --add safe.directory "$DESIGNCOMPOSE_DIR"
 
-  "GCP_UBUNTU")
-    # If the job was started with a debug SSH key (go/kokoro-ssh-vm) then report our IP address
-    # so we can find the VM. (This isn't available on the Docker host)
-    if [ -n "$KOKORO_DEBUG_ACCESS_KEY" ]; then
-        echo "$KOKORO_DEBUG_ACCESS_KEY" >> ~/.ssh/authorized_keys
-
-        external_ip=$(curl -s -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip)
-        echo "INSTANCE_EXTERNAL_IP=${external_ip}"
-
-        echo "Don't forget to add a sleep so that the VM stays up and waiting for you to log in"
-    fi
-
-    # Before updating the Java version, update the Android SDK command line tools
-    yes | /opt/android-sdk/current/tools/bin/sdkmanager --licenses > /dev/null
-    /opt/android-sdk/current/tools/bin/sdkmanager "cmdline-tools;latest"> /dev/null
-
-    # Set Java version to 11
-    sudo apt-get install -y openjdk-11-jdk
-    sudo update-java-alternatives --set java-1.11.0-openjdk-amd64
-    export JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64
-    java -version
-
-    # On Kokoro instances /dev/kvm is owned by root:root.
-    # Set the permissions so that KVM is owned by the `kvm` group
-    readonly KVM_GID="$(getent group kvm | cut -d: -f3)"
-    sudo chown "$USER:$KVM_GID" /dev/kvm
-    ;;
-
-  *)
-    echo "Don't know how to handle the $KOKORO_JOB_CLUSTER cluster"
-    exit 1
-    ;;
-esac
+# On Kokoro instances /dev/kvm is owned by root:root.
+# Set the permissions so that KVM is owned by the `kvm` group
+readonly KVM_GID="$(getent group kvm | cut -d: -f3)"
+sudo chown "$USER:$KVM_GID" /dev/kvm
 
 # Trick the Android emulator into thinking that we have Android Studio 3.0 installed,
 # so that it'll allow us to make snapshots of AVDs. Otherwise Gradle Managed Devices doesn't work

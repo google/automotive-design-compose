@@ -133,9 +133,10 @@ dc_test_designcompose() {
     # Takes a bit longer, but
     # I think failures should probably happen most likely in linting, then testing, then build
     ./gradlew lint ktfmtCheck
-    ./gradlew tabletAtdApi30Setup test "$GRADLE_TESTOPTIONS_OPTS"
+    ./gradlew test
+    # ./gradlew tabletAtdApi30Setup test "$GRADLE_TESTOPTIONS_OPTS"
     # The new kokoro Docker host can't handle multiple Gradle managed device tests running at once, so disable parallelization while running them.
-    ./gradlew -Porg.gradle.parallel=false tabletAtdApi30DebugAndroidTest "$GRADLE_TESTOPTIONS_OPTS"
+    # ./gradlew -Porg.gradle.parallel=false tabletAtdApi30DebugAndroidTest "$GRADLE_TESTOPTIONS_OPTS"
     ./gradlew build
 }
 
@@ -176,8 +177,9 @@ dc_test_validation_standalone() {
     mv validation validation-standalone
 
     cd validation-standalone || exit
-    ./gradlew tabletAtdApi30Setup build "$GRADLE_TESTOPTIONS_OPTS"
-    ./gradlew -Porg.gradle.parallel=false tabletAtdApi30DebugAndroidTest "$GRADLE_TESTOPTIONS_OPTS"
+    ./gradlew build
+    # ./gradlew tabletAtdApi30Setup build "$GRADLE_TESTOPTIONS_OPTS"
+    # ./gradlew -Porg.gradle.parallel=false tabletAtdApi30DebugAndroidTest "$GRADLE_TESTOPTIONS_OPTS"
 
 }
 

@@ -19,6 +19,7 @@ import org.gradle.process.internal.DefaultExecOperations
 plugins {
     kotlin("jvm")
     `java-library`
+    id("designcompose.conventions.java-toolchain")
     id("designcompose.conventions.publish.jvm")
 }
 

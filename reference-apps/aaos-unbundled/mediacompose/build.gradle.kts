@@ -23,6 +23,7 @@ plugins {
 }
 
 var applicationID = "com.android.designcompose.reference.mediacompose"
+
 @Suppress("UnstableApiUsage")
 android {
     namespace = applicationID

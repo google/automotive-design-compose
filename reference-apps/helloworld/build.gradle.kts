@@ -20,10 +20,12 @@ plugins {
     id("com.google.android.gms.oss-licenses-plugin")
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
+    id("designcompose.conventions.java-toolchain")
     id("designcompose.features.figma-token-task")
 }
 
 var applicationID = "com.android.designcompose.testapp.helloworld"
+
 @Suppress("UnstableApiUsage")
 android {
     namespace = applicationID
@@ -61,11 +63,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     buildFeatures { compose = true }

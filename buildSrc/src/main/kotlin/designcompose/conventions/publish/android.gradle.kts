@@ -23,10 +23,20 @@ plugins {
     id("designcompose.conventions.publish.common")
 }
 
-android { publishing { singleVariant("release") { withJavadocJar() } } }
+android {
+    publishing {
+        multipleVariants {
+            allVariants()
+            withJavadocJar()
+            withSourcesJar()
+        }
+    }
+}
 
-publishing {
-    publications {
-        register<MavenPublication>("release") { afterEvaluate { from(components["release"]) } }
+afterEvaluate {
+    publishing {
+        publications {
+            register<MavenPublication>("release") { afterEvaluate { from(components["default"]) } }
+        }
     }
 }

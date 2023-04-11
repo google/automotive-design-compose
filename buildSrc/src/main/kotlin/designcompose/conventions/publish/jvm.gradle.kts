@@ -22,6 +22,11 @@ plugins {
     id("designcompose.conventions.publish.common")
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 publishing {
     publications {
         register<MavenPublication>("release") { afterEvaluate { from(components["kotlin"]) } }

@@ -26,11 +26,6 @@ export ANDROID_AVD_HOME=/tmpfs/tmp/.android/avd
 # by Rust compilation
 git config --global --add safe.directory "$DESIGNCOMPOSE_DIR"
 
-# On Kokoro instances /dev/kvm is owned by root:root.
-# Set the permissions so that KVM is owned by the `kvm` group
-readonly KVM_GID="$(getent group kvm | cut -d: -f3)"
-sudo chown "$USER:$KVM_GID" /dev/kvm
-
 # Trick the Android emulator into thinking that we have Android Studio 3.0 installed,
 # so that it'll allow us to make snapshots of AVDs. Otherwise Gradle Managed Devices doesn't work
 mkdir -p ~/.AndroidStudio3.0

@@ -23,7 +23,6 @@ plugins {
     id("designcompose.conventions.android-test-devices")
 }
 
-// Seems like everything in the Android Gradle Plugin is incubating so just suppress it all
 @Suppress("UnstableApiUsage")
 android {
     namespace = "com.android.designcompose"

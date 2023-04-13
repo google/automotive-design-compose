@@ -16,6 +16,7 @@
 
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.google.devtools.ksp.gradle.KspTask
+import com.ncorti.ktfmt.gradle.tasks.KtfmtFormatTask
 
 buildscript {
     repositories {
@@ -35,7 +36,7 @@ buildscript {
 
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    alias(libs.plugins.ktfmt) apply false
+    alias(libs.plugins.ktfmt)
     alias(libs.plugins.versions)
     alias(libs.plugins.versionCatalogUpdate)
     alias(libs.plugins.rustAndroidGradle) apply false
@@ -66,6 +67,14 @@ fun String.isNonStable(): Boolean {
 tasks.withType<DependencyUpdatesTask> {
     rejectVersionIf { candidate.version.isNonStable() && !currentVersion.isNonStable() }
 }
+
+ktfmt { kotlinLangStyle() }
+
+val fmtBuildScriptsTask =
+    tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
+        source = project.fileTree(rootDir)
+        include("**/*.gradle.kts")
+    }
 
 subprojects {
     apply {

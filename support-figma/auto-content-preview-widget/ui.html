@@ -202,6 +202,53 @@
     visibility: visible;
   }
 
+  /* Tooltip container */
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Tooltip text */
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    font-size: 12;
+    width: 200px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px;
+    border-radius: 1px;
+
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 40%;
+    margin-left: -60px;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  /* Tooltip arrow */
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+  }
+
+  /* Show the tooltip text when you mouse over the tooltip container */
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+
 </style>
 
 <svg style="display: none">
@@ -671,9 +718,12 @@
       </div>
 
       <div id="scrollingSection" style="margin-left: 12">
-        <div class="switch" >
-          <input id="gridScrolling" type="checkbox" class="switch__toggle">
-          <label for="gridScrolling" class="switch__label">Enable overflow scrolling</label>
+        <div class="tooltip">
+          <div class="switch" >
+            <input id="gridScrolling" type="checkbox" class="switch__toggle">
+            <label for="gridScrolling" class="switch__label">Enable overflow scrolling</label>
+              <span id="gridScrollingTooltip" class="tooltiptext">Scrolling is disabled when the formatting is set to "Hug Contents"</span>
+          </div>
         </div>
         <span class="label" style="padding-left: 50; margin-top: -6">Content will scroll vertically for column formatting and horizontally for row formatting</span>
         <hr class="separator-medium" color="#D7D7D7" size="1">
@@ -1306,6 +1356,14 @@
     }
   }
 
+  function updateScrollingState() {
+    let isScrollingDisabled = (!isGridLayout() && basicSizePolicy.value == 'hug');
+    gridScrolling.disabled = isScrollingDisabled;
+    gridScrollingTooltip.style.display = isScrollingDisabled ? 'block' : 'none';
+    if (isScrollingDisabled)
+      gridScrolling.checked = false;
+  }
+
   // Hide/show/enable/disable elements based on the form state.
   function ensureFrameFormState() {
     createGridDiagram();
@@ -1377,10 +1435,7 @@
       basicSizePolicy.style.display = 'block';
     }
 
-    let isScrollingDisabled = (!isGridLayout() && basicSizePolicy.value == 'hug');
-    gridScrolling.disabled = isScrollingDisabled;
-    if (isScrollingDisabled)
-      gridScrolling.checked = false;
+    updateScrollingState();
 
     document.getElementById('gridMissingKeywords').style.display = currentSelection.hasKeywordData ? 'none' : 'block';
     document.getElementById('gridSpanTable').style.display = currentSelection.hasKeywordData ? 'block' : 'none';
@@ -1467,7 +1522,7 @@
     for (let i = 0; i < gridSpanTable.rows.length - 1; ++i) {
       let spanSelect = document.getElementById("spanSelect" + i);
       let spanInput = document.getElementById("spanSelect" + i + "Input");
-      
+
       gridSpanContent.push({
         nodeName: currentSelection.content[i].nodeName,
         nodeId: currentSelection.content[i].nodeId,
@@ -1475,6 +1530,8 @@
         maxSpan: spanSelect.value == "All"
       });
     }
+
+    updateScrollingState();
 
     let commonData = {
       marginLeft: toNumber(gridMarginLeft.value, 0),
@@ -1550,14 +1607,14 @@
       };
 
       // Populate the content node name option dropdown with available node names
-      while (contentNodeName.options.length > 0) {                
+      while (contentNodeName.options.length > 0) {
         contentNodeName.remove(0);
       }
       let selectOptions = msg.contentNodeNameOptions;
       for (const option of selectOptions) {
         var opt = document.createElement('option');
         opt.value = option;
-        opt.innerHTML = option;
+        opt.text = option;
         contentNodeName.appendChild(opt);
       }
 
@@ -1569,14 +1626,14 @@
       for (const option of previewSelectOptions) {
         var opt = document.createElement('option');
         opt.value = option;
-        opt.innerHTML = option;
+        opt.text = option;
         previewPage.appendChild(opt);
       }
 
       let widgetContent = msg.widgetContent;
       contentNodeName.value = widgetContent.contentNodeName;
       previewPage.value = widgetContent.previewPage;
-      
+
       // Hide the formatting section until a preview page has been selected
       let hasPreview = widgetContent.contentNodeName != null;
       showInitialUI(false, hasPreview);

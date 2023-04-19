@@ -560,7 +560,6 @@ internal class LayoutInfoRow(
     selfModifier: Modifier,
     val childModifier: Modifier,
     marginModifier: Modifier,
-    val scrollingEnabled: Boolean,
 ) : SimplifiedLayoutInfo(selfModifier, marginModifier)
 
 internal class LayoutInfoColumn(
@@ -569,7 +568,6 @@ internal class LayoutInfoColumn(
     selfModifier: Modifier,
     val childModifier: Modifier,
     marginModifier: Modifier,
-    val scrollingEnabled: Boolean,
 ) : SimplifiedLayoutInfo(selfModifier, marginModifier)
 
 internal class LayoutInfoGrid(
@@ -796,12 +794,6 @@ internal fun calcLayoutInfo(
             selfModifier = selfModifier,
             childModifier = childModifier,
             marginModifier = marginModifier,
-            scrollingEnabled =
-                when (view.scroll_info.overflow) {
-                    is OverflowDirection.HORIZONTAL_SCROLLING -> true
-                    is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> true
-                    else -> false
-                },
         )
     }
     return LayoutInfoColumn(
@@ -831,11 +823,5 @@ internal fun calcLayoutInfo(
         selfModifier = selfModifier,
         childModifier = childModifier,
         marginModifier = marginModifier,
-        scrollingEnabled =
-            when (view.scroll_info.overflow) {
-                is OverflowDirection.VERTICAL_SCROLLING -> true
-                is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> true
-                else -> false
-            },
     )
 }

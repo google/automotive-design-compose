@@ -80,6 +80,15 @@ tasks.withType<com.android.build.gradle.tasks.MergeSourceSetFolders>().configure
     }
 }
 
+publishing {
+    publications.named<MavenPublication>("release") {
+        pom {
+            name.set("Automotive Design for Compose")
+            description.set("Core library for the SDK")
+        }
+    }
+}
+
 dependencies {
     api(project(":common"))
     api(project(":annotation"))

@@ -33,10 +33,11 @@ android {
     }
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            register<MavenPublication>("release") { afterEvaluate { from(components["default"]) } }
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            pom { basePom() }
+            afterEvaluate { from(components["default"]) }
         }
     }
 }

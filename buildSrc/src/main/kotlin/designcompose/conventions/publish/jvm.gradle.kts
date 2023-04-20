@@ -29,6 +29,11 @@ java {
 
 publishing {
     publications {
-        register<MavenPublication>("release") { afterEvaluate { from(components["kotlin"]) } }
+        register<MavenPublication>("release") {
+            afterEvaluate {
+                from(components["kotlin"])
+                pom { basePom() }
+            }
+        }
     }
 }

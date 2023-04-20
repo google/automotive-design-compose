@@ -21,6 +21,15 @@ plugins {
     id("designcompose.conventions.publish.jvm")
 }
 
+publishing {
+    publications.named<MavenPublication>("release") {
+        pom {
+            name.set("Automotive Design for Compose Code Generation")
+            description.set("Code generation library")
+        }
+    }
+}
+
 dependencies {
     api(project(":annotation"))
     api(libs.ksp)

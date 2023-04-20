@@ -32,5 +32,5 @@ dc_main_project_job
 dc_aaos_apps_job
 dc_test_release_job
 
-echo "Test run complete, everything appears to have passed. Artifacts dir:"
+echo "Test run complete, everything appears to have passed. Work directory:"
 echo "$KOKORO_ARTIFACTS_DIR"

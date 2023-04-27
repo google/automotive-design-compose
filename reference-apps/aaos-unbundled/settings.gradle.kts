@@ -18,12 +18,15 @@ rootProject.name = "DC Unbundled Apps"
 
 apply("unbundled-settings.gradle.kts")
 
+val designComposeMavenRepoForAAOS = File(rootDir, "build/designcompose_m2repo")
+
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        maven(uri(designComposeMavenRepoForAAOS))
     }
 }
 
@@ -31,17 +34,3 @@ dependencyResolutionManagement {
 include(":media")
 
 include(":mediacompose")
-
-// Re-imports of projects needed for our reference apps
-fun includeDir(settings: Settings, gradlePath: String, projectDir: File) {
-    settings.include(gradlePath)
-    settings.project(gradlePath).projectDir = projectDir
-}
-
-includeDir(settings, ":common", File("../../common"))
-
-includeDir(settings, ":annotation", File("../../annotation"))
-
-includeDir(settings, ":designcompose", File("../../designcompose"))
-
-includeDir(settings, ":codegen", File("../../codegen"))

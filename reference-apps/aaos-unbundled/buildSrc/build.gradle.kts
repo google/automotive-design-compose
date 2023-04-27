@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-plugins { `kotlin-dsl` }
+val designComposeRepoBuild =
+    tasks.register<GradleBuild>("buildDesignComposeRepo") {
+        dir = layout.projectDirectory.dir("../../../").asFile
+        tasks = listOf("publishAllPublicationsToLocalDirRepository")
+        startParameter.projectProperties["DesignComposeMavenRepo"] =
+            layout.projectDirectory.dir("../build/designcompose_m2repo").asFile.toString()
+    }
 
-repositories {
-    google()
-    // for kotlin-dsl plugin
-    gradlePluginPortal()
-}
-
-dependencies {
-    implementation(unbundledLibs.android.gradlePlugin)
-    implementation(libs.dokka.gradlePlugin)
-    implementation(libs.kotlin.gradlePlugin)
-}
+tasks.named("build") { dependsOn(designComposeRepoBuild) }

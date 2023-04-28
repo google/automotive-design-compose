@@ -22,9 +22,10 @@ export ANDROID_USER_HOME=/tmpfs/tmp/.android
 export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
 export ANDROID_AVD_HOME=/tmpfs/tmp/.android/avd
 
-# Allow git pulls into the designcompose directory. Required
-# by Rust compilation
+# Allow git pulls into the designcompose and unbundled directories. Required
+# by Rust compilation and to fetch Unbundled
 git config --global --add safe.directory "$DESIGNCOMPOSE_DIR"
+git config --global --add safe.directory "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
 
 # Trick the Android emulator into thinking that we have Android Studio 3.0 installed,
 # so that it'll allow us to make snapshots of AVDs. Otherwise Gradle Managed Devices doesn't work
@@ -41,7 +42,6 @@ source "$HOME/.cargo/env"
 
 # Android SDK updates and licenses
 yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-"${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --update > /dev/null
 "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "ndk;25.2.9519653" > /dev/null
 
 # repo gets confused by pyenv, so set a default version.

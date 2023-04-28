@@ -76,14 +76,12 @@ dc_fetch_aaos_unbundled() {
         return
     fi
 
-    mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
-    cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir" || exit
-
     # Download the Unbundled AAOS repo
-    curl -s https://storage.googleapis.com/git-repo-downloads/repo >repo
-    chmod +x repo
-    ./repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master
-    ./repo sync -cq -j4
+    HOST=https://android.googlesource.com/platform/superproject
+    BRANCH=ub-automotive-master-20230303
+    mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
+    git clone "$HOST" "$ORG_GRADLE_PROJECT_unbundledAAOSDir" --branch="$BRANCH" \
+    --single-branch --filter=blob:none --recurse-submodules --jobs=4
 }
 
 # Utility function, call in job tasks that require AAOS Unbundled to make sure that

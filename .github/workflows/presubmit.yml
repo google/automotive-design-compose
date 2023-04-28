@@ -17,9 +17,9 @@ jobs:
         cache: "gradle"
 
 
-    - name: ktlintCheck
+    - name: ktfmtCheck
       shell: bash
-      run: ./gradlew ktlint
+      run: ./gradlew ktfmtCheck
   # Rust-Lint:
   #   runs-on: ubuntu-latest
   #   steps:

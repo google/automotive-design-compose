@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  Kotlin-Lint:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -17,7 +17,11 @@ jobs:
         cache: "gradle"
 
 
-    - name: ktlint
+    - name: ktlintCheck
       shell: bash
       run: ./gradlew ktlint
+  # Rust-Lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+
 

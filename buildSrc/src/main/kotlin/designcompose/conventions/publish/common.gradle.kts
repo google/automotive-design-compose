@@ -28,11 +28,11 @@ val libs = the<LibrariesForLibs>()
 
 version = libs.versions.designcompose.get()
 
-
 publishing {
     repositories {
         // Configurable location to output a flat-file repository
-        // Set the DesignComposeMavenRepo Gradle Property to a directory to publish the library there.
+        // Set the DesignComposeMavenRepo Gradle Property to a directory to publish the library
+        // there.
         // The standalone sample projects will also use the property to find the libraries.
         // See `dev-scripts/test-standalone-projects.sh` for an example.
         val DesignComposeMavenRepo: String? by project

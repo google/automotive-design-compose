@@ -24,23 +24,16 @@ use crate::{
     error::Error,
     extended_layout_schema::ExtendedAutoLayout,
     figma_schema::{
-        Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse,
-        ImageResponse, Node, NodeData, NodesResponse, ProjectFilesResponse,
+        Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse, Node,
+        NodeData, NodesResponse, ProjectFilesResponse,
     },
-    image_context::{
-        EncodedImageMap, ImageContext, ImageContextSession, ImageKey, VectorImageIdBuilder,
-    },
-    svg::render_svg_without_clip,
+    image_context::{EncodedImageMap, ImageContext, ImageContextSession, ImageKey},
     toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
-    transform_flexbox::{
-        always_imaged_nodes, create_component_flexbox, find_unrenderable_nodes,
-        try_generate_line_svg,
-    },
+    transform_flexbox::create_component_flexbox,
 };
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
 const BASE_FILE_URL: &str = "https://api.figma.com/v1/files/";
-const BASE_IMAGE_URL: &str = "https://api.figma.com/v1/images/";
 const BASE_COMPONENT_URL: &str = "https://api.figma.com/v1/components/";
 const BASE_PROJECT_URL: &str = "https://api.figma.com/v1/projects/";
 
@@ -431,7 +424,7 @@ impl Document {
                     action(view, reference_component);
                 }
             }
-            if let ViewData::Rect { children } = &mut view.data {
+            if let ViewData::Container { children, .. } = &mut view.data {
                 for child in children {
                     for_each_component_instance(reference_components, child, action);
                 }
@@ -466,8 +459,6 @@ impl Document {
         &mut self,
         node_names: &Vec<NodeQuery>,
         ignored_images: &Vec<(NodeQuery, Vec<String>)>,
-        node_customizations: &Vec<String>,
-        always_imaged: &Vec<String>,
         error_list: &mut Vec<String>,
     ) -> Result<HashMap<NodeQuery, View>, Error> {
         // First we gather all of nodes that we're going to convert and find all of the
@@ -703,160 +694,6 @@ impl Document {
         let mut views = HashMap::new();
 
         loop {
-            // Accumulate all of the unrenderable nodes.
-            let mut unrenderable: HashSet<String> = HashSet::new();
-            for (_, node) in &nodes {
-                find_unrenderable_nodes(node, &node_customizations, &mut unrenderable, true);
-            }
-
-            if !always_imaged.is_empty() {
-                for (_, node) in &nodes {
-                    always_imaged_nodes(node, &mut unrenderable, always_imaged.clone())
-                }
-            }
-
-            // Calculate hashes for these unrenderable nodes; we do this with another recursion
-            // into the nodes because it's much simpler to do after having identified the top-level
-            // nodes that we want to image (opposed to tracking the hash state as we recurse and
-            // attempt to identify the top-level node to image).
-            fn node_hash(node: &Node, hasher: &mut VectorImageIdBuilder) {
-                hasher.add_node(node);
-                for child in &node.children {
-                    node_hash(child, hasher);
-                }
-            }
-
-            let mut unrenderable_hashes = HashMap::new();
-            for node_id in &unrenderable {
-                let mut builder = VectorImageIdBuilder::new();
-                if let Some(node) = id_index.get(node_id) {
-                    node_hash(node, &mut builder);
-                    unrenderable_hashes.insert(node_id.clone(), builder.build());
-                }
-            }
-
-            // Ask Figma to render all of those nodes which are unrenderable. We filter out
-            // the items we've already asked Figma to render for us so it doesn't have to do
-            // so much work.
-            let unrenderable_ids: Vec<String> = unrenderable
-                .iter()
-                .filter(|node_id| {
-                    !self.image_context.image_hash_match(node_id, unrenderable_hashes.get(*node_id))
-                })
-                .cloned()
-                .collect();
-
-            self.image_context.update_image_hash(&unrenderable_hashes);
-
-            // Group the images by document id. Then for each document id, request all images
-            // that we need from that document
-            let mut unrenderable_doc_hash: HashMap<String, Vec<String>> = HashMap::new();
-            for id in unrenderable_ids {
-                let maybe_doc_id = node_doc_hash.get(&id);
-                let doc_id = maybe_doc_id.unwrap_or(&self.document_id);
-                let node_ids = unrenderable_doc_hash.get_mut(doc_id);
-                if let Some(node_ids) = node_ids {
-                    node_ids.push(id);
-                } else {
-                    unrenderable_doc_hash.insert(doc_id.clone(), vec![id]);
-                }
-            }
-
-            // The api to request images requires one document id with a list of node ids, so
-            // loop through the doc ids and request all images under that doc.
-            //
-            // We've already filtered out the images we know about, so here we ideally want to
-            // fetch every single unrenderable image here.
-            //
-            // We fetch them as SVG, and then rasterize them ourselves to different sizes to
-            // support different display densities. Figma also supports PNG format (where it
-            // rasterizes the vectors itself), but we don't use that because:
-            //
-            //  * It clips the edges off of vectors that go outside of their bounds (due to an
-            //    outset stroke).
-            //  * It's quite slow, and supporting multiple display densities multiplies out the
-            //    slowness.
-            //  * Figma seem to assign a high "cost" to each PNG rasterization request, so we can
-            //    easily exhaust an access token's quota/rate limit and get 409 errors with PNG
-            //    requests.
-            //
-            // Using SVG requires us to implement SVG rasterization, which we're doing with a
-            // third party crate (which is safe and has high performance).
-            //
-            for (doc_id, node_ids) in unrenderable_doc_hash {
-                if node_ids.is_empty() {
-                    continue;
-                }
-                // Request the URLs for the SVG files. Figma goes and generates all of the SVGs
-                // from this call, and then we fetch them individually.
-                // NOTE: We sort the node IDs before dispatching them to the server to ensure
-                // they're always in a known order. This helps mock known requests.
-                let mut node_ids = node_ids.clone();
-                node_ids.sort();
-                let figma_svg_request_url = format!(
-                    "{}{}?ids={}&format=svg&use_absolute_bounds=true",
-                    BASE_IMAGE_URL,
-                    doc_id,
-                    node_ids.join(",")
-                );
-
-                let figma_svg_request = http_fetch(self.api_key.as_str(), figma_svg_request_url)?;
-                let figma_svg_response: ImageResponse =
-                    serde_json::from_str(figma_svg_request.as_str())?;
-
-                // Map from Node ID to SVG URL.
-                let mut node_to_svg = figma_svg_response.images;
-                self.image_context.add_node_urls(node_to_svg.clone());
-
-                for (node_id, svg_url) in node_ids
-                    .iter()
-                    .map(|node_id| (node_id, node_to_svg.remove(node_id).unwrap_or(None)))
-                {
-                    let svg_node_ref = id_index.get(node_id);
-                    // First fetch the generated SVG content.
-                    let maybe_svg_content = if let Some(url) = svg_url {
-                        http_fetch(self.api_key.as_str(), url.clone())
-                    } else if let Some(svg_node) = svg_node_ref {
-                        // Attempt to synthesize some SVG ourselves since perhaps this is a case where
-                        // Figma has not emitted SVG for a zero-width/height line which has a thickness
-                        // and is unclipped.
-                        if let Some(svg) = try_generate_line_svg(svg_node) {
-                            Ok(svg)
-                        } else {
-                            println!("No SVG content generated for vector node {:#?}", node_id);
-                            continue;
-                        }
-                    } else {
-                        println!("No SVG content generated for vector node {:#?}", node_id);
-                        continue;
-                    };
-
-                    // Extract bounds information from the SVG, and rasterize it.
-                    let maybe_vector_image = match maybe_svg_content {
-                        Ok(svg_content) => render_svg_without_clip(&svg_content),
-                        Err(e) => {
-                            println!(
-                                "Unable to fetch SVG content for vector node {:#?}: {}",
-                                node_id, e
-                            );
-                            continue;
-                        }
-                    };
-
-                    // Now update our image context with the rasterized SVG, and the extracted
-                    // bounds information.
-                    match maybe_vector_image {
-                        Ok(vector_image) => {
-                            self.image_context.add_rasterized_vector(node_id, vector_image);
-                        }
-                        Err(e) => {
-                            println!("Unable to extract bounds and rasterize SVG content for vector node {:#?}: {}", node_id, e);
-                            continue;
-                        }
-                    }
-                }
-            }
-
             // XXX: Very silly cloning here; why doesn't DocumentKey do this once?
 
             // Add the ignored images into a hash map for easier access
@@ -895,7 +732,6 @@ impl Document {
                         &self.document_root.components,
                         &self.document_root.component_sets,
                         &mut component_context,
-                        &mut unrenderable_hashes,
                         &mut self.image_context,
                     ),
                 );

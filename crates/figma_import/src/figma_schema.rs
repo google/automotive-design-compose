@@ -16,6 +16,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::vector_schema::WindingRule;
+
 // We use serde to decode Figma's JSON documents into Rust structures.
 // These structures were derived from Figma's public API documentation, which has more information
 // on what each field means: https://www.figma.com/developers/api#files
@@ -244,8 +246,10 @@ pub struct Size {
 pub type Transform = [[Option<f32>; 3]; 2];
 
 #[derive(Deserialize, Serialize, Debug, Clone, Hash)]
+#[serde(rename_all = "camelCase")]
 pub struct Path {
     pub path: String,
+    pub winding_rule: WindingRule,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -675,7 +679,7 @@ fn default_effects() -> Vec<Effect> {
     Vec::new()
 }
 fn default_clips_content() -> bool {
-    true
+    false
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -743,6 +747,29 @@ pub struct FrameCommon {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ArcData {
+    pub starting_angle: f32,
+    pub ending_angle: f32,
+    pub inner_radius: f32,
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum StrokeCap {
+    None,
+    Round,
+    Square,
+    LineArrow,
+    TriangleArrow,
+    CircleFilled,
+}
+
+fn default_stroke_cap() -> StrokeCap {
+    StrokeCap::None
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum NodeData {
     Document {},
@@ -785,6 +812,8 @@ pub enum NodeData {
     Ellipse {
         #[serde(flatten)]
         vector: VectorCommon,
+        #[serde(rename = "arcData")]
+        arc_data: ArcData,
     },
     Star {
         #[serde(flatten)]
@@ -856,6 +885,8 @@ pub struct Node {
     pub size: Option<Vector>,
     pub fill_geometry: Option<Vec<Path>>,
     pub stroke_geometry: Option<Vec<Path>>,
+    #[serde(default = "default_stroke_cap")]
+    pub stroke_cap: StrokeCap,
 }
 
 impl Node {
@@ -900,13 +931,6 @@ impl Node {
             Some(&vector.constraints)
         } else {
             None
-        }
-    }
-    pub fn is_text(&self) -> bool {
-        if let NodeData::Text { .. } = &self.data {
-            true
-        } else {
-            false
         }
     }
 }

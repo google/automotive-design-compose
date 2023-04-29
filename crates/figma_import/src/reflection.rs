@@ -77,6 +77,18 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::GridLayoutType>(&samples)
         .expect("couldn't trace GridLayoutType");
     tracer
+        .trace_type::<crate::toolkit_style::RotationMeterData>(&samples)
+        .expect("couldn't trace RotationMeterData");
+    tracer
+        .trace_type::<crate::toolkit_style::ArcMeterData>(&samples)
+        .expect("couldn't trace ArcMeterData");
+    tracer
+        .trace_type::<crate::toolkit_style::ProgressBarMeterData>(&samples)
+        .expect("couldn't trace ProgressBarMeterData");
+    tracer
+        .trace_type::<crate::toolkit_style::MeterData>(&samples)
+        .expect("couldn't trace MeterData");
+    tracer
         .trace_type::<crate::toolkit_layout_style::PositionType>(&samples)
         .expect("couldn't trace PositionType");
     tracer
@@ -117,6 +129,17 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace TransitionDirection");
 
     tracer
+        .trace_type::<crate::vector_schema::WindingRule>(&samples)
+        .expect("couldn't trace WindingRule");
+    tracer.trace_type::<crate::vector_schema::Path>(&samples).expect("couldn't trace Path");
+    tracer
+        .trace_type::<crate::vector_schema::RenderStyle>(&samples)
+        .expect("couldn't trace RenderStyle");
+    tracer
+        .trace_type::<crate::vector_schema::RenderCommand>(&samples)
+        .expect("couldn't trace RenderCommand");
+
+    tracer
         .trace_type::<crate::toolkit_schema::OverflowDirection>(&samples)
         .expect("couldn't trace OverflowDirection");
     tracer
@@ -125,6 +148,12 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::toolkit_schema::ComponentInfo>(&samples)
         .expect("couldn't trace ComponentInfo");
+    tracer
+        .trace_type::<crate::toolkit_schema::ViewShape>(&samples)
+        .expect("couldn't trace ViewShape");
+    tracer
+        .trace_type::<crate::toolkit_schema::StrokeCap>(&samples)
+        .expect("couldn't trace StrokeCap");
     tracer
         .trace_type::<crate::toolkit_schema::ViewData>(&samples)
         .expect("couldn't trace ViewData");

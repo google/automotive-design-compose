@@ -538,7 +538,7 @@ internal fun DesignView(
                 viewLayoutInfo = viewLayoutInfo,
                 customizations = customizations
             )
-        is ViewData.Rect -> {
+        is ViewData.Container -> {
             // Check to see whether an interaction has changed the current variant. If it did, then
             // we
             // ignore any variant properties set from @DesignVariant annotations by passing
@@ -548,6 +548,7 @@ internal fun DesignView(
             DesignFrame(
                 m,
                 style,
+                (view.data as ViewData.Container).shape,
                 view.name,
                 variantParentName,
                 viewLayoutInfo,
@@ -560,7 +561,7 @@ internal fun DesignView(
                 if (customContent != null) {
                     customContent()
                 } else {
-                    (view.data as ViewData.Rect).children.forEach { child ->
+                    (view.data as ViewData.Container).children.forEach { child ->
                         child?.let { childView ->
                             DesignView(
                                 Modifier,

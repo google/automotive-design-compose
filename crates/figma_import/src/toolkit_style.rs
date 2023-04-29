@@ -458,11 +458,50 @@ impl Default for GridLayoutType {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RotationMeterData {
+    pub enabled: bool,
+    pub start: f32,
+    pub end: f32,
+    pub discrete: bool,
+    pub discrete_value: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ArcMeterData {
+    pub enabled: bool,
+    pub start: f32,
+    pub end: f32,
+    pub discrete: bool,
+    pub discrete_value: f32,
+    pub corner_radius: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressBarMeterData {
+    pub enabled: bool,
+    pub start: f32,
+    pub end: f32,
+    pub discrete: bool,
+    pub discrete_value: f32,
+    pub vertical: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum MeterData {
+    ArcData(ArcMeterData),
+    RotationData(RotationMeterData),
+    ProgressBarData(ProgressBarMeterData),
+}
+
 /// ToolkitStyle contains all of the styleable parameters accepted by the Rect and Text components.
 ///
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct ViewStyle {
-    pub border_radius: [f32; 4],
     pub text_color: Background,
     pub font_size: f32,
     pub font_family: Option<String>,
@@ -471,12 +510,9 @@ pub struct ViewStyle {
     pub font_stretch: FontStretch,
     pub background: Vec<Background>,
     pub box_shadow: Vec<BoxShadow>,
-    pub border_color: Color,
     pub stroke: Stroke,
-    pub local_opacity: f32, // local opacity does not apply to children
     pub opacity: Option<f32>,
     pub transform: Option<LayoutTransform>,
-    pub transition_size: Option<(f32, f32)>, // to add or subtract from the layout size without causing a re-layout.
     pub text_align: TextAlign,
     pub text_align_vertical: TextAlignVertical,
     pub text_overflow: TextOverflow,
@@ -510,7 +546,6 @@ pub struct ViewStyle {
     pub right: Dimension,
     pub margin: Rect<Dimension>,
     pub padding: Rect<Dimension>,
-    pub border: Rect<Dimension>,
     pub item_spacing: ItemSpacing,
     pub cross_axis_item_spacing: f32,
     pub flex_grow: f32,
@@ -524,11 +559,11 @@ pub struct ViewStyle {
     pub max_height: Dimension,
     pub aspect_ratio: Number,
     pub pointer_events: PointerEvents,
+    pub meter_data: Option<MeterData>,
 }
 impl Default for ViewStyle {
     fn default() -> ViewStyle {
         ViewStyle {
-            border_radius: [0.0, 0.0, 0.0, 0.0],
             text_color: Background::Solid(Color::from_u8s(0, 0, 0, 255)),
             font_size: 18.0,
             font_family: None,
@@ -537,12 +572,9 @@ impl Default for ViewStyle {
             font_stretch: FontStretch::NORMAL,
             background: Vec::new(),
             box_shadow: Vec::new(),
-            border_color: Color::from_u8s(0, 0, 0, 0),
             stroke: Stroke::default(),
-            local_opacity: 1.0,
             opacity: None,
             transform: None,
-            transition_size: None,
             text_align: TextAlign::Left,
             text_align_vertical: TextAlignVertical::Top,
             text_overflow: TextOverflow::Clip,
@@ -575,7 +607,6 @@ impl Default for ViewStyle {
             right: Dimension::default(),
             margin: Rect::<Dimension>::default(),
             padding: Rect::<Dimension>::default(),
-            border: Rect::<Dimension>::default(),
             item_spacing: ItemSpacing::default(),
             cross_axis_item_spacing: 0.0,
             flex_grow: 0.0,
@@ -589,6 +620,7 @@ impl Default for ViewStyle {
             max_height: Dimension::default(),
             aspect_ratio: Number::default(),
             pointer_events: PointerEvents::default(),
+            meter_data: None,
         }
     }
 }
@@ -597,9 +629,6 @@ impl ViewStyle {
     /// that can be applied to this style to make it equal the given style using apply_non_default.
     pub fn difference(&self, other: &ViewStyle) -> ViewStyle {
         let mut delta = ViewStyle::default();
-        if self.border_radius != other.border_radius {
-            delta.border_radius = other.border_radius;
-        }
         if self.text_color != other.text_color {
             delta.text_color = other.text_color.clone();
         }
@@ -624,23 +653,14 @@ impl ViewStyle {
         if self.box_shadow != other.box_shadow {
             delta.box_shadow = other.box_shadow.clone();
         }
-        if self.border_color != other.border_color {
-            delta.border_color = other.border_color;
-        }
         if self.stroke != other.stroke {
             delta.stroke = other.stroke.clone();
-        }
-        if self.local_opacity != other.local_opacity {
-            delta.local_opacity = other.local_opacity;
         }
         if self.opacity != other.opacity {
             delta.opacity = other.opacity;
         }
         if self.transform != other.transform {
             delta.transform = other.transform;
-        }
-        if self.transition_size != other.transition_size {
-            delta.transition_size = other.transition_size;
         }
         if self.text_align != other.text_align {
             delta.text_align = other.text_align;
@@ -735,9 +755,6 @@ impl ViewStyle {
         if self.padding != other.padding {
             delta.padding = other.padding;
         }
-        if self.border != other.border {
-            delta.border = other.border;
-        }
         if self.item_spacing != other.item_spacing {
             delta.item_spacing = other.item_spacing.clone();
         }
@@ -776,6 +793,9 @@ impl ViewStyle {
         }
         if self.pointer_events != other.pointer_events {
             delta.pointer_events = other.pointer_events;
+        }
+        if self.meter_data != other.meter_data {
+            delta.meter_data = other.meter_data.clone();
         }
         delta
     }

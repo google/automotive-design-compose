@@ -19,12 +19,13 @@ plugins {
     id("com.android.application")
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
+    id("designcompose.conventions.java-toolchain")
     id("designcompose.conventions.android-test-devices")
     id("designcompose.features.figma-token-task")
 }
 
 var applicationID = "com.android.designcompose.tutorial"
-// Seems like everything in the Android Gradle Plugin is incubating so just suppress it all
+
 @Suppress("UnstableApiUsage")
 android {
     namespace = applicationID
@@ -62,11 +63,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     buildFeatures { compose = true }

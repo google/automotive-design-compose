@@ -17,6 +17,13 @@
 plugins { `kotlin-dsl` }
 
 repositories {
+    google()
     // for kotlin-dsl plugin
     gradlePluginPortal()
+}
+
+dependencies {
+    implementation(unbundledLibs.android.gradlePlugin)
+    implementation(libs.dokka.gradlePlugin)
+    implementation(libs.kotlin.gradlePlugin)
 }

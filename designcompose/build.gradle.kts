@@ -19,11 +19,11 @@ plugins {
     id("com.android.library")
     id("org.mozilla.rust-android-gradle.rust-android")
     // Plugins from our buildSrc
+    id("designcompose.conventions.java-toolchain")
     id("designcompose.conventions.publish.android")
     id("designcompose.conventions.android-test-devices")
 }
 
-// Seems like everything in the Android Gradle Plugin is incubating so just suppress it all
 @Suppress("UnstableApiUsage")
 android {
     namespace = "com.android.designcompose"

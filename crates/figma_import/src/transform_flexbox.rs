@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::f32::consts::PI;
 
 use crate::toolkit_font_style::{FontStyle, FontWeight};
@@ -21,12 +21,14 @@ use crate::toolkit_layout_style::{
     Overflow, PositionType,
 };
 
+use crate::toolkit_schema::ViewShape;
 use crate::toolkit_style::{
     Background, FilterOp, FontFeature, GridLayoutType, GridSpan, ItemSpacing, LayoutTransform,
-    LineHeight, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
+    LineHeight, MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
 };
 
-use crate::figma_schema::{Paint, TextAutoResize};
+use crate::figma_schema::TextAutoResize;
+use crate::vector_schema;
 use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, ExtendedTextLayout, LayoutType, SizePolicy},
@@ -36,7 +38,7 @@ use crate::{
         NodeData, PaintData, StrokeAlign, TextAlignHorizontal, TextAlignVertical,
         VerticalLayoutConstraintValue,
     },
-    image_context::{ImageContext, VectorImageId},
+    image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
     toolkit_schema::{ComponentInfo, OverflowDirection, ScrollInfo, View},
 };
@@ -308,6 +310,32 @@ fn convert_transform(transform: &crate::figma_schema::Transform) -> LayoutTransf
     )
 }
 
+fn convert_blend_mode(
+    blend_mode: Option<crate::figma_schema::BlendMode>,
+) -> crate::toolkit_style::BlendMode {
+    match blend_mode {
+        Some(BlendMode::PassThrough) | None => crate::toolkit_style::BlendMode::PassThrough,
+        Some(BlendMode::Normal) => crate::toolkit_style::BlendMode::Normal,
+        Some(BlendMode::Darken) => crate::toolkit_style::BlendMode::Darken,
+        Some(BlendMode::Multiply) => crate::toolkit_style::BlendMode::Multiply,
+        Some(BlendMode::LinearBurn) => crate::toolkit_style::BlendMode::LinearBurn,
+        Some(BlendMode::ColorBurn) => crate::toolkit_style::BlendMode::ColorBurn,
+        Some(BlendMode::Lighten) => crate::toolkit_style::BlendMode::Lighten,
+        Some(BlendMode::Screen) => crate::toolkit_style::BlendMode::Screen,
+        Some(BlendMode::LinearDodge) => crate::toolkit_style::BlendMode::LinearDodge,
+        Some(BlendMode::ColorDodge) => crate::toolkit_style::BlendMode::ColorDodge,
+        Some(BlendMode::Overlay) => crate::toolkit_style::BlendMode::Overlay,
+        Some(BlendMode::SoftLight) => crate::toolkit_style::BlendMode::SoftLight,
+        Some(BlendMode::HardLight) => crate::toolkit_style::BlendMode::HardLight,
+        Some(BlendMode::Difference) => crate::toolkit_style::BlendMode::Difference,
+        Some(BlendMode::Exclusion) => crate::toolkit_style::BlendMode::Exclusion,
+        Some(BlendMode::Hue) => crate::toolkit_style::BlendMode::Hue,
+        Some(BlendMode::Saturation) => crate::toolkit_style::BlendMode::Saturation,
+        Some(BlendMode::Color) => crate::toolkit_style::BlendMode::Color,
+        Some(BlendMode::Luminosity) => crate::toolkit_style::BlendMode::Luminosity,
+    }
+}
+
 fn compute_background(
     last_paint: &crate::figma_schema::Paint,
     images: &mut ImageContext,
@@ -553,7 +581,6 @@ fn visit_node(
     component_set_map: &HashMap<String, ComponentSet>,
     component_context: &mut ComponentContext,
     images: &mut ImageContext,
-    unrenderable: &HashMap<String, VectorImageId>,
     parent_plugin_data: Option<&HashMap<String, String>>,
 ) -> View {
     // See if we have any plugin data. If we have plugin data passed in, it came from a parent
@@ -841,27 +868,7 @@ fn visit_node(
     }
 
     // Blend mode is common to all elements.
-    style.blend_mode = match node.blend_mode {
-        Some(BlendMode::PassThrough) | None => crate::toolkit_style::BlendMode::PassThrough,
-        Some(BlendMode::Normal) => crate::toolkit_style::BlendMode::Normal,
-        Some(BlendMode::Darken) => crate::toolkit_style::BlendMode::Darken,
-        Some(BlendMode::Multiply) => crate::toolkit_style::BlendMode::Multiply,
-        Some(BlendMode::LinearBurn) => crate::toolkit_style::BlendMode::LinearBurn,
-        Some(BlendMode::ColorBurn) => crate::toolkit_style::BlendMode::ColorBurn,
-        Some(BlendMode::Lighten) => crate::toolkit_style::BlendMode::Lighten,
-        Some(BlendMode::Screen) => crate::toolkit_style::BlendMode::Screen,
-        Some(BlendMode::LinearDodge) => crate::toolkit_style::BlendMode::LinearDodge,
-        Some(BlendMode::ColorDodge) => crate::toolkit_style::BlendMode::ColorDodge,
-        Some(BlendMode::Overlay) => crate::toolkit_style::BlendMode::Overlay,
-        Some(BlendMode::SoftLight) => crate::toolkit_style::BlendMode::SoftLight,
-        Some(BlendMode::HardLight) => crate::toolkit_style::BlendMode::HardLight,
-        Some(BlendMode::Difference) => crate::toolkit_style::BlendMode::Difference,
-        Some(BlendMode::Exclusion) => crate::toolkit_style::BlendMode::Exclusion,
-        Some(BlendMode::Hue) => crate::toolkit_style::BlendMode::Hue,
-        Some(BlendMode::Saturation) => crate::toolkit_style::BlendMode::Saturation,
-        Some(BlendMode::Color) => crate::toolkit_style::BlendMode::Color,
-        Some(BlendMode::Luminosity) => crate::toolkit_style::BlendMode::Luminosity,
-    };
+    style.blend_mode = convert_blend_mode(node.blend_mode);
 
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {
@@ -1075,88 +1082,6 @@ fn visit_node(
                 node.absolute_bounding_box,
             );
         }
-    } else if let NodeData::Rectangle { .. } = &node.data {
-        // All styles handled below, although we should check if this rectangle has weird geometry and
-        // fall back to an image.
-    } else if let NodeData::Ellipse { .. } = &node.data {
-        // This is a fudge for Ellipse, which we don't really support; we just make a big roundrect. We
-        // should probably create a Rect that's circular and then stretch it.
-        style.border_radius = [1000.0, 1000.0, 1000.0, 1000.0];
-    }
-
-    // XXX: We probably want to note ComponentSets and ComponentInstances (and figure out
-    //      the node name of the component that we have an instance of) so that we can later
-    //      use the info when doing substitutions of Figma content for toolkit components.
-
-    // If this node is unrenderable, then use the image fill for it instead and bail.
-    if unrenderable.contains_key(&node.id) {
-        // Create an element that occupies normal space in the flow (or has the absolute
-        // positioning requested). Then we create an absolutely positioned child element
-        // which contains the image, and has the bounding box information (extracted from
-        // a vector version of the image) applied.
-        //
-        // In the future, we could avoid the container if the image bounding box is the same
-        // as our current size.
-
-        // Clear the transform for images, to avoid the transform being applied twice since Figma already applies it.
-        style.transform = None;
-
-        if let Some(bbox) = images.get_bbox(&node.id) {
-            // The clip contents behavior will have been encoded into the image, so we can clear it out
-            // here.
-            style.overflow = Overflow::Visible;
-            // Ok, we have our image bounding box; create a container using the regular style so we can add the
-            // image as an absolutely positioned child.
-            let mut container = View::new_rect(
-                &node.id,
-                &node.name,
-                style,
-                component_info,
-                reactions,
-                ScrollInfo::default(),
-                frame_extras,
-                node.absolute_bounding_box,
-            );
-
-            // Now make the style for the child.
-            let mut image_style = ViewStyle::default();
-            image_style.position_type = PositionType::Absolute;
-            image_style.left = Dimension::Points(bbox.x() as f32);
-            image_style.top = Dimension::Points(bbox.y() as f32 + 0.5);
-            image_style.width = Dimension::Points(bbox.width().ceil() as f32);
-            image_style.height = Dimension::Points(bbox.height().ceil() as f32);
-
-            // Get the background image out.
-            if let Some(vector_image) = images.vector_image(&node.id, &node.name) {
-                image_style.background = vec![Background::from_image_key(vector_image)];
-            }
-
-            container.add_child(View::new_rect(
-                &format!("image-content-{}", node.id),
-                &format!("image content for {}", node.name),
-                image_style,
-                None,
-                None,
-                ScrollInfo::default(),
-                None,
-                node.absolute_bounding_box,
-            ));
-
-            return container;
-        }
-
-        // Ok, we don't have any extra image size information, so just return a single view containing the
-        // image.
-        return View::new_rect(
-            &node.id,
-            &node.name,
-            style,
-            component_info,
-            reactions,
-            ScrollInfo::default(),
-            frame_extras,
-            node.absolute_bounding_box,
-        );
     }
 
     for fill in node.fills.iter().filter(|paint| paint.visible) {
@@ -1178,12 +1103,76 @@ fn visit_node(
         Some(StrokeAlign::Outside) | None => crate::toolkit_style::StrokeAlign::Outside,
     };
 
-    if let Some(border_radius) = node.corner_radius {
-        style.border_radius = [border_radius, border_radius, border_radius, border_radius];
-    }
-    if let Some(border_radii) = node.rectangle_corner_radii {
-        style.border_radius = [border_radii[0], border_radii[1], border_radii[3], border_radii[2]];
-    }
+    // Convert any path data we have; we'll use it for non-frame types.
+    let fill_paths = if let Some(fills) = &node.fill_geometry {
+        fills.iter().map(|figma_path| parse_path(figma_path)).flatten().collect()
+    } else {
+        Vec::new()
+    };
+
+    // Normally the client will compute stroke paths itself, because Figma returns incorrect
+    // stroke geometry for shapes with an area (e.g.: not lines) with Outside or Inside
+    // stroke treatment. However, when a shape has no area (e.g.: it is a line), then the
+    // fill geometry will be empty so we *have* to use the stroke geometry.
+    let stroke_paths = if let Some(strokes) = &node.stroke_geometry {
+        strokes.iter().map(|figma_path| parse_path(figma_path)).flatten().collect()
+    } else {
+        Vec::new()
+    };
+
+    let (corner_radius, has_corner_radius) = if let Some(border_radii) = node.rectangle_corner_radii
+    {
+        (
+            [border_radii[0], border_radii[1], border_radii[2], border_radii[3]],
+            border_radii[0] > 0.0
+                || border_radii[1] > 0.0
+                || border_radii[2] > 0.0
+                || border_radii[3] > 0.0,
+        )
+    } else if let Some(border_radius) = node.corner_radius {
+        ([border_radius, border_radius, border_radius, border_radius], border_radius > 0.0)
+    } else {
+        ([0.0, 0.0, 0.0, 0.0], false)
+    };
+
+    // Figure out the ViewShape from the node type.
+    let view_shape = match &node.data {
+        NodeData::BooleanOperation { .. }
+        | NodeData::Line { .. }
+        | NodeData::RegularPolygon { .. }
+        | NodeData::Star { .. }
+        | NodeData::Vector { .. } => ViewShape::Path { path: fill_paths, stroke: stroke_paths },
+        // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
+        // to support progress bars. If this node is set up as a progress bar, the renderer will
+        // construct the rectangle, modified by progress bar parameters. Otherwise it will be
+        // rendered as a ViewShape::Path.
+        NodeData::Rectangle { .. } => {
+            ViewShape::VectorRect { path: fill_paths, stroke: stroke_paths, corner_radius }
+        }
+        // Ellipses get turned into an Arc in order to support dials/gauges with an arc type
+        // meter customization. If this node is setup as an arc type meter, the renderer will
+        // construct the ellipse, modified by the arc parameters. Otherwise it will be rendered
+        // as a ViewShape::Path.
+        NodeData::Ellipse { arc_data, .. } => ViewShape::Arc {
+            path: fill_paths,
+            stroke: stroke_paths,
+            stroke_cap: node.stroke_cap.clone(),
+            start_angle_degrees: arc_data.starting_angle,
+            sweep_angle_degrees: arc_data.ending_angle,
+            inner_radius: arc_data.inner_radius,
+            corner_radius: 0.0, // corner radius is only exposed in the plugin data
+        },
+        _ => {
+            if has_corner_radius {
+                ViewShape::RoundRect {
+                    corner_radius,
+                    corner_smoothing: 0.0, // Not in Figma REST API
+                }
+            } else {
+                ViewShape::Rect
+            }
+        }
+    };
 
     for effect in &node.effects {
         if !effect.visible {
@@ -1227,10 +1216,20 @@ fn visit_node(
         }
     }
 
+    // Check to see if there is additional plugin data to set this node up as
+    // a type of meter (dials/gauges/progress bars)
+    if let Some(vsw_data) = plugin_data {
+        if let Some(data) = vsw_data.get("vsw-meter-data") {
+            let meter_data: Option<MeterData> = serde_json::from_str(data.as_str()).ok();
+            style.meter_data = meter_data;
+        }
+    }
+
     // Create our view node, now that we've finished populating style.
     let mut view = View::new_rect(
         &node.id,
         &node.name,
+        view_shape,
         style,
         component_info,
         reactions,
@@ -1239,19 +1238,22 @@ fn visit_node(
         node.absolute_bounding_box,
     );
 
-    // Iterate over our visible children.
-    for child in node.children.iter() {
-        if child.visible {
-            view.add_child(visit_node(
-                child,
-                Some(node),
-                component_map,
-                component_set_map,
-                component_context,
-                images,
-                unrenderable,
-                child_plugin_data,
-            ));
+    // Iterate over our visible children, but not vectors because they always
+    // present their childrens content themselves (e.g.: they are boolean products
+    // of their children).
+    if node.vector().is_none() {
+        for child in node.children.iter() {
+            if child.visible {
+                view.add_child(visit_node(
+                    child,
+                    Some(node),
+                    component_map,
+                    component_set_map,
+                    component_context,
+                    images,
+                    child_plugin_data,
+                ));
+            }
         }
     }
     view
@@ -1270,7 +1272,6 @@ pub fn create_component_flexbox(
     component_map: &HashMap<String, Component>,
     component_set_map: &HashMap<String, ComponentSet>,
     component_context: &mut ComponentContext,
-    unrenderable: &HashMap<String, VectorImageId>,
     image_context: &mut ImageContext,
 ) -> View {
     visit_node(
@@ -1280,183 +1281,32 @@ pub fn create_component_flexbox(
         component_set_map,
         component_context,
         image_context,
-        unrenderable,
         None,
     )
 }
 
-/// Find all of the nodes in a Figma document that we can't render using the toolkit and
-/// need to ask Figma to render for us. Figma's API expects a batch of nodes to render
-/// rather than going serially, and then gives us URLs to fetch the rendered results
-/// from.
-///
-/// * `component`: The Figma node to start looking for unrenderable content at.
-/// * `unrenderable`: The set to populate with the node IDs of toolkit unrenderable content which must be rendered by Figma.
-pub fn find_unrenderable_nodes(
-    component: &Node,
-    node_customizations: &Vec<String>,
-    unrenderable: &mut HashSet<String>,
-    is_root: bool,
-) -> (bool, bool) {
-    // What is unrenderable?
-    //  * Vector, Line, RegularPolygon, Ster, BooleanOperation.
-    //  * Is one of the children a mask?
-    //
-    // Ideally, we want to make an image of the highest-level parent that can be turned into an image (i.e.: doesn't stretch
-    // with parent layout, doesn't have text children) so that we have the fewest images. We prevent text nodes from going
-    // into images, and we prevent frames that stretch or use auto layout themselves from being part of images.
-    //
-    // So we track "cant_be_imaged": true for text and layout nodes and for parents of text and layout nodes, and
-    // "must_be_imaged": true for vector nodes. If a child is "must_be_imaged" and a parent is "cant_be_imaged" then
-    // the child gets added to the list to be imaged.
-    let mut cant_be_imaged = {
-        let has_layout =
-            if let Some(frame) = component.frame() { !frame.layout_mode.is_none() } else { false };
-
-        let mut has_customization = false;
-        for node_name in node_customizations {
-            if node_name == &component.id.as_str() || node_name == &component.name.as_str() {
-                has_customization = true;
-                break;
+fn parse_path(path: &crate::figma_schema::Path) -> Option<vector_schema::Path> {
+    let mut output = vector_schema::Path::new();
+    for segment in svgtypes::SimplifyingPathParser::from(path.path.as_str()) {
+        match segment {
+            Ok(svgtypes::SimplePathSegment::MoveTo { x, y }) => {
+                output.move_to(x as f32, y as f32);
             }
-        }
-
-        has_layout || component.is_text() || has_customization
-    };
-
-    let must_be_imaged = match &component.data {
-        NodeData::Vector { .. } => true,
-        NodeData::Line { .. } => true,
-        NodeData::RegularPolygon { .. } => true,
-        NodeData::Star { .. } => true,
-        NodeData::BooleanOperation { .. } => true,
-        //NodeData::Frame { .. } => true,
-        _ => {
-            let mut child_has_mask = false;
-            for child in &component.children {
-                if let Some(child_vector) = child.vector() {
-                    child_has_mask = child_has_mask || child_vector.is_mask;
-                }
-                if let Some(child_frame) = child.frame() {
-                    child_has_mask = child_has_mask || child_frame.is_mask;
-                }
+            Ok(svgtypes::SimplePathSegment::LineTo { x, y }) => {
+                output.line_to(x as f32, y as f32);
             }
-            child_has_mask
-        }
-    };
-
-    // Now we know if we can't be imaged or must be imaged, we can look at
-    // children. If any of them must be imaged but we can't, then we add them
-    // to the list of things to be imaged.
-    let mut image_children = Vec::new();
-    for child in &component.children {
-        let (child_must_be_imaged, child_cant_be_imaged) =
-            find_unrenderable_nodes(child, node_customizations, unrenderable, false);
-        if child_must_be_imaged {
-            image_children.push(child.id.clone());
-        }
-        if child_cant_be_imaged {
-            cant_be_imaged = true;
+            Ok(svgtypes::SimplePathSegment::CurveTo { x1, y1, x2, y2, x, y }) => {
+                output.cubic_to(x1 as f32, y1 as f32, x2 as f32, y2 as f32, x as f32, y as f32);
+            }
+            Ok(svgtypes::SimplePathSegment::Quadratic { x1, y1, x, y }) => {
+                output.quad_to(x1 as f32, y1 as f32, x as f32, y as f32);
+            }
+            Ok(svgtypes::SimplePathSegment::ClosePath) => {
+                output.close();
+            }
+            Err(_) => return None,
         }
     }
-
-    // If we can't be imaged, but have children that must be imaged, then we must add their node IDs.
-    if image_children.len() > 0 && (cant_be_imaged || is_root) {
-        for child in image_children {
-            unrenderable.insert(child.clone());
-        }
-
-        // We don't need to be imaged, we can't be imaged.
-        return (false, true);
-    }
-
-    // Return if we must be imaged
-    (must_be_imaged || image_children.len() > 0, cant_be_imaged)
-}
-
-pub fn always_imaged_nodes(
-    component: &Node,
-    unrenderable: &mut HashSet<String>,
-    always_imaged: Vec<String>,
-) {
-    if always_imaged.contains(&component.name) {
-        unrenderable.insert(component.clone().id);
-    }
-
-    for child in &component.children {
-        always_imaged_nodes(child, unrenderable, always_imaged.clone());
-    }
-}
-
-/// Attempt to generate some SVG source corresponding to an axis-aligned Vector or Line node.
-///
-/// The Figma API will not return SVG content for lines that have a zero width or zero height,
-/// but still contribute color to the image because they have a non-zero thickness and aren't
-/// clipped to bounds.
-///
-/// In those cases, we attempt to generate an appropriate SVG image from the Vector or Line
-/// node itself. This is straightforward because the node already includes the SVG path
-/// definition.
-pub fn try_generate_line_svg(node: &Node) -> Option<String> {
-    // Only bother to attempt to recover this vector if it has a zero width/height in the
-    // absolute bounding rect, and a non-zero width/height in the absolute render bounds.
-    //
-    // We'll also only do it for leaf Vector/Line nodes.
-
-    let abs_bounds = node.absolute_bounding_box?;
-    let render_bounds = node.absolute_render_bounds?;
-    // Don't attempt where we don't have a zero width/height situation.
-    if abs_bounds.width() > 0.0 && abs_bounds.height() > 0.0 {
-        return None;
-    }
-    // Don't attempt where the render bounds are zero.
-    if render_bounds.width() <= 0.0 || render_bounds.height() <= 0.0 {
-        return None;
-    }
-
-    // Only do this for solid color strokes right now.
-    if node.fills.iter().filter(|fill| fill.visible).count() > 0 {
-        return None;
-    }
-    let (opacity, color) =
-        if let Some(Paint { opacity, data: PaintData::Solid { color }, .. }) =
-            node.strokes.iter().filter(|stroke| stroke.visible).next()
-        {
-            (*opacity, *color)
-        } else {
-            return None;
-        };
-
-    // Only do this when we have stroke geometry.
-    let path = if let Some(stroke_geometry) = &node.stroke_geometry {
-        if stroke_geometry.len() == 1 {
-            &stroke_geometry[0].path
-        } else {
-            return None;
-        }
-    } else {
-        return None;
-    };
-
-    match &node.data {
-        NodeData::Vector { .. } | NodeData::Line { .. } => {
-            let svg: String = format!(
-                "<svg width=\"{}\" height=\"{}\" viewBox=\"0 0 {} {}\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"{}\" fill=\"rgba({}, {}, {}, {})\" fill-opacity=\"{}\" stroke=\"transparent\"/></svg>",
-                        // width, height
-                        render_bounds.width(), render_bounds.height(),
-                        // viewBox width, height
-                        render_bounds.width(), render_bounds.height(),
-                        // path data
-                        path,
-                        // fill-color
-                        (color.r * 255.0).floor(),
-                        (color.g * 255.0).floor(),
-                        (color.b * 255.0).floor(),
-                        color.a,
-                        // fill-opacity
-                        opacity);
-            Some(svg)
-        }
-        _ => None,
-    }
+    output.winding_rule(path.winding_rule);
+    Some(output)
 }

@@ -61,6 +61,8 @@ fun EmptyListContent(): ListContent {
 
 typealias TapCallback = () -> Unit
 
+typealias Meter = Float
+
 // A Customization changes the way a node is presented, or changes the content of a node.
 data class Customization(
     // Text content customization
@@ -86,7 +88,9 @@ data class Customization(
     // Font customizations
     var textStyle: Optional<TextStyle> = Optional.empty(),
     // Open link callback function
-    var openLinkCallback: Optional<OpenLinkCallback> = Optional.empty()
+    var openLinkCallback: Optional<OpenLinkCallback> = Optional.empty(),
+    // Meter (dial, gauge, progress bar) customization as a percentage 0-100
+    var meterValue: Optional<Float> = Optional.empty()
 )
 
 private fun Customization.clone(): Customization {
@@ -102,6 +106,7 @@ private fun Customization.clone(): Customization {
     c.visible = visible
     c.textStyle = textStyle
     c.openLinkCallback = openLinkCallback
+    c.meterValue = meterValue
 
     return c
 }
@@ -255,6 +260,10 @@ fun CustomizationContext.setTextStyle(nodeName: String, textStyle: TextStyle) {
     customize(nodeName) { c -> c.textStyle = Optional.ofNullable(textStyle) }
 }
 
+fun CustomizationContext.setMeterValue(nodeName: String, value: Float) {
+    customize(nodeName) { c -> c.meterValue = Optional.ofNullable(value) }
+}
+
 fun CustomizationContext.setVariantProperties(vp: HashMap<String, String>) {
     variantProperties = vp
 }
@@ -380,6 +389,12 @@ fun CustomizationContext.getTextStyle(nodeName: String): TextStyle? {
 fun CustomizationContext.getOpenLinkCallback(nodeName: String): OpenLinkCallback? {
     val c = cs[nodeName] ?: return null
     if (c.openLinkCallback.isPresent) return c.openLinkCallback.get()
+    return null
+}
+
+fun CustomizationContext.getMeterValue(nodeName: String): Float? {
+    val c = cs[nodeName] ?: return null
+    if (c.meterValue.isPresent) return c.meterValue.get()
     return null
 }
 

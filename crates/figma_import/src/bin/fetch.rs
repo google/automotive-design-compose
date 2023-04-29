@@ -63,8 +63,6 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     let nodes = doc.nodes(
         &args.nodes.iter().map(|name| NodeQuery::name(name)).collect(),
         &Vec::new(),
-        &Vec::new(),
-        &Vec::new(),
         &mut error_list,
     )?;
     for error in error_list {

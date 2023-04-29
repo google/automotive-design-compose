@@ -41,7 +41,6 @@ pub struct ConvertRequest<'r> {
     queries: Vec<&'r str>,
     // Ignored images
     ignored_images: Vec<IgnoredImage<'r>>,
-    node_customizations: Vec<String>,
 
     // Last modified comes from the previously fetched document and is
     // used to avoid fetching the same doc version over and over.
@@ -82,8 +81,6 @@ pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate:
                 .iter()
                 .map(|imgref| (NodeQuery::name(imgref.node), imgref.images.clone()))
                 .collect(),
-            &rq.node_customizations,
-            &vec![],
             &mut error_list,
         )?;
 

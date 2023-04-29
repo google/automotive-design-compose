@@ -23,7 +23,7 @@ plugins {
 }
 
 var applicationID = "com.android.designcompose.reference.mediacompose"
-// Seems like everything in the Android Gradle Plugin is incubating so just suppress it all
+
 @Suppress("UnstableApiUsage")
 android {
     namespace = applicationID

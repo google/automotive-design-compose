@@ -19,6 +19,7 @@ import org.gradle.process.internal.DefaultExecOperations
 plugins {
     kotlin("jvm")
     `java-library`
+    id("designcompose.conventions.java-toolchain")
     id("designcompose.conventions.publish.jvm")
 }
 
@@ -79,7 +80,7 @@ val serdeGenTask =
         generatedCodeDir.set(layout.buildDirectory.dir("generated/serdegen/java"))
     }
 
-//Connect the outputs to the java source set, so it'll automatically be compiled
+// Connect the outputs to the java source set, so it'll automatically be compiled
 project.sourceSets.main { java { srcDir(serdeGenTask.flatMap { it.generatedCodeDir }) } }
 
 dependencies {

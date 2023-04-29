@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -74,6 +75,7 @@ import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.LazyContentSpan
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
+import com.android.designcompose.Meter
 import com.android.designcompose.OpenLinkCallback
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
@@ -138,7 +140,9 @@ val EXAMPLES: ArrayList<Pair<String, @Composable () -> Unit>> =
         Pair("Fill Container", { FillTest() }),
         Pair("CrossAxis Fill", { CrossAxisFillTest() }),
         Pair("Grid Layout Documentation", { GridLayoutDocumentation() }),
-        Pair("Blend Modes", { BlendModeTest() })
+        Pair("Blend Modes", { BlendModeTest() }),
+        Pair("Vector Rendering", { VectorRenderingTest() }),
+        Pair("Dials Gauges", { DialsGaugesTest() }),
     )
 
 // TEST Basic Hello World example
@@ -630,7 +634,8 @@ fun AdaptiveButton(setAdaptive: (Boolean) -> Unit) {
 
 @Composable
 private fun Slider(value: MutableState<Float>, min: Float, max: Float) {
-    val sliderMax = 400f
+    val density = LocalDensity.current.density
+    val sliderMax = 400f * density
     val v = remember { mutableStateOf(sliderMax * (value.value - min) / (max - min)) }
     Box(
         modifier =
@@ -640,7 +645,12 @@ private fun Slider(value: MutableState<Float>, min: Float, max: Float) {
     ) {
         Box(
             modifier =
-                Modifier.offset { IntOffset(v.value.roundToInt() + 5, 5) }
+                Modifier.offset {
+                        IntOffset(
+                            v.value.roundToInt() + (5 * density).toInt(),
+                            (5 * density).toInt()
+                        )
+                    }
                     .draggable(
                         orientation = Orientation.Horizontal,
                         state =
@@ -1519,7 +1529,67 @@ fun BlendModeTest() {
     BlendModeTestDoc.MainFrame()
 }
 
-// Main Activity class. Setup access token and font, then build the UI with buttons for each test
+// TEST vector rendering
+@DesignDoc(id = "Z3ucY0wMAbIwZIa6mLEWIK")
+interface VectorRenderingTest {
+    @DesignComponent(node = "#stage") fun MainFrame()
+}
+
+// Test page for vector rendering support
+@Composable
+fun VectorRenderingTest() {
+    VectorRenderingTestDoc.MainFrame()
+}
+
+// TEST dials and gauges
+@DesignDoc(id = "lZj6E9GtIQQE4HNLpzgETw")
+interface DialsGaugesTest {
+    @DesignComponent(node = "#stage")
+    fun MainFrame(
+        @Design(node = "#arc-angle") arcAngle: Meter,
+        @Design(node = "#needle-rotation") needleRotation: Meter,
+        @Design(node = "#progress-bar") progressBar: Meter,
+    )
+}
+
+@Composable
+fun DialsGaugesTest() {
+    val angle = remember { mutableStateOf(50f) }
+    val rotation = remember { mutableStateOf(50f) }
+    val progress = remember { mutableStateOf(50f) }
+    DialsGaugesTestDoc.MainFrame(
+        arcAngle = angle.value,
+        needleRotation = rotation.value,
+        progressBar = progress.value,
+    )
+
+    Row(
+        Modifier.absoluteOffset(0.dp, 1410.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Dial angle: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(angle, 0f, 100f)
+        Text(angle.value.toString(), fontSize = 20.sp)
+    }
+    Row(
+        Modifier.absoluteOffset(0.dp, 1460.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Dial rotation: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(rotation, 0f, 100f)
+        Text(rotation.value.toString(), fontSize = 20.sp)
+    }
+    Row(
+        Modifier.absoluteOffset(0.dp, 1510.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(progress, 0f, 100f)
+        Text(progress.value.toString(), fontSize = 20.sp)
+    }
+}
+
+// Main Activity class. Setup auth token and font, then build the UI with buttons for each test
 // on the left and the currently selected test on the right.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

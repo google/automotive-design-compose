@@ -28,13 +28,13 @@ mod figma_schema;
 mod image_context;
 pub mod reaction_schema;
 mod serialized_document;
-mod svg;
 pub mod toolkit_font_style;
 pub mod toolkit_layout_style;
 pub mod toolkit_schema;
 pub mod toolkit_style;
 mod transform_flexbox;
 mod utils;
+mod vector_schema;
 // Exports for library users
 pub use document::{Document, NodeQuery};
 pub use error::Error;

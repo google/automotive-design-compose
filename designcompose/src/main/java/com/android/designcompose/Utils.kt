@@ -21,6 +21,7 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.Shader
 import android.os.Build
+import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
@@ -29,6 +30,8 @@ import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.RadialGradientShader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.SolidColor
@@ -59,6 +62,8 @@ import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.serdegen.WindingRule
+import java.util.Optional
 import kotlin.math.roundToInt
 
 /** Convert a serialized color to a Compose color */
@@ -201,17 +206,6 @@ internal const val blurFudgeFactor = 0.72f
 // Merge styles; any non-default properties of the override style are copied over the base style.
 internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
     val style = ViewStyle.Builder()
-    style.border_radius =
-        if (
-            override.border_radius[0] != 0.0f ||
-                override.border_radius[1] != 0.0f ||
-                override.border_radius[2] != 0.0f ||
-                override.border_radius[3] != 0.0f
-        ) {
-            override.border_radius
-        } else {
-            base.border_radius
-        }
     style.text_color =
         if (override.text_color !is Background.None) {
             override.text_color
@@ -260,23 +254,11 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.box_shadow
         }
-    style.border_color =
-        if (convertColor(override.border_color) != Color.Transparent) {
-            override.border_color
-        } else {
-            base.border_color
-        }
     style.stroke =
         if (override.stroke.strokes.size > 0) {
             override.stroke
         } else {
             base.stroke
-        }
-    style.local_opacity =
-        if (override.local_opacity != 1.0f) {
-            override.local_opacity
-        } else {
-            base.local_opacity
         }
     style.opacity =
         if (override.opacity.isPresent) {
@@ -289,12 +271,6 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             override.transform
         } else {
             base.transform
-        }
-    style.transition_size =
-        if (override.transition_size.isPresent) {
-            override.transition_size
-        } else {
-            base.transition_size
         }
     style.text_align =
         if (override.text_align !is TextAlign.Left) {
@@ -489,12 +465,6 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.padding
         }
-    style.border =
-        if (!override.border.isDefault()) {
-            override.border
-        } else {
-            base.border
-        }
     fun ItemSpacing.isDefault(): Boolean {
         return this is ItemSpacing.Fixed && this.value == 0
     }
@@ -575,6 +545,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             override.pointer_events
         } else {
             base.pointer_events
+        }
+    style.meter_data =
+        if (override.meter_data.isPresent) {
+            override.meter_data
+        } else {
+            base.meter_data
         }
     return style.build()
 }
@@ -931,6 +907,7 @@ internal constructor(
         return "RelativeImageFill"
     }
 }
+
 /**
  * Convert a LayoutTransform to a Compose transformation matrix, adjusted to operate on pixels at
  * the given display density.
@@ -1053,4 +1030,87 @@ internal fun Background.asBrush(document: DocContent, density: Float): Pair<Brus
         }
     }
     return null
+}
+
+internal fun com.android.designcompose.serdegen.Path.asPath(density: Float): Path {
+    val MOVE_TO: Byte = 0
+    val LINE_TO: Byte = 1
+    val CUBIC_TO: Byte = 2
+    val QUAD_TO: Byte = 3
+    val CLOSE: Byte = 4
+
+    val p = Path()
+    p.fillType =
+        when (this.winding_rule) {
+            is WindingRule.EVENODD -> PathFillType.EvenOdd
+            else -> PathFillType.NonZero
+        }
+    var idx = 0
+    for (cmd in this.commands) {
+        when (cmd) {
+            MOVE_TO -> {
+                p.moveTo(this.data[idx++] * density, this.data[idx++] * density)
+            }
+            LINE_TO -> {
+                p.lineTo(this.data[idx++] * density, this.data[idx++] * density)
+            }
+            CUBIC_TO -> {
+                p.cubicTo(
+                    this.data[idx++] * density,
+                    this.data[idx++] * density,
+                    this.data[idx++] * density,
+                    this.data[idx++] * density,
+                    this.data[idx++] * density,
+                    this.data[idx++] * density
+                )
+            }
+            QUAD_TO -> {
+                p.quadraticBezierTo(
+                    this.data[idx++] * density,
+                    this.data[idx++] * density,
+                    this.data[idx++] * density,
+                    this.data[idx++] * density
+                )
+            }
+            CLOSE -> {
+                p.close()
+            }
+        }
+    }
+    return p
+}
+
+internal fun com.android.designcompose.serdegen.Path.log() {
+    val MOVE_TO: Byte = 0
+    val LINE_TO: Byte = 1
+    val CUBIC_TO: Byte = 2
+    val QUAD_TO: Byte = 3
+    val CLOSE: Byte = 4
+
+    var idx = 0
+    for (cmd in this.commands) {
+        when (cmd) {
+            MOVE_TO -> {
+                Log.e(TAG, "Move To ${this.data[idx++]}+${this.data[idx++]}")
+            }
+            LINE_TO -> {
+                Log.e(TAG, "Line To ${this.data[idx++]}+${this.data[idx++]}")
+            }
+            CUBIC_TO -> {
+                Log.e(
+                    TAG,
+                    "Cubic To ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]}"
+                )
+            }
+            QUAD_TO -> {
+                Log.e(
+                    TAG,
+                    "Quad To ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]}"
+                )
+            }
+            CLOSE -> {
+                Log.e(TAG, "Close")
+            }
+        }
+    }
 }

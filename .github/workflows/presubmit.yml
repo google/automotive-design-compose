@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-kotlin:
     runs-on: ubuntu-latest
@@ -29,10 +33,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: rust-cache@v2
       - name: Build all
         run: cargo build --all-targets --all-features
       - name: Test all
-        run: test --all-targets --all-features
+        run: cargo test --all-targets --all-features
 
   sdk-build:
     runs-on: ubuntu-latest
@@ -42,6 +47,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "11"
+      - uses: rust-cache@v2
 
       - name: Install Rust dependencies
         run: bash install-rust-toolchains.sh
@@ -74,6 +80,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "11"
+      - uses: rust-cache@v2
 
       - name: Install Rust dependencies
         run: bash install-rust-toolchains.sh
@@ -87,7 +94,7 @@ jobs:
         run: cd build; zip -q -r designcompose_m2repo.zip designcompose_m2repo/
 
       - name: Upload zipped repo
-        uses: actions/upload-artifacts@v3
+        uses: actions/upload-artifact@v3
         with:
           name: designcompose-m2-repo-zip
           path: build/designcompose_m2repo.zip

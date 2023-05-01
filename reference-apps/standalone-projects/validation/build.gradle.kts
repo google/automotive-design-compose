@@ -30,6 +30,4 @@ buildscript {
     }
 }
 
-subprojects {
-    apply { plugin(rootProject.libs.plugins.strictVersionMatcher.get().pluginId) }
-}
+subprojects { apply { plugin(rootProject.libs.plugins.strictVersionMatcher.get().pluginId) } }

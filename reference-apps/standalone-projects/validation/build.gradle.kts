@@ -32,9 +32,4 @@ buildscript {
 
 subprojects {
     apply { plugin(rootProject.libs.plugins.strictVersionMatcher.get().pluginId) }
-
-    tasks.withType<JavaCompile>().configureEach {
-        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-        targetCompatibility = JavaVersion.VERSION_1_8.toString()
-    }
 }

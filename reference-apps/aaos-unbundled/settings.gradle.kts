@@ -34,3 +34,4 @@ dependencyResolutionManagement {
 include(":media")
 
 include(":mediacompose")
+

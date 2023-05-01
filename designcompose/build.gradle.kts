@@ -19,7 +19,7 @@ plugins {
     id("com.android.library")
     id("org.mozilla.rust-android-gradle.rust-android")
     // Plugins from our buildSrc
-    id("designcompose.conventions.java-toolchain")
+    id("designcompose.conventions.base")
     id("designcompose.conventions.publish.android")
     id("designcompose.conventions.android-test-devices")
 }

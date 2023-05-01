@@ -45,6 +45,7 @@ class InteractionTests {
 
         // Navigate to the Triggers -> Timeouts menu
         composeTestRule.onNodeWithText("Triggers").performClick()
+        composeTestRule.onNodeWithText("While Pressed").assertIsDisplayed().performClick()
         composeTestRule.onNodeWithText("Timeouts").assertIsDisplayed().performClick()
 
         // Confirm initial state

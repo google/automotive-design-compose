@@ -59,7 +59,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -82,6 +85,8 @@ import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignContentTypes
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.annotation.DesignKeyAction
+import com.android.designcompose.annotation.DesignMetaKey
 import com.android.designcompose.annotation.DesignPreviewContent
 import com.android.designcompose.annotation.DesignVariant
 import com.android.designcompose.annotation.PreviewNode
@@ -437,13 +442,27 @@ fun VConstraintsTest() {
 // TEST Interactions
 @DesignDoc(id = "8Zg9viyjYTnyN29pbkR1CE")
 interface InteractionTest {
-    @DesignComponent(node = "Start Here") fun MainFrame()
+    @DesignComponent(node = "Start Here")
+    fun MainFrame(
+        @Design(node = "#KeyButtonB") onTapKeyButtonB: TapCallback,
+        @Design(node = "#KeyButtonC") onTapKeyButtonC: TapCallback,
+    )
+
+    // Inject a ctrl-shift-B key when the 'clickedB()' function is called
+    @DesignKeyAction(key = 'B', metaKeys = [DesignMetaKey.MetaShift, DesignMetaKey.MetaCtrl])
+    fun clickedB()
+    // Inject a meta-C key when the 'clickedC()' function is called
+    @DesignKeyAction(key = 'C', metaKeys = [DesignMetaKey.MetaMeta]) fun clickedC()
 }
 
 @Preview
 @Composable
 fun InteractionTest() {
-    InteractionTestDoc.MainFrame()
+    val rootView = LocalView.current
+    InteractionTestDoc.MainFrame(
+        onTapKeyButtonB = { InteractionTestDoc.clickedB() },
+        onTapKeyButtonC = { InteractionTestDoc.clickedC() }
+    )
 }
 
 // TEST Shadows

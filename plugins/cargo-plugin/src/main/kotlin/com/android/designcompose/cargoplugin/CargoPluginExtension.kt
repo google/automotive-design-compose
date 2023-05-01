@@ -14,36 +14,16 @@
  * limitations under the License.
  */
 
-@Suppress("UnstableApiUsage")
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
+package com.android.designcompose.cargoplugin
+
+import java.io.File
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
+
+interface CargoPluginExtension {
+    val cargoBin: Property<File> // Path to the cargo Binary, defaults to ~/.cargo/bin/cargo
+    val crateDir: DirectoryProperty // The cargo workspace to compile
+    val abi:
+        SetProperty<String> // The ABI's to compile https://developer.android.com/ndk/guides/abis
 }
-
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-    }
-    includeBuild("plugins")
-    includeBuild("build-logic")
-}
-
-rootProject.name = "DesignCompose"
-
-include(":designcompose")
-
-include(":annotation")
-
-include(":codegen")
-
-include(":common")
-
-include(":integration-tests:validation")
-
-include(":reference-apps:helloworld")
-
-include(":reference-apps:tutorial")

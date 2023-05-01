@@ -14,36 +14,21 @@
  * limitations under the License.
  */
 
-@Suppress("UnstableApiUsage")
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+buildscript {
     repositories {
         google()
         mavenCentral()
     }
-}
-
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
+    dependencies {
+        // These are plugins that are published as external jars, integrating directly into the
+        // build scripts
+        classpath(libs.kotlin.gradlePlugin)
     }
-    includeBuild("plugins")
-    includeBuild("build-logic")
 }
 
-rootProject.name = "DesignCompose"
+plugins { alias(libs.plugins.ktfmt) }
 
-include(":designcompose")
-
-include(":annotation")
-
-include(":codegen")
-
-include(":common")
-
-include(":integration-tests:validation")
-
-include(":reference-apps:helloworld")
-
-include(":reference-apps:tutorial")
+subprojects {
+    apply { plugin(rootProject.libs.plugins.ktfmt.get().pluginId) }
+    configure<com.ncorti.ktfmt.gradle.KtfmtExtension> { kotlinLangStyle() }
+}

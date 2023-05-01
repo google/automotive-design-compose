@@ -26,6 +26,7 @@ if ! which "$GOPATH"/addlicense; then
     exit 1
 fi
 
+( cd "$GIT_ROOT/plugins" || exit; ./gradlew ktfmtFormat)
 
 ( cd "$GIT_ROOT" || exit
     ./gradlew ktfmtFormatBuildScripts

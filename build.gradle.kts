@@ -39,8 +39,6 @@ plugins {
     alias(libs.plugins.ktfmt)
     alias(libs.plugins.versions)
     alias(libs.plugins.versionCatalogUpdate)
-    alias(libs.plugins.rustAndroidGradle) apply false
-
     alias(libs.plugins.ksp) apply false
 }
 

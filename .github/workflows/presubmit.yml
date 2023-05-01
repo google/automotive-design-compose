@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
       - name: Build all
         run: cargo build --all-targets --all-features
       - name: Test all
@@ -47,7 +47,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "11"
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
 
       - name: Install Rust toolchains
         run: bash install-rust-toolchains.sh
@@ -80,7 +80,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "11"
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
 
       - name: Install Rust toolchains
         run: bash install-rust-toolchains.sh
@@ -103,16 +103,12 @@ jobs:
   figma-resources:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e5e7e5
-      - uses: bahmutov/npm-install@v1
-        with:
-          working-directory: |
-            support-figma/extended-layout-plugin
-            support-figma/auto-content-preview-widget
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
 
       - name: Build Plugin
         working-directory: support-figma/extended-layout-plugin
-        run: npm run build
+        run: npm ci; npm run build
       
       - name: Package Plugin
         working-directory: support-figma
@@ -130,7 +126,7 @@ jobs:
 
       - name: Build Widget
         working-directory: support-figma/auto-content-preview-widget
-        run: npm run build
+        run: npm ci; npm run build
 
       - name: Package Widget
         working-directory: support-figma

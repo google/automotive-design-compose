@@ -8,10 +8,11 @@
     - [Rust](#rust)
     - [Rust Toolchains](#rust-toolchains)
     - [Python](#python)
-    - [Installing the Automotive Design for Compose Figma Plugin and Widget](#installing-the-automotive-design-for-compose-figma-plugin-and-widget)
   - [Running the Tutorial App](#running-the-tutorial-app)
   - [Building your own app](#building-your-own-app)
   - [Source Layout](#source-layout)
+  - [Building additional resources](#building-additional-resources)
+    - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
   - [Get in touch](#get-in-touch)
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose/badge)](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose)
@@ -33,7 +34,7 @@ If you'd like to begin working with Automotive Design for Compose or would like 
 
 ### Android Studio
 
-Currently testing with Android Studio Electric Eel | 2022.1.1
+Currently testing with Android Studio Flamingo | 2022.2.1
 
 ### Android NDK
 
@@ -65,35 +66,22 @@ Python3 must be installed and available on your path as `python`. You can config
 apt install python-is-python3
 ```
 
-### Installing the Automotive Design for Compose Figma Plugin and Widget
-
-The DesignCompose Plugin and Auto Content Preview widget are needed to enable additional layout options and features. Check your Figma account to see if they've already been installed for you. If not, you'll need to build and install them. You can build on any system, but Figma only supports plugin installation via the [Figma Desktop App](https://www.figma.com/downloads/), which only runs on macOS and Windows.
-
-There are two packages that are needed, the Extended Layout plugin and Auto Content Preview widget. Both are located in the `support-figma` directory. Build each by running the following: (you'll need `nodejs` and `npm` installed on your system)
-
-```shell
-npm install
-npm run build
-```
-
-Then open the Figma Desktop app, go to **Plugins** -> **Development** -> **Import plugin from Manifest** and select the `manifest.json` file to import.
-
 ## Running the Tutorial App
 
 The DesignCompose Tutorial app shows you the capabilities of DesignCompose through a series of interactive examples.  You will need a Figma account and [personal access token](https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens) to view the Tutorial Figma file and a large-screen device to run it on.
 
-You'll work with your own copy of the Tutorial Figma file. Create it by importing `reference-apps/tutorial/DesignComposeTutorial.fig` to your Figma account. Once uploaded, you'll need to identify the Figma Document ID from your new file's URL. It's the alphanumeric string between `file/` and the name of the document For example:
+You'll work with your own copy of the [Tutorial Figma file](https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose). Create your own by clicking **Open in Figma**, which creates a copy of the file in your account. Once open, identify the Figma Document ID from your new file's URL. It's the alphanumeric string between `file/` and the name of the document. For example:
 
 <pre><code>figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
 
-The app's Gradle project is `:reference_apps:tutorial` within the main DesignCompose Gradle project. Build and launch it on your device, then set your Figma Access Token on the app by running:
+The app's Gradle project is `:reference-apps:tutorial` within the main DesignCompose Gradle project. Build and launch it on your device, then set your Figma Access Token on the app by running:
 
 ```shell
 FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> \
-    ./gradlew :reference_apps:tutorial:setFigmaTokenDebug
+    ./gradlew :reference-apps:tutorial:setFigmaTokenDebug
 ```
 
-Next,  switch the app to use your copy of the Tutorial file by clicking the dropdown arrow in the upper right. This will open the Design Switcher.
+Next, switch the app to use your copy of the Tutorial file by clicking the dropdown arrow in the upper right. This will open the Design Switcher.
 
 ![Collapsed Design Switcher](docs/design-switcher-collapsed.png)
 
@@ -138,6 +126,23 @@ Automotive Design for Compose consists of several components:
 - The Tutorial app in `reference-apps` provides an overview of DesignCompose
 
 - The `reference-apps/aaos-unbundled` directory contains a separate Gradle project that includes demonstrations of DesignCompose with Android Automotive OS Apps, such as a MediaCenter app.
+
+## Building additional resources
+
+### Building the Automotive Design for Compose Figma Plugin and Widget
+
+The DesignCompose Plugin and Auto Content Preview widget are needed to enable additional layout options and features. The latest releases are available in the Figma Community and on our [Figma Community profile](https://www.figma.com/@designcompose). To build and install an older or customized version, follow these instructions:
+
+You can build on any system, but Figma only supports plugin installation via the [Figma Desktop App](https://www.figma.com/downloads/), which only runs on macOS and Windows.
+
+There are two packages that are needed, the Extended Layout plugin and Auto Content Preview widget. Both are located in the `support-figma` directory. Build each by running the following: (you'll need `nodejs` and `npm` installed on your system)
+
+```shell
+npm install
+npm run build
+```
+
+Then open the Figma Desktop app, go to **Plugins** -> **Development** -> **Import plugin from Manifest** and select the `manifest.json` file to import.
 
 ## Get in touch
 

@@ -116,10 +116,11 @@ jobs:
       
       - name: Package Plugin
         working-directory: support-figma
-        run: zip -q -r extended-layout-plugin.zip |
-          extended-layout-plugin/manifest.json
-          extended-layout-plugin/ui.htm
-          extended-layout-plugin/code.js
+        run: |
+          zip -r extended-layout-plugin.zip \
+            extended-layout-plugin/manifest.json \
+            extended-layout-plugin/ui.html \
+            extended-layout-plugin/code.js
 
       - uses: actions/upload-artifact@v3
         with:
@@ -133,10 +134,11 @@ jobs:
 
       - name: Package Widget
         working-directory: support-figma
-        run: zip -q -r auto-content-preview-widget.zip |
-          auto-content-preview-widget/manifest.json
-          auto-content-preview-widget/ui.htm
-          auto-content-preview-widget/code.js
+        run: |
+          zip -r auto-content-preview-widget.zip \
+            auto-content-preview-widget/manifest.json \
+            auto-content-preview-widget/ui.html \
+            auto-content-preview-widget/code.js
 
       - uses: actions/upload-artifact@v3
         with:

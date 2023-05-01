@@ -23,6 +23,14 @@ dependencyResolutionManagement {
     }
 }
 
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+    }
+    includeBuild("build-logic")
+}
+
 rootProject.name = "DesignCompose"
 
 include(":designcompose")

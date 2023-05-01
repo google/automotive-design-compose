@@ -27,12 +27,10 @@ if ! which "$GOPATH"/addlicense; then
 fi
 
 
-
-
 ( cd "$GIT_ROOT" || exit
-  ./gradlew ktfmtFormatBuildScripts
-  ./gradlew ktfmtFormat
-  cargo fmt
+    ./gradlew ktfmtFormatBuildScripts
+    ./gradlew ktfmtFormat
+    cargo fmt
 )
 
 ( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit; ./gradlew ktfmtFormat)

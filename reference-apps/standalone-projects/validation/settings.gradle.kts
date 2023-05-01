@@ -28,4 +28,12 @@ dependencyResolutionManagement {
     }
 }
 
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+    }
+    includeBuild("../../../build-logic")
+}
+
 include(":validation")

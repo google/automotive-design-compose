@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ import org.gradle.process.internal.DefaultExecOperations
 plugins {
     kotlin("jvm")
     `java-library`
-    id("designcompose.conventions.java-toolchain")
+    id("designcompose.conventions.base")
     id("designcompose.conventions.publish.jvm")
 }
 

@@ -17,7 +17,7 @@
 plugins {
     kotlin("jvm")
     `java-library`
-    id("designcompose.conventions.java-toolchain")
+    id("designcompose.conventions.base")
     id("designcompose.conventions.publish.jvm")
 }
 
@@ -25,7 +25,9 @@ publishing {
     publications.named<MavenPublication>("release") {
         pom {
             name.set("Automotive Design for Compose Annotations")
-            description.set("Annotations for describing how a generated Composable maps data to design elements")
+            description.set(
+                "Annotations for describing how a generated Composable maps data to design elements"
+            )
         }
     }
 }

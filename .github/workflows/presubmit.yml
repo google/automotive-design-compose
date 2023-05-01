@@ -13,7 +13,6 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "11"
-          cache: "gradle"
 
       - uses: gradle/gradle-build-action@v2
         with:
@@ -43,13 +42,12 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "11"
-          cache: "gradle"
 
       - name: Install Rust dependencies
         run: bash install-rust-toolchains.sh
 
       - name: Run local tests
-      - uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2
         with:
           arguments: test
 
@@ -76,7 +74,6 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "11"
-          cache: "gradle"
 
       - name: Install Rust dependencies
         run: bash install-rust-toolchains.sh
@@ -104,7 +101,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "11"
-          cache: "gradle"
+
       - uses: actions/download-artifact@v3
         with:
           name: designcompose-m2-repo-zip

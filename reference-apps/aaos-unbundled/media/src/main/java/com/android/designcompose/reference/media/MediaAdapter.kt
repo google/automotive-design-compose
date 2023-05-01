@@ -134,9 +134,20 @@ class MediaNowPlaying {
     var playController: PlaybackViewModel.PlaybackController? = null
     var upNextTitle: String = ""
     var upNextList: ListContent = EmptyListContent()
+    var showNextTrack: Boolean = false
+    var onTapNextTrack: TapCallback = {}
+    var nextTrackIcon: @Composable (ImageReplacementContext) -> Bitmap? = { null }
+    var nextTrackTitle: String = ""
+    var nextTrackSubtitle: String = ""
+    var showPrevTrack: Boolean = false
+    var onTapPrevTrack: TapCallback = {}
+    var prevTrackIcon: Bitmap? = null
+    var prevTrackTitle: String = ""
+    var prevTrackSubtitle: String = ""
     var showUpNext: Boolean = false
     var hasError: Boolean = false
     var errorFrame: @Composable (ComponentReplacementContext) -> Unit = {}
+    var appIcon: @Composable (ImageReplacementContext) -> Bitmap? = { null }
 }
 
 class MediaBrowse {
@@ -186,6 +197,23 @@ private class MediaArtRequestManager {
     }
 }
 
+private fun drawableToBitmap(drawable: Drawable, width: Int, height: Int, color: Int?): Bitmap {
+    val buffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val c = Canvas(buffer)
+    drawable.setBounds(0, 0, width, height)
+    if (color != null) {
+        when (drawable) {
+            is ColorDrawable -> {
+                drawable.color = color
+            }
+            is VectorDrawable -> {
+                drawable.setTint(color)
+            }
+        }
+    }
+    drawable.draw(c)
+    return buffer
+}
 // Helper class that loads art for MediaItemMetadata. Create this with a callback
 // that takes the loaded bitmap, then provide the artwork key by calling setImage().
 private class MediaArtworkBinder(
@@ -202,28 +230,13 @@ private class MediaArtworkBinder(
             if (drawable == null) {
                 setBitmap(null)
             } else {
-                threadPool.execute(
-                    Runnable {
-                        val buffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                        val c = Canvas(buffer)
-                        drawable.setBounds(0, 0, width, height)
-                        if (color != null) {
-                            when (drawable) {
-                                is ColorDrawable -> {
-                                    drawable.color = color
-                                }
-                                is VectorDrawable -> {
-                                    drawable.setTint(color)
-                                }
-                            }
-                        }
-                        drawable.draw(c)
-                        setBitmap(buffer)
-                    }
-                )
+                threadPool.execute {
+                    val buffer = drawableToBitmap(drawable, width, height, color)
+                    setBitmap(buffer)
+                }
             }
         }
-    ) {}
+    )
 
 private fun getMediaUrl(metadata: MediaItemMetadata?): String {
     val descriptionField: Field =
@@ -562,16 +575,34 @@ class MediaAdapter(
             ListContentData(count = itemData.size) { index -> itemData[index].composable() }
         }
 
+        @Composable
+        fun getAlbumFunc(
+            metadata: MediaItemMetadata,
+            bmp: Bitmap?,
+            setBmp: (Bitmap?) -> Unit
+        ): @Composable (ImageReplacementContext) -> Bitmap? {
+            return { context: ImageReplacementContext ->
+                val width = context.imageContext.getPixelWidth() ?: 300
+                val height = context.imageContext.getPixelHeight() ?: 300
+                val cachedBmp: Bitmap? = getArtwork(metadata, width, height, null, setBmp)
+                cachedBmp ?: bmp
+            }
+        }
+
+        fun playItem(item: MediaItemMetadata) {
+            if (item.queueId != null)
+                playController?.skipToQueueItem(item.queueId!!)
+            else
+                playController?.playItem(item)
+        }
+
         // Album art
         val (albumBitmap, setAlbumBitmap) = remember { mutableStateOf<Bitmap?>(null) }
-        nowPlaying.albumArt = { context ->
-            val width = context.imageContext.getPixelWidth() ?: 300
-            val height = context.imageContext.getPixelHeight() ?: 300
-            var cachedIcon: Bitmap? = null
-            if (metadata != null)
-                cachedIcon = getArtwork(metadata!!, width, height, null, setAlbumBitmap)
-            cachedIcon ?: albumBitmap
-        }
+        nowPlaying.albumArt =
+            if (metadata != null) getAlbumFunc(metadata!!, albumBitmap, setAlbumBitmap)
+            else {
+                { null }
+            }
 
         // Up next queue
         val upNextTitle: CharSequence? by playbackViewModel.queueTitle.observeAsState()
@@ -599,6 +630,57 @@ class MediaAdapter(
                 false
             )
 
+        var nextTrack: MediaItemMetadata? = null
+        val (nextTrackBitmap, setNextTrackBitmap) = remember { mutableStateOf<Bitmap?>(null) }
+        if (nextList != null && nextList?.size!! >= 2) nextTrack = nextList?.get(1)
+
+        nowPlaying.nextTrackTitle = nextTrack?.title?.toString() ?: ""
+        nowPlaying.nextTrackSubtitle = nextTrack?.subtitle?.toString() ?: ""
+        nowPlaying.nextTrackIcon =
+            if (nextTrack != null) getAlbumFunc(nextTrack!!, nextTrackBitmap, setNextTrackBitmap)
+            else {
+                { null }
+            }
+        nowPlaying.showNextTrack = nextTrack?.title?.isNotEmpty() == true
+        nowPlaying.onTapNextTrack = { if (nextTrack != null) playItem(nextTrack) }
+
+        val (prevMetadata, setPrevMetadata) = remember { mutableStateOf<MediaItemMetadata?>(null) }
+        val (currentMetadata, setCurrentMetadata) = remember { mutableStateOf<MediaItemMetadata?>(null) }
+        val (prevArt, setPrevArt) = remember { mutableStateOf<Bitmap?>(null) }
+        nowPlaying.prevTrackTitle = prevMetadata?.title?.toString() ?: ""
+        nowPlaying.prevTrackSubtitle = prevMetadata?.artist?.toString() ?: ""
+        nowPlaying.showPrevTrack = prevMetadata?.title?.isNotEmpty() == true
+        nowPlaying.onTapPrevTrack = { if (prevMetadata != null) playItem(prevMetadata) }
+        nowPlaying.prevTrackIcon = prevArt
+        if (currentMetadata?.title != metadata?.title) {
+            setPrevMetadata(currentMetadata)
+            setCurrentMetadata(metadata)
+            setPrevArt(albumBitmap)
+        }
+
+        nowPlaying.appIcon = { context ->
+            val mediaSource: MediaSource? by playbackSource.primaryMediaSource.observeAsState()
+            var icon: Bitmap? = null
+            var sourceIcon = mediaSource?.icon
+            if (sourceIcon != null) {
+                val width = context.imageContext.getPixelWidth() ?: sourceIcon.intrinsicWidth
+                val height = context.imageContext.getPixelHeight() ?: sourceIcon.intrinsicHeight
+                val color = context.imageContext.getBackgroundColor()
+                val artKey =
+                    MediaArtKey(mediaSource?.displayName?.toString() ?: "", width, height, color)
+                icon = artCache.get(artKey)
+                if (icon == null && color != null) {
+                    val state = sourceIcon?.mutate()?.constantState
+                    val newIcon = state?.newDrawable()?.mutate()
+                    if (newIcon != null) {
+                        icon = drawableToBitmap(newIcon, width, height, color)
+                        artCache.insert(artKey, icon)
+                    }
+                }
+            }
+            icon ?: mediaSource?.croppedPackageIcon
+        }
+
         return nowPlaying
     }
 
@@ -613,7 +695,8 @@ class MediaAdapter(
         val nowPlaying = MediaNowPlayingProgress()
         // Observe the current track progress
         val progress: PlaybackProgress? by playbackViewModel.progress.observeAsState()
-        nowPlaying.progressWidth =
+        val maxProgress = progress?.maxProgress?.toFloat() ?: 0F
+        nowPlaying.progressWidth = if (maxProgress == 0F) 0F else
             (progress?.progress?.toFloat() ?: 0F) / (progress?.maxProgress?.toFloat() ?: 0F)
         nowPlaying.currentTimeText = progress?.currentTimeText as String? ?: ""
         nowPlaying.maxTimeText = progress?.maxTimeText as String? ?: ""

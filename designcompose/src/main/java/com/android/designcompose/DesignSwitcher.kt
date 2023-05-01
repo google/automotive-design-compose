@@ -33,6 +33,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.FeedbackLevel
+import com.android.designcompose.serdegen.FigmaDocInfo
 import com.android.designcompose.serdegen.NodeQuery
 import java.time.Instant
 import kotlin.collections.HashMap
@@ -386,7 +387,13 @@ private fun GetProjectList(
     setDocId: (String) -> Unit,
     interactionState: InteractionState
 ) {
-    doc?.c?.project_files?.forEach {
+    val docs: List<FigmaDocInfo> = listOf(
+        FigmaDocInfo("Bootcamp", "tO6K4RPuJ4Sxf6M2M4IEIW"),
+        FigmaDocInfo("Black", "UlRCCRcaTX53RBf84FhNpC"),
+        FigmaDocInfo("Media 1", "7rvM6aVWe0jZCm7jhO9ITx"),
+    )
+    docs.forEach {
+    //doc?.c?.project_files?.forEach {
         DesignSwitcherDoc.FigmaDoc(
             it.name,
             it.id,

@@ -21,10 +21,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,6 +34,7 @@ import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.ListContent
+import com.android.designcompose.Meter
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -74,7 +72,10 @@ val notosansFont =
         Font(R.font.notosans_thin, FontWeight.Thin, FontStyle.Normal),
     )
 
-@DesignDoc(id = "7rvM6aVWe0jZCm7jhO9ITx", version = "0.1")
+@DesignDoc(
+    id = "tO6K4RPuJ4Sxf6M2M4IEIW",
+    version = "0.1"
+) // "7rvM6aVWe0jZCm7jhO9ITx", version = "0.1")
 interface CenterDisplay : com.android.designcompose.reference.media.MediaInterface {
     @DesignComponent(node = "#stage", isRoot = true)
     fun MainFrame(
@@ -84,14 +85,26 @@ interface CenterDisplay : com.android.designcompose.reference.media.MediaInterfa
         @Design(node = "#media/now-playing/album") album: String,
         @Design(node = "#media/now-playing/artwork")
         albumArt: @Composable (ImageReplacementContext) -> Bitmap?,
-        @Design(node = "#media/now-playing/source-icon") appIcon: Bitmap?,
+        @Design(node = "#media/now-playing/source-icon")
+        appIcon: @Composable (ImageReplacementContext) -> Bitmap?,
         @Design(node = "#media/now-playing/source-name") appName: String,
+        @Design(node = "#media/next-track") showNextTrack: Boolean,
+        @Design(node = "#media/next-track") onTapNextTrack: TapCallback,
+        @Design(node = "#media/next-track-icon") nextTrackIcon: @Composable (ImageReplacementContext) -> Bitmap?,
+        @Design(node = "#media/next-track-title") nextTrackTitle: String,
+        @Design(node = "#media/next-track-subtitle") nextTrackSubtitle: String,
+
+        @Design(node = "#media/prev-track") showPrevTrack: Boolean,
+        @Design(node = "#media/prev-track") onTapPrevTrack: TapCallback,
+        @Design(node = "#media/prev-track-icon") prevTrackIcon: @Composable (ImageReplacementContext) -> Bitmap?,
+        @Design(node = "#media/prev-track-title") prevTrackTitle: String,
+        @Design(node = "#media/prev-track-subtitle") prevTrackSubtitle: String,
+
         // These track progress customizations change frequently, so make sure their customizations
         // are functions so that we don't need to recompose the whole main frame
         @Design(node = "#media/now-playing/time-elapsed") timeElapsed: @Composable () -> String,
         @Design(node = "#media/now-playing/time-duration") timeDuration: @Composable () -> String,
-        @Design(node = "#media/now-playing/progress-bar")
-        progress: @Composable (ComponentReplacementContext) -> Unit,
+        @Design(node = "#media/now-playing/progress-bar") progress: Meter,
 
         // Playback controls
         @DesignVariant(property = "#media/now-playing/play-state-button") playState: PlayState,
@@ -341,20 +354,21 @@ class MainActivity : ComponentActivity() {
             artist = nowPlaying.artist,
             album = nowPlaying.album,
             albumArt = nowPlaying.albumArt,
-            appIcon = mediaSource?.croppedPackageIcon,
+            appIcon = nowPlaying.appIcon, // mediaSource?.croppedPackageIcon,
             appName = mediaSource?.displayName as String,
+            showNextTrack = nowPlaying.showNextTrack,
+            onTapNextTrack = nowPlaying.onTapNextTrack,
+            nextTrackIcon = nowPlaying.nextTrackIcon,
+            nextTrackTitle = nowPlaying.nextTrackTitle,
+            nextTrackSubtitle = nowPlaying.nextTrackSubtitle,
+            showPrevTrack = nowPlaying.showPrevTrack,
+            onTapPrevTrack = nowPlaying.onTapPrevTrack,
+            prevTrackIcon = nowPlaying.prevTrackIcon,
+            prevTrackTitle = nowPlaying.prevTrackTitle,
+            prevTrackSubtitle = nowPlaying.prevTrackSubtitle,
             timeElapsed = { mediaAdapter.getNowPlayingProgress().currentTimeText },
             timeDuration = { mediaAdapter.getNowPlayingProgress().maxTimeText },
-            progress = { context ->
-                val progress = mediaAdapter.getNowPlayingProgress()
-                val progressWidth =
-                    if (progress.progressWidth.isFinite()) {
-                        progress.progressWidth
-                    } else {
-                        0.0f
-                    }
-                Row(Modifier.fillMaxHeight().fillMaxWidth(progressWidth)) { context.Content() }
-            },
+            progress = mediaAdapter.getNowPlayingProgress().progressWidth * 100F,
             playState = if (nowPlaying.showPlay) PlayState.Play else PlayState.Pause,
             onPlayPauseTap = {
                 if (nowPlaying.showPlay) nowPlaying.playController?.play()

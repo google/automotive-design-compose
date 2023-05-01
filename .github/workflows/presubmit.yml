@@ -15,9 +15,25 @@ jobs:
           java-version: "11"
           cache: "gradle"
 
-      - name: ktfmtCheck
-        shell: bash
-        run: ./gradlew ktfmtCheck
+      - uses: gradle/gradle-build-action@v2
+        with:
+          arguments: ktfmtCheck
+
+  lint-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Rust lint
+        run: cargo-fmt --all --check
+
+  rust-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build all
+        run: cargo build --all-targets --all-features
+      - name: Test all
+        run: test --all-targets --all-features
 
   sdk-build:
     runs-on: ubuntu-latest
@@ -33,13 +49,71 @@ jobs:
         run: bash install-rust-toolchains.sh
 
       - name: Run local tests
-        run: ./gradlew test
+      - uses: gradle/gradle-build-action@v2
+        with:
+          arguments: test
 
       - name: Build debug
-        run: ./gradlew assembleDebug
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: assembleDebug
 
       - name: Build release
-        run: ./gradlew assembleRelease
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: assembleRelease
 
       - name: Final check
-        run: ./gradlew check
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: check
+
+  build-maven-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "11"
+          cache: "gradle"
+
+      - name: Install Rust dependencies
+        run: bash install-rust-toolchains.sh
+
+      - name: Build Maven repo
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: publishAllPublicationsToLocalDirRepository
+
+      - name: Zip repo
+        run: cd build; zip -q -r designcompose_m2repo.zip designcompose_m2repo/
+
+      - name: Upload zipped repo
+        uses: actions/upload-artifacts@v3
+        with:
+          name: designcompose-m2-repo-zip
+          path: build/designcompose_m2repo.zip
+
+  validation-standalone-test:
+    runs-on: ubuntu-latest
+    needs: build-maven-repo
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "11"
+          cache: "gradle"
+      - uses: actions/download-artifact@v3
+        with:
+          name: designcompose-m2-repo-zip
+
+      - name: Unpack repo
+        run: unzip designcompose_m2repo.zip
+
+      - uses: gradle/gradle-build-action@v2
+        with:
+          arguments: |
+            -PDesignComposeMavenRepo=designcompose_m2repo
+            check

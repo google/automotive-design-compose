@@ -75,26 +75,4 @@ subprojects {
         sourceCompatibility = JavaVersion.VERSION_1_8.toString()
         targetCompatibility = JavaVersion.VERSION_1_8.toString()
     }
-    // Replace dependencies on DesignCompose with our project
-    configurations.all {
-        resolutionStrategy.dependencySubstitution {
-            substitute(module("com.android.designcompose:designcompose"))
-                .using(project(":designcompose"))
-            substitute(module("com.android.designcompose:codegen")).using(project(":codegen"))
-        }
-    }
-    afterEvaluate {
-        // Redirect the buildDir for our semi-included DesignCompose projects to a separate
-        // directory.
-        // This should prevent build conflicts between the two and allow both projects to be worked
-        // on
-        // simultaneously.
-        // Rather than list each one individually, we just assume that any project whose projectDir
-        // is not within the Unbundled rootDir should have it's output redirected.
-        // (This doesn't, and doesn't need to, move the includedBuild projects)
-        if (!projectDir.startsWith(rootDir)) {
-            println("Redirecting build output")
-            buildDir = File(rootDir, "build/designcompose/${this.name}")
-        }
-    }
 }

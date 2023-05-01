@@ -100,6 +100,7 @@ dc_kokoro_wrapup() {
 END OF TEST SCRIPT
 ANY FAILURE SHOULD BE REPORTED ABOVE HERE
 
+Work directory: $KOKORO_ARTIFACTS_DIR
 BEGINNING TEST WRAP UP
 *****************************************
 "
@@ -191,7 +192,8 @@ dc_build_mediacompose_standalone() {
         "$DESIGNCOMPOSE_DIR/reference-apps/aaos-unbundled/standalone-projects/mediacompose" \
         -o "$TMP_MC_DIR/mediacompose"
 
-    tar czvf "${KOKORO_ARTIFACTS_DIR}/artifacts/mediacompose.tgz" -C "$TMP_MC_DIR" mediacompose/
+    cd "$TMP_MC_DIR"
+    zip -q -r "${KOKORO_ARTIFACTS_DIR}/artifacts/mediacompose.zip" mediacompose/
 }
 
 # Build the DesignCompose Maven Repo
@@ -202,7 +204,8 @@ dc_build_designcompose_m2repo() {
     cd "$DESIGNCOMPOSE_DIR" || exit
     ./gradlew publishAllPublicationsToLocalDirRepository
 
-    tar czvf "${KOKORO_ARTIFACTS_DIR}/artifacts/designcompose_m2repo.tgz" -C "$TMP_DCM2_DIR" designcompose_m2repo/
+    cd "$TMP_DCM2_DIR"
+    zip -q -r "${KOKORO_ARTIFACTS_DIR}/artifacts/designcompose_m2repo.zip" designcompose_m2repo/
 }
 
 # Build the Tutorial App
@@ -213,17 +216,18 @@ dc_build_tutorial() {
     cp "$DESIGNCOMPOSE_DIR/reference-apps/tutorial/build/outputs/apk/release/tutorial-release.apk" "${KOKORO_ARTIFACTS_DIR}/artifacts/"
 }
 
-dc_build_figma_tool() {
+dc_build_figma_resource() {
     TOOL_NAME="$1"
     cd "$DESIGNCOMPOSE_DIR/support-figma/$TOOL_NAME"|| exit
     npm install
     npm run build
-    tar czvf "${KOKORO_ARTIFACTS_DIR}/artifacts/figma-$TOOL_NAME.tgz" manifest.json ui.html code.js
+    cd ..
+    zip -q -r "${KOKORO_ARTIFACTS_DIR}/artifacts/figma-$TOOL_NAME.zip" "$TOOL_NAME"/{manifest.json,ui.html,code.js}
 }
 
-dc_build_figma_tools() {
-    dc_build_figma_tool extended-layout-plugin
-    dc_build_figma_tool auto-content-preview-widget
+dc_build_figma_resources() {
+    dc_build_figma_resource extended-layout-plugin
+    dc_build_figma_resource auto-content-preview-widget
 }
 
 ###### Scripts for the individual jobs. Each of the below are called by different Kokoro Jobs
@@ -244,7 +248,7 @@ dc_aaos_apps_job() {
 # The release job
 dc_release_job() {
     export ORG_GRADLE_PROJECT_liveUpdateJNIReleaseBuild=true
-    dc_build_figma_tools
+    dc_build_figma_resources
     dc_build_designcompose_m2repo
     dc_build_mediacompose_standalone
     dc_build_tutorial
@@ -267,8 +271,8 @@ dc_test_release_job() {
     GRADLE_TEST_RESULT_DIRS+=("$TMP_MCTEST_DIR")
 
     # Unpack the results of the release job, rename mediacompose directory to separate the test results from the results of the normal test
-    tar xf "${KOKORO_ARTIFACTS_DIR}/artifacts/designcompose_m2repo.tgz"
-    tar xf "${KOKORO_ARTIFACTS_DIR}/artifacts/mediacompose.tgz"
+    unzip "${KOKORO_ARTIFACTS_DIR}/artifacts/designcompose_m2repo.zip"
+    unzip "${KOKORO_ARTIFACTS_DIR}/artifacts/mediacompose.zip"
     mv mediacompose mediacompose-standalone
 
     cd mediacompose-standalone || exit

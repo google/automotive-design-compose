@@ -80,14 +80,21 @@ tasks.withType<com.android.build.gradle.tasks.MergeSourceSetFolders>().configure
     }
 }
 
+publishing {
+    publications.named<MavenPublication>("release") {
+        pom {
+            name.set("Automotive Design for Compose")
+            description.set("Core library for the SDK")
+        }
+    }
+}
+
 dependencies {
     api(project(":common"))
     api(project(":annotation"))
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.lifecycle.livedata.ktx)
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
     api(libs.androidx.compose.foundation)
     api(libs.androidx.compose.foundation.layout)
     api(libs.androidx.compose.runtime)

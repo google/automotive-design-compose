@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,14 @@ plugins {
     id("designcompose.conventions.publish.jvm")
 }
 
+publishing {
+    publications.named<MavenPublication>("release") {
+        pom {
+            name.set("Automotive Design for Compose Common Library")
+            description.set("Common code used by other DesignCompose libraries")
+        }
+    }
+}
 /**
  * Serde gen task
  *

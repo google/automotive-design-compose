@@ -129,8 +129,6 @@ jobs:
         name: designcompose-m2-repo-zip
 
     - run: unzip designcompose_m2repo.zip
-    - run: ls
-    - run: pwd
 
     - name: Check Tutorial App
       uses: gradle/gradle-build-action@v2
@@ -139,10 +137,8 @@ jobs:
         arguments: |
           --init-script ../local-design-compose-repo.init.gradle.kts
           -PDesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo
+          dependencies
           check
-
-
-
 
   figma-resources:
     runs-on: ubuntu-latest

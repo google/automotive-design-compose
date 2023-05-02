@@ -1,6 +1,5 @@
 rootProject.name = "DesignCompose Tutorial App"
 
-
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     // Use the same version catalog that we use for the core SDK

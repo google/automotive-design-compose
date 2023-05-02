@@ -3,13 +3,14 @@
 - [Automotive Design for Compose](#automotive-design-for-compose)
   - [Introduction](#introduction)
   - [Getting Started](#getting-started)
+  - [Building your own app](#building-your-own-app)
+- [Working with the Source](#working-with-the-source)
+  - [SDK build dependencies](#sdk-build-dependencies)
     - [Android Studio](#android-studio)
     - [Android NDK](#android-ndk)
     - [Rust](#rust)
     - [Rust Toolchains](#rust-toolchains)
     - [Python](#python)
-  - [Running the Tutorial App](#running-the-tutorial-app)
-  - [Building your own app](#building-your-own-app)
   - [Source Layout](#source-layout)
   - [Building additional resources](#building-additional-resources)
     - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
@@ -28,9 +29,42 @@ Find our documentation on the
 
 ## Getting Started
 
-Automotive Design for Compose is currently only available as source code. Stay with us as we get closer to our 1.0 release and add more documentation, begin publishing releases, and make things even easier to use!
+The DesignCompose Tutorial app shows you the capabilities of DesignCompose through a series of interactive examples.  You will need a Figma account and [personal access token](https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens) to view the Tutorial Figma file and a large-screen device to run it on.
 
-If you'd like to begin working with Automotive Design for Compose or would like to run the Tutorial App, you will need to perform some initial setup:
+You'll work with your own copy of the [Tutorial Figma file](https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose). Create your own by clicking **Open in Figma**, which creates a copy of the file in your account. Once open, identify the Figma Document ID from your new file's URL. It's the alphanumeric string between `file/` and the name of the document. For example:
+
+<pre><code>figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
+
+The app's Gradle project is located in `reference-apps/tutorial`. Build and launch it on your device, then set your Figma Access Token on the app by running:
+
+```shell
+FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> \
+    ./gradlew setFigmaTokenDebug
+```
+
+Next, switch the app to use your copy of the Tutorial file by clicking the dropdown arrow in the upper right. This will open the Design Switcher.
+
+![Collapsed Design Switcher](docs/design-switcher-collapsed.png)
+
+Click the **Change** button to switch document IDs, and enter the ID of your copy of the Tutorial Figma File. Click **Load** and the app will start fetching your file (it'll take about a minute)
+
+While that's loading, open your copy of the Tutorial file on Figma and find the **Getting Started** box (it's at the top with a pointer pointing to it).
+
+![Find Getting Started](docs/TutorialGettingStarted.png)
+
+Zoom in on it and begin your tutorial!
+
+![Getting Started Frame](docs/GettingStartedFrame.svg)
+
+## Building your own app
+
+We'll be adding more documentation and guides soon! For now you can look to `reference-apps/helloworld` for an an example of a basic app.
+
+# Working with the Source
+
+## SDK build dependencies
+
+DesignCompose's Live Update system uses a native library built in Rust to fetch and serialize your Figma Documents. You'll need the following to build it and the rest of the SDK.
 
 ### Android Studio
 
@@ -65,41 +99,6 @@ Python3 must be installed and available on your path as `python`. You can config
 ```shell
 apt install python-is-python3
 ```
-
-## Running the Tutorial App
-
-The DesignCompose Tutorial app shows you the capabilities of DesignCompose through a series of interactive examples.  You will need a Figma account and [personal access token](https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens) to view the Tutorial Figma file and a large-screen device to run it on.
-
-You'll work with your own copy of the [Tutorial Figma file](https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose). Create your own by clicking **Open in Figma**, which creates a copy of the file in your account. Once open, identify the Figma Document ID from your new file's URL. It's the alphanumeric string between `file/` and the name of the document. For example:
-
-<pre><code>figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
-
-The app's Gradle project is `:reference-apps:tutorial` within the main DesignCompose Gradle project. Build and launch it on your device, then set your Figma Access Token on the app by running:
-
-```shell
-FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> \
-    ./gradlew :reference-apps:tutorial:setFigmaTokenDebug
-```
-
-Next, switch the app to use your copy of the Tutorial file by clicking the dropdown arrow in the upper right. This will open the Design Switcher.
-
-![Collapsed Design Switcher](docs/design-switcher-collapsed.png)
-
-Click the **Change** button to switch document IDs, and enter the ID of your copy of the Tutorial Figma File. Click **Load** and the app will start fetching your file (it'll take about a minute)
-
-While that's loading, open your copy of the Tutorial file on Figma and find the **Getting Started** box (it's at the top with a pointer pointing to it).
-
-![Find Getting Started](docs/TutorialGettingStarted.png)
-
-Zoom in on it and begin your tutorial!
-
-![Getting Started Frame](docs/GettingStartedFrame.svg)
-
-## Building your own app
-
-Automotive Design for Compose is not yet being published in Maven. For now you can use the `publishAllPublicationsToLocalDirRepository` Gradle task to build a local copy of the libraries or include the project in a [Gradle composite build](https://docs.gradle.org/current/userguide/composite_builds.html).
-
-We'll be adding more documentation and guides soon!
 
 ## Source Layout
 

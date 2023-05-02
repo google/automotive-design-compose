@@ -133,13 +133,12 @@ jobs:
     - run: pwd
 
     - name: Check Tutorial App
-      env: 
-        ORG_GRADLE_PROJECT_DesignComposeMavenRepo : $PWD/designcompose_m2repo
       uses: gradle/gradle-build-action@v2
       with:
         build-root-directory: reference-apps/tutorial
         arguments: |
-          --init-script reference-apps/local-design-compose-repo.init.gradle.kts
+          --init-script ../local-design-compose-repo.init.gradle.kts
+          -PDesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo
           check
 
 

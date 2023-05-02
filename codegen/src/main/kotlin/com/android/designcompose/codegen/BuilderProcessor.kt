@@ -709,7 +709,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             // Add an optional callback function to be called when the doc is ready to be rendered
             val defaultDocReady = if (override) "" else " = null"
-            args.add(Pair("designDocReadyCallback", "(() -> Unit)?$defaultDocReady"))
+            args.add(Pair("designDocReadyCallback", "((String) -> Unit)?$defaultDocReady"))
 
             // Add optional key that can be used to uniquely identify this particular instance
             val keyDefault = if (override) "" else " = null"

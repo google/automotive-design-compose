@@ -658,7 +658,7 @@ fun DesignDoc(
     serverParams: DocumentServerParams = DocumentServerParams(),
     setDocId: (String) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
-    designDocReadyCallback: (() -> Unit)? = null,
+    designDocReadyCallback: ((String) -> Unit)? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) =
     DesignDocInternal(
@@ -687,7 +687,7 @@ internal fun DesignDocInternal(
     setDocId: (String) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
-    designDocReadyCallback: (() -> Unit)? = null,
+    designDocReadyCallback: ((String) -> Unit)? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) {
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
@@ -747,7 +747,9 @@ internal fun DesignDocInternal(
     if (doc != null) {
         val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)
         if (startFrame != null) {
-            LaunchedEffect(Unit) { if (designDocReadyCallback != null) designDocReadyCallback() }
+            LaunchedEffect(docId) {
+                if (designDocReadyCallback != null) designDocReadyCallback(docId)
+            }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
                 DesignView(
                     modifier,

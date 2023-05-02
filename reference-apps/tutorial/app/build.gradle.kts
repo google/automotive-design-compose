@@ -62,8 +62,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":designcompose"))
-    ksp(project(":codegen"))
+    implementation(libs.designcompose)
+    ksp(libs.designcompose.codegen)
 
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)

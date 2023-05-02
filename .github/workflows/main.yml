@@ -51,7 +51,10 @@ jobs:
         run: cargo-fmt --all --check
 
   rust-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
@@ -61,7 +64,10 @@ jobs:
         run: cargo test --all-targets --all-features
 
   sdk-build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}    
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -124,7 +130,10 @@ jobs:
           path: build/designcompose_m2repo.zip
 
   figma-resources:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

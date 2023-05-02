@@ -133,12 +133,17 @@ object DesignSettings {
         fontDb[name] = family
     }
 
+
     fun showMessageInToast(msg: String, duration: Int) {
         Log.i(TAG, "Raising toast: $msg")
+        // Toast.makeText dies in AAOS with "display must not be null" on secondary displays
+        // like the cluster display.  Just log the message till that issue is resolved.
+        /*
         val activity = parentActivity.get()
         activity?.runOnUiThread { Toast.makeText(activity, msg, duration).show() }
+         */
     }
-
+    
     internal fun fontFamily(
         fontFamily: Optional<String>,
         fallback: FontFamily = FontFamily.Default,

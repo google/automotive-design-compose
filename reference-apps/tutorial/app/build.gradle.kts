@@ -82,11 +82,3 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espresso.core)
 }
-project.afterEvaluate {
-    gradle.settingsEvaluated{
-        dependencyResolutionManagement.repositories.forEach{
-            println(it)
-        }
-    }
-    println(project.repositories.toString())
-}

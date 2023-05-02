@@ -155,7 +155,7 @@ interface HelloWorld {
 fun HelloWorld() {
     HelloWorldDoc.Main(
         name = "World",
-        designDocReadyCallback = { Log.i("DesignCompose", "HelloWorld Ready!") },
+        designDocReadyCallback = { id -> Log.i("DesignCompose", "HelloWorld Ready: doc ID = $id") },
     )
 }
 

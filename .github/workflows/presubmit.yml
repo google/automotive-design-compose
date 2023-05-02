@@ -137,7 +137,7 @@ jobs:
         arguments: |
           --init-script ../local-design-compose-repo.init.gradle.kts
           -PDesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo
-          dependencies
+          app:dependencies
           check
 
   figma-resources:

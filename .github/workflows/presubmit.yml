@@ -15,6 +15,7 @@
 name: Presubmit
 
 on:
+  merge_group:
   pull_request:
     branches: [main]
 

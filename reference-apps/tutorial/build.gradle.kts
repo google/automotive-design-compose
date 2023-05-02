@@ -24,3 +24,4 @@ buildscript {
         classpath(libs.android.gradlePlugin)
     }
 }
+

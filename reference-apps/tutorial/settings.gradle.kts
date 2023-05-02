@@ -31,6 +31,9 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
+    repositories.forEach{
+        println(it.name)
+    }
 }
 
 pluginManagement {

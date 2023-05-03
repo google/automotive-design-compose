@@ -1,7 +1,0 @@
-# Standalone projects
-
-Contained in here are each of our reference / sample / etc. apps that we intend to release as standalone reference projects. Meaning they'll be separate release artifacts, separate gradle projects and will rely on the released DesignCompose maven artifacts.
-
-The majority of each project's directory are symlinks to other files in our repo. For example, `reference-apps/aaos-unbundled/standalone-project/mediacompose` has symlinks to the actual `media` and `mediacompose` submodules in aaos-unbundled, the `unbundled-settings.gradle.kts` file which brings in the Unbundled apps project, `gradle/libs.versions.toml`, and so-on.
-
-The `export-standalone-project.py` script is used to create the releasable standalone project. It simply copies the directory to a given location, filtering out unnecessary files (`build/`, `local.properties`, etc), and dereferencing the symlinks as it goes. The result should be ready to release and build.

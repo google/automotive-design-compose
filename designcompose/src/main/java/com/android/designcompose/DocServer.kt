@@ -66,6 +66,10 @@ internal class LiveDocSubscriptions(
 
 object DesignSettings {
     internal var liveUpdatesEnabled = false
+    // Toast.makeText causes a crash in AAOS on secondary displays with a
+    // "display must not be null" error.  This flag is used to disable
+    // Toasts in affected apps till that issue is resolved.
+    internal var toastsEnabled = true
     private var parentActivity = WeakReference<ComponentActivity>(null)
     internal var liveUpdateSettings: LiveUpdateSettingsRepository? = null
     private var figmaApiKeyFlow: Flow<String?>? = null
@@ -107,6 +111,10 @@ object DesignSettings {
         DocServer.initializeLiveUpdate()
     }
 
+    fun disableToasts() {
+        toastsEnabled = false
+    }
+
     // Intent consumer that checks for a new API Key and stores it.
     private val setApiKeyListener =
         Consumer<Intent> { intent ->
@@ -134,9 +142,12 @@ object DesignSettings {
     }
 
     fun showMessageInToast(msg: String, duration: Int) {
-        Log.i(TAG, "Raising toast: $msg")
-        val activity = parentActivity.get()
-        activity?.runOnUiThread { Toast.makeText(activity, msg, duration).show() }
+        Log.i(TAG, "Toast message: $msg")
+
+        if (toastsEnabled) {
+            val activity = parentActivity.get()
+            activity?.runOnUiThread { Toast.makeText(activity, msg, duration).show() }
+        }
     }
 
     internal fun fontFamily(

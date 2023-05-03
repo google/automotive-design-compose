@@ -62,7 +62,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -446,22 +445,40 @@ interface InteractionTest {
     fun MainFrame(
         @Design(node = "#KeyButtonB") onTapKeyButtonB: TapCallback,
         @Design(node = "#KeyButtonC") onTapKeyButtonC: TapCallback,
+        @Design(node = "#KeyInjectA") onTapInjectA: TapCallback,
+        @Design(node = "#KeyInjectB") onTapInjectB: TapCallback,
+        @Design(node = "#KeyInjectC") onTapInjectC: TapCallback,
+        @Design(node = "#KeyInjectAB") onTapInjectAB: TapCallback,
+        @Design(node = "#KeyInjectBC") onTapInjectBC: TapCallback,
     )
 
     // Inject a ctrl-shift-B key when the 'clickedB()' function is called
     @DesignKeyAction(key = 'B', metaKeys = [DesignMetaKey.MetaShift, DesignMetaKey.MetaCtrl])
-    fun clickedB()
+    fun clickedShiftCtrlB()
     // Inject a meta-C key when the 'clickedC()' function is called
-    @DesignKeyAction(key = 'C', metaKeys = [DesignMetaKey.MetaMeta]) fun clickedC()
+    @DesignKeyAction(key = 'C', metaKeys = [DesignMetaKey.MetaMeta]) fun clickedMetaC()
+    @DesignKeyAction(key = 'A', metaKeys = []) fun clickedA()
+    @DesignKeyAction(key = 'B', metaKeys = []) fun clickedB()
+    @DesignKeyAction(key = 'C', metaKeys = []) fun clickedC()
 }
 
 @Preview
 @Composable
 fun InteractionTest() {
-    val rootView = LocalView.current
     InteractionTestDoc.MainFrame(
-        onTapKeyButtonB = { InteractionTestDoc.clickedB() },
-        onTapKeyButtonC = { InteractionTestDoc.clickedC() }
+        onTapKeyButtonB = { InteractionTestDoc.clickedShiftCtrlB() },
+        onTapKeyButtonC = { InteractionTestDoc.clickedMetaC() },
+        onTapInjectA = { InteractionTestDoc.clickedA() },
+        onTapInjectB = { InteractionTestDoc.clickedB() },
+        onTapInjectC = { InteractionTestDoc.clickedC() },
+        onTapInjectAB = {
+            InteractionTestDoc.clickedA()
+            InteractionTestDoc.clickedB()
+        },
+        onTapInjectBC = {
+            InteractionTestDoc.clickedB()
+            InteractionTestDoc.clickedC()
+        },
     )
 }
 

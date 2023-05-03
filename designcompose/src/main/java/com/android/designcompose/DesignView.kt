@@ -262,30 +262,39 @@ data class DesignKeyEvent(val key: Char, val metaKeys: List<DesignMetaKey>) {
     }
 }
 
+private data class KeyAction(
+    val interactionState: InteractionState,
+    val action: Action,
+    val targetInstanceId: String?,
+    val key: String?,
+    val undoInstanceId: String?
+)
+
 // Manager to handle key event injects and listeners of key events
 private object KeyInjectManager {
-    private val keyListenerMap: HashMap<DesignKeyEvent, HashSet<(DesignKeyEvent) -> Unit>> =
-        HashMap()
+    private val keyListenerMap: HashMap<DesignKeyEvent, HashSet<KeyAction>> = HashMap()
 
-    // Inject a key event and notify listeners of the key event
+    // Inject a key event and dispatch any interactions on listeners of the key event
     fun injectKey(key: Char, metaKeys: List<DesignMetaKey>) {
         val keyEvent = DesignKeyEvent(key, metaKeys)
         val listeners = keyListenerMap[keyEvent]
-        listeners?.forEach { it(keyEvent) }
+        listeners?.forEach {
+            it.interactionState.dispatch(it.action, it.targetInstanceId, it.key, it.undoInstanceId)
+        }
     }
 
     // Register a listener for a specific key event. This happens when a view with a key event
     // trigger is composed.
-    fun addListener(keyEvent: DesignKeyEvent, setTriggeredKeyEvent: (DesignKeyEvent) -> Unit) {
+    fun addListener(keyEvent: DesignKeyEvent, keyAction: KeyAction) {
         if (keyListenerMap[keyEvent].isNullOrEmpty()) keyListenerMap[keyEvent] = HashSet()
-        keyListenerMap[keyEvent]?.add(setTriggeredKeyEvent)
+        keyListenerMap[keyEvent]?.add(keyAction)
     }
 
     // Remove a listener for a specific key event. This happens when a view with a key event trigger
     // is removed from composition.
-    fun removeListener(keyEvent: DesignKeyEvent, setTriggeredKeyEvent: (DesignKeyEvent) -> Unit) {
+    fun removeListener(keyEvent: DesignKeyEvent, keyAction: KeyAction) {
         val listeners = keyListenerMap[keyEvent]
-        listeners?.remove(setTriggeredKeyEvent)
+        listeners?.remove(keyAction)
     }
 }
 
@@ -496,37 +505,21 @@ internal fun DesignView(
             )
     }
 
-    // triggeredKeyEvent starts out as null and gets populated if any key events that we are
-    // interested in get triggered. We just need to check if it's not null, find the reaction that
-    // the event corresponds with, and execute it.
-    val (triggeredKeyEvent, setTriggeredKeyEvent) =
-        remember { mutableStateOf<DesignKeyEvent?>(null) }
-
     // Register to be a listener for key reactions on this node
     for (keyReaction in onKeyReactions) {
         val keyTrigger = keyReaction.trigger as Trigger.OnKeyDown
         val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.key_codes)
         DisposableEffect(keyEvent) {
-            KeyInjectManager.addListener(keyEvent, setTriggeredKeyEvent)
-            onDispose { KeyInjectManager.removeListener(keyEvent, setTriggeredKeyEvent) }
-        }
-    }
-
-    // Check if the key event was triggered, and if so dispatch the reaction
-    if (triggeredKeyEvent != null) {
-        onKeyReactions.forEach { reaction ->
-            val keyTrigger = reaction.trigger as Trigger.OnKeyDown
-            val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.key_codes)
-            if (triggeredKeyEvent == keyEvent) {
-                interactionState.dispatch(
-                    reaction.action,
-                    findTargetInstanceId(reaction.action),
+            val keyAction =
+                KeyAction(
+                    interactionState,
+                    keyReaction.action,
+                    findTargetInstanceId(keyReaction.action),
                     customizations.getKey(),
                     null
                 )
-                // Clear the triggered key events
-                setTriggeredKeyEvent(null)
-            }
+            KeyInjectManager.addListener(keyEvent, keyAction)
+            onDispose { KeyInjectManager.removeListener(keyEvent, keyAction) }
         }
     }
 

@@ -139,7 +139,7 @@ jobs:
 
     - run: unzip designcompose_m2repo.zip
 
-    - name: "Set environmental variables"
+    - name: "Set environment variables"
       run: |
         echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> $GITHUB_ENV
 

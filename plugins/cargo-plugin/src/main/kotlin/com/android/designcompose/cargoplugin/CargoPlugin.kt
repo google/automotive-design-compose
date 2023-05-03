@@ -19,6 +19,7 @@ package com.android.designcompose.cargoplugin
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.android.build.api.variant.Variant
 import java.io.File
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -120,6 +121,21 @@ class CargoPlugin : Plugin<Project> {
                 task.rustSrcs.from(cargoExtension.crateDir).filterNot { file ->
                     file.name == "target"
                 }
+
+                task.hostOS.set(
+                    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                        if (Os.isArch("x86_64") || Os.isArch("amd64")) {
+                            "windows-x86_64"
+                        } else {
+                            "windows"
+                        }
+                    } else if (Os.isFamily(Os.FAMILY_MAC)) {
+                        "darwin-x86_64"
+                    } else {
+                        "linux-x86_64"
+                    }
+                )
+
                 task.androidAbi.set(abi)
                 task.useReleaseProfile.set(variant.buildType != "debug")
                 task.ndkDirectory.set(ndkDir)

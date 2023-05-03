@@ -41,6 +41,7 @@ data class Toolchain(
     val androidAbi: String,
     val compileApi: Int,
     val ndkDirectory: File,
+    val hostOS: String
 ) {
 
     init {
@@ -57,7 +58,7 @@ data class Toolchain(
 
     // The binary dir of the NDK
     private val binDir
-        get() = File(ndkDirectory, "toolchains/llvm/prebuilt/linux-x86_64/bin")
+        get() = File(ndkDirectory, "toolchains/llvm/prebuilt/$hostOS/bin")
     // The C compiler for this toolchain (also the linker)
     val cc
         get() = File(binDir, "${compilerTriple}$compileApi-clang")

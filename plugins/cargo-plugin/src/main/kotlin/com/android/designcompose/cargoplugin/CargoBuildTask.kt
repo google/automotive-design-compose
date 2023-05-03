@@ -69,6 +69,8 @@ abstract class CargoBuildTask @Inject constructor(private val executor: ExecOper
     @get:InputFile
     abstract val cargoBin: Property<File>
 
+    @get:Input abstract val hostOS: Property<String>
+
     @get:Input abstract val androidAbi: Property<String>
 
     @get:Input abstract val compileApi: Property<Int>
@@ -83,7 +85,8 @@ abstract class CargoBuildTask @Inject constructor(private val executor: ExecOper
 
     @TaskAction
     fun runCommand() {
-        val toolchain = Toolchain(androidAbi.get(), compileApi.get(), ndkDirectory.get().asFile)
+        val toolchain =
+            Toolchain(androidAbi.get(), compileApi.get(), ndkDirectory.get().asFile, hostOS.get())
         val debugOrRelease = if (useReleaseProfile.get()) "release" else "debug"
         // The path (within the root Cargo target dir) that will contain the compiled .so file
         val targetOutputDir = cargoTargetDir.get().dir(toolchain.cargoTriple).dir(debugOrRelease)

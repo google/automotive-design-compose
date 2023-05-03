@@ -46,4 +46,4 @@ include(":integration-tests:validation")
 
 include(":reference-apps:helloworld")
 
-include(":reference-apps:tutorial")
+includeBuild("reference-apps/tutorial")

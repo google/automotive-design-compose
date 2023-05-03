@@ -26,6 +26,8 @@ if ! which "$GOPATH"/addlicense; then
     exit 1
 fi
 
+"$GOPATH"/addlicense -c "Google LLC" -l apache "$GIT_ROOT"
+
 ( cd "$GIT_ROOT/plugins" || exit; ./gradlew ktfmtFormat)
 
 ( cd "$GIT_ROOT" || exit
@@ -36,4 +38,3 @@ fi
 
 ( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit; ./gradlew ktfmtFormat)
 
-"$GOPATH"/addlicense -c "Google LLC" -l apache "$GIT_ROOT"

@@ -55,8 +55,9 @@ pub enum ScaleMode {
     Stretch,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub enum Background {
+    #[default]
     None,
     Solid(Color),
     LinearGradient {
@@ -90,11 +91,7 @@ pub enum Background {
     },
     Clear, // Clear all the pixels underneath, used for hole-punch compositing.
 }
-impl Default for Background {
-    fn default() -> Self {
-        Background::None
-    }
-}
+
 impl Background {
     pub fn is_some(&self) -> bool {
         match self {
@@ -284,40 +281,28 @@ pub enum FilterOp {
 }
 
 /// Horizontal text alignment. This value aligns the text within its bounds.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub enum TextAlign {
+    #[default]
     Left,
     Center,
     Right,
 }
-impl Default for TextAlign {
-    fn default() -> TextAlign {
-        TextAlign::Left
-    }
-}
 
 /// Vertical text alignment. This value aligns the text vertically within its bounds.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub enum TextAlignVertical {
+    #[default]
     Top,
     Center,
     Bottom,
 }
-impl Default for TextAlignVertical {
-    fn default() -> TextAlignVertical {
-        TextAlignVertical::Top
-    }
-}
 
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub enum TextOverflow {
+    #[default]
     Clip,
     Ellipsis,
-}
-impl Default for TextOverflow {
-    fn default() -> TextOverflow {
-        TextOverflow::Clip
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
@@ -369,9 +354,10 @@ impl Default for Stroke {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub enum BlendMode {
     ///Normal blends:
+    #[default]
     PassThrough,
     ///(only applicable to objects with children)
     Normal,
@@ -403,23 +389,15 @@ pub enum BlendMode {
     Color,
     Luminosity,
 }
-impl Default for BlendMode {
-    fn default() -> Self {
-        BlendMode::PassThrough
-    }
-}
 
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub enum PointerEvents {
     Auto,
     None,
+    #[default]
     Inherit,
 }
-impl Default for PointerEvents {
-    fn default() -> Self {
-        PointerEvents::Inherit
-    }
-}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct LayoutPixel;
 
@@ -445,17 +423,13 @@ impl Default for ItemSpacing {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub enum GridLayoutType {
+    #[default]
     FixedColumns,
     FixedRows,
     AutoColumns,
     AutoRows,
-}
-impl Default for GridLayoutType {
-    fn default() -> Self {
-        GridLayoutType::FixedColumns
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]

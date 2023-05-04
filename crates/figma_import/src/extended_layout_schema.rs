@@ -47,7 +47,9 @@ pub struct SpanData {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub enum LayoutType {
+    #[default]
     None,
     FixedColumns,
     FixedRows,
@@ -58,38 +60,30 @@ pub enum LayoutType {
 }
 impl LayoutType {
     pub(crate) fn is_grid(&self) -> bool {
-        return match self {
+        match self {
             LayoutType::FixedColumns
             | LayoutType::FixedRows
             | LayoutType::AutoColumns
             | LayoutType::AutoRows => true,
             _ => false,
-        };
+        }
     }
     pub(crate) fn is_row_or_column(&self) -> bool {
-        return match self {
+        match self {
             LayoutType::Horizontal | LayoutType::Vertical => true,
             _ => false,
-        };
-    }
-}
-impl Default for LayoutType {
-    fn default() -> LayoutType {
-        LayoutType::None
+        }
     }
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub enum Alignment {
+    #[default]
     Start,
     Center,
     End,
-}
-impl Default for Alignment {
-    fn default() -> Alignment {
-        Alignment::Start
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -125,14 +119,11 @@ impl Default for CommonLayoutData {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub enum SizePolicy {
     Hug,
+    #[default]
     Fixed,
-}
-impl Default for SizePolicy {
-    fn default() -> SizePolicy {
-        SizePolicy::Fixed
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -208,6 +199,7 @@ impl Default for GridLayoutData {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub struct LimitContentData {
     /// maximum number of children a frame can have
     #[serde(default)]
@@ -218,16 +210,6 @@ pub struct LimitContentData {
     /// id of overflow node to use as last child when there are more children than max_num_items
     #[serde(default)]
     pub overflow_node_id: String,
-}
-
-impl Default for LimitContentData {
-    fn default() -> LimitContentData {
-        LimitContentData {
-            max_num_items: 0,
-            overflow_node_name: String::default(),
-            overflow_node_id: String::default(),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

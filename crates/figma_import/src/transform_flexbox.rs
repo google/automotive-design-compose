@@ -43,7 +43,6 @@ use crate::{
     toolkit_schema::{ComponentInfo, OverflowDirection, ScrollInfo, View},
 };
 
-use euclid;
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -66,7 +65,7 @@ fn check_child_size_override(node: &Node) -> Option<LayoutType> {
             }
         }
     }
-    return None;
+    None
 }
 
 // Map Figma's new flexbox-based Auto Layout properties to our own flexbox-based layout
@@ -75,8 +74,8 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
     let mut style = ViewStyle::default();
 
     // Determine if the parent is using Auto Layout (and thus is a Flexbox parent) or if it isn't.
-    let parent_frame = parent.map_or(None, |p| p.frame());
-    let parent_bounding_box = parent.map_or(None, |p| p.absolute_bounding_box);
+    let parent_frame = parent.and_then(|p| p.frame());
+    let parent_bounding_box = parent.and_then(|p| p.absolute_bounding_box);
     let parent_is_root = parent.is_none();
     let parent_is_flexbox = if let Some(frame) = parent_frame {
         !frame.layout_mode.is_none()
@@ -449,13 +448,7 @@ fn compute_background(
             g_stops.push(g);
         }
 
-        Background::LinearGradient {
-            start_x: start_x,
-            start_y: start_y,
-            end_x: end_x,
-            end_y: end_y,
-            color_stops: g_stops,
-        }
+        Background::LinearGradient { start_x, start_y, end_x, end_y, color_stops: g_stops }
     } else if let PaintData::GradientAngular { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
         let center_y = gradient.gradient_handle_positions[0].y();
@@ -485,13 +478,7 @@ fn compute_background(
             g_stops.push(g);
         }
 
-        Background::AngularGradient {
-            center_x: center_x,
-            center_y: center_y,
-            angle: angle,
-            scale: scale,
-            color_stops: g_stops,
-        }
+        Background::AngularGradient { center_x, center_y, angle, scale, color_stops: g_stops }
     } else if let PaintData::GradientRadial { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
         let center_y = gradient.gradient_handle_positions[0].y();
@@ -523,13 +510,7 @@ fn compute_background(
             g_stops.push(g);
         }
 
-        Background::RadialGradient {
-            center_x: center_x,
-            center_y: center_y,
-            radius: radius,
-            angle: angle,
-            color_stops: g_stops,
-        }
+        Background::RadialGradient { center_x, center_y, radius, angle, color_stops: g_stops }
     } else if let PaintData::GradientDiamond { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
         let center_y = gradient.gradient_handle_positions[0].y();
@@ -561,13 +542,7 @@ fn compute_background(
             g_stops.push(g);
         }
 
-        Background::RadialGradient {
-            center_x: center_x,
-            center_y: center_y,
-            radius: radius,
-            angle: angle,
-            color_stops: g_stops,
-        }
+        Background::RadialGradient { center_x, center_y, radius, angle, color_stops: g_stops }
     } else {
         Background::None
     }
@@ -640,7 +615,7 @@ fn visit_node(
 
     // Check relative transform to see if there is a rotation.
     if let Some(transform) = node.relative_transform {
-        let parent_bounding_box = parent.map_or(None, |p| p.absolute_bounding_box);
+        let parent_bounding_box = parent.and_then(|p| p.absolute_bounding_box);
         let bounds = node.absolute_bounding_box;
 
         fn get(transform: [[Option<f32>; 3]; 2], a: usize, b: usize) -> f32 {
@@ -768,12 +743,10 @@ fn visit_node(
                 } else {
                     ItemSpacing::Auto(gld.vertical_spacing, gld.auto_spacing_item_size)
                 }
+            } else if horizontal {
+                ItemSpacing::Fixed(gld.horizontal_spacing)
             } else {
-                if horizontal {
-                    ItemSpacing::Fixed(gld.horizontal_spacing)
-                } else {
-                    ItemSpacing::Fixed(gld.vertical_spacing)
-                }
+                ItemSpacing::Fixed(gld.vertical_spacing)
             };
             style.cross_axis_item_spacing = if horizontal {
                 gld.vertical_spacing as f32
@@ -792,10 +765,10 @@ fn visit_node(
             for grid_span in extended_auto_layout.grid_layout_data.span_content {
                 // Parse variant name with format "property1=value1, property2=value2" into variant_hash
                 let mut variant_hash: HashMap<String, String> = HashMap::new();
-                let props_and_names = grid_span.node_name.split(",");
+                let props_and_names = grid_span.node_name.split(',');
                 for prop_var in props_and_names {
                     let prop_variant = prop_var.to_string();
-                    let variant_parts: Vec<&str> = prop_variant.split("=").collect();
+                    let variant_parts: Vec<&str> = prop_variant.split('=').collect();
                     if variant_parts.len() == 2 {
                         variant_hash
                             .insert(variant_parts[0].to_string(), variant_parts[1].to_string());
@@ -925,7 +898,7 @@ fn visit_node(
                 let flag_bytes = flag_ascii.as_bytes();
                 if flag_bytes.len() == 4 {
                     let tag = [flag_bytes[0], flag_bytes[1], flag_bytes[2], flag_bytes[3]];
-                    font_features.push(FontFeature { tag: tag, enabled: *value == 1 });
+                    font_features.push(FontFeature { tag, enabled: *value == 1 });
                 } else {
                     println!("Unsupported OpenType flag: {}", flag)
                 }
@@ -1008,7 +981,7 @@ fn visit_node(
             let sub_style = text_style.to_sub_type_style();
 
             let mut flush = |current_run: &mut String, last_style: &mut Option<usize>| {
-                if current_run.len() == 0 {
+                if current_run.is_empty() {
                     return;
                 }
 
@@ -1061,7 +1034,7 @@ fn visit_node(
                     None
                 };
                 // Do we need to flush the current run?
-                if style_id != last_style && current_run.len() > 0 {
+                if style_id != last_style && !current_run.is_empty() {
                     // Flush!
                     flush(&mut current_run, &mut last_style);
                     current_run = g.to_string();
@@ -1105,7 +1078,7 @@ fn visit_node(
 
     // Convert any path data we have; we'll use it for non-frame types.
     let fill_paths = if let Some(fills) = &node.fill_geometry {
-        fills.iter().map(|figma_path| parse_path(figma_path)).flatten().collect()
+        fills.iter().filter_map(parse_path).collect()
     } else {
         Vec::new()
     };
@@ -1115,7 +1088,7 @@ fn visit_node(
     // stroke treatment. However, when a shape has no area (e.g.: it is a line), then the
     // fill geometry will be empty so we *have* to use the stroke geometry.
     let stroke_paths = if let Some(strokes) = &node.stroke_geometry {
-        strokes.iter().map(|figma_path| parse_path(figma_path)).flatten().collect()
+        strokes.iter().filter_map(parse_path).collect()
     } else {
         Vec::new()
     };

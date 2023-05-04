@@ -122,7 +122,7 @@ impl Path {
         self.commands.push(PathCommand::Close as u8);
         self
     }
-    pub fn iter<'a>(&'a self) -> PathIterator<'a> {
+    pub fn iter(&self) -> PathIterator<'_> {
         PathIterator(self.commands.iter(), self.data.iter())
     }
 }

@@ -216,9 +216,7 @@ impl ImageContext {
         // Add empty entries for any referenced images which we don't have network bytes for.
         for k in &self.referenced_images {
             let key = ImageKey(k.clone());
-            if !image_bytes.contains_key(&key) {
-                image_bytes.insert(key, Arc::new(serde_bytes::ByteBuf::new()));
-            }
+            image_bytes.entry(key).or_insert_with(|| Arc::new(serde_bytes::ByteBuf::new()));
         }
         EncodedImageMap(image_bytes)
     }
@@ -293,7 +291,7 @@ impl ImageContext {
                 .filter(|(k, _)| client_images.contains(k))
                 .collect(),
             image_bounds,
-            client_images: client_images,
+            client_images,
         }
     }
 

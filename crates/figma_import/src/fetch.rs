@@ -66,7 +66,7 @@ pub enum ConvertResponse {
 
 pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate::Error> {
     if let Some(mut doc) = Document::new_if_changed(
-        rq.figma_api_key.into(),
+        rq.figma_api_key,
         id.into(),
         rq.last_modified.unwrap_or(String::new()),
         rq.version.unwrap_or(String::new()),
@@ -76,7 +76,7 @@ pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate:
         // a new copy.
         let mut error_list: Vec<String> = vec![];
         let nodes = doc.nodes(
-            &rq.queries.iter().map(|name| NodeQuery::name(name)).collect(),
+            &rq.queries.iter().map(NodeQuery::name).collect(),
             &rq.ignored_images
                 .iter()
                 .map(|imgref| (NodeQuery::name(imgref.node), imgref.images.clone()))

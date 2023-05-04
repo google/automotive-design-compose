@@ -59,12 +59,12 @@ pub struct ConvertRequest<'r> {
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum ConvertResponse {
+pub enum ConvertResult {
     Document(Vec<u8>),
     Unmodified(String),
 }
 
-pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate::Error> {
+pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResult, crate::Error> {
     if let Some(mut doc) = Document::new_if_changed(
         rq.figma_api_key,
         id.into(),
@@ -104,8 +104,19 @@ pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate:
         // can be more robust if there's corruption.
         response.append(&mut serde_json::to_vec(&doc.image_session())?);
 
-        Ok(ConvertResponse::Document(response))
+        Ok(ConvertResult::Document(response))
     } else {
-        Ok(ConvertResponse::Unmodified("x".into()))
+        Ok(ConvertResult::Unmodified("x".into()))
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum ConvertResponse {
+    Document(Vec<u8>),
+    Unmodified(String),
+    Error(crate::Error),
+}
+
+pub fn fetch_doc_with_serialized_response(id: &str, rq: ConvertRequest) -> Result<ConvertResponse> {
+
 }

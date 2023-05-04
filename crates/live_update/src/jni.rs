@@ -66,7 +66,7 @@ fn jni_fetch_doc(
 
 fn jni_fetch_doc_impl(doc_id: String, request_json: String) -> Result<Vec<u8>, Error> {
     let request: ConvertRequest = serde_json::from_str(&request_json)?;
-    let conv_resp: figma_import::ConvertResponse = fetch_doc(&doc_id, request)?;
+    let conv_resp: figma_import::ConvertResult = fetch_doc(&doc_id, request)?;
 
     bincode::serialize(&conv_resp).map_err(|e| e.into())
 }

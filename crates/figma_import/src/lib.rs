@@ -38,7 +38,7 @@ mod vector_schema;
 // Exports for library users
 pub use document::{Document, NodeQuery};
 pub use error::Error;
-pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse};
+pub use fetch::{fetch_doc, ConvertRequest, ConvertResult};
 pub use figma_schema::Rectangle;
 pub use image_context::{ImageContextSession, ImageKey};
 pub use serialized_document::{SerializedFigmaDoc, SerializedFigmaDocHeader, ServerFigmaDoc};

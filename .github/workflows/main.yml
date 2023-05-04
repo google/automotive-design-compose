@@ -215,16 +215,6 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         name: designcompose-m2-repo-zip
-    - uses: actions/checkout@v3
-      with:
-        repository: https://android.googlesource.com/platform/superproject
-        ref: ub-automotive-master-20230303
-        path: undbundled-aaos
-        submodules: true
-
-    - run: ls
-    - run: ls *
-
 
     - run: unzip designcompose_m2repo.zip
 
@@ -232,6 +222,15 @@ jobs:
       run: |
         echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> $GITHUB_ENV
         echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/undbundled-aaos" >> $GITHUB_ENV
+
+
+    - name: Check out the Unbundled AAOS Repo
+      run: |
+        HOST=https://android.googlesource.com/platform/superproject
+        BRANCH=ub-automotive-master-20230303
+        mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
+        git clone "$HOST" "$ORG_GRADLE_PROJECT_unbundledAAOSDir" --branch="$BRANCH" \
+        --single-branch --filter=blob:none --recurse-submodules --jobs=4
 
     - name: Check MediaCompose
       uses: gradle/gradle-build-action@v2

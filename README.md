@@ -10,7 +10,6 @@
     - [Android NDK](#android-ndk)
     - [Rust](#rust)
     - [Rust Toolchains](#rust-toolchains)
-    - [Python](#python)
   - [Source Layout](#source-layout)
   - [Building additional resources](#building-additional-resources)
     - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
@@ -80,7 +79,7 @@ Version `25.2.9519653` is required. It can be installed via [Android Studio's SD
 
 ### Rust
 
-Rust 1.63.0 is required to compile DesignCompose's Live Update service. Install at [rustup.rs](https://rustup.rs/). For working with the code, we recommend the `rust-analyzer` plugins for VS Code and Android Studio / IntelliJ.
+Rust 1.68.0 is required to compile DesignCompose's Live Update service. Install at [rustup.rs](https://rustup.rs/). For working with the code, we recommend the `rust-analyzer` plugins for VS Code and Android Studio / IntelliJ.
 
 Android Studio will not pick up on a new Rust install without restarting the IDE. In addition, if you launch Android Studio via desktop shortcut or similar (i.e. not from the command line), then it still may not detect the install. In this case you can log out of your computer and back in, or simply restart your computer.
 
@@ -90,14 +89,6 @@ The DesignCompose library includes a Rust JNI library, which requires Rust build
 
 ```shell
 ./install-rust-toolchains.sh
-```
-
-### Python
-
-Python3 must be installed and available on your path as `python`. You can configure this by installing `python-is-python3`:
-
-```shell
-apt install python-is-python3
 ```
 
 ## Source Layout
@@ -120,9 +111,9 @@ Automotive Design for Compose consists of several components:
 
   - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma widget that uses the JSON file and allows designers to create and preview complex list layouts.
 
-- A Validation app in `integration-tests` is used for visually validating changes
+- A Validation app in `integration-tests/validation` is used for visually validating changes
 
-- The Tutorial app in `reference-apps` provides an overview of DesignCompose
+- The Tutorial app in `reference-apps/tutorial` provides an overview of DesignCompose
 
 - The `reference-apps/aaos-unbundled` directory contains a separate Gradle project that includes demonstrations of DesignCompose with Android Automotive OS Apps, such as a MediaCenter app.
 

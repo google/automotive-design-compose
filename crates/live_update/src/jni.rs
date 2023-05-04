@@ -36,7 +36,7 @@ fn jni_fetch_doc(
     let doc_id: String = match env.get_string(jdoc_id) {
         Ok(it) => it.into(),
         Err(_) => {
-            throw_basic_exception(env, format!("Internal JNI Error"));
+            throw_basic_exception(env, "Internal JNI Error".to_string());
             return std::ptr::null_mut();
         }
     };
@@ -44,7 +44,7 @@ fn jni_fetch_doc(
     let request_json: String = match env.get_string(jrequest_json) {
         Ok(it) => it.into(),
         Err(_) => {
-            throw_basic_exception(env, format!("Internal JNI Error"));
+            throw_basic_exception(env, "Internal JNI Error".to_string());
             return std::ptr::null_mut();
         }
     };
@@ -59,8 +59,8 @@ fn jni_fetch_doc(
     };
 
     env.byte_array_from_slice(&ser_result).unwrap_or_else(|_| {
-        throw_basic_exception(env, format!("Internal JNI Error"));
-        return std::ptr::null_mut();
+        throw_basic_exception(env, "Internal JNI Error".to_string());
+        std::ptr::null_mut()
     })
 }
 
@@ -85,7 +85,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
         .find_class("com/android/designcompose/LiveUpdateJni")
         .expect("Unable to find com.android.designcompose.LiveUpdateJni class");
 
-    if !env
+    if env
         .register_native_methods(
             cls,
             &[jni::NativeMethod {
@@ -94,7 +94,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                 fn_ptr: jni_fetch_doc as *mut c_void,
             }],
         )
-        .is_ok()
+        .is_err()
     {
         error!("Unable to register native methods");
     }

@@ -181,7 +181,7 @@ impl Document {
             return Ok(None);
         }
 
-        Document::new(api_key, document_id, image_session).map(|doc| Some(doc))
+        Document::new(api_key, document_id, image_session).map(Some)
     }
 
     /// Ask Figma if an updated document is available, and then fetch the updated document
@@ -232,12 +232,12 @@ impl Document {
     /// component with variants. Find its parent, and if it is of type NodeData::ComponentSet,
     /// then add all of its children to self.variant_nodes. Also fill out node_doc_hash,
     /// which hashes node ids to the document id they come from.
-    fn fetch_component_variants<'a>(
+    fn fetch_component_variants(
         &self,
         node: &Node,
         node_doc_hash: &mut HashMap<String, String>,
         variant_nodes: &mut Vec<Node>,
-        id_index: &HashMap<String, &'a Node>,
+        id_index: &HashMap<String, &Node>,
         component_hash: &HashMap<String, Component>,
         parent_tree: &mut Vec<String>,
         error_list: &mut Vec<String>,
@@ -311,7 +311,7 @@ impl Document {
                                 "{}{}/nodes?ids={}",
                                 BASE_FILE_URL, variant_document_id, parent_node_id
                             );
-                            let http_str = http_fetch(self.api_key.as_str(), nodes_url.clone())?;
+                            let http_str = http_fetch(self.api_key.as_str(), nodes_url)?;
                             let nodes_response: NodesResponse =
                                 serde_json::from_str(http_str.as_str())?;
                             // The response is a list of nodes, but we only requested one so this loop
@@ -489,7 +489,7 @@ impl Document {
             if !is_variant {
                 // If there's already a node with the same name, then only replace it if
                 // we're a component.
-                if let Some(_) = name_index.get(&node.name) {
+                if name_index.get(&node.name).is_some() {
                     if let NodeData::Component { .. } = node.data {
                         name_index.insert(node.name.clone(), node);
                     }
@@ -518,8 +518,8 @@ impl Document {
         // For each node that is a component set, add all of its children (which are variants)
         // into the node name hash so that we retrieve those nodes. Also add them to the
         // component_set_hash, which hashes a component set node name to all of its children.
-        fn add_variant_node_names<'a>(
-            node: &'a Node,
+        fn add_variant_node_names(
+            node: &Node,
             node_name_hash: &mut HashSet<NodeQuery>,
             component_set_hash: &mut HashMap<String, Vec<String>>,
         ) {
@@ -530,10 +530,10 @@ impl Document {
                     node_name_hash.contains(&NodeQuery::NodeName(node.name.clone()));
                 if !add_children {
                     'outer: for child in &node.children {
-                        let child_name_parts = child.name.split(",");
+                        let child_name_parts = child.name.split(',');
                         for variant_name in child_name_parts {
                             let variant_name = variant_name.to_string();
-                            let variant_parts: Vec<&str> = variant_name.split("=").collect();
+                            let variant_parts: Vec<&str> = variant_name.split('=').collect();
                             if variant_parts.len() == 2 {
                                 // Format is property_name=value, so check if the property_name is in node_name_hash
                                 if node_name_hash
@@ -569,7 +569,7 @@ impl Document {
 
         // Search the node hierarchy for nodes that have plugin data that specifies an overflow
         // node. Add these nodes to node_name_hash so that we fetch them.
-        fn add_overflow_nodes<'a>(node: &'a Node, node_name_hash: &mut HashSet<NodeQuery>) {
+        fn add_overflow_nodes(node: &Node, node_name_hash: &mut HashSet<NodeQuery>) {
             if node.shared_plugin_data.contains_key("designcompose") {
                 let plugin_data = node.shared_plugin_data.get("designcompose");
                 if let Some(vsw_data) = plugin_data {
@@ -579,8 +579,7 @@ impl Document {
                         if let Some(extended_auto_layout) = extended_auto_layout {
                             if extended_auto_layout.limit_content {
                                 let lcd = extended_auto_layout.limit_content_data;
-                                node_name_hash
-                                    .insert(NodeQuery::NodeId(lcd.overflow_node_id.clone()));
+                                node_name_hash.insert(NodeQuery::NodeId(lcd.overflow_node_id));
                             }
                         }
                     }
@@ -642,7 +641,7 @@ impl Document {
         // Index the variant nodes that we pulled from other documents
         for node in &self.variant_nodes {
             index_node(
-                &node,
+                node,
                 None, // TODO this is untested -- we may need to get the parent of node and pass it in here
                 &mut name_index,
                 &mut id_index,

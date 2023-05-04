@@ -88,7 +88,9 @@ impl Rectangle {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum BlendMode {
+    #[default]
     PassThrough,
     Normal,
     Darken,
@@ -108,11 +110,6 @@ pub enum BlendMode {
     Saturation,
     Color,
     Luminosity,
-}
-impl Default for BlendMode {
-    fn default() -> Self {
-        BlendMode::PassThrough
-    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy)]
@@ -278,7 +275,9 @@ pub struct ColorStop {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum TextCase {
+    #[default]
     Original,
     Upper,
     Lower,
@@ -286,60 +285,46 @@ pub enum TextCase {
     SmallCaps,
     SmallCapsForced,
 }
-impl Default for TextCase {
-    fn default() -> Self {
-        TextCase::Original
-    }
-}
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum TextDecoration {
+    #[default]
     None,
     Strikethrough,
     Underline,
 }
-impl Default for TextDecoration {
-    fn default() -> Self {
-        TextDecoration::None
-    }
-}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum TextAutoResize {
+    #[default]
     None,
     Height,
     WidthAndHeight,
 }
-impl Default for TextAutoResize {
-    fn default() -> Self {
-        TextAutoResize::None
-    }
-}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum TextAlignHorizontal {
+    #[default]
     Left,
     Right,
     Center,
     Justified,
 }
-impl Default for TextAlignHorizontal {
-    fn default() -> Self {
-        TextAlignHorizontal::Left
-    }
-}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum TextAlignVertical {
+    #[default]
     Top,
     Center,
     Bottom,
-}
-impl Default for TextAlignVertical {
-    fn default() -> Self {
-        TextAlignVertical::Top
-    }
 }
 
 fn default_line_height_percent() -> f32 {
@@ -558,29 +543,24 @@ pub struct Style {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum StrokeAlign {
     Inside,
     Outside,
+    #[default]
     Center,
-}
-impl Default for StrokeAlign {
-    fn default() -> Self {
-        StrokeAlign::Center
-    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum LayoutMode {
+    #[default]
     None,
     Horizontal,
     Vertical,
 }
-impl Default for LayoutMode {
-    fn default() -> Self {
-        LayoutMode::None
-    }
-}
+
 impl LayoutMode {
     pub fn is_none(&self) -> bool {
         match self {
@@ -592,28 +572,22 @@ impl LayoutMode {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum LayoutSizingMode {
     Fixed,
+    #[default]
     Auto,
-}
-impl Default for LayoutSizingMode {
-    fn default() -> Self {
-        LayoutSizingMode::Auto
-    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum LayoutAlignItems {
+    #[default]
     Min,
     Center,
     Max,
     SpaceBetween,
-}
-impl Default for LayoutAlignItems {
-    fn default() -> Self {
-        LayoutAlignItems::Min
-    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -629,17 +603,15 @@ pub enum LayoutAlign {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum OverflowDirection {
+    #[default]
     None,
     HorizontalScrolling,
     VerticalScrolling,
     HorizontalAndVerticalScrolling,
 }
-impl Default for OverflowDirection {
-    fn default() -> Self {
-        OverflowDirection::None
-    }
-}
+
 impl OverflowDirection {
     pub fn scrolls_horizontal(&self) -> bool {
         match self {
@@ -974,11 +946,11 @@ pub struct ComponentKeyResponse {
 }
 impl ComponentKeyResponse {
     pub fn parent_id(&self) -> Option<String> {
-        if let Some(key_state_group) = &self.meta.containing_frame.containing_state_group {
-            Some(key_state_group.node_id.clone())
-        } else {
-            None
-        }
+        self.meta
+            .containing_frame
+            .containing_state_group
+            .as_ref()
+            .map(|key_state_group| key_state_group.node_id.clone())
     }
 }
 

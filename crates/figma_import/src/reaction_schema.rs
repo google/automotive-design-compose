@@ -396,7 +396,7 @@ impl From<ActionJson> for Action {
                 overlay_relative_position,
             } => Self::Node {
                 destination_id,
-                navigation: navigation.into(),
+                navigation,
                 transition: transition.map(|t| t.into()),
                 preserve_scroll_position,
                 overlay_relative_position,

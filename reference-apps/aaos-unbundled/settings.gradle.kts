@@ -18,15 +18,12 @@ rootProject.name = "DC Unbundled Apps"
 
 apply("unbundled-settings.gradle.kts")
 
-val designComposeMavenRepoForAAOS = File(rootDir, "build/designcompose_m2repo")
-
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-        maven(uri(designComposeMavenRepoForAAOS))
     }
 }
 

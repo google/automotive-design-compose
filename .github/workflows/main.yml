@@ -238,5 +238,4 @@ jobs:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
           --init-script ../local-design-compose-repo.init.gradle.kts
-          app:dependencies
           check 

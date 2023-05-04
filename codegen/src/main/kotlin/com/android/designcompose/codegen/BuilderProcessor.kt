@@ -16,6 +16,7 @@
 
 package com.android.designcompose.codegen
 
+import com.android.designcompose.annotation.DesignMetaKey
 import com.android.designcompose.annotation.DesignPreviewContent
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.closestClassDeclaration
@@ -100,6 +101,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             file += "import android.view.ViewGroup\n"
             file += "import android.os.Build\n"
 
+            file += "import com.android.designcompose.annotation.DesignMetaKey\n"
             file += "import com.android.designcompose.serdegen.NodeQuery\n"
             file += "import com.android.designcompose.common.DocumentServerParams\n"
             file += "import com.android.designcompose.ComponentReplacementContext\n"
@@ -109,6 +111,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             file += "import com.android.designcompose.DesignSwitcherPolicy\n"
             file += "import com.android.designcompose.OpenLinkCallback\n"
             file += "import com.android.designcompose.DesignNodeData\n"
+            file += "import com.android.designcompose.DesignInjectKey\n"
             file += "import com.android.designcompose.ListContent\n"
             file += "import com.android.designcompose.setKey\n"
             file += "import com.android.designcompose.mergeFrom\n"
@@ -183,7 +186,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         Queries,
         NodeCustomizations,
         IgnoredImages,
-        ComposableFunctions
+        ComposableFunctions,
+        KeyActionFunctions,
     }
 
     private enum class CustomizationType {
@@ -371,6 +375,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             visitPhase = VisitPhase.ComposableFunctions
             classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
 
+            visitPhase = VisitPhase.KeyActionFunctions
+            classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
+
             // Add a function that composes a component with variants given a node name that
             // contains all the variant properties and values
             out.appendText("    @Composable\n")
@@ -439,12 +446,20 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 return
             }
 
-            // Get the @DesignComponent annotation object, or return if none
-            val annotation: KSAnnotation? =
-                function.annotations.find { it.shortName.asString() == "DesignComponent" }
+            if (visitPhase == VisitPhase.KeyActionFunctions) {
+                // For the KeyActionFunctions visit phase, check for a @DesignKeyAction annotation
+                // and generate the function to inject a key event
+                val keyAnnotation: KSAnnotation? =
+                    function.annotations.find { it.shortName.asString() == "DesignKeyAction" }
+                if (keyAnnotation != null) visitDesignKeyAction(function, keyAnnotation)
+            } else {
+                // Get the @DesignComponent annotation object, or return if none
+                val annotation: KSAnnotation? =
+                    function.annotations.find { it.shortName.asString() == "DesignComponent" }
 
-            currentFunc = function.toString()
-            if (annotation != null) visitDesignComponent(function, data, annotation)
+                currentFunc = function.toString()
+                if (annotation != null) visitDesignComponent(function, data, annotation)
+            }
         }
 
         private fun visitDesignComponent(
@@ -475,7 +490,34 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 VisitPhase.IgnoredImages -> visitFunctionIgnoredImagesBuild(function, nodeName)
                 VisitPhase.ComposableFunctions ->
                     visitFunctionComposables(function, data, nodeName, override)
+                VisitPhase.KeyActionFunctions -> {}
             }
+        }
+
+        private fun visitDesignKeyAction(
+            function: KSFunctionDeclaration,
+            annotation: KSAnnotation
+        ) {
+            // Get the 'key' argument
+            val keyArg: KSValueArgument =
+                annotation.arguments.first { arg -> arg.name?.asString() == "key" }
+            val key = keyArg.value as Char
+
+            // Get the 'metaKeys' argument
+            val metaKeysArg: KSValueArgument =
+                annotation.arguments.first { arg -> arg.name?.asString() == "metaKeys" }
+
+            // Generate a comma separated list of metakeys
+            var metaKeysStr = ""
+            if (metaKeysArg.value != null) {
+                val metaKeys = metaKeysArg.value as ArrayList<DesignMetaKey>
+                metaKeysStr = metaKeys.joinToString(",")
+            }
+
+            val out = currentStream!!
+            out.appendText("    fun $function() {\n")
+            out.appendText("        DesignInjectKey('$key', listOf($metaKeysStr))\n ")
+            out.appendText("    }\n\n")
         }
 
         private fun visitFunctionQueries(function: KSFunctionDeclaration, nodeName: String) {
@@ -697,7 +739,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             // Collect arguments into a list so we can reuse them
             val args: ArrayList<Pair<String, String>> = ArrayList()
-            val listContentArgs: ArrayList<String> = ArrayList()
 
             // Add a modifier for the root item. Default params not allowed with override
             val defaultModifier = if (override) "" else " = Modifier"

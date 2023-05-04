@@ -86,3 +86,25 @@ annotation class PreviewNode(
 @Repeatable
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class DesignPreviewContent(val name: String, val nodes: Array<PreviewNode>)
+
+/**
+ * Meta keys that can be used with a character key to form a DesignKeyAction. For example, a list of
+ * two DesignMetaKeys MetaCtrl and MetaAlt with the character 'C' represents a key event of the
+ * letter 'C' with the control and alt keys held down.
+ */
+enum class DesignMetaKey {
+    MetaShift,
+    MetaCtrl,
+    MetaMeta,
+    MetaAlt,
+}
+
+/**
+ * Generate a function that, when called, injects a key event with the given key and list of meta
+ * keys.
+ *
+ * @param key the key to inject
+ * @param metaKeys the list of meta keys held down when the key inject event occurs
+ */
+@Target(AnnotationTarget.FUNCTION)
+annotation class DesignKeyAction(val key: Char, val metaKeys: Array<DesignMetaKey>)

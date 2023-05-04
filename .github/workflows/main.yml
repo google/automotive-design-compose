@@ -78,6 +78,8 @@ jobs:
           distribution: "temurin"
           java-version: "11"
       - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
+        with:
+          workspaces: ". -> designcompose/build/intermediates/cargoTarget"
 
       - name: Install Rust toolchains
         run: bash install-rust-toolchains.sh

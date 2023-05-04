@@ -14,36 +14,23 @@
  * limitations under the License.
  */
 
-@Suppress("UnstableApiUsage")
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
+plugins {
+    groovy
+    `java-gradle-plugin`
+    id("designcompose.conventions.base")
+    kotlin("jvm")
+}
+
+gradlePlugin {
+    plugins {
+        create("cargoPlugin") {
+            id = "com.android.designcompose.rust-in-android"
+            implementationClass = "com.android.designcompose.cargoplugin.CargoPlugin"
+        }
     }
 }
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-    }
-    includeBuild("plugins")
-    includeBuild("build-logic")
+dependencies {
+    implementation(libs.android.gradlePlugin)
+    implementation(libs.kotlin.gradlePlugin)
 }
-
-rootProject.name = "DesignCompose"
-
-include(":designcompose")
-
-include(":annotation")
-
-include(":codegen")
-
-include(":common")
-
-include(":integration-tests:validation")
-
-include(":reference-apps:helloworld")
-
-includeBuild("reference-apps/tutorial")

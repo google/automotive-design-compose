@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-@Suppress("UnstableApiUsage")
+rootProject.name = "DesignCompose Plugins"
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
     }
+    versionCatalogs { create("libs") { from(files("../gradle/libs.versions.toml")) } }
 }
 
 pluginManagement {
@@ -28,22 +30,7 @@ pluginManagement {
         gradlePluginPortal()
         google()
     }
-    includeBuild("plugins")
-    includeBuild("build-logic")
+    includeBuild("../build-logic")
 }
 
-rootProject.name = "DesignCompose"
-
-include(":designcompose")
-
-include(":annotation")
-
-include(":codegen")
-
-include(":common")
-
-include(":integration-tests:validation")
-
-include(":reference-apps:helloworld")
-
-includeBuild("reference-apps/tutorial")
+include("cargo-plugin")

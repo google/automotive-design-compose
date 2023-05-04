@@ -17,7 +17,7 @@
 plugins {
     kotlin("android")
     id("com.android.library")
-    id("org.mozilla.rust-android-gradle.rust-android")
+    id("com.android.designcompose.rust-in-android")
     // Plugins from our buildSrc
     id("designcompose.conventions.base")
     id("designcompose.conventions.publish.android")
@@ -50,43 +50,13 @@ android {
     }
 }
 
-// Syntax: https://github.com/mozilla/rust-android-gradle
 // Defines the configuation for the Rust JNI build
 cargo {
-    module = "../crates/live_update"
-    targetDirectory = "../target"
-    targetIncludes = arrayOf("liblive_update.so")
-    libname = "figma_import"
-    targets =
-        listOf(
-            "arm", // Older Physical Android Devices
-            "arm64", // Recent Physical Android Devices
-            "x86", // Older Emulated devices, including the ATD Android Test device
-            "x86_64", // Most Emulated Android Devices
-        )
-
-    if (hasProperty("liveUpdateJNIReleaseBuild")) {
-        println("Building the release profile of the Live Update JNI")
-        profile = "release"
-    }
-}
-
-android.sourceSets.getByName("androidTest") { jniLibs.srcDir("$buildDir/rustJniLibs/android") }
-
-// Must manually configure that Android build to depend on the JNI artifacts
-tasks.withType<com.android.build.gradle.tasks.MergeSourceSetFolders>().configureEach {
-    if (this.name.contains("Jni")) {
-        this.dependsOn(tasks.named("cargoBuild"))
-    }
-}
-
-publishing {
-    publications.named<MavenPublication>("release") {
-        pom {
-            name.set("Automotive Design for Compose")
-            description.set("Core library for the SDK")
-        }
-    }
+    crateDir.set(File(rootProject.relativePath("../crates/live_update")))
+    abi.add("x86") // Older Emulated devices, including the ATD Android Test device
+    abi.add("x86_64") // Most Emulated Android Devices
+    abi.add("armeabi-v7a")
+    abi.add("arm64-v8a")
 }
 
 dependencies {

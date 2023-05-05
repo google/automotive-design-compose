@@ -48,8 +48,7 @@ dependencyResolutionManagement {
             maven(uri(DesignComposeMavenRepo!!)) {
                 content { includeGroup("com.android.designcompose") }
             }
-//            google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
-            google()
+            google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
         } else {
             google()
         }

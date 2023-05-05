@@ -4,10 +4,7 @@ The directories here contain reference apps for DesignCompose. They are:
 
 - Tutorial: A walkthrough of the DesignCompose SDK and it's features
 - HelloWorld: A simple app showing the minimum for a working DesignCompose app
-- AAOS-Unbundled: Contains the MediaCompose demonstration app, demonstrating a Media Center on Android Automotive OS (AAOS). This uses APIs from AAOS, which are released as part of the (Unbundled Apps)[https://source.android.com/docs/devices/automotive/unbundled_apps/integration] repository, and ******************************
-
-
-
+- AAOS-Unbundled: Contains the MediaCompose demonstration app, demonstrating a Media Center on Android Automotive OS (AAOS). This uses APIs from AAOS, which are released as part of the (Unbundled Apps)[https://source.android.com/docs/devices/automotive/unbundled_apps/integration] repository, and requires an AAOS device or emulator to run.
 
 # Building
 

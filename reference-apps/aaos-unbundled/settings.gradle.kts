@@ -16,16 +16,50 @@
 
 rootProject.name = "DC Unbundled Apps"
 
-apply("unbundled-settings.gradle.kts")
+val unbundledAAOSDir: String by settings
+val designComposeMavenRepoForAAOS = File(rootDir, "build/designcompose_m2repo")
 
-@Suppress("UnstableApiUsage")
+includeBuild("$unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project") {
+    dependencySubstitution {
+        substitute(module("com.android.car-ui-lib:car-ui-lib")).using(project(":car-ui-lib"))
+        substitute(module("com.android.car-apps-common:car-apps-common"))
+            .using(project(":car-apps-common"))
+        substitute(module("com.android.car-media-common:car-media-common"))
+            .using(project(":car-media-common"))
+    }
+}
+
+// TODO: Detect these from the unbundled project
+val unbundledAAOSAndroidGradlePluginVer = "7.1.2"
+val aaosLatestSDK = "32"
+
+@Suppress("UnstableApiUsage") // For versionCatalogs and repositories
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        maven(uri(designComposeMavenRepoForAAOS))
+    }
+    versionCatalogs {
+        create("unbundledLibs") {
+            from(files("gradle/libs.versions.toml"))
+            // Version overrides used for the unbundled apps, which include the Unbundled AAOS repo
+            // and must match certain key versions These versions must match the version of the
+            // Android Gradle Plugin used in the AAOS Unbundled repo Version can be found in
+            // `packages/apps/Car/libs/aaos-apps-gradle-project/build.gradle` of the repo TODO:
+            // parse out the version the version from that file
+            println(
+                "Reminder! Overriding Android Gradle Plugin version to $unbundledAAOSAndroidGradlePluginVer to match the Unbundled AAOS project!"
+            )
+            version("android.gradlePlugin", unbundledAAOSAndroidGradlePluginVer)
+            version("aaosLatestSDK", aaosLatestSDK)
+            // Use the latest published version of the SDK
+            version("designcompose", "+")
+        }
     }
 }
+
 
 // Reference apps
 include(":media")

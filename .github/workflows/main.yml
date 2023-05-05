@@ -147,9 +147,9 @@ jobs:
 
     - run: unzip designcompose_m2repo.zip
 
-    - name: "Set environment variables"
-      run: |
-        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> $GITHUB_ENV
+    # - name: "Set environment variables"
+    #   run: |
+    #     echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> $GITHUB_ENV
 
     - name: Check Tutorial App
       uses: gradle/gradle-build-action@v2
@@ -157,6 +157,7 @@ jobs:
         build-root-directory: reference-apps/tutorial
         arguments: |
           --init-script ../local-design-compose-repo.init.gradle.kts
+          -PDesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo
           app:dependencies
           check
 
@@ -238,4 +239,5 @@ jobs:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
           --init-script ../local-design-compose-repo.init.gradle.kts
+          -PusePreBuiltDesignComposeSdk
           check 

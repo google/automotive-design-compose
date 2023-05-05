@@ -30,11 +30,11 @@ val designComposeRepoBuild =
         commandLine =
             listOf(
                 "./gradlew",
-                "-PDesignComposeMavenRepo=reference-apps/aaos-unbundled/build/designcompose_m2repo",
                 "publishAllPublicationsToLocalDirRepository"
             )
     }
 
-if (! hasProperty("usePreBuiltDesignComposeSdk")) {
+if (hasProperty("alwaysRebuildDesignComposeSdk")) {
+    if (!hasProperty("DesignComposeMavenRepo")) throw GradleException("Can't build DesignCompose SDK: DesignComposeMavenRepo must be set")
     tasks.named("build") { dependsOn(designComposeRepoBuild) }
 }

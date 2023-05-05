@@ -17,7 +17,9 @@
 rootProject.name = "DC Unbundled Apps"
 
 val unbundledAAOSDir: String by settings
-val designComposeMavenRepoForAAOS = File(rootDir, "build/designcompose_m2repo")
+val DesignComposeMavenRepo: String? by settings
+val unbundledAAOSAndroidGradlePluginVer = "7.1.2"
+val aaosLatestSDK = "32"
 
 includeBuild("$unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project") {
     dependencySubstitution {
@@ -29,17 +31,27 @@ includeBuild("$unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project"
     }
 }
 
-// TODO: Detect these from the unbundled project
-val unbundledAAOSAndroidGradlePluginVer = "7.1.2"
-val aaosLatestSDK = "32"
+/* Note about how this project finds the DesignCompose SDK:
+
+By default: The SDK is fetched from Google's Maven repository
+To use a pre-built DesignCompose SDK: Set the DesignComposeMavenRepo Gradle Property to the path to the pre-built Maven directory
+To use the SDK from the local source, Set DesignComposeMavenRepo like above and also set alwaysRebuildDesignComposeSdk (to anything)
+ */
 
 @Suppress("UnstableApiUsage") // For versionCatalogs and repositories
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
+
+        if (!DesignComposeMavenRepo.isNullOrBlank()) {
+            maven(uri(DesignComposeMavenRepo!!)) {
+                content { includeGroup("com.android.designcompose") }
+            }
+            google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
+        } else {
+            google()
+        }
         mavenCentral()
-        maven(uri(designComposeMavenRepoForAAOS))
     }
     versionCatalogs {
         create("unbundledLibs") {

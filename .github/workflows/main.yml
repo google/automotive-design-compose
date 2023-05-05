@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
           distribution: "temurin"
-          java-version: "11"
+          java-version: "17"
 
       - uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
         with:
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
           distribution: "temurin"
-          java-version: "11"
+          java-version: "17"
       - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
@@ -111,7 +111,7 @@ jobs:
       - uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
           distribution: "temurin"
-          java-version: "11"
+          java-version: "17"
       - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
 
       - name: Install Rust toolchains
@@ -140,7 +140,7 @@ jobs:
     - uses: actions/setup-java@v3
       with:
         distribution: "temurin"
-        java-version: "11"
+        java-version: "17"
     - uses: actions/download-artifact@v3
       with:
         name: designcompose-m2-repo-zip
@@ -211,7 +211,7 @@ jobs:
     - uses: actions/setup-java@v3
       with:
         distribution: "temurin"
-        java-version: "11"
+        java-version: "17"
     - uses: actions/download-artifact@v3
       with:
         name: designcompose-m2-repo-zip

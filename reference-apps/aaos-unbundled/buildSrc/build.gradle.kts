@@ -34,7 +34,7 @@ val designComposeRepoBuild =
             )
     }
 
-if (hasProperty("alwaysRebuildDesignComposeSdk")) {
+if (hasProperty("designComposeAAOSUnbundledUseSource")) {
     if (!hasProperty("DesignComposeMavenRepo")) throw GradleException("Can't build DesignCompose SDK: DesignComposeMavenRepo must be set")
     tasks.named("build") { dependsOn(designComposeRepoBuild) }
 }

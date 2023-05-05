@@ -879,6 +879,7 @@
   let overflowButtonSection = document.getElementById('overflowButtonSection');
   let overflowNodePreview = document.getElementById('overflowNodePreview');
   let overflowNodePreviewImg = document.getElementById('overflowNodePreviewImg');
+  let overflowNodePreviewImgData = null;
   let overflowNodeName = document.getElementById('overflowNodeName');
   let overflowNodeId = "";
   let overflowModal = document.getElementById("overflowModal");
@@ -1440,7 +1441,7 @@
     document.getElementById('gridMissingKeywords').style.display = currentSelection.hasKeywordData ? 'none' : 'block';
     document.getElementById('gridSpanTable').style.display = currentSelection.hasKeywordData ? 'block' : 'none';
 
-    maxNumItemsSection.style.display = limitContent.checked ? 'disabled' : 'none';
+    maxNumItemsSection.style.display = limitContent.checked ? 'block' : 'none';
   }
 
   // Use the extended layout data to set values in the UI
@@ -1476,7 +1477,7 @@
     let hasOverflowNode = (lcd && lcd.overflowNodeName.length > 0);
     overflowNodePreview.style.display = hasOverflowNode ? 'flex' : 'none';
     if (lcd && lcd.overflowNodePreviewData)
-      overflowNodePreviewImg.src = lcd.overflowNodePreviewData;
+      overflowNodePreviewImg.src = "data:image/png;base64," + lcd.overflowNodePreviewData;
     overflowButtonSection.style.display = hasOverflowNode ? 'none' : 'flex';
 
     gridLayoutSection.style.display = isGridLayout() ? "block" : "none";
@@ -1561,7 +1562,7 @@
         maxNumItems: toNumber(maxNumItems.value, 0),
         overflowNodeName: overflowNodeName.textContent,
         overflowNodeId: overflowNodeId,
-        overflowNodePreviewData: overflowNodePreviewImg.src
+        overflowNodePreviewData: overflowNodePreviewImgData
     }
 
     // Make a message and send it back to the plugin to save in the node.
@@ -1654,6 +1655,7 @@
       overflowNodeName.textContent = msg.name;
       overflowNodeId = msg.id;
       overflowNodePreviewImg.src = "data:image/png;base64," + msg.data;
+      overflowNodePreviewImgData = msg.data;
       
       frameFormUpdated();
     }

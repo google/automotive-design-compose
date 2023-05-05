@@ -59,6 +59,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -82,6 +84,8 @@ import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignContentTypes
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.annotation.DesignKeyAction
+import com.android.designcompose.annotation.DesignMetaKey
 import com.android.designcompose.annotation.DesignPreviewContent
 import com.android.designcompose.annotation.DesignVariant
 import com.android.designcompose.annotation.PreviewNode
@@ -437,13 +441,45 @@ fun VConstraintsTest() {
 // TEST Interactions
 @DesignDoc(id = "8Zg9viyjYTnyN29pbkR1CE")
 interface InteractionTest {
-    @DesignComponent(node = "Start Here") fun MainFrame()
+    @DesignComponent(node = "Start Here")
+    fun MainFrame(
+        @Design(node = "#KeyButtonB") onTapKeyButtonB: TapCallback,
+        @Design(node = "#KeyButtonC") onTapKeyButtonC: TapCallback,
+        @Design(node = "#KeyInjectA") onTapInjectA: TapCallback,
+        @Design(node = "#KeyInjectB") onTapInjectB: TapCallback,
+        @Design(node = "#KeyInjectC") onTapInjectC: TapCallback,
+        @Design(node = "#KeyInjectAB") onTapInjectAB: TapCallback,
+        @Design(node = "#KeyInjectBC") onTapInjectBC: TapCallback,
+    )
+
+    // Inject a ctrl-shift-B key when the 'clickedB()' function is called
+    @DesignKeyAction(key = 'B', metaKeys = [DesignMetaKey.MetaShift, DesignMetaKey.MetaCtrl])
+    fun clickedShiftCtrlB()
+    // Inject a meta-C key when the 'clickedC()' function is called
+    @DesignKeyAction(key = 'C', metaKeys = [DesignMetaKey.MetaMeta]) fun clickedMetaC()
+    @DesignKeyAction(key = 'A', metaKeys = []) fun clickedA()
+    @DesignKeyAction(key = 'B', metaKeys = []) fun clickedB()
+    @DesignKeyAction(key = 'C', metaKeys = []) fun clickedC()
 }
 
 @Preview
 @Composable
 fun InteractionTest() {
-    InteractionTestDoc.MainFrame()
+    InteractionTestDoc.MainFrame(
+        onTapKeyButtonB = { InteractionTestDoc.clickedShiftCtrlB() },
+        onTapKeyButtonC = { InteractionTestDoc.clickedMetaC() },
+        onTapInjectA = { InteractionTestDoc.clickedA() },
+        onTapInjectB = { InteractionTestDoc.clickedB() },
+        onTapInjectC = { InteractionTestDoc.clickedC() },
+        onTapInjectAB = {
+            InteractionTestDoc.clickedA()
+            InteractionTestDoc.clickedB()
+        },
+        onTapInjectBC = {
+            InteractionTestDoc.clickedB()
+            InteractionTestDoc.clickedC()
+        },
+    )
 }
 
 // TEST Shadows

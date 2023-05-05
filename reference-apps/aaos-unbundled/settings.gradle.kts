@@ -48,7 +48,8 @@ dependencyResolutionManagement {
             maven(uri(DesignComposeMavenRepo!!)) {
                 content { includeGroup("com.android.designcompose") }
             }
-            google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
+//            google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
+            google()
         } else {
             google()
         }
@@ -56,7 +57,7 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("unbundledLibs") {
-            from(files("gradle/libs.versions.toml"))
+            from(files("../../gradle/libs.versions.toml"))
             // Version overrides used for the unbundled apps, which include the Unbundled AAOS repo
             // and must match certain key versions These versions must match the version of the
             // Android Gradle Plugin used in the AAOS Unbundled repo Version can be found in
@@ -67,6 +68,9 @@ dependencyResolutionManagement {
             )
             version("android.gradlePlugin", unbundledAAOSAndroidGradlePluginVer)
             version("aaosLatestSDK", aaosLatestSDK)
+        }
+        create("libs") {
+            from(files("../../gradle/libs.versions.toml"))
             // Use the latest published version of the SDK
             version("designcompose", "+")
         }

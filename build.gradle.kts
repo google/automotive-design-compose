@@ -29,7 +29,6 @@ buildscript {
         classpath(libs.android.gradlePlugin)
         classpath(libs.dokka.gradlePlugin)
         classpath(libs.android.gms.strictVersionMatcher)
-        classpath(libs.android.gms.ossLicensesPlugin)
     }
 }
 

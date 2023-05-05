@@ -22,6 +22,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
@@ -29,6 +30,7 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.LocalState
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -60,6 +62,9 @@ import org.gradle.process.ExecOperations
 abstract class CargoBuildTask @Inject constructor(private val executor: ExecOperations) :
     DefaultTask() {
 
+    @get:Inject abstract val fs: FileSystemOperations
+
+
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:InputFiles
     abstract val rustSrcs: ConfigurableFileCollection
@@ -82,9 +87,10 @@ abstract class CargoBuildTask @Inject constructor(private val executor: ExecOper
 
     @get:OutputDirectory abstract val outLibDir: DirectoryProperty
 
-    @Internal
-    val cargoTargetDir: Provider<Directory> =
-        project.layout.buildDirectory.map { it.dir("intermediates/cargoTarget") }
+
+    @get:Internal
+    abstract val cargoTargetDir: DirectoryProperty
+
 
     @TaskAction
     fun runCommand() {
@@ -113,7 +119,7 @@ abstract class CargoBuildTask @Inject constructor(private val executor: ExecOper
         }
         // Copy the final compiled library to the correct location in the output dir.
         val finalOutLibDir = outLibDir.get().dir(androidAbi.get())
-        project.copy {
+        fs.copy {
             it.from(targetOutputDir)
             it.include("*.so")
             it.into(finalOutLibDir)

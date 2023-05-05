@@ -35,7 +35,7 @@ includeBuild("$unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project"
 
 By default: The SDK is fetched from Google's Maven repository
 To use a pre-built DesignCompose SDK: Set the DesignComposeMavenRepo Gradle Property to the path to the pre-built Maven directory
-To use the SDK from the local source, Set DesignComposeMavenRepo like above and also set alwaysRebuildDesignComposeSdk (to anything)
+To use the SDK from the local source, Set DesignComposeMavenRepo like above and also set alwaysRebuildDesignComposeSdk (to anything). The SDK will be built by a task in the buildSrc project, which ensures the repository exists before the root project checks for it.
  */
 
 @Suppress("UnstableApiUsage") // For versionCatalogs and repositories
@@ -44,6 +44,7 @@ dependencyResolutionManagement {
     repositories {
 
         if (!DesignComposeMavenRepo.isNullOrBlank()) {
+            logger.lifecycle("Using DesignCompose SDK from $DesignComposeMavenRepo")
             maven(uri(DesignComposeMavenRepo!!)) {
                 content { includeGroup("com.android.designcompose") }
             }

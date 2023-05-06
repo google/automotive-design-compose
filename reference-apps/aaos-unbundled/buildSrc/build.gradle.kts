@@ -27,14 +27,11 @@
 val designComposeRepoBuild =
     tasks.register<Exec>("buildDesignComposeRepo") {
         workingDir = layout.projectDirectory.dir("../../../").asFile
-        commandLine =
-            listOf(
-                "./gradlew",
-                "publishAllPublicationsToLocalDirRepository"
-            )
+        commandLine = listOf("./gradlew", "publishAllPublicationsToLocalDirRepository")
     }
 
 if (hasProperty("designComposeAAOSUnbundledUseSource")) {
-    if (!hasProperty("DesignComposeMavenRepo")) throw GradleException("Can't build DesignCompose SDK: DesignComposeMavenRepo must be set")
+    if (!hasProperty("DesignComposeMavenRepo"))
+        throw GradleException("Can't build DesignCompose SDK: DesignComposeMavenRepo must be set")
     tasks.named("build") { dependsOn(designComposeRepoBuild) }
 }

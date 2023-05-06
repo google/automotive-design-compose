@@ -20,7 +20,6 @@ import java.io.File
 import javax.inject.Inject
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
@@ -30,7 +29,6 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.LocalState
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -64,7 +62,6 @@ abstract class CargoBuildTask @Inject constructor(private val executor: ExecOper
 
     @get:Inject abstract val fs: FileSystemOperations
 
-
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:InputFiles
     abstract val rustSrcs: ConfigurableFileCollection
@@ -87,10 +84,7 @@ abstract class CargoBuildTask @Inject constructor(private val executor: ExecOper
 
     @get:OutputDirectory abstract val outLibDir: DirectoryProperty
 
-
-    @get:Internal
-    abstract val cargoTargetDir: DirectoryProperty
-
+    @get:Internal abstract val cargoTargetDir: DirectoryProperty
 
     @TaskAction
     fun runCommand() {

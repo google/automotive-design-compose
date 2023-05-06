@@ -44,9 +44,7 @@ dependencyResolutionManagement {
     repositories {
         if (!DesignComposeMavenRepo.isNullOrBlank()) {
             logger.lifecycle("Using DesignCompose SDK from $DesignComposeMavenRepo")
-            maven(uri(DesignComposeMavenRepo!!)) {
-                content { includeGroup("com.android.designcompose") }
-            }
+            maven(uri(DesignComposeMavenRepo!!)) { content { includeGroup("com.android.designcompose") } }
             google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
         } else {
             google()

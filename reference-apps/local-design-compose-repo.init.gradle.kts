@@ -22,9 +22,7 @@ settingsEvaluated {
     dependencyResolutionManagement {
         repositories.clear()
         repositories {
-            maven(uri(DesignComposeMavenRepo)) {
-                content { includeGroup("com.android.designcompose") }
-            }
+            maven(uri(DesignComposeMavenRepo)) { content { includeGroup("com.android.designcompose") } }
 
             google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
 

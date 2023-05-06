@@ -29,7 +29,6 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.LocalState
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -85,10 +84,7 @@ abstract class CargoBuildTask @Inject constructor(private val executor: ExecOper
 
     @get:OutputDirectory abstract val outLibDir: DirectoryProperty
 
-
-    @get:Internal
-    abstract val cargoTargetDir: DirectoryProperty
-
+    @get:Internal abstract val cargoTargetDir: DirectoryProperty
 
     @TaskAction
     fun runCommand() {

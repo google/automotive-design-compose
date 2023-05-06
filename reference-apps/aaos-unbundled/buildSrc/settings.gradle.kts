@@ -14,22 +14,3 @@
  * limitations under the License.
  */
 
-val unbundledAAOSAndroidGradlePluginVer = "7.1.2"
-
-dependencyResolutionManagement {
-    versionCatalogs {
-        create("libs") { from(files("../gradle/libs.versions.toml")) }
-        create("unbundledLibs") {
-            from(files("../gradle/libs.versions.toml"))
-            // Version overrides used for the unbundled apps, which include the Unbundled AAOS repo
-            // and must match certain key versions These versions must match the version of the
-            // Android Gradle Plugin used in the AAOS Unbundled repo Version can be found in
-            // `packages/apps/Car/libs/aaos-apps-gradle-project/build.gradle` of the repo TODO:
-            // parse out the version the version from that file
-            println(
-                "Reminder! Overriding Android Gradle Plugin version to $unbundledAAOSAndroidGradlePluginVer to match the Unbundled AAOS project!"
-            )
-            version("android.gradlePlugin", unbundledAAOSAndroidGradlePluginVer)
-        }
-    }
-}

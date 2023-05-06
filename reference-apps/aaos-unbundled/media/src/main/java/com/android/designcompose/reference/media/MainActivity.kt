@@ -62,7 +62,7 @@ interface MediaInterface {
     fun CustomActionButton(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
         icon: @Composable (ImageReplacementContext) -> Bitmap?,
         onTap: TapCallback,
@@ -75,7 +75,7 @@ interface MediaInterface {
     fun BrowsePage(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
         pageHeaderType: PageHeaderType,
         showHeader: Boolean,
@@ -92,7 +92,7 @@ interface MediaInterface {
     fun LoadingPage(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
     ) {}
     fun LoadingPageDesignNodeData(): DesignNodeData {
@@ -103,7 +103,7 @@ interface MediaInterface {
     fun GroupHeader(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
         title: String,
     ) {}
@@ -115,7 +115,7 @@ interface MediaInterface {
     fun SourceButton(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
         sourceButtonType: SourceButtonType,
         onTap: TapCallback,
@@ -132,7 +132,7 @@ interface MediaInterface {
     fun PageHeaderNavButton(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
         navButtonType: NavButtonType,
         onTap: TapCallback,
@@ -147,7 +147,7 @@ interface MediaInterface {
     fun BrowseItem(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
         browseType: BrowseItemType,
         currentlyPlaying: CurrentlyPlaying,
@@ -168,7 +168,7 @@ interface MediaInterface {
     fun ErrorFrame(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
         errorMessage: String,
         errorButtonText: String,
@@ -183,7 +183,7 @@ interface MediaInterface {
     fun BrowseHeaderNav(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
     ) {}
     fun BrowseHeaderNavDesignNodeData(): DesignNodeData {
@@ -194,7 +194,7 @@ interface MediaInterface {
     fun BrowseHeaderDrillDown(
         modifier: Modifier = Modifier,
         openLinkCallback: OpenLinkCallback? = null,
-        designDocReadyCallback: (() -> Unit)? = null,
+        designDocReadyCallback: ((String) -> Unit)? = null,
         key: String? = null,
     ) {}
     fun BrowseHeaderDrillDownDesignNodeData(): DesignNodeData {

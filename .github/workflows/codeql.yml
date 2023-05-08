@@ -30,7 +30,7 @@ on:
     branches: [ "main", stable/* ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "main" ]
+    branches: [ "main", "wb/*"]
   schedule:
     - cron: '30 16 * * 0'
 

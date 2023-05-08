@@ -46,4 +46,6 @@ include(":integration-tests:validation")
 
 include(":reference-apps:helloworld")
 
-includeBuild("reference-apps/tutorial")
+include(":tutorial-app")
+project(":tutorial-app").projectDir=File("reference-apps/tutorial/app")
+

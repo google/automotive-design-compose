@@ -42,10 +42,12 @@ include(":codegen")
 
 include(":common")
 
-include(":integration-tests:validation")
+include(":validation-app")
+project(":validation-app").projectDir = File("integration-tests/validation")
 
-include(":reference-apps:helloworld")
+include(":helloworld-app")
+project(":helloworld-app").projectDir = File("reference-apps/helloworld")
 
 include(":tutorial-app")
-project(":tutorial-app").projectDir=File("reference-apps/tutorial/app")
+project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
 

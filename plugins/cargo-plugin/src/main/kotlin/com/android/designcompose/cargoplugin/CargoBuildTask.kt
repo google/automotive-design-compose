@@ -24,7 +24,6 @@ import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
@@ -34,6 +33,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.UntrackedTask
 import org.gradle.process.ExecOperations
 
 /**
@@ -53,7 +53,10 @@ import org.gradle.process.ExecOperations
  * @property useReleaseProfile If set, compile a debug build. Otherwise compile release
  * @property outLibDir Where the libraries will be copied to. Actually set by the Android plugin
  */
-@CacheableTask
+@UntrackedTask(
+    because =
+        "Cargo has it's own up-to-date checks. Trying to reproduce them so that we don't need to run Cargo is infeasible, and any errors will cause out-of-date code to be included"
+)
 abstract class CargoBuildTask @Inject constructor(private val executor: ExecOperations) :
     DefaultTask() {
 

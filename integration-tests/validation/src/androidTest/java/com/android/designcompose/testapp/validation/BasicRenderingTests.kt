@@ -46,4 +46,10 @@ class BasicRenderingTests {
         composeTestRule.setContent { TelltaleTest() }
         composeTestRule.onNodeWithText("Frames").assertIsDisplayed()
     }
+
+    @Test
+    fun renderDialsGauges() {
+        composeTestRule.setContent { DialsGaugesTest() }
+        composeTestRule.onNodeWithText("Rotation Test", substring = true).assertIsDisplayed()
+    }
 }

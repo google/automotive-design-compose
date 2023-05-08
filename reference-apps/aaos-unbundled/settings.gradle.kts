@@ -42,7 +42,6 @@ To use the SDK from the local source, Set DesignComposeMavenRepo like above and 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-
         if (!DesignComposeMavenRepo.isNullOrBlank()) {
             logger.lifecycle("Using DesignCompose SDK from $DesignComposeMavenRepo")
             maven(uri(DesignComposeMavenRepo!!)) {
@@ -75,7 +74,6 @@ dependencyResolutionManagement {
         }
     }
 }
-
 
 // Reference apps
 include(":media")

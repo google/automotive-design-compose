@@ -1585,6 +1585,7 @@ interface DialsGaugesTest {
         @Design(node = "#arc-angle") arcAngle: Meter,
         @Design(node = "#needle-rotation") needleRotation: Meter,
         @Design(node = "#progress-bar") progressBar: Meter,
+        @Design(node = "#progress-indicator") progressIndicator: Meter,
     )
 }
 
@@ -1593,10 +1594,12 @@ fun DialsGaugesTest() {
     val angle = remember { mutableStateOf(50f) }
     val rotation = remember { mutableStateOf(50f) }
     val progress = remember { mutableStateOf(50f) }
+    val progressIndicator = remember { mutableStateOf(50f) }
     DialsGaugesTestDoc.MainFrame(
         arcAngle = angle.value,
         needleRotation = rotation.value,
         progressBar = progress.value,
+        progressIndicator = progressIndicator.value,
     )
 
     Row(
@@ -1622,6 +1625,14 @@ fun DialsGaugesTest() {
         Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(progress, 0f, 100f)
         Text(progress.value.toString(), fontSize = 20.sp)
+    }
+    Row(
+        Modifier.absoluteOffset(0.dp, 1560.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Progress Indicator: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(progressIndicator, 0f, 100f)
+        Text(progressIndicator.value.toString(), fontSize = 20.sp)
     }
 }
 

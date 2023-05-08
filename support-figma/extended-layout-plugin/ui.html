@@ -24,6 +24,54 @@
     font-weight: normal;
     font-size: 12;
   }
+
+  /* Tooltip container */
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Tooltip text */
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    font-size: 12;
+    width: 200px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px;
+    border-radius: 1px;
+
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -100px;
+    margin-bottom: 5px;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  /* Tooltip arrow */
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+  }
+
+  /* Show the tooltip text when you mouse over the tooltip container */
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
 </style>
 
 <div id="text" style="margin: 8px; display: none;">
@@ -133,31 +181,42 @@
     <div class="switch">
       <input id="barSwitch" type="checkbox" class="switch__toggle">
       <label for="barSwitch" class="switch__label">Progress Bar Customization</label>
+      <div class="tooltip">
+        <label>&#9432</label>
+        <span class="tooltiptext">Progress bars must be in a parent frame, which is used as the bounds for the progress bar.</span>
+      </div>
     </div>
     <div id="barControls" style="margin-left:20; display:none">
-      <div style="display: flex; align-items: center">
-        <label for="barStart" class="sublabel" style="width:120">Progress Bar Start</label>
-        <input id="barStart" type="input" style="width: 40;" class="input__field" value="0">
-      </div>
-      <div style="display: flex; align-items: center">
-        <label for="barEnd" class="sublabel" style="width:120">Progress Bar End</label>
-        <input id="barEnd" type="input" style="width: 40;" class="input__field" value="360">
-      </div>
       <div style="display: flex">
         <div class="switch">
           <input id="barDiscreteSwitch" type="checkbox" class="switch__toggle">
-          <label for="barDiscreteSwitch" class="switch__label" style="font-weight:normal">Discrete Values (pixels)</label>
+          <label for="barDiscreteSwitch" class="switch__label" style="font-weight:normal">Discrete Values (percentage)</label>
         </div>
         <input id="barDiscreteValue" type="input" style="width: 40;" class="input__field" value="1" disabled>
       </div>
-      <div style="display: flex">
-        <div class="switch">
-          <input id="barVerticalSwitch" type="checkbox" class="switch__toggle">
-          <label for="barVerticalSwitch" class="switch__label" style="font-weight:normal">Vertical</label>
-        </div>
-      </div>
       <div class="slidecontainer">
         <input id="barValue" type="range" min="0" max="100" class="slider" id="myRange" oninput="barChanged();">
+      </div>
+    </div>
+  </div><div id="progressMarkerSection" onchange="markerChanged()">
+    <div class="switch">
+      <input id="markerSwitch" type="checkbox" class="switch__toggle">
+      <label for="markerSwitch" class="switch__label">Progress Marker Customization</label>
+      <div class="tooltip">
+        <label>&#9432</label>
+        <span class="tooltiptext">Progress bars must be in a parent frame, which is used as the bounds for the progress bar.</span>
+      </div>
+    </div>
+    <div id="markerControls" style="margin-left:20; display:none">
+      <div style="display: flex">
+        <div class="switch">
+          <input id="markerDiscreteSwitch" type="checkbox" class="switch__toggle">
+          <label for="markerDiscreteSwitch" class="switch__label" style="font-weight:normal">Discrete Values (percentage)</label>
+        </div>
+        <input id="markerDiscreteValue" type="input" style="width: 40;" class="input__field" value="1" disabled>
+      </div>
+      <div class="slidecontainer">
+        <input id="markerValue" type="range" min="0" max="100" class="slider" id="myRange" oninput="markerChanged();">
       </div>
     </div>
   </div>
@@ -184,6 +243,8 @@
   let pluginMode = PluginMode.Text;
   let currentSelection = null;
   let currentNodeType = null;
+  let parentNodeType = null;
+  let parentSize = { width: 0, height: 0 };
 
   function toNumber(str, def) {
     let num = parseInt(str, 10);
@@ -258,12 +319,17 @@
   }
 
   function updateMeterDisabledStates() {
-    let allowRotation = !arcSwitch.checked && !barSwitch.checked;
-    let allowArc = currentNodeType == "ELLIPSE" && !rotationSwitch.checked && !barSwitch.checked;
-    let allowBar = (currentNodeType == "FRAME" || currentNodeType == "RECTANGLE") && !rotationSwitch.checked && !arcSwitch.checked;
+    let allowRotation = !arcSwitch.checked && !barSwitch.checked && !markerSwitch.checked;
+    let allowArc = currentNodeType == "ELLIPSE" && !rotationSwitch.checked && !barSwitch.checked && !markerSwitch.checked;
+    let hasParentFrame = parentNodeType == "FRAME";
+    let allowProgress = (currentNodeType == "FRAME" || currentNodeType == "RECTANGLE") && hasParentFrame
+    let allowBar = hasParentFrame && allowProgress && !rotationSwitch.checked && !arcSwitch.checked && !markerSwitch.checked;
+    let allowMarker = hasParentFrame && allowProgress && !rotationSwitch.checked && !arcSwitch.checked && !barSwitch.checked;
+
     rotationSwitch.disabled = !allowRotation;
     arcSwitch.disabled = !allowArc;
     barSwitch.disabled = !allowBar;
+    markerSwitch.disabled = !allowMarker;
   }
 
   function arcChanged() {
@@ -303,12 +369,22 @@
     parent.postMessage({ pluginMessage: {
         msg: 'bar-changed',
         enabled: barSwitch.checked,
-        start: toNumber(barStart.value, 0),
-        end: toNumber(barEnd.value, 0),
         value: toNumber(barValue.value, 0),
         discrete: barDiscreteSwitch.checked,
         discreteValue: toNumber(barDiscreteValue.value, 1),
-        vertical: barVerticalSwitch.checked,
+      }}, '*');
+  }
+
+  function markerChanged() {
+    updateMeterDisabledStates();
+    markerControls.style.display = markerSwitch.checked ? 'block' : 'none';
+    markerDiscreteValue.disabled = !markerDiscreteSwitch.checked;
+    parent.postMessage({ pluginMessage: {
+        msg: 'marker-changed',
+        enabled: markerSwitch.checked,
+        value: toNumber(markerValue.value, 0),
+        discrete: markerDiscreteSwitch.checked,
+        discreteValue: toNumber(markerDiscreteValue.value, 1),
       }}, '*');
   }
 
@@ -318,10 +394,14 @@
 
   function setMeterData(msg) {
     currentNodeType = msg.nodeType;
+    parentNodeType = msg.parentType;
+    parentSize = msg.parentSize;
+
     let meterData = msg.meterData;
     let ellipseAngle = msg.ellipseAngle;
     let rotation = msg.rotation;
     let progress = msg.progress;
+    let marker = msg.marker;
 
     let sd = meterData.arcData;
     arcSwitch.disabled = msg.nodeType != "ELLIPSE";
@@ -355,16 +435,21 @@
     barSwitch.disabled = (msg.nodeType != "FRAME" && msg.nodeType != "RECTANGLE");
     barControls.style.display = (bd && bd.enabled) ? 'block' : 'none';
     barSwitch.checked = bd && bd.enabled;
-    let bdStart = bd ? bd.start : 0;
-    let bdEnd = bd ? bd.end : (progress ? progress : 100);
-    barStart.value = bdStart;
-    barEnd.value = bdEnd;
     if (progress)
-      barValue.value = valueToPercent(progress, bdStart, bdEnd);
+      barValue.value = progress;
     barDiscreteSwitch.checked = bd && bd.discrete;
     barDiscreteValue.value = bd ? bd.discreteValue : 1;
     barDiscreteValue.disabled = !bd || !bd.discrete;
-    barVerticalSwitch.checked = bd && bd.vertical;
+
+    let md = meterData.progressMarkerData;
+    markerSwitch.disabled = (msg.nodeType != "FRAME" && msg.nodeType != "RECTANGLE");
+    markerControls.style.display = (md && md.enabled) ? 'block' : 'none';
+    markerSwitch.checked = md && md.enabled;
+    if (progress)
+      markerValue.value = progress;
+    markerDiscreteSwitch.checked = md && md.discrete;
+    markerDiscreteValue.value = md ? md.discreteValue : 1;
+    markerDiscreteValue.disabled = !md || !md.discrete;
 
     updateMeterDisabledStates();
   }
@@ -494,6 +579,9 @@
     }
     if (msg.msg == 'meters-selection-cleared') {
       currentSelection = null;
+      currentNodeType = null;
+      parentNodeType = null;
+      parentSize = null;
 
       arcControls.style.display = 'none';
       arcSwitch.checked = false;
@@ -506,6 +594,10 @@
       barControls.style.display = 'none';
       barSwitch.checked = false;
       barSwitch.disabled = true;
+
+      markerControls.style.display = 'none';
+      markerSwitch.checked = false;
+      markerSwitch.disabled = true;
     }
     else if (msg.msg == 'meters-selection') {
       setMeterData(msg);

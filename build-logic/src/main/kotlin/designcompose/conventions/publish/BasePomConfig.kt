@@ -34,12 +34,8 @@ fun MavenPom.basePom() {
         }
     }
     scm {
-        connection.set(
-            "scm:git:https://github.com/google/automotive-design-compose.git"
-        )
-        developerConnection.set(
-            "scm:git:git@github.com:google/automotive-design-compose.git"
-        )
+        connection.set("scm:git:https://github.com/google/automotive-design-compose.git")
+        developerConnection.set("scm:git:git@github.com:google/automotive-design-compose.git")
         url.set("https://github.com/google/automotive-design-compose")
     }
 }

@@ -114,10 +114,12 @@ guavaAndroid = { module = "com.google.guava:guava", version.ref = "guavaAndroid"
 guavaJre = { module = "com.google.guava:guava", version.ref = "guavaJre" }
 javax-annotationApi = { module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation" }
 junit = { module = "junit:junit", version.ref = "junit" }
+ktfmt-gradlePlugin = { module = "com.ncorti.ktfmt.gradle:plugin", version.ref = "ktfmt" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockkAgent" }

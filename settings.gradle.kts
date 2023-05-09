@@ -52,7 +52,4 @@ project(":helloworld-app").projectDir = File("reference-apps/helloworld")
 
 include(":tutorial-app")
 
-project(":tutorial-app").projectDir =
-    File(
-        "reference-apps/tutorial/app"
-    )
+project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")

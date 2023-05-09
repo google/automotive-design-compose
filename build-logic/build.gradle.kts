@@ -23,9 +23,8 @@ plugins {
 ktfmt { kotlinLangStyle() }
 
 tasks.withType<KtfmtBaseTask> {
-    exclude { it.file.path.contains("generated/") }
-    exclude { it.file.path.contains("generated-sources/") }
-    include("**/*.gradle.kts")
+    // For some reason Ktfmt has problems filtering out generated kotlin files from the build dir
+    exclude { it.file.path.contains("/build/") }
 }
 
 repositories {

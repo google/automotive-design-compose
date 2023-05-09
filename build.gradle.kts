@@ -16,7 +16,6 @@
 
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.ncorti.ktfmt.gradle.tasks.KtfmtFormatTask
-import com.ncorti.ktfmt.gradle.tasks.KtfmtCheckTask
 
 buildscript {
     repositories {
@@ -59,17 +58,18 @@ fun isNonStable(version: String) = "^[0-9,.v-]+(-r)?$".toRegex().matches(version
 // unless the dependency is already using a non-stable release
 tasks.withType<DependencyUpdatesTask> { rejectVersionIf { isNonStable(candidate.version) } }
 
-    tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
-        source = project.fileTree(rootDir)
-        include("**/*.gradle.kts")
-    }
-val ktfmtCheckBuildScripts =
-    tasks.register<KtfmtCheckTask>("ktfmtCheckBuildScripts") {
-        source = project.fileTree(rootDir)
-        include("**/*.gradle.kts")
-    }
-
-tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtCheck") })
-dependsOn(ktfmtCheckBuildScripts)}
+tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtCheck") }) }
 
 tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
+
+tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
+    source = project.fileTree(project.rootDir)
+    exclude { it.path.contains("/build/") }
+    include("**/*.gradle.kts")
+}
+
+tasks.register<KtfmtFormatTask>("ktfmtPrecommit") {
+    source = project.fileTree(rootDir)
+    include("**/*.gradle.kts")
+    include("**/*.kt")
+}

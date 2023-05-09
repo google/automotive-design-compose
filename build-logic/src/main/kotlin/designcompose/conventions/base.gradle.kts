@@ -18,6 +18,7 @@ package designcompose.conventions
 
 import com.android.build.gradle.BaseExtension
 import com.google.devtools.ksp.gradle.KspTask
+import com.ncorti.ktfmt.gradle.tasks.KtfmtCheckTask
 
 plugins {
     id("com.ncorti.ktfmt.gradle")
@@ -28,6 +29,14 @@ ktfmt {
     // KotlinLang style - 4 space indentation - From kotlinlang.org/docs/coding-conventions.html
     kotlinLangStyle()
 }
+
+val ktfmtCheckBuildScripts =
+    tasks.register<KtfmtCheckTask>("ktfmtCheckBuildScripts") {
+        source = project.layout.projectDirectory.asFileTree
+        include("*.gradle.kts")
+    }
+
+tasks.named("ktfmtCheck") { dependsOn(ktfmtCheckBuildScripts) }
 
 project.plugins.withType(JavaBasePlugin::class.java) {
     project.extensions.getByType(JavaPluginExtension::class.java).toolchain {

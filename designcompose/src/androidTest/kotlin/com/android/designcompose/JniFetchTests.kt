@@ -36,11 +36,12 @@ class JniFetchTests {
     @Test
     fun invalidKey() {
         try {
-            LiveUpdateJni.jniFetchDoc("DummyDocId", requestJson)
+            LiveUpdateJni.jniFetchDoc( "DummyDocId", requestJson)
             Assert.fail("Should have thrown an exception")
         } catch (exception: Exception) {
 
             Assert.assertTrue(exception.message?.contains("HttpError(Status(403") == true)
         }
+
     }
 }

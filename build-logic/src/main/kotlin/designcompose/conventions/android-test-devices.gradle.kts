@@ -22,6 +22,7 @@ apply<ATDPlugin>()
 // Have to look them up the old fashioned way
 afterEvaluate {
     tasks.named("tabletAtdApi30DebugAndroidTest").configure { group = "DesignCompose Developer" }
-    tasks.named("tabletAllApisGroupDebugAndroidTest")
-        .configure { group = "DesignCompose Developer" }
+    tasks.named("tabletAllApisGroupDebugAndroidTest").configure {
+        group = "DesignCompose Developer"
+    }
 }

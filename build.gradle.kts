@@ -62,7 +62,7 @@ tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfm
 tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
 
 tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
-    source = project.fileTree(project.rootDir)
+    source = project.layout.projectDirectory.asFileTree
     exclude { it.path.contains("/build/") }
     include("**/*.gradle.kts")
 }

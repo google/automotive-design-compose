@@ -67,9 +67,3 @@ tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
     exclude { it.path.contains("/build/") }
     include("**/*.gradle.kts")
 }
-
-tasks.register<KtfmtFormatTask>("ktfmtPrecommit") {
-    source = project.fileTree(rootDir)
-    include("**/*.gradle.kts")
-    include("**/*.kt")
-}

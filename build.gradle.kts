@@ -57,8 +57,9 @@ fun isNonStable(version: String) = "^[0-9,.v-]+(-r)?$".toRegex().matches(version
 // unless the dependency is already using a non-stable release
 tasks.withType<DependencyUpdatesTask> { rejectVersionIf { isNonStable(candidate.version) } }
 
+// Format all *.gradle.kts files in the repository. This should catch all buildscripts.
 // This task must be run on it's own, since it modifies the build scripts for everything else and
-// Gradle throws an error
+// Gradle throws an error.
 tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
     source = project.layout.projectDirectory.asFileTree
     exclude { it.path.contains("/build/") }

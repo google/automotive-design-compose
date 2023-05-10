@@ -51,6 +51,7 @@ android {
 }
 
 // Defines the configuation for the Rust JNI build
+
 cargo {
     crateDir.set(File(rootProject.relativePath("../crates/live_update")))
     abi.add("x86") // Older Emulated devices, including the ATD Android Test device
@@ -74,11 +75,8 @@ dependencies {
     api(libs.androidx.lifecycle.runtime)
     api(libs.androidx.lifecycle.livedata.core)
     implementation(libs.accompanist.flowlayout)
-    implementation(libs.grpc.auth)
-    implementation(libs.grpc.stub)
-    implementation(libs.grpc.okhttp)
-    implementation(libs.grpc.protobufLite)
     implementation(libs.guavaAndroid)
+    implementation(libs.grpc.stub)
     implementation(libs.javax.annotationApi)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.compose)

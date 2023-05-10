@@ -38,9 +38,9 @@ class JniFetchTests {
         try {
             LiveUpdateJni.jniFetchDoc("DummyDocId", requestJson)
             Assert.fail("Should have thrown an exception")
-        } catch (exception: Exception) {
+        } catch (exception: AccessDeniedException) {
 
-            Assert.assertTrue(exception.message?.contains("HttpError(Status(403") == true)
+            Assert.assertTrue(exception.message?.contains("Invalid Authentication Token") == true)
         }
     }
 }

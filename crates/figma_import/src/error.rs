@@ -12,55 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fmt::Display;
+use thiserror::Error;
 
 /// Combined error type for all errors that can occur working with Figma documents.
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum Error {
-    IoError(std::io::Error),
-    HttpError(ureq::Error),
-    ImageError(image::ImageError),
-    JsonError(serde_json::Error),
-    BincodeError(bincode::Error),
-}
-impl From<std::io::Error> for Error {
-    fn from(io_error: std::io::Error) -> Self {
-        Error::IoError(io_error)
-    }
-}
-impl From<ureq::Error> for Error {
-    fn from(ureq_error: ureq::Error) -> Self {
-        Error::HttpError(ureq_error)
-    }
-}
-impl From<image::ImageError> for Error {
-    fn from(image_error: image::ImageError) -> Self {
-        Error::ImageError(image_error)
-    }
-}
-impl From<serde_json::Error> for Error {
-    fn from(serde_error: serde_json::Error) -> Self {
-        Error::JsonError(serde_error)
-    }
-}
-impl From<bincode::Error> for Error {
-    fn from(bincode_error: bincode::Error) -> Self {
-        Error::BincodeError(bincode_error)
-    }
-}
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Error::IoError(e) => Some(e),
-            Error::HttpError(e) => Some(e),
-            Error::ImageError(e) => Some(e),
-            Error::JsonError(e) => Some(e),
-            Error::BincodeError(e) => Some(e),
-        }
-    }
-}
-impl Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
+    #[error("IO Error")]
+    IoError(#[from] std::io::Error),
+    #[error("HTTP Error")]
+    HttpError(#[from] ureq::Error),
+    #[error("Image Error")]
+    ImageError(#[from] image::ImageError),
+    #[error("Json Serialization Error")]
+    JsonError(#[from] serde_json::Error),
+    #[error("Serialization Error")]
+    BincodeError(#[from] bincode::Error),
 }

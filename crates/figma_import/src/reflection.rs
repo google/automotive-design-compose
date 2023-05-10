@@ -170,7 +170,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::SerializedFigmaDoc>(&samples)
         .expect("couldn't trace SerializedFigmaDoc");
     tracer.trace_type::<crate::ServerFigmaDoc>(&samples).expect("couldn't trace ServerFigmaDoc");
-    tracer.trace_type::<crate::ConvertResult>(&samples).expect("couldn't trace ConvertResponse");
+    tracer.trace_type::<crate::ConvertResponse>(&samples).expect("couldn't trace ConvertResponse");
 
     tracer.registry()
 }

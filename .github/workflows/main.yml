@@ -23,7 +23,9 @@ on:
       - main
   merge_group:
   pull_request:
-    branches: [main]
+    branches: 
+      - main
+      - 'wb/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}

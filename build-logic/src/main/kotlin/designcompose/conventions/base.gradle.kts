@@ -17,6 +17,26 @@
 package designcompose.conventions
 
 import com.android.build.gradle.BaseExtension
+import com.google.devtools.ksp.gradle.KspTask
+import com.ncorti.ktfmt.gradle.tasks.KtfmtCheckTask
+
+plugins {
+    id("com.ncorti.ktfmt.gradle")
+    id("com.google.android.gms.strict-version-matcher-plugin")
+}
+
+ktfmt {
+    // KotlinLang style - 4 space indentation - From kotlinlang.org/docs/coding-conventions.html
+    kotlinLangStyle()
+}
+
+val ktfmtCheckBuildScripts =
+    tasks.register<KtfmtCheckTask>("ktfmtCheckBuildScripts") {
+        source = project.layout.projectDirectory.asFileTree
+        include("*.gradle.kts")
+    }
+
+tasks.named("ktfmtCheck") { dependsOn(ktfmtCheckBuildScripts) }
 
 project.plugins.withType(JavaBasePlugin::class.java) {
     project.extensions.getByType(JavaPluginExtension::class.java).toolchain {
@@ -31,4 +51,19 @@ project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // Replace dependencies on DesignCompose with our project. Because of the way we include our
+    // reference apps, we need to only do so the gradle project being run actually includes
+    // DesiggnCompose
+    if (findProject(":designcompose") != null) {
+        configurations.all {
+            resolutionStrategy.dependencySubstitution {
+                substitute(module("com.android.designcompose:designcompose"))
+                    .using(project(":designcompose"))
+                substitute(module("com.android.designcompose:codegen")).using(project(":codegen"))
+            }
+        }
+    }
 }
+
+tasks.withType<KspTask>() { group = "DesignCompose Developer" }

@@ -28,13 +28,11 @@ fi
 
 "$GOPATH"/addlicense -c "Google LLC" -l apache "$GIT_ROOT"
 
-( cd "$GIT_ROOT/plugins" || exit; ./gradlew ktfmtFormat)
-
 ( cd "$GIT_ROOT" || exit
     ./gradlew ktfmtFormatBuildScripts
     ./gradlew ktfmtFormat
     cargo fmt
 )
 
-( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit; ./gradlew ktfmtFormat)
+( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit; ./gradlew -P designComposeAAOSUnbundledUseSource=false ktfmtFormat)
 

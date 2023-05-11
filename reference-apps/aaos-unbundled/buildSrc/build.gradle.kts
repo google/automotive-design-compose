@@ -30,7 +30,9 @@ val designComposeRepoBuild =
         commandLine = listOf("./gradlew", "publishAllPublicationsToLocalDirRepository")
     }
 
-if (hasProperty("designComposeAAOSUnbundledUseSource")) {
+val designComposeAAOSUnbundledUseSource: String? by project
+
+if (designComposeAAOSUnbundledUseSource.toBoolean()) {
     if (!hasProperty("DesignComposeMavenRepo"))
         throw GradleException("Can't build DesignCompose SDK: DesignComposeMavenRepo must be set")
     tasks.named("build") { dependsOn(designComposeRepoBuild) }

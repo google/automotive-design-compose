@@ -26,9 +26,4 @@ buildscript {
     }
 }
 
-plugins { alias(libs.plugins.ktfmt) }
-
-subprojects {
-    apply { plugin(rootProject.libs.plugins.ktfmt.get().pluginId) }
-    configure<com.ncorti.ktfmt.gradle.KtfmtExtension> { kotlinLangStyle() }
-}
+plugins { id("designcompose.conventions.base") }

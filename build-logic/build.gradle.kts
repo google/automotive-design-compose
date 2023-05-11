@@ -13,8 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import com.ncorti.ktfmt.gradle.tasks.KtfmtBaseTask
 
-plugins { `kotlin-dsl` }
+plugins {
+    `kotlin-dsl`
+    alias(libs.plugins.ktfmt)
+}
+
+ktfmt { kotlinLangStyle() }
+
+tasks.withType<KtfmtBaseTask> {
+    // For some reason Ktfmt has problems filtering out generated kotlin files from the build dir
+    exclude { it.file.path.contains("/build/") }
+}
 
 repositories {
     google()
@@ -26,6 +37,9 @@ dependencies {
     implementation(libs.android.gradlePlugin)
     implementation(libs.dokka.gradlePlugin)
     implementation(libs.kotlin.gradlePlugin)
+    implementation(libs.ktfmt.gradlePlugin)
+    implementation(libs.ksp.gradlePlugin)
+    implementation(libs.android.gms.strictVersionMatcher)
     // Allows the precompiled scripts to access our local directory, specifically to
     // Access the version catalog
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))

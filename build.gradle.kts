@@ -15,7 +15,6 @@
  */
 
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import com.google.devtools.ksp.gradle.KspTask
 import com.ncorti.ktfmt.gradle.tasks.KtfmtFormatTask
 
 buildscript {
@@ -36,7 +35,7 @@ buildscript {
 
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    alias(libs.plugins.ktfmt)
+    id("designcompose.conventions.base")
     alias(libs.plugins.versions)
     alias(libs.plugins.versionCatalogUpdate)
     alias(libs.plugins.ksp) apply false
@@ -52,43 +51,19 @@ versionCatalogUpdate {
 }
 
 // Function to determine whether a release is final or not.
-fun String.isNonStable(): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { toUpperCase().contains(it) }
-    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-    val isStable = stableKeyword || regex.matches(this)
-    return isStable.not()
-}
+fun isNonStable(version: String) = "^[0-9,.v-]+(-r)?$".toRegex().matches(version).not()
 
 // https://github.com/ben-manes/gradle-versions-plugin
 // Prevent the versions plugin from updating versions to non-stable releases,
 // unless the dependency is already using a non-stable release
-tasks.withType<DependencyUpdatesTask> {
-    rejectVersionIf { candidate.version.isNonStable() && !currentVersion.isNonStable() }
-}
+tasks.withType<DependencyUpdatesTask> { rejectVersionIf { isNonStable(candidate.version) } }
 
-ktfmt { kotlinLangStyle() }
+tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtCheck") }) }
 
-val fmtBuildScriptsTask =
-    tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
-        source = project.fileTree(rootDir)
-        include("**/*.gradle.kts")
-    }
+tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
 
-subprojects {
-    apply {
-        plugin(rootProject.libs.plugins.ktfmt.get().pluginId)
-        plugin(rootProject.libs.plugins.strictVersionMatcher.get().pluginId)
-    }
-    configure<com.ncorti.ktfmt.gradle.KtfmtExtension> { kotlinLangStyle() }
-
-    // Replace dependencies on DesignCompose with our project
-    configurations.all {
-        resolutionStrategy.dependencySubstitution {
-            substitute(module("com.android.designcompose:designcompose"))
-                .using(project(":designcompose"))
-            substitute(module("com.android.designcompose:codegen")).using(project(":codegen"))
-        }
-    }
-
-    tasks.withType<KspTask>() { group = "DesignCompose Developer" }
+tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
+    source = project.fileTree(project.rootDir)
+    exclude { it.path.contains("/build/") }
+    include("**/*.gradle.kts")
 }

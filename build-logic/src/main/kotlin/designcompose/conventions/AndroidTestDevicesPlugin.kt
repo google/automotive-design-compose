@@ -51,28 +51,21 @@ class ATDPlugin : Plugin<Project> {
         // Configure an ATD:
         // https://developer.android.com/studio/test/gradle-managed-devices
         devices.apply {
-            maybeCreate<ManagedVirtualDevice>(
-                "tabletAtdApi30"
-            )
-                .apply {
-                    device = "Nexus 10"
-                    // ATDs currently support only API level 30.
-                    apiLevel = 30
-                    systemImageSource = "aosp-atd"
-                }
+            maybeCreate<ManagedVirtualDevice>("tabletAtdApi30").apply {
+                device = "Nexus 10"
+                // ATDs currently support only API level 30.
+                apiLevel = 30
+                systemImageSource = "aosp-atd"
+            }
         }
         tabletAllApisGroup.targetDevices.add(devices["tabletAtdApi30"])
         arrayOf(31, 32, 33).forEach { thisApiLevel ->
             val device =
-                devices
-                    .maybeCreate<ManagedVirtualDevice>(
-                        "tabletApi${thisApiLevel}"
-                    )
-                    .apply {
-                        device = "Nexus 10"
-                        apiLevel = thisApiLevel
-                        systemImageSource = "google"
-                    }
+                devices.maybeCreate<ManagedVirtualDevice>("tabletApi${thisApiLevel}").apply {
+                    device = "Nexus 10"
+                    apiLevel = thisApiLevel
+                    systemImageSource = "google"
+                }
             tabletAllApisGroup.targetDevices.add(device)
         }
     }

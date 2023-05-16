@@ -102,8 +102,6 @@ class CargoPlugin : Plugin<Project> {
         ndkDir: Provider<Directory>
     ) {
         val cargoTask =
-
-            // Register the task
             project.tasks.register(
                 "cargoBuild${abi.capitalized()}${variant.name.capitalized()}",
                 CargoBuildTask::class.java,

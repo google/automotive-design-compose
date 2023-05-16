@@ -52,6 +52,8 @@ abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExe
 
     @get:OutputDirectory abstract val generatedCodeDir: DirectoryProperty
 
+    @get:Internal abstract val cargoTargetDir: DirectoryProperty
+
     init {
         group = "DesignCompose Developer"
     }
@@ -61,7 +63,7 @@ abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExe
         generatedCodeDir.get().asFileTree.forEach { it.delete() }
         executor.exec {
             executable = "cargo"
-            environment("CARGO_TARGET_DIR", "${project.buildDir}/serdeGenCargoTarget")
+            environment("CARGO_TARGET_DIR", cargoTargetDir.get().toString())
             workingDir(rustSrcs.asPath)
             args(
                 listOf(
@@ -86,6 +88,7 @@ val serdeGenTask =
             layout.projectDirectory.files("../crates/figma_import").filterNot { name == "target" }
         )
         generatedCodeDir.set(layout.buildDirectory.dir("generated/serdegen/java"))
+        cargoTargetDir.set(layout.buildDirectory.dir("serdeGenCargoTarget"))
     }
 
 // Connect the outputs to the java source set, so it'll automatically be compiled

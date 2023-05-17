@@ -40,6 +40,7 @@ pub struct SerializedFigmaDoc {
     pub name: String,
     pub component_sets: HashMap<String, String>,
     pub version: String,
+    pub id: String,
 }
 
 // This is the struct we send over to the client. It contains the serialized document

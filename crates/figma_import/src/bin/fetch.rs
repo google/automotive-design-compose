@@ -76,6 +76,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
         last_modified: doc.last_modified().clone(),
         name: doc.get_name(),
         version: doc.get_version(),
+        id: doc.get_document_id(),
     };
     // We don't bother with serialization headers or image sessions with
     // this tool.

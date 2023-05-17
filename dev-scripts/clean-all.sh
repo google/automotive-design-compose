@@ -19,6 +19,9 @@
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
 ( cd "$GIT_ROOT" || exit; ./gradlew clean; cargo clean)
-( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit; ./gradlew clean)
-( cd "$GIT_ROOT/reference-apps/standalone-projects/validation" || exit; ./gradlew clean)
-( cd "$GIT_ROOT/reference-apps/aaos-unbundled/standalone-projects/mediacompose" || exit; ./gradlew clean)
+( cd "$GIT_ROOT/reference-apps/tutorial" || exit; ./gradlew clean)
+( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit;  ./gradlew  -P designComposeAAOSUnbundledUseSource=false clean)
+
+./gradlew --stop
+find "$GIT_ROOT" -iname build -exec rm -r {} \;
+rm -r "$GIT_ROOT/.gradle"

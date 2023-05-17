@@ -34,9 +34,16 @@ val ktfmtCheckBuildScripts =
     tasks.register<KtfmtCheckTask>("ktfmtCheckBuildScripts") {
         source = project.layout.projectDirectory.asFileTree
         include("*.gradle.kts")
+        doFirst {
+            @Suppress("UnstableApiUsage")
+            if (this.project.gradle.startParameter.isConfigurationCacheRequested) {
+                throw GradleException(
+                    "This task will not run properly with the Configuration Cache. " +
+                        "You must rerun with '--no-configuration-cache'"
+                )
+            }
+        }
     }
-
-tasks.named("ktfmtCheck") { dependsOn(ktfmtCheckBuildScripts) }
 
 project.plugins.withType(JavaBasePlugin::class.java) {
     project.extensions.getByType(JavaPluginExtension::class.java).toolchain {

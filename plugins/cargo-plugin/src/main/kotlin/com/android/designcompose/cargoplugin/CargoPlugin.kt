@@ -102,8 +102,6 @@ class CargoPlugin : Plugin<Project> {
         ndkDir: Provider<Directory>
     ) {
         val cargoTask =
-
-            // Register the task
             project.tasks.register(
                 "cargoBuild${abi.capitalized()}${variant.name.capitalized()}",
                 CargoBuildTask::class.java,
@@ -140,6 +138,9 @@ class CargoPlugin : Plugin<Project> {
                 task.useReleaseProfile.set(variant.buildType != "debug")
                 task.ndkDirectory.set(ndkDir)
                 task.compileApi.set(variant.minSdkVersion.apiLevel)
+                task.cargoTargetDir.set(
+                    project.layout.buildDirectory.map { it.dir("intermediates/cargoTarget") }
+                )
 
                 task.group = "build"
                 // Try to get the cargo build started earlier in the build execution.

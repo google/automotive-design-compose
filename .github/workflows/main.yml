@@ -46,7 +46,7 @@ jobs:
 
       - uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
         with:
-          arguments: ktfmtCheck
+          arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
 
   lint-rust:
     runs-on: ubuntu-latest

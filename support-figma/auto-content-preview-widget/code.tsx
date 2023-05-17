@@ -679,7 +679,7 @@ function ListPreview() {
         let node = selection[0];
         sendOverflowNodeData(node);
       }
-    } if (selectParentMode) {
+    } else if (selectParentMode) {
       setSelectParentMode(false);
 
       let selection = figma.currentPage.selection;

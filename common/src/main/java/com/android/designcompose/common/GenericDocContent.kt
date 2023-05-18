@@ -18,7 +18,7 @@ package com.android.designcompose.common
 
 import com.android.designcompose.serdegen.FigmaDocInfo
 import com.android.designcompose.serdegen.NodeQuery
-import com.android.designcompose.serdegen.SerializedFigmaDoc
+import com.android.designcompose.serdegen.SerializedDesignDoc
 import com.android.designcompose.serdegen.SerializedFigmaDocHeader
 import com.android.designcompose.serdegen.ServerFigmaDoc
 import com.android.designcompose.serdegen.View
@@ -32,7 +32,7 @@ import java.io.InputStream
 class GenericDocContent(
     var docId: String,
     private val header: SerializedFigmaDocHeader,
-    val document: SerializedFigmaDoc,
+    val document: SerializedDesignDoc,
     val variantViewMap: HashMap<String, HashMap<String, View>>,
     val variantPropertyMap: VariantPropertyMap,
     private val imageSessionData: ByteArray,
@@ -95,8 +95,8 @@ fun decodeDiskBaseDoc(doc: InputStream, docId: String, feedback: FeedbackImpl): 
 
     val header = decodeHeader(deserializer, docId, feedback) ?: return null
 
-    // Disk loads are in the format of SerializedFigmaDoc
-    val content = SerializedFigmaDoc.deserialize(deserializer)
+    // Disk loads are in the format of SerializedDesignDoc
+    val content = SerializedDesignDoc.deserialize(deserializer)
     val imageSessionData = decodeImageSession(docBytes, deserializer)
     val variantMap = createVariantViewMap(content.nodes)
     val variantPropertyMap = createVariantPropertyMap(content.nodes)

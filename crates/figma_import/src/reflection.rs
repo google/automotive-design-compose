@@ -164,8 +164,8 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace EncodedImageMap");
     tracer.trace_type::<crate::NodeQuery>(&samples).expect("couldn't trace NodeQuery");
     tracer
-        .trace_type::<crate::SerializedFigmaDocHeader>(&samples)
-        .expect("couldn't trace SerializedFigmaDocHeader");
+        .trace_type::<crate::SerializedDesignDocHeader>(&samples)
+        .expect("couldn't trace SerializedDesignDocHeader");
     tracer
         .trace_type::<crate::SerializedDesignDoc>(&samples)
         .expect("couldn't trace SerializedDesignDoc");

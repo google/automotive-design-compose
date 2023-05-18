@@ -450,12 +450,7 @@ internal fun ContentDrawScope.render(
                 getPaths(shape.path, shape.stroke)
             }
             is ViewShape.VectorRect -> {
-                if (!customProgressBar) {
-                    // Render normally with Figma provided fill/stroke path
-                    getPaths(shape.path, shape.stroke)
-                } else {
-                    computeRoundedRect(frameSize, shape.corner_radius, density)
-                }
+                computeRoundedRect(frameSize, shape.corner_radius, density)
             }
             is ViewShape.Arc -> {
                 if (!customArcAngle) {

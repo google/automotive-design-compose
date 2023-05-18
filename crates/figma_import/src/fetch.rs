@@ -15,7 +15,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Document, ImageContextSession, NodeQuery, SerializedFigmaDoc, SerializedFigmaDocHeader,
+    Document, ImageContextSession, NodeQuery, SerializedDesignDoc, SerializedDesignDocHeader,
     ServerFigmaDoc,
 };
 
@@ -84,7 +84,7 @@ pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate:
             &mut error_list,
         )?;
 
-        let figma_doc = SerializedFigmaDoc {
+        let figma_doc = SerializedDesignDoc {
             nodes,
             component_sets: doc.component_sets().clone(),
             images: doc.encoded_image_map(),
@@ -93,7 +93,7 @@ pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate:
             version: doc.get_version(),
             id: doc.get_document_id(),
         };
-        let mut response = bincode::serialize(&SerializedFigmaDocHeader::current())?;
+        let mut response = bincode::serialize(&SerializedDesignDocHeader::current())?;
         response.append(&mut bincode::serialize(&ServerFigmaDoc {
             figma_doc,
             errors: error_list,

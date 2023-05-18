@@ -91,6 +91,7 @@ pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate:
             last_modified: doc.last_modified().clone(),
             name: doc.get_name(),
             version: doc.get_version(),
+            id: doc.get_document_id(),
         };
         let mut response = bincode::serialize(&SerializedFigmaDocHeader::current())?;
         response.append(&mut bincode::serialize(&ServerFigmaDoc {

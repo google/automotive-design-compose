@@ -33,7 +33,7 @@ impl SerializedFigmaDocHeader {
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SerializedFigmaDoc {
+pub struct SerializedDesignDoc {
     pub last_modified: String,
     pub nodes: HashMap<NodeQuery, toolkit_schema::View>,
     pub images: EncodedImageMap,
@@ -47,7 +47,7 @@ pub struct SerializedFigmaDoc {
 // along with some extra data: document branches, project files, and errors
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ServerFigmaDoc {
-    pub figma_doc: SerializedFigmaDoc,
+    pub figma_doc: SerializedDesignDoc,
     pub branches: Vec<FigmaDocInfo>,
     pub project_files: Vec<FigmaDocInfo>,
     pub errors: Vec<String>,

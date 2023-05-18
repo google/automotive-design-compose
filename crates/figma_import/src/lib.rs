@@ -41,7 +41,7 @@ pub use error::Error;
 pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse};
 pub use figma_schema::Rectangle;
 pub use image_context::{ImageContextSession, ImageKey};
-pub use serialized_document::{SerializedFigmaDoc, SerializedFigmaDocHeader, ServerFigmaDoc};
+pub use serialized_document::{SerializedDesignDoc, SerializedFigmaDocHeader, ServerFigmaDoc};
 pub use toolkit_schema::{View, ViewData}; // ugly hack
                                           // Internal convenience
 pub use color::Color;

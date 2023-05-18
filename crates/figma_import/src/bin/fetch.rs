@@ -14,7 +14,7 @@
 
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use figma_import::{Document, NodeQuery, SerializedFigmaDoc};
+use figma_import::{Document, NodeQuery, SerializedDesignDoc};
 #[derive(Debug)]
 struct ConvertError(String);
 impl From<figma_import::Error> for ConvertError {
@@ -69,7 +69,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
         eprintln!("Warning: {error}");
     }
     // Build the serializable doc structure
-    let serializable_doc = SerializedFigmaDoc {
+    let serializable_doc = SerializedDesignDoc {
         nodes,
         component_sets: doc.component_sets().clone(),
         images: doc.encoded_image_map(),

@@ -167,8 +167,8 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::SerializedFigmaDocHeader>(&samples)
         .expect("couldn't trace SerializedFigmaDocHeader");
     tracer
-        .trace_type::<crate::SerializedFigmaDoc>(&samples)
-        .expect("couldn't trace SerializedFigmaDoc");
+        .trace_type::<crate::SerializedDesignDoc>(&samples)
+        .expect("couldn't trace SerializedDesignDoc");
     tracer.trace_type::<crate::ServerFigmaDoc>(&samples).expect("couldn't trace ServerFigmaDoc");
     tracer.trace_type::<crate::ConvertResponse>(&samples).expect("couldn't trace ConvertResponse");
 

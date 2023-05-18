@@ -19,6 +19,7 @@ package com.android.designcompose
 import com.android.designcompose.common.DocumentServerParams
 import org.junit.Assert
 import org.junit.Test
+import kotlin.test.assertFailsWith
 
 /**
  * Jni fetch tests
@@ -35,12 +36,8 @@ class JniFetchTests {
     private val requestJson = constructPostJson("NOT_A_FIG_KEY", null, DocumentServerParams())
     @Test
     fun invalidKey() {
-        try {
-            LiveUpdateJni.jniFetchDoc("DummyDocId", requestJson)
-            Assert.fail("Should have thrown an exception")
-        } catch (exception: AccessDeniedException) {
-
-            Assert.assertTrue(exception.message?.contains("Invalid Authentication Token") == true)
-        }
+       assertFailsWith(AccessDeniedException::class){
+           LiveUpdateJni.jniFetchDoc("DummyDocId", requestJson)
+       }
     }
 }

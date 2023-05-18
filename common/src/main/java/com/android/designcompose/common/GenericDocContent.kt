@@ -19,7 +19,7 @@ package com.android.designcompose.common
 import com.android.designcompose.serdegen.FigmaDocInfo
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.SerializedDesignDoc
-import com.android.designcompose.serdegen.SerializedFigmaDocHeader
+import com.android.designcompose.serdegen.SerializedDesignDocHeader
 import com.android.designcompose.serdegen.ServerFigmaDoc
 import com.android.designcompose.serdegen.View
 import com.novi.bincode.BincodeDeserializer
@@ -31,7 +31,7 @@ import java.io.InputStream
 
 class GenericDocContent(
     var docId: String,
-    private val header: SerializedFigmaDocHeader,
+    private val header: SerializedDesignDocHeader,
     val document: SerializedDesignDoc,
     val variantViewMap: HashMap<String, HashMap<String, View>>,
     val variantPropertyMap: VariantPropertyMap,
@@ -193,9 +193,9 @@ private fun decodeHeader(
     deserializer: BincodeDeserializer,
     docId: String,
     feedback: FeedbackImpl
-): SerializedFigmaDocHeader? {
+): SerializedDesignDocHeader? {
     // Now attempt to deserialize the doc)
-    val header = SerializedFigmaDocHeader.deserialize(deserializer)
+    val header = SerializedDesignDocHeader.deserialize(deserializer)
     if (header.version != FSAAS_DOC_VERSION) {
         feedback.documentDecodeVersionMismatch(FSAAS_DOC_VERSION, header.version, docId)
         return null

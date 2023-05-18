@@ -18,16 +18,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema, NodeQuery};
 
-static CURRENT_VERSION: u32 = 12;
+static CURRENT_VERSION: u32 = 13;
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SerializedFigmaDocHeader {
+pub struct SerializedDesignDocHeader {
     pub version: u32,
 }
-impl SerializedFigmaDocHeader {
-    pub fn current() -> SerializedFigmaDocHeader {
-        SerializedFigmaDocHeader { version: CURRENT_VERSION }
+impl SerializedDesignDocHeader {
+    pub fn current() -> SerializedDesignDocHeader {
+        SerializedDesignDocHeader { version: CURRENT_VERSION }
     }
 }
 

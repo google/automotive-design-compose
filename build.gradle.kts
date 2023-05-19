@@ -29,7 +29,6 @@ buildscript {
         classpath(libs.android.gradlePlugin)
         classpath(libs.dokka.gradlePlugin)
         classpath(libs.android.gms.strictVersionMatcher)
-        classpath(libs.android.gms.ossLicensesPlugin)
     }
 }
 
@@ -58,12 +57,27 @@ fun isNonStable(version: String) = "^[0-9,.v-]+(-r)?$".toRegex().matches(version
 // unless the dependency is already using a non-stable release
 tasks.withType<DependencyUpdatesTask> { rejectVersionIf { isNonStable(candidate.version) } }
 
+// Format all *.gradle.kts files in the repository. This should catch all buildscripts.
+// This task must be run on it's own, since it modifies the build scripts for everything else and
+// Gradle throws an error.
+tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
+    source = project.layout.projectDirectory.asFileTree
+    exclude { it.path.contains("/build/") }
+    include("**/*.gradle.kts")
+    notCompatibleWithConfigurationCache(
+        "Doesn't seem to read the codestyle set in the ktfmt extension"
+    )
+    doFirst {
+        @Suppress("UnstableApiUsage")
+        if (this.project.gradle.startParameter.isConfigurationCacheRequested) {
+            throw GradleException(
+                "This task will not run properly with the Configuration Cache. " +
+                    "You must rerun with '--no-configuration-cache'"
+            )
+        }
+    }
+}
+
 tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtCheck") }) }
 
 tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
-
-tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
-    source = project.fileTree(project.rootDir)
-    exclude { it.path.contains("/build/") }
-    include("**/*.gradle.kts")
-}

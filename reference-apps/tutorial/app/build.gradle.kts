@@ -73,7 +73,6 @@ dependencies {
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.material)
-    implementation(libs.android.gms.ossLicenses)
 
     testImplementation(libs.junit)
     debugImplementation(libs.androidx.compose.ui.tooling)

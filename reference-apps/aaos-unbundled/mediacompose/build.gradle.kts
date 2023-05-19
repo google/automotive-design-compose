@@ -17,7 +17,6 @@
 plugins {
     kotlin("android")
     id("com.android.application")
-    id("com.google.android.gms.oss-licenses-plugin")
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
 }
@@ -89,7 +88,6 @@ dependencies {
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
-    implementation(libs.android.gms.ossLicenses)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.legacy.support.v4)

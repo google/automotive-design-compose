@@ -29,7 +29,7 @@ fi
 "$GOPATH"/addlicense -c "Google LLC" -l apache "$GIT_ROOT"
 
 ( cd "$GIT_ROOT" || exit
-    ./gradlew ktfmtFormatBuildScripts
+    ./gradlew ktfmtFormatBuildScripts --no-configuration-cache
     ./gradlew ktfmtFormat
     cargo fmt
 )

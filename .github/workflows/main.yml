@@ -21,6 +21,7 @@ on:
   push:
     branches:
       - main
+      - 'stable/**'
   merge_group:
   pull_request:
     branches: 

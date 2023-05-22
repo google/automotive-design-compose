@@ -147,6 +147,7 @@ val EXAMPLES: ArrayList<Pair<String, @Composable () -> Unit>> =
         Pair("Blend Modes", { BlendModeTest() }),
         Pair("Vector Rendering", { VectorRenderingTest() }),
         Pair("Dials Gauges", { DialsGaugesTest() }),
+        Pair("Masks", { MaskTest() })
     )
 
 // TEST Basic Hello World example
@@ -1634,6 +1635,16 @@ fun DialsGaugesTest() {
         Slider(progressIndicator, 0f, 100f)
         Text(progressIndicator.value.toString(), fontSize = 20.sp)
     }
+}
+
+@DesignDoc(id = "mEmdUVEIjvBBbV0kELPy37")
+interface MaskTest {
+    @DesignComponent(node = "#MainFrame") fun Main()
+}
+
+@Composable
+fun MaskTest() {
+    MaskTestDoc.Main()
 }
 
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test

@@ -28,14 +28,18 @@ pub use crate::figma_schema::StrokeCap;
 /// Shape of a view, either a rect or a path of some kind.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ViewShape {
-    Rect,
+    Rect {
+        is_mask: bool,
+    },
     RoundRect {
         corner_radius: [f32; 4],
         corner_smoothing: f32,
+        is_mask: bool,
     },
     Path {
         path: Vec<crate::vector_schema::Path>,
         stroke: Vec<crate::vector_schema::Path>,
+        is_mask: bool,
     },
     Arc {
         path: Vec<crate::vector_schema::Path>,
@@ -45,11 +49,13 @@ pub enum ViewShape {
         sweep_angle_degrees: f32,
         inner_radius: f32,
         corner_radius: f32,
+        is_mask: bool,
     },
     VectorRect {
         path: Vec<crate::vector_schema::Path>,
         stroke: Vec<crate::vector_schema::Path>,
         corner_radius: [f32; 4],
+        is_mask: bool,
     },
 }
 

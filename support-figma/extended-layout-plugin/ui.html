@@ -198,6 +198,7 @@
     textPanel.style.display = 'block';
     errorPanel.style.display = 'none';
     keywordsPanel.style.display = 'none';
+    meters.style.display = 'none';
 
     // Update the selectionAppropriate flag; ensureFormState will enable/disable as appropriate.
     let selectionAppropriate = currentSelection != null && currentSelection.nodeType == 'TEXT';
@@ -399,6 +400,7 @@
       textPanel.style.display = 'none';
       errorPanel.style.display = 'block';
       keywordsPanel.style.display = 'none';
+      meters.style.display = 'none';
 
       // Show suggestion to upload keywords doc if null
       let errorsMissingKeywords = document.getElementById('errorsMissingKeywords');
@@ -473,6 +475,7 @@
     if (msg.msg == "check-keywords") {
       textPanel.style.display = 'none';
       errorPanel.style.display = 'none';
+      meters.style.display = 'none';
       keywordsPanel.style.display = 'block';
 
       let keywordsFilename = document.getElementById('keywordsFilename');

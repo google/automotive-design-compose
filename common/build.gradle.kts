@@ -55,6 +55,8 @@ abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExe
 
     @get:Internal abstract val cargoTargetDir: DirectoryProperty
 
+    @get:Internal abstract val cargoTargetDir: DirectoryProperty
+
     init {
         group = "DesignCompose Developer"
     }

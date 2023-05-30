@@ -1574,7 +1574,7 @@ interface VectorRenderingTest {
 // Test page for vector rendering support
 @Composable
 fun VectorRenderingTest() {
-    VectorRenderingTestDoc.MainFrame()
+    VectorRenderingTestDoc.MainFrame(modifier = Modifier.fillMaxSize())
 }
 
 // TEST dials and gauges

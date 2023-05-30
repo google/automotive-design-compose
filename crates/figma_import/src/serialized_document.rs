@@ -18,35 +18,36 @@ use serde::{Deserialize, Serialize};
 
 use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema, NodeQuery};
 
-static CURRENT_VERSION: u32 = 12;
+static CURRENT_VERSION: u32 = 13;
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SerializedFigmaDocHeader {
+pub struct SerializedDesignDocHeader {
     pub version: u32,
 }
-impl SerializedFigmaDocHeader {
-    pub fn current() -> SerializedFigmaDocHeader {
-        SerializedFigmaDocHeader { version: CURRENT_VERSION }
+impl SerializedDesignDocHeader {
+    pub fn current() -> SerializedDesignDocHeader {
+        SerializedDesignDocHeader { version: CURRENT_VERSION }
     }
 }
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SerializedFigmaDoc {
+pub struct SerializedDesignDoc {
     pub last_modified: String,
     pub nodes: HashMap<NodeQuery, toolkit_schema::View>,
     pub images: EncodedImageMap,
     pub name: String,
     pub component_sets: HashMap<String, String>,
     pub version: String,
+    pub id: String,
 }
 
 // This is the struct we send over to the client. It contains the serialized document
 // along with some extra data: document branches, project files, and errors
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ServerFigmaDoc {
-    pub figma_doc: SerializedFigmaDoc,
+    pub figma_doc: SerializedDesignDoc,
     pub branches: Vec<FigmaDocInfo>,
     pub project_files: Vec<FigmaDocInfo>,
     pub errors: Vec<String>,

@@ -198,8 +198,8 @@ jobs:
         run: |
           zip -r auto-content-preview-widget.zip \
             auto-content-preview-widget/manifest.json \
-            auto-content-preview-widget/ui.html \
-            auto-content-preview-widget/code.js
+            auto-content-preview-widget/dist/ui.html \
+            auto-content-preview-widget/dist/code.js
 
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:

@@ -1,0 +1,233 @@
+
+.button-hover {
+  border-color:#FFFFFF;
+  border-width:1px
+}
+
+.button-hover:hover {
+  border-color:#000000;
+  border-width:1px
+}
+
+.button-overflow {
+  display: flex;
+  background-color: white;
+  border: 1px solid #D7D7D7;
+  align-items: center;
+  padding: 10;
+}
+
+.button-overflow:hover {
+  border-color:#000000;
+}
+
+.button-blue {
+  background-color: #66B5FF;
+}
+
+.label {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 18px;
+}
+
+.link {
+  font-size: 11px;
+  color: rgba(0, 178, 255, 255);
+  text-decoration: underline;
+}
+
+.separator-large {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.separator-medium {
+  margin-left: 20px;
+  margin-right: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.separator-small {
+  margin-left: 50px;
+  margin-right: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px; 
+  color: #D7D7D7;
+  size: 1;
+}
+
+.switch__label {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.grid-cell {
+  width: 22px;
+  height: 26px;
+}
+.grid-cell-bg {
+  background-color: rgba(255, 211, 211)
+}
+.grid-cell-gradient-horizontal {
+  background-image: linear-gradient(to right, #ffd3d3 , white)
+}
+.grid-cell-gradient-vertical {
+  background-image: linear-gradient(rgba(255, 211, 211) , white)
+}
+.grid-square {
+  width: 17;
+  height: 17;
+  margin-left: 2;
+  border: 1px dashed rgb(161, 113, 240);
+  border-radius: 3px;
+}
+.grid-square-bg {
+  background-color: rgb(196, 196, 196);
+}
+.grid-square-gradient-horizontal {
+  background-image: linear-gradient(to right, rgba(196, 196, 196) , white);
+}
+.grid-square-gradient-vertical {
+  background-image: linear-gradient(rgba(196, 196, 196) , white);
+}
+
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.76); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+  margin: auto;
+  padding: 20px;
+  width: 80%;
+}
+
+/* The Close Button */
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* 3x3 Alignment UI background */
+.alignment-table-bg {
+  background-image: url("data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='1' y='1' width='62' height='62' stroke='%23E6E6E6' stroke-width='2'/%3E%3Crect x='11' y='11' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='11' y='31' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='11' y='51' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='31' y='11' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='31' y='31' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='31' y='51' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='51' y='11' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='51' y='31' width='2' height='2' fill='%23C2C2C2'/%3E%3Crect x='51' y='51' width='2' height='2' fill='%23C2C2C2'/%3E%3C/svg%3E");
+}
+/* When not selected, show clear stroke */
+.alignment-svg {
+  stroke: #00000000 !important;
+}
+/* When hovering, show grey stroke */
+.alignment-svg-hover {
+  stroke: #00000050 !important;
+}
+/* When selected, show black stroke */
+.alignment-svg-selected {
+  stroke: #000000FF !important;
+}
+
+/* Alignment tooltip container */
+.alignment-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+/* Alignment tooltip text */
+.alignment-tooltip .alignment-tooltiptext {
+  visibility: hidden;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  font-size: 12;
+  padding: 5px 10px;
+  border-radius: 1px;
+  width: max-content;
+  bottom: 150%;
+  left: 20%;
+  transform:translateX(-20%);
+  position: absolute;
+  z-index: 1;
+}
+
+/* Alignment tooltip arrow */
+.alignment-tooltip .alignment-tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 20%;
+  margin-left: 0px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.alignment-tooltip:hover .alignment-tooltiptext {
+  visibility: visible;
+}
+
+/* Tooltip container */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  font-size: 12;
+  width: 200px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 5px;
+  border-radius: 1px;
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  left: 40%;
+  margin-left: -60px;
+
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}

@@ -50,10 +50,7 @@ abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExe
     @get:InputFiles
     abstract val rustSrcs: ConfigurableFileCollection
 
-    @get:OutputDirectory
-    abstract val generatedCodeDir: DirectoryProperty
-
-    @get:Internal abstract val cargoTargetDir: DirectoryProperty
+    @get:OutputDirectory abstract val generatedCodeDir: DirectoryProperty
 
     @get:Internal abstract val cargoTargetDir: DirectoryProperty
 
@@ -88,7 +85,8 @@ abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExe
 val serdeGenTask =
     tasks.register<SerdeGenTask>("generateSerdegenCode") {
         rustSrcs.from(
-            layout.projectDirectory.files("../crates/figma_import").filterNot { name == "target" })
+            layout.projectDirectory.files("../crates/figma_import").filterNot { name == "target" }
+        )
         generatedCodeDir.set(layout.buildDirectory.dir("generated/serdegen/java"))
         cargoTargetDir.set(layout.buildDirectory.dir("serdeGenCargoTarget"))
     }

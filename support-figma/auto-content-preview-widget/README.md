@@ -1,4 +1,6 @@
-Below are the steps to get your widget running. You can also find instructions at:
+## Building the widget
+
+Below are the steps to build your widget. You can also find instructions at:
 
 https://www.figma.com/widget-docs/setup-guide/
 
@@ -9,9 +11,12 @@ libraries. You can find the download link here:
 
 https://nodejs.org/en/download/
 
-Next, install TypeScript and the latest type definitions by running:
+Or you can install on linux with the command:
+`sudo apt-get install nodejs npm git`
 
-npm install
+Next, run the following to build the widget:
+`npm install`
+`npm run build`
 
 If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
 is already valid Typescript code.
@@ -34,3 +39,12 @@ We recommend writing TypeScript code using Visual Studio code:
    you reopen Visual Studio Code.
 
 That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+
+## Adding the widget to Figma
+To add the development version of the widget, you need to be running the Figma desktop application on a Windows or MacOS machine.
+
+* In a doc, right-click and open the widget menu.
+* Select "Development"
+* Select "Import widget from manifest"
+* Navigate to your `manifest.json` and press OK.
+* Once you've done this once, the widget will be available directly in the "Development" menu option.

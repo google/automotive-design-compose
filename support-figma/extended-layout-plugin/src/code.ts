@@ -788,13 +788,13 @@ else if (figma.command === "move-plugin-data") {
     // Convert into degrees because our rotation functions expect it.
     result.angle = radiansToDegrees(result.angle);
 
-		// calculate delta transform point
-		const px = deltaTransformPoint(t, { x: 0, y: 1 });
-  	const py = deltaTransformPoint(t, { x: 1, y: 0 });
+    // calculate delta transform point
+    const px = deltaTransformPoint(t, { x: 0, y: 1 });
+    const py = deltaTransformPoint(t, { x: 1, y: 0 });
 
-		// calculate skew
-		result.skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
-		result.skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
+    // calculate skew
+    result.skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
+    result.skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
 
     return result
   }

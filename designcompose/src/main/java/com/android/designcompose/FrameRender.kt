@@ -38,9 +38,13 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.minus
 import androidx.core.graphics.plus
+import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
 import com.android.designcompose.serdegen.MeterData
 import com.android.designcompose.serdegen.Overflow
+import com.android.designcompose.serdegen.ProgressBarMeterData
+import com.android.designcompose.serdegen.ProgressMarkerMeterData
+import com.android.designcompose.serdegen.RotationMeterData
 import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.ViewShape
@@ -293,6 +297,131 @@ private fun computeRoundedRect(
     return Pair(listOf(path), listOf<Path>())
 }
 
+private fun ViewStyle.getTransform(density: Float): androidx.compose.ui.graphics.Matrix {
+    return transform.asComposeTransform(density) ?: androidx.compose.ui.graphics.Matrix()
+}
+
+private fun lerp(start: Float, end: Float, percent: Float, density: Float): Float {
+    return start * density + percent / 100F * (end - start) * density
+}
+
+private fun calculateRotationData(
+    rotationData: RotationMeterData,
+    meterValue: Float,
+    style: ViewStyle,
+    frameSize: Size,
+    density: Float
+): androidx.compose.ui.graphics.Matrix? {
+    var overrideTransform: androidx.compose.ui.graphics.Matrix? = null
+    val rotation =
+        (rotationData.start + meterValue / 100f * (rotationData.end - rotationData.start))
+            .coerceDiscrete(rotationData.discrete, rotationData.discreteValue)
+
+    // Calculate offsets from parent when the rotation is 0
+    val offsets =
+        calculateParentOffsets(
+            style,
+            frameSize.width.toDouble(),
+            frameSize.height.toDouble(),
+            density
+        )
+    val xOffsetParent = offsets.first
+    val yOffsetParent = offsets.second
+
+    // Calculate a rotation transform that rotates about the center of the
+    // node and then moves by xOffset and yOffset
+    overrideTransform = androidx.compose.ui.graphics.Matrix()
+    val moveX = frameSize.width / 2
+    val moveY = frameSize.height / 2
+
+    // First translate so we rotate about the center
+    val translateOrigin = androidx.compose.ui.graphics.Matrix()
+    translateOrigin.translate(-moveX, -moveY, 0f)
+    overrideTransform.timesAssign(translateOrigin)
+
+    // Perform the rotation
+    val rotate = androidx.compose.ui.graphics.Matrix()
+    rotate.rotateZ(-rotation)
+    overrideTransform.timesAssign(rotate)
+
+    // Translate back, with an additional offset from the parent
+    val translateBack = androidx.compose.ui.graphics.Matrix()
+    translateBack.translate(
+        moveX - style.left.pointsAsDp().value + xOffsetParent.toFloat(),
+        moveY - style.top.pointsAsDp().value + yOffsetParent.toFloat(),
+        0f
+    )
+    overrideTransform.timesAssign(translateBack)
+    return overrideTransform
+}
+
+private fun calculateProgressBarData(
+    progressBarData: ProgressBarMeterData,
+    meterValue: Float,
+    size: Size,
+    density: Float
+): Size {
+    // Progress bar discrete values are done by percentage
+    val meterValue =
+        meterValue.coerceDiscrete(progressBarData.discrete, progressBarData.discreteValue)
+
+    // Resize the progress bar by interpolating between 0 and endX
+    val barWidth = lerp(0F, progressBarData.endX, meterValue, density)
+    return Size(barWidth, size.height)
+}
+
+private fun calculateProgressMarkerData(
+    markerData: ProgressMarkerMeterData,
+    meterValue: Float,
+    style: ViewStyle,
+    density: Float
+): androidx.compose.ui.graphics.Matrix? {
+    // Progress marker discrete values are done by percentage
+    val meterValue = meterValue.coerceDiscrete(markerData.discrete, markerData.discreteValue)
+
+    // The indicator mode means we don't resize the node; we just move it
+    // along an axis defined by startX, endX, startY, and endY
+    val moveX = lerp(markerData.startX, markerData.endX, meterValue, density)
+    val moveY = lerp(markerData.startY, markerData.endY, meterValue, density)
+    val leftOffset = style.left.pointsAsDp().value
+    val topOffset = style.top.pointsAsDp().value
+    var overrideTransform = style.getTransform(density)
+    // Set the location of this node, subtracting its existing offset from
+    // its parent
+    overrideTransform.setTranslation(moveX - leftOffset, moveY - topOffset)
+
+    return overrideTransform
+}
+
+private fun calculateArcData(
+    arcData: ArcMeterData,
+    meterValue: Float,
+    shape: ViewShape
+): ViewShape {
+    // Max out the arc to just below a full circle to avoid having the
+    // path completely disappear
+    val arcMeterValue = meterValue.coerceAtMost(99.999F)
+    val arcAngleMeter =
+        (arcMeterValue / 100f * (arcData.end - arcData.start)).coerceDiscrete(
+            arcData.discrete,
+            arcData.discreteValue
+        )
+    var returnShape = shape
+    if (shape is ViewShape.Arc) {
+        returnShape =
+            ViewShape.Arc(
+                listOf(),
+                listOf(),
+                shape.stroke_cap,
+                arcData.start,
+                arcAngleMeter,
+                shape.inner_radius,
+                arcData.cornerRadius,
+            )
+    }
+    return returnShape
+}
+
 internal fun ContentDrawScope.render(
     modifier: Modifier,
     style: ViewStyle,
@@ -308,9 +437,8 @@ internal fun ContentDrawScope.render(
     var frameSize = size
     var shape = frameShape
     var customArcAngle = false
-    var customProgressBar = false
-
     var meterValue = customizations.getMeterValue(name)
+
     if (meterValue != null) {
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.meter_data.isPresent) {
@@ -318,92 +446,45 @@ internal fun ContentDrawScope.render(
                 is MeterData.rotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
-                        val rotation =
-                            (rotationData.start +
-                                    meterValue / 100f * (rotationData.end - rotationData.start))
-                                .coerceDiscrete(rotationData.discrete, rotationData.discreteValue)
-
-                        // Calculate offsets from parent when the rotation is 0
-                        val offsets =
-                            calculateParentOffsets(
+                        overrideTransform =
+                            calculateRotationData(
+                                rotationData,
+                                meterValue,
                                 style,
-                                frameSize.width.toDouble(),
-                                frameSize.height.toDouble(),
+                                frameSize,
                                 density
                             )
-                        val xOffsetParent = offsets.first
-                        val yOffsetParent = offsets.second
-
-                        // Calculate a rotation transform that rotates about the center of the
-                        // node and then moves by xOffset and yOffset
-                        overrideTransform = androidx.compose.ui.graphics.Matrix()
-                        val moveX = size.width / 2
-                        val moveY = size.height / 2
-
-                        // First translate so we rotate about the center
-                        val translateOrigin = androidx.compose.ui.graphics.Matrix()
-                        translateOrigin.translate(-moveX, -moveY, 0f)
-                        overrideTransform.timesAssign(translateOrigin)
-
-                        // Perform the rotation
-                        val rotate = androidx.compose.ui.graphics.Matrix()
-                        rotate.rotateZ(-rotation)
-                        overrideTransform.timesAssign(rotate)
-
-                        // Translate back, with an additional offset from the parent
-                        val translateBack = androidx.compose.ui.graphics.Matrix()
-                        translateBack.translate(
-                            moveX - style.left.pointsAsDp().value + xOffsetParent.toFloat(),
-                            moveY - style.top.pointsAsDp().value + yOffsetParent.toFloat(),
-                            0f
-                        )
-                        overrideTransform.timesAssign(translateBack)
                     }
                 }
                 is MeterData.progressBarData -> {
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
-                        val start = progressBarData.start
-                        val end = progressBarData.end
-                        val progress =
-                            (start + meterValue / 100f * (end - start) * density).coerceDiscrete(
-                                progressBarData.discrete,
-                                progressBarData.discreteValue
+                        frameSize =
+                            calculateProgressBarData(
+                                progressBarData,
+                                meterValue,
+                                frameSize,
+                                density
                             )
-                        if (progressBarData.vertical) {
-                            frameSize = Size(size.width, progress)
-                            val topOffset = style.top.pointsAsDp().value
-                            overrideTransform = androidx.compose.ui.graphics.Matrix()
-                            overrideTransform.translate(0F, -topOffset + end - progress)
-                        } else frameSize = Size(progress, size.height)
-                        customProgressBar = true
+                    }
+                }
+                is MeterData.progressMarkerData -> {
+                    val progressMarkerData = meterData.value
+                    if (progressMarkerData.enabled) {
+                        overrideTransform =
+                            calculateProgressMarkerData(
+                                progressMarkerData,
+                                meterValue,
+                                style,
+                                density
+                            )
                     }
                 }
                 is MeterData.arcData -> {
                     val arcData = meterData.value
                     if (arcData.enabled) {
-                        meterValue =
-                            meterValue.coerceDiscrete(arcData.discrete, arcData.discreteValue)
-                        // Max out the arc to just below a full circle to avoid having the
-                        // path completely disappear
-                        val arcMeterValue = meterValue.coerceAtMost(99.999F)
-                        val arcAngleMeter =
-                            (arcMeterValue / 100f * (arcData.end - arcData.start)).coerceDiscrete(
-                                arcData.discrete,
-                                arcData.discreteValue
-                            )
+                        shape = calculateArcData(arcData, meterValue, shape)
                         customArcAngle = true
-                        if (shape is ViewShape.Arc)
-                            shape =
-                                ViewShape.Arc(
-                                    listOf(),
-                                    listOf(),
-                                    shape.stroke_cap,
-                                    arcData.start,
-                                    arcAngleMeter,
-                                    shape.inner_radius,
-                                    arcData.cornerRadius,
-                                )
                     }
                 }
             }

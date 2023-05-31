@@ -457,11 +457,21 @@ pub struct ArcMeterData {
 #[serde(rename_all = "camelCase")]
 pub struct ProgressBarMeterData {
     pub enabled: bool,
-    pub start: f32,
-    pub end: f32,
     pub discrete: bool,
     pub discrete_value: f32,
-    pub vertical: bool,
+    pub end_x: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressMarkerMeterData {
+    pub enabled: bool,
+    pub discrete: bool,
+    pub discrete_value: f32,
+    pub start_x: f32,
+    pub start_y: f32,
+    pub end_x: f32,
+    pub end_y: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -470,6 +480,7 @@ pub enum MeterData {
     ArcData(ArcMeterData),
     RotationData(RotationMeterData),
     ProgressBarData(ProgressBarMeterData),
+    ProgressMarkerData(ProgressMarkerMeterData),
 }
 
 /// ToolkitStyle contains all of the styleable parameters accepted by the Rect and Text components.

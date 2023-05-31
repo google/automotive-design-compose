@@ -2,8 +2,8 @@
   "name": "Automotive Design for Compose",
   "id": "1228101499915033562",
   "api": "1.0.0",
-  "main": "code.js",
-  "ui": "ui.html",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
   "editorType": ["figma"],
   "menu": [
     { "name": "Live text format", "command": "extended-layout-text" },

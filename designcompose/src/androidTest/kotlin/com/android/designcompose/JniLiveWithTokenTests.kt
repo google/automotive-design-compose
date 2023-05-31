@@ -16,28 +16,42 @@
 
 package com.android.designcompose
 
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.common.DocumentServerParams
-import org.junit.Assert
-import org.junit.Test
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import org.junit.Test
 
+val dummyFigmaKeyJson = constructPostJson("NOT_A_FIG_KEY", null, DocumentServerParams())
+
+const val smallDocID = "pxVlixodJqZL95zo2RzTHl" // The HelloWorld Doc
+const val largeDocID = "7rvM6aVWe0jZCm7jhO9ITx" // The MediaCompose Doc
 /**
  * Jni fetch tests
  *
  * These tests use the JNI Library and will reach out to Figma.com itself.
  */
-class JniFetchTests {
+class JniLiveFetchTests {
+
+    private val actualFigmaToken: String? =
+        InstrumentationRegistry.getArguments().getString("FIGMA_ACCESS_TOKEN")
 
     /**
      * Invalid key test
      *
      * Tests that a fetch request using an invalid Figma API Key returns the proper failure
      */
-    private val requestJson = constructPostJson("NOT_A_FIG_KEY", null, DocumentServerParams())
     @Test
     fun invalidKey() {
-       assertFailsWith(AccessDeniedException::class){
-           LiveUpdateJni.jniFetchDoc("DummyDocId", requestJson)
-       }
+        assertFailsWith(AccessDeniedException::class) {
+            LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaKeyJson)
+        }
+    }
+
+    @Test
+    fun fetchSmallDoc() {
+        assertNotNull(actualFigmaToken, "Cannot run this test without Figma Access Token")
+        LiveUpdateJni.jniFetchDoc(actualFigmaToken, smallDocID)
     }
 }
+

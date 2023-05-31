@@ -1,0 +1,6 @@
+//[common](../../../index.md)/[com.android.designcompose.common](../index.md)/[GenericDocContent](index.md)/[GenericDocContent](-generic-doc-content.md)
+
+# GenericDocContent
+
+[jvm]\
+constructor(docId: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), header: SerializedDesignDocHeader, document: SerializedDesignDoc, variantViewMap: [HashMap](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), [HashMap](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), View&gt;&gt;, variantPropertyMap: [VariantPropertyMap](../-variant-property-map/index.md), imageSessionData: [ByteArray](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html), imageSession: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, branches: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;FigmaDocInfo&gt;? = null, project_files: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;FigmaDocInfo&gt;? = null)

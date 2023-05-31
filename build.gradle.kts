@@ -82,4 +82,4 @@ tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfm
 
 tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
 
-tasks.dokkaHtmlMultiModule { outputDirectory.set(projectDir.resolve("docs/html")) }
+tasks.dokkaGfmMultiModule { outputDirectory.set(projectDir.resolve("docs/dokka")) }

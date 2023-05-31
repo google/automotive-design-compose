@@ -20,7 +20,7 @@ pub enum Error {
     #[error("IO Error")]
     IoError(#[from] std::io::Error),
     #[error("HTTP Error")]
-    HttpError(#[from] ureq::Error),
+    NetworkError(#[from] ureq::Error),
     #[error("Image Error")]
     ImageError(#[from] image::ImageError),
     #[error("Json Serialization Error")]

@@ -18,40 +18,60 @@ package com.android.designcompose
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.common.DocumentServerParams
+import io.mockk.mockkObject
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import org.junit.Before
 import org.junit.Test
 
-val dummyFigmaKeyJson = constructPostJson("NOT_A_FIG_KEY", null, DocumentServerParams())
-
-const val smallDocID = "pxVlixodJqZL95zo2RzTHl" // The HelloWorld Doc
-const val largeDocID = "7rvM6aVWe0jZCm7jhO9ITx" // The MediaCompose Doc
+const val smallDocID = "pxVlixodJqZL95zo2RzTHl" // HelloWorld Doc
+const val largeDocID = "RfGl9SWnBEvdg8T1Ex6ZAR" // Battleship Doc
 /**
  * Jni fetch tests
  *
  * These tests use the JNI Library and will reach out to Figma.com itself.
  */
-class JniLiveFetchTests {
+class JniLiveWithTokenTests {
 
     private val actualFigmaToken: String? =
         InstrumentationRegistry.getArguments().getString("FIGMA_ACCESS_TOKEN")
+    private lateinit var firstFetchJson: String
 
-    /**
-     * Invalid key test
-     *
-     * Tests that a fetch request using an invalid Figma API Key returns the proper failure
-     */
+    @Before
+    fun setup() {
+        assertNotNull(actualFigmaToken, "Cannot run this test without Figma Access Token")
+        firstFetchJson = constructPostJson(actualFigmaToken, null, DocumentServerParams())
+
+        mockkObject(Feedback)
+    }
     @Test
-    fun invalidKey() {
-        assertFailsWith(AccessDeniedException::class) {
-            LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaKeyJson)
+    fun fetchSmallDoc() {
+        with(LiveUpdateJni.fetchDocBytes(smallDocID, firstFetchJson)) {
+            assertNotNull(this)
+            val decodedDoc = decodeServerDoc(this, null, smallDocID, null, Feedback)
+            assertNotNull(decodedDoc)
+            assertEquals(decodedDoc.c.docId, smallDocID)
+        }
+    }
+    @Test
+    fun fetchLargeDoc() {
+        with(LiveUpdateJni.fetchDocBytes(largeDocID, firstFetchJson)) {
+            assertNotNull(this)
+            val decodedDoc = decodeServerDoc(this, null, largeDocID, null, Feedback)
+            assertNotNull(decodedDoc)
+            assertEquals(decodedDoc.c.docId, largeDocID)
         }
     }
 
     @Test
-    fun fetchSmallDoc() {
-        assertNotNull(actualFigmaToken, "Cannot run this test without Figma Access Token")
-        LiveUpdateJni.jniFetchDoc(actualFigmaToken, smallDocID)
+    fun invalidDocId() {
+        with(
+            assertFailsWith<DocumentNotFoundException> {
+                LiveUpdateJni.jniFetchDoc("InvalidDocID", firstFetchJson)
+            }
+        ) {
+            assertEquals(docID, "InvalidDocID")
+        }
     }
 }
-

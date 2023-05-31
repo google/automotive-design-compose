@@ -17,5 +17,3 @@ extern crate log;
 mod jni;
 
 mod error_map;
-#[cfg(debug_assertions)]
-mod test_jni;

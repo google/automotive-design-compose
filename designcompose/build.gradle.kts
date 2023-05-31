@@ -34,6 +34,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         consumerProguardFiles("consumer-proguard-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] = System.getenv("FIGMA_ACCESS_TOKEN")
     }
 
     buildFeatures { compose = true }
@@ -54,10 +55,10 @@ android {
 
 cargo {
     crateDir.set(File(rootProject.relativePath("../crates/live_update")))
-    abi.add("x86") // Older Emulated devices, including the ATD Android Test device
+//    abi.add("x86") // Older Emulated devices, including the ATD Android Test device
     abi.add("x86_64") // Most Emulated Android Devices
-    abi.add("armeabi-v7a")
-    abi.add("arm64-v8a")
+//    abi.add("armeabi-v7a")
+//    abi.add("arm64-v8a")
 }
 
 dependencies {

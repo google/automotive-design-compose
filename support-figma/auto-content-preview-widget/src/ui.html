@@ -1,0 +1,1310 @@
+<!--
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css"/>
+</head>
+
+<svg style="display: none">
+  <defs>
+    <symbol id="sectionExpanded" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4.66667 6L0.0478635 -8.70043e-07L9.28547 -6.24663e-08L4.66667 6Z" fill="#BEBEBE"/>
+    </symbol>
+  </defs>
+</svg>
+
+<svg style="display: none">
+  <defs>
+    <symbol id="sectionCollapsed" width="7" height="10" viewBox="0 0 7 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.33325 5.00001L0.333252 9.61881L0.333252 0.381203L6.33325 5.00001Z" fill="#BEBEBE"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ADD PARENT SECTION -->
+
+<div id="parentFrameSection" style="margin-left: 20; margin-right: 10; margin-top: 10; display: none">
+  <span class="label" style="justify-content: center; font-size: 14px; font-weight: bold; color: black">Move the widget into a frame</span>
+  <img style="margin-top: 20; margin-left: 10" src="images/parent-frame.png">
+  <span class="label" style="margin-top: 30">
+    Drag the widget into a frame or select the button below to place it. Resize the parent frame to resize the widget, then click the refresh size icon (on the widget) to update.
+  </span>
+  <input type="button" style="margin-top: 30; margin-left: 90; display: flex; justify-content: center; color:rgba(0, 0, 0, 0.8); font-size: 12; color: white; width:180" class="button button-blue button-hover" value="Select frame" onClick="onClickSetParentFrame()">
+</div>
+
+<!-- NO KEYWORDS SOURCES FOUND -->
+
+<div id="noKeywordSourceSection" style="text-align: center; margin-top: 50; margin-left: 20; margin-right: 20; display: none">
+  <span class="header">No keyword source found</span>
+  <br><br>
+  <span style="font-size: 12; color: rgba(0, 0, 0, 0.6);">Auto content preview needs a .json file with the latest keywords to run. Reach out to the DesignCompose developer at your company if you need help locating this file.</span>
+  <br><br><br>
+  <input id="jsonInputFile" type="button" style="display: inline; justify-content: center; color:rgba(0, 0, 0, 0.8); font-size: 12; width:180" class="button button-hover" value="Upload keyword file" onClick="onClickUploadKeywordsFile()">  
+</div>
+
+<div id="hasKeywordSection">
+    
+  <!-- AUTO CONTENT FRAME SECTION -->
+
+  <script>
+    function autoContentFrameCollapsedClicked() {
+      document.getElementById('autoContentFrameCollapsed').style.display = 'none';
+      document.getElementById('autoContentFrameExpanded').style.display = 'flex';
+      document.getElementById('autoContentFrame').style.display = 'block';
+    }
+    function autoContentFrameExpandedClicked() {
+      document.getElementById('autoContentFrameCollapsed').style.display = 'flex';
+      document.getElementById('autoContentFrameExpanded').style.display = 'none';
+      document.getElementById('autoContentFrame').style.display = 'none';
+    }
+  </script>
+
+  <div id="autoContentSection">
+    <div id="autoContentFrameCollapsed" style="margin-left: 10; display: none; align-items: center">
+      <svg width="10" height="10" onClick="autoContentFrameCollapsedClicked()"><use href="#sectionCollapsed"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Auto content frame</span>
+    </div>
+    <div id="autoContentFrameExpanded" style="margin-left: 10; display: flex; align-items: center">
+      <svg width="10" height="6" onClick="autoContentFrameExpandedClicked()"><use href="#sectionExpanded"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Auto content frame</span>
+    </div>
+    <div id="autoContentFrame" style="display: block; margin-left: 20; margin-top: 16">        
+      <span class="label">This defines how content will be displayed in the live view. Resize the parent frame to resize the widget, then click the refresh size icon (on the widget) to update.</span>
+      <table style="margin-top: 10; margin-left: 6">
+        <tr>
+          <td rowspan="2">
+            <img src="images/auto-content-icon.svg">
+          </td>
+          <td><div style="height: 18"><span class="label" style="margin-left: 10">Auto content frame:</span></div></td>
+        </tr>
+        <tr>
+          <td>
+            <select id="contentNodeName" style="margin-left: 4; width: 200;" class="select-menu__button">
+              <option value="">--Select an option--
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="2">
+            <img src="images/preview-content-icon.svg">            
+          </td>
+          <td><div style="height: 18"><span class="label" style="margin-left: 10">Preview content in frame:</span></div></td>
+        </tr>
+        <tr>
+          <td>
+            <select id="previewPage" style="margin-left: 4px; width: 200;" class="select-menu__button"></select>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <hr class="separator-large" color="#D7D7D7" size="1">
+  </div>
+
+  <!-- FORMATTING SECTION -->
+
+  <script>
+    function formattingContentCollapsedClicked() {
+      document.getElementById('formattingContentCollapsed').style.display = 'none';
+      document.getElementById('formattingContentExpanded').style.display = 'flex';
+      document.getElementById('formattingContent').style.display = 'block';
+    }
+    function formattingContentExpandedClicked() {
+      document.getElementById('formattingContentCollapsed').style.display = 'flex';
+      document.getElementById('formattingContentExpanded').style.display = 'none';
+      document.getElementById('formattingContent').style.display = 'none';
+    }
+  </script>
+
+  <div id="formattingSection">
+    <div id="formattingContentCollapsed" style="margin-left: 10; display: none; align-items: center">
+      <svg width="10" height="10" onClick="formattingContentCollapsedClicked()"><use href="#sectionCollapsed"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Formatting</span>
+    </div>
+    <div id="formattingContentExpanded" style="margin-left: 10; display: flex; align-items: center">
+      <svg width="10" height="6" onClick="formattingContentExpandedClicked()"><use href="#sectionExpanded"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Formatting</span>
+    </div>
+    <div id="formattingContent" style="margin-left: 10">  
+      <div id="gridSection">
+        <div style="margin-left: 16px; display: flex; justify-content:left; align-items: center">
+          <img id="iconFormatHorizontal" src="images/format-horizontal-icon.svg">
+          <img id="iconFormatVertical" src="images/format-vertical-icon.svg">
+          <img id="iconFormatColumnsStretch" src="images/format-columns-stretch-icon.svg">
+          <img id="iconFormatColumnsAuto" src="images/format-columns-auto-icon.svg">
+          <img id="iconFormatRowsStretch" src="images/format-rows-stretch-icon.svg">
+          <img id="iconFormatRowsAuto" src="images/format-rows-auto-icon.svg">
+          <select id="gridColumnsOrRows" style="margin-left:8px; width:150" class="select-menu__button">
+            <optgroup label="Basic">
+              <option value="horizontal" class="select-menu__label">Align horizontally</option>
+              <option value="vertical" class="select-menu__label">Align vertically</option>
+            </optgroup>
+            <optgroup label = "Grid Columns">
+              <option value="fixedColumns" class="select-menu__label">Stretch columns</option>
+              <option value="autoColumns" class="select-menu__label">Auto columns</option>
+            </optgroup>
+            <optgroup label="Grid Rows">
+              <option value="fixedRows" class="select-menu__label">Stretch rows</option>
+              <option value="autoRows" class="select-menu__label">Auto rows</option>
+            </optgroup>
+          </select>
+          <select id="basicSizePolicy" style="margin-left:40; width:120" class="select-menu__button">
+            <option value="hug" class="select-menu__label">Hug contents</option>
+            <option value="fixed" class="select-menu__label">Fixed</option>
+          </select>
+          <span id="gridColumnsRowsLabel" class="label" style="width: 80; height: 15; text-align: right">Columns</span>
+          <input id="gridColumnsRows" type="input" style="margin-right: 10px; width: 40; font-size: 14; font-weight: bold;" class="input__field" value="1"> 
+          <span id="adaptiveMinSizeLabel" class="label" style="width: 120; height: 15; text-align: right">Min Column Width</span>
+          <input id="adaptiveMinSize" type="input" style="margin-right: 10px; width: 40; font-size: 14; font-weight: bold;" class="input__field" value="50"> 
+        </div>
+        <span id="gridLayoutDescription" class="label" style="margin-left: 12">Width of columns expands with parent frame</span>
+        <hr class="separator-medium" color="#D7D7D7" size="1">
+        <div class="button" style="margin-left: 0px;">
+          <input id="layoutButton" type="button" style="color: #000000; background-color:#E5E5E5;" class="button button-hover" value="Layout" onClick="onClickLayoutButton()">
+          <input id="spacingButton" type="button" style="color: #8A8A8A; background-color: #FFFFFF; color:rgba(0, 0, 0, 0.8); margin-left: 20px" class="button button-hover" value="Spacing" onClick="onClickSpacingButton()">
+        </div>
+        <hr class="separator-medium" color="#D7D7D7" size="1">
+
+        <!-- The "Layout" tab for grid layout -->
+        <div id="gridLayoutSection" style="display: block">  
+          <table id="gridDiagram" style="margin-left: 22px; margin-top: 10px; margin-bottom: 10px; border-spacing: 0px; border: dashed 1px #000000; border-radius: 5px;">
+          </table>
+          <hr class="separator-medium" color="#D7D7D7" size="1" style="margin-top: 20; margin-bottom: 2">
+          <table id="gridSpanTable" style="display: block; margin-left: 20px; border-collapse: collapse" width="340">
+            <tr>
+              <td width="90%"><span class="label" style="padding: 0">Element</span></td>
+              <td colspan="2"><span class="label" id="gridTableHeaderText">Column span</span></td> 
+            </tr>
+          </table>
+          <div id="gridMissingKeywords" style="display: none; margin-left: 20px;">
+            <img src="images/thinking-face.png">
+            <span style="font-size: 12">Hmm... content data not found.<br>This usually means that either this frame has not been configured for live data, or the keyword document is missing or out of data. Run the "Check keyword definitions" plugin to upload a keyword document.</span>
+          </div>
+        </div>
+
+        <!-- The "Layout" tab for auto layout -->
+        <div id="autoLayoutSection" style="display: flex">
+          <!-- The alignment table that mimics Figma's 3x3 alignment grid UI for vertical alignment -->
+          <table id="autoLayoutAlignmentTableVertical" style="margin-left: 20; width: 64; height: 64;" class="alignment-table-bg">
+            <tr>
+              <td>
+                <div id="alignmentTopLeft" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentTopLeftPathH" class="alignment-svg" d="M8 0L8 16M2 0V7M14 0L14 10" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentTopLeftPathV" class="alignment-svg" d="M0 8L16 8M0 14L7 14M0 2L10 2" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Top left alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentTopCenter" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentTopCenterPathH" class="alignment-svg" d="M8 0L8 16M2 0V7M14 0L14 10" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentTopCenterPathV" class="alignment-svg" d="M16 8L0 8M12 2H5M13 14L3 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Top Center alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentTopRight" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentTopRightPathH" class="alignment-svg" d="M8 0L8 16M2 0V7M14 0L14 10" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentTopRightPathV" class="alignment-svg" d="M16 8L0 8M16 2L9 2M16 14L6 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Top right alignment</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div id="alignmentLeft" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentLeftPathH" class="alignment-svg" d="M8 16L8 0M14 12V5M2 13L2 3" fill="0000FFFF" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentLeftPathV" class="alignment-svg" d="M0 8L16 8M0 14L7 14M0 2L10 2" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Left alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentCenter" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentCenterPathH" class="alignment-svg" d="M8 16L8 0M14 12V5M2 13L2 3" fill="0000FFFF" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentCenterPathV" class="alignment-svg" d="M16 8L0 8M12 2H5M13 14L3 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Center alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentRight" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentRightPathH" class="alignment-svg" d="M8 16L8 0M14 12V5M2 13L2 3" fill="0000FFFF" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentRightPathV" class="alignment-svg" d="M16 8L0 8M16 2L9 2M16 14L6 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Right alignment</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div id="alignmentBottomLeft" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentBottomLeftPathH" class="alignment-svg" d="M8 16L8 0M14 16V9M2 16L2 6" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentBottomLeftPathV" class="alignment-svg" d="M0 8L16 8M0 14L7 14M0 2L10 2" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Bottom left alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentBottomCenter" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentBottomCenterPathH" class="alignment-svg" d="M8 16L8 0M14 16V9M2 16L2 6" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentBottomCenterPathV" class="alignment-svg" d="M16 8L0 8M12 2H5M13 14L3 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Bottom center alignment</span>
+                </div>
+              </td>
+              <td>
+                <div id="alignmentBottomRight" class="alignment-tooltip" onmouseover="onHoverAlignment(this);" onmouseleave="onLeaveAlignment(this);" onclick="onAlignmentClick(this);">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path id="alignmentBottomRightPathH" class="alignment-svg" d="M8 16L8 0M14 16V9M2 16L2 6" stroke="#00000000" stroke-width="4"/>
+                    <path id="alignmentBottomRightPathV" class="alignment-svg" d="M16 8L0 8M16 2L9 2M16 14L6 14" stroke="#00000000" stroke-width="4"/>
+                  </svg>
+                  <span class="alignment-tooltiptext">Bottom right alignment</span>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- The "Spacing" tab for grid layout -->
+        <div id="gridSpacingSection" style="display: none;">
+          <div id="edgeToEdgeSpacingSection" style="margin-left: 12">
+            <div class="switch">
+              <input id="autoSpacing" type="checkbox" class="switch__toggle">
+              <label for="autoSpacing" class="switch__label">Enable edge-to-edge spacing</label>
+            </div>
+            <span class="label" style="padding-left: 50; margin-top: 2; margin-bottom: 20">Columns or rows will space out evenly. Note that this may not work when used with items of different sizes that have the same span.</span>
+            <hr class="separator-medium" color="#D7D7D7" size="1">
+          </div>
+          <div style="margin-left: 24; margin-bottom: 10; width: 350; display: flex;">
+            <div style="width: 100; display: flex; justify-content:left; align-items:center">
+              <img src="images/spacing-margins-icon.svg">
+              <input id="gridMarginsAll" type="input" style="width: 40; font-size: 14; font-weight: bold; align-self: flex-start;" class="input__field" value="0">
+              <svg id="gridMarginsExpandButton" onClick="onClickGridMarginsExpand()" width="9" height="15" viewBox="0 0 9 6" fill="none">
+                <path d="M0.5 0.5L4.5 4.5L8.5 0.5" stroke="#B2B2B2"/>
+              </svg>
+              <svg id="gridMarginsCollapseButton" style="display: none" onClick="onClickGridMarginsCollapse()" width="16" height="15" viewBox="0 0 16 15" fill="none">
+                <rect x="0.5" width="15" height="15" rx="5" fill="#E5E5E5"/>
+                <path d="M11.5 9.5L7.5 5.5L3.5 9.5" stroke="#7F7F7F"/>
+              </svg>  
+            </div>
+            <div id="horizontalSpacingSection" style="width: 80; display: flex; justify-content:left; align-items:center">
+              <img src="images/spacing-horizontal-between.svg">
+              <input id="gridHorizontalSpacing" type="input" style="width: 40; font-size: 14; font-weight: bold; align-self: flex-start;" class="input__field" value="0">
+            </div>
+            <div id="verticalSpacingSection" style="width: 70; display: flex; justify-content:left; align-items:center">
+              <img src="images/spacing-vertical-between.svg">
+              <input id="gridVerticalSpacing" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+            </div>
+            <div id="spaceBetweenSection" class="switch">
+              <input id="spaceBetween" type="checkbox" class="switch__toggle">
+              <label for="spaceBetween" class="switch__label" style="margin-left: -26">Space between</label>
+            </div>
+          </div>
+          <div id="gridSpacingDiagram" style="margin-left: 24px">
+            <img src="images/spacing-grid-diagram.svg">
+          </div>
+          <div id="horizontalSpacingDiagram" style="margin-left: 24px">
+            <img src="images/spacing-horizontal-diagram.svg">
+          </div>
+          <div id="horizontalSpacingDiagramSpaceBetween" style="margin-left: 24px">
+            <img src="images/spacing-horizontal-between-diagram.svg">
+          </div>
+          <div id="verticalSpacingDiagram" style="margin-left: 24px">
+            <img src="images/spacing-vertical-diagram.svg">
+          </div>
+          <div id="verticalSpacingDiagramSpaceBetween" style="margin-left: 24px">
+            <img src="images/spacing-vertical-between-diagram.svg">
+          </div>
+          <table id="gridMarginsSection" style="margin-left: 20px; width:300px; display: none">
+            <tr>
+              <td width="100">
+                <div style="display: flex; justify-content:left; align-items:center">
+                  <img src="images/spacing-grid-margin-left.svg">
+                  <input id="gridMarginLeft" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; justify-content:left; align-items:center">
+                  <img src="images/spacing-grid-margin-right.svg">
+                  <input id="gridMarginRight" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display: flex; justify-content:left; align-items:center">
+                  <img src="images/spacing-grid-margin-top.svg">
+                  <input id="gridMarginTop" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; justify-content:left; align-items:center">
+                  <img src="images/spacing-grid-margin-bottom.svg">
+                  <input id="gridMarginBottom" type="input" style="width: 40; font-size: 14; font-weight: bold" class="input__field" value="0">
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <hr class="separator-medium" color="#D7D7D7" size="1">
+      </div>
+
+      <div id="scrollingSection" style="margin-left: 12">
+        <div class="tooltip">
+          <div class="switch" >
+            <input id="gridScrolling" type="checkbox" class="switch__toggle">
+            <label for="gridScrolling" class="switch__label">Enable overflow scrolling</label>
+              <span id="gridScrollingTooltip" class="tooltiptext">Scrolling is disabled when the formatting is set to "Hug Contents"</span>
+          </div>
+        </div>
+        <span class="label" style="padding-left: 50; margin-top: -6">Content will scroll vertically for column formatting and horizontally for row formatting</span>
+        <hr class="separator-medium" color="#D7D7D7" size="1">
+      </div>
+
+      <div id="gridLimitContentSection" style="margin-left: 12">
+        <div class="switch" >
+          <input id="limitContent" type="checkbox" class="switch__toggle">
+          <label for="limitContent" class="switch__label">Limit elements</label>
+        </div>
+        <span class="label" style="padding-left: 50px; margin-top: -12">Number of elements before cutting off</span>
+        <div style="margin-left: 43px; margin-top: -4; margin-bottom: 4" id="maxNumItemsSection">
+          <input id="maxNumItems" type="input" style="width: 40;" class="input__field" value="1">
+          <div style="margin-top: -10">
+            <span class="label" style="font-weight: bold; color: #000000">Replace last element with overflow frame</span>
+            <span class="label" style="height:60; margin-top: -10; font-style: italic;">
+              You can add an icon inside this frame, such as an ellipses or menu. Connect this frame to the full overflow view in the Prototype tab.
+            </span>
+            <img style="margin-left:8; margin-top: 8" src="images/limit-overflow-diagram.svg">
+          </div>
+          <div id="overflowNodePreview" style="margin-left: 8; margin-top: 16; margin-bottom: 20; padding: 5; width: 300; height: 30; background-color: #F0F0F0; display: flex; align-items: center">
+            <img id="overflowNodePreviewImg">
+            <span class="label link" id="overflowNodeName" style="font-size: 12;" onclick="onClickOverflowNode()"></span>
+            <img src="images/limit-overflow-clear.svg" onClick="onClickClearOverflowNode()">
+          </div>
+          <div class="button-overflow" style="margin-left: 8; margin-top: 16px; margin-bottom: 20; width: 300; height: 30; display: flex" id="overflowButtonSection" onClick="onClickSelectOverflowNode()">
+            <span id="overflowButton" class="label" style="color:rgba(0, 0, 0, 0.8);">Select element</span>
+            <img src="images/limit-overflow-add.svg">
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr id="formattingSeparator" class="separator-large" color="#D7D7D7" size="1">
+  </div>
+
+  <!-- Modal dialog when selecting overflow node -->
+  <div id="overflowModal" class="modal">
+    <div class="modal-content">
+      <p style="text-align: center; color:#FFFFFF">
+        Select a frame in the layers panel to use as an overflow indicator
+      </p>
+      <div style="text-align: center">
+        <center>
+          <input type="button" class="button button-hover" style="color:rgba(0, 0, 0, 0.8); font-weight: bold;" value="Cancel" onClick="onClickOverflowModalClose()">
+        </center>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOURCE SECTION -->
+
+  <script>
+    function sourceContentCollapseClicked() {
+      document.getElementById('sourceContentCollapsed').style.display = 'none';
+      document.getElementById('sourceContentExpanded').style.display = 'flex';
+      document.getElementById('sourceContent').style.display = 'block';
+    }
+    function sourceContentExpandedClicked() {
+      document.getElementById('sourceContentCollapsed').style.display = 'flex';
+      document.getElementById('sourceContentExpanded').style.display = 'none';
+      document.getElementById('sourceContent').style.display = 'none';
+    }
+  </script>
+
+  <div id="sourceSection">
+    <div id="sourceContentCollapsed" style="margin-left: 10; display: flex; align-items: center">
+      <svg width="10" height="10" onClick="sourceContentCollapseClicked()"><use href="#sectionCollapsed"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Keyword source</span>
+    </div>
+    <div id="sourceContentExpanded" style="margin-left: 10; display: none; align-items: center">
+      <svg width="10" height="6" onClick="sourceContentExpandedClicked()"><use href="#sectionExpanded"/></svg>
+      <span class="label" style="font-size: 12px; font-weight: bold; color: black">Keyword source</span>
+    </div>
+    <div id="sourceContent" style="margin-left: 20; display: none">
+      <div style="display: flex; padding-left:0px; justify-content:left; align-items:center;">
+        <span class="label" style="width: 80">File:</span> 
+        <span class="label" id="keywordsFilename" style="font-weight: bold; color: black">Media.json</span> 
+      </div>
+      <div style="display: flex; padding-left:0px; justify-content:left; align-items:center">
+        <span class="label" style="width: 80">Name:</span> 
+        <span class="label" id="keywordsName" style="font-weight: bold; color: black">Media</span> 
+      </div>
+      <div style="display: flex; padding-left:0px; justify-content:left; align-items:center">
+        <span class="label" style="width: 80">Version:</span> 
+        <span class="label" id="keywordsVersion" style="font-weight: bold; color: black">1.0</span> 
+      </div>
+
+      <div style="margin-left: 70px; margin-top:10px">
+        <input id="jsonInputFile" type="button" style="justify-content: center; color:rgba(0, 0, 0, 0.8); font-size: 12; width:180" class="button button-hover" value="Update keyword file" onClick="onClickUploadKeywordsFile()">
+        <input id="clearInputFile" type="button" style="justify-content: center; color:rgba(0, 0, 0, 0.8); font-size: 12; width:180" class="button button-hover" value="Clear keyword file" onClick="onClickClearKeywordsFile()">
+      </div>
+      <br>
+    </div>
+  </div>
+
+  <!-- Modal dialog to indicate parent selection mode -->
+  <div id="selectParentModal" class="modal">
+    <div class="modal-content">
+      <p style="text-align: center; color:#FFFFFF">Select a frame to place this Auto content preview widget into.</p>
+      <div style="text-align: center">
+        <center>
+          <input type="button" class="button button-hover" style="color:rgba(0, 0, 0, 0.8); font-weight: bold;" value="Cancel" onClick="onClickSelectParentModalClose()">
+        </center>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let contentNodeName = document.getElementById('contentNodeName');
+  let previewPage = document.getElementById('previewPage');
+  let gridSection = document.getElementById('gridSection')
+  let gridLayoutSection = document.getElementById('gridLayoutSection');
+  let gridSpacingSection = document.getElementById('gridSpacingSection');
+  let gridSpanExpandButton = document.getElementById('gridSpanExpandButton');
+  let gridSpanCollapseButton = document.getElementById('gridSpanCollapseButton');
+  let gridScrolling = document.getElementById('gridScrolling');
+  let gridColumnsOrRows = document.getElementById('gridColumnsOrRows');
+  let gridColumnsRows = document.getElementById('gridColumnsRows');
+  let gridColumnsRowsLabel = document.getElementById('gridColumnsRowsLabel');
+  let gridLayoutDescription = document.getElementById('gridLayoutDescription');
+  let adaptiveMinSize = document.getElementById('adaptiveMinSize');
+  let adaptiveMinSizeLabel = document.getElementById('adaptiveMinSizeLabel');
+  let gridMarginsExpandButton = document.getElementById('gridMarginsExpandButton');
+  let gridMarginsCollapseButton = document.getElementById('gridMarginsCollapseButton');
+  let gridMarginsAll = document.getElementById('gridMarginsAll');
+  let gridMarginsSection = document.getElementById('gridMarginsSection');
+  let gridMarginLeft = document.getElementById('gridMarginLeft');
+  let gridMarginRight = document.getElementById('gridMarginRight');
+  let gridMarginTop = document.getElementById('gridMarginTop');
+  let gridMarginBottom = document.getElementById('gridMarginBottom');
+  let autoSpacing = document.getElementById('autoSpacing');
+  let gridVerticalSpacing = document.getElementById('gridVerticalSpacing');
+  let gridHorizontalSpacing = document.getElementById('gridHorizontalSpacing');
+  let gridSpanTable = document.getElementById('gridSpanTable');
+
+  let limitContent = document.getElementById('limitContent');
+  let maxNumItemsSection = document.getElementById('maxNumItemsSection');
+  let maxNumItems = document.getElementById('maxNumItems');
+  let overflowButtonSection = document.getElementById('overflowButtonSection');
+  let overflowNodePreview = document.getElementById('overflowNodePreview');
+  let overflowNodePreviewImg = document.getElementById('overflowNodePreviewImg');
+  let overflowNodePreviewImgData = null;
+  let overflowNodeName = document.getElementById('overflowNodeName');
+  let overflowNodeId = "";
+  let overflowModal = document.getElementById("overflowModal");
+
+  let jsonInputFile = document.getElementById('jsonInputFile');
+  let currentSelection = null;
+  let autolayoutAlignmentId = "alignmentTopLeft";
+  let autolayoutAlignment = "topleft";
+  let formatTab = "layout";
+
+  window.onclick = function(event) {
+    if (event.target == overflowModal) {
+      overflowModal.style.display = "none";
+    }
+    else if (event.target == selectParentModal) {
+      selectParentModal.style.display = "none";
+    }
+  }
+
+  function isGridLayout() {
+    let layoutType = gridColumnsOrRows.value;
+    return layoutType != "horizontal" && layoutType != "vertical";
+  }
+
+  function isHorizontalLayout() {
+    return gridColumnsOrRows.value == "horizontal";
+  }
+
+  function isVerticalLayout() {
+    return gridColumnsOrRows.value == "vertical";
+  }
+
+  function onClickSetParentFrame() {
+    selectParentModal.style.display = "block";
+    parent.postMessage({ pluginMessage: {
+      msg: 'set-parent-frame',
+    }}, '*');
+  }
+
+  function onClickLayoutButton() {
+    formatTab = "layout";
+    gridSpacingSection.style.display = 'none';
+    gridLayoutSection.style.display = isGridLayout() ? 'block' : 'none';
+    autoLayoutSection.style.display = isGridLayout() ? 'none' : 'flex';
+
+    let layoutButton = document.getElementById('layoutButton')
+    let spacingButton = document.getElementById('spacingButton')
+    layoutButton.style.backgroundColor = "#E5E5E5";
+    layoutButton.style.color = "000000"
+    spacingButton.style.backgroundColor = "#FFFFFF";
+    spacingButton.style.color = "#8A8A8A";
+  }
+
+  function onClickSpacingButton() {
+    formatTab = "spacing";
+    gridLayoutSection.style.display = 'none';
+    autoLayoutSection.style.display = 'none';
+    gridSpacingSection.style.display = 'block';
+    gridSpacingDiagram.style.display = isGridLayout() ? 'block' : 'none';
+    edgeToEdgeSpacingSection.style.display = isGridLayout() ? 'block' : 'none';
+
+    let spaceBetweenOn = !isGridLayout() && spaceBetween.checked;
+    horizontalSpacingDiagram.style.display = isHorizontalLayout() && !spaceBetweenOn ? 'block' : 'none';
+    horizontalSpacingDiagramSpaceBetween.style.display = isHorizontalLayout() && spaceBetweenOn ? 'block' : 'none';
+    verticalSpacingDiagram.style.display = isVerticalLayout() && !spaceBetweenOn ? 'block' : 'none';
+    verticalSpacingDiagramSpaceBetween.style.display = isVerticalLayout() && spaceBetweenOn ? 'block' : 'none';
+    horizontalSpacingSection.style.display = isVerticalLayout() ? 'none' : 'flex';
+    verticalSpacingSection.style.display = isHorizontalLayout() ? 'none' : 'flex';
+    spaceBetweenSection.style.display = isGridLayout() ? 'none' : 'flex';
+    gridHorizontalSpacing.disabled = spaceBetweenOn;
+    gridVerticalSpacing.disabled = spaceBetweenOn;
+
+    let layoutButton = document.getElementById('layoutButton')
+    let spacingButton = document.getElementById('spacingButton')
+    layoutButton.style.backgroundColor = "#FFFFFF";
+    layoutButton.style.color = "8A8A8A"
+    spacingButton.style.backgroundColor = "#E5E5E5";
+    spacingButton.style.color = "#000000";
+  }
+
+  function onClickGridMarginsExpand() {
+    gridMarginsExpandButton.style.display = 'none';
+    gridMarginsCollapseButton.style.display = 'block';
+    gridMarginsSection.style.display = 'block';
+  }
+
+  function onClickGridMarginsCollapse() {
+    gridMarginsExpandButton.style.display = 'block';
+    gridMarginsCollapseButton.style.display = 'none';
+    gridMarginsSection.style.display = 'none';
+  }
+
+  function onClickOverflowNode() {
+    parent.postMessage({ pluginMessage: {
+      msg: 'show-node',
+      key: 'vsw-show-node',
+      node: overflowNodeId
+    }}, '*');
+  }
+
+  function onClickSelectOverflowNode() {
+    overflowModal.style.display = "block";
+
+    parent.postMessage({ pluginMessage: {
+      msg: 'overflow-node-clicked',
+    }}, '*');
+  }
+
+  function onClickClearOverflowNode() {
+    overflowNodePreview.style.display = 'none';
+    overflowNodeName.textContent = "";
+    overflowNodeId = "";
+    frameFormUpdated();
+  }
+
+  function onClickOverflowModalClose() {
+    overflowModal.style.display = "none";
+
+    parent.postMessage({ pluginMessage: {
+      msg: 'overflow-node-closed',
+    }}, '*');
+  }
+
+  function onClickSelectParentModalClose() {
+    selectParentModal.style.display = "none";
+
+    parent.postMessage({ pluginMessage: {
+      msg: 'set-parent-frame-closed',
+    }}, '*');
+  }
+
+  function onClickUploadKeywordsFile() {
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = _ => {
+      let selectedFile = input.files[0];
+      const reader = new FileReader();
+      reader.addEventListener("loadend", e => {
+        parent.postMessage({ pluginMessage: {
+          msg: 'clippy-file-selected',
+          fileName: selectedFile.name,
+          contents: reader.result.toString()
+        }}, '*');
+      })
+      reader.readAsText(selectedFile);
+    };
+    input.click();
+  }
+
+  function onClickClearKeywordsFile() {
+    parent.postMessage({ pluginMessage: {
+        msg: 'clippy-file-cleared',
+      }}, '*');
+  }
+
+  function toNumber(str, def) {
+    let num = parseInt(str, 10);
+    if (isNaN(num)) {
+      return def;
+    }
+    return num;
+  }
+
+  function setGridMarginsSummary() {
+    let valuesEqual = 
+      gridMarginLeft.value == gridMarginRight.value &&
+      gridMarginLeft.value == gridMarginTop.value &&
+      gridMarginLeft.value == gridMarginBottom.value;
+    gridMarginsAll.value = valuesEqual ? gridMarginLeft.value : "...";
+    gridMarginsAll.disabled = !valuesEqual;
+    gridMarginsCollapseButton.onclick = valuesEqual ? onClickGridMarginsCollapse : null;
+    if (!valuesEqual)
+      onClickGridMarginsExpand();
+  }
+  
+  function updateGridSpanUI(gridSpanContent) {
+    let content = currentSelection ? currentSelection.content : null;
+    while (gridSpanTable.rows.length > 1)
+      gridSpanTable.deleteRow(1);
+
+    if (!isGridLayout() || !content)
+      return;
+    
+    let index = 0;
+    for (const node of content) {
+      let nodeHtml = document.createElement('span');
+      nodeHtml.classList.add("label", "link");
+      nodeHtml.textContent = node.nodeName;
+      nodeHtml.onclick = () => {
+        console.log("click " + node.nodeId);
+        parent.postMessage({ pluginMessage: {
+          msg: 'show-node',
+          key: 'vsw-show-node',
+          node: node.nodeId
+        }}, '*');
+      };
+
+      let bgColor = "#FFFFFF";
+      if (index % 2 == 1)
+        bgColor = "#F8F7F7"
+
+      let row = gridSpanTable.insertRow(index + 1);
+      row.style.height = "36px";
+      row.style.backgroundColor = bgColor;
+      
+      let nodeNameCell = row.insertCell(0);
+      nodeNameCell.appendChild(nodeHtml);
+      
+      let span = 1;
+      let maxSpan = false;
+      if (gridSpanContent && gridSpanContent.length > index) {
+        span = toNumber(gridSpanContent[index].span, 1);
+        maxSpan = gridSpanContent[index].maxSpan;
+      }
+      let displayAll = " display: " + (maxSpan ? "block" : "none");
+      let displayInput = " display: " + (maxSpan ? "none" : "block");
+        
+      let maxSpanSwitch = row.insertCell(1);
+      maxSpanSwitch.style.width = "80px";
+      maxSpanSwitch.style.textAlign = "right";
+      maxSpanSwitch.innerHTML = 
+        "<span id=\"spanSelect" + index + "All\" class=\"label\" style=\"width: 30; font-size: 13; font-weight: bold; height: 15;" + displayAll + "\">All</span>" +
+        "<input id=\"spanSelect" + index + "Input\" type=\"input\" style=\"width: 30; font-size: 13; font-weight: bold;" + displayInput + "\" class=\"input__field\" value=\"" + span + "\">";
+
+      let spanInput = row.insertCell(2);
+      spanInput.style.width = "20px";
+      spanInput.innerHTML =
+        "<select class=\"select-menu__button\" id=\"spanSelect" + index + "\" style=\"height:15px\">" +
+        "  <option value=\"Number\" " + (maxSpan ? "" : "selected") + ">Number</option>" + 
+        "  <option value=\"All\" " + (maxSpan ? "selected" : "") + ">All</option>" +
+        "</select>";
+      index += 1;
+    }
+  }
+
+  function onHoverAlignment(element) {
+    if (element.id != autolayoutAlignmentId) {
+      let suffix = isHorizontalLayout() ? "PathH" : "PathV";
+      let path = document.getElementById(element.id + suffix);
+      path.classList.remove("alignment-svg");
+      path.classList.add("alignment-svg-hover");
+    }
+    //alignmentTopLeftPathH.classList.add("alignment-svg-selected");
+  }
+
+  function onLeaveAlignment(element) {
+    if (element.id != autolayoutAlignmentId) {
+      let suffix = isHorizontalLayout() ? "PathH" : "PathV";
+      let path = document.getElementById(element.id + suffix);
+      path.classList.remove("alignment-svg-hover");
+      path.classList.add("alignment-svg");
+    }
+  }
+
+  function clearAlignmentSelected() {
+    alignmentTopLeftPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopCenterPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopRightPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentLeftPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentCenterPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentRightPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomLeftPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomCenterPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomRightPathV.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopLeftPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopCenterPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentTopRightPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentLeftPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentCenterPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentRightPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomLeftPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomCenterPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+    alignmentBottomRightPathH.classList.remove("alignment-svg-selected", "alignment-svg-hover");
+
+    alignmentTopLeftPathV.classList.add("alignment-svg");
+    alignmentTopCenterPathV.classList.add("alignment-svg");
+    alignmentTopRightPathV.classList.add("alignment-svg");
+    alignmentLeftPathV.classList.add("alignment-svg");
+    alignmentCenterPathV.classList.add("alignment-svg");
+    alignmentRightPathV.classList.add("alignment-svg");
+    alignmentBottomLeftPathV.classList.add("alignment-svg");
+    alignmentBottomCenterPathV.classList.add("alignment-svg");
+    alignmentBottomRightPathV.classList.add("alignment-svg");
+    alignmentTopLeftPathH.classList.add("alignment-svg");
+    alignmentTopCenterPathH.classList.add("alignment-svg");
+    alignmentTopRightPathH.classList.add("alignment-svg");
+    alignmentLeftPathH.classList.add("alignment-svg");
+    alignmentCenterPathH.classList.add("alignment-svg");
+    alignmentRightPathH.classList.add("alignment-svg");
+    alignmentBottomLeftPathH.classList.add("alignment-svg");
+    alignmentBottomCenterPathH.classList.add("alignment-svg");
+    alignmentBottomRightPathH.classList.add("alignment-svg");
+  }
+
+  function onAlignmentClick(alignment) {
+    setAlignment(alignment);
+    frameFormUpdated();
+  }
+
+  function setAlignment(alignment) {
+    clearAlignmentSelected();
+      let suffix = isHorizontalLayout() ? "PathH" : "PathV";
+    let pathElement = document.getElementById(alignment.id + suffix);
+    pathElement.classList.remove("alignment-svg");
+    pathElement.classList.add("alignment-svg-selected");
+
+    autolayoutAlignmentId = alignment.id;
+    switch (alignment.id) {
+      case "alignmentTopLeft":
+        autolayoutAlignment = "topleft";
+        break;
+      case "alignmentTopCenter":
+        autolayoutAlignment = "topcenter";
+        break;
+      case "alignmentTopRight":
+        autolayoutAlignment = "topright";
+        break;
+      case "alignmentLeft":
+        autolayoutAlignment = "left";
+        break;
+      case "alignmentCenter":
+        autolayoutAlignment = "center";
+        break;
+      case "alignmentRight":
+        autolayoutAlignment = "right";
+        break;
+      case "alignmentBottomLeft":
+        autolayoutAlignment = "bottomleft";
+        break;
+      case "alignmentBottomCenter":
+        autolayoutAlignment = "bottomcenter";
+        break;
+      case "alignmentBottomRight":
+        autolayoutAlignment = "bottomright";
+        break;
+      default:
+      console.log("Unknown alignment: " + alignment.id);
+        break;
+    }
+  }
+
+  function getHorizontalAlignment() {
+    switch (autolayoutAlignment) {
+      case "topleft":
+      case "left":
+      case "bottomleft":
+        return "start";
+      case "topcenter":
+      case "center":
+      case "bottomcenter":
+        return "center";
+      case "topright":
+      case "right":
+      case "bottomright":
+        return "end";
+    }
+  }
+
+  function getVerticalAlignment() {
+    switch (autolayoutAlignment) {
+      case "topleft":
+      case "topcenter":
+      case "topright":
+        return "start";
+      case "left":
+      case "center":
+      case "right":
+        return "center";
+      case "bottomleft":
+      case "bottomcenter":
+      case "bottomright":
+        return "end";
+    }
+  }
+
+  // Show the alignment UI for single Horizontal/Vertical Row/Column layout
+  function updateAutolayoutAlignmentUI(autolayout) {
+    if (!autolayout)
+      return;
+
+    let h = autolayout.horizontalAlignment;
+    let v = autolayout.verticalAlignment;
+    if (h == "start" && v == "start")
+      setAlignment(alignmentTopLeft);
+    else if (h == "center" && v == "start")
+      setAlignment(alignmentTopCenter);
+    else if (h == "end" && v == "start")
+      setAlignment(alignmentTopRight);
+    else if (h == "start" && v == "center")
+      setAlignment(alignmentLeft);
+    else if (h == "center" && v == "center")
+      setAlignment(alignmentCenter);
+    else if (h == "end" && v == "center")
+      setAlignment(alignmentRight);
+    else if (h == "start" && v == "end")
+      setAlignment(alignmentBottomLeft);
+    else if (h == "center" && v == "end")
+      setAlignment(alignmentBottomCenter);
+    else if (h == "end" && v == "end")
+      setAlignment(alignmentBottomRight);
+
+    spaceBetween.checked = autolayout.spaceBetween;
+  }
+
+  // Create the grid diagram showing the number of rows or columns selected
+  function createGridDiagram() {
+    let diagram = document.getElementById('gridDiagram');
+    diagram.innerHTML = "";
+
+    function createCell(row, index, showSquare, showGradient, horizontal) {
+      // Create a table cell with a pink background, padding, and a optional grey square in the center
+      let cell = row.insertCell(index++);
+      cell.className = "grid-cell";
+      let direction = horizontal ? "horizontal" : "vertical";
+      cell.className += showGradient ? " grid-cell-gradient-" + direction : " grid-cell-bg";
+      if (showSquare) {
+        let squareClass = "grid-square";
+        squareClass += showGradient ? " grid-square-gradient-" + direction : " grid-square-bg";
+        cell.innerHTML = "<div class=\"" + squareClass + "\"></div>"
+      }
+    }
+
+    let layoutType = gridColumnsOrRows.value;
+    if (layoutType == "fixedColumns" || layoutType == "autoColumns") {
+      // Create the specified number of columns and three rows
+      let maxShown = 10;
+      let count = toNumber(gridColumnsRows.value);
+      let countShown = Math.min(count, maxShown);
+      let row = diagram.insertRow(0);
+      let index = 0;
+      for (i = 0; i < countShown; ++i) {
+        let padding = row.insertCell(index++);
+        padding.width = "4";
+        createCell(row, index, true, i == maxShown - 1 && count > maxShown, true);
+        index++;
+      }
+      let padding = row.insertCell(index++);
+      padding.width = "4";
+
+      row = diagram.insertRow(1);
+      index = 0;
+      for (i = 0; i < countShown; ++i) {
+        let padding = row.insertCell(index++);
+        padding.width = "4";
+        createCell(row, index, true, i == maxShown - 1 && count > maxShown, true);
+        index++;
+      }
+
+      row = diagram.insertRow(2);
+      index = 0;
+      for (i = 0; i < countShown; ++i) {
+        let padding = row.insertCell(index++);
+        padding.width = "4";
+        createCell(row, index, i < 2, i == maxShown - 1 && count > maxShown, true);
+        index++;
+      }
+    } else if (layoutType == "fixedRows" || layoutType == "autoRows") {
+      // Create the specified number of rows and three columns
+      let maxShown = 6;
+      let count = toNumber(gridColumnsRows.value);
+      let countShown = Math.min(count, maxShown);
+      let index = 0;
+      for (i = 0; i < countShown; ++i) {
+        let paddingRow = diagram.insertRow(index++);
+        let paddingCell = paddingRow.insertCell(0);
+        paddingCell.height = "4";
+        let row = diagram.insertRow(index++);
+        createCell(row, 0, true, i == maxShown - 1 && count > maxShown, false);
+        createCell(row, 1, true, i == maxShown - 1 && count > maxShown, false);
+        createCell(row, 2, i < 2, i == maxShown - 1 && count > maxShown, false);
+      }
+      let paddingRow = diagram.insertRow(index++);
+      let paddingCell = paddingRow.insertCell(0);
+      paddingCell.height = "4";
+    }
+  }
+
+  function updateScrollingState() {
+    let isScrollingDisabled = (!isGridLayout() && basicSizePolicy.value == 'hug');
+    gridScrolling.disabled = isScrollingDisabled;
+    gridScrollingTooltip.style.display = isScrollingDisabled ? 'block' : 'none';
+    if (isScrollingDisabled)
+      gridScrolling.checked = false;
+  }
+
+  // Hide/show/enable/disable elements based on the form state.
+  function ensureFrameFormState() {
+    createGridDiagram();
+
+    let layoutType = gridColumnsOrRows.value;
+    let columns = layoutType == "fixedColumns" || layoutType == "autoColumns";
+    let headerText = (columns ? "Column" : "Row") + " span";
+    document.getElementById("gridTableHeaderText").innerHTML = headerText;
+
+    iconFormatHorizontal.style.display = 'none';
+    iconFormatVertical.style.display = 'none';
+    iconFormatColumnsAuto.style.display = 'none';
+    iconFormatColumnsStretch.style.display = 'none';
+    iconFormatRowsAuto.style.display = 'none';
+    iconFormatRowsStretch.style.display = 'none';
+
+    // Depending on the layout type, hide/show the appropriate input field and adjust the text
+    if (layoutType == "fixedColumns") {
+      gridColumnsRows.style.display = 'block';
+      gridColumnsRowsLabel.style.display = 'block';
+      adaptiveMinSize.style.display = 'none';
+      adaptiveMinSizeLabel.style.display = 'none';
+      gridColumnsRowsLabel.innerHTML = "Columns";
+      gridLayoutDescription.innerHTML = "Width of columns expands with parent frame";
+      iconFormatColumnsStretch.style.display = 'block';
+      basicSizePolicy.style.display = 'none';
+    } else if (layoutType == "fixedRows") {
+      gridColumnsRows.style.display = 'block';
+      gridColumnsRowsLabel.style.display = 'block';
+      adaptiveMinSize.style.display = 'none';
+      adaptiveMinSizeLabel.style.display = 'none';
+      gridColumnsRowsLabel.innerHTML = "Rows";
+      gridLayoutDescription.innerHTML = "Height of rows expands with parent frame";
+      iconFormatRowsStretch.style.display = 'block';
+      basicSizePolicy.style.display = 'none';
+    } else if (layoutType == "autoColumns") {
+      gridColumnsRows.style.display = 'none';
+      gridColumnsRowsLabel.style.display = 'none';
+      adaptiveMinSize.style.display = 'block';
+      adaptiveMinSizeLabel.style.display = 'block';
+      adaptiveMinSizeLabel.innerHTML = "Min column width";
+      gridLayoutDescription.innerHTML = "Frame width determines number of columns";
+      iconFormatColumnsAuto.style.display = 'block';
+      basicSizePolicy.style.display = 'none';
+    } else if (layoutType == "autoRows") {
+      gridColumnsRows.style.display = 'none';
+      gridColumnsRowsLabel.style.display = 'none';
+      adaptiveMinSize.style.display = 'block';
+      adaptiveMinSizeLabel.style.display = 'block';
+      adaptiveMinSizeLabel.innerHTML = "Min row height";
+      gridLayoutDescription.innerHTML = "Frame height determines number of rows";
+      iconFormatRowsAuto.style.display = 'block';
+      basicSizePolicy.style.display = 'none';
+    } else if (layoutType == "horizontal") {
+      gridColumnsRows.style.display = 'none';
+      gridColumnsRowsLabel.style.display = 'none';
+      adaptiveMinSize.style.display = 'none';
+      adaptiveMinSizeLabel.style.display = 'none';
+      gridLayoutDescription.innerHTML = "Align elements in a single row";
+      iconFormatHorizontal.style.display = 'block';
+      basicSizePolicy.style.display = 'block';
+    } else if (layoutType == "vertical") {
+      gridColumnsRows.style.display = 'none';
+      gridColumnsRowsLabel.style.display = 'none';
+      adaptiveMinSize.style.display = 'none';
+      adaptiveMinSizeLabel.style.display = 'none';
+      gridLayoutDescription.innerHTML = "Align elements in a single column";
+      iconFormatVertical.style.display = 'block';
+      basicSizePolicy.style.display = 'block';
+    }
+
+    updateScrollingState();
+
+    document.getElementById('gridMissingKeywords').style.display = currentSelection.hasKeywordData ? 'none' : 'block';
+    document.getElementById('gridSpanTable').style.display = currentSelection.hasKeywordData ? 'block' : 'none';
+
+    maxNumItemsSection.style.display = limitContent.checked ? 'block' : 'none';
+  }
+
+  // Use the extended layout data to set values in the UI
+  function setFrameFormData(el) {
+    gridColumnsOrRows.value = el ? el.layout : "horizontal";
+
+    let common = el.commonData;
+    gridMarginLeft.value = common ? toNumber(common.marginLeft, 0) : 0;
+    gridMarginRight.value = common ? toNumber(common.marginRight, 0) : 0;
+    gridMarginTop.value = common ? toNumber(common.marginTop, 0) : 0;
+    gridMarginBottom.value = common ? toNumber(common.marginBottom, 0) : 0;
+    gridScrolling.checked = common ? common.scrolling : false;
+
+    let grid = el.gridLayoutData;
+    gridColumnsRows.value = grid ? toNumber(grid.columnsRows, 1) : 1;
+    adaptiveMinSize.value = grid ? toNumber(grid.adaptiveMinSize, 50) : 50;
+    gridVerticalSpacing.value = grid ? toNumber(grid.verticalSpacing, 0) : 0;
+    gridHorizontalSpacing.value = grid ? toNumber(grid.horizontalSpacing, 0) : 0;
+    autoSpacing.checked = grid && grid.autoSpacing;
+
+    let auto = el.autoLayoutData;
+    if (isHorizontalLayout())
+      gridHorizontalSpacing.value = auto ? toNumber(auto.itemSpacing, 0) : 0;
+    if (isVerticalLayout())
+      gridVerticalSpacing.value = auto ? toNumber(auto.itemSpacing, 0) : 0;
+    basicSizePolicy.value = auto && auto.sizePolicy ? auto.sizePolicy : "fixed";
+
+    limitContent.checked = el && el.limitContent;
+    let lcd = el.limitContentData;
+    maxNumItems.value = lcd ? toNumber(lcd.maxNumItems, 1) : 1;
+    overflowNodeName.textContent = lcd ? lcd.overflowNodeName : "";
+    overflowNodeId = lcd ? lcd.overflowNodeId : "";
+    let hasOverflowNode = (lcd && lcd.overflowNodeName.length > 0);
+    overflowNodePreview.style.display = hasOverflowNode ? 'flex' : 'none';
+    if (lcd && lcd.overflowNodePreviewData)
+      overflowNodePreviewImg.src = "data:image/png;base64," + lcd.overflowNodePreviewData;
+    overflowButtonSection.style.display = hasOverflowNode ? 'none' : 'flex';
+
+    gridLayoutSection.style.display = isGridLayout() ? "block" : "none";
+    autoLayoutSection.style.display = isGridLayout() ? "none" : "flex";
+
+    if (formatTab == "layout")
+      onClickLayoutButton();
+    else
+      onClickSpacingButton();
+
+    updateGridSpanUI(grid ? grid.spanContent : null);
+    updateAutolayoutAlignmentUI(auto);
+    setGridMarginsSummary();
+    ensureFrameFormState();
+  }
+
+  function autoContentFrameChanged() {
+    parent.postMessage({ pluginMessage: {
+      msg: 'set-widget-content',
+      widgetContent: {
+        contentNodeName: contentNodeName.value,
+        previewPage: previewPage.value
+      }
+    }}, '*');
+
+    // Set a default layout if one has not been selected yet
+    if (gridColumnsOrRows.value == "") {
+      gridColumnsOrRows.value = "horizontal";
+      frameFormUpdated();
+    }
+  }
+
+  function gridMarginsAllChanged() {
+    let value = gridMarginsAll.value;
+    gridMarginLeft.value = value;
+    gridMarginRight.value = value;
+    gridMarginTop.value = value;
+    gridMarginBottom.value = value;
+  }
+
+  function frameFormUpdated() {
+    let gridSpanContent = []
+    for (let i = 0; i < gridSpanTable.rows.length - 1; ++i) {
+      let spanSelect = document.getElementById("spanSelect" + i);
+      let spanInput = document.getElementById("spanSelect" + i + "Input");
+
+      gridSpanContent.push({
+        nodeName: currentSelection.content[i].nodeName,
+        nodeId: currentSelection.content[i].nodeId,
+        span: toNumber(spanInput.value, 1),
+        maxSpan: spanSelect.value == "All"
+      });
+    }
+
+    updateScrollingState();
+
+    let commonData = {
+      marginLeft: toNumber(gridMarginLeft.value, 0),
+      marginRight: toNumber(gridMarginRight.value, 0),
+      marginTop: toNumber(gridMarginTop.value, 0),
+      marginBottom: toNumber(gridMarginBottom.value, 0),
+      scrolling: gridScrolling.checked,
+    }
+    let autoLayoutData = !isGridLayout() ? {
+      itemSpacing: isHorizontalLayout() ? toNumber(gridHorizontalSpacing.value, 0) : toNumber(gridVerticalSpacing.value, 0),
+      spaceBetween: spaceBetween.checked,
+      horizontalAlignment: getHorizontalAlignment(),
+      verticalAlignment: getVerticalAlignment(),
+      sizePolicy: basicSizePolicy.value,
+    } : {};
+
+    let gridLayoutData = isGridLayout() ? {
+      columnsRows: toNumber(gridColumnsRows.value, 1),
+      adaptiveMinSize: toNumber(adaptiveMinSize.value, 1),
+      autoSpacing: autoSpacing.checked ? true : false,
+      verticalSpacing: toNumber(gridVerticalSpacing.value, 0),
+      horizontalSpacing: toNumber(gridHorizontalSpacing.value, 0),
+      spanContent: gridSpanContent
+    } : {};
+
+    let limitContentData = {
+        maxNumItems: toNumber(maxNumItems.value, 0),
+        overflowNodeName: overflowNodeName.textContent,
+        overflowNodeId: overflowNodeId,
+        overflowNodePreviewData: overflowNodePreviewImgData
+    }
+
+    // Make a message and send it back to the plugin to save in the node.
+    parent.postMessage({ pluginMessage: {
+      msg: 'save-extended-layout',
+      extendedLayout: {
+        layout: gridColumnsOrRows.value,
+        commonData,
+        gridLayoutData,
+        autoLayoutData,
+        limitContent: limitContent.checked || false,
+        limitContentData,
+      }
+    }}, '*');
+  }
+
+  function showInitialUI(needsParent, hasPreview) {
+    parentFrameSection.style.display = needsParent ? 'block' : 'none';
+    autoContentSection.style.display = needsParent ? 'none' : 'block';
+    formattingSection.style.display = (needsParent || !hasPreview) ? 'none' : 'block';
+    sourceSection.style.display = needsParent ? 'none' : 'block';
+  }
+
+  document.getElementById('autoContentFrame').addEventListener('change', autoContentFrameChanged, false);
+  document.getElementById('formattingSection').addEventListener('change', frameFormUpdated, false);
+  gridMarginsAll.addEventListener('change', gridMarginsAllChanged, false);
+
+  // Update the form from a selection change.
+  window.onmessage = function(event) {
+    let msg = event.data.pluginMessage;
+
+    if (msg.msg == 'init') {
+      hasKeywordFile = msg.file != ""
+      document.getElementById('noKeywordSourceSection').style.display = hasKeywordFile ? 'none' : 'block';
+      document.getElementById('hasKeywordSection').style.display = hasKeywordFile ? 'block' : 'none';
+      if (!hasKeywordFile)
+        return;
+
+      currentSelection = {
+        extendedLayout: msg.extendedLayout,
+        content: msg.content,
+        hasKeywordData: msg.hasKeywordData
+      };
+
+      // Populate the content node name option dropdown with available node names
+      while (contentNodeName.options.length > 0) {
+        contentNodeName.remove(0);
+      }
+      let selectOptions = msg.contentNodeNameOptions;
+      for (const option of selectOptions) {
+        var opt = document.createElement('option');
+        opt.value = option;
+        opt.text = option;
+        contentNodeName.appendChild(opt);
+      }
+
+      // Populate the preview page option dropdown
+      while (previewPage.options.length > 0) {
+        previewPage.remove(0);
+      }
+      let previewSelectOptions = msg.previewPageOptions;
+      for (const option of previewSelectOptions) {
+        var opt = document.createElement('option');
+        opt.value = option;
+        opt.text = option;
+        previewPage.appendChild(opt);
+      }
+
+      let widgetContent = msg.widgetContent;
+      contentNodeName.value = widgetContent.contentNodeName;
+      previewPage.value = widgetContent.previewPage;
+
+      // Hide the formatting section until a preview page has been selected
+      let hasPreview = widgetContent.contentNodeName != null;
+      showInitialUI(false, hasPreview);
+      selectParentModal.style.display = "none";
+
+      let keywordsFilename = document.getElementById('keywordsFilename');
+      let keywordsName = document.getElementById('keywordsName');
+      let keywordsVersion = document.getElementById('keywordsVersion');
+      
+      keywordsFilename.textContent = msg.file ? msg.file : ""
+      keywordsName.textContent = msg.name ? msg.name : ""
+      keywordsVersion.textContent = msg.version ? msg.version : ""
+
+      setFrameFormData(msg.extendedLayout);
+    }
+    else if (msg.msg == 'overflow-node-selected') {
+      overflowModal.style.display = "none";
+      overflowNodeName.textContent = msg.name;
+      overflowNodeId = msg.id;
+      overflowNodePreviewImg.src = "data:image/png;base64," + msg.data;
+      overflowNodePreviewImgData = msg.data;
+      
+      frameFormUpdated();
+    }
+    else if (msg.msg == 'need-parent') {
+      // The widget needs a parent, so hide all UI except for the parentFrameSection UI
+      showInitialUI(true, false);
+    }
+  }
+</script>

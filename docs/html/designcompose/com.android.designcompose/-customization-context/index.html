@@ -1,0 +1,684 @@
+<!doctype html>
+<!--
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>CustomizationContext</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>DesignCompose</span>            </a>    </div>
+    <div>
+    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":designcompose:dokkaHtmlPartial/release">androidJvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="designcompose::com.android.designcompose/CustomizationContext///PointingToDeclaration//-1683625199">
+  <div class="breadcrumbs"><a href="../../index.html">designcompose</a><span class="delimiter">/</span><a href="../index.html">com.android.designcompose</a><span class="delimiter">/</span><span class="current">CustomizationContext</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Customization</span><wbr><span><span>Context</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="index.html">CustomizationContext</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>cs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../-customization/index.html">Customization</a><span class="token operator">&gt;</span><span class="token operator"> = </span>HashMap()<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">var </span>variantProperties<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator"> = </span>HashMap()<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">var </span>customComposable<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/java/util/Optional.html">Optional</a><span class="token operator">&lt;</span><span class="token keyword"></span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/Modifier.html">Modifier</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><span data-unresolved-link="com.android.designcompose.serdegen/NodeQuery///PointingToDeclaration/">NodeQuery</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-parent-component-info/index.html">ParentComponentInfo</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="../index.html#442006480%2FClasslikes%2F-1683625199">TapCallback</a><span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">&gt;</span><span class="token operator"> = </span>Optional.empty()<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">var </span>key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button><button class="section-tab" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY,EXTENSION_PROPERTY,EXTENSION_FUNCTION">Members &amp; Extensions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="863022422%2FConstructors%2F-1683625199" anchor-label="CustomizationContext" id="863022422%2FConstructors%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-customization-context.html"><span>Customization</span><wbr><span><span>Context</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="863022422%2FConstructors%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">cs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../-customization/index.html">Customization</a><span class="token operator">&gt;</span><span class="token operator"> = </span>HashMap()<span class="token punctuation">, </span></span><span class="parameter ">variantProperties<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator"> = </span>HashMap()<span class="token punctuation">, </span></span><span class="parameter ">customComposable<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/java/util/Optional.html">Optional</a><span class="token operator">&lt;</span><span class="token keyword"></span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/Modifier.html">Modifier</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><span data-unresolved-link="com.android.designcompose.serdegen/NodeQuery///PointingToDeclaration/">NodeQuery</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-parent-component-info/index.html">ParentComponentInfo</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="../index.html#442006480%2FClasslikes%2F-1683625199">TapCallback</a><span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">&gt;</span><span class="token operator"> = </span>Optional.empty()<span class="token punctuation">, </span></span><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="EXTENSION_FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-817169741%2FFunctions%2F-1683625199" anchor-label="get" id="-817169741%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get.html"><span><span>get</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-817169741%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get.html"><span class="token function">get</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/java/util/Optional.html">Optional</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-customization/index.html">Customization</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-718211020%2FFunctions%2F-1683625199" anchor-label="getComponent" id="-718211020%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-component.html"><span>get</span><wbr><span><span>Component</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-718211020%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-component.html"><span class="token function">getComponent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="../-component-replacement-context/index.html">ComponentReplacementContext</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-571832784%2FFunctions%2F-1683625199" anchor-label="getContent" id="-571832784%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-content.html"><span>get</span><wbr><span><span>Content</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-571832784%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-content.html"><span class="token function">getContent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="425311411%2FFunctions%2F-1683625199" anchor-label="getCustomComposable" id="425311411%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-custom-composable.html"><span>get</span><wbr><span>Custom</span><wbr><span><span>Composable</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="425311411%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-custom-composable.html"><span class="token function">getCustomComposable</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/Modifier.html">Modifier</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><span data-unresolved-link="com.android.designcompose.serdegen/NodeQuery///PointingToDeclaration/">NodeQuery</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-parent-component-info/index.html">ParentComponentInfo</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="../index.html#442006480%2FClasslikes%2F-1683625199">TapCallback</a><span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1244941678%2FFunctions%2F-1683625199" anchor-label="getImage" id="-1244941678%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-image.html"><span>get</span><wbr><span><span>Image</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1244941678%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-image.html"><span class="token function">getImage</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/graphics/Bitmap.html">Bitmap</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1350990209%2FFunctions%2F-1683625199" anchor-label="getImageWithContext" id="1350990209%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-image-with-context.html"><span>get</span><wbr><span>Image</span><wbr><span>With</span><wbr><span><span>Context</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1350990209%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-image-with-context.html"><span class="token function">getImageWithContext</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="../-image-replacement-context/index.html">ImageReplacementContext</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/android/graphics/Bitmap.html">Bitmap</a><span class="token operator">?</span><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-216878674%2FFunctions%2F-1683625199" anchor-label="getKey" id="-216878674%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-key.html"><span>get</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-216878674%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-key.html"><span class="token function">getKey</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="853705138%2FFunctions%2F-1683625199" anchor-label="getListContent" id="853705138%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-list-content.html"><span>get</span><wbr><span>List</span><wbr><span><span>Content</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="853705138%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-list-content.html"><span class="token function">getListContent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../index.html#-113441219%2FClasslikes%2F-1683625199">ListContent</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-904991947%2FFunctions%2F-1683625199" anchor-label="getMatchingVariant" id="-904991947%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-matching-variant.html"><span>get</span><wbr><span>Matching</span><wbr><span><span>Variant</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-904991947%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-matching-variant.html"><span class="token function">getMatchingVariant</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">maybeComponentInfo<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/java/util/Optional.html">Optional</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="com.android.designcompose.serdegen/ComponentInfo///PointingToDeclaration/">ComponentInfo</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1227490117%2FFunctions%2F-1683625199" anchor-label="getMeterValue" id="-1227490117%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-meter-value.html"><span>get</span><wbr><span>Meter</span><wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1227490117%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-meter-value.html"><span class="token function">getMeterValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float/index.html">Float</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1123100118%2FFunctions%2F-1683625199" anchor-label="getModifier" id="-1123100118%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-modifier.html"><span>get</span><wbr><span><span>Modifier</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1123100118%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-modifier.html"><span class="token function">getModifier</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/Modifier.html">Modifier</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1530462748%2FFunctions%2F-1683625199" anchor-label="getOpenLinkCallback" id="1530462748%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-open-link-callback.html"><span>get</span><wbr><span>Open</span><wbr><span>Link</span><wbr><span><span>Callback</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1530462748%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-open-link-callback.html"><span class="token function">getOpenLinkCallback</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-open-link-callback/index.html">OpenLinkCallback</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="352826431%2FFunctions%2F-1683625199" anchor-label="getTapCallback" id="352826431%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-tap-callback.html"><span>get</span><wbr><span>Tap</span><wbr><span><span>Callback</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="352826431%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-tap-callback.html"><span class="token function">getTapCallback</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../index.html#442006480%2FClasslikes%2F-1683625199">TapCallback</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-761475968%2FFunctions%2F-1683625199" anchor-label="getText" id="-761475968%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-text.html"><span>get</span><wbr><span><span>Text</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-761475968%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-text.html"><span class="token function">getText</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="378400120%2FFunctions%2F-1683625199" anchor-label="getTextFunction" id="378400120%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-text-function.html"><span>get</span><wbr><span>Text</span><wbr><span><span>Function</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="378400120%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-text-function.html"><span class="token function">getTextFunction</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1553910213%2FFunctions%2F-1683625199" anchor-label="getTextStyle" id="-1553910213%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-text-style.html"><span>get</span><wbr><span>Text</span><wbr><span><span>Style</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1553910213%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-text-style.html"><span class="token function">getTextStyle</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/text/TextStyle.html">TextStyle</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-117947479%2FFunctions%2F-1683625199" anchor-label="getVisible" id="-117947479%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../get-visible.html"><span>get</span><wbr><span><span>Visible</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-117947479%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../get-visible.html"><span class="token function">getVisible</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1104641027%2FFunctions%2F-1683625199" anchor-label="mergeFrom" id="1104641027%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../merge-from.html"><span>merge</span><wbr><span><span>From</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1104641027%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../merge-from.html"><span class="token function">mergeFrom</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">other<span class="token operator">: </span><a href="index.html">CustomizationContext</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="544918987%2FFunctions%2F-1683625199" anchor-label="setComponent" id="544918987%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-component.html"><span>set</span><wbr><span><span>Component</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="544918987%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-component.html"><span class="token function">setComponent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">component<span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="../-component-replacement-context/index.html">ComponentReplacementContext</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1398832120%2FFunctions%2F-1683625199" anchor-label="setContent" id="1398832120%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-content.html"><span>set</span><wbr><span><span>Content</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1398832120%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-content.html"><span class="token function">setContent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">content<span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1830657817%2FFunctions%2F-1683625199" anchor-label="setCustomComposable" id="1830657817%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-custom-composable.html"><span>set</span><wbr><span>Custom</span><wbr><span><span>Composable</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1830657817%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-custom-composable.html"><span class="token function">setCustomComposable</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">composable<span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/Modifier.html">Modifier</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><span data-unresolved-link="com.android.designcompose.serdegen/NodeQuery///PointingToDeclaration/">NodeQuery</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-parent-component-info/index.html">ParentComponentInfo</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="../index.html#442006480%2FClasslikes%2F-1683625199">TapCallback</a><span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1059053395%2FFunctions%2F-1683625199" anchor-label="setImage" id="-1059053395%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-image.html"><span>set</span><wbr><span><span>Image</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1059053395%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-image.html"><span class="token function">setImage</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">image<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/graphics/Bitmap.html">Bitmap</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-242872039%2FFunctions%2F-1683625199" anchor-label="setImageWithContext" id="-242872039%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-image-with-context.html"><span>set</span><wbr><span>Image</span><wbr><span>With</span><wbr><span><span>Context</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-242872039%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-image-with-context.html"><span class="token function">setImageWithContext</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">imageWithContext<span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="../-image-replacement-context/index.html">ImageReplacementContext</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/android/graphics/Bitmap.html">Bitmap</a><span class="token operator">?</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-954681191%2FFunctions%2F-1683625199" anchor-label="setKey" id="-954681191%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-key.html"><span>set</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-954681191%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-key.html"><span class="token function">setKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1931118257%2FFunctions%2F-1683625199" anchor-label="setListContent" id="1931118257%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-list-content.html"><span>set</span><wbr><span>List</span><wbr><span><span>Content</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1931118257%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-list-content.html"><span class="token function">setListContent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">listContent<span class="token operator">: </span><a href="../index.html#-113441219%2FClasslikes%2F-1683625199">ListContent</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="226581545%2FFunctions%2F-1683625199" anchor-label="setMeterValue" id="226581545%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-meter-value.html"><span>set</span><wbr><span>Meter</span><wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="226581545%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-meter-value.html"><span class="token function">setMeterValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float/index.html">Float</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1808779562%2FFunctions%2F-1683625199" anchor-label="setModifier" id="1808779562%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-modifier.html"><span>set</span><wbr><span><span>Modifier</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1808779562%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-modifier.html"><span class="token function">setModifier</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">modifier<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/Modifier.html">Modifier</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-621461752%2FFunctions%2F-1683625199" anchor-label="setOpenLinkCallback" id="-621461752%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-open-link-callback.html"><span>set</span><wbr><span>Open</span><wbr><span>Link</span><wbr><span><span>Callback</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-621461752%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-open-link-callback.html"><span class="token function">setOpenLinkCallback</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">callback<span class="token operator">: </span><a href="../-open-link-callback/index.html">OpenLinkCallback</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-201837542%2FFunctions%2F-1683625199" anchor-label="setTapCallback" id="-201837542%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-tap-callback.html"><span>set</span><wbr><span>Tap</span><wbr><span><span>Callback</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-201837542%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-tap-callback.html"><span class="token function">setTapCallback</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">tapCallback<span class="token operator">: </span><a href="../index.html#442006480%2FClasslikes%2F-1683625199">TapCallback</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="270095250%2FFunctions%2F-1683625199" anchor-label="setText" id="270095250%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-text.html"><span>set</span><wbr><span><span>Text</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="270095250%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-text.html"><span class="token function">setText</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">text<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-593131029%2FFunctions%2F-1683625199" anchor-label="setTextFunction" id="-593131029%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-text-function.html"><span>set</span><wbr><span>Text</span><wbr><span><span>Function</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-593131029%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-text-function.html"><span class="token function">setTextFunction</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">text<span class="token operator">: </span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-94896108%2FFunctions%2F-1683625199" anchor-label="setTextStyle" id="-94896108%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-text-style.html"><span>set</span><wbr><span>Text</span><wbr><span><span>Style</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-94896108%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-text-style.html"><span class="token function">setTextStyle</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">textStyle<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/text/TextStyle.html">TextStyle</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1328387239%2FFunctions%2F-1683625199" anchor-label="setVariantProperties" id="1328387239%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-variant-properties.html"><span>set</span><wbr><span>Variant</span><wbr><span><span>Properties</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1328387239%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-variant-properties.html"><span class="token function">setVariantProperties</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">vp<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2085889735%2FFunctions%2F-1683625199" anchor-label="setVisible" id="2085889735%2FFunctions%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../set-visible.html"><span>set</span><wbr><span><span>Visible</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2085889735%2FFunctions%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html">CustomizationContext</a><span class="token punctuation">.</span><a href="../set-visible.html"><span class="token function">setVisible</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nodeName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">visible<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-1382266047%2FProperties%2F-1683625199" anchor-label="cs" id="-1382266047%2FProperties%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="cs.html"><span><span>cs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1382266047%2FProperties%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="cs.html">cs</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../-customization/index.html">Customization</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="168484115%2FProperties%2F-1683625199" anchor-label="customComposable" id="168484115%2FProperties%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="custom-composable.html"><span>custom</span><wbr><span><span>Composable</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="168484115%2FProperties%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="custom-composable.html">customComposable</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/java/util/Optional.html">Optional</a><span class="token operator">&lt;</span><span class="token keyword"></span><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable.html"><span class="token annotation builtin">Composable</span></a>&nbsp;</span><span class="token punctuation">(</span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/Modifier.html">Modifier</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><span data-unresolved-link="com.android.designcompose.serdegen/NodeQuery///PointingToDeclaration/">NodeQuery</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-parent-component-info/index.html">ParentComponentInfo</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="../index.html#442006480%2FClasslikes%2F-1683625199">TapCallback</a><span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-763787574%2FProperties%2F-1683625199" anchor-label="key" id="-763787574%2FProperties%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="key.html"><span><span>key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-763787574%2FProperties%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="key.html">key</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-278951247%2FProperties%2F-1683625199" anchor-label="variantProperties" id="-278951247%2FProperties%2F-1683625199" data-filterable-set=":designcompose:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":designcompose:dokkaHtmlPartial/release" data-filterable-set=":designcompose:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="variant-properties.html"><span>variant</span><wbr><span><span>Properties</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-278951247%2FProperties%2F-1683625199"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":designcompose:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="variant-properties.html">variantProperties</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>
+

@@ -1,0 +1,208 @@
+<!doctype html>
+<!--
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>BuilderProcessor</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>DesignCompose</span>            </a>    </div>
+    <div>
+    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":codegen:dokkaHtmlPartial/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="codegen::com.android.designcompose.codegen/BuilderProcessor///PointingToDeclaration//1451126455">
+  <div class="breadcrumbs"><a href="../../index.html">codegen</a><span class="delimiter">/</span><a href="../index.html">com.android.designcompose.codegen</a><span class="delimiter">/</span><span class="current">BuilderProcessor</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Builder</span><wbr><span><span>Processor</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":codegen:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">BuilderProcessor</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">codeGenerator<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.processing/CodeGenerator///PointingToDeclaration/">CodeGenerator</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>logger<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.processing/KSPLogger///PointingToDeclaration/">KSPLogger</span></span></span><span class="token punctuation">)</span> : <span data-unresolved-link="com.google.devtools.ksp.processing/SymbolProcessor///PointingToDeclaration/">SymbolProcessor</span></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="1941844845%2FConstructors%2F1451126455" anchor-label="BuilderProcessor" id="1941844845%2FConstructors%2F1451126455" data-filterable-set=":codegen:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":codegen:dokkaHtmlPartial/main" data-filterable-set=":codegen:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-builder-processor.html"><span>Builder</span><wbr><span><span>Processor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1941844845%2FConstructors%2F1451126455"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":codegen:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">codeGenerator<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.processing/CodeGenerator///PointingToDeclaration/">CodeGenerator</span><span class="token punctuation">, </span></span><span class="parameter ">logger<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.processing/KSPLogger///PointingToDeclaration/">KSPLogger</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="-714077928%2FClasslikes%2F1451126455" anchor-label="DesignDocVisitor" id="-714077928%2FClasslikes%2F1451126455" data-filterable-set=":codegen:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":codegen:dokkaHtmlPartial/main" data-filterable-set=":codegen:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-design-doc-visitor/index.html"><span>Design</span><wbr><span>Doc</span><wbr><span><span>Visitor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-714077928%2FClasslikes%2F1451126455"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":codegen:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">inner </span><span class="token keyword">class </span><a href="-design-doc-visitor/index.html">DesignDocVisitor</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">outputStreams<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html">OutputStream</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">jsonStreams<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-hash-map/index.html">HashMap</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html">OutputStream</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span> : <span data-unresolved-link="com.google.devtools.ksp.symbol/KSVisitorVoid///PointingToDeclaration/">KSVisitorVoid</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1531701697%2FFunctions%2F1451126455" anchor-label="finish" id="-1531701697%2FFunctions%2F1451126455" data-filterable-set=":codegen:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":codegen:dokkaHtmlPartial/main" data-filterable-set=":codegen:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1531701697%2FFunctions%2F1451126455"><span><span>finish</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1531701697%2FFunctions%2F1451126455"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":codegen:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html#-1531701697%2FFunctions%2F1451126455"><span class="token function">finish</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2015143775%2FFunctions%2F1451126455" anchor-label="onError" id="2015143775%2FFunctions%2F1451126455" data-filterable-set=":codegen:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":codegen:dokkaHtmlPartial/main" data-filterable-set=":codegen:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#2015143775%2FFunctions%2F1451126455"><span>on</span><wbr><span><span>Error</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2015143775%2FFunctions%2F1451126455"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":codegen:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="index.html#2015143775%2FFunctions%2F1451126455"><span class="token function">onError</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-202455143%2FFunctions%2F1451126455" anchor-label="plusAssign" id="-202455143%2FFunctions%2F1451126455" data-filterable-set=":codegen:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":codegen:dokkaHtmlPartial/main" data-filterable-set=":codegen:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="plus-assign.html"><span>plus</span><wbr><span><span>Assign</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-202455143%2FFunctions%2F1451126455"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":codegen:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">operator </span><span class="token keyword">fun </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html">OutputStream</a><span class="token punctuation">.</span><a href="plus-assign.html"><span class="token function">plusAssign</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">str<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1047738189%2FFunctions%2F1451126455" anchor-label="process" id="-1047738189%2FFunctions%2F1451126455" data-filterable-set=":codegen:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":codegen:dokkaHtmlPartial/main" data-filterable-set=":codegen:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="process.html"><span><span>process</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1047738189%2FFunctions%2F1451126455"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":codegen:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="process.html"><span class="token function">process</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">resolver<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.processing/Resolver///PointingToDeclaration/">Resolver</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="com.google.devtools.ksp.symbol/KSAnnotated///PointingToDeclaration/">KSAnnotated</span><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-514251065%2FProperties%2F1451126455" anchor-label="logger" id="-514251065%2FProperties%2F1451126455" data-filterable-set=":codegen:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":codegen:dokkaHtmlPartial/main" data-filterable-set=":codegen:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="logger.html"><span><span>logger</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-514251065%2FProperties%2F1451126455"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":codegen:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="logger.html">logger</a><span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.processing/KSPLogger///PointingToDeclaration/">KSPLogger</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>
+

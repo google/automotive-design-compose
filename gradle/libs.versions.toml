@@ -90,6 +90,7 @@ appauth = { module = "net.openid:appauth", version.ref = "appauth" }
 designcompose = { module = "com.android.designcompose:designcompose", version.ref = "designcompose" }
 designcompose-codegen = { module = "com.android.designcompose:codegen", version.ref = "designcompose" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
+dokka-androidPlugin = { module = "org.jetbrains.dokka:android-documentation-plugin", version.ref = "dokka"}
 grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guavaAndroid = { module = "com.google.guava:guava", version.ref = "guavaAndroid" }
@@ -113,3 +114,4 @@ ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
 strictVersionMatcher = { id = "com.google.android.gms.strict-version-matcher-plugin", version.ref = "android-gms-strictVersionMatcher" }
 versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCataLogUpdatePlugin" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versionsPlugin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka"}

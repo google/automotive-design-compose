@@ -87,4 +87,5 @@ dependencies {
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.androidx.rules)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    dokkaPlugin(libs.dokka.androidPlugin)
 }

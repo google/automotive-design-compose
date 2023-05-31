@@ -134,6 +134,10 @@ npm run build
 
 Then open the Figma Desktop app, go to **Plugins** -> **Development** -> **Import plugin from Manifest** and select the `manifest.json` file to import.
 
+### Updating Dokka documentation
+
+Run `./gradlew dokkaHtmlMultiModule --no-configuration-cache` and commit the changes.
+
 ## Get in touch
 
 - Report a bug: <https://github.com/google/automotive-design-compose/issues>

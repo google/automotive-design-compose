@@ -18,7 +18,10 @@ package designcompose.conventions.publish
 
 import org.gradle.accessors.dm.LibrariesForLibs
 
-plugins { `maven-publish` }
+plugins {
+    `maven-publish`
+    id("org.jetbrains.dokka")
+}
 
 group = "com.android.designcompose"
 

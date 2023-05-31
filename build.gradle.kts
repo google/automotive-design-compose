@@ -27,7 +27,6 @@ buildscript {
         // build scripts
         classpath(libs.kotlin.gradlePlugin)
         classpath(libs.android.gradlePlugin)
-        classpath(libs.dokka.gradlePlugin)
         classpath(libs.android.gms.strictVersionMatcher)
     }
 }
@@ -35,6 +34,7 @@ buildscript {
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
     id("designcompose.conventions.base")
+    alias(libs.plugins.dokka)
     alias(libs.plugins.versions)
     alias(libs.plugins.versionCatalogUpdate)
     alias(libs.plugins.ksp) apply false
@@ -81,3 +81,5 @@ tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
 tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtCheck") }) }
 
 tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
+
+tasks.dokkaHtmlMultiModule { outputDirectory.set(projectDir.resolve("docs/html")) }

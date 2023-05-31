@@ -1,0 +1,11 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+
+module:annotation
+com.android.designcompose.annotation
+module:codegen
+com.android.designcompose.codegen
+module:common
+com.android.designcompose.common
+module:designcompose
+com.android.designcompose

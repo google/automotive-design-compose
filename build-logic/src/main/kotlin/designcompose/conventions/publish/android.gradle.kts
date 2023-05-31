@@ -19,7 +19,6 @@ package designcompose.conventions.publish
 plugins {
     kotlin("android")
     id("com.android.library")
-    id("org.jetbrains.dokka")
     id("designcompose.conventions.publish.common")
 }
 

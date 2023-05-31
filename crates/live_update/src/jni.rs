@@ -76,7 +76,7 @@ fn jni_fetch_doc_impl(
     let convert_result: figma_import::ConvertResponse = match fetch_doc(&doc_id, request) {
         Ok(it) => it,
         Err(err) => {
-            map_err_to_exception(env, &err).expect("Failed to throw exception");
+            map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
             return Err(err);
         }
     };

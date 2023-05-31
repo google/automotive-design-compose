@@ -5,9 +5,26 @@ use log::{debug, error};
 use ureq::Error::{Status, Transport};
 use ureq::ErrorKind;
 
+fn create_new_fetch_exception<'local>(
+    env: &mut JNIEnv<'local>,
+    class_name: &str,
+    doc_id: String,
+) -> Result<JThrowable<'local>, jni::errors::Error> {
+    let doc_id_jstring = env.new_string(doc_id.to_string())?;
+    let throwable: JThrowable = env
+        .new_object(
+            format!("com/android/designcompose/{class_name}"),
+            "(Ljava/lang/String;)V",
+            &[(&doc_id_jstring).into()],
+        )?
+        .into();
+    return Ok(throwable);
+}
+
 pub fn map_err_to_exception(
     env: &mut JNIEnv,
     err: &figma_import::Error,
+    doc_id: String,
 ) -> Result<(), jni::errors::Error> {
     match err {
         NetworkError(network_error) => match network_error {
@@ -15,22 +32,9 @@ pub fn map_err_to_exception(
                 "com/android/designcompose/AccessDeniedException",
                 "Invalid Authentication Token",
             )?,
-            Status(404, resp) => {
-                let doc_id = resp
-                    .get_url()
-                    .split("/")
-                    .skip_while(|x| !x.eq(&"file"))
-                    .next()
-                    .unwrap_or("Unknown");
-                error!("Got doc_id {doc_id}");
-                let doc_id_jstring = env.new_string(doc_id.to_string())?;
-                let exception: JThrowable = env
-                    .new_object(
-                        "com/android/designcompose/DocumentNotFoundException",
-                        "(Ljava/lang/String;)V",
-                        &[(&doc_id_jstring).into()],
-                    )?
-                    .into();
+            Status(404, _) => {
+                let exception =
+                    create_new_fetch_exception(env, "DocumentNotFoundException", doc_id)?;
                 env.throw(exception)?
             }
             Status(code, response) => env.throw_new(

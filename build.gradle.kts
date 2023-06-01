@@ -16,6 +16,7 @@
 
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.ncorti.ktfmt.gradle.tasks.KtfmtFormatTask
+import org.jetbrains.dokka.gradle.DokkaTask
 
 buildscript {
     repositories {
@@ -82,4 +83,5 @@ tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfm
 
 tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
 
-tasks.dokkaGfmMultiModule { outputDirectory.set(projectDir.resolve("docs/dokka")) }
+tasks.withType<DokkaTask>
+{ outputDirectory.set(projectDir.resolve("docs/dokka")) }

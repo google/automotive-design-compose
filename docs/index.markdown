@@ -22,14 +22,6 @@ DesignCompose library, an interactive tutorial app (in reference-apps/Tutorial),
 and a sample customizable Media Center for Android Automotive OS (in
 reference-apps/aaos-unbundled).
 
-See our video from the Google Automotive Partner Bootcamp for an overview and
-demonstration:
-
-<iframe src="https://drive.google.com/file/d/1puw7GPaLD5y43LGx8UW-D9pZOfISkYwV/preview" width="640" height="360" allow="autoplay"></iframe>
-
-Important: This video is protected by Google under NDAs with your organization.
-If the video doesn't start, get in touch with your Google point of contact.
-
 ## Impact on the design development flow {:#impact}
 
 A primary goal of DesignCompose is to improve the design and development of user

@@ -4,13 +4,23 @@
   "description": "Preview dynamic content in custom layout lists",
   "main": "code.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "webpack",
+    "watch": "npm run build -- --watch"
   },
   "author": "",
   "license": "",
   "devDependencies": {
     "@figma/plugin-typings": "^1.54.1",
     "@figma/widget-typings": "*",
-    "typescript": "*"
+    "css-loader": "^6.8.1",
+    "html-inline-css-webpack-plugin": "^1.11.1",
+    "html-loader": "^4.2.0",
+    "html-webpack-plugin": "^5.5.1",
+    "mini-css-extract-plugin": "^2.7.6",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.4.3",
+    "typescript": "^5.0.4",
+    "webpack": "^5.84.1",
+    "webpack-cli": "^5.1.1"
   }
 }

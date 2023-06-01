@@ -147,8 +147,9 @@ function clippyCheckUnusedKeywords(
   function findKeywordsRecurse(node: BaseNode, keywords: Set<String>, found: Map<String, number>) {
     if (!node) return;
     if (keywords.has(node.name)) {
-      if (found.has(node.name)) {
-        found.set(node.name, found.get(node.name) + 1);
+      const num = found.get(node.name)
+      if (num) {
+        found.set(node.name, num + 1);
       } else {
         found.set(node.name, 1);
       }
@@ -166,15 +167,17 @@ function clippyCheckUnusedKeywords(
     let component = topLevelComponentDefns.get(nodeName);
     // Skip root frames because customizations within a root frame are often passed down to
     // customized children, so they don't show up in the root node of Figma.
-    if (component.isRoot)
+    if (!component || component.isRoot)
       continue;
     let keywords: Set<string> = new Set();
     component.customizations.forEach( c => {
-      if (DesignCustomizationKind[c.kind] != DesignCustomizationKind.VariantProperty)
+      if (c.kind != DesignCustomizationKind.VariantProperty)
         keywords.add(c.node);
     });
     if (topLevelComponents.has(nodeName)) {
       let components = topLevelComponents.get(nodeName);
+      if (!components)
+        continue;
       let componentSet = components.find(node => node.type == "COMPONENT_SET");
       components.forEach(node => {
         // If there are multiple components with the same name and at least one is a COMPONENT_SET,
@@ -215,7 +218,7 @@ function clippyCheckKeywords(
   for (const topLevelComponentName of topLevelComponentDefns.keys()) {
     if (topLevelComponents.has(topLevelComponentName)) {
       let components = topLevelComponents.get(topLevelComponentName);
-      if (components.length > 1) {
+      if (components && components.length > 1) {
         // 3. Warn for duplicated top level keywords
         // If there's one node that's a COMPONENT or COMPONENT_SET, and everything else is
         // a FRAME or INSTANCE then that's fine because the service scores the components higher.
@@ -275,20 +278,22 @@ function clippyCheckVariants(
     let component = topLevelComponentDefns.get(nodeName);
     // Skip root frames because customizations within a root frame are often passed down to
     // customized children, so they don't show up in the root node of Figma.
-    if (component.isRoot)
+    if (!component || component.isRoot)
       continue;
 
     // `variants` maps a property name to variant names within a node
     let variants: Map<string, Set<string>> = new Map();
     component.customizations.forEach( c => {
-      if (DesignCustomizationKind[c.kind] == DesignCustomizationKind.VariantProperty) {
+      if (c.kind == DesignCustomizationKind.VariantProperty) {
         let customizationVariant = c as DesignCustomizationVariantProperty
         if (!variants.has(c.node)) {
           variants.set(c.node, new Set());
         }
         let variantNames = variants.get(c.node);
-        for (const variantName of customizationVariant.values)
-          variantNames.add(variantName);
+        if (variantNames) {
+          for (const variantName of customizationVariant.values)
+            variantNames.add(variantName);
+        }
       }
     });
 
@@ -358,7 +363,7 @@ function clipyCheckTypeMismatches(
       //   - If text customization is not on a text node
       //   - If content replacement customization is not on a frame node
       //   - If image customization is not on a frame node
-      var kind = DesignCustomizationKind[customization.kind];
+      var kind = customization.kind;
       switch (kind) {
         case DesignCustomizationKind.Text:
         case DesignCustomizationKind.TextStyle:
@@ -450,8 +455,9 @@ function clippy(json: DesignDocSpec): ClippyWarning[] {
     if (!node) return;
     if (topLevelComponentDefns.has(node.name)) {
       // Store this ref in our list of topLevelComponents.
-      if (topLevelComponents.has(node.name)) {
-        topLevelComponents.get(node.name).push(node);
+      let list = topLevelComponents.get(node.name)
+      if (list) {
+        list.push(node);
       } else {
         topLevelComponents.set(node.name, [node]);
       }
@@ -489,14 +495,16 @@ function clippyRefresh() {
   // Get the json plugin data from our root node
   let clippyFile = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json-file');
   let clippyData = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json');
+  /*
   var reviver = function(key, value) {
     return value;
   };
+  */
 
   var errors = null;
   try {
     // Parse the string into a JSON tree
-    let json = JSON.parse(clippyData, reviver);
+    let json = JSON.parse(clippyData);
 
     // Check for errors
     errors = clippy(json);
@@ -507,21 +515,24 @@ function clippyRefresh() {
   figma.ui.postMessage({ msg: 'clippy', errors, clippyFile });
 }
 
-function loadClippy(): DesignDocSpec {
+function loadClippy(): DesignDocSpec | null {
   // Get the json plugin data from our root node
   let clippyData = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json');
   if (!clippyData)
     return null;
 
+    /*
   var reviver = function(key, value) {
     return value;
   };
+  */
 
   try {
-    return JSON.parse(clippyData, reviver);
+    return JSON.parse(clippyData);
   } catch(e) {
     console.log("Error parsing clippy JSON: " + e);
   }
+  return null;
 }
 
 // If we were invoked with the "sync" command then run our sync logic and quit.
@@ -707,12 +718,93 @@ else if (figma.command === "move-plugin-data") {
     ]
   }
 
+  function deltaTransformPoint(transform: Transform, point: Vector)  {
+    var x = point.x * transform[0][0] + point.y * transform[0][1];
+    var y = point.x * transform[1][0] + point.y * transform[1][1];
+    return { x, y };
+  }
+
+  // Hypotenuse of right triangle with sides x and y
+  function hypot(x: number, y: number): number {
+    return Math.sqrt(x * x + y * y)
+  }
+
+  function decomposeTransform(t: Transform) {
+    let result: any = {};
+    let row0x = t[0][0];
+    let row0y = t[0][1];
+    let row1x = t[1][0];
+    let row1y = t[1][1];
+    result.translateX = t[0][2];
+    result.translateY = t[1][2];
+
+    // Compute scaling factors.
+    result.scaleX = hypot(row0x, row0y)
+    result.scaleY = hypot(row1x, row1y)
+
+    // If determinant is negative, one axis was flipped.
+    const determinant = row0x * row1y - row0y * row1x
+    if (determinant < 0) {
+        // Flip axis with minimum unit vector dot product.
+        if (row0x < row1y) result.scaleX = -result.scaleX 
+        else result.scaleY = -result.scaleY
+    }
+
+    // Renormalize matrix to remove scale.
+    if (result.scaleX != 1) {
+        row0x *= 1 / result.scaleX
+        row0y *= 1 / result.scaleX
+    }
+    if (result.scaleY != 1) {
+        row1x *= 1 / result.scaleY
+        row1y *= 1 / result.scaleY
+    }
+
+    // Compute rotation and renormalize matrix.
+    result.angle = Math.atan2(row0y, row0x)
+
+    if (result.angle != 0) {
+        // Rotate(-angle) = [cos(angle), sin(angle), -sin(angle), cos(angle)]
+        //                = [row0x, -row0y, row0y, row0x]
+        // Thanks to the normalization above.
+        const sn = -row0y
+        const cs = row0x
+        const m11 = row0x
+        const m12 = row0y
+        const m21 = row1x
+        const m22 = row1y
+
+        row0x = cs * m11 + sn * m21
+        row0y = cs * m12 + sn * m22
+        row1x = -sn * m11 + cs * m21
+        row1y = -sn * m12 + cs * m22
+    }
+
+    result.m11 = row0x
+    result.m12 = row0y
+    result.m21 = row1x
+    result.m22 = row1y
+
+    // Convert into degrees because our rotation functions expect it.
+    result.angle = radiansToDegrees(result.angle);
+
+    // calculate delta transform point
+    const px = deltaTransformPoint(t, { x: 0, y: 1 });
+    const py = deltaTransformPoint(t, { x: 1, y: 0 });
+
+    // calculate skew
+    result.skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
+    result.skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
+
+    return result
+  }
+
   function getMeterData(node: SceneNode) {
     let meterDataStr = node.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-meter-data');
     return (meterDataStr && meterDataStr.length) ? JSON.parse(meterDataStr) : {};
   }
 
-  function saveMeterData(meterData) {
+  function saveMeterData(meterData: any) {
     let node = figma.currentPage.selection[0];
     node.setSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-meter-data', JSON.stringify(meterData));
   }
@@ -741,18 +833,26 @@ else if (figma.command === "move-plugin-data") {
     rotation = (node as FrameNode).rotation;
 
     if (node.type == "FRAME" || node.type == "RECTANGLE") {
-      if (meterData && meterData.progressBarData && meterData.progressBarData.vertical)
-        progress = node.height;
-      else
-        progress = node.width;
+      // Calculate current progress bar position based on node position and size
+      if (meterData.progressMarkerData) {
+        const { startX = 0, endX = 0 } = meterData.progressMarkerData;
+        progress = (node.x - startX) / (endX - startX) * 100;
+      } else if (meterData.progressBarData) {
+        const { endX = 0 } = meterData.progressBarData;
+        progress = node.width / endX * 100;
+      }
     }
 
     // If we just selected a node with arc data, save the corner radius if it has changed
     saveArcCornerRadius();
 
+    let parent = node.parent as FrameNode;
+
     figma.ui.postMessage({
       msg: 'meters-selection',
       nodeType: node.type,
+      parentType: parent.type,
+      parentSize: { width: parent.width, height: parent.height },
       meterData,
       ellipseAngle,
       rotation,
@@ -872,33 +972,90 @@ else if (figma.command === "move-plugin-data") {
     saveMeterData(meterData);
   }
 
-  function barChanged(msg: any) {
-    let start = clamp(msg.start, 0.01, msg.end);
-    let end = clamp(msg.end, 0.01, msg.end);
-    let value = percentToValue(msg.value, start, end);
+  function flipRect(r: Rect): Rect {
+    return {
+      x: r.x,
+      y: r.y,
+      width: r.height,
+      height: r.width
+    }
+  }
+
+  function progressChanged(msg: any, progressMarker: boolean) {
+    const node = figma.currentPage.selection[0] as FrameNode;
+
+    // Use the parent of the progress bar to determine the extents to which the
+    // progress bar moves.
+    // Rotate bounding boxes if parent is rotated; we only support 90 degree rotations
+    const parent = node.parent as FrameNode;
+    let nodeBB = node.absoluteBoundingBox;
+    let parentBB = parent.absoluteBoundingBox;
+    if (!nodeBB)
+      nodeBB = { x: 0, y: 0, width: 0, height: 0 }
+    if (!parentBB)
+      parentBB = { x: 0, y: 0, width: 0, height: 0 }
+    if (Math.abs(parent.rotation) == 90) {
+      nodeBB = flipRect(nodeBB);
+      parentBB = flipRect(parentBB);
+    }
+
+    // Decompose the transform to obtain the skew angles, which are used to calculate
+    // offsets needed to determine the amount that a skewed progress bar moves.
+    const decomposed = decomposeTransform(node.relativeTransform);
+    const skewX = node.height * Math.abs(Math.sin(degreesToRadians(decomposed.skewX)));
+    const skewY = node.width * Math.abs(Math.sin(degreesToRadians(decomposed.skewY)));
+
+    // Calculate the progress bar value if discrete values are specified
+    let value = msg.value;
     if (msg.discrete)
-      value = clamp(value - (value % msg.discreteValue), 0.01, msg.end);
+      value = clamp(value - (value % msg.discreteValue), 0, 100);
 
-    let node = figma.currentPage.selection[0] as FrameNode;
-    if (msg.vertical) {
-      node.resize(node.width, value);
-      node.y = msg.end - value;
-    }
-    else {
-      node.resize(value, node.height);
-    }
-
-    let progressBarData = {
+    let barData: any = {
       enabled: msg.enabled,
-      start: msg.start,
-      end: msg.end,
       discrete: msg.discrete,
       discreteValue: msg.discreteValue,
-      vertical: msg.vertical,
+    }
+    
+    let meterData: any = {};
+    if (progressMarker) {
+      // The progress marker means we don't resize the node; we just move it along an axis
+      // within the parent frame. We calculate this axis by taking the difference between
+      // the parent bounding box and our bounding box, offseting by the skew of this node.
+      const parentWidth = parentBB ? parentBB.width : 0;
+      const parentHeight = parentBB ? parentBB.height : 0;
+      const startX = skewX;
+      const startY = parentBB.height - nodeBB.height + skewY;
+      const endX = parentBB.width - nodeBB.width + skewX;
+      const endY = skewY; 
+      let moveX = percentToValue(value, startX, endX);
+      let moveY = percentToValue(value, startY, endY);
+      node.x = moveX;
+      node.y = moveY;
+
+      barData.startX = startX;
+      barData.startY = startY;
+      barData.endX = endX;
+      barData.endY = endY;
+      meterData.progressMarkerData = barData;
+    }
+    else {
+      // Normal progress bar mode means we resize the progress bar between a width of 0.01
+      // and a max size that we calculate based on the hypotenuse of our parent's bounding
+      // box, adjusted by our own size and the skew. We currently only support progress bars
+      // that are either X or Y axis aligned -- that is, either the left is parallel with the
+      // Y axis or the top is parallel with the X axis.
+      let boundsWidth = parentBB.width - skewX;
+      let boundsHeight = parentBB.height;
+      if (Math.abs(node.rotation) < 45)
+        boundsHeight -= node.height;
+      let boundsMax = hypot(boundsWidth, boundsHeight);
+      let width = percentToValue(value, 0.01, boundsMax); // Min size must be at least 0.01
+      node.resize(width, node.height);
+
+      barData.endX = boundsMax;
+      meterData.progressBarData = barData;
     }
 
-    let meterData: any = {};
-    meterData.progressBarData = progressBarData;
     saveMeterData(meterData);
   }
 
@@ -912,7 +1069,9 @@ else if (figma.command === "move-plugin-data") {
     } else if (msg.msg == 'rotation-changed') {
       rotationChanged(msg);
     } else if (msg.msg == 'bar-changed') {
-      barChanged(msg);
+      progressChanged(msg, false);
+    } else if (msg.msg == 'marker-changed') {
+      progressChanged(msg, true);
     }
   }
 } else if (figma.command === "clippy") {

@@ -13,6 +13,7 @@ node_modules
 # Output of npm build
 /support-figma/*/code.js
 /support-figma/*/dist
+_site
 
 # Cache dirs
 .gradle

@@ -16,8 +16,6 @@
 
 package com.android.designcompose.common
 
-import java.lang.Exception
-
 const val TAG = "DesignCompose"
 
 enum class FeedbackLevel {

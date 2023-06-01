@@ -19,12 +19,12 @@ package com.android.designcompose
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.common.DocumentServerParams
 import io.mockk.mockkObject
+import java.lang.RuntimeException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import java.lang.RuntimeException
 
 const val smallDocID = "pxVlixodJqZL95zo2RzTHl" // HelloWorld Doc
 const val largeDocID = "RfGl9SWnBEvdg8T1Ex6ZAR" // Battleship Doc
@@ -65,16 +65,16 @@ class JniLiveWithTokenTests {
     }
 
     @Test
-    fun smallFetch(){
+    fun smallFetch() {
         testFetch(smallDocID)
     }
     @Test
-    fun largeFetch(){
+    fun largeFetch() {
         testFetch(largeDocID)
     }
     // Currently failing due to #98
     @Test(expected = RuntimeException::class)
-    fun veryLargeFetch(){
+    fun veryLargeFetch() {
         testFetch(veryLargeDocID)
     }
 }

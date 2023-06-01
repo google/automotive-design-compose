@@ -39,6 +39,8 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.lang.ref.WeakReference
+import java.net.ConnectException
+import java.net.SocketException
 import java.util.Optional
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
@@ -49,8 +51,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.net.ConnectException
-import java.net.SocketException
 
 internal const val TAG = "DesignCompose"
 
@@ -327,18 +327,20 @@ internal fun DocServer.fetchDocuments(
             } else {
                 Feedback.documentUnchanged(id)
             }
-
         } catch (exception: Exception) {
-            val msg = when(exception) {
-                is AccessDeniedException -> "Invalid Token"
-                is FigmaFileNotFoundException -> "File ID not found"
-                is RateLimitedException -> "Too many requests to Figma.com"
-                is InternalFigmaErrorException -> "Figma.com internal error"
-                is FetchException -> "Unknown Fetch Error"
-                is ConnectException -> "Connection Error"
-                is SocketException -> "Connection Error"
-                else -> {"Unhandled ${exception.javaClass}"}
-            }
+            val msg =
+                when (exception) {
+                    is AccessDeniedException -> "Invalid Token"
+                    is FigmaFileNotFoundException -> "File ID not found"
+                    is RateLimitedException -> "Too many requests to Figma.com"
+                    is InternalFigmaErrorException -> "Figma.com internal error"
+                    is FetchException -> "Unknown Fetch Error"
+                    is ConnectException -> "Connection Error"
+                    is SocketException -> "Connection Error"
+                    else -> {
+                        "Unhandled ${exception.javaClass}"
+                    }
+                }
             if (DocumentSwitcher.isNotOriginalDocId(id)) {
                 Feedback.documentUpdateErrorRevert(id, msg)
                 DocumentSwitcher.revertToOriginal(id)

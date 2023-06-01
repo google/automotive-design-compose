@@ -1,9 +1,8 @@
 package com.android.designcompose
 
-open class NetworkException: RuntimeException()
-class ConnectionFailedException: NetworkException()
-class AccessDeniedException: RuntimeException()
+open class FetchException():RuntimeException()
+class AccessDeniedException: FetchException()
+class FigmaFileNotFoundException() : FetchException()
 
-open class FetchException(val docID: String): RuntimeException()
-class DocumentNotFoundException(docID: String) : FetchException(docID)
-
+class RateLimitedException(): FetchException()
+class InternalFigmaErrorException(): FetchException()

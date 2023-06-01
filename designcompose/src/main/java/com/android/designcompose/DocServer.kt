@@ -49,6 +49,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.net.ConnectException
+import java.net.SocketException
 
 internal const val TAG = "DesignCompose"
 
@@ -325,14 +327,23 @@ internal fun DocServer.fetchDocuments(
             } else {
                 Feedback.documentUnchanged(id)
             }
-            // TODO: expand exception handling. Need to have the
-            // JNI raise descriptive exceptions.
+
         } catch (exception: Exception) {
+            val msg = when(exception) {
+                is AccessDeniedException -> "Invalid Token"
+                is FigmaFileNotFoundException -> "File ID not found"
+                is RateLimitedException -> "Too many requests to Figma.com"
+                is InternalFigmaErrorException -> "Figma.com internal error"
+                is FetchException -> "Unknown Fetch Error"
+                is ConnectException -> "Connection Error"
+                is SocketException -> "Connection Error"
+                else -> {"Unhandled ${exception.javaClass}"}
+            }
             if (DocumentSwitcher.isNotOriginalDocId(id)) {
-                Feedback.documentUpdateErrorRevert(id, exception)
+                Feedback.documentUpdateErrorRevert(id, msg)
                 DocumentSwitcher.revertToOriginal(id)
             } else {
-                Feedback.documentUpdateError(id, exception)
+                Feedback.documentUpdateError(id, msg)
             }
         }
     }

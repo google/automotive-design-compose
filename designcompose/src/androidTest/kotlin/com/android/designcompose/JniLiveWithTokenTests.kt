@@ -24,9 +24,11 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import org.junit.Before
 import org.junit.Test
+import java.lang.RuntimeException
 
 const val smallDocID = "pxVlixodJqZL95zo2RzTHl" // HelloWorld Doc
 const val largeDocID = "RfGl9SWnBEvdg8T1Ex6ZAR" // Battleship Doc
+const val veryLargeDocID = "KKvsSWtfwRYxYibnaVKBQK" // Cluster Doc
 /**
  * Jni fetch tests
  *
@@ -45,33 +47,34 @@ class JniLiveWithTokenTests {
 
         mockkObject(Feedback)
     }
+
     @Test
-    fun fetchSmallDoc() {
-        with(LiveUpdateJni.fetchDocBytes(smallDocID, firstFetchJson)) {
-            assertNotNull(this)
-            val decodedDoc = decodeServerDoc(this, null, smallDocID, null, Feedback)
-            assertNotNull(decodedDoc)
-            assertEquals(decodedDoc.c.docId, smallDocID)
+    fun invalidDocId() {
+        assertFailsWith<FigmaFileNotFoundException> {
+            LiveUpdateJni.jniFetchDoc("InvalidDocID", firstFetchJson)
         }
     }
-    @Test
-    fun fetchLargeDoc() {
-        with(LiveUpdateJni.fetchDocBytes(largeDocID, firstFetchJson)) {
+
+    private fun testFetch(docID: String) {
+        with(LiveUpdateJni.fetchDocBytes(docID, firstFetchJson)) {
             assertNotNull(this)
-            val decodedDoc = decodeServerDoc(this, null, largeDocID, null, Feedback)
+            val decodedDoc = decodeServerDoc(this, null, docID, null, Feedback)
             assertNotNull(decodedDoc)
-            assertEquals(decodedDoc.c.docId, largeDocID)
+            assertEquals(decodedDoc.c.docId, docID)
         }
     }
 
     @Test
-    fun invalidDocId() {
-        with(
-            assertFailsWith<DocumentNotFoundException> {
-                LiveUpdateJni.jniFetchDoc("InvalidDocID", firstFetchJson)
-            }
-        ) {
-            assertEquals(docID, "InvalidDocID")
-        }
+    fun smallFetch(){
+        testFetch(smallDocID)
+    }
+    @Test
+    fun largeFetch(){
+        testFetch(largeDocID)
+    }
+    // Currently failing due to #98
+    @Test(expected = RuntimeException::class)
+    fun veryLargeFetch(){
+        testFetch(veryLargeDocID)
     }
 }

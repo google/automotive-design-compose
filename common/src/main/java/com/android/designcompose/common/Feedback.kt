@@ -108,33 +108,15 @@ abstract class FeedbackImpl {
         setStatus("Live update for $truncatedId warning: $msg", FeedbackLevel.Warn, docId)
     }
 
-    fun documentUpdateError(docId: String, exception: Exception) {
+    fun documentUpdateError(docId: String, msg: String) {
         val truncatedId = shortDocId(docId)
-        setStatus("Live update for $truncatedId failed with $exception", FeedbackLevel.Error, docId)
+        setStatus("Live update for $truncatedId failed: $msg", FeedbackLevel.Error, docId)
     }
 
-    fun documentUpdateError(docId: String, url: String, exception: Exception) {
+    fun documentUpdateErrorRevert(docId: String, msg: String) {
         val truncatedId = shortDocId(docId)
         setStatus(
-            "Live update for $truncatedId failed with $exception for url $url",
-            FeedbackLevel.Error,
-            docId
-        )
-    }
-
-    fun documentUpdateError(docId: String, code: Int, errorMessage: String?) {
-        val truncatedId = shortDocId(docId)
-        setStatus(
-            "Live update for $truncatedId failed with server code $code, error: $errorMessage",
-            FeedbackLevel.Error,
-            docId
-        )
-    }
-
-    fun documentUpdateErrorRevert(docId: String, exception: Exception) {
-        val truncatedId = shortDocId(docId)
-        setStatus(
-            "Live update for $truncatedId failed with error: $exception, reverting to original doc ID",
+            "Live update for $truncatedId failed: $msg, reverting to original doc ID",
             FeedbackLevel.Error,
             docId
         )

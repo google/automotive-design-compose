@@ -34,8 +34,9 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         consumerProguardFiles("consumer-proguard-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =
-            System.getenv("FIGMA_ACCESS_TOKEN")
+        System.getenv("FIGMA_ACCESS_TOKEN")?.let {
+            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] = it
+        }
     }
 
     buildFeatures { compose = true }

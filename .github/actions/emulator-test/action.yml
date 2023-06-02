@@ -1,0 +1,62 @@
+name: Android Emulator tests
+description: Runs Android Instrumented tests. Should be run on MacOS runners
+# See: https://github.com/ReactiveCircus/android-emulator-runner#github-action---android-emulator-runner
+
+inputs:
+  api-level:
+    description: 'The version of Android emulator API to test with.'
+    required: true
+  arch:
+    description: 'The architecture to build and test with'
+    required: true
+  test-cmd:
+    description: 'The command that will run the test'
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Java
+      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+      with:
+        distribution: "temurin"
+        java-version: "17"
+
+    - name: Install Rust toolchains
+      run: ./install-rust-toolchains.sh
+      shell: bash
+
+    - name: Gradle cache
+      uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+
+    - name: AVD cache
+      uses: actions/cache@v3
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-${{ inputs.arch }}-${{ inputs.api-level }}
+
+    - name: create AVD and generate snapshot for caching
+      if: steps.avd-cache.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ inputs.api-level }}
+        arch: ${{ inputs.arch }}
+        force-avd-creation: false
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: false
+        script: echo "Generated AVD snapshot for caching."
+
+    - name: run tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ inputs.api-level }}
+        arch: ${{ inputs.arch }}
+        force-avd-creation: false
+        ndk: 25.2.9519653
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: ${{ inputs.test-cmd }}

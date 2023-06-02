@@ -33,10 +33,7 @@ class JniNoNetworkTests {
     fun setup() {
         InstrumentationRegistry.getInstrumentation()
             .uiAutomation
-            .executeShellCommand("svc wifi disable")
-        InstrumentationRegistry.getInstrumentation()
-            .uiAutomation
-            .executeShellCommand("svc data disable")
+            .executeShellCommand("cmd connectivity airplane-mode enable")
     }
     @Test
     fun networkFailure() {
@@ -56,9 +53,6 @@ class JniNoNetworkTests {
     fun teardown() {
         InstrumentationRegistry.getInstrumentation()
             .uiAutomation
-            .executeShellCommand("svc wifi enable")
-        InstrumentationRegistry.getInstrumentation()
-            .uiAutomation
-            .executeShellCommand("svc data enable")
+            .executeShellCommand("cmd connectivity airplane-mode disable")
     }
 }

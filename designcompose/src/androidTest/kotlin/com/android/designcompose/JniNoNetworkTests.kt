@@ -27,6 +27,7 @@ import org.hamcrest.core.IsInstanceOf
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.lang.Thread.sleep
 
 class JniNoNetworkTests {
     @Before
@@ -34,6 +35,8 @@ class JniNoNetworkTests {
         InstrumentationRegistry.getInstrumentation()
             .uiAutomation
             .executeShellCommand("cmd connectivity airplane-mode enable")
+        // Add a sleep to make sure the connection goes down.
+        sleep(250)
     }
     @Test
     fun networkFailure() {

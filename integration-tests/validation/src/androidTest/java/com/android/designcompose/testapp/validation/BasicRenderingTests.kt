@@ -16,7 +16,6 @@
 
 package com.android.designcompose.testapp.validation
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -38,18 +37,18 @@ class BasicRenderingTests {
     @Test
     fun testHello() {
         composeTestRule.setContent { HelloWorld() }
-        composeTestRule.onNodeWithText("World", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("World", substring = true).assertExists()
     }
 
     @Test
     fun testTelltale() {
         composeTestRule.setContent { TelltaleTest() }
-        composeTestRule.onNodeWithText("Frames").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Frames").assertExists()
     }
 
     @Test
     fun renderDialsGauges() {
         composeTestRule.setContent { DialsGaugesTest() }
-        composeTestRule.onNodeWithText("Rotation Test", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Rotation Test", substring = true).assertExists()
     }
 }

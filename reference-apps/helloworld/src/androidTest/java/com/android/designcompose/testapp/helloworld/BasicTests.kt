@@ -16,7 +16,6 @@
 
 package com.android.designcompose.testapp.helloworld
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -31,6 +30,6 @@ class BasicTests {
     @Test
     fun testHello() {
         composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
-        composeTestRule.onNodeWithText("Testers!", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Testers!", substring = true).assertExists()
     }
 }

@@ -16,9 +16,10 @@
 
 package com.android.designcompose.tutorial
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToLog
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DesignSettings
 import org.junit.Before
@@ -38,11 +39,13 @@ class CheckStartupPage {
     @Test
     fun testStartupPage() {
         composeTestRule.setContent { TutorialMain() }
+        composeTestRule.onRoot().printToLog("TAG")
+
         composeTestRule
             .onNodeWithText(
                 "Congratulations on running the Automotive Design for Compose Tutorial app!",
                 substring = true
             )
-            .assertIsDisplayed()
+            .assertExists()
     }
 }

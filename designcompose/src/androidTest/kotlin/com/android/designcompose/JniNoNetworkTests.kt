@@ -41,10 +41,16 @@ class JniNoNetworkTests {
                 getSystemService(instrumentation.context, ConnectivityManager::class.java)
             )
 
+        // Disable the network by enabling airplane mode
         instrumentation.uiAutomation.executeShellCommand("cmd connectivity airplane-mode enable")
+
+        // Wait until the network is disabled
         val startTime = SystemClock.elapsedRealtime()
-        while (!connectivityManager.isDefaultNetworkActive) {
-            assertThat("Network is disabled", SystemClock.elapsedRealtime() - startTime < 2000)
+        while (connectivityManager.isDefaultNetworkActive) {
+            assertThat(
+                "Network shut down before timeout",
+                SystemClock.elapsedRealtime() - startTime < 2000
+            )
             SystemClock.sleep(100)
         }
     }

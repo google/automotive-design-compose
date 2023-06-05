@@ -101,18 +101,6 @@ jobs:
         with:
           arguments: check
 
-  sdk-emulator-tests:
-    runs-on: macos-latest # Emulators run best on MacOS
-    strategy:
-      matrix:
-        arch: [x86_64]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/emulator-test
-        with:
-          api-level: 30
-          arch: ${{ matrix.arch }}
-          test-cmd: ./gradlew connectedCheck -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 
   sdk-emulator-atd-test:
     runs-on: macos-latest # Emulators run best on MacOS

@@ -1,0 +1,59 @@
+
+name: Nightly
+
+on: 
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
+jobs:
+  rust-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        release: [stable, nightly]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: rustup toolchain ${{ matrix.release }} stable --profile minimal
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
+        with: 
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build all
+        run: cargo build --all-targets --all-features
+      - name: Test all
+        run: cargo test --all-targets --all-features
+
+  sdk-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        gradle_release: [wrapper, nightly]
+    runs-on: ${{ matrix.os }}  
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: ./.github/actions/prepare-build-env 
+        with:
+          rust: "true"
+      - name: Gradle Check
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          gradle-version: ${{matrix.gradle_release}}
+          arguments: check
+
+  sdk-emulator-tests:
+    runs-on: macos-latest # Emulators run best on MacOS
+    strategy:
+      matrix:
+        arch: [x86_64, arm64-v8]
+        api-level: [30, 31, UpsideDownCake]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/emulator-test
+        with:
+          api-level: ${{matrix.api-level}}
+          arch: ${{ matrix.arch }}
+          test-cmd: ./gradlew connectedCheck -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+        

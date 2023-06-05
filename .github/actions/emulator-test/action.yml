@@ -23,6 +23,10 @@ inputs:
   arch:
     description: 'The architecture to build and test with'
     required: true
+  target:
+    description: 'The target image to use'
+    required: false
+    default: "default"
   test-cmd:
     description: 'The command that will run the test'
 
@@ -49,8 +53,9 @@ runs:
       with:
         api-level: ${{ inputs.api-level }}
         arch: ${{ inputs.arch }}
-        force-avd-creation: false
+        target: ${{ inputs.target}}
         profile: Nexus 10
+        force-avd-creation: false
         emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         disable-animations: false
         script: echo "Generated AVD snapshot for caching."
@@ -60,6 +65,8 @@ runs:
       with:
         api-level: ${{ inputs.api-level }}
         arch: ${{ inputs.arch }}
+        target: ${{ inputs.target}}
+        profile: Nexus 10
         force-avd-creation: false
         ndk: 25.2.9519653
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none

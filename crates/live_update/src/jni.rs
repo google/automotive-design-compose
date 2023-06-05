@@ -15,60 +15,73 @@
 use std::ffi::c_void;
 
 use android_logger::Config;
-use figma_import::{fetch_doc, ConvertRequest, Error};
+use jni::objects::{JByteArray, JObject};
 use jni::objects::{JClass, JString};
-use jni::sys::{jbyteArray, jint, JNI_VERSION_1_6};
+use jni::sys::{jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 use log::error;
 use log::LevelFilter;
 
-fn throw_basic_exception(env: JNIEnv, msg: String) {
+use figma_import::{fetch_doc, ConvertRequest};
+
+use crate::error_map::map_err_to_exception;
+
+fn throw_basic_exception(env: &mut JNIEnv, msg: String) {
     //An error occurring while trying to throw an exception shouldn't happen, but let's at least panic with a decent error message
     env.throw(msg).expect("Error while trying to throw Exception");
 }
 
-fn jni_fetch_doc(
-    env: JNIEnv,
+fn jni_fetch_doc<'local>(
+    mut env: JNIEnv<'local>,
     _class: JClass,
     jdoc_id: JString,
     jrequest_json: JString,
-) -> jbyteArray {
-    let doc_id: String = match env.get_string(jdoc_id) {
+) -> JByteArray<'local> {
+    let doc_id: String = match env.get_string(&jdoc_id) {
         Ok(it) => it.into(),
         Err(_) => {
-            throw_basic_exception(env, "Internal JNI Error".to_string());
-            return std::ptr::null_mut();
+            throw_basic_exception(&mut env, "Internal JNI Error".to_string());
+            return JObject::null().into();
         }
     };
 
-    let request_json: String = match env.get_string(jrequest_json) {
+    let request_json: String = match env.get_string(&jrequest_json) {
         Ok(it) => it.into(),
         Err(_) => {
-            throw_basic_exception(env, "Internal JNI Error".to_string());
-            return std::ptr::null_mut();
+            throw_basic_exception(&mut env, "Internal JNI Error".to_string());
+            return JObject::null().into();
         }
     };
 
-    let ser_result = match jni_fetch_doc_impl(doc_id, request_json) {
+    let ser_result = match jni_fetch_doc_impl(&mut env, doc_id, request_json) {
         Ok(it) => it,
-        Err(err) => {
-            // TODO: Throw more specific exceptions
-            throw_basic_exception(env, format!("Failure to fetch doc: {:?}", err));
-            return std::ptr::null_mut();
+        Err(_err) => {
+            return JObject::null().into();
         }
     };
 
     env.byte_array_from_slice(&ser_result).unwrap_or_else(|_| {
-        throw_basic_exception(env, "Internal JNI Error".to_string());
-        std::ptr::null_mut()
+        throw_basic_exception(&mut env, "Internal JNI Error".to_string());
+        JObject::null().into()
     })
 }
 
-fn jni_fetch_doc_impl(doc_id: String, request_json: String) -> Result<Vec<u8>, Error> {
+fn jni_fetch_doc_impl(
+    env: &mut JNIEnv,
+    doc_id: String,
+    request_json: String,
+) -> Result<Vec<u8>, figma_import::Error> {
     let request: ConvertRequest = serde_json::from_str(&request_json)?;
-    let conv_resp: figma_import::ConvertResponse = fetch_doc(&doc_id, request)?;
 
-    bincode::serialize(&conv_resp).map_err(|e| e.into())
+    let convert_result: figma_import::ConvertResponse = match fetch_doc(&doc_id, request) {
+        Ok(it) => it,
+        Err(err) => {
+            map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
+            return Err(err);
+        }
+    };
+
+    bincode::serialize(&convert_result).map_err(|e| e.into())
 }
 
 #[allow(non_snake_case)]
@@ -79,7 +92,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
         Config::default().with_tag("LiveUpdateJNI").with_max_level(LevelFilter::Info),
     );
 
-    let env = vm.get_env().expect("Cannot get reference to the JNIEnv");
+    let mut env = vm.get_env().expect("Cannot get reference to the JNIEnv");
 
     let cls = env
         .find_class("com/android/designcompose/LiveUpdateJni")

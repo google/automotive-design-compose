@@ -34,6 +34,9 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         consumerProguardFiles("consumer-proguard-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        System.getenv("FIGMA_ACCESS_TOKEN")?.let {
+            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] = it
+        }
     }
 
     buildFeatures { compose = true }
@@ -87,4 +90,5 @@ dependencies {
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.androidx.rules)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    implementation(kotlin("test"))
 }

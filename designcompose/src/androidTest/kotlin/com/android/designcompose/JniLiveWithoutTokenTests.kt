@@ -17,30 +17,21 @@
 package com.android.designcompose
 
 import com.android.designcompose.common.DocumentServerParams
-import org.junit.Assert
+import kotlin.test.assertFailsWith
 import org.junit.Test
 
-/**
- * Jni fetch tests
- *
- * These tests use the JNI Library and will reach out to Figma.com itself.
- */
-class JniFetchTests {
+val dummyFigmaTokenJson = constructPostJson("NOT_A_FIGMA_TOKEN", null, DocumentServerParams())
 
+class JniLiveWithoutTokenTests {
     /**
      * Invalid key test
      *
      * Tests that a fetch request using an invalid Figma API Key returns the proper failure
      */
-    private val requestJson = constructPostJson("NOT_A_FIG_KEY", null, DocumentServerParams())
     @Test
     fun invalidKey() {
-        try {
-            LiveUpdateJni.jniFetchDoc("DummyDocId", requestJson)
-            Assert.fail("Should have thrown an exception")
-        } catch (exception: Exception) {
-
-            Assert.assertTrue(exception.message?.contains("HttpError(Status(403") == true)
+        assertFailsWith(AccessDeniedException::class) {
+            LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson)
         }
     }
 }

@@ -278,7 +278,7 @@ impl Document {
                         match http_fetch(self.api_key.as_str(), component_url.clone()) {
                             Ok(str) => str,
                             Err(e) => {
-                                let fetch_error = if let Error::HttpError(ureq_error) = &e {
+                                let fetch_error = if let Error::NetworkError(ureq_error) = &e {
                                     if let ureq::Error::Status(code, _response) = ureq_error {
                                         format!("HTTP {} at {}", code, component_url)
                                     } else {

@@ -16,13 +16,12 @@
 
 package com.android.designcompose
 
-import org.junit.Assert
-import org.junit.Test
+open class FetchException() : RuntimeException()
 
-class HelloJniTest {
-    @Test
-    fun testHello() {
-        val output = HelloJni.hello("DesignCompose")
-        Assert.assertEquals("Hello, DesignCompose!", output)
-    }
-}
+class AccessDeniedException : FetchException()
+
+class FigmaFileNotFoundException() : FetchException()
+
+class RateLimitedException() : FetchException()
+
+class InternalFigmaErrorException() : FetchException()

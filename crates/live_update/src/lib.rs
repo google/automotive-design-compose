@@ -16,5 +16,4 @@ extern crate android_logger;
 extern crate log;
 mod jni;
 
-#[cfg(debug_assertions)]
-mod test_jni;
+mod error_map;

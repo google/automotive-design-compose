@@ -23,7 +23,7 @@ import com.novi.bincode.BincodeDeserializer
 internal object LiveUpdateJni {
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniFetchDoc(apiKey: String, requestJson: String): ByteArray
+    external fun jniFetchDoc(docId: String, requestJson: String): ByteArray
 
     fun fetchDocBytes(docId: String, requestJson: String): ByteArray? {
 

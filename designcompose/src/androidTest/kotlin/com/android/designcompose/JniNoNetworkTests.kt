@@ -43,12 +43,10 @@ class JniNoNetworkTests {
 
         instrumentation.uiAutomation.executeShellCommand("cmd connectivity airplane-mode enable")
         val startTime = SystemClock.elapsedRealtime()
-        do {
-            assertThat(
-                "We've waited less than 2 seconds",
-                SystemClock.elapsedRealtime() - startTime < 2000
-            )
-        } while (connectivityManager.isDefaultNetworkActive)
+        while (!connectivityManager.isDefaultNetworkActive) {
+            assertThat("Network is disabled", SystemClock.elapsedRealtime() - startTime < 2000)
+            SystemClock.sleep(100)
+        }
     }
     @Test
     fun networkFailure() {

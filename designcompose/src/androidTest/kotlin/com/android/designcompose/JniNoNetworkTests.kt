@@ -17,12 +17,14 @@
 package com.android.designcompose
 
 import android.net.ConnectivityManager
+import android.os.SystemClock
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketException
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.anyOf
 import org.hamcrest.core.IsInstanceOf
@@ -33,19 +35,20 @@ import org.junit.Test
 class JniNoNetworkTests {
     @Before
     fun setup() {
-        InstrumentationRegistry.getInstrumentation()
-            .uiAutomation
-            .executeShellCommand("cmd connectivity airplane-mode enable")
-        // Add a sleep to make sure the connection goes down.
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
         val connectivityManager =
-            getSystemService(
-                InstrumentationRegistry.getInstrumentation().context,
-                ConnectivityManager::class.java
+            assertNotNull(
+                getSystemService(instrumentation.context, ConnectivityManager::class.java)
             )
-        println(connectivityManager?.isDefaultNetworkActive)
-        println("Hii")
 
-        wait
+        instrumentation.uiAutomation.executeShellCommand("cmd connectivity airplane-mode enable")
+        val startTime = SystemClock.elapsedRealtime()
+        do {
+            assertThat(
+                "We've waited less than 2 seconds",
+                SystemClock.elapsedRealtime() - startTime < 2000
+            )
+        } while (connectivityManager.isDefaultNetworkActive)
     }
     @Test
     fun networkFailure() {

@@ -46,13 +46,13 @@ class JniNoNetworkTests {
 
         // Wait until the network is disabled
         val startTime = SystemClock.elapsedRealtime()
-        while (connectivityManager.isDefaultNetworkActive) {
-            assertThat(
-                "Network shut down before timeout",
+        while (
+            connectivityManager.activeNetwork != null &&
                 SystemClock.elapsedRealtime() - startTime < 2000
-            )
+        ) {
             SystemClock.sleep(100)
         }
+        assertThat("Network is still active", connectivityManager.activeNetwork == null)
     }
     @Test
     fun networkFailure() {

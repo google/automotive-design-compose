@@ -46,4 +46,4 @@ runs:
       with:
         workspaces: ". -> designcompose/build/intermediates/cargoTarget"
         shared-key: "gradle-rust"
-        save-if: ${{ github.ref != 'refs/heads/main' }}
+        save-if: ${{ github.ref == 'refs/heads/main' }}

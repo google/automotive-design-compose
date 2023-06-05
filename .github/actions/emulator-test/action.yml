@@ -30,19 +30,9 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v3
-
-    - name: Install Java
-      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+    - uses: ./.github/actions/prepare-build-env 
       with:
-        distribution: "temurin"
-        java-version: "17"
-
-    - name: Install Rust toolchains
-      run: ./install-rust-toolchains.sh
-      shell: bash
-
-    - name: Gradle cache
-      uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        rust: "true"
 
     - name: AVD cache
       uses: actions/cache@v3

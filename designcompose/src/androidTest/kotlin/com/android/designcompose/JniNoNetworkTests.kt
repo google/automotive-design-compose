@@ -31,6 +31,7 @@ import org.hamcrest.core.IsInstanceOf
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import com.android.designcompose.dummyFigmaTokenJson
 
 class JniNoNetworkTests {
     @Before

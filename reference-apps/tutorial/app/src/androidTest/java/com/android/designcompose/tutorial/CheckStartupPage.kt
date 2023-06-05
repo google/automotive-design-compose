@@ -40,7 +40,7 @@ class CheckStartupPage {
         composeTestRule.setContent { TutorialMain() }
         composeTestRule
             .onNodeWithText(
-                "Congratulations on running the DesignCompose Tutorial app!",
+                "Congratulations on running the Automotive Design for Compose Tutorial app!",
                 substring = true
             )
             .assertIsDisplayed()

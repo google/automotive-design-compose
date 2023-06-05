@@ -53,7 +53,7 @@ android {
     }
 }
 
-// Defines the configuation for the Rust JNI build
+// Defines the configuration for the Rust JNI build
 
 cargo {
     crateDir.set(File(rootProject.relativePath("../crates/live_update")))

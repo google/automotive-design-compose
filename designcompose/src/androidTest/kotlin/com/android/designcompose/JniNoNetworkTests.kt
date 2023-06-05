@@ -16,6 +16,8 @@
 
 package com.android.designcompose
 
+import android.net.ConnectivityManager
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.IOException
 import java.net.ConnectException
@@ -27,7 +29,6 @@ import org.hamcrest.core.IsInstanceOf
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import java.lang.Thread.sleep
 
 class JniNoNetworkTests {
     @Before
@@ -36,7 +37,15 @@ class JniNoNetworkTests {
             .uiAutomation
             .executeShellCommand("cmd connectivity airplane-mode enable")
         // Add a sleep to make sure the connection goes down.
-        sleep(250)
+        val connectivityManager =
+            getSystemService(
+                InstrumentationRegistry.getInstrumentation().context,
+                ConnectivityManager::class.java
+            )
+        println(connectivityManager?.isDefaultNetworkActive)
+        println("Hii")
+
+        wait
     }
     @Test
     fun networkFailure() {

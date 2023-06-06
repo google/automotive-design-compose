@@ -18,6 +18,8 @@ name: Nightly
 on: 
   schedule:
     - cron: "0 0 * * *"
+  #TESTING: DO_NOT_SUBMIT
+  pull_request:
 
 permissions:  # added using https://github.com/step-security/secure-repo
   contents: read
@@ -30,7 +32,7 @@ jobs:
         release: [stable, nightly]
     runs-on: ${{ matrix.os }}
     steps:
-      - run: rustup toolchain ${{ matrix.release }} stable --profile minimal
+      - run: rustup toolchain ${{ matrix.release }} --profile minimal
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
         with: 
@@ -61,7 +63,7 @@ jobs:
     runs-on: macos-latest # Emulators run best on MacOS
     strategy:
       matrix:
-        arch: [x86_64, arm64-v8]
+        arch: [x86_64, arm64-v8a]
         api-level: [30, 31, UpsideDownCake]
     steps:
       - uses: actions/checkout@v3
@@ -81,3 +83,22 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: ./gradlew connectedCheck -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+
+  super-lint:
+    name: SuperLinter
+    runs-on: ubuntu-latest
+
+    # Grant status permission for MULTI_STATUS #
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Lint Code Base
+        uses: super-linter/super-linter@v5
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          DEFAULT_BRANCH: main

@@ -144,7 +144,7 @@ jobs:
 
     - name: "Set environment variables"
       run: |
-        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> $GITHUB_ENV
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
 
     - name: Check Tutorial App
       uses: gradle/gradle-build-action@v2
@@ -210,8 +210,8 @@ jobs:
 
     - name: "Set environment variables"
       run: |
-        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> $GITHUB_ENV
-        echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/undbundled-aaos" >> $GITHUB_ENV
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+        echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/undbundled-aaos" >> "$GITHUB_ENV"
 
     - name: Check out the Unbundled AAOS Repo
       run: |

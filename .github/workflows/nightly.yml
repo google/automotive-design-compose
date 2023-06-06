@@ -78,8 +78,8 @@ jobs:
           target: google_apis
           profile: Nexus 10
           force-avd-creation: false
+          avd-name: macOS-avd-${{matrix.arch}}-${{matrix.api-level}}
           ndk: 25.2.9519653
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          emulator-boot-timeout: 1200 #20 minutes - might be necessary?
           disable-animations: true
           script: ./gradlew connectedCheck -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect

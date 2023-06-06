@@ -437,8 +437,8 @@ internal fun ContentDrawScope.render(
     var frameSize = size
     var shape = frameShape
     var customArcAngle = false
-    var meterValue = customizations.getMeterValue(name)
 
+    val meterValue = customizations.getMeterValue(name)
     if (meterValue != null) {
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.meter_data.isPresent) {

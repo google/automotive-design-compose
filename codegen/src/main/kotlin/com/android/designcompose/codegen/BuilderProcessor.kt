@@ -122,6 +122,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             file += "import com.android.designcompose.setImage\n"
             file += "import com.android.designcompose.setImageWithContext\n"
             file += "import com.android.designcompose.setMeterValue\n"
+            file += "import com.android.designcompose.setMeterFunction\n"
             file += "import com.android.designcompose.setModifier\n"
             file += "import com.android.designcompose.setTapCallback\n"
             file += "import com.android.designcompose.setOpenLinkCallback\n"
@@ -204,6 +205,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         TextStyle,
         VariantProperty,
         Meter,
+        MeterFunction,
         Unknown
     }
 
@@ -232,6 +234,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var textStyleCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var meterCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
+        private var meterFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+            HashMap()
         private var nodeNameBuilder: ArrayList<String> = ArrayList()
         private var variantProperties: HashMap<String, String> = HashMap()
 
@@ -721,6 +725,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 "Boolean" -> CustomizationType.Visibility
                 "TextStyle" -> CustomizationType.TextStyle
                 "com.android.designcompose.Meter" -> CustomizationType.Meter
+                "com.android.designcompose.MeterFunction" -> CustomizationType.MeterFunction
                 else -> CustomizationType.Unknown
             }
         }
@@ -909,6 +914,12 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setMeterValue(\"$node\", $value)\n")
             }
 
+            val meterFunctionCustom =
+                meterFunctionCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in meterFunctionCustom) {
+                out.appendText("        customizations.setMeterFunction(\"$node\", $value)\n")
+            }
+
             out.appendText("\n")
 
             // Generate code to set variant properties if there are any @DesignVariant parameters
@@ -1014,6 +1025,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, textStyleCustomizations)
                 CustomizationType.Meter ->
                     addCustomization(valueParameter, annotation, meterCustomizations)
+                CustomizationType.MeterFunction ->
+                    addCustomization(valueParameter, annotation, meterFunctionCustomizations)
                 else ->
                     logger.error(
                         "Invalid @Design parameter type ${getParamTypeString(valueParameter)}"

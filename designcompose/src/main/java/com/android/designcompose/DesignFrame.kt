@@ -85,6 +85,10 @@ internal fun DesignFrame(
             )
     }
 
+    // Since the meter function is a composable, we need to call it here even though we don't need
+    // it until frameRender() since that function is not a composable.
+    val meterValue = customizations.getMeterFunction(name)?.let { it() }
+    meterValue?.let { customizations.setMeterValue(name, it) }
     var m =
         Modifier.layoutStyle(name, style)
             .frameRender(style, shape, customImage, document, name, customizations)
@@ -566,7 +570,7 @@ internal fun Modifier.frameRender(
                 customImageWithContext,
                 document,
                 name,
-                customizations
+                customizations,
             )
         }
     )

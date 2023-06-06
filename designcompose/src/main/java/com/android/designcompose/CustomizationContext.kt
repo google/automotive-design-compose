@@ -61,6 +61,8 @@ fun EmptyListContent(): ListContent {
 
 typealias TapCallback = () -> Unit
 
+typealias MeterFunction = @Composable () -> Meter
+
 typealias Meter = Float
 
 // A Customization changes the way a node is presented, or changes the content of a node.
@@ -90,7 +92,9 @@ data class Customization(
     // Open link callback function
     var openLinkCallback: Optional<OpenLinkCallback> = Optional.empty(),
     // Meter (dial, gauge, progress bar) customization as a percentage 0-100
-    var meterValue: Optional<Float> = Optional.empty()
+    var meterValue: Optional<Float> = Optional.empty(),
+    // Meter (dial, gauge, progress bar) customization as a function that returns a percentage 0-100
+    var meterFunction: Optional<@Composable () -> Float> = Optional.empty()
 )
 
 private fun Customization.clone(): Customization {
@@ -107,6 +111,7 @@ private fun Customization.clone(): Customization {
     c.textStyle = textStyle
     c.openLinkCallback = openLinkCallback
     c.meterValue = meterValue
+    c.meterFunction = meterFunction
 
     return c
 }
@@ -264,6 +269,10 @@ fun CustomizationContext.setMeterValue(nodeName: String, value: Float) {
     customize(nodeName) { c -> c.meterValue = Optional.ofNullable(value) }
 }
 
+fun CustomizationContext.setMeterFunction(nodeName: String, value: @Composable () -> Float) {
+    customize(nodeName) { c -> c.meterFunction = Optional.ofNullable(value) }
+}
+
 fun CustomizationContext.setVariantProperties(vp: HashMap<String, String>) {
     variantProperties = vp
 }
@@ -394,7 +403,14 @@ fun CustomizationContext.getOpenLinkCallback(nodeName: String): OpenLinkCallback
 
 fun CustomizationContext.getMeterValue(nodeName: String): Float? {
     val c = cs[nodeName] ?: return null
-    if (c.meterValue.isPresent) return c.meterValue.get()
+    var value = if (c.meterValue.isPresent) c.meterValue.get() else return null
+    if (value?.isNaN() == true) value = 0F
+    return value
+}
+
+fun CustomizationContext.getMeterFunction(nodeName: String): (@Composable () -> Float)? {
+    val c = cs[nodeName] ?: return null
+    if (c.meterFunction.isPresent) return c.meterFunction.get()
     return null
 }
 

@@ -62,8 +62,7 @@ jobs:
     runs-on: macos-latest # Emulators run best on MacOS
     strategy:
       matrix:
-        arch: [x86_64, arm64-v8a]
-        api-level: [30, 31, UpsideDownCake]
+        api-level: [30, 31, 33]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/prepare-build-env 
@@ -74,12 +73,9 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.arch }}
+          arch: x86_64
           target: google_apis
           profile: Nexus 10
-          force-avd-creation: false
-          avd-name: macOS-avd-${{matrix.arch}}-${{matrix.api-level}}
           ndk: 25.2.9519653
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: ./gradlew connectedCheck -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect

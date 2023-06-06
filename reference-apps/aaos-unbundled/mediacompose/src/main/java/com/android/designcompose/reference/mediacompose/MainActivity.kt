@@ -21,10 +21,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,6 +34,7 @@ import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.ListContent
+import com.android.designcompose.MeterFunction
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -90,8 +88,7 @@ interface CenterDisplay : com.android.designcompose.reference.media.MediaInterfa
         // are functions so that we don't need to recompose the whole main frame
         @Design(node = "#media/now-playing/time-elapsed") timeElapsed: @Composable () -> String,
         @Design(node = "#media/now-playing/time-duration") timeDuration: @Composable () -> String,
-        @Design(node = "#media/now-playing/progress-bar")
-        progress: @Composable (ComponentReplacementContext) -> Unit,
+        @Design(node = "#media/now-playing/progress-bar") progress: MeterFunction,
 
         // Playback controls
         @DesignVariant(property = "#media/now-playing/play-state-button") playState: PlayState,
@@ -345,16 +342,7 @@ class MainActivity : ComponentActivity() {
             appName = mediaSource?.displayName as String,
             timeElapsed = { mediaAdapter.getNowPlayingProgress().currentTimeText },
             timeDuration = { mediaAdapter.getNowPlayingProgress().maxTimeText },
-            progress = { context ->
-                val progress = mediaAdapter.getNowPlayingProgress()
-                val progressWidth =
-                    if (progress.progressWidth.isFinite()) {
-                        progress.progressWidth
-                    } else {
-                        0.0f
-                    }
-                Row(Modifier.fillMaxHeight().fillMaxWidth(progressWidth)) { context.Content() }
-            },
+            progress = { mediaAdapter.getNowPlayingProgress().progressWidth * 100F },
             playState = if (nowPlaying.showPlay) PlayState.Play else PlayState.Pause,
             onPlayPauseTap = {
                 if (nowPlaying.showPlay) nowPlaying.playController?.play()

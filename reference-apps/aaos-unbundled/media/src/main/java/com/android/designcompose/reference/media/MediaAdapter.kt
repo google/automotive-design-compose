@@ -613,8 +613,9 @@ class MediaAdapter(
         val nowPlaying = MediaNowPlayingProgress()
         // Observe the current track progress
         val progress: PlaybackProgress? by playbackViewModel.progress.observeAsState()
+        val maxProgress = progress?.maxProgress?.toFloat() ?: 0F
         nowPlaying.progressWidth =
-            (progress?.progress?.toFloat() ?: 0F) / (progress?.maxProgress?.toFloat() ?: 0F)
+            if (maxProgress == 0F) 0F else (progress?.progress?.toFloat() ?: 0F) / maxProgress
         nowPlaying.currentTimeText = progress?.currentTimeText as String? ?: ""
         nowPlaying.maxTimeText = progress?.maxTimeText as String? ?: ""
         return nowPlaying

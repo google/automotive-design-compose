@@ -75,7 +75,7 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           arch: ${{ matrix.arch }}
-          target: default
+          target: google_apis
           profile: Nexus 10
           force-avd-creation: false
           ndk: 25.2.9519653

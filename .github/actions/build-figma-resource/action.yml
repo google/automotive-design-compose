@@ -1,0 +1,29 @@
+name: Build Figma resource
+
+inputs:
+  resource:
+    description: Name of the resource
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+    - name: Build 
+      working-directory: support-figma/${{ inputs.resource }}
+      run: npm ci; npm run build
+      shell: bash
+
+    - name: Package 
+      working-directory: support-figma/
+      shell: bash
+      run: |
+        zip -r ${{ inputs.resource }}.zip \
+          ${{ inputs.resource }}/manifest.json \
+          ${{ inputs.resource }}/dist/ui.html \
+          ${{ inputs.resource }}/dist/code.js
+
+    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      with:
+        name: ${{ inputs.resource }}
+        path: support-figma/${{ inputs.resource }}.zip

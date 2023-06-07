@@ -1,0 +1,205 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Presubmit
+
+on:
+  label:
+    types:
+      - created
+  push:
+    branches:
+      - main
+      - 'stable/**'
+  merge_group:
+  pull_request:
+    branches: 
+      - main
+      - 'wb/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
+jobs:
+  lint-kotlin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: ./.github/actions/prepare-build-env
+
+      - uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
+
+  lint-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup toolchain install stable --profile minimal
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - name: Rust lint
+        run: cargo-fmt --all --check
+
+  rust-test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup toolchain install stable --profile minimal
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
+        with: 
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build all
+        run: cargo build --all-targets --all-features
+      - name: Test all
+        run: cargo test --all-targets --all-features
+
+  sdk-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: ./.github/actions/prepare-build-env 
+        with:
+          rust: "true"
+
+      - name: Run local tests
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: test
+
+      - name: Build debug
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: assembleDebug
+
+      - name: Build release
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: assembleRelease
+
+      - name: Final check
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: check
+
+  sdk-emulator-atd-test:
+    runs-on: macos-latest # Emulators run best on MacOS
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/emulator-test
+        with:
+          api-level: 30
+          arch: x86
+          target: aosp_atd
+          test-cmd: ./gradlew connectedCheck -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+
+  build-maven-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: ./.github/actions/prepare-build-env 
+        with:
+          rust: "true"
+
+      - name: Build Maven repo
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: publishAllPublicationsToLocalDirRepository
+
+      - name: Zip repo
+        working-directory: build
+        run: zip -q -r designcompose_m2repo.zip designcompose_m2repo/
+
+      - name: Upload zipped repo
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: designcompose-m2-repo-zip
+          path: build/designcompose_m2repo.zip
+  
+  tutorial-app:
+    runs-on: ubuntu-latest
+    needs: build-maven-repo
+    steps:       
+    - uses: actions/checkout@v3
+    - uses: ./.github/actions/prepare-build-env 
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: designcompose-m2-repo-zip
+
+    - run: unzip designcompose_m2repo.zip
+
+    - name: "Set environment variables"
+      run: |
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+
+    - name: Check Tutorial App
+      uses: gradle/gradle-build-action@v2
+      with:
+        build-root-directory: reference-apps/tutorial
+        arguments: |
+          --init-script ../local-design-compose-repo.init.gradle.kts
+          app:dependencies
+          check
+
+  figma-resources:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      - uses: ./.github/actions/build-figma-resource
+        with:
+            resource: auto-content-preview-widget
+
+      - uses: ./.github/actions/build-figma-resource
+        with:
+            resource: extended-layout-plugin
+
+  mediacompose-build:
+    runs-on: ubuntu-latest
+    needs: build-maven-repo
+    steps:       
+    - uses: actions/checkout@v3
+    - uses: ./.github/actions/prepare-build-env 
+ 
+    - uses: actions/download-artifact@v3
+      with:
+        name: designcompose-m2-repo-zip
+
+    - run: unzip designcompose_m2repo.zip
+
+    - name: "Set environment variables"
+      run: |
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+        echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/undbundled-aaos" >> "$GITHUB_ENV"
+
+    - name: Check out the Unbundled AAOS Repo
+      run: |
+        HOST=https://android.googlesource.com/platform/superproject
+        BRANCH=ub-automotive-master-20230303
+        mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
+        git clone "$HOST" "$ORG_GRADLE_PROJECT_unbundledAAOSDir" --branch="$BRANCH" \
+        --single-branch --filter=blob:none --recurse-submodules --jobs=4
+
+    - name: Check MediaCompose
+      uses: gradle/gradle-build-action@v2
+      with:
+        build-root-directory: reference-apps/aaos-unbundled
+        arguments: |
+          check 

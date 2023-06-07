@@ -2,7 +2,7 @@ name: Release
 
 on:
   pull_request:
-  # Testing
+  # Testing so much
   push:
     # Sequence of patterns matched against refs/tags
     tags:

@@ -202,6 +202,7 @@ internal object SpanCache {
 
 internal object DocServer {
     internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
+    internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
     internal val documents: HashMap<String, DocContent> = HashMap()
     internal val subscriptions: HashMap<String, LiveDocSubscriptions> = HashMap()
     internal val branchHash: HashMap<String, HashMap<String, String>> =
@@ -266,6 +267,16 @@ internal fun DocServer.scheduleLiveUpdate() {
     }
 }
 
+internal fun DocServer.getProxyConfig(): ProxyConfig {
+    val proxyConfig = ProxyConfig()
+    val proxySpecHost: String? = System.getProperty("http.proxyHost")
+    if (proxySpecHost != null) {
+        val proxySpecPort = System.getProperty("http.proxyPort") ?: DEFAULT_HTTP_PROXY_PORT
+        proxyConfig.httpProxyConfig = HttpProxyConfig("$proxySpecHost:$proxySpecPort")
+    }
+    return proxyConfig
+}
+
 internal fun DocServer.fetchDocuments(
     firstFetch: Boolean,
 ): Boolean {
@@ -278,6 +289,10 @@ internal fun DocServer.fetchDocuments(
         )
         return false
     }
+
+    val proxyConfig = getProxyConfig()
+    Log.i(TAG, "HTTP Proxy: ${proxyConfig.httpProxyConfig?.proxySpec ?: "not set"}")
+
     val docIds =
         synchronized(subscriptions) {
             // Collect the docs
@@ -294,8 +309,7 @@ internal fun DocServer.fetchDocuments(
         val saveFile = synchronized(subscriptions) { subscriptions[id]?.saveFile }
         try {
             val postData = constructPostJson(figmaApiKey, previousDoc?.c, params, firstFetch)
-
-            val documentData: ByteArray? = LiveUpdateJni.fetchDocBytes(id, postData)
+            val documentData: ByteArray? = LiveUpdateJni.fetchDocBytes(id, postData, proxyConfig)
 
             if (documentData != null) {
                 Feedback.documentDecodeReadBytes(documentData.size, id)

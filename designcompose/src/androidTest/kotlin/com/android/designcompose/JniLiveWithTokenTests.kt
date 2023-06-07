@@ -19,7 +19,6 @@ package com.android.designcompose
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.common.DocumentServerParams
 import io.mockk.mockkObject
-import java.lang.RuntimeException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -54,12 +53,12 @@ class JniLiveWithTokenTests {
     @Test
     fun invalidDocId() {
         assertFailsWith<FigmaFileNotFoundException> {
-            LiveUpdateJni.jniFetchDoc("InvalidDocID", firstFetchJson)
+            LiveUpdateJni.jniFetchDoc("InvalidDocID", firstFetchJson, ProxyConfig())
         }
     }
 
     private fun testFetch(docID: String) {
-        with(LiveUpdateJni.fetchDocBytes(docID, firstFetchJson)) {
+        with(LiveUpdateJni.fetchDocBytes(docID, firstFetchJson, ProxyConfig() = null)) {
             assertNotNull(this)
             val decodedDoc = decodeServerDoc(this, null, docID, null, Feedback)
             assertNotNull(decodedDoc)

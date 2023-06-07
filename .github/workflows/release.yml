@@ -2,6 +2,7 @@ name: Release
 
 on:
   release:
+    types: [published]
   # pull_request:
   # # Testing so much
   # push:
@@ -55,5 +56,5 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: build/designcompose_m2repo.zip
-          asset_name: "SDK Maven Repository"
+          asset_name: "SDK-Maven-Repository"
           asset_content_type: application/zip

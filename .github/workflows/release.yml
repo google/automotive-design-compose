@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: ./.github/actions/prepare-build-env
+        with:
+          rust: "true"
+
+      - name: Build Maven repo
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: -PdesignComposeReleaseVersion=${{ github.ref }}  publishAllPublicationsToLocalDirRepository
+
+      - name: Upload
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: designcompose_m2repo.zip
+          path: build/designcompose_m2repo
+
+      - name: Zip repo
+        working-directory: build
+        run: zip -q -r designcompose_m2repo.zip designcompose_m2repo/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: true
+
+      - name: Upload Maven Repo
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: build/designcompose_m2repo.zip
+          asset_name: "SDK Maven Repository"
+          asset_content_type: application/zip

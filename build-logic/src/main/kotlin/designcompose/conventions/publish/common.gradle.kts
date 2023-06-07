@@ -26,7 +26,10 @@ group = "com.android.designcompose"
 // aren't available inside a pre-built plugin
 val libs = the<LibrariesForLibs>()
 
-version = libs.versions.designcompose.get()
+version =
+    (project.findProperty("designComposeReleaseVersion") ?: libs.versions.designcompose.get())
+        .toString()
+        .trimStart('v')
 
 publishing {
     repositories {

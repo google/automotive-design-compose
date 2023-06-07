@@ -2,6 +2,7 @@ name: Release
 
 on:
   release:
+    types: [created]
   # pull_request:
   # # Testing so much
   # push:
@@ -17,24 +18,44 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-      - uses: ./.github/actions/prepare-build-env
-        with:
-          rust: "true"
+      # - uses: ./.github/actions/prepare-build-env
+      #   with:
+      #     rust: "true"
 
-      - name: Build Maven repo
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
-        with:
-          arguments: -PdesignComposeReleaseVersion=${{ github.event.release.tag_name }}  publishAllPublicationsToLocalDirRepository
+      # - name: Build Maven repo
+      #   uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+      #   with:
+      #     arguments: -PdesignComposeReleaseVersion=${{ github.event.release.tag_name }}  publishAllPublicationsToLocalDirRepository
 
-      - name: Upload
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-        with:
-          name: designcompose_m2repo.zipbb
-          path: build/designcompose_m2repo
+      # - name: Upload
+      #   uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      #   with:
+      #     name: designcompose_m2repo.zipbb
+      #     path: build/designcompose_m2repo
 
-      - name: Zip repo
-        working-directory: build
-        run: zip -q -r designcompose_m2repo.zip designcompose_m2repo/
+      # - name: Zip repo
+      #   working-directory: build
+        # run: zip -q -r designcompose_m2repo.zip designcompose_m2repo/
+
+
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+
+      - name: Build Plugin
+        working-directory: support-figma/extended-layout-plugin
+        run: npm ci; npm run build
+      
+      - name: Package Plugin
+        working-directory: support-figma
+        run: |
+          zip -r extended-layout-plugin.zip \
+            extended-layout-plugin/manifest.json \
+            extended-layout-plugin/dist/ui.html \
+            extended-layout-plugin/dist/code.js
+
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: figma-plugin-zip
+          path: support-figma/extended-layout-plugin.zip
 
       # - name: Create Release
       #   id: create_release
@@ -47,13 +68,23 @@ jobs:
       #     draft: true
       #     prerelease: true
 
-      - name: Upload Maven Repo
-        id: upload-release-asset
+      - name: Upload Plugin
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: build/designcompose_m2repo.zip
-          asset_name: "SDK Maven Repository"
+          asset_path: ./support-figma/extended-layout-plugin.zip
+          asset_name: extended-layout-plugin.zip
           asset_content_type: application/zip
+
+      # - name: Upload Maven Repo
+      #   id: upload-release-asset
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+      #     asset_path: ./build/designcompose_m2repo.zip
+      #     asset_name: designcompose_m2repo.zip
+      #     asset_content_type: application/zip

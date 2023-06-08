@@ -1,0 +1,74 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Android Emulator tests
+description: Runs Android Instrumented tests. Should be run on MacOS runners
+# See: https://github.com/ReactiveCircus/android-emulator-runner#github-action---android-emulator-runner
+
+inputs:
+  api-level:
+    description: 'The version of Android emulator API to test with.'
+    required: true
+  arch:
+    description: 'The architecture to build and test with'
+    required: true
+  target:
+    description: 'The target image to use'
+    required: false
+    default: "default"
+  test-cmd:
+    description: 'The command that will run the test'
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    - uses: ./.github/actions/prepare-build-env 
+      with:
+        rust: "true"
+
+    - name: AVD cache
+      uses: actions/cache@v3
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-${{ inputs.arch }}-${{ inputs.api-level }}
+
+    - name: create AVD and generate snapshot for caching
+      if: steps.avd-cache.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ inputs.api-level }}
+        arch: ${{ inputs.arch }}
+        target: ${{ inputs.target}}
+        profile: Nexus 10
+        force-avd-creation: false
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: false
+        script: echo "Generated AVD snapshot for caching."
+
+    - name: run tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ inputs.api-level }}
+        arch: ${{ inputs.arch }}
+        target: ${{ inputs.target}}
+        profile: Nexus 10
+        force-avd-creation: false
+        ndk: 25.2.9519653
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: ${{ inputs.test-cmd }}

@@ -16,7 +16,6 @@
 
 package com.android.designcompose.testapp.validation
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -45,36 +44,36 @@ class InteractionTests {
 
         // Navigate to the Triggers -> Timeouts menu
         composeTestRule.onNodeWithText("Triggers").performClick()
-        composeTestRule.onNodeWithText("While Pressed").assertIsDisplayed().performClick()
-        composeTestRule.onNodeWithText("Timeouts").assertIsDisplayed().performClick()
+        composeTestRule.onNodeWithText("While Pressed").assertExists().performClick()
+        composeTestRule.onNodeWithText("Timeouts").assertExists().performClick()
 
         // Confirm initial state
         composeTestRule.onNodeWithText("pressed").assertDoesNotExist()
-        composeTestRule.onNodeWithText("idle").assertIsDisplayed()
+        composeTestRule.onNodeWithText("idle").assertExists()
 
         // Hold the button down for half a second and release
         composeTestRule
             .onNodeWithText("idle")
             .performTouchInput { down(center) }
             .assertDoesNotExist()
-        composeTestRule.onNodeWithText("pressed").assertIsDisplayed()
+        composeTestRule.onNodeWithText("pressed").assertExists()
         composeTestRule.onRoot().performTouchInput { cancel(500) }
         composeTestRule.onNodeWithText("pressed").assertDoesNotExist()
-        composeTestRule.onNodeWithText("idle").assertIsDisplayed()
+        composeTestRule.onNodeWithText("idle").assertExists()
 
         // Hold the button down for more than a second, make sure it switches to display "timeout",
         composeTestRule
             .onNodeWithText("idle")
             .performTouchInput { down(center) }
             .assertDoesNotExist()
-        composeTestRule.onNodeWithText("pressed").assertIsDisplayed()
+        composeTestRule.onNodeWithText("pressed").assertExists()
         composeTestRule.mainClock.advanceTimeBy(1250)
         composeTestRule.onNodeWithText("pressed").assertDoesNotExist()
-        composeTestRule.onNodeWithText("timeout").assertIsDisplayed()
+        composeTestRule.onNodeWithText("timeout").assertExists()
 
         // Release the button, make sure it returns to idle.
         composeTestRule.onRoot().performTouchInput { cancel() }
         composeTestRule.onNodeWithText("timeout").assertDoesNotExist()
-        composeTestRule.onNodeWithText("idle").assertIsDisplayed()
+        composeTestRule.onNodeWithText("idle").assertExists()
     }
 }

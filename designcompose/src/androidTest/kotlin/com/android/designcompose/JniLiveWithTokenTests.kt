@@ -33,6 +33,9 @@ const val veryLargeDocID = "KKvsSWtfwRYxYibnaVKBQK" // Cluster Doc
  * Jni fetch tests
  *
  * These tests use the JNI Library and will reach out to Figma.com itself.
+ *
+ * These tests can be excluded by running Gradle with:
+ * -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests
  */
 class JniLiveWithTokenTests {
 

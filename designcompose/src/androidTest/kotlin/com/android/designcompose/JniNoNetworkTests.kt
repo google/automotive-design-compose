@@ -48,7 +48,7 @@ class JniNoNetworkTests {
         val startTime = SystemClock.elapsedRealtime()
         while (
             connectivityManager.activeNetwork != null &&
-                SystemClock.elapsedRealtime() - startTime < 2000
+                SystemClock.elapsedRealtime() - startTime < 20000
         ) {
             SystemClock.sleep(100)
         }

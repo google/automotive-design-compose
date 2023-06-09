@@ -18,7 +18,6 @@ name: Nightly
 on: 
   schedule:
     - cron: "0 0 * * *"
-  pull_request: #DO_NOT_SUBMIT
 
 permissions:  # added using https://github.com/step-security/secure-repo
   contents: read

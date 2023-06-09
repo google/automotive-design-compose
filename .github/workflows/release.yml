@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: write
+
+jobs:
+  build-figma-resources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      - uses: ./.github/actions/build-figma-resource
+        with:
+            resource: auto-content-preview-widget
+      - uses: ./.github/actions/build-figma-resource
+        with:
+            resource: extended-layout-plugin
+
+  build-maven-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: ./.github/actions/prepare-build-env
+        with:
+          rust: "true"
+
+      - name: Build Maven repo
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: -PdesignComposeReleaseVersion=${{ github.ref_name}} publishAllPublicationsToLocalDirRepository
+
+      - name: Upload
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: designcompose_m2repo
+          path: build/designcompose_m2repo
+
+  upload-release:
+    runs-on: ubuntu-latest
+    needs:
+      - build-figma-resources
+      - build-maven-repo
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      # Download all artifacts
+      - uses: actions/download-artifact@v3
+
+      - name: Zip up maven repo
+        run: zip -q -r designcompose_m2repo.zip designcompose_m2repo/
+
+      - name: Upload release artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.ref_name }} \
+          extended-layout-plugin/extended-layout-plugin.zip \
+          auto-content-preview-widget/auto-content-preview-widget.zip \
+          designcompose_m2repo.zip

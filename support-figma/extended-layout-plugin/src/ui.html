@@ -16,6 +16,7 @@
 
 <head>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css"/>
+<link rel="stylesheet" href="style.css"/>
 </head>
 
 <div id="text" style="margin: 8px; display: none;">
@@ -65,105 +66,195 @@
   </div>
 </div>
 
-<script>
-</script>
-
 <div id="meters">
-  <div id="arcSection" onchange="arcChanged()">
-    <div class="switch">
-      <input id="arcSwitch" type="checkbox" class="switch__toggle">
-      <label for="arcSwitch" class="switch__label">Arc Customization</label>
+  <div style="margin-left:12; margin-top: 14">
+    <span class="descriptionlabel">Use Figma’s tools to create a gauge or dial. Use one of the options below to define live functionality.</span>
+  </div>
+  <hr class="separator-large" color="#D7D7D7" size="1">
+  <div id="arcSection" onchange="arcChanged()" style="margin-top: 24; margin-left: 12; margin-bottom: 40">
+    <div style="display: flex; align-items: center; ">
+      <label class="switchimg">
+        <input id="arcSwitch" type="checkbox">
+        <span class="sliderimg round"></span>
+      </label>
+      <img src="images/dials/icon-arc-path.svg" style="margin-left: 20">
+      <div style="margin-left: 20; display: block">
+        <span class="boldlabel">Arc path</span><br>
+        <span class="sublabel">Select an ellipse or <a href="https://help.figma.com/hc/en-us/articles/360040450173-Arc-tool-create-arcs-semi-circles-and-rings" target="_blank">arc</a>.</span>
+      </div>
     </div>
-    <div id="arcControls" style="margin-left:20; display:none">
-      <div style="display: flex; align-items: center">
-        <label for="arcStart" class="sublabel" style="width:80">Arc Start</label>
-        <input id="arcStart" type="input" style="width: 40;" class="input__field" value="0">
-      </div>
-      <div style="display: flex; align-items: center">
-        <label for="arcEnd" class="sublabel" style="width:80">Arc End</label>
-        <input id="arcEnd" type="input" style="width: 40;" class="input__field" value="360">
-      </div>
-      <div style="display: flex">
-        <div class="switch">
-          <input id="arcDiscreteSwitch" type="checkbox" class="switch__toggle">
-          <label for="arcDiscreteSwitch" class="switch__label" style="font-weight:normal">Discrete Values (degrees)</label>
+    <div id="arcControls" style="margin-left:58; display:none">
+      <div style="display: flex; margin-top: 8">
+        <div style="display: flex; align-items: center">
+          <label for="arcStart" class="normallabel">Start</label>
+          <input id="arcStart" type="input" style="width: 40;" class="input__field" value="0" onkeydown="inputKeyDown(this, NaN, NaN, arcChanged)">
         </div>
-        <input id="arcDiscreteValue" type="input" style="width: 40;" class="input__field" value="1" disabled>
+        <div style="display: flex; align-items: center; margin-left: 30">
+          <label for="arcEnd" class="normallabel">End</label>
+          <input id="arcEnd" type="input" style="width: 40;" class="input__field" value="360" onkeydown="inputKeyDown(this, NaN, NaN, arcChanged)">
+        </div>
       </div>
-      <div class="slidecontainer">
-        <input id="arcValue" type="range" min="0" max="100" value="50" class="slider" id="myRange" oninput="arcChanged();">
+      <div style="display: flex; margin-top: 2">
+        <div class="checkbox" style="margin-left: -3">
+          <input id="arcDiscreteSwitch" type="checkbox" class="checkbox">
+          <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
+        </div>
+        <input id="arcDiscreteValue" type="input" style="width: 40;" class="input__field" value="20" onkeydown="inputKeyDown(this, 1, NaN, arcChanged)">
+      </div>
+      <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10;">
+        <span class="sublabel">Preview</span>
+        <div>
+          <input id="arcValue" type="range" min="0" max="100" value="50" class="slider" list="arcStepList" style="margin-left: 8; margin-top: -3" oninput="arcChanged();">
+          <datalist id="arcStepList"></datalist>
+          <div id="arcTicks" class="sliderticks"></div>
+        </div>
+        <span id="arcValuePercent" class="sublabel" style="margin-left: 8"></span>
       </div>
     </div>
   </div>
-  <div id="rotationSection" onchange="rotationChanged()">
-    <div class="switch">
-      <input id="rotationSwitch" type="checkbox" class="switch__toggle">
-      <label for="rotationSwitch" class="switch__label">Rotation Customization</label>
-    </div>
-    <div id="rotationControls" style="margin-left:20; display:none">
-      <div style="display: flex; align-items: center">
-        <label for="rotationStart" class="sublabel" style="width:80">Rotation Start</label>
-        <input id="rotationStart" type="input" style="width: 40;" class="input__field" value="0">
-      </div>
-      <div style="display: flex; align-items: center">
-        <label for="rotationEnd" class="sublabel" style="width:80">Rotation End</label>
-        <input id="rotationEnd" type="input" style="width: 40;" class="input__field" value="360">
-      </div>
-      <div style="display: flex">
-        <div class="switch">
-          <input id="rotationDiscreteSwitch" type="checkbox" class="switch__toggle">
-          <label for="rotationDiscreteSwitch" class="switch__label" style="font-weight:normal">Discrete Values (degrees)</label>
+  <hr class="separator-large" color="#D7D7D7" size="1">
+
+  <div id="rotationSection" onchange="rotationChanged()" style="margin-top: 24; margin-left: 12; margin-bottom: 40">
+    <div style="display: flex; align-items: center; ">
+      <label class="switchimg">
+        <input id="rotationSwitch" type="checkbox">
+        <span class="sliderimg round"></span>
+      </label>
+      <img src="images/dials/icon-rotation-needle.svg" style="margin-left: 20">
+      <div style="margin-left: 20; display: block">
+        <div style="display: flex">
+          <span class="boldlabel">Rotation / needle</span>
+          <div style="margin-top: 3">
+            <a href="#" onclick="toggleOverlay(rotationOverlay, 'rotation')">
+              <img src="images/dials/info-grey.svg" id="rotationInfoGrey" style="margin-left:2; margin-bottom: -3">
+              <img src="images/dials/info-blue.svg" id="rotationInfoBlue" style="margin-left:2; margin-bottom: -3; display: none">
+            </a>
+            <div id="rotationOverlay" class="modal" onclick="toggleOverlay(rotationOverlay, 'rotation');">
+              <img src="images/dials/overlay-tooltip-rotation.png">
+            </div>
+          </div>
         </div>
-        <input id="rotationDiscreteValue" type="input" style="width: 40;" class="input__field" value="1" disabled>
+        <span class="sublabel">Select a frame or shape.</span>
       </div>
-      <div class="slidecontainer">
-        <input id="rotationValue" type="range" min="0" max="100" step="-1" class="slider" id="myRange" oninput="rotationChanged();">
+    </div>
+    <div id="rotationControls" style="margin-left:58; display:none">
+      <div style="display: flex; margin-top: 8">
+        <div style="display: flex; align-items: center">
+          <label for="rotationStart" class="normallabel">Start</label>
+          <input id="rotationStart" type="input" style="width: 40;" class="input__field" value="0" onkeydown="inputKeyDown(this, NaN, NaN, rotationChanged)">
+        </div>
+        <div style="display: flex; align-items: center; margin-left: 30">
+          <label for="rotationEnd" class="normallabel">End</label>
+          <input id="rotationEnd" type="input" style="width: 40;" class="input__field" value="360" onkeydown="inputKeyDown(this, NaN, NaN, rotationChanged)">
+        </div>
+      </div>
+      <div style="display: flex; margin-top: 2">
+        <div class="checkbox" style="margin-left: -3">
+          <input id="rotationDiscreteSwitch" type="checkbox" class="checkbox">
+          <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
+        </div>
+        <input id="rotationDiscreteValue" type="input" style="width: 40;" class="input__field" value="20" onkeydown="inputKeyDown(this, 1, NaN, rotationChanged)">
+      </div>
+      <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10">
+        <span class="sublabel">Preview</span>
+        <div>
+          <input id="rotationValue" type="range" min="0" max="100" value="50" class="slider" list="rotationStepList" style="margin-left: 8; margin-top: -3" oninput="rotationChanged();">
+          <datalist id="rotationStepList"></datalist>
+          <div id="rotationTicks" class="sliderticks"></div>
+        </div>
+        <span id="rotationValuePercent" class="sublabel" style="margin-left: 8"></span>
       </div>
     </div>
   </div>
-  <div id="progressBarSection" onchange="barChanged()">
-    <div class="switch">
-      <input id="barSwitch" type="checkbox" class="switch__toggle">
-      <label for="barSwitch" class="switch__label">Progress Bar Customization</label>
-      <div class="tooltip">
-        <label>&#9432</label>
-        <span class="tooltiptext">Progress bars must be in a parent frame, which is used as the bounds for the progress bar.</span>
-      </div>
-    </div>
-    <div id="barControls" style="margin-left:20; display:none">
-      <div style="display: flex">
-        <div class="switch">
-          <input id="barDiscreteSwitch" type="checkbox" class="switch__toggle">
-          <label for="barDiscreteSwitch" class="switch__label" style="font-weight:normal">Discrete Values (percentage)</label>
+  <hr class="separator-large" color="#D7D7D7" size="1">
+
+  <div id="progressBarSection" onchange="barChanged()" style="margin-top: 24; margin-left: 12; margin-bottom: 40">
+    <div style="display: flex; align-items: center;">
+      <label class="switchimg">
+        <input id="barSwitch" type="checkbox">
+        <span class="sliderimg round"></span>
+      </label>
+      <img src="images/dials/icon-progress-fill.svg" style="margin-left: 20">
+      <div style="margin-left: 20; display: block; width: 220">
+        <div style="display: flex">
+          <span class="boldlabel">Progress bar fill</span>
+          <div style="margin-top: 3">
+            <a href="#" onclick="toggleOverlay(progressBarOverlay, 'progressBar')">
+              <img src="images/dials/info-grey.svg" id="progressBarInfoGrey" style="margin-left:4; margin-bottom: -3">
+              <img src="images/dials/info-blue.svg" id="progressBarInfoBlue" style="margin-left:4; margin-bottom: -3; display: none">
+            </a>
+            <div class="modal" id="progressBarOverlay" onclick="toggleOverlay(progressBarOverlay, 'progressBar')">
+              <img src="images/dials/overlay-tooltip-progress-bar.png">
+            </div>
+          </div>
         </div>
-        <input id="barDiscreteValue" type="input" style="width: 40;" class="input__field" value="1" disabled>
-      </div>
-      <div class="slidecontainer">
-        <input id="barValue" type="range" min="0" max="100" class="slider" id="myRange" oninput="barChanged();">
+        <span class="sublabel" style="width:100">Select a rectangle in a frame.</span>
       </div>
     </div>
-  </div><div id="progressMarkerSection" onchange="markerChanged()">
-    <div class="switch">
-      <input id="markerSwitch" type="checkbox" class="switch__toggle">
-      <label for="markerSwitch" class="switch__label">Progress Marker Customization</label>
-      <div class="tooltip">
-        <label>&#9432</label>
-        <span class="tooltiptext">Progress bars must be in a parent frame, which is used as the bounds for the progress bar.</span>
-      </div>
-    </div>
-    <div id="markerControls" style="margin-left:20; display:none">
-      <div style="display: flex">
-        <div class="switch">
-          <input id="markerDiscreteSwitch" type="checkbox" class="switch__toggle">
-          <label for="markerDiscreteSwitch" class="switch__label" style="font-weight:normal">Discrete Values (percentage)</label>
+    <div id="barControls" style="margin-left:58; display:none">
+      <div style="display: flex; margin-top: 2">
+        <div class="checkbox" style="margin-left: -3">
+          <input id="barDiscreteSwitch" type="checkbox" class="checkbox">
+          <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
         </div>
-        <input id="markerDiscreteValue" type="input" style="width: 40;" class="input__field" value="1" disabled>
+        <input id="barDiscreteValue" type="input" style="width: 40;" class="input__field" value="20" onkeydown="inputKeyDown(this, 1, NaN, barChanged)">
       </div>
-      <div class="slidecontainer">
-        <input id="markerValue" type="range" min="0" max="100" class="slider" id="myRange" oninput="markerChanged();">
+      <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10">
+        <span class="sublabel">Preview</span>
+        <div>
+          <input id="barValue" type="range" min="0" max="100" value="50" class="slider" list="barStepList" style="margin-left: 8; margin-top: -3" oninput="barChanged();">
+          <datalist id="barStepList"></datalist>
+          <div id="barTicks" class="sliderticks"></div>
+        </div>
+        <span id="barValuePercent" class="sublabel" style="margin-left: 8"></span>
       </div>
     </div>
   </div>
+  <hr class="separator-large" color="#D7D7D7" size="1">
+
+  <div id="progressMarkerSection" onchange="markerChanged()" style="margin-top: 24; margin-left: 12; margin-bottom: 40">
+    <div style="display: flex; align-items: center;">
+      <label class="switchimg">
+        <input id="markerSwitch" type="checkbox">
+        <span class="sliderimg round"></span>
+      </label>
+      <img src="images/dials/icon-progress-marker.svg" style="margin-left: 20">
+      <div style="margin-left: 20; display: block; width: 220">
+        <div style="display: flex">
+          <span class="boldlabel">Progress bar marker</span>
+          <div style="margin-top: 3">
+            <a href="#" onclick="toggleOverlay(progressMarkerOverlay, 'progressMarker')">
+              <img src="images/dials/info-grey.svg" id="progressMarkerInfoGrey" style="margin-left:4; margin-bottom: -3">
+              <img src="images/dials/info-blue.svg" id="progressMarkerInfoBlue" style="margin-left:4; margin-bottom: -3; display: none">
+            </a>
+            <div class="modal" id="progressMarkerOverlay" onclick="toggleOverlay(progressMarkerOverlay, 'progressMarker')">
+              <img src="images/dials/overlay-tooltip-progress-marker.png">
+            </div> 
+          </div>
+        </div>
+        <span class="sublabel" style="width:100">Select a framed element in a frame.</span>
+      </div>
+    </div>
+    <div id="markerControls" style="margin-left:58; display:none">
+      <div style="display: flex; margin-top: 2">
+        <div class="checkbox" style="margin-left: -3">
+          <input id="markerDiscreteSwitch" type="checkbox" class="checkbox">
+          <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
+        </div>
+        <input id="markerDiscreteValue" type="input" style="width: 40;" class="input__field" value="20" onkeydown="inputKeyDown(this, 1, NaN, markerChanged)">
+      </div>
+      <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10">
+        <span class="sublabel">Preview</span>
+        <div>
+          <input id="markerValue" type="range" min="0" max="100" value="50" class="slider" list="markerStepList" style="margin-left: 8; margin-top: -3" oninput="markerChanged();">
+          <datalist id="markerStepList"></datalist>
+          <div id="markerTicks" class="sliderticks"></div>
+        </div>
+        <span id="markerValuePercent" class="sublabel" style="margin-left: 8"></span>
+      </div>
+    </div>
+  </div>
+  <hr class="separator-large" color="#D7D7D7" size="1">
 </div>
 
 <script>
@@ -276,10 +367,106 @@
     markerSwitch.disabled = !allowMarker;
   }
 
+  function addDegrees(num) {
+    if (num.charAt(num.length - 1) != "°")
+      return num + "°"
+    return num
+  }
+
+  function addPercent(num) {
+    if (num.charAt(num.length - 1) != "%")
+      return num + "%"
+    return num
+  }
+
+  function incrementInput(input, min, max, updateFunc) {
+    let value = toNumber(input.value) + 1;
+    if (!isNaN(min))
+      value = Math.max(value, min);
+    if (!isNaN(max))
+      value = Math.min(value, max);
+    input.value = value.toString();
+    updateFunc();
+  }
+
+  function decrementInput(input, min, max, updateFunc) {
+    let value = toNumber(input.value) - 1;
+    if (!isNaN(min))
+      value = Math.max(value, min);
+    if (!isNaN(max))
+      value = Math.min(value, max);
+    input.value = value.toString();
+    updateFunc();
+  }
+
+  function inputKeyDown(input, min, max, updateFunc) {
+    switch (event.keyCode) {
+      case 38: // Up key
+        incrementInput(input, min, max, updateFunc);
+        break;
+      case 40: // Down key
+        decrementInput(input, min, max, updateFunc);
+        break;
+    }
+  }
+
+  function clearChildren(element) {
+    if (!element)
+      return;
+
+    while (element.firstChild) {
+      element.removeChild(element.lastChild);
+    }
+  }
+
+  function makeStepList(stepList, tickList, startInput, endInput, discreteSwitch, discreteInput) {
+    const start = toNumber(startInput.value);
+    const end = toNumber(endInput.value);
+    makeStepListValues(stepList, tickList, start, end, discreteSwitch, discreteInput);
+  }
+
+  function makeStepListValues(stepList, tickList, start, end, discreteSwitch, discreteInput) {
+    clearChildren(stepList);
+    clearChildren(tickList);
+
+    const incr = discreteSwitch.checked ? toNumber(discreteInput.value) : 0;
+    if (incr == 0)
+      return;
+    
+    let range = Math.abs(end - start);
+    let numStops = range / incr;
+    let maxStops = tickList ? tickList.offsetWidth : Number.MAX_SAFE_INTEGER;
+    if (numStops > maxStops)
+      return;
+
+    for (var i = 0; i <= numStops; ++i) {
+      let stop = document.createElement("OPTION");
+      let value = Math.round(i / numStops * 100);
+      stop.setAttribute("value", value);
+      stepList.appendChild(stop);
+
+      if (tickList != null) {
+        let tick = document.createElement("div");
+        tick.classList.add("tick");
+        tickList.appendChild(tick);
+      }
+    }
+  }
+
+  function arcInputFormat() {
+    arcStart.value = addDegrees(arcStart.value);
+    arcEnd.value = addDegrees(arcEnd.value);
+    arcDiscreteValue.value = addDegrees(arcDiscreteValue.value);
+    arcValuePercent.textContent = addPercent(arcValue.value.toString());
+    makeStepList(arcStepList, arcTicks, arcStart, arcEnd, arcDiscreteSwitch, arcDiscreteValue);
+  }
+
   function arcChanged() {
     updateMeterDisabledStates();
     arcControls.style.display = arcSwitch.checked ? 'block' : 'none';
-    arcDiscreteValue.disabled = !arcDiscreteSwitch.checked;
+    arcDiscreteValue.style.display = arcDiscreteSwitch.checked ? 'block' : 'none';
+    arcInputFormat();
+
     parent.postMessage({ pluginMessage: {
         msg: 'arc-changed',
         enabled: arcSwitch.checked,
@@ -287,14 +474,33 @@
         end: toNumber(arcEnd.value, 0),
         value: toNumber(arcValue.value, 0),
         discrete: arcDiscreteSwitch.checked,
-        discreteValue: toNumber(arcDiscreteValue.value, 1),
+        discreteValue: toNumber(arcDiscreteValue.value, 20),
       }}, '*');
+  }
+
+  function toggleOverlay(overlay, infoButtonPrefix) {
+    overlay.style.display = overlay.style.display == "flex" ? "none" : "flex";
+
+    var greyButton = document.getElementById(infoButtonPrefix + "InfoGrey");
+    var blueButton = document.getElementById(infoButtonPrefix + "InfoBlue");
+    greyButton.style.display = greyButton.style.display == "none" ? "block" : "none";
+    blueButton.style.display = blueButton.style.display == "none" ? "block" : "none";
+  }
+
+  function rotationInputFormat() {
+    rotationStart.value = addDegrees(rotationStart.value);
+    rotationEnd.value = addDegrees(rotationEnd.value);
+    rotationDiscreteValue.value = addDegrees(rotationDiscreteValue.value);
+    rotationValuePercent.textContent = addPercent(rotationValue.value.toString());
+    makeStepList(rotationStepList, rotationTicks, rotationStart, rotationEnd, rotationDiscreteSwitch, rotationDiscreteValue);
   }
 
   function rotationChanged() {
     updateMeterDisabledStates();
     rotationControls.style.display = rotationSwitch.checked ? 'block' : 'none';
-    rotationDiscreteValue.disabled = !rotationDiscreteSwitch.checked;
+    rotationDiscreteValue.style.display = rotationDiscreteSwitch.checked ? 'block' : 'none';
+    rotationInputFormat();
+    
     parent.postMessage({ pluginMessage: {
         msg: 'rotation-changed',
         enabled: rotationSwitch.checked,
@@ -302,33 +508,49 @@
         end: toNumber(rotationEnd.value, 0),
         value: toNumber(rotationValue.value, 0),
         discrete: rotationDiscreteSwitch.checked,
-        discreteValue: toNumber(rotationDiscreteValue.value, 1),
+        discreteValue: toNumber(rotationDiscreteValue.value, 20),
       }}, '*');
+  }
+
+  function barInputFormat() {
+    barDiscreteValue.value = addPercent(barDiscreteValue.value);
+    barValuePercent.textContent = addPercent(barValue.value.toString());
+    makeStepListValues(barStepList, barTicks, 0, 100, barDiscreteSwitch, barDiscreteValue);
   }
 
   function barChanged() {
     updateMeterDisabledStates();
     barControls.style.display = barSwitch.checked ? 'block' : 'none';
-    barDiscreteValue.disabled = !barDiscreteSwitch.checked;
+    barDiscreteValue.style.display = barDiscreteSwitch.checked ? 'block' : 'none';
+    barInputFormat();
+
     parent.postMessage({ pluginMessage: {
         msg: 'bar-changed',
         enabled: barSwitch.checked,
         value: toNumber(barValue.value, 0),
         discrete: barDiscreteSwitch.checked,
-        discreteValue: toNumber(barDiscreteValue.value, 1),
+        discreteValue: toNumber(barDiscreteValue.value, 20),
       }}, '*');
+  }
+
+  function markerInputFormat() {
+    markerDiscreteValue.value = addPercent(markerDiscreteValue.value);
+    markerValuePercent.textContent = addPercent(markerValue.value.toString());
+    makeStepListValues(markerStepList, markerTicks, 0, 100, markerDiscreteSwitch, markerDiscreteValue);
   }
 
   function markerChanged() {
     updateMeterDisabledStates();
     markerControls.style.display = markerSwitch.checked ? 'block' : 'none';
-    markerDiscreteValue.disabled = !markerDiscreteSwitch.checked;
+    markerDiscreteValue.style.display = markerDiscreteSwitch.checked ? 'block' : 'none';
+    markerInputFormat();
+
     parent.postMessage({ pluginMessage: {
         msg: 'marker-changed',
         enabled: markerSwitch.checked,
         value: toNumber(markerValue.value, 0),
         discrete: markerDiscreteSwitch.checked,
-        discreteValue: toNumber(markerDiscreteValue.value, 1),
+        discreteValue: toNumber(markerDiscreteValue.value, 20),
       }}, '*');
   }
 
@@ -351,29 +573,35 @@
     arcSwitch.disabled = msg.nodeType != "ELLIPSE";
     arcControls.style.display = (sd && sd.enabled) ? 'block' : 'none';
     arcSwitch.checked = sd && sd.enabled;
-    let sdStart = sd ? sd.start : 0;
-    let sdEnd = sd ? sd.end : 360;
+    let sdStart = sd ? sd.start.toString() : "0";
+    let sdEnd = sd ? sd.end.toString() : "360";
     arcStart.value = sdStart;
     arcEnd.value = sdEnd;
-    if (ellipseAngle)
-      arcValue.value = valueToPercent(ellipseAngle, sdStart, sdEnd);
+    if (ellipseAngle) {
+      const percent = valueToPercent(ellipseAngle, sdStart, sdEnd);
+      arcValue.value = percent;
+    }
     arcDiscreteSwitch.checked = sd && sd.discrete;
-    arcDiscreteValue.value = sd ? sd.discreteValue : 1;
-    arcDiscreteValue.disabled = !sd || !sd.discrete;
+    arcDiscreteValue.value = sd ? sd.discreteValue : 20;
+    arcDiscreteValue.style.display = (sd && sd.discrete ? 'block' : 'none');
+    arcInputFormat();
 
     let rd = meterData.rotationData;
     rotationSwitch.disabled = false;
     rotationControls.style.display = (rd && rd.enabled) ? 'block' : 'none';
     rotationSwitch.checked = rd && rd.enabled;
-    let rdStart = rd ? rd.start : 0;
-    let rdEnd = rd ? rd.end : -360;
+    let rdStart = rd ? rd.start.toString() : "0";
+    let rdEnd = rd ? rd.end.toString() : "-360";
     rotationStart.value = rdStart;
     rotationEnd.value = rdEnd;
-    if (rotation)
-      rotationValue.value = valueToPercent(rotation, rdStart, rdEnd);
+    if (rotation) {
+      const percent = valueToPercent(rotation, rdStart, rdEnd);
+      rotationValue.value = percent
+    }
     rotationDiscreteSwitch.checked = rd && rd.discrete;
-    rotationDiscreteValue.value = rd ? rd.discreteValue : 1;
-    rotationDiscreteValue.disabled = !rd || !rd.discrete;
+    rotationDiscreteValue.value = rd ? rd.discreteValue : 20;
+    rotationDiscreteValue.style.display = (rd && rd.discrete) ? 'block' : 'display';
+    rotationInputFormat();
 
     let bd = meterData.progressBarData;
     barSwitch.disabled = (msg.nodeType != "FRAME" && msg.nodeType != "RECTANGLE");
@@ -382,8 +610,9 @@
     if (progress)
       barValue.value = progress;
     barDiscreteSwitch.checked = bd && bd.discrete;
-    barDiscreteValue.value = bd ? bd.discreteValue : 1;
-    barDiscreteValue.disabled = !bd || !bd.discrete;
+    barDiscreteValue.value = bd ? bd.discreteValue : 20;
+    barDiscreteValue.style.display = (bd && bd.discrete) ? 'block' : 'none';
+    barInputFormat();
 
     let md = meterData.progressMarkerData;
     markerSwitch.disabled = (msg.nodeType != "FRAME" && msg.nodeType != "RECTANGLE");
@@ -392,8 +621,9 @@
     if (progress)
       markerValue.value = progress;
     markerDiscreteSwitch.checked = md && md.discrete;
-    markerDiscreteValue.value = md ? md.discreteValue : 1;
-    markerDiscreteValue.disabled = !md || !md.discrete;
+    markerDiscreteValue.value = md ? md.discreteValue : 20;
+    markerDiscreteValue.style.display = (md && md.discrete) ? 'block' : 'none';
+    markerInputFormat();
 
     updateMeterDisabledStates();
   }

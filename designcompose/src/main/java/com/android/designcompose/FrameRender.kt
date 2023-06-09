@@ -381,15 +381,11 @@ private fun calculateProgressMarkerData(
     val meterValue = meterValue.coerceDiscrete(markerData.discrete, markerData.discreteValue)
 
     // The indicator mode means we don't resize the node; we just move it
-    // along an axis defined by startX, endX, startY, and endY
+    // along the x axis
     val moveX = lerp(markerData.startX, markerData.endX, meterValue, density)
-    val moveY = lerp(markerData.startY, markerData.endY, meterValue, density)
-    val leftOffset = style.left.pointsAsDp().value
-    val topOffset = style.top.pointsAsDp().value
     var overrideTransform = style.getTransform(density)
-    // Set the location of this node, subtracting its existing offset from
-    // its parent
-    overrideTransform.setTranslation(moveX - leftOffset, moveY - topOffset)
+    val leftOffset = style.left.pointsAsDp().value
+    overrideTransform.setXTranslation(moveX - leftOffset)
 
     return overrideTransform
 }

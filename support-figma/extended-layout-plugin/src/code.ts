@@ -986,24 +986,7 @@ else if (figma.command === "move-plugin-data") {
 
     // Use the parent of the progress bar to determine the extents to which the
     // progress bar moves.
-    // Rotate bounding boxes if parent is rotated; we only support 90 degree rotations
     const parent = node.parent as FrameNode;
-    let nodeBB = node.absoluteBoundingBox;
-    let parentBB = parent.absoluteBoundingBox;
-    if (!nodeBB)
-      nodeBB = { x: 0, y: 0, width: 0, height: 0 }
-    if (!parentBB)
-      parentBB = { x: 0, y: 0, width: 0, height: 0 }
-    if (Math.abs(parent.rotation) == 90) {
-      nodeBB = flipRect(nodeBB);
-      parentBB = flipRect(parentBB);
-    }
-
-    // Decompose the transform to obtain the skew angles, which are used to calculate
-    // offsets needed to determine the amount that a skewed progress bar moves.
-    const decomposed = decomposeTransform(node.relativeTransform);
-    const skewX = node.height * Math.abs(Math.sin(degreesToRadians(decomposed.skewX)));
-    const skewY = node.width * Math.abs(Math.sin(degreesToRadians(decomposed.skewY)));
 
     // Calculate the progress bar value if discrete values are specified
     let value = msg.value;
@@ -1018,41 +1001,23 @@ else if (figma.command === "move-plugin-data") {
     
     let meterData: any = {};
     if (progressMarker) {
-      // The progress marker means we don't resize the node; we just move it along an axis
-      // within the parent frame. We calculate this axis by taking the difference between
-      // the parent bounding box and our bounding box, offseting by the skew of this node.
-      const parentWidth = parentBB ? parentBB.width : 0;
-      const parentHeight = parentBB ? parentBB.height : 0;
-      const startX = skewX;
-      const startY = parentBB.height - nodeBB.height + skewY;
-      const endX = parentBB.width - nodeBB.width + skewX;
-      const endY = skewY; 
-      let moveX = percentToValue(value, startX, endX);
-      let moveY = percentToValue(value, startY, endY);
+      // The progress marker means we don't resize the node; we just move it along the x axis
+      const startX = -node.width / 2;
+      const endX = parent.width - node.width / 2;
+      const moveX = percentToValue(value, startX, endX);
       node.x = moveX;
-      node.y = moveY;
 
       barData.startX = startX;
-      barData.startY = startY;
       barData.endX = endX;
-      barData.endY = endY;
       meterData.progressMarkerData = barData;
     }
     else {
       // Normal progress bar mode means we resize the progress bar between a width of 0.01
-      // and a max size that we calculate based on the hypotenuse of our parent's bounding
-      // box, adjusted by our own size and the skew. We currently only support progress bars
-      // that are either X or Y axis aligned -- that is, either the left is parallel with the
-      // Y axis or the top is parallel with the X axis.
-      let boundsWidth = parentBB.width - skewX;
-      let boundsHeight = parentBB.height;
-      if (Math.abs(node.rotation) < 45)
-        boundsHeight -= node.height;
-      let boundsMax = hypot(boundsWidth, boundsHeight);
-      let width = percentToValue(value, 0.01, boundsMax); // Min size must be at least 0.01
+      // and a max size based on the parent width.
+      const width = percentToValue(value, 0.01, parent.width);
       node.resize(width, node.height);
 
-      barData.endX = boundsMax;
+      barData.endX = parent.width;
       meterData.progressBarData = barData;
     }
 

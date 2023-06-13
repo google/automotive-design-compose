@@ -40,7 +40,7 @@ use crate::{
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
-    toolkit_schema::{ComponentInfo, OverflowDirection, ScrollInfo, View},
+    toolkit_schema::{ComponentInfo, OverflowDirection, ScrollInfo, View, RenderStyle},
 };
 
 use unicode_segmentation::UnicodeSegmentation;
@@ -967,6 +967,7 @@ fn visit_node(
                 reactions,
                 characters,
                 node.absolute_bounding_box,
+                RenderStyle::None,
             );
         } else {
             // Build some runs of custom styled text out of the style overrides. We need to be able to iterate
@@ -1053,6 +1054,7 @@ fn visit_node(
                 reactions,
                 runs,
                 node.absolute_bounding_box,
+                RenderStyle::None,
             );
         }
     }
@@ -1223,6 +1225,7 @@ fn visit_node(
         scroll_info,
         frame_extras,
         node.absolute_bounding_box,
+        RenderStyle::None,
     );
 
     // Iterate over our visible children, but not vectors because they always

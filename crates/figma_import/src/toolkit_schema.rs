@@ -111,8 +111,8 @@ impl Default for ScrollInfo {
     }
 }
 
-// This will be used to indicate which nodes are telltales, in the case
-// Where they need to be rendered differently.
+/// This enum may be used as a hint by the DesignCompose renderer implementation 
+/// to determine if it's important for the content to be rendered identically on different platforms.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum RenderStyle {
     None,

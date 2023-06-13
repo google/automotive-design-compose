@@ -40,7 +40,7 @@ use crate::{
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
-    toolkit_schema::{ComponentInfo, OverflowDirection, ScrollInfo, View, RenderStyle},
+    toolkit_schema::{ComponentInfo, OverflowDirection, RenderStyle, ScrollInfo, View},
 };
 
 use unicode_segmentation::UnicodeSegmentation;

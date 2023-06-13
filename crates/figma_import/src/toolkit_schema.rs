@@ -112,7 +112,7 @@ impl Default for ScrollInfo {
 }
 
 /// This enum may be used as a hint by the DesignCompose renderer implementation 
-/// to determine if it's important for the content to be rendered identically on different platforms.
+/// to determine if it is important for the content to be rendered identically on different platforms.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum RenderStyle {
     None,

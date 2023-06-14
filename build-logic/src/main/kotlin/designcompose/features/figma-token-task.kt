@@ -77,7 +77,7 @@ abstract class FigmaTokenTask @Inject constructor(private val executor: DefaultE
         val execResult =
             executor.exec {
                 executable = adbPath.get().toString()
-                args("shell", "pm", "list", "packages", appID.get())
+                args("shell", "pm", "list", "packages", "--user", "current", appID.get())
                 standardOutput = stdOut
                 errorOutput = stdErr
                 isIgnoreExitValue = true // Handle it ourselves
@@ -125,6 +125,7 @@ abstract class FigmaTokenTask @Inject constructor(private val executor: DefaultE
         val execResult =
             executor.exec {
                 executable = adbPath.get().toString()
+                isIgnoreExitValue = true
                 args(
                     "shell",
                     "am",
@@ -138,7 +139,9 @@ abstract class FigmaTokenTask @Inject constructor(private val executor: DefaultE
                     token
                 )
             }
-        execResult.assertNormalExitValue()
+        if (execResult.exitValue != 0) {
+            logger.lifecycle("Failed to set token for ${appID.get()}")
+        }
     }
 }
 

@@ -40,7 +40,7 @@ design language.
 
 ### Now Playing & Browse toggle {:#NowPlaying}
 
-<img src="./play-browse-toggle-1x.png" class="attempt-right">
+<img src="/img/play-browse-toggle-1x.png" class="attempt-right">
 The **Now Playing & Browse toggle** design places the Now Playing and Browse
 functionality as top-level peers, with a toggle to switch between them. Drivers
 and passengers can either see the Now Playing information and use the media
@@ -58,7 +58,7 @@ DesignCompose partner Google Drive.
 
 ### Browse Slide-Up {:#BrowseSlideUp}
 
-<img src="./play-browse-slide-up-1x.png" class="attempt-right">
+<img src="/img/play-browse-slide-up-1x.png" class="attempt-right">
 The **Browse Slide-Up** design presents the Now Playing functionality initially,
 with Browse available as an overlay, accessible using a button at the top of the
 screen. Since the Browse view is smaller than the full Now Playing view, this
@@ -72,7 +72,7 @@ DesignCompose partner Google Drive.
 
 ### Now Playing Fly-Up {:#NowPlayingFlyUp}
 
-<img src="./one-screen-fly-up-1x.png" class="attempt-right">
+<img src="/img/one-screen-fly-up-1x.png" class="attempt-right">
 In the **Now Playing Fly-Up** design, Browse functionality is the primary view
 and the Now Playing functionality is a bar at the bottom. Drivers and passengers
 wanting access to extended controls or a bigger view of the Now Playing display
@@ -87,7 +87,7 @@ DesignCompose partner Google Drive.
 
 ### Top Media Source Tabs {:#TopMedia}
 
-<img src="./top-tabs-1x.png" class="attempt-right">
+<img src="/img/top-tabs-1x.png" class="attempt-right">
 In the **Top Media Source Tabs** design, the available media sources are always
 accessible at the top of the media player, making it easy for the listener to
 switch between sources. Users can browse the selected source immediately below.
@@ -101,7 +101,7 @@ DesignCompose partner Google Drive.
 
 ## Nova {:#Nova}
 
-<img src="./nova-1x.png" class="attempt-right">
+<img src="/img/nova-1x.png" class="attempt-right">
 **Nova** is a whimsical design that delivers functionality with style. In this
 design, Browse is the main view with a source switcher drop-down at the top so
 it's easy to select another source. Similar to the previous two designs, the Now
@@ -127,5 +127,5 @@ larger view by tapping on the bar. Style elements are described below.
 Find this design at `Media Designs/3 - Nova Media.fig` in the DesignCompose
 partner Google Drive.
 
-[1]: /training/cars/designcompose/getting-started/tutorial
-[2]: /training/cars/designcompose/media-center-demo
+[1]: /docs/getting-started/tutorial
+[2]: /docs/media-center-demo

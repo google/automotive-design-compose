@@ -100,6 +100,6 @@ plugins][6]{:.external} website.
 
 [1]: https://www.figma.com/@designcompose
 [2]: https://www.figma.com/downloads/
-[3]: /training/cars/designcompose/getting-started/#GetSource
+[3]: /docs/getting-started/#GetSource
 [4]: https://help.figma.com/hc/en-us/articles/360042786733-Create-a-plugin-for-development
 [6]: https://www.figma.com/community/plugins

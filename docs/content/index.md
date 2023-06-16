@@ -3,7 +3,8 @@ title: 'Automotive Design For Compose'
 layout: 'layouts/home.njk'
 eleventyNavigation:
   key: Home
-  order: 1
+  order: 0
+  topBar: true
 ---
 
 # Automotive Design for Compose

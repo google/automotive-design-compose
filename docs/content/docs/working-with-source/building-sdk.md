@@ -75,7 +75,7 @@ To build the code in Android Studio:
     menu with entries for each of the included apps.
 
 1.  Build the Tutorial app using either the basic or advanced instructions in
-    [Build and run your app](/studio/run) The Tutorial app is listed in the
+    [Build and run your app](https://developer.android.com/studio/run) The Tutorial app is listed in the
     **run configurations** menu as `reference-apps:tutorial`.
 
 ### Command line {:#BuildWithCommandLine}

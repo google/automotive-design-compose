@@ -3,7 +3,7 @@ title: 'Live Update'
 layout: 'layouts/docs.njk'
 eleventyNavigation:
   key: Live Update
-  parent: Guides
+  order: 3
 ---
 
 # Live Update
@@ -66,6 +66,6 @@ appear on the actual Android-powered device.
 Learn more about both the plugin and widget in the [DesignCompose Tutorial
 App][3].
 
-[1]: /training/cars/designcompose/live-update/setup
-[2]: /training/cars/designcompose/live-update/design-switcher
-[3]: /training/cars/designcompose/getting-started/tutorial
+[1]: /docs/live-update/setup
+[2]: /docs/live-update/design-switcher
+[3]: /docs/getting-started/tutorial

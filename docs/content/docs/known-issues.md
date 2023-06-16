@@ -2,7 +2,7 @@
 layout: 'layouts/docs.njk'
 eleventyNavigation:
   key: Known Issues
-  parent: Guides
+  order: 20
 ---
 
 

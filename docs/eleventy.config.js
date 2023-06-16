@@ -1,4 +1,5 @@
 const { DateTime } = require("luxon");
+const markdownItAttrs = require("markdown-it-attrs");
 const markdownItAnchor = require("markdown-it-anchor");
 
 const pluginRss = require("@11ty/eleventy-plugin-rss");
@@ -80,6 +81,7 @@ module.exports = function(eleventyConfig) {
 
 	// Customize Markdown library settings:
 	eleventyConfig.amendLibrary("md", mdLib => {
+		mdLib.use(markdownItAttrs)
 		mdLib.use(markdownItAnchor, {
 			permalink: markdownItAnchor.permalink.ariaHidden({
 				placement: "after",
@@ -121,7 +123,7 @@ module.exports = function(eleventyConfig) {
 		],
 
 		// Pre-process *.md files with: (default: `liquid`)
-		markdownTemplateEngine: "liquid",
+		markdownTemplateEngine: "njk",
 
 		// Pre-process *.html files with: (default: `liquid`)
 		htmlTemplateEngine: "njk",
@@ -144,6 +146,6 @@ module.exports = function(eleventyConfig) {
 		// When paired with the HTML <base> plugin https://www.11ty.dev/docs/plugins/html-base/
 		// it will transform any absolute URLs in your HTML to include this
 		// folder name and does **not** affect where things go in the output folder.
-		pathPrefix: "/",
+		pathPrefix: "/automotive-design-compose/",
 	};
 };

@@ -2,7 +2,7 @@
 layout: 'layouts/docs.njk'
 eleventyNavigation:
   key: Media Center App
-  parent: Guides
+  order: 5
 ---
 # Media Center Demonstration App
 
@@ -136,7 +136,7 @@ The following steps describe how to import the Media Center design documents:
     `reference-apps/aaos-unbundled/mediacompose/figma_files` directory.
 
     ![Import
-    file](/training/cars/designcompose/getting-started/figma-import.png){:.screenshot}
+    file](/img/figma-import.png){:.screenshot}
 
     **Figure 1.** Figma's Import file button.
 
@@ -345,23 +345,23 @@ This error occurs when the app was not signed with the platform key or otherwise
 authenticated as a system app. Ensure that the key being used to sign the app is
 the platform key for the emulator or device that you are installing on.
 
-[1]: /training/cars/designcompose/media-center-demo/example-designs
+[1]: /docs/media-center-demo/example-designs
 [2]: https://source.android.com/docs/devices/automotive/hmi/media/
-[3]: /training/cars/designcompose/getting-started/tutorial
-[4]: /training/cars/designcompose/getting-started/index
+[3]: /docs/getting-started/tutorial
+[4]: /docs/getting-started/index
 [5]: #MediaContentControl
 [6]: https://source.android.com/docs/devices/automotive/unbundled_apps/integration
 [7]: https://source.android.com/docs/setup/download#installing-repo
 [8]: https://source.android.com/docs/devices/automotive/unbundled_apps/integration#check-out
 [9]: https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_configuration_properties
 [10]: #aaos-ub-setup
-[12]: /training/cars/designcompose/live-update/setup
+[12]: /docs/live-update/setup
 [13]: https://www.figma.com
 [14]: https://source.android.com/devices/tech/ota/sign_builds#certificates-keys
 [15]: #SetDocID
-[17]: /studio/build/building-cmdline#gradle_signing
+[17]: https://developer.android.com/studio/build/building-cmdline#gradle_signing
 [18]: #ImportDocsSection
-[19]: /studio/run
-[20]: /training/cars/designcompose/live-update/setup#StoreFigmaToken
+[19]: https://developer.android.com/studio/run
+[20]: /docs/live-update/setup#StoreFigmaToken
 [21]: example-designs
 [22]: #SetDocID

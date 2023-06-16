@@ -2,13 +2,13 @@
 layout: 'layouts/docs.njk'
 eleventyNavigation:
   key: Tutorial
-  parent: Guides
+  parent: Getting Started
 ---
 
 
 # DesignCompose Tutorial App
 
-<img src="./tutorial-doc-1x.png" class="attempt-right" srcset="1x ./tutorial-doc-1x.png, 2x ./tutorial-doc-2x.png">
+<img src="/img/tutorial-doc-2x.png">
 
 This page explains how to download and configure the DesignCompose tutorial app.
 This is written as a tutorial, so it's important to follow each step.
@@ -28,7 +28,7 @@ tutorial and a large-screen device to run it on.
     Tiramisu (API 33) system image with the startup orientation set to Portrait.
 
     ![Creating a Nexus 10
-    device](/training/cars/designcompose/getting-started/tablet-virt-dev.png)
+    device](/img/tablet-virt-dev.png)
 
     **Figure 1.** Android Studio virtual device definition screen.
 
@@ -93,19 +93,19 @@ work with:
 While that's loading, return to your copy of the tutorial file on Figma and find
 the Getting Started box.
 
-![Getting Started](TutorialGettingStarted.png)
+![Getting Started](/img/TutorialGettingStarted.png)
 
 **Figure 4.** The location of the tutorial Figma file's Getting Started frame.
 
 Zoom in and begin your tutorial!
 
-![Getting Started Frame](GettingStartedFrame.svg)
+![Getting Started Frame](/img/GettingStartedFrame.svg)
 
 **Figure 5.** The Getting Started frame.
 
-[1]: /training/cars/designcompose/getting-started/index
-[2]: /training/cars/designcompose/live-update/setup
+[1]: /docs/getting-started/index
+[2]: /docs/live-update/setup
 [3]: https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose
-[4]: /studio/run
-[5]: /training/cars/designcompose/live-update/setup#StoreFigmaToken
-[6]: /training/cars/designcompose/getting-started/LiveUpdateDropdown.png
+[4]: https://developer.android.com/studio/run
+[5]: /docs/live-update/setup#StoreFigmaToken
+[6]: /img/LiveUpdateDropdown.png

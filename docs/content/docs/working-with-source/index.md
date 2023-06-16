@@ -2,7 +2,7 @@
 layout: 'layouts/docs.njk'
 eleventyNavigation:
   key: Working with Source
-  parent: Guides
+  order: 6
 ---
 
 

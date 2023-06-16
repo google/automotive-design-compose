@@ -1,7 +1,11 @@
-project_path: /_project.yaml
-book_path: /_book.yaml
-keywords: designcompose
-
+---
+title: 'Live Update Setup'
+layout: 'layouts/docs.njk'
+eleventyNavigation:
+  key: Setup
+  parent: Live Update
+  order: 1
+---
 # Set Up Figma Authentication
 
 This guide walks you through the process of authenticating DesignCompose-enabled

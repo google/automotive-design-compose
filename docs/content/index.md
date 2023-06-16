@@ -1,8 +1,12 @@
-project_path: /_project.yaml
-book_path: /_book.yaml
-keywords: designcompose
+---
+title: 'Automotive Design For Compose'
+layout: 'layouts/home.njk'
+eleventyNavigation:
+  key: Home
+  order: 1
+---
 
-# DesignCompose Overview
+# Automotive Design for Compose
 
 Automotive Design for Compose (also called DesignCompose in the source) is an
 extension to [Jetpack Compose](/jetpack/compose) that allows every screen,

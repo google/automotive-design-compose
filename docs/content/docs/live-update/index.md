@@ -1,6 +1,10 @@
-project_path: /_project.yaml
-book_path: /_book.yaml
-keywords: designcompose
+---
+title: 'Live Update'
+layout: 'layouts/docs.njk'
+eleventyNavigation:
+  key: Live Update
+  parent: Guides
+---
 
 # Live Update
 

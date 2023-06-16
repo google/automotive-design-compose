@@ -1,6 +1,10 @@
-project_path: /_project.yaml
-book_path: /_book.yaml
-keywords: designcompose
+---
+layout: 'layouts/docs.njk'
+eleventyNavigation:
+  key: Building the SDK
+  parent: Working with Source
+  order: 1
+---
 
 # Build the SDK from source
 

@@ -91,6 +91,16 @@ module.exports = function(eleventyConfig) {
 			slugify: eleventyConfig.getFilter("slugify")
 		});
 	});
+	eleventyConfig.addFilter('log', value => {
+		console.log(value)
+	})
+	eleventyConfig.addCollection("sidebarNav", function(collection) {
+		// filter out excludeFromSidebar options
+		return collection.getAll()
+			.filter(item => {
+				return item.data?.eleventyNavigation && item.data.isDocs && item.data?.excludeFromSidebar !== true;
+			});
+	});
 
 	// Features to make your build faster (when you need them)
 
@@ -111,7 +121,7 @@ module.exports = function(eleventyConfig) {
 		],
 
 		// Pre-process *.md files with: (default: `liquid`)
-		markdownTemplateEngine: "njk",
+		markdownTemplateEngine: "liquid",
 
 		// Pre-process *.html files with: (default: `liquid`)
 		htmlTemplateEngine: "njk",

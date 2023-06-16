@@ -1,7 +1,9 @@
-project_path: /_project.yaml
-book_path: /_book.yaml
-keywords: designcompose
-
+---
+layout: 'layouts/docs.njk'
+eleventyNavigation:
+  key: Media Center App
+  parent: Guides
+---
 # Media Center Demonstration App
 
 This page explains how to use the Media Center demonstration app, which uses the

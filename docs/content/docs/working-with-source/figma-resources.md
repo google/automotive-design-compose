@@ -1,6 +1,10 @@
-project_path: /_project.yaml
-book_path: /_book.yaml
-keywords: designcompose
+---
+layout: 'layouts/docs.njk'
+eleventyNavigation:
+  key: Figma Resources
+  parent: Working with Source
+  order: 2
+---
 
 # Figma Resources
 

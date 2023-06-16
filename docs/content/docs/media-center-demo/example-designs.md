@@ -1,6 +1,10 @@
-project_path: /_project.yaml
-book_path: /_book.yaml
-keywords: designcompose
+---
+layout: 'layouts/docs.njk'
+eleventyNavigation:
+  key: Example Designs
+  parent: Media Center App
+  order: 2
+---
 
 # Media Center Example Designs
 

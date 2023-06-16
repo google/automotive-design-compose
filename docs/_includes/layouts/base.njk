@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ metadata.language }}">
+<html lang="en"{% if templateClass %} class="{{ templateClass }}"{% endif %}>	
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,17 +24,17 @@
 		{#- Add an arbitrary string to the bundle #}
 		{%- css %}* { box-sizing: border-box; }{% endcss %}
 		{#- Add the contents of a file to the bundle #}
-		{%- css %}{% include "public/css/index.css" %}{% endcss %}
+		{%- css %}{% include "index.css" %}{% endcss %}
+		{%- css %}{% include "partials/toc.css" %}{% endcss %}
 		{#- Or add from node_modules #}
-		{# {%- css %}{% include "node_modules/prismjs/themes/prism-okaidia.css" %}{% endcss %} #}
 
 		{#- Render the CSS bundle using Inlined CSS (for the fastest site performance in production) #}
 		<style>{% getBundle "css" %}</style>
 		{#- Renders the CSS bundle using a separate file, if you can't set CSP directive style-src: 'unsafe-inline' #}
 		{#- <link rel="stylesheet" href="{% getBundleFileUrl "css" %}"> #}
+				<script>{% include "partials/details-force-state.js" %}</script>
 	</head>
 	<body>
-		<a href="#skip" class="visually-hidden">Skip to main content</a>
 
 		<header>
 			<a href="/" class="home-link">{{ metadata.title }}</a>
@@ -44,15 +44,13 @@
 				<h2 class="visually-hidden">Top level navigation menu</h2>
 				<ul class="nav">
 				{%- for entry in collections.all | eleventyNavigation %}
-					<li class="nav-item"><a href="{{ entry.url }}"{% if entry.url == page.url %} aria-current="page"{% endif %}>{{ entry.title }}</a></li>
+						<li class="nav-item"><a href="{{ entry.url }}"{% if entry.url == page.url %} aria-current="page"{% endif %}>{{ entry.title }}</a></li>
 				{%- endfor %}
 				</ul>
 			</nav>
 		</header>
 
-		<main id="skip">
 			{{ content | safe }}
-		</main>
 
 		<footer></footer>
 

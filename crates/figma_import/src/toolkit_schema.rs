@@ -114,7 +114,7 @@ impl Default for ScrollInfo {
 /// This enum may be used as a hint by the DesignCompose renderer implementation
 /// to determine if it is important for the content to be rendered identically on different platforms.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum RenderStyle {
+pub enum RenderMethod {
     None,
     PixelPerfect,
 }
@@ -138,7 +138,7 @@ pub struct View {
     pub style: ViewStyle,
     pub data: ViewData,
     pub design_absolute_bounding_box: Option<Rectangle>,
-    pub render_style: RenderStyle,
+    pub render_method: RenderMethod,
 }
 impl View {
     pub(crate) fn new_rect(
@@ -151,7 +151,7 @@ impl View {
         scroll_info: ScrollInfo,
         frame_extras: Option<FrameExtras>,
         design_absolute_bounding_box: Option<Rectangle>,
-        render_style: RenderStyle,
+        render_method: RenderMethod,
     ) -> View {
         View {
             id: id.clone(),
@@ -163,7 +163,7 @@ impl View {
             scroll_info,
             data: ViewData::Container { shape, children: vec![] },
             design_absolute_bounding_box,
-            render_style,
+            render_method,
         }
     }
     pub(crate) fn new_text(
@@ -174,7 +174,7 @@ impl View {
         reactions: Option<Vec<Reaction>>,
         text: &str,
         design_absolute_bounding_box: Option<Rectangle>,
-        render_style: RenderStyle,
+        render_method: RenderMethod,
     ) -> View {
         View {
             id: id.clone(),
@@ -186,7 +186,7 @@ impl View {
             scroll_info: ScrollInfo::default(),
             data: ViewData::Text { content: text.into() },
             design_absolute_bounding_box,
-            render_style,
+            render_method,
         }
     }
     pub(crate) fn new_styled_text(
@@ -197,7 +197,7 @@ impl View {
         reactions: Option<Vec<Reaction>>,
         text: Vec<StyledTextRun>,
         design_absolute_bounding_box: Option<Rectangle>,
-        render_style: RenderStyle,
+        render_method: RenderMethod,
     ) -> View {
         View {
             id: id.clone(),
@@ -209,7 +209,7 @@ impl View {
             scroll_info: ScrollInfo::default(),
             data: ViewData::StyledText { content: text },
             design_absolute_bounding_box,
-            render_style,
+            render_method,
         }
     }
     pub(crate) fn add_child(&mut self, child: View) {

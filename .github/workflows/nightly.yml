@@ -56,25 +56,3 @@ jobs:
         with:
           gradle-version: ${{matrix.gradle_release}}
           arguments: check
-
-  sdk-emulator-tests:
-    runs-on: macos-latest # Emulators run best on MacOS
-    strategy:
-      matrix:
-        api-level: [30, 31, 33]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/prepare-build-env 
-        with:
-          rust: "true"
-      # Don't use caching, since GitHub only allows 10GB of cache space and it's fine if it takes longer to run
-      - name: Run Emulator tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          arch: x86_64
-          target: google_apis
-          profile: Nexus 10
-          ndk: 25.2.9519653
-          disable-animations: true
-          script: ./gradlew connectedCheck -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect

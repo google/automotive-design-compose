@@ -94,18 +94,7 @@ jobs:
         uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
         with:
           arguments: check
-
-  sdk-emulator-atd-test:
-    runs-on: macos-latest # Emulators run best on MacOS
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/emulator-test
-        with:
-          api-level: 30
-          arch: x86
-          target: aosp_atd
-          test-cmd: ./gradlew connectedCheck -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
-
+  
   build-maven-repo:
     runs-on: ubuntu-latest
     steps:

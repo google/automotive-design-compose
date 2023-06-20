@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -70,6 +71,7 @@ import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.Reaction
 import com.android.designcompose.serdegen.Trigger
@@ -303,6 +305,22 @@ fun DesignInjectKey(key: Char, metaKeys: List<DesignMetaKey>) {
     KeyInjectManager.injectKey(key, metaKeys)
 }
 
+// When rendering with masks, we need to differentiate nodes that are masks themselves, a node with
+// a child that is a mask, and normal nodes with no masking involved.
+internal enum class MaskViewType {
+    None,
+    MaskNode,
+    MaskParent,
+}
+
+// Helper class that groups together data needed to support masks
+internal data class MaskInfo(
+    // Keep track of the size of a node that has a child that is a mask
+    val parentSize: MutableState<Size>?,
+    // The type of node with respect to masking
+    val type: MaskViewType?,
+)
+
 @Composable
 internal fun DesignView(
     modifier: Modifier = Modifier,
@@ -314,7 +332,8 @@ internal fun DesignView(
     interactionState: InteractionState,
     interactionScope: CoroutineScope,
     parentComponents: List<ParentComponentInfo>,
-    parentLayoutInfo: ParentLayoutInfo
+    parentLayoutInfo: ParentLayoutInfo,
+    maskInfo: MaskInfo? = null,
 ) {
     val parentComps =
         if (v.component_info.isPresent) {
@@ -633,6 +652,17 @@ internal fun DesignView(
             // Optional.empty
             // into DesignFrame's componentInfo parameter.
             val hasVariantReplacement = view.name != v.name
+
+            // Get the mask info from parameters unless we have a child that is a mask, in which
+            // case we know the mask view type is MaskParent and we create a new parent size
+            // mutable state.
+            var maskViewType = maskInfo?.type
+            var parentSize = maskInfo?.parentSize
+            if (view.hasChildMask()) {
+                maskViewType = MaskViewType.MaskParent
+                parentSize = remember { mutableStateOf(Size(0F, 0F)) }
+            }
+
             DesignFrame(
                 m,
                 style,
@@ -644,13 +674,64 @@ internal fun DesignView(
                 customizations,
                 if (hasVariantReplacement) Optional.empty() else view.component_info,
                 parentComponents,
+                MaskInfo(parentSize, maskViewType),
             ) { parentLayoutInfoForChildren ->
                 val customContent = customizations.getContent(view.name)
                 if (customContent != null) {
                     customContent()
                 } else {
-                    (view.data as ViewData.Container).children.forEach { child ->
-                        child?.let { childView ->
+                    if ((view.data as ViewData.Container).children.isNotEmpty()) {
+                        // Create  a list of views to render. If the view is a mask, the second item
+                        // in the pair is a list of views that they mask. This lets us iterate
+                        // through all the views that a mask affects first, render them to a layer,
+                        // and then render the mask itself on top with appropriate alpha blending.
+                        // Note that we currently only support one mask under a parent, and we
+                        // don't support unmasked nodes under a parent when there exists a mask.
+                        val viewList: ArrayList<Pair<View, ArrayList<View>>> = ArrayList()
+                        var currentMask: View? = null
+                        (view.data as ViewData.Container).children.forEach { child ->
+                            val shouldClip = child.style.overflow is Overflow.Hidden
+                            if (child.isMask()) {
+                                // Add the mask to the list and set the current mask
+                                viewList.add(Pair(child, ArrayList()))
+                                currentMask = child
+                            } else if (shouldClip) {
+                                // A node with clip contents ends the reach of the last mask, so
+                                // add this view to the list and clear the current mask
+                                viewList.add(Pair(child, ArrayList()))
+                                currentMask = null
+                            } else {
+                                if (currentMask != null) {
+                                    // This view is masked so add it to the mask's list
+                                    viewList.last().second.add(child)
+                                } else {
+                                    // This view is not masked so add it to the main list
+                                    viewList.add(Pair(child, ArrayList()))
+                                }
+                            }
+                        }
+                        viewList.forEach {
+                            val childView = it.first
+                            val maskedChildren = it.second
+                            var maskViewType = MaskViewType.None
+                            if (maskedChildren.isNotEmpty()) {
+                                maskedChildren.forEach { maskedChild ->
+                                    DesignView(
+                                        Modifier,
+                                        maskedChild,
+                                        "",
+                                        docId,
+                                        document,
+                                        customizations,
+                                        interactionState,
+                                        interactionScope,
+                                        parentComps,
+                                        parentLayoutInfoForChildren,
+                                        MaskInfo(parentSize, maskViewType),
+                                    )
+                                }
+                                maskViewType = MaskViewType.MaskNode
+                            }
                             DesignView(
                                 Modifier,
                                 childView,
@@ -661,7 +742,8 @@ internal fun DesignView(
                                 interactionState,
                                 interactionScope,
                                 parentComps,
-                                parentLayoutInfoForChildren
+                                parentLayoutInfoForChildren,
+                                MaskInfo(parentSize, maskViewType),
                             )
                         }
                     }

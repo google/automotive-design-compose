@@ -1,8 +1,9 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Working with Source
-  order: 6
+title: Working with Source
+has_children: true
+nav_order: 6
+has_toc: false
+
 ---
 
 

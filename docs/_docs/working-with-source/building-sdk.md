@@ -1,24 +1,22 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Building the SDK
-  parent: Working with Source
-  order: 1
+title: Building the SDK
+parent: Working with Source
+nav_order: 1
 ---
 
 # Build the SDK from source
 
 This page outlines how to download and build the Automotive Design for Compose
 source.
-## Install required dependencies {:#InstallDependencies}
+## Install required dependencies {#InstallDependencies}
 
 Additional dependencies are required to compile the SDK.
 
-### Android Studio {:#AndroidStudio}
+### Android Studio {#AndroidStudio}
 
 The source requires Android Studio Flamingo or later.
 
-### Android NDK {:#AndroidNDK}
+### Android NDK {#AndroidNDK}
 
 Version `25.2.9519653` is required. You can install the NDK with Android
 Studio's SDK Manager or on the command line using the sdkmanager binary:
@@ -28,7 +26,7 @@ Studio's SDK Manager or on the command line using the sdkmanager binary:
     --install "ndk;25.2.9519653"
 ```
 
-### Rust {:#InstallRust}
+### Rust {#InstallRust}
 
 Rust 1.63.0 is required to compile DesignCompose's Live Update service.
 Installation instructions are on the [Rust installer
@@ -37,7 +35,7 @@ page](https://rustup.rs){:.external}.
 To complete the Rust installation the Android Studio IDE must be aware of the
 new install. The simplest way to do this is to reboot your computer.
 
-### Rust toolchains {: #RustToolchains}
+### Rust toolchains {#RustToolchains}
 
 The DesignCompose library includes a Rust JNI library, which must be compiled
 for multiple system types. Install the toolchains that DesignCompose needs by
@@ -51,7 +49,7 @@ rustup target add \
     x86_64-linux-android
 ```
 
-## Check out the code {:#GetSource}
+## Check out the code {#GetSource}
 
 To check out the code, run the following:
 
@@ -59,13 +57,13 @@ To check out the code, run the following:
 git clone https://github.com/google/automotive-design-compose.git
 ```
 
-## Build the code {:#BuildCode}
+## Build the code {#BuildCode}
 
 Instructions are provided for building DesignCompose and it's reference apps
 using both Android Studio and the command line. The examples below describe how
 to build the Tutorial app.
 
-### Android Studio {:#BuildInAndroidStudio}
+### Android Studio {#BuildInAndroidStudio}
 
 To build the code in Android Studio:
 
@@ -78,7 +76,7 @@ To build the code in Android Studio:
     [Build and run your app](https://developer.android.com/studio/run) The Tutorial app is listed in the
     **run configurations** menu as `reference-apps:tutorial`.
 
-### Command line {:#BuildWithCommandLine}
+### Command line {#BuildWithCommandLine}
 
 To build the code from the command line:
 

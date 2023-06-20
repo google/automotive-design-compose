@@ -1,8 +1,0 @@
----
-layout: layouts/base.njk
-templateClass: elv-default
----
-
-<main class="elv-layout{% if layoutClass %} {{ layoutClass }}{% endif %}" {% if not excludeFromSearch %} data-pagefind-body{% endif %}>
-	{{ content | safe }}
-</main>

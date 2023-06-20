@@ -1,0 +1,66 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+
+title: Automotive Design for Compose
+# baseurl: "/automotive-design-compose" # the subpath of your site, e.g. /blog
+domain: "google.github.io/"
+url: "https://google.github.io/"
+favicon_ico: "/img/favicon.png"
+
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      layout: "default"
+    
+
+# Footer "Edit this page on GitHub" link text
+gh_edit_link: true # show or hide edit this page link
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/google/automotive-design-compose/docs" # the github URL for your repo
+gh_edit_branch: "main" # the branch that your docs is served from
+# gh_edit_source: docs # the source that your files originate from
+gh_edit_view_mode: "tree" # "tree" or "edit" if you want the user to jump into the editor immediately
+
+# Build settings
+markdown: kramdown
+kramdown:
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+theme: just-the-docs
+plugins:
+  - jekyll-titles-from-headings
+  - jekyll-github-metadata
+
+heading_anchors: true
+enable_copy_code_button: true
+
+
+# Exclude from processing.
+# The following items will not be processed, by default. Create a custom list
+# to override the default setting.
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+
+collections:
+  # Define a collection named "tests", its documents reside in the "_tests" directory
+  docs:
+    permalink: "/:collection/:path/"
+    output: true
+
+just_the_docs:
+  # Enable the sidebar nav
+  collections:
+    docs:
+      name: Documentation

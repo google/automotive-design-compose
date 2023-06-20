@@ -1,17 +1,14 @@
 ---
 title: 'Live Update Setup'
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Setup
-  parent: Live Update
-  order: 1
+parent: Live Update
+nav_order: 1
 ---
 # Set Up Figma Authentication
 
 This guide walks you through the process of authenticating DesignCompose-enabled
 apps with Figma.
 
-## Generate a Figma access token for your Figma account {:#GetFigmaToken}
+## Generate a Figma access token for your Figma account {#GetFigmaToken}
 
 To configure access to your documents, you need to generate an access token.
 
@@ -31,7 +28,7 @@ To configure access to your documents, you need to generate an access token.
 To learn more about personal access tokens, see [Manage personal access
 tokens][2]{:.external} in the Figma help center.
 
-### Store your Figma access token {:#StoreFigmaToken}
+### Store your Figma access token {#StoreFigmaToken}
 
 The token grants full access to the contents of your Figma files, so don't
 commit the token into source control. You can store the token by writing it to a
@@ -52,13 +49,13 @@ export $(cat .figma_token.env)
 You can add the previous line to your `.bashrc` file to automatically set the
 variable when you log in.
 
-## Set your Figma access token in an app {:#SetUpFigmaToken}
+## Set your Figma access token in an app {#SetUpFigmaToken}
 
 The Figma access token is set by using the Android Debug Bridge (adb) to send it
 to the running app. A Gradle task is provided to simplify this, or the adb
 method can be used for greater control.
 
-### With a Gradle task {:#FigmaTokenWithGradle}
+### With a Gradle task {#FigmaTokenWithGradle}
 
 The internal apps (HelloWorld, Validation, and Tutorial) have an extra Gradle
 task named `setFigmaToken`. Different versions are generated for each Android
@@ -80,7 +77,7 @@ device you want (for example `emulator-5444`) in the `$ANDROID_SERIAL`
 environment variable. You can run adb devices to see the list of devices and
 their addresses.
 
-### With Android Debug Bridge {:#FigmaTokenWithAdb}
+### With Android Debug Bridge {#FigmaTokenWithAdb}
 
 Set the Figma token using adb to send an [explicit intent][3] directed to the
 app. The intent action is `setApiKey`, and it requires extra string data with
@@ -100,4 +97,4 @@ adb shell am startservice -n "com.android.designcompose.tutorial/com.android.des
 
 [1]: https://www.figma.com
 [2]: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens
-[3]: /guide/components/intents-filters#Types
+[3]: https://developer.android.com/guide/components/intents-filters#Types

@@ -1,8 +1,6 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Tutorial
-  parent: Getting Started
+title: Tutorial
+parent: Getting Started
 ---
 
 
@@ -13,13 +11,13 @@ eleventyNavigation:
 This page explains how to download and configure the DesignCompose tutorial app.
 This is written as a tutorial, so it's important to follow each step.
 
-## About this tutorial {:#about}
+## About this tutorial {#about}
 
 The DesignCompose tutorial app shows you the capabilities of DesignCompose
 through a series of interactive examples. You need a Figma account to run the
 tutorial and a large-screen device to run it on.
 
-## Initial setup {:#InitialSetup}
+## Initial setup {#InitialSetup}
 
 1.  Acquire an Android-powered device or emulator with a large,
     portrait-orientation screen. If you don't have a physical device handy then
@@ -40,7 +38,7 @@ tutorial and a large-screen device to run it on.
     files. Follow the instructions in [Set Up Figma Authentication][2] to create
     a Figma authentication token and be ready to use it.
 
-## Create your copy of the Figma tutorial file {:#CopyTutorialFile}
+## Create your copy of the Figma tutorial file {#CopyTutorialFile}
 
 The tutorial app demonstrates how you can modify a Figma design and see the
 results in your running Android app. First, create your own copy of the file to
@@ -57,7 +55,7 @@ work with:
     For example, the **ID** of the document at
     `https://www.figma.com/file/aabbccdd/Tutorial` is `aabbccdd`.
 
-## Launch and configure the tutorial {:#LaunchTutorial}
+## Launch and configure the tutorial {#LaunchTutorial}
 
 1.  Build and launch the tutorial app on your device. You can do this with
     [Android Studio][4] or manually using Gradle.

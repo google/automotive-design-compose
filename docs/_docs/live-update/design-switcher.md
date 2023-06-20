@@ -1,9 +1,7 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Design Switcher
-  parent: Live Update
-  order: 2
+title: Design Switcher
+parent: Live Update
+nav_order: 2
 ---
 
 # Work with Files and Branches
@@ -48,7 +46,7 @@ and the Design Switcher reverts to the original file ID.
 The list of branches and project files is refreshed every few seconds, letting
 you quickly try out new ideas!
 
-## Control the Design Switcher from code {:#ControllingFromCode}
+## Control the Design Switcher from code {#ControllingFromCode}
 
 By default, the Design Switcher appears at the top right corner of a
 `@Composable` Figma view if the Figma view is the root view. For example if your

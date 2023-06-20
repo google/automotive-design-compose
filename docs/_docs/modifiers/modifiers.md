@@ -1,8 +1,6 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Modifiers
-  parent: Guides
+title: Modifiers
+nav_order: 8
 ---
 
 
@@ -17,14 +15,14 @@ DesignCompose lets you to define every screen, component, and overlay in Figma.
 Use the design elements described below to create and apply your own
 customizations.
 
-## Basic customizations {:#basic-customizations}
+## Basic customizations {#basic-customizations}
 
 Customizations are specified as `@Design` attributes on arguments.
 
 The Hello World example uses a Text Content customization (also called a
 *string*) to replace `name` with a custom string.
 
-### Text content {:#text-content}
+### Text content {#text-content}
 
 The following example uses a `@Design` annotation on an argument with a `String`
 type to replace the actual text in a design element. This example creates a
@@ -51,7 +49,7 @@ interface HelloWorld {
 }
 ```
 
-### Text style {:#text-style}
+### Text style {#text-style}
 
 The color and size of text can be defined in the code. For example, you can
 display a readout in red when a threshold has been exceeded. Either supply a new
@@ -79,7 +77,7 @@ interface HelloWorld {
 }
 ```
 
-### Text content with a lambda function {:#text-content-with-lamda}
+### Text content with a lambda function {#text-content-with-lamda}
 
 By using a lambda function instead of a string value, you can extend the time
 needed to read a state, which allows Compose to run less code when recomposing
@@ -99,7 +97,7 @@ interface HelloWorld {
 }
 ```
 
-### Image content {:#image-content}
+### Image content {#image-content}
 
 Use a `Bitmap` customization to use an image to replace the background fill of a
 frame. This customization accepts a nullable `android.graphics.Bitmap`, which is
@@ -122,7 +120,7 @@ called `artwork`, which is a nullable `android.graphics.Bitmap` instance. To use
 the background fill from the document, pass a value to replace the background
 fill or pass `null`.
 
-### Visibility {:#visibility}
+### Visibility {#visibility}
 
 The following example illustrates how to create a visibility customization to
 control the visibility of a design element:
@@ -141,7 +139,7 @@ The generated `MainFrame` `Composable` function contains a single `Boolean`
 argument called `showText`, which controls the visibility of the Figma node
 called `#name`.
 
-### Component variants {:#component-variants}
+### Component variants {#component-variants}
 
 Variants are a great way to create different variations of a component. To
 create Component Variants in Figma, see [Creating and organizing
@@ -203,7 +201,7 @@ VariantTestDoc.Square(
 )
 ```
 
-### Component replacement {:#comp-replace}
+### Component replacement {#comp-replace}
 
 With a [`Composable`][2] of your choice, an element of a design can be replaced
 while retaining the style information provided by the designer. The difference
@@ -255,7 +253,7 @@ interface ComponentReplacementContext {
 }
 ```
 
-## Text input {:#text-input}
+## Text input {#text-input}
 
 This section addresses how to add text input fields to an app.
 
@@ -301,7 +299,7 @@ the text field contains content, the content can be concealed. In addition, add
 a placeholder text element in your design and use a [Visibility][7]
 customization.
 
-## Lists {:#creating-lists}
+## Lists {#creating-lists}
 
 The customizations described above populate simple data into our design
 elements. If you have list data to represent, you can use the Auto Content
@@ -417,7 +415,7 @@ displays the `#ListMainFrame` with a title and some list items based on the
 
 **Figure 3.** A list in Android
 
-## Grid layout with the Auto Content Preview widget {:#grid-layout}
+## Grid layout with the Auto Content Preview widget {#grid-layout}
 
 If you want to arrange list items in a grid format instead of a single
 horizontal or vertical list, use the Auto Content Preview widget to specify grid
@@ -552,7 +550,7 @@ The live view appears below after replacing the data with live content.
 
 **Figure 5.** Grid view in Android
 
-## Placeholder content {:#placeholder-content}
+## Placeholder content {#placeholder-content}
 
 In development mode, Design Elements are fetched from your Figma document and
 saved to a file in the app's `data` directory. In production mode, this file is
@@ -599,7 +597,7 @@ class MainActivity : ComponentActivity() {
 }
 ```
 
-## Callback customizations {:#callback-customizations}
+## Callback customizations {#callback-customizations}
 
 When a design element is tapped with the `TapCallback` customization, add a
 callback function. Although the `Modifier` customization can be used to handle
@@ -635,7 +633,7 @@ class MainActivity : ComponentActivity() {
 }
 ```
 
-## Dials, gauges and progress bars {:#dials,-gauges}
+## Dials, gauges and progress bars {#dials,-gauges}
 
 A designer can use the Dials and Gauges plugin to configure a node to behave as
 a dial, gauge, or progress bar. To support this, you need to use a `Meter` type
@@ -673,7 +671,7 @@ class MainActivity : ComponentActivity() {
 
 ```
 
-## Key Injection {:#key-injection}
+## Key Injection {#key-injection}
 
 Figma supports interactions with a keyboard event as the trigger. For example, a
 designer can set up an interaction that opens an overlay when a particular key
@@ -726,7 +724,7 @@ class MainActivity : ComponentActivity() {
 
 ```
 
-## Modifier customizations {:#modifier-customizations}
+## Modifier customizations {#modifier-customizations}
 
 Jetpack Compose defines the appearance, layout, and interaction behaviors using
 a list of `Modifier`s attached to each Composable. The Jetpack Compose
@@ -791,7 +789,7 @@ For example:
 ListItem(Modifier.clickable { Log.i("MyApp", "clicked!" }, title = "Click Me")
 ```
 
-## Automatically generated arguments {:#automatically-generated}
+## Automatically generated arguments {#automatically-generated}
 
 In addition to the @DesignComponent parameters specified in the macro, every
 generated @DesignComponent function generates these three optional parameters:
@@ -897,10 +895,10 @@ fun Main(
 ```
 
 [1]: https://help.figma.com/hc/en-us/articles/360056440594-Create-and-use-variants
-[2]: /reference/kotlin/androidx/compose/runtime/Composable
+[2]: https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable
 [3]: https://www.figma.com/best-practices/creating-and-organizing-variants/
 [5]: #creating-lists)
 [6]: #comp-replace
 [7]: #visibility
 [8]: https://www.figma.com/file/aOb2Mm1RMQe8UJhPegPEpP/Vsw-Compose-List-Example
-[9]: /jetpack/compose/modifiers-list
+[9]: https://developer.android.com/jetpack/compose/modifiers-list

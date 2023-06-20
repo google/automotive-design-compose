@@ -1,20 +1,18 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  title: Documentation
-  key: Getting Started
-  order: 1
-  topBar: true
+title: Getting Started
+nav_order: 1
+has_children: true
+has_toc: false
 ---
 
 
 # Getting Started
 
 The best introduction to Automotive Design for Compose is provided by following
-the [Tutorial](/docs/getting-started/tutorial). Begin by
+the [Tutorial](/docs//tutorial/index). Begin by
 following the steps below.
 
-## Check out the code {:#GetSource}
+## Check out the code {#GetSource}
 
 To check out the code, which includes the Tutorial Android App, run the
 following:
@@ -23,6 +21,6 @@ following:
 git clone https://github.com/google/automotive-design-compose.git
 ```
 
-## Update Android Studio {:#AndroidStudio}
+## Update Android Studio {#AndroidStudio}
 
 The Tutorial Android App requires [Android Studio Flamingo](https://developer.android.com/studio) or later.

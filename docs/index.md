@@ -1,16 +1,11 @@
 ---
-title: 'Automotive Design For Compose'
-layout: 'layouts/home.njk'
-eleventyNavigation:
-  key: Home
-  order: 0
-  topBar: true
+title: 'Home'
 ---
 
 # Automotive Design for Compose
 
 Automotive Design for Compose (also called DesignCompose in the source) is an
-extension to [Jetpack Compose](/jetpack/compose) that allows every screen,
+extension to [Jetpack Compose](https://developer.android.com/jetpack/compose) that allows every screen,
 component, and overlay of your Android App to be defined in
 [Figma](https://www.figma.com){:.external}, and lets you see the latest changes
 to your Figma design in your app, immediately!
@@ -23,7 +18,7 @@ DesignCompose library, an interactive tutorial app (in reference-apps/Tutorial),
 and a sample customizable Media Center for Android Automotive OS (in
 reference-apps/aaos-unbundled).
 
-## Impact on the design development flow {:#impact}
+## Impact on the design development flow {#impact}
 
 A primary goal of DesignCompose is to improve the design and development of user
 interfaces. With DesignCompose, you can incorporate testing, corrections, and

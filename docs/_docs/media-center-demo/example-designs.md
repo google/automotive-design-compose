@@ -1,9 +1,7 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Example Designs
-  parent: Media Center App
-  order: 2
+title: Example Designs
+parent: Media Center App
+nav_order: 2
 ---
 
 # Media Center Example Designs
@@ -13,7 +11,7 @@ Demonstration][2] tutorials, take a look at the Media Center app design examples
 on this page to get you started with your own user experience designs. You can
 use the same codebase to create your designs.
 
-## Switch between different example designs {:#SwitchBetweenDesigns}
+## Switch between different example designs {#SwitchBetweenDesigns}
 
 In the [Media Center Demonstration][2], you downloaded a reference app called
 `MediaCompose_Reference_App`.
@@ -32,13 +30,13 @@ To open Design Switcher, follow these steps:
 When MediaCompose is started, try the designs described in the following
 sections.
 
-## UX variations {:#UXVariations}
+## UX variations {#UXVariations}
 
 These design variations were created to show the different types of UX flows you
 can create using only Figma interactions. Each uses a simple wireframe-like
 design language.
 
-### Now Playing & Browse toggle {:#NowPlaying}
+### Now Playing & Browse toggle {#NowPlaying}
 
 <img src="/img/play-browse-toggle-1x.png" class="attempt-right">
 The **Now Playing & Browse toggle** design places the Now Playing and Browse
@@ -56,7 +54,7 @@ Figma's **Open overlay** action.
 Find this design at `Media Designs/1 - Play & browse toggle.fig` in the
 DesignCompose partner Google Drive.
 
-### Browse Slide-Up {:#BrowseSlideUp}
+### Browse Slide-Up {#BrowseSlideUp}
 
 <img src="/img/play-browse-slide-up-1x.png" class="attempt-right">
 The **Browse Slide-Up** design presents the Now Playing functionality initially,
@@ -70,7 +68,7 @@ Browse content.
 Find this design at `Media Designs/2 - Play & browse slide-up.fig` in the
 DesignCompose partner Google Drive.
 
-### Now Playing Fly-Up {:#NowPlayingFlyUp}
+### Now Playing Fly-Up {#NowPlayingFlyUp}
 
 <img src="/img/one-screen-fly-up-1x.png" class="attempt-right">
 In the **Now Playing Fly-Up** design, Browse functionality is the primary view
@@ -85,7 +83,7 @@ and form factors.
 Find this design at `Media Designs/4 - One screen with fly-up.fig` in the
 DesignCompose partner Google Drive.
 
-### Top Media Source Tabs {:#TopMedia}
+### Top Media Source Tabs {#TopMedia}
 
 <img src="/img/top-tabs-1x.png" class="attempt-right">
 In the **Top Media Source Tabs** design, the available media sources are always
@@ -99,7 +97,7 @@ bottom, and a larger view is accessible by tapping on it.
 Find this design at `Media Designs/5 - Top media source tabs.fig` in the
 DesignCompose partner Google Drive.
 
-## Nova {:#Nova}
+## Nova {#Nova}
 
 <img src="/img/nova-1x.png" class="attempt-right">
 **Nova** is a whimsical design that delivers functionality with style. In this
@@ -127,5 +125,5 @@ larger view by tapping on the bar. Style elements are described below.
 Find this design at `Media Designs/3 - Nova Media.fig` in the DesignCompose
 partner Google Drive.
 
-[1]: /docs/getting-started/tutorial
+[1]: /docs/tutorial/index
 [2]: /docs/media-center-demo

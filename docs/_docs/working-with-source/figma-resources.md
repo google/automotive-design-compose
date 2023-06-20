@@ -1,9 +1,7 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Figma Resources
-  parent: Working with Source
-  order: 2
+title: Figma Resources
+parent: Working with Source
+nav_order: 2
 ---
 
 # Figma Resources
@@ -22,7 +20,7 @@ or widget. If so, follow the instructions on this page.
 NodeJS is required to compile the Figma resources. On Linux it can be installed
 by running `apt-get install nodejs npm`.
 
-## Install a previous or customized versions {:#install}
+## Install a previous or customized versions {#install}
 
 Note: The plugin and widget need to be installed only once per Figma
 organization. If your account is part of an organization, then you can check to
@@ -36,7 +34,7 @@ The plugin is located in the `support-figma/extended-layout-plugin/` directory
 of the [DesignCompose source][3]. The widget is located in the
 `support-figma/auto-content-preview-widget/` directory.
 
-### Create new resource IDs {:#create-new-ids}
+### Create new resource IDs {#create-new-ids}
 
 Figma uses unique IDs for each plugin and widget. Before uploading your own
 version of a resource you need to create a new ID for it.
@@ -49,7 +47,7 @@ version of a resource you need to create a new ID for it.
 1.  Open the `manifest.json` file for the DesignCompose widget or plugin and
     replace the existing `id` instance with the one from the template.
 
-### Build the resources {:#building-resources}
+### Build the resources {#building-resources}
 
 Build each by running the following:
 
@@ -62,7 +60,7 @@ npm run build
 This produces a `code.js` file. That file, the `manifest.json` file, and the
 `ui.html` file are needed to install the plugin.
 
-### Upload the resources {:#upload}
+### Upload the resources {#upload}
 
 You can install the DesignCompose Figma plugin and widget in the Figma desktop
 app on macOS and Windows. Download the Figma app from [Figma
@@ -100,6 +98,6 @@ plugins][6]{:.external} website.
 
 [1]: https://www.figma.com/@designcompose
 [2]: https://www.figma.com/downloads/
-[3]: /docs/getting-started/#GetSource
+[3]: /docs/working-with-source/building-sdk/#GetSource
 [4]: https://help.figma.com/hc/en-us/articles/360042786733-Create-a-plugin-for-development
 [6]: https://www.figma.com/community/plugins

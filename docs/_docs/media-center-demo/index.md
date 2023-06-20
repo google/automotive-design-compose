@@ -1,8 +1,8 @@
 ---
-layout: 'layouts/docs.njk'
-eleventyNavigation:
-  key: Media Center App
-  order: 5
+title: Media Center App
+has_children: true
+nav_order: 5
+has_toc: false
 ---
 # Media Center Demonstration App
 
@@ -27,7 +27,7 @@ the following:
     browsing access of installed media apps. To learn more, see [Customizing
     Media][2]{:.external}
 
-## Prerequisites {:#prerequisites}
+## Prerequisites {#prerequisites}
 
 If this is your first time trying out Automotive Design For Compose, we
 recommend reading the [Tutorial app guide][3], which describes the initial setup
@@ -49,7 +49,7 @@ To run the MediaCompose demonstration app, you need the prerequisites for
 *   The current release of the [Android Automotive OS unbundled
     repository][6]{:.external} (see below)
 
-### AAOS unbundled setup {:#aaos-ub-setup}
+### AAOS unbundled setup {#aaos-ub-setup}
 
 The Media Center app depends on the AAOS libraries, which are part of the
 Android platform. These libraries are available outside of AAOS as part of the
@@ -96,7 +96,7 @@ them available to the Media Center app.
     unbundledAAOSDir=/data/git/aaos-unbundled
     ```
 
-### Build the DesignCompose SDK {:#buildSDK}
+### Build the DesignCompose SDK {#buildSDK}
 
 The MediaCenter demonstration app uses the compiled DesignCompose SDK. Follow
 these instructions to compile it:
@@ -114,18 +114,18 @@ these instructions to compile it:
 Note: The same Gradle property is used by the MediaCompose Reference app to
 locate the built DesignCompose SDK. No additional configuration is needed here.
 
-## Set up Figma {:#setUpFigma}
+## Set up Figma {#setUpFigma}
 
 This section describes how to create a Figma Access Token (if one is not already
 at hand) and upload the MediaCompose design to your Figma account.
 
-### Create a Figma access token {:#CreateToken}
+### Create a Figma access token {#CreateToken}
 
 If you haven't already done so (for example, while following the [tutorial
 guide][3], create a Figma access token. Follow the instructions in [Setting Up
 Figma Authentication ][12].
 
-### Import Media Center Figma documents {:#ImportDocsSection}
+### Import Media Center Figma documents {#ImportDocsSection}
 
 The following steps describe how to import the Media Center design documents:
 
@@ -135,10 +135,6 @@ The following steps describe how to import the Media Center design documents:
     `Media1_V2.fig` file in the
     `reference-apps/aaos-unbundled/mediacompose/figma_files` directory.
 
-    ![Import
-    file](/img/figma-import.png){:.screenshot}
-
-    **Figure 1.** Figma's Import file button.
 
 1.  Open the uploaded design documents and note the **Figma Document ID** in the
     URLs between `file/` and the name of the document.
@@ -146,14 +142,14 @@ The following steps describe how to import the Media Center design documents:
     For example, the **ID** of the document at
     `https://www.figma.com/file/aabbccdd/Tutorial` is `aabbccdd`.
 
-## Configure the MediaCompose reference app {:#ConfigureApp}
+## Configure the MediaCompose reference app {#ConfigureApp}
 
 In Android Studio, open the
 `reference-apps/aaos-unbundled/standalone-projects/mediacompose` directory
 (don't create a new project) and wait for the initial synchronization of the
 project to finish.
 
-### Enable browsing of other media apps {:#MediaContentControl}
+### Enable browsing of other media apps {#MediaContentControl}
 
 The Media Center demonstration app uses third-party media services, which are
 secured with the `MEDIA_CONTENT_CONTROL` permission. This permission can be
@@ -169,7 +165,7 @@ Note: If you're using a generic AOSP Android image then the key that is included
 with the Media Center source might work for you. Skip to [Configure the Figma
 Document ID in the Media Center app][15].
 
-#### Add the platform signing key {:#PlatformKeySection}
+#### Add the platform signing key {#PlatformKeySection}
 
 Typically, a key is used only to sign a release build. However, the Media Center
 app doesn't function without the permissions granted by a platform key.
@@ -215,7 +211,7 @@ Therefore, all variants must be signed.
 To learn more about signing configurations, see [Configure Gradle to sign your
 app][17].
 
-### Configure the Figma document ID in the Media Center app {:#SetDocID}
+### Configure the Figma document ID in the Media Center app {#SetDocID}
 
 Update the Media Center app to load your copy of the Figma Design:
 
@@ -235,7 +231,7 @@ Update the Media Center app to load your copy of the Figma Design:
     Figma File that you uploaded previously. (See [Import Media Center Figma
     documents][18] for the document IDs).
 
-## Run the Media Center app and set your Figma access token {:#RunApp}
+## Run the Media Center app and set your Figma access token {#RunApp}
 
 1.  Build and launch the app on your device. You can do this with [Android
     Studio][19]{:.external} or manually using Gradle.
@@ -262,7 +258,7 @@ Update the Media Center app to load your copy of the Figma Design:
 1.  After this, the app fetches the Figma Design document. The rendered design
     typically appears within one minute.
 
-### Explore the app! {:#ExploreApp}
+### Explore the app! {#ExploreApp}
 
 The app is up and running. You're welcome to experiment with it by playing
 different audio, or changing audio sources. Open the Media Center Figma file
@@ -272,13 +268,13 @@ they're rendered in the app.
 You can also load and see the alternative designs that are included with the
 source. See [Media Center Example Designs][21] for more on about those designs.
 
-## Convert the app to static production mode {:#ProductionMode}
+## Convert the app to static production mode {#ProductionMode}
 
 When the design of an app is stable, you can convert it to a static,
 production-ready app that doesn't support Live Update and doesn't need network
 access to run.
 
-### Add the Figma documents to the app source {:#AddDocsToSource}
+### Add the Figma documents to the app source {#AddDocsToSource}
 
 A Live Update-enabled app fetches the Figma documents and stores them as a
 serialized file in the app's storage. You can download these files and add them
@@ -323,7 +319,7 @@ to the app's source for inclusion in the APK.
     created earlier
     (`reference-apps/aaos-unbundled/standalone-projects/mediacompose/app/src/main/assets/figma`).
 
-### Deactivate Live Update {:#DisableLiveUpdate}
+### Deactivate Live Update {#DisableLiveUpdate}
 
 You can deactivate Live Update.
 
@@ -337,9 +333,9 @@ You can deactivate Live Update.
     Switcher widget in the upper right corner is not displayed. The project's
     APK files can be installed on any device, with or without internet access.
 
-## Common issues {:#Troubleshooting}
+## Common issues {#Troubleshooting}
 
-### App crashes on startup with `requires android.permission.MEDIA_CONTENT_CONTROL` {:#StartupCrash}
+### App crashes on startup with `requires android.permission.MEDIA_CONTENT_CONTROL` {#StartupCrash}
 
 This error occurs when the app was not signed with the platform key or otherwise
 authenticated as a system app. Ensure that the key being used to sign the app is
@@ -347,8 +343,8 @@ the platform key for the emulator or device that you are installing on.
 
 [1]: /docs/media-center-demo/example-designs
 [2]: https://source.android.com/docs/devices/automotive/hmi/media/
-[3]: /docs/getting-started/tutorial
-[4]: /docs/getting-started/index
+[3]: /docs/tutorial/index
+[4]: /docs/
 [5]: #MediaContentControl
 [6]: https://source.android.com/docs/devices/automotive/unbundled_apps/integration
 [7]: https://source.android.com/docs/setup/download#installing-repo
@@ -363,5 +359,5 @@ the platform key for the emulator or device that you are installing on.
 [18]: #ImportDocsSection
 [19]: https://developer.android.com/studio/run
 [20]: /docs/live-update/setup#StoreFigmaToken
-[21]: example-designs
+[21]: /docs/media-center-demo/example-designs
 [22]: #SetDocID

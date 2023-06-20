@@ -283,14 +283,14 @@ HelloWorldDoc.MainFrame(Modifier.fillMaxSize()) { context ->
 The illustration below shows a document that contains a text node named
 `#text-input`:
 
-![Text Input Figma doc](/img/text-input-doc.png)
+![Text Input Figma doc](../text-input-doc.png)
 
 **Figure 1.** Text input in Figma
 
 This creates a text field that contains the designer-defined style of the text
 node, including font, color, OpenType properties, and shadows.
 
-![Text Input running on Android](/img/text-input-running.png)
+![Text Input running on Android](../text-input-running.png)
 
 **Figure 2.** Text input in Android
 
@@ -411,7 +411,7 @@ Running the example using the Figma document ID of a clone of that document
 displays the `#ListMainFrame` with a title and some list items based on the
 `#ListItem` frame:
 
-![List App](/img/ListApp.png)
+![List App](../ListApp.png)
 
 **Figure 3.** A list in Android
 
@@ -540,13 +540,13 @@ class MainActivity : ComponentActivity() {
 The Figma document is displayed below. The content specified in the
 `@DesignPreviewContent` annotation populates the grid design in Figma.
 
-![Grid Figma](/img/grid-figma.png)
+![Grid Figma](../grid-figma.png)
 
 **Figure 4.** Grid view in Figma
 
 The live view appears below after replacing the data with live content.
 
-![Grid Live](/img/grid-live.png)
+![Grid Live](../grid-live.png)
 
 **Figure 5.** Grid view in Android
 
@@ -677,7 +677,7 @@ Figma supports interactions with a keyboard event as the trigger. For example, a
 designer can set up an interaction that opens an overlay when a particular key
 event is detected, such as **Ctrl-Shift-B**, which appears as follows:
 
-![Key interaction](/img/key-interaction.png)
+![Key interaction](../key-interaction.png)
 
 You can then inject this key event whenever you want to trigger the interaction.
 The `@DesignKeyAction` annotation takes a key and a list of meta keys and

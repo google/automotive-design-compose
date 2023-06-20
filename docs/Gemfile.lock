@@ -211,10 +211,6 @@ GEM
       gemoji (~> 3.0)
       html-pipeline (~> 2.2)
       jekyll (>= 3.0, < 5.0)
-    just-the-docs (0.5.3)
-      jekyll (>= 3.8.5)
-      jekyll-seo-tag (>= 2.0)
-      rake (>= 12.3.1)
     kramdown (2.3.2)
       rexml
     kramdown-parser-gfm (1.1.0)
@@ -296,9 +292,9 @@ DEPENDENCIES
   github-pages (~> 228)
   http_parser.rb (~> 0.6.0)
   jekyll-github-metadata
+  jekyll-remote-theme
   jekyll-test
   jekyll-titles-from-headings
-  just-the-docs
   kramdown-parser-gfm
   rake
   tzinfo (>= 1, < 3)

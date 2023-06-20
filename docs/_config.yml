@@ -9,10 +9,9 @@
 # 'bundle exec jekyll serve'. If you change this file, please restart the server process.
 
 title: Automotive Design for Compose
-# baseurl: "/automotive-design-compose" # the subpath of your site, e.g. /blog
-domain: "google.github.io/"
-url: "https://google.github.io/"
-favicon_ico: "/img/favicon.png"
+logo: "favicon.png"
+favicon_ico: "favicon.png"
+repository: google/automotive-design-compose
 
 defaults:
   -
@@ -21,7 +20,6 @@ defaults:
     values:
       layout: "default"
     
-
 # Footer "Edit this page on GitHub" link text
 gh_edit_link: true # show or hide edit this page link
 gh_edit_link_text: "Edit this page on GitHub"
@@ -36,14 +34,15 @@ kramdown:
   syntax_highlighter_opts:
     block:
       line_numbers: false
-theme: just-the-docs
+
+remote_theme: just-the-docs/just-the-docs
 plugins:
+  - jekyll-remote-theme
   - jekyll-titles-from-headings
   - jekyll-github-metadata
 
 heading_anchors: true
 enable_copy_code_button: true
-
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
@@ -52,6 +51,7 @@ exclude:
   - Gemfile
   - Gemfile.lock
   - node_modules
+  - vendor/bundle/
 
 collections:
   # Define a collection named "tests", its documents reside in the "_tests" directory

@@ -15,7 +15,7 @@ If you're using an older version of the Automotive Design for Compose SDK then
 it might be necessary to install a previous or customized version of the plugin
 or widget. If so, follow the instructions on this page.
 
-## Install NodeJS {: #InstallNodeJS}
+## Install NodeJS {#InstallNodeJS}
 
 NodeJS is required to compile the Figma resources. On Linux it can be installed
 by running `apt-get install nodejs npm`.

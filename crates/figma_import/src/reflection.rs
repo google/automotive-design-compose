@@ -161,7 +161,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_schema::ViewData>(&samples)
         .expect("couldn't trace ViewData");
     tracer.trace_type::<crate::toolkit_schema::View>(&samples).expect("couldn't trace View");
-    
+
     tracer
         .trace_type::<crate::image_context::EncodedImageMap>(&samples)
         .expect("couldn't trace EncodedImageMap");

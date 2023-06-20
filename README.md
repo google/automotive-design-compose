@@ -32,7 +32,7 @@ The DesignCompose Tutorial app shows you the capabilities of DesignCompose throu
 
 You'll work with your own copy of the [Tutorial Figma file](https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose). Create your own by clicking **Open in Figma**, which creates a copy of the file in your account. Once open, identify the Figma Document ID from your new file's URL. It's the alphanumeric string between `file/` and the name of the document. For example:
 
-<pre><code>figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
+`<pre><code`>`figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
 
 The app's Gradle project is located in `reference-apps/tutorial`. Build and launch it on your device, then set your Figma Access Token on the app by running:
 
@@ -60,6 +60,22 @@ Zoom in on it and begin your tutorial!
 We'll be adding more documentation and guides soon! For now you can look to `reference-apps/helloworld` for an an example of a basic app.
 
 # Working with the Source
+
+## Testing presubmits locally
+
+To check that you can pass presubmits and nightlies before pushing to PR you can do the following:
+
+- Prerequisites:
+  - Make sure your system can run Android AVDs
+  - Have the build dependencies below installed
+  - Check out the current supported branch of the AAOS Unbundled repo (see the "Check out the Unbundled AAOS Repo" job in `.github/workflows/main` for the correct branch) and set $ORG_GRADLE_PROJECT_unbundledAAOSDir to the path of the checkout
+- Run the following scripts in order:
+
+  ```shell
+  ./dev-scripts/clean-all.sh #Optional, but will ensure you're testing a clean environment.
+  ./dev-scripts/format-all.sh
+  ./dev-scripts/test-all.sh
+  ```
 
 ## SDK build dependencies
 

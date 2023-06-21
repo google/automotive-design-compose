@@ -1,5 +1,6 @@
 ---
 title: Modifiers
+layout: page
 nav_order: 8
 ---
 

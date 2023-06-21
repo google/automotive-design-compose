@@ -1,5 +1,6 @@
 ---
 title: 'Live Update Setup'
+layout: page
 parent: Live Update
 nav_order: 1
 ---

@@ -16,15 +16,10 @@ aux_links:
   "Open source on GitHub":
     - "https://github.com/google/automotive-design-compose" 
 
-# Default page front matter
-defaults:
-  -
-    scope:
-      path: ""
-    values:
-      # Just have every page use the same layout
-      layout: "page"
-    
+theme: just-the-docs
+plugins:
+  - jekyll-github-metadata
+
 # Footer "Edit this page on GitHub" link text
 gh_edit_link: true # show or hide edit this page link
 gh_edit_link_text: "Edit this page on GitHub"
@@ -34,23 +29,9 @@ gh_edit_source: docs # the source that your files originate from
 gh_edit_view_mode: "tree" # "tree" or "edit" if you want the user to jump into the editor immediately
 
 # Site options
-# markdown: kramdown
-# kramdown:
-#   syntax_highlighter_opts:
-#     block:
-#       line_numbers: false
-# search_enabled: true
-# heading_anchors: true
-# enable_copy_code_button: true
+markdown: kramdown
+enable_copy_code_button: true
 
-
-
-# remote_theme: just-the-docs/just-the-docs
-theme: just-the-docs
-plugins:
-  # - jekyll-remote-theme
-  # - jekyll-titles-from-headings
-  - jekyll-github-metadata
 
 
 # Exclude from processing.
@@ -58,9 +39,9 @@ plugins:
 # to override the default setting.
 exclude:
   - Gemfile
+  - Rakefile
   - Gemfile.lock
   - node_modules
-  - vendor/bundle/
 
 collections:
   # Define a collection named "docs", its documents reside in the "_docs" directory

@@ -1,5 +1,6 @@
 ---
 title: Example Designs
+layout: page
 parent: Media Center App
 nav_order: 2
 ---

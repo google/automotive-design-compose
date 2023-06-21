@@ -1,5 +1,6 @@
 ---
 title: Figma Resources
+layout: page
 parent: Working with Source
 nav_order: 2
 ---

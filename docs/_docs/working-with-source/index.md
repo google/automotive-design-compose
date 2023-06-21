@@ -1,5 +1,6 @@
 ---
 title: Working with Source
+layout: page
 has_children: true
 nav_order: 6
 has_toc: false

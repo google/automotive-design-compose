@@ -1,6 +1,7 @@
 ---
 title: Tutorial
 parent: Getting Started
+layout: page
 ---
 
 <details open markdown="block">

@@ -1,5 +1,6 @@
 ---
 title: Design Switcher
+layout: page
 parent: Live Update
 nav_order: 2
 ---

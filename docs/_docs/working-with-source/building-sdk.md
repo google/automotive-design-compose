@@ -1,5 +1,6 @@
 ---
 title: Building the SDK
+layout: page
 parent: Working with Source
 nav_order: 1
 ---

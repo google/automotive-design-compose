@@ -1,5 +1,7 @@
 ---
+Title: Known Issues
 nav_order: 20
+layout: page
 ---
 
 

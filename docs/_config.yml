@@ -11,6 +11,10 @@
 title: Automotive Design for Compose
 logo: "img/logo.png"
 repository: google/automotive-design-compose
+url: "https://github.com/google/automotive-design-compose"
+aux_links:
+  "Open source on GitHub":
+    - "https://github.com/google/automotive-design-compose" 
 
 # Default page front matter
 defaults:

@@ -5,6 +5,8 @@ parent: Media Center App
 nav_order: 2
 ---
 
+{% include toc.md %}
+
 # Media Center Example Designs
 
 Now that you've completed the [DesignCompose][1] and the [Media Center

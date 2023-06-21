@@ -5,6 +5,8 @@ parent: Working with Source
 nav_order: 2
 ---
 
+{% include toc.md %}
+
 # Figma Resources
 
 The Figma plugin enables various features that enhance the tools that Figma

@@ -5,6 +5,8 @@ parent: Working with Source
 nav_order: 1
 ---
 
+{% include toc.md %}
+
 # Build the SDK from source
 
 This page outlines how to download and build the Automotive Design for Compose

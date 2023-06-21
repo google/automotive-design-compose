@@ -4,6 +4,7 @@ layout: page
 nav_order: 8
 ---
 
+{% include toc.md %}
 
 # Design Elements
 

@@ -4,6 +4,9 @@ layout: page
 parent: Live Update
 nav_order: 1
 ---
+
+{% include toc.md %}
+
 # Set Up Figma Authentication
 
 This guide walks you through the process of authenticating DesignCompose-enabled

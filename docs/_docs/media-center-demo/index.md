@@ -5,6 +5,9 @@ has_children: true
 nav_order: 5
 has_toc: false
 ---
+
+{% include toc.md %}
+
 # Media Center Demonstration App
 
 This page explains how to use the Media Center demonstration app, which uses the

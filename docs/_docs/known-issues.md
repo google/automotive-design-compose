@@ -4,6 +4,7 @@ nav_order: 20
 layout: page
 ---
 
+{% include toc.md %}
 
 # Known Issues
 

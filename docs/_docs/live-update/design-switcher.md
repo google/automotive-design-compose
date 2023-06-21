@@ -5,6 +5,8 @@ parent: Live Update
 nav_order: 2
 ---
 
+{% include toc.md %}
+
 # Work with Files and Branches
 
 Figma empowers designers to try different ideas with two tools: [multiple

@@ -6,6 +6,8 @@ has_children: true
 has_toc: false
 ---
 
+{% include toc.md %}
+
 # Live Update
 
  The Live Update feature automatically downloads and displays Figma designs as

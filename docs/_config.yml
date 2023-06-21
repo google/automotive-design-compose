@@ -32,8 +32,6 @@ gh_edit_view_mode: "tree" # "tree" or "edit" if you want the user to jump into t
 markdown: kramdown
 enable_copy_code_button: true
 
-
-
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
 # to override the default setting.

@@ -24,7 +24,7 @@ defaults:
 gh_edit_link: true # show or hide edit this page link
 gh_edit_link_text: "Edit this page on GitHub"
 gh_edit_repository: "https://github.com/google/automotive-design-compose" # the github URL for your repo
-gh_edit_branch: "wb/froeht/jekyll" # the branch that your docs is served from
+gh_edit_branch: "main" # the branch that your docs is served from
 gh_edit_source: docs # the source that your files originate from
 gh_edit_view_mode: "tree" # "tree" or "edit" if you want the user to jump into the editor immediately
 
@@ -54,7 +54,7 @@ exclude:
   - vendor/bundle/
 
 collections:
-  # Define a collection named "tests", its documents reside in the "_tests" directory
+  # Define a collection named "docs", its documents reside in the "_docs" directory
   docs:
     permalink: "/:collection/:path/"
     output: true

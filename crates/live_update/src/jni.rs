@@ -42,10 +42,7 @@ fn get_string(env: &mut JNIEnv, obj: &JObject) -> Option<String> {
     }
 }
 
-fn get_proxy_config(
-    env: &mut JNIEnv,
-    input: &JObject,
-) -> Result<ProxyConfig, jni::errors::Error> {
+fn get_proxy_config(env: &mut JNIEnv, input: &JObject) -> Result<ProxyConfig, jni::errors::Error> {
     let http_proxy_config = env
         .get_field(input, "httpProxyConfig", "Lcom/android/designcompose/HttpProxyConfig;")?
         .l()?;

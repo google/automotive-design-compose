@@ -140,20 +140,23 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace RenderCommand");
 
     tracer
-        .trace_type::<crate::toolkit_schema::OverflowDirection>(&samples)
-        .expect("couldn't trace OverflowDirection");
-    tracer
         .trace_type::<crate::toolkit_schema::ComponentContentOverride>(&samples)
         .expect("couldn't trace ComponentContentOverride");
     tracer
         .trace_type::<crate::toolkit_schema::ComponentInfo>(&samples)
         .expect("couldn't trace ComponentInfo");
     tracer
-        .trace_type::<crate::toolkit_schema::ViewShape>(&samples)
-        .expect("couldn't trace ViewShape");
+        .trace_type::<crate::toolkit_schema::OverflowDirection>(&samples)
+        .expect("couldn't trace OverflowDirection");
+    tracer
+        .trace_type::<crate::toolkit_schema::RenderMethod>(&samples)
+        .expect("couldn't trace RenderMethod");
     tracer
         .trace_type::<crate::toolkit_schema::StrokeCap>(&samples)
         .expect("couldn't trace StrokeCap");
+    tracer
+        .trace_type::<crate::toolkit_schema::ViewShape>(&samples)
+        .expect("couldn't trace ViewShape");
     tracer
         .trace_type::<crate::toolkit_schema::ViewData>(&samples)
         .expect("couldn't trace ViewData");

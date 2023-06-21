@@ -1,5 +1,6 @@
 ---
-title: 'Home'
+title: Home
+layout: home
 ---
 
 # Automotive Design for Compose

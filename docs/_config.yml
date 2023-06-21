@@ -9,7 +9,7 @@
 # 'bundle exec jekyll serve'. If you change this file, please restart the server process.
 
 title: Automotive Design for Compose
-logo: "img/logo.png"
+logo: "assets/logo.png"
 repository: google/automotive-design-compose
 url: "https://github.com/google/automotive-design-compose"
 aux_links:
@@ -23,7 +23,7 @@ defaults:
       path: ""
     values:
       # Just have every page use the same layout
-      layout: "default"
+      layout: "page"
     
 # Footer "Edit this page on GitHub" link text
 gh_edit_link: true # show or hide edit this page link
@@ -34,21 +34,22 @@ gh_edit_source: docs # the source that your files originate from
 gh_edit_view_mode: "tree" # "tree" or "edit" if you want the user to jump into the editor immediately
 
 # Site options
-markdown: kramdown
-kramdown:
-  syntax_highlighter_opts:
-    block:
-      line_numbers: false
-search_enabled: true
-heading_anchors: true
-enable_copy_code_button: true
+# markdown: kramdown
+# kramdown:
+#   syntax_highlighter_opts:
+#     block:
+#       line_numbers: false
+# search_enabled: true
+# heading_anchors: true
+# enable_copy_code_button: true
 
 
 
-remote_theme: just-the-docs/just-the-docs
+# remote_theme: just-the-docs/just-the-docs
+theme: just-the-docs
 plugins:
-  - jekyll-remote-theme
-  - jekyll-titles-from-headings
+  # - jekyll-remote-theme
+  # - jekyll-titles-from-headings
   - jekyll-github-metadata
 
 

@@ -1,6 +1,7 @@
 ---
 title: 'Live Update'
 layout: page
+permalink: docs/live-update
 nav_order: 3
 has_children: true
 has_toc: false
@@ -70,4 +71,4 @@ App][3].
 
 [1]: /docs/live-update/setup
 [2]: /docs/live-update/design-switcher
-[3]: /docs/tutorial/index
+[3]: /docs/tutorial

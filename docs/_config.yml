@@ -38,6 +38,7 @@ enable_copy_code_button: true
 exclude:
   - Gemfile
   - Rakefile
+  - README.md
   - Gemfile.lock
   - node_modules
 

@@ -133,5 +133,5 @@ larger view by tapping on the bar. Style elements are described below.
 Find this design at `Media Designs/3 - Nova Media.fig` in the DesignCompose
 partner Google Drive.
 
-[1]: /docs/tutorial/index
-[2]: /docs/media-center-demo/index
+[1]: /docs/tutorial
+[2]: /docs/media-center-demo

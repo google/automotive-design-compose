@@ -1,6 +1,7 @@
 ---
 title: Media Center App
 layout: page
+permalink: docs/media-center-demo
 has_children: true
 nav_order: 5
 has_toc: false
@@ -347,8 +348,8 @@ the platform key for the emulator or device that you are installing on.
 
 [1]: /docs/media-center-demo/example-designs
 [2]: https://source.android.com/docs/devices/automotive/hmi/media/
-[3]: /docs/tutorial/index
-[4]: /docs/index
+[3]: /docs/tutorial
+[4]: /docs/getting-started
 [5]: #MediaContentControl
 [6]: https://source.android.com/docs/devices/automotive/unbundled_apps/integration
 [7]: https://source.android.com/docs/setup/download#installing-repo

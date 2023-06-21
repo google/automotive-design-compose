@@ -133,4 +133,4 @@ the Design Switcher.
 
 [1]: https://help.figma.com/hc/en-us/articles/1500005554982-Guide-to-files-and-projects#files
 [2]: https://help.figma.com/hc/en-us/articles/360063144053-Create-branches-and-merge-changes
-[3]: /docs/live-update/index
+[3]: /docs/live-update

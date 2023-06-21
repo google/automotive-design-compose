@@ -9,15 +9,16 @@
 # 'bundle exec jekyll serve'. If you change this file, please restart the server process.
 
 title: Automotive Design for Compose
-logo: "favicon.png"
-favicon_ico: "favicon.png"
+logo: "img/logo.png"
 repository: google/automotive-design-compose
 
+# Default page front matter
 defaults:
   -
     scope:
       path: ""
     values:
+      # Just have every page use the same layout
       layout: "default"
     
 # Footer "Edit this page on GitHub" link text
@@ -28,12 +29,17 @@ gh_edit_branch: "main" # the branch that your docs is served from
 gh_edit_source: docs # the source that your files originate from
 gh_edit_view_mode: "tree" # "tree" or "edit" if you want the user to jump into the editor immediately
 
-# Build settings
+# Site options
 markdown: kramdown
 kramdown:
   syntax_highlighter_opts:
     block:
       line_numbers: false
+search_enabled: true
+heading_anchors: true
+enable_copy_code_button: true
+
+
 
 remote_theme: just-the-docs/just-the-docs
 plugins:
@@ -41,8 +47,6 @@ plugins:
   - jekyll-titles-from-headings
   - jekyll-github-metadata
 
-heading_anchors: true
-enable_copy_code_button: true
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list

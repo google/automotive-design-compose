@@ -897,7 +897,7 @@ fun Main(
 [1]: https://help.figma.com/hc/en-us/articles/360056440594-Create-and-use-variants
 [2]: https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composable
 [3]: https://www.figma.com/best-practices/creating-and-organizing-variants/
-[5]: #creating-lists)
+[5]: #creating-lists
 [6]: #comp-replace
 [7]: #visibility
 [8]: https://www.figma.com/file/aOb2Mm1RMQe8UJhPegPEpP/Vsw-Compose-List-Example

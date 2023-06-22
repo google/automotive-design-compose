@@ -10,6 +10,8 @@ Jekyll is a Ruby Gem and requires Ruby to run. The recommended way to install Ru
 - Switch to this directory (`/docs`), which contains a .ruby-version file. 
 - Run `rbenv install` to install the correct version of Ruby
 
+I recommend also following the instructions for the [jekyll-github-metadata](https://github.com/jekyll/github-metadata/blob/main/docs/authentication.md) plugin to set up a GitHub token. Otherwise you may run into rate limiting from GitHub while re-building the site.
+
 To start the site:
 
 - Switch to this directory (`docs`)
@@ -23,6 +25,7 @@ If the site builds correctly it will start hosting it at something like `127.0.0
 
 The main content is located in `docs/_docs`. The underscore means it can be processed as a collection, which allows it to be organized for the sidebar under a "Documentation" header (More info)[https://just-the-docs.com/docs/configuration/#document-collections]. Anything that isn't "documentation" (like an "About" page or something else) can be located inside the main `docs` folder, and it will appear in the sidebar alongside the other uncollected pages like "Home"
 
-## Theme and Styling
+### Internal linking]:{%
+### Theme and Styling
 
 The theme used is (Just the Docs)[https://just-the-docs.com/]. See the theme's page for instructions on making changes to the colors and features. You can click the "Edit this page in GitHub" link at the bottom of any page to see the source for it, if you need any inspiration.

@@ -41,7 +41,7 @@ design language.
 
 ### Now Playing & Browse toggle {#NowPlaying}
 
-<img src="../play-browse-toggle-1x.png" class="attempt-right">
+<img src="./play-browse-toggle-1x.png" class="attempt-right">
 
 The **Now Playing & Browse toggle** design places the Now Playing and Browse
 functionality as top-level peers, with a toggle to switch between them. Drivers
@@ -60,7 +60,7 @@ DesignCompose partner Google Drive.
 
 ### Browse Slide-Up {#BrowseSlideUp}
 
-<img src="../play-browse-slide-up-1x.png" class="attempt-right">
+<img src="./play-browse-slide-up-1x.png" class="attempt-right">
 
 The **Browse Slide-Up** design presents the Now Playing functionality initially,
 with Browse available as an overlay, accessible using a button at the top of the
@@ -75,7 +75,7 @@ DesignCompose partner Google Drive.
 
 ### Now Playing Fly-Up {#NowPlayingFlyUp}
 
-<img src="../one-screen-fly-up-1x.png" class="attempt-right">
+<img src="./one-screen-fly-up-1x.png" class="attempt-right">
 
 In the **Now Playing Fly-Up** design, Browse functionality is the primary view
 and the Now Playing functionality is a bar at the bottom. Drivers and passengers
@@ -91,7 +91,7 @@ DesignCompose partner Google Drive.
 
 ### Top Media Source Tabs {#TopMedia}
 
-<img src="../top-tabs-1x.png" class="attempt-right">
+<img src="./top-tabs-1x.png" class="attempt-right">
 
 In the **Top Media Source Tabs** design, the available media sources are always
 accessible at the top of the media player, making it easy for the listener to
@@ -106,7 +106,7 @@ DesignCompose partner Google Drive.
 
 ## Nova {#Nova}
 
-<img src="../nova-1x.png" class="attempt-right">
+<img src="./nova-1x.png" class="attempt-right">
 
 **Nova** is a whimsical design that delivers functionality with style. In this
 design, Browse is the main view with a source switcher drop-down at the top so

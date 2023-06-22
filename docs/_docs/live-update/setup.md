@@ -19,7 +19,7 @@ To configure access to your documents, you need to generate an access token.
 1.  From any page on [figma.com][1]{:.external}, click the drop-down in the
     upper right corner and select **Settings**.
 
-    ![Settings](../mediacomposere--jvzkvorv2nc.png)
+    ![Settings](./mediacomposere--jvzkvorv2nc.png)
 
     **Figure 1.** Figma Settings Menu.
 

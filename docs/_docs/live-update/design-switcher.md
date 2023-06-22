@@ -24,12 +24,12 @@ screen:
 
 <div style="display: flex; justify-content: center; align-items: start">
 <figure style="flex: 0.5">
-    <img alt="" src="../design-switcher-collapsed.png" />
+    <img alt="" src="./design-switcher-collapsed.png" />
     <figcaption><b>Figure 1.</b> The Design Switcher occupies a small part of the screen when closed and shows the last update message for 5 seconds. Click it to expand for more info.</figcaption>
 </figure>
 
 <figure style="flex: 0.5">
-    <img alt="" src="../design-switcher-expanded.png" />
+    <img alt="" src="./design-switcher-expanded.png" />
     <figcaption><b>Figure 2.</b> View recent log messages in the expanded Design Switcher.</figcaption>
 </figure>
 </div>
@@ -37,7 +37,7 @@ screen:
 Tap **Change** to open a list of alternative files, and a text field to enter a
 **Figma File ID** into:
 
-![Open Design Switcher](../HelloWorldDesignSwitcher.png "The Design Switcher
+![Open Design Switcher](./HelloWorldDesignSwitcher.png "The Design Switcher
 showing a file called Design Switcher Test, which has a Goodbye
 branch."){: .screenshot}
 
@@ -119,7 +119,7 @@ private fun addFigmaView() {
 }
 ```
 
-![Design Switcher in a ViewGroup](../design-switcher-viewgroup.png)
+![Design Switcher in a ViewGroup](./design-switcher-viewgroup.png)
 
 **Figure 4.** The Design Switcher in a ViewGroup.
 
@@ -129,4 +129,4 @@ the Design Switcher.
 
 [1]: https://help.figma.com/hc/en-us/articles/1500005554982-Guide-to-files-and-projects#files
 [2]: https://help.figma.com/hc/en-us/articles/360063144053-Create-branches-and-merge-changes
-[3]: _docs/live-update/index.md
+[3]: {%link _docs/live-update/index.md %}

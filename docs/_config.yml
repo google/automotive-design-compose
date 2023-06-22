@@ -45,7 +45,7 @@ exclude:
 collections:
   # Define a collection named "docs", its documents reside in the "_docs" directory
   docs:
-    permalink: "/:collection/:path/"
+    permalink: "/:collection/:path"
     output: true
 
 just_the_docs:

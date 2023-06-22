@@ -80,8 +80,8 @@ add a Design Switcher to a `ViewGroup` using the generated function
 @DesignDoc(id = "FvnQGlHGy2mEyvB11PakjC")
 interface SwitcherAndroidView {
 
-    // Hide the Design Switcher
-    @DesignComponent(node = "#Red", {{ '<strong>' }}hideDesignSwitcher = true{{ '</strong>' }})
+    // !!! Hide the Design Switcher
+    @DesignComponent(node = "#Red", hideDesignSwitcher = true)
     fun RedSquare() {}
 }
 
@@ -93,15 +93,11 @@ override fun onCreate(savedInstanceState: Bundle?) {
     // Use a regular Android.View-based scroll view for our main UI
     setContentView(R.layout.activity_scrollview)
 
-    // Add the Design Switcher to the root view group.
-    {{ '<strong>' }}
+    // !!! Add the Design Switcher to the root view group.
     val root = findViewById<View>(R.id.root) as FrameLayout
     SwitcherAndroidViewDoc.addDesignSwitcherToViewGroup(this, root)
-    {{ '</strong>' }}
 
-    // Add five instances of a the SwitcherAndroidView
-    addFigmaView()
-    addFigmaView()
+    // Add three instances of a the SwitcherAndroidView
     addFigmaView()
     addFigmaView()
     addFigmaView()

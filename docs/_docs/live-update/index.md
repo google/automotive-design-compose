@@ -23,7 +23,7 @@ using a personal access token. When access is granted, Live Update automatically
 downloads the latest updates to your Figma designs, allowing the DesignCompose
 library to render them on screen.
 
-Learn how to set it up on [Setting Up Figma Authentication][1].
+Learn how to set it up on [Live Update Setup][1].
 
 ## Design Switcher {#DesignSwitcher}
 

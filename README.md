@@ -32,7 +32,7 @@ The DesignCompose Tutorial app shows you the capabilities of DesignCompose throu
 
 You'll work with your own copy of the [Tutorial Figma file](https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose). Create your own by clicking **Open in Figma**, which creates a copy of the file in your account. Once open, identify the Figma Document ID from your new file's URL. It's the alphanumeric string between `file/` and the name of the document. For example:
 
-`<pre><code`>`figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
+<pre><code>figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
 
 The app's Gradle project is located in `reference-apps/tutorial`. Build and launch it on your device, then set your Figma Access Token on the app by running:
 

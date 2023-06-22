@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
@@ -417,9 +418,18 @@ private fun calculateArcData(
                 arcAngleMeter,
                 shape.inner_radius,
                 arcData.cornerRadius,
+                shape.is_mask,
             )
     }
     return returnShape
+}
+
+private fun renderPaths(drawContext: DrawContext, paths: List<Path>, brushes: List<Paint>) {
+    for (path in paths) {
+        for (paint in brushes) {
+            drawContext.canvas.drawPath(path, paint)
+        }
+    }
 }
 
 internal fun ContentDrawScope.render(
@@ -692,11 +702,7 @@ internal fun ContentDrawScope.render(
         )
         drawContext.canvas.restore()
     } else {
-        for (fill in fills) {
-            for (paint in fillBrush) {
-                drawContext.canvas.drawPath(fill, paint)
-            }
-        }
+        renderPaths(drawContext, fills, fillBrush)
     }
 
     // Now do inset shadows
@@ -773,19 +779,10 @@ internal fun ContentDrawScope.render(
         }
         drawContent()
         drawContext.canvas.restore()
-        for (stroke in strokes) {
-            for (paint in strokeBrush) {
-                drawContext.canvas.drawPath(stroke, paint)
-            }
-        }
+        renderPaths(drawContext, strokes, strokeBrush)
     } else {
-        // No clipping; paint our stroke first and then paint
-        // our children.
-        for (stroke in strokes) {
-            for (paint in strokeBrush) {
-                drawContext.canvas.drawPath(stroke, paint)
-            }
-        }
+        // No clipping; paint our stroke first and then paint our children.
+        renderPaths(drawContext, strokes, strokeBrush)
         drawContent()
     }
 

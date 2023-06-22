@@ -40,7 +40,7 @@ use crate::{
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
-    toolkit_schema::{ComponentInfo, OverflowDirection, ScrollInfo, View},
+    toolkit_schema::{ComponentInfo, OverflowDirection, RenderMethod, ScrollInfo, View},
 };
 
 use unicode_segmentation::UnicodeSegmentation;
@@ -967,6 +967,7 @@ fn visit_node(
                 reactions,
                 characters,
                 node.absolute_bounding_box,
+                RenderMethod::None,
             );
         } else {
             // Build some runs of custom styled text out of the style overrides. We need to be able to iterate
@@ -1053,6 +1054,7 @@ fn visit_node(
                 reactions,
                 runs,
                 node.absolute_bounding_box,
+                RenderMethod::None,
             );
         }
     }
@@ -1108,25 +1110,42 @@ fn visit_node(
         ([0.0, 0.0, 0.0, 0.0], false)
     };
 
+    let make_rect = |is_mask| -> ViewShape {
+        if has_corner_radius {
+            ViewShape::RoundRect {
+                corner_radius,
+                corner_smoothing: 0.0, // Not in Figma REST API
+                is_mask: is_mask,
+            }
+        } else {
+            ViewShape::Rect { is_mask }
+        }
+    };
+
     // Figure out the ViewShape from the node type.
     let view_shape = match &node.data {
-        NodeData::BooleanOperation { .. }
-        | NodeData::Line { .. }
-        | NodeData::RegularPolygon { .. }
-        | NodeData::Star { .. }
-        | NodeData::Vector { .. } => ViewShape::Path { path: fill_paths, stroke: stroke_paths },
+        NodeData::BooleanOperation { vector, .. }
+        | NodeData::Line { vector }
+        | NodeData::RegularPolygon { vector }
+        | NodeData::Star { vector }
+        | NodeData::Vector { vector } => {
+            ViewShape::Path { path: fill_paths, stroke: stroke_paths, is_mask: vector.is_mask }
+        }
         // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
         // to support progress bars. If this node is set up as a progress bar, the renderer will
         // construct the rectangle, modified by progress bar parameters. Otherwise it will be
         // rendered as a ViewShape::Path.
-        NodeData::Rectangle { .. } => {
-            ViewShape::VectorRect { path: fill_paths, stroke: stroke_paths, corner_radius }
-        }
+        NodeData::Rectangle { vector } => ViewShape::VectorRect {
+            path: fill_paths,
+            stroke: stroke_paths,
+            corner_radius,
+            is_mask: vector.is_mask,
+        },
         // Ellipses get turned into an Arc in order to support dials/gauges with an arc type
         // meter customization. If this node is setup as an arc type meter, the renderer will
         // construct the ellipse, modified by the arc parameters. Otherwise it will be rendered
         // as a ViewShape::Path.
-        NodeData::Ellipse { arc_data, .. } => ViewShape::Arc {
+        NodeData::Ellipse { vector, arc_data, .. } => ViewShape::Arc {
             path: fill_paths,
             stroke: stroke_paths,
             stroke_cap: node.stroke_cap.clone(),
@@ -1134,17 +1153,14 @@ fn visit_node(
             sweep_angle_degrees: arc_data.ending_angle,
             inner_radius: arc_data.inner_radius,
             corner_radius: 0.0, // corner radius is only exposed in the plugin data
+            is_mask: vector.is_mask,
         },
-        _ => {
-            if has_corner_radius {
-                ViewShape::RoundRect {
-                    corner_radius,
-                    corner_smoothing: 0.0, // Not in Figma REST API
-                }
-            } else {
-                ViewShape::Rect
-            }
-        }
+        NodeData::Frame { frame }
+        | NodeData::Group { frame }
+        | NodeData::Component { frame }
+        | NodeData::ComponentSet { frame }
+        | NodeData::Instance { frame, .. } => make_rect(frame.is_mask),
+        _ => make_rect(false),
     };
 
     for effect in &node.effects {
@@ -1209,6 +1225,7 @@ fn visit_node(
         scroll_info,
         frame_extras,
         node.absolute_bounding_box,
+        RenderMethod::None,
     );
 
     // Iterate over our visible children, but not vectors because they always

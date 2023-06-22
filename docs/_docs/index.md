@@ -10,7 +10,7 @@ has_toc: false
 # Getting Started
 
 The best introduction to Automotive Design for Compose is provided by following
-the [Tutorial](/docs//tutorial/index). Begin by
+the [Tutorial]({% link _docs/tutorial/index.md %}). Begin by
 following the steps below.
 
 ## Check out the code {#GetSource}

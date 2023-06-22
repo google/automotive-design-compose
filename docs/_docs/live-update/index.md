@@ -68,6 +68,6 @@ appear on the actual Android-powered device.
 Learn more about both the plugin and widget in the [DesignCompose Tutorial
 App][3].
 
-[1]: /docs/live-update/setup
-[2]: /docs/live-update/design-switcher
-[3]: /docs/tutorial/index
+[1]: {%link _docs/live-update/setup.md %}
+[2]: {%link _docs/live-update/design-switcher.md %}
+[3]: {%link _docs/tutorial/index.md %}

@@ -345,23 +345,23 @@ This error occurs when the app was not signed with the platform key or otherwise
 authenticated as a system app. Ensure that the key being used to sign the app is
 the platform key for the emulator or device that you are installing on.
 
-[1]: /docs/media-center-demo/example-designs
+[1]: {%link _docs/media-center-demo/example-designs.md %}
 [2]: https://source.android.com/docs/devices/automotive/hmi/media/
-[3]: /docs/tutorial/index
-[4]: /docs/index
+[3]: {%link _docs/tutorial/index.md %}
+[4]: {%link _docs/index.md %}
 [5]: #MediaContentControl
 [6]: https://source.android.com/docs/devices/automotive/unbundled_apps/integration
 [7]: https://source.android.com/docs/setup/download#installing-repo
 [8]: https://source.android.com/docs/devices/automotive/unbundled_apps/integration#check-out
 [9]: https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_configuration_properties
 [10]: #aaos-ub-setup
-[12]: /docs/live-update/setup
+[12]: {%link _docs/live-update/setup.md %}
 [13]: https://www.figma.com
 [14]: https://source.android.com/devices/tech/ota/sign_builds#certificates-keys
 [15]: #SetDocID
 [17]: https://developer.android.com/studio/build/building-cmdline#gradle_signing
 [18]: #ImportDocsSection
 [19]: https://developer.android.com/studio/run
-[20]: /docs/live-update/setup#StoreFigmaToken
-[21]: /docs/media-center-demo/example-designs
+[20]: {%link _docs/live-update/setup.md %}#StoreFigmaToken
+[21]: {%link _docs/media-center-demo/example-designs.md %}
 [22]: #SetDocID

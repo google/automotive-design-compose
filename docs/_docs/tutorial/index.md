@@ -103,9 +103,9 @@ Zoom in and begin your tutorial!
 
 **Figure 5.** The Getting Started frame.
 
-[1]: /docs/index
-[2]: /docs/live-update/setup
+[1]: {%link _docs/index.md %}
+[2]: {%link _docs/live-update/setup.md %}
 [3]: https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose
 [4]: https://developer.android.com/studio/run
-[5]: /docs/live-update/setup#StoreFigmaToken
+[5]: {%link _docs/live-update/setup.md %}#StoreFigmaToken
 [6]: ../LiveUpdateDropdown.png

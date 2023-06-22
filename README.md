@@ -69,6 +69,7 @@ To check that you can pass presubmits and nightlies before pushing to PR you can
   - Make sure your system can run Android AVDs
   - Have the build dependencies below installed
   - Check out the current supported branch of the AAOS Unbundled repo (see the "Check out the Unbundled AAOS Repo" job in `.github/workflows/main` for the correct branch) and set $ORG_GRADLE_PROJECT_unbundledAAOSDir to the path of the checkout
+  - Set $FIGMA_ACCESS_TOKEN to your Figma token
 - Run the following scripts in order:
 
   ```shell

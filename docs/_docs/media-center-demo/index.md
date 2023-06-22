@@ -64,13 +64,11 @@ them available to the Media Center app.
     Repo][7]{:.external}
 1.  Create a directory and download the AAOS unbundled repositories:
 
-    ```posix-terminal
+    ```shell
     mkdir aaos-unbundled
-
     cd aaos-unbundled
 
-    repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master
-
+    repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master-20230303
     repo sync -cq -j16
     ```
 
@@ -99,25 +97,6 @@ them available to the Media Center app.
     ```
     unbundledAAOSDir=/data/git/aaos-unbundled
     ```
-
-### Build the DesignCompose SDK {#buildSDK}
-
-The MediaCenter demonstration app uses the compiled DesignCompose SDK. Follow
-these instructions to compile it:
-
-1.  Create a Gradle property called `DesignComposeMavenRepo` in the same file as
-    the [`unbundledAAOSDir` property][10].
-
-1.  Set the property to the absolute path of a location on your file system of
-    your choosing. For example: `/data/git/designcompose/maven-repo`.
-
-1.  Navigate to the root of the DesignCompose repository and run `./gradlew
-    publishAllPublicationsToLocalDirRepository`. The task publishes the Maven
-    repository to the location defined in `DesignComposeMavenRepo`.
-
-Note: The same Gradle property is used by the MediaCompose Reference app to
-locate the built DesignCompose SDK. No additional configuration is needed here.
-
 ## Set up Figma {#setUpFigma}
 
 This section describes how to create a Figma Access Token (if one is not already
@@ -138,7 +117,6 @@ The following steps describe how to import the Media Center design documents:
 1.  Click **Import File** on the main Figma screen. Locate and import the
     `Media1_V2.fig` file in the
     `reference-apps/aaos-unbundled/mediacompose/figma_files` directory.
-
 
 1.  Open the uploaded design documents and note the **Figma Document ID** in the
     URLs between `file/` and the name of the document.
@@ -255,7 +233,7 @@ Update the Media Center app to load your copy of the Figma Design:
 
     *   Alternatively, you can set the token in one command by running:
 
-    ```posix-terminal
+    ```shell
     FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> ./gradlew setFigmaTokenDebug
     ```
 
@@ -308,7 +286,7 @@ to the app's source for inclusion in the APK.
     the `find` command, searching for a portion of the app's package name. For
     example:
 
-    ```posix-terminal
+    ```shell
     $ adb root
     restarting adbd as root
     $ adb shell

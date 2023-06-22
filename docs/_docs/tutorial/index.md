@@ -59,20 +59,21 @@ work with:
 
 ## Launch and configure the tutorial {#LaunchTutorial}
 
-1.  Build and launch the tutorial app on your device. You can do this with
-    [Android Studio][4] or manually using Gradle.
+1.  The Tutorial app's project is located in the `reference-apps/tutorial` directory. Open that directory in Android Studio and allow the project to synchronize.
 
-1.  Set your Figma access token in the app by running the `./gradlew
-    :tutorial-app:setFigmaTokenDebug` task.
+1.  Build and launch the tutorial app on your device. See the 
+    [Android Studio documentation][4] or manually using Gradle.
+
+1.  Set your Figma access token in the app by running the `setFigmaTokenDebug` Gradle task.
 
     *   The task reads the token from the `$FIGMA_ACCESS_TOKEN` environment
         variable that was set in [Store Your Figma Access Token][5].
 
     *   Alternatively, you can set the token in one command by running:
 
-    ```posix-terminal
-    FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> \
-        ./gradlew :tutorial-app:setFigmaTokenDebug
+    ```shell
+    # From within the reference-apps/tutorial directory
+    FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> ./gradlew setFigmaTokenDebug
     ```
 
 1.  Use the Design Switcher to load your version of the tutorial file.

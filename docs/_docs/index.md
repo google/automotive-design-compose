@@ -1,7 +1,6 @@
 ---
 title: Getting Started
 layout: page
-permalink: docs/getting-started
 nav_order: 1
 has_children: true
 has_toc: false
@@ -11,7 +10,7 @@ has_toc: false
 # Getting Started
 
 The best introduction to Automotive Design for Compose is provided by following
-the [Tutorial](/docs/tutorial). Begin by
+the [Tutorial](/docs//tutorial/index). Begin by
 following the steps below.
 
 ## Check out the code {#GetSource}

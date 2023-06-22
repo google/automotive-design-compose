@@ -1,6 +1,5 @@
 ---
 title: Working with Source
-permalink: docs/working-with-source
 layout: page
 has_children: true
 nav_order: 6

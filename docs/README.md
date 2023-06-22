@@ -25,7 +25,14 @@ If the site builds correctly it will start hosting it at something like `127.0.0
 
 The main content is located in `docs/_docs`. The underscore means it can be processed as a collection, which allows it to be organized for the sidebar under a "Documentation" header (More info)[https://just-the-docs.com/docs/configuration/#document-collections]. Anything that isn't "documentation" (like an "About" page or something else) can be located inside the main `docs` folder, and it will appear in the sidebar alongside the other uncollected pages like "Home"
 
-### Internal linking]:{%
+### Internal linking
+
+Jekyll's [link](https://jekyllrb.com/docs/liquid/tags/#links) tag is used to generate the proper path to the file you want to link to. Any anchors need to be after the link tag. For example, a link to the Store Figma Token section of the Live Update Setup page would be: 
+
+```
+[Link text]({%link _docs/live-update/setup.md %}#StoreFigmaToken)
+```
+
 ### Theme and Styling
 
 The theme used is (Just the Docs)[https://just-the-docs.com/]. See the theme's page for instructions on making changes to the colors and features. You can click the "Edit this page in GitHub" link at the bottom of any page to see the source for it, if you need any inspiration.

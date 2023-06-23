@@ -23,8 +23,7 @@ Automotive Design for Compose (also called DesignCompose in the source) is an ex
 
 To use Automotive Design for Compose in an app, a developer specifies the Composables that they’d like to be defined by Figma, and a designer uses Figma to draw them. Most Figma features, including Auto Layout, Interactions, Variants, and Blend Modes are fully supported. This repo includes the DesignCompose library, an interactive tutorial app (in reference-apps/Tutorial), and a sample customizable Media Center for Android Automotive OS (in reference-apps/aaos-unbundled).
 
-Find our documentation on the
-[Android Automotive partner website](https://docs.partner.android.com/automotive/customize/designcompose).
+[Click here for our documentation!](https://google.github.io/automotive-design-compose/)
 
 ## Getting Started
 

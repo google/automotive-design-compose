@@ -13,10 +13,15 @@
 // limitations under the License.
 
 //use phf::phf_map;
+use crate::fetch::ProxyConfig;
 use crate::Error;
 use phf;
 
-pub fn http_fetch(api_key: &str, url: String) -> Result<String, Error> {
+pub fn http_fetch(
+    _api_key: &str,
+    url: String,
+    _proxy_config: &ProxyConfig,
+) -> Result<String, Error> {
     // TODO: Split off the document specific URL data to form a key
     match MOCKED_HTTP_REQUESTS.get(&url) {
         Some(value) => Ok(value.to_string()),

@@ -34,6 +34,14 @@ where
     Ok(T::deserialize(v).ok())
 }
 
+// Proxy configuration.
+#[derive(Debug, Clone)]
+pub enum ProxyConfig {
+    // HTTP Proxy Config in <host>:<port> format
+    HttpProxyConfig(String),
+    None,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ConvertRequest<'r> {
     figma_api_key: &'r str,
@@ -64,10 +72,15 @@ pub enum ConvertResponse {
     Unmodified(String),
 }
 
-pub fn fetch_doc(id: &str, rq: ConvertRequest) -> Result<ConvertResponse, crate::Error> {
+pub fn fetch_doc(
+    id: &str,
+    rq: ConvertRequest,
+    proxy_config: &ProxyConfig,
+) -> Result<ConvertResponse, crate::Error> {
     if let Some(mut doc) = Document::new_if_changed(
         rq.figma_api_key,
         id.into(),
+        proxy_config,
         rq.last_modified.unwrap_or(String::new()),
         rq.version.unwrap_or(String::new()),
         rq.image_session.clone(),

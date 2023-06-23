@@ -23,6 +23,7 @@ use crate::{
     component_context::ComponentContext,
     error::Error,
     extended_layout_schema::ExtendedAutoLayout,
+    fetch::ProxyConfig,
     figma_schema::{
         Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse, Node,
         NodeData, NodesResponse, ProjectFilesResponse,
@@ -38,8 +39,15 @@ const BASE_COMPONENT_URL: &str = "https://api.figma.com/v1/components/";
 const BASE_PROJECT_URL: &str = "https://api.figma.com/v1/projects/";
 
 #[cfg(not(feature = "http_mock"))]
-fn http_fetch(api_key: &str, url: String) -> Result<String, Error> {
-    let body = ureq::get(url.as_str())
+fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<String, Error> {
+    let mut agent_builder = ureq::AgentBuilder::new();
+    // Only HttpProxyConfig is supported.
+    if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
+        agent_builder = agent_builder.proxy(ureq::Proxy::new(spec)?);
+    }
+    let body = agent_builder
+        .build()
+        .get(url.as_str())
         .set(FIGMA_TOKEN_HEADER, api_key)
         .timeout(Duration::from_secs(90))
         .call()?
@@ -118,6 +126,7 @@ fn get_branches(document_root: &FileResponse) -> Vec<FigmaDocInfo> {
 pub struct Document {
     api_key: String,
     document_id: String,
+    proxy_config: ProxyConfig,
 
     document_root: FileResponse,
     image_context: ImageContext,
@@ -131,6 +140,7 @@ impl Document {
     pub fn new(
         api_key: &str,
         document_id: String,
+        proxy_config: &ProxyConfig,
         image_session: Option<ImageContextSession>,
     ) -> Result<Document, Error> {
         // Fetch the document...
@@ -139,12 +149,12 @@ impl Document {
             BASE_FILE_URL, document_id,
         );
         let document_root: FileResponse =
-            serde_json::from_str(http_fetch(api_key, document_url)?.as_str())?;
+            serde_json::from_str(http_fetch(api_key, document_url, proxy_config)?.as_str())?;
 
         // ...and the mapping from imageRef to URL
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, document_id);
         let image_refs: ImageFillResponse =
-            serde_json::from_str(http_fetch(api_key, image_ref_url)?.as_str())?;
+            serde_json::from_str(http_fetch(api_key, image_ref_url, proxy_config)?.as_str())?;
 
         let mut image_context = ImageContext::new(image_refs.meta.images);
         if let Some(session) = image_session {
@@ -156,6 +166,7 @@ impl Document {
         Ok(Document {
             api_key: api_key.to_string(),
             document_id,
+            proxy_config: proxy_config.clone(),
             document_root,
             image_context,
             variant_nodes: vec![],
@@ -169,28 +180,32 @@ impl Document {
     pub fn new_if_changed(
         api_key: &str,
         document_id: String,
+        proxy_config: &ProxyConfig,
         last_modified: String,
         version: String,
         image_session: Option<ImageContextSession>,
     ) -> Result<Option<Document>, Error> {
         let document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, document_id);
         let document_head: FileHeadResponse =
-            serde_json::from_str(http_fetch(api_key, document_head_url)?.as_str())?;
+            serde_json::from_str(http_fetch(api_key, document_head_url, proxy_config)?.as_str())?;
 
         if document_head.last_modified == last_modified && document_head.version == version {
             return Ok(None);
         }
 
-        Document::new(api_key, document_id, image_session).map(Some)
+        Document::new(api_key, document_id, proxy_config, image_session).map(Some)
     }
 
     /// Ask Figma if an updated document is available, and then fetch the updated document
     /// if so.
-    pub fn update(&mut self) -> Result<UpdateStatus, Error> {
+    pub fn update(&mut self, proxy_config: &ProxyConfig) -> Result<UpdateStatus, Error> {
+        self.proxy_config = proxy_config.clone();
+
         // Fetch just the top level of the document. (depth=0 causes an internal server error).
         let document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, self.document_id);
-        let document_head: FileHeadResponse =
-            serde_json::from_str(http_fetch(self.api_key.as_str(), document_head_url)?.as_str())?;
+        let document_head: FileHeadResponse = serde_json::from_str(
+            http_fetch(self.api_key.as_str(), document_head_url, &self.proxy_config)?.as_str(),
+        )?;
 
         // Now compare the version and modification times and bail out if they're the same.
         // Figma docs include a "version" field, but that doesn't always change when the document
@@ -207,13 +222,15 @@ impl Document {
             "{}{}?plugin_data=shared&geometry=paths&branch_data=true",
             BASE_FILE_URL, self.document_id,
         );
-        let document_root: FileResponse =
-            serde_json::from_str(http_fetch(self.api_key.as_str(), document_url)?.as_str())?;
+        let document_root: FileResponse = serde_json::from_str(
+            http_fetch(self.api_key.as_str(), document_url, &self.proxy_config)?.as_str(),
+        )?;
 
         // ...and the mapping from imageRef to URL
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, self.document_id);
-        let image_refs: ImageFillResponse =
-            serde_json::from_str(http_fetch(self.api_key.as_str(), image_ref_url)?.as_str())?;
+        let image_refs: ImageFillResponse = serde_json::from_str(
+            http_fetch(self.api_key.as_str(), image_ref_url, &self.proxy_config)?.as_str(),
+        )?;
 
         self.branches = get_branches(&document_root);
         self.document_root = document_root;
@@ -274,30 +291,33 @@ impl Document {
                         return Ok(());
                     }
                     let component_url = format!("{}{}", BASE_COMPONENT_URL, file_key);
-                    let component_http_response =
-                        match http_fetch(self.api_key.as_str(), component_url.clone()) {
-                            Ok(str) => str,
-                            Err(e) => {
-                                let fetch_error = if let Error::NetworkError(ureq_error) = &e {
-                                    if let ureq::Error::Status(code, _response) = ureq_error {
-                                        format!("HTTP {} at {}", code, component_url)
-                                    } else {
-                                        ureq_error.to_string()
-                                    }
+                    let component_http_response = match http_fetch(
+                        self.api_key.as_str(),
+                        component_url.clone(),
+                        &self.proxy_config,
+                    ) {
+                        Ok(str) => str,
+                        Err(e) => {
+                            let fetch_error = if let Error::NetworkError(ureq_error) = &e {
+                                if let ureq::Error::Status(code, _response) = ureq_error {
+                                    format!("HTTP {} at {}", code, component_url)
                                 } else {
-                                    e.to_string()
-                                };
-                                let error_string = format!(
-                                    "Fetch component error {}: {} -> {}",
-                                    fetch_error,
-                                    parent_tree.join(" -> "),
-                                    node.name
-                                );
-                                error_hash.insert(file_key);
-                                error_list.push(error_string);
-                                return Ok(());
-                            }
-                        };
+                                    ureq_error.to_string()
+                                }
+                            } else {
+                                e.to_string()
+                            };
+                            let error_string = format!(
+                                "Fetch component error {}: {} -> {}",
+                                fetch_error,
+                                parent_tree.join(" -> "),
+                                node.name
+                            );
+                            error_hash.insert(file_key);
+                            error_list.push(error_string);
+                            return Ok(());
+                        }
+                    };
 
                     // Deserialize into a ComponentKeyResponse
                     let component_key_response: ComponentKeyResponse =
@@ -311,7 +331,8 @@ impl Document {
                                 "{}{}/nodes?ids={}",
                                 BASE_FILE_URL, variant_document_id, parent_node_id
                             );
-                            let http_str = http_fetch(self.api_key.as_str(), nodes_url)?;
+                            let http_str =
+                                http_fetch(self.api_key.as_str(), nodes_url, &self.proxy_config)?;
                             let nodes_response: NodesResponse =
                                 serde_json::from_str(http_str.as_str())?;
                             // The response is a list of nodes, but we only requested one so this loop
@@ -789,8 +810,9 @@ impl Document {
     /// Get all the Figma documents in the given project ID
     pub fn get_projects(&self, project_id: &str) -> Result<Vec<FigmaDocInfo>, Error> {
         let url = format!("{}{}/files", BASE_PROJECT_URL, project_id);
-        let project_files: ProjectFilesResponse =
-            serde_json::from_str(http_fetch(self.api_key.as_str(), url)?.as_str())?;
+        let project_files: ProjectFilesResponse = serde_json::from_str(
+            http_fetch(self.api_key.as_str(), url, &self.proxy_config)?.as_str(),
+        )?;
 
         let mut figma_docs: Vec<FigmaDocInfo> = vec![];
         for file_hash in &project_files.files {

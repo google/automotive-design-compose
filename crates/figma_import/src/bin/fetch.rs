@@ -14,7 +14,7 @@
 
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use figma_import::{Document, NodeQuery, SerializedDesignDoc};
+use figma_import::{Document, NodeQuery, ProxyConfig, SerializedDesignDoc};
 #[derive(Debug)]
 struct ConvertError(String);
 impl From<figma_import::Error> for ConvertError {
@@ -49,6 +49,9 @@ struct Args {
     /// Figma API key to use for Figma requests
     #[arg(short, long)]
     api_key: String,
+    /// HTTP proxy server - <host>:<port>
+    #[arg(long)]
+    http_proxy: Option<String>,
     /// Root nodes to find in the doc and convert
     #[arg(short, long)]
     nodes: Vec<String>,
@@ -57,7 +60,11 @@ struct Args {
     output: std::path::PathBuf,
 }
 fn fetch_impl(args: Args) -> Result<(), ConvertError> {
-    let mut doc = Document::new(args.api_key.as_str(), args.doc_id, None)?;
+    let proxy_config: ProxyConfig = match args.http_proxy {
+        Some(x) => ProxyConfig::HttpProxyConfig(x),
+        None => ProxyConfig::None,
+    };
+    let mut doc = Document::new(args.api_key.as_str(), args.doc_id, &proxy_config, None)?;
     let mut error_list = Vec::new();
     // Convert the requested nodes from the Figma doc.
     let nodes = doc.nodes(

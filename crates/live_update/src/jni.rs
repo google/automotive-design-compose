@@ -22,13 +22,36 @@ use jni::{JNIEnv, JavaVM};
 use log::error;
 use log::LevelFilter;
 
-use figma_import::{fetch_doc, ConvertRequest};
+use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 
 use crate::error_map::map_err_to_exception;
 
 fn throw_basic_exception(env: &mut JNIEnv, msg: String) {
-    //An error occurring while trying to throw an exception shouldn't happen, but let's at least panic with a decent error message
+    // An error occurring while trying to throw an exception shouldn't happen,
+    // but let's at least panic with a decent error message
     env.throw(msg).expect("Error while trying to throw Exception");
+}
+
+fn get_string(env: &mut JNIEnv, obj: &JObject) -> Option<String> {
+    match env.get_string(obj.into()) {
+        Ok(it) => Some(it.into()),
+        Err(_) => {
+            // obj is null or not a java.lang.String
+            None
+        }
+    }
+}
+
+fn get_proxy_config(env: &mut JNIEnv, input: &JObject) -> Result<ProxyConfig, jni::errors::Error> {
+    let http_proxy_config = env
+        .get_field(input, "httpProxyConfig", "Lcom/android/designcompose/HttpProxyConfig;")?
+        .l()?;
+    let proxy_spec_field =
+        env.get_field(http_proxy_config, "proxySpec", "Ljava/lang/String;")?.l()?;
+    Ok(match get_string(env, &proxy_spec_field) {
+        Some(x) => ProxyConfig::HttpProxyConfig(x),
+        None => ProxyConfig::None,
+    })
 }
 
 fn jni_fetch_doc<'local>(
@@ -36,6 +59,7 @@ fn jni_fetch_doc<'local>(
     _class: JClass,
     jdoc_id: JString,
     jrequest_json: JString,
+    jproxy_config: JObject,
 ) -> JByteArray<'local> {
     let doc_id: String = match env.get_string(&jdoc_id) {
         Ok(it) => it.into(),
@@ -53,7 +77,15 @@ fn jni_fetch_doc<'local>(
         }
     };
 
-    let ser_result = match jni_fetch_doc_impl(&mut env, doc_id, request_json) {
+    let proxy_config: ProxyConfig = match get_proxy_config(&mut env, &jproxy_config) {
+        Ok(it) => it,
+        Err(e) => {
+            error!("Error getting proxy_config - {e}");
+            ProxyConfig::None
+        }
+    };
+
+    let ser_result = match jni_fetch_doc_impl(&mut env, doc_id, request_json, &proxy_config) {
         Ok(it) => it,
         Err(_err) => {
             return JObject::null().into();
@@ -70,16 +102,18 @@ fn jni_fetch_doc_impl(
     env: &mut JNIEnv,
     doc_id: String,
     request_json: String,
+    proxy_config: &ProxyConfig,
 ) -> Result<Vec<u8>, figma_import::Error> {
     let request: ConvertRequest = serde_json::from_str(&request_json)?;
 
-    let convert_result: figma_import::ConvertResponse = match fetch_doc(&doc_id, request) {
-        Ok(it) => it,
-        Err(err) => {
-            map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
-            return Err(err);
-        }
-    };
+    let convert_result: figma_import::ConvertResponse =
+        match fetch_doc(&doc_id, request, proxy_config) {
+            Ok(it) => it,
+            Err(err) => {
+                map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
+                return Err(err);
+            }
+        };
 
     bincode::serialize(&convert_result).map_err(|e| e.into())
 }
@@ -103,7 +137,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
             cls,
             &[jni::NativeMethod {
                 name: "jniFetchDoc".into(),
-                sig: "(Ljava/lang/String;Ljava/lang/String;)[B".into(),
+                sig: "(Ljava/lang/String;Ljava/lang/String;Lcom/android/designcompose/ProxyConfig;)[B".into(),
                 fn_ptr: jni_fetch_doc as *mut c_void,
             }],
         )

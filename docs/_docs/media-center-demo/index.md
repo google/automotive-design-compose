@@ -50,7 +50,7 @@ To run the MediaCompose demonstration app, you need the prerequisites for
 *   A platform signing key for your Android emulator or test device (see [Enable
     browsing of other media apps][5].
 
-*   The current release of the [Android Automotive OS unbundled
+*   The current tested release of the [Android Automotive OS unbundled
     repository][6]{:.external} (see below)
 
 ### AAOS unbundled setup {#aaos-ub-setup}
@@ -64,13 +64,11 @@ them available to the Media Center app.
     Repo][7]{:.external}
 1.  Create a directory and download the AAOS unbundled repositories:
 
-    ```posix-terminal
+    ```shell
     mkdir aaos-unbundled
-
     cd aaos-unbundled
 
-    repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master
-
+    repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master-20230303
     repo sync -cq -j16
     ```
 
@@ -99,25 +97,6 @@ them available to the Media Center app.
     ```
     unbundledAAOSDir=/data/git/aaos-unbundled
     ```
-
-### Build the DesignCompose SDK {#buildSDK}
-
-The MediaCenter demonstration app uses the compiled DesignCompose SDK. Follow
-these instructions to compile it:
-
-1.  Create a Gradle property called `DesignComposeMavenRepo` in the same file as
-    the [`unbundledAAOSDir` property][10].
-
-1.  Set the property to the absolute path of a location on your file system of
-    your choosing. For example: `/data/git/designcompose/maven-repo`.
-
-1.  Navigate to the root of the DesignCompose repository and run `./gradlew
-    publishAllPublicationsToLocalDirRepository`. The task publishes the Maven
-    repository to the location defined in `DesignComposeMavenRepo`.
-
-Note: The same Gradle property is used by the MediaCompose Reference app to
-locate the built DesignCompose SDK. No additional configuration is needed here.
-
 ## Set up Figma {#setUpFigma}
 
 This section describes how to create a Figma Access Token (if one is not already
@@ -139,7 +118,6 @@ The following steps describe how to import the Media Center design documents:
     `Media1_V2.fig` file in the
     `reference-apps/aaos-unbundled/mediacompose/figma_files` directory.
 
-
 1.  Open the uploaded design documents and note the **Figma Document ID** in the
     URLs between `file/` and the name of the document.
 
@@ -149,7 +127,7 @@ The following steps describe how to import the Media Center design documents:
 ## Configure the MediaCompose reference app {#ConfigureApp}
 
 In Android Studio, open the
-`reference-apps/aaos-unbundled/standalone-projects/mediacompose` directory
+`reference-apps/aaos-unbundled/mediacompose` directory
 (don't create a new project) and wait for the initial synchronization of the
 project to finish.
 
@@ -181,7 +159,7 @@ Therefore, all variants must be signed.
     the key file.
 
 1.  In
-    `reference-apps/aaos-unbundled/standalone-projects/mediacompose/app/build.gradle.kts`,
+    `reference-apps/aaos-unbundled/mediacompose/build.gradle.kts`,
     find the `signingConfigs` block in the `android{}` block. Replace the
     contents of the `signingConfigs` block with the path to your key and the
     key's passwords and alias. You can also change the name of the
@@ -220,10 +198,10 @@ app][17].
 Update the Media Center app to load your copy of the Figma Design:
 
 1.  Open the app's `MainActivity.kt` file, located within the Android project at
-    `MediaCompose/mediacompose/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
+    `DC Unbundled Apps/mediacompose/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
 
     The actual file location is
-    `reference-apps/aaos-unbundled/standalone-projects/mediacompose/app/src/main/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
+    `reference-apps/aaos-unbundled/mediacompose/src/main/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
 
 1.  Find the following line:
 
@@ -248,14 +226,14 @@ Update the Media Center app to load your copy of the Figma Design:
 
 1.  Set your Figma access token in the app by running the `./gradlew
     setFigmaTokenDebug` task from the
-    ``reference-apps/aaos-unbundled/standalone-projects/mediacompose` directory.
+    ``reference-apps/aaos-unbundled/mediacompose` directory.
 
     *   The task reads the token from the `$FIGMA_ACCESS_TOKEN` environment
         variable that was set in [Storing Your Figma Access Token][20].
 
     *   Alternatively, you can set the token in one command by running:
 
-    ```posix-terminal
+    ```shell
     FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> ./gradlew setFigmaTokenDebug
     ```
 
@@ -292,7 +270,7 @@ to the app's source for inclusion in the APK.
     render.
 
 1.  Create a directory in
-    `reference-apps/aaos-unbundled/standalone-projects/mediacompose/app/src/main`
+    `reference-apps/aaos-unbundled/mediacompose/src/main`
     named `assets` and a directory in `assets` named `figma`.
 
 1.  Open the **Device File Explorer** tool window in Android Studio and go to
@@ -308,7 +286,7 @@ to the app's source for inclusion in the APK.
     the `find` command, searching for a portion of the app's package name. For
     example:
 
-    ```posix-terminal
+    ```shell
     $ adb root
     restarting adbd as root
     $ adb shell
@@ -321,7 +299,7 @@ to the app's source for inclusion in the APK.
 
 1.  Download the cached documents and copy them into the new assets directory
     created earlier
-    (`reference-apps/aaos-unbundled/standalone-projects/mediacompose/app/src/main/assets/figma`).
+    (`reference-apps/aaos-unbundled/mediacompose/src/main/assets/figma`).
 
 ### Deactivate Live Update {#DisableLiveUpdate}
 

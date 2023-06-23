@@ -68,6 +68,23 @@ appear on the actual Android-powered device.
 Learn more about both the plugin and widget in the [DesignCompose Tutorial
 App][3].
 
+## Using an HTTP Proxy Server on Android {#HttpProxy}
+
+Live Update can be configured to download Figma design via an 
+HTTP Proxy Server on Android.
+
+To set the HTTP Proxy Server, run:
+
+```shell
+adb shell settings put global http_proxy "<host>:<port>"
+```
+
+To unset:
+
+```shell
+adb shell settings put global http_proxy ":0"
+```
+
 [1]: {%link _docs/live-update/setup.md %}
 [2]: {%link _docs/live-update/design-switcher.md %}
 [3]: {%link _docs/tutorial/index.md %}

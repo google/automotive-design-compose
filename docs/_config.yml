@@ -1,0 +1,55 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+
+title: Automotive Design for Compose
+logo: "assets/logo.png"
+repository: google/automotive-design-compose
+url: "https://github.com/google/automotive-design-compose"
+aux_links:
+  "Open source on GitHub":
+    - "https://github.com/google/automotive-design-compose" 
+
+theme: just-the-docs
+plugins:
+  - jekyll-github-metadata
+
+# Footer "Edit this page on GitHub" link text
+gh_edit_link: true # show or hide edit this page link
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/google/automotive-design-compose" # the github URL for your repo
+gh_edit_branch: "main" # the branch that your docs is served from
+gh_edit_source: docs # the source that your files originate from
+gh_edit_view_mode: "tree" # "tree" or "edit" if you want the user to jump into the editor immediately
+
+# Site options
+markdown: kramdown
+enable_copy_code_button: true
+
+# Exclude from processing.
+# The following items will not be processed, by default. Create a custom list
+# to override the default setting.
+exclude:
+  - Gemfile
+  - Rakefile
+  - README.md
+  - Gemfile.lock
+  - node_modules
+
+collections:
+  # Define a collection named "docs", its documents reside in the "_docs" directory
+  docs:
+    permalink: "/:collection/:path"
+    output: true
+
+just_the_docs:
+  # Enable the sidebar nav
+  collections:
+    docs:
+      name: Documentation

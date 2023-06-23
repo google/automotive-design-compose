@@ -18,7 +18,7 @@ following the steps below.
 To check out the code, which includes the Tutorial Android App, run the
 following:
 
-```posix-terminal
+```shell
 git clone https://github.com/google/automotive-design-compose.git
 ```
 

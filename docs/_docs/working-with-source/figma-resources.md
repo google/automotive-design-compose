@@ -54,7 +54,7 @@ version of a resource you need to create a new ID for it.
 
 Build each by running the following:
 
-```posix-terminal
+```shell
 npm install
 
 npm run build

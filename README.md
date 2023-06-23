@@ -60,6 +60,23 @@ We'll be adding more documentation and guides soon! For now you can look to `ref
 
 # Working with the Source
 
+## Testing presubmits locally
+
+To check that you can pass presubmits and nightlies before pushing to PR you can do the following:
+
+- Prerequisites:
+  - Make sure your system can run Android AVDs
+  - Have the build dependencies below installed
+  - Check out the current supported branch of the AAOS Unbundled repo (see the "Check out the Unbundled AAOS Repo" job in `.github/workflows/main` for the correct branch) and set $ORG_GRADLE_PROJECT_unbundledAAOSDir to the path of the checkout
+  - Set $FIGMA_ACCESS_TOKEN to your Figma token
+- Run the following scripts in order:
+
+  ```shell
+  ./dev-scripts/clean-all.sh #Optional, but will ensure you're testing a clean environment.
+  ./dev-scripts/format-all.sh
+  ./dev-scripts/test-all.sh
+  ```
+
 ## SDK build dependencies
 
 DesignCompose's Live Update system uses a native library built in Rust to fetch and serialize your Figma Documents. You'll need the following to build it and the rest of the SDK.

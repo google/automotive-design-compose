@@ -24,7 +24,7 @@ The source requires Android Studio Flamingo or later.
 Version `25.2.9519653` is required. You can install the NDK with Android
 Studio's SDK Manager or on the command line using the sdkmanager binary:
 
-```posix-terminal
+```shell
 "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" \
     --install "ndk;25.2.9519653"
 ```
@@ -36,7 +36,7 @@ Installation instructions are on the [Rust installer
 page](https://rustup.rs){:.external}.
 
 To complete the Rust installation the Android Studio IDE must be aware of the
-new install. The simplest way to do this is to reboot your computer.
+new install. There are many ways to do this, but the simplest way to do this is to reboot your computer.
 
 ### Rust toolchains {#RustToolchains}
 
@@ -44,7 +44,7 @@ The DesignCompose library includes a Rust JNI library, which must be compiled
 for multiple system types. Install the toolchains that DesignCompose needs by
 running the following:
 
-```posix-terminal
+```shell
 rustup target add \
     armv7-linux-androideabi \
     i686-linux-android \
@@ -56,7 +56,7 @@ rustup target add \
 
 To check out the code, run the following:
 
-```posix-terminal
+```shell
 git clone https://github.com/google/automotive-design-compose.git
 ```
 
@@ -98,7 +98,7 @@ To build the code from the command line:
 
 1.  Run the following command:
 
-    ```posix-terminal
+    ```shell
     ./gradlew reference-apps:tutorial:assembleDebug
     ```
 

@@ -23,8 +23,11 @@ To configure access to your documents, you need to generate an access token.
 
     **Figure 1.** Figma Settings Menu.
 
-1.  Go to **Personal access tokens** and then create a new token by adding a
-    description and pressing **Enter**.
+1.  Scroll down to **Personal access tokens** and click **Generate new token**
+
+1.  Automotive Design for Compose requires a token with read-only File content access. All other scopes can be left set to "No access". Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
+
+    ![Figma Token Generation Screen](figma-token.png)
 
 1.  Record the new **Figma Access Token** token. This token is used in the next
     section.
@@ -40,13 +43,13 @@ file on your local machine, such as `.figma_token.env`.
 
 Create the file by running:
 
-```posix-terminal
+```shell
 echo FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> > .figma_token.env
 ```
 
 To load the key into the variable, run the following:
 
-```posix-terminal
+```shell
 export $(cat .figma_token.env)
 ```
 
@@ -67,7 +70,7 @@ build variant, such as `Debug` and `Release`. Configure your Figma token to the
 environment variable `$FIGMA_ACCESS_TOKEN` and call the instance of the task for
 whichever app you're working with. For example:
 
-```posix-terminal
+```shell
 FIGMA_ACCESS_TOKEN=XXXXXX-XXXXXXXXXX-XXXX ./gradlew ref:helloworld:setFigmaTokenDebug
 ```
 
@@ -89,13 +92,13 @@ key `ApiKey` and value `<your Figma Token>`. Both the app's main activity and a
 service that is included in DesignCompose can receive the intent. To start the
 service, run:
 
-```posix-terminal
+```shell
 adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setApiKey -e ApiKey $FIGMA_ACCESS_TOKEN
 ```
 
 Example for the tutorial app:
 
-```posix-terminal
+```shell
 adb shell am startservice -n "com.android.designcompose.tutorial/com.android.designcompose.ApiKeyService" -a setApiKey -e ApiKey $FIGMA_ACCESS_TOKEN
 ```
 

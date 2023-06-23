@@ -108,6 +108,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             file += "import com.android.designcompose.ImageReplacementContext\n"
             file += "import com.android.designcompose.CustomizationContext\n"
             file += "import com.android.designcompose.DesignDoc\n"
+            file += "import com.android.designcompose.DesignComposeCallbacks\n"
             file += "import com.android.designcompose.DesignSwitcherPolicy\n"
             file += "import com.android.designcompose.OpenLinkCallback\n"
             file += "import com.android.designcompose.DesignNodeData\n"
@@ -753,9 +754,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             val defaultOpenLink = if (override) "" else " = null"
             args.add(Pair("openLinkCallback", "OpenLinkCallback?$defaultOpenLink"))
 
-            // Add an optional callback function to be called when the doc is ready to be rendered
-            val defaultDocReady = if (override) "" else " = null"
-            args.add(Pair("designDocReadyCallback", "((String) -> Unit)?$defaultDocReady"))
+            // Add optional callbacks to be called on certain document events
+            val defaultCallbacks = if (override) "" else " = null"
+            args.add(Pair("designComposeCallbacks", "DesignComposeCallbacks?$defaultCallbacks"))
 
             // Add optional key that can be used to uniquely identify this particular instance
             val keyDefault = if (override) "" else " = null"
@@ -964,7 +965,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 if (hideDesignSwitcher) "DesignSwitcherPolicy.HIDE"
                 else "DesignSwitcherPolicy.SHOW_IF_ROOT"
             out.appendText("                designSwitcherPolicy = $switchPolicy,\n")
-            out.appendText("                designDocReadyCallback = designDocReadyCallback,\n")
+            out.appendText("                designComposeCallbacks = designComposeCallbacks,\n")
             out.appendText("            )\n")
             out.appendText("        }\n")
             out.appendText("    }\n\n")

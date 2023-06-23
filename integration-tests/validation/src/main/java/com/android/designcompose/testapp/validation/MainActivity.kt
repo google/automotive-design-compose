@@ -59,8 +59,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -71,6 +69,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.ComponentReplacementContext
+import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.GetDesignNodeData
 import com.android.designcompose.ImageReplacementContext
@@ -160,7 +159,15 @@ interface HelloWorld {
 fun HelloWorld() {
     HelloWorldDoc.Main(
         name = "World",
-        designDocReadyCallback = { id -> Log.i("DesignCompose", "HelloWorld Ready: doc ID = $id") },
+        designComposeCallbacks =
+            DesignComposeCallbacks(
+                docReadyCallback = { id ->
+                    Log.i("DesignCompose", "HelloWorld Ready: doc ID = $id")
+                },
+                newDocDataCallback = { data ->
+                    Log.i("DesignCompose", "HelloWorld Updated: ${data?.size ?: 0} bytes")
+                },
+            )
     )
 }
 

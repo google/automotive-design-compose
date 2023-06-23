@@ -43,17 +43,25 @@ class GenericDocContent(
     fun save(filepath: File, feedback: FeedbackImpl) {
         feedback.documentSaveTo(filepath.absolutePath, docId)
         try {
-            val serializer = BincodeSerializer()
-            header.serialize(serializer)
-            document.serialize(serializer)
+            val bytes = toSerializedBytes(feedback)
             val output = FileOutputStream(filepath)
-            output.write(serializer._bytes)
-            output.write(imageSessionData)
+            output.write(bytes)
             output.close()
             feedback.documentSaveSuccess(docId)
         } catch (error: Throwable) {
             feedback.documentSaveError(error.toString(), docId)
         }
+    }
+    fun toSerializedBytes(feedback: FeedbackImpl): ByteArray? {
+        try {
+            val serializer = BincodeSerializer()
+            header.serialize(serializer)
+            document.serialize(serializer)
+            return serializer._bytes.toUByteArray().toByteArray() + imageSessionData
+        } catch (error: Throwable) {
+            feedback.documentSaveError(error.toString(), docId)
+        }
+        return null
     }
 }
 

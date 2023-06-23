@@ -79,7 +79,7 @@ fn jni_fetch_doc<'local>(
 
     let proxy_config: ProxyConfig = match get_proxy_config(&mut env, &jproxy_config) {
         Ok(it) => it,
-        Err(_) => ProxyConfig::None
+        Err(_) => ProxyConfig::None,
     };
 
     let ser_result = match jni_fetch_doc_impl(&mut env, doc_id, request_json, &proxy_config) {

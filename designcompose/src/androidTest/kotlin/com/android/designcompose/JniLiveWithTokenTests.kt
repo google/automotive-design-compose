@@ -58,7 +58,7 @@ class JniLiveWithTokenTests {
     }
 
     private fun testFetch(docID: String) {
-        with(LiveUpdateJni.fetchDocBytes(docID, firstFetchJson, ProxyConfig() = null)) {
+        with(LiveUpdateJni.fetchDocBytes(docID, firstFetchJson, ProxyConfig())) {
             assertNotNull(this)
             val decodedDoc = decodeServerDoc(this, null, docID, null, Feedback)
             assertNotNull(decodedDoc)

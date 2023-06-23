@@ -159,7 +159,7 @@ Therefore, all variants must be signed.
     the key file.
 
 1.  In
-    `reference-apps/aaos-unbundled/mediacompose/app/build.gradle.kts`,
+    `reference-apps/aaos-unbundled/mediacompose/build.gradle.kts`,
     find the `signingConfigs` block in the `android{}` block. Replace the
     contents of the `signingConfigs` block with the path to your key and the
     key's passwords and alias. You can also change the name of the
@@ -201,7 +201,7 @@ Update the Media Center app to load your copy of the Figma Design:
     `DC Unbundled Apps/mediacompose/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
 
     The actual file location is
-    `reference-apps/aaos-unbundled/mediacompose/app/src/main/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
+    `reference-apps/aaos-unbundled/mediacompose/src/main/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
 
 1.  Find the following line:
 
@@ -270,7 +270,7 @@ to the app's source for inclusion in the APK.
     render.
 
 1.  Create a directory in
-    `reference-apps/aaos-unbundled/mediacompose/app/src/main`
+    `reference-apps/aaos-unbundled/mediacompose/src/main`
     named `assets` and a directory in `assets` named `figma`.
 
 1.  Open the **Device File Explorer** tool window in Android Studio and go to
@@ -299,7 +299,7 @@ to the app's source for inclusion in the APK.
 
 1.  Download the cached documents and copy them into the new assets directory
     created earlier
-    (`reference-apps/aaos-unbundled/mediacompose/app/src/main/assets/figma`).
+    (`reference-apps/aaos-unbundled/mediacompose/src/main/assets/figma`).
 
 ### Deactivate Live Update {#DisableLiveUpdate}
 

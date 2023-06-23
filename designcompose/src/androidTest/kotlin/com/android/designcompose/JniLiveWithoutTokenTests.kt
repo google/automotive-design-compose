@@ -31,7 +31,7 @@ class JniLiveWithoutTokenTests {
     @Test
     fun invalidKey() {
         assertFailsWith(AccessDeniedException::class) {
-            LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson)
+            LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson, ProxyConfig())
         }
     }
 }

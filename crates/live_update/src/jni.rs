@@ -79,8 +79,7 @@ fn jni_fetch_doc<'local>(
 
     let proxy_config: ProxyConfig = match get_proxy_config(&mut env, &jproxy_config) {
         Ok(it) => it,
-        Err(e) => {
-            error!("Error getting proxy_config - {e}");
+        Err(_) => {
             ProxyConfig::None
         }
     };

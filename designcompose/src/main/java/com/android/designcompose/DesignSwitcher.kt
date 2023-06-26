@@ -77,7 +77,6 @@ private interface DesignSwitcher {
             "#ShowRecompositionCheckbox",
             "#Name",
             "#Id",
-            "#GoButton",
             "#Text",
             "#TimeStamp",
             "#Logout",
@@ -128,7 +127,7 @@ private interface DesignSwitcher {
         val queries = queries()
         queries.add(nodeName)
         CompositionLocalProvider(LocalCustomizationContext provides customizations) {
-            DesignDoc(
+            DesignDocInternal(
                 designSwitcherDocName(),
                 docId,
                 rootNodeQuery,
@@ -137,7 +136,8 @@ private interface DesignSwitcher {
                 serverParams = DocumentServerParams(queries, nodeCustomizations(), ignoredImages()),
                 setDocId = setDocId,
                 designSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
-                parentComponents = parentComponents
+                parentComponents = parentComponents,
+                liveUpdateMode = getLiveMode(),
             )
         }
     }
@@ -205,12 +205,7 @@ private interface DesignSwitcher {
                 serverParams =
                     DocumentServerParams(queries(), nodeCustomizations(), ignoredImages()),
                 designSwitcherPolicy = DesignSwitcherPolicy.IS_DESIGN_SWITCHER,
-                liveUpdateMode =
-                    if (DISABLE_LIVE_MODE) {
-                        LiveUpdateMode.OFFLINE
-                    } else {
-                        LiveUpdateMode.LIVE
-                    }
+                liveUpdateMode = getLiveMode(),
             )
         }
     }
@@ -234,12 +229,7 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams =
                     DocumentServerParams(queries(), nodeCustomizations(), ignoredImages()),
-                liveUpdateMode =
-                    if (DISABLE_LIVE_MODE) {
-                        LiveUpdateMode.OFFLINE
-                    } else {
-                        LiveUpdateMode.LIVE
-                    }
+                liveUpdateMode = getLiveMode(),
             )
         }
     }
@@ -261,12 +251,7 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams =
                     DocumentServerParams(queries(), nodeCustomizations(), ignoredImages()),
-                liveUpdateMode =
-                    if (DISABLE_LIVE_MODE) {
-                        LiveUpdateMode.OFFLINE
-                    } else {
-                        LiveUpdateMode.LIVE
-                    }
+                liveUpdateMode = getLiveMode(),
             )
         }
     }
@@ -288,12 +273,7 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams =
                     DocumentServerParams(queries(), nodeCustomizations(), ignoredImages()),
-                liveUpdateMode =
-                    if (DISABLE_LIVE_MODE) {
-                        LiveUpdateMode.OFFLINE
-                    } else {
-                        LiveUpdateMode.LIVE
-                    }
+                liveUpdateMode = getLiveMode(),
             )
         }
     }
@@ -310,12 +290,7 @@ private interface DesignSwitcher {
             customizations = CustomizationContext(),
             modifier = modifier,
             serverParams = DocumentServerParams(queries, nodeCustomizations(), ignoredImages()),
-            liveUpdateMode =
-                if (DISABLE_LIVE_MODE) {
-                    LiveUpdateMode.OFFLINE
-                } else {
-                    LiveUpdateMode.LIVE
-                }
+            liveUpdateMode = getLiveMode(),
         )
     }
 }
@@ -327,6 +302,14 @@ internal fun designSwitcherDocId() = "Ljph4e3sC0lHcynfXpoh9f"
 internal fun designSwitcherDocName() = "DesignSwitcherDoc"
 
 private const val DISABLE_LIVE_MODE = true
+
+private fun getLiveMode(): LiveUpdateMode {
+    return if (DISABLE_LIVE_MODE) {
+        LiveUpdateMode.OFFLINE
+    } else {
+        LiveUpdateMode.LIVE
+    }
+}
 
 private fun elapsedTimeString(elapsedSeconds: Long): String {
     val elapsedSecondsNonNeg: Long = maxOf(elapsedSeconds, 0)
@@ -540,8 +523,10 @@ internal fun DesignSwitcher(
         show_help_text = docIdText.isEmpty(),
         on_tap_go =
             Modifier.clickable {
-                interactionState.close(null)
-                setDocId(docIdText)
+                if (docIdText.isNotEmpty()) {
+                    interactionState.close(null)
+                    setDocId(docIdText)
+                }
             },
         node_names_checkbox = { GetNodeNamesCheckbox(nodeNamesChecked, setNodeNamesChecked) },
         mini_messages_checkbox = {

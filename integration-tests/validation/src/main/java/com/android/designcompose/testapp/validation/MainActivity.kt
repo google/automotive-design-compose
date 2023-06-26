@@ -164,8 +164,11 @@ fun HelloWorld() {
                 docReadyCallback = { id ->
                     Log.i("DesignCompose", "HelloWorld Ready: doc ID = $id")
                 },
-                newDocDataCallback = { data ->
-                    Log.i("DesignCompose", "HelloWorld Updated: ${data?.size ?: 0} bytes")
+                newDocDataCallback = { docId, data ->
+                    Log.i(
+                        "DesignCompose",
+                        "HelloWorld Updated doc ID $docId: ${data?.size ?: 0} bytes"
+                    )
                 },
             )
     )

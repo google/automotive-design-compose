@@ -58,7 +58,7 @@ internal class LiveDocSubscription(
     val id: String,
     val docId: String,
     val onUpdate: (DocContent?) -> Unit,
-    val docUpdateCallback: ((ByteArray?) -> Unit)?,
+    val docUpdateCallback: ((String, ByteArray?) -> Unit)?,
 )
 
 internal class LiveDocSubscriptions(
@@ -336,7 +336,10 @@ internal fun DocServer.fetchDocuments(
                     SpanCache.clear()
                     for (subscriber in subs) {
                         subscriber.onUpdate(doc)
-                        subscriber.docUpdateCallback?.invoke(doc?.c?.toSerializedBytes(Feedback))
+                        subscriber.docUpdateCallback?.invoke(
+                            id,
+                            doc?.c?.toSerializedBytes(Feedback)
+                        )
                     }
                 }
                 Feedback.documentUpdated(id, subs.size)
@@ -410,7 +413,7 @@ internal fun DocServer.doc(
     resourceName: String,
     docId: String,
     serverParams: DocumentServerParams,
-    docUpdateCallback: ((ByteArray?) -> Unit)?,
+    docUpdateCallback: ((String, ByteArray?) -> Unit)?,
     disableLiveMode: Boolean,
 ): DocContent? {
     // Check that the document ID is valid
@@ -464,7 +467,7 @@ internal fun DocServer.doc(
                 }
                 targetDoc
             }
-        docUpdateCallback?.invoke(targetDoc?.c?.toSerializedBytes(Feedback))
+        docUpdateCallback?.invoke(docId, targetDoc?.c?.toSerializedBytes(Feedback))
         setLiveDoc(targetDoc)
 
         // Subscribe to live updates, if we have an access token.
@@ -479,7 +482,7 @@ internal fun DocServer.doc(
     // Don't return a doc with the wrong ID.
     if (liveDoc != null && liveDoc.c.docId == docId) return liveDoc
     if (preloadedDoc != null && preloadedDoc.c.docId == docId) {
-        docUpdateCallback?.invoke(preloadedDoc.c.toSerializedBytes(Feedback))
+        docUpdateCallback?.invoke(docId, preloadedDoc.c.toSerializedBytes(Feedback))
         return preloadedDoc
     }
 
@@ -490,7 +493,7 @@ internal fun DocServer.doc(
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }
-            docUpdateCallback?.invoke(decodedDoc.c.toSerializedBytes(Feedback))
+            docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             return decodedDoc
         }
     } catch (error: Throwable) {

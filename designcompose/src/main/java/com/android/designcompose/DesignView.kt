@@ -817,6 +817,11 @@ enum class LiveUpdateMode {
     OFFLINE // Live updates off (load from serialized file)
 }
 
+class DesignComposeCallbacks(
+    val docReadyCallback: ((String) -> Unit)? = null,
+    val newDocDataCallback: ((ByteArray?) -> Unit)? = null,
+)
+
 @Composable
 fun DesignDoc(
     docName: String,
@@ -828,7 +833,7 @@ fun DesignDoc(
     serverParams: DocumentServerParams = DocumentServerParams(),
     setDocId: (String) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
-    designDocReadyCallback: ((String) -> Unit)? = null,
+    designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) =
     DesignDocInternal(
@@ -841,7 +846,7 @@ fun DesignDoc(
         serverParams = serverParams,
         setDocId = setDocId,
         designSwitcherPolicy = designSwitcherPolicy,
-        designDocReadyCallback = designDocReadyCallback,
+        designComposeCallbacks = designComposeCallbacks,
         parentComponents = parentComponents,
     )
 
@@ -857,11 +862,18 @@ internal fun DesignDocInternal(
     setDocId: (String) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
-    designDocReadyCallback: ((String) -> Unit)? = null,
+    designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) {
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
-    val doc = DocServer.doc(docName, docId, serverParams, liveUpdateMode == LiveUpdateMode.OFFLINE)
+    val doc =
+        DocServer.doc(
+            docName,
+            docId,
+            serverParams,
+            designComposeCallbacks?.newDocDataCallback,
+            liveUpdateMode == LiveUpdateMode.OFFLINE
+        )
     val interactionState = InteractionStateManager.stateForDoc(docId)
     val interactionScope = rememberCoroutineScope()
     val isRoot = LocalDesignIsRootContext.current.isRoot
@@ -917,9 +929,7 @@ internal fun DesignDocInternal(
     if (doc != null) {
         val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)
         if (startFrame != null) {
-            LaunchedEffect(docId) {
-                if (designDocReadyCallback != null) designDocReadyCallback(docId)
-            }
+            LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
                 DesignView(
                     modifier,

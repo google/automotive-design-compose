@@ -780,6 +780,7 @@ internal object DocumentSwitcher {
         subscribers[originalDocId] = list
     }
     internal fun switch(originalDocId: String, newDocId: String) {
+        if (newDocId.isEmpty()) return
         if (originalDocId != newDocId) {
             documentSwitchHash[originalDocId] = newDocId
             documentSwitchReverseHash[newDocId] = originalDocId

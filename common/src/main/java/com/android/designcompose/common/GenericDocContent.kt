@@ -57,7 +57,7 @@ class GenericDocContent(
             val serializer = BincodeSerializer()
             header.serialize(serializer)
             document.serialize(serializer)
-            return serializer._bytes.toUByteArray().toByteArray() + imageSessionData
+            return serializer._bytes.toUByteArray().asByteArray() + imageSessionData
         } catch (error: Throwable) {
             feedback.documentSaveError(error.toString(), docId)
         }

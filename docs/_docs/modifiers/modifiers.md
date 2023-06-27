@@ -846,7 +846,7 @@ generated @DesignComponent function generates these three optional parameters:
 *   `designComposeCallbacks: DesignComposeCallbacks? = null`. Set this parameter to register callbacks for a certain events. The `DesignComposeCallbacks` class supports the following event callbacks:
     * `docReadyCallback: ((String) -> Unit)? = null` \
     This callback is called when the Figma document has loaded is ready to be rendered.
-    * `newDocDataCallback: ((ByteArray?) -> Unit)? = null` \
+    * `newDocDataCallback: ((String, ByteArray?) -> Unit)? = null` \
     This callback is called both when the Figma document has first loaded and whenever it updates from live update changes. The ByteArray passed in contains the serialized Figma file.
 
 This example illustrates the use of unique keys to ensure all `#ButtonVariant`

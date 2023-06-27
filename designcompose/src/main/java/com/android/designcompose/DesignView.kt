@@ -819,7 +819,7 @@ enum class LiveUpdateMode {
 
 class DesignComposeCallbacks(
     val docReadyCallback: ((String) -> Unit)? = null,
-    val newDocDataCallback: ((ByteArray?) -> Unit)? = null,
+    val newDocDataCallback: ((String, ByteArray?) -> Unit)? = null,
 )
 
 @Composable

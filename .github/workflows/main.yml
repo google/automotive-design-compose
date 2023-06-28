@@ -178,7 +178,7 @@ jobs:
     - name: Check out the Unbundled AAOS Repo
       run: |
         HOST=https://android.googlesource.com/platform/superproject
-        BRANCH=ub-automotive-master-20230303
+        BRANCH=ub-automotive-master-20230622
         mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
         git clone "$HOST" "$ORG_GRADLE_PROJECT_unbundledAAOSDir" --branch="$BRANCH" \
         --single-branch --filter=blob:none --recurse-submodules --jobs=4

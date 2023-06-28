@@ -17,23 +17,42 @@ set -e
 usage() {
 cat  <<END
 This script should run all of the tests that CI will run. (It'll need to be kept up to date though)
+Options:
+  -s: Skip emulator tests
 Pre-requisites: 
     Must be run on a system that can run emulators
     Have \$ORG_GRADLE_PROJECT_unbundledAAOSDir set to your AAOS Unbundled repo
     Have \$FIGMA_ACCESS_TOKEN set to your actual Figma token
 END
-exit 1
 }
+
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
+run_emulator_tests=1
+while getopts "s" opt; do
+  case "$opt" in
+    s)
+      run_emulator_tests=0
+      ;;
+    *)
+      usage
+      exit 0
+      ;;
+
+  esac
+done
+
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
 if [[ -z "$ORG_GRADLE_PROJECT_unbundledAAOSDir" ]]; then
   echo "ORG_GRADLE_PROJECT_unbundledAAOSDir must be set"
   usage
+  exit 1
 fi
 if [[ -z "$FIGMA_ACCESS_TOKEN" ]]; then
   echo "FIGMA_ACCESS_TOKEN must be set"
   usage
+  exit 1
 fi
 
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"
@@ -45,10 +64,14 @@ cargo-fmt --all --check
 ./gradlew  ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
 cargo build --all-targets --all-features
 cargo test --all-targets --all-features
-./gradlew check publishAllPublicationsToLocalDirRepository tabletAtdApi30Check -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+./gradlew check publishAllPublicationsToLocalDirRepository
+
+if [[ $run_emulator_tests == 1 ]]; then
+  ./gradlew tabletAtdApi30Check -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+fi
 
 cd "$GIT_ROOT/reference-apps/tutorial"
-./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check tabletAtdApi30Check
+./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check
 
 cd "$GIT_ROOT/support-figma/extended-layout-plugin"
 npm ci

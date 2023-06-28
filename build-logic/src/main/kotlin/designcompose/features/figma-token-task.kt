@@ -77,7 +77,7 @@ abstract class FigmaTokenTask @Inject constructor(private val executor: DefaultE
         val execResult =
             executor.exec {
                 executable = adbPath.get().toString()
-                args("shell", "pm", "list", "packages", "--user", "current", appID.get())
+                args("shell", "pm", "list", "packages", appID.get())
                 standardOutput = stdOut
                 errorOutput = stdErr
                 isIgnoreExitValue = true // Handle it ourselves

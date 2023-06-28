@@ -94,10 +94,18 @@ internal fun DesignFrame(
     // it until frameRender() since that function is not a composable.
     val meterValue = customizations.getMeterFunction(name)?.let { it() }
     meterValue?.let { customizations.setMeterValue(name, it) }
-    var m =
-        Modifier.layoutStyle(name, style)
-            .frameRender(style, shape, customImage, document, name, customizations, maskInfo)
-            .then(modifier)
+
+    // Check to see if this node is part of a component set with variants and if any @DesignVariant
+    // annotations set variant properties that match. If so, variantNodeName will be set to the
+    // name of the node with all the variants set to the @DesignVariant parameters
+    val variantNodeName = customizations.getMatchingVariant(componentInfo)
+
+    var m = Modifier.layoutStyle(name, style)
+    // Only render the frame if we don't have a custom variant node that we are about to
+    // render instead
+    if (variantNodeName.isNullOrEmpty())
+        m = m.frameRender(style, shape, customImage, document, name, customizations, maskInfo)
+    m = m.then(modifier)
 
     val customModifier = customizations.getModifier(name)
     if (customModifier != null) {
@@ -124,10 +132,7 @@ internal fun DesignFrame(
         return
     }
 
-    // Check to see if this node is part of a component set with variants and if any @DesignVariant
-    // annotations set variant properties that match. If so, variantNodeName will be set to the
-    // name of the node with all the variants set to the @DesignVariant parameters
-    val variantNodeName = customizations.getMatchingVariant(componentInfo)
+    // If we a custom variant, compose it instead and then return.
     if (variantNodeName != null) {
         // Get the generated CustomVariantComponent() function and call it with variantNodeName
         val customComposable = customizations.getCustomComposable()

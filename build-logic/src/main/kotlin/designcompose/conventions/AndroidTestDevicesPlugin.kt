@@ -28,7 +28,7 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.maybeCreate
 
 // We want to apply this to both android libraries and applications, so we can't
-// just use the DLS here. Instead we ...
+// just use the DSL here. Instead we ...
 class ATDPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         // Hook into the project when the base Android plugin is applied

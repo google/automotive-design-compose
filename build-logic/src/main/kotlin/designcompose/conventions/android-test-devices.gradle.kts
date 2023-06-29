@@ -18,11 +18,15 @@ package designcompose.conventions
 
 apply<ATDPlugin>()
 
-// AGP consideres Tasks to be an implementation detail, so there's no accessors for them.
+// AGP considers Tasks to be an implementation detail, so there's no accessors for them.
 // Have to look them up the old fashioned way
-afterEvaluate {
-    tasks.named("tabletAtdApi30DebugAndroidTest").configure { group = "DesignCompose Developer" }
-    tasks.named("tabletAllApisGroupDebugAndroidTest").configure {
-        group = "DesignCompose Developer"
+project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
+    afterEvaluate {
+        tasks.named("tabletAtdApi30DebugAndroidTest").configure {
+            group = "DesignCompose Developer"
+        }
+        tasks.named("tabletAllApisGroupDebugAndroidTest").configure {
+            group = "DesignCompose Developer"
+        }
     }
 }

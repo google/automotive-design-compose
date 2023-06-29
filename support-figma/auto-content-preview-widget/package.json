@@ -1,6 +1,6 @@
 {
   "name": "list-preview-widget",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Preview dynamic content in custom layout lists",
   "main": "code.js",
   "scripts": {

@@ -18,6 +18,13 @@ name: Nightly
 on: 
   schedule:
     - cron: "0 0 * * *"
+  # Also run on pull requests that change this file
+  pull_request:
+    branches: 
+      - main
+      - 'wb/**'  
+    paths:
+      .github/workflows/nightly.yml
 
 permissions:  # added using https://github.com/step-security/secure-repo
   contents: read
@@ -56,3 +63,66 @@ jobs:
         with:
           gradle-version: ${{matrix.gradle_release}}
           arguments: check
+
+  build-maven-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: ./.github/actions/prepare-build-env 
+        with:
+          rust: "true"
+
+      - name: Build Maven repo
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        with:
+          arguments: publishAllPublicationsToLocalDirRepository
+
+      - name: Zip repo
+        working-directory: build
+        run: zip -q -r designcompose_m2repo.zip designcompose_m2repo/
+
+      - name: Upload zipped repo
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: designcompose-m2-repo-zip
+          path: build/designcompose_m2repo.zip
+
+  unbundled-apps-test:
+    runs-on: ubuntu-latest
+    needs: build-maven-repo
+    strategy:
+      matrix:
+        ub-branch: [ub-automotive-master, ub-automotive-master-20230622]
+    steps:       
+    - uses: actions/checkout@v3
+    - uses: ./.github/actions/prepare-build-env 
+ 
+    - uses: actions/download-artifact@v3
+      with:
+        name: designcompose-m2-repo-zip
+
+    - run: unzip designcompose_m2repo.zip
+    
+    # Temporarily using repo instead of the git superproject due to b/289387570
+    - run: sudo apt-get install repo
+
+    - name: "Set environment variables"
+      run: |
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+        echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/undbundled-aaos" >> "$GITHUB_ENV"
+
+    - name: Check out the Unbundled AAOS Repo
+      run: |
+        HOST=https://android.googlesource.com/platform/manifest
+        BRANCH=${{ matrix.ub-branch }}
+        mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
+        cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
+        repo init -u $HOST -b $BRANCH
+        repo sync -cq -j4
+
+    - name: Check MediaCompose
+      uses: gradle/gradle-build-action@v2
+      with:
+        build-root-directory: reference-apps/aaos-unbundled
+        arguments: |
+          check 

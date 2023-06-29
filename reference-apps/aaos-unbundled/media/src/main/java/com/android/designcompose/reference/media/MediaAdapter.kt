@@ -464,8 +464,8 @@ class MediaAdapter(
         // Observe now playing metadata
         val metadata: MediaItemMetadata? by playbackViewModel.metadata.observeAsState()
         nowPlaying.title = metadata?.title?.toString() ?: ""
-        nowPlaying.artist = metadata?.artist?.toString() ?: ""
-        nowPlaying.album = metadata?.albumTitle ?: ""
+        nowPlaying.artist = metadata?.subtitle?.toString() ?: ""
+        nowPlaying.album = metadata?.description?.toString() ?: ""
 
         // Observe playback controller to attach actions.
         val playController: PlaybackViewModel.PlaybackController? by

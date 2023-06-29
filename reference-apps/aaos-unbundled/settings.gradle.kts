@@ -18,7 +18,7 @@ rootProject.name = "DC Unbundled Apps"
 
 val unbundledAAOSDir: String by settings
 val DesignComposeMavenRepo: String? by settings
-val unbundledAAOSAndroidGradlePluginVer = "7.1.2"
+val unbundledAAOSAndroidGradlePluginVer = "7.4.2"
 val aaosLatestSDK = "32"
 
 includeBuild("$unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project") {

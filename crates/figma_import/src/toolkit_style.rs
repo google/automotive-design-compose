@@ -469,9 +469,7 @@ pub struct ProgressMarkerMeterData {
     pub discrete: bool,
     pub discrete_value: f32,
     pub start_x: f32,
-    pub start_y: f32,
     pub end_x: f32,
-    pub end_y: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

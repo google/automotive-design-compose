@@ -145,6 +145,12 @@ The Tutorial's DesignDoc is set to the main development Figma file, to assist in
 
 The Tutorial app is currently part of two projects: The root project in the root of the repository, and the tutorial project in `reference-apps/tutorial`. The root project is the one that contains the entire SDK and our apps and is where you typically develop. The second project is the one that users following the Tutorial are directed to use. It fetches DesignCompose from gMaven, which means that it builds much faster and doesn't compile rust code (and doesn't require the rust SDK to be installed). This means that the standalone Tutorial needs some extra configuration if you want the standalone Tutorial project to use any unpublished changes to the libraries and plugin.
 
+First, set `$ORG_GRADLE_PROJECT_DesignComposeMavenRepo` to a location such as ~/.m2repo/designComposeRepo. This will set the location for the SDK and Plugin to be built to and where the Tutorial all will read them from. Run  `./gradlew publishAllPublicationsToLocalDirRepository` to build the SDK and plugin to that location.
+
+Now you can use the `reference-apps/local-design-compose-repo.init.gradle.kts` init script to tell the Tutorial app where to find the libraries that you built. The script reads `ORG_GRADLE_PROJECT_DesignComposeMavenRepo` and uses it to configure Gradle to look for the libraries and plugin from there. You run init scripts by adding `--init-script <path to script>` to your Gradle command. For example, `./gradlew --init-script ../local-design-compose-repo.init.gradle.kts assembleDebug`.
+
+NOTE: Android Studio doesn't have a great way to use init scripts. You'll have to build and use the Tutorial app using the command line. That's fine for quick tests. Any actual development should be done with the proper root Gradle project, which doesn't need the init script.
+
 ## Running all tests
 
 The `./dev-scripts/test-all.sh` script will trigger all tests in the repo. This script must pass before a release candidate can be cut.

@@ -19,10 +19,10 @@ plugins {
     id("com.android.application")
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
-    id("designcompose.conventions.base")
-    id("designcompose.conventions.android-test-devices")
-    id("designcompose.features.figma-token-task")
+    alias(libs.plugins.designcompose)
 }
+
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(11)) } }
 
 var applicationID = "com.android.designcompose.tutorial"
 
@@ -42,6 +42,11 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
@@ -58,7 +63,8 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
-    packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+    // Deprecated in AGP 8+, replaced by `packaging`
+    packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
 }
 
 dependencies {

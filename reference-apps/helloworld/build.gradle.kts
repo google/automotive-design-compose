@@ -20,7 +20,7 @@ plugins {
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
     id("designcompose.conventions.base")
-    id("designcompose.features.figma-token-task")
+    alias(libs.plugins.designcompose)
 }
 
 var applicationID = "com.android.designcompose.testapp.helloworld"

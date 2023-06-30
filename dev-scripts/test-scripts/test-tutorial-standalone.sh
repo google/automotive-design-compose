@@ -14,20 +14,13 @@
 # limitations under the License.
 
 
-# Runs all clean jobs that we have, getting the repo roughly back to a clean state
-
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
-( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit; 
- ./gradlew  -P designComposeAAOSUnbundledUseSource=false clean; 
- rm -r buildSrc/build # Need to clean that one manually
- )
+export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-tutorial-standalone/designcompose_m2repo"
 
-( cd "$GIT_ROOT/reference-apps/tutorial" || exit; ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts clean)
-( cd "$GIT_ROOT" || exit; ./gradlew clean; cargo clean)
+cd "$GIT_ROOT" || exit
+./dev-scripts/clean-all.sh
+./gradlew publishAllPublicationsToLocalDirRepository
 
-( cd "$GIT_ROOT/plugins" || exit; ./gradlew clean)
-( cd "$GIT_ROOT/build-logic" || exit; ./gradlew clean)
-
-./gradlew --stop
-rm -r "$GIT_ROOT/.gradle"
+cd "$GIT_ROOT/reference-apps/tutorial" || exit
+./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check

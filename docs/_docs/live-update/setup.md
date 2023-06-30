@@ -64,18 +64,18 @@ method can be used for greater control.
 
 ### With a Gradle task {#FigmaTokenWithGradle}
 
-The internal apps (HelloWorld, Validation, and Tutorial) have an extra Gradle
-task named `setFigmaToken`. Different versions are generated for each Android
+The DesignCompose Gradle plugin adds the `SetFigmaToken` tasks to the Gradle build. Individual tasks are generated for each 
 build variant, such as `Debug` and `Release`. Configure your Figma token to the
 environment variable `$FIGMA_ACCESS_TOKEN` and call the instance of the task for
 whichever app you're working with. For example:
 
 ```shell
-FIGMA_ACCESS_TOKEN=XXXXXX-XXXXXXXXXX-XXXX ./gradlew ref:helloworld:setFigmaTokenDebug
+cd reference-apps/tutorial
+FIGMA_ACCESS_TOKEN=XXXXXX-XXXXXXXXXX-XXXX ./gradlew setFigmaTokenDebug
 ```
 
 The task uses adb to check whether the app is installed and skip execution if it
-isn't. This lets you run `./gradlew setFigmaToken` from the root of the project
+isn't. This lets you run `./gradlew setFigmaToken<variant>` from the root of the project
 to configure all installed apps.
 
 The task uses adb, which automatically selects your device if it only detects

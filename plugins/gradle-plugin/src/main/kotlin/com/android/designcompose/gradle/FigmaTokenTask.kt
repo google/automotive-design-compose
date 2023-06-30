@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-package designcompose.features
+package com.android.designcompose.gradle
 
-import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.Plugin
-import org.gradle.api.Project
-import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
-import org.gradle.configurationcache.extensions.capitalized
-import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.register
-import org.gradle.process.internal.DefaultExecOperations
+import org.gradle.process.ExecOperations
 
 /**
  * Figma token task
@@ -51,7 +43,7 @@ import org.gradle.process.internal.DefaultExecOperations
  * @property figmaToken The token to set. Expected to be set using a system environment variable
  *   provider
  */
-abstract class FigmaTokenTask @Inject constructor(private val executor: DefaultExecOperations) :
+abstract class FigmaTokenTask @Inject constructor(private val executor: ExecOperations) :
     DefaultTask() {
 
     @get:InputFile abstract val adbPath: RegularFileProperty
@@ -76,11 +68,11 @@ abstract class FigmaTokenTask @Inject constructor(private val executor: DefaultE
         val stdErr = ByteArrayOutputStream()
         val execResult =
             executor.exec {
-                executable = adbPath.get().toString()
-                args("shell", "pm", "list", "packages", "--user", "current", appID.get())
-                standardOutput = stdOut
-                errorOutput = stdErr
-                isIgnoreExitValue = true // Handle it ourselves
+                it.executable = adbPath.get().toString()
+                it.args("shell", "pm", "list", "packages", "--user", "current", appID.get())
+                it.standardOutput = stdOut
+                it.errorOutput = stdErr
+                it.isIgnoreExitValue = true // Handle it ourselves
             }
         if (
             execResult.exitValue != 0 &&
@@ -124,9 +116,9 @@ abstract class FigmaTokenTask @Inject constructor(private val executor: DefaultE
 
         val execResult =
             executor.exec {
-                executable = adbPath.get().toString()
-                isIgnoreExitValue = true
-                args(
+                it.executable = adbPath.get().toString()
+                it.isIgnoreExitValue = true
+                it.args(
                     "shell",
                     "am",
                     "startservice",
@@ -141,63 +133,6 @@ abstract class FigmaTokenTask @Inject constructor(private val executor: DefaultE
             }
         if (execResult.exitValue != 0) {
             logger.lifecycle("Failed to set token for ${appID.get()}")
-        }
-    }
-}
-
-/**
- * Figma token plugin
- *
- * Registers and configures FigmaTokenTasks for the project it is being applied to. Will only apply
- * to projects that also have the AGP App plugin applied. Configure your Figma token to the
- * environment variable `FIGMA_ACCESS_TOKEN` and call the task for the app. For example:
- *
- * `FIGMA_ACCESS_TOKEN=XXXXXX-XXXXXXXXXX-XXXX ./gradlew ref:helloworld:setFigmaTokenDebug`
- *
- * Calling the `Debug` or `Release` versions only matter if there's a difference in the app's ID.
- *
- * The task will use adb to check whether the app is installed and skip execution if it's not. This
- * allows you to just run `./gradlew setFigmaToken` from the root of the project to configure all
- * installed apps.
- *
- * If you have multiple emulators or devices connected you can run `adb devices` to check their
- * addresses (such as `emulator-5444`) and set the address to the `ANDROID_SERIAL` environment
- * variable.
- *
- * @constructor Create empty Figma token plugin
- */
-class FigmaTokenPlugin : Plugin<Project> {
-    override fun apply(project: Project) {
-        project.plugins.withType(com.android.build.gradle.AppPlugin::class.java) {
-            project.extensions.getByType<ApplicationAndroidComponentsExtension>().let { ace ->
-                @Suppress("UnstableApiUsage") val adb = ace.sdkComponents.adb
-                // Create one task per variant of the app
-                ace.onVariants() { variant ->
-                    createTokenTask(project, variant.name, variant.applicationId, adb)
-                }
-            }
-        }
-    }
-
-    /**
-     * Create token task for the given [project] and [variant][variantId]
-     *
-     * @param project The Gradle project we're applying to
-     * @param variantName The AGP-generated name for the application variant
-     * @param variantId The Application ID for the variant
-     * @param adb Provided by AGP, the path to adb on the system
-     */
-    private fun createTokenTask(
-        project: Project,
-        variantName: String,
-        variantId: Property<String>,
-        adb: Provider<RegularFile>
-    ) {
-        project.tasks.register<FigmaTokenTask>("setFigmaToken${variantName.capitalized()}") {
-            adbPath.set(adb)
-            appID.set(variantId)
-            figmaToken.set(project.providers.environmentVariable("FIGMA_ACCESS_TOKEN"))
-            group = "DesignCompose"
         }
     }
 }

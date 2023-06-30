@@ -105,9 +105,8 @@ internal fun Matrix.decompose(): DecomposedMatrix2D {
     return result
 }
 
-internal fun Matrix.setTranslation(x: Float, y: Float) {
+internal fun Matrix.setXTranslation(x: Float) {
     this[3, 0] = x
-    this[3, 1] = y
 }
 
 // Hypotenuse of right triangle with sides x and y

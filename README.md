@@ -60,23 +60,6 @@ We'll be adding more documentation and guides soon! For now you can look to `ref
 
 # Working with the Source
 
-## Testing presubmits locally
-
-To check that you can pass presubmits and nightlies before pushing to PR you can do the following:
-
-- Prerequisites:
-  - Make sure your system can run Android AVDs
-  - Have the build dependencies below installed
-  - Check out the current supported branch of the AAOS Unbundled repo (see the "Check out the Unbundled AAOS Repo" job in `.github/workflows/main` for the correct branch) and set $ORG_GRADLE_PROJECT_unbundledAAOSDir to the path of the checkout
-  - Set $FIGMA_ACCESS_TOKEN to your Figma token
-- Run the following scripts in order:
-
-  ```shell
-  ./dev-scripts/clean-all.sh #Optional, but will ensure you're testing a clean environment.
-  ./dev-scripts/format-all.sh
-  ./dev-scripts/test-all.sh
-  ```
-
 ## SDK build dependencies
 
 DesignCompose's Live Update system uses a native library built in Rust to fetch and serialize your Figma Documents. You'll need the following to build it and the rest of the SDK.
@@ -150,7 +133,52 @@ npm run build
 
 Then open the Figma Desktop app, go to **Plugins** -> **Development** -> **Import plugin from Manifest** and select the `manifest.json` file to import.
 
-## Get in touch
+# Development process
+## Updating serialized Figma files
+
+Any changes that include an update to the Figma serialized File version (set in crates/figma_import/src/serialized_document.rs) will require the committed serialized files to be updated with new versions that have been fetched with the updated version. At a minimum this includes any files that are being tested with AndroidIntegratedTests, and most especially the Tutorial's welcome screen, which is a special case.
+
+The Tutorial's DesignDoc is set to the main development Figma file, to assist in development of the app, but the committed serialized file is a separate file that presents a "welcome" page. This file's ID is `BX9UyUa5lkuSP3dEnqBdJf`. To update the file, fetch the `BX9UyUa5lkuSP3dEnqBdJf` file, then replace `reference-apps/tutorial/app/src/main/assets/figma/TutorialDoc_3z4xExq0INrL9vxPhj9tl7` with the serialized file. **The file name will remain the same**, the `TutorialDoc_3z4xExq0INrL9vxPhj9tl7` fill will contain the serialized `BX9UyUa5lkuSP3dEnqBdJf` file. The Tutorial app project has an AndroidIntegratedTest to ensure that the correct file is set, and it will be run as part of running the `./dev-scripts/test-all.sh` script.
+
+## Running all tests
+
+The `./dev-scripts/test-all.sh` script will trigger all tests in the repo. This script must pass before a release candidate can be cut.
+
+### Prerequisites:
+
+- Make sure your system can run Android AVDs
+- Have the build dependencies below installed
+- Check out the current supported branch of the AAOS Unbundled repo (see the "Check out the Unbundled AAOS Repo" job in `.github/workflows/main` for the correct branch) and set $ORG_GRADLE_PROJECT_unbundledAAOSDir to the path of the checkout
+- Set `$FIGMA_ACCESS_TOKEN` to your Figma token
+
+The test-all script takes an optional `-s` flag to skip all emulator tests. It's intended for situations where emulators can't be started or when running tests before updating serialized files.
+
+## Before you submit for review:
+
+To check that you can pass presubmits and emulator tests before pushing to PR you can do the following:
+
+  ```shell
+  ./dev-scripts/clean-all.sh #Optional, but will ensure you're testing a clean environment.
+  ./dev-scripts/format-all.sh
+  ./dev-scripts/test-all.sh
+  ```
+
+## Release process
+
+1. Create a new release in GitHub, set the tag to "v<version>" (see previous releases for examples). This will trigger a release build action. \
+    You can watch it's progress [here](https://github.com/google/automotive-design-compose/actions/workflows/release.yml)
+2. Once complete the release artifacts will be uploaded to the GitHub release automatically
+3. Stage the SDK
+  1. On a Google workstation, download the designcompose_m2repo.zip from the release and copy it to `/x20/teams/designcompose/release_staging/`
+  2. Run gmaven_publisher to stage it: 
+  ```
+  /google/bin/releases/android-devtools/gmaven/publisher/gmaven-publisher stage --gfile /x20/teams/designcompose/release_staging/<the m2repo.zip>
+  ```
+  3. The staged release will be available for additional testing (see go/gmaven for more info). You will receive an email explaining how the release can be submitted for publishing and then approval. The release will be published publicly immediately after approval
+4. Update the widget, plugin and Tutorial \
+  TODO: write this
+
+# Get in touch
 
 - Report a bug: <https://github.com/google/automotive-design-compose/issues>
 - Say hello:

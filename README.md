@@ -141,6 +141,10 @@ Any changes that include an update to the Figma serialized file version (set in 
 
 The Tutorial's DesignDoc is set to the main development Figma file, to assist in development of the app, but the committed serialized file is a separate file that presents a "welcome" page. This file's ID is `BX9UyUa5lkuSP3dEnqBdJf`. To update the file, fetch the `BX9UyUa5lkuSP3dEnqBdJf` file, then replace `reference-apps/tutorial/app/src/main/assets/figma/TutorialDoc_3z4xExq0INrL9vxPhj9tl7` with the serialized file. **The file name will remain the same**, the `TutorialDoc_3z4xExq0INrL9vxPhj9tl7` fill will contain the serialized `BX9UyUa5lkuSP3dEnqBdJf` file. The Tutorial app project has an AndroidIntegratedTest to ensure that the correct file is set, and it will be run as part of running the `./dev-scripts/test-all.sh` script.
 
+## Testing the standalone version of the Tutorial app
+
+The Tutorial app is currently part of two projects: The root project in the root of the repository, and the tutorial project in `reference-apps/tutorial`. The root project is the one that contains the entire SDK and our apps and is where you typically develop. The second project is the one that users following the Tutorial are directed to use. It fetches DesignCompose from gMaven, which means that it builds much faster and doesn't compile rust code (and doesn't require the rust SDK to be installed). This means that the standalone Tutorial needs some extra configuration if you want the standalone Tutorial project to use any unpublished changes to the libraries and plugin.
+
 ## Running all tests
 
 The `./dev-scripts/test-all.sh` script will trigger all tests in the repo. This script must pass before a release candidate can be cut.

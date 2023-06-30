@@ -41,8 +41,9 @@ publishing {
         val DesignComposeMavenRepo: String? by project
 
         // The default publish dir is meant to be within the main build's buildDir.
-        // If the publishing project (like the plugin) is an included build then put the output in the parent's buildDir
-        val defaultPublishDir=gradle.parent?.rootProject?.buildDir?: rootProject.buildDir
+        // If the publishing project (like the plugin) is an included build then put the output in
+        // the parent's buildDir
+        val defaultPublishDir = gradle.parent?.rootProject?.buildDir ?: rootProject.buildDir
 
         // This will create the `publish*ToLocalDirRepository` tasks
         maven {

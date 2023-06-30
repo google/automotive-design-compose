@@ -70,16 +70,16 @@ if [[ $run_emulator_tests == 1 ]]; then
   ./gradlew tabletAtdApi30Check -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 fi
 
-cd "$GIT_ROOT/reference-apps/tutorial"
+cd "$GIT_ROOT/reference-apps/tutorial" || exit
 ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check
 
-cd "$GIT_ROOT/support-figma/extended-layout-plugin"
+cd "$GIT_ROOT/support-figma/extended-layout-plugin" || exit
 npm ci
 npm run build
 
-cd "$GIT_ROOT/support-figma/auto-content-preview-widget"
+cd "$GIT_ROOT/support-figma/auto-content-preview-widget" || exit
 npm ci
 npm run build
 
-cd "$GIT_ROOT/reference-apps/aaos-unbundled"
+cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit
 ./gradlew check

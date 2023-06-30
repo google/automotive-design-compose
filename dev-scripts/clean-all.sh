@@ -23,7 +23,7 @@ GIT_ROOT=$(git rev-parse --show-toplevel)
  rm -r buildSrc/build # Need to clean that one manually
  )
 
-( cd "$GIT_ROOT/reference-apps/tutorial" || exit; ./gradlew clean)
+( cd "$GIT_ROOT/reference-apps/tutorial" || exit; ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts clean)
 ( cd "$GIT_ROOT" || exit; ./gradlew clean; cargo clean)
 
 ( cd "$GIT_ROOT/plugins" || exit; ./gradlew clean)

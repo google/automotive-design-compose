@@ -53,8 +53,14 @@ android {
     }
 }
 
-// Defines the configuration for the Rust JNI build
+// To simplify publishing of the entire SDK, make the DesignCompose publish tasks depend on the
+// Gradle Plugin's publish tasks
+// Necessary because the plugin must be in a separate Gradle build
+listOf("publish", "publishToMavenLocal", "publishAllPublicationsToLocalDirRepository").forEach {
+    tasks.named(it) { dependsOn(gradle.includedBuild("plugins").task(":gradle-plugin:${it}")) }
+}
 
+// Defines the configuration for the Rust JNI build
 cargo {
     crateDir.set(File(rootProject.relativePath("../crates/live_update")))
     abi.add("x86") // Older Emulated devices, including the ATD Android Test device

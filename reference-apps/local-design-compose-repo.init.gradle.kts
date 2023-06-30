@@ -31,4 +31,16 @@ settingsEvaluated {
             mavenCentral()
         }
     }
+    pluginManagement {
+        repositories.clear()
+        repositories {
+            maven(uri(DesignComposeMavenRepo)) {
+                content { includeGroup("com.android.designcompose") }
+            }
+
+            google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
+
+            gradlePluginPortal()
+        }
+    }
 }

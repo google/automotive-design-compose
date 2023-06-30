@@ -33,13 +33,4 @@ dependencyResolutionManagement {
     }
 }
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-    }
-    // For now we rely on the build-logic subproject for the SetFigmaToken task
-    includeBuild("../../build-logic")
-}
-
 include("app")

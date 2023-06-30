@@ -21,7 +21,7 @@ plugins {
     alias(libs.plugins.ksp)
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices")
-    id("designcompose.features.figma-token-task")
+    alias(libs.plugins.designcompose)
 }
 
 var applicationID = "com.android.designcompose.testapp.validation"

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
@@ -24,3 +25,6 @@ cd "$GIT_ROOT" || exit
 
 cd "$GIT_ROOT/reference-apps/tutorial" || exit
 ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check
+./gradlew --init-script ../local-design-compose-repo.init.gradle.kts tasks | grep setFigmaToken
+
+echo "Test passed"

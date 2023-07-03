@@ -35,15 +35,23 @@ gradlePlugin {
 }
 
 publishing {
-    publications.create<MavenPublication>("pluginMaven") {
-        pom {
-            basePom()
-            artifactId = "gradle-plugin"
-            name.set("Automotive Design for Compose Plugin")
-            description.set(
-                "Plugin that adds base configuration and assisting tasks to DesignCompose-enabled apps"
-            )
+    afterEvaluate {
+        // The java-gradle-plugin creates two publications, the "main" publication for the plugin's
+        // code
+        // and the "marker" publication that declares the plugin. Both need to have their POM
+        // metadata set.
+        // https://docs.gradle.org/current/userguide/java_gradle_plugin.html#maven_publish_plugin
+        val configuration: MavenPublication.() -> Unit = {
+            pom {
+                basePom()
+                name.set("Automotive Design for Compose Plugin")
+                description.set(
+                    "Plugin that adds base configuration and assisting tasks to DesignCompose-enabled apps"
+                )
+            }
         }
+        publications.named("pluginMaven", configuration)
+        publications.named("designcompose-gradle-pluginPluginMarkerMaven", configuration)
     }
 }
 

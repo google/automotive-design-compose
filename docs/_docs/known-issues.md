@@ -46,10 +46,18 @@ DesignCompose does not support Layer Blur and Background Blur effects.
 Only Normal and Pass Through blend modes are supported. All other blend modes
 are interpreted as Normal.
 
+### Gradients {#Gradients}
+
+All gradients types are supported except for the diamond gradient.
+
 ### Stroke properties {#StrokeProperties}
 
 Dashed strokes and distinct top-, left-, bottom-, and right-stroke thicknesses
 are ignored.
+
+### Text {#Text}
+
+Underline and strikethrough text properties are ignored. Strokes on text are ignored. Letter case is ignored.
 
 ## Interaction {#Interaction}
 

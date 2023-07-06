@@ -110,9 +110,11 @@ private fun calculateParentOffsets(
 private fun computeArcPath(frameSize: Size, shape: ViewShape.Arc): Pair<List<Path>, List<Path>> {
     val fWidth = frameSize.width
     val fHeight = frameSize.height
-    val startAngle = shape.start_angle_degrees
-    val sweepAngle = shape.sweep_angle_degrees
-    val endAngle = startAngle + sweepAngle
+    val positiveSweep = shape.sweep_angle_degrees >= 0
+    val sweepAngle = if (positiveSweep) shape.sweep_angle_degrees else -shape.sweep_angle_degrees
+    val startAngle =
+        if (positiveSweep) shape.start_angle_degrees else shape.start_angle_degrees - sweepAngle
+    val endAngle = if (positiveSweep) startAngle + sweepAngle else shape.start_angle_degrees
     val cornerRadius = shape.corner_radius
     val angleDirection = if (endAngle > startAngle) 1.0F else -1.0F
 

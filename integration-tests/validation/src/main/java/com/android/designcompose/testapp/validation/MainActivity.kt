@@ -597,9 +597,15 @@ enum class SquareBorder {
     Curved
 }
 
+enum class Shape {
+    Circle,
+    Square,
+}
+
 // TEST Variant Extra Properties Test
 // This tests that even though the Figma doc has four variant properties for the component named
 // #SquareBorder, we can only use two in the code and pick a variant that matches the two.
+
 @DesignDoc(id = "4P7zDdrQxj7FZsKJoIQcx1")
 interface VariantPropertiesTest {
     @DesignComponent(node = "#MainFrame")
@@ -608,6 +614,10 @@ interface VariantPropertiesTest {
         @Design(node = "#Square2") square2: @Composable (ComponentReplacementContext) -> Unit,
         @Design(node = "#Square3") square3: @Composable (ComponentReplacementContext) -> Unit,
         @Design(node = "#Square4") square4: @Composable (ComponentReplacementContext) -> Unit,
+        @DesignVariant(property = "#bg1") bg1: Shape,
+        @DesignVariant(property = "#bg2") bg2: Shape,
+        @DesignVariant(property = "#SquareBorder") type: SquareBorder,
+        @DesignVariant(property = "#SquareColor") color: SquareColor,
     )
 
     @DesignComponent(node = "#SquareBorder")
@@ -619,6 +629,11 @@ interface VariantPropertiesTest {
 
 @Composable
 fun VariantPropertiesTest() {
+    val (bg1, setBg1) = remember { mutableStateOf(Shape.Circle) }
+    val (bg2, setBg2) = remember { mutableStateOf(Shape.Circle) }
+    val (borderType, setBorderType) = remember { mutableStateOf(SquareBorder.Sharp) }
+    val (color, setColor) = remember { mutableStateOf(SquareColor.Green) }
+
     VariantPropertiesTestDoc.MainFrame(
         square1 = {
             VariantPropertiesTestDoc.Square(type = SquareBorder.Sharp, color = SquareColor.Blue)
@@ -631,8 +646,37 @@ fun VariantPropertiesTest() {
         },
         square4 = {
             VariantPropertiesTestDoc.Square(type = SquareBorder.Curved, color = SquareColor.Green)
-        }
+        },
+        bg1 = bg1,
+        bg2 = bg2,
+        type = borderType,
+        color = color,
     )
+
+    Column(modifier = Modifier.absoluteOffset(x = 20.dp, y = 600.dp)) {
+        Row {
+            Text("Background 1 ", fontSize = 30.sp, color = Color.Black)
+            Button("Square", bg1 == Shape.Square) { setBg1(Shape.Square) }
+            Button("Circle", bg1 == Shape.Circle) { setBg1(Shape.Circle) }
+        }
+        Row {
+            Text("Background 2 ", fontSize = 30.sp, color = Color.Black)
+            Button("Square", bg2 == Shape.Square) { setBg2(Shape.Square) }
+            Button("Circle", bg2 == Shape.Circle) { setBg2(Shape.Circle) }
+        }
+        Row {
+            Text("Border ", fontSize = 30.sp, color = Color.Black)
+            Button("Sharp", borderType == SquareBorder.Sharp) { setBorderType(SquareBorder.Sharp) }
+            Button("Curved", borderType == SquareBorder.Curved) {
+                setBorderType(SquareBorder.Curved)
+            }
+        }
+        Row {
+            Text("Color ", fontSize = 30.sp, color = Color.Black)
+            Button("Green", color == SquareColor.Green) { setColor(SquareColor.Green) }
+            Button("Blue", color == SquareColor.Blue) { setColor(SquareColor.Blue) }
+        }
+    }
 }
 
 @Composable

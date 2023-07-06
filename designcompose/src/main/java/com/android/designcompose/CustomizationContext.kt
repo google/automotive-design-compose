@@ -430,4 +430,5 @@ fun CustomizationContext.mergeFrom(other: CustomizationContext) {
         cs[it.key] = it.value.clone()
     }
     other.variantProperties.forEach { variantProperties[it.key] = it.value }
+    customComposable = other.customComposable
 }

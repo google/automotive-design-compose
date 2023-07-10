@@ -67,7 +67,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     let mut doc = Document::new(args.api_key.as_str(), args.doc_id, &proxy_config, None)?;
     let mut error_list = Vec::new();
     // Convert the requested nodes from the Figma doc.
-    let nodes = doc.nodes(
+    let views = doc.nodes(
         &args.nodes.iter().map(|name| NodeQuery::name(name)).collect(),
         &Vec::new(),
         &mut error_list,
@@ -77,7 +77,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     }
     // Build the serializable doc structure
     let serializable_doc = SerializedDesignDoc {
-        nodes,
+        views,
         component_sets: doc.component_sets().clone(),
         images: doc.encoded_image_map(),
         last_modified: doc.last_modified().clone(),

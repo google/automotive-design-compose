@@ -73,6 +73,7 @@ internal fun ViewShape.computePaths(
     style: ViewStyle,
     density: Float,
     frameSize: Size,
+    rectSize: Size?,
     customArcAngle: Boolean,
     vectorScaleX: Float,
     vectorScaleY: Float,
@@ -82,25 +83,46 @@ internal fun ViewShape.computePaths(
         stroke: List<com.android.designcompose.serdegen.Path>,
         vectorSize: Optional<List<Float>>,
     ): Pair<List<Path>, List<Path>> {
-        // If we have a vector size different than the frameSize, then constraints have caused the
-        // container frame to resize. We then check our style.left and style.top attributes and if
-        // they are of type Dimension.Percent, we know that the vector should scale. Use the vector
-        // size and frameSize to calculate the scaling factor.
+        // If we have a vector size different than the frameSize, then constraints or a transform
+        // have caused the container frame to resize. We then check if constraints caused the resize
+        // by checking the style's left/right/top/bottom attributes. If left/right are both Percent,
+        // the vector should scale horizontally. If top/bottom are both Percent, the vector should
+        // scale vertically. Use the vector size and frameSize to calculate the scaling factor.
+        // We don't yet support constraint scaled and transformed vectors.
         var scaleX = 1F
         var scaleY = 1F
         vectorSize.ifPresent {
             val sizeList = vectorSize.get()
             if (sizeList.size == 2) {
-                val vecWidth = sizeList[0] * vectorScaleX * density
-                val vecHeight = sizeList[1] * vectorScaleY * density
-                if (style.left is Dimension.Percent) scaleX = frameSize.width / vecWidth
-                if (style.top is Dimension.Percent) scaleY = frameSize.height / vecHeight
+                val scaleHorizontal =
+                    (style.left is Dimension.Percent && style.right is Dimension.Percent)
+                val scaleVertical =
+                    (style.top is Dimension.Percent && style.bottom is Dimension.Percent)
+                if (scaleHorizontal) {
+                    val vecWidth = sizeList[0] * vectorScaleX * density
+                    scaleX = frameSize.width / vecWidth
+                }
+                if (scaleVertical) {
+                    val vecHeight = sizeList[1] * vectorScaleY * density
+                    scaleY = frameSize.height / vecHeight
+                }
             }
         }
         return Pair(
             path.map { p -> p.asPath(density, scaleX, scaleY) },
             stroke.map { p -> p.asPath(density, scaleX, scaleY) }
         )
+    }
+    fun getRectSize(rectSize: Size?, style: ViewStyle, density: Float): Size {
+        val width =
+            rectSize?.width
+                ?: if (style.width is Dimension.Points) style.width.pointsAsDp(density).value
+                else frameSize.width
+        val height =
+            rectSize?.height
+                ?: if (style.height is Dimension.Points) style.height.pointsAsDp(density).value
+                else frameSize.height
+        return Size(width, height)
     }
     // Fill then stroke.
     val (fills: List<Path>, precomputedStrokes: List<Path>) =
@@ -110,14 +132,24 @@ internal fun ViewShape.computePaths(
                     style,
                     listOf(0.0f, 0.0f, 0.0f, 0.0f),
                     density,
-                    frameSize
+                    getRectSize(rectSize, style, density),
                 )
             }
             is ViewShape.RoundRect -> {
-                return computeRoundRectPathsFast(style, this.corner_radius, density, frameSize)
+                return computeRoundRectPathsFast(
+                    style,
+                    this.corner_radius,
+                    density,
+                    getRectSize(rectSize, style, density)
+                )
             }
             is ViewShape.VectorRect -> {
-                return computeRoundRectPathsFast(style, this.corner_radius, density, frameSize)
+                return computeRoundRectPathsFast(
+                    style,
+                    this.corner_radius,
+                    density,
+                    getRectSize(rectSize, style, density)
+                )
             }
             is ViewShape.Path -> {
                 getPaths(this.path, this.stroke, this.size)
@@ -139,7 +171,8 @@ internal fun ViewShape.computePaths(
             }
             else -> {
                 val path = Path()
-                path.addRect(Rect(0.0f, 0.0f, frameSize.width, frameSize.height))
+                val size = getRectSize(rectSize, style, density)
+                path.addRect(Rect(0.0f, 0.0f, size.width, size.height))
                 Pair(listOf(path), listOf())
             }
         }

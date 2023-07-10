@@ -149,16 +149,16 @@ private interface DesignSwitcher {
         last_mod_time: String,
         branch_file_count: String,
         project_file_count: String,
-        branch_list: @Composable () -> Unit,
+        branch_list: ReplacementContent,
         show_branch_section: Boolean,
-        project_file_list: @Composable () -> Unit,
-        status_message_list: @Composable () -> Unit,
+        project_file_list: ReplacementContent,
+        status_message_list: ReplacementContent,
         doc_text_edit: @Composable ((ComponentReplacementContext) -> Unit)?,
         show_help_text: Boolean,
         on_tap_go: Modifier,
-        node_names_checkbox: @Composable () -> Unit,
-        mini_messages_checkbox: @Composable () -> Unit,
-        show_recomposition_checkbox: @Composable () -> Unit,
+        node_names_checkbox: ReplacementContent,
+        mini_messages_checkbox: ReplacementContent,
+        show_recomposition_checkbox: ReplacementContent,
         on_tap_logout: Modifier,
         live_mode: LiveMode,
         top_status_bar: TopStatusBar,
@@ -213,6 +213,7 @@ private interface DesignSwitcher {
         name: String,
         id: String,
         modifier: Modifier,
+        parentLayout: ParentLayoutInfo,
     ) {
         val customizations = CustomizationContext()
         customizations.setText("#Name", name)
@@ -227,6 +228,7 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
+                parentLayout = parentLayout,
             )
         }
     }
@@ -235,6 +237,7 @@ private interface DesignSwitcher {
     fun Message(
         text: String,
         timestamp: String,
+        parentLayout: ParentLayoutInfo,
     ) {
         val customizations = CustomizationContext()
         customizations.setText("#Text", text)
@@ -248,6 +251,7 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
+                parentLayout = parentLayout,
             )
         }
     }
@@ -256,6 +260,7 @@ private interface DesignSwitcher {
     fun MessageFailed(
         text: String,
         timestamp: String,
+        parentLayout: ParentLayoutInfo,
     ) {
         val customizations = CustomizationContext()
         customizations.setText("#Text", text)
@@ -269,12 +274,17 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
+                parentLayout = parentLayout,
             )
         }
     }
 
     @Composable
-    fun Checkbox(modifier: Modifier, checked: Boolean) {
+    fun Checkbox(
+        modifier: Modifier,
+        checked: Boolean,
+        parentLayout: ParentLayoutInfo,
+    ) {
         val nodeName = "#Checkbox=" + (if (checked) "On" else "Off")
         val queries = queries()
         queries.add(nodeName)
@@ -286,6 +296,7 @@ private interface DesignSwitcher {
             modifier = modifier,
             serverParams = DocumentServerParams(queries, ignoredImages()),
             liveUpdateMode = getLiveMode(),
+            parentLayout = parentLayout,
         )
     }
 }
@@ -342,22 +353,28 @@ private fun elapsedTimeString(elapsedSeconds: Long): String {
     }
 }
 
-@Composable
 private fun GetBranches(
     branchHash: HashMap<String, String>?,
     setDocId: (String) -> Unit,
     interactionState: InteractionState
-) {
-    branchHash?.forEach {
-        DesignSwitcherDoc.FigmaDoc(
-            it.value,
-            it.key,
-            Modifier.clickable {
-                interactionState.close(null)
-                setDocId(it.key)
+): ReplacementContent {
+    val branchList = branchHash?.toList() ?: listOf()
+    return ReplacementContent(
+        count = branchList.size,
+        content = { index ->
+            { rc ->
+                DesignSwitcherDoc.FigmaDoc(
+                    branchList[index].second,
+                    branchList[index].first,
+                    Modifier.clickable {
+                        interactionState.close(null)
+                        setDocId(branchList[index].first)
+                    },
+                    ParentLayoutInfo(rc.parentLayoutId, index),
+                )
             }
-        )
-    }
+        }
+    )
 }
 
 private fun GetProjectFileCount(doc: DocContent?): String {
@@ -365,26 +382,31 @@ private fun GetProjectFileCount(doc: DocContent?): String {
     return count.toString()
 }
 
-@Composable
 private fun GetProjectList(
     doc: DocContent?,
     setDocId: (String) -> Unit,
     interactionState: InteractionState
-) {
-    doc?.c?.project_files?.forEach {
-        DesignSwitcherDoc.FigmaDoc(
-            it.name,
-            it.id,
-            Modifier.clickable {
-                interactionState.close(null)
-                setDocId(it.id)
+): ReplacementContent {
+    return ReplacementContent(
+        count = doc?.c?.project_files?.size ?: 0,
+        content = { index ->
+            { rc ->
+                DesignSwitcherDoc.FigmaDoc(
+                    doc?.c?.project_files?.get(index)?.name ?: "",
+                    doc?.c?.project_files?.get(index)?.id ?: "",
+                    Modifier.clickable {
+                        interactionState.close(null)
+                        setDocId(doc?.c?.project_files?.get(index)?.id ?: "")
+                    },
+                    ParentLayoutInfo(rc.parentLayoutId, index),
+                )
             }
-        )
-    }
+        }
+    )
 }
 
 @Composable
-private fun GetMessages(docId: String) {
+private fun GetMessages(docId: String): ReplacementContent {
     val (_, setMessagesId) = remember { mutableStateOf(0) }
     DisposableEffect(docId) {
         Feedback.register(docId, setMessagesId)
@@ -392,13 +414,28 @@ private fun GetMessages(docId: String) {
     }
 
     val messages = Feedback.getMessages()
-    messages.forEach {
-        val message = if (it.count > 1) it.message + "(${it.count})" else it.message
-        val secondsAgo = (System.currentTimeMillis() - it.timestamp) / 1000
-        if (it.level == FeedbackLevel.Error || it.level == FeedbackLevel.Warn)
-            DesignSwitcherDoc.MessageFailed(message, elapsedTimeString(secondsAgo))
-        else DesignSwitcherDoc.Message(message, elapsedTimeString(secondsAgo))
-    }
+    return ReplacementContent(
+        count = messages.size,
+        content = { index ->
+            { rc ->
+                val it = messages[index]
+                val message = if (it.count > 1) it.message + "(${it.count})" else it.message
+                val secondsAgo = (System.currentTimeMillis() - it.timestamp) / 1000
+                if (it.level == FeedbackLevel.Error || it.level == FeedbackLevel.Warn)
+                    DesignSwitcherDoc.MessageFailed(
+                        message,
+                        elapsedTimeString(secondsAgo),
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                    )
+                else
+                    DesignSwitcherDoc.Message(
+                        message,
+                        elapsedTimeString(secondsAgo),
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                    )
+            }
+        }
+    )
 }
 
 @Composable
@@ -419,32 +456,89 @@ private fun getMiniMessage(): String {
 }
 
 @Composable
-private fun GetNodeNamesCheckbox(state: Boolean, setState: (Boolean) -> Unit) {
+private fun GetNodeNamesCheckbox(state: Boolean, setState: (Boolean) -> Unit): ReplacementContent {
     val clickModifier =
         Modifier.clickable {
             setState(!state)
             DebugNodeManager.setShowNodes(!state)
         }
-    if (state) DesignSwitcherDoc.Checkbox(modifier = clickModifier, true)
-    else DesignSwitcherDoc.Checkbox(modifier = clickModifier, false)
+    return ReplacementContent(
+        count = 1,
+        content = {
+            { rc ->
+                if (state)
+                    DesignSwitcherDoc.Checkbox(
+                        modifier = clickModifier,
+                        true,
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                    )
+                else
+                    DesignSwitcherDoc.Checkbox(
+                        modifier = clickModifier,
+                        false,
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                    )
+            }
+        }
+    )
 }
 
 @Composable
-private fun GetMiniMessagesCheckbox(state: Boolean, setState: (Boolean) -> Unit) {
+private fun GetMiniMessagesCheckbox(
+    state: Boolean,
+    setState: (Boolean) -> Unit
+): ReplacementContent {
     val clickModifier = Modifier.clickable { setState(!state) }
-    if (state) DesignSwitcherDoc.Checkbox(modifier = clickModifier, true)
-    else DesignSwitcherDoc.Checkbox(modifier = clickModifier, false)
+    return ReplacementContent(
+        count = 1,
+        content = {
+            { rc ->
+                if (state)
+                    DesignSwitcherDoc.Checkbox(
+                        modifier = clickModifier,
+                        true,
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                    )
+                else
+                    DesignSwitcherDoc.Checkbox(
+                        modifier = clickModifier,
+                        false,
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                    )
+            }
+        }
+    )
 }
 
 @Composable
-private fun GetShowRecompositionCheckbox(state: Boolean, setState: (Boolean) -> Unit) {
+private fun GetShowRecompositionCheckbox(
+    state: Boolean,
+    setState: (Boolean) -> Unit
+): ReplacementContent {
     val clickModifier =
         Modifier.clickable {
             setState(!state)
             DebugNodeManager.setShowRecomposition(!state)
         }
-    if (state) DesignSwitcherDoc.Checkbox(modifier = clickModifier, true)
-    else DesignSwitcherDoc.Checkbox(modifier = clickModifier, false)
+    return ReplacementContent(
+        count = 1,
+        content = {
+            { rc ->
+                if (state)
+                    DesignSwitcherDoc.Checkbox(
+                        modifier = clickModifier,
+                        true,
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                    )
+                else
+                    DesignSwitcherDoc.Checkbox(
+                        modifier = clickModifier,
+                        false,
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                    )
+            }
+        }
+    )
 }
 
 @Composable
@@ -494,10 +588,10 @@ internal fun DesignSwitcher(
         last_mod_time = lastModifiedString,
         branch_file_count = branchHash?.size.toString(),
         project_file_count = GetProjectFileCount(doc),
-        branch_list = { GetBranches(branchHash, setDocId, interactionState) },
+        branch_list = GetBranches(branchHash, setDocId, interactionState),
         show_branch_section = !branchHash.isNullOrEmpty(),
-        project_file_list = { GetProjectList(doc, setDocId, interactionState) },
-        status_message_list = { GetMessages(currentDocId) },
+        project_file_list = GetProjectList(doc, setDocId, interactionState),
+        status_message_list = GetMessages(currentDocId),
         doc_text_edit = { context ->
             BasicTextField(
                 value = docIdText,
@@ -523,13 +617,11 @@ internal fun DesignSwitcher(
                     setDocId(docIdText)
                 }
             },
-        node_names_checkbox = { GetNodeNamesCheckbox(nodeNamesChecked, setNodeNamesChecked) },
-        mini_messages_checkbox = {
-            GetMiniMessagesCheckbox(miniMessagesChecked, setMiniMessagesChecked)
-        },
-        show_recomposition_checkbox = {
-            GetShowRecompositionCheckbox(showRecompositionChecked, setShowRecompositionChecked)
-        },
+        node_names_checkbox = GetNodeNamesCheckbox(nodeNamesChecked, setNodeNamesChecked),
+        mini_messages_checkbox =
+            GetMiniMessagesCheckbox(miniMessagesChecked, setMiniMessagesChecked),
+        show_recomposition_checkbox =
+            GetShowRecompositionCheckbox(showRecompositionChecked, setShowRecompositionChecked),
         on_tap_logout = Modifier.clickable { Log.i(TAG, "TODO: Re-implement Logging out") },
         live_mode =
             if (DesignSettings.isDocumentLive.value) DesignSwitcher.LiveMode.Live

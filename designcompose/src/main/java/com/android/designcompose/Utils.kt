@@ -53,6 +53,8 @@ import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
+import com.android.designcompose.serdegen.Layout
+import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
@@ -67,7 +69,6 @@ import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.serdegen.WindingRule
-import java.util.Optional
 import kotlin.math.roundToInt
 
 /** Convert a serialized color to a Compose color */
@@ -88,9 +89,9 @@ internal fun Dimension.resolve(available: Int, density: Float): Int? {
     }
 }
 
-internal fun Dimension.pointsAsDp(): Dp {
+internal fun Dimension.pointsAsDp(density: Float): Dp {
     return when (this) {
-        is Dimension.Points -> value.dp
+        is Dimension.Points -> (value * density).dp
         else -> 0.dp
     }
 }
@@ -306,6 +307,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.text_shadow
         }
+    style.text_size =
+        if (override.text_size.width != 0.0f || override.text_size.height != 0.0f) {
+            override.text_size
+        } else {
+            base.text_size
+        }
     style.line_height =
         if (!override.line_height.equals(LineHeight.Percent(1.0f))) {
             override.line_height
@@ -507,6 +514,24 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             override.flex_basis
         } else {
             base.flex_basis
+        }
+    style.bounding_box =
+        if (override.bounding_box.width != 0.0f || override.bounding_box.height != 0.0f) {
+            override.bounding_box
+        } else {
+            base.bounding_box
+        }
+    style.horizontal_sizing =
+        if (override.horizontal_sizing !is LayoutSizing.FIXED) {
+            override.horizontal_sizing
+        } else {
+            base.horizontal_sizing
+        }
+    style.vertical_sizing =
+        if (override.vertical_sizing !is LayoutSizing.FIXED) {
+            override.vertical_sizing
+        } else {
+            base.vertical_sizing
         }
     style.width =
         if (override.width !is Dimension.Undefined) {
@@ -710,14 +735,16 @@ internal constructor(
                 if (center.y == Float.POSITIVE_INFINITY) size.height else center.y * size.height
         }
 
+        // Don't let radius be 0
+        val radius =
+            if (radiusX == Float.POSITIVE_INFINITY) size.minDimension / 2
+            else if (size.width > 0F) radiusX * size.width else 0.01F
         val shader =
             RadialGradientShader(
                 colors = colors,
                 colorStops = stops,
                 center = Offset(centerX, centerY),
-                radius =
-                    if (radiusX == Float.POSITIVE_INFINITY) size.minDimension / 2
-                    else radiusX * size.width,
+                radius = radius,
                 tileMode = tileMode
             )
 
@@ -1153,7 +1180,7 @@ internal fun com.android.designcompose.serdegen.Path.log() {
 
 // Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
 // vectors that don't have sides.
-internal fun com.android.designcompose.serdegen.StrokeWeight.toUniform(): Float {
+internal fun StrokeWeight.toUniform(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.top
@@ -1161,7 +1188,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.toUniform(): Float 
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.top(): Float {
+internal fun StrokeWeight.top(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.top
@@ -1169,7 +1196,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.top(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.left(): Float {
+internal fun StrokeWeight.left(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.left
@@ -1177,7 +1204,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.left(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.bottom(): Float {
+internal fun StrokeWeight.bottom(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.bottom
@@ -1185,10 +1212,27 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.bottom(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.right(): Float {
+internal fun StrokeWeight.right(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.right
     }
     return 0.0f
+}
+
+// Return whether a text node is both auto height and auto width with a width layout mode of FILL.
+// This layout type requires a measure function to be passed into the layout system.
+internal fun isAutoHeightFillWidth(style: ViewStyle) =
+    style.width is Dimension.Auto &&
+        style.height is Dimension.Auto &&
+        style.horizontal_sizing is LayoutSizing.FILL
+
+internal fun Layout.withDensity(density: Float): Layout {
+    return Layout(
+        this.order,
+        this.width * density,
+        this.height * density,
+        this.left * density,
+        this.top * density
+    )
 }

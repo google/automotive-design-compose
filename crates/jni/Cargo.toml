@@ -1,8 +1,8 @@
 [package]
-name = "live_update"
+name = "jni"
 version = "0.1.0"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]
-description = "Figma document serialization library for Android"
+description = "Figma jni library for Android"
 license = "Apache-2.0"
 edition = "2018"
 # https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
@@ -13,6 +13,7 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 figma_import = {path="../figma_import"}
+layout = {path="../layout"}
 log = "0.4"
 jni = "0.21.1"
 android_logger = "0.13.1"
@@ -21,3 +22,4 @@ serde_json = "1.0"
 serde_bytes = "0.11"
 bincode = "1.3"
 ureq = "2"
+lazy_static = "1.4.0"

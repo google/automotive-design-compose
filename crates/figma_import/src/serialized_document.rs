@@ -35,7 +35,7 @@ impl SerializedDesignDocHeader {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SerializedDesignDoc {
     pub last_modified: String,
-    pub nodes: HashMap<NodeQuery, toolkit_schema::View>,
+    pub views: HashMap<NodeQuery, toolkit_schema::View>,
     pub images: EncodedImageMap,
     pub name: String,
     pub component_sets: HashMap<String, String>,

@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.ComponentReplacementContext
+import com.android.designcompose.ContentReplacementContext
 import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.GetDesignNodeData
@@ -78,6 +79,8 @@ import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
 import com.android.designcompose.Meter
 import com.android.designcompose.OpenLinkCallback
+import com.android.designcompose.ParentLayoutInfo
+import com.android.designcompose.ReplacementContent
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -88,6 +91,7 @@ import com.android.designcompose.annotation.DesignMetaKey
 import com.android.designcompose.annotation.DesignPreviewContent
 import com.android.designcompose.annotation.DesignVariant
 import com.android.designcompose.annotation.PreviewNode
+import com.android.designcompose.widgetParent
 import java.lang.Float.max
 import java.lang.Float.min
 import kotlin.math.roundToInt
@@ -152,7 +156,8 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Vector Rendering", { VectorRenderingTest() }, "Z3ucY0wMAbIwZIa6mLEWIK"),
         Triple("Dials Gauges", { DialsGaugesTest() }, "lZj6E9GtIQQE4HNLpzgETw"),
         Triple("Masks", { MaskTest() }, "mEmdUVEIjvBBbV0kELPy37"),
-        Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67")
+        Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67"),
+        Triple("Layout Tests", { LayoutTests() }, "Gv63fYTzpeH2ZtxP4go31E")
     )
 
 // TEST Basic Hello World example
@@ -240,7 +245,7 @@ interface OpenLinkTest {
     @DesignComponent(node = "#MainFrame")
     fun MainFrame(
         @Design(node = "#Name") name: String,
-        @Design(node = "#Content") content: @Composable () -> Unit,
+        @Design(node = "#Content") content: ReplacementContent,
         @Design(node = "#Swap") clickSwap: Modifier,
     )
 
@@ -256,7 +261,7 @@ interface OpenLinkTest {
     fun Square(
         @DesignVariant(property = "#SquareShadow") shadow: SquareShadow,
         @DesignVariant(property = "#SquareColor") color: SquareColor,
-        @Design(node = "#icon") icon: @Composable () -> Unit
+        @Design(node = "#icon") icon: ReplacementContent,
     )
 }
 
@@ -275,21 +280,64 @@ fun OpenLinkTest() {
     OpenLinkTestDoc.MainFrame(
         name = "Rob",
         openLinkCallback = openLinkFunc,
-        content = {
-            OpenLinkTestDoc.Red()
-            OpenLinkTestDoc.Green()
-            OpenLinkTestDoc.Blue()
-            OpenLinkTestDoc.Square(
-                shadow = SquareShadow.On,
-                color = SquareColor.Green,
-                icon = { OpenLinkTestDoc.PurpleCircle() }
-            )
-            OpenLinkTestDoc.Square(
-                shadow = SquareShadow.On,
-                color = SquareColor.Red,
-                icon = { OpenLinkTestDoc.PurpleCircle() }
-            )
-        },
+        content =
+            ReplacementContent(
+                count = 5,
+                content = { index ->
+                    { rc ->
+                        when (index) {
+                            0 ->
+                                OpenLinkTestDoc.Red(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                )
+                            1 ->
+                                OpenLinkTestDoc.Green(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                )
+                            2 ->
+                                OpenLinkTestDoc.Blue(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                )
+                            3 ->
+                                OpenLinkTestDoc.Square(
+                                    shadow = SquareShadow.On,
+                                    color = SquareColor.Green,
+                                    icon =
+                                        ReplacementContent(
+                                            count = 1,
+                                            content = { i ->
+                                                { irc ->
+                                                    OpenLinkTestDoc.PurpleCircle(
+                                                        parentLayout =
+                                                            ParentLayoutInfo(irc.parentLayoutId, i)
+                                                    )
+                                                }
+                                            }
+                                        ),
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                )
+                            else ->
+                                OpenLinkTestDoc.Square(
+                                    shadow = SquareShadow.On,
+                                    color = SquareColor.Red,
+                                    icon =
+                                        ReplacementContent(
+                                            count = 1,
+                                            content = { i ->
+                                                { irc ->
+                                                    OpenLinkTestDoc.PurpleCircle(
+                                                        parentLayout =
+                                                            ParentLayoutInfo(irc.parentLayoutId, i)
+                                                    )
+                                                }
+                                            }
+                                        ),
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                )
+                        }
+                    }
+                }
+            ),
         clickSwap = Modifier.clickable { setUseFuncOne(!useFuncOne) }
     )
 }
@@ -516,8 +564,8 @@ fun ShadowsTest() {
 interface ItemSpacingTest {
     @DesignComponent(node = "#Main")
     fun MainFrame(
-        @Design(node = "#HorizontalCustom") horizontalItems: @Composable () -> Unit,
-        @Design(node = "#VerticalCustom") verticalItems: @Composable () -> Unit,
+        @Design(node = "#HorizontalCustom") horizontalItems: ReplacementContent,
+        @Design(node = "#VerticalCustom") verticalItems: ReplacementContent,
     )
 
     @DesignComponent(node = "#Square") fun Square()
@@ -527,16 +575,28 @@ interface ItemSpacingTest {
 @Composable
 fun ItemSpacingTest() {
     ItemSpacingTestDoc.MainFrame(
-        horizontalItems = {
-            ItemSpacingTestDoc.Square()
-            ItemSpacingTestDoc.Square()
-            ItemSpacingTestDoc.Square()
-        },
-        verticalItems = {
-            ItemSpacingTestDoc.Square()
-            ItemSpacingTestDoc.Square()
-            ItemSpacingTestDoc.Square()
-        }
+        horizontalItems =
+            ReplacementContent(
+                count = 3,
+                content = { index ->
+                    { rc ->
+                        ItemSpacingTestDoc.Square(
+                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                        )
+                    }
+                }
+            ),
+        verticalItems =
+            ReplacementContent(
+                count = 3,
+                content = { index ->
+                    { rc ->
+                        ItemSpacingTestDoc.Square(
+                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                        )
+                    }
+                }
+            )
     )
 }
 
@@ -546,8 +606,8 @@ interface RecursiveCustomizations {
     @DesignComponent(node = "#MainFrame")
     fun MainFrame(
         @Design(node = "#Name") name: String,
-        @Design(node = "#ChildFrame") child: @Composable () -> Unit,
-        @Design(node = "#Content") content: @Composable () -> Unit,
+        @Design(node = "#ChildFrame") child: ReplacementContent,
+        @Design(node = "#Content") content: ReplacementContent,
     )
 
     @DesignComponent(node = "#NameFrame") fun NameFrame()
@@ -562,12 +622,45 @@ interface RecursiveCustomizations {
 fun RecursiveCustomizations() {
     RecursiveCustomizationsDoc.MainFrame(
         name = "Google",
-        child = { RecursiveCustomizationsDoc.NameFrame() },
-        content = {
-            RecursiveCustomizationsDoc.TitleFrame(title = "First")
-            RecursiveCustomizationsDoc.TitleFrame(title = "Second")
-            RecursiveCustomizationsDoc.TitleFrame(title = "Third")
-        }
+        child =
+            ReplacementContent(
+                count = 1,
+                content = {
+                    { replacementContext ->
+                        RecursiveCustomizationsDoc.NameFrame(
+                            parentLayout = ParentLayoutInfo(replacementContext.parentLayoutId, 0)
+                        )
+                    }
+                }
+            ),
+        content =
+            ReplacementContent(
+                count = 3,
+                content = { index ->
+                    { replacementContext ->
+                        when (index) {
+                            0 ->
+                                RecursiveCustomizationsDoc.TitleFrame(
+                                    parentLayout =
+                                        ParentLayoutInfo(replacementContext.parentLayoutId, 0),
+                                    title = "First"
+                                )
+                            1 ->
+                                RecursiveCustomizationsDoc.TitleFrame(
+                                    parentLayout =
+                                        ParentLayoutInfo(replacementContext.parentLayoutId, 1),
+                                    title = "Second"
+                                )
+                            else ->
+                                RecursiveCustomizationsDoc.TitleFrame(
+                                    parentLayout =
+                                        ParentLayoutInfo(replacementContext.parentLayoutId, 2),
+                                    title = "Third"
+                                )
+                        }
+                    }
+                }
+            )
     )
 }
 
@@ -642,16 +735,32 @@ fun VariantPropertiesTest() {
 
     VariantPropertiesTestDoc.MainFrame(
         square1 = {
-            VariantPropertiesTestDoc.Square(type = SquareBorder.Sharp, color = SquareColor.Blue)
+            VariantPropertiesTestDoc.Square(
+                modifier = it.layoutModifier.then(it.appearanceModifier),
+                type = SquareBorder.Sharp,
+                color = SquareColor.Blue
+            )
         },
         square2 = {
-            VariantPropertiesTestDoc.Square(type = SquareBorder.Sharp, color = SquareColor.Green)
+            VariantPropertiesTestDoc.Square(
+                modifier = it.layoutModifier.then(it.appearanceModifier),
+                type = SquareBorder.Sharp,
+                color = SquareColor.Green
+            )
         },
         square3 = {
-            VariantPropertiesTestDoc.Square(type = SquareBorder.Curved, color = SquareColor.Blue)
+            VariantPropertiesTestDoc.Square(
+                modifier = it.layoutModifier.then(it.appearanceModifier),
+                type = SquareBorder.Curved,
+                color = SquareColor.Blue
+            )
         },
         square4 = {
-            VariantPropertiesTestDoc.Square(type = SquareBorder.Curved, color = SquareColor.Green)
+            VariantPropertiesTestDoc.Square(
+                modifier = it.layoutModifier.then(it.appearanceModifier),
+                type = SquareBorder.Curved,
+                color = SquareColor.Green
+            )
         },
         bg1 = bg1,
         bg2 = bg2,
@@ -1144,17 +1253,40 @@ fun GridWidgetTest() {
     @Composable
     fun itemComposable(items: ArrayList<Pair<GridItemType, String>>, index: Int) {
         when (items[index].first) {
-            GridItemType.SectionTitle -> GridWidgetTestDoc.SectionTitle(title = items[index].second)
+            GridItemType.SectionTitle ->
+                GridWidgetTestDoc.SectionTitle(
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
             GridItemType.VSectionTitle ->
-                GridWidgetTestDoc.VSectionTitle(title = items[index].second)
+                GridWidgetTestDoc.VSectionTitle(
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
             GridItemType.RowGrid ->
-                GridWidgetTestDoc.Item(type = ItemType.Grid, title = items[index].second)
+                GridWidgetTestDoc.Item(
+                    type = ItemType.Grid,
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
             GridItemType.RowList ->
-                GridWidgetTestDoc.Item(type = ItemType.List, title = items[index].second)
+                GridWidgetTestDoc.Item(
+                    type = ItemType.List,
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
             GridItemType.ColGrid ->
-                GridWidgetTestDoc.VItem(type = ItemType.Grid, title = items[index].second)
+                GridWidgetTestDoc.VItem(
+                    type = ItemType.Grid,
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
             GridItemType.ColList ->
-                GridWidgetTestDoc.VItem(type = ItemType.List, title = items[index].second)
+                GridWidgetTestDoc.VItem(
+                    type = ItemType.List,
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
         }
     }
 
@@ -1374,7 +1506,7 @@ interface VariantInteractionsTest {
     fun MainFrame(
         @DesignContentTypes(nodes = ["#SectionTitle", "#Item"])
         @Design(node = "#Content")
-        content: @Composable () -> Unit,
+        content: ReplacementContent,
         @DesignVariant(property = "#ButtonCircle") buttonCircleState: ButtonState,
     )
     @DesignComponent(node = "#ButtonVariant1")
@@ -1397,68 +1529,94 @@ fun VariantInteractionsTest() {
     val (buttonCircleState, setButtonCircleState) = remember { mutableStateOf(ButtonState.Off) }
 
     VariantInteractionsTestDoc.MainFrame(
-        content = {
-            VariantInteractionsTestDoc.ButtonVariant1(
-                type = ItemType.List,
-                title = "One",
-                onTap = { println("Tap One") },
-                key = "One"
-            )
-            VariantInteractionsTestDoc.ButtonVariant1(
-                type = ItemType.List,
-                title = "Two",
-                onTap = { println("Tap Two") },
-                key = "Two"
-            )
-            VariantInteractionsTestDoc.ButtonVariant1(
-                type = ItemType.List,
-                title = "Three",
-                onTap = { println("Tap Three") },
-                key = "Three"
-            )
-            VariantInteractionsTestDoc.ButtonVariant2(
-                type = ItemType.Grid,
-                playState = PlayState.Play,
-                title = "Four",
-                onTap = { println("Tap Four") },
-                key = "Four"
-            )
-            VariantInteractionsTestDoc.ButtonVariant2(
-                type = ItemType.Grid,
-                playState = PlayState.Play,
-                title = "Five",
-                onTap = { println("Tap Five") },
-                key = "Five"
-            )
-            VariantInteractionsTestDoc.ButtonVariant2(
-                type = ItemType.Grid,
-                playState = PlayState.Pause,
-                title = "Six",
-                onTap = { println("Tap Six") },
-                key = "Six"
-            )
-            VariantInteractionsTestDoc.ButtonVariant2(
-                type = ItemType.Grid,
-                playState = PlayState.Pause,
-                title = "Seven",
-                onTap = { println("Tap Seven") },
-                key = "Seven"
-            )
-            VariantInteractionsTestDoc.ButtonVariant2(
-                type = ItemType.List,
-                playState = PlayState.Pause,
-                title = "Eight",
-                onTap = { println("Tap Eight") },
-                key = "Eight"
-            )
-            VariantInteractionsTestDoc.ButtonVariant2(
-                type = ItemType.List,
-                playState = PlayState.Pause,
-                title = "Nine",
-                onTap = { println("Tap Nine") },
-                key = "Nine"
-            )
-        },
+        content =
+            ReplacementContent(
+                count = 9,
+                content = { index ->
+                    { rc ->
+                        when (index) {
+                            0 ->
+                                VariantInteractionsTestDoc.ButtonVariant1(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.List,
+                                    title = "One",
+                                    onTap = { println("Tap One") },
+                                    key = "One"
+                                )
+                            1 ->
+                                VariantInteractionsTestDoc.ButtonVariant1(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.List,
+                                    title = "Two",
+                                    onTap = { println("Tap Two") },
+                                    key = "Two"
+                                )
+                            2 ->
+                                VariantInteractionsTestDoc.ButtonVariant1(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.List,
+                                    title = "Three",
+                                    onTap = { println("Tap Three") },
+                                    key = "Three"
+                                )
+                            3 ->
+                                VariantInteractionsTestDoc.ButtonVariant2(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.Grid,
+                                    playState = PlayState.Play,
+                                    title = "Four",
+                                    onTap = { println("Tap Four") },
+                                    key = "Four"
+                                )
+                            4 ->
+                                VariantInteractionsTestDoc.ButtonVariant2(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.Grid,
+                                    playState = PlayState.Play,
+                                    title = "Five",
+                                    onTap = { println("Tap Five") },
+                                    key = "Five"
+                                )
+                            5 ->
+                                VariantInteractionsTestDoc.ButtonVariant2(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.Grid,
+                                    playState = PlayState.Pause,
+                                    title = "Six",
+                                    onTap = { println("Tap Six") },
+                                    key = "Six"
+                                )
+                            6 ->
+                                VariantInteractionsTestDoc.ButtonVariant2(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.Grid,
+                                    playState = PlayState.Pause,
+                                    title = "Seven",
+                                    onTap = { println("Tap Seven") },
+                                    key = "Seven"
+                                )
+                            7 ->
+                                VariantInteractionsTestDoc.ButtonVariant2(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.List,
+                                    playState = PlayState.Pause,
+                                    title = "Eight",
+                                    onTap = { println("Tap Eight") },
+                                    key = "Eight"
+                                )
+                            8 ->
+                                VariantInteractionsTestDoc.ButtonVariant2(
+                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    type = ItemType.List,
+                                    playState = PlayState.Pause,
+                                    title = "Nine",
+                                    onTap = { println("Tap Nine") },
+                                    key = "Nine"
+                                )
+                        }
+                    }
+                }
+            ),
         buttonCircleState = buttonCircleState
     )
 }
@@ -1474,9 +1632,9 @@ interface LayoutReplacementTest {
     @DesignComponent(node = "#stage")
     fun MainFrame(
         @Design(node = "#next") onNext: TapCallback,
-        @Design(node = "#parent1") parent1: @Composable () -> Unit,
-        @Design(node = "#parent2") parent2: @Composable () -> Unit,
-        @Design(node = "#parent3") parent3: @Composable () -> Unit,
+        @Design(node = "#parent1") parent1: ReplacementContent,
+        @Design(node = "#parent2") parent2: ReplacementContent,
+        @Design(node = "#parent3") parent3: ReplacementContent,
     )
     @DesignComponent(node = "#fill") fun Fill()
     @DesignComponent(node = "#topleft") fun TopLeft()
@@ -1485,27 +1643,38 @@ interface LayoutReplacementTest {
 }
 
 @Composable
-fun LayoutReplacementTestCase(idx: Int) {
+fun LayoutReplacementTestCase(idx: Int, rc: ContentReplacementContext) {
     if (idx == 0) {
-        LayoutReplacementTestDoc.Fill()
+        LayoutReplacementTestDoc.Fill(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
     } else if (idx == 1) {
-        LayoutReplacementTestDoc.TopLeft()
+        LayoutReplacementTestDoc.TopLeft(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
     } else if (idx == 2) {
-        LayoutReplacementTestDoc.BottomRight()
+        LayoutReplacementTestDoc.BottomRight(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
     } else if (idx == 3) {
-        LayoutReplacementTestDoc.Center()
+        LayoutReplacementTestDoc.Center(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
     }
 }
 
 @Composable
 fun LayoutReplacementTest() {
     val (idx, setIdx) = remember { mutableStateOf(0) }
-
     LayoutReplacementTestDoc.MainFrame(
         onNext = { setIdx((idx + 1) % 4) },
-        parent1 = { LayoutReplacementTestCase(idx) },
-        parent2 = { LayoutReplacementTestCase(idx) },
-        parent3 = { LayoutReplacementTestCase(idx) },
+        parent1 =
+            ReplacementContent(
+                count = 1,
+                content = { { rc -> LayoutReplacementTestCase(idx, rc) } }
+            ),
+        parent2 =
+            ReplacementContent(
+                count = 1,
+                content = { { rc -> LayoutReplacementTestCase(idx, rc) } }
+            ),
+        parent3 =
+            ReplacementContent(
+                count = 1,
+                content = { { rc -> LayoutReplacementTestCase(idx, rc) } }
+            ),
     )
 }
 
@@ -1552,7 +1721,7 @@ interface CrossAxisFillTest {
     @DesignComponent(node = "#stage")
     fun MainFrame(
         @Design(node = "#FixedWidth") fixedWidth: Modifier,
-        @Design(node = "#OuterColumn") outerColumnContents: @Composable () -> Unit,
+        @Design(node = "#OuterColumn") outerColumnContents: ReplacementContent,
     )
     @DesignComponent(node = "#LargeFixedWidth") fun LargeFixedWidth()
     @DesignComponent(node = "#FillParentWidth") fun FillParentWidth()
@@ -1563,10 +1732,23 @@ fun CrossAxisFillTest() {
     CrossAxisFillTestDoc.MainFrame(
         modifier = Modifier.fillMaxWidth(),
         fixedWidth = Modifier.width(200.dp),
-        outerColumnContents = {
-            CrossAxisFillTestDoc.LargeFixedWidth(Modifier.width(200.dp))
-            CrossAxisFillTestDoc.FillParentWidth()
-        }
+        outerColumnContents =
+            ReplacementContent(
+                count = 2,
+                content = { index ->
+                    { rc ->
+                        if (index == 0)
+                            CrossAxisFillTestDoc.LargeFixedWidth(
+                                parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                modifier = Modifier.width(200.dp)
+                            )
+                        else
+                            CrossAxisFillTestDoc.FillParentWidth(
+                                parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                            )
+                    }
+                }
+            )
     )
 }
 
@@ -1715,6 +1897,224 @@ interface VariableBorderTest {
 @Composable
 fun VariableBorderTest() {
     VariableBorderTestDoc.Main()
+}
+
+enum class ButtonSquare {
+    On,
+    Off,
+    Blue,
+    Green
+}
+
+// TEST Various layout tests for new Rust based layout system
+@DesignDoc(id = "Gv63fYTzpeH2ZtxP4go31E")
+interface LayoutTests {
+    @DesignComponent(node = "#stage")
+    fun Main(
+        @Design(node = "#Name") name: String,
+        @Design(node = "#NameAutoWidth") nameAutoWidth: String,
+        @Design(node = "#NameAutoHeight") nameAutoHeight: String,
+        @Design(node = "#NameFixed") nameFixed: String,
+        @Design(node = "#NameFillWidthAutoHeight") nameFillWidthAutoHeight: String,
+        @DesignVariant(property = "#ButtonSquare") buttonSquare: ButtonSquare,
+        @Design(node = "#HorizontalContent") horizontalContent: ReplacementContent,
+        @Design(node = "#Parent") parent: ReplacementContent,
+        @DesignContentTypes(nodes = ["#BlueSquare", "#RedSquare", "#ButtonSquare"])
+        @DesignPreviewContent(
+            name = "Items",
+            nodes =
+                [
+                    PreviewNode(1, "#ButtonSquare=Green"),
+                    PreviewNode(1, "#ButtonSquare=Blue"),
+                    PreviewNode(1, "#RedSquare"),
+                    PreviewNode(1, "#BlueSquare"),
+                    PreviewNode(1, "#ButtonSquare=Green"),
+                    PreviewNode(1, "#ButtonSquare=Blue"),
+                    PreviewNode(1, "#RedSquare"),
+                    PreviewNode(1, "#BlueSquare"),
+                ]
+        )
+        @Design(node = "#WidgetContent")
+        widgetItems: ListContent,
+        @Design(node = "#Rect1") showRect1: Boolean,
+        @Design(node = "#Rect2") showRect2: Boolean,
+        @Design(node = "#media/now-playing/skip-prev-button") showPrev: Boolean,
+        @Design(node = "#media/now-playing/skip-next-button") showNext: Boolean,
+        @DesignVariant(property = "#media/now-playing/play-state-button") playState: PlayState,
+        @Design(node = "#media/now-playing/play-state-button") onPlayPauseTap: TapCallback,
+    )
+    @DesignComponent(node = "#BlueSquare") fun BlueSquare()
+    @DesignComponent(node = "#RedSquare") fun RedSquare()
+    @DesignComponent(node = "#fill") fun Fill()
+    @DesignComponent(node = "#topleft") fun TopLeft()
+    @DesignComponent(node = "#bottomright") fun BottomRight()
+    @DesignComponent(node = "#center") fun Center()
+    @DesignComponent(node = "#ButtonSquare")
+    fun ButtonSquare(
+        @DesignVariant(property = "#ButtonSquare") type: ButtonSquare,
+    )
+}
+
+@Composable
+fun LayoutTests() {
+    val loremText =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+    val (autoWidthLen, setAutoWidthLen) = remember { mutableStateOf(17) }
+    val (autoHeightLen, setAutoHeightLen) = remember { mutableStateOf(17) }
+    val (fixedSizeLen, setFixedSizeLen) = remember { mutableStateOf(17) }
+    val (fillWidthAutoHeightLen, setFillWidthAutoHeightLen) = remember { mutableStateOf(89) }
+    val (buttonSquare, setButtonSquare) = remember { mutableStateOf(ButtonSquare.Off) }
+    val (numChildren, setNumChildren) = remember { mutableStateOf(2) }
+    val (showRect1, setShowRect1) = remember { mutableStateOf(false) }
+    val (showRect2, setShowRect2) = remember { mutableStateOf(true) }
+
+    LayoutTestsDoc.Main(
+        name = "LongerText",
+        nameAutoWidth = loremText.subSequence(0, autoWidthLen).toString(),
+        nameAutoHeight = loremText.subSequence(0, autoHeightLen).toString(),
+        nameFixed = loremText.subSequence(0, fixedSizeLen).toString(),
+        nameFillWidthAutoHeight = loremText.subSequence(0, fillWidthAutoHeightLen).toString(),
+        buttonSquare = buttonSquare,
+        horizontalContent =
+            ReplacementContent(
+                count = numChildren,
+                content = { index ->
+                    { replacementContext ->
+                        if (index % 2 == 0)
+                            LayoutTestsDoc.BlueSquare(
+                                parentLayout =
+                                    ParentLayoutInfo(replacementContext.parentLayoutId, index)
+                            )
+                        else
+                            LayoutTestsDoc.RedSquare(
+                                parentLayout =
+                                    ParentLayoutInfo(replacementContext.parentLayoutId, index)
+                            )
+                    }
+                }
+            ),
+        parent =
+            ReplacementContent(
+                count = 1,
+                content = { index ->
+                    { rc ->
+                        LayoutTestsDoc.Fill(
+                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                        )
+                    }
+                }
+            ),
+        widgetItems = { spanFunc ->
+            ListContentData(
+                count = 10,
+                span = { index ->
+                    val nodeData =
+                        if (index % 4 == 0) {
+                            { LayoutTestsDoc.RedSquareDesignNodeData() }
+                        } else {
+                            { LayoutTestsDoc.BlueSquareDesignNodeData() }
+                        }
+                    spanFunc(nodeData)
+                    // val nodeData = getNodeData(vertItems, index)
+                    // spanFunc(nodeData)
+                },
+            ) { index ->
+                if (index % 4 == 0) LayoutTestsDoc.RedSquare(parentLayout = widgetParent)
+                else LayoutTestsDoc.BlueSquare(parentLayout = widgetParent)
+                // itemComposable(vertItems, index)
+            }
+        },
+        showRect1 = showRect1,
+        showRect2 = showRect2,
+        showPrev = false,
+        showNext = true,
+        playState = PlayState.Play,
+        onPlayPauseTap = { println("Tap") },
+        designComposeCallbacks =
+            DesignComposeCallbacks(
+                docReadyCallback = { id ->
+                    Log.i("DesignCompose", "HelloWorld Ready: doc ID = $id")
+                },
+                newDocDataCallback = { docId, data ->
+                    Log.i(
+                        "DesignCompose",
+                        "HelloWorld Updated doc ID $docId: ${data?.size ?: 0} bytes"
+                    )
+                },
+            )
+    )
+    Column(Modifier.offset(10.dp, 820.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("AutoWidth", fontSize = 30.sp, color = Color.Black)
+            Button("-", false) {
+                val len = (autoWidthLen - 1).coerceAtLeast(1)
+                setAutoWidthLen(len)
+            }
+            Button("+", false) {
+                val len = (autoWidthLen + 1).coerceAtMost(loremText.length)
+                setAutoWidthLen(len)
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("AutoHeight", fontSize = 30.sp, color = Color.Black)
+            Button("-", false) {
+                val len = (autoHeightLen - 1).coerceAtLeast(1)
+                setAutoHeightLen(len)
+            }
+            Button("+", false) {
+                val len = (autoHeightLen + 1).coerceAtMost(loremText.length)
+                setAutoHeightLen(len)
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Fixed", fontSize = 30.sp, color = Color.Black)
+            Button("-", false) {
+                val len = (fixedSizeLen - 1).coerceAtLeast(1)
+                setFixedSizeLen(len)
+            }
+            Button("+", false) {
+                val len = (fixedSizeLen + 1).coerceAtMost(loremText.length)
+                setFixedSizeLen(len)
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("FillWidth AutoHeight", fontSize = 30.sp, color = Color.Black)
+            Button("-", false) {
+                val len = (fillWidthAutoHeightLen - 1).coerceAtLeast(1)
+                setFillWidthAutoHeightLen(len)
+            }
+            Button("+", false) {
+                val len = (fillWidthAutoHeightLen + 1).coerceAtMost(loremText.length)
+                setFillWidthAutoHeightLen(len)
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("ButtonSquare", fontSize = 30.sp, color = Color.Black)
+            Button("Change Variant", false) {
+                setButtonSquare(
+                    when (buttonSquare) {
+                        ButtonSquare.Off -> ButtonSquare.On
+                        ButtonSquare.On -> ButtonSquare.Blue
+                        ButtonSquare.Blue -> ButtonSquare.Green
+                        ButtonSquare.Green -> ButtonSquare.Off
+                    }
+                )
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Replacement Content", fontSize = 30.sp, color = Color.Black)
+            Button("-", false) {
+                val num = (numChildren - 1).coerceAtLeast(0)
+                setNumChildren(num)
+            }
+            Button("+", false) { setNumChildren(numChildren + 1) }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Visibility", fontSize = 30.sp, color = Color.Black)
+            Button("Rect1", false) { setShowRect1(!showRect1) }
+            Button("Rect2", false) { setShowRect2(!showRect2) }
+        }
+    }
 }
 
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test

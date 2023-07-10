@@ -307,7 +307,7 @@ internal fun DocServer.fetchDocuments(
         val saveFile = synchronized(subscriptions) { subscriptions[id]?.saveFile }
         try {
             val postData = constructPostJson(figmaApiKey, previousDoc?.c, params, firstFetch)
-            val documentData: ByteArray? = LiveUpdateJni.fetchDocBytes(id, postData, proxyConfig)
+            val documentData: ByteArray? = LiveUpdate.fetchDocBytes(id, postData, proxyConfig)
 
             if (documentData != null) {
                 Feedback.documentDecodeReadBytes(documentData.size, id)

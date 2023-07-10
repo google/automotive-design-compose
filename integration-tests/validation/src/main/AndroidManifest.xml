@@ -50,5 +50,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".LayoutTest"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Validation.NoActionBar">
+            <layout
+                android:defaultHeight="1920dp"
+                android:defaultWidth="1080dp"
+                android:gravity="top|start"
+                android:minHeight="720dp"
+                android:minWidth="600dp" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

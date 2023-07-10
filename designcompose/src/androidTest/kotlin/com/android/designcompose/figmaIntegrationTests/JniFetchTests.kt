@@ -62,12 +62,12 @@ class JniFetchTests {
     @Test
     fun invalidDocId() {
         assertFailsWith<FigmaFileNotFoundException> {
-            LiveUpdateJni.jniFetchDoc("InvalidDocID", firstFetchJson, ProxyConfig())
+            Jni.jniFetchDoc("InvalidDocID", firstFetchJson, ProxyConfig())
         }
     }
 
     private fun testFetch(docID: String) {
-        with(LiveUpdateJni.fetchDocBytes(docID, firstFetchJson, ProxyConfig())) {
+        with(LiveUpdate.fetchDocBytes(docID, firstFetchJson, ProxyConfig())) {
             assertNotNull(this)
             val decodedDoc = decodeServerDoc(this, null, docID, null, Feedback)
             assertNotNull(decodedDoc)

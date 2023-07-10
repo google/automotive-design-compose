@@ -17,7 +17,9 @@
 package com.android.designcompose
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,6 +29,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -42,31 +45,32 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.View
+import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
-import java.util.Optional
 
 @Composable
 internal fun DesignFrame(
     modifier: Modifier = Modifier,
+    view: View,
+    baseVariantView: View?,
     style: ViewStyle,
-    shape: ViewShape,
-    name: String,
-    variantParentName: String,
     layoutInfo: SimplifiedLayoutInfo,
     document: DocContent,
     customizations: CustomizationContext,
-    componentInfo: Optional<ComponentInfo>,
+    parentLayout: ParentLayoutInfo?,
+    layoutId: Int,
     parentComponents: List<ParentComponentInfo>,
     maskInfo: MaskInfo?,
-    content: @Composable (parentLayoutInfo: ParentLayoutInfo) -> Unit,
-) {
-    if (!customizations.getVisible(name)) return
+    content: @Composable () -> Unit,
+): Boolean {
+    val name = view.name
+    if (!customizations.getVisible(name)) return false
 
     // Check for an image customization with context. If it exists, call the custom image function
     // and provide it with the frame's background and size.
@@ -95,18 +99,46 @@ internal fun DesignFrame(
     val meterValue = customizations.getMeterFunction(name)?.let { it() }
     meterValue?.let { customizations.setMeterValue(name, it) }
 
-    // Check to see if this node is part of a component set with variants and if any @DesignVariant
-    // annotations set variant properties that match. If so, variantNodeName will be set to the
-    // name of the node with all the variants set to the @DesignVariant parameters
-    val variantNodeName = customizations.getMatchingVariant(componentInfo)
+    // Keep track of the layout state, which changes whenever this view's layout changes
+    val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
+    // Subscribe for layout changes whenever the view changes. The view can change if it is a
+    // component instance that changes to another variant. It can also change due to a live update.
+    // Subscribing when already subscribed simply updates the view in the layout system.
+    DisposableEffect(view) {
+        val parentLayoutId = parentLayout?.parentLayoutId ?: -1
+        val childIndex = parentLayout?.childIndex ?: -1
+        Log.d(
+            TAG,
+            "Subscribe Frame ${view.name} layoutId $layoutId parent $parentLayoutId index $childIndex"
+        )
+        // Subscribe to layout changes when the view changes or is added
+        LayoutManager.subscribe(
+            layoutId,
+            setLayoutState,
+            parentLayoutId,
+            childIndex,
+            view,
+            baseVariantView
+        )
+        onDispose {}
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            // Unsubscribe to layout changes when the view is removed
+            Log.d(TAG, "Unsubscribe ${view.name} layoutId $layoutId")
+            LayoutManager.unsubscribe(layoutId)
+        }
+    }
 
-    var m = Modifier.layoutStyle(name, style)
-    // Only render the frame if we don't have a custom variant node that we are about to
-    // render instead
-    if (variantNodeName.isNullOrEmpty())
+    // Check for a customization that replaces this component completely
+    val replacementComponent = customizations.getComponent(name)
+    var m = Modifier as Modifier
+
+    // Only render the frame if we don't have a replacement node
+    val shape = (view.data as ViewData.Container).shape
+    if (replacementComponent == null)
         m = m.frameRender(style, shape, customImage, document, name, customizations, maskInfo)
     m = m.then(modifier)
-
     val customModifier = customizations.getModifier(name)
     if (customModifier != null) {
         // We may need more control over where a custom modifier is placed in the list
@@ -116,7 +148,6 @@ internal fun DesignFrame(
 
     // If we're replaced, then invoke the replacement here. We may want to pass more layout info
     // (row/column/etc) to the replacement component at some point.
-    val replacementComponent = customizations.getComponent(name)
     if (replacementComponent != null) {
         replacementComponent(
             object : ComponentReplacementContext {
@@ -124,29 +155,12 @@ internal fun DesignFrame(
                 override val appearanceModifier = m
                 @Composable
                 override fun Content() {
-                    content(absoluteParentLayoutInfo)
+                    content()
                 }
                 override val textStyle: TextStyle? = null
             }
         )
-        return
-    }
-
-    // If we a custom variant, compose it instead and then return.
-    if (variantNodeName != null) {
-        // Get the generated CustomVariantComponent() function and call it with variantNodeName
-        val customComposable = customizations.getCustomComposable()
-        if (customComposable != null) {
-            val tapCallback = customizations.getTapCallback(name)
-            customComposable(
-                layoutInfo.selfModifier.then(m),
-                variantNodeName,
-                NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { name }),
-                parentComponents,
-                tapCallback
-            )
-            return
-        }
+        return true
     }
 
     val lazyContent = customizations.getListContent(name)
@@ -166,7 +180,7 @@ internal fun DesignFrame(
                         overflowNodeId = style.overflow_node_id.get()
                 }
                 Row(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
                     horizontalArrangement = layoutInfo.arrangement,
                     verticalAlignment = layoutInfo.alignment,
                 ) {
@@ -191,17 +205,11 @@ internal fun DesignFrame(
                 }
             } else {
                 Row(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
                     horizontalArrangement = layoutInfo.arrangement,
                     verticalAlignment = layoutInfo.alignment
                 ) {
-                    val childLayoutInfo =
-                        ParentLayoutInfo(
-                            type = LayoutType.Row,
-                            isRoot = false,
-                            weight = { w -> Modifier.weight(w) }
-                        )
-                    content(childLayoutInfo)
+                    content()
                 }
             }
         }
@@ -216,7 +224,7 @@ internal fun DesignFrame(
                         overflowNodeId = style.overflow_node_id.get()
                 }
                 Column(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
                     verticalArrangement = layoutInfo.arrangement,
                     horizontalAlignment = layoutInfo.alignment,
                 ) {
@@ -241,22 +249,16 @@ internal fun DesignFrame(
                 }
             } else {
                 Column(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
                     verticalArrangement = layoutInfo.arrangement,
                     horizontalAlignment = layoutInfo.alignment
                 ) {
-                    val childLayoutInfo =
-                        ParentLayoutInfo(
-                            type = LayoutType.Column,
-                            isRoot = false,
-                            weight = { w -> Modifier.weight(w) }
-                        )
-                    content(childLayoutInfo)
+                    content()
                 }
             }
         }
         is LayoutInfoGrid -> {
-            if (lazyContent == null) return
+            if (lazyContent == null) return false
 
             // Given the list of possible content that goes into this grid layout, try to find a
             // matching
@@ -430,6 +432,9 @@ internal fun DesignFrame(
                 return if (count > 0) count else 1
             }
 
+            val layout = LayoutManager.getLayout(layoutId)
+            val gridSizeModifier = Modifier.layoutSizeToModifier(layout)
+
             val density = LocalDensity.current.density
             if (
                 layoutInfo.layout is GridLayoutType.FixedColumns ||
@@ -443,7 +448,7 @@ internal fun DesignFrame(
                 val verticalSpacing = layoutInfo.crossAxisSpacing
 
                 LazyVerticalGrid(
-                    modifier = layoutInfo.selfModifier.then(m),
+                    modifier = layoutInfo.selfModifier.then(gridSizeModifier).then(m),
                     columns =
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(
@@ -508,7 +513,7 @@ internal fun DesignFrame(
                         layoutInfo.mainAxisSpacing.value
                     else 0
                 LazyHorizontalGrid(
-                    modifier = layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    modifier = layoutInfo.selfModifier.then(gridSizeModifier).then(m),
                     rows =
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(
@@ -556,11 +561,24 @@ internal fun DesignFrame(
             }
         }
         is LayoutInfoAbsolute -> {
-            DesignLayout(modifier = layoutInfo.selfModifier.then(m), style = style, name = name) {
-                content(absoluteParentLayoutInfo)
+            if (parentLayout?.isWidgetChild == true) {
+                // For direct children of a widget, render the frame as a box with the calculated
+                // layout size, then compose the frame's children with our custom layout
+                val layout = LayoutManager.getLayout(layoutId)
+                Box(m.layoutSizeToModifier(layout)) {
+                    DesignFrameLayout(modifier, name, layoutId, layoutState) { content() }
+                }
+            } else {
+                // Otherwise, use our custom layout to render the frame and to place its children
+                m = m.then(Modifier.layoutStyle(name, layoutId))
+                DesignFrameLayout(m, name, layoutId, layoutState) {
+                    Box(Modifier) // Need this for some reason
+                    content()
+                }
             }
         }
     }
+    return true
 }
 
 internal fun Modifier.frameRender(
@@ -584,6 +602,7 @@ internal fun Modifier.frameRender(
                     name,
                     customizations,
                 )
+
             when (maskInfo?.type ?: MaskViewType.None) {
                 MaskViewType.MaskNode -> {
                     // When rendering a mask, call saveLayer with blendmode DSTIN so that we blend
@@ -593,7 +612,10 @@ internal fun Modifier.frameRender(
                     val paint = Paint()
                     paint.blendMode = BlendMode.DstIn
                     val offset =
-                        Offset(-style.left.pointsAsDp().value, -style.top.pointsAsDp().value)
+                        Offset(
+                            -style.margin.start.pointsAsDp().value,
+                            -style.margin.top.pointsAsDp().value
+                        )
                     val parentSize = maskInfo?.parentSize?.value ?: size
                     drawContext.canvas.withSaveLayer(Rect(offset, parentSize), paint) { render() }
                 }

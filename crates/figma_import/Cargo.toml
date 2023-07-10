@@ -28,6 +28,10 @@ unicode-segmentation = "1"
 "euclid" = { version = "0.20.13", default-features = false, features = ["serde"] }
 "phf" = { version = "0.11.2", features = ["macros"], optional = true }
 
+# layout dependencies
+taffy = "0.3.12"
+lazy_static = "1.4.0"
+
 # reflection dependencies
 "serde-reflection" = { version = "0.3", optional = true }
 "serde-generate" = { version = "0.25.1", optional = true }

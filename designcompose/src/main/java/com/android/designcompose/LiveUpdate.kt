@@ -16,39 +16,15 @@
 
 package com.android.designcompose
 
-import androidx.annotation.VisibleForTesting
 import com.android.designcompose.serdegen.ConvertResponse
 import com.novi.bincode.BincodeDeserializer
 
-// HTTP Proxy configuration.
-internal data class HttpProxyConfig(val proxySpec: String)
-
-// Proxy configuration.
-//
-// Only HTTP proxy supported.
-internal class ProxyConfig {
-    var httpProxyConfig: HttpProxyConfig? = null
-}
-
-internal object LiveUpdateJni {
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniFetchDoc(
-        docId: String,
-        requestJson: String,
-        proxyConfig: ProxyConfig
-    ): ByteArray
-
+internal object LiveUpdate {
     fun fetchDocBytes(docId: String, requestJson: String, proxyConfig: ProxyConfig): ByteArray? {
-
-        val serializedResponse: ByteArray = jniFetchDoc(docId, requestJson, proxyConfig)
+        val serializedResponse: ByteArray = Jni.jniFetchDoc(docId, requestJson, proxyConfig)
         val deserializer = BincodeDeserializer(serializedResponse)
         val convResp = ConvertResponse.deserialize(deserializer)
         if (convResp is ConvertResponse.Document) return convResp.value.toByteArray()
         return null
-    }
-
-    init {
-        System.loadLibrary("live_update")
     }
 }

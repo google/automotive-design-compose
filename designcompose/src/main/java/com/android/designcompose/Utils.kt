@@ -53,6 +53,7 @@ import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
+import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
@@ -67,7 +68,6 @@ import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.serdegen.WindingRule
-import java.util.Optional
 import kotlin.math.roundToInt
 
 /** Convert a serialized color to a Compose color */
@@ -306,6 +306,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.text_shadow
         }
+    style.text_size =
+        if (override.text_size.width != 0.0f || override.text_size.height != 0.0f) {
+            override.text_size
+        } else {
+            base.text_size
+        }
     style.line_height =
         if (!override.line_height.equals(LineHeight.Percent(1.0f))) {
             override.line_height
@@ -507,6 +513,24 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             override.flex_basis
         } else {
             base.flex_basis
+        }
+    style.bounding_box =
+        if (override.bounding_box.width != 0.0f || override.bounding_box.height != 0.0f) {
+            override.bounding_box
+        } else {
+            base.bounding_box
+        }
+    style.horizontal_sizing =
+        if (override.horizontal_sizing !is LayoutSizing.FIXED) {
+            override.horizontal_sizing
+        } else {
+            base.horizontal_sizing
+        }
+    style.vertical_sizing =
+        if (override.vertical_sizing !is LayoutSizing.FIXED) {
+            override.vertical_sizing
+        } else {
+            base.vertical_sizing
         }
     style.width =
         if (override.width !is Dimension.Undefined) {
@@ -710,14 +734,16 @@ internal constructor(
                 if (center.y == Float.POSITIVE_INFINITY) size.height else center.y * size.height
         }
 
+        // Don't let radius be 0
+        val radius =
+            if (radiusX == Float.POSITIVE_INFINITY) size.minDimension / 2
+            else if (size.width > 0F) radiusX * size.width else 0.01F
         val shader =
             RadialGradientShader(
                 colors = colors,
                 colorStops = stops,
                 center = Offset(centerX, centerY),
-                radius =
-                    if (radiusX == Float.POSITIVE_INFINITY) size.minDimension / 2
-                    else radiusX * size.width,
+                radius = radius,
                 tileMode = tileMode
             )
 
@@ -1191,4 +1217,23 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.right(): Float {
         is StrokeWeight.Individual -> return this.right
     }
     return 0.0f
+}
+
+internal fun isAutoHeightFillWidth(style: ViewStyle) =
+    style.width is Dimension.Auto &&
+        style.height is Dimension.Auto &&
+        style.horizontal_sizing is LayoutSizing.FILL
+
+// Determine if view data needs a measure func.
+// Currently, we need a measure func for text nodes that are both auto height and auto width
+internal fun needsMeasureFunc(viewData: ViewData, style: ViewStyle): Boolean {
+    return when (viewData) {
+        is ViewData.Text -> isAutoHeightFillWidth(style)
+        is ViewData.StyledText -> isAutoHeightFillWidth(style)
+        else -> false
+    }
+}
+
+internal fun View.isTextView(): Boolean {
+    return this.data is ViewData.Text || this.data is ViewData.StyledText
 }

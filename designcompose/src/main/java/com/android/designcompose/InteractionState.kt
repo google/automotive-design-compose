@@ -486,7 +486,7 @@ internal fun InteractionState.rootNode(
         navOverlaySubscriptions.add(updateQuery)
         onDispose { navOverlaySubscriptions.remove(updateQuery) }
     }
-    return searchNodes(query, doc.c.document.nodes, doc.c.variantViewMap, doc.c.variantPropertyMap)
+    return searchNodes(query, doc.c.document.views, doc.c.variantViewMap, doc.c.variantPropertyMap)
 }
 
 @Composable
@@ -506,7 +506,7 @@ internal fun InteractionState.rootOverlays(doc: DocContent): List<View> {
     // the latest doc nodes, rather than causing an invalidation here and returning
     // an updated value later).
     return rootOverlays.mapNotNull { query ->
-        searchNodes(query, doc.c.document.nodes, doc.c.variantViewMap, doc.c.variantPropertyMap)
+        searchNodes(query, doc.c.document.views, doc.c.variantViewMap, doc.c.variantPropertyMap)
     }
 }
 
@@ -539,7 +539,7 @@ internal fun InteractionState.nodeVariant(
     if (variant == null) return null
     return searchNodes(
         NodeQuery.NodeId(variant),
-        doc.c.document.nodes,
+        doc.c.document.views,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap
     )

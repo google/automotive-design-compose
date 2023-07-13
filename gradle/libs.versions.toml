@@ -54,8 +54,6 @@ rules = "1.5.0"
 rustAndroidGradle = "0.9.3"
 # @keep Non-`dependency` constant
 targetSdk = "33"
-versionCataLogUpdatePlugin = "0.8.0"
-versionsPlugin = "0.46.0"
 
 [libraries]
 accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanist" }
@@ -115,5 +113,3 @@ designcompose = { id = "com.android.designcompose", version.ref = "designcompose
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
 strictVersionMatcher = { id = "com.google.android.gms.strict-version-matcher-plugin", version.ref = "android-gms-strictVersionMatcher" }
-versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCataLogUpdatePlugin" }
-versions = { id = "com.github.ben-manes.versions", version.ref = "versionsPlugin" }

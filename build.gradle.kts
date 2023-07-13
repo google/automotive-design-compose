@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.ncorti.ktfmt.gradle.tasks.KtfmtFormatTask
 
 buildscript {
@@ -36,27 +35,8 @@ buildscript {
 plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices") apply false
-    alias(libs.plugins.versions)
-    alias(libs.plugins.versionCatalogUpdate)
     alias(libs.plugins.ksp) apply false
 }
-
-versionCatalogUpdate {
-    keep {
-        // The version catalog plugin seems to be very aggressive in removing versions it things are
-        // unused.
-        keepUnusedVersions.set(true)
-        keepUnusedLibraries.set(true)
-    }
-}
-
-// Function to determine whether a release is final or not.
-fun isNonStable(version: String) = "^[0-9,.v-]+(-r)?$".toRegex().matches(version).not()
-
-// https://github.com/ben-manes/gradle-versions-plugin
-// Prevent the versions plugin from updating versions to non-stable releases,
-// unless the dependency is already using a non-stable release
-tasks.withType<DependencyUpdatesTask> { rejectVersionIf { isNonStable(candidate.version) } }
 
 // Format all *.gradle.kts files in the repository. This should catch all buildscripts.
 // This task must be run on it's own, since it modifies the build scripts for everything else and

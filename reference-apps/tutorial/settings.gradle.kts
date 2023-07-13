@@ -32,5 +32,11 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+pluginManagement {
+    repositories {
+        google()
+        gradlePluginPortal()
+    }
+}
 
 include("app")

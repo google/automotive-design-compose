@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: daily
+
+  - package-ecosystem: bundler
+    directory: /docs
+    schedule:
+      interval: daily
+
+  - package-ecosystem: npm
+    directory: /support-figma/auto-content-preview-widget
+    schedule:
+      interval: daily
+
+  - package-ecosystem: npm
+    directory: /support-figma/extended-layout-plugin
+    schedule:
+      interval: daily

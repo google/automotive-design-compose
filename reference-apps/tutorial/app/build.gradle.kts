@@ -64,6 +64,7 @@ android {
     }
 
     // Deprecated in AGP 8+, replaced by `packaging`
+    @Suppress("DEPRECATION")
     packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
 }
 

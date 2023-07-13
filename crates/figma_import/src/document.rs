@@ -536,6 +536,27 @@ impl Document {
             }
         }
 
+        // For each node in nodes or an ancestor of a node in nodes, if it is a component
+        // instance, add the component set associated with the instance into node_name_hash.
+        fn find_component_sets(
+            nodes: &Vec<&Node>,
+            component_set_index: &HashMap<String, &Node>,
+            node_name_hash: &mut HashSet<NodeQuery>,
+        ) {
+            for node in nodes {
+                if let NodeData::Instance { frame: _, component_id } = &node.data {
+                    let component_set = component_set_index.get(component_id);
+                    if let Some(cs) = component_set {
+                        node_name_hash.insert(NodeQuery::NodeName(cs.name.clone()));
+                    }
+                }
+
+                for child in &node.children {
+                    find_component_sets(&vec![child], component_set_index, node_name_hash);
+                }
+            }
+        }
+
         // For each node that is a component set, add all of its children (which are variants)
         // into the node name hash so that we retrieve those nodes. Also add them to the
         // component_set_hash, which hashes a component set node name to all of its children.
@@ -676,6 +697,26 @@ impl Document {
         // Also add all component sets to component_set_hash, mapping the component set name to
         // a list of all their variant children.
         let mut node_name_hash: HashSet<NodeQuery> = HashSet::from_iter(node_names.iter().cloned());
+        // Convert node_names into a list of nodes. We'll use this list in find_component_sets to
+        // add any component sets whose instances are in the tree of any nodes in query_nodes. This
+        // ensures that we have access to other component variants.
+        let query_nodes: Vec<&Node> = node_names
+            .iter()
+            .map(|name| {
+                // Look up the node if it's defined.
+                let maybe_node = match &name {
+                    NodeQuery::NodeId(id) => id_index.get(id),
+                    NodeQuery::NodeName(node_name) => name_index.get(node_name),
+                    NodeQuery::NodeVariant(node_name, parent_name) => {
+                        variant_index.get(&(node_name.clone(), parent_name.clone()))
+                    }
+                };
+                maybe_node
+            })
+            .filter(|maybe_node| maybe_node.is_some())
+            .map(|node| *node.unwrap()) // safe to unwrap
+            .collect();
+        find_component_sets(&query_nodes, &component_set_index, &mut node_name_hash);
         let mut component_set_hash: HashMap<String, Vec<String>> = HashMap::new();
         add_variant_node_names(
             &self.document_root.document,

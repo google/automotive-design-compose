@@ -1,0 +1,47 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Dependency Submissions
+on:
+  push:
+    branches:
+      - main #(Can only run on main)
+
+jobs:
+  build:
+    name: Dependencies
+    runs-on: ubuntu-latest
+    permissions: # The Dependency Submission API requires write permission
+      contents: write
+    strategy:
+        matrix:
+            project: [".", "build-logic", "plugins", "reference-apps/tutorial"]
+
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Snapshot project
+        uses: mikepenz/gradle-dependency-submission@v0.8.6
+        with:
+            gradle-project-path: ${{matrix.project}}
+            use-gradlew: true
+            sub-module-mode: INDIVIDUAL_DEEP
+            include-build-environment: true

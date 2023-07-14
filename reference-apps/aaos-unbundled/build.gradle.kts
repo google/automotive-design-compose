@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-
 buildscript {
     repositories {
         google()
@@ -32,35 +30,7 @@ buildscript {
 }
 
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
-plugins {
-    alias(libs.plugins.ktfmt) apply false
-    alias(libs.plugins.versions)
-    alias(libs.plugins.versionCatalogUpdate)
-}
-
-versionCatalogUpdate {
-    keep {
-        // The version catalog plugin seems to be very aggressive in removing versions it things are
-        // unused.
-        keepUnusedVersions.set(true)
-        keepUnusedLibraries.set(true)
-    }
-}
-
-// Function to determine whether a release is final or not.
-fun String.isNonStable(): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { toUpperCase().contains(it) }
-    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-    val isStable = stableKeyword || regex.matches(this)
-    return isStable.not()
-}
-
-// https://github.com/ben-manes/gradle-versions-plugin
-// Prevent the verisons plugin from updating versions to non-stable releases,
-// unless the dependency is already using a non-stable release
-tasks.withType<DependencyUpdatesTask> {
-    rejectVersionIf { candidate.version.isNonStable() && !currentVersion.isNonStable() }
-}
+plugins { alias(libs.plugins.ktfmt) apply false }
 
 subprojects {
     apply {

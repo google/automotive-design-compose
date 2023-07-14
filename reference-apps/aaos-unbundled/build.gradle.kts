@@ -22,7 +22,7 @@ buildscript {
     dependencies {
         // These are plugins that are published as external jars, integrating directly into the
         // build scripts
-        classpath(unbundledLibs.android.gradlePlugin)
+        classpath(libs.android.gradlePlugin)
         classpath(libs.kotlin.gradlePlugin)
         classpath(libs.dokka.gradlePlugin)
         classpath(libs.android.gms.strictVersionMatcher)

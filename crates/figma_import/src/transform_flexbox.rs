@@ -489,13 +489,20 @@ fn compute_background(
     images: &mut ImageContext,
     node_name: &String,
 ) -> crate::toolkit_style::Background {
-    if let PaintData::Solid { color } = &last_paint.data {
-        Background::Solid(crate::Color::from_f32s(
+    if let PaintData::Solid { color, bound_variables } = &last_paint.data {
+        let mut bg = Background::Solid(crate::Color::from_f32s(
             color.r,
             color.g,
             color.b,
             color.a * last_paint.opacity,
-        ))
+        ));
+        if let Some(vars) = bound_variables {
+            let color_var = vars.get_color();
+            if let Some(var_id) = color_var {
+                bg = Background::Variable(var_id);
+            }
+        }
+        bg
     } else if let PaintData::Image {
         image_ref: Some(image_ref),
         filters,

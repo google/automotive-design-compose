@@ -96,6 +96,7 @@ pub fn fetch_doc(
                 .collect(),
             &mut error_list,
         )?;
+        let variable_map = doc.build_variable_map();
 
         let figma_doc = SerializedDesignDoc {
             views,
@@ -105,6 +106,7 @@ pub fn fetch_doc(
             name: doc.get_name(),
             version: doc.get_version(),
             id: doc.get_document_id(),
+            variable_map: variable_map,
         };
         let mut response = bincode::serialize(&SerializedDesignDocHeader::current())?;
         response.append(&mut bincode::serialize(&ServerFigmaDoc {

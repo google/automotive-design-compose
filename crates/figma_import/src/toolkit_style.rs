@@ -21,6 +21,7 @@ use taffy::prelude as taffy;
 
 use crate::{
     color::Color,
+    figma_schema::{VariableAlias},
     toolkit_font_style::{FontStretch, FontStyle, FontWeight},
     toolkit_layout_style::{
         AlignContent, AlignItems, AlignSelf, Dimension, Display, FlexDirection, FlexWrap,
@@ -61,6 +62,7 @@ pub enum Background {
     #[default]
     None,
     Solid(Color),
+    Variable(String), // variable ID
     LinearGradient {
         start_x: f32,
         start_y: f32,

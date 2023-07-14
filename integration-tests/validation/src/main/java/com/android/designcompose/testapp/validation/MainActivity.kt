@@ -116,7 +116,7 @@ const val TAG = "DesignCompose"
 
 val EXAMPLES: ArrayList<Pair<String, @Composable () -> Unit>> =
     arrayListOf(
-        Pair("Hello", { HelloWorld() }),
+        Pair("Hello", { VariablesTest() }),
         Pair("Image Update", { ImageUpdateTest() }),
         Pair("Telltales", { TelltaleTest() }),
         Pair("OpenLink", { OpenLinkTest() }),
@@ -1655,6 +1655,16 @@ interface MaskTest {
 @Composable
 fun MaskTest() {
     MaskTestDoc.Main()
+}
+
+@DesignDoc(id = "DP0rUPhV8rBcHPX32fETgY")
+interface VariablesTest {
+    @DesignComponent(node = "#Stage") fun Main()
+}
+
+@Composable
+fun VariablesTest() {
+    VariablesTestDoc.Main()
 }
 
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test

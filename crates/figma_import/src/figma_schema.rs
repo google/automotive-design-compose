@@ -14,9 +14,8 @@
 
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
-
 use crate::vector_schema::WindingRule;
+use serde::{Deserialize, Serialize};
 
 // We use serde to decode Figma's JSON documents into Rust structures.
 // These structures were derived from Figma's public API documentation, which has more information
@@ -1018,4 +1017,122 @@ pub struct NodeResponseData {
 pub struct ProjectFilesResponse {
     pub name: String,
     pub files: Vec<HashMap<String, String>>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ModeBinding {
+    pub mode_id: String,
+    pub name: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct VariableCollection {
+    pub default_mode_id: String,
+    pub id: String,
+    pub name: String,
+    pub remote: bool,
+    pub modes: Vec<ModeBinding>,
+    pub key: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum VariableType {
+    Boolean,
+    Float,
+    String,
+    Color,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct VariableAlias {
+    pub r#type: String,
+    pub id: String,
+}
+
+// We use the "untagged" serde attribute because the value of a variable is
+// described in a hash where we don't know the format of the value based on the
+// key. The value format is different depending on the type of variable and if
+// it is an alias to another variable. For example, this is a string value
+//
+// "valuesByMode": {
+//   "1:0": "Hello"
+// }
+//
+// And this is an alias to another variable:
+//
+// "valuesByMode": {
+//   "1:0": {
+//     "type": "VARIABLE_ALIAS",
+//     "id": "VariableID:1:234"
+//   },
+// }
+//
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(untagged)]
+pub enum VariableValue {
+    Boolean(bool),
+    Float(f32),
+    String(String),
+    Color(FigmaColor),
+    Alias(VariableAlias),
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct VariableCommon {
+    pub id: String,
+    pub name: String,
+    pub remote: bool,
+    pub key: String,
+    pub variable_collection_id: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // Because "resolvedType" is in this format
+#[serde(tag = "resolvedType")] // Maps to different enum values based on "resolvedType"
+pub enum Variable {
+    #[serde(rename_all = "camelCase")] // Because the members in each enum are in this format
+    Boolean {
+        #[serde(flatten)]
+        common: VariableCommon,
+        values_by_mode: HashMap<String, VariableValue>,
+    },
+    #[serde(rename_all = "camelCase")]
+    Float {
+        #[serde(flatten)]
+        common: VariableCommon,
+        values_by_mode: HashMap<String, VariableValue>,
+    },
+    #[serde(rename_all = "camelCase")]
+    String {
+        #[serde(flatten)]
+        common: VariableCommon,
+        values_by_mode: HashMap<String, VariableValue>,
+    },
+    #[serde(rename_all = "camelCase")]
+    Color {
+        #[serde(flatten)]
+        common: VariableCommon,
+        //#[serde(deserialize_with = "value_or_alias")]
+        values_by_mode: HashMap<String, VariableValue>,
+    },
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct VariablesMeta {
+    pub variable_collections: HashMap<String, VariableCollection>,
+    pub variables: HashMap<String, Variable>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct VariablesResponse {
+    pub error: bool,
+    pub status: i32,
+    pub meta: VariablesMeta,
 }

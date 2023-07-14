@@ -41,6 +41,7 @@ pub struct SerializedDesignDoc {
     pub component_sets: HashMap<String, String>,
     pub version: String,
     pub id: String,
+    pub variable_map: toolkit_schema::VariableMap,
 }
 
 // This is the struct we send over to the client. It contains the serialized document

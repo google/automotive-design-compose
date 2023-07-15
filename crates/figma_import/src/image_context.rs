@@ -20,6 +20,7 @@ use std::{
 };
 
 use crate::error::Error;
+use crate::fetch::ProxyConfig;
 use crate::figma_schema::{Paint, Transform};
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
@@ -33,10 +34,18 @@ pub struct VectorImageId {
     paints: Vec<Paint>,
 }
 
-fn http_fetch_image(url: impl ToString) -> Result<(DynamicImage, Vec<u8>), Error> {
+fn http_fetch_image(
+    url: impl ToString,
+    proxy_config: &ProxyConfig,
+) -> Result<(DynamicImage, Vec<u8>), Error> {
     let url = url.to_string();
 
-    let body = ureq::get(url.as_str()).timeout(Duration::from_secs(90)).call()?;
+    let mut agent_builder = ureq::AgentBuilder::new();
+    // Only HttpProxyConfig is supported.
+    if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
+        agent_builder = agent_builder.proxy(ureq::Proxy::new(spec)?);
+    }
+    let body = agent_builder.build().get(url.as_str()).timeout(Duration::from_secs(90)).call()?;
 
     let mut response_bytes: Vec<u8> = Vec::new();
     body.into_reader().read_to_end(&mut response_bytes)?;
@@ -47,6 +56,7 @@ fn http_fetch_image(url: impl ToString) -> Result<(DynamicImage, Vec<u8>), Error
 
     Ok((img, response_bytes))
 }
+
 fn lookup_or_fetch(
     client_images: &HashSet<String>,
     client_used_images: &mut HashSet<String>,
@@ -54,6 +64,7 @@ fn lookup_or_fetch(
     decoded_image_sizes: &mut HashMap<String, (u32, u32)>,
     network_bytes: &mut HashMap<String, Arc<serde_bytes::ByteBuf>>,
     url: Option<&Option<String>>,
+    proxy_config: &ProxyConfig,
 ) -> bool {
     if let Some(Some(url)) = url {
         referenced_images.insert(url.clone());
@@ -67,7 +78,7 @@ fn lookup_or_fetch(
         if network_bytes.contains_key(url) {
             return true;
         } else {
-            match http_fetch_image(url) {
+            match http_fetch_image(url, proxy_config) {
                 Ok((dynamic_image, fetched_bytes)) => {
                     decoded_image_sizes
                         .insert(url.clone(), (dynamic_image.width(), dynamic_image.height()));
@@ -140,13 +151,18 @@ pub struct ImageContext {
     // Images that have been referenced since this ImageContext was created. We track these
     // so that a remote client knows which images from a previous run to keep.
     referenced_images: HashSet<String>,
+    // Proxy configuration
+    proxy_config: ProxyConfig,
 }
 impl ImageContext {
     /// Create a new ImageContext that knows about the given images and vector ID to URL mappings
     /// and that uses the api_key to fetch the image bytes.
     ///
     /// * `images`: the mapping from Figma's `imageRef` to image URL.
-    pub fn new(images: HashMap<String, Option<String>>) -> ImageContext {
+    pub fn new(
+        images: HashMap<String, Option<String>>,
+        proxy_config: &ProxyConfig,
+    ) -> ImageContext {
         ImageContext {
             images,
             vectors: HashSet::new(),
@@ -158,6 +174,7 @@ impl ImageContext {
             client_images: HashSet::new(),
             client_used_images: HashSet::new(),
             referenced_images: HashSet::new(),
+            proxy_config: proxy_config.clone(),
         }
     }
 
@@ -179,6 +196,7 @@ impl ImageContext {
                 &mut self.decoded_image_sizes,
                 &mut self.network_bytes,
                 url,
+                &self.proxy_config,
             ) {
                 url.unwrap_or(&None).as_ref().map(|url_string| ImageKey(url_string.clone()))
             } else {

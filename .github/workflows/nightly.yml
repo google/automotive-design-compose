@@ -44,7 +44,7 @@ jobs:
 
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-      - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
+      - uses: Swatinem/rust-cache@dd05243424bd5c0e585e4b55eb2d7615cdd32f1f
         with: 
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build all

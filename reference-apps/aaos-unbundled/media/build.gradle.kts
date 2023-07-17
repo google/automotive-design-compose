@@ -17,21 +17,24 @@
 plugins {
     kotlin("android")
     id("com.android.library")
+    @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
 }
 
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(11)) } }
+
 @Suppress("UnstableApiUsage")
 android {
+    namespace = "com.android.designcompose.reference.media"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = libs.versions.appMinSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
         consumerProguardFiles("consumer-proguard-rules.pro")
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures { compose = true }
@@ -39,6 +42,9 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
+
+    // Deprecated in AGP 8+, replaced by `packaging`
+    @Suppress("DEPRECATION")
     packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
 }
 
@@ -55,14 +61,14 @@ dependencies {
     implementation(libs.androidx.legacy.support.v4)
 
     // The following dependencies are provided by the unbundled aaos repository
-    val unbundledAAOSDir: String by project
-    implementation(
-        files(
-            "$unbundledAAOSDir/prebuilts/sdk/${unbundledLibs.versions.aaosLatestSDK.get()}/system/android.car-system-stubs.jar"
-        )
-    )
-    implementation("com.android.car-apps-common:car-apps-common:UNBUNDLED")
-    api("com.android.car-media-common:car-media-common:UNBUNDLED")
+//    val unbundledAAOSDir: String by project
+//    implementation(
+//        files(
+//            "$unbundledAAOSDir/prebuilts/sdk/${unbundledLibs.versions.aaosLatestSDK.get()}/system/android.car-system-stubs.jar"
+//        )
+//    )
+    implementation("com.android.car:car-apps-common:UNBUNDLED")
+    api("com.android.car:car-media-common:UNBUNDLED")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

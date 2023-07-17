@@ -19,7 +19,11 @@ plugins {
     id("com.android.application")
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
+    alias(libs.plugins.designcompose)
+
 }
+
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(11)) } }
 
 var applicationID = "com.android.designcompose.reference.mediacompose"
 
@@ -39,6 +43,11 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
     signingConfigs {
         register("platform_UNSECURE") {
             // Use AOSP's platform key for signing. This is a well-known key which must not be
@@ -46,7 +55,7 @@ android {
             // emulator builds.
             //
             // For a production project, you should replace this with your own platform key.
-            storeFile = rootProject.file("aosp_platform.keystore")
+            storeFile = project.layout.projectDirectory.file("../aosp_platform.keystore").asFile
             storePassword = "UNSECURE"
             keyAlias = "platform"
             keyPassword = "UNSECURE"
@@ -65,24 +74,21 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
     buildFeatures { compose = true }
 
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
+    // Deprecated in AGP 8+, replaced by `packaging`
+    @Suppress("DEPRECATION")
     packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
 }
 
 dependencies {
     implementation(libs.designcompose)
     ksp(libs.designcompose.codegen)
-    implementation(project(":media"))
+    implementation(project(":media-lib"))
 
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)

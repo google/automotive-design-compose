@@ -63,8 +63,12 @@ tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfm
 
 tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
 
-// Apply some of our convention plugins to the tutorial app
-project("tutorial-app") {
-    plugins.apply("designcompose.conventions.base")
-    plugins.apply("designcompose.conventions.android-test-devices")
+// Apply some of our convention plugins to the reference apps
+
+for (projectName in listOf("tutorial-app", "media-lib", "mediacompose-app")) {
+    if (projectName in childProjects){
+        project(projectName).plugins.apply("designcompose.conventions.base")
+        project(projectName).plugins.apply("designcompose.conventions.android-test-devices")
+    }
 }
+

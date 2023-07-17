@@ -1,4 +1,10 @@
 version: 2
+assignees: timothyfroehlich
+reviewers: timothyfroehlich
+groups: true
+open-pull-requests-limit: 5
+schedule:
+  interval: weekly
 updates:
   - package-ecosystem: github-actions
     directory: /

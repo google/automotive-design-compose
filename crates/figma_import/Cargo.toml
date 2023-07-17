@@ -26,7 +26,7 @@ fetch = ["clap"]
 unicode-segmentation = "1"
 "image" = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
 "euclid" = { version = "0.20.13", default-features = false, features = ["serde"] }
-"phf" = { version = "0.10.1", features = ["macros"], optional = true }
+"phf" = { version = "0.11.2", features = ["macros"], optional = true }
 
 # reflection dependencies
 "serde-reflection" = { version = "0.3", optional = true }

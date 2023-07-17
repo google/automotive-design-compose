@@ -39,7 +39,7 @@ jobs:
           java-version: "17"
 
       - name: Snapshot project
-        uses: mikepenz/gradle-dependency-submission@v0.8.6
+        uses: mikepenz/gradle-dependency-submission@v0.9.0
         with:
             gradle-project-path: ${{matrix.project}}
             use-gradlew: true

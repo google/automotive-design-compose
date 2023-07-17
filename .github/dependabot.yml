@@ -5,7 +5,10 @@ updates:
     directory: /
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: true
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
     open-pull-requests-limit: 2
     schedule:
       interval: weekly
@@ -14,16 +17,25 @@ updates:
     directory: /
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: true
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
     open-pull-requests-limit: 2
     schedule:
       interval: weekly
+    # Only allow updates to the lockfile and
+    # ignore any version updates that affect the manifest
+    versioning-strategy: lockfile-only
 
   - package-ecosystem: bundler
     directory: /docs
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: true
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
     open-pull-requests-limit: 2
     schedule:
       interval: weekly
@@ -32,7 +44,10 @@ updates:
     directory: /support-figma/auto-content-preview-widget
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: true
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
     open-pull-requests-limit: 2
     schedule:
       interval: weekly
@@ -41,7 +56,10 @@ updates:
     directory: /support-figma/extended-layout-plugin
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: true
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
     open-pull-requests-limit: 2
     schedule:
       interval: weekly

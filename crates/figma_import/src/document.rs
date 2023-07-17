@@ -156,7 +156,7 @@ impl Document {
         let image_refs: ImageFillResponse =
             serde_json::from_str(http_fetch(api_key, image_ref_url, proxy_config)?.as_str())?;
 
-        let mut image_context = ImageContext::new(image_refs.meta.images);
+        let mut image_context = ImageContext::new(image_refs.meta.images, proxy_config);
         if let Some(session) = image_session {
             image_context.add_session_info(session);
         }

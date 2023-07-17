@@ -8,7 +8,9 @@ The directories here contain reference apps for DesignCompose. They are:
 
 # Building
 
-Each project is largely self-contained in it's own Gradle project. Tutorial and HelloWorld are both included in the main DesignCompose Gradle project, and can be built there. The AAOS-Unbundled project depends on Unbundled apps which requires a specific version of the Android Gradle Plugin, and therefore cannot  be included in the DesignCompose Gradle project.
+All three apps are included in the core DesignCompose Gradle project and should be built from and developed there.
+
+The Tutorial and MediaCompose apps have their own standalone projects, allowing them to be built using published DesignCompose releases and without needing to build the DesignCompose SDK. 
 
 ## Depending on the DesignCompose SDK
 
@@ -26,6 +28,3 @@ cd reference-apps/tutorial
 ./gradlew --init-script=../local-design-compose-repo.init.gradle.kts build
 ```
 
-### Rebuild and use the SDK from source (AAOS Unbundled Only)
-
-As stated above, the Unbundled project cannot be included in the DesignCompose Gradle project. To facilitate testing with the source from DesignCompose, set the `designComposeAAOSUnbundledUseSource` Gradle property to `true` and set `DesignComposeMavenRepo`. The SDK will be re-built each time the reference app's Gradle project is used.

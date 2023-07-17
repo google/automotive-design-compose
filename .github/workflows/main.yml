@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - uses: ./.github/actions/prepare-build-env
 
-      - uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+      - uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
         with:
           arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
 
@@ -96,22 +96,22 @@ jobs:
           rust: "true"
 
       - name: Run local tests
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
         with:
           arguments: test
 
       - name: Build debug
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
         with:
           arguments: assembleDebug
 
       - name: Build release
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
         with:
           arguments: assembleRelease
 
       - name: Final check
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
         with:
           arguments: check
   
@@ -129,7 +129,7 @@ jobs:
           rust: "true"
 
       - name: Build Maven repo
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
         with:
           arguments: publishAllPublicationsToLocalDirRepository
 

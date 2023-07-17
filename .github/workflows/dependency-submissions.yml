@@ -18,6 +18,9 @@ on:
     branches:
       - main #(Can only run on main)
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Dependencies
@@ -29,8 +32,13 @@ jobs:
             project: [".", "build-logic", "plugins", "reference-apps/tutorial"]
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
+        with:
+          egress-policy: audit
+
       - name: 'Checkout Repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       - name: Set up Java
         uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
@@ -39,7 +47,7 @@ jobs:
           java-version: "17"
 
       - name: Snapshot project
-        uses: mikepenz/gradle-dependency-submission@v0.9.0
+        uses: mikepenz/gradle-dependency-submission@91b021ee7e1ec04cb057c055cc80c5124e70242c # v0.9.0
         with:
             gradle-project-path: ${{matrix.project}}
             use-gradlew: true

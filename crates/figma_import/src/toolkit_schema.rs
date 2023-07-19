@@ -481,3 +481,12 @@ impl VariableMap {
         self.variables.get(var_id)
     }
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct BoundVariables {
+    pub variables: HashMap<String, VariableAlias>,
+}
+impl BoundVariables {
+
+}

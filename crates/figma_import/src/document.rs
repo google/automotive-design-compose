@@ -153,6 +153,7 @@ impl Document {
             BASE_FILE_URL, document_id,
         );
         let res = http_fetch(api_key, document_url, proxy_config)?;
+        println!("{}", res);
         let document_root: FileResponse = serde_json::from_str(res.as_str())?;
 
         // ...and the mapping from imageRef to URL

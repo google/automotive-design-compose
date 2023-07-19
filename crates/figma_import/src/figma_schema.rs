@@ -454,6 +454,7 @@ pub struct Gradient {
 pub enum PaintData {
     Solid {
         color: FigmaColor,
+        bound_variables: Option<BoundVariables>,
     },
     GradientLinear {
         #[serde(flatten)]
@@ -858,6 +859,7 @@ pub struct Node {
     pub stroke_geometry: Option<Vec<Path>>,
     #[serde(default = "default_stroke_cap")]
     pub stroke_cap: StrokeCap,
+    pub bound_variables: Option<BoundVariables>,
 }
 
 impl Node {
@@ -1046,11 +1048,41 @@ pub enum VariableType {
     Color,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct VariableAlias {
     pub r#type: String,
     pub id: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(untagged)]
+pub enum VariableAliasOrList {
+    Alias(VariableAlias),
+    List(Vec<VariableAlias>),
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct BoundVariables {
+    #[serde(flatten)]
+    variables: HashMap<String, VariableAliasOrList>,
+}
+impl BoundVariables {
+    pub(crate) fn get_color(&self) -> Option<String> {
+        let var = self.variables.get("color");
+        if let Some(var) = var {
+            if let VariableAliasOrList::Alias(alias) = var {
+                return Some(alias.id.clone());
+            } else if let VariableAliasOrList::List(list) = var {
+                let alias = list.first();
+                if let Some(alias) = alias {
+                    return Some(alias.id.clone());
+                }
+            }
+        }
+        None
+    }
 }
 
 // We use the "untagged" serde attribute because the value of a variable is

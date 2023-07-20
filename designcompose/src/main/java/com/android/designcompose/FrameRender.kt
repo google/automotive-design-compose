@@ -41,6 +41,7 @@ import androidx.core.graphics.minus
 import androidx.core.graphics.plus
 import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
+import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.MeterData
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
@@ -50,6 +51,7 @@ import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
+import java.util.Optional
 import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.cos
@@ -416,6 +418,7 @@ private fun calculateArcData(
                 arcAngleMeter,
                 shape.inner_radius,
                 arcData.cornerRadius,
+                shape.size,
                 shape.is_mask,
             )
     }
@@ -501,7 +504,14 @@ internal fun ContentDrawScope.render(
 
     // Push any transforms
     val transform = overrideTransform ?: style.transform.asComposeTransform(density)
-    if (transform != null) drawContext.transform.transform(transform)
+    var vectorScaleX = 1F
+    var vectorScaleY = 1F
+    if (transform != null) {
+        val decomposed = style.transform.decompose(density)
+        vectorScaleX = abs(decomposed.scaleX)
+        vectorScaleY = abs(decomposed.scaleY)
+        drawContext.transform.transform(transform)
+    }
 
     // Blend mode
     val blendMode = style.blend_mode.asComposeBlendMode()
@@ -522,11 +532,27 @@ internal fun ContentDrawScope.render(
 
     fun getPaths(
         path: List<com.android.designcompose.serdegen.Path>,
-        stroke: List<com.android.designcompose.serdegen.Path>
+        stroke: List<com.android.designcompose.serdegen.Path>,
+        vectorSize: Optional<List<Float>>,
     ): Pair<List<Path>, List<Path>> {
+        // If we have a vector size different than the frameSize, then constraints have caused the
+        // container frame to resize. We then check our style.left and style.top attributes and if
+        // they are of type Dimension.Percent, we know that the vector should scale. Use the vector
+        // size and frameSize to calculate the scaling factor.
+        var scaleX = 1F
+        var scaleY = 1F
+        vectorSize.ifPresent {
+            val sizeList = vectorSize.get()
+            if (sizeList.size == 2) {
+                val vecWidth = sizeList[0] * vectorScaleX
+                val vecHeight = sizeList[1] * vectorScaleY
+                if (style.left is Dimension.Percent) scaleX = frameSize.width / vecWidth
+                if (style.top is Dimension.Percent) scaleY = frameSize.height / vecHeight
+            }
+        }
         return Pair(
-            path.map { path -> path.asPath(density) },
-            stroke.map { path -> path.asPath(density) }
+            path.map { path -> path.asPath(density, scaleX, scaleY) },
+            stroke.map { path -> path.asPath(density, scaleX, scaleY) }
         )
     }
     // Fill then stroke.
@@ -536,7 +562,7 @@ internal fun ContentDrawScope.render(
                 computeRoundedRect(frameSize, shape.corner_radius, density)
             }
             is ViewShape.Path -> {
-                getPaths(shape.path, shape.stroke)
+                getPaths(shape.path, shape.stroke, shape.size)
             }
             is ViewShape.VectorRect -> {
                 computeRoundedRect(frameSize, shape.corner_radius, density)
@@ -544,7 +570,7 @@ internal fun ContentDrawScope.render(
             is ViewShape.Arc -> {
                 if (!customArcAngle) {
                     // Render normally with Figma provided fill/stroke path
-                    getPaths(shape.path, shape.stroke)
+                    getPaths(shape.path, shape.stroke, shape.size)
                 } else {
                     // We have a custom angle set by a meter customization, so we can't use
                     // the path provided by Figma. Instead, we construct our own path given

@@ -32,6 +32,7 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
 pluginManagement {
     repositories {
         google()

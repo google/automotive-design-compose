@@ -413,7 +413,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("                customizations = customizations,\n")
             out.appendText("                modifier = modifier,\n")
             out.appendText(
-                "                serverParams = DocumentServerParams(queries, nodeCustomizations(), ignoredImages()),\n"
+                "                serverParams = DocumentServerParams(queries, ignoredImages()),\n"
             )
             out.appendText("                setDocId = setDocId,\n")
             out.appendText(
@@ -958,7 +958,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("                customizations = customizations,\n")
             out.appendText("                modifier = modifier,\n")
             out.appendText(
-                "                serverParams = DocumentServerParams(queries, nodeCustomizations(), ignoredImages()),\n"
+                "                serverParams = DocumentServerParams(queries, ignoredImages()),\n"
             )
             out.appendText("                setDocId = setDocId,\n")
             val switchPolicy =

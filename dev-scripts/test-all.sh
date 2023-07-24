@@ -19,19 +19,23 @@ cat  <<END
 This script should run all of the tests that CI will run. (It'll need to be kept up to date though)
 Options:
   -s: Skip emulator tests
+  -u: Set Unbundled AAOS path
 Pre-requisites: 
-    Must be run on a system that can run emulators
-    Have \$ORG_GRADLE_PROJECT_unbundledAAOSDir set to your AAOS Unbundled repo
     Have \$FIGMA_ACCESS_TOKEN set to your actual Figma token
+    To run the full suite your system must be able to run emulator tests.
+      Use the -s argument to skip emulator tests.
 END
 }
 
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 run_emulator_tests=1
-while getopts "s" opt; do
+while getopts "su:" opt; do
   case "$opt" in
     s)
       run_emulator_tests=0
+      ;;
+    u)
+      ORG_GRADLE_PROJECT_unbundledAAOSDir=$(realpath "${OPTARG}")
       ;;
     *)
       usage

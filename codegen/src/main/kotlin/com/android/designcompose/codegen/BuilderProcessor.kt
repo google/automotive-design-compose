@@ -17,6 +17,10 @@
 package com.android.designcompose.codegen
 
 import com.android.designcompose.annotation.DesignMetaKey
+import com.android.designcompose.annotation.DesignPreviewContent
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.closestClassDeclaration
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -182,6 +186,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
     private enum class VisitPhase {
         Queries,
+        NodeCustomizations,
         IgnoredImages,
         ComposableFunctions,
         KeyActionFunctions,
@@ -237,6 +242,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
         private var visitPhase: VisitPhase = VisitPhase.Queries
         private var queriesNameSet: HashSet<String> = HashSet()
+        private var nodeCustomizationsNameSet: HashSet<String> = HashSet()
         private var ignoredImages: HashMap<String, HashSet<String>> = HashMap()
 
         private var overrideInterface: String = ""
@@ -300,6 +306,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
             out.appendText("        )\n")
             out.appendText("    }\n\n")
+
+            // Create a list of all customization node names used in this interface
+            visitPhase = VisitPhase.NodeCustomizations
+            classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
 
             // Iterate through all the functions and parameters and build up the ignoredImages
             // HashMap
@@ -476,6 +486,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             when (visitPhase) {
                 VisitPhase.Queries -> visitFunctionQueries(function, nodeName)
+                VisitPhase.NodeCustomizations ->
+                    visitFunctionNodeCustomizations(function, nodeName, isRoot)
                 VisitPhase.IgnoredImages -> visitFunctionIgnoredImagesBuild(function, nodeName)
                 VisitPhase.ComposableFunctions ->
                     visitFunctionComposables(function, data, nodeName, override)
@@ -530,6 +542,99 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     }
                 }
             }
+        }
+
+        @OptIn(KspExperimental::class)
+        private fun visitFunctionNodeCustomizations(
+            function: KSFunctionDeclaration,
+            node: String,
+            isRoot: Boolean
+        ) {
+            // Add the node and function name to the json components list
+            val jsonComponent = JsonObject()
+            jsonComponent.addProperty("node", node)
+            jsonComponent.addProperty("name", function.toString())
+            jsonComponent.addProperty("isRoot", isRoot)
+            jsonComponents.add(jsonComponent)
+            val jsonCustomizations = JsonArray()
+
+            function.parameters.forEach { param ->
+                val annotation: KSAnnotation =
+                    param.annotations.find {
+                        it.shortName.asString() == "Design" ||
+                            it.shortName.asString() == "DesignVariant"
+                    }
+                        ?: return
+                val nodeArg: KSValueArgument =
+                    annotation.arguments.first { arg ->
+                        arg.name?.asString() == "node" || arg.name?.asString() == "property"
+                    }
+                val nodeName = nodeArg.value as String
+
+                // Add a customization for this arg to the json list
+                val jsonHash = JsonObject()
+                val paramType = getParamCustomizationType(param)
+                jsonHash.addProperty("name", param.name?.asString())
+                jsonHash.addProperty("node", nodeName)
+                jsonHash.addProperty("kind", paramType.name)
+
+                // If there is a @DesignContentTypes annotation, use it to build a content list
+                // for this node. This represents all node names that could be placed into this
+                // node as a child.
+                val contentTypesAnnotation =
+                    param.annotations.find { it.shortName.asString() == "DesignContentTypes" }
+                if (contentTypesAnnotation != null) {
+                    @Suppress("UNCHECKED_CAST")
+                    val nodes =
+                        contentTypesAnnotation.arguments
+                            .first { arg -> arg.name?.asString() == "nodes" }
+                            .value as? ArrayList<String>
+                    val jsonContentArray = JsonArray()
+                    nodes?.forEach { jsonContentArray.add(it.trim()) }
+                    jsonHash.add("content", jsonContentArray)
+                }
+
+                // To get data for the @DesignPreviewContent annotation, we need to use
+                // getAnnotationsByType() in order to parse out the custom class PreviewNode.
+                val designPreviewContentAnnotations =
+                    param.getAnnotationsByType(DesignPreviewContent::class)
+
+                val previewContentArray = JsonArray()
+                designPreviewContentAnnotations.forEach { content ->
+                    val previewPageHash = JsonObject()
+                    val jsonContentArray = JsonArray()
+                    content.nodes.forEach {
+                        for (i in 1..it.count) {
+                            jsonContentArray.add(it.node.trim())
+                        }
+                    }
+                    if (!jsonContentArray.isEmpty) {
+                        previewPageHash.addProperty("name", content.name)
+                        previewPageHash.add("content", jsonContentArray)
+                        previewContentArray.add(previewPageHash)
+                    }
+                }
+                if (!previewContentArray.isEmpty)
+                    jsonHash.add("previewContent", previewContentArray)
+
+                jsonCustomizations.add(jsonHash)
+
+                val classDecl = param.type.resolve().declaration.closestClassDeclaration()
+                if (classDecl != null && classDecl.classKind == ClassKind.ENUM_CLASS) {
+                    val jsonVariantsArray = JsonArray()
+                    classDecl.declarations.forEach {
+                        val enumValue = it.simpleName.asString()
+                        if (
+                            enumValue != "valueOf" && enumValue != "values" && enumValue != "<init>"
+                        ) {
+                            jsonVariantsArray.add(it.simpleName.asString())
+                        }
+                    }
+                    jsonHash.add("values", jsonVariantsArray)
+                }
+            }
+
+            jsonComponent.add("customizations", jsonCustomizations)
         }
 
         private fun visitFunctionIgnoredImagesBuild(

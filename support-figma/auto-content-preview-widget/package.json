@@ -10,17 +10,17 @@
   "author": "",
   "license": "",
   "devDependencies": {
-    "@figma/plugin-typings": "^1.70.0",
+    "@figma/plugin-typings": "^1.71.1",
     "@figma/widget-typings": "*",
     "css-loader": "^6.8.1",
-    "html-inline-css-webpack-plugin": "^1.11.1",
+    "html-inline-css-webpack-plugin": "^1.11.2",
     "html-loader": "^4.2.0",
     "html-webpack-plugin": "^5.5.3",
     "mini-css-extract-plugin": "^2.7.6",
     "style-loader": "^3.3.3",
     "ts-loader": "^9.4.4",
     "typescript": "^5.1.6",
-    "webpack": "^5.88.1",
+    "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
   }
 }

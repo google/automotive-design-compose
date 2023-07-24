@@ -44,10 +44,10 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
       - uses: ./.github/actions/prepare-build-env
 
-      - uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+      - uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # v2.6.1
         with:
           arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
 
@@ -60,7 +60,7 @@ jobs:
           egress-policy: audit
 
       - run: rustup toolchain install stable --profile minimal
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
       - name: Rust lint
         run: cargo-fmt --all --check
 
@@ -73,7 +73,7 @@ jobs:
           egress-policy: audit
 
       - run: rustup toolchain install stable --profile minimal
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
       - uses: Swatinem/rust-cache@dd05243424bd5c0e585e4b55eb2d7615cdd32f1f
         with: 
           save-if: ${{ github.ref == 'refs/heads/main' }}
@@ -90,28 +90,28 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
       - uses: ./.github/actions/prepare-build-env 
         with:
           rust: "true"
 
       - name: Run local tests
-        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+        uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # v2.6.1
         with:
           arguments: test
 
       - name: Build debug
-        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+        uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # v2.6.1
         with:
           arguments: assembleDebug
 
       - name: Build release
-        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+        uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # v2.6.1
         with:
           arguments: assembleRelease
 
       - name: Final check
-        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+        uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # v2.6.1
         with:
           arguments: check
   
@@ -123,13 +123,13 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
       - uses: ./.github/actions/prepare-build-env 
         with:
           rust: "true"
 
       - name: Build Maven repo
-        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+        uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # v2.6.1
         with:
           arguments: publishAllPublicationsToLocalDirRepository
 
@@ -166,7 +166,7 @@ jobs:
         echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$PWD/designcompose_m2repo" >> "$GITHUB_ENV"
 
     - name: Check Tutorial App
-      uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+      uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # v2.6.1
       with:
         build-root-directory: reference-apps/tutorial
         arguments: |
@@ -182,7 +182,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
 
       - uses: ./.github/actions/build-figma-resource
         with:
@@ -224,7 +224,7 @@ jobs:
         --single-branch --filter=blob:none --recurse-submodules --jobs=4
 
     - name: Check MediaCompose
-      uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+      uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # v2.6.1
       with:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |

@@ -53,10 +53,15 @@ if [[ -z "$ORG_GRADLE_PROJECT_unbundledAAOSDir" ]]; then
   usage
   exit 1
 fi
+
 if [[ -z "$FIGMA_ACCESS_TOKEN" ]]; then
-  echo "FIGMA_ACCESS_TOKEN must be set"
-  usage
-  exit 1
+  if [[ -r ~/.config/figma_access_token ]]; then
+    FIGMA_ACCESS_TOKEN=$(cat ~/.config/figma_access_token)
+  else
+    echo "FIGMA_ACCESS_TOKEN must be set"
+    usage
+    exit 1
+  fi
 fi
 
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"

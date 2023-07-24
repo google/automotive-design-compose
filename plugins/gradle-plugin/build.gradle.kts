@@ -54,4 +54,14 @@ publishing {
     }
 }
 
-dependencies { compileOnly(libs.android.gradlePlugin.minimumSupportedVersion) }
+tasks.withType(Test::class.java).configureEach {
+    useJUnitPlatform()
+    testLogging.events("passed")
+    failFast = true
+}
+
+dependencies {
+    compileOnly(libs.android.gradlePlugin.minimumSupportedVersion)
+    testImplementation(libs.google.truth)
+    testImplementation(libs.junit.jupiter)
+}

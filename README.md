@@ -27,7 +27,7 @@ To use Automotive Design for Compose in an app, a developer specifies the Compos
 
 ## Getting Started
 
-The DesignCompose Tutorial app shows you the capabilities of DesignCompose through a series of interactive examples.  You will need a Figma account and [personal access token](https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens) to view the Tutorial Figma file and a large-screen device to run it on.
+The DesignCompose Tutorial app shows you the capabilities of DesignCompose through a series of interactive examples.  You will need a Figma account and [personal access token](https://google.github.io/automotive-design-compose/docs/live-update/setup) to view the Tutorial Figma file and a large-screen device to run it on.
 
 You'll work with your own copy of the [Tutorial Figma file](https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose). Create your own by clicking **Open in Figma**, which creates a copy of the file in your account. Once open, identify the Figma Document ID from your new file's URL. It's the alphanumeric string between `file/` and the name of the document. For example:
 
@@ -36,8 +36,7 @@ You'll work with your own copy of the [Tutorial Figma file](https://www.figma.co
 The app's Gradle project is located in `reference-apps/tutorial`. Build and launch it on your device, then set your Figma Access Token on the app by running:
 
 ```shell
-FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> \
-    ./gradlew setFigmaTokenDebug
+./gradlew setFigmaTokenDebug
 ```
 
 Next, switch the app to use your copy of the Tutorial file by clicking the dropdown arrow in the upper right. This will open the Design Switcher.
@@ -155,7 +154,7 @@ NOTE: Android Studio doesn't have a great way to use init scripts. You'll have t
 
 The `./dev-scripts/test-all.sh` script will trigger all tests in the repo. This script must pass before a release candidate can be cut.
 
-### Prerequisites:
+### Prerequisites
 
 - Make sure your system can run Android AVDs
 - Have the build dependencies below installed
@@ -164,7 +163,7 @@ The `./dev-scripts/test-all.sh` script will trigger all tests in the repo. This 
 
 The test-all script takes an optional `-s` flag to skip all emulator tests. It's intended for situations where emulators can't be started or when running tests before updating serialized files.
 
-## Before you submit for review:
+## Before you submit for review
 
 To check that you can pass presubmits and emulator tests before pushing to PR you can do the following:
 
@@ -183,7 +182,7 @@ To check that you can pass presubmits and emulator tests before pushing to PR yo
     1. On a Google workstation, download the designcompose_m2repo.zip from the release and copy it to `/x20/teams/designcompose/release_staging/`
     2. Run gmaven_publisher to stage it:
 
-        ```
+        ```bash
         /google/bin/releases/android-devtools/gmaven/publisher/gmaven-publisher stage --gfile /x20/teams/designcompose/release_staging/<the m2repo.zip>
         ```
 
@@ -205,7 +204,6 @@ To check that you can pass presubmits and emulator tests before pushing to PR yo
     4. Create a new branch of the Tutorial file named after version you're releasing
     5. From the original file, click the **Share** button in the upper right, switch to the **Publish** tab of the window that pops up and **Publish update**
     6. Make any changes necessary, then click **Save**
-
 
 # Get in touch
 

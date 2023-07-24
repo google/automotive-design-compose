@@ -46,40 +46,44 @@ import org.gradle.configurationcache.extensions.capitalized
  * @constructor Create empty Figma token plugin
  */
 class Plugin : Plugin<Project> {
+
+    private lateinit var pluginExtension: PluginExtension
+
     override fun apply(project: Project) {
-        project.plugins.withType(com.android.build.gradle.AppPlugin::class.java) {
+        pluginExtension = project.extensions.create("designcompose", PluginExtension::class.java)
+        project.initializeExtension(pluginExtension)
+
+        project.pluginManager.withPlugin("com.android.application") {
             project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java).let {
                 ace ->
                 @Suppress("UnstableApiUsage") val adb = ace.sdkComponents.adb
                 // Create one task per variant of the app
                 ace.onVariants { variant ->
-                    createTokenTask(project, variant.name, variant.applicationId, adb)
+                    project.createSetFigmaTokenTask(variant.name, variant.applicationId, adb)
                 }
             }
         }
     }
 
     /**
-     * Create token task for the given [project] and [variant][variantId]
+     * Create a setFigmaToken task for the given [variant][variantId]
      *
-     * @param project The Gradle project we're applying to
      * @param variantName The AGP-generated name for the application variant
      * @param variantId The Application ID for the variant
      * @param adb Provided by AGP, the path to adb on the system
      */
-    private fun createTokenTask(
-        project: Project,
+    private fun Project.createSetFigmaTokenTask(
         variantName: String,
         variantId: Property<String>,
         adb: Provider<RegularFile>
     ) {
-        project.tasks.register(
+        tasks.register(
             "setFigmaToken${variantName.capitalized()}",
-            FigmaTokenTask::class.java
+            SetFigmaTokenTask::class.java
         ) {
             it.adbPath.set(adb)
             it.appID.set(variantId)
-            it.figmaToken.set(project.providers.environmentVariable("FIGMA_ACCESS_TOKEN"))
+            it.figmaToken.set(pluginExtension.figmaToken)
             it.group = "DesignCompose"
         }
     }

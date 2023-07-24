@@ -52,6 +52,7 @@ class GenericDocContent(
             feedback.documentSaveError(error.toString(), docId)
         }
     }
+    @kotlin.ExperimentalUnsignedTypes
     fun toSerializedBytes(feedback: FeedbackImpl): ByteArray? {
         try {
             val serializer = BincodeSerializer()

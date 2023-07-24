@@ -309,11 +309,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             // Create a list of all customization node names used in this interface
             visitPhase = VisitPhase.NodeCustomizations
-            out.appendText("    fun nodeCustomizations(): Array<String> {\n")
-            out.appendText("        return arrayOf(\n")
             classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
-            out.appendText("        )\n")
-            out.appendText("    }\n\n")
 
             // Iterate through all the functions and parameters and build up the ignoredImages
             // HashMap
@@ -413,7 +409,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("                customizations = customizations,\n")
             out.appendText("                modifier = modifier,\n")
             out.appendText(
-                "                serverParams = DocumentServerParams(queries, nodeCustomizations(), ignoredImages()),\n"
+                "                serverParams = DocumentServerParams(queries, ignoredImages()),\n"
             )
             out.appendText("                setDocId = setDocId,\n")
             out.appendText(
@@ -635,11 +631,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                         }
                     }
                     jsonHash.add("values", jsonVariantsArray)
-                }
-
-                if (!nodeCustomizationsNameSet.contains(nodeName)) {
-                    currentStream!!.appendText("            \"$nodeName\",\n")
-                    nodeCustomizationsNameSet.add(nodeName)
                 }
             }
 
@@ -958,7 +949,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("                customizations = customizations,\n")
             out.appendText("                modifier = modifier,\n")
             out.appendText(
-                "                serverParams = DocumentServerParams(queries, nodeCustomizations(), ignoredImages()),\n"
+                "                serverParams = DocumentServerParams(queries, ignoredImages()),\n"
             )
             out.appendText("                setDocId = setDocId,\n")
             val switchPolicy =

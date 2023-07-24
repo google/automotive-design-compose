@@ -18,12 +18,10 @@ package com.android.designcompose.common
 
 class DocumentServerParams(
     private val nodeQueries: ArrayList<String>? = null,
-    private val nodeCustomizations: Array<String>? = null,
     private val ignoredImages: HashMap<String, Array<String>>? = null
 ) {
     fun toJsonSnippet(): String {
         val queriesStr = nodeQueries?.joinToString(",") { "\"$it\"" } ?: ""
-        val nodeCustomizationsStr = nodeCustomizations?.joinToString(",") { "\"$it\"" } ?: ""
         val ignoredImagesStr =
             ignoredImages?.keys?.joinToString(",") { node ->
                 val images = ignoredImages[node]?.joinToString(",") { "\"$it\"" }
@@ -32,8 +30,7 @@ class DocumentServerParams(
                 ?: ""
 
         var jsonStr = "\"ignored_images\": [$ignoredImagesStr], "
-        jsonStr += "\"queries\": [$queriesStr], "
-        jsonStr += "\"node_customizations\": [$nodeCustomizationsStr]"
+        jsonStr += "\"queries\": [$queriesStr]"
         return jsonStr
     }
 }

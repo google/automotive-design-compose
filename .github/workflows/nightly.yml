@@ -38,13 +38,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
+        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
         with:
           egress-policy: audit
 
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-      - uses: Swatinem/rust-cache@6fd3edff6979b79f87531400ad694fb7f2c84b1f
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
+      - uses: Swatinem/rust-cache@dd05243424bd5c0e585e4b55eb2d7615cdd32f1f
         with: 
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build all
@@ -60,16 +60,16 @@ jobs:
     runs-on: ${{ matrix.os }}  
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
+        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
       - uses: ./.github/actions/prepare-build-env 
         with:
           rust: "true"
       - name: Gradle Check
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
           gradle-version: ${{matrix.gradle_release}}
           arguments: check
@@ -78,17 +78,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
+        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
       - uses: ./.github/actions/prepare-build-env 
         with:
           rust: "true"
 
       - name: Build Maven repo
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
           arguments: publishAllPublicationsToLocalDirRepository
 
@@ -110,7 +110,7 @@ jobs:
         ub-branch: [ub-automotive-master, ub-automotive-master-20230622]
     steps:       
     - name: Harden Runner
-      uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
+      uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
       with:
         egress-policy: audit
 
@@ -141,7 +141,7 @@ jobs:
         repo sync -cq -j4
 
     - name: Check MediaCompose
-      uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+      uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
       with:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |

@@ -1,26 +1,79 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 version: 2
+
 updates:
   - package-ecosystem: github-actions
     directory: /
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 2
     schedule:
-      interval: daily
+      interval: weekly
 
   - package-ecosystem: cargo
     directory: /
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 2
     schedule:
-      interval: daily
+      interval: weekly
+    # Only allow updates to the lockfile and
+    # ignore any version updates that affect the manifest
+    versioning-strategy: lockfile-only
 
   - package-ecosystem: bundler
     directory: /docs
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 2
     schedule:
-      interval: daily
+      interval: weekly
 
   - package-ecosystem: npm
     directory: /support-figma/auto-content-preview-widget
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 2
     schedule:
-      interval: daily
+      interval: weekly
 
   - package-ecosystem: npm
     directory: /support-figma/extended-layout-plugin
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 2
     schedule:
-      interval: daily
+      interval: weekly

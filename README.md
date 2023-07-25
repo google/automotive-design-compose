@@ -159,7 +159,7 @@ The `./dev-scripts/test-all.sh` script will trigger all tests in the repo. This 
 
 - Make sure your system can run Android AVDs
 - Have the build dependencies below installed
-- Check out the current supported branch of the AAOS Unbundled repo (see the "Check out the Unbundled AAOS Repo" job in `.github/workflows/main` for the correct branch) and set $ORG_GRADLE_PROJECT_unbundledAAOSDir to the path of the checkout
+- Check out the current supported branch of the AAOS Unbundled repo (see the "Check out the Unbundled AAOS Repo" job in `.github/workflows/main` for the correct branch)
 - Set `$FIGMA_ACCESS_TOKEN` to your Figma token
 
 The test-all script takes an optional `-s` flag to skip all emulator tests. It's intended for situations where emulators can't be started or when running tests before updating serialized files.

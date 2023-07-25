@@ -36,6 +36,31 @@ permissions:  # added using https://github.com/step-security/secure-repo
   contents: read
 
 jobs:
+  lint-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
+
+      # Only run the lint on changed files to not force a big re-write
+      - uses: tj-actions/changed-files@v37
+        id: changed-files
+        with:
+          files: '**/*.md'
+          separator: ","
+
+      - uses: xt0rted/markdownlint-problem-matcher@v2
+      - uses: DavidAnson/markdownlint-cli2-action@v11
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          globs: ${{ steps.changed-files.outputs.all_changed_files }}
+          fix: true
+          separator: ","
+
   lint-kotlin:
     runs-on: ubuntu-latest
     steps:

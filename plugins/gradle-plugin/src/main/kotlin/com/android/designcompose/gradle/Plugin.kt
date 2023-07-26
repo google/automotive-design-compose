@@ -77,13 +77,10 @@ class Plugin : Plugin<Project> {
         variantId: Property<String>,
         adb: Provider<RegularFile>
     ) {
-        tasks.register(
-            "setFigmaToken${variantName.capitalized()}",
-            SetFigmaTokenTask::class.java
-        ) {
+        tasks.register("setFigmaToken${variantName.capitalized()}", SetFigmaTokenTask::class.java) {
             it.adbPath.set(adb)
             it.appID.set(variantId)
-            it.figmaToken.set(pluginExtension.figmaToken.also{token -> token.finalizeValue()})
+            it.figmaToken.set(pluginExtension.figmaToken.also { token -> token.finalizeValue() })
             it.group = "DesignCompose"
         }
     }

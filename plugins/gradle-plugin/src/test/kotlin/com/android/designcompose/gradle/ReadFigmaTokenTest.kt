@@ -17,12 +17,12 @@
 package com.android.designcompose.gradle
 
 import com.google.common.truth.Truth.assertThat
+import java.io.File
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import java.io.File
 
 /**
  * Read figma token test
@@ -57,8 +57,8 @@ class ReadFigmaTokenTest {
     }
 
     /**
-     * Write build script for the project being used in the test. This includes a task in this project
-     * to check that the token read by the project matches the expected one per test
+     * Write build script for the project being used in the test. This includes a task in this
+     * project to check that the token read by the project matches the expected one per test
      *
      * @param expectedToken: The token that the test expects to find
      */

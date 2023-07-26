@@ -71,8 +71,9 @@ jobs:
       - name: Gradle Check
         uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
+          dependency-graph: generate-and-submit
           gradle-version: ${{matrix.gradle_release}}
-          arguments: check
+          arguments: build
 
   build-maven-repo:
     runs-on: ubuntu-latest

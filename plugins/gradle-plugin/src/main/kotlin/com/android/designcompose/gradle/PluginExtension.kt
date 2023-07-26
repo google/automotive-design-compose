@@ -46,16 +46,12 @@ fun Project.initializeExtension(extension: PluginExtension) {
 
     // Determine the directory where the token file should live, based on OS
     val tokenFileDir: Provider<Directory> =
-        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            providers.systemProperty("APPDATA").map { homeString ->
-                layout.projectDirectory.dir(homeString)
-            }
-        } else if (Os.isFamily(Os.FAMILY_UNIX)) {
-            providers.systemProperty("user.home").map { homeString ->
-                layout.projectDirectory.dir(homeString)
-            }
-        } else {
-            provider { rootProject.layout.projectDirectory }
+        when {
+            Os.isFamily(Os.FAMILY_WINDOWS) ->
+                providers.systemProperty("APPDATA").map { layout.projectDirectory.dir(it) }
+            Os.isFamily(Os.FAMILY_UNIX) ->
+                providers.systemProperty("user.home").map { layout.projectDirectory.dir(it) }
+            else -> provider { rootProject.layout.projectDirectory }
         }
 
     // Set the path to the file, but allow it to be overriden by a Gradle property

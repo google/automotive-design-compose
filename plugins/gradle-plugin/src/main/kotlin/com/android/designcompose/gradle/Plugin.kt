@@ -83,7 +83,7 @@ class Plugin : Plugin<Project> {
         ) {
             it.adbPath.set(adb)
             it.appID.set(variantId)
-            it.figmaToken.set(pluginExtension.figmaToken)
+            it.figmaToken.set(pluginExtension.figmaToken.also{token -> token.finalizeValue()})
             it.group = "DesignCompose"
         }
     }

@@ -93,6 +93,9 @@ updates:
       interval: weekly
 
   - package-ecosystem: gradle
+    registries:
+      - maven-google
+      - gradle-plugin-portal
     directory: /
     assignees:
       - "timothyfroehlich"

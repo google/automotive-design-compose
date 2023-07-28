@@ -30,7 +30,7 @@ updates:
   # A directory of "/" only actually includes .github/workflows.
   # A separate section is needed for our custom actions
   - package-ecosystem: github-actions
-    directory: ".github/actions/*"
+    directory: "/.github/actions/"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
     groups: 

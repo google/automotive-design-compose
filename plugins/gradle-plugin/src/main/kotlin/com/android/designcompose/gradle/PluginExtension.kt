@@ -50,7 +50,7 @@ fun Project.initializeExtension(extension: PluginExtension) {
             Os.isFamily(Os.FAMILY_WINDOWS) ->
                 providers.systemProperty("APPDATA").map { layout.projectDirectory.dir(it) }
             Os.isFamily(Os.FAMILY_UNIX) ->
-                providers.systemProperty("user.home").map { layout.projectDirectory.dir(it) }
+                providers.systemProperty("user.home").map { layout.projectDirectory.dir(it).dir(".config") }
             else -> provider { rootProject.layout.projectDirectory }
         }
 

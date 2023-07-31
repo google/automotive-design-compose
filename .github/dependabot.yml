@@ -30,7 +30,7 @@ updates:
   # A directory of "/" only actually includes .github/workflows.
   # A separate section is needed for our custom actions
   - package-ecosystem: github-actions
-    directory: ".github/actions/*"
+    directory: "/.github/actions/"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
     groups: 
@@ -93,6 +93,9 @@ updates:
       interval: weekly
 
   - package-ecosystem: gradle
+    registries:
+      - maven-google
+      - gradle-plugin-portal
     directory: /
     assignees:
       - "timothyfroehlich"
@@ -108,3 +111,12 @@ updates:
         - dependency-name: "com.android.tools.build"
         - dependency-name: "com.google.devtools.ksp"
         - dependency-name: "org.jetbrains.kotlin"
+
+# Required due to https://github.com/dependabot/dependabot-core/issues/6888
+registries:
+  maven-google:
+    type: maven-repository
+    url: "https://dl.google.com/dl/android/maven2/"
+  gradle-plugin-portal:
+    type: maven-repository
+    url: https://plugins.gradle.org/m2

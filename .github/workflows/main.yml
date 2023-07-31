@@ -222,7 +222,7 @@ jobs:
         BRANCH=ub-automotive-master-20230622
         mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
         cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
-        repo init -u $HOST -b $BRANCH -g car-apps-gradle --depth=1
+        repo init -u $HOST -b $BRANCH -g pdk,pdk-fs --depth=1
         repo sync -cq -j4
 
     - name: Check MediaCompose

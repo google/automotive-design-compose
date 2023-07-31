@@ -209,6 +209,7 @@ jobs:
         name: designcompose-m2-repo-zip
 
     - run: unzip designcompose_m2repo.zip
+    - run: sudo apt-get install repo
 
     - name: "Set environment variables"
       run: |

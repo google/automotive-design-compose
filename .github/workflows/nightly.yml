@@ -123,8 +123,6 @@ jobs:
         name: designcompose-m2-repo-zip
 
     - run: unzip designcompose_m2repo.zip
-    
-    # Temporarily using repo instead of the git superproject due to b/289387570
     - run: sudo apt-get install repo
 
     - name: "Set environment variables"

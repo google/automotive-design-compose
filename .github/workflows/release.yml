@@ -34,12 +34,18 @@ jobs:
 
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
 
+      - name: Set version for Widget
+        working-directory: support-figma/auto-content-preview-widget
+        run: |
+          sed -i -e 's/\("name":.*\)",/\1 ${{ github.ref_name }}",/' manifest.json
+
       - uses: ./.github/actions/build-figma-resource
         with:
             resource: auto-content-preview-widget
       - uses: ./.github/actions/build-figma-resource
         with:
             resource: extended-layout-plugin
+
 
   build-maven-repo:
     runs-on: ubuntu-latest

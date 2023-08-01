@@ -85,7 +85,6 @@ dependencies {
     api(libs.androidx.lifecycle.livedata.core)
     implementation(libs.accompanist.flowlayout)
     implementation(libs.guavaAndroid)
-    implementation(libs.grpc.stub)
     implementation(libs.javax.annotationApi)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.compose)

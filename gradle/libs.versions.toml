@@ -28,9 +28,8 @@ appauth = "0.11.1"
 compileSdk = "33"
 datastoreCore = "1.0.0"
 datastorePreferences = "1.0.0"
-designcompose = "0.22.0-SNAPSHOT"
+designcompose = "0.23.0-SNAPSHOT"
 dokka = "1.8.10"
-grpc = "1.54.1"
 gson = "2.10.1"
 guavaAndroid = "31.1-android"
 guavaJre = "31.1-jre"
@@ -91,7 +90,6 @@ appauth = { module = "net.openid:appauth", version.ref = "appauth" }
 designcompose = { module = "com.android.designcompose:designcompose", version.ref = "designcompose" }
 designcompose-codegen = { module = "com.android.designcompose:codegen", version.ref = "designcompose" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
-grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guavaAndroid = { module = "com.google.guava:guava", version.ref = "guavaAndroid" }
 guavaJre = { module = "com.google.guava:guava", version.ref = "guavaJre" }

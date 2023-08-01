@@ -34,7 +34,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.android.designcompose.common.DocumentServerParams
 import com.google.common.annotations.VisibleForTesting
-import io.grpc.StatusRuntimeException
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -218,24 +217,15 @@ internal fun DocServer.initializeLiveUpdate() {
     periodicFetchRunnable =
         Runnable() {
             thread {
-                try {
-                    if (!fetchDocuments(firstFetch)) {
-                        Log.e(TAG, "Error occurred while fetching or decoding documents.")
-                        return@thread
-                    }
-                    firstFetch = false
-                } catch (e: StatusRuntimeException) {
-                    Log.e(TAG, "API error.  $e")
-                    DesignSettings.showMessageInToast(
-                        "Error accessing the Design Compose API.",
-                        Toast.LENGTH_LONG
-                    )
+                if (!fetchDocuments(firstFetch)) {
+                    Log.e(TAG, "Error occurred while fetching or decoding documents.")
                     return@thread
-                } finally {
-                    // Schedule another run after some time even if there were any
-                    // errors.
-                    scheduleLiveUpdate()
                 }
+                firstFetch = false
+
+                // Schedule another run after some time even if there were any
+                // errors.
+                scheduleLiveUpdate()
             }
         }
     // Kickstart periodic updates of documents

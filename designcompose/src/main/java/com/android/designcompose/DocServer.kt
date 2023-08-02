@@ -421,7 +421,7 @@ internal fun DocServer.doc(
     val preloadedDoc = synchronized(documents) { documents[docId] }
 
     val context = LocalContext.current
-    val saveFile = context.getFileStreamPath(id)
+    val saveFile = context.getFileStreamPath("$id.dcf")
 
     // We can manage the subscription lifecycle using a DisposableEffect (which
     // will run any time id changes, and also on first execution; and runs the
@@ -479,7 +479,7 @@ internal fun DocServer.doc(
     // Use the LocalContext to locate this doc in the precompiled serializedDesignDocuments
     val assetManager = context.assets
     try {
-        val assetDoc = assetManager.open("figma/$id")
+        val assetDoc = assetManager.open("figma/$id.dcf")
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }

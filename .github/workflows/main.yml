@@ -209,6 +209,7 @@ jobs:
         name: designcompose-m2-repo-zip
 
     - run: unzip designcompose_m2repo.zip
+    - run: sudo apt-get install repo
 
     - name: "Set environment variables"
       run: |
@@ -217,11 +218,12 @@ jobs:
 
     - name: Check out the Unbundled AAOS Repo
       run: |
-        HOST=https://android.googlesource.com/platform/superproject
+        HOST=https://android.googlesource.com/platform/manifest        
         BRANCH=ub-automotive-master-20230622
         mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
-        git clone "$HOST" "$ORG_GRADLE_PROJECT_unbundledAAOSDir" --branch="$BRANCH" \
-        --single-branch --filter=blob:none --recurse-submodules --jobs=4
+        cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
+        repo init -u $HOST -b $BRANCH -g pdk,pdk-fs --depth=1
+        repo sync -cq -j4
 
     - name: Check MediaCompose
       uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0

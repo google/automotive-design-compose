@@ -123,8 +123,6 @@ jobs:
         name: designcompose-m2-repo-zip
 
     - run: unzip designcompose_m2repo.zip
-    
-    # Temporarily using repo instead of the git superproject due to b/289387570
     - run: sudo apt-get install repo
 
     - name: "Set environment variables"
@@ -138,7 +136,7 @@ jobs:
         BRANCH=${{ matrix.ub-branch }}
         mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
         cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
-        repo init -u $HOST -b $BRANCH
+        repo init -u $HOST -b $BRANCH -g pdk,pdk-fs --depth=1
         repo sync -cq -j4
 
     - name: Check MediaCompose

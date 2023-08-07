@@ -51,6 +51,8 @@ mysql = "8.0.32"
 rules = "1.5.0"
 # @keep Non-`dependency` constant
 targetSdk = "33"
+junit5 = "5.9.3"
+truth = "1.1.4"
 
 [libraries]
 accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanist" }
@@ -101,6 +103,8 @@ ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-
 material = { module = "com.google.android.material:material", version.ref = "material" }
 mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockkAgent" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockkAndroid" }
+google-truth = { module = "com.google.truth:truth", version.ref = "truth" }
+junit-jupiter = {module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
 
 [plugins]
 designcompose = { id = "com.android.designcompose", version.ref = "designcompose" }

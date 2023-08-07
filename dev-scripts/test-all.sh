@@ -53,10 +53,15 @@ if [[ -z "$ORG_GRADLE_PROJECT_unbundledAAOSDir" ]]; then
   usage
   exit 1
 fi
+
 if [[ -z "$FIGMA_ACCESS_TOKEN" ]]; then
-  echo "FIGMA_ACCESS_TOKEN must be set"
-  usage
-  exit 1
+  if [[ -r ~/.config/figma_access_token ]]; then
+    FIGMA_ACCESS_TOKEN=$(cat ~/.config/figma_access_token)
+  else
+    echo "FIGMA_ACCESS_TOKEN must be set"
+    usage
+    exit 1
+  fi
 fi
 
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"
@@ -68,7 +73,14 @@ cargo-fmt --all --check
 ./gradlew  ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
 cargo build --all-targets --all-features
 cargo test --all-targets --all-features
-./gradlew check publishAllPublicationsToLocalDirRepository
+
+cd "$GIT_ROOT/build-logic" || exit
+./gradlew build
+cd "$GIT_ROOT/plugins" || exit
+./gradlew build
+
+cd "$GIT_ROOT" || exit
+./gradlew build publishAllPublicationsToLocalDirRepository
 
 if [[ $run_emulator_tests == 1 ]]; then
   ./gradlew tabletAtdApi30Check -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
@@ -86,4 +98,4 @@ npm ci
 npm run build
 
 cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit
-./gradlew check
+./gradlew build

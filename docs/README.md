@@ -8,10 +8,12 @@ Jekyll is a Ruby Gem and requires Ruby to run. The recommended way to install Ru
 
 - Follow steps 1, 2 and 3 of the [Basic Git Checkout](https://github.com/rbenv/rbenv#basic-git-checkout) section of the `rbenv` docs. (Don't install from apt-get, that version is very out of date.)
 - Install the ruby-build plugin with the following command:
-```
+
+```bash
 git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
 ```
-- Switch to this directory (`/docs`), which contains a .ruby-version file. 
+
+- Switch to this directory (`/docs`), which contains a .ruby-version file.
 - Run `rbenv install` to install the correct version of Ruby
 
 I recommend also following the instructions for the [jekyll-github-metadata](https://github.com/jekyll/github-metadata/blob/main/docs/authentication.md) plugin to set up a GitHub token. Otherwise you may run into rate limiting from GitHub while re-building the site.
@@ -19,9 +21,13 @@ I recommend also following the instructions for the [jekyll-github-metadata](htt
 To start the site:
 
 - Switch to this directory (`docs`)
-- Run `bundle install` to install the required Gems (usually only need to do this once)
-- Run `bundle exec jekyll serve -wIl`
-    - -w to watch for changes and rebuild, -I for incremental rebuild and -l to enable live reload in your browser
+- Run:
+
+    ```bash
+    bundle install # install the required Gems (usually only need to do this once)
+    # -w to watch for changes and rebuild, -I for incremental rebuild and -l to enable live reload in your browser
+    bundle exec jekyll serve -wIl
+    ```
 
 If the site builds correctly it will start hosting it at something like `127.0.0.1:4000` (check the output of the `serve` command for the actual address). Open that in your local web browser. (You can also add `-o` to automatically open the site in your browser)
 
@@ -31,9 +37,9 @@ The main content is located in `docs/_docs`. The underscore means it can be proc
 
 ### Internal linking
 
-Jekyll's [link](https://jekyllrb.com/docs/liquid/tags/#links) tag is used to generate the proper path to the file you want to link to. Any anchors need to be after the link tag. For example, a link to the Store Figma Token section of the Live Update Setup page would be: 
+Jekyll's [link](https://jekyllrb.com/docs/liquid/tags/#links) tag is used to generate the proper path to the file you want to link to. Any anchors need to be after the link tag. For example, a link to the Store Figma Token section of the Live Update Setup page would be:
 
-```
+```bash
 [Link text]({%link _docs/live-update/setup.md %}#StoreFigmaToken)
 ```
 

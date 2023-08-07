@@ -82,6 +82,31 @@ jobs:
       - name: Test all
         run: cargo test --all-targets --all-features
 
+  sdk-support-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
+      - uses: ./.github/actions/prepare-build-env
+        with:
+          rust: "true"
+
+      - name: Test build-logic
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+        with:
+          build-root-directory: build-logic
+          arguments: test
+
+      - name: Test the plugins
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+        with:
+          build-root-directory: plugins
+          arguments: test
+
   sdk-build:
     runs-on: ubuntu-latest
     steps:
@@ -113,7 +138,7 @@ jobs:
       - name: Final check
         uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
-          arguments: check
+          arguments: build
   
   build-maven-repo:
     runs-on: ubuntu-latest

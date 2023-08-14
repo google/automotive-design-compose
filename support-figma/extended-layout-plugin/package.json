@@ -10,8 +10,8 @@
   "author": "",
   "license": "",
   "devDependencies": {
-    "@figma/plugin-typings": "^1.72.0",
-    "@types/node": "^20.4.5",
+    "@figma/plugin-typings": "^1.74.0",
+    "@types/node": "^20.5.0",
     "css-loader": "^6.8.1",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-loader": "^4.2.0",

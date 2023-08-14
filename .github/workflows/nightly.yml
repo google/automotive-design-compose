@@ -38,13 +38,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           egress-policy: audit
 
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: Swatinem/rust-cache@dd05243424bd5c0e585e4b55eb2d7615cdd32f1f
+      - uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
         with: 
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build all
@@ -60,7 +60,7 @@ jobs:
     runs-on: ${{ matrix.os }}  
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           egress-policy: audit
 
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           egress-policy: audit
 
@@ -111,7 +111,7 @@ jobs:
         ub-branch: [ub-automotive-master, ub-automotive-master-20230622]
     steps:       
     - name: Harden Runner
-      uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
+      uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
       with:
         egress-policy: audit
 

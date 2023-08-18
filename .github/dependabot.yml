@@ -34,7 +34,7 @@ updates:
       github-workflow-dependency-patches:
         update-types:
         - "patch"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 3
     schedule:
       interval: weekly
       day: wednesday
@@ -49,7 +49,7 @@ updates:
       github-action-dependency-patches:
         update-types:
         - "patch"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 3
     schedule:
       interval: weekly
       day: wednesday
@@ -62,7 +62,7 @@ updates:
       rust-dependency-patches:
         update-types:
         - "patch"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 3
     schedule:
       interval: weekly
       day: tuesday
@@ -75,7 +75,7 @@ updates:
       jekyll-dependency-patches:
         update-types:
         - "patch"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 3
     schedule:
       interval: weekly
       day: monday
@@ -88,7 +88,7 @@ updates:
       figma-widget-dependency-patches:
         update-types:
         - "patch"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 3
     schedule:
       interval: weekly
       day: friday
@@ -101,7 +101,7 @@ updates:
       figma-plugin-dependency-patches:
         update-types:
         - "patch"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 3
     schedule:
       interval: weekly
       day: friday

@@ -66,9 +66,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.4.2
         with:
-          # Upload in the dependency-review workflow
-          dependency-graph: generate
-          gradle-home-cache-cleanup: true
+          cache-read-only: true
 
       - name: Update Rust
         run: rustup toolchain install stable --profile minimal
@@ -81,7 +79,7 @@ jobs:
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          save-if: false
 
       - name: Build Maven repo
         uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0

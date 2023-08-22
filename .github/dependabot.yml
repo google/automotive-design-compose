@@ -14,103 +14,6 @@
 
 version: 2
 
-updates:
-  - package-ecosystem: github-actions
-    directory: /
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    groups: 
-      github-workflow-dependencies:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 2
-    schedule:
-      interval: weekly
-
-  # A directory of "/" only actually includes .github/workflows.
-  # A separate section is needed for our custom actions
-  - package-ecosystem: github-actions
-    directory: "/.github/actions/"
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    groups: 
-      github-action-dependencies:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 2
-    schedule:
-      interval: weekly
-
-  - package-ecosystem: cargo
-    directory: /
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    groups: 
-      dependencies:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 2
-    schedule:
-      interval: weekly
-    # Only allow updates to the lockfile and
-    # ignore any version updates that affect the manifest
-    versioning-strategy: lockfile-only
-
-  - package-ecosystem: bundler
-    directory: /docs
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    groups: 
-      dependencies:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 2
-    schedule:
-      interval: weekly
-
-  - package-ecosystem: npm
-    directory: /support-figma/auto-content-preview-widget
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    groups: 
-      figma-widget-dependencies:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 2
-    schedule:
-      interval: weekly
-
-  - package-ecosystem: npm
-    directory: /support-figma/extended-layout-plugin
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    groups: 
-      figma-plugin-dependencies:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 2
-    schedule:
-      interval: weekly
-
-  - package-ecosystem: gradle
-    registries:
-      - maven-google
-      - gradle-plugin-portal
-    directory: /
-    assignees:
-      - "timothyfroehlich"
-    reviewers:
-      - "timothyfroehlich"
-    groups:
-      gradle-dependencies:
-        patterns:
-          - "*"
-    schedule:
-      interval: weekly
-    ignore:
-        - dependency-name: "com.android.tools.build"
-        - dependency-name: "com.google.devtools.ksp"
-        - dependency-name: "org.jetbrains.kotlin"
 
 # Required due to https://github.com/dependabot/dependabot-core/issues/6888
 registries:
@@ -120,3 +23,102 @@ registries:
   gradle-plugin-portal:
     type: maven-repository
     url: https://plugins.gradle.org/m2
+
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      github-workflow-dependency-patches:
+        update-types:
+        - "patch"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: weekly
+      day: wednesday
+
+  # A directory of "/" only actually includes .github/workflows.
+  # A separate section is needed for our custom actions
+  - package-ecosystem: github-actions
+    directory: "/.github/actions/build-figma-resource"
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      github-action-dependency-patches:
+        update-types:
+        - "patch"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: weekly
+      day: wednesday
+      
+  - package-ecosystem: cargo
+    directory: /
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      rust-dependency-patches:
+        update-types:
+        - "patch"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: weekly
+      day: tuesday
+
+  - package-ecosystem: bundler
+    directory: /docs
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      jekyll-dependency-patches:
+        update-types:
+        - "patch"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: weekly
+      day: monday
+
+  - package-ecosystem: npm
+    directory: /support-figma/auto-content-preview-widget
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      figma-widget-dependency-patches:
+        update-types:
+        - "patch"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: weekly
+      day: friday
+
+  - package-ecosystem: npm
+    directory: /support-figma/extended-layout-plugin
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    groups: 
+      figma-plugin-dependency-patches:
+        update-types:
+        - "patch"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: weekly
+      day: friday
+
+  - package-ecosystem: gradle
+    directory: "/"
+    registries:
+    - maven-google
+    - gradle-plugin-portal
+    assignees: [timothyfroehlich]
+    reviewers: [timothyfroehlich]
+    # Dependabot groups seem to be busted for Gradle. Uncommenting this will prevent
+    # PRs from being created for Gradle dependencies.
+    # groups: 
+    #   gradle-dependencies-patches:
+    #     update-types:
+    #     - "patch"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: daily

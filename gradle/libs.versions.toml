@@ -51,7 +51,7 @@ mysql = "8.0.32"
 rules = "1.5.0"
 # @keep Non-`dependency` constant
 targetSdk = "33"
-junit5 = "5.9.3"
+junit5 = "5.10.0"
 truth = "1.1.4"
 
 [libraries]

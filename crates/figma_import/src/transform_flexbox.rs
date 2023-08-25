@@ -549,16 +549,9 @@ fn compute_background(
 }
 
 // We have a 1:1 correspondence between Nodes and Views which is super nice.
-// NOTE: We carry round the immediate parent AND a relative_transform parent as we visit nodes.
-// The reason for this is that in some cases the `relative_transform` data is NOT relative to
-// the immediate parent. Please see:
-// https://www.figma.com/plugin-docs/api/properties/nodes-relativetransform/#:~:text=The%20relative%20transform%20of%20a,group%20or%20a%20boolean%20operation.
-// So in other words, `parent` will always be this node's immediate parent. But `relative_transform_parent` may
-// be a parent further up the tree.
 fn visit_node(
     node: &Node,
     parent: Option<&Node>,
-    relative_transform_parent: Option<&Node>,
     component_map: &HashMap<String, Component>,
     component_set_map: &HashMap<String, ComponentSet>,
     component_context: &mut ComponentContext,
@@ -622,7 +615,7 @@ fn visit_node(
 
     // Check relative transform to see if there is a rotation.
     if let Some(transform) = node.relative_transform {
-        let parent_bounding_box = relative_transform_parent.and_then(|p| p.absolute_bounding_box);
+        let parent_bounding_box = parent.and_then(|p| p.absolute_bounding_box);
         let bounds = node.absolute_bounding_box;
 
         fn get(transform: [[Option<f32>; 3]; 2], a: usize, b: usize) -> f32 {
@@ -1239,14 +1232,6 @@ fn visit_node(
         RenderMethod::None,
     );
 
-    // If the current node is a Group or a Boolean operation, it does
-    // not become the new parent used for `relative_transform` calculations.
-    let relative_transform_node = match node.data {
-        NodeData::Group { .. } => relative_transform_parent,
-        NodeData::BooleanOperation { .. } => relative_transform_parent,
-        _ => Some(node),
-    };
-
     // Iterate over our visible children, but not vectors because they always
     // present their children's content themselves (e.g.: they are boolean products
     // of their children).
@@ -1256,7 +1241,6 @@ fn visit_node(
                 view.add_child(visit_node(
                     child,
                     Some(node),
-                    relative_transform_node,
                     component_map,
                     component_set_map,
                     component_context,
@@ -1286,7 +1270,6 @@ pub fn create_component_flexbox(
 ) -> View {
     visit_node(
         component,
-        None,
         None,
         component_map,
         component_set_map,

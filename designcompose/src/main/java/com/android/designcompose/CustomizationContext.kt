@@ -404,7 +404,7 @@ fun CustomizationContext.getOpenLinkCallback(nodeName: String): OpenLinkCallback
 fun CustomizationContext.getMeterValue(nodeName: String): Float? {
     val c = cs[nodeName] ?: return null
     var value = if (c.meterValue.isPresent) c.meterValue.get() else return null
-    if (value?.isNaN() == true) value = 0F
+    if (!value.isFinite()) value = 0F
     return value
 }
 

@@ -1072,8 +1072,15 @@ fn visit_node(
 
     // Copy out the common styles from frames and supported content.
     style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
-    if let Some(stroke_weight) = node.stroke_weight {
-        style.stroke.stroke_weight = stroke_weight;
+    if let Some(individual_stroke_weights) = node.individual_stroke_weights {
+        style.stroke.stroke_weight = crate::toolkit_style::StrokeWeight::Individual {
+            top: individual_stroke_weights.top,
+            right: individual_stroke_weights.right,
+            bottom: individual_stroke_weights.bottom,
+            left: individual_stroke_weights.left,
+        };
+    } else if let Some(stroke_weight) = node.stroke_weight {
+        style.stroke.stroke_weight = crate::toolkit_style::StrokeWeight::Uniform(stroke_weight);
     }
     style.stroke.stroke_align = match node.stroke_align {
         Some(StrokeAlign::Inside) => crate::toolkit_style::StrokeAlign::Inside,

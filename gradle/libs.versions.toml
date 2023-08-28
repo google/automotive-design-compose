@@ -36,7 +36,7 @@ hikariCP = "5.0.1"
 javax-annotation = "1.3.2"
 junit = "4.13.2"
 # @pin - Compose Compiler doesn't support the latest Kotlin version yet
-kotlin = "1.9.0"
+kotlin = "1.9.10"
 kotlinxCoroutinesTest = "1.7.2"
 # @pin - KSP version depends on  Kotlin version
 ksp = "1.9.0-1.0.13"

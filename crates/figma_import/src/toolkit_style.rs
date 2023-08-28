@@ -496,6 +496,7 @@ pub struct ViewStyle {
     pub stroke: Stroke,
     pub opacity: Option<f32>,
     pub transform: Option<LayoutTransform>,
+    pub relative_transform: Option<LayoutTransform>,
     pub text_align: TextAlign,
     pub text_align_vertical: TextAlignVertical,
     pub text_overflow: TextOverflow,
@@ -558,6 +559,7 @@ impl Default for ViewStyle {
             stroke: Stroke::default(),
             opacity: None,
             transform: None,
+            relative_transform: None,
             text_align: TextAlign::Left,
             text_align_vertical: TextAlignVertical::Top,
             text_overflow: TextOverflow::Clip,
@@ -644,6 +646,9 @@ impl ViewStyle {
         }
         if self.transform != other.transform {
             delta.transform = other.transform;
+        }
+        if self.relative_transform != other.relative_transform {
+            delta.relative_transform = other.relative_transform;
         }
         if self.text_align != other.text_align {
             delta.text_align = other.text_align;

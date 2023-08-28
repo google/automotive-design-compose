@@ -1063,7 +1063,11 @@ internal fun Background.asBrush(document: DocContent, density: Float): Pair<Brus
     return null
 }
 
-internal fun com.android.designcompose.serdegen.Path.asPath(density: Float): Path {
+internal fun com.android.designcompose.serdegen.Path.asPath(
+    density: Float,
+    scaleX: Float,
+    scaleY: Float
+): Path {
     val MOVE_TO: Byte = 0
     val LINE_TO: Byte = 1
     val CUBIC_TO: Byte = 2
@@ -1080,27 +1084,27 @@ internal fun com.android.designcompose.serdegen.Path.asPath(density: Float): Pat
     for (cmd in this.commands) {
         when (cmd) {
             MOVE_TO -> {
-                p.moveTo(this.data[idx++] * density, this.data[idx++] * density)
+                p.moveTo(this.data[idx++] * density * scaleX, this.data[idx++] * density * scaleY)
             }
             LINE_TO -> {
-                p.lineTo(this.data[idx++] * density, this.data[idx++] * density)
+                p.lineTo(this.data[idx++] * density * scaleX, this.data[idx++] * density * scaleY)
             }
             CUBIC_TO -> {
                 p.cubicTo(
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY,
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY,
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY,
                 )
             }
             QUAD_TO -> {
                 p.quadraticBezierTo(
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY,
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY
                 )
             }
             CLOSE -> {

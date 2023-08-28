@@ -39,6 +39,7 @@ pub enum ViewShape {
     Path {
         path: Vec<crate::vector_schema::Path>,
         stroke: Vec<crate::vector_schema::Path>,
+        size: Option<(f32, f32)>,
         is_mask: bool,
     },
     Arc {
@@ -49,6 +50,7 @@ pub enum ViewShape {
         sweep_angle_degrees: f32,
         inner_radius: f32,
         corner_radius: f32,
+        size: Option<(f32, f32)>,
         is_mask: bool,
     },
     VectorRect {

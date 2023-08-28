@@ -18,7 +18,7 @@ GEM
     faraday-net_http (3.0.2)
     ffi (1.15.5)
     forwardable-extended (2.6.0)
-    google-protobuf (3.24.1-x86_64-linux)
+    google-protobuf (3.24.2-x86_64-linux)
     html-proofer (3.19.4)
       addressable (~> 2.3)
       mercenary (~> 0.3)
@@ -63,7 +63,7 @@ GEM
       rspec-html-matchers (~> 0.9)
     jekyll-watch (2.2.1)
       listen (~> 3.0)
-    just-the-docs (0.6.0)
+    just-the-docs (0.6.1)
       jekyll (>= 3.8.5)
       jekyll-include-cache
       jekyll-seo-tag (>= 2.0)
@@ -133,7 +133,7 @@ DEPENDENCIES
   jekyll (~> 4.3.2)
   jekyll-github-metadata
   jekyll-test
-  just-the-docs (= 0.6.0)
+  just-the-docs (= 0.6.1)
   kramdown-parser-gfm
   rake
   tzinfo (>= 1, < 3)

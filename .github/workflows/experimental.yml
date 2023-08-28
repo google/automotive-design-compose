@@ -13,18 +13,17 @@
 # limitations under the License.
 
 
-name: Nightly
+# Testing our builds versus the latest and incoming releases of
+# key build tools and dependencies
+name: Nightly Experimental Builds
 
 on: 
   schedule:
     - cron: "0 0 * * *"
   # Also run on pull requests that change this file
   pull_request:
-    branches: 
-      - main
-      - 'wb/**'  
     paths:
-      .github/workflows/nightly.yml
+      .github/workflows/experimental.yml
 
 permissions:  # added using https://github.com/step-security/secure-repo
   contents: read
@@ -44,7 +43,7 @@ jobs:
 
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4
+      - uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
         with: 
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build all
@@ -52,11 +51,11 @@ jobs:
       - name: Test all
         run: cargo test --all-targets --all-features
 
-  sdk-test:
+  sdk-build:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        gradle_release: [wrapper, nightly]
+        gradle_release: [current, release-candidate]
     runs-on: ${{ matrix.os }}  
     steps:
       - name: Harden Runner
@@ -65,47 +64,46 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: ./.github/actions/prepare-build-env 
+
+      - name: Set up Java
+        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
         with:
-          rust: "true"
-      - name: Gradle Check
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.4.2
         with:
-          dependency-graph: generate-and-submit
+          cache-read-only: true
           gradle-version: ${{matrix.gradle_release}}
-          arguments: build
 
-  build-maven-repo:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+      - name: Update Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Install Rust toolchains
+        run: ./install-rust-toolchains.sh
+
+      - name: Set up Rust Cache
+        uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
         with:
-          egress-policy: audit
+          workspaces: ". -> designcompose/build/intermediates/cargoTarget"
+          shared-key: "gradle-rust"
 
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: ./.github/actions/prepare-build-env 
+      - name: Gradle Build
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
-          rust: "true"
 
-      - name: Build Maven repo
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
-        with:
-          arguments: publishAllPublicationsToLocalDirRepository
+          arguments: build publishAllPublicationsToLocalDirRepository
 
-      - name: Zip repo
-        working-directory: build
-        run: zip -q -r designcompose_m2repo.zip designcompose_m2repo/
-
-      - name: Upload zipped repo
+      - name: Upload repo
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
-          name: designcompose-m2-repo-zip
-          path: build/designcompose_m2repo.zip
+          name: designcompose_m2repo
+          path: build/designcompose_m2repo/
 
-  unbundled-apps-test:
+  unbundled-apps:
     runs-on: ubuntu-latest
-    needs: build-maven-repo
+    needs: sdk-build
     strategy:
       matrix:
         ub-branch: [ub-automotive-master, ub-automotive-master-20230622]
@@ -116,13 +114,23 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-    - uses: ./.github/actions/prepare-build-env 
- 
+
+    - name: Set up Java
+      uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+      with:
+        distribution: "temurin"
+        java-version: "17"
+
+    - name: Set up Gradle
+      uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.4.2
+      with:
+        cache-read-only: true
+
     - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
       with:
-        name: designcompose-m2-repo-zip
+        name: designcompose_m2repo
+        path: designcompose_m2repo
 
-    - run: unzip designcompose_m2repo.zip
     - run: sudo apt-get install repo
 
     - name: "Set environment variables"
@@ -140,8 +148,9 @@ jobs:
         repo sync -cq -j4
 
     - name: Check MediaCompose
-      uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
+      uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
       with:
+        cache-read-only: true
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
           check 

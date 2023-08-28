@@ -12,30 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Presubmit
 
+name: SDK Main Workflow
+
+# The on: and concurrencency: blocks should be the same for all core workflows
+# Triggers nightly, on merges or pushes to main and stable and on pull requests.
 on:
-  label:
-    types:
-      - created
   push:
     branches:
-      - main
-      - 'stable/**'
-  merge_group:
+    - main
+    - 'stable/**'
   pull_request:
-    branches: 
-      - main
-      - 'wb/**'
+  merge_group:
+  schedule:
+    - cron: "0 0 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-permissions:  # added using https://github.com/step-security/secure-repo
+permissions: 
   contents: read
 
 jobs:
+  ############## Lints
+  validate-gradle-wrapper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: gradle/wrapper-validation-action@56b90f209b02bf6d1deae490e9ef18b21a389cd4 # v1.1.0
+
   lint-kotlin:
     runs-on: ubuntu-latest
     steps:
@@ -45,11 +56,34 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: ./.github/actions/prepare-build-env
+
+      - name: Set up Java
+        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+        with:
+          distribution: "temurin"
+          java-version: "17"
 
       - uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
         with:
+          cache-read-only: true
           arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
+
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Download actionlint
+        id: get_actionlint
+        run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+        shell: bash
+      - name: Check workflow files
+        run: ${{ steps.get_actionlint.outputs.executable }} -color
+        shell: bash
 
   lint-rust:
     runs-on: ubuntu-latest
@@ -64,7 +98,7 @@ jobs:
       - name: Rust lint
         run: cargo-fmt --all --check
 
-  rust-test:
+  validate-dependabot:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -72,16 +106,10 @@ jobs:
         with:
           egress-policy: audit
 
-      - run: rustup toolchain install stable --profile minimal
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4
-        with: 
-          save-if: ${{ github.ref == 'refs/heads/main' }}
-      - name: Build all
-        run: cargo build --all-targets --all-features
-      - name: Test all
-        run: cargo test --all-targets --all-features
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: marocchino/validate-dependabot@30653575251e0731f7c99bff8773e3988361597e # v2.1.0
 
+############## Gradle
   sdk-support-build:
     runs-on: ubuntu-latest
     steps:
@@ -91,24 +119,34 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: ./.github/actions/prepare-build-env
+
+      - name: Set up Java
+        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
         with:
-          rust: "true"
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+        with:
+          # Upload in the dependency-review workflow
+          dependency-graph: generate
+          gradle-home-cache-cleanup: true
 
       - name: Test build-logic
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
           build-root-directory: build-logic
           arguments: test
 
       - name: Test the plugins
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
           build-root-directory: plugins
           arguments: test
 
   sdk-build:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
@@ -116,61 +154,48 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: ./.github/actions/prepare-build-env 
-        with:
-          rust: "true"
 
-      - name: Run local tests
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
+      - name: Set up Java
+        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
         with:
-          arguments: test
+          distribution: "temurin"
+          java-version: "17"
 
-      - name: Build debug
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
-          arguments: assembleDebug
+          # Upload in the dependency-review workflow
+          dependency-graph: generate
+          gradle-home-cache-cleanup: true
 
-      - name: Build release
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
+      - name: Update Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Install Rust toolchains
+        run: ./install-rust-toolchains.sh
+
+      - name: Set up Rust Cache
+        uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
         with:
-          arguments: assembleRelease
+          workspaces: ". -> designcompose/build/intermediates/cargoTarget"
+          shared-key: "gradle-rust"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Final check
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
+      - name: Full Gradle Test and publish
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
-          arguments: build
-  
-  build-maven-repo:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-      - uses: ./.github/actions/prepare-build-env 
-        with:
-          rust: "true"
-
-      - name: Build Maven repo
-        uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
-        with:
-          arguments: publishAllPublicationsToLocalDirRepository
-
-      - name: Zip repo
-        working-directory: build
-        run: zip -q -r designcompose_m2repo.zip designcompose_m2repo/
-
-      - name: Upload zipped repo
+          arguments: check build publishAllPublicationsToLocalDirRepository 
+      
+      - name: Upload maven repo
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
-          name: designcompose-m2-repo-zip
-          path: build/designcompose_m2repo.zip
-  
+          name: designcompose_m2repo
+          path: build/designcompose_m2repo/
+
+########### Tutorial app
   tutorial-app:
     runs-on: ubuntu-latest
-    needs: build-maven-repo
+    needs: sdk-build
     steps:       
     - name: Harden Runner
       uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
@@ -178,17 +203,27 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-    - uses: ./.github/actions/prepare-build-env 
+
+    - name: Set up Java
+      uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+      with:
+        distribution: "temurin"
+        java-version: "17"
+
+    - name: Set up Gradle
+      uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.4.2
+      with:
+        dependency-graph: generate
+        gradle-home-cache-cleanup: true
 
     - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
       with:
-        name: designcompose-m2-repo-zip
-
-    - run: unzip designcompose_m2repo.zip
-
+        name: designcompose_m2repo
+        path: designcompose_m2repo
+    
     - name: "Set environment variables"
       run: |
-        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$PWD/designcompose_m2repo" >> "$GITHUB_ENV"
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
 
     - name: Check Tutorial App
       uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
@@ -196,30 +231,13 @@ jobs:
         build-root-directory: reference-apps/tutorial
         arguments: |
           --init-script ../local-design-compose-repo.init.gradle.kts
-          app:dependencies
-          check
+          build
 
-  figma-resources:
+
+######### Unbundled apps     
+  aaos-unbundled:
     runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
-
-      - uses: ./.github/actions/build-figma-resource
-        with:
-            resource: auto-content-preview-widget
-
-      - uses: ./.github/actions/build-figma-resource
-        with:
-            resource: extended-layout-plugin
-
-  mediacompose-build:
-    runs-on: ubuntu-latest
-    needs: build-maven-repo
+    needs: sdk-build
     steps:       
     - name: Harden Runner
       uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
@@ -227,13 +245,24 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-    - uses: ./.github/actions/prepare-build-env 
- 
+
+    - name: Set up Java
+      uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+      with:
+        distribution: "temurin"
+        java-version: "17"
+
+    - name: Set up Gradle
+      uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.4.2
+      with:
+        dependency-graph: generate
+        gradle-home-cache-cleanup: true
+
     - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
       with:
-        name: designcompose-m2-repo-zip
+        name: designcompose_m2repo
+        path: designcompose_m2repo
 
-    - run: unzip designcompose_m2repo.zip
     - run: sudo apt-get install repo
 
     - name: "Set environment variables"
@@ -256,3 +285,48 @@ jobs:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
           check 
+      
+############# Rust
+  rust-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
+
+      - run: rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
+        with: 
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build all
+        run: cargo build --all-targets --all-features
+
+      - name: Test all
+        run: cargo test --all-targets --all-features
+
+############ Figma resources
+  figma-resources:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
+
+      - uses: ./.github/actions/build-figma-resource
+        with:
+            resource: auto-content-preview-widget
+
+      - uses: ./.github/actions/build-figma-resource
+        with:
+            resource: extended-layout-plugin
+
+
+

@@ -63,7 +63,7 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+      - uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
         with:
           cache-read-only: true
           arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
@@ -106,10 +106,41 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - uses: marocchino/validate-dependabot@30653575251e0731f7c99bff8773e3988361597e # v2.1.0
+      - run: rustup toolchain install stable --profile minimal
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
+      - uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
+        with: 
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build all
+        run: cargo build --all-targets --all-features
+      - name: Test all
+        run: cargo test --all-targets --all-features
 
-############## Gradle
+  sdk-support-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
+      - uses: ./.github/actions/prepare-build-env
+        with:
+          rust: "true"
+
+      - name: Test build-logic
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+        with:
+          build-root-directory: build-logic
+          arguments: test
+
+      - name: Test the plugins
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+        with:
+          build-root-directory: plugins
+          arguments: test
+
   sdk-build:
     runs-on: "ubuntu-latest"
     steps:
@@ -120,33 +151,45 @@ jobs:
 
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
 
-      - name: Set up Java
-        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+      - name: Run local tests
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Set up Gradle
-        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.4.2
+      - name: Build debug
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
 
-      - name: Update Rust
-        run: rustup toolchain install stable --profile minimal
+      - name: Build release
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+        with:
+          arguments: assembleRelease
 
-      - name: Install Rust toolchains
-        run: ./install-rust-toolchains.sh
-
-      - name: Set up Rust Cache
-        uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
+      - name: Final check
+        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+        with:
+          arguments: build
+  
+  build-maven-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Full Gradle Test and publish
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.2
+      - uses: ./.github/actions/prepare-build-env 
+        with:
+          rust: "true"
+
+      - name: Build Maven repo
         uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
         with:
           arguments: check build publishAllPublicationsToLocalDirRepository 
@@ -191,7 +234,7 @@ jobs:
         echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$PWD/designcompose_m2repo" >> "$GITHUB_ENV"
 
     - name: Check Tutorial App
-      uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+      uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
       with:
         build-root-directory: reference-apps/tutorial
         arguments: |
@@ -245,11 +288,10 @@ jobs:
         repo sync -cq -j4
 
     - name: Check MediaCompose
-      uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+      uses: gradle/gradle-build-action@243af859f8ca30903d9d7f7936897ca0358ba691 # v2.7.1
       with:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
-          check 
       
 ############# Rust
 

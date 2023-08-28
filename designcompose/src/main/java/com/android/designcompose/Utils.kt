@@ -275,6 +275,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.transform
         }
+    style.relative_transform =
+        if (override.relative_transform.isPresent) {
+            override.relative_transform
+        } else {
+            base.relative_transform
+        }
     style.text_align =
         if (override.text_align !is TextAlign.Left) {
             override.text_align

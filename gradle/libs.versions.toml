@@ -45,8 +45,7 @@ material = "1.9.0"
 # @keep Non-`dependency` constant
 minSdk = "26"
 mockito = "5.1.1"
-mockkAgent = "1.13.5"
-mockkAndroid = "1.13.5"
+mockk = "1.13.7"
 mysql = "8.0.32"
 rules = "1.5.0"
 # @keep Non-`dependency` constant
@@ -101,8 +100,8 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
-mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockkAgent" }
-mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockkAndroid" }
+mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockk" }
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 google-truth = { module = "com.google.truth:truth", version.ref = "truth" }
 junit-jupiter = {module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
 

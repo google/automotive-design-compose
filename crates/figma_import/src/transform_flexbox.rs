@@ -632,10 +632,6 @@ fn visit_node(
                 get(transform, 0, 2),
                 get(transform, 1, 2),
             );
-
-            // Provide an unaltered transform from the last relevant parent.
-            style.relative_transform = Some(r.clone());
-            // And an additional transform with translation removed.
             let r = r.post_translate(euclid::vec3(
                 -(bounds.x() - parent_bounds.x()),
                 -(bounds.y() - parent_bounds.y()),
@@ -1243,7 +1239,7 @@ fn visit_node(
     );
 
     // Iterate over our visible children, but not vectors because they always
-    // present their children's content themselves (e.g.: they are boolean products
+    // present their childrens content themselves (e.g.: they are boolean products
     // of their children).
     if node.vector().is_none() {
         for child in node.children.iter() {

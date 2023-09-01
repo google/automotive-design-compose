@@ -51,7 +51,7 @@ rules = "1.5.0"
 # @keep Non-`dependency` constant
 targetSdk = "33"
 junit5 = "5.10.0"
-truth = "1.1.4"
+truth = "1.1.5"
 
 [libraries]
 accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanist" }

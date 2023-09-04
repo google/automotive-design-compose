@@ -544,8 +544,8 @@ internal fun ContentDrawScope.render(
         vectorSize.ifPresent {
             val sizeList = vectorSize.get()
             if (sizeList.size == 2) {
-                val vecWidth = sizeList[0] * vectorScaleX
-                val vecHeight = sizeList[1] * vectorScaleY
+                val vecWidth = sizeList[0] * vectorScaleX * density
+                val vecHeight = sizeList[1] * vectorScaleY * density
                 if (style.left is Dimension.Percent) scaleX = frameSize.width / vecWidth
                 if (style.top is Dimension.Percent) scaleY = frameSize.height / vecHeight
             }

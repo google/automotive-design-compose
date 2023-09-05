@@ -297,7 +297,7 @@ internal fun designSwitcherDocId() = "Ljph4e3sC0lHcynfXpoh9f"
 
 internal fun designSwitcherDocName() = "DesignSwitcherDoc"
 
-private const val DISABLE_LIVE_MODE = true
+private const val DISABLE_LIVE_MODE = false
 
 private fun getLiveMode(): LiveUpdateMode {
     return if (DISABLE_LIVE_MODE) {

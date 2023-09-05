@@ -297,6 +297,13 @@ internal fun designSwitcherDocId() = "Ljph4e3sC0lHcynfXpoh9f"
 
 internal fun designSwitcherDocName() = "DesignSwitcherDoc"
 
+/**
+ * Disable Live Mode for the Design Switcher
+ *
+ * Controls whether the Design Switcher will fetch updates to it's DesignDoc from Figma.
+ *
+ * This should only be changed temporarily. Do not commit a change to `false`.
+ */
 private const val DISABLE_LIVE_MODE = true
 
 private fun getLiveMode(): LiveUpdateMode {

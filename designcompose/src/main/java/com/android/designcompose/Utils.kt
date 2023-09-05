@@ -58,6 +58,7 @@ import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
+import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
@@ -1148,4 +1149,46 @@ internal fun com.android.designcompose.serdegen.Path.log() {
             }
         }
     }
+}
+
+// Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
+// vectors that don't have sides.
+internal fun com.android.designcompose.serdegen.StrokeWeight.toUniform(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.top
+    }
+    return 0.0f
+}
+
+internal fun com.android.designcompose.serdegen.StrokeWeight.top(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.top
+    }
+    return 0.0f
+}
+
+internal fun com.android.designcompose.serdegen.StrokeWeight.left(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.left
+    }
+    return 0.0f
+}
+
+internal fun com.android.designcompose.serdegen.StrokeWeight.bottom(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.bottom
+    }
+    return 0.0f
+}
+
+internal fun com.android.designcompose.serdegen.StrokeWeight.right(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.right
+    }
+    return 0.0f
 }

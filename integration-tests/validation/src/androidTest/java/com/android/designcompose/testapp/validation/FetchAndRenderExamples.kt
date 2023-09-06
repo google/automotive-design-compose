@@ -17,24 +17,16 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.TestUtils
-import com.android.designcompose.docIdSemanticsKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertNotNull
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import kotlin.test.assertNotNull
-
-// Give up to 40 seconds for the doc to load
-const val fetchTimeoutMS: Long = 40000
 
 @RunWith(Parameterized::class)
 class FetchAndRenderExamples(
@@ -47,7 +39,6 @@ class FetchAndRenderExamples(
     @Before
     fun setUp() {
         DesignSettings.addFontFamily("Inter", interFont)
-        TestUtils.enableTestingLiveUpdate()
     }
 
     companion object {
@@ -57,32 +48,17 @@ class FetchAndRenderExamples(
             return EXAMPLES.filter { it.third != null }
                 .map { arrayOf(it.first, it.second, it.third!!) }
         }
-
-        @JvmStatic
-        @BeforeClass
-        fun setUpLiveUpdate(): Unit {
-            // Clear any previously fetched files (doesn't clear files form assets)
-            InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
-            TestUtils.enableTestingLiveUpdate()
-        }
     }
 
-    @OptIn(ExperimentalTestApi::class)
     @Test
     fun testFetchAndRender() {
         composeTestRule.setContent(fileComposable)
+        TestUtils.triggerLiveUpdate()
 
-        // Wait until the doc is displayed and we've received the first fetch of the file.
-        composeTestRule.waitUntilAtLeastOneExists(
-            SemanticsMatcher.expectValue(docIdSemanticsKey, fileId),
-            timeoutMillis = fetchTimeoutMS
-        )
-        composeTestRule.waitUntil(timeoutMillis = fetchTimeoutMS){
-            DesignSettings.designDocStatuses[fileId]?.lastUpdateFromFetch != null
-        }
-
+        composeTestRule.waitForIdle()
         with(DesignSettings.designDocStatuses[fileId]) {
             assertNotNull(this)
+            assertNotNull(lastUpdateFromFetch)
             assertNotNull(lastFetch)
             assertThat(isRendered).isTrue()
         }

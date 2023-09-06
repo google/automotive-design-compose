@@ -26,7 +26,6 @@ plugins {
 
 var applicationID = "com.android.designcompose.testapp.validation"
 
-@Suppress("UnstableApiUsage")
 android {
     namespace = applicationID
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -39,6 +38,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] = designcompose.figmaToken.get()
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -71,7 +71,7 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
-    packaging { resources { excludes.add("/META-INF/*") } }
+    packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
 }
 
 dependencies {
@@ -89,10 +89,13 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    androidTestImplementation(testFixtures(project(":designcompose")))
+    androidTestImplementation(kotlin("test"))
     androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.google.truth)
+    androidTestImplementation(libs.androidx.compose.ui.tooling)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.mockk.android)
-    androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.androidx.rules)
 }

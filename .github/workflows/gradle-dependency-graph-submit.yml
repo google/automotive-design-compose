@@ -41,6 +41,6 @@ jobs:
           egress-policy: audit
 
       - name: Retrieve dependency graph artifact from the Gradle builds and submit
-        uses: gradle/gradle-build-action@a4cf152f482c7ca97ef56ead29bf08bcd953284c # v2.7.0
+        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
           dependency-graph: download-and-submit

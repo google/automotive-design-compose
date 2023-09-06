@@ -146,7 +146,8 @@ val EXAMPLES: ArrayList<Pair<String, @Composable () -> Unit>> =
         Pair("Blend Modes", { BlendModeTest() }),
         Pair("Vector Rendering", { VectorRenderingTest() }),
         Pair("Dials Gauges", { DialsGaugesTest() }),
-        Pair("Masks", { MaskTest() })
+        Pair("Masks", { MaskTest() }),
+        Pair("Variable Borders", { VariableBorderTest() })
     )
 
 // TEST Basic Hello World example
@@ -1699,6 +1700,16 @@ interface MaskTest {
 @Composable
 fun MaskTest() {
     MaskTestDoc.Main()
+}
+
+@DesignDoc(id = "MWnVAfW3FupV4VMLNR1m67")
+interface VariableBorderTest {
+    @DesignComponent(node = "#MainFrame") fun Main()
+}
+
+@Composable
+fun VariableBorderTest() {
+    VariableBorderTestDoc.Main()
 }
 
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.figmaIntegration
+package com.android.designcompose.figmaIntegrationTests
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.platform.app.InstrumentationRegistry

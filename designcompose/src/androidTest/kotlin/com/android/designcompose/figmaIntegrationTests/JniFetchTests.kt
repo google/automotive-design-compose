@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.figmaIntegration
+package com.android.designcompose.figmaIntegrationTests
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.AccessDeniedException

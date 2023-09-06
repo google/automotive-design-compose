@@ -38,6 +38,8 @@ publishing {
         register<MavenPublication>("release") {
             pom { basePom() }
             afterEvaluate { from(components["default"]) }
+            // Gradle complains that Test Fixtures aren't compatible with older versions of maven,
+            // which we don't care about
             suppressPomMetadataWarningsFor("debugTestFixturesVariantDefaultApiPublication")
             suppressPomMetadataWarningsFor("debugTestFixturesVariantDefaultRuntimePublication")
             suppressPomMetadataWarningsFor("releaseTestFixturesVariantDefaultApiPublication")

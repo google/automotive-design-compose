@@ -22,8 +22,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
-import junit.framework.TestCase.assertNull
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import org.junit.Rule
 import org.junit.Test
 
@@ -48,12 +48,13 @@ class RenderTests {
         with(DesignSettings.designDocStatuses[designSwitcherDocId()]) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)
-            kotlin.test.assertNull(lastFetch)
-            kotlin.test.assertNull(lastUpdateFromFetch)
+            assertNull(lastFetch)
+            assertNull(lastUpdateFromFetch)
             assertThat(isRendered).isTrue()
         }
     }
 
+    /** Test that a missing serialized file will cause the correct behavior */
     @Test
     fun missingSerializedFileDoesNotRender() {
         // Clear any previous HelloWorld file (doesn't clear files form assets)
@@ -75,11 +76,13 @@ class RenderTests {
             .onNodeWithText("Document $helloWorldDocId not available", substring = true)
             .assertExists()
 
+        // It was not loaded from disk and did not render
         with(DesignSettings.designDocStatuses[helloWorldDocId]) {
-            // Base assumptions
             assertNotNull(this)
-            assertNull(lastLoadFromDisk)
             // What we're testing
+            assertNull(lastLoadFromDisk)
+            assertNull(lastFetch)
+            assertNull(lastUpdateFromFetch)
             assertThat(isRendered).isFalse()
         }
     }

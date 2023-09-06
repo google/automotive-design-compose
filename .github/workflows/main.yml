@@ -175,7 +175,7 @@ jobs:
         run: ./install-rust-toolchains.sh
 
       - name: Set up Rust Cache
-        uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
+        uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
@@ -299,7 +299,7 @@ jobs:
 
       - run: rustup toolchain install stable --profile minimal
 
-      - uses: Swatinem/rust-cache@578b235f6e5f613f7727f1c17bd3305b4d4d4e1f
+      - uses: Swatinem/rust-cache@e207df5d269b42b69c8bc5101da26f7d31feddb4
         with: 
           save-if: ${{ github.ref == 'refs/heads/main' }}
 

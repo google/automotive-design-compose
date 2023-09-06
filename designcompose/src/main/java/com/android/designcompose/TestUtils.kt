@@ -29,10 +29,9 @@ import kotlinx.coroutines.flow.flowOf
  * @param token: The Figma Access Token to authenticate with
  */
 @VisibleForTesting
-fun testOnlyEnableLiveUpdate(token: String) {
+fun testOnlyTriggerLiveUpdate(token: String) {
     DesignSettings.figmaApiKeyStateFlow = MutableStateFlow(token)
     DesignSettings.liveUpdatesEnabled = true
     DesignSettings.isDocumentLive = flowOf(true)
-    DocServer.firstFetch = true
-    DocServer.initializeLiveUpdate()
+    DocServer.fetchDocuments(true)
 }

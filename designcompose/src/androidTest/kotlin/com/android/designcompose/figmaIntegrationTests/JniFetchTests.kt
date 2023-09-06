@@ -89,7 +89,7 @@ class JniFetchTests {
         testFetch(veryLargeDocID)
     }
     @Test
-    fun invalidKey() {
+    fun invalidToken() {
         assertFailsWith(AccessDeniedException::class) {
             LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson, ProxyConfig())
         }

@@ -16,24 +16,24 @@
 
 package com.android.designcompose;
 
-import static com.android.designcompose.TestUtilsKt.testOnlyEnableLiveUpdate;
+import static com.android.designcompose.TestUtilsKt.testOnlyTriggerLiveUpdate;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 public class TestUtils {
 
     /**
-     * enableTestingLiveUpdate
+     * triggerLiveUpdate
      * <p>
      * Reads a Figma token from the instrumentation registry and
-     * uses it to enable Live Update for the test being run
+     * uses it to trigger a one-off Live Update fetch
      */
-    public static void enableTestingLiveUpdate() {
+    public static void triggerLiveUpdate() {
         String actualFigmaToken =
                 InstrumentationRegistry.getArguments().getString("FIGMA_ACCESS_TOKEN");
         if (actualFigmaToken == null)
             throw new RuntimeException("This test requires a Figma Access Token");
 
-        testOnlyEnableLiveUpdate(actualFigmaToken);
+        testOnlyTriggerLiveUpdate(actualFigmaToken);
     }
 }

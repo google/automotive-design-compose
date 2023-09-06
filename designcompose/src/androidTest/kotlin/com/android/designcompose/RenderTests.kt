@@ -16,7 +16,6 @@
 
 package com.android.designcompose
 
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -24,27 +23,35 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * Render tests
+ *
+ * Test behavior of loading and rendering files from storage Does not use live update or a Figma
+ * token
+ */
 class RenderTests {
-
     @get:Rule val composeTestRule = createComposeRule()
 
+    @Before
+    fun setup() {
+        // Clear any files from previous test runs
+        InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
+    }
     /**
      * Test that the DesignSwitcher will load from the disk and render. Test will fail if the doc
      * fails to deserialize
      */
-    @OptIn(ExperimentalTestApi::class)
     @Test
     fun loadDesignSwitcherFromDisk() {
         composeTestRule.setContent {
             DesignSwitcher(doc = null, currentDocId = "DEADBEEF", branchHash = null, setDocId = {})
         }
-        composeTestRule.waitUntilExactlyOneExists(
-            SemanticsMatcher.expectValue(docIdSemanticsKey, designSwitcherDocId()),
-            timeoutMillis = 1000
-        )
+
+        composeTestRule.waitForIdle()
         with(DesignSettings.designDocStatuses[designSwitcherDocId()]) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)
@@ -57,15 +64,10 @@ class RenderTests {
     /** Test that a missing serialized file will cause the correct behavior */
     @Test
     fun missingSerializedFileDoesNotRender() {
-        // Clear any previous HelloWorld file (doesn't clear files form assets)
-        InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
-
         composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "No one") }
-        composeTestRule.waitUntil(timeoutMillis = 1000) {
-            DesignSettings.designDocStatuses[helloWorldDocId] != null
-        }
-
         composeTestRule.waitForIdle()
+
+        // Test that...
         // No doc is rendered with this ID
         composeTestRule
             .onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey))
@@ -79,7 +81,6 @@ class RenderTests {
         // It was not loaded from disk and did not render
         with(DesignSettings.designDocStatuses[helloWorldDocId]) {
             assertNotNull(this)
-            // What we're testing
             assertNull(lastLoadFromDisk)
             assertNull(lastFetch)
             assertNull(lastUpdateFromFetch)

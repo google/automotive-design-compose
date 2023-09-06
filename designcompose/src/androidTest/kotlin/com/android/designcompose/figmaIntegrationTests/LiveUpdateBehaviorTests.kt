@@ -16,11 +16,13 @@
 
 package com.android.designcompose.figmaIntegrationTests
 
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.HelloWorldDoc
+import com.android.designcompose.TestUtils
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.docIdSemanticsKey
@@ -28,28 +30,42 @@ import com.android.designcompose.helloWorldDocId
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+
+@DesignDoc(id = helloWorldDocId)
+interface HelloWorldWrongNode {
+    @DesignComponent(node = "#NonExistentNode", hideDesignSwitcher = true) fun nonExistentFrame()
+}
 
 /**
  * Tests different DesignDoc loading situations
  *
  * All tests require a Figma Token
  */
-class LiveUpdateBehaviorTests : BaseLiveUpdateTest() {
+class LiveUpdateBehaviorTests {
+    @get:Rule val composeTestRule = createComposeRule()
+
+    @Before
+    fun setup() {
+        InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
+    }
 
     /**
      * Tests that HelloWorld can be fetched from Figma,
      *
      * This test will fail if you add HelloWorld to the assets for designcompose. Don't do that.
      */
-    @OptIn(ExperimentalTestApi::class)
     @Test
-    fun LiveUpdateFetchHellowWorldTest() {
+    fun fetchHelloWorld() {
         composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
-        composeTestRule.waitUntilExactlyOneExists(
-            SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId),
-            timeoutMillis = fetchTimeoutMS
-        )
+        TestUtils.triggerLiveUpdate()
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId))
+            .assertExists()
+
         with(DesignSettings.designDocStatuses[helloWorldDocId]) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
@@ -58,30 +74,15 @@ class LiveUpdateBehaviorTests : BaseLiveUpdateTest() {
             assertThat(isRendered).isTrue()
         }
     }
-}
 
-@DesignDoc(id = helloWorldDocId)
-interface HelloWorldWrongNode {
-    @DesignComponent(node = "#NonExistentNode", hideDesignSwitcher = true) fun nonExistentFrame()
-}
-
-/**
- * Test for the correct behavior when a doc is loaded with a missing root node
- *
- * This needs to be a separate class than the DesignDocStatusTests. It also uses the HelloWorld ID,
- * which means that it would pick up and use a previously cached version of it. (I tried to figure
- * out how to clean up the cached docs from an earlier test run, but ran into problems trying to
- * wait for the DocServer thread to finish so that I could clear the file
- */
-class LiveUpdateWrongNodeTest : BaseLiveUpdateTest() {
+    /** Test for the correct behavior when a doc is loaded with a missing root node */
     @Test
     fun wrongNodeCausesRenderFailure() {
         composeTestRule.setContent { HelloWorldWrongNodeDoc.nonExistentFrame() }
-        composeTestRule.waitUntil(fetchTimeoutMS) {
-            DesignSettings.designDocStatuses[helloWorldDocId]?.lastFetch != null
-        }
-
+        TestUtils.triggerLiveUpdate()
         composeTestRule.waitForIdle()
+
+        // Check that...
         // No doc is rendered with this ID
         composeTestRule
             .onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey))
@@ -92,7 +93,12 @@ class LiveUpdateWrongNodeTest : BaseLiveUpdateTest() {
             .onNodeWithText("Node \"#NonExistentNode\" not found", substring = true)
             .assertExists()
 
-        // Make sure isRendered is false
-        assertThat(DesignSettings.designDocStatuses[helloWorldDocId]?.isRendered).isFalse()
+        // The doc was fetched, but doesn't report it was rendered.
+        with(DesignSettings.designDocStatuses[helloWorldDocId]) {
+            assertNotNull(this)
+            assertNotNull(lastUpdateFromFetch)
+            assertNotNull(lastFetch)
+            assertThat(isRendered).isFalse()
+        }
     }
 }

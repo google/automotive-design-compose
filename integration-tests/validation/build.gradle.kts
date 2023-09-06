@@ -38,7 +38,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] = designcompose.figmaToken.get()
+        if (designcompose.figmaToken.isPresent) {
+            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =
+                designcompose.figmaToken.get()
+        }
         vectorDrawables.useSupportLibrary = true
     }
 

@@ -40,6 +40,7 @@ import java.io.FileInputStream
 import java.lang.ref.WeakReference
 import java.net.ConnectException
 import java.net.SocketException
+import java.time.LocalDateTime
 import java.util.Optional
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +67,32 @@ internal class LiveDocSubscriptions(
     val subscribers: ArrayList<LiveDocSubscription> = ArrayList(),
 )
 
+/**
+ * Design doc status
+ *
+ * Publicly accessible status for a DesignDoc. Accessible via DesignSettings.designDocStatuses
+ */
+class DesignDocStatus() {
+    // If set, the time when the doc was last loaded from storage. Otherwise, this has not happened
+    var lastLoadFromDisk: LocalDateTime? = null
+        internal set
+    // If set, the time when the doc's status was last updated from Figma, whether or not the doc
+    // had changed. If unset then the doc has not been successfully queried from Figma yet
+    var lastFetch: LocalDateTime? = null
+        internal set
+    // If set, the time when a full fetch of the doc from Figma was last performed.
+    // Otherwise this has not happened
+    var lastUpdateFromFetch: LocalDateTime? = null
+        internal set
+    // If true then the doc is currently being successfully rendered via Compose (may or may not be
+    // visible)
+    var isRendered: Boolean = false
+        internal set
+}
+
 object DesignSettings {
+
+    var designDocStatuses: HashMap<String, DesignDocStatus> = HashMap()
     internal var liveUpdatesEnabled = false
     // Toast.makeText causes a crash in AAOS on secondary displays with a
     // "display must not be null" error.  This flag is used to disable
@@ -314,6 +340,11 @@ internal fun DocServer.fetchDocuments(
 
                 // Remember the new document
                 synchronized(documents) { documents[id] = doc }
+                synchronized(DesignSettings.designDocStatuses) {
+                    val now = LocalDateTime.now()
+                    DesignSettings.designDocStatuses[id]?.lastFetch = now
+                    DesignSettings.designDocStatuses[id]?.lastUpdateFromFetch = now
+                }
 
                 // Get the list of subscribers to this document id
                 val subs: Array<LiveDocSubscription> =
@@ -334,6 +365,7 @@ internal fun DocServer.fetchDocuments(
                 }
                 Feedback.documentUpdated(id, subs.size)
             } else {
+                DesignSettings.designDocStatuses[id]?.lastFetch = LocalDateTime.now()
                 Feedback.documentUnchanged(id)
             }
         } catch (exception: Exception) {
@@ -416,6 +448,7 @@ internal fun DocServer.doc(
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }
+    DesignSettings.designDocStatuses.putIfAbsent(docId, DesignDocStatus())
 
     // See if we've already loaded this doc
     val preloadedDoc = synchronized(documents) { documents[docId] }
@@ -450,6 +483,8 @@ internal fun DocServer.doc(
                             )
                         if (targetDoc != null) {
                             documents[docId] = targetDoc
+                            DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk =
+                                LocalDateTime.now()
                         }
                     } catch (error: Throwable) {
                         Feedback.diskLoadFail(id, docId)
@@ -483,6 +518,8 @@ internal fun DocServer.doc(
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }
+            DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk = LocalDateTime.now()
+
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             return decodedDoc
         }

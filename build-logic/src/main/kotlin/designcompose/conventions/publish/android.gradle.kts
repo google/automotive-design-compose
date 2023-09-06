@@ -38,6 +38,10 @@ publishing {
         register<MavenPublication>("release") {
             pom { basePom() }
             afterEvaluate { from(components["default"]) }
+            suppressPomMetadataWarningsFor("debugTestFixturesVariantDefaultApiPublication")
+            suppressPomMetadataWarningsFor("debugTestFixturesVariantDefaultRuntimePublication")
+            suppressPomMetadataWarningsFor("releaseTestFixturesVariantDefaultApiPublication")
+            suppressPomMetadataWarningsFor("releaseTestFixturesVariantDefaultRuntimePublication")
         }
     }
 }

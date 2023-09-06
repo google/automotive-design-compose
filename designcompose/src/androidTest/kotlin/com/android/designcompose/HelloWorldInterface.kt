@@ -16,22 +16,16 @@
 
 package com.android.designcompose
 
-import com.android.designcompose.common.DocumentServerParams
-import kotlin.test.assertFailsWith
-import org.junit.Test
+import com.android.designcompose.annotation.Design
+import com.android.designcompose.annotation.DesignComponent
+import com.android.designcompose.annotation.DesignDoc
 
-val dummyFigmaTokenJson = constructPostJson("NOT_A_FIGMA_TOKEN", null, DocumentServerParams())
+const val helloWorldDocId = "pxVlixodJqZL95zo2RzTHl"
 
-class JniLiveWithoutTokenTests {
-    /**
-     * Invalid key test
-     *
-     * Tests that a fetch request using an invalid Figma API Key returns the proper failure
-     */
-    @Test
-    fun invalidKey() {
-        assertFailsWith(AccessDeniedException::class) {
-            LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson, ProxyConfig())
-        }
-    }
+@DesignDoc(id = helloWorldDocId)
+interface HelloWorld {
+    @DesignComponent(node = "#MainFrame", hideDesignSwitcher = true)
+    fun mainFrame(@Design(node = "#Name") name: String)
 }
+
+const val helloWorldFileName = "HelloWorldDoc_$helloWorldDocId.dcf"

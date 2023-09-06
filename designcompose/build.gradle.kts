@@ -18,6 +18,9 @@ plugins {
     kotlin("android")
     id("com.android.library")
     id("com.android.designcompose.rust-in-android")
+    alias(libs.plugins.ksp) // For testing a fetch of HelloWorld
+    alias(libs.plugins.designcompose) // Allows us to get the Figma Token
+
     // Plugins from our buildSrc
     id("designcompose.conventions.base")
     id("designcompose.conventions.publish.android")
@@ -30,13 +33,13 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = "25.2.9519653"
 
+    testFixtures { enable = true }
+
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
         consumerProguardFiles("consumer-proguard-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        System.getenv("FIGMA_ACCESS_TOKEN")?.let {
-            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] = it
-        }
+        testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] = designcompose.figmaToken.get()
     }
 
     buildFeatures { compose = true }
@@ -72,28 +75,25 @@ cargo {
 dependencies {
     api(project(":common"))
     api(project(":annotation"))
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.runtime.livedata)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.text)
+    implementation(libs.androidx.core)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.androidx.lifecycle.livedata.ktx)
-    api(libs.androidx.compose.foundation)
-    api(libs.androidx.compose.foundation.layout)
-    api(libs.androidx.compose.runtime)
-    api(libs.androidx.compose.runtime.livedata)
-    api(libs.androidx.compose.ui)
-    api(libs.androidx.compose.ui.text)
-    api(libs.androidx.lifecycle.runtime)
-    api(libs.androidx.lifecycle.livedata.core)
-    implementation(libs.accompanist.flowlayout)
-    implementation(libs.guavaAndroid)
-    implementation(libs.javax.annotationApi)
-    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.runtime.compose)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.mockk.android)
+    implementation(libs.guavaAndroid)
+    ksp(libs.designcompose.codegen)
+    androidTestImplementation(kotlin("test"))
+    androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.mockk.agent)
-    androidTestImplementation(libs.androidx.rules)
-    androidTestImplementation(libs.kotlinx.coroutines.test)
-    implementation(kotlin("test"))
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.androidx.compose.ui.test.manifest)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    testFixturesImplementation(libs.androidx.test.ext.junit)
 }

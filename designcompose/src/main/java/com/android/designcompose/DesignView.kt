@@ -60,6 +60,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -320,6 +323,10 @@ internal data class MaskInfo(
     // The type of node with respect to masking
     val type: MaskViewType?,
 )
+
+// Custom Compose Semantic that identifies a DesignCompose Composable
+val docIdSemanticsKey = SemanticsPropertyKey<String>("DocId")
+var SemanticsPropertyReceiver.sDocId by docIdSemanticsKey
 
 @Composable
 internal fun DesignView(
@@ -927,13 +934,14 @@ internal fun DesignDocInternal(
     var noFrameErrorMessage = ""
     var noFrameBgColor = Color(0x00000000)
 
+    // Reset the isRendered flag, only set it back to true if the DesignView properly displays
     if (doc != null) {
         val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)
         if (startFrame != null) {
             LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
                 DesignView(
-                    modifier,
+                    modifier.semantics { sDocId = docId },
                     startFrame,
                     variantParentName,
                     docId,
@@ -972,8 +980,10 @@ internal fun DesignDocInternal(
                 designSwitcher()
             }
 
+            DesignSettings.designDocStatuses[docId]?.isRendered = true
             return
         }
+        DesignSettings.designDocStatuses[docId]?.isRendered = false
         // We have a document, we have a starting frame name, but couldn't find the frame.
         if (rootFrameName.isNotEmpty()) {
             noFrameErrorMessage = "Node \"$rootFrameName\" not found in $docId"
@@ -981,6 +991,7 @@ internal fun DesignDocInternal(
             println("Node not found: rootNodeQuery $rootNodeQuery rootFrameName $rootFrameName")
         }
     } else {
+        DesignSettings.designDocStatuses[docId]?.isRendered = false
         // The doc is null, so either we're fetching it, or it's missing.
         noFrameErrorMessage =
             if (!DesignSettings.liveUpdatesEnabled) {

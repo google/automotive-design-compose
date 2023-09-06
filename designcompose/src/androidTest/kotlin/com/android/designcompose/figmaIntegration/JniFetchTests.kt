@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package com.android.designcompose
+package com.android.designcompose.figmaIntegration
 
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.designcompose.AccessDeniedException
+import com.android.designcompose.Feedback
+import com.android.designcompose.FigmaFileNotFoundException
+import com.android.designcompose.LiveUpdateJni
+import com.android.designcompose.ProxyConfig
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.constructPostJson
+import com.android.designcompose.decodeServerDoc
 import io.mockk.mockkObject
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -28,6 +35,8 @@ import org.junit.Test
 const val smallDocID = "pxVlixodJqZL95zo2RzTHl" // HelloWorld Doc
 const val largeDocID = "RfGl9SWnBEvdg8T1Ex6ZAR" // Battleship Doc
 const val veryLargeDocID = "KKvsSWtfwRYxYibnaVKBQK" // Cluster Doc
+val dummyFigmaTokenJson = constructPostJson("NOT_A_FIGMA_TOKEN", null, DocumentServerParams())
+
 /**
  * Jni fetch tests
  *
@@ -36,7 +45,7 @@ const val veryLargeDocID = "KKvsSWtfwRYxYibnaVKBQK" // Cluster Doc
  * These tests can be excluded by running Gradle with:
  * -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests
  */
-class JniLiveWithTokenTests {
+class JniFetchTests {
 
     private val actualFigmaToken: String? =
         InstrumentationRegistry.getArguments().getString("FIGMA_ACCESS_TOKEN")
@@ -78,5 +87,11 @@ class JniLiveWithTokenTests {
     @Test(expected = RuntimeException::class)
     fun veryLargeFetch() {
         testFetch(veryLargeDocID)
+    }
+    @Test
+    fun invalidKey() {
+        assertFailsWith(AccessDeniedException::class) {
+            LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson, ProxyConfig())
+        }
     }
 }

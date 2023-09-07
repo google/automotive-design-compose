@@ -40,7 +40,7 @@ import java.io.FileInputStream
 import java.lang.ref.WeakReference
 import java.net.ConnectException
 import java.net.SocketException
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.Optional
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
@@ -74,15 +74,15 @@ internal class LiveDocSubscriptions(
  */
 class DesignDocStatus() {
     // If set, the time when the doc was last loaded from storage. Otherwise, this has not happened
-    var lastLoadFromDisk: LocalDateTime? = null
+    var lastLoadFromDisk: Instant? = null
         internal set
     // If set, the time when the doc's status was last updated from Figma, whether or not the doc
     // had changed. If unset then the doc has not been successfully queried from Figma yet
-    var lastFetch: LocalDateTime? = null
+    var lastFetch: Instant? = null
         internal set
     // If set, the time when a full fetch of the doc from Figma was last performed.
     // Otherwise this has not happened
-    var lastUpdateFromFetch: LocalDateTime? = null
+    var lastUpdateFromFetch: Instant? = null
         internal set
     // If true then the doc is currently being successfully rendered via Compose (may or may not be
     // visible)
@@ -341,7 +341,7 @@ internal fun DocServer.fetchDocuments(
                 // Remember the new document
                 synchronized(documents) { documents[id] = doc }
                 synchronized(DesignSettings.designDocStatuses) {
-                    val now = LocalDateTime.now()
+                    val now = Instant.now()
                     DesignSettings.designDocStatuses[id]?.lastFetch = now
                     DesignSettings.designDocStatuses[id]?.lastUpdateFromFetch = now
                 }
@@ -365,7 +365,7 @@ internal fun DocServer.fetchDocuments(
                 }
                 Feedback.documentUpdated(id, subs.size)
             } else {
-                DesignSettings.designDocStatuses[id]?.lastFetch = LocalDateTime.now()
+                DesignSettings.designDocStatuses[id]?.lastFetch = Instant.now()
                 Feedback.documentUnchanged(id)
             }
         } catch (exception: Exception) {
@@ -484,7 +484,7 @@ internal fun DocServer.doc(
                         if (targetDoc != null) {
                             documents[docId] = targetDoc
                             DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk =
-                                LocalDateTime.now()
+                                Instant.now()
                         }
                     } catch (error: Throwable) {
                         Feedback.diskLoadFail(id, docId)
@@ -518,7 +518,7 @@ internal fun DocServer.doc(
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }
-            DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk = LocalDateTime.now()
+            DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk = Instant.now()
 
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             return decodedDoc

@@ -146,9 +146,9 @@ The Tutorial's DesignDoc is set to the main development Figma file, to assist in
 
 All instrumented tests can be run on a running emulator by running "./gradlew connectedCheck". Additionally they can be run on [Gradle Managed Devices](https://developer.android.com/studio/test/gradle-managed-devices). These devices are the standard test targets and all tests must pass on them prior to a release. They are collected into three gradle tasks:
 
-- `gmdTestsQuick` run the tests on an [ATD image](https://developer.android.com/studio/test/gradle-managed-devices#gmd-atd), which is optimized for instrumented tests.
-- `gmdTestsStandard` runs the tests on both the ATD and the most current Android image
-- `gmdTestsAll` runs the tests on all configured Gradle Managed devices,including the above and any additional APIs that have been chosen to be tested against.
+- `gmdTestQuick` run the tests on an [ATD image](https://developer.android.com/studio/test/gradle-managed-devices#gmd-atd), which is optimized for instrumented tests.
+- `gmdTestStandard` runs the tests on both the ATD and the most current Android image
+- `gmdTestAll` runs the tests on all configured Gradle Managed devices,including the above and any additional APIs that have been chosen to be tested against.
 
 Note: The first run will have some significant first-time setup as the GMDs are created.
 

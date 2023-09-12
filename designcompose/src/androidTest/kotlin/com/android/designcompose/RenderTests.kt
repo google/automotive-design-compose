@@ -50,9 +50,9 @@ class RenderTests {
             DesignSwitcher(doc = null, currentDocId = "DEADBEEF", branchHash = null, setDocId = {})
         }
 
-        composeTestRule.onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey)).assertExists()
-
         composeTestRule.waitForIdle()
+
+        composeTestRule.onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey)).assertExists()
         with(DesignSettings.designDocStatuses[designSwitcherDocId()]) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)

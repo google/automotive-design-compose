@@ -361,7 +361,9 @@ internal fun DocServer.fetchDocuments(
                 }
                 Feedback.documentUpdated(id, subs.size)
             } else {
-                DesignSettings.designDocStatuses[id]?.lastFetch = Instant.now()
+                synchronized(DesignSettings.designDocStatuses) {
+                    DesignSettings.designDocStatuses[id]?.lastFetch = Instant.now()
+                }
                 Feedback.documentUnchanged(id)
             }
         } catch (exception: Exception) {
@@ -441,10 +443,13 @@ internal fun DocServer.doc(
     }
 
     val id = "${resourceName}_$docId"
+    Log.d("froehtdebug", "$id recomposed")
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }
-    DesignSettings.designDocStatuses.putIfAbsent(docId, DesignDocStatus())
+    synchronized(DesignSettings.designDocStatuses) {
+        DesignSettings.designDocStatuses.putIfAbsent(docId, DesignDocStatus())
+    }
 
     // See if we've already loaded this doc
     val preloadedDoc = synchronized(documents) { documents[docId] }
@@ -479,8 +484,10 @@ internal fun DocServer.doc(
                             )
                         if (targetDoc != null) {
                             documents[docId] = targetDoc
-                            DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk =
-                                Instant.now()
+                            synchronized(DesignSettings.designDocStatuses) {
+                                DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk =
+                                    Instant.now()
+                            }
                         }
                     } catch (error: Throwable) {
                         Feedback.diskLoadFail(id, docId)
@@ -514,8 +521,9 @@ internal fun DocServer.doc(
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }
-            DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk = Instant.now()
-
+            synchronized(DesignSettings.designDocStatuses) {
+                DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk = Instant.now()
+            }
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             return decodedDoc
         }

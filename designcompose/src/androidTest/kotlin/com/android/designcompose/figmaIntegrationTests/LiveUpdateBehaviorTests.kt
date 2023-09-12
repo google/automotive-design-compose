@@ -27,7 +27,6 @@ import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.docIdSemanticsKey
 import com.android.designcompose.helloWorldDocId
-import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import org.junit.Before
@@ -71,7 +70,6 @@ class LiveUpdateBehaviorTests {
             assertNull(lastLoadFromDisk)
             assertNotNull(lastFetch)
             assertNotNull(lastUpdateFromFetch)
-            assertThat(isRendered).isTrue()
         }
     }
 
@@ -98,7 +96,6 @@ class LiveUpdateBehaviorTests {
             assertNotNull(this)
             assertNotNull(lastUpdateFromFetch)
             assertNotNull(lastFetch)
-            assertThat(isRendered).isFalse()
         }
     }
 }

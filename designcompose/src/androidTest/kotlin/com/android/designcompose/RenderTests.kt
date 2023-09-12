@@ -20,7 +20,6 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import org.junit.Before
@@ -51,13 +50,14 @@ class RenderTests {
             DesignSwitcher(doc = null, currentDocId = "DEADBEEF", branchHash = null, setDocId = {})
         }
 
+        composeTestRule.onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey)).assertExists()
+
         composeTestRule.waitForIdle()
         with(DesignSettings.designDocStatuses[designSwitcherDocId()]) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)
             assertNull(lastFetch)
             assertNull(lastUpdateFromFetch)
-            assertThat(isRendered).isTrue()
         }
     }
 
@@ -84,7 +84,6 @@ class RenderTests {
             assertNull(lastLoadFromDisk)
             assertNull(lastFetch)
             assertNull(lastUpdateFromFetch)
-            assertThat(isRendered).isFalse()
         }
     }
 }

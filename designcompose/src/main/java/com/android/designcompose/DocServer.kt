@@ -84,10 +84,6 @@ class DesignDocStatus() {
     // Otherwise this has not happened
     var lastUpdateFromFetch: Instant? = null
         internal set
-    // If true then the doc is currently being successfully rendered via Compose (may or may not be
-    // visible)
-    var isRendered: Boolean = false
-        internal set
 }
 
 object DesignSettings {

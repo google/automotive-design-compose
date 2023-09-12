@@ -980,10 +980,8 @@ internal fun DesignDocInternal(
                 designSwitcher()
             }
 
-            DesignSettings.designDocStatuses[docId]?.isRendered = true
             return
         }
-        DesignSettings.designDocStatuses[docId]?.isRendered = false
         // We have a document, we have a starting frame name, but couldn't find the frame.
         if (rootFrameName.isNotEmpty()) {
             noFrameErrorMessage = "Node \"$rootFrameName\" not found in $docId"
@@ -991,7 +989,6 @@ internal fun DesignDocInternal(
             println("Node not found: rootNodeQuery $rootNodeQuery rootFrameName $rootFrameName")
         }
     } else {
-        DesignSettings.designDocStatuses[docId]?.isRendered = false
         // The doc is null, so either we're fetching it, or it's missing.
         noFrameErrorMessage =
             if (!DesignSettings.liveUpdatesEnabled) {

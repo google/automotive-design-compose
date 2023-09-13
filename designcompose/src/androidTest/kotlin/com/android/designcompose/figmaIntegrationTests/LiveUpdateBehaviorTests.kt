@@ -65,7 +65,7 @@ class LiveUpdateBehaviorTests {
             .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId))
             .assertExists()
 
-        with(DesignSettings.designDocStatuses[helloWorldDocId]) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
             assertNotNull(lastFetch)
@@ -92,7 +92,7 @@ class LiveUpdateBehaviorTests {
             .assertExists()
 
         // The doc was fetched, but doesn't report it was rendered.
-        with(DesignSettings.designDocStatuses[helloWorldDocId]) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)
             assertNotNull(lastUpdateFromFetch)
             assertNotNull(lastFetch)

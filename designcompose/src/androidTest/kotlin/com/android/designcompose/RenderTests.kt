@@ -53,7 +53,7 @@ class RenderTests {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey)).assertExists()
-        with(DesignSettings.designDocStatuses[designSwitcherDocId()]) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(designSwitcherDocId())) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)
             assertNull(lastFetch)
@@ -79,7 +79,7 @@ class RenderTests {
             .assertExists()
 
         // It was not loaded from disk and did not render
-        with(DesignSettings.designDocStatuses[helloWorldDocId]) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
             assertNull(lastFetch)

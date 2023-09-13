@@ -22,6 +22,8 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.annotation.RestrictTo
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +35,6 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.android.designcompose.common.DocumentServerParams
-import com.google.common.annotations.VisibleForTesting
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -87,8 +88,6 @@ class DesignDocStatus() {
 }
 
 object DesignSettings {
-
-    var designDocStatuses: HashMap<String, DesignDocStatus> = HashMap()
     internal var liveUpdatesEnabled = false
     // Toast.makeText causes a crash in AAOS on secondary displays with a
     // "display must not be null" error.  This flag is used to disable
@@ -100,8 +99,13 @@ object DesignSettings {
     internal var figmaApiKeyStateFlow: StateFlow<String?>? = null
     internal var isDocumentLive: Flow<Boolean>? = null
     private var fontDb: HashMap<String, FontFamily> = HashMap()
+    internal var fileFetchStatus: HashMap<String, DesignDocStatus> = HashMap()
 
     @VisibleForTesting internal var defaultIODispatcher = Dispatchers.IO
+
+    @VisibleForTesting
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    fun testOnlyFigmaFetchStatus(fileId: String) = fileFetchStatus[fileId]
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun enableLiveUpdates(
@@ -336,10 +340,10 @@ internal fun DocServer.fetchDocuments(
 
                 // Remember the new document
                 synchronized(documents) { documents[id] = doc }
-                synchronized(DesignSettings.designDocStatuses) {
+                synchronized(DesignSettings.fileFetchStatus) {
                     val now = Instant.now()
-                    DesignSettings.designDocStatuses[id]?.lastFetch = now
-                    DesignSettings.designDocStatuses[id]?.lastUpdateFromFetch = now
+                    DesignSettings.fileFetchStatus[id]?.lastFetch = now
+                    DesignSettings.fileFetchStatus[id]?.lastUpdateFromFetch = now
                 }
 
                 // Get the list of subscribers to this document id
@@ -361,8 +365,8 @@ internal fun DocServer.fetchDocuments(
                 }
                 Feedback.documentUpdated(id, subs.size)
             } else {
-                synchronized(DesignSettings.designDocStatuses) {
-                    DesignSettings.designDocStatuses[id]?.lastFetch = Instant.now()
+                synchronized(DesignSettings.fileFetchStatus) {
+                    DesignSettings.fileFetchStatus[id]?.lastFetch = Instant.now()
                 }
                 Feedback.documentUnchanged(id)
             }
@@ -447,8 +451,8 @@ internal fun DocServer.doc(
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }
-    synchronized(DesignSettings.designDocStatuses) {
-        DesignSettings.designDocStatuses.putIfAbsent(docId, DesignDocStatus())
+    synchronized(DesignSettings.fileFetchStatus) {
+        DesignSettings.fileFetchStatus.putIfAbsent(docId, DesignDocStatus())
     }
 
     // See if we've already loaded this doc
@@ -484,8 +488,8 @@ internal fun DocServer.doc(
                             )
                         if (targetDoc != null) {
                             documents[docId] = targetDoc
-                            synchronized(DesignSettings.designDocStatuses) {
-                                DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk =
+                            synchronized(DesignSettings.fileFetchStatus) {
+                                DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk =
                                     Instant.now()
                             }
                         }
@@ -521,8 +525,8 @@ internal fun DocServer.doc(
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }
-            synchronized(DesignSettings.designDocStatuses) {
-                DesignSettings.designDocStatuses[docId]?.lastLoadFromDisk = Instant.now()
+            synchronized(DesignSettings.fileFetchStatus) {
+                DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
             }
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             return decodedDoc

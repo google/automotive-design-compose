@@ -42,6 +42,9 @@ interface HelloWorldWrongNode {
  * Tests different DesignDoc loading situations
  *
  * All tests require a Figma Token
+ *
+ * These tests can be excluded by running Gradle with:
+ * -Pandroid.testInstrumentationRunnerArguments.notPackage=com.android.designcompose.figmaIntegrationTests
  */
 class LiveUpdateBehaviorTests {
     @get:Rule val composeTestRule = createComposeRule()

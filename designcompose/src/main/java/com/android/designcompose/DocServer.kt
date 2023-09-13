@@ -447,7 +447,6 @@ internal fun DocServer.doc(
     }
 
     val id = "${resourceName}_$docId"
-    Log.d("froehtdebug", "$id recomposed")
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }

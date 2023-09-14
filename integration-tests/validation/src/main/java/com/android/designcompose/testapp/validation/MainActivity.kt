@@ -131,6 +131,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Recurse Customization", { RecursiveCustomizations() }, "o0GWzcqdOWEgzj4kIeIlAu"),
         Triple("Color Tint", { ColorTintTest() }, "MCtUD3yjONxK6rQm65yqM5"),
         Triple("Variant Properties", { VariantPropertiesTest() }, "4P7zDdrQxj7FZsKJoIQcx1"),
+        // Lazy Grid doesn't actually use a doc
         Triple("Lazy Grid", { LazyGridItemSpans() }, null),
         Triple("Grid Layout", { GridLayoutTest() }, "JOSOEvsrjvMqanyQa5OpNR"),
         Triple("Grid Widget", { GridWidgetTest() }, "OBhNItd9i9J2LwVYuLxEIx"),

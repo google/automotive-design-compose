@@ -38,6 +38,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        if (designcompose.figmaToken.isPresent) {
+            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =
+                designcompose.figmaToken.get()
+        }
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -75,6 +79,7 @@ android {
 
 dependencies {
     implementation(project(":designcompose"))
+    androidTestImplementation(testFixtures(project(":designcompose")))
     ksp(project(":codegen"))
 
     val composeBom = platform(libs.androidx.compose.bom)
@@ -88,6 +93,8 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    androidTestImplementation(kotlin("test"))
+    androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espresso.core)

@@ -16,20 +16,42 @@
 
 package com.android.designcompose.testapp.helloworld
 
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.android.designcompose.DesignSettings
+import com.android.designcompose.TestUtils
+import com.android.designcompose.docIdSemanticsKey
+import kotlin.test.assertNotNull
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-class BasicTests {
+class TestFetchAndRender {
     @get:Rule val composeTestRule = createComposeRule()
+
+    @Before
+    fun setup() {
+        InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
+    }
 
     @Test
     fun testHello() {
         composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
+        TestUtils.triggerLiveUpdate()
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId))
+            .assertExists()
+
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
+            assertNotNull(this)
+            assertNotNull(lastLoadFromDisk)
+            assertNotNull(lastFetch)
+            assertNotNull(lastUpdateFromFetch)
+        }
+
         composeTestRule.onNodeWithText("Testers!", substring = true).assertExists()
     }
 }

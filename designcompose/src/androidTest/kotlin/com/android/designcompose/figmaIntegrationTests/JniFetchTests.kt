@@ -43,7 +43,7 @@ val dummyFigmaTokenJson = constructPostJson("NOT_A_FIGMA_TOKEN", null, DocumentS
  * These tests use the JNI Library and will reach out to Figma.com itself.
  *
  * These tests can be excluded by running Gradle with:
- * -Pandroid.testInstrumentationRunnerArguments.notClass=com.android.designcompose.JniLiveWithTokenTests
+ * -Pandroid.testInstrumentationRunnerArguments.notPackage=com.android.designcompose.figmaIntegrationTests
  */
 class JniFetchTests {
 

@@ -27,7 +27,9 @@ import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.testapp.helloworld.ui.theme.helloworldTheme
 
-@DesignDoc(id = "pxVlixodJqZL95zo2RzTHl")
+const val helloWorldDocId = "pxVlixodJqZL95zo2RzTHl"
+
+@DesignDoc(id = helloWorldDocId)
 interface HelloWorld {
     @DesignComponent(node = "#MainFrame") fun mainFrame(@Design(node = "#Name") name: String)
 }

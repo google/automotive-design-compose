@@ -99,12 +99,16 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.guavaAndroid)
+
+    debugImplementation(libs.androidx.compose.ui.tooling)
+
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
-    androidTestImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+
     testFixturesImplementation(libs.androidx.test.ext.junit)
 }

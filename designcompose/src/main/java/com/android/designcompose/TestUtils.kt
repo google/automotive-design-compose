@@ -16,19 +16,21 @@
 
 package com.android.designcompose
 
+import androidx.annotation.RestrictTo
 import com.google.common.annotations.VisibleForTesting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 /**
- * For use in tests only
+ * For use in tests only, restricted to use via the test fixture.
  *
- * Enable Live Update using a given Figma Token This skips the LiveUpdateSettings setup and
+ * Enable Live Update using a given Figma Token. This skips the LiveUpdateSettings setup and
  * coroutine flows associated with it, which simplifies its use in tests.
  *
  * @param token: The Figma Access Token to authenticate with
  */
 @VisibleForTesting
+@RestrictTo(RestrictTo.Scope.LIBRARY)
 fun testOnlyTriggerLiveUpdate(token: String) {
     DesignSettings.figmaApiKeyStateFlow = MutableStateFlow(token)
     DesignSettings.liveUpdatesEnabled = true

@@ -16,16 +16,23 @@
 
 package com.android.designcompose
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+
+@Preview()
+@Composable
+fun DesignSwitcherDeadbeef() {
+    DesignSwitcher(doc = null, currentDocId = "DEADBEEF", branchHash = null, setDocId = {})
+}
 
 /**
  * Render tests
@@ -47,17 +54,18 @@ class RenderTests {
      */
     @Test
     fun loadDesignSwitcherFromDisk() {
-        composeTestRule.setContent {
-            DesignSwitcher(doc = null, currentDocId = "DEADBEEF", branchHash = null, setDocId = {})
-        }
+        composeTestRule.setContent { DesignSwitcherDeadbeef() }
 
         composeTestRule.waitForIdle()
-        with(DesignSettings.designDocStatuses[designSwitcherDocId()]) {
+
+        composeTestRule
+            .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, designSwitcherDocId()))
+            .assertExists()
+        with(DesignSettings.testOnlyFigmaFetchStatus(designSwitcherDocId())) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)
             assertNull(lastFetch)
             assertNull(lastUpdateFromFetch)
-            assertThat(isRendered).isTrue()
         }
     }
 
@@ -79,12 +87,11 @@ class RenderTests {
             .assertExists()
 
         // It was not loaded from disk and did not render
-        with(DesignSettings.designDocStatuses[helloWorldDocId]) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
             assertNull(lastFetch)
             assertNull(lastUpdateFromFetch)
-            assertThat(isRendered).isFalse()
         }
     }
 }

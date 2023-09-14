@@ -27,7 +27,6 @@ import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.docIdSemanticsKey
 import com.android.designcompose.helloWorldDocId
-import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import org.junit.Before
@@ -43,6 +42,9 @@ interface HelloWorldWrongNode {
  * Tests different DesignDoc loading situations
  *
  * All tests require a Figma Token
+ *
+ * These tests can be excluded by running Gradle with:
+ * -Pandroid.testInstrumentationRunnerArguments.notPackage=com.android.designcompose.figmaIntegrationTests
  */
 class LiveUpdateBehaviorTests {
     @get:Rule val composeTestRule = createComposeRule()
@@ -66,12 +68,11 @@ class LiveUpdateBehaviorTests {
             .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId))
             .assertExists()
 
-        with(DesignSettings.designDocStatuses[helloWorldDocId]) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
             assertNotNull(lastFetch)
             assertNotNull(lastUpdateFromFetch)
-            assertThat(isRendered).isTrue()
         }
     }
 
@@ -93,12 +94,11 @@ class LiveUpdateBehaviorTests {
             .onNodeWithText("Node \"#NonExistentNode\" not found", substring = true)
             .assertExists()
 
-        // The doc was fetched, but doesn't report it was rendered.
-        with(DesignSettings.designDocStatuses[helloWorldDocId]) {
+        // The doc was fetched
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)
             assertNotNull(lastUpdateFromFetch)
             assertNotNull(lastFetch)
-            assertThat(isRendered).isFalse()
         }
     }
 }

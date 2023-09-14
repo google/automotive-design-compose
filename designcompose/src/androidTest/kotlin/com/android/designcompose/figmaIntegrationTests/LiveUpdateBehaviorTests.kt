@@ -94,7 +94,7 @@ class LiveUpdateBehaviorTests {
             .onNodeWithText("Node \"#NonExistentNode\" not found", substring = true)
             .assertExists()
 
-        // The doc was fetched, but doesn't report it was rendered.
+        // The doc was fetched
         with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)
             assertNotNull(lastUpdateFromFetch)

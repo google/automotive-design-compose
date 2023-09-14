@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.flowOf
 /**
  * For use in tests only, restricted to use via the test fixture.
  *
- * Enable Live Update using a given Figma Token This skips the LiveUpdateSettings setup and
+ * Enable Live Update using a given Figma Token. This skips the LiveUpdateSettings setup and
  * coroutine flows associated with it, which simplifies its use in tests.
  *
  * @param token: The Figma Access Token to authenticate with

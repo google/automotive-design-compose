@@ -144,7 +144,10 @@ jobs:
           path: build/designcompose_m2repo.zip
   
   tutorial-app:
-    runs-on: ubuntu-latest
+    strategy: 
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     needs: build-maven-repo
     steps:       
     - name: Harden Runner

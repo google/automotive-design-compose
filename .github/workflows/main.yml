@@ -217,7 +217,7 @@ jobs:
     - name: Set up Gradle
       uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.4.2
       with:
-        dependency-graph: generate
+        dependency-graph: ${{ matrix.os == 'ubuntu-latest' && 'generate' ||  'disabled' }}
         gradle-home-cache-cleanup: true
 
     - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2

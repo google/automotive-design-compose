@@ -217,6 +217,7 @@ jobs:
     - name: Set up Gradle
       uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.4.2
       with:
+        # This is GitHub's ternary operator
         dependency-graph: ${{ matrix.os == 'ubuntu-latest' && 'generate' ||  'disabled' }}
         gradle-home-cache-cleanup: true
 
@@ -225,16 +226,13 @@ jobs:
         name: designcompose_m2repo
         path: designcompose_m2repo
     
-    - name: "Set environment variables"
-      run: |
-        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
-
     - name: Check Tutorial App
       uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.7.1
       with:
         build-root-directory: reference-apps/tutorial
         arguments: |
           --init-script ../local-design-compose-repo.init.gradle.kts
+          -PDesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo
           build
 
 

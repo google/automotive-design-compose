@@ -741,6 +741,14 @@ fn default_stroke_cap() -> StrokeCap {
     StrokeCap::None
 }
 
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone, Copy)]
+pub struct StrokeWeights {
+    pub top: f32,
+    pub right: f32,
+    pub bottom: f32,
+    pub left: f32,
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum NodeData {
@@ -837,6 +845,7 @@ pub struct Node {
     pub visible: bool,
     pub blend_mode: Option<BlendMode>,
     pub stroke_weight: Option<f32>,
+    pub individual_stroke_weights: Option<StrokeWeights>,
     pub stroke_align: Option<StrokeAlign>,
     pub corner_radius: Option<f32>,
     pub rectangle_corner_radii: Option<[f32; 4]>,

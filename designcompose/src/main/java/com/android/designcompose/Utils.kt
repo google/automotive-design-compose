@@ -58,6 +58,7 @@ import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
+import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
@@ -274,6 +275,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             override.transform
         } else {
             base.transform
+        }
+    style.relative_transform =
+        if (override.relative_transform.isPresent) {
+            override.relative_transform
+        } else {
+            base.relative_transform
         }
     style.text_align =
         if (override.text_align !is TextAlign.Left) {
@@ -1057,7 +1064,11 @@ internal fun Background.asBrush(document: DocContent, density: Float): Pair<Brus
     return null
 }
 
-internal fun com.android.designcompose.serdegen.Path.asPath(density: Float): Path {
+internal fun com.android.designcompose.serdegen.Path.asPath(
+    density: Float,
+    scaleX: Float,
+    scaleY: Float
+): Path {
     val MOVE_TO: Byte = 0
     val LINE_TO: Byte = 1
     val CUBIC_TO: Byte = 2
@@ -1074,27 +1085,27 @@ internal fun com.android.designcompose.serdegen.Path.asPath(density: Float): Pat
     for (cmd in this.commands) {
         when (cmd) {
             MOVE_TO -> {
-                p.moveTo(this.data[idx++] * density, this.data[idx++] * density)
+                p.moveTo(this.data[idx++] * density * scaleX, this.data[idx++] * density * scaleY)
             }
             LINE_TO -> {
-                p.lineTo(this.data[idx++] * density, this.data[idx++] * density)
+                p.lineTo(this.data[idx++] * density * scaleX, this.data[idx++] * density * scaleY)
             }
             CUBIC_TO -> {
                 p.cubicTo(
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY,
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY,
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY,
                 )
             }
             QUAD_TO -> {
                 p.quadraticBezierTo(
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density,
-                    this.data[idx++] * density
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY,
+                    this.data[idx++] * density * scaleX,
+                    this.data[idx++] * density * scaleY
                 )
             }
             CLOSE -> {
@@ -1138,4 +1149,46 @@ internal fun com.android.designcompose.serdegen.Path.log() {
             }
         }
     }
+}
+
+// Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
+// vectors that don't have sides.
+internal fun com.android.designcompose.serdegen.StrokeWeight.toUniform(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.top
+    }
+    return 0.0f
+}
+
+internal fun com.android.designcompose.serdegen.StrokeWeight.top(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.top
+    }
+    return 0.0f
+}
+
+internal fun com.android.designcompose.serdegen.StrokeWeight.left(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.left
+    }
+    return 0.0f
+}
+
+internal fun com.android.designcompose.serdegen.StrokeWeight.bottom(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.bottom
+    }
+    return 0.0f
+}
+
+internal fun com.android.designcompose.serdegen.StrokeWeight.right(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return this.right
+    }
+    return 0.0f
 }

@@ -1,59 +1,59 @@
 [versions]
 accompanist = "0.30.1"
-android-car-ui = "2.4.0"
+android-car-ui = "2.5.1"
 android-gms-ossLicenses = "17.0.1"
 android-gms-strictVersionMatcher = "1.2.4"
-android-gradlePlugin = "8.0.2"
+android-gradlePlugin = "8.1.0"
 # The minimum supported AGP version for DesignCompose Apps
 # @pin - Manually update
 android-gradlePlugin-minSupported = "7.3.1"
-androidx-activity-compose = "1.7.1"
+androidx-activity-compose = "1.7.2"
 androidx-appcompat = "1.6.1"
-androidx-compose-bom = "2023.05.00"
+androidx-compose-bom = "2023.06.01"
 # @keep Non-`dependency` constant
-androidx-compose-compiler = "1.4.8"
+androidx-compose-compiler = "1.5.1"
 androidx-compose-foundation = "1.4.3"
 androidx-compose-runtime = "1.4.3"
 androidx-compose-ui = "1.4.3"
 androidx-constraintlayout = "2.1.4"
 androidx-legacy-support-v4 = "1.0.0"
-androidx-lifecycle = "2.6.1"
+androidx-lifecycle = "2.6.2"
 androidx-media = "1.6.0"
 androidx-test-espresso = "3.5.1"
 androidx-test-ext-junit = "1.1.5"
 # @keep Non-`dependency` constant
 appMinSdk = "30"
-appauth = "0.11.1"
 # @keep Non-`dependency` constant
 compileSdk = "33"
 datastoreCore = "1.0.0"
 datastorePreferences = "1.0.0"
-designcompose = "0.22.0-SNAPSHOT"
-dokka = "1.8.10"
-grpc = "1.54.1"
+designcompose = "0.24.0-SNAPSHOT"
+dokka = "1.9.0"
 gson = "2.10.1"
-guavaAndroid = "31.1-android"
-guavaJre = "31.1-jre"
+guavaAndroid = "32.1.2-android"
+guavaJre = "32.1.2-android"
 hikariCP = "5.0.1"
 javax-annotation = "1.3.2"
 junit = "4.13.2"
 # @pin - Compose Compiler doesn't support the latest Kotlin version yet
-kotlin = "1.8.22"
-kotlinxCoroutinesTest = "1.7.0"
+kotlin = "1.9.0"
+kotlinxCoroutinesTest = "1.7.3"
 # @pin - KSP version depends on  Kotlin version
-ksp = "1.8.22-1.0.11"
+ksp = "1.9.0-1.0.13"
 ktfmt = "0.12.0"
 material = "1.9.0"
 # @keep Non-`dependency` constant
 minSdk = "26"
 mockito = "5.1.1"
-mockkAgent = "1.13.5"
-mockkAndroid = "1.13.5"
+mockk = "1.13.7"
 mysql = "8.0.32"
 rules = "1.5.0"
-rustAndroidGradle = "0.9.3"
 # @keep Non-`dependency` constant
 targetSdk = "33"
+junit5 = "5.10.0"
+truth = "1.1.5"
+core = "1.10.1"
+activityKtx = "1.7.2"
 
 [libraries]
 accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanist" }
@@ -87,11 +87,9 @@ androidx-media = { module = "androidx.media:media", version.ref = "androidx-medi
 androidx-rules = { module = "androidx.test:rules", version.ref = "rules" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
-appauth = { module = "net.openid:appauth", version.ref = "appauth" }
 designcompose = { module = "com.android.designcompose:designcompose", version.ref = "designcompose" }
 designcompose-codegen = { module = "com.android.designcompose:codegen", version.ref = "designcompose" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
-grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guavaAndroid = { module = "com.google.guava:guava", version.ref = "guavaAndroid" }
 guavaJre = { module = "com.google.guava:guava", version.ref = "guavaJre" }
@@ -104,9 +102,12 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
-mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
-mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockkAgent" }
-mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockkAndroid" }
+mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockk" }
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
+google-truth = { module = "com.google.truth:truth", version.ref = "truth" }
+junit-jupiter = {module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 
 [plugins]
 designcompose = { id = "com.android.designcompose", version.ref = "designcompose" }

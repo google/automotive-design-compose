@@ -34,7 +34,7 @@ pub mod toolkit_schema;
 pub mod toolkit_style;
 mod transform_flexbox;
 mod utils;
-mod vector_schema;
+pub mod vector_schema;
 // Exports for library users
 pub use document::{Document, NodeQuery};
 pub use error::Error;

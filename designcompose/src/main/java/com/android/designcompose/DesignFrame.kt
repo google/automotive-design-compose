@@ -325,7 +325,7 @@ internal fun DesignFrame(
             // one
             // is specified.
             val lazyItemContent: LazyGridScope.() -> Unit = {
-                val lContent = lazyContent!! { nodeData ->
+                val lContent = lazyContent { nodeData ->
                     getSpan(layoutInfo.gridSpanContent, nodeData)
                 }
 

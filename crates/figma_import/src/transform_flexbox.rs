@@ -27,7 +27,6 @@ use crate::toolkit_style::{
     LineHeight, MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
 };
 
-use crate::figma_schema::TextAutoResize;
 use crate::vector_schema;
 use crate::{
     component_context::ComponentContext,
@@ -35,8 +34,8 @@ use crate::{
     figma_schema::{
         BlendMode, Component, ComponentSet, EffectType, HorizontalLayoutConstraintValue,
         LayoutAlign, LayoutAlignItems, LayoutMode, LayoutSizingMode, LineHeightUnit, Node,
-        NodeData, PaintData, StrokeAlign, TextAlignHorizontal, TextAlignVertical,
-        VerticalLayoutConstraintValue,
+        NodeData, PaintData, StrokeAlign, TextAlignHorizontal, TextAlignVertical, TextAutoResize,
+        Vector, VerticalLayoutConstraintValue,
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
@@ -633,6 +632,10 @@ fn visit_node(
                 get(transform, 0, 2),
                 get(transform, 1, 2),
             );
+
+            // Provide an unaltered transform from the last relevant parent.
+            style.relative_transform = Some(r.clone());
+            // And an additional transform with translation removed.
             let r = r.post_translate(euclid::vec3(
                 -(bounds.x() - parent_bounds.x()),
                 -(bounds.y() - parent_bounds.y()),
@@ -1069,8 +1072,15 @@ fn visit_node(
 
     // Copy out the common styles from frames and supported content.
     style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
-    if let Some(stroke_weight) = node.stroke_weight {
-        style.stroke.stroke_weight = stroke_weight;
+    if let Some(individual_stroke_weights) = node.individual_stroke_weights {
+        style.stroke.stroke_weight = crate::toolkit_style::StrokeWeight::Individual {
+            top: individual_stroke_weights.top,
+            right: individual_stroke_weights.right,
+            bottom: individual_stroke_weights.bottom,
+            left: individual_stroke_weights.left,
+        };
+    } else if let Some(stroke_weight) = node.stroke_weight {
+        style.stroke.stroke_weight = crate::toolkit_style::StrokeWeight::Uniform(stroke_weight);
     }
     style.stroke.stroke_align = match node.stroke_align {
         Some(StrokeAlign::Inside) => crate::toolkit_style::StrokeAlign::Inside,
@@ -1122,15 +1132,25 @@ fn visit_node(
         }
     };
 
+    // Save the vector frame size which is needed to compare against the
+    // runtime frame size to calculate the scaling factor if a vector's
+    // constraints are set to scale.
+    let mut vector_size: Option<(f32, f32)> = None;
+    if let Some(Vector { x: Some(x), y: Some(y) }) = &node.size {
+        vector_size = Some((*x, *y));
+    }
     // Figure out the ViewShape from the node type.
     let view_shape = match &node.data {
         NodeData::BooleanOperation { vector, .. }
         | NodeData::Line { vector }
         | NodeData::RegularPolygon { vector }
         | NodeData::Star { vector }
-        | NodeData::Vector { vector } => {
-            ViewShape::Path { path: fill_paths, stroke: stroke_paths, is_mask: vector.is_mask }
-        }
+        | NodeData::Vector { vector } => ViewShape::Path {
+            path: fill_paths,
+            stroke: stroke_paths,
+            size: vector_size,
+            is_mask: vector.is_mask,
+        },
         // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
         // to support progress bars. If this node is set up as a progress bar, the renderer will
         // construct the rectangle, modified by progress bar parameters. Otherwise it will be
@@ -1153,6 +1173,7 @@ fn visit_node(
             sweep_angle_degrees: arc_data.ending_angle,
             inner_radius: arc_data.inner_radius,
             corner_radius: 0.0, // corner radius is only exposed in the plugin data
+            size: vector_size,
             is_mask: vector.is_mask,
         },
         NodeData::Frame { frame }
@@ -1229,7 +1250,7 @@ fn visit_node(
     );
 
     // Iterate over our visible children, but not vectors because they always
-    // present their childrens content themselves (e.g.: they are boolean products
+    // present their children's content themselves (e.g.: they are boolean products
     // of their children).
     if node.vector().is_none() {
         for child in node.children.iter() {

@@ -22,6 +22,8 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.annotation.RestrictTo
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
@@ -33,13 +35,13 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.android.designcompose.common.DocumentServerParams
-import com.google.common.annotations.VisibleForTesting
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.lang.ref.WeakReference
 import java.net.ConnectException
 import java.net.SocketException
+import java.time.Instant
 import java.util.Optional
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
@@ -66,6 +68,25 @@ internal class LiveDocSubscriptions(
     val subscribers: ArrayList<LiveDocSubscription> = ArrayList(),
 )
 
+/**
+ * Design doc status
+ *
+ * Publicly accessible status for a DesignDoc. Accessible via DesignSettings.designDocStatuses
+ */
+class DesignDocStatus() {
+    // If set, the time when the doc was last loaded from storage. Otherwise, this has not happened
+    var lastLoadFromDisk: Instant? = null
+        internal set
+    // If set, the time when the doc's status was last updated from Figma, whether or not the doc
+    // had changed. If unset then the doc has not been successfully queried from Figma yet
+    var lastFetch: Instant? = null
+        internal set
+    // If set, the time when a full fetch of the doc from Figma was last performed.
+    // Otherwise this has not happened
+    var lastUpdateFromFetch: Instant? = null
+        internal set
+}
+
 object DesignSettings {
     internal var liveUpdatesEnabled = false
     // Toast.makeText causes a crash in AAOS on secondary displays with a
@@ -78,8 +99,13 @@ object DesignSettings {
     internal var figmaApiKeyStateFlow: StateFlow<String?>? = null
     internal var isDocumentLive: Flow<Boolean>? = null
     private var fontDb: HashMap<String, FontFamily> = HashMap()
+    internal var fileFetchStatus: HashMap<String, DesignDocStatus> = HashMap()
 
     @VisibleForTesting internal var defaultIODispatcher = Dispatchers.IO
+
+    @VisibleForTesting
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    fun testOnlyFigmaFetchStatus(fileId: String) = fileFetchStatus[fileId]
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun enableLiveUpdates(
@@ -314,6 +340,11 @@ internal fun DocServer.fetchDocuments(
 
                 // Remember the new document
                 synchronized(documents) { documents[id] = doc }
+                synchronized(DesignSettings.fileFetchStatus) {
+                    val now = Instant.now()
+                    DesignSettings.fileFetchStatus[id]?.lastFetch = now
+                    DesignSettings.fileFetchStatus[id]?.lastUpdateFromFetch = now
+                }
 
                 // Get the list of subscribers to this document id
                 val subs: Array<LiveDocSubscription> =
@@ -334,6 +365,9 @@ internal fun DocServer.fetchDocuments(
                 }
                 Feedback.documentUpdated(id, subs.size)
             } else {
+                synchronized(DesignSettings.fileFetchStatus) {
+                    DesignSettings.fileFetchStatus[id]?.lastFetch = Instant.now()
+                }
                 Feedback.documentUnchanged(id)
             }
         } catch (exception: Exception) {
@@ -416,6 +450,9 @@ internal fun DocServer.doc(
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }
+    synchronized(DesignSettings.fileFetchStatus) {
+        DesignSettings.fileFetchStatus.putIfAbsent(docId, DesignDocStatus())
+    }
 
     // See if we've already loaded this doc
     val preloadedDoc = synchronized(documents) { documents[docId] }
@@ -450,6 +487,10 @@ internal fun DocServer.doc(
                             )
                         if (targetDoc != null) {
                             documents[docId] = targetDoc
+                            synchronized(DesignSettings.fileFetchStatus) {
+                                DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk =
+                                    Instant.now()
+                            }
                         }
                     } catch (error: Throwable) {
                         Feedback.diskLoadFail(id, docId)
@@ -483,6 +524,9 @@ internal fun DocServer.doc(
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }
+            synchronized(DesignSettings.fileFetchStatus) {
+                DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
+            }
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             return decodedDoc
         }

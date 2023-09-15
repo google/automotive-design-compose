@@ -52,6 +52,9 @@ dependencies {
 
     api(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.runtime.livedata)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
     implementation(libs.androidx.legacy.support.v4)
 
     // The following dependencies are provided by the unbundled aaos repository

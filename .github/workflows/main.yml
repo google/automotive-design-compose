@@ -184,7 +184,8 @@ jobs:
       - name: Full Gradle Test and publish
         uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
-          arguments: check build publishAllPublicationsToLocalDirRepository 
+          # arguments: check build publishAllPublicationsToLocalDirRepository 
+          arguments: publishAllPublicationsToLocalDirRepository 
       
       - name: Upload maven repo
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3

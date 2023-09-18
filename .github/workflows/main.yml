@@ -187,7 +187,7 @@ jobs:
           arguments: check build publishAllPublicationsToLocalDirRepository 
       
       - name: Upload maven repo
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: designcompose_m2repo
           path: build/designcompose_m2repo/
@@ -226,13 +226,24 @@ jobs:
         name: designcompose_m2repo
         path: designcompose_m2repo
     
+    - name: "Set environment variables (Linux/Mac)"
+      if: ${{ matrix.os != 'windows-latest'}}
+      run: |
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+
+    - name: "Set environment variables (Windows)"
+      if: ${{ matrix.os == 'windows-latest'}}
+      run: |
+        chcp 65001 #set code page to utf-8
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$env:GITHUB_WORKSPACE/designcompose_m2repo" >> "$env:GITHUB_ENV"
+
+
     - name: Check Tutorial App
       uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.7.1
       with:
         build-root-directory: reference-apps/tutorial
         arguments: |
           --init-script ../local-design-compose-repo.init.gradle.kts
-          -PDesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo
           build
 
 

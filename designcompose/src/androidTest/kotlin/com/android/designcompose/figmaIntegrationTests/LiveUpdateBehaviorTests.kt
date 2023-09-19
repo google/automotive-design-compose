@@ -51,6 +51,7 @@ class LiveUpdateBehaviorTests {
 
     @Before
     fun setup() {
+        // Clear any previously cached files
         InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
     }
 

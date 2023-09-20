@@ -9,11 +9,11 @@ nav_order: 2
 
 This method will allow you to add a pre-fetched Figma file to your DesignCompose app's assets. This allows the app to run and display your design without a network connection and without a Figma authentication token set.
 
-1. Launch the app as normal in an emulator, set the Figma Token i needed, and allow the Figma file to be fetched and displayed
+1. Launch the app as normal in an emulator, set the Figma Token if needed, and allow the Figma file to be fetched and displayed
 
 1. Create a directory in your app's `src/main` directory named `assets/figma`. (See `reference-apps/helloworld/src/main/assets/figma` for an example)
 
-1. Open a terminal and navigate to that directory. On way to do this is to right-click the directory in Android Studio and select **Open In -> Terminal**
+1. Open a terminal and navigate to that directory. One way to do this is to right-click the directory in Android Studio and select **Open In -> Terminal**
 
     ![Open in terminal](<open-in-terminal.png>)
 
@@ -37,7 +37,7 @@ This method will allow you to add a pre-fetched Figma file to your DesignCompose
 
         - Alternatively you can search for your file's ID specifically by replacing `*.dcf` with `*YOUR_DOC_ID.dcf`
 
-1. Pull the file to your local machine
+1. From the same `assets/figma` directory, pull the file to your local machine
 
     ```shell
     $ adb pull <path to the file on your device>

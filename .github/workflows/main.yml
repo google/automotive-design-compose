@@ -192,6 +192,58 @@ jobs:
           name: designcompose_m2repo
           path: build/designcompose_m2repo/
 
+  # These tests run on the local JVM and don't need the rust code, 
+  # so it makes sense to put them in a seperate job
+  roborazzi:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v3.5.2
+
+      - name: Set up Java
+        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Validate Roborazzi
+        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        with:
+          # Upload in the dependency-review workflow
+          dependency-graph: generate
+          arguments: verifyRoborazziDebug
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: screenshot-diff
+          path: |
+            **/src/testDebug/roborazzi
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: screenshot-diff-reports
+          path: |
+            **/build/reports
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: screenshot-diff-test-results
+          path: |
+            **/build/test-results
+          retention-days: 30
+
 ########### Tutorial app
   tutorial-app:
     runs-on: ubuntu-latest

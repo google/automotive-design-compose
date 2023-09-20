@@ -21,6 +21,7 @@ plugins {
     alias(libs.plugins.ksp)
     id("designcompose.conventions.base")
     alias(libs.plugins.designcompose)
+    alias(libs.plugins.roborazzi)
 }
 
 var applicationID = "com.android.designcompose.testapp.helloworld"
@@ -74,7 +75,8 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
-    packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+    packaging.resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
+    testOptions.unitTests.isIncludeAndroidResources = true // For Roborazzi
 }
 
 dependencies {
@@ -93,6 +95,14 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit)
+    testImplementation(libs.androidx.test.espresso.core)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.junit)

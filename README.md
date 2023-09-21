@@ -144,13 +144,7 @@ The Tutorial's DesignDoc is set to the main development Figma file, to assist in
 
 ## Roborazzi screenshot tests
 
-[Roborazzi](https://github.com/takahirom/roborazzi) is a new framework that allows for screenshot testing of Android Apps on your local system. It uses [Robolectric](https://github.com/robolectric/robolectric), the standard unit testing framework for Android, to render DesignCompose locally, allowing screenshots to be generated. The screenshots won't be one-to-one with actual Android devices, but they'll be very close and stable enough for changes to be detected.
-
-Roborazzi is implemented in tests under `<package>/src/testDebug`. The tests themselves will run if you run `./gradlew test`, but screenshots will only be checked if you run `./gradlew verifyRoborazziDebug`. This command has been added to the `./dev-scripts/test-all.sh` command, so you don't need to run it separately if you run test-all.
-
-If `verifyRoborazziDebug` fails then you can run `compareRoborazziDebug` to generate image diffs. If after reviewing these you determine that the change is acceptable you can regenerate the screenshots using `recordRoborazziDebug`. (Note that this will regenerate all images from all tests).
-
-More info can be found in [Roborazzi's readme](https://github.com/takahirom/roborazzi#apply-roborazzi-gradle-plugin).
+[Roborazzi](https://github.com/takahirom/roborazzi) is a new framework that allows for screenshot testing of Android Apps on your local system. It uses [Robolectric](https://github.com/robolectric/robolectric), the standard unit testing framework for Android, to render DesignCompose locally, allowing screenshots to be generated. The screenshots won't be one-to-one with actual Android devices, but they'll be very close and stable enough for changes to be detected. The comparison is run using `./gradlew verifyRoborazziDebug`. See [our documentation](https://google.github.io/automotive-design-compose/docs/working-with-source/writing-tests) for more information.
 
 ## Testing the standalone version of the Tutorial app
 

@@ -83,9 +83,9 @@ themselves will run if you run `./gradlew test`, but screenshots will only be ch
 run `./gradlew verifyRoborazziDebug`. This command has been added to the `./dev-scripts/test-all.sh`
 command, so you don't need to run it separately if you run `test-all`.
 
-If `verifyRoborazziDebug` fails then you can run `compareRoborazziDebug` to generate image diffs. If
-after reviewing these you determine that the change is acceptable you can regenerate the screenshots
-using `recordRoborazziDebug`. (Note that this will regenerate all images from all tests).
+If `verifyRoborazziDebug` fails it will output comparison images to `<package>/build/outputs/roborazzi`. You can also run `./gradlew compareRoborazziDebug --rerun-tasks` to generate a report of all changed images in `<package>/build/reports/roborazzi`. If you determine that the change is acceptable you can regenerate the screenshots using`recordRoborazziDebug`. (Note that this will regenerate all images from all tests).
+
+More information can be found in [Roborazzi's readme](https://github.com/takahirom/roborazzi#apply-roborazzi-gradle-plugin).
 
 ## Testing Figma file rendering
 

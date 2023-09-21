@@ -35,8 +35,8 @@ jobs:
       - uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
-          name: screenshot
-          workflow: roborazzi-store-screenshot.yml
+          name: screenshots
+          workflow: main.yml
           branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || 'main' }}
 
       - name: compare screenshot test
@@ -49,23 +49,8 @@ jobs:
         with:
           name: screenshot-diff
           path: |
-            **/src/testDebug/roborazzi
-          retention-days: 30
-
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
-        with:
-          name: screenshot-diff-reports
-          path: |
-            **/build/reports
-          retention-days: 30
-
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
-        with:
-          name: screenshot-diff-test-results
-          path: |
-            **/build/test-results
+            **/build/outputs/roborazzi
+            **/build/reports/roborazzi
           retention-days: 30
 
       - name: Save PR number

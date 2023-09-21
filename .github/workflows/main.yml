@@ -213,35 +213,39 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Validate Roborazzi
+      # Ordering of these tasks matters.
+      # First generate the screenshot diffs and upload them
+      # Then run verifyAndRecord to get a pass/fail for the job and record fresh screenshots
+      # and upload the new screenshots for use as a baseline for future runs of the 
+      # compare-screenshot workflow
+
+      - name: Generate full comparison 
+        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        with:
+          arguments: compareRoborazziDebug
+
+      - name: Upload diff report
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshot-diff-report
+          path: |
+            **/build/outputs/roborazzi
+            **/build/reports/roborazzi
+          retention-days: 30
+
+      - name: Verify Roborazzi
         uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
-          arguments: verifyRoborazziDebug
+          arguments: verifyAndRecordRoborazziDebug
 
       - uses: actions/upload-artifact@v3
         if: ${{ always() }}
         with:
-          name: screenshot-diff
+          name: screenshots
           path: |
             **/src/testDebug/roborazzi
-          retention-days: 30
-
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
-        with:
-          name: screenshot-diff-reports
-          path: |
-            **/build/reports
-          retention-days: 30
-
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
-        with:
-          name: screenshot-diff-test-results
-          path: |
-            **/build/test-results
           retention-days: 30
 
 ########### Tutorial app

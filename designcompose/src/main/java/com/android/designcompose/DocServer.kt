@@ -101,8 +101,6 @@ object DesignSettings {
     private var fontDb: HashMap<String, FontFamily> = HashMap()
     internal var fileFetchStatus: HashMap<String, DesignDocStatus> = HashMap()
 
-    @VisibleForTesting internal var defaultIODispatcher = Dispatchers.IO
-
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyFigmaFetchStatus(fileId: String) = fileFetchStatus[fileId]
@@ -133,37 +131,12 @@ object DesignSettings {
                 latestKey != null && liveUpdatesEnabled
             }
 
-        // Start listening for the setApiKey intent on the main activity
-        activity.addOnNewIntentListener(setApiKeyListener)
-
         DocServer.initializeLiveUpdate()
     }
 
     fun disableToasts() {
         toastsEnabled = false
     }
-
-    // Intent consumer that checks for a new API Key and stores it.
-    private val setApiKeyListener =
-        Consumer<Intent> { intent ->
-            if (intent?.action == ACTION_SET_API_KEY) {
-                val activity = parentActivity.get()
-                if (activity == null) {
-                    Log.e(TAG, "Cannot set API Key, LiveUpdate not fully initialized")
-                    return@Consumer
-                } else {
-                    intent.getStringExtra(EXTRA_SET_API_KEY)?.let { newKey ->
-                        // Launch the coroutine to save the new value
-                        activity.lifecycleScope.launch(defaultIODispatcher) {
-                            // Grab an instance and set the key
-                            activity.applicationContext.let {
-                                liveUpdateSettings?.setFigmaApiKey(newKey)
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
     fun addFontFamily(name: String, family: FontFamily) {
         fontDb[name] = family

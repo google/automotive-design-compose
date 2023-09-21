@@ -9,7 +9,7 @@ android-gradlePlugin = "8.1.0"
 android-gradlePlugin-minSupported = "7.3.1"
 androidx-activity-compose = "1.7.2"
 androidx-appcompat = "1.6.1"
-androidx-compose-bom = "2023.06.01"
+androidx-compose-bom = "2023.09.01"
 # @keep Non-`dependency` constant
 androidx-compose-compiler = "1.5.1"
 androidx-compose-foundation = "1.4.3"

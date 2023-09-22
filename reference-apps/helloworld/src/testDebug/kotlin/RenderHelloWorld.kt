@@ -62,11 +62,11 @@ class RenderHelloWorld {
     @Test
     fun testHello() {
         with(composeTestRule) {
-            setContent { HelloWorldDoc.mainFrame(name = "Test 3") }
+            setContent { HelloWorldDoc.mainFrame(name = "Test 4") }
             onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId)).assertExists()
-            onNodeWithText("Test 3", substring = true)
+            onNodeWithText("Test 4", substring = true)
                 .also { it.assertExists() }
-                .captureRoboImage("theText.png")
+                .captureRoboImage("src/testDebug/roborazzi/theText.png")
         }
     }
 
@@ -77,7 +77,7 @@ class RenderHelloWorld {
             onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId)).assertExists()
             onNodeWithText("Test Error", substring = true)
                 .also { it.assertExists() }
-                .captureRoboImage("theTestErrorText.png")
+                .captureRoboImage("src/testDebug/roborazzi/theTestErrorText.png")
         }
     }
 }

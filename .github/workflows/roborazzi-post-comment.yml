@@ -58,7 +58,8 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.event  == 'pull_request' && github.event.workflow_run.event.pull_request.base.ref || 'main' }}
 
-      - id: switch-companion-branch
+      - name: Switch to companion branch
+        id: switch-companion-branch
         env:
           BRANCH_NAME: roborazzi_companion_${{ github.event.workflow_run.head_branch }}
         run: |

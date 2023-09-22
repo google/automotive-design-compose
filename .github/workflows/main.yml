@@ -194,11 +194,8 @@ jobs:
 
   # These tests run on the local JVM and don't need the rust code, 
   # so it makes sense to put them in a seperate job
-  roborazzi:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  verify-roborazzi:
+    runs-on: "ubuntu-latest"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1

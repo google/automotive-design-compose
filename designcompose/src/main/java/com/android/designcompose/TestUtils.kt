@@ -17,9 +17,8 @@
 package com.android.designcompose
 
 import androidx.annotation.RestrictTo
+import androidx.compose.runtime.mutableStateOf
 import com.google.common.annotations.VisibleForTesting
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 
 /**
  * For use in tests only, restricted to use via the test fixture.
@@ -32,8 +31,8 @@ import kotlinx.coroutines.flow.flowOf
 @VisibleForTesting
 @RestrictTo(RestrictTo.Scope.LIBRARY)
 fun testOnlyTriggerLiveUpdate(token: String) {
-    DesignSettings.figmaApiKeyStateFlow = MutableStateFlow(token)
+    DesignSettings.figmaToken = mutableStateOf(token)
     DesignSettings.liveUpdatesEnabled = true
-    DesignSettings.isDocumentLive = flowOf(true)
+    DesignSettings.isDocumentLive = mutableStateOf(true)
     DocServer.fetchDocuments(true)
 }

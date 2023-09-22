@@ -308,7 +308,6 @@ internal fun DocServer.fetchDocuments(
     }
 
     val proxyConfig = getProxyConfig()
-    Log.i(TAG, "HTTP Proxy: ${proxyConfig.httpProxyConfig?.proxySpec ?: "not set"}")
 
     val docIds =
         synchronized(subscriptions) {

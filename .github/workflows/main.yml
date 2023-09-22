@@ -194,11 +194,8 @@ jobs:
 
   # These tests run on the local JVM and don't need the rust code, 
   # so it makes sense to put them in a seperate job
-  roborazzi:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  verify-roborazzi:
+    runs-on: "ubuntu-latest"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
@@ -212,39 +209,32 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "17"
-
-      - name: Validate Roborazzi
+    
+      - name: Set up Gradle
         uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
-          arguments: verifyRoborazziDebug
+          gradle-home-cache-cleanup: true
 
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
+      - name: Generate full comparison 
+        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
-          name: screenshot-diff
-          path: |
-            **/src/testDebug/roborazzi
-          retention-days: 30
+          arguments: compareRoborazziDebug
 
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
+      - name: Upload diff report
+        uses: actions/upload-artifact@v3
         with:
-          name: screenshot-diff-reports
+          name: screenshot-diff-report
           path: |
-            **/build/reports
             **/build/outputs/roborazzi
-
+            **/build/reports/roborazzi
           retention-days: 30
 
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
+      - name: Verify Roborazzi
+        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
-          name: screenshot-diff-test-results
-          path: |
-            **/build/test-results
-          retention-days: 30
+          arguments: verifyRoborazziDebug
 
 ########### Tutorial app
   tutorial-app:

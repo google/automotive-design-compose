@@ -60,24 +60,26 @@ class RenderHelloWorld {
         )
 
     @Test
-    fun testHello() {
+    fun testError() {
         with(composeTestRule) {
-            setContent { HelloWorldDoc.mainFrame(name = "Test 4") }
+            val text = "Diff vs Comitted"
+            setContent { HelloWorldDoc.mainFrame(name = text) }
             onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId)).assertExists()
-            onNodeWithText("Test 4", substring = true)
+            onNodeWithText(text, substring = true)
                 .also { it.assertExists() }
-                .captureRoboImage("src/testDebug/roborazzi/theText.png")
+                .captureRoboImage("src/testDebug/roborazzi/theTestErrorText.png")
         }
     }
 
     @Test
-    fun testError() {
+    fun testHello() {
         with(composeTestRule) {
-            setContent { HelloWorldDoc.mainFrame(name = "Test Error") }
+            val text = "Diff vs Base"
+            setContent { HelloWorldDoc.mainFrame(name = text) }
             onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId)).assertExists()
-            onNodeWithText("Test Error", substring = true)
+            onNodeWithText(text, substring = true)
                 .also { it.assertExists() }
-                .captureRoboImage("src/testDebug/roborazzi/theTestErrorText.png")
+                .captureRoboImage("src/testDebug/roborazzi/theText.png")
         }
     }
 }

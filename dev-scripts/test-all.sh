@@ -83,7 +83,7 @@ cd "$GIT_ROOT" || exit
 ./gradlew build publishAllPublicationsToLocalDirRepository verifyRoborazziDebug
 
 if [[ $run_emulator_tests == 1 ]]; then
-  ./gradlew tabletAtdApi30Check -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+  ./gradlew gmdTestStandard -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 fi
 
 cd "$GIT_ROOT/reference-apps/tutorial" || exit

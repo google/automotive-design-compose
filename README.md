@@ -142,6 +142,24 @@ To update the Design Switcher, temporarily set the `DISABLE_LIVE_MODE` flag in `
 
 The Tutorial's DesignDoc is set to the main development Figma file, to assist in development of the app, but the committed serialized file is a separate file that presents a "welcome" page. This file's ID is `BX9UyUa5lkuSP3dEnqBdJf`. To update the file, fetch the `BX9UyUa5lkuSP3dEnqBdJf` file, then replace `reference-apps/tutorial/app/src/main/assets/figma/TutorialDoc_3z4xExq0INrL9vxPhj9tl7` with the serialized file. **The file name will remain the same**, the `TutorialDoc_3z4xExq0INrL9vxPhj9tl7` fill will contain the serialized `BX9UyUa5lkuSP3dEnqBdJf` file. The Tutorial app project has an AndroidIntegratedTest to ensure that the correct file is set, and it will be run as part of running the `./dev-scripts/test-all.sh` script.
 
+## Running Instrumented Tests
+
+All instrumented tests can be run on a running emulator by running "./gradlew connectedCheck". Additionally they can be run on [Gradle Managed Devices](https://developer.android.com/studio/test/gradle-managed-devices). These devices are the standard test targets and all tests must pass on them prior to a release. They are collected into three gradle tasks:
+
+- `gmdTestQuick` run the tests on an [ATD image](https://developer.android.com/studio/test/gradle-managed-devices#gmd-atd), which is optimized for instrumented tests.
+- `gmdTestStandard` runs the tests on both the ATD and the most current Android image
+- `gmdTestAll` runs the tests on all configured Gradle Managed devices,including the above and any additional APIs that have been chosen to be tested against.
+
+Note: The first run will have some significant first-time setup as the GMDs are created.
+
+These tests can be accelerated on a sufficiently powerful workstation by enabling test sharding in your gradle.properties. This will launch multiple instances of the GMDs, allowing the tests to run in parallel.
+
+```bash
+android.experimental.androidTest.numManagedDeviceShards=3 #Up to 4 are supported, though more than 3 may not provide much benefit
+```
+
+This can provide significant speedup for instrumented tests. Having shards set to 4 can reduce the time to run instrumented tests by 75% (Sample test run: `g connectedCheck` ran in 4m24s, `g gmdTestsQuick` with 3 shards ran in 1m10s)
+
 ## Roborazzi screenshot tests
 
 [Roborazzi](https://github.com/takahirom/roborazzi) is a new framework that allows for screenshot testing of Android Apps on your local system. It uses [Robolectric](https://github.com/robolectric/robolectric), the standard unit testing framework for Android, to render DesignCompose locally, allowing screenshots to be generated. The screenshots won't be one-to-one with actual Android devices, but they'll be very close and stable enough for changes to be detected. The comparison is run using `./gradlew verifyRoborazziDebug`. See [our documentation](https://google.github.io/automotive-design-compose/docs/working-with-source/writing-tests) for more information.

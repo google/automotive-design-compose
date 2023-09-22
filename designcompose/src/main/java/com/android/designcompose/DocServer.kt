@@ -43,12 +43,7 @@ import java.net.SocketException
 import java.util.Optional
 import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 internal const val TAG = "DesignCompose"
@@ -74,14 +69,11 @@ object DesignSettings {
     internal var toastsEnabled = true
     private var parentActivity = WeakReference<ComponentActivity>(null)
     internal var liveUpdateSettings: LiveUpdateSettingsRepository? = null
-    private var figmaApiKeyFlow: Flow<String?>? = null
-    internal var figmaApiKeyStateFlow: StateFlow<String?>? = null
-    internal var isDocumentLive: Flow<Boolean>? = null
+    internal var figmaToken = mutableStateOf<String?>(null)
+    internal var isDocumentLive = mutableStateOf(false)
     private var fontDb: HashMap<String, FontFamily> = HashMap()
 
     @VisibleForTesting internal var defaultIODispatcher = Dispatchers.IO
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun enableLiveUpdates(
         activity: ComponentActivity,
     ) {
@@ -98,15 +90,32 @@ object DesignSettings {
         // This sets that all up.
         liveUpdateSettings =
             LiveUpdateSettingsRepository(activity.applicationContext.liveUpdateSettings)
-        figmaApiKeyFlow = liveUpdateSettings!!.settingsUpdateFlow
-        figmaApiKeyStateFlow =
-            figmaApiKeyFlow!!.stateIn(activity.lifecycleScope, SharingStarted.Eagerly, null)
 
-        isDocumentLive =
-            figmaApiKeyStateFlow!!.mapLatest { latestKey ->
-                latestKey != null && liveUpdatesEnabled
+        // Launch a coroutine that awaits updates to the Figma Token
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.settingsUpdateFlow.collectLatest { newTokenValue ->
+                // Store the new value locally
+                figmaToken.value = newTokenValue
+
+                if (liveUpdatesEnabled) {
+                    if (figmaToken.value != null) {
+                        // If live update's enabled and the new token isn't null then start live
+                        // updates
+                        isDocumentLive.value = true
+                        DocServer.startLiveUpdates()
+                        return@collectLatest
+                    } else {
+                        showMessageInToast(
+                            "No Figma API Key Set - LiveUpdate Disabled",
+                            Toast.LENGTH_LONG
+                        )
+                    }
+                }
+                // Otherwise stop them
+                isDocumentLive.value = false
+                DocServer.stopLiveUpdates()
             }
-
+        }
         // Start listening for the setApiKey intent on the main activity
         activity.addOnNewIntentListener(setApiKeyListener)
 
@@ -214,6 +223,7 @@ internal object DocServer {
 }
 
 internal fun DocServer.initializeLiveUpdate() {
+    Log.i(TAG, "Live Updates initialized")
     periodicFetchRunnable =
         Runnable() {
             thread {
@@ -234,6 +244,7 @@ internal fun DocServer.initializeLiveUpdate() {
 
 internal fun DocServer.stopLiveUpdates() {
     if (DesignSettings.liveUpdatesEnabled) {
+        Log.i(TAG, "Stopping Live Updates")
         pauseUpdates = true
         removeScheduledPeriodicFetchRunnables()
     }
@@ -241,6 +252,7 @@ internal fun DocServer.stopLiveUpdates() {
 
 internal fun DocServer.startLiveUpdates() {
     if (DesignSettings.liveUpdatesEnabled) {
+        Log.i(TAG, "Starting Live Updates")
         pauseUpdates = false
         scheduleLiveUpdate()
     }
@@ -271,8 +283,7 @@ internal fun DocServer.getProxyConfig(): ProxyConfig {
 internal fun DocServer.fetchDocuments(
     firstFetch: Boolean,
 ): Boolean {
-
-    val figmaApiKey = DesignSettings.figmaApiKeyStateFlow?.value
+    val figmaApiKey = DesignSettings.figmaToken?.value
     if (figmaApiKey == null) {
         DesignSettings.showMessageInToast(
             "No Figma API Key Set - LiveUpdate Disabled",

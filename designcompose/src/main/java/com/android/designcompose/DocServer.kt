@@ -177,13 +177,11 @@ object DesignSettings {
 
 internal class ActivityLifecycleObserver : DefaultLifecycleObserver {
     override fun onResume(owner: LifecycleOwner) {
-        Log.d(TAG, "onResume.  Starting live updates.")
         super.onResume(owner)
         DocServer.startLiveUpdates()
     }
 
     override fun onPause(owner: LifecycleOwner) {
-        Log.d(TAG, "onPause.  Stopping live updates.")
         super.onPause(owner)
         DocServer.stopLiveUpdates()
     }
@@ -221,7 +219,7 @@ internal object DocServer {
 }
 
 internal fun DocServer.initializeLiveUpdate() {
-    Log.e("froeht", "initializeLiveUpdates")
+    Log.i(TAG, "Live Updates initialized")
     periodicFetchRunnable =
         Runnable() {
             thread {
@@ -242,14 +240,15 @@ internal fun DocServer.initializeLiveUpdate() {
 
 internal fun DocServer.stopLiveUpdates() {
     if (DesignSettings.liveUpdatesEnabled) {
+        Log.i(TAG, "Stopping Live Updates")
         pauseUpdates = true
         removeScheduledPeriodicFetchRunnables()
     }
 }
 
 internal fun DocServer.startLiveUpdates() {
-    Log.e("froeht", "StartLiveUpdates")
     if (DesignSettings.liveUpdatesEnabled) {
+        Log.i(TAG, "Starting Live Updates")
         pauseUpdates = false
         scheduleLiveUpdate()
     }
@@ -260,7 +259,6 @@ internal fun DocServer.removeScheduledPeriodicFetchRunnables() {
 }
 
 internal fun DocServer.scheduleLiveUpdate() {
-    Log.e("froeht", "scheduleLiveUpdates")
     if (DesignSettings.liveUpdatesEnabled && !pauseUpdates) {
         // Stop any live updates that have already been scheduled.
         removeScheduledPeriodicFetchRunnables()
@@ -281,8 +279,6 @@ internal fun DocServer.getProxyConfig(): ProxyConfig {
 internal fun DocServer.fetchDocuments(
     firstFetch: Boolean,
 ): Boolean {
-    Log.e("froeht", "DoAFetch")
-
     val figmaApiKey = DesignSettings.figmaToken?.value
     if (figmaApiKey == null) {
         DesignSettings.showMessageInToast(

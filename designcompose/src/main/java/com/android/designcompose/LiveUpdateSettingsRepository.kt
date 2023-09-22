@@ -56,7 +56,7 @@ class LiveUpdateSettingsRepository(private val dataStore: DataStore<Preferences>
 
     // Expose the function to set the key
     suspend fun setFigmaApiKey(newKey: String) {
-        Log.e("froeht", "Setting the key")
         dataStore.edit { it[figmaApiPrefKey] = newKey }
+        Log.i(TAG, "Figma token set")
     }
 }

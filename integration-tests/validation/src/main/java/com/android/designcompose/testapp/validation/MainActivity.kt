@@ -114,40 +114,45 @@ val interFont =
 
 const val TAG = "DesignCompose"
 
-val EXAMPLES: ArrayList<Pair<String, @Composable () -> Unit>> =
+val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
-        Pair("Hello", { HelloWorld() }),
-        Pair("Image Update", { ImageUpdateTest() }),
-        Pair("Telltales", { TelltaleTest() }),
-        Pair("OpenLink", { OpenLinkTest() }),
-        Pair("Variant *", { VariantAsteriskTest() }),
-        Pair("Alignment", { AlignmentTest() }),
-        Pair("Battleship", { BattleshipTest() }),
-        Pair("H Constraints", { HConstraintsTest() }),
-        Pair("V Constraints", { VConstraintsTest() }),
-        Pair("Interaction", { InteractionTest() }),
-        Pair("Shadows", { ShadowsTest() }),
-        Pair("Recurse Customization", { RecursiveCustomizations() }),
-        Pair("Item Spacing", { ItemSpacingTest() }),
-        Pair("Color Tint", { ColorTintTest() }),
-        Pair("Variant Properties", { VariantPropertiesTest() }),
-        Pair("Lazy Grid", { LazyGridItemSpans() }),
-        Pair("Grid Layout", { GridLayoutTest() }),
-        Pair("Grid Widget", { GridWidgetTest() }),
-        Pair("List Widget", { ListWidgetTest() }),
-        Pair("Variant Interactions", { VariantInteractionsTest() }),
-        Pair("1px Separator", { OnePxSeparatorTest() }),
-        Pair("Layout Replacement", { LayoutReplacementTest() }),
-        Pair("Text Elide", { TextElideTest() }),
-        Pair("Fancy Fills", { FancyFillTest() }),
-        Pair("Fill Container", { FillTest() }),
-        Pair("CrossAxis Fill", { CrossAxisFillTest() }),
-        Pair("Grid Layout Documentation", { GridLayoutDocumentation() }),
-        Pair("Blend Modes", { BlendModeTest() }),
-        Pair("Vector Rendering", { VectorRenderingTest() }),
-        Pair("Dials Gauges", { DialsGaugesTest() }),
-        Pair("Masks", { MaskTest() }),
-        Pair("Variable Borders", { VariableBorderTest() })
+        Triple("Hello", { HelloWorld() }, "pxVlixodJqZL95zo2RzTHl"),
+        Triple("Image Update", { ImageUpdateTest() }, "oQw7kiy94fvdVouCYBC9T0"),
+        Triple("Telltales", { TelltaleTest() }, "TZgHrKWx8wvQM7UPTyEpmz"),
+        Triple("OpenLink", { OpenLinkTest() }, "r7m4tqyKv6y9DWcg7QBEDf"),
+        Triple("Variant *", { VariantAsteriskTest() }, "gQeYHGCSaBE4zYSFpBrhre"),
+        Triple("Alignment", { AlignmentTest() }, "JIjE9oKQbq8ipi66ab5UaK"),
+        Triple("Battleship", { BattleshipTest() }, "RfGl9SWnBEvdg8T1Ex6ZAR"),
+        Triple("H Constraints", { HConstraintsTest() }, "KuHLbsKA23DjZPhhgHqt71"),
+        Triple("V Constraints", { VConstraintsTest() }, "KuHLbsKA23DjZPhhgHqt71"),
+        Triple("Interaction", { InteractionTest() }, "8Zg9viyjYTnyN29pbkR1CE"),
+        Triple("Shadows", { ShadowsTest() }, "OqK58Y46IqP4wIgKCWys48"),
+        Triple("Item Spacing", { ItemSpacingTest() }, "YXrHBp6C6OaW5ShcCYeGJc"),
+        Triple("Recurse Customization", { RecursiveCustomizations() }, "o0GWzcqdOWEgzj4kIeIlAu"),
+        Triple("Color Tint", { ColorTintTest() }, "MCtUD3yjONxK6rQm65yqM5"),
+        Triple("Variant Properties", { VariantPropertiesTest() }, "4P7zDdrQxj7FZsKJoIQcx1"),
+        // Lazy Grid doesn't actually use a doc
+        Triple("Lazy Grid", { LazyGridItemSpans() }, null),
+        Triple("Grid Layout", { GridLayoutTest() }, "JOSOEvsrjvMqanyQa5OpNR"),
+        Triple("Grid Widget", { GridWidgetTest() }, "OBhNItd9i9J2LwVYuLxEIx"),
+        Triple("List Widget", { ListWidgetTest() }, "9ev0MBNHFrgTqJOrAGcEpV"),
+        Triple("1px Separator", { OnePxSeparatorTest() }, "EXjTHxfMNBtXDrz8hr6MFB"),
+        Triple("Variant Interactions", { VariantInteractionsTest() }, "WcsgoLR4aDRSkZHY29Qdhq"),
+        Triple("Layout Replacement", { LayoutReplacementTest() }, "dwk2GF7RiNvlbbAKPjqldx"),
+        Triple("Text Elide", { TextElideTest() }, "oQ7nK49Ya5PJ3GpjI5iy8d"),
+        Triple("Fancy Fills", { FancyFillTest() }, "xQ9cunHt8VUm6xqJJ2Pjb2"),
+        Triple("Fill Container", { FillTest() }, "dB3q96FkxkTO4czn5NqnxV"),
+        Triple("CrossAxis Fill", { CrossAxisFillTest() }, "GPr1cx4n3zBPwLhqlSL1ba"),
+        Triple(
+            "Grid Layout Documentation",
+            { GridLayoutDocumentation() },
+            "MBNjjSbzzKeN7nBjVoewsl"
+        ),
+        Triple("Blend Modes", { BlendModeTest() }, "ZqX5i5g6inv9tANIwMMXUV"),
+        Triple("Vector Rendering", { VectorRenderingTest() }, "Z3ucY0wMAbIwZIa6mLEWIK"),
+        Triple("Dials Gauges", { DialsGaugesTest() }, "lZj6E9GtIQQE4HNLpzgETw"),
+        Triple("Masks", { MaskTest() }, "mEmdUVEIjvBBbV0kELPy37"),
+        Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67")
     )
 
 // TEST Basic Hello World example

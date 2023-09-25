@@ -22,11 +22,25 @@ apply<ATDPlugin>()
 // Have to look them up the old fashioned way
 project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
     afterEvaluate {
-        tasks.named("tabletAtdApi30DebugAndroidTest").configure {
+        val atdApi30Task =
+            tasks.named("gmdAtdApi30DebugAndroidTest").also {
+                it.configure { group = "DesignCompose Developer" }
+            }
+        val gmdAllApisTask =
+            tasks.named("gmdAllApisGroupDebugAndroidTest").also {
+                it.configure { group = "DesignCompose Developer" }
+            }
+        tasks.register("gmdTestQuick") {
             group = "DesignCompose Developer"
+            dependsOn(atdApi30Task)
         }
-        tasks.named("tabletAllApisGroupDebugAndroidTest").configure {
+        tasks.register("gmdTestStandard") {
             group = "DesignCompose Developer"
+            dependsOn(atdApi30Task, tasks.named("gmdApi34DebugAndroidTest"))
+        }
+        tasks.register("gmdTestAll") {
+            group = "DesignCompose Developer"
+            dependsOn(gmdAllApisTask)
         }
     }
 }

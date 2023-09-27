@@ -20,6 +20,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.docIdSemanticsKey
@@ -51,8 +52,10 @@ class RenderAllExamples(private val config: TestConfig) {
     @Test
     fun testRender() {
         composeTestRule.setContent(config.fileComposable)
-        composeTestRule.onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, config.fileId)).assertExists()
-
+        composeTestRule
+            .onAllNodes(SemanticsMatcher.expectValue(docIdSemanticsKey, config.fileId))
+            .onFirst()
+            .assertExists()
     }
     @get:Rule
     val roborazziRule =

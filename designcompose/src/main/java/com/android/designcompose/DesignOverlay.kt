@@ -16,12 +16,14 @@
 
 package com.android.designcompose
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,5 +64,19 @@ internal fun DesignOverlay(
         boxModifier = boxModifier.background(Color(color.r, color.g, color.b, color.a))
     }
 
+    DisposableEffect(Unit) {
+        // Similar to a root view, tell the layout manager to defer layout computations until all
+        // child views have been added to the overlay
+        LayoutManager.deferComputations()
+        Log.d(TAG,"Overlay start")
+        onDispose {}
+    }
     Box(boxModifier, contentAlignment = alignment) { content() }
+    DisposableEffect(Unit) {
+        // Similar to a root view, tell the layout manager to that child views have been added so
+        // that layout can be computed
+        LayoutManager.resumeComputations()
+        Log.d(TAG,"Overlay end")
+        onDispose {}
+    }
 }

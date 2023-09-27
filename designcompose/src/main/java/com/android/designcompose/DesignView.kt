@@ -959,7 +959,7 @@ internal fun DesignDocInternal(
             // Render debug node names, if turned on
             Box(Modifier.fillMaxSize()) { DebugNodeManager.DrawNodeNames() }
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
-                // DesignSwitcher(doc, docId, branchHash, switchDocId)
+                DesignSwitcher(doc, docId, branchHash, switchDocId)
             }
         }
     }
@@ -973,11 +973,11 @@ internal fun DesignDocInternal(
         if (startFrame != null) {
             LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
-                // Whenever the root view changes, call newDoc() so that we defer layout calculation
+                // Whenever the root view changes, call deferComputations() so that we defer layout calculation
                 // until all views have been added
                 if (isRoot)
                     DisposableEffect(startFrame) {
-                        LayoutManager.newDoc()
+                        LayoutManager.deferComputations()
                         onDispose {}
                     }
 
@@ -1024,7 +1024,7 @@ internal fun DesignDocInternal(
                 // child composables have been called so that it can trigger a layout compute.
                 if (isRoot)
                     DisposableEffect(startFrame) {
-                        LayoutManager.docLoaded()
+                        LayoutManager.resumeComputations()
                         onDispose {}
                     }
             }

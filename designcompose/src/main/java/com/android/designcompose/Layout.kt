@@ -81,18 +81,20 @@ internal object LayoutManager {
         return ++nextLayoutId
     }
 
-    internal fun newDoc() {
-        // We just loaded a new doc, so halt layout computations until the all views under the root
-        // view have been composed.
-        Log.d(TAG, "NewDoc")
+    internal fun deferComputations() {
+        // Defer layout computations when adding or removing views. This is an optimization to
+        // prevent layout from being calculated after every view subscribe or unsubscribe when we
+        // know that we need to add or remove a bunch of views. Typically resumeComputations() is
+        // called when the root or overlay view is done adding children.
+        Log.d(TAG, "deferComputations")
         docLoaded = false
     }
 
-    internal fun docLoaded() {
+    internal fun resumeComputations() {
         // The root view along with its children have finished composition, so compute layout.
         // Subsequent composition changes such as changing, adding, or removing views will also
         // trigger layout computations.
-        Log.d(TAG, "Doc Loaded")
+        Log.d(TAG, "resumeComputations")
         docLoaded = true
         val responseBytes = Jni.jniComputeLayout()
         handleResponse(responseBytes)
@@ -546,6 +548,7 @@ internal fun designMeasurePolicy(name: String, layoutId: Int) =
         }
         val myWidth = myLayout?.width() ?: 0
         val myHeight = myLayout?.height() ?: 0
+        Log.d(TAG, "Layout $name $myWidth, $myHeight")
         layout(myWidth, myHeight) {
             // Place children in the parent layout
             placeables.forEachIndexed { index, placeable ->
@@ -596,7 +599,6 @@ internal fun designTextMeasurePolicy(
 ) = MeasurePolicy { measurables, constraints ->
     val placeables = measurables.map { measurable -> measurable.measure(constraints) }
 
-    // val layout = LayoutManager.getLayout(layoutId)
     val myWidth = layout?.width() ?: 0
     val myHeight = renderHeight ?: layout?.height() ?: 0
     val myX = 0

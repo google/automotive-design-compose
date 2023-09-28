@@ -80,7 +80,7 @@ cd "$GIT_ROOT/plugins" || exit
 ./gradlew build
 
 cd "$GIT_ROOT" || exit
-./gradlew build publishAllPublicationsToLocalDirRepository
+./gradlew build publishAllPublicationsToLocalDirRepository verifyRoborazziDebug
 
 if [[ $run_emulator_tests == 1 ]]; then
   ./gradlew gmdTestStandard -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect

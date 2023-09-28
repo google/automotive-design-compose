@@ -31,7 +31,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-permissions: 
+permissions:
   contents: read
 
 jobs:
@@ -184,21 +184,18 @@ jobs:
       - name: Full Gradle Test and publish
         uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
         with:
-          arguments: check build publishAllPublicationsToLocalDirRepository 
-      
+          arguments: check build publishAllPublicationsToLocalDirRepository
+
       - name: Upload maven repo
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: designcompose_m2repo
           path: build/designcompose_m2repo/
 
-  # These tests run on the local JVM and don't need the rust code, 
+  # These tests run on the local JVM and don't need the rust code,
   # so it makes sense to put them in a seperate job
-  roborazzi:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  verify-roborazzi:
+    runs-on: "ubuntu-latest"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
@@ -213,44 +210,37 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Validate Roborazzi
+      - name: Set up Gradle
         uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
-          arguments: verifyRoborazziDebug
+          gradle-home-cache-cleanup: true
 
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
+      - name: Generate full comparison
+        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
-          name: screenshot-diff
-          path: |
-            **/src/testDebug/roborazzi
-          retention-days: 30
+          arguments: compareRoborazziDebug
 
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
+      - name: Upload diff report
+        uses: actions/upload-artifact@v3
         with:
-          name: screenshot-diff-reports
+          name: screenshot-diff-report
           path: |
-            **/build/reports
             **/build/outputs/roborazzi
-
+            **/build/reports/roborazzi
           retention-days: 30
 
-      - uses: actions/upload-artifact@v3
-        if: ${{ always() }}
+      - name: Verify Roborazzi
+        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
-          name: screenshot-diff-test-results
-          path: |
-            **/build/test-results
-          retention-days: 30
+          arguments: verifyRoborazziDebug
 
 ########### Tutorial app
   tutorial-app:
     runs-on: ubuntu-latest
     needs: sdk-build
-    steps:       
+    steps:
     - name: Harden Runner
       uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
       with:
@@ -274,7 +264,7 @@ jobs:
       with:
         name: designcompose_m2repo
         path: designcompose_m2repo
-    
+
     - name: "Set environment variables"
       run: |
         echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
@@ -288,11 +278,11 @@ jobs:
           build
 
 
-######### Unbundled apps     
+######### Unbundled apps
   aaos-unbundled:
     runs-on: ubuntu-latest
     needs: sdk-build
-    steps:       
+    steps:
     - name: Harden Runner
       uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
       with:
@@ -326,7 +316,7 @@ jobs:
 
     - name: Check out the Unbundled AAOS Repo
       run: |
-        HOST=https://android.googlesource.com/platform/manifest        
+        HOST=https://android.googlesource.com/platform/manifest
         BRANCH=ub-automotive-master-20230622
         mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
         cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
@@ -338,8 +328,8 @@ jobs:
       with:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
-          check 
-      
+          check
+
 ############# Rust
   rust-test:
     runs-on: ubuntu-latest
@@ -354,7 +344,7 @@ jobs:
       - run: rustup toolchain install stable --profile minimal
 
       - uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43
-        with: 
+        with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build all

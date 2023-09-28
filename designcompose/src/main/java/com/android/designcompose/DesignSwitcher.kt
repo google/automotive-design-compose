@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.TextStyle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.FeedbackLevel
 import com.android.designcompose.serdegen.NodeQuery
@@ -449,13 +448,6 @@ private fun GetShowRecompositionCheckbox(state: Boolean, setState: (Boolean) -> 
 }
 
 @Composable
-private fun getLiveUpdateEnabled(): Boolean {
-    if (DesignSettings.isDocumentLive == null) return false
-    val enabled: Boolean? by DesignSettings.isDocumentLive!!.collectAsStateWithLifecycle(false)
-    return enabled ?: false
-}
-
-@Composable
 internal fun DesignSwitcher(
     doc: DocContent?,
     currentDocId: String,
@@ -540,7 +532,7 @@ internal fun DesignSwitcher(
         },
         on_tap_logout = Modifier.clickable { Log.i(TAG, "TODO: Re-implement Logging out") },
         live_mode =
-            if (getLiveUpdateEnabled()) DesignSwitcher.LiveMode.Live
+            if (DesignSettings.isDocumentLive.value) DesignSwitcher.LiveMode.Live
             else DesignSwitcher.LiveMode.Offline,
         top_status_bar = topStatusBar,
     )

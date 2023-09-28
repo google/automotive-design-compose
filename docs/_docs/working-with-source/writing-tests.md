@@ -140,7 +140,7 @@ see `reference-apps/helloworld/src/testDebug/kotlin/RenderHelloWorld.kt` for the
 used. Copy that code block into any tests you create that use Roborazzi, otherwise the screenshots
 will be saved in the default Roborazzi location.
 
-**Remember**, screenshots are **only captured** when running `./gradlew captureRoborazziDebug` and checked
+**Remember**, screenshots are **only captured** when running `./gradlew recordRoborazziDebug` and checked
 when running `./gradlew verifyRoborazziDebug`.
 
 # Rust tests

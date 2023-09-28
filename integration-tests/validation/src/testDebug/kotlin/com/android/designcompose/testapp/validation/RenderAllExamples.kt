@@ -25,10 +25,7 @@ import androidx.compose.ui.test.onRoot
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.docIdSemanticsKey
 import com.github.takahirom.roborazzi.RoborazziRule
-import com.google.common.truth.Truth.assertThat
 import java.io.File
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test

@@ -340,7 +340,7 @@ impl LayoutManager {
     }
 
     // Apply any customizations that have been saved for this node
-    fn apply_customizations(&mut self, layout_id: i32, style: &mut taffy::style::Style) {
+    fn apply_customizations(&self, layout_id: i32, style: &mut taffy::style::Style) {
         let size = self.customizations.get_size(layout_id);
         if let Some(size) = size {
             style.min_size.width = taffy::prelude::Dimension::Points(size.width as f32);

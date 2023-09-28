@@ -59,6 +59,7 @@ import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
@@ -959,7 +960,7 @@ internal fun DesignDocInternal(
             // Render debug node names, if turned on
             Box(Modifier.fillMaxSize()) { DebugNodeManager.DrawNodeNames() }
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
-                DesignSwitcher(doc, docId, branchHash, switchDocId)
+                // DesignSwitcher(doc, docId, branchHash, switchDocId)
             }
         }
     }
@@ -973,13 +974,20 @@ internal fun DesignDocInternal(
         if (startFrame != null) {
             LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
-                // Whenever the root view changes, call deferComputations() so that we defer layout calculation
+                // Whenever the root view changes, call deferComputations() so that we defer layout
+                // calculation
                 // until all views have been added
-                if (isRoot)
+                if (isRoot) {
                     DisposableEffect(startFrame) {
                         LayoutManager.deferComputations()
                         onDispose {}
                     }
+                    val density = LocalDensity.current.density
+                    DisposableEffect(density) {
+                        LayoutManager.setDensity(density)
+                        onDispose {}
+                    }
+                }
 
                 DesignView(
                     modifier.semantics { sDocId = docId },

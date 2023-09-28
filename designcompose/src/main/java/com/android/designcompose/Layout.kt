@@ -76,6 +76,7 @@ internal object LayoutManager {
     private var textMeasures: HashMap<Int, TextMeasureData> = HashMap()
     private var nextLayoutId: Int = 0
     private var docLoaded: Boolean = false
+    private var density: Float = 1F
 
     internal fun getNextLayoutId(): Int {
         return ++nextLayoutId
@@ -98,6 +99,15 @@ internal object LayoutManager {
         docLoaded = true
         val responseBytes = Jni.jniComputeLayout()
         handleResponse(responseBytes)
+    }
+
+    internal fun setDensity(pixelDensity: Float) {
+        Log.i(TAG, "setDensity $pixelDensity")
+        density = pixelDensity
+    }
+
+    internal fun getDensity(): Float {
+        return density
     }
 
     internal fun subscribe(
@@ -176,6 +186,11 @@ internal object LayoutManager {
     }
 
     // Ask for the layout for the associated node via JNI
+    internal fun getLayoutWithDensity(layoutId: Int): Layout? {
+        return getLayout(layoutId)?.withDensity(density)
+    }
+
+    // Ask for the layout for the associated node via JNI
     internal fun getLayout(layoutId: Int): Layout? {
         val layoutBytes = Jni.jniGetLayout(layoutId)
         if (layoutBytes != null) {
@@ -188,7 +203,9 @@ internal object LayoutManager {
     // Tell the Rust layout manager that a node size has changed. In the returned response, get all
     // the nodes that have changed and notify subscribers of this change.
     internal fun setNodeSize(layoutId: Int, width: Int, height: Int) {
-        val responseBytes = Jni.jniSetNodeSize(layoutId, width, height)
+        val adjustedWidth = (width.toFloat() / density).roundToInt()
+        val adjustedHeight = (height.toFloat() / density).roundToInt()
+        val responseBytes = Jni.jniSetNodeSize(layoutId, adjustedWidth, adjustedHeight)
         handleResponse(responseBytes)
     }
 
@@ -542,7 +559,7 @@ internal fun designMeasurePolicy(name: String, layoutId: Int) =
     MeasurePolicy { measurables, constraints ->
         val placeables = measurables.map { measurable -> measurable.measure(constraints) }
 
-        var myLayout = LayoutManager.getLayout(layoutId)
+        var myLayout = LayoutManager.getLayoutWithDensity(layoutId)
         if (myLayout == null) {
             Log.d(TAG, "designMeasurePolicy error: null layout $name layoutId $layoutId")
         }
@@ -560,7 +577,7 @@ internal fun designMeasurePolicy(name: String, layoutId: Int) =
                     Log.d(TAG, "Place $name index $index: $myX, $myY}")
                     placeable.place(myX, myY)
                 } else {
-                    val childLayout = LayoutManager.getLayout(layoutData.layoutId)
+                    val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
                     if (childLayout == null) {
                         Log.d(
                             TAG,

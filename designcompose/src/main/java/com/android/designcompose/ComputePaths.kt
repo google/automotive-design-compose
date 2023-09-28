@@ -113,14 +113,14 @@ internal fun ViewShape.computePaths(
             stroke.map { p -> p.asPath(density, scaleX, scaleY) }
         )
     }
-    fun getRectSize(rectSize: Size?, style: ViewStyle): Size {
+    fun getRectSize(rectSize: Size?, style: ViewStyle, density: Float): Size {
         val width =
             rectSize?.width
-                ?: if (style.width is Dimension.Points) (style.width as Dimension.Points).value
+                ?: if (style.width is Dimension.Points) style.width.pointsAsDp(density).value
                 else frameSize.width
         val height =
             rectSize?.height
-                ?: if (style.height is Dimension.Points) (style.height as Dimension.Points).value
+                ?: if (style.height is Dimension.Points) style.height.pointsAsDp(density).value
                 else frameSize.height
         return Size(width, height)
     }
@@ -132,7 +132,7 @@ internal fun ViewShape.computePaths(
                     style,
                     listOf(0.0f, 0.0f, 0.0f, 0.0f),
                     density,
-                    getRectSize(rectSize, style),
+                    getRectSize(rectSize, style, density),
                 )
             }
             is ViewShape.RoundRect -> {
@@ -140,7 +140,7 @@ internal fun ViewShape.computePaths(
                     style,
                     this.corner_radius,
                     density,
-                    getRectSize(rectSize, style)
+                    getRectSize(rectSize, style, density)
                 )
             }
             is ViewShape.VectorRect -> {
@@ -148,7 +148,7 @@ internal fun ViewShape.computePaths(
                     style,
                     this.corner_radius,
                     density,
-                    getRectSize(rectSize, style)
+                    getRectSize(rectSize, style, density)
                 )
             }
             is ViewShape.Path -> {
@@ -171,7 +171,7 @@ internal fun ViewShape.computePaths(
             }
             else -> {
                 val path = Path()
-                val size = getRectSize(rectSize, style)
+                val size = getRectSize(rectSize, style, density)
                 path.addRect(Rect(0.0f, 0.0f, size.width, size.height))
                 Pair(listOf(path), listOf())
             }

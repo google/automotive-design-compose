@@ -62,9 +62,9 @@ private fun calculateParentOffsets(
     val decomposed = style.transform.decompose(density)
 
     // X Node position offset by the X translation value of the transform matrix
-    val nodeX = style.margin.start.pointsAsDp().value.toDouble() + decomposed.translateX
+    val nodeX = style.margin.start.pointsAsDp(density).value.toDouble() + decomposed.translateX
     // Y Node position offset by the Y translation value of the transform matrix
-    val nodeY = style.margin.top.pointsAsDp().value.toDouble() + decomposed.translateY
+    val nodeY = style.margin.top.pointsAsDp(density).value.toDouble() + decomposed.translateY
 
     // Radius of the circle encapsulating the node
     val r = sqrt(nodeWidth * nodeWidth + nodeHeight * nodeHeight) / 2
@@ -106,8 +106,8 @@ private fun calculateRotationData(
         (rotationData.start + meterValue / 100f * (rotationData.end - rotationData.start))
             .coerceDiscrete(rotationData.discrete, rotationData.discreteValue)
 
-    val nodeWidth = style.width.pointsAsDp().value
-    val nodeHeight = style.height.pointsAsDp().value
+    val nodeWidth = style.width.pointsAsDp(density).value
+    val nodeHeight = style.height.pointsAsDp(density).value
 
     // Calculate offsets from parent when the rotation is 0
     val offsets =
@@ -134,8 +134,8 @@ private fun calculateRotationData(
     // Translate back, with an additional offset from the parent
     val translateBack = androidx.compose.ui.graphics.Matrix()
     translateBack.translate(
-        moveX - style.margin.start.pointsAsDp().value + xOffsetParent.toFloat(),
-        moveY - style.margin.top.pointsAsDp().value + yOffsetParent.toFloat(),
+        moveX - style.margin.start.pointsAsDp(density).value + xOffsetParent.toFloat(),
+        moveY - style.margin.top.pointsAsDp(density).value + yOffsetParent.toFloat(),
         0f
     )
     overrideTransform.timesAssign(translateBack)
@@ -171,7 +171,7 @@ private fun calculateProgressMarkerData(
     // along the x axis
     val moveX = lerp(markerData.startX, markerData.endX, discretizedMeterValue, density)
     val overrideTransform = style.getTransform(density)
-    val leftOffset = style.margin.start.pointsAsDp().value
+    val leftOffset = style.margin.start.pointsAsDp(density).value
     overrideTransform.setXTranslation(moveX - leftOffset)
 
     return overrideTransform
@@ -253,7 +253,7 @@ internal fun ContentDrawScope.render(
                             calculateProgressBarData(
                                 progressBarData,
                                 meterValue,
-                                style.height.pointsAsDp().value,
+                                style.height.pointsAsDp(density).value,
                                 density
                             )
                     }

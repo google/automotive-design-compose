@@ -53,6 +53,7 @@ import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
+import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.Overflow
@@ -88,9 +89,9 @@ internal fun Dimension.resolve(available: Int, density: Float): Int? {
     }
 }
 
-internal fun Dimension.pointsAsDp(): Dp {
+internal fun Dimension.pointsAsDp(density: Float): Dp {
     return when (this) {
-        is Dimension.Points -> value.dp
+        is Dimension.Points -> (value * density).dp
         else -> 0.dp
     }
 }
@@ -1179,7 +1180,7 @@ internal fun com.android.designcompose.serdegen.Path.log() {
 
 // Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
 // vectors that don't have sides.
-internal fun com.android.designcompose.serdegen.StrokeWeight.toUniform(): Float {
+internal fun StrokeWeight.toUniform(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.top
@@ -1187,7 +1188,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.toUniform(): Float 
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.top(): Float {
+internal fun StrokeWeight.top(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.top
@@ -1195,7 +1196,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.top(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.left(): Float {
+internal fun StrokeWeight.left(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.left
@@ -1203,7 +1204,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.left(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.bottom(): Float {
+internal fun StrokeWeight.bottom(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.bottom
@@ -1211,7 +1212,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.bottom(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.right(): Float {
+internal fun StrokeWeight.right(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.right
@@ -1219,21 +1220,19 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.right(): Float {
     return 0.0f
 }
 
+// Return whether a text node is both auto height and auto width with a width layout mode of FILL.
+// This layout type requires a measure function to be passed into the layout system.
 internal fun isAutoHeightFillWidth(style: ViewStyle) =
     style.width is Dimension.Auto &&
         style.height is Dimension.Auto &&
         style.horizontal_sizing is LayoutSizing.FILL
 
-// Determine if view data needs a measure func.
-// Currently, we need a measure func for text nodes that are both auto height and auto width
-internal fun needsMeasureFunc(viewData: ViewData, style: ViewStyle): Boolean {
-    return when (viewData) {
-        is ViewData.Text -> isAutoHeightFillWidth(style)
-        is ViewData.StyledText -> isAutoHeightFillWidth(style)
-        else -> false
-    }
-}
-
-internal fun View.isTextView(): Boolean {
-    return this.data is ViewData.Text || this.data is ViewData.StyledText
+internal fun Layout.withDensity(density: Float): Layout {
+    return Layout(
+        this.order,
+        this.width * density,
+        this.height * density,
+        this.left * density,
+        this.top * density
+    )
 }

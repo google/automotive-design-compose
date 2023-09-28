@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.isIdentity
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.text.AnnotatedString
@@ -224,7 +225,12 @@ internal fun DesignText(
         TextLayoutData(annotatedText, textStyle, LocalFontLoader.current, style.text_size)
     val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE
     val textMeasureData =
-        TextMeasureData(textLayoutData, density, maxLines, style.min_width.pointsAsDp().value)
+        TextMeasureData(
+            textLayoutData,
+            density,
+            maxLines,
+            style.min_width.pointsAsDp(density.density).value
+        )
     val useMeasure = isAutoHeightFillWidth(style)
 
     // Get the layout for this view that describes its size and position.
@@ -314,8 +320,8 @@ internal fun DesignText(
                 )
             } else {
                 // Text needs to use a modifier that sets the size so that it wraps properly
-                val textModifier =
-                    modifier.sizeToModifier(layout?.width() ?: 0, layout?.height() ?: 0)
+                val height = renderHeight ?: layout?.height() ?: 0
+                val textModifier = modifier.sizeToModifier(layout?.width() ?: 0, height)
                 BasicText(
                     annotatedText,
                     modifier = textModifier,
@@ -331,7 +337,16 @@ internal fun DesignText(
             .wrapContentSize(align = Alignment.TopStart, unbounded = true)
             .textTransform(style)
             .layoutStyle(name, layoutId)
-    DesignTextLayout(layoutModifier, name, layout, layoutState, renderHeight, renderTop, content)
+    val layoutWithDensity = layout?.withDensity(density.density)
+    DesignTextLayout(
+        layoutModifier,
+        name,
+        layoutWithDensity,
+        layoutState,
+        renderHeight,
+        renderTop,
+        content
+    )
     return true
 }
 
@@ -345,6 +360,11 @@ fun measureTextBoundsFunc(
     availableWidth: Float,
     availableHeight: Float
 ): Pair<Float, Float> {
+    val density = LayoutManager.getDensity()
+    val width = width * density
+    val availableWidth = availableWidth * density
+    val availableHeight = availableHeight * density
+
     val textMeasureData = LayoutManager.getTextMeasureData(layoutId)
     if (textMeasureData == null) {
         Log.d(TAG, "measureTextBoundsFunc() error: no textMeasureData for layoutId $layoutId")
@@ -367,7 +387,8 @@ fun measureTextBoundsFunc(
     val outHeight =
         if (availableHeight > 0f && rectBounds.height().toFloat() > availableHeight) availableHeight
         else rectBounds.height().toFloat()
-    return Pair(rectBounds.width().toFloat(), outHeight)
+
+    return Pair(rectBounds.width().toFloat() / density, outHeight / density)
 }
 
 private class TextBounds(
@@ -397,18 +418,16 @@ private fun measureTextBounds(
     // defined in Figma, but when the text is set to auto height then this gets set to the height
     // calculated by boundsForWidth().
     var rectBounds: android.graphics.Rect
-    var layoutHeight =
-        if (style.height is Dimension.Points) (style.height as Dimension.Points).value.roundToInt()
-        else 0
+    var layoutHeight: Int
     when (val width = style.width) {
         is Dimension.Points -> {
             // Fixed width
-            textWidth = width.value.roundToInt()
+            textWidth = width.pointsAsDp(density.density).value.roundToInt()
             when (style.height) {
                 is Dimension.Points -> {
                     // Fixed height. Get actual height so we can calculate vertical alignment
                     rectBounds = textLayoutData.boundsForWidth(Int.MAX_VALUE, 1, density).first
-                    renderHeight = (style.height as Dimension.Points).value.roundToInt()
+                    renderHeight = style.height.pointsAsDp(density.density).value.roundToInt()
                     layoutHeight = renderHeight
                 }
                 else -> {
@@ -433,7 +452,7 @@ private fun measureTextBounds(
             rectBounds = textLayoutData.boundsForWidth(Int.MAX_VALUE, 1, density).first
             textWidth = rectBounds.width()
             renderHeight = rectBounds.height()
-            layoutHeight = textLayoutData.textBoxSize.height.roundToInt()
+            layoutHeight = (textLayoutData.textBoxSize.height * density.density).roundToInt()
         }
     }
 

@@ -432,7 +432,7 @@ internal fun DesignFrame(
                 return if (count > 0) count else 1
             }
 
-            val layout = LayoutManager.getLayout(layoutId)
+            val layout = LayoutManager.getLayoutWithDensity(layoutId)
             val gridSizeModifier = Modifier.layoutSizeToModifier(layout)
 
             val density = LocalDensity.current.density
@@ -497,10 +497,10 @@ internal fun DesignFrame(
                     userScrollEnabled = layoutInfo.scrollingEnabled,
                     contentPadding =
                         PaddingValues(
-                            layoutInfo.padding.start.pointsAsDp(),
-                            layoutInfo.padding.top.pointsAsDp(),
-                            layoutInfo.padding.end.pointsAsDp(),
-                            layoutInfo.padding.bottom.pointsAsDp(),
+                            layoutInfo.padding.start.pointsAsDp(density),
+                            layoutInfo.padding.top.pointsAsDp(density),
+                            layoutInfo.padding.end.pointsAsDp(density),
+                            layoutInfo.padding.bottom.pointsAsDp(density),
                         ),
                 ) {
                     lazyItemContent()
@@ -564,7 +564,7 @@ internal fun DesignFrame(
             if (parentLayout?.isWidgetChild == true) {
                 // For direct children of a widget, render the frame as a box with the calculated
                 // layout size, then compose the frame's children with our custom layout
-                val layout = LayoutManager.getLayout(layoutId)
+                val layout = LayoutManager.getLayoutWithDensity(layoutId)
                 Box(m.layoutSizeToModifier(layout)) {
                     DesignFrameLayout(modifier, name, layoutId, layoutState) { content() }
                 }
@@ -613,8 +613,8 @@ internal fun Modifier.frameRender(
                     paint.blendMode = BlendMode.DstIn
                     val offset =
                         Offset(
-                            -style.margin.start.pointsAsDp().value,
-                            -style.margin.top.pointsAsDp().value
+                            -style.margin.start.pointsAsDp(density).value,
+                            -style.margin.top.pointsAsDp(density).value
                         )
                     val parentSize = maskInfo?.parentSize?.value ?: size
                     drawContext.canvas.withSaveLayer(Rect(offset, parentSize), paint) { render() }

@@ -31,7 +31,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-permissions: 
+permissions:
   contents: read
 
 jobs:
@@ -44,7 +44,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - uses: gradle/wrapper-validation-action@56b90f209b02bf6d1deae490e9ef18b21a389cd4 # v1.1.0
 
   lint-kotlin:
@@ -55,15 +55,15 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v3.5.2
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
 
       - name: Set up Java
-        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
         with:
           distribution: "temurin"
           java-version: "17"
 
-      - uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.7.1
+      - uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.7.1
         with:
           cache-read-only: true
           arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
@@ -76,7 +76,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - name: Download actionlint
         id: get_actionlint
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
@@ -94,7 +94,7 @@ jobs:
           egress-policy: audit
 
       - run: rustup toolchain install stable --profile minimal
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v3.5.2
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
       - name: Rust lint
         run: cargo-fmt --all --check
 
@@ -106,7 +106,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - uses: marocchino/validate-dependabot@30653575251e0731f7c99bff8773e3988361597e # v2.1.0
 
 ############## Gradle
@@ -118,29 +118,29 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v3.5.2
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
 
       - name: Set up Java
-        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
         with:
           distribution: "temurin"
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
 
       - name: Test build-logic
-        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
         with:
           build-root-directory: build-logic
           arguments: test
 
       - name: Test the plugins
-        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
         with:
           build-root-directory: plugins
           arguments: test
@@ -153,16 +153,16 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v3.5.2
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
 
       - name: Set up Java
-        uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
         with:
           distribution: "temurin"
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
@@ -182,17 +182,17 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Full Gradle Test and publish
-        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
         with:
-          arguments: check build publishAllPublicationsToLocalDirRepository 
-      
+          arguments: check build publishAllPublicationsToLocalDirRepository
+
       - name: Upload maven repo
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: designcompose_m2repo
           path: build/designcompose_m2repo/
 
-  # These tests run on the local JVM and don't need the rust code, 
+  # These tests run on the local JVM and don't need the rust code,
   # so it makes sense to put them in a seperate job
   verify-roborazzi:
     runs-on: "ubuntu-latest"
@@ -209,7 +209,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "17"
-    
+
       - name: Set up Gradle
         uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
@@ -217,7 +217,7 @@ jobs:
           dependency-graph: generate
           gradle-home-cache-cleanup: true
 
-      - name: Generate full comparison 
+      - name: Generate full comparison
         uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
         with:
           arguments: compareRoborazziDebug
@@ -240,22 +240,22 @@ jobs:
   tutorial-app:
     runs-on: ubuntu-latest
     needs: sdk-build
-    steps:       
+    steps:
     - name: Harden Runner
       uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
 
     - name: Set up Java
-      uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
       with:
         distribution: "temurin"
         java-version: "17"
 
     - name: Set up Gradle
-      uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.4.2
+      uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.4.2
       with:
         dependency-graph: generate
         gradle-home-cache-cleanup: true
@@ -264,13 +264,13 @@ jobs:
       with:
         name: designcompose_m2repo
         path: designcompose_m2repo
-    
+
     - name: "Set environment variables"
       run: |
         echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
 
     - name: Check Tutorial App
-      uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.7.1
+      uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.7.1
       with:
         build-root-directory: reference-apps/tutorial
         arguments: |
@@ -278,26 +278,26 @@ jobs:
           build
 
 
-######### Unbundled apps     
+######### Unbundled apps
   aaos-unbundled:
     runs-on: ubuntu-latest
     needs: sdk-build
-    steps:       
+    steps:
     - name: Harden Runner
       uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
 
     - name: Set up Java
-      uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
+      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
       with:
         distribution: "temurin"
         java-version: "17"
 
     - name: Set up Gradle
-      uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.4.2
+      uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.4.2
       with:
         dependency-graph: generate
         gradle-home-cache-cleanup: true
@@ -316,7 +316,7 @@ jobs:
 
     - name: Check out the Unbundled AAOS Repo
       run: |
-        HOST=https://android.googlesource.com/platform/manifest        
+        HOST=https://android.googlesource.com/platform/manifest
         BRANCH=ub-automotive-master-20230622
         mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
         cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
@@ -324,12 +324,12 @@ jobs:
         repo sync -cq -j4
 
     - name: Check MediaCompose
-      uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.7.1
+      uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.7.1
       with:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
-          check 
-      
+          check
+
 ############# Rust
   rust-test:
     runs-on: ubuntu-latest
@@ -339,12 +339,12 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v3.5.2
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
 
       - run: rustup toolchain install stable --profile minimal
 
       - uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43
-        with: 
+        with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build all
@@ -362,7 +362,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v3.5.2
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
 
       - uses: ./.github/actions/build-figma-resource
         with:

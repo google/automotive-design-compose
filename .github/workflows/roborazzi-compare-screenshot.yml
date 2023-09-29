@@ -1,0 +1,80 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Adapted from https://github.com/takahirom/roborazzi-compare-on-github-comment-sample/blob/main/.github/workflows/CompareScreenshot.yml
+
+name: CompareScreenshot
+
+on:
+  push:
+    branches:
+      - main
+      - 'stable/**'
+  pull_request:
+
+permissions: {}
+
+jobs:
+  compare-with-base-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read # for clone
+      actions: write # for upload-artifact
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+
+      - name: Download screenshots from base branch
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        with:
+          name: screenshots
+          workflow: roborazzi-record-screenshot.yml
+          branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event.repository.default_branch }}
+
+      - name: Compare Screenshots
+        id: compare-screenshot-test
+        run: |
+          ./gradlew compareRoborazziDebug --stacktrace
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: diff-vs-base-branch
+          path: |
+            **/build/outputs/roborazzi
+            **/build/reports/roborazzi
+          retention-days: 30
+
+      - name: Save PR number
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          mkdir -p ./pr
+          echo ${{ github.event.number }} > ./pr/NR
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pr
+          path: pr/

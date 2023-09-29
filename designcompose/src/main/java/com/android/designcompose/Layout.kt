@@ -162,7 +162,7 @@ internal object LayoutManager {
 
     internal fun unsubscribe(layoutId: Int) {
         subscribers.remove(layoutId)
-        val responseBytes = Jni.jniRemoveNode(layoutId)
+        val responseBytes = Jni.jniRemoveNode(layoutId, docLoaded)
         handleResponse(responseBytes)
     }
 

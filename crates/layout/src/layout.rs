@@ -270,7 +270,7 @@ impl LayoutManager {
         }
     }
 
-    fn remove_view(&mut self, layout_id: i32) -> LayoutChangedResponse {
+    fn remove_view(&mut self, layout_id: i32, compute_layout: bool) -> LayoutChangedResponse {
         let mut taffy = taffy();
         let taffy_node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(taffy_node) = taffy_node {
@@ -302,7 +302,11 @@ impl LayoutManager {
             error!("no taffy node for layout_id {}", layout_id);
         }
 
-        self.recompute_layouts(&mut taffy)
+        if compute_layout {
+            self.recompute_layouts(&mut taffy)
+        } else {
+            LayoutChangedResponse::unchanged(self.layout_state)
+        }
     }
 
     // Set the given node's size to a fixed value, recompute layout, and return
@@ -436,8 +440,8 @@ pub fn add_view_measure(
     )
 }
 
-pub fn remove_view(layout_id: i32) -> LayoutChangedResponse {
-    manager().remove_view(layout_id)
+pub fn remove_view(layout_id: i32, compute_layout: bool) -> LayoutChangedResponse {
+    manager().remove_view(layout_id, compute_layout)
 }
 
 pub fn set_node_size(layout_id: i32, width: u32, height: u32) -> LayoutChangedResponse {

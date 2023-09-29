@@ -486,13 +486,3 @@ fn print_layout_recurse(layout_id: i32, manager: &LayoutManager, taffy: &Taffy, 
         }
     }
 }
-
-// Add tests:
-//
-// 1. Nodes in vertical layout
-// 2. Nodes in horizontal layout
-// 3. Nodes in absolute layout
-// 4. Remove node
-// 5. Remove node, add node
-// 6. Remove text node, add node with same ID
-// 7. Change node variant

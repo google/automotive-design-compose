@@ -978,10 +978,7 @@ internal fun DesignDocInternal(
                 // calculation
                 // until all views have been added
                 if (isRoot) {
-                    DisposableEffect(startFrame) {
-                        LayoutManager.deferComputations()
-                        onDispose {}
-                    }
+                    DisposableEffect(startFrame) { onDispose {} }
                     val density = LocalDensity.current.density
                     DisposableEffect(density) {
                         LayoutManager.setDensity(density)
@@ -1030,11 +1027,7 @@ internal fun DesignDocInternal(
 
                 // For root views, tell the layout manager that it is done loading after all
                 // child composables have been called so that it can trigger a layout compute.
-                if (isRoot)
-                    DisposableEffect(startFrame) {
-                        LayoutManager.resumeComputations()
-                        onDispose {}
-                    }
+                if (isRoot) DisposableEffect(startFrame) { onDispose {} }
             }
 
             return

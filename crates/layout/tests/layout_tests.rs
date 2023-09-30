@@ -29,7 +29,8 @@ use figma_import::{
     NodeQuery, SerializedDesignDoc, ViewData,
 };
 use layout::{
-    add_view, add_view_measure, compute_layout, print_layout, remove_view, set_node_size, get_node_layout,
+    add_view, add_view_measure, compute_layout, get_node_layout, print_layout, remove_view,
+    set_node_size,
 };
 use std::fs::File;
 use std::io::prelude::*;
@@ -124,7 +125,7 @@ fn test_vertical_layout() {
     let view = view_result.unwrap();
     let mut id = 0;
     add_view_to_layout(&view, &mut id, -1, -1);
-    
+
     let root_layout_result = get_node_layout(0);
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
@@ -136,7 +137,7 @@ fn test_vertical_layout() {
     let child1_layout = child1_layout_result.unwrap();
     assert!(child1_layout.width == 50.0);
     assert!(child1_layout.height == 50.0);
-    
+
     let child2_layout_result = get_node_layout(2);
     assert!(child2_layout_result.is_some());
     let child2_layout = child2_layout_result.unwrap();

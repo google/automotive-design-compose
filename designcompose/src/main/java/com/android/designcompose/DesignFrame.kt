@@ -112,7 +112,7 @@ internal fun DesignFrame(
             "Subscribe Frame ${view.name} layoutId $layoutId parent $parentLayoutId index $childIndex"
         )
         // Subscribe to layout changes when the view changes or is added
-        LayoutManager.subscribe(
+        LayoutManager.subscribeFrame(
             layoutId,
             setLayoutState,
             parentLayoutId,
@@ -129,6 +129,18 @@ internal fun DesignFrame(
             LayoutManager.unsubscribe(layoutId)
         }
     }
+
+    val finishLayout =
+        @Composable {
+            // This must be called at the end of DesignFrame just before returning, after adding all
+            // children. This lets the LayoutManager know that this frame has completed, and so if
+            // there are no other parent frames performing layout, layout computation can be
+            // performed.
+            DisposableEffect(view) {
+                LayoutManager.finishLayout(layoutId)
+                onDispose {}
+            }
+        }
 
     // Check for a customization that replaces this component completely
     val replacementComponent = customizations.getComponent(name)
@@ -160,6 +172,7 @@ internal fun DesignFrame(
                 override val textStyle: TextStyle? = null
             }
         )
+        finishLayout()
         return true
     }
 
@@ -258,7 +271,10 @@ internal fun DesignFrame(
             }
         }
         is LayoutInfoGrid -> {
-            if (lazyContent == null) return false
+            if (lazyContent == null) {
+                finishLayout()
+                return false
+            }
 
             // Given the list of possible content that goes into this grid layout, try to find a
             // matching
@@ -578,6 +594,8 @@ internal fun DesignFrame(
             }
         }
     }
+
+    finishLayout()
     return true
 }
 

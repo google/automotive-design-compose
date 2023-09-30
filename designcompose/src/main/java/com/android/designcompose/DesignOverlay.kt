@@ -67,7 +67,6 @@ internal fun DesignOverlay(
     DisposableEffect(Unit) {
         // Similar to a root view, tell the layout manager to defer layout computations until all
         // child views have been added to the overlay
-        LayoutManager.deferComputations()
         Log.d(TAG, "Overlay start")
         onDispose {}
     }
@@ -75,7 +74,6 @@ internal fun DesignOverlay(
     DisposableEffect(Unit) {
         // Similar to a root view, tell the layout manager to that child views have been added so
         // that layout can be computed
-        LayoutManager.resumeComputations()
         Log.d(TAG, "Overlay end")
         onDispose {}
     }

@@ -254,15 +254,7 @@ internal fun DesignText(
                 view,
                 textMeasureData
             )
-        else
-            LayoutManager.subscribe(
-                layoutId,
-                setLayoutState,
-                parentLayoutId,
-                childIndex,
-                view,
-                null
-            )
+        else LayoutManager.subscribeText(layoutId, setLayoutState, parentLayoutId, childIndex, view)
         onDispose {}
     }
     // Unsubscribe to layout changes when the composable is no longer in view.

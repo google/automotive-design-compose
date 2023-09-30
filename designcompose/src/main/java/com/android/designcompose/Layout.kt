@@ -73,9 +73,10 @@ internal data class TextMeasureData(
 
 internal object LayoutManager {
     private val subscribers: HashMap<Int, (Int) -> Unit> = HashMap()
+    private val layoutsInProgress: HashSet<Int> = HashSet()
     private var textMeasures: HashMap<Int, TextMeasureData> = HashMap()
     private var nextLayoutId: Int = 0
-    private var docLoaded: Boolean = false
+    private var performLayoutComputation: Boolean = false
     private var density: Float = 1F
 
     internal fun getNextLayoutId(): Int {
@@ -83,22 +84,16 @@ internal object LayoutManager {
     }
 
     internal fun deferComputations() {
-        // Defer layout computations when adding or removing views. This is an optimization to
-        // prevent layout from being calculated after every view subscribe or unsubscribe when we
-        // know that we need to add or remove a bunch of views. Typically resumeComputations() is
-        // called when the root or overlay view is done adding children.
+        // Defer layout computations when removing views. This is an optimization to prevent layout
+        // from being calculated after every view unsubscribe. Currently we only defer computations
+        // when performing an navigation interaction that changes the root view.
         Log.d(TAG, "deferComputations")
-        docLoaded = false
+        performLayoutComputation = false
     }
 
-    internal fun resumeComputations() {
-        // The root view along with its children have finished composition, so compute layout.
-        // Subsequent composition changes such as changing, adding, or removing views will also
-        // trigger layout computations.
-        Log.d(TAG, "resumeComputations")
-        docLoaded = true
-        val responseBytes = Jni.jniComputeLayout()
-        handleResponse(responseBytes)
+    private fun resumeComputations() {
+        // Resume layout computations. This happens as soon as we start adding (subscribing) views.
+        performLayoutComputation = true
     }
 
     internal fun setDensity(pixelDensity: Float) {
@@ -110,7 +105,53 @@ internal object LayoutManager {
         return density
     }
 
-    internal fun subscribe(
+    internal fun subscribeFrame(
+        layoutId: Int,
+        setLayoutState: (Int) -> Unit,
+        parentLayoutId: Int,
+        childIndex: Int,
+        view: View,
+        variantView: View?
+    ) {
+        // Frames can have children so call beginLayout() to optimize layout computation until all
+        // children have been added.
+        beginLayout(layoutId)
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, view, variantView)
+    }
+
+    internal fun subscribeText(
+        layoutId: Int,
+        setLayoutState: (Int) -> Unit,
+        parentLayoutId: Int,
+        childIndex: Int,
+        view: View
+    ) {
+        // Text cannot have children so don't call beginLayout()
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, view, null)
+    }
+
+    internal fun subscribeWithMeasure(
+        layoutId: Int,
+        setLayoutState: (Int) -> Unit,
+        parentLayoutId: Int,
+        childIndex: Int,
+        view: View,
+        textMeasureData: TextMeasureData,
+    ) {
+        subscribers[layoutId] = setLayoutState
+        textMeasures[layoutId] = textMeasureData
+
+        val serializer = BincodeSerializer()
+        view.serialize(serializer)
+        val serializedView = serializer._bytes.toUByteArray().asByteArray()
+        // Compute layout if this is the only node that changed
+        val computeLayout = layoutsInProgress.isEmpty()
+        val responseBytes =
+            Jni.jniAddTextNode(layoutId, parentLayoutId, childIndex, serializedView, computeLayout)
+        handleResponse(responseBytes)
+    }
+
+    private fun subscribe(
         layoutId: Int,
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
@@ -136,34 +177,33 @@ internal object LayoutManager {
                 childIndex,
                 serializedView,
                 serializedVariantView,
-                docLoaded
+                false
             )
-        handleResponse(responseBytes)
-    }
-
-    internal fun subscribeWithMeasure(
-        layoutId: Int,
-        setLayoutState: (Int) -> Unit,
-        parentLayoutId: Int,
-        childIndex: Int,
-        view: View,
-        textMeasureData: TextMeasureData,
-    ) {
-        subscribers[layoutId] = setLayoutState
-        textMeasures[layoutId] = textMeasureData
-
-        val serializer = BincodeSerializer()
-        view.serialize(serializer)
-        val serializedView = serializer._bytes.toUByteArray().asByteArray()
-        val responseBytes =
-            Jni.jniAddTextNode(layoutId, parentLayoutId, childIndex, serializedView, docLoaded)
-        handleResponse(responseBytes)
     }
 
     internal fun unsubscribe(layoutId: Int) {
         subscribers.remove(layoutId)
-        val responseBytes = Jni.jniRemoveNode(layoutId, docLoaded)
+        val responseBytes = Jni.jniRemoveNode(layoutId, performLayoutComputation)
         handleResponse(responseBytes)
+    }
+
+    private fun beginLayout(layoutId: Int) {
+        // Add a layout ID to a set of IDs that are in progress. As a view recursively calls its
+        // children, this set grows. Each time a view has finished calling its children it calls
+        // finishLayout().
+        layoutsInProgress.add(layoutId)
+        resumeComputations()
+    }
+
+    internal fun finishLayout(layoutId: Int) {
+        // Remove a layout ID from the set of IDs that are in progress. If this was the last ID
+        // removed, trigger a layout computation.
+        layoutsInProgress.remove(layoutId)
+        if (layoutsInProgress.isEmpty()) {
+            Log.d(TAG, "Finished layout $layoutId, computing layout")
+            val responseBytes = Jni.jniComputeLayout()
+            handleResponse(responseBytes)
+        }
     }
 
     private fun handleResponse(responseBytes: ByteArray?) {

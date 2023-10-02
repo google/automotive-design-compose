@@ -137,7 +137,7 @@ class CargoPlugin : Plugin<Project> {
                 task.androidAbi.set(abi)
                 task.useReleaseProfile.set(variant.buildType != "debug")
                 task.ndkDirectory.set(ndkDir)
-                task.compileApi.set(variant.minSdkVersion.apiLevel)
+                task.compileApi.set(variant.minSdk.apiLevel)
                 task.cargoTargetDir.set(
                     project.layout.buildDirectory.map { it.dir("intermediates/cargoTarget") }
                 )

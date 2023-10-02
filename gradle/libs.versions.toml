@@ -45,7 +45,7 @@ material = "1.9.0"
 # @keep Non-`dependency` constant
 minSdk = "26"
 mockito = "5.1.1"
-mockk = "1.13.7"
+mockk = "1.13.8"
 mysql = "8.0.32"
 rules = "1.5.0"
 # @keep Non-`dependency` constant
@@ -54,6 +54,8 @@ junit5 = "5.10.0"
 truth = "1.1.5"
 core = "1.10.1"
 activityKtx = "1.7.2"
+robolectric = "4.10.3"
+roborazzi = "1.7.0-alpha-3"
 
 [libraries]
 accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanist" }
@@ -108,9 +110,14 @@ google-truth = { module = "com.google.truth:truth", version.ref = "truth" }
 junit-jupiter = {module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
+robolectric = {module = "org.robolectric:robolectric", version.ref = "robolectric"}
+roborazzi = {module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi"}
+roborazzi-compose = {module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi"}
+roborazzi-junit = {module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi"}
 
 [plugins]
 designcompose = { id = "com.android.designcompose", version.ref = "designcompose" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
 strictVersionMatcher = { id = "com.google.android.gms.strict-version-matcher-plugin", version.ref = "android-gms-strictVersionMatcher" }
+roborazzi = {id = "io.github.takahirom.roborazzi", version.ref = "roborazzi"}

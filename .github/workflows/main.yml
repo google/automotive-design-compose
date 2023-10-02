@@ -238,8 +238,12 @@ jobs:
 
 ########### Tutorial app
   tutorial-app:
-    runs-on: ubuntu-latest
+    strategy: 
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     needs: sdk-build
+
     steps:
     - name: Harden Runner
       uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
@@ -257,7 +261,9 @@ jobs:
     - name: Set up Gradle
       uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.4.2
       with:
-        dependency-graph: generate
+        # Dependency graph isn't supported on Windows and we don't need it to run on Mac either
+        # This is GitHub's ternary operator
+        dependency-graph: ${{ matrix.os == 'ubuntu-latest' && 'generate' ||  'disabled' }}
         gradle-home-cache-cleanup: true
 
     - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
@@ -265,9 +271,17 @@ jobs:
         name: designcompose_m2repo
         path: designcompose_m2repo
 
-    - name: "Set environment variables"
+    - name: "Set environment variables (Linux/Mac)"
+      if: ${{ matrix.os != 'windows-latest'}}
       run: |
         echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+
+    - name: "Set environment variables (Windows)"
+      if: ${{ matrix.os == 'windows-latest'}}
+      run: |
+        chcp 65001 #set code page to utf-8
+        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$env:GITHUB_WORKSPACE/designcompose_m2repo" >> "$env:GITHUB_ENV"
+
 
     - name: Check Tutorial App
       uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.7.1

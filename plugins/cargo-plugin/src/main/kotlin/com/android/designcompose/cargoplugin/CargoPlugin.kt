@@ -18,6 +18,7 @@ package com.android.designcompose.cargoplugin
 
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.android.build.api.variant.Variant
+import com.android.builder.model.PROPERTY_BUILD_ABI
 import java.io.File
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.GradleException
@@ -149,10 +150,19 @@ class CargoPlugin : Plugin<Project> {
 
         // Add the result to the variant's JNILibs sources. This is all we need to do to make sure
         // the JNILibs are compiled and included in the library
-        @Suppress("UnstableApiUsage")
         with(variant.sources.jniLibs) {
-            if (this != null) this.addGeneratedSourceDirectory(cargoTask, CargoBuildTask::outLibDir)
-            else
+            if (this != null) {
+                // Check to see if we're building for a specific abi
+                project.findProperty(PROPERTY_BUILD_ABI)?.toString()?.let { injectedBuildAbis ->
+                    println("buildAbi: $injectedBuildAbis")
+                    if (!injectedBuildAbis.split(",").contains(abi)) {
+                        println("$PROPERTY_BUILD_ABI set, filtering out $abi")
+                        return@with
+                    }
+                }
+
+                this.addGeneratedSourceDirectory(cargoTask, CargoBuildTask::outLibDir)
+            } else
                 project.logger.error(
                     "No JniLibs configured by Android Gradle Plugin, Cargo tasks may not run"
                 )

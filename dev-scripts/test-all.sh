@@ -20,7 +20,7 @@ This script should run all of the tests that CI will run. (It'll need to be kept
 Options:
   -s: Skip emulator tests
   -u: Set Unbundled AAOS path
-Pre-requisites: 
+Pre-requisites:
     Have \$FIGMA_ACCESS_TOKEN set to your actual Figma token
     To run the full suite your system must be able to run emulator tests.
       Use the -s argument to skip emulator tests.
@@ -64,6 +64,7 @@ if [[ -z "$FIGMA_ACCESS_TOKEN" ]]; then
   fi
 fi
 
+export ANDROID_INJECTED_BUILD_ABI=x86,x86_64
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"
 
 cd "$GIT_ROOT" || exit

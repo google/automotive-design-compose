@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
-        consumerProguardFiles("consumer-proguard-rules.pro")
+        //        consumerProguardFiles("consumer-proguard-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (designcompose.figmaToken.isPresent) {
             testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =
@@ -69,10 +69,10 @@ listOf("publish", "publishToMavenLocal", "publishAllPublicationsToLocalDirReposi
 // Defines the configuration for the Rust JNI build
 cargo {
     crateDir.set(File(rootProject.relativePath("../crates/live_update")))
-    // abi.add("x86") // Older Emulated devices, including the ATD Android Test device
+    abi.add("x86") // Older Emulated devices, including the ATD Android Test device
     abi.add("x86_64") // Most Emulated Android Devices
-    // abi.add("armeabi-v7a")
-    // abi.add("arm64-v8a")
+    abi.add("armeabi-v7a")
+    abi.add("arm64-v8a")
 }
 
 dependencies {

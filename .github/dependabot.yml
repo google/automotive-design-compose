@@ -28,7 +28,7 @@ updates:
     directory: /
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: 
+    groups:
       github-workflow-dependency-patches:
         update-types:
         - "patch"
@@ -43,7 +43,7 @@ updates:
     directory: "/.github/actions/build-figma-resource"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: 
+    groups:
       github-action-dependency-patches:
         update-types:
         - "patch"
@@ -51,12 +51,14 @@ updates:
     schedule:
       interval: weekly
       day: wednesday
-      
+
   - package-ecosystem: cargo
     directory: /
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: 
+    allow:
+      - dependency-type: "all"
+    groups:
       rust-dependency-patches:
         update-types:
         - "patch"
@@ -69,7 +71,7 @@ updates:
     directory: /docs
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: 
+    groups:
       jekyll-dependency-patches:
         update-types:
         - "patch"
@@ -81,7 +83,7 @@ updates:
     directory: /support-figma/auto-content-preview-widget
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: 
+    groups:
       figma-widget-dependency-patches:
         update-types:
         - "patch"
@@ -93,7 +95,7 @@ updates:
     directory: /support-figma/extended-layout-plugin
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    groups: 
+    groups:
       figma-plugin-dependency-patches:
         update-types:
         - "patch"
@@ -110,7 +112,7 @@ updates:
     reviewers: [timothyfroehlich]
     # Dependabot groups seem to be busted for Gradle. Uncommenting this will prevent
     # PRs from being created for Gradle dependencies.
-    # groups: 
+    # groups:
     #   gradle-dependencies-patches:
     #     update-types:
     #     - "patch"

@@ -36,6 +36,7 @@ plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices") apply false
     alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.roborazzi) apply false
 }
 
 // Format all *.gradle.kts files in the repository. This should catch all buildscripts.

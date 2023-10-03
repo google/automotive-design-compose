@@ -18,6 +18,8 @@ usage() {
 cat  <<END
 This script should run all of the tests that CI will run. (It'll need to be kept up to date though)
 Options:
+  -f: Run a basic format of the Kotlin code before testing. 
+    Won't catch everything but shouldn't cause everything to rebuild either.
   -s: Skip emulator tests
   -u: Set Unbundled AAOS path
 Pre-requisites:
@@ -29,13 +31,17 @@ END
 
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 run_emulator_tests=1
-while getopts "su:" opt; do
+RUN_FORMAT=false
+while getopts "fsu:" opt; do
   case "$opt" in
     s)
       run_emulator_tests=0
       ;;
     u)
       ORG_GRADLE_PROJECT_unbundledAAOSDir=$(realpath "${OPTARG}")
+      ;;
+    f)
+      RUN_FORMAT=true
       ;;
     *)
       usage
@@ -68,6 +74,9 @@ export ANDROID_INJECTED_BUILD_ABI=x86,x86_64
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"
 
 cd "$GIT_ROOT" || exit
+
+if [[ $RUN_FORMAT == "true" ]]; then ./gradlew ktfmtFormat; fi
+
 # if https://github.com/rhysd/actionlint is installed then run it. This is a low priority check so it's fine to not run it
 if which actionlint > /dev/null; then actionlint; fi
 cargo-fmt --all --check
@@ -81,7 +90,7 @@ cd "$GIT_ROOT/plugins" || exit
 ./gradlew build
 
 cd "$GIT_ROOT" || exit
-./gradlew build publishAllPublicationsToLocalDirRepository
+./gradlew build publishAllPublicationsToLocalDirRepository verifyRoborazziDebug
 
 if [[ $run_emulator_tests == 1 ]]; then
   ./gradlew gmdTestStandard -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect

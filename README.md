@@ -160,6 +160,10 @@ android.experimental.androidTest.numManagedDeviceShards=3 #Up to 4 are supported
 
 This can provide significant speedup for instrumented tests. Having shards set to 4 can reduce the time to run instrumented tests by 75% (Sample test run: `g connectedCheck` ran in 4m24s, `g gmdTestsQuick` with 3 shards ran in 1m10s)
 
+## Roborazzi screenshot tests
+
+[Roborazzi](https://github.com/takahirom/roborazzi) is a new framework that allows for screenshot testing of Android Apps on your local system. It uses [Robolectric](https://github.com/robolectric/robolectric), the standard unit testing framework for Android, to render DesignCompose locally, allowing screenshots to be generated. The screenshots won't be one-to-one with actual Android devices, but they'll be very close and stable enough for changes to be detected. The comparison is run using `./gradlew verifyRoborazziDebug`. See [our documentation](https://google.github.io/automotive-design-compose/docs/working-with-source/writing-tests) for more information.
+
 ## Testing the standalone version of the Tutorial app
 
 The Tutorial app is currently part of two projects: The root project in the root of the repository, and the tutorial project in `reference-apps/tutorial`. The root project is the one that contains the entire SDK and our apps and is where you typically develop. The second project is the one that users following the Tutorial are directed to use. It fetches DesignCompose from gMaven, which means that it builds much faster and doesn't compile rust code (and doesn't require the rust SDK to be installed). This means that the standalone Tutorial needs some extra configuration if you want the standalone Tutorial project to use any unpublished changes to the libraries and plugin.

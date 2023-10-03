@@ -23,13 +23,13 @@ To configure access to your documents, you need to generate an access token.
 
     **Figure 1.** Figma Settings Menu.
 
-1. Scroll down to **Personal access tokens** and click **Generate new token**
+2. Scroll down to **Personal access tokens** and click **Generate new token**
 
-1. Automotive Design for Compose requires a token with read-only File content access. All other scopes can be left set to "No access". Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
+3. Automotive Design for Compose requires a token with read-only File content access. All other scopes can be left set to "No access". Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
 
     ![Figma Token Generation Screen](figma-token.png)
 
-1. Save the token in the following well-known location on your file system. The location depends on your operating system:
+4. Save the token in the following well-known location on your file system. The location depends on your operating system:
 
     - Linux, MacOS: `$HOME/.config/figma_access_token`
 

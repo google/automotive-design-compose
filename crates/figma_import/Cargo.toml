@@ -3,6 +3,7 @@ name = "figma_import"
 version = "0.1.0"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]
 description = "Figma document serialization toolkit"
+license = "Apache-2.0"
 edition = "2018"
 build = "build.rs"
 
@@ -25,7 +26,7 @@ fetch = ["clap"]
 unicode-segmentation = "1"
 "image" = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
 "euclid" = { version = "0.20.13", default-features = false, features = ["serde"] }
-"phf" = { version = "0.11.2", features = ["macros"], optional = true }
+"phf" = { version = "0.11", features = ["macros"], optional = true }
 
 # reflection dependencies
 "serde-reflection" = { version = "0.3", optional = true }

@@ -9,7 +9,6 @@ build = "build.rs"
 [features]
 default = []
 reflection = ["serde-reflection", "serde-generate", "clap"]
-webserver = ["rocket"]
 http_mock = ["phf"]
 fetch = ["clap"]
 
@@ -32,9 +31,6 @@ unicode-segmentation = "1"
 "serde-reflection" = { version = "0.3", optional = true }
 "serde-generate" = { version = "0.25.1", optional = true }
 clap = { version = "4.4", features = ["derive"], optional = true }
-
-# webserver dependencies
-rocket = { version = "0.5.0-rc.1", features = ["json"], optional = true }
 
 # logging
 log = "0.4"

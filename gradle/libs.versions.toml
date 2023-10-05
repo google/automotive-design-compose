@@ -7,7 +7,7 @@ android-gradlePlugin = "8.1.0"
 # The minimum supported AGP version for DesignCompose Apps
 # @pin - Manually update
 android-gradlePlugin-minSupported = "7.3.1"
-androidx-activity-compose = "1.7.2"
+androidx-activity-compose = "1.8.0"
 androidx-appcompat = "1.6.1"
 androidx-compose-bom = "2023.06.01"
 # @keep Non-`dependency` constant

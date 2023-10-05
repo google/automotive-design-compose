@@ -49,11 +49,15 @@ jobs:
       - name: Install Rust toolchains
         run: ./install-rust-toolchains.sh
 
-      - name: Set up Gradle
+      - name: Run the profiled build
         uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           arguments:
             ${{matrix.task}} --profile
+
+      - name: Parse the results
+        run: |
+            ./dev-scripts/parse-profile-data.sh
 
       - name: Upload profile info
         uses: actions/upload-artifact@v3

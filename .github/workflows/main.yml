@@ -414,7 +414,8 @@ jobs:
         with:
           name: gradle-profile-${{matrix.task}}-${{matrix.cache}}
           path: |
-            **/build/repors/profile
+            **/build/reports/profile
+          if-no-files-found: error
 
 
 ############# Rust

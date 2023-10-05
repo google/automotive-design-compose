@@ -1,10 +1,23 @@
 #!/bin/bash
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 set -e
 shopt -s globstar
 
-# This is a helper script to be called by androidx.sh
-# This script locates, parses, and merges build profiling information from various report files
-# A history of the results of running this script can be visualized at go/androidx-build-times
+# Adapted from AndroidX's profile parsing. Pases key metrics from the Gradle profile into a
+# more easily parsed json.
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
@@ -12,8 +25,6 @@ cd "$GIT_ROOT" || exit
 
 PROFILE_FILES="**/build/reports/profile/*.html"
 for PROFILE in $PROFILE_FILES; do
-  # parse the profile file and generate a .json file summarizing it
   PROFILE_JSON="${PROFILE%.html}.json"
-  # Because we run Gradle twice (see TaskUpToDateValidator.kt), we want the second-to-last profile
   ./dev-scripts/parse-profile-html.py --input-profile "$PROFILE" --output-summary "$PROFILE_JSON"
 done

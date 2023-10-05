@@ -255,7 +255,7 @@ jobs:
 
 ########### Tutorial app
   tutorial-app:
-    strategy: 
+    strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -360,6 +360,62 @@ jobs:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
           check
+
+  gradle-build-profile:
+    strategy:
+      matrix:
+        task: [assembleDebug, publishAllPublicationsToLocalDirRepository]
+        cache: [cache-enabled, cache-disabled]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
+
+      - name: Set up Java
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
+        with:
+          cache-disabled: ${{matrix.cache == 'cache-disabled'}}
+
+      - name: Set up Rust Cache
+        if: ${{matrix.cache == 'cache-enabled'}}
+        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43
+        with:
+          workspaces: ". -> designcompose/build/intermediates/cargoTarget"
+          shared-key: "gradle-rust"
+
+      - name: Update Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Install Rust toolchains
+        run: ./install-rust-toolchains.sh
+
+      - name: Run the profiled build
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
+        with:
+          arguments:
+            ${{matrix.task}} --profile
+
+      - name: Parse the results
+        run: |
+            ./dev-scripts/parse-profile-data.sh
+
+      - name: Upload profile info
+        uses: actions/upload-artifact@v3
+        with:
+          name: gradle-profile-${{matrix.task}}-${{matrix.cache}}
+          path: |
+            **/build/repors/profile
+
 
 ############# Rust
   rust-test:

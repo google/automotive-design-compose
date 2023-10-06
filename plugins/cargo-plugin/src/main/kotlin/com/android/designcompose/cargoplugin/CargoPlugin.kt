@@ -45,10 +45,30 @@ class CargoPlugin : Plugin<Project> {
             project.extensions.getByType(LibraryAndroidComponentsExtension::class.java).let { ace ->
                 val ndkDir = findNdkDirectory(project, ace)
 
+                val configuredAbis = cargoExtension.abi.get()
+                val activeAbis = if (project.findProperty(allowAbiOverride)?.toString() == "true") {
+                    selectActiveAbis(
+                        configuredAbis,
+                        project.findProperty(PROPERTY_BUILD_ABI)?.toString(),
+                        project.findProperty(abiFilter)?.toString()
+                    )
+
+                } else {
+                    configuredAbis
+                }
+
+
                 // Create one task per variant and ABI
                 ace.onVariants { variant ->
                     cargoExtension.abi.get().forEach { abi ->
-                        createCargoTask(project, cargoExtension, variant, abi, ndkDir)
+                        createCargoTask(
+                            project,
+                            cargoExtension,
+                            variant,
+                            abi,
+                            configuredAbis.contains(abi),
+                            ndkDir
+                        )
                     }
                 }
             }
@@ -100,6 +120,7 @@ class CargoPlugin : Plugin<Project> {
         cargoExtension: CargoPluginExtension,
         variant: Variant,
         abi: String,
+        abiEnabled: Boolean,
         ndkDir: Provider<Directory>
     ) {
         val cargoTask =
@@ -148,24 +169,34 @@ class CargoPlugin : Plugin<Project> {
                 task.shouldRunAfter(project.tasks.named("preBuild"))
             }
 
-        // Add the result to the variant's JNILibs sources. This is all we need to do to make sure
-        // the JNILibs are compiled and included in the library
-        with(variant.sources.jniLibs) {
-            if (this != null) {
-                // Check to see if we're building for a specific abi
-                project.findProperty(PROPERTY_BUILD_ABI)?.toString()?.let { injectedBuildAbis ->
-                    println("buildAbi: $injectedBuildAbis")
-                    if (!injectedBuildAbis.split(",").contains(abi)) {
-                        println("$PROPERTY_BUILD_ABI set, filtering out $abi")
-                        return@with
-                    }
-                }
-
-                this.addGeneratedSourceDirectory(cargoTask, CargoBuildTask::outLibDir)
-            } else
-                project.logger.error(
-                    "No JniLibs configured by Android Gradle Plugin, Cargo tasks may not run"
-                )
+        if (abiEnabled) {
+            // Add the result to the variant's JNILibs sources. This is all we need to do to make sure
+            // the JNILibs are compiled and included in the library
+            with(variant.sources.jniLibs) {
+                if (this != null) {
+                    this.addGeneratedSourceDirectory(cargoTask, CargoBuildTask::outLibDir)
+                } else
+                    project.logger.error(
+                        "No JniLibs configured by Android Gradle Plugin, Cargo tasks may not run"
+                    )
+            }
         }
     }
+}
+
+internal fun selectActiveAbis(
+    configuredAbis: Set<String>,
+    injectedBuildAbis: String?,
+    abiFilter: String?
+): Set<String> {
+    return if (injectedBuildAbis != null) {
+        val abi = injectedBuildAbis.split(",").first()
+        if (configuredAbis.contains(abi)) setOf(abi) else throw GradleException("Unknown injected build ABI: $abi")
+
+    } else if (abiFilter != null) {
+        abiFilter.split(",")
+            .map { if (!configuredAbis.contains(it)) throw GradleException("Unknown abiFilter: $it") else it }
+            .toSet()
+
+    } else configuredAbis
 }

@@ -14,14 +14,17 @@
 
 package com.android.designcompose;
 
+import androidx.annotation.Keep;
+
 import kotlin.Pair;
 
 // JNI function called from Rust as a measure function for text
+@Keep
 public class DesignTextMeasure {
-  public static TextSize measureTextSize(int layoutId, float width, float height, float availableWidth, float availableHeight) {
-    Pair<Float, Float> size = com.android.designcompose.DesignTextKt.measureTextBoundsFunc(layoutId, width, height, availableWidth, availableHeight);
-    float outWidth = size.component1().floatValue();
-    float outHeight = size.component2().floatValue();
-    return new TextSize(outWidth, outHeight);
-  }
+    public static TextSize measureTextSize(int layoutId, float width, float height, float availableWidth, float availableHeight) {
+        Pair<Float, Float> size = com.android.designcompose.DesignTextKt.measureTextBoundsFunc(layoutId, width, height, availableWidth, availableHeight);
+        float outWidth = size.component1().floatValue();
+        float outHeight = size.component2().floatValue();
+        return new TextSize(outWidth, outHeight);
+    }
 }

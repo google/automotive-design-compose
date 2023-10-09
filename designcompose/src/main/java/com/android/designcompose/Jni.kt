@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import androidx.annotation.Keep
 import androidx.annotation.VisibleForTesting
 
 // HTTP Proxy configuration.
@@ -28,6 +29,7 @@ internal class ProxyConfig {
     var httpProxyConfig: HttpProxyConfig? = null
 }
 
+@Keep
 internal class TextSize(
     var width: Float = 0F,
     var height: Float = 0F,

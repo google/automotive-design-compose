@@ -39,34 +39,35 @@ import org.gradle.configurationcache.extensions.capitalized
 class CargoPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val cargoExtension = project.extensions.create("cargo", CargoPluginExtension::class.java)
+        val configuredAbis = cargoExtension.abi.map { it }
+        val activeAbis =
+            configuredAbis.map {
+                if (project.findProperty(allowAbiOverride)?.toString() == "true") {
+                    selectActiveAbis(
+                        configuredAbis.get(),
+                        project.findProperty(PROPERTY_BUILD_ABI)?.toString(),
+                        project.findProperty(abiFilter)?.toString()
+                    )
+                } else {
+                    it
+                }
+            }
+
         // withPlugin(String) will do the action once the plugin is applied, or immediately
         // if the plugin is already applied
         project.pluginManager.withPlugin("com.android.library") {
             project.extensions.getByType(LibraryAndroidComponentsExtension::class.java).let { ace ->
                 val ndkDir = findNdkDirectory(project, ace)
 
-                val configuredAbis = cargoExtension.abi.get()
-                val activeAbis = if (project.findProperty(allowAbiOverride)?.toString() == "true") {
-                    selectActiveAbis(
-                        configuredAbis,
-                        project.findProperty(PROPERTY_BUILD_ABI)?.toString(),
-                        project.findProperty(abiFilter)?.toString()
-                    )
-
-                } else {
-                    configuredAbis
-                }
-
-
                 // Create one task per variant and ABI
                 ace.onVariants { variant ->
-                    cargoExtension.abi.get().forEach { abi ->
+                    configuredAbis.get().forEach { abi ->
                         createCargoTask(
                             project,
                             cargoExtension,
                             variant,
                             abi,
-                            configuredAbis.contains(abi),
+                            activeAbis.get().contains(abi),
                             ndkDir
                         )
                     }
@@ -170,7 +171,8 @@ class CargoPlugin : Plugin<Project> {
             }
 
         if (abiEnabled) {
-            // Add the result to the variant's JNILibs sources. This is all we need to do to make sure
+            // Add the result to the variant's JNILibs sources. This is all we need to do to make
+            // sure
             // the JNILibs are compiled and included in the library
             with(variant.sources.jniLibs) {
                 if (this != null) {
@@ -191,12 +193,15 @@ internal fun selectActiveAbis(
 ): Set<String> {
     return if (injectedBuildAbis != null) {
         val abi = injectedBuildAbis.split(",").first()
-        if (configuredAbis.contains(abi)) setOf(abi) else throw GradleException("Unknown injected build ABI: $abi")
-
+        if (configuredAbis.contains(abi)) setOf(abi)
+        else throw GradleException("Unknown injected build ABI: $abi")
     } else if (abiFilter != null) {
-        abiFilter.split(",")
-            .map { if (!configuredAbis.contains(it)) throw GradleException("Unknown abiFilter: $it") else it }
+        abiFilter
+            .split(",")
+            .map {
+                if (!configuredAbis.contains(it)) throw GradleException("Unknown abiFilter: $it")
+                else it
+            }
             .toSet()
-
     } else configuredAbis
 }

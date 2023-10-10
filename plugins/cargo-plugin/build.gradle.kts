@@ -29,6 +29,7 @@ gradlePlugin {
         }
     }
 }
+
 tasks.withType(Test::class.java).configureEach {
     useJUnitPlatform()
     testLogging.events("passed")
@@ -39,5 +40,4 @@ dependencies {
     implementation(libs.kotlin.gradlePlugin)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.google.truth)
-
 }

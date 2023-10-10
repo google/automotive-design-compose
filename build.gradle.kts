@@ -24,8 +24,6 @@ buildscript {
     dependencies {
         // These are plugins that are published as external jars, integrating directly into the
         // build scripts
-        classpath(libs.kotlin.gradlePlugin)
-        classpath(libs.android.gradlePlugin)
         classpath(libs.dokka.gradlePlugin)
         classpath(libs.android.gms.strictVersionMatcher)
     }
@@ -35,6 +33,10 @@ buildscript {
 plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices") apply false
+    alias(libs.plugins.androidApplication) apply false
+    alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.kotlinAndroid) apply false
+    alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.roborazzi) apply false
 }

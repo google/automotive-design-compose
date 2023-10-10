@@ -3,9 +3,9 @@
 designcompose = "0.24.0-SNAPSHOT"
 
 #Android Gradle Plugin
-android-gradlePlugin = "8.1.0"
+agp = "8.1.2"
 # The minimum supported AGP version for DesignCompose Apps
-android-gradlePlugin-minSupported = "7.3.1"
+agp-minSupported = "7.3.1"
 
 # SDK Levels
 minSdk = "26"
@@ -52,8 +52,8 @@ roborazzi = "1.7.0-alpha-4"
 [libraries]
 android-car-ui = { module = "com.android.car.ui:car-ui-lib", version.ref = "android-car-ui" } # Used in MediaCompose
 android-gms-strictVersionMatcher = { module = "com.google.android.gms:strict-version-matcher-plugin", version.ref = "android-gms-strictVersionMatcher" }
-android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "android-gradlePlugin" }
-android-gradlePlugin-minimumSupportedVersion = { module = "com.android.tools.build:gradle", version.ref = "android-gradlePlugin-minSupported" }
+android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+android-gradlePlugin-minimumSupportedVersion = { module = "com.android.tools.build:gradle", version.ref = "agp-minSupported" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "androidx-activity" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
@@ -103,6 +103,10 @@ roborazzi-compose = {module = "io.github.takahirom.roborazzi:roborazzi-compose",
 roborazzi-junit = {module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi"}
 
 [plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 designcompose = { id = "com.android.designcompose", version.ref = "designcompose" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }

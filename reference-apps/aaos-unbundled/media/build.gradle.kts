@@ -46,9 +46,7 @@ dependencies {
     implementation(libs.designcompose)
     ksp(libs.designcompose.codegen)
 
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
-    androidTestImplementation(composeBom)
+    implementation(platform(libs.androidx.compose.bom))
 
     api(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation.layout)
@@ -70,6 +68,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     testImplementation(libs.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espresso.core)
 }

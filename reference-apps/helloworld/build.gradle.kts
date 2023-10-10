@@ -84,9 +84,7 @@ dependencies {
     androidTestImplementation(testFixtures(project(":designcompose")))
     ksp(project(":codegen"))
 
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
-    androidTestImplementation(composeBom)
+    implementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material)
@@ -104,6 +102,7 @@ dependencies {
     testImplementation(libs.androidx.compose.ui.test.junit4)
 
     androidTestImplementation(kotlin("test"))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

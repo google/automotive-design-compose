@@ -14,16 +14,8 @@
  * limitations under the License.
  */
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        // These are plugins that are published as external jars, integrating directly into the
-        // build scripts
-        classpath(libs.kotlin.gradlePlugin)
-    }
+@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
+plugins {
+  id("designcompose.conventions.base")
+  alias(libs.plugins.kotlinJvm) apply false
 }
-
-plugins { id("designcompose.conventions.base") }

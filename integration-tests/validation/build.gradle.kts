@@ -80,7 +80,12 @@ android {
     @Suppress("UnstableApiUsage")
     testOptions {
         // For Roborazzi
-        unitTests { isIncludeAndroidResources = true }
+        unitTests { isIncludeAndroidResources = true
+            all {
+                it.minHeapSize = "128m"
+                it.maxHeapSize = "1024m"
+            }
+        }
     }
 }
 
@@ -88,7 +93,10 @@ dependencies {
     implementation(libs.designcompose)
     ksp(libs.designcompose.codegen)
 
-    implementation(platform(libs.androidx.compose.bom))
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.ui.tooling.preview)
@@ -108,7 +116,6 @@ dependencies {
 
     androidTestImplementation(testFixtures(project(":designcompose")))
     androidTestImplementation(kotlin("test"))
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.androidx.compose.ui.tooling)

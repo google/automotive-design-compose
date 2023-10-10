@@ -10,8 +10,8 @@ agp-minSupported = "7.3.1"
 # SDK Levels
 minSdk = "26"
 appMinSdk = "30"
-compileSdk = "33"
-targetSdk = "33"
+compileSdk = "34"
+targetSdk = "34"
 
 #Compose and Kotlin Versions - tightly coupled
 kotlin = "1.9.10"

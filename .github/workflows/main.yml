@@ -34,6 +34,10 @@ concurrency:
 permissions:
   contents: read
 
+# We only need to make sure that one ABI builds
+env:
+  GRADLE_OPTS: "-Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOverride=true -Dorg.gradle.project.designcompose.cargoPlugin.abiFilter=x86_64"
+
 jobs:
   ############## Lints
   validate-gradle-wrapper:
@@ -164,10 +168,6 @@ jobs:
 
   sdk-build:
     runs-on: "ubuntu-latest"
-    env:
-      # We only need to make sure that one ABI builds
-      GRADLE_OPTS: |
-        "-Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOverride=true -Dorg.gradle.project.designcompose.cargoPlugin.abiFilter=x86_64 "
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
@@ -371,6 +371,7 @@ jobs:
         task: [assembleDebug, publishAllPublicationsToLocalDirRepository]
         cache: [cache-enabled, cache-disabled]
     runs-on: ubuntu-latest
+
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1

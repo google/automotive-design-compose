@@ -77,18 +77,18 @@ cd "$GIT_ROOT" || exit
 
 if [[ $RUN_FORMAT == "true" ]]; then ./gradlew ktfmtFormat; fi
 
-## if https://github.com/rhysd/actionlint is installed then run it. This is a low priority check so it's fine to not run it
-#if which actionlint > /dev/null; then actionlint; fi
-#cargo-fmt --all --check
-#./gradlew  ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
-#cargo build --all-targets --all-features
-#cargo test --all-targets --all-features
-#
-#cd "$GIT_ROOT/build-logic" || exit
-#./gradlew build
-#cd "$GIT_ROOT/plugins" || exit
-#./gradlew build
-#
+# if https://github.com/rhysd/actionlint is installed then run it. This is a low priority check so it's fine to not run it
+if which actionlint > /dev/null; then actionlint; fi
+cargo-fmt --all --check
+./gradlew  ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
+cargo build --all-targets --all-features
+cargo test --all-targets --all-features
+
+cd "$GIT_ROOT/build-logic" || exit
+./gradlew build
+cd "$GIT_ROOT/plugins" || exit
+./gradlew build
+
 cd "$GIT_ROOT" || exit
 ./gradlew build publishAllPublicationsToLocalDirRepository verifyRoborazziDebug
 

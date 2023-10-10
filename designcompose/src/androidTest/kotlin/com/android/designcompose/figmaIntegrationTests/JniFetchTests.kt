@@ -79,6 +79,7 @@ class JniFetchTests {
     fun smallFetch() {
         testFetch(smallDocID)
     }
+
     @Test
     fun largeFetch() {
         testFetch(largeDocID)
@@ -88,6 +89,7 @@ class JniFetchTests {
     fun veryLargeFetch() {
         testFetch(veryLargeDocID)
     }
+
     @Test
     fun invalidToken() {
         assertFailsWith(AccessDeniedException::class) {

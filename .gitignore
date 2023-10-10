@@ -9,7 +9,7 @@ captures
 node_modules
 # Something in android studio is generating this. Probably related to
 # https://github.com/gradle/gradle/issues/23032
-*/bin 
+*/bin
 # Output of npm build
 /support-figma/*/code.js
 /support-figma/*/dist
@@ -20,7 +20,8 @@ node_modules
 .terragrunt-cache
 
 # User settings dirs
-.idea
+**/.idea/*
+!.idea/ktfmt.xml
 .vscode
 local.properties
 

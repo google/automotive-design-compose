@@ -63,7 +63,7 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.7.1
+      - uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.7.1
         with:
           cache-read-only: true
           arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
@@ -98,6 +98,23 @@ jobs:
       - name: Rust lint
         run: cargo-fmt --all --check
 
+  cargo-deny:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
+
+    # Prevent sudden announcement of a new advisory from failing ci:
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: EmbarkStudios/cargo-deny-action@v1
+      with:
+          command: check ${{ matrix.checks }}
+
   validate-dependabot:
     runs-on: ubuntu-latest
     steps:
@@ -127,20 +144,20 @@ jobs:
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
 
       - name: Test build-logic
-        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           build-root-directory: build-logic
           arguments: test
 
       - name: Test the plugins
-        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           build-root-directory: plugins
           arguments: test
@@ -162,7 +179,7 @@ jobs:
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
@@ -182,7 +199,7 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Full Gradle Test and publish
-        uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.8.1
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           arguments: check build publishAllPublicationsToLocalDirRepository
 
@@ -211,14 +228,14 @@ jobs:
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
 
       - name: Generate full comparison
-        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           arguments: compareRoborazziDebug
 
@@ -232,13 +249,13 @@ jobs:
           retention-days: 30
 
       - name: Verify Roborazzi
-        uses: gradle/gradle-build-action@ef76a971e2fa3f867b617efd72f2fbd72cf6f8bc # v2.8.0
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
         with:
           arguments: verifyRoborazziDebug
 
 ########### Tutorial app
   tutorial-app:
-    strategy: 
+    strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -259,7 +276,7 @@ jobs:
         java-version: "17"
 
     - name: Set up Gradle
-      uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.4.2
+      uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.4.2
       with:
         # Dependency graph isn't supported on Windows and we don't need it to run on Mac either
         # This is GitHub's ternary operator
@@ -284,7 +301,7 @@ jobs:
 
 
     - name: Check Tutorial App
-      uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.7.1
+      uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.7.1
       with:
         build-root-directory: reference-apps/tutorial
         arguments: |
@@ -311,7 +328,7 @@ jobs:
         java-version: "17"
 
     - name: Set up Gradle
-      uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.4.2
+      uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.4.2
       with:
         dependency-graph: generate
         gradle-home-cache-cleanup: true
@@ -338,11 +355,68 @@ jobs:
         repo sync -cq -j4
 
     - name: Check MediaCompose
-      uses: gradle/gradle-build-action@b5126f31dbc19dd434c3269bf8c28c315e121da2 # v2.7.1
+      uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.7.1
       with:
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
           check
+
+  gradle-build-profile:
+    strategy:
+      matrix:
+        task: [assembleDebug, publishAllPublicationsToLocalDirRepository]
+        cache: [cache-enabled, cache-disabled]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
+
+      - name: Set up Java
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
+        with:
+          cache-disabled: ${{matrix.cache == 'cache-disabled'}}
+
+      - name: Set up Rust Cache
+        if: ${{matrix.cache == 'cache-enabled'}}
+        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43
+        with:
+          workspaces: ". -> designcompose/build/intermediates/cargoTarget"
+          shared-key: "gradle-rust"
+
+      - name: Update Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Install Rust toolchains
+        run: ./install-rust-toolchains.sh
+
+      - name: Run the profiled build
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
+        with:
+          arguments:
+            ${{matrix.task}} --profile
+
+      - name: Parse the results
+        run: |
+            ./dev-scripts/parse-profile-data.sh
+
+      - name: Upload profile info
+        uses: actions/upload-artifact@v3
+        with:
+          name: gradle-profile-${{matrix.task}}-${{matrix.cache}}
+          path: |
+            **/build/reports/profile
+          if-no-files-found: error
+
 
 ############# Rust
   rust-test:

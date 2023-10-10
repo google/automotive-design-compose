@@ -19,6 +19,7 @@ plugins {
     id("com.android.application")
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
+    alias(libs.plugins.designcompose)
 }
 
 var applicationID = "com.android.designcompose.reference.mediacompose"

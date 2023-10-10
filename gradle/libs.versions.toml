@@ -1,70 +1,62 @@
 [versions]
-accompanist = "0.30.1"
-android-car-ui = "2.5.1"
-android-gms-ossLicenses = "17.0.1"
-android-gms-strictVersionMatcher = "1.2.4"
+# DesignCompose
+designcompose = "0.24.0-SNAPSHOT"
+
+#Android Gradle Plugin
 android-gradlePlugin = "8.1.0"
 # The minimum supported AGP version for DesignCompose Apps
-# @pin - Manually update
 android-gradlePlugin-minSupported = "7.3.1"
-androidx-activity-compose = "1.7.2"
-androidx-appcompat = "1.6.1"
-androidx-compose-bom = "2023.06.01"
-# @keep Non-`dependency` constant
+
+# SDK Levels
+minSdk = "26"
+appMinSdk = "30"
+compileSdk = "33"
+targetSdk = "33"
+
+#Compose and Kotlin Versions - tightly coupled
+kotlin = "1.9.0"
+ksp = "1.9.0-1.0.13"
 androidx-compose-compiler = "1.5.1"
+androidx-compose-bom = "2023.06.01"
 androidx-compose-foundation = "1.4.3"
 androidx-compose-runtime = "1.4.3"
 androidx-compose-ui = "1.4.3"
+
+# Everything else
+android-car-ui = "2.5.1"
+android-gms-strictVersionMatcher = "1.2.4" # Used in build-logic
+androidx-core = "1.10.1"
+androidx-activity = "1.7.2"
 androidx-constraintlayout = "2.1.4"
 androidx-legacy-support-v4 = "1.0.0"
 androidx-lifecycle = "2.6.2"
 androidx-media = "1.6.0"
 androidx-test-espresso = "3.5.1"
 androidx-test-ext-junit = "1.1.5"
-# @keep Non-`dependency` constant
-appMinSdk = "30"
-# @keep Non-`dependency` constant
-compileSdk = "33"
-datastoreCore = "1.0.0"
-datastorePreferences = "1.0.0"
-designcompose = "0.24.0-SNAPSHOT"
+androidx-datastoreCore = "1.0.0"
+androidx-datastorePreferences = "1.0.0"
+androidx-rules = "1.5.0"
 dokka = "1.9.0"
 gson = "2.10.1"
 guavaAndroid = "32.1.2-android"
-guavaJre = "32.1.2-android"
-hikariCP = "5.0.1"
 javax-annotation = "1.3.2"
 junit = "4.13.2"
-# @pin - Compose Compiler doesn't support the latest Kotlin version yet
-kotlin = "1.9.0"
-kotlinxCoroutinesTest = "1.7.3"
-# @pin - KSP version depends on  Kotlin version
-ksp = "1.9.0-1.0.13"
 ktfmt = "0.12.0"
 material = "1.9.0"
-# @keep Non-`dependency` constant
-minSdk = "26"
-mockito = "5.1.1"
 mockk = "1.13.8"
-mysql = "8.0.32"
-rules = "1.5.0"
-# @keep Non-`dependency` constant
-targetSdk = "33"
 junit5 = "5.10.0"
 truth = "1.1.5"
-core = "1.10.1"
-activityKtx = "1.7.2"
 robolectric = "4.10.3"
 roborazzi = "1.7.0-alpha-4"
 
 [libraries]
-accompanist-flowlayout = { module = "com.google.accompanist:accompanist-flowlayout", version.ref = "accompanist" }
-android-car-ui = { module = "com.android.car.ui:car-ui-lib", version.ref = "android-car-ui" }
+android-car-ui = { module = "com.android.car.ui:car-ui-lib", version.ref = "android-car-ui" } # Used in MediaCompose
 android-gms-strictVersionMatcher = { module = "com.google.android.gms:strict-version-matcher-plugin", version.ref = "android-gms-strictVersionMatcher" }
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "android-gradlePlugin" }
 android-gradlePlugin-minimumSupportedVersion = { module = "com.android.tools.build:gradle", version.ref = "android-gradlePlugin-minSupported" }
-androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity-compose" }
-androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "androidx-activity" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidx-compose-bom" }
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "androidx-compose-foundation" }
 androidx-compose-foundation-layout = { module = "androidx.compose.foundation:foundation-layout", version.ref = "androidx-compose-foundation" }
@@ -78,15 +70,13 @@ androidx-compose-ui-text = { module = "androidx.compose.ui:ui-text", version.ref
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "androidx-compose-ui" }
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "androidx-compose-ui" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidx-constraintlayout" }
-androidx-datastore-core = { module = "androidx.datastore:datastore-core", version.ref = "datastoreCore" }
-androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
+androidx-datastore-core = { module = "androidx.datastore:datastore-core", version.ref = "androidx-datastoreCore" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx-datastorePreferences" }
 androidx-legacy-support-v4 = { module = "androidx.legacy:legacy-support-v4", version.ref = "androidx-legacy-support-v4" }
-androidx-lifecycle-livedata-core = { module = "androidx.lifecycle:lifecycle-livedata-core-ktx", version.ref = "androidx-lifecycle" }
-androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
-androidx-media = { module = "androidx.media:media", version.ref = "androidx-media" }
-androidx-rules = { module = "androidx.test:rules", version.ref = "rules" }
+androidx-media = { module = "androidx.media:media", version.ref = "androidx-media" } # Used in MediaCompose
+androidx-rules = { module = "androidx.test:rules", version.ref = "androidx-rules" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
 designcompose = { module = "com.android.designcompose:designcompose", version.ref = "designcompose" }
@@ -94,13 +84,11 @@ designcompose-codegen = { module = "com.android.designcompose:codegen", version.
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guavaAndroid = { module = "com.google.guava:guava", version.ref = "guavaAndroid" }
-guavaJre = { module = "com.google.guava:guava", version.ref = "guavaJre" }
 javax-annotationApi = { module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation" }
 junit = { module = "junit:junit", version.ref = "junit" }
 ktfmt-gradlePlugin = { module = "com.ncorti.ktfmt.gradle:plugin", version.ref = "ktfmt" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
-kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
@@ -108,8 +96,7 @@ mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockk" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 google-truth = { module = "com.google.truth:truth", version.ref = "truth" }
 junit-jupiter = {module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
-androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
-androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
+
 robolectric = {module = "org.robolectric:robolectric", version.ref = "robolectric"}
 roborazzi = {module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi"}
 roborazzi-compose = {module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi"}

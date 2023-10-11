@@ -36,7 +36,7 @@ import org.robolectric.annotation.GraphicsMode
 
 // Enable Robolectric Native Graphics (RNG)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav")
+@Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav", sdk = [33])
 @RunWith(ParameterizedRobolectricTestRunner::class)
 class RenderAllExamples(private val config: TestConfig) {
     data class TestConfig(

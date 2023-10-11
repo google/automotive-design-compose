@@ -80,7 +80,13 @@ android {
     @Suppress("UnstableApiUsage")
     testOptions {
         // For Roborazzi
-        unitTests { isIncludeAndroidResources = true }
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.minHeapSize = "128m"
+                it.maxHeapSize = "1024m"
+            }
+        }
     }
 }
 

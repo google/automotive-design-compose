@@ -1,19 +1,19 @@
 # Automotive Design for Compose
 
 - [Automotive Design for Compose](#automotive-design-for-compose)
-  - [Introduction](#introduction)
-  - [Getting Started](#getting-started)
-  - [Building your own app](#building-your-own-app)
+    - [Introduction](#introduction)
+    - [Getting Started](#getting-started)
+    - [Building your own app](#building-your-own-app)
 - [Working with the Source](#working-with-the-source)
-  - [SDK build dependencies](#sdk-build-dependencies)
-    - [Android Studio](#android-studio)
-    - [Android NDK](#android-ndk)
-    - [Rust](#rust)
-    - [Rust Toolchains](#rust-toolchains)
-  - [Source Layout](#source-layout)
-  - [Building additional resources](#building-additional-resources)
-    - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
-  - [Get in touch](#get-in-touch)
+    - [SDK build dependencies](#sdk-build-dependencies)
+        - [Android Studio](#android-studio)
+        - [Android NDK](#android-ndk)
+        - [Rust](#rust)
+        - [Rust Toolchains](#rust-toolchains)
+    - [Source Layout](#source-layout)
+    - [Building additional resources](#building-additional-resources)
+        - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
+    - [Get in touch](#get-in-touch)
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose/badge)](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose)
 
@@ -151,13 +151,13 @@ Automotive Design for Compose consists of several components:
 - The Jetpack Compose renderer of Automotive Design for Compose documents consists of several
   modules:
 
-  - `annotation` contains the Kotlin annotation definitions like `@DesignDoc`
+    - `annotation` contains the Kotlin annotation definitions like `@DesignDoc`
       and `@DesignComponent`.
 
-  - `codegen` contains the Kotlin compiler plugin that processes the annotations and generates
+    - `codegen` contains the Kotlin compiler plugin that processes the annotations and generates
       stub Composables that use the Automotive Design for Compose runtime.
 
-  - `designcompose` contains the code that interprets Automotive Design for Compose documents and
+    - `designcompose` contains the code that interprets Automotive Design for Compose documents and
       renders them using Jetpack Compose. It also contains the code that uses the Figma Import JNI
       library to fetch documents from the Figma webservice.
 

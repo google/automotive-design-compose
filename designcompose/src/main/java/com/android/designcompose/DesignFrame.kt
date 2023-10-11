@@ -181,6 +181,7 @@ internal fun DesignFrame(
     // Select the appropriate representation for ourselves based on our layout style;
     // row or column (with or without wrapping/flow), or absolute positioning (similar to the CSS2
     // model).
+    val layout = LayoutManager.getLayoutWithDensity(layoutId)
     when (layoutInfo) {
         is LayoutInfoRow -> {
             if (lazyContent != null) {
@@ -192,8 +193,12 @@ internal fun DesignFrame(
                     if (style.overflow_node_id.isPresent)
                         overflowNodeId = style.overflow_node_id.get()
                 }
+                val rowSizeModifier = Modifier.layoutSizeToModifier(layout)
                 Row(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
+                    rowSizeModifier
+                        .then(layoutInfo.selfModifier)
+                        .then(m)
+                        .then(layoutInfo.marginModifier),
                     horizontalArrangement = layoutInfo.arrangement,
                     verticalAlignment = layoutInfo.alignment,
                 ) {
@@ -236,8 +241,12 @@ internal fun DesignFrame(
                     if (style.overflow_node_id.isPresent)
                         overflowNodeId = style.overflow_node_id.get()
                 }
+                val columnSizeModifier = Modifier.layoutSizeToModifier(layout)
                 Column(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
+                    columnSizeModifier
+                        .then(layoutInfo.selfModifier)
+                        .then(m)
+                        .then(layoutInfo.marginModifier),
                     verticalArrangement = layoutInfo.arrangement,
                     horizontalAlignment = layoutInfo.alignment,
                 ) {
@@ -448,7 +457,6 @@ internal fun DesignFrame(
                 return if (count > 0) count else 1
             }
 
-            val layout = LayoutManager.getLayoutWithDensity(layoutId)
             val gridSizeModifier = Modifier.layoutSizeToModifier(layout)
 
             val density = LocalDensity.current.density
@@ -464,7 +472,7 @@ internal fun DesignFrame(
                 val verticalSpacing = layoutInfo.crossAxisSpacing
 
                 LazyVerticalGrid(
-                    modifier = layoutInfo.selfModifier.then(gridSizeModifier).then(m),
+                    modifier = gridSizeModifier.then(layoutInfo.selfModifier).then(m),
                     columns =
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(
@@ -580,7 +588,6 @@ internal fun DesignFrame(
             if (parentLayout?.isWidgetChild == true) {
                 // For direct children of a widget, render the frame as a box with the calculated
                 // layout size, then compose the frame's children with our custom layout
-                val layout = LayoutManager.getLayoutWithDensity(layoutId)
                 Box(m.layoutSizeToModifier(layout)) {
                     DesignFrameLayout(modifier, name, layoutId, layoutState) { content() }
                 }

@@ -236,7 +236,7 @@ internal fun selectActiveAbis(
         abiFilter
             .split(",")
             .map {
-                if (!configuredAbis.contains(it)) throw GradleException("Unknown abiFilter: $it")
+                if (!configuredAbis.contains(it)) throw GradleException("Unknown abiOverride: $it")
                 else it
             }
             .toSet()

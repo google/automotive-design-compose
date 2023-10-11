@@ -21,4 +21,4 @@ package com.android.designcompose.cargoplugin
 const val PROPERTY_ALLOW_ABI_OVERRIDE = "designcompose.cargoPlugin.allowAbiOverride"
 // Comma separated list of abis to build instead of the configured ones. Must be a subset of the
 // configured ABIs.
-const val PROPERTY_ABI_FILTER = "designcompose.cargoPlugin.abiFilter"
+const val PROPERTY_ABI_FILTER = "designcompose.cargoPlugin.abiOverride"

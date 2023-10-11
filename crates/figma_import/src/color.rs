@@ -50,7 +50,6 @@ impl Color {
     /// Returns the H,S,V (Hue, Saturation, Value) representation
     /// of the (Red, Green, Blue) color argument.
     ///
-    /// DONOTSUBMITasdfasdfasdf
     /// # Arguments
     ///
     /// * `color` - a tuple of r,g,b values between 0.0 and 1.0

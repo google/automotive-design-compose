@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
-        //        consumerProguardFiles("consumer-proguard-rules.pro")
+               consumerProguardFiles("consumer-proguard-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (designcompose.figmaToken.isPresent) {
             testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =

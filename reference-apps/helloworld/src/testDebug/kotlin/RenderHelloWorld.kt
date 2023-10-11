@@ -39,7 +39,7 @@ import org.robolectric.annotation.GraphicsMode
  * Includes Roborazzi for Screenshot tests,
  */
 @RunWith(AndroidJUnit4::class)
-@Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet)
+@Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [33])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class RenderHelloWorld {
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()

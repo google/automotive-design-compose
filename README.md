@@ -1,19 +1,19 @@
 # Automotive Design for Compose
 
 - [Automotive Design for Compose](#automotive-design-for-compose)
-    - [Introduction](#introduction)
-    - [Getting Started](#getting-started)
-    - [Building your own app](#building-your-own-app)
+  - [Introduction](#introduction)
+  - [Getting Started](#getting-started)
+  - [Building your own app](#building-your-own-app)
 - [Working with the Source](#working-with-the-source)
-    - [SDK build dependencies](#sdk-build-dependencies)
-        - [Android Studio](#android-studio)
-        - [Android NDK](#android-ndk)
-        - [Rust](#rust)
-        - [Rust Toolchains](#rust-toolchains)
-    - [Source Layout](#source-layout)
-    - [Building additional resources](#building-additional-resources)
-        - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
-    - [Get in touch](#get-in-touch)
+  - [SDK build dependencies](#sdk-build-dependencies)
+    - [Android Studio](#android-studio)
+    - [Android NDK](#android-ndk)
+    - [Rust](#rust)
+    - [Rust Toolchains](#rust-toolchains)
+  - [Source Layout](#source-layout)
+  - [Building additional resources](#building-additional-resources)
+    - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
+  - [Get in touch](#get-in-touch)
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose/badge)](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose)
 
@@ -122,13 +122,13 @@ Install them by running the following from the root of the repository
 ### Controlling the architectures to build the Rust libraries for
 
 Release builds of DesignCompose need to include versions of the Rust libraries compiled for all four
-current Android ABIs - `x86`, `x86_64`, `armeabi-v7a` and `arm64-v8a`. However local development typically only needs a single ABI, corresponding to their test device / AVD. 
+current Android ABIs - `x86`, `x86_64`, `armeabi-v7a` and `arm64-v8a`. However local development typically only needs a single ABI, corresponding to their test device / AVD.
 Cargo can (unfortunately) only build a single ABI at a time, so building all four ABIs adds significant time to a build (at least a minute). .
 
 The `designcompose.cargoPlugin.allowAbiOverride` Gradle property enables the ability to override the list of ABIs to build. If set to `true` then the `designcompose.cargoPlugin.abiOverride` property will be read (if set) and used to filter the configured list of ABIs that is configured in the Gradle project. It takes a comma seperated list of ABIs.[gradle.properties](..%2F..%2F..%2F.gradle%2Fgradle.properties)
 When building in Android Studio, the `allowAbiOverride` property will allow the build to check the ABI of the device that you are building for (when installing the app or running an instrumented test or similar) and only build the ABI needed for the device. This has priority over the `abiOverride` list that may be provided.
 
-Note: The abi overrides are ignored when building for release. 
+Note: The abi overrides are ignored when building for release.
 
 ### Gradle optimizations
 
@@ -144,7 +144,6 @@ You can optionally add these to your personal gradle.properties:
     - `org.gradle.configureondemand`: Incubating feature feature that attempts to configure only the projects that are required for a build.
     - `android.experimental.androidTest.numManagedDeviceShards`: When running Gradle Managed Device tests, starts up additional VMs to execute the tests on in parallel
 
-
 ## Source Layout
 
 Automotive Design for Compose consists of several components:
@@ -152,13 +151,13 @@ Automotive Design for Compose consists of several components:
 - The Jetpack Compose renderer of Automotive Design for Compose documents consists of several
   modules:
 
-    - `annotation` contains the Kotlin annotation definitions like `@DesignDoc`
+  - `annotation` contains the Kotlin annotation definitions like `@DesignDoc`
       and `@DesignComponent`.
 
-    - `codegen` contains the Kotlin compiler plugin that processes the annotations and generates
+  - `codegen` contains the Kotlin compiler plugin that processes the annotations and generates
       stub Composables that use the Automotive Design for Compose runtime.
 
-    - `designcompose` contains the code that interprets Automotive Design for Compose documents and
+  - `designcompose` contains the code that interprets Automotive Design for Compose documents and
       renders them using Jetpack Compose. It also contains the code that uses the Figma Import JNI
       library to fetch documents from the Figma webservice.
 
@@ -170,12 +169,12 @@ Automotive Design for Compose consists of several components:
 - Figma plugins that give designers more control and a better experience using Figma with Automotive
   Design for Compose:
 
-    - The Extended Layout Plugin, in `support-figma/extended-layout-plugin` , provides a panel for
+  - The Extended Layout Plugin, in `support-figma/extended-layout-plugin` , provides a panel for
       formatting text, a panel to provide a JSON file with keyword details, a panel to validate
       keyword usages against the provided JSON file, and a command to sync Figma's prototype
       settings to the main document.
 
-    - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma
+  - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma
       widget that uses the JSON file and allows designers to create and preview complex list
       layouts.
 

@@ -20,6 +20,7 @@ import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.android.build.api.variant.LibraryVariant
 import com.android.build.api.variant.Variant
 import com.android.builder.model.PROPERTY_BUILD_ABI
+import java.io.File
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -29,7 +30,6 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.configurationcache.extensions.capitalized
-import java.io.File
 
 /**
  * Cargo plugin
@@ -42,7 +42,7 @@ class CargoPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val cargoExtension = project.extensions.create("cargo", CargoPluginExtension::class.java)
 
-        // Check the list of ABIs and whether they're being overridden by a property
+        // Filter the ABIs using configurable Gradle properties
         val activeAbis = getActiveAbis(cargoExtension.abi, project)
 
         // withPlugin(String) will do the action once the plugin is applied, or immediately
@@ -152,7 +152,6 @@ class CargoPlugin : Plugin<Project> {
      * @param cargoExtension Configuration for this plugin
      * @param variant Android build variant that this task will build for
      * @param abi The Android ABI to compile
-     * @param activeAbis The list of ABIs
      * @param ndkDir The directory containing the NDK tools
      */
     private fun createCargoTask(

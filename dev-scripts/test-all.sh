@@ -70,7 +70,7 @@ if [[ -z "$FIGMA_ACCESS_TOKEN" ]]; then
   fi
 fi
 GRADLE_OPTS="-Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOverride=true "
-GRADLE_OPTS+="-Dorg.gradle.project.designcompose.cargoPlugin.abiFilter=x86,x86_64 "
+GRADLE_OPTS+="-Dorg.gradle.project.designcompose.cargoPlugin.abiFilter=x86,x86_64"
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"
 
 cd "$GIT_ROOT" || exit

@@ -111,12 +111,12 @@ internal object LayoutManager {
         parentLayoutId: Int,
         childIndex: Int,
         view: View,
-        variantView: View?
+        baseView: View?
     ) {
         // Frames can have children so call beginLayout() to optimize layout computation until all
         // children have been added.
         beginLayout(layoutId)
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, view, variantView)
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, view, baseView)
     }
 
     internal fun subscribeText(
@@ -157,18 +157,18 @@ internal object LayoutManager {
         parentLayoutId: Int,
         childIndex: Int,
         view: View,
-        variantView: View?
+        baseView: View?
     ) {
         subscribers[layoutId] = setLayoutState
 
         val serializer = BincodeSerializer()
         view.serialize(serializer)
         val serializedView = serializer._bytes.toUByteArray().asByteArray()
-        var serializedVariantView = ByteArray(0)
-        if (variantView != null) {
+        var serializedBaseView = ByteArray(0)
+        if (baseView != null) {
             val variantSerializer = BincodeSerializer()
-            variantView.serialize(variantSerializer)
-            serializedVariantView = variantSerializer._bytes.toUByteArray().asByteArray()
+            baseView.serialize(variantSerializer)
+            serializedBaseView = variantSerializer._bytes.toUByteArray().asByteArray()
         }
         val responseBytes =
             Jni.jniAddNode(
@@ -176,7 +176,7 @@ internal object LayoutManager {
                 parentLayoutId,
                 childIndex,
                 serializedView,
-                serializedVariantView,
+                serializedBaseView,
                 false
             )
     }
@@ -366,7 +366,12 @@ class ParentLayoutInfo(
     val parentLayoutId: Int = -1,
     val childIndex: Int = 0,
     val isWidgetChild: Boolean = false,
+    var baseView: View? = null,
 )
+
+internal fun ParentLayoutInfo.withBaseView(baseView: View?): ParentLayoutInfo {
+    return ParentLayoutInfo(this.parentLayoutId, this.childIndex, this.isWidgetChild, baseView)
+}
 
 internal val rootParentLayoutInfo = ParentLayoutInfo()
 val widgetParent = ParentLayoutInfo(isWidgetChild = true)

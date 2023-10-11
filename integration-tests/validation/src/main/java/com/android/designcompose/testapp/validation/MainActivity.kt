@@ -737,6 +737,7 @@ fun VariantPropertiesTest() {
         square1 = {
             VariantPropertiesTestDoc.Square(
                 modifier = it.layoutModifier.then(it.appearanceModifier),
+                parentLayout = it.parentLayout,
                 type = SquareBorder.Sharp,
                 color = SquareColor.Blue
             )
@@ -744,6 +745,7 @@ fun VariantPropertiesTest() {
         square2 = {
             VariantPropertiesTestDoc.Square(
                 modifier = it.layoutModifier.then(it.appearanceModifier),
+                parentLayout = it.parentLayout,
                 type = SquareBorder.Sharp,
                 color = SquareColor.Green
             )
@@ -751,6 +753,7 @@ fun VariantPropertiesTest() {
         square3 = {
             VariantPropertiesTestDoc.Square(
                 modifier = it.layoutModifier.then(it.appearanceModifier),
+                parentLayout = it.parentLayout,
                 type = SquareBorder.Curved,
                 color = SquareColor.Blue
             )
@@ -758,6 +761,7 @@ fun VariantPropertiesTest() {
         square4 = {
             VariantPropertiesTestDoc.Square(
                 modifier = it.layoutModifier.then(it.appearanceModifier),
+                parentLayout = it.parentLayout,
                 type = SquareBorder.Curved,
                 color = SquareColor.Green
             )
@@ -1938,10 +1942,10 @@ interface LayoutTests {
         widgetItems: ListContent,
         @Design(node = "#Rect1") showRect1: Boolean,
         @Design(node = "#Rect2") showRect2: Boolean,
-        @Design(node = "#media/now-playing/skip-prev-button") showPrev: Boolean,
-        @Design(node = "#media/now-playing/skip-next-button") showNext: Boolean,
-        @DesignVariant(property = "#media/now-playing/play-state-button") playState: PlayState,
-        @Design(node = "#media/now-playing/play-state-button") onPlayPauseTap: TapCallback,
+        @Design(node = "#Replacement1")
+        replacement1: @Composable (ComponentReplacementContext) -> Unit,
+        @Design(node = "#Replacement2")
+        replacement2: @Composable (ComponentReplacementContext) -> Unit,
     )
     @DesignComponent(node = "#BlueSquare") fun BlueSquare()
     @DesignComponent(node = "#RedSquare") fun RedSquare()
@@ -2015,21 +2019,16 @@ fun LayoutTests() {
                             { LayoutTestsDoc.BlueSquareDesignNodeData() }
                         }
                     spanFunc(nodeData)
-                    // val nodeData = getNodeData(vertItems, index)
-                    // spanFunc(nodeData)
                 },
             ) { index ->
                 if (index % 4 == 0) LayoutTestsDoc.RedSquare(parentLayout = widgetParent)
                 else LayoutTestsDoc.BlueSquare(parentLayout = widgetParent)
-                // itemComposable(vertItems, index)
             }
         },
         showRect1 = showRect1,
         showRect2 = showRect2,
-        showPrev = false,
-        showNext = true,
-        playState = PlayState.Play,
-        onPlayPauseTap = { println("Tap") },
+        replacement1 = { LayoutTestsDoc.BlueSquare(parentLayout = it.parentLayout) },
+        replacement2 = { LayoutTestsDoc.BlueSquare(parentLayout = it.parentLayout) },
         designComposeCallbacks =
             DesignComposeCallbacks(
                 docReadyCallback = { id ->

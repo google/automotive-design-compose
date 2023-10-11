@@ -58,7 +58,6 @@ import com.android.designcompose.serdegen.ViewStyle
 internal fun DesignFrame(
     modifier: Modifier = Modifier,
     view: View,
-    baseVariantView: View?,
     style: ViewStyle,
     layoutInfo: SimplifiedLayoutInfo,
     document: DocContent,
@@ -71,6 +70,36 @@ internal fun DesignFrame(
 ): Boolean {
     val name = view.name
     if (!customizations.getVisible(name)) return false
+
+    var m = Modifier as Modifier
+    m = m.then(modifier)
+    val customModifier = customizations.getModifier(name)
+    if (customModifier != null) {
+        // We may need more control over where a custom modifier is placed in the list
+        // than just always adding at the end.
+        m = m.then(customModifier)
+    }
+
+    // Check for a customization that replaces this component completely
+    // If we're replaced, then invoke the replacement here. We may want to pass more layout info
+    // (row/column/etc) to the replacement component at some point.
+    val replacementComponent = customizations.getComponent(name)
+    if (replacementComponent != null) {
+        val myParentLayout = parentLayout?.withBaseView(view)
+        replacementComponent(
+            object : ComponentReplacementContext {
+                override val layoutModifier = layoutInfo.selfModifier
+                override val appearanceModifier = m
+                @Composable
+                override fun Content() {
+                    content()
+                }
+                override val textStyle: TextStyle? = null
+                override val parentLayout = myParentLayout
+            }
+        )
+        return true
+    }
 
     // Check for an image customization with context. If it exists, call the custom image function
     // and provide it with the frame's background and size.
@@ -118,7 +147,7 @@ internal fun DesignFrame(
             parentLayoutId,
             childIndex,
             view,
-            baseVariantView
+            parentLayout?.baseView
         )
         onDispose {}
     }
@@ -142,39 +171,10 @@ internal fun DesignFrame(
             }
         }
 
-    // Check for a customization that replaces this component completely
-    val replacementComponent = customizations.getComponent(name)
-    var m = Modifier as Modifier
-
     // Only render the frame if we don't have a replacement node
     val shape = (view.data as ViewData.Container).shape
     if (replacementComponent == null)
         m = m.frameRender(style, shape, customImage, document, name, customizations, maskInfo)
-    m = m.then(modifier)
-    val customModifier = customizations.getModifier(name)
-    if (customModifier != null) {
-        // We may need more control over where a custom modifier is placed in the list
-        // than just always adding at the end.
-        m = m.then(customModifier)
-    }
-
-    // If we're replaced, then invoke the replacement here. We may want to pass more layout info
-    // (row/column/etc) to the replacement component at some point.
-    if (replacementComponent != null) {
-        replacementComponent(
-            object : ComponentReplacementContext {
-                override val layoutModifier = layoutInfo.selfModifier
-                override val appearanceModifier = m
-                @Composable
-                override fun Content() {
-                    content()
-                }
-                override val textStyle: TextStyle? = null
-            }
-        )
-        finishLayout()
-        return true
-    }
 
     val lazyContent = customizations.getListContent(name)
 

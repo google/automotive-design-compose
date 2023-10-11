@@ -257,6 +257,9 @@ interface ComponentReplacementContext {
     // Return the text style, if the component being replaced is a text node in the Figma
     // document.
     val textStyle: TextStyle?
+
+    // Data needed to perform layout
+    val parentLayout: ParentLayoutInfo?
 }
 
 fun CustomizationContext.setComponent(

@@ -56,7 +56,7 @@ internal object Jni {
         parentLayoutId: Int,
         childIndex: Int,
         serializedView: ByteArray,
-        serializedVariantView: ByteArray,
+        serializedBaseView: ByteArray,
         computeLayout: Boolean
     ): ByteArray?
 

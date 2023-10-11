@@ -29,9 +29,10 @@ use figma_import::{
     NodeQuery, SerializedDesignDoc, ViewData,
 };
 use layout::{
-    add_view, add_view_measure, compute_layout, get_node_layout, print_layout, remove_view,
-    set_node_size,
+    add_view, add_view_measure, clear_views, compute_layout, get_node_layout, print_layout,
+    remove_view, set_node_size,
 };
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -60,8 +61,15 @@ fn measure_func(
     (result_width, result_height)
 }
 
-fn add_view_to_layout(view: &View, id: &mut i32, parent_layout_id: i32, child_index: i32) {
-    println!("add_view_to_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
+fn add_view_to_layout(
+    view: &View,
+    id: &mut i32,
+    parent_layout_id: i32,
+    child_index: i32,
+    replacements: &HashMap<String, String>,
+    views: &HashMap<NodeQuery, View>,
+) {
+    //println!("add_view_to_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
     let my_id: i32 = id.clone();
     *id = *id + 1;
     if let ViewData::Text { content: _ } = &view.data {
@@ -92,7 +100,7 @@ fn add_view_to_layout(view: &View, id: &mut i32, parent_layout_id: i32, child_in
         add_view(my_id, parent_layout_id, child_index, view.clone(), None, false);
         let mut index = 0;
         for child in children {
-            add_view_to_layout(child, id, my_id, index);
+            add_view_to_layout(child, id, my_id, index, replacements, views);
             index = index + 1;
         }
     }
@@ -119,12 +127,12 @@ fn test_vertical_layout() {
     assert!(figma_doc_result.is_ok());
 
     let figma_doc = figma_doc_result.unwrap();
-    let view_result = figma_doc.views.get(&NodeQuery::NodeName("VerticalAutolayout".into()));
+    let view_result = figma_doc.views.get(&NodeQuery::NodeName("VerticalAutoLayout".into()));
     assert!(view_result.is_some());
 
     let view = view_result.unwrap();
     let mut id = 0;
-    add_view_to_layout(&view, &mut id, -1, -1);
+    add_view_to_layout(&view, &mut id, -1, -1, &HashMap::new(), &figma_doc.views);
 
     let root_layout_result = get_node_layout(0);
     assert!(root_layout_result.is_some());
@@ -144,7 +152,87 @@ fn test_vertical_layout() {
     assert!(child2_layout.width == 80.0);
     assert!(child2_layout.height == 30.0);
 
-    print_layout(0);
+    clear_views();
+}
+
+// Test replacement nodes in autolayout
+#[test]
+fn test_replacement_autolayout() {
+    let figma_doc_result = setup();
+    assert!(figma_doc_result.is_ok());
+
+    let figma_doc = figma_doc_result.unwrap();
+    let view_result = figma_doc.views.get(&NodeQuery::NodeName("ReplacementAutoLayout".into()));
+    assert!(view_result.is_some());
+
+    let view = view_result.unwrap();
+    let mut id = 0;
+    add_view_to_layout(&view, &mut id, -1, -1, &HashMap::new(), &figma_doc.views);
+
+    let root_layout_result = get_node_layout(0);
+    assert!(root_layout_result.is_some());
+    let root_layout = root_layout_result.unwrap();
+
+    assert!(root_layout.width == 140.0);
+    assert!(root_layout.height == 70.0);
+
+    let child1_layout_result = get_node_layout(1);
+    assert!(child1_layout_result.is_some());
+    let child1_layout = child1_layout_result.unwrap();
+    assert!(child1_layout.width == 50.0);
+    assert!(child1_layout.height == 50.0);
+    assert!(child1_layout.left == 10.0);
+    assert!(child1_layout.top == 10.0);
+
+    let child2_layout_result = get_node_layout(2);
+    assert!(child2_layout_result.is_some());
+    let child2_layout = child2_layout_result.unwrap();
+    assert!(child2_layout.width == 50.0);
+    assert!(child2_layout.height == 50.0);
+    assert!(child2_layout.left == 80.0);
+    assert!(child2_layout.top == 10.0);
+
+    clear_views();
+}
+
+// Test replacement nodes in autolayout
+#[test]
+fn test_replacement_fixedlayout() {
+    let figma_doc_result = setup();
+    assert!(figma_doc_result.is_ok());
+
+    let figma_doc = figma_doc_result.unwrap();
+    let view_result = figma_doc.views.get(&NodeQuery::NodeName("ReplacementFixedLayout".into()));
+    assert!(view_result.is_some());
+
+    let view = view_result.unwrap();
+    let mut id = 0;
+    add_view_to_layout(&view, &mut id, -1, -1, &HashMap::new(), &figma_doc.views);
+
+    let root_layout_result = get_node_layout(0);
+    assert!(root_layout_result.is_some());
+    let root_layout = root_layout_result.unwrap();
+
+    assert!(root_layout.width == 140.0);
+    assert!(root_layout.height == 70.0);
+
+    let child1_layout_result = get_node_layout(1);
+    assert!(child1_layout_result.is_some());
+    let child1_layout = child1_layout_result.unwrap();
+    assert!(child1_layout.width == 50.0);
+    assert!(child1_layout.height == 50.0);
+    assert!(child1_layout.left == 10.0);
+    assert!(child1_layout.top == 10.0);
+
+    let child2_layout_result = get_node_layout(2);
+    assert!(child2_layout_result.is_some());
+    let child2_layout = child2_layout_result.unwrap();
+    assert!(child2_layout.width == 50.0);
+    assert!(child2_layout.height == 50.0);
+    assert!(child2_layout.left == 80.0);
+    assert!(child2_layout.top == 10.0);
+
+    clear_views();
 }
 
 // Add tests:

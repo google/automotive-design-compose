@@ -693,15 +693,18 @@ internal fun DesignView(
                 parentSize = remember { mutableStateOf(Size(0F, 0F)) }
             }
 
+            // Set the base view in parentLayout if there is a variant replacement
+            val myParentLayout =
+                if (hasVariantReplacement) parentLayout?.withBaseView(v) else parentLayout
+
             return DesignFrame(
                 m,
                 view,
-                if (hasVariantReplacement) v else null,
                 style,
                 viewLayoutInfo,
                 document,
                 customizations,
-                parentLayout,
+                myParentLayout,
                 layoutId,
                 parentComponents,
                 MaskInfo(parentSize, maskViewType),

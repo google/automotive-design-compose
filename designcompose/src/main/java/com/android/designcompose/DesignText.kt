@@ -308,6 +308,7 @@ internal fun DesignText(
                         override val appearanceModifier = Modifier
                         @Composable override fun Content() {}
                         override val textStyle = textStyle
+                        override val parentLayout = parentLayout
                     }
                 )
             } else {

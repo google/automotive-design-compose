@@ -176,18 +176,20 @@ impl LayoutManager {
         None
     }
 
-    // If a variant view exists, copy the variant's margin to the style. This is necessary to
+    // If a base view exists, copy the base's margin to the style. This is necessary to
     // preserve the position of an instance of a component with variants where the variant
-    // changes due to an interaction. Without this, the new variant displayed would have its
-    // position reset to 0, 0.
-    fn apply_variant_style(
+    // changes due to an interaction, or if a component has been replaced with another
+    // composable. Without this, the new variant or replaced component displayed would have
+    // its position reset to 0, 0.
+    fn apply_base_style(
         &self,
         style: &mut taffy::style::Style,
-        variant_view: &Option<toolkit_schema::View>,
+        base_view: &Option<toolkit_schema::View>,
     ) {
-        if let Some(view) = variant_view {
-            let variant_style: taffy::style::Style = (&view.style).into();
-            style.margin = variant_style.margin;
+        if let Some(view) = base_view {
+            let base_style: taffy::style::Style = (&view.style).into();
+            style.margin = base_style.margin;
+            style.position = base_style.position;
         }
     }
 
@@ -197,7 +199,7 @@ impl LayoutManager {
         parent_layout_id: i32,
         child_index: i32,
         view: toolkit_schema::View,
-        variant_view: Option<toolkit_schema::View>,
+        base_view: Option<toolkit_schema::View>,
         measure_func: Option<taffy::node::MeasureFunc>,
         compute_layout: bool,
     ) -> LayoutChangedResponse {
@@ -209,7 +211,7 @@ impl LayoutManager {
             println!("{:#?}", view.style);
         }
 
-        self.apply_variant_style(&mut node_style, &variant_view);
+        self.apply_base_style(&mut node_style, &base_view);
         self.apply_customizations(layout_id, &mut node_style);
 
         let node = self.layout_id_to_taffy_node.get(&layout_id);
@@ -272,6 +274,15 @@ impl LayoutManager {
 
     fn remove_view(&mut self, layout_id: i32, compute_layout: bool) -> LayoutChangedResponse {
         let mut taffy = taffy();
+        self.remove_view_internal(layout_id, compute_layout, &mut taffy)
+    }
+
+    fn remove_view_internal(
+        &mut self,
+        layout_id: i32,
+        compute_layout: bool,
+        taffy: &mut Taffy,
+    ) -> LayoutChangedResponse {
         let taffy_node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(taffy_node) = taffy_node {
             let parent = taffy.parent(*taffy_node);
@@ -303,9 +314,34 @@ impl LayoutManager {
         }
 
         if compute_layout {
-            self.recompute_layouts(&mut taffy)
+            self.recompute_layouts(taffy)
         } else {
             LayoutChangedResponse::unchanged(self.layout_state)
+        }
+    }
+
+    // Recursively remove a node's children and then the node itself
+    fn remove_recursive(&mut self, layout_id: i32, taffy: &mut Taffy) {
+        let node = self.layout_id_to_taffy_node.get(&layout_id);
+        if let Some(node) = node {
+            let children_result = taffy.children(*node);
+            if let Ok(children) = children_result {
+                for child in children.iter() {
+                    let child_layout_id = self.taffy_node_to_layout_id.get(child);
+                    if let Some(child_layout_id) = child_layout_id {
+                        self.remove_recursive(*child_layout_id, taffy);
+                    }
+                }
+            }
+        }
+        self.remove_view_internal(layout_id, false, taffy);
+    }
+
+    // Remove all nodes
+    fn clear(&mut self) {
+        let mut taffy = taffy();
+        for layout_id in &self.root_layout_ids.clone() {
+            self.remove_recursive(*layout_id, &mut taffy);
         }
     }
 
@@ -388,7 +424,7 @@ pub fn add_view(
     parent_layout_id: i32,
     child_index: i32,
     view: toolkit_schema::View,
-    variant_view: Option<toolkit_schema::View>,
+    base_view: Option<toolkit_schema::View>,
     compute_layout: bool,
 ) -> LayoutChangedResponse {
     manager().add_view(
@@ -396,7 +432,7 @@ pub fn add_view(
         parent_layout_id,
         child_index,
         view,
-        variant_view,
+        base_view,
         None,
         compute_layout,
     )
@@ -442,6 +478,10 @@ pub fn add_view_measure(
 
 pub fn remove_view(layout_id: i32, compute_layout: bool) -> LayoutChangedResponse {
     manager().remove_view(layout_id, compute_layout)
+}
+
+pub fn clear_views() {
+    manager().clear()
 }
 
 pub fn set_node_size(layout_id: i32, width: u32, height: u32) -> LayoutChangedResponse {

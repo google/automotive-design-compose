@@ -22,6 +22,7 @@ use figma_import::{
 use layout::{
     add_view, add_view_measure, compute_layout, print_layout, remove_view, set_node_size,
 };
+use std::collections::HashMap;
 use std::io;
 use std::io::prelude::*;
 use taffy::error::TaffyError;
@@ -114,7 +115,13 @@ fn measure_func(
 
     (result_width, result_height)
 }
-fn test_layout(view: &View, id: &mut i32, parent_layout_id: i32, child_index: i32) {
+fn test_layout(
+    view: &View,
+    id: &mut i32,
+    parent_layout_id: i32,
+    child_index: i32,
+    views: &HashMap<NodeQuery, View>,
+) {
     println!("test_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
     let my_id: i32 = id.clone();
     *id = *id + 1;
@@ -143,10 +150,24 @@ fn test_layout(view: &View, id: &mut i32, parent_layout_id: i32, child_index: i3
             add_view(my_id, parent_layout_id, child_index, fixed_view, None, false);
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
-        add_view(my_id, parent_layout_id, child_index, view.clone(), None, false);
+        if view.name.starts_with("#Replacement") {
+            let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
+            if let Some(square) = square {
+                add_view(
+                    my_id,
+                    parent_layout_id,
+                    child_index,
+                    square.clone(),
+                    Some(view.clone()),
+                    false,
+                );
+            }
+        } else {
+            add_view(my_id, parent_layout_id, child_index, view.clone(), None, false);
+        }
         let mut index = 0;
         for child in children {
-            test_layout(child, id, my_id, index);
+            test_layout(child, id, my_id, index, views);
             index = index + 1;
         }
     }
@@ -176,7 +197,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     let stage = views.get(&NodeQuery::NodeName("#stage".to_string()));
     if let Some(stage) = stage {
         let mut id = 0;
-        test_layout(stage, &mut id, -1, -1);
+        test_layout(stage, &mut id, -1, -1, &views);
         print_layout(0);
     }
 

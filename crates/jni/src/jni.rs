@@ -179,7 +179,7 @@ fn jni_add_node<'local>(
     parent_layout_id: jint,
     child_index: jint,
     jserialized_view: JByteArray,
-    jserialized_variant_view: JByteArray,
+    jserialized_base_view: JByteArray,
     compute_layout: jboolean,
 ) -> JByteArray<'local> {
     let bytes_view = env.convert_byte_array(jserialized_view);
@@ -188,15 +188,15 @@ fn jni_add_node<'local>(
             bincode::deserialize(&bytes_view);
         match result {
             Ok(view) => {
-                let mut variant_view: Option<toolkit_schema::View> = None;
-                let bytes_variant_view: Result<Vec<u8>, jni::errors::Error> =
-                    env.convert_byte_array(jserialized_variant_view);
-                if let Ok(bytes_variant_view) = bytes_variant_view {
-                    if !bytes_variant_view.is_empty() {
+                let mut base_view: Option<toolkit_schema::View> = None;
+                let bytes_base_view: Result<Vec<u8>, jni::errors::Error> =
+                    env.convert_byte_array(jserialized_base_view);
+                if let Ok(bytes_base_view) = bytes_base_view {
+                    if !bytes_base_view.is_empty() {
                         let var_result: Result<toolkit_schema::View, Box<bincode::ErrorKind>> =
-                            bincode::deserialize(&bytes_variant_view);
+                            bincode::deserialize(&bytes_base_view);
                         match var_result {
-                            Ok(var_view) => variant_view = Some(var_view),
+                            Ok(bview) => base_view = Some(bview),
                             Err(e) => throw_basic_exception(
                                 &mut env,
                                 format!("Internal JNI Error: {}", e),
@@ -210,7 +210,7 @@ fn jni_add_node<'local>(
                     parent_layout_id,
                     child_index,
                     view,
-                    variant_view,
+                    base_view,
                     compute_layout != 0,
                 );
                 return layout_response_to_bytearray(env, &layout_response);

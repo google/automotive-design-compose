@@ -122,22 +122,31 @@ Install them by running the following from the root of the repository
 ### Controlling the architectures to build the Rust libraries for
 
 Release builds of DesignCompose need to include versions of the Rust libraries compiled for all four
-current Android ABIs - `x86`, `x86_64`, `armeabi-v7a` and `arm64-v8a`. However local development typically only needs a single ABI, corresponding to their test device / AVD.
-Cargo can (unfortunately) only build a single ABI at a time, so building all four ABIs adds significant time to a build (at least a minute). .
+current Android ABIs - `x86`, `x86_64`, `armeabi-v7a` and `arm64-v8a`. However local development
+typically only needs a single ABI, corresponding to their test device / AVD.
+Cargo can (unfortunately) only build a single ABI at a time, so building all four ABIs adds
+significant time to a build (at least a minute). .
 
-The `designcompose.cargoPlugin.allowAbiOverride` Gradle property enables the ability to override the list of ABIs to build. If set to `true` then the `designcompose.cargoPlugin.abiOverride` property will be read (if set) and used to filter the configured list of ABIs that is configured in the Gradle project. It takes a comma seperated list of ABIs.[gradle.properties](..%2F..%2F..%2F.gradle%2Fgradle.properties)
-When building in Android Studio, the `allowAbiOverride` property will allow the build to check the ABI of the device that you are building for (when installing the app or running an instrumented test or similar) and only build the ABI needed for the device. This has priority over the `abiOverride` list that may be provided.
+The `designcompose.cargoPlugin.allowAbiOverride` Gradle property enables the ability to override the
+list of ABIs to build. If set to `true` then the `designcompose.cargoPlugin.abiOverride` property
+will be read (if set) and used to filter the configured list of ABIs that is configured in the
+Gradle project. It takes a comma seperated list of
+ABIs.[gradle.properties](..%2F..%2F..%2F.gradle%2Fgradle.properties)
+When building in Android Studio, the `allowAbiOverride` property will allow the build to check the
+ABI of the device that you are building for (when installing the app or running an instrumented test
+or similar) and only build the ABI needed for the device. This has priority over the `abiOverride`
+list that may be provided.
 
 Note: The abi overrides are ignored when building for release.
 
 ### Gradle optimizations
 
 The properties file that is committed already includes the following optimizations:
-    - Parallel builds
-    - Build caching
-    - Configuration caching
-        - Android's Jetifier is disabled
-    - Increased the JVM memory allotment to 4GB
+- Parallel builds
+- Build caching
+- Configuration caching
+- Android's Jetifier is disabled
+- Increased the JVM memory allotment to 4GB
 
 You can optionally add these to your personal gradle.properties:
 
@@ -169,12 +178,12 @@ Automotive Design for Compose consists of several components:
 - Figma plugins that give designers more control and a better experience using Figma with Automotive
   Design for Compose:
 
-  - The Extended Layout Plugin, in `support-figma/extended-layout-plugin` , provides a panel for
+    - The Extended Layout Plugin, in `support-figma/extended-layout-plugin` , provides a panel for
       formatting text, a panel to provide a JSON file with keyword details, a panel to validate
       keyword usages against the provided JSON file, and a command to sync Figma's prototype
       settings to the main document.
 
-  - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma
+    - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma
       widget that uses the JSON file and allows designers to create and preview complex list
       layouts.
 

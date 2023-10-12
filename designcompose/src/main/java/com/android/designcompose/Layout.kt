@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
@@ -376,7 +375,14 @@ internal fun ParentLayoutInfo.withBaseView(baseView: View?): ParentLayoutInfo {
 internal val rootParentLayoutInfo = ParentLayoutInfo()
 val widgetParent = ParentLayoutInfo(isWidgetChild = true)
 
-internal open class SimplifiedLayoutInfo(val selfModifier: Modifier)
+internal open class SimplifiedLayoutInfo(val selfModifier: Modifier) {
+    internal fun shouldRender(): Boolean {
+        // We only want to render if the layout is an absolute layout, meaning we are using our
+        // custom Rust layout implementation. All other layout types mean we are using the list
+        // widget, and any special visual styles applied in Figma should be on the widget's parent.
+        return this is LayoutInfoAbsolute
+    }
+}
 
 internal class LayoutInfoAbsolute(selfModifier: Modifier) : SimplifiedLayoutInfo(selfModifier)
 
@@ -570,8 +576,6 @@ internal class DesignLayoutData(val name: String, val layoutId: Int) : ParentDat
     }
 }
 
-internal val Measurable.designLayoutData: DesignLayoutData?
-    get() = parentData as? DesignLayoutData
 internal val Placeable.designLayoutData: DesignLayoutData?
     get() = parentData as? DesignLayoutData
 

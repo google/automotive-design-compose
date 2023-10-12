@@ -171,9 +171,9 @@ internal fun DesignFrame(
             }
         }
 
-    // Only render the frame if we don't have a replacement node
+    // Only render the frame if we don't have a replacement node and layout is absolute
     val shape = (view.data as ViewData.Container).shape
-    if (replacementComponent == null)
+    if (replacementComponent == null && layoutInfo.shouldRender())
         m = m.frameRender(style, shape, customImage, document, name, customizations, maskInfo)
 
     val lazyContent = customizations.getListContent(name)

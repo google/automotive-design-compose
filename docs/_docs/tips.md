@@ -4,9 +4,9 @@ nav_order: 15
 layout: page
 ---
 
-{% include toc.md %}
-
 # Tips and Tricks
+
+(More to come!)
 
 ## Compile time optimizations
 

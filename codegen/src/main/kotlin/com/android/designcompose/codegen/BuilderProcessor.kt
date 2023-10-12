@@ -75,7 +75,11 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         this.write(str.toByteArray())
     }
 
-    fun createNewFile(className: String, packageName: String, dependencies: Set<KSFile>): OutputStream {
+    fun createNewFile(
+        className: String,
+        packageName: String,
+        dependencies: Set<KSFile>
+    ): OutputStream {
         val fileName = className.replace('.', '_') + "_gen"
         val file =
             codeGenerator.createNewFile(
@@ -136,7 +140,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         return file
     }
 
-
     override fun process(resolver: Resolver): List<KSAnnotated> {
 
         fun createJsonFile(packageName: String, dependencies: Set<KSFile>): OutputStream {
@@ -163,18 +166,22 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         val perPackageSourceDependencies: HashMap<String, MutableSet<KSFile>> = HashMap()
         symbols.forEach {
             it.containingFile?.let(
-                perPackageSourceDependencies.getOrPut(it.packageName.asString()) { mutableSetOf<KSFile>() }::add
+                perPackageSourceDependencies.getOrPut(it.packageName.asString()) {
+                    mutableSetOf<KSFile>()
+                }::add
             )
         }
 
         // Use that map to create files for each package
         val jsonStreams: HashMap<String, OutputStream> = HashMap()
-        perPackageSourceDependencies.forEach { jsonStreams[it.key] = createJsonFile(it.key, it.value.toSet()) }
+        perPackageSourceDependencies.forEach {
+            jsonStreams[it.key] = createJsonFile(it.key, it.value.toSet())
+        }
 
         // Visit each symbol and generate all files
         symbols.forEach { it.accept(DesignDocVisitor(jsonStreams), Unit) }
 
-        //Finish up
+        // Finish up
         jsonStreams.values.forEach { it.close() }
         // val ret = symbols.filterNot { it.validate() }.toList()
 
@@ -255,7 +262,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 logger.error("Invalid class kind with @DesignDoc", classDeclaration)
                 return
             }
-            //Convenience
+            // Convenience
             val packageName = classDeclaration.packageName.asString()
             val className = classDeclaration.simpleName.asString()
 
@@ -438,7 +445,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             val gson = GsonBuilder().setPrettyPrinting().create()
             currentJsonStream?.appendText(gson.toJson(designDocJson))
 
-            //Close out the main file
+            // Close out the main file
             out.close()
         }
 

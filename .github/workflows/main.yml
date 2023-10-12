@@ -34,6 +34,10 @@ concurrency:
 permissions:
   contents: read
 
+# We only need to make sure that one ABI builds
+env:
+  GRADLE_OPTS: "-Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOverride=true -Dorg.gradle.project.designcompose.cargoPlugin.abiOverride=x86_64"
+
 jobs:
   ############## Lints
   validate-gradle-wrapper:

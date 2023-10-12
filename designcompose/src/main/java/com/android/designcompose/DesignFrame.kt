@@ -40,11 +40,13 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.withSaveLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
@@ -193,9 +195,19 @@ internal fun DesignFrame(
                     if (style.overflow_node_id.isPresent)
                         overflowNodeId = style.overflow_node_id.get()
                 }
-                val rowSizeModifier = Modifier.layoutSizeToModifier(layout)
+
+                // If the widget is set to hug contents, don't give Row() a size and let it size
+                // itself. Then when the size is determined, inform the layout manager. Otherwise,
+                // get the fixed size from the layout manager and use it in a Modifier.
+                val hugContents = view.style.width is Dimension.Auto
+                val rowModifier =
+                    if (hugContents)
+                        Modifier.onSizeChanged {
+                            LayoutManager.setNodeSize(layoutId, it.width, it.height)
+                        }
+                    else Modifier.layoutSizeToModifier(layout)
                 Row(
-                    rowSizeModifier
+                    rowModifier
                         .then(layoutInfo.selfModifier)
                         .then(m)
                         .then(layoutInfo.marginModifier),
@@ -241,9 +253,19 @@ internal fun DesignFrame(
                     if (style.overflow_node_id.isPresent)
                         overflowNodeId = style.overflow_node_id.get()
                 }
-                val columnSizeModifier = Modifier.layoutSizeToModifier(layout)
+
+                // If the widget is set to hug contents, don't give Column() a size and let it size
+                // itself. Then when the size is determined, inform the layout manager. Otherwise,
+                // get the fixed size from the layout manager and use it in a Modifier.
+                val hugContents = view.style.height is Dimension.Auto
+                val columnModifier =
+                    if (hugContents)
+                        Modifier.onSizeChanged {
+                            LayoutManager.setNodeSize(layoutId, it.width, it.height)
+                        }
+                    else Modifier.layoutSizeToModifier(layout)
                 Column(
-                    columnSizeModifier
+                    columnModifier
                         .then(layoutInfo.selfModifier)
                         .then(m)
                         .then(layoutInfo.marginModifier),

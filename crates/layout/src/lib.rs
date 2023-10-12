@@ -12,21 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use thiserror::Error;
+extern crate android_logger;
+extern crate log;
+mod layout;
 
-/// Combined error type for all errors that can occur working with Figma documents.
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("IO Error")]
-    IoError(#[from] std::io::Error),
-    #[error("HTTP Error")]
-    NetworkError(#[from] ureq::Error),
-    #[error("Image Error")]
-    ImageError(#[from] image::ImageError),
-    #[error("Json Serialization Error")]
-    JsonError(#[from] serde_json::Error),
-    #[error("Serialization Error")]
-    BincodeError(#[from] bincode::Error),
-    #[error("Layout Error")]
-    LayoutError(#[from] taffy::error::TaffyError),
-}
+pub use layout::{
+    add_view, add_view_measure, clear_views, compute_layout, get_node_layout, print_layout,
+    remove_view, set_node_size, unchanged_response,
+};

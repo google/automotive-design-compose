@@ -304,6 +304,16 @@ pub enum TextAutoResize {
     None,
     Height,
     WidthAndHeight,
+    Truncate,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
+pub enum TextTruncation {
+    #[default]
+    Disabled,
+    Ending,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -336,6 +346,9 @@ fn default_paragraph_spacing() -> f32 {
 fn default_paragraph_indent() -> f32 {
     0.0
 }
+fn default_max_lines() -> i32 {
+    -1
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -366,6 +379,10 @@ pub struct TypeStyle {
     pub text_decoration: TextDecoration,
     #[serde(default)]
     pub text_auto_resize: TextAutoResize,
+    #[serde(default)]
+    pub text_truncation: TextTruncation,
+    #[serde(default = "default_max_lines")]
+    pub max_lines: i32,
     #[serde(default)]
     pub text_align_horizontal: TextAlignHorizontal,
     #[serde(default)]
@@ -551,7 +568,7 @@ pub enum StrokeAlign {
     Center,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
 pub enum LayoutMode {
@@ -570,7 +587,7 @@ impl LayoutMode {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
 pub enum LayoutSizingMode {
@@ -590,7 +607,7 @@ pub enum LayoutAlignItems {
     SpaceBetween,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LayoutAlign {
     Inherit,
@@ -654,6 +671,15 @@ fn default_clips_content() -> bool {
     false
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Default, Copy)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum LayoutSizing {
+    #[default]
+    Fixed,
+    Hug,
+    Fill,
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct VectorCommon {
@@ -668,6 +694,10 @@ pub struct VectorCommon {
     pub constraints: LayoutConstraint,
     #[serde(default)]
     pub is_mask: bool,
+    #[serde(default)]
+    pub layout_sizing_horizontal: LayoutSizing,
+    #[serde(default)]
+    pub layout_sizing_vertical: LayoutSizing,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -690,6 +720,10 @@ pub struct FrameCommon {
     pub primary_axis_sizing_mode: LayoutSizingMode, // FIXED, AUTO
     #[serde(default)]
     pub counter_axis_sizing_mode: LayoutSizingMode, // FIXED, AUTO
+    #[serde(default)]
+    pub layout_sizing_horizontal: LayoutSizing,
+    #[serde(default)]
+    pub layout_sizing_vertical: LayoutSizing,
     #[serde(default)]
     pub primary_axis_align_items: LayoutAlignItems, // MIN, CENTER, MAX, SPACE_BETWEEN
     #[serde(default)]
@@ -900,6 +934,12 @@ impl Node {
     pub fn is_widget(&self) -> bool {
         match &self.data {
             NodeData::Widget {} => true,
+            _ => false,
+        }
+    }
+    pub fn is_text(&self) -> bool {
+        match &self.data {
+            NodeData::Text { .. } => true,
             _ => false,
         }
     }

@@ -88,7 +88,7 @@ pub fn fetch_doc(
         // The document has changed since the version the client has, so we should fetch
         // a new copy.
         let mut error_list: Vec<String> = vec![];
-        let nodes = doc.nodes(
+        let views = doc.nodes(
             &rq.queries.iter().map(NodeQuery::name).collect(),
             &rq.ignored_images
                 .iter()
@@ -98,7 +98,7 @@ pub fn fetch_doc(
         )?;
 
         let figma_doc = SerializedDesignDoc {
-            nodes,
+            views,
             component_sets: doc.component_sets().clone(),
             images: doc.encoded_image_map(),
             last_modified: doc.last_modified().clone(),

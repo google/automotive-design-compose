@@ -212,6 +212,10 @@ internal fun InteractionState.navigate(targetNodeId: String, undoInstanceId: Str
     // Close overlays when navigating the top-level frame.
     this.overlayMemory.clear()
 
+    // When we navigate, the root view changes. Defer computations so that we
+    // don't compute layout after every view in the previous root view is
+    // removed.
+    LayoutManager.deferComputations()
     invalNavOverlay()
 }
 
@@ -242,6 +246,10 @@ internal fun InteractionState.back() {
     if (this.navigationHistory.size > 0) {
         this.navigationHistory.removeLast()
         this.overlayMemory.clear()
+        // When we navigate, the root view changes. Defer computations so that
+        // we don't compute layout after every view in the previous root view
+        // is removed.
+        LayoutManager.deferComputations()
     } else {
         Log.i(TAG, "Unable to go back because the navigation stack is empty")
     }
@@ -486,7 +494,7 @@ internal fun InteractionState.rootNode(
         navOverlaySubscriptions.add(updateQuery)
         onDispose { navOverlaySubscriptions.remove(updateQuery) }
     }
-    return searchNodes(query, doc.c.document.nodes, doc.c.variantViewMap, doc.c.variantPropertyMap)
+    return searchNodes(query, doc.c.document.views, doc.c.variantViewMap, doc.c.variantPropertyMap)
 }
 
 @Composable
@@ -506,7 +514,7 @@ internal fun InteractionState.rootOverlays(doc: DocContent): List<View> {
     // the latest doc nodes, rather than causing an invalidation here and returning
     // an updated value later).
     return rootOverlays.mapNotNull { query ->
-        searchNodes(query, doc.c.document.nodes, doc.c.variantViewMap, doc.c.variantPropertyMap)
+        searchNodes(query, doc.c.document.views, doc.c.variantViewMap, doc.c.variantPropertyMap)
     }
 }
 
@@ -539,7 +547,7 @@ internal fun InteractionState.nodeVariant(
     if (variant == null) return null
     return searchNodes(
         NodeQuery.NodeId(variant),
-        doc.c.document.nodes,
+        doc.c.document.views,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap
     )

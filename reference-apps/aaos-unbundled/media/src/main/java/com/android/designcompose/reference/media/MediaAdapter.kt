@@ -74,6 +74,7 @@ import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
 import com.android.designcompose.TapCallback
+import com.android.designcompose.widgetParent
 import java.lang.reflect.Field
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -420,6 +421,7 @@ class MediaAdapter(
                 cachedIcon ?: icon
             },
             key = key,
+            parentLayout = widgetParent,
         )
     }
 
@@ -446,7 +448,8 @@ class MediaAdapter(
                 val cachedIcon = getArtwork(item, width, height, color, setIcon)
                 cachedIcon ?: icon
             },
-            key = item.id
+            key = item.id,
+            parentLayout = widgetParent,
         )
     }
 
@@ -531,7 +534,8 @@ class MediaAdapter(
                             Log.i(TAG, "Opening authentication PendingIntent")
                             pendingIntent.send(context, 0, intent)
                         }
-                    }
+                    },
+                    parentLayout = widgetParent,
                 )
             }
         }
@@ -551,7 +555,8 @@ class MediaAdapter(
                         getCustomActionIcon(it, context, width, height, color)
                     },
                     onTap = { playController?.doCustomAction(it.mAction, null) },
-                    key = it.mAction
+                    key = it.mAction,
+                    parentLayout = widgetParent,
                 )
             }
             itemData.add(item)
@@ -653,6 +658,7 @@ class MediaAdapter(
                     showResults = false,
                     numResults = "",
                     key = source.packageName,
+                    parentLayout = widgetParent,
                 )
             }
         }
@@ -674,7 +680,7 @@ class MediaAdapter(
                     count = 1,
                     span = { spanFunc { media.LoadingPageDesignNodeData() } }
                 ) {
-                    media.LoadingPage(Modifier)
+                    media.LoadingPage(Modifier, parentLayout = widgetParent)
                 }
             }
         }
@@ -755,7 +761,8 @@ class MediaAdapter(
                         media.GroupHeader(
                             modifier = Modifier,
                             openLinkCallback = null,
-                            title = group
+                            title = group,
+                            parentLayout = widgetParent,
                         )
                     }
                     groupItem.key = group
@@ -824,7 +831,7 @@ class MediaAdapter(
                 span = { index -> spans[index] },
                 key = { index -> itemData[index].key },
                 initialSpan = { spanFunc { media.LoadingPageDesignNodeData() } },
-                initialContent = { media.LoadingPage(Modifier) }
+                initialContent = { media.LoadingPage(Modifier, parentLayout = widgetParent) }
             ) { index ->
                 itemData[index].composable()
             }
@@ -871,7 +878,7 @@ class MediaAdapter(
                     count = 1,
                     span = { spanFunc { media.LoadingPageDesignNodeData() } }
                 ) {
-                    media.LoadingPage(Modifier)
+                    media.LoadingPage(Modifier, parentLayout = widgetParent)
                 }
             }
             return browse
@@ -921,8 +928,9 @@ class MediaAdapter(
         val childPage = parent != null && browseStack.size() > 1
         browse.headerContent = {
             ListContentData(count = 1) {
-                if (childPage) media.BrowseHeaderDrillDown(modifier = Modifier)
-                else media.BrowseHeaderNav(modifier = Modifier)
+                if (childPage)
+                    media.BrowseHeaderDrillDown(modifier = Modifier, parentLayout = widgetParent)
+                else media.BrowseHeaderNav(modifier = Modifier, parentLayout = widgetParent)
             }
         }
         browse.title = parent?.title?.toString() ?: ""

@@ -59,6 +59,15 @@ fun EmptyListContent(): ListContent {
     return { ListContentData {} }
 }
 
+data class ContentReplacementContext(
+    val parentLayoutId: Int,
+)
+
+data class ReplacementContent(
+    var count: Int = 0,
+    var content: ((index: Int) -> @Composable (ContentReplacementContext) -> Unit),
+)
+
 typealias TapCallback = () -> Unit
 
 typealias MeterFunction = @Composable () -> Meter
@@ -80,8 +89,8 @@ data class Customization(
     var modifier: Optional<Modifier> = Optional.empty(),
     // Tap callback customization
     var tapCallback: Optional<TapCallback> = Optional.empty(),
-    // Child content customization
-    var content: Optional<@Composable () -> Unit> = Optional.empty(),
+    // Child content customization V2
+    var content: Optional<ReplacementContent> = Optional.empty(),
     var listContent: Optional<ListContent> = Optional.empty(),
     // Node substitution customization
     var component: Optional<@Composable (ComponentReplacementContext) -> Unit> = Optional.empty(),
@@ -208,7 +217,7 @@ fun CustomizationContext.setTapCallback(nodeName: String, tapCallback: TapCallba
     customize(nodeName) { c -> c.tapCallback = Optional.ofNullable(tapCallback) }
 }
 
-fun CustomizationContext.setContent(nodeName: String, content: @Composable (() -> Unit)?) {
+fun CustomizationContext.setContent(nodeName: String, content: ReplacementContent?) {
     customize(nodeName) { c -> c.content = Optional.ofNullable(content) }
 }
 
@@ -248,6 +257,9 @@ interface ComponentReplacementContext {
     // Return the text style, if the component being replaced is a text node in the Figma
     // document.
     val textStyle: TextStyle?
+
+    // Data needed to perform layout
+    val parentLayout: ParentLayoutInfo?
 }
 
 fun CustomizationContext.setComponent(
@@ -327,7 +339,7 @@ fun CustomizationContext.getTapCallback(nodeName: String): TapCallback? {
     return null
 }
 
-fun CustomizationContext.getContent(nodeName: String): @Composable (() -> Unit)? {
+fun CustomizationContext.getContent(nodeName: String): ReplacementContent? {
     val c = cs[nodeName] ?: return null
     if (c.content.isPresent) return c.content.get()
     return null

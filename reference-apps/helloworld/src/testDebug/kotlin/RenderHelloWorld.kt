@@ -65,8 +65,7 @@ class RenderHelloWorld {
             onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, HelloWorldDoc.javaClass.name))
                 .assertExists()
 
-            // Disabled due to "GH #458 (most likely)"
-            // onNodeWithText("Testers!", substring = true).assertExists()
+            onNodeWithText("Testers!", substring = true).assertExists()
         }
     }
 }

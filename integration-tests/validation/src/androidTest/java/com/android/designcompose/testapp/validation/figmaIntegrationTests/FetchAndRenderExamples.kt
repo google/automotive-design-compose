@@ -43,8 +43,7 @@ import org.junit.runners.Parameterized
  * @constructor Create empty Fetch and render examples
  * @property testName Human readable name for a the test
  * @property testComposable The composable to run
- * @property fileClass The classname of the DesignCompose DesignDoc that is being tested
- *   file)
+ * @property fileClass The classname of the DesignCompose DesignDoc that is being tested file)
  */
 @RunWith(Parameterized::class)
 class FetchAndRenderExamples(

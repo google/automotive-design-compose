@@ -33,6 +33,7 @@ buildscript {
 plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices") apply false
+    id("designcompose.conventions.roborazzi") apply false
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.kotlinAndroid) apply false

@@ -59,7 +59,7 @@ class RenderTests {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, designSwitcherDocId()))
+            .onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, designSwitcherDocId()))
             .assertExists()
         with(DesignSettings.testOnlyFigmaFetchStatus(designSwitcherDocId())) {
             assertNotNull(this)
@@ -78,7 +78,7 @@ class RenderTests {
         // Test that...
         // No doc is rendered with this ID
         composeTestRule
-            .onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey))
+            .onNode(SemanticsMatcher.keyIsDefined(docClassSemanticsKey))
             .assertDoesNotExist()
 
         // The Node not found screen is shown

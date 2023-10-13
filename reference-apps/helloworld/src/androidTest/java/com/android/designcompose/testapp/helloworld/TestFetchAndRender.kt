@@ -22,7 +22,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.TestUtils
-import com.android.designcompose.docIdSemanticsKey
+import com.android.designcompose.docClassSemanticsKey
 import kotlin.test.assertNotNull
 import org.junit.Before
 import org.junit.Rule
@@ -42,7 +42,7 @@ class TestFetchAndRender {
         TestUtils.triggerLiveUpdate()
         composeTestRule.waitForIdle()
         composeTestRule
-            .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId))
+            .onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, helloWorldDocId))
             .assertExists()
 
         with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {

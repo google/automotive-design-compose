@@ -63,7 +63,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -325,8 +324,8 @@ internal data class MaskInfo(
 )
 
 // Custom Compose Semantic that identifies a DesignCompose Composable
-val docIdSemanticsKey = SemanticsPropertyKey<String>("DocId")
-var SemanticsPropertyReceiver.sDocId by docIdSemanticsKey
+val docClassSemanticsKey = SemanticsPropertyKey<String>("DocClass")
+var SemanticsPropertyReceiver.sDocId by docClassSemanticsKey
 
 @Composable
 internal fun DesignView(
@@ -990,7 +989,7 @@ internal fun DesignDocInternal(
                 }
 
                 DesignView(
-                    modifier.semantics { sDocId = docId },
+                    modifier,
                     startFrame,
                     variantParentName,
                     docId,

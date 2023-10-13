@@ -25,7 +25,7 @@ import com.android.designcompose.HelloWorldDoc
 import com.android.designcompose.TestUtils
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
-import com.android.designcompose.docIdSemanticsKey
+import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.helloWorldDocId
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -66,7 +66,7 @@ class LiveUpdateBehaviorTests {
         TestUtils.triggerLiveUpdate()
         composeTestRule.waitForIdle()
         composeTestRule
-            .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId))
+            .onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, helloWorldDocId))
             .assertExists()
 
         with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
@@ -87,7 +87,7 @@ class LiveUpdateBehaviorTests {
         // Check that...
         // No doc is rendered with this ID
         composeTestRule
-            .onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey))
+            .onNode(SemanticsMatcher.keyIsDefined(docClassSemanticsKey))
             .assertDoesNotExist()
 
         // The Node not found screen is shown

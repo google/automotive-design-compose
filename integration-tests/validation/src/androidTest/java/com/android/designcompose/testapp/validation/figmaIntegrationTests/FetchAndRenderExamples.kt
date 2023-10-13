@@ -23,7 +23,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.TestUtils
-import com.android.designcompose.docIdSemanticsKey
+import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.testapp.validation.EXAMPLES
 import com.android.designcompose.testapp.validation.interFont
 import kotlin.test.assertNotNull
@@ -43,14 +43,14 @@ import org.junit.runners.Parameterized
  * @constructor Create empty Fetch and render examples
  * @property testName Human readable name for a the test
  * @property testComposable The composable to run
- * @property fileId The Figma file ID of the test (currently each test should only use one Figma
+ * @property fileClass The classname of the DesignCompose DesignDoc that is being tested
  *   file)
  */
 @RunWith(Parameterized::class)
 class FetchAndRenderExamples(
     private val testName: String,
     private val testComposable: @Composable () -> Unit,
-    private val fileId: String
+    internal val fileClass: String
 ) {
     @get:Rule val composeTestRule = createComposeRule()
 
@@ -82,10 +82,10 @@ class FetchAndRenderExamples(
         TestUtils.triggerLiveUpdate()
 
         composeTestRule.waitForIdle()
-        // Check that at least one node has the doc ID set correctly (some tests use display
+        // Check that at least one node has the doc's class set correctly (some tests use display
         // multiple instances)
         composeTestRule
-            .onAllNodes(SemanticsMatcher.expectValue(docIdSemanticsKey, fileId))
+            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
             .onFirst()
             .assertExists()
 

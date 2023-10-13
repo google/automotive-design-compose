@@ -98,6 +98,13 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
         style.width = Dimension::Auto;
         style.height = Dimension::Auto;
         style.flex_grow = frame.layout_grow;
+        if frame.layout_grow == 1.0 {
+            // When the value of layout_grow is 1, it is because the node has
+            // its width or height set to FILL. Figma's node properties don't
+            // specify this, but flex_basis needs to be set to 0 so that it
+            // starts out small and grows to fill the container
+            style.flex_basis = Dimension::Points(0.0);
+        }
         style.flex_shrink = 0.0;
         style.horizontal_sizing = frame.layout_sizing_horizontal.into();
         style.vertical_sizing = frame.layout_sizing_vertical.into();
@@ -220,12 +227,12 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                 let height_points = bounds.height().ceil();
                 style.width = match frame.layout_sizing_horizontal {
                     LayoutSizing::Fixed => Dimension::Points(width_points),
-                    LayoutSizing::Fill => Dimension::Points(width_points),
+                    LayoutSizing::Fill => Dimension::Auto,
                     LayoutSizing::Hug => Dimension::Auto,
                 };
                 style.height = match frame.layout_sizing_vertical {
                     LayoutSizing::Fixed => Dimension::Points(height_points),
-                    LayoutSizing::Fill => Dimension::Points(height_points),
+                    LayoutSizing::Fill => Dimension::Auto,
                     LayoutSizing::Hug => Dimension::Auto,
                 };
             }
@@ -285,6 +292,13 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
     // For text we want to force the width.
     if let NodeData::Text { vector, style: text_style, .. } = &node.data {
         style.flex_grow = vector.layout_grow;
+        if vector.layout_grow == 1.0 {
+            // When the value of layout_grow is 1, it is because the node has
+            // its width or height set to FILL. Figma's node properties don't
+            // specify this, but flex_basis needs to be set to 0 so that it
+            // starts out small and grows to fill the container
+            style.flex_basis = Dimension::Points(0.0);
+        }
         style.horizontal_sizing = vector.layout_sizing_horizontal.into();
         style.vertical_sizing = vector.layout_sizing_vertical.into();
 

@@ -22,7 +22,7 @@ Options:
     Won't catch everything but shouldn't cause everything to rebuild either.
   -s: Skip emulator tests
   -u: Set Unbundled AAOS path
-Pre-requisites: 
+Pre-requisites:
     Have \$FIGMA_ACCESS_TOKEN set to your actual Figma token
     To run the full suite your system must be able to run emulator tests.
       Use the -s argument to skip emulator tests.
@@ -69,7 +69,9 @@ if [[ -z "$FIGMA_ACCESS_TOKEN" ]]; then
     exit 1
   fi
 fi
-
+GRADLE_OPTS="-Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOverride=true "
+# Both are needed for the GMD Tests
+GRADLE_OPTS+="-Dorg.gradle.project.designcompose.cargoPlugin.abiOverride=x86,x86_64"
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"
 
 cd "$GIT_ROOT" || exit

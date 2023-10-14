@@ -423,8 +423,8 @@ private fun measureTextBounds(
                 is Dimension.Points -> {
                     // Fixed height. Get actual height so we can calculate vertical alignment
                     rectBounds = textLayoutData.boundsForWidth(Int.MAX_VALUE, 1, density).first
-                    renderHeight = style.height.pointsAsDp(density.density).value.roundToInt()
-                    layoutHeight = renderHeight
+                    renderHeight = style.bounding_box.height.roundToInt()
+                    layoutHeight = style.height.pointsAsDp(density.density).value.roundToInt()
                 }
                 else -> {
                     // Auto height
@@ -432,22 +432,17 @@ private fun measureTextBounds(
                         if (style.line_count.isPresent) style.line_count.get().toInt()
                         else Int.MAX_VALUE
                     rectBounds = textLayoutData.boundsForWidth(textWidth, maxLines, density).first
-                    renderHeight = rectBounds.height()
-                    layoutHeight = renderHeight
+                    renderHeight = (rectBounds.height().toFloat() / density.density).roundToInt()
+                    layoutHeight = rectBounds.height()
                 }
             }
         }
         else -> {
             // Auto width, meaning everything is in one line
             // TODO auto width can also span multiple lines; support this
-            // val maxLines = if (style.line_height is LineHeight.Pixels)
-            //    (textLayoutData.textBoxSize.height / (style.line_height as
-            // LineHeight.Pixels).value).roundToInt().coerceAtLeast(1)
-            // else 1
-
             rectBounds = textLayoutData.boundsForWidth(Int.MAX_VALUE, 1, density).first
             textWidth = rectBounds.width()
-            renderHeight = rectBounds.height()
+            renderHeight = (rectBounds.height().toFloat() / density.density).roundToInt()
             layoutHeight = (textLayoutData.textBoxSize.height * density.density).roundToInt()
         }
     }

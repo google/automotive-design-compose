@@ -29,7 +29,6 @@ buildscript {
     }
 }
 
-@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices") apply false

@@ -135,6 +135,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import com.android.designcompose.setVisible\n"
         file += "import com.android.designcompose.TapCallback\n"
         file += "import com.android.designcompose.ParentComponentInfo\n"
+        file += "import com.android.designcompose.ParentLayoutInfo\n"
         file += "import com.android.designcompose.LocalCustomizationContext\n\n"
 
         return file

@@ -15,13 +15,12 @@
  */
 
 plugins {
-    kotlin("android")
-    id("com.android.application")
-    @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
+    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
-    id("designcompose.conventions.base")
     alias(libs.plugins.designcompose)
-    alias(libs.plugins.roborazzi)
+    id("designcompose.conventions.base")
+    id("designcompose.conventions.roborazzi")
 }
 
 var applicationID = "com.android.designcompose.testapp.helloworld"
@@ -76,7 +75,6 @@ android {
     }
 
     packaging.resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
-    testOptions.unitTests.isIncludeAndroidResources = true // For Roborazzi
 }
 
 dependencies {

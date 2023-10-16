@@ -70,6 +70,7 @@ interface MediaInterface {
         icon: @Composable (ImageReplacementContext) -> Bitmap?,
         onTap: TapCallback,
     ) {}
+
     fun CustomActionButtonDesignNodeData(): DesignNodeData {
         return DesignNodeData()
     }
@@ -88,6 +89,7 @@ interface MediaInterface {
         browseContent: ListContent,
         show: Boolean,
     ) {}
+
     fun BrowsePageDesignNodeData(pageHeaderType: PageHeaderType): DesignNodeData {
         return DesignNodeData()
     }
@@ -100,6 +102,7 @@ interface MediaInterface {
         key: String? = null,
         parentLayout: ParentLayoutInfo?,
     ) {}
+
     fun LoadingPageDesignNodeData(): DesignNodeData {
         return DesignNodeData()
     }
@@ -113,6 +116,7 @@ interface MediaInterface {
         parentLayout: ParentLayoutInfo?,
         title: String,
     ) {}
+
     fun GroupHeaderDesignNodeData(): DesignNodeData {
         return DesignNodeData()
     }
@@ -131,6 +135,7 @@ interface MediaInterface {
         showResults: Boolean,
         numResults: String,
     ) {}
+
     fun SourceButtonDesignNodeData(sourceButtonType: SourceButtonType): DesignNodeData {
         return DesignNodeData()
     }
@@ -147,6 +152,7 @@ interface MediaInterface {
         name: String,
         icon: @Composable (ImageReplacementContext) -> Bitmap?,
     ) {}
+
     fun PageHeaderNavButtonDesignNodeData(navButtonType: NavButtonType): DesignNodeData {
         return DesignNodeData()
     }
@@ -166,6 +172,7 @@ interface MediaInterface {
         showSubtitle: Boolean,
         icon: @Composable (ImageReplacementContext) -> Bitmap?,
     ) {}
+
     fun BrowseItemDesignNodeData(
         browseType: BrowseItemType,
         currentlyPlaying: CurrentlyPlaying,
@@ -185,6 +192,7 @@ interface MediaInterface {
         showErrorButton: Boolean,
         onTapErrorButton: TapCallback,
     ) {}
+
     fun ErrorFrameDesignNodeData(): DesignNodeData {
         return DesignNodeData()
     }
@@ -197,6 +205,7 @@ interface MediaInterface {
         key: String? = null,
         parentLayout: ParentLayoutInfo?,
     ) {}
+
     fun BrowseHeaderNavDesignNodeData(): DesignNodeData {
         return DesignNodeData()
     }
@@ -209,6 +218,7 @@ interface MediaInterface {
         key: String? = null,
         parentLayout: ParentLayoutInfo?,
     ) {}
+
     fun BrowseHeaderDrillDownDesignNodeData(): DesignNodeData {
         return DesignNodeData()
     }

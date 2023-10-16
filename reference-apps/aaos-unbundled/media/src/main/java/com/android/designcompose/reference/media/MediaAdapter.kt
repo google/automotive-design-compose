@@ -504,15 +504,13 @@ class MediaAdapter(
             val hasActionLabel =
                 extras?.containsKey(
                     MediaConstants.PLAYBACK_STATE_EXTRAS_KEY_ERROR_RESOLUTION_ACTION_LABEL
-                )
-                    ?: false
+                ) ?: false
             val buttonText =
                 if (!hasActionLabel) ""
                 else {
                     extras?.getString(
                         MediaConstants.PLAYBACK_STATE_EXTRAS_KEY_ERROR_RESOLUTION_ACTION_LABEL
-                    )
-                        ?: ""
+                    ) ?: ""
                 }
             nowPlaying.errorFrame = { c ->
                 media.ErrorFrame(

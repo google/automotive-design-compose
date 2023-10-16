@@ -68,7 +68,7 @@ dependencyResolutionManagement {
             println(
                 "Reminder! Overriding Android Gradle Plugin version to $unbundledAAOSAndroidGradlePluginVer to match the Unbundled AAOS project!"
             )
-            version("android.gradlePlugin", unbundledAAOSAndroidGradlePluginVer)
+            version("agp", unbundledAAOSAndroidGradlePluginVer)
             version("aaosLatestSDK", aaosLatestSDK)
         }
         create("libs") {

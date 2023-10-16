@@ -54,8 +54,11 @@ import kotlin.math.roundToInt
 // Surface the layout data to our parent container.
 private class DesignChildData(val name: String, val layoutId: Int) : ParentDataModifier {
     override fun Density.modifyParentData(parentData: Any?) = this@DesignChildData
+
     override fun hashCode(): Int = layoutId // style.hashCode()
+
     override fun toString(): String = "DesignChildData($name, $layoutId)"
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         val otherModifier = other as? DesignChildData ?: return false
@@ -89,6 +92,7 @@ internal object LayoutMgr {
     private var layoutState: Int = 0
     private var nextId: Int = 0
     private var greenState: Boolean = false
+
     init {
         data["stage"] = LO(500F, 500F, 0F, 0F)
         data["rect1"] = LO(100F, 100F, 20F, 20F)
@@ -99,13 +103,16 @@ internal object LayoutMgr {
         data["rect3"] = LO(200F, 200F, 50F, 50F)
         data["rect4"] = LO(200F, 200F, 100F, 300F)
     }
+
     fun getNextId(): Int {
         ++nextId
         return nextId
     }
+
     fun get(name: String): LO {
         return if (data.containsKey(name)) data[name]!! else LO(0F, 0F, 0F, 0F)
     }
+
     fun get(layoutId: Int): LO {
         val name = layoutToName[layoutId]
         if (name != null) {
@@ -113,19 +120,23 @@ internal object LayoutMgr {
         }
         return EmptyLO()
     }
+
     fun subscribe(layoutId: Int, name: String, setLayoutState: (Int) -> Unit) {
         println("Subscribe $name $layoutId")
         layoutToName[layoutId] = name
         subscribers[layoutId] = setLayoutState
     }
+
     fun unsubscribe(layoutId: Int) {
         println("Unsubscribe $layoutId")
         layoutToName.remove(layoutId)
         subscribers.remove(layoutId)
     }
+
     fun notifySubscribers() {
         subscribers.values.forEach { it(layoutState) }
     }
+
     fun toggleGreen() {
         greenState = !greenState
         if (greenState) data["rect2-0"] = LO(50F, 50F, 10F, 120F)
@@ -133,6 +144,7 @@ internal object LayoutMgr {
         ++layoutState
         notifySubscribers()
     }
+
     fun computeLayout() {}
 }
 
@@ -146,6 +158,7 @@ internal object ChildrenMgr {
 
 internal object ColorMgr {
     private val data: HashMap<String, Color> = HashMap()
+
     init {
         data["stage"] = Color.Black
         data["stage2"] = Color.Black
@@ -155,6 +168,7 @@ internal object ColorMgr {
         data["rect3"] = Color.Cyan
         data["rect4"] = Color.Magenta
     }
+
     fun get(name: String): Color {
         return if (data.containsKey(name)) data[name]!! else Color.Yellow
     }

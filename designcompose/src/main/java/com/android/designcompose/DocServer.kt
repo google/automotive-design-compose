@@ -192,6 +192,7 @@ internal class ActivityLifecycleObserver : DefaultLifecycleObserver {
 // scrolling. We clear the cache whenever there is an update from the server.
 internal object SpanCache {
     private val nodeSpanHash: HashMap<DesignNodeData, LazyContentSpan> = HashMap()
+
     internal fun getSpan(nodeData: DesignNodeData): LazyContentSpan? {
         return nodeSpanHash[nodeData]
     }
@@ -521,13 +522,14 @@ internal fun DocServer.doc(
 }
 
 internal fun DocServer.branches(docId: String): HashMap<String, String>? {
-    val mediaDocs: HashMap<String, String> = hashMapOf(
-        "7rvM6aVWe0jZCm7jhO9ITx" to "Media 1",
-        "S3n4mhNgoHzNxCCHhmrVcR" to "Media 2",
-        "5n0LhOQ6wOiDxrH0YUVhJS" to "Media 4",
-        "dui99iAKZ273s7RN11Z9Ak" to "Media 5",
-        "2DQtQOf6U26mA8dqBie3gT" to "Media Nova",
-    )
+    val mediaDocs: HashMap<String, String> =
+        hashMapOf(
+            "7rvM6aVWe0jZCm7jhO9ITx" to "Media 1",
+            "S3n4mhNgoHzNxCCHhmrVcR" to "Media 2",
+            "5n0LhOQ6wOiDxrH0YUVhJS" to "Media 4",
+            "dui99iAKZ273s7RN11Z9Ak" to "Media 5",
+            "2DQtQOf6U26mA8dqBie3gT" to "Media Nova",
+        )
     return mediaDocs
-    //return branchHash[docId]
+    // return branchHash[docId]
 }

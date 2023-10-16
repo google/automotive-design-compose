@@ -179,6 +179,7 @@ data class ImageContext(
         }
         return null
     }
+
     fun getPixelWidth(): Int? {
         if (width is Dimension.Points) return width.value.toInt()
         if (minWidth is Dimension.Points) return minWidth.value.toInt()

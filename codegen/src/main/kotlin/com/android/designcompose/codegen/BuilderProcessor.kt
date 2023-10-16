@@ -572,8 +572,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     param.annotations.find {
                         it.shortName.asString() == "Design" ||
                             it.shortName.asString() == "DesignVariant"
-                    }
-                        ?: return
+                    } ?: return
                 val nodeArg: KSValueArgument =
                     annotation.arguments.first { arg ->
                         arg.name?.asString() == "node" || arg.name?.asString() == "property"
@@ -1057,29 +1056,48 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         }
 
         override fun visitNode(node: KSNode, data: Unit) {}
+
         override fun visitAnnotated(annotated: KSAnnotated, data: Unit) {}
+
         override fun visitAnnotation(annotation: KSAnnotation, data: Unit) {}
+
         override fun visitModifierListOwner(modifierListOwner: KSModifierListOwner, data: Unit) {}
+
         override fun visitDeclaration(declaration: KSDeclaration, data: Unit) {}
+
         override fun visitDeclarationContainer(
             declarationContainer: KSDeclarationContainer,
             data: Unit
         ) {}
 
         override fun visitDynamicReference(reference: KSDynamicReference, data: Unit) {}
+
         override fun visitFile(file: KSFile, data: Unit) {}
+
         override fun visitCallableReference(reference: KSCallableReference, data: Unit) {}
+
         override fun visitParenthesizedReference(reference: KSParenthesizedReference, data: Unit) {}
+
         override fun visitPropertyDeclaration(property: KSPropertyDeclaration, data: Unit) {}
+
         override fun visitPropertyAccessor(accessor: KSPropertyAccessor, data: Unit) {}
+
         override fun visitPropertyGetter(getter: KSPropertyGetter, data: Unit) {}
+
         override fun visitPropertySetter(setter: KSPropertySetter, data: Unit) {}
+
         override fun visitClassifierReference(reference: KSClassifierReference, data: Unit) {}
+
         override fun visitReferenceElement(element: KSReferenceElement, data: Unit) {}
+
         override fun visitTypeAlias(typeAlias: KSTypeAlias, data: Unit) {}
+
         override fun visitTypeArgument(typeArgument: KSTypeArgument, data: Unit) {}
+
         override fun visitTypeParameter(typeParameter: KSTypeParameter, data: Unit) {}
+
         override fun visitTypeReference(typeReference: KSTypeReference, data: Unit) {}
+
         override fun visitValueArgument(valueArgument: KSValueArgument, data: Unit) {}
     }
 }

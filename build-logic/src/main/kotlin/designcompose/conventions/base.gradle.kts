@@ -16,7 +16,6 @@
 
 package designcompose.conventions
 
-import com.android.build.gradle.BaseExtension
 import com.google.devtools.ksp.gradle.KspTask
 import com.ncorti.ktfmt.gradle.tasks.KtfmtCheckTask
 
@@ -51,13 +50,7 @@ project.plugins.withType(JavaBasePlugin::class.java) {
     }
 }
 
-// This block can go away once Gradle 8.1 is released
-// https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support
 project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
-    project.extensions.getByType(BaseExtension::class.java).compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
 
     // Replace dependencies on DesignCompose with our project. Because of the way we include our
     // reference apps, we need to only do so the gradle project being run actually includes

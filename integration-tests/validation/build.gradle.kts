@@ -15,14 +15,13 @@
  */
 
 plugins {
-    kotlin("android")
-    id("com.android.application")
-    @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
+    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.designcompose)
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices")
-    alias(libs.plugins.designcompose)
-    alias(libs.plugins.roborazzi)
+    id("designcompose.conventions.roborazzi")
 }
 
 var applicationID = "com.android.designcompose.testapp.validation"
@@ -76,18 +75,6 @@ android {
     }
 
     packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
-
-    @Suppress("UnstableApiUsage")
-    testOptions {
-        // For Roborazzi
-        unitTests {
-            isIncludeAndroidResources = true
-            all {
-                it.minHeapSize = "128m"
-                it.maxHeapSize = "1024m"
-            }
-        }
-    }
 }
 
 dependencies {

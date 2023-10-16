@@ -93,6 +93,7 @@ class ReadFigmaTokenTest {
             testProject.withEnvironment(envTokenEnvironment + propertyTokenEnvironment).build()
         assertThat(result.task(":checkFigmaToken")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
     }
+
     @Test
     fun environmentVarOverridesFile() {
         writeBuildScript(envToken)

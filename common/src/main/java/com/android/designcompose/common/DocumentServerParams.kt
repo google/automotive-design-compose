@@ -26,8 +26,7 @@ class DocumentServerParams(
             ignoredImages?.keys?.joinToString(",") { node ->
                 val images = ignoredImages[node]?.joinToString(",") { "\"$it\"" }
                 "{ \"node\": \"$node\", \"images\": [$images] }"
-            }
-                ?: ""
+            } ?: ""
 
         var jsonStr = "\"ignored_images\": [$ignoredImagesStr], "
         jsonStr += "\"queries\": [$queriesStr]"

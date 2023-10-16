@@ -474,8 +474,11 @@ interface InteractionTest {
     fun clickedShiftCtrlB()
     // Inject a meta-C key when the 'clickedC()' function is called
     @DesignKeyAction(key = 'C', metaKeys = [DesignMetaKey.MetaMeta]) fun clickedMetaC()
+
     @DesignKeyAction(key = 'A', metaKeys = []) fun clickedA()
+
     @DesignKeyAction(key = 'B', metaKeys = []) fun clickedB()
+
     @DesignKeyAction(key = 'C', metaKeys = []) fun clickedC()
 }
 
@@ -898,18 +901,22 @@ interface GridLayoutTest {
         @Design(node = "#HorizontalGrid2")
         horizontal2: ListContent,
     )
+
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#VItem")
     fun VItem(
         @DesignVariant(property = "#VItem") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#SectionTitle")
     fun SectionTitle(@Design(node = "#Title") title: String)
+
     @DesignComponent(node = "#VSectionTitle")
     fun VSectionTitle(@Design(node = "#Title") title: String)
 }
@@ -1085,18 +1092,22 @@ interface GridWidgetTest {
         @Design(node = "#list-auto-content")
         items: ListContent,
     )
+
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#VItem")
     fun VItem(
         @DesignVariant(property = "#VItem") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#SectionTitle")
     fun SectionTitle(@Design(node = "#Title") title: String)
+
     @DesignComponent(node = "#VSectionTitle")
     fun VSectionTitle(@Design(node = "#Title") title: String)
 }
@@ -1246,11 +1257,13 @@ interface ListWidgetTest {
         @Design(node = "#col-content-scrolling")
         colScrollItems: ListContent,
     )
+
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#VItem")
     fun VItem(
         @DesignVariant(property = "#VItem") type: ItemType,
@@ -1377,12 +1390,14 @@ interface VariantInteractionsTest {
         content: @Composable () -> Unit,
         @DesignVariant(property = "#ButtonCircle") buttonCircleState: ButtonState,
     )
+
     @DesignComponent(node = "#ButtonVariant1")
     fun ButtonVariant1(
         @DesignVariant(property = "#ButtonVariant1") type: ItemType,
         @Design(node = "#Title") title: String,
         @Design(node = "#ButtonVariant1") onTap: TapCallback
     )
+
     @DesignComponent(node = "#ButtonVariant2")
     fun ButtonVariant2(
         @DesignVariant(property = "#ButtonVariant2") type: ItemType,
@@ -1478,9 +1493,13 @@ interface LayoutReplacementTest {
         @Design(node = "#parent2") parent2: @Composable () -> Unit,
         @Design(node = "#parent3") parent3: @Composable () -> Unit,
     )
+
     @DesignComponent(node = "#fill") fun Fill()
+
     @DesignComponent(node = "#topleft") fun TopLeft()
+
     @DesignComponent(node = "#bottomright") fun BottomRight()
+
     @DesignComponent(node = "#center") fun Center()
 }
 
@@ -1554,7 +1573,9 @@ interface CrossAxisFillTest {
         @Design(node = "#FixedWidth") fixedWidth: Modifier,
         @Design(node = "#OuterColumn") outerColumnContents: @Composable () -> Unit,
     )
+
     @DesignComponent(node = "#LargeFixedWidth") fun LargeFixedWidth()
+
     @DesignComponent(node = "#FillParentWidth") fun FillParentWidth()
 }
 
@@ -1589,9 +1610,12 @@ interface GridLayout {
         @Design(node = "#BrowseList")
         items: ListContent,
     )
+
     @DesignComponent(node = "#SectionTitle")
     fun SectionTitle(@Design(node = "#Title") title: String)
+
     @DesignComponent(node = "#LoadingPage") fun LoadingPage()
+
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") itemType: ItemType,

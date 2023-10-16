@@ -66,6 +66,7 @@ object Feedback : FeedbackImpl() {
     internal fun assetLoadFail(id: String, docId: String) {
         setStatus("Unable to open $id from assets", FeedbackLevel.Debug, docId)
     }
+
     internal fun startLiveUpdate(docId: String) {
         val truncatedId = shortDocId(docId)
         setStatus("Live update fetching $truncatedId", FeedbackLevel.Debug, docId)

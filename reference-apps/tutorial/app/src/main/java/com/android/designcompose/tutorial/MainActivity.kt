@@ -134,22 +134,29 @@ interface Tutorial {
         @Design(node = "#browse/grid-outlined/auto-content")
         gridOutlinedContent: ListContent,
     )
+
     @DesignComponent(node = "#Track")
     fun Track(
         @Design(node = "#title") title: String,
     )
+
     @DesignComponent(node = "#GridItem")
     fun GridItem(@DesignVariant(property = "#GridItem") itemType: GridItemType)
+
     @DesignComponent(node = "#GridItem2")
     fun GridItem2(@DesignVariant(property = "#GridItem2") itemType: GridItemType)
 
     // Unused functions for document checker tutorial slide
     @DesignComponent(node = "#bluebutton") fun ButtonDuplicate()
+
     @DesignComponent(node = "#purplebutton") fun ButtonMissing()
+
     @DesignComponent(node = "#greenbutton")
     fun CustomButtonMissing(@Design(node = "#greenbuttontext") text: String)
+
     @DesignComponent(node = "#orangesubmitbutton")
     fun BadComponentSet(@DesignVariant(property = "#orangesubmitbutton") buttonState: ButtonState)
+
     @DesignComponent(node = "#redbutton")
     fun CustomButtonMismatch(@Design(node = "#redbuttontext") text: String)
 }

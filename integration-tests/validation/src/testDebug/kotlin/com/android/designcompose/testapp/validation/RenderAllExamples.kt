@@ -44,6 +44,7 @@ class RenderAllExamples(private val config: TestConfig) {
         internal val fileComposable: @Composable () -> Unit,
         internal val fileId: String
     )
+
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
@@ -54,6 +55,7 @@ class RenderAllExamples(private val config: TestConfig) {
             .onFirst()
             .assertExists()
     }
+
     @get:Rule
     val roborazziRule =
         RoborazziRule(
@@ -69,6 +71,7 @@ class RenderAllExamples(private val config: TestConfig) {
                     }
                 ),
         )
+
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")

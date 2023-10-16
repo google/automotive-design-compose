@@ -16,7 +16,6 @@
 
 import designcompose.conventions.publish.basePom
 
-@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
     kotlin("jvm")
     `java-gradle-plugin`

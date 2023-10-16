@@ -108,9 +108,10 @@ impl LayoutManager {
     fn update_layouts(&mut self, taffy: &Taffy) -> Vec<i32> {
         fn update_layout(
             layout_id: i32,
+            parent_layout_id: i32,
             manager: &mut LayoutManager,
             taffy: &Taffy,
-            changed: &mut Vec<i32>,
+            changed: &mut HashSet<i32>,
         ) {
             let node = manager.layout_id_to_taffy_node.get(&layout_id);
             if let Some(node) = node {
@@ -127,10 +128,14 @@ impl LayoutManager {
                         layout_changed = true;
                     }
 
+                    // If a layout change is detected, add the node that changed and its parent.
+                    // The parent is needed because layout positioning for a child is done in the
+                    // parent's layout function.
                     if layout_changed {
                         let layout_id = manager.taffy_node_to_layout_id.get(node);
                         if let Some(layout_id) = layout_id {
-                            changed.push(*layout_id);
+                            changed.insert(*layout_id);
+                            changed.insert(parent_layout_id);
                             manager.layouts.insert(*node, layout);
                         } else {
                             error!("update_layouts: cannot find node id");
@@ -142,9 +147,9 @@ impl LayoutManager {
                 match children_result {
                     Ok(children) => {
                         for child in children {
-                            let layout_id = manager.taffy_node_to_layout_id.get(&child);
-                            if let Some(layout_id) = layout_id {
-                                update_layout(*layout_id, manager, taffy, changed);
+                            let child_layout_id = manager.taffy_node_to_layout_id.get(&child);
+                            if let Some(child_layout_id) = child_layout_id {
+                                update_layout(*child_layout_id, layout_id, manager, taffy, changed);
                             }
                         }
                     }
@@ -155,11 +160,11 @@ impl LayoutManager {
             }
         }
 
-        let mut changed: Vec<i32> = vec![];
+        let mut changed: HashSet<i32> = HashSet::new();
         for layout_id in &self.root_layout_ids.clone() {
-            update_layout(*layout_id, self, &taffy, &mut changed);
+            update_layout(*layout_id, -1, self, &taffy, &mut changed);
         }
-        changed
+        changed.into_iter().collect()
     }
 
     // Get the computed layout for the given node

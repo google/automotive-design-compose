@@ -672,7 +672,7 @@ internal fun designTextMeasurePolicy(
     val myHeight = renderHeight ?: layout?.height() ?: 0
     val myX = 0
     val myY = renderTop ?: layout?.top() ?: 0
-    Log.d(TAG, "LayoutText $name w $myWidth h $myHeight x $myX y $myY")
+    Log.d(TAG, "LayoutText $name w $myWidth h $myHeight x $myX y $myY left ${layout?.left}")
     layout(myWidth, myHeight) {
         // Text has no children, so placeables is always just a list of 1 for this text, which
         // we place at the calculated offset.

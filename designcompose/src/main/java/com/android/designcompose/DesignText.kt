@@ -239,7 +239,7 @@ internal fun DesignText(
     // Keep track of the layout state, which changes whenever this view's layout changes
     val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
     // Subscribe for layout changes whenever the text data changes.
-    DisposableEffect(textMeasureData) {
+    DisposableEffect(textMeasureData, style) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
         val childIndex = parentLayout?.childIndex ?: -1
         Log.d(

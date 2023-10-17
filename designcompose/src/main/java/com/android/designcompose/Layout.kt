@@ -567,8 +567,11 @@ internal fun Modifier.sizeToModifier(width: Int, height: Int) =
 // Surface the layout data to our parent container.
 internal class DesignLayoutData(val name: String, val layoutId: Int) : ParentDataModifier {
     override fun Density.modifyParentData(parentData: Any?) = this@DesignLayoutData
+
     override fun hashCode(): Int = layoutId // style.hashCode()
+
     override fun toString(): String = "DesignLayoutData($name, $layoutId)"
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         val otherModifier = other as? DesignLayoutData ?: return false

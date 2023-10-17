@@ -75,77 +75,78 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         this.write(str.toByteArray())
     }
 
+    fun createNewFile(
+        className: String,
+        packageName: String,
+        dependencies: Set<KSFile>
+    ): OutputStream {
+        val fileName = className.replace('.', '_') + "_gen"
+        val file =
+            codeGenerator.createNewFile(
+                dependencies = Dependencies(false, *dependencies.toTypedArray()),
+                packageName = packageName,
+                fileName = fileName
+            )
+        file += "package $packageName\n\n"
+        file += "import androidx.compose.runtime.Composable\n"
+        file += "import androidx.compose.ui.text.TextStyle\n"
+        file += "import androidx.compose.foundation.layout.Box\n"
+        file += "import android.graphics.Bitmap\n"
+        file += "import androidx.compose.ui.Modifier\n"
+        file += "import androidx.compose.ui.semantics.semantics\n"
+        file += "import androidx.compose.ui.semantics.SemanticsPropertyReceiver\n"
+        file += "import androidx.compose.runtime.mutableStateOf\n"
+        file += "import androidx.compose.runtime.remember\n"
+        file += "import androidx.compose.ui.platform.ComposeView\n"
+        file += "import androidx.compose.runtime.CompositionLocalProvider\n"
+        file += "import androidx.compose.runtime.compositionLocalOf\n"
+        file += "import android.widget.FrameLayout\n"
+        file += "import android.util.DisplayMetrics\n"
+        file += "import android.app.Activity\n"
+        file += "import android.view.ViewGroup\n"
+        file += "import android.os.Build\n"
+
+        file += "import com.android.designcompose.annotation.DesignMetaKey\n"
+        file += "import com.android.designcompose.serdegen.NodeQuery\n"
+        file += "import com.android.designcompose.common.DocumentServerParams\n"
+        file += "import com.android.designcompose.ComponentReplacementContext\n"
+        file += "import com.android.designcompose.ImageReplacementContext\n"
+        file += "import com.android.designcompose.CustomizationContext\n"
+        file += "import com.android.designcompose.DesignDoc\n"
+        file += "import com.android.designcompose.DesignComposeCallbacks\n"
+        file += "import com.android.designcompose.DesignSwitcherPolicy\n"
+        file += "import com.android.designcompose.OpenLinkCallback\n"
+        file += "import com.android.designcompose.DesignNodeData\n"
+        file += "import com.android.designcompose.DesignInjectKey\n"
+        file += "import com.android.designcompose.ListContent\n"
+        file += "import com.android.designcompose.setKey\n"
+        file += "import com.android.designcompose.mergeFrom\n"
+        file += "import com.android.designcompose.setComponent\n"
+        file += "import com.android.designcompose.setContent\n"
+        file += "import com.android.designcompose.setListContent\n"
+        file += "import com.android.designcompose.setCustomComposable\n"
+        file += "import com.android.designcompose.setImage\n"
+        file += "import com.android.designcompose.setImageWithContext\n"
+        file += "import com.android.designcompose.setMeterValue\n"
+        file += "import com.android.designcompose.setMeterFunction\n"
+        file += "import com.android.designcompose.setModifier\n"
+        file += "import com.android.designcompose.setTapCallback\n"
+        file += "import com.android.designcompose.setOpenLinkCallback\n"
+        file += "import com.android.designcompose.setText\n"
+        file += "import com.android.designcompose.setTextFunction\n"
+        file += "import com.android.designcompose.setVariantProperties\n"
+        file += "import com.android.designcompose.setVisible\n"
+        file += "import com.android.designcompose.TapCallback\n"
+        file += "import com.android.designcompose.ParentComponentInfo\n"
+        file += "import com.android.designcompose.ParentLayoutInfo\n"
+        file += "import com.android.designcompose.docClassSemanticsKey\n"
+        file += "import com.android.designcompose.LocalCustomizationContext\n\n"
+        file += "var SemanticsPropertyReceiver.sDocClass by docClassSemanticsKey\n\n"
+
+        return file
+    }
+
     override fun process(resolver: Resolver): List<KSAnnotated> {
-
-        fun createNewFile(packageName: String, dependencies: Set<KSFile>): OutputStream {
-            val fileName = packageName.replace('.', '_') + "_gen"
-            val file =
-                codeGenerator.createNewFile(
-                    dependencies = Dependencies(false, *dependencies.toTypedArray()),
-                    packageName = packageName,
-                    fileName = fileName
-                )
-            file += "package $packageName\n\n"
-            file += "import androidx.compose.runtime.Composable\n"
-            file += "import androidx.compose.ui.text.TextStyle\n"
-            file += "import androidx.compose.foundation.layout.Box\n"
-            file += "import android.graphics.Bitmap\n"
-            file += "import androidx.compose.ui.Modifier\n"
-            file += "import androidx.compose.ui.semantics.semantics\n"
-            file += "import androidx.compose.ui.semantics.SemanticsPropertyReceiver\n"
-            file += "import androidx.compose.runtime.mutableStateOf\n"
-            file += "import androidx.compose.runtime.remember\n"
-            file += "import androidx.compose.ui.platform.ComposeView\n"
-            file += "import androidx.compose.runtime.CompositionLocalProvider\n"
-            file += "import androidx.compose.runtime.compositionLocalOf\n"
-            file += "import android.widget.FrameLayout\n"
-            file += "import android.util.DisplayMetrics\n"
-            file += "import android.app.Activity\n"
-            file += "import android.view.ViewGroup\n"
-            file += "import android.os.Build\n"
-
-            file += "import com.android.designcompose.annotation.DesignMetaKey\n"
-            file += "import com.android.designcompose.serdegen.NodeQuery\n"
-            file += "import com.android.designcompose.common.DocumentServerParams\n"
-            file += "import com.android.designcompose.ComponentReplacementContext\n"
-            file += "import com.android.designcompose.ContentReplacementContext\n"
-            file += "import com.android.designcompose.ImageReplacementContext\n"
-            file += "import com.android.designcompose.CustomizationContext\n"
-            file += "import com.android.designcompose.DesignDoc\n"
-            file += "import com.android.designcompose.DesignComposeCallbacks\n"
-            file += "import com.android.designcompose.DesignSwitcherPolicy\n"
-            file += "import com.android.designcompose.OpenLinkCallback\n"
-            file += "import com.android.designcompose.DesignNodeData\n"
-            file += "import com.android.designcompose.DesignInjectKey\n"
-            file += "import com.android.designcompose.ListContent\n"
-            file += "import com.android.designcompose.ReplacementContent\n"
-            file += "import com.android.designcompose.setKey\n"
-            file += "import com.android.designcompose.mergeFrom\n"
-            file += "import com.android.designcompose.setComponent\n"
-            file += "import com.android.designcompose.setContent\n"
-            file += "import com.android.designcompose.setListContent\n"
-            file += "import com.android.designcompose.setCustomComposable\n"
-            file += "import com.android.designcompose.setImage\n"
-            file += "import com.android.designcompose.setImageWithContext\n"
-            file += "import com.android.designcompose.setMeterValue\n"
-            file += "import com.android.designcompose.setMeterFunction\n"
-            file += "import com.android.designcompose.setModifier\n"
-            file += "import com.android.designcompose.setTapCallback\n"
-            file += "import com.android.designcompose.setOpenLinkCallback\n"
-            file += "import com.android.designcompose.setText\n"
-            file += "import com.android.designcompose.setTextFunction\n"
-            file += "import com.android.designcompose.setVariantProperties\n"
-            file += "import com.android.designcompose.setVisible\n"
-            file += "import com.android.designcompose.TapCallback\n"
-            file += "import com.android.designcompose.ParentComponentInfo\n"
-            file += "import com.android.designcompose.ParentLayoutInfo\n"
-            file += "import com.android.designcompose.docClassSemanticsKey\n"
-            file += "import com.android.designcompose.LocalCustomizationContext\n\n"
-            file += "var SemanticsPropertyReceiver.sDocClass by docClassSemanticsKey\n\n"
-
-            return file
-        }
-
         fun createJsonFile(packageName: String, dependencies: Set<KSFile>): OutputStream {
             val fileName = packageName.replace('.', '_') + "_gen"
             return codeGenerator.createNewFile(
@@ -165,24 +166,27 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 >() // Making sure we take only class declarations.
         if (!symbols.iterator().hasNext()) return emptyList()
 
-        // Because we make one file per package, first go through the found symbols and build a
-        // map of each package to the files that contribute to it
-        val dependencies: HashMap<String, MutableSet<KSFile>> = HashMap()
+        // The Json output files are package-specific. Build a map of the package names to the
+        // files that contribute symbols to the package.
+        val perPackageSourceDependencies: HashMap<String, MutableSet<KSFile>> = HashMap()
         symbols.forEach {
             it.containingFile?.let(
-                dependencies.getOrPut(it.packageName.asString()) { mutableSetOf<KSFile>() }::add
+                perPackageSourceDependencies.getOrPut(it.packageName.asString()) {
+                    mutableSetOf<KSFile>()
+                }::add
             )
         }
 
-        // Using these dependency lists, create the initial file for each package
-        val outputStreams: HashMap<String, OutputStream> = HashMap()
+        // Use that map to create files for each package
         val jsonStreams: HashMap<String, OutputStream> = HashMap()
-        dependencies.forEach { outputStreams[it.key] = createNewFile(it.key, it.value.toSet()) }
-        dependencies.forEach { jsonStreams[it.key] = createJsonFile(it.key, it.value.toSet()) }
+        perPackageSourceDependencies.forEach {
+            jsonStreams[it.key] = createJsonFile(it.key, it.value.toSet())
+        }
 
-        // Now build out the file per symbol
-        symbols.forEach { it.accept(DesignDocVisitor(outputStreams, jsonStreams), Unit) }
-        outputStreams.values.forEach { it.close() }
+        // Visit each symbol and generate all files
+        symbols.forEach { it.accept(DesignDocVisitor(jsonStreams), Unit) }
+
+        // Finish up
         jsonStreams.values.forEach { it.close() }
         // val ret = symbols.filterNot { it.validate() }.toList()
 
@@ -219,7 +223,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
     }
 
     inner class DesignDocVisitor(
-        private val outputStreams: HashMap<String, OutputStream>,
         private val jsonStreams: HashMap<String, OutputStream>,
     ) : KSVisitorVoid() {
         private var docName: String = ""
@@ -250,12 +253,11 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
         private var visitPhase: VisitPhase = VisitPhase.Queries
         private var queriesNameSet: HashSet<String> = HashSet()
-        private var nodeCustomizationsNameSet: HashSet<String> = HashSet()
         private var ignoredImages: HashMap<String, HashSet<String>> = HashMap()
 
         private var overrideInterface: String = ""
 
-        private var currentStream: OutputStream? = null
+        private lateinit var out: OutputStream
         private var currentJsonStream: OutputStream? = null
         private var designDocJson: JsonObject = JsonObject()
         private var jsonComponents: JsonArray = JsonArray()
@@ -265,11 +267,14 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 logger.error("Invalid class kind with @DesignDoc", classDeclaration)
                 return
             }
-            // Get the output stream for the file associated with the class's package name
+            // Convenience
             val packageName = classDeclaration.packageName.asString()
-            currentStream = outputStreams[packageName]
+            val className = classDeclaration.simpleName.asString()
+
+            // Create a new file for each @DesignDoc annotation
+            out = createNewFile(className, packageName, setOf(classDeclaration.containingFile!!))
+
             currentJsonStream = jsonStreams[packageName]
-            val out = currentStream!!
 
             // If the interface inherits from another interface, get the name of it
             classDeclaration.superTypes.forEach {
@@ -293,15 +298,15 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Get the 'id' argument object from @DesignDoc.
             val idArg: KSValueArgument =
                 annotation.arguments.first { arg -> arg.name?.asString() == "id" }
-            docName = classDeclaration.simpleName.asString() + "Doc"
+            docName = className + "Doc"
             docId = idArg.value as String
 
             // Declare a global document ID that can be changed by the Design Switcher
-            val docIdVarName = classDeclaration.simpleName.asString() + "GenId"
+            val docIdVarName = className + "GenId"
             out.appendText("private var $docIdVarName: String = \"$docId\"\n\n")
 
             // Create an interface for each interface declaration
-            val interfaceName = classDeclaration.simpleName.asString() + "Gen"
+            val interfaceName = className + "Gen"
             // Inherit from the specified superclass interface if it exists
             val overrideInterfaceDecl =
                 if (overrideInterface.isNotEmpty()) ": $overrideInterface " else ""
@@ -430,11 +435,11 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             out.appendText("}\n\n")
 
-            val objectName = classDeclaration.simpleName.asString() + "Doc"
+            val objectName = className + "Doc"
             out.appendText("object $objectName: $interfaceName {}\n\n")
 
             // Write the design doc JSON for our plugin
-            designDocJson.addProperty("name", classDeclaration.simpleName.asString())
+            designDocJson.addProperty("name", className)
             designDocJson.add("components", jsonComponents)
             val versionArg = annotation.arguments.find { arg -> arg.name?.asString() == "version" }
             if (versionArg != null) {
@@ -444,6 +449,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             val gson = GsonBuilder().setPrettyPrinting().create()
             currentJsonStream?.appendText(gson.toJson(designDocJson))
+
+            // Close out the main file
+            out.close()
         }
 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
@@ -523,7 +531,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 metaKeysStr = metaKeys.joinToString(",")
             }
 
-            val out = currentStream!!
             out.appendText("    fun $function() {\n")
             out.appendText("        DesignInjectKey('$key', listOf($metaKeysStr))\n ")
             out.appendText("    }\n\n")
@@ -531,7 +538,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
         private fun visitFunctionQueries(function: KSFunctionDeclaration, nodeName: String) {
             if (!queriesNameSet.contains(nodeName)) {
-                currentStream!!.appendText("            \"$nodeName\",\n")
+                out.appendText("            \"$nodeName\",\n")
                 queriesNameSet.add(nodeName)
             }
 
@@ -545,7 +552,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                         annotation.arguments.first { arg -> arg.name?.asString() == "property" }
                     val propertyName = propertyArg.value as String
                     if (!queriesNameSet.contains(propertyName)) {
-                        currentStream!!.appendText("            \"$propertyName\",\n")
+                        out.appendText("            \"$propertyName\",\n")
                         queriesNameSet.add(propertyName)
                     }
                 }
@@ -571,8 +578,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     param.annotations.find {
                         it.shortName.asString() == "Design" ||
                             it.shortName.asString() == "DesignVariant"
-                    }
-                        ?: return
+                    } ?: return
                 val nodeArg: KSValueArgument =
                     annotation.arguments.first { arg ->
                         arg.name?.asString() == "node" || arg.name?.asString() == "property"
@@ -738,7 +744,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             override: Boolean
         ) {
             // Generate the function name and args
-            val out = currentStream!!
             out.appendText("    @Composable\n")
             val overrideKeyword = if (override) "override " else ""
             out.appendText("    ${overrideKeyword}fun $function(\n")
@@ -1060,29 +1065,48 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         }
 
         override fun visitNode(node: KSNode, data: Unit) {}
+
         override fun visitAnnotated(annotated: KSAnnotated, data: Unit) {}
+
         override fun visitAnnotation(annotation: KSAnnotation, data: Unit) {}
+
         override fun visitModifierListOwner(modifierListOwner: KSModifierListOwner, data: Unit) {}
+
         override fun visitDeclaration(declaration: KSDeclaration, data: Unit) {}
+
         override fun visitDeclarationContainer(
             declarationContainer: KSDeclarationContainer,
             data: Unit
         ) {}
 
         override fun visitDynamicReference(reference: KSDynamicReference, data: Unit) {}
+
         override fun visitFile(file: KSFile, data: Unit) {}
+
         override fun visitCallableReference(reference: KSCallableReference, data: Unit) {}
+
         override fun visitParenthesizedReference(reference: KSParenthesizedReference, data: Unit) {}
+
         override fun visitPropertyDeclaration(property: KSPropertyDeclaration, data: Unit) {}
+
         override fun visitPropertyAccessor(accessor: KSPropertyAccessor, data: Unit) {}
+
         override fun visitPropertyGetter(getter: KSPropertyGetter, data: Unit) {}
+
         override fun visitPropertySetter(setter: KSPropertySetter, data: Unit) {}
+
         override fun visitClassifierReference(reference: KSClassifierReference, data: Unit) {}
+
         override fun visitReferenceElement(element: KSReferenceElement, data: Unit) {}
+
         override fun visitTypeAlias(typeAlias: KSTypeAlias, data: Unit) {}
+
         override fun visitTypeArgument(typeArgument: KSTypeArgument, data: Unit) {}
+
         override fun visitTypeParameter(typeParameter: KSTypeParameter, data: Unit) {}
+
         override fun visitTypeReference(typeReference: KSTypeReference, data: Unit) {}
+
         override fun visitValueArgument(valueArgument: KSValueArgument, data: Unit) {}
     }
 }

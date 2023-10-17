@@ -192,6 +192,7 @@ internal class ActivityLifecycleObserver : DefaultLifecycleObserver {
 // scrolling. We clear the cache whenever there is an update from the server.
 internal object SpanCache {
     private val nodeSpanHash: HashMap<DesignNodeData, LazyContentSpan> = HashMap()
+
     internal fun getSpan(nodeData: DesignNodeData): LazyContentSpan? {
         return nodeSpanHash[nodeData]
     }

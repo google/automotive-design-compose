@@ -92,10 +92,12 @@ internal fun DesignFrame(
             object : ComponentReplacementContext {
                 override val layoutModifier = layoutInfo.selfModifier
                 override val appearanceModifier = m
+
                 @Composable
                 override fun Content() {
                     content()
                 }
+
                 override val textStyle: TextStyle? = null
                 override val parentLayout = myParentLayout
             }
@@ -513,6 +515,7 @@ internal fun DesignFrame(
                     horizontalArrangement =
                         object : Arrangement.Horizontal {
                             var customSpacing: Int = horizontalSpacing
+
                             init {
                                 if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
                                     customSpacing = layoutInfo.mainAxisSpacing.value
@@ -525,6 +528,7 @@ internal fun DesignFrame(
                                         else layoutInfo.mainAxisSpacing.field0
                                 }
                             }
+
                             override fun Density.arrange(
                                 totalSize: Int,
                                 sizes: IntArray,
@@ -537,6 +541,7 @@ internal fun DesignFrame(
                                         "sizes $sizes layout $layoutDirection out $outPositions"
                                 )
                             }
+
                             override val spacing = customSpacing.dp
                         },
                     verticalArrangement = Arrangement.spacedBy(verticalSpacing.dp),
@@ -579,6 +584,7 @@ internal fun DesignFrame(
                     verticalArrangement =
                         object : Arrangement.Vertical {
                             var customSpacing: Int = verticalSpacing
+
                             init {
                                 if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
                                     customSpacing = layoutInfo.mainAxisSpacing.value
@@ -591,6 +597,7 @@ internal fun DesignFrame(
                                         else layoutInfo.mainAxisSpacing.field0
                                 }
                             }
+
                             override fun Density.arrange(
                                 totalSize: Int,
                                 sizes: IntArray,
@@ -598,6 +605,7 @@ internal fun DesignFrame(
                             ) {
                                 println("verticalArrangement arrange")
                             }
+
                             override val spacing = customSpacing.dp
                         },
                     userScrollEnabled = layoutInfo.scrollingEnabled,

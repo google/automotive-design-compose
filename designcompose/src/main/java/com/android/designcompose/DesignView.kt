@@ -179,23 +179,29 @@ internal object DebugNodeManager {
         val size: IntSize,
         val color: Color,
     )
+
     private val showNodes: MutableLiveData<Boolean> = MutableLiveData(false)
     private val showRecomposition: MutableLiveData<Boolean> = MutableLiveData(false)
     private val nodes: SnapshotStateMap<Int, NodePosition> = mutableStateMapOf()
     private var nodeId: Int = 0
+
     internal fun getShowNodes(): LiveData<Boolean> {
         return showNodes
     }
+
     internal fun setShowNodes(show: Boolean) {
         if (!show) nodes.clear()
         showNodes.postValue(show)
     }
+
     internal fun getShowRecomposition(): LiveData<Boolean> {
         return showRecomposition
     }
+
     internal fun setShowRecomposition(show: Boolean) {
         showRecomposition.postValue(show)
     }
+
     internal fun addNode(docId: String, existingId: Int, node: NodePosition): Int {
         if (
             !showNodes.value!! ||
@@ -213,9 +219,11 @@ internal object DebugNodeManager {
             nodeId
         }
     }
+
     internal fun removeNode(id: Int) {
         nodes.remove(id)
     }
+
     @Composable
     internal fun DrawNodeNames() {
         val show: Boolean? by showNodes.observeAsState()
@@ -814,11 +822,13 @@ internal object DocumentSwitcher {
     private val subscribers: HashMap<String, ArrayList<(String) -> Unit>> = HashMap()
     private val documentSwitchHash: HashMap<String, String> = HashMap()
     private val documentSwitchReverseHash: HashMap<String, String> = HashMap()
+
     internal fun subscribe(originalDocId: String, setDocId: (String) -> Unit) {
         val list = subscribers[originalDocId] ?: ArrayList()
         list.add(setDocId)
         subscribers[originalDocId] = list
     }
+
     internal fun switch(originalDocId: String, newDocId: String) {
         if (newDocId.isEmpty()) return
         if (originalDocId != newDocId) {
@@ -831,6 +841,7 @@ internal object DocumentSwitcher {
         val list = subscribers[originalDocId]
         list?.forEach { it(newDocId) }
     }
+
     internal fun revertToOriginal(docId: String) {
         val originalDocId = documentSwitchReverseHash[docId]
         if (originalDocId != null) {
@@ -838,10 +849,12 @@ internal object DocumentSwitcher {
             documentSwitchReverseHash.remove(docId)
         }
     }
+
     internal fun isNotOriginalDocId(docId: String): Boolean {
         val originalDocId = documentSwitchReverseHash[docId]
         return originalDocId != null
     }
+
     internal fun getSwitchedDocId(docId: String): String {
         return documentSwitchHash[docId] ?: docId
     }

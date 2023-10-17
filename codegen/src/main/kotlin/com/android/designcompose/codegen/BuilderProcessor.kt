@@ -139,9 +139,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import com.android.designcompose.TapCallback\n"
         file += "import com.android.designcompose.ParentComponentInfo\n"
         file += "import com.android.designcompose.ParentLayoutInfo\n"
-        file += "import com.android.designcompose.docClassSemanticsKey\n"
+        file += "import com.android.designcompose.sDocClass\n"
         file += "import com.android.designcompose.LocalCustomizationContext\n\n"
-        file += "var SemanticsPropertyReceiver.sDocClass by docClassSemanticsKey\n\n"
 
         return file
     }

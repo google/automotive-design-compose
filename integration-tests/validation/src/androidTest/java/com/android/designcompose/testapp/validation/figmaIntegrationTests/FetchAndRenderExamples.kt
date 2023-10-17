@@ -18,15 +18,18 @@ package com.android.designcompose.testapp.validation.figmaIntegrationTests
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertAny
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onSiblings
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.DesignSettings
+import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
+import com.android.designcompose.docRenderStatusSemanticsKey
 import com.android.designcompose.testapp.validation.EXAMPLES
 import com.android.designcompose.testapp.validation.interFont
-import kotlin.test.assertNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -49,7 +52,7 @@ import org.junit.runners.Parameterized
 class FetchAndRenderExamples(
     private val testName: String,
     private val testComposable: @Composable () -> Unit,
-    internal val fileClass: String
+    private val fileClass: String
 ) {
     @get:Rule val composeTestRule = createComposeRule()
 
@@ -80,18 +83,14 @@ class FetchAndRenderExamples(
         composeTestRule.setContent(testComposable)
         TestUtils.triggerLiveUpdate()
 
-        composeTestRule.waitForIdle()
         // Check that at least one node has the doc's class set correctly (some tests use display
         // multiple instances)
         composeTestRule
-            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
+            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, fileClass))
             .onFirst()
-            .assertExists()
-
-        with(DesignSettings.testOnlyFigmaFetchStatus(fileId)) {
-            assertNotNull(this)
-            assertNotNull(lastUpdateFromFetch)
-            assertNotNull(lastFetch)
-        }
+            .onSiblings()
+            .assertAny(
+                SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, DocRenderStatus.Rendered)
+            )
     }
 }

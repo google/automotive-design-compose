@@ -17,7 +17,6 @@
 package com.android.designcompose
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.tooling.preview.Preview
@@ -58,9 +57,7 @@ class RenderTests {
 
         composeTestRule.waitForIdle()
 
-        composeTestRule
-            .onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, designSwitcherDocId()))
-            .assertExists()
+        composeTestRule.onDCDoc(DesignSwitcherDoc).assertExists().assertExists()
         with(DesignSettings.testOnlyFigmaFetchStatus(designSwitcherDocId())) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)
@@ -76,10 +73,7 @@ class RenderTests {
         composeTestRule.waitForIdle()
 
         // Test that...
-        // No doc is rendered with this ID
-        composeTestRule
-            .onNode(SemanticsMatcher.keyIsDefined(docClassSemanticsKey))
-            .assertDoesNotExist()
+        composeTestRule.onDCDoc(HelloWorldDoc).assertRenderStatus(DocRenderStatus.NotAvailable)
 
         // The Node not found screen is shown
         composeTestRule

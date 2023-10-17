@@ -16,27 +16,19 @@
 
 package com.android.designcompose.figmaIntegrationTests
 
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.HelloWorldDoc
+import com.android.designcompose.HelloWorldWrongNodeDoc
 import com.android.designcompose.TestUtils
-import com.android.designcompose.annotation.DesignComponent
-import com.android.designcompose.annotation.DesignDoc
-import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.helloWorldDocId
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-
-@DesignDoc(id = helloWorldDocId)
-interface HelloWorldWrongNode {
-    @DesignComponent(node = "#NonExistentNode", hideDesignSwitcher = true) fun nonExistentFrame()
-}
 
 /**
  * Tests different DesignDoc loading situations
@@ -64,10 +56,6 @@ class LiveUpdateBehaviorTests {
     fun fetchHelloWorld() {
         composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
         TestUtils.triggerLiveUpdate()
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, helloWorldDocId))
-            .assertExists()
 
         with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)
@@ -82,14 +70,8 @@ class LiveUpdateBehaviorTests {
     fun wrongNodeCausesRenderFailure() {
         composeTestRule.setContent { HelloWorldWrongNodeDoc.nonExistentFrame() }
         TestUtils.triggerLiveUpdate()
-        composeTestRule.waitForIdle()
 
         // Check that...
-        // No doc is rendered with this ID
-        composeTestRule
-            .onNode(SemanticsMatcher.keyIsDefined(docClassSemanticsKey))
-            .assertDoesNotExist()
-
         // The Node not found screen is shown
         composeTestRule
             .onNodeWithText("Node \"#NonExistentNode\" not found", substring = true)

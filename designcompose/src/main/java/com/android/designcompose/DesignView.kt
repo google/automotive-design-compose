@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -43,6 +44,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,8 +63,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
-import androidx.compose.ui.semantics.SemanticsPropertyKey
-import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -330,10 +331,6 @@ internal data class MaskInfo(
     // The type of node with respect to masking
     val type: MaskViewType?,
 )
-
-// Custom Compose Semantic that identifies a DesignCompose Composable
-val docClassSemanticsKey = SemanticsPropertyKey<String>("DocClass")
-var SemanticsPropertyReceiver.sDocId by docClassSemanticsKey
 
 @Composable
 internal fun DesignView(
@@ -922,6 +919,7 @@ internal fun DesignDocInternal(
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
 ) {
+    var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
     val doc =
         DocServer.doc(
@@ -980,10 +978,11 @@ internal fun DesignDocInternal(
         }
     }
 
+    Box(modifier = Modifier.semantics { sDocRenderStatus = docRenderStatus })
+
     var noFrameErrorMessage = ""
     var noFrameBgColor = Color(0x00000000)
 
-    // Reset the isRendered flag, only set it back to true if the DesignView properly displays
     if (doc != null) {
         val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)
         if (startFrame != null) {
@@ -1017,6 +1016,7 @@ internal fun DesignDocInternal(
                         parentLayout
                     }
                 )
+                docRenderStatus = DocRenderStatus.Rendered
                 // If we're the root, then also paint overlays
                 if (isRoot || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {
                     for (overlay in interactionState.rootOverlays(doc)) {
@@ -1051,16 +1051,19 @@ internal fun DesignDocInternal(
         if (rootFrameName.isNotEmpty()) {
             noFrameErrorMessage = "Node \"$rootFrameName\" not found in $docId"
             noFrameBgColor = Color(0xFFFFFFFF)
-            println("Node not found: rootNodeQuery $rootNodeQuery rootFrameName $rootFrameName")
+            Log.e(TAG, "Node not found: rootNodeQuery $rootNodeQuery rootFrameName $rootFrameName")
+            docRenderStatus = DocRenderStatus.NodeNotFound
         }
     } else {
         // The doc is null, so either we're fetching it, or it's missing.
-        noFrameErrorMessage =
-            if (!DesignSettings.liveUpdatesEnabled) {
-                "Document $docId not available"
-            } else {
-                "Fetching $docId..."
-            }
+
+        if (!DesignSettings.liveUpdatesEnabled) {
+            noFrameErrorMessage = "Document $docId not available"
+            docRenderStatus = DocRenderStatus.NotAvailable
+        } else {
+            noFrameErrorMessage = "Fetching $docId..."
+            docRenderStatus = DocRenderStatus.Fetching
+        }
     }
 
     // If we have a placeholder then present it.

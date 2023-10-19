@@ -171,6 +171,10 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::layout::LayoutChangedResponse>(&samples)
         .expect("couldn't trace LayoutChangedResponse");
+    tracer.trace_type::<crate::layout::LayoutNode>(&samples).expect("couldn't trace LayoutNode");
+    tracer
+        .trace_type::<crate::layout::LayoutNodeList>(&samples)
+        .expect("couldn't trace LayoutNodeList");
 
     tracer
         .trace_type::<crate::image_context::EncodedImageMap>(&samples)

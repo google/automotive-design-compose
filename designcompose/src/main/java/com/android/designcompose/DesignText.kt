@@ -246,16 +246,18 @@ internal fun DesignText(
             TAG,
             "Subscribe TEXT $nodeName  layoutId $layoutId parent $parentLayoutId index $childIndex"
         )
-        if (useMeasure)
+        if (useMeasure) {
             LayoutManager.subscribeWithMeasure(
                 layoutId,
                 setLayoutState,
                 parentLayoutId,
+                parentLayout?.rootLayoutId ?: layoutId,
                 childIndex,
                 view,
                 textMeasureData
             )
-        else LayoutManager.subscribeText(layoutId, setLayoutState, parentLayoutId, childIndex, view)
+        } else
+            LayoutManager.subscribeText(layoutId, setLayoutState, parentLayoutId, childIndex, view)
         onDispose {}
     }
     // Unsubscribe to layout changes when the composable is no longer in view.
@@ -277,8 +279,8 @@ internal fun DesignText(
     val (renderHeight, setRenderHeight) = remember { mutableStateOf<Int?>(null) }
     val (renderTop, setRenderTop) = remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(style, textLayoutData, density, layout) {
-        // Only set the size if autoWidthHeight is false, because otherwise the measureFunc is used
-        if (!isAutoHeightFillWidth(style)) {
+        // Only set the size if useMeasure is false, because otherwise the measureFunc is used
+        if (!useMeasure) {
             val textBounds = measureTextBounds(style, textLayoutData, density)
             Log.d(
                 TAG,
@@ -289,6 +291,7 @@ internal fun DesignText(
 
             LayoutManager.setNodeSize(
                 layoutId,
+                parentLayout?.rootLayoutId ?: layoutId,
                 textBounds.width,
                 textBounds.layoutHeight,
             )

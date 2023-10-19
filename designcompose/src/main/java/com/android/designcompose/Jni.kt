@@ -48,32 +48,24 @@ internal object Jni {
     external fun jniGetLayout(layoutId: Int): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniSetNodeSize(layoutId: Int, width: Int, height: Int): ByteArray?
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniAddNode(
+    external fun jniSetNodeSize(
         layoutId: Int,
-        parentLayoutId: Int,
-        childIndex: Int,
-        serializedView: ByteArray,
-        serializedBaseView: ByteArray,
-        computeLayout: Boolean
+        rootLayoutId: Int,
+        width: Int,
+        height: Int
     ): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniAddTextNode(
-        layoutId: Int,
-        parentLayoutId: Int,
-        childIndex: Int,
-        serializedView: ByteArray,
-        computeLayout: Boolean
+    external fun jniAddNodes(
+        rootLayoutId: Int,
+        serializedNodes: ByteArray,
     ): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniRemoveNode(layoutId: Int, computeLayout: Boolean): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniComputeLayout(): ByteArray?
+    external fun jniComputeLayout(layoutId: Int): ByteArray?
 
     init {
         System.loadLibrary("jni")

@@ -21,6 +21,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::toolkit_schema;
+
 // The layout response sent back to client which contains a layout state ID and
 // a list of layout IDs that have changed.
 #[derive(Serialize, Deserialize, Debug)]
@@ -32,4 +34,21 @@ impl LayoutChangedResponse {
     pub fn unchanged(layout_state: i32) -> Self {
         LayoutChangedResponse { layout_state, changed_layout_ids: vec![] }
     }
+}
+
+// A representation of a Figma node to register for layout.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LayoutNode {
+    pub layout_id: i32,
+    pub parent_layout_id: i32,
+    pub child_index: i32,
+    pub view: toolkit_schema::View,
+    pub base_view: Option<toolkit_schema::View>,
+    pub use_measure_func: bool,
+}
+
+// A list of Figma nodes to register for layout
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LayoutNodeList {
+    pub layout_nodes: Vec<LayoutNode>,
 }

@@ -16,13 +16,13 @@ use std::ffi::c_void;
 
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
-use figma_import::layout::LayoutChangedResponse;
+use figma_import::layout::{LayoutChangedResponse, LayoutNode, LayoutNodeList};
 use figma_import::{fetch_doc, toolkit_schema, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 use layout::{
-    add_view, add_view_measure, compute_layout, get_node_layout, remove_view, set_node_size,
+    add_view, add_view_measure, compute_node_layout, get_node_layout, remove_view, set_node_size,
     unchanged_response,
 };
 use lazy_static::lazy_static;
@@ -165,95 +165,61 @@ fn jni_set_node_size<'local>(
     env: JNIEnv<'local>,
     _class: JClass,
     layout_id: jint,
+    root_layout_id: jint,
     width: jint,
     height: jint,
 ) -> JByteArray<'local> {
-    let layout_response = set_node_size(layout_id, width as u32, height as u32);
+    let layout_response = set_node_size(layout_id, root_layout_id, width as u32, height as u32);
     layout_response_to_bytearray(env, &layout_response)
 }
 
-fn jni_add_node<'local>(
+fn jni_add_nodes<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
-    layout_id: jint,
-    parent_layout_id: jint,
-    child_index: jint,
-    jserialized_view: JByteArray,
-    jserialized_base_view: JByteArray,
-    compute_layout: jboolean,
+    root_layout_id: jint,
+    serialized_nodes: JByteArray,
 ) -> JByteArray<'local> {
-    let bytes_view = env.convert_byte_array(jserialized_view);
-    if let Ok(bytes_view) = bytes_view {
-        let result: Result<toolkit_schema::View, Box<bincode::ErrorKind>> =
-            bincode::deserialize(&bytes_view);
+    let bytes_nodes = env.convert_byte_array(serialized_nodes);
+    if let Ok(bytes_nodes) = bytes_nodes {
+        let result: Result<LayoutNodeList, Box<bincode::ErrorKind>> =
+            bincode::deserialize(&bytes_nodes);
         match result {
-            Ok(view) => {
-                let mut base_view: Option<toolkit_schema::View> = None;
-                let bytes_base_view: Result<Vec<u8>, jni::errors::Error> =
-                    env.convert_byte_array(jserialized_base_view);
-                if let Ok(bytes_base_view) = bytes_base_view {
-                    if !bytes_base_view.is_empty() {
-                        let var_result: Result<toolkit_schema::View, Box<bincode::ErrorKind>> =
-                            bincode::deserialize(&bytes_base_view);
-                        match var_result {
-                            Ok(bview) => base_view = Some(bview),
-                            Err(e) => throw_basic_exception(
-                                &mut env,
-                                format!("Internal JNI Error: {}", e),
-                            ),
-                        }
+            Ok(node_list) => {
+                info!(
+                    "jni_add_nodes: {} nodes, layout_id {}",
+                    node_list.layout_nodes.len(),
+                    root_layout_id
+                );
+                for node in node_list.layout_nodes.into_iter() {
+                    if node.use_measure_func {
+                        add_view_measure(
+                            node.layout_id,
+                            node.parent_layout_id,
+                            node.child_index,
+                            node.view,
+                            java_jni_measure_text,
+                        );
+                    } else {
+                        add_view(
+                            node.layout_id,
+                            node.parent_layout_id,
+                            node.child_index,
+                            node.view,
+                            node.base_view,
+                        );
                     }
                 }
-
-                let layout_response = add_view(
-                    layout_id,
-                    parent_layout_id,
-                    child_index,
-                    view,
-                    base_view,
-                    compute_layout != 0,
-                );
-                return layout_response_to_bytearray(env, &layout_response);
             }
             Err(e) => {
                 throw_basic_exception(&mut env, format!("Internal JNI Error: {}", e));
             }
         }
+    } else {
+        throw_basic_exception(&mut env, format!("Internal JNI Error: {:?}", bytes_nodes.err()));
     }
-    layout_response_to_bytearray(env, &unchanged_response())
-}
 
-fn jni_add_text_node<'local>(
-    mut env: JNIEnv<'local>,
-    _class: JClass,
-    layout_id: jint,
-    parent_layout_id: jint,
-    child_index: jint,
-    jserialized_view: JByteArray,
-    compute_layout: jboolean,
-) -> JByteArray<'local> {
-    let bytes_view = env.convert_byte_array(jserialized_view);
-    if let Ok(bytes_view) = bytes_view {
-        let result: Result<toolkit_schema::View, Box<bincode::ErrorKind>> =
-            bincode::deserialize(&bytes_view);
-        match result {
-            Ok(view) => {
-                let layout_response = add_view_measure(
-                    layout_id,
-                    parent_layout_id,
-                    child_index,
-                    view,
-                    java_jni_measure_text,
-                    compute_layout != 0,
-                );
-                return layout_response_to_bytearray(env, &layout_response);
-            }
-            Err(e) => {
-                throw_basic_exception(&mut env, format!("Internal JNI Error: {}", e));
-            }
-        }
-    }
-    layout_response_to_bytearray(env, &unchanged_response())
+    let layout_response = compute_node_layout(root_layout_id);
+    layout_response_to_bytearray(env, &layout_response)
 }
 
 fn jni_remove_node<'local>(
@@ -266,10 +232,14 @@ fn jni_remove_node<'local>(
     layout_response_to_bytearray(env, &layout_response)
 }
 
-fn jni_compute_layout<'local>(env: JNIEnv<'local>, _class: JClass) -> JByteArray<'local> {
+fn jni_compute_layout<'local>(
+    env: JNIEnv<'local>,
+    _class: JClass,
+    layout_id: jint,
+) -> JByteArray<'local> {
     info!("jni_compute_layout");
 
-    let layout_response = compute_layout();
+    let layout_response = compute_node_layout(layout_id);
     layout_response_to_bytearray(env, &layout_response)
 }
 
@@ -367,18 +337,13 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                 },
                 jni::NativeMethod {
                     name: "jniSetNodeSize".into(),
-                    sig: "(III)[B".into(),
+                    sig: "(IIII)[B".into(),
                     fn_ptr: jni_set_node_size as *mut c_void,
                 },
                 jni::NativeMethod {
-                    name: "jniAddNode".into(),
-                    sig: "(III[B[BZ)[B".into(),
-                    fn_ptr: jni_add_node as *mut c_void,
-                },
-                jni::NativeMethod {
-                    name: "jniAddTextNode".into(),
-                    sig: "(III[BZ)[B".into(),
-                    fn_ptr: jni_add_text_node as *mut c_void,
+                    name: "jniAddNodes".into(),
+                    sig: "(I[B)[B".into(),
+                    fn_ptr: jni_add_nodes as *mut c_void,
                 },
                 jni::NativeMethod {
                     name: "jniRemoveNode".into(),
@@ -387,7 +352,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                 },
                 jni::NativeMethod {
                     name: "jniComputeLayout".into(),
-                    sig: "()[B".into(),
+                    sig: "(I)[B".into(),
                     fn_ptr: jni_compute_layout as *mut c_void,
                 }
             ],

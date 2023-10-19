@@ -665,6 +665,7 @@ internal fun DesignView(
     // Use blue for DesignFrame nodes and green for DesignText nodes
     m = positionModifierFunc(Color(0f, 0f, 0.8f, 0.7f)).then(m)
 
+    val parentLayout = parentLayout?.withRootIdIfNone(layoutId)
     when (view.data) {
         is ViewData.Text ->
             return DesignText(
@@ -753,6 +754,7 @@ internal fun DesignView(
                                 }
                             }
                         }
+                        val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
                         var childIndex = 0
                         viewList.forEach {
                             val childView = it.first
@@ -771,7 +773,7 @@ internal fun DesignView(
                                             interactionState,
                                             interactionScope,
                                             parentComps,
-                                            ParentLayoutInfo(layoutId, childIndex),
+                                            ParentLayoutInfo(layoutId, childIndex, rootLayoutId),
                                             MaskInfo(parentSize, maskViewType),
                                         )
                                     if (show) ++childIndex
@@ -789,7 +791,7 @@ internal fun DesignView(
                                     interactionState,
                                     interactionScope,
                                     parentComps,
-                                    ParentLayoutInfo(layoutId, childIndex),
+                                    ParentLayoutInfo(layoutId, childIndex, rootLayoutId),
                                     MaskInfo(parentSize, maskViewType),
                                 )
                             if (show) ++childIndex

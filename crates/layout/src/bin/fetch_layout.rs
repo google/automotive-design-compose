@@ -20,7 +20,7 @@ use figma_import::{
     Document, NodeQuery, ProxyConfig, SerializedDesignDoc, ViewData,
 };
 use layout::{
-    add_view, add_view_measure, compute_layout, print_layout, remove_view, set_node_size,
+    add_view, add_view_measure, compute_node_layout, print_layout, remove_view, set_node_size,
 };
 use std::collections::HashMap;
 use std::io;
@@ -135,35 +135,21 @@ fn test_layout(
             }
         }
         if use_measure_func {
-            add_view_measure(
-                my_id,
-                parent_layout_id,
-                child_index,
-                view.clone(),
-                measure_func,
-                false,
-            );
+            add_view_measure(my_id, parent_layout_id, child_index, view.clone(), measure_func);
         } else {
             let mut fixed_view = view.clone();
             fixed_view.style.width = Dimension::Points(view.style.bounding_box.width);
             fixed_view.style.height = Dimension::Points(view.style.bounding_box.height);
-            add_view(my_id, parent_layout_id, child_index, fixed_view, None, false);
+            add_view(my_id, parent_layout_id, child_index, fixed_view, None);
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
         if view.name.starts_with("#Replacement") {
             let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
             if let Some(square) = square {
-                add_view(
-                    my_id,
-                    parent_layout_id,
-                    child_index,
-                    square.clone(),
-                    Some(view.clone()),
-                    false,
-                );
+                add_view(my_id, parent_layout_id, child_index, square.clone(), Some(view.clone()));
             }
         } else {
-            add_view(my_id, parent_layout_id, child_index, view.clone(), None, false);
+            add_view(my_id, parent_layout_id, child_index, view.clone(), None);
         }
         let mut index = 0;
         for child in children {
@@ -173,7 +159,7 @@ fn test_layout(
     }
 
     if parent_layout_id == -1 {
-        compute_layout();
+        compute_node_layout(*id);
     }
 }
 fn fetch_impl(args: Args) -> Result<(), ConvertError> {

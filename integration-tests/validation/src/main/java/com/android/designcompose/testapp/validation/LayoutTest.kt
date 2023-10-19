@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Density
@@ -228,10 +229,32 @@ fun MyFrame(
     val renderModifier = Modifier.myRender(name, color)
     val layoutModifier = Modifier.layoutStyle(name, layoutId)
 
-    Layout(modifier = modifier.then(renderModifier).then(layoutModifier), content = myContent) {
-        measurables,
-        constraints ->
-        println("$space Layout $name")
+    DesignFrameLayout(
+        modifier.then(renderModifier).then(layoutModifier),
+        name,
+        layoutId,
+        layoutState,
+        space,
+        myContent
+    )
+}
+
+@Composable
+internal inline fun DesignFrameLayout(
+    modifier: Modifier,
+    name: String,
+    layoutId: Int,
+    layoutState: Int,
+    space: String,
+    content: @Composable () -> Unit
+) {
+    val measurePolicy = remember(layoutState) { designMeasurePolicy(name, layoutId, space) }
+    Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
+}
+
+internal fun designMeasurePolicy(name: String, layoutId: Int, space: String) =
+    MeasurePolicy { measurables, constraints ->
+        println("$space START Layout $name")
 
         val placeables =
             measurables.mapIndexed { index, measurable ->
@@ -266,9 +289,9 @@ fun MyFrame(
                     }
                 }
             }
+        println("$space END Layout $name")
         result
     }
-}
 
 @Composable
 private fun Button(name: String, selected: Boolean, select: () -> Unit) {

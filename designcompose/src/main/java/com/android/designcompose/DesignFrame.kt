@@ -170,7 +170,7 @@ internal fun DesignFrame(
             // there are no other parent frames performing layout, layout computation can be
             // performed.
             DisposableEffect(view) {
-                LayoutManager.finishLayout(layoutId)
+                LayoutManager.finishLayout(layoutId, parentLayout?.rootLayoutId ?: layoutId)
                 onDispose {}
             }
         }
@@ -186,6 +186,7 @@ internal fun DesignFrame(
     // row or column (with or without wrapping/flow), or absolute positioning (similar to the CSS2
     // model).
     val layout = LayoutManager.getLayout(layoutId)
+    val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
     when (layoutInfo) {
         is LayoutInfoRow -> {
             if (lazyContent != null) {
@@ -205,7 +206,7 @@ internal fun DesignFrame(
                 val rowModifier =
                     if (hugContents)
                         Modifier.onSizeChanged {
-                            LayoutManager.setNodeSize(layoutId, it.width, it.height)
+                            LayoutManager.setNodeSize(layoutId, rootLayoutId, it.width, it.height)
                         }
                     else Modifier.layoutSizeToModifier(layout)
                 Row(
@@ -263,7 +264,7 @@ internal fun DesignFrame(
                 val columnModifier =
                     if (hugContents)
                         Modifier.onSizeChanged {
-                            LayoutManager.setNodeSize(layoutId, it.width, it.height)
+                            LayoutManager.setNodeSize(layoutId, rootLayoutId, it.width, it.height)
                         }
                     else Modifier.layoutSizeToModifier(layout)
                 Column(

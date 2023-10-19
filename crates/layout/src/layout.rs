@@ -77,6 +77,7 @@ impl LayoutManager {
     }
 
     fn recompute_layouts(&mut self, taffy: &mut Taffy) -> LayoutChangedResponse {
+        info!("recompute_layouts {}", self.root_layout_ids.len());
         for layout_id in &self.root_layout_ids {
             let node = self.layout_id_to_taffy_node.get(layout_id);
             if let Some(node) = node {
@@ -135,7 +136,9 @@ impl LayoutManager {
                         let layout_id = manager.taffy_node_to_layout_id.get(node);
                         if let Some(layout_id) = layout_id {
                             changed.insert(*layout_id);
-                            changed.insert(parent_layout_id);
+                            if parent_layout_id >= 0 {
+                                changed.insert(parent_layout_id);
+                            }
                             manager.layouts.insert(*node, layout);
                         } else {
                             error!("update_layouts: cannot find node id");
@@ -206,8 +209,7 @@ impl LayoutManager {
         view: toolkit_schema::View,
         base_view: Option<toolkit_schema::View>,
         measure_func: Option<taffy::node::MeasureFunc>,
-        compute_layout: bool,
-    ) -> LayoutChangedResponse {
+    ) {
         let mut taffy = taffy();
 
         let mut node_style: taffy::style::Style = (&view.style).into();
@@ -268,12 +270,6 @@ impl LayoutManager {
                     error!("taffy_new_leaf error: {}", e);
                 }
             }
-        }
-
-        if compute_layout {
-            self.recompute_layouts(&mut taffy)
-        } else {
-            LayoutChangedResponse::unchanged(self.layout_state)
         }
     }
 
@@ -352,7 +348,13 @@ impl LayoutManager {
 
     // Set the given node's size to a fixed value, recompute layout, and return
     // the changed nodes
-    fn set_node_size(&mut self, layout_id: i32, width: u32, height: u32) -> LayoutChangedResponse {
+    fn set_node_size(
+        &mut self,
+        layout_id: i32,
+        root_layout_id: i32,
+        width: u32,
+        height: u32,
+    ) -> LayoutChangedResponse {
         let mut taffy = taffy();
 
         let node = self.layout_id_to_taffy_node.get(&layout_id);
@@ -381,7 +383,7 @@ impl LayoutManager {
             }
         }
 
-        self.recompute_layouts(&mut taffy)
+        self.compute_node_layout_internal(root_layout_id, &mut taffy)
     }
 
     // Apply any customizations that have been saved for this node
@@ -397,9 +399,41 @@ impl LayoutManager {
         }
     }
 
-    fn compute_layout(&mut self) -> LayoutChangedResponse {
+    // Compute the layout on the node with the given layout_id. This should always be
+    // a root level node.
+    fn compute_node_layout(&mut self, layout_id: i32) -> LayoutChangedResponse {
         let mut taffy = taffy();
-        self.recompute_layouts(&mut taffy)
+        self.compute_node_layout_internal(layout_id, &mut taffy)
+    }
+
+    fn compute_node_layout_internal(
+        &mut self,
+        layout_id: i32,
+        taffy: &mut Taffy,
+    ) -> LayoutChangedResponse {
+        info!("compute_node_layout {}", layout_id);
+        let node = self.layout_id_to_taffy_node.get(&layout_id);
+        if let Some(node) = node {
+            let result = taffy.compute_layout(
+                *node,
+                Size {
+                    // TODO get this size from somewhere
+                    height: AvailableSpace::Definite(500.0),
+                    width: AvailableSpace::Definite(500.0),
+                },
+            );
+            if let Some(e) = result.err() {
+                error!("compute_node_layout_internal: compute_layoute error: {}", e);
+            }
+        }
+
+        let changed_layout_ids = self.update_layouts(&taffy);
+        self.layout_state = self.layout_state + 1;
+
+        LayoutChangedResponse {
+            layout_state: self.layout_state,
+            changed_layout_ids: changed_layout_ids,
+        }
     }
 }
 
@@ -430,17 +464,8 @@ pub fn add_view(
     child_index: i32,
     view: toolkit_schema::View,
     base_view: Option<toolkit_schema::View>,
-    compute_layout: bool,
-) -> LayoutChangedResponse {
-    manager().add_view(
-        layout_id,
-        parent_layout_id,
-        child_index,
-        view,
-        base_view,
-        None,
-        compute_layout,
-    )
+) {
+    manager().add_view(layout_id, parent_layout_id, child_index, view, base_view, None)
 }
 
 pub fn add_view_measure(
@@ -449,8 +474,7 @@ pub fn add_view_measure(
     child_index: i32,
     view: toolkit_schema::View,
     measure_func: impl Send + Sync + 'static + Fn(i32, f32, f32, f32, f32) -> (f32, f32),
-    compute_layout: bool,
-) -> LayoutChangedResponse {
+) {
     info!("add_view_measure layoutId {}", layout_id);
     let layout_measure_func =
         move |size: Size<Option<f32>>, available_size: Size<AvailableSpace>| -> Size<f32> {
@@ -477,7 +501,6 @@ pub fn add_view_measure(
         view,
         None,
         Some(taffy::node::MeasureFunc::Boxed(Box::new(layout_measure_func))),
-        compute_layout,
     )
 }
 
@@ -489,12 +512,17 @@ pub fn clear_views() {
     manager().clear()
 }
 
-pub fn set_node_size(layout_id: i32, width: u32, height: u32) -> LayoutChangedResponse {
-    manager().set_node_size(layout_id, width, height)
+pub fn set_node_size(
+    layout_id: i32,
+    root_layout_id: i32,
+    width: u32,
+    height: u32,
+) -> LayoutChangedResponse {
+    manager().set_node_size(layout_id, root_layout_id, width, height)
 }
 
-pub fn compute_layout() -> LayoutChangedResponse {
-    manager().compute_layout()
+pub fn compute_node_layout(layout_id: i32) -> LayoutChangedResponse {
+    manager().compute_node_layout(layout_id)
 }
 
 pub fn print_layout(layout_id: i32) {

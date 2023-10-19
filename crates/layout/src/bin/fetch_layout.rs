@@ -202,43 +202,6 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     }
 
     /*
-    let fill = views.get(&NodeQuery::NodeName("#fill".to_string()));
-    if let Some(fill) = fill {
-        println!("Add #fill");
-        let response = add_view(2, 1, 0, fill.clone(), None);
-        print_layout(0);
-    }
-    */
-
-    //println!("SetNodeSize 250, 24");
-    //set_node_size(2, 250, 24);
-    //set_node_size(5, 250, 24);
-    //print_layout(0);
-
-    // TODO make a unit test for this below based off of #stage-replacements
-    /*
-    let square = views.get(&NodeQuery::NodeName("HSquare2".to_string()));
-    if let Some(square) = square {
-        println!("\nAdd 3 squares");
-        add_view(4, 1, 0, square, None);
-        add_view(5, 1, 1, square, None);
-        let response = add_view(6, 1, 2, square, None);
-        println!("Changed: {:?}", response.changed_layout_ids);
-        print_layout2(0);
-    }
-
-    println!("\nRemove one square");
-    let mut response = remove_view(2);
-    println!("Changed: {:?}", response.changed_layout_ids);
-    print_layout2(0);
-
-    println!("\nResize one square");
-    response = set_node_size(5, 70, 70);
-    println!("Changed: {:?}", response.changed_layout_ids);
-    print_layout2(0);
-    */
-
-    /*
     pause();
 
     println!("");

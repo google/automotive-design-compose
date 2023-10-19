@@ -185,7 +185,7 @@ internal fun DesignFrame(
     // Select the appropriate representation for ourselves based on our layout style;
     // row or column (with or without wrapping/flow), or absolute positioning (similar to the CSS2
     // model).
-    val layout = LayoutManager.getLayoutWithDensity(layoutId)
+    val layout = LayoutManager.getLayout(layoutId)
     when (layoutInfo) {
         is LayoutInfoRow -> {
             if (lazyContent != null) {

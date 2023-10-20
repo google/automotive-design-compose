@@ -16,14 +16,13 @@ use std::ffi::c_void;
 
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
-use figma_import::layout::{LayoutChangedResponse, LayoutNode, LayoutNodeList};
-use figma_import::{fetch_doc, toolkit_schema, ConvertRequest, ProxyConfig};
+use figma_import::layout::{LayoutChangedResponse, LayoutNodeList};
+use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 use layout::{
     add_view, add_view_measure, compute_node_layout, get_node_layout, remove_view, set_node_size,
-    unchanged_response,
 };
 use lazy_static::lazy_static;
 use log::{error, info, warn, LevelFilter};
@@ -118,31 +117,6 @@ fn jni_fetch_doc_impl(
     bincode::serialize(&convert_result).map_err(|e| e.into())
 }
 
-fn jni_get_layout<'local>(
-    mut env: JNIEnv<'local>,
-    _class: JClass,
-    layout_id: jint,
-) -> JByteArray<'local> {
-    let layout = get_node_layout(layout_id);
-    if let Some(layout) = layout {
-        let bytes: Result<Vec<u8>, figma_import::Error> =
-            bincode::serialize(&layout).map_err(|e| e.into());
-        match bytes {
-            Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap_or_else(|_| {
-                throw_basic_exception(&mut env, "Internal JNI Error".to_string());
-                JObject::null().into()
-            }),
-            Err(_err) => {
-                throw_basic_exception(&mut env, "Layout serialization error".to_string());
-                JObject::null().into()
-            }
-        }
-    } else {
-        warn!("Layout not found for layout_id {}", layout_id);
-        JObject::null().into()
-    }
-}
-
 fn layout_response_to_bytearray<'local>(
     mut env: JNIEnv<'local>,
     layout_response: &LayoutChangedResponse,
@@ -229,17 +203,6 @@ fn jni_remove_node<'local>(
     compute_layout: jboolean,
 ) -> JByteArray<'local> {
     let layout_response = remove_view(layout_id, compute_layout != 0);
-    layout_response_to_bytearray(env, &layout_response)
-}
-
-fn jni_compute_layout<'local>(
-    env: JNIEnv<'local>,
-    _class: JClass,
-    layout_id: jint,
-) -> JByteArray<'local> {
-    info!("jni_compute_layout");
-
-    let layout_response = compute_node_layout(layout_id);
     layout_response_to_bytearray(env, &layout_response)
 }
 
@@ -331,11 +294,6 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                     fn_ptr: jni_fetch_doc as *mut c_void,
                 },
                 jni::NativeMethod {
-                    name: "jniGetLayout".into(),
-                    sig: "(I)[B".into(),
-                    fn_ptr: jni_get_layout as *mut c_void,
-                },
-                jni::NativeMethod {
                     name: "jniSetNodeSize".into(),
                     sig: "(IIII)[B".into(),
                     fn_ptr: jni_set_node_size as *mut c_void,
@@ -350,11 +308,6 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                     sig: "(IZ)[B".into(),
                     fn_ptr: jni_remove_node as *mut c_void,
                 },
-                jni::NativeMethod {
-                    name: "jniComputeLayout".into(),
-                    sig: "(I)[B".into(),
-                    fn_ptr: jni_compute_layout as *mut c_void,
-                }
             ],
         )
         .is_err()

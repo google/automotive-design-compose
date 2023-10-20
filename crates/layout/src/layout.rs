@@ -95,24 +95,21 @@ impl LayoutManager {
             }
         }
 
-        let changed_layout_ids = self.update_layouts(taffy);
+        let changed_layouts = self.update_layouts(taffy);
         self.layout_state = self.layout_state + 1;
 
-        LayoutChangedResponse {
-            layout_state: self.layout_state,
-            changed_layout_ids: changed_layout_ids,
-        }
+        LayoutChangedResponse { layout_state: self.layout_state, changed_layouts: changed_layouts }
     }
 
     // Update the hash of layouts and return a list of node IDs whose layouts
     // changed
-    fn update_layouts(&mut self, taffy: &Taffy) -> Vec<i32> {
+    fn update_layouts(&mut self, taffy: &Taffy) -> HashMap<i32, toolkit_schema::Layout> {
         fn update_layout(
             layout_id: i32,
             parent_layout_id: i32,
             manager: &mut LayoutManager,
             taffy: &Taffy,
-            changed: &mut HashSet<i32>,
+            changed: &mut HashMap<i32, toolkit_schema::Layout>,
         ) {
             let node = manager.layout_id_to_taffy_node.get(&layout_id);
             if let Some(node) = node {
@@ -133,16 +130,20 @@ impl LayoutManager {
                     // The parent is needed because layout positioning for a child is done in the
                     // parent's layout function.
                     if layout_changed {
-                        let layout_id = manager.taffy_node_to_layout_id.get(node);
-                        if let Some(layout_id) = layout_id {
-                            changed.insert(*layout_id);
-                            if parent_layout_id >= 0 {
-                                changed.insert(parent_layout_id);
+                        changed.insert(layout_id, layout.clone());
+                        if parent_layout_id >= 0 {
+                            if !changed.contains_key(&parent_layout_id) {
+                                let parent_node =
+                                    manager.layout_id_to_taffy_node.get(&parent_layout_id);
+                                if let Some(parent_node) = parent_node {
+                                    let parent_layout = manager.layouts.get(parent_node);
+                                    if let Some(parent_layout) = parent_layout {
+                                        changed.insert(parent_layout_id, parent_layout.clone());
+                                    }
+                                }
                             }
-                            manager.layouts.insert(*node, layout);
-                        } else {
-                            error!("update_layouts: cannot find node id");
                         }
+                        manager.layouts.insert(*node, layout);
                     }
                 }
 
@@ -163,11 +164,11 @@ impl LayoutManager {
             }
         }
 
-        let mut changed: HashSet<i32> = HashSet::new();
+        let mut changed: HashMap<i32, toolkit_schema::Layout> = HashMap::new();
         for layout_id in &self.root_layout_ids.clone() {
             update_layout(*layout_id, -1, self, &taffy, &mut changed);
         }
-        changed.into_iter().collect()
+        changed
     }
 
     // Get the computed layout for the given node
@@ -427,13 +428,10 @@ impl LayoutManager {
             }
         }
 
-        let changed_layout_ids = self.update_layouts(&taffy);
+        let changed_layouts = self.update_layouts(&taffy);
         self.layout_state = self.layout_state + 1;
 
-        LayoutChangedResponse {
-            layout_state: self.layout_state,
-            changed_layout_ids: changed_layout_ids,
-        }
+        LayoutChangedResponse { layout_state: self.layout_state, changed_layouts: changed_layouts }
     }
 }
 

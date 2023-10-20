@@ -19,20 +19,20 @@
 //! The goal of this crate is to perform the mapping from Figma to the toolkit; it does
 //! not provide any kind of UI logic mapping.
 
-use serde::{Deserialize, Serialize};
-
 use crate::toolkit_schema;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // The layout response sent back to client which contains a layout state ID and
 // a list of layout IDs that have changed.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LayoutChangedResponse {
     pub layout_state: i32,
-    pub changed_layout_ids: Vec<i32>,
+    pub changed_layouts: HashMap<i32, toolkit_schema::Layout>,
 }
 impl LayoutChangedResponse {
     pub fn unchanged(layout_state: i32) -> Self {
-        LayoutChangedResponse { layout_state, changed_layout_ids: vec![] }
+        LayoutChangedResponse { layout_state, changed_layouts: HashMap::new() }
     }
 }
 

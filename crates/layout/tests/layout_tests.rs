@@ -250,8 +250,8 @@ fn test_vertical_fill_resize() {
 
     // Increase fixed left node height by 30 pixels
     let result = set_node_size(1, 0, 50, 140);
-    assert!(result.changed_layout_ids.contains(&2));
-    assert!(result.changed_layout_ids.contains(&3));
+    assert!(result.changed_layouts.contains_key(&2));
+    assert!(result.changed_layouts.contains_key(&3));
 
     // Right node should be taller by 30 pixels
     let right_layout_result = get_node_layout(2);
@@ -310,8 +310,8 @@ fn test_horizontal_fill_resize() {
 
     // Increase fixed top node width by 30 pixels
     let result = set_node_size(1, 0, 140, 50);
-    assert!(result.changed_layout_ids.contains(&2));
-    assert!(result.changed_layout_ids.contains(&3));
+    assert!(result.changed_layouts.contains_key(&2));
+    assert!(result.changed_layouts.contains_key(&3));
 
     // Bottom node should be wider by 30 pixels
     let bottom_layout_result = get_node_layout(2);

@@ -45,9 +45,6 @@ internal object Jni {
     ): ByteArray
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniGetLayout(layoutId: Int): ByteArray?
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniSetNodeSize(
         layoutId: Int,
         rootLayoutId: Int,
@@ -63,9 +60,6 @@ internal object Jni {
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniRemoveNode(layoutId: Int, computeLayout: Boolean): ByteArray?
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniComputeLayout(layoutId: Int): ByteArray?
 
     init {
         System.loadLibrary("jni")

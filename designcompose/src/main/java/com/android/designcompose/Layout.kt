@@ -81,6 +81,7 @@ internal object LayoutManager {
     private var performLayoutComputation: Boolean = false
     private var density: Float = 1F
     private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
+    private var layoutCache: HashMap<Int, Layout> = HashMap()
 
     internal fun getNextLayoutId(): Int {
         return ++nextLayoutId
@@ -181,11 +182,12 @@ internal object LayoutManager {
     internal fun unsubscribe(layoutId: Int) {
         subscribers.remove(layoutId)
         textMeasures.remove(layoutId)
+        layoutCache.remove(layoutId)
         val responseBytes = Jni.jniRemoveNode(layoutId, performLayoutComputation)
         handleResponse(responseBytes)
     }
 
-    internal fun beginLayout(layoutId: Int) {
+    private fun beginLayout(layoutId: Int) {
         // Add a layout ID to a set of IDs that are in progress. As a view recursively calls its
         // children, this set grows. Each time a view has finished calling its children it calls
         // finishLayout().
@@ -218,11 +220,16 @@ internal object LayoutManager {
         if (responseBytes != null) {
             val deserializer = BincodeDeserializer(responseBytes)
             val response: LayoutChangedResponse = LayoutChangedResponse.deserialize(deserializer)
-            notifySubscribers(response.changed_layout_ids, response.layout_state)
-            if (response.changed_layout_ids.isNotEmpty())
+
+            // Add all the layouts to our cache
+            response.changed_layouts.forEach { (layoutId, layout) ->
+                layoutCache[layoutId] = layout
+            }
+            notifySubscribers(response.changed_layouts.keys, response.layout_state)
+            if (response.changed_layouts.isNotEmpty())
                 Log.d(
                     TAG,
-                    "HandleResponse ${response.layout_state}, changed: ${response.changed_layout_ids}"
+                    "HandleResponse ${response.layout_state}, changed: ${response.changed_layouts.keys}"
                 )
         } else {
             Log.d(TAG, "HandleResponse NULL")
@@ -240,12 +247,7 @@ internal object LayoutManager {
 
     // Ask for the layout for the associated node via JNI
     internal fun getLayout(layoutId: Int): Layout? {
-        val layoutBytes = Jni.jniGetLayout(layoutId)
-        if (layoutBytes != null) {
-            val deserializer = BincodeDeserializer(layoutBytes)
-            return Layout.deserialize(deserializer)
-        }
-        return null
+        return layoutCache[layoutId]
     }
 
     // Tell the Rust layout manager that a node size has changed. In the returned response, get all
@@ -259,7 +261,7 @@ internal object LayoutManager {
     }
 
     // For every node in nodes, inform the subscribers of the new layout ID
-    private fun notifySubscribers(nodes: List<Int>, layoutState: Int) {
+    private fun notifySubscribers(nodes: Set<Int>, layoutState: Int) {
         for (layoutId in nodes) {
             val updateLayout = subscribers[layoutId]
             updateLayout?.let { it.invoke(layoutState) }

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::sync::atomic::AtomicU16;
+
 // We use serde to serialize and deserialize our "toolkit style" views. Because we need
 // serialization, we use our own replacement for ViewStyle which can be serialized and
 // retain image references.
@@ -124,6 +126,9 @@ pub enum RenderMethod {
 /// Represents a toolkit View (like a Composable).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct View {
+    // unique numeric id (not replicated within one DesignCompose file), which is used by the
+    // renderer when building a layout tree, or when mapping from an integer to a View.
+    pub unique_id: u16,
     // id doesn't exist in vsw toolkit, but is useful for tracing from Figma node to output
     pub id: String,
     // name doesn't exist in vsw toolkit, but is also useful for tracing.
@@ -143,6 +148,10 @@ pub struct View {
     pub render_method: RenderMethod,
 }
 impl View {
+    fn next_unique_id() -> u16 {
+        static COUNTER: AtomicU16 = AtomicU16::new(0);
+        COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    }
     pub(crate) fn new_rect(
         id: &String,
         name: &String,
@@ -156,6 +165,7 @@ impl View {
         render_method: RenderMethod,
     ) -> View {
         View {
+            unique_id: View::next_unique_id(),
             id: id.clone(),
             name: name.clone(),
             component_info,
@@ -179,6 +189,7 @@ impl View {
         render_method: RenderMethod,
     ) -> View {
         View {
+            unique_id: View::next_unique_id(),
             id: id.clone(),
             name: name.clone(),
             component_info,
@@ -202,6 +213,7 @@ impl View {
         render_method: RenderMethod,
     ) -> View {
         View {
+            unique_id: View::next_unique_id(),
             id: id.clone(),
             name: name.clone(),
             style,

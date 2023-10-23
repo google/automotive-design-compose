@@ -62,11 +62,36 @@ import java.util.Optional
 import kotlin.math.roundToInt
 
 internal data class TextMeasureData(
+    val textHash: Int,
     val paragraph: ParagraphIntrinsics,
     val density: Density,
     val maxLines: Int,
     val autoWidth: Boolean,
-)
+) {
+    override fun hashCode(): Int {
+        // Don't hash all of TextLayoutData because it's derived from style, which is
+        // already hashed everywhere we use TextMeasureData's hashCode.
+        var result = density.hashCode()
+        result = 31 * result + textHash
+        result = 31 * result + maxLines.hashCode()
+        result = 31 * result + autoWidth.hashCode()
+        return result
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TextMeasureData
+
+        if (density != other.density) return false
+        if (textHash != other.textHash) return false
+        if (maxLines != other.maxLines) return false
+        if (autoWidth != other.autoWidth) return false
+
+        return true
+    }
+}
 
 internal object LayoutManager {
     private var managerId: Int = 0
@@ -144,6 +169,14 @@ internal object LayoutManager {
         computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
+    internal fun squooshSetTextMeasureData(layoutId: Int, textMeasureData: TextMeasureData) {
+        textMeasures[layoutId] = textMeasureData
+    }
+
+    internal fun squooshClearTextMeasureData(layoutId: Int) {
+        textMeasures.remove(layoutId)
+    }
+
     private fun subscribe(
         layoutId: Int,
         setLayoutState: (Int) -> Unit,
@@ -210,12 +243,11 @@ internal object LayoutManager {
     private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
         if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
             trace(DCTraces.LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE) {
-                val layoutNodeList = LayoutNodeList(layoutNodes)
+                val layoutNodeList = LayoutNodeList(layoutNodes, arrayListOf())
                 val nodeListSerializer = BincodeSerializer()
                 layoutNodeList.serialize(nodeListSerializer)
                 val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-                val responseBytes =
-                    Jni.tracedJniAddNodes(managerId, rootLayoutId, serializedNodeList)
+                val responseBytes = Jni.jniAddNodes(managerId, rootLayoutId, serializedNodeList)
                 handleResponse(responseBytes)
                 layoutNodes.clear()
             }

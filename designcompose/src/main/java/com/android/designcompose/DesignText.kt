@@ -260,6 +260,7 @@ internal fun DesignText(
     val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE
     val textMeasureData =
         TextMeasureData(
+            annotatedText.text.hashCode(),
             paragraph,
             density,
             maxLines,

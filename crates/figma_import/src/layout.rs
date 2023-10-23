@@ -49,8 +49,16 @@ pub struct LayoutNode {
     pub fixed_height: Option<i32>,
 }
 
+// A parent node id and a list of child ids
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LayoutParentChildren {
+    pub parent_layout_id: i32,
+    pub child_layout_ids: Vec<i32>,
+}
+
 // A list of Figma nodes to register for layout
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LayoutNodeList {
     pub layout_nodes: Vec<LayoutNode>,
+    pub parent_children: Vec<LayoutParentChildren>,
 }

@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::collections::HashMap;
 use std::ffi::c_void;
+use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
-use figma_import::layout::{LayoutChangedResponse, LayoutNodeList};
+use figma_import::layout::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
@@ -24,9 +27,6 @@ use jni::{JNIEnv, JavaVM};
 use layout::LayoutManager;
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicI32, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard};
 
 lazy_static! {
     static ref JAVA_VM: Mutex<Option<JavaVM>> = Mutex::new(None);
@@ -233,6 +233,11 @@ fn jni_add_nodes<'local>(
                                 node.fixed_height,
                             );
                         }
+                    }
+                    for LayoutParentChildren { parent_layout_id, child_layout_ids } in
+                        &node_list.parent_children
+                    {
+                        manager.update_children(*parent_layout_id, child_layout_ids)
                     }
                 }
                 Err(e) => {

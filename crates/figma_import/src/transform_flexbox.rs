@@ -143,14 +143,14 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
             LayoutAlignItems::Max => AlignItems::FlexEnd,
             LayoutAlignItems::Min => AlignItems::FlexStart,
             LayoutAlignItems::SpaceBetween => AlignItems::FlexStart, // XXX
-            LayoutAlignItems::Baseline => AlignItems::FlexStart, // Not supported, default to FlexStart
+            LayoutAlignItems::Baseline => AlignItems::FlexStart,
         };
         style.justify_content = match frame.primary_axis_align_items {
             LayoutAlignItems::Center => JustifyContent::Center,
             LayoutAlignItems::Max => JustifyContent::FlexEnd,
             LayoutAlignItems::Min => JustifyContent::FlexStart,
             LayoutAlignItems::SpaceBetween => JustifyContent::SpaceBetween,
-            LayoutAlignItems::Baseline => JustifyContent::FlexStart, // Not supported, default to FlexStart
+            LayoutAlignItems::Baseline => JustifyContent::FlexStart,
         };
         // The toolkit picks "Stretch" as a sensible default, but we don't
         // want that for Figma elements.
@@ -1338,8 +1338,8 @@ fn visit_node(
             path: fill_paths,
             stroke: stroke_paths,
             stroke_cap: node.stroke_cap.clone(),
-            start_angle_degrees: arc_data.starting_angle,
-            sweep_angle_degrees: arc_data.ending_angle,
+            start_angle_degrees: euclid::Angle::radians(arc_data.starting_angle).to_degrees(),
+            sweep_angle_degrees: euclid::Angle::radians(arc_data.ending_angle).to_degrees(),
             inner_radius: arc_data.inner_radius,
             corner_radius: 0.0, // corner radius is only exposed in the plugin data
             is_mask: vector.is_mask,

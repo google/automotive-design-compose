@@ -123,7 +123,7 @@ internal fun ViewShape.computePaths(
                 getPaths(this.path, this.stroke)
             }
             is ViewShape.Arc -> {
-                if (!customArcAngle) {
+                if (!customArcAngle && (this.path.isNotEmpty() || this.stroke.isNotEmpty())) {
                     // Render normally with Figma provided fill/stroke path
                     getPaths(this.path, this.stroke)
                 } else {

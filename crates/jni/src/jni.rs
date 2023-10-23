@@ -17,13 +17,14 @@ use std::ffi::c_void;
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
 use figma_import::layout::LayoutChangedResponse;
+use figma_import::toolkit_style::ViewStyle;
 use figma_import::{fetch_doc, toolkit_schema, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 use layout::{
     add_view, add_view_measure, compute_layout, get_node_layout, remove_view, set_node_size,
-    unchanged_response,
+    unchanged_response, add_style,
 };
 use lazy_static::lazy_static;
 use log::{error, info, warn, LevelFilter};
@@ -223,6 +224,35 @@ fn jni_add_node<'local>(
     layout_response_to_bytearray(env, &unchanged_response())
 }
 
+fn jni_add_style<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass,
+    layout_id: jint,
+    parent_layout_id: jint,
+    child_index: jint,
+    jserialized_style: JByteArray,
+)
+{
+    let bytes_view = env.convert_byte_array(jserialized_style);
+    if let Ok(bytes_view) = bytes_view {
+        let result: Result<ViewStyle, Box<bincode::ErrorKind>> =
+            bincode::deserialize(&bytes_view);
+        match result {
+            Ok(view_style) => {
+                add_style(
+                    layout_id,
+                    parent_layout_id,
+                    child_index,
+                    view_style,
+                );
+            }
+            Err(e) => {
+                throw_basic_exception(&mut env, format!("Internal JNI Error: {}", e));
+            }
+        }
+    }
+}
+
 fn jni_add_text_node<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
@@ -374,6 +404,11 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                     name: "jniAddNode".into(),
                     sig: "(III[B[BZ)[B".into(),
                     fn_ptr: jni_add_node as *mut c_void,
+                },
+                jni::NativeMethod {
+                    name: "jniAddStyle".into(),
+                    sig: "(III[B)V".into(),
+                    fn_ptr: jni_add_style as *mut c_void,
                 },
                 jni::NativeMethod {
                     name: "jniAddTextNode".into(),

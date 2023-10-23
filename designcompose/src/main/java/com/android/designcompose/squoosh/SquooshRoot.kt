@@ -63,16 +63,13 @@ internal object SquooshLayout {
         layoutId: Int,
         parentLayoutId: Int,
         childIndex: Int,
-        view: View,
-        baseView: View?)
+        style: ViewStyle)
     {
-        Jni.jniAddNode(
+        Jni.jniAddStyle(
             layoutId,
             parentLayoutId,
             childIndex,
-            serialize(view),
-            serialize(baseView),
-            false)
+            serialize(style))
     }
 
     internal fun removeNode(layoutId: Int) {
@@ -82,6 +79,13 @@ internal object SquooshLayout {
     internal fun keepJniBits() {
         Jni.jniSetNodeSize(0, 0, 0)
         Jni.jniAddTextNode(0, 0, 0, emptyByteArray, false)
+        Jni.jniAddNode(
+            0,
+            0,
+            0,
+            emptyByteArray,
+            emptyByteArray,
+            false)
         Jni.jniRemoveNode(0, false)
     }
 
@@ -97,7 +101,7 @@ internal object SquooshLayout {
     }
 
     private val emptyByteArray = ByteArray(0)
-    private fun serialize(v: View?): ByteArray {
+    private fun serialize(v: ViewStyle?): ByteArray {
         if (v == null) {
             return emptyByteArray
         }
@@ -233,8 +237,7 @@ internal fun updateLayoutTree(
             layoutId = layoutId,
             parentLayoutId = parentLayoutId,
             childIndex = childIndex,
-            view = resolvedNode.view,
-            baseView = null // XXX: Really just need to pass the merged style in...
+            style = resolvedNode.style
         )
         layoutCache[layoutId] = layoutCacheKey
     }

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use figma_import::layout;
+use figma_import::toolkit_style::ViewStyle;
 use lazy_static::lazy_static;
 use log::{error, info};
 use std::collections::{HashMap, HashSet};
@@ -190,6 +192,72 @@ impl LayoutManager {
             let base_style: taffy::style::Style = (&view.style).into();
             style.margin = base_style.margin;
             style.position = base_style.position;
+        }
+    }
+
+    fn add_style(
+        &mut self,
+        layout_id: i32,
+        parent_layout_id: i32,
+        child_index: i32,
+        style: ViewStyle,
+        measure_func: Option<taffy::node::MeasureFunc>
+    )
+    {
+        let mut taffy = taffy();
+        let mut node_style: taffy::style::Style = (&style).into();
+
+        self.apply_customizations(layout_id, &mut node_style);
+
+        let node = self.layout_id_to_taffy_node.get(&layout_id);
+        if let Some(node) = node {
+            // We already have this view in our tree. Update it's style
+            let result = taffy.set_style(*node, node_style);
+            if let Some(e) = result.err() {
+                error!("taffy set_style error: {}", e);
+            }
+        } else {
+            // This is a new view to add to our tree. Create a new node and add it
+            let result = if let Some(measure_func) = measure_func {
+                taffy.new_leaf_with_measure(node_style, measure_func)
+            } else {
+                taffy.new_leaf(node_style)
+            };
+            match result {
+                Ok(node) => {
+                    let parent_node = self.layout_id_to_taffy_node.get(&parent_layout_id);
+                    if let Some(parent_node) = parent_node {
+                        // This has a parent node, so add it as a child
+                        let children_result = taffy.children(*parent_node);
+                        match children_result {
+                            Ok(mut children) => {
+                                children.insert(child_index as usize, node);
+                                let set_children_result =
+                                    taffy.set_children(*parent_node, children.as_ref());
+                                if let Some(e) = set_children_result.err() {
+                                    error!("taffy set_children error: {}", e);
+                                } else {
+                                    self.taffy_node_to_layout_id.insert(node, layout_id);
+                                    self.layout_id_to_taffy_node.insert(layout_id, node);
+                                    //self.layout_id_to_view.insert(layout_id, view.clone());
+                                }
+                            }
+                            Err(e) => {
+                                error!("taffy_children error: {}", e);
+                            }
+                        }
+                    } else {
+                        // No parent; this is a root node
+                        self.taffy_node_to_layout_id.insert(node, layout_id);
+                        self.layout_id_to_taffy_node.insert(layout_id, node);
+                        //self.layout_id_to_view.insert(layout_id, view.clone());
+                        self.root_layout_ids.insert(layout_id);
+                    }
+                }
+                Err(e) => {
+                    error!("taffy_new_leaf error: {}", e);
+                }
+            }
         }
     }
 
@@ -435,6 +503,22 @@ pub fn add_view(
         base_view,
         None,
         compute_layout,
+    )
+}
+
+pub fn add_style(
+    layout_id: i32,
+    parent_layout_id: i32,
+    child_index: i32,
+    style: ViewStyle,
+)
+{
+    manager().add_style(
+        layout_id,
+        parent_layout_id,
+        child_index,
+        style,
+        None
     )
 }
 

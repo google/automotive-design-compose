@@ -61,6 +61,14 @@ internal object Jni {
     ): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    external fun jniAddStyle(
+        layoutId: Int,
+        parentLayoutId: Int,
+        childIndex: Int,
+        serializedStyle: ByteArray,
+    )
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniAddTextNode(
         layoutId: Int,
         parentLayoutId: Int,

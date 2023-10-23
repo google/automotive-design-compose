@@ -275,6 +275,7 @@ internal fun DesignText(
     // slightly different than Figma text.
     val (renderHeight, setRenderHeight) = remember { mutableStateOf<Int?>(null) }
     val (renderTop, setRenderTop) = remember { mutableStateOf<Int?>(null) }
+    Log.d(TAG, "Pre-launched effect $nodeName")
     LaunchedEffect(style, textLayoutData, density, layout) {
         // Only set the size if autoWidthHeight is false, because otherwise the measureFunc is used
         if (!isAutoHeightFillWidth(style)) {
@@ -297,6 +298,7 @@ internal fun DesignText(
             setRenderTop(0)
         }
     }
+    Log.d(TAG, "Post-launched effect $nodeName render height $renderHeight renderTop $renderTop")
 
     val content =
         @Composable {

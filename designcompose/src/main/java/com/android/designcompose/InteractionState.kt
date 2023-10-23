@@ -553,6 +553,37 @@ internal fun InteractionState.nodeVariant(
     )
 }
 
+internal fun InteractionState.squooshNodeVariant(
+    instanceId: String,
+    key: String?,
+    doc: DocContent
+): View?
+{
+    val varKey = getInstanceIdWithKey(instanceId, key)
+    val variant = variantMemory[varKey] ?: return null
+    return searchNodes(
+        NodeQuery.NodeId(variant),
+        doc.c.document.views,
+        doc.c.variantViewMap,
+        doc.c.variantPropertyMap
+    )
+}
+internal fun InteractionState.squooshRootNode(
+    initialNode: NodeQuery,
+    doc: DocContent,
+    isRoot: Boolean
+): View? {
+    val findRootNode = {
+        if (isRoot) {
+            navigationHistory.lastOrNull() ?: initialNode
+        } else {
+            initialNode
+        }
+    }
+    val query = findRootNode()
+    return searchNodes(query, doc.c.document.views, doc.c.variantViewMap, doc.c.variantPropertyMap)
+}
+
 /// InteractionState is managed in a global, per document. We don't pass it down via a
 /// LocalComposition, because we want to support usage models where there are multiple
 /// roots (e.g.: many ComposeViews are used to mix design elements in with existing

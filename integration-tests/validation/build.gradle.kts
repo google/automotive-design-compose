@@ -99,6 +99,7 @@ dependencies {
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.material)
+    implementation("androidx.compose.runtime:runtime-tracing:1.0.0-alpha03")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

@@ -29,8 +29,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.text.AnnotatedString
@@ -199,7 +202,7 @@ internal object LayoutManager {
         // removed, trigger a layout computation.
         layoutsInProgress.remove(layoutId)
         if (layoutsInProgress.isEmpty()) {
-            Log.d(TAG, "Finished layout $layoutId, computing layout")
+            Log.d(TAG, "Finished layout $layoutId, computing layout", Exception())
             val responseBytes = Jni.jniComputeLayout()
             handleResponse(responseBytes)
         }
@@ -576,6 +579,9 @@ internal class DesignLayoutData(val name: String, val layoutId: Int) : ParentDat
     }
 }
 
+internal val Measurable.designLayout: DesignLayoutData?
+    get() = parentData as? DesignLayoutData
+
 internal val Placeable.designLayoutData: DesignLayoutData?
     get() = parentData as? DesignLayoutData
 
@@ -606,7 +612,19 @@ internal inline fun DesignFrameLayout(
 // Measure policy for DesignFrame.
 internal fun designMeasurePolicy(name: String, layoutId: Int) =
     MeasurePolicy { measurables, constraints ->
+        Log.d(TAG, "Measure $name")
+
+        if (name == "#MainFrame")
+            Log.d(TAG, "Laid out from", Exception())
+
+        // I want to recurse the layout tree and run Layout before calling "measure" which
+        // will set the width/height for each node.
+        //
+        // measure actually doesn't have to set the width/height. `layout(width, height)` literally
+        // doesn't even do that.
         val placeables = measurables.map { measurable -> measurable.measure(constraints) }
+
+        Log.d(TAG, "Measured $name")
 
         var myLayout = LayoutManager.getLayoutWithDensity(layoutId)
         if (myLayout == null) {
@@ -615,7 +633,9 @@ internal fun designMeasurePolicy(name: String, layoutId: Int) =
         val myWidth = myLayout?.width() ?: 0
         val myHeight = myLayout?.height() ?: 0
         Log.d(TAG, "Layout $name $myWidth, $myHeight")
-        layout(myWidth, myHeight) {
+
+        val officialLayout = layout(myWidth, myHeight) {
+            Log.d(TAG, "Child Placement $name")
             // Place children in the parent layout
             placeables.forEachIndexed { index, placeable ->
                 val layoutData = placeable.designLayoutData
@@ -637,7 +657,24 @@ internal fun designMeasurePolicy(name: String, layoutId: Int) =
                     }
                 }
             }
+            Log.d(TAG, "Completed layout $name")
         }
+
+        val x = object : MeasureResult {
+            override val width = if (name == "#MainFrame") { myWidth } else { 0 }
+            override val height = if (name == "#MainFrame") { myHeight } else { 0 }
+            override val alignmentLines: Map<AlignmentLine, Int>
+                get() = HashMap()
+
+            override fun placeChildren() {
+                Log.d(TAG, "call realPlaceChildren")
+                officialLayout.placeChildren()
+                Log.d(TAG, "called realPlaceChildren")
+                //TODO("Not yet implemented")
+            }
+        }
+
+        officialLayout
     }
 
 @Composable

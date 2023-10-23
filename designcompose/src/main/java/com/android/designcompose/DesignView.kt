@@ -47,6 +47,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -82,6 +83,7 @@ import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.squoosh.SquooshRoot
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -227,8 +229,9 @@ internal object DebugNodeManager {
         nodes.values.forEach {
             Box(
                 modifier =
-                    Modifier.absoluteOffset(it.position.x.dp, it.position.y.dp)
-                        .size(it.size.width.dp, it.size.height.dp)
+                Modifier
+                    .absoluteOffset(it.position.x.dp, it.position.y.dp)
+                    .size(it.size.width.dp, it.size.height.dp)
             ) {
                 BasicText(
                     it.nodeName,
@@ -604,14 +607,19 @@ internal fun DesignView(
     if (viewLayoutInfo !is LayoutInfoGrid) {
         when (view.scroll_info.overflow) {
             is OverflowDirection.VERTICAL_SCROLLING -> {
-                m = Modifier.verticalScroll(rememberScrollState()).then(m)
+                m = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .then(m)
             }
             is OverflowDirection.HORIZONTAL_SCROLLING -> {
-                m = Modifier.horizontalScroll(rememberScrollState()).then(m)
+                m = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .then(m)
             }
             is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> {
                 m =
-                    Modifier.horizontalScroll(rememberScrollState())
+                    Modifier
+                        .horizontalScroll(rememberScrollState())
                         .verticalScroll(rememberScrollState())
                         .then(m)
             }
@@ -971,6 +979,13 @@ internal fun DesignDocInternal(
     var noFrameErrorMessage = ""
     var noFrameBgColor = Color(0x00000000)
 
+    // TESTING
+    SquooshRoot(docName = docName, incomingDocId = incomingDocId, rootNodeQuery = rootNodeQuery, customizationContext = customizations)
+
+    return
+    val (renderCount, setRenderCount) = remember { mutableStateOf(0) }
+    if (renderCount > 0) return
+    setRenderCount(1)
     // Reset the isRendered flag, only set it back to true if the DesignView properly displays
     if (doc != null) {
         val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)
@@ -1057,7 +1072,11 @@ internal fun DesignDocInternal(
         designSwitcher()
     } else {
         CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
-            Box(Modifier.fillMaxSize().background(noFrameBgColor).padding(20.dp)) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(noFrameBgColor)
+                    .padding(20.dp)) {
                 BasicText(text = noFrameErrorMessage, style = TextStyle(fontSize = 24.sp))
             }
             designSwitcher()

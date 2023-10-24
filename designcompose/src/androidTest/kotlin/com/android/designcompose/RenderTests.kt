@@ -73,9 +73,7 @@ class RenderTests {
     fun missingSerializedFileDoesNotRender() {
         with(composeTestRule) {
             setContent { HelloWorldDoc.mainFrame(name = "No one") }
-            onRoot().printToLog("froeht")
 
-            // Test that...
             onDCDoc(HelloWorldDoc).assertDoesNotExist()
             assertDCRenderStatus(DocRenderStatus.NotAvailable)
 

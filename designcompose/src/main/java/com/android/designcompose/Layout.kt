@@ -54,7 +54,6 @@ import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
-import java.util.Optional
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -114,13 +113,13 @@ internal object LayoutManager {
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
         childIndex: Int,
-        view: View,
-        baseView: View?
+        style: ViewStyle,
+        name: String,
     ) {
         // Frames can have children so call beginLayout() to optimize layout computation until all
         // children have been added.
         beginLayout(layoutId)
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, view, baseView, false)
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, false)
     }
 
     internal fun subscribeText(
@@ -128,11 +127,12 @@ internal object LayoutManager {
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
         childIndex: Int,
-        view: View
+        style: ViewStyle,
+        name: String,
     ) {
         // Text cannot have children and already recomputes layout after it measures itself and
         // tells Rust its size, so don't call beginLayout()
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, view, null, false)
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, false)
     }
 
     internal fun subscribeWithMeasure(
@@ -141,13 +141,14 @@ internal object LayoutManager {
         parentLayoutId: Int,
         rootLayoutId: Int,
         childIndex: Int,
-        view: View,
+        style: ViewStyle,
+        name: String,
         textMeasureData: TextMeasureData,
     ) {
         subscribers[layoutId] = setLayoutState
         textMeasures[layoutId] = textMeasureData
 
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, view, null, true)
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
 
         // Text with a measure func is measured when Rust computes layout, so call
         // computeLayoutIfComplete() here. This is needed to trigger a layout recompute when the
@@ -160,8 +161,8 @@ internal object LayoutManager {
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
         childIndex: Int,
-        view: View,
-        baseView: View?,
+        style: ViewStyle,
+        name: String,
         useMeasureFunc: Boolean,
     ) {
         subscribers[layoutId] = setLayoutState
@@ -172,8 +173,8 @@ internal object LayoutManager {
                 layoutId,
                 parentLayoutId,
                 childIndex,
-                view,
-                Optional.ofNullable(baseView),
+                style,
+                name,
                 useMeasureFunc,
             )
         )
@@ -185,6 +186,10 @@ internal object LayoutManager {
         layoutCache.remove(layoutId)
         val responseBytes = Jni.jniRemoveNode(layoutId, performLayoutComputation)
         handleResponse(responseBytes)
+
+        // TODO for children of a lazy grid view, don't recompute layout when removing views since
+        // they are completely gone from the grid view. Need to be able to detect, when removing the
+        // view, if it is an ancestor of the child of a lazy grid view.
     }
 
     private fun beginLayout(layoutId: Int) {
@@ -378,18 +383,7 @@ class ParentLayoutInfo(
     val childIndex: Int = 0,
     val rootLayoutId: Int = -1,
     val isWidgetChild: Boolean = false,
-    var baseView: View? = null,
 )
-
-internal fun ParentLayoutInfo.withBaseView(baseView: View?): ParentLayoutInfo {
-    return ParentLayoutInfo(
-        this.parentLayoutId,
-        this.childIndex,
-        this.rootLayoutId,
-        this.isWidgetChild,
-        baseView
-    )
-}
 
 internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutInfo {
     val rootLayoutId = if (this.rootLayoutId == -1) rootLayoutId else this.rootLayoutId
@@ -398,7 +392,6 @@ internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutI
         this.childIndex,
         rootLayoutId,
         this.isWidgetChild,
-        this.baseView
     )
 }
 

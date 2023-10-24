@@ -19,7 +19,7 @@ use std::sync::{Mutex, MutexGuard};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
 
-use figma_import::{layout::LayoutChangedResponse, toolkit_schema};
+use figma_import::{layout::LayoutChangedResponse, toolkit_schema, toolkit_style::ViewStyle};
 
 // Customizations that can applied to a node
 struct Customizations {
@@ -56,8 +56,8 @@ struct LayoutManager {
     layout_id_to_taffy_node: HashMap<i32, taffy::node::Node>,
     // Taffy node -> layout id
     taffy_node_to_layout_id: HashMap<taffy::node::Node, i32>,
-    // layout id -> View
-    layout_id_to_view: HashMap<i32, toolkit_schema::View>,
+    // layout id -> name
+    layout_id_to_name: HashMap<i32, String>,
     // A list of root level layout IDs used to recompute layout whenever
     // something has changed
     root_layout_ids: HashSet<i32>,
@@ -71,7 +71,7 @@ impl LayoutManager {
 
             layout_id_to_taffy_node: HashMap::new(),
             taffy_node_to_layout_id: HashMap::new(),
-            layout_id_to_view: HashMap::new(),
+            layout_id_to_name: HashMap::new(),
             root_layout_ids: HashSet::new(),
         }
     }
@@ -185,41 +185,23 @@ impl LayoutManager {
         None
     }
 
-    // If a base view exists, copy the base's margin to the style. This is necessary to
-    // preserve the position of an instance of a component with variants where the variant
-    // changes due to an interaction, or if a component has been replaced with another
-    // composable. Without this, the new variant or replaced component displayed would have
-    // its position reset to 0, 0.
-    fn apply_base_style(
-        &self,
-        style: &mut taffy::style::Style,
-        base_view: &Option<toolkit_schema::View>,
-    ) {
-        if let Some(view) = base_view {
-            let base_style: taffy::style::Style = (&view.style).into();
-            style.margin = base_style.margin;
-            style.position = base_style.position;
-        }
-    }
-
-    fn add_view(
+    fn add_style(
         &mut self,
         layout_id: i32,
         parent_layout_id: i32,
         child_index: i32,
-        view: toolkit_schema::View,
-        base_view: Option<toolkit_schema::View>,
+        style: ViewStyle,
+        name: String,
         measure_func: Option<taffy::node::MeasureFunc>,
     ) {
         let mut taffy = taffy();
 
-        let mut node_style: taffy::style::Style = (&view.style).into();
-        if view.name.starts_with("FrameTop") {
-            println!("{} VIEWSTYLE:", view.name);
-            println!("{:#?}", view.style);
+        let mut node_style: taffy::style::Style = (&style).into();
+        if name.starts_with("FrameTop") {
+            println!("{} VIEWSTYLE:", name);
+            println!("{:#?}", style);
         }
 
-        self.apply_base_style(&mut node_style, &base_view);
         self.apply_customizations(layout_id, &mut node_style);
 
         let node = self.layout_id_to_taffy_node.get(&layout_id);
@@ -252,7 +234,7 @@ impl LayoutManager {
                                 } else {
                                     self.taffy_node_to_layout_id.insert(node, layout_id);
                                     self.layout_id_to_taffy_node.insert(layout_id, node);
-                                    self.layout_id_to_view.insert(layout_id, view.clone());
+                                    self.layout_id_to_name.insert(layout_id, name.clone());
                                 }
                             }
                             Err(e) => {
@@ -263,7 +245,7 @@ impl LayoutManager {
                         // No parent; this is a root node
                         self.taffy_node_to_layout_id.insert(node, layout_id);
                         self.layout_id_to_taffy_node.insert(layout_id, node);
-                        self.layout_id_to_view.insert(layout_id, view.clone());
+                        self.layout_id_to_name.insert(layout_id, name.clone());
                         self.root_layout_ids.insert(layout_id);
                     }
                 }
@@ -303,7 +285,7 @@ impl LayoutManager {
                     // Remove from all our hashes
                     self.taffy_node_to_layout_id.remove(&removed_node);
                     self.layout_id_to_taffy_node.remove(&layout_id);
-                    self.layout_id_to_view.remove(&layout_id);
+                    self.layout_id_to_name.remove(&layout_id);
                     self.root_layout_ids.remove(&layout_id);
                     self.customizations.remove(&layout_id);
                 }
@@ -456,21 +438,22 @@ pub fn get_node_layout(layout_id: i32) -> Option<toolkit_schema::Layout> {
     manager().get_node_layout(layout_id)
 }
 
-pub fn add_view(
+pub fn add_style(
     layout_id: i32,
     parent_layout_id: i32,
     child_index: i32,
-    view: toolkit_schema::View,
-    base_view: Option<toolkit_schema::View>,
+    style: ViewStyle,
+    name: String,
 ) {
-    manager().add_view(layout_id, parent_layout_id, child_index, view, base_view, None)
+    manager().add_style(layout_id, parent_layout_id, child_index, style, name, None)
 }
 
-pub fn add_view_measure(
+pub fn add_style_measure(
     layout_id: i32,
     parent_layout_id: i32,
     child_index: i32,
-    view: toolkit_schema::View,
+    style: ViewStyle,
+    name: String,
     measure_func: impl Send + Sync + 'static + Fn(i32, f32, f32, f32, f32) -> (f32, f32),
 ) {
     info!("add_view_measure layoutId {}", layout_id);
@@ -492,12 +475,12 @@ pub fn add_view_measure(
             Size { width: result.0, height: result.1 }
         };
 
-    manager().add_view(
+    manager().add_style(
         layout_id,
         parent_layout_id,
         child_index,
-        view,
-        None,
+        style,
+        name,
         Some(taffy::node::MeasureFunc::Boxed(Box::new(layout_measure_func))),
     )
 }
@@ -534,9 +517,9 @@ fn print_layout_recurse(layout_id: i32, manager: &LayoutManager, taffy: &Taffy, 
     if let Some(layout_node) = layout_node {
         let layout = taffy.layout(*layout_node);
         if let Ok(layout) = layout {
-            let view_result = manager.layout_id_to_view.get(&layout_id);
-            if let Some(view) = view_result {
-                println!("{}Node {} {}:", space, view.name, layout_id);
+            let name_result = manager.layout_id_to_name.get(&layout_id);
+            if let Some(name) = name_result {
+                println!("{}Node {} {}:", space, name, layout_id);
                 println!("  {}{:?}", space, layout);
             }
 

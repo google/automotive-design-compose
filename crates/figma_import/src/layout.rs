@@ -19,7 +19,7 @@
 //! The goal of this crate is to perform the mapping from Figma to the toolkit; it does
 //! not provide any kind of UI logic mapping.
 
-use crate::toolkit_schema;
+use crate::{toolkit_schema::Layout, toolkit_style::ViewStyle};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -28,7 +28,7 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LayoutChangedResponse {
     pub layout_state: i32,
-    pub changed_layouts: HashMap<i32, toolkit_schema::Layout>,
+    pub changed_layouts: HashMap<i32, Layout>,
 }
 impl LayoutChangedResponse {
     pub fn unchanged(layout_state: i32) -> Self {
@@ -42,8 +42,8 @@ pub struct LayoutNode {
     pub layout_id: i32,
     pub parent_layout_id: i32,
     pub child_index: i32,
-    pub view: toolkit_schema::View,
-    pub base_view: Option<toolkit_schema::View>,
+    pub style: ViewStyle,
+    pub name: String,
     pub use_measure_func: bool,
 }
 

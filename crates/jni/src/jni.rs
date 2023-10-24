@@ -17,12 +17,13 @@ use std::ffi::c_void;
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
 use figma_import::layout::{LayoutChangedResponse, LayoutNodeList};
+use figma_import::toolkit_style::ViewStyle;
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 use layout::{
-    add_view, add_view_measure, compute_node_layout, get_node_layout, remove_view, set_node_size,
+    add_style, add_style_measure, compute_node_layout, get_node_layout, remove_view, set_node_size,
 };
 use lazy_static::lazy_static;
 use log::{error, info, warn, LevelFilter};
@@ -151,12 +152,12 @@ fn jni_add_nodes<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
     root_layout_id: jint,
-    serialized_nodes: JByteArray,
+    serialized_views: JByteArray,
 ) -> JByteArray<'local> {
-    let bytes_nodes = env.convert_byte_array(serialized_nodes);
-    if let Ok(bytes_nodes) = bytes_nodes {
+    let bytes_views = env.convert_byte_array(serialized_views);
+    if let Ok(bytes_views) = bytes_views {
         let result: Result<LayoutNodeList, Box<bincode::ErrorKind>> =
-            bincode::deserialize(&bytes_nodes);
+            bincode::deserialize(&bytes_views);
         match result {
             Ok(node_list) => {
                 info!(
@@ -166,20 +167,21 @@ fn jni_add_nodes<'local>(
                 );
                 for node in node_list.layout_nodes.into_iter() {
                     if node.use_measure_func {
-                        add_view_measure(
+                        add_style_measure(
                             node.layout_id,
                             node.parent_layout_id,
                             node.child_index,
-                            node.view,
+                            node.style,
+                            node.name,
                             java_jni_measure_text,
                         );
                     } else {
-                        add_view(
+                        add_style(
                             node.layout_id,
                             node.parent_layout_id,
                             node.child_index,
-                            node.view,
-                            node.base_view,
+                            node.style,
+                            node.name,
                         );
                     }
                 }
@@ -189,7 +191,7 @@ fn jni_add_nodes<'local>(
             }
         }
     } else {
-        throw_basic_exception(&mut env, format!("Internal JNI Error: {:?}", bytes_nodes.err()));
+        throw_basic_exception(&mut env, format!("Internal JNI Error: {:?}", bytes_views.err()));
     }
 
     let layout_response = compute_node_layout(root_layout_id);

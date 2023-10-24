@@ -29,7 +29,7 @@ use figma_import::{
     NodeQuery, SerializedDesignDoc, ViewData,
 };
 use layout::{
-    add_view, add_view_measure, clear_views, compute_node_layout, get_node_layout, print_layout,
+    add_style, add_style_measure, clear_views, compute_node_layout, get_node_layout, print_layout,
     remove_view, set_node_size,
 };
 use std::collections::HashMap;
@@ -82,15 +82,28 @@ fn add_view_to_layout(
             }
         }
         if use_measure_func {
-            add_view_measure(my_id, parent_layout_id, child_index, view.clone(), measure_func);
+            add_style_measure(
+                my_id,
+                parent_layout_id,
+                child_index,
+                view.style.clone(),
+                view.name.clone(),
+                measure_func,
+            );
         } else {
             let mut fixed_view = view.clone();
             fixed_view.style.width = Dimension::Points(view.style.bounding_box.width);
             fixed_view.style.height = Dimension::Points(view.style.bounding_box.height);
-            add_view(my_id, parent_layout_id, child_index, fixed_view, None);
+            add_style(
+                my_id,
+                parent_layout_id,
+                child_index,
+                fixed_view.style.clone(),
+                fixed_view.name.clone(),
+            );
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
-        add_view(my_id, parent_layout_id, child_index, view.clone(), None);
+        add_style(my_id, parent_layout_id, child_index, view.style.clone(), view.name.clone());
         let mut index = 0;
         for child in children {
             add_view_to_layout(child, id, my_id, index, replacements, views);

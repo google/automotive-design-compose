@@ -87,7 +87,6 @@ internal fun DesignFrame(
     // (row/column/etc) to the replacement component at some point.
     val replacementComponent = customizations.getComponent(name)
     if (replacementComponent != null) {
-        val myParentLayout = parentLayout?.withBaseView(view)
         replacementComponent(
             object : ComponentReplacementContext {
                 override val layoutModifier = layoutInfo.selfModifier
@@ -99,7 +98,7 @@ internal fun DesignFrame(
                 }
 
                 override val textStyle: TextStyle? = null
-                override val parentLayout = myParentLayout
+                override val parentLayout = parentLayout
             }
         )
         return true
@@ -150,8 +149,8 @@ internal fun DesignFrame(
             setLayoutState,
             parentLayoutId,
             childIndex,
-            view,
-            parentLayout?.baseView
+            style,
+            view.name
         )
         onDispose {}
     }
@@ -170,7 +169,9 @@ internal fun DesignFrame(
             // there are no other parent frames performing layout, layout computation can be
             // performed.
             DisposableEffect(view) {
-                LayoutManager.finishLayout(layoutId, parentLayout?.rootLayoutId ?: layoutId)
+                var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+                if (rootLayoutId == -1) rootLayoutId = layoutId
+                LayoutManager.finishLayout(layoutId, rootLayoutId)
                 onDispose {}
             }
         }

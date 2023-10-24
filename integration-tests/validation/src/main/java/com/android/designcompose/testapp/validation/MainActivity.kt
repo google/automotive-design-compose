@@ -27,6 +27,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -288,15 +289,18 @@ fun OpenLinkTest() {
                         when (index) {
                             0 ->
                                 OpenLinkTestDoc.Red(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             1 ->
                                 OpenLinkTestDoc.Green(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             2 ->
                                 OpenLinkTestDoc.Blue(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             3 ->
                                 OpenLinkTestDoc.Square(
@@ -309,12 +313,17 @@ fun OpenLinkTest() {
                                                 { irc ->
                                                     OpenLinkTestDoc.PurpleCircle(
                                                         parentLayout =
-                                                            ParentLayoutInfo(irc.parentLayoutId, i)
+                                                            ParentLayoutInfo(
+                                                                irc.parentLayoutId,
+                                                                i,
+                                                                rc.rootLayoutId
+                                                            )
                                                     )
                                                 }
                                             }
                                         ),
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             else ->
                                 OpenLinkTestDoc.Square(
@@ -327,12 +336,17 @@ fun OpenLinkTest() {
                                                 { irc ->
                                                     OpenLinkTestDoc.PurpleCircle(
                                                         parentLayout =
-                                                            ParentLayoutInfo(irc.parentLayoutId, i)
+                                                            ParentLayoutInfo(
+                                                                irc.parentLayoutId,
+                                                                i,
+                                                                rc.rootLayoutId
+                                                            )
                                                     )
                                                 }
                                             }
                                         ),
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                         }
                     }
@@ -584,7 +598,8 @@ fun ItemSpacingTest() {
                 content = { index ->
                     { rc ->
                         ItemSpacingTestDoc.Square(
-                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                            parentLayout =
+                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                         )
                     }
                 }
@@ -595,7 +610,8 @@ fun ItemSpacingTest() {
                 content = { index ->
                     { rc ->
                         ItemSpacingTestDoc.Square(
-                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                            parentLayout =
+                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                         )
                     }
                 }
@@ -629,9 +645,9 @@ fun RecursiveCustomizations() {
             ReplacementContent(
                 count = 1,
                 content = {
-                    { replacementContext ->
+                    { rc ->
                         RecursiveCustomizationsDoc.NameFrame(
-                            parentLayout = ParentLayoutInfo(replacementContext.parentLayoutId, 0)
+                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                         )
                     }
                 }
@@ -640,24 +656,24 @@ fun RecursiveCustomizations() {
             ReplacementContent(
                 count = 3,
                 content = { index ->
-                    { replacementContext ->
+                    { rc ->
                         when (index) {
                             0 ->
                                 RecursiveCustomizationsDoc.TitleFrame(
                                     parentLayout =
-                                        ParentLayoutInfo(replacementContext.parentLayoutId, 0),
+                                        ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId),
                                     title = "First"
                                 )
                             1 ->
                                 RecursiveCustomizationsDoc.TitleFrame(
                                     parentLayout =
-                                        ParentLayoutInfo(replacementContext.parentLayoutId, 1),
+                                        ParentLayoutInfo(rc.parentLayoutId, 1, rc.rootLayoutId),
                                     title = "Second"
                                 )
                             else ->
                                 RecursiveCustomizationsDoc.TitleFrame(
                                     parentLayout =
-                                        ParentLayoutInfo(replacementContext.parentLayoutId, 2),
+                                        ParentLayoutInfo(rc.parentLayoutId, 2, rc.rootLayoutId),
                                     title = "Third"
                                 )
                         }
@@ -1556,7 +1572,8 @@ fun VariantInteractionsTest() {
                         when (index) {
                             0 ->
                                 VariantInteractionsTestDoc.ButtonVariant1(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     title = "One",
                                     onTap = { println("Tap One") },
@@ -1564,7 +1581,8 @@ fun VariantInteractionsTest() {
                                 )
                             1 ->
                                 VariantInteractionsTestDoc.ButtonVariant1(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     title = "Two",
                                     onTap = { println("Tap Two") },
@@ -1572,7 +1590,8 @@ fun VariantInteractionsTest() {
                                 )
                             2 ->
                                 VariantInteractionsTestDoc.ButtonVariant1(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     title = "Three",
                                     onTap = { println("Tap Three") },
@@ -1580,7 +1599,8 @@ fun VariantInteractionsTest() {
                                 )
                             3 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.Grid,
                                     playState = PlayState.Play,
                                     title = "Four",
@@ -1589,7 +1609,8 @@ fun VariantInteractionsTest() {
                                 )
                             4 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.Grid,
                                     playState = PlayState.Play,
                                     title = "Five",
@@ -1598,7 +1619,8 @@ fun VariantInteractionsTest() {
                                 )
                             5 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.Grid,
                                     playState = PlayState.Pause,
                                     title = "Six",
@@ -1607,7 +1629,8 @@ fun VariantInteractionsTest() {
                                 )
                             6 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.Grid,
                                     playState = PlayState.Pause,
                                     title = "Seven",
@@ -1616,7 +1639,8 @@ fun VariantInteractionsTest() {
                                 )
                             7 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     playState = PlayState.Pause,
                                     title = "Eight",
@@ -1625,7 +1649,8 @@ fun VariantInteractionsTest() {
                                 )
                             8 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     playState = PlayState.Pause,
                                     title = "Nine",
@@ -1668,13 +1693,21 @@ interface LayoutReplacementTest {
 @Composable
 fun LayoutReplacementTestCase(idx: Int, rc: ContentReplacementContext) {
     if (idx == 0) {
-        LayoutReplacementTestDoc.Fill(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
+        LayoutReplacementTestDoc.Fill(
+            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
+        )
     } else if (idx == 1) {
-        LayoutReplacementTestDoc.TopLeft(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
+        LayoutReplacementTestDoc.TopLeft(
+            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
+        )
     } else if (idx == 2) {
-        LayoutReplacementTestDoc.BottomRight(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
+        LayoutReplacementTestDoc.BottomRight(
+            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
+        )
     } else if (idx == 3) {
-        LayoutReplacementTestDoc.Center(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
+        LayoutReplacementTestDoc.Center(
+            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
+        )
     }
 }
 
@@ -1764,12 +1797,14 @@ fun CrossAxisFillTest() {
                     { rc ->
                         if (index == 0)
                             CrossAxisFillTestDoc.LargeFixedWidth(
-                                parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                parentLayout =
+                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                 modifier = Modifier.width(200.dp)
                             )
                         else
                             CrossAxisFillTestDoc.FillParentWidth(
-                                parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                parentLayout =
+                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                             )
                     }
                 }
@@ -2014,27 +2049,28 @@ fun LayoutTests() {
             ReplacementContent(
                 count = numChildren,
                 content = { index ->
-                    { replacementContext ->
+                    { rc ->
                         if (index % 2 == 0)
                             LayoutTestsDoc.BlueSquare(
                                 parentLayout =
-                                    ParentLayoutInfo(replacementContext.parentLayoutId, index)
+                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                             )
                         else
                             LayoutTestsDoc.RedSquare(
                                 parentLayout =
-                                    ParentLayoutInfo(replacementContext.parentLayoutId, index)
+                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                             )
                     }
                 }
             ),
         parent =
             ReplacementContent(
-                count = 1,
+                count = 3,
                 content = { index ->
                     { rc ->
-                        LayoutTestsDoc.Fill(
-                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                        LayoutTestsDoc.BlueSquare(
+                            parentLayout =
+                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                         )
                     }
                 }

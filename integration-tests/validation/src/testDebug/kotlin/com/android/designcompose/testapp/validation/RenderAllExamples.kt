@@ -19,6 +19,7 @@ package com.android.designcompose.testapp.validation
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertAny
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
@@ -54,11 +55,11 @@ class RenderAllExamples(private val config: TestConfig) {
     @Test
     fun testRender() {
         composeTestRule.setContent(config.fileComposable)
+        composeTestRule.waitForIdle()
         composeTestRule
             .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
             .onFirst()
-            .onSiblings()
-            .assertAny(
+            .assert(
                 SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, DocRenderStatus.Rendered)
             )
     }

@@ -18,11 +18,10 @@ package com.android.designcompose.testapp.helloworld
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertAny
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.onSiblings
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.docClassSemanticsKey
@@ -67,8 +66,7 @@ class RenderHelloWorld {
         with(composeTestRule) {
             setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
             onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, HelloWorldDoc.javaClass.name))
-                .onSiblings()
-                .assertAny(
+                .assert(
                     SemanticsMatcher.expectValue(
                         docRenderStatusSemanticsKey,
                         DocRenderStatus.Rendered

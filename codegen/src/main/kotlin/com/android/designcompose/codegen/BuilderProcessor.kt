@@ -91,6 +91,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import androidx.compose.runtime.Composable\n"
         file += "import androidx.compose.ui.text.TextStyle\n"
         file += "import androidx.compose.foundation.layout.Box\n"
+        file += "import androidx.compose.foundation.layout.size\n" +
+                "import androidx.compose.ui.unit.dp\n"
         file += "import android.graphics.Bitmap\n"
         file += "import androidx.compose.ui.Modifier\n"
         file += "import androidx.compose.ui.semantics.semantics\n"
@@ -822,7 +824,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("    ) {\n")
             // Embed the Doc's class to allow matching on in tests
             out.appendText("        val className = javaClass.name\n")
-            out.appendText("        Box(modifier = Modifier.semantics { sDocClass = className})\n")
+//            out.appendText(
+//                "        Box(modifier = Modifier.size(0.dp).semantics { sDocClass = className})\n"
+//            )
             out.appendText("        val customizations = remember { CustomizationContext() }\n")
             out.appendText("        customizations.setKey(key)\n")
             out.appendText("        customizations.mergeFrom(LocalCustomizationContext.current)\n")
@@ -962,7 +966,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("                placeholder = $placeholderComposable,")
             }
             out.appendText("                customizations = customizations,\n")
-            out.appendText("                modifier = modifier,\n")
+            out.appendText("                modifier = modifier.semantics { sDocClass = className},\n")
             out.appendText(
                 "                serverParams = DocumentServerParams(queries, ignoredImages()),\n"
             )

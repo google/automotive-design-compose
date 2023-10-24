@@ -16,6 +16,7 @@
 
 package com.android.designcompose.cargoplugin
 
+import org.gradle.api.Project
 import java.io.File
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
@@ -26,4 +27,11 @@ interface CargoPluginExtension {
     val crateDir: DirectoryProperty // The cargo workspace to compile
     val abi:
         SetProperty<String> // The ABI's to compile https://developer.android.com/ndk/guides/abis
+    val hostLibsOut: DirectoryProperty
+}
+
+fun Project.initializeExtension(): CargoPluginExtension {
+    val cargoExtension = extensions.create("cargo", CargoPluginExtension::class.java)
+    cargoExtension.hostLibsOut.convention(layout.buildDirectory.dir("intermediates/host_rust_libs"))
+    return cargoExtension
 }

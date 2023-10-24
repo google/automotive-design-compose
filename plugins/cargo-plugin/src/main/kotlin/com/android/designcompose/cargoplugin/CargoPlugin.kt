@@ -52,16 +52,12 @@ class CargoPlugin : Plugin<Project> {
         // Filter the ABIs using configurable Gradle properties
         val activeAbis = getActiveAbis(cargoExtension.abi, project)
 
-        //        project.createConfiguration()
-        //            val cargoDebugHostTask =
-        //                project.registerHostCargoTask(cargoExtension, CargoBuildType.DEBUG)
-        //
-        //
-        //            project.artifacts { artifacts ->
-        //                artifacts.add("hostLibs", cargoDebugHostTask.get().outputFile){
-        //                    it.builtBy(cargoDebugHostTask)
-        //                }
-        //            }
+        project.gradle.afterProject{
+            val cargoDebugHostTask =
+                project.registerHostCargoTask(cargoExtension, CargoBuildType.DEBUG)
+
+        }
+
 
         // withPlugin(String) will do the action once the plugin is applied, or immediately
         // if the plugin is already applied

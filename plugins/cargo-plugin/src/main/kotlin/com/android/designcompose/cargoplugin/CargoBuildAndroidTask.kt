@@ -16,14 +16,19 @@
 
 package com.android.designcompose.cargoplugin
 
+import org.gradle.api.Project
+import org.gradle.api.file.Directory
 import javax.inject.Inject
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskProvider
+import org.gradle.configurationcache.extensions.capitalized
 import org.gradle.process.ExecOperations
 
 /**
@@ -45,7 +50,7 @@ import org.gradle.process.ExecOperations
  */
 
 abstract class CargoBuildAndroidTask @Inject constructor(private val executor: ExecOperations) :
-    CargoBuildBaseTask() {
+    CargoBuildTask() {
 
     @get:PathSensitive(PathSensitivity.ABSOLUTE)
     @get:InputDirectory
@@ -82,3 +87,30 @@ abstract class CargoBuildAndroidTask @Inject constructor(private val executor: E
     }
 
 }
+/**
+ * Create cargo task
+ *
+ * @param this@createAndroidCargoTask The project to create the task in
+ * @param cargoExtension Configuration for this plugin
+ * @param variant Android build variant that this task will build for
+ * @param abi The Android ABI to compile
+ * @param ndkDir The directory containing the NDK tools
+ */
+fun Project.registerAndroidCargoTask(
+    cargoExtension: CargoPluginExtension,
+    buildType: CargoBuildType,
+    compileApi: Int,
+    abi: String,
+    ndkDir: Provider<Directory>
+): TaskProvider<CargoBuildAndroidTask> =
+    tasks.register(
+        "cargoBuild${abi.capitalized()}${buildType.toString().capitalized()}",
+        CargoBuildAndroidTask::class.java
+    ) { task ->
+        task.applyBaseConfig(cargoExtension, this, buildType)
+        task.androidAbi.set(abi)
+        task.ndkDirectory.set(ndkDir)
+        task.compileApi.set(compileApi)
+        // Don't set the outLibDir, it's set by the task's consumer
+    }
+

@@ -19,8 +19,6 @@ package com.android.designcompose
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.test.assertNotNull

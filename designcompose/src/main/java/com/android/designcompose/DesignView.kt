@@ -941,7 +941,6 @@ internal fun DesignDocInternal(
         }
     }
 
-
     var noFrameErrorMessage = ""
     var noFrameBgColor = Color(0x00000000)
 
@@ -949,8 +948,6 @@ internal fun DesignDocInternal(
     if (doc != null) {
         val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)
         if (startFrame != null) {
-
-    Box(modifier = Modifier.size(0.dp).semantics { sDocRenderStatus = docRenderStatus })
             LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
                 DesignView(
@@ -1021,7 +1018,11 @@ internal fun DesignDocInternal(
         designSwitcher()
     } else {
         CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
-            Box(Modifier.fillMaxSize().background(noFrameBgColor).padding(20.dp)) {
+            Box(
+                Modifier.fillMaxSize().background(noFrameBgColor).padding(20.dp).semantics {
+                    sDocRenderStatus = docRenderStatus
+                }
+            ) {
                 BasicText(text = noFrameErrorMessage, style = TextStyle(fontSize = 24.sp))
             }
             designSwitcher()

@@ -18,10 +18,9 @@ package com.android.designcompose.testapp.validation.figmaIntegrationTests
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertAny
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onSiblings
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocRenderStatus
@@ -88,8 +87,7 @@ class FetchAndRenderExamples(
         composeTestRule
             .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, fileClass))
             .onFirst()
-            .onSiblings()
-            .assertAny(
+            .assert(
                 SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, DocRenderStatus.Rendered)
             )
     }

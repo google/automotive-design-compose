@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.FeedbackLevel
@@ -200,7 +201,7 @@ private interface DesignSwitcher {
                 designSwitcherDocId(),
                 NodeQuery.NodeName("#SettingsView"),
                 customizations = customizations,
-                modifier = modifier,
+                modifier = modifier.semantics { sDocClass = DesignSwitcherDoc.javaClass.name },
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 designSwitcherPolicy = DesignSwitcherPolicy.IS_DESIGN_SWITCHER,
                 liveUpdateMode = getLiveMode(),

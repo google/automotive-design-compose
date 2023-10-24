@@ -20,11 +20,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertAny
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.onSiblings
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.docClassSemanticsKey

@@ -16,14 +16,16 @@
 
 package com.android.designcompose
 
-import androidx.compose.ui.test.SemanticsMatcher.Companion.expectValue
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
-import androidx.compose.ui.test.assertAny
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
-import androidx.compose.ui.test.onSiblings
-
-fun SemanticsNodeInteraction.assertRenderStatus(status: DocRenderStatus) =
-    onSiblings().assertAny(expectValue(docRenderStatusSemanticsKey, status))
 
 fun ComposeContentTestRule.onDCDoc(genDoc: Any) =
-    onNode(expectValue(docClassSemanticsKey, genDoc.javaClass.name))
+    onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, genDoc.javaClass.name))
+
+fun SemanticsNodeInteraction.assertRenderStatus(status: DocRenderStatus) =
+    assert(SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, status))
+
+fun ComposeContentTestRule.assertDCRenderStatus(status: DocRenderStatus) =
+    onNode(SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, status)).assertExists()

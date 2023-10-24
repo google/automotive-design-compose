@@ -22,6 +22,7 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.HelloWorldDoc
 import com.android.designcompose.HelloWorldWrongNodeDoc
 import com.android.designcompose.TestUtils
+import com.android.designcompose.assertDCRenderStatus
 import com.android.designcompose.assertRenderStatus
 import com.android.designcompose.onDCDoc
 import org.junit.Before
@@ -51,7 +52,8 @@ class DocRenderSemanticBehavior {
         with(composeTestRule) {
             setContent { HelloWorldWrongNodeDoc.nonExistentFrame() }
             TestUtils.triggerLiveUpdate()
-            onDCDoc(HelloWorldWrongNodeDoc).assertRenderStatus(DocRenderStatus.NodeNotFound)
+            onDCDoc(HelloWorldWrongNodeDoc).assertDoesNotExist()
+            assertDCRenderStatus(DocRenderStatus.NodeNotFound)
         }
     }
 }

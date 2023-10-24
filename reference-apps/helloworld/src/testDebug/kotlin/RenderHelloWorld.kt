@@ -18,11 +18,15 @@ package com.android.designcompose.testapp.helloworld
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertAny
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onSiblings
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.designcompose.docIdSemanticsKey
+import com.android.designcompose.DocRenderStatus
+import com.android.designcompose.docClassSemanticsKey
+import com.android.designcompose.docRenderStatusSemanticsKey
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.RoborazziRule
 import org.junit.Rule
@@ -34,7 +38,7 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * Render hello world
  *
- * Basic test that uses Robolectrict's native graphics to test that HelloWorld renders.
+ * Basic test that uses Robolectric's native graphics to test that HelloWorld renders.
  *
  * Includes Roborazzi for Screenshot tests,
  */
@@ -62,7 +66,14 @@ class RenderHelloWorld {
     fun testHello() {
         with(composeTestRule) {
             setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
-            onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId)).assertExists()
+            onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, HelloWorldDoc.javaClass.name))
+                .onSiblings()
+                .assertAny(
+                    SemanticsMatcher.expectValue(
+                        docRenderStatusSemanticsKey,
+                        DocRenderStatus.Rendered
+                    )
+                )
             onNodeWithText("Testers!", substring = true).assertExists()
         }
     }

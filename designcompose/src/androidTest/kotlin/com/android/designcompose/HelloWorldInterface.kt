@@ -29,3 +29,8 @@ interface HelloWorld {
 }
 
 const val helloWorldFileName = "HelloWorldDoc_$helloWorldDocId.dcf"
+
+@DesignDoc(id = helloWorldDocId)
+interface HelloWorldWrongNode {
+    @DesignComponent(node = "#NonExistentNode", hideDesignSwitcher = true) fun nonExistentFrame()
+}

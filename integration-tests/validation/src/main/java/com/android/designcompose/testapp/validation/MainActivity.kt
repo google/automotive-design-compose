@@ -116,43 +116,63 @@ const val TAG = "DesignCompose"
 
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
-        Triple("Hello", { HelloWorld() }, "pxVlixodJqZL95zo2RzTHl"),
-        Triple("Image Update", { ImageUpdateTest() }, "oQw7kiy94fvdVouCYBC9T0"),
-        Triple("Telltales", { TelltaleTest() }, "TZgHrKWx8wvQM7UPTyEpmz"),
-        Triple("OpenLink", { OpenLinkTest() }, "r7m4tqyKv6y9DWcg7QBEDf"),
-        Triple("Variant *", { VariantAsteriskTest() }, "gQeYHGCSaBE4zYSFpBrhre"),
-        Triple("Alignment", { AlignmentTest() }, "JIjE9oKQbq8ipi66ab5UaK"),
-        Triple("Battleship", { BattleshipTest() }, "RfGl9SWnBEvdg8T1Ex6ZAR"),
-        Triple("H Constraints", { HConstraintsTest() }, "KuHLbsKA23DjZPhhgHqt71"),
-        Triple("V Constraints", { VConstraintsTest() }, "KuHLbsKA23DjZPhhgHqt71"),
-        Triple("Interaction", { InteractionTest() }, "8Zg9viyjYTnyN29pbkR1CE"),
-        Triple("Shadows", { ShadowsTest() }, "OqK58Y46IqP4wIgKCWys48"),
-        Triple("Item Spacing", { ItemSpacingTest() }, "YXrHBp6C6OaW5ShcCYeGJc"),
-        Triple("Recurse Customization", { RecursiveCustomizations() }, "o0GWzcqdOWEgzj4kIeIlAu"),
-        Triple("Color Tint", { ColorTintTest() }, "MCtUD3yjONxK6rQm65yqM5"),
-        Triple("Variant Properties", { VariantPropertiesTest() }, "4P7zDdrQxj7FZsKJoIQcx1"),
+        Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
+        Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
+        Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
+        Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
+        Triple("Variant *", { VariantAsteriskTest() }, VariantAsteriskTestDoc.javaClass.name),
+        Triple("Alignment", { AlignmentTest() }, AlignmentTestDoc.javaClass.name),
+        Triple("Battleship", { BattleshipTest() }, BattleshipDoc.javaClass.name),
+        Triple("H Constraints", { HConstraintsTest() }, ConstraintsDoc.javaClass.name),
+        Triple("V Constraints", { VConstraintsTest() }, ConstraintsDoc.javaClass.name),
+        Triple("Interaction", { InteractionTest() }, InteractionTestDoc.javaClass.name),
+        Triple("Shadows", { ShadowsTest() }, ShadowsTestDoc.javaClass.name),
+        Triple("Item Spacing", { ItemSpacingTest() }, ItemSpacingTestDoc.javaClass.name),
+        Triple(
+            "Recurse Customization",
+            { RecursiveCustomizations() },
+            RecursiveCustomizationsDoc.javaClass.name
+        ),
+        Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
+        Triple(
+            "Variant Properties",
+            { VariantPropertiesTest() },
+            VariantPropertiesTestDoc.javaClass.name
+        ),
         // Lazy Grid doesn't actually use a doc
         Triple("Lazy Grid", { LazyGridItemSpans() }, null),
-        Triple("Grid Layout", { GridLayoutTest() }, "JOSOEvsrjvMqanyQa5OpNR"),
-        Triple("Grid Widget", { GridWidgetTest() }, "OBhNItd9i9J2LwVYuLxEIx"),
-        Triple("List Widget", { ListWidgetTest() }, "9ev0MBNHFrgTqJOrAGcEpV"),
-        Triple("1px Separator", { OnePxSeparatorTest() }, "EXjTHxfMNBtXDrz8hr6MFB"),
-        Triple("Variant Interactions", { VariantInteractionsTest() }, "WcsgoLR4aDRSkZHY29Qdhq"),
-        Triple("Layout Replacement", { LayoutReplacementTest() }, "dwk2GF7RiNvlbbAKPjqldx"),
-        Triple("Text Elide", { TextElideTest() }, "oQ7nK49Ya5PJ3GpjI5iy8d"),
-        Triple("Fancy Fills", { FancyFillTest() }, "xQ9cunHt8VUm6xqJJ2Pjb2"),
-        Triple("Fill Container", { FillTest() }, "dB3q96FkxkTO4czn5NqnxV"),
-        Triple("CrossAxis Fill", { CrossAxisFillTest() }, "GPr1cx4n3zBPwLhqlSL1ba"),
+        Triple("Grid Layout", { GridLayoutTest() }, GridLayoutTestDoc.javaClass.name),
+        Triple("Grid Widget", { GridWidgetTest() }, GridWidgetTestDoc.javaClass.name),
+        Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
+        Triple("1px Separator", { OnePxSeparatorTest() }, OnePxSeparatorDoc.javaClass.name),
+        Triple(
+            "Variant Interactions",
+            { VariantInteractionsTest() },
+            VariantInteractionsTestDoc.javaClass.name
+        ),
+        Triple(
+            "Layout Replacement",
+            { LayoutReplacementTest() },
+            LayoutReplacementTestDoc.javaClass.name
+        ),
+        Triple("Text Elide", { TextElideTest() }, TextElideTestDoc.javaClass.name),
+        Triple("Fancy Fills", { FancyFillTest() }, FancyFillTestDoc.javaClass.name),
+        Triple("Fill Container", { FillTest() }, FillTestDoc.javaClass.name),
+        Triple("CrossAxis Fill", { CrossAxisFillTest() }, CrossAxisFillTestDoc.javaClass.name),
         Triple(
             "Grid Layout Documentation",
             { GridLayoutDocumentation() },
-            "MBNjjSbzzKeN7nBjVoewsl"
+            GridLayoutDoc.javaClass.name
         ),
-        Triple("Blend Modes", { BlendModeTest() }, "ZqX5i5g6inv9tANIwMMXUV"),
-        Triple("Vector Rendering", { VectorRenderingTest() }, "Z3ucY0wMAbIwZIa6mLEWIK"),
-        Triple("Dials Gauges", { DialsGaugesTest() }, "lZj6E9GtIQQE4HNLpzgETw"),
-        Triple("Masks", { MaskTest() }, "mEmdUVEIjvBBbV0kELPy37"),
-        Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67")
+        Triple("Blend Modes", { BlendModeTest() }, BlendModeTestDoc.javaClass.name),
+        Triple(
+            "Vector Rendering",
+            { VectorRenderingTest() },
+            VectorRenderingTestDoc.javaClass.name
+        ),
+        Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
+        Triple("Masks", { MaskTest() }, MaskTestDoc.javaClass.name),
+        Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
     )
 
 // TEST Basic Hello World example

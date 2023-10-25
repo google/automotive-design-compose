@@ -92,6 +92,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import androidx.compose.ui.text.TextStyle\n"
         file += "import android.graphics.Bitmap\n"
         file += "import androidx.compose.ui.Modifier\n"
+        file += "import androidx.compose.ui.semantics.semantics\n"
         file += "import androidx.compose.runtime.mutableStateOf\n"
         file += "import androidx.compose.runtime.remember\n"
         file += "import androidx.compose.ui.platform.ComposeView\n"
@@ -135,6 +136,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import com.android.designcompose.setVisible\n"
         file += "import com.android.designcompose.TapCallback\n"
         file += "import com.android.designcompose.ParentComponentInfo\n"
+        file += "import com.android.designcompose.sDocClass\n"
         file += "import com.android.designcompose.LocalCustomizationContext\n\n"
 
         return file
@@ -816,6 +818,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Generate the function body by filling out customizations and then returning
             // the @Composable DesignDoc function
             out.appendText("    ) {\n")
+            // Embed the Doc's class to allow matching on in tests
+            out.appendText("        val className = javaClass.name\n")
             out.appendText("        val customizations = remember { CustomizationContext() }\n")
             out.appendText("        customizations.setKey(key)\n")
             out.appendText("        customizations.mergeFrom(LocalCustomizationContext.current)\n")
@@ -955,7 +959,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("                placeholder = $placeholderComposable,")
             }
             out.appendText("                customizations = customizations,\n")
-            out.appendText("                modifier = modifier,\n")
+            out.appendText(
+                "                modifier = modifier.semantics { sDocClass = className},\n"
+            )
             out.appendText(
                 "                serverParams = DocumentServerParams(queries, ignoredImages()),\n"
             )

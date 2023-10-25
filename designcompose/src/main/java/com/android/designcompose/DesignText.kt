@@ -210,6 +210,8 @@ internal fun DesignText(
             fontStyle = fontStyle,
             textAlign =
                 customTextStyle?.textAlign
+            textAlign =
+                customTextStyle?.textAlign
                     ?: when (style.text_align) {
                         is TextAlign.Center -> androidx.compose.ui.text.style.TextAlign.Center
                         is TextAlign.Right -> androidx.compose.ui.text.style.TextAlign.Right

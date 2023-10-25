@@ -19,11 +19,14 @@ package com.android.designcompose.testapp.validation
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
 import com.android.designcompose.DesignSettings
-import com.android.designcompose.docIdSemanticsKey
+import com.android.designcompose.DocRenderStatus
+import com.android.designcompose.docClassSemanticsKey
+import com.android.designcompose.docRenderStatusSemanticsKey
 import com.github.takahirom.roborazzi.RoborazziRule
 import java.io.File
 import org.junit.BeforeClass
@@ -42,7 +45,7 @@ class RenderAllExamples(private val config: TestConfig) {
     data class TestConfig(
         internal val fileName: String,
         internal val fileComposable: @Composable () -> Unit,
-        internal val fileId: String
+        internal val fileClass: String
     )
 
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
@@ -50,10 +53,13 @@ class RenderAllExamples(private val config: TestConfig) {
     @Test
     fun testRender() {
         composeTestRule.setContent(config.fileComposable)
+        composeTestRule.waitForIdle()
         composeTestRule
-            .onAllNodes(SemanticsMatcher.expectValue(docIdSemanticsKey, config.fileId))
+            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
             .onFirst()
-            .assertExists()
+            .assert(
+                SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, DocRenderStatus.Rendered)
+            )
     }
 
     @get:Rule

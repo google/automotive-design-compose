@@ -37,13 +37,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
         with:
           egress-policy: audit
 
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
-      - uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43
+      - uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8
         with: 
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build all
@@ -59,7 +59,7 @@ jobs:
     runs-on: ${{ matrix.os }}  
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
         with:
           egress-policy: audit
 
@@ -84,7 +84,7 @@ jobs:
         run: ./install-rust-toolchains.sh
 
       - name: Set up Rust Cache
-        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43
+        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
@@ -109,7 +109,7 @@ jobs:
         ub-branch: [ub-automotive-master, ub-automotive-master-20230622]
     steps:       
     - name: Harden Runner
-      uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+      uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
       with:
         egress-policy: audit
 

@@ -31,11 +31,11 @@ pluginManagement {
 
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
-  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-  repositories {
-    google()
-    mavenCentral()
-  }
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
 
 rootProject.name = "DesignCompose"
@@ -62,23 +62,28 @@ project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
 
 val unbundledAAOSDir: String? by settings
 
-if (unbundledAAOSDir != null) {
-  val unbundledRepo = File(unbundledAAOSDir, "out/aaos-apps-gradle-build/unbundled_m2repo")
-  if (unbundledRepo.exists()) {
+println(unbundledAAOSDir)
 
-    include(":media-lib")
-    project(":media-lib").projectDir = File("reference-apps/aaos-unbundled/media")
-    include(":mediacompose-app")
-    project(":mediacompose-app").projectDir = File("reference-apps/aaos-unbundled/mediacompose")
-
-    dependencyResolutionManagement { repositories { maven(uri(unbundledRepo)) } }
-  } else {
-    throw GradleException(
-        "Unbundled Maven repo missing, cannot proceed with build.\n" +
-            "Go to $unbundledRepo/packages/apps/Car/libs/aaos-apps-gradle-project \n" +
-            "and run:\n" +
-            "./gradlew publishAllPublicationsToLocalRepository")
-  }
+if (unbundledAAOSDir.isNullOrBlank()) {
+    logger.warn("unbundledAAOSDir not set, cannot include MediaCompose in the project")
 } else {
-  logger.warn("unbundledAAOSDir not set, cannot include MediaCompose in the build")
+    logger.info("unbundledAAOSDir set, including MediaCompose in the project")
+
+    val unbundledRepo = File(unbundledAAOSDir, "out/aaos-apps-gradle-build/unbundled_m2repo")
+    if (unbundledRepo.exists()) {
+
+        include(":media-lib")
+        project(":media-lib").projectDir = File("reference-apps/aaos-unbundled/media")
+        include(":mediacompose-app")
+        project(":mediacompose-app").projectDir = File("reference-apps/aaos-unbundled/mediacompose")
+
+        dependencyResolutionManagement { repositories { maven(uri(unbundledRepo)) } }
+    } else {
+        throw GradleException(
+            "Cannot find compiled Unbundled libraries, cannot proceed with build.\n" +
+                "Go to $unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project \n" +
+                "and run:\n" +
+                "./gradlew publishAllPublicationsToLocalRepository"
+        )
+    }
 }

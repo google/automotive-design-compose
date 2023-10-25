@@ -15,13 +15,12 @@
  */
 
 plugins {
-    kotlin("android")
-    id("com.android.library")
-    @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
+    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.ksp)
+    id("designcompose.conventions.base")
 }
 
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(11)) } }
 
 @Suppress("UnstableApiUsage")
 android {
@@ -32,10 +31,6 @@ android {
         minSdk = libs.versions.appMinSdk.get().toInt()
         consumerProguardFiles("consumer-proguard-rules.pro")
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
 
     buildFeatures { compose = true }
 
@@ -43,9 +38,8 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
-    // Deprecated in AGP 8+, replaced by `packaging`
-    @Suppress("DEPRECATION")
-    packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+    packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+    useLibrary("android.car")
 }
 
 dependencies {
@@ -61,13 +55,6 @@ dependencies {
 
     implementation(libs.androidx.legacy.support.v4)
 
-    // The following dependencies are provided by the unbundled aaos repository
-//    val unbundledAAOSDir: String by project
-//    implementation(
-//        files(
-//            "$unbundledAAOSDir/prebuilts/sdk/${unbundledLibs.versions.aaosLatestSDK.get()}/system/android.car-system-stubs.jar"
-//        )
-//    )
     implementation("com.android.car:car-apps-common:UNBUNDLED")
     api("com.android.car:car-media-common:UNBUNDLED")
 

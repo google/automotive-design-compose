@@ -15,19 +15,16 @@
  */
 
 plugins {
-    kotlin("android")
-    id("com.android.application")
-    @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
+    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
-
+    id("designcompose.conventions.base")
 }
 
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(11)) } }
 
 var applicationID = "com.android.designcompose.reference.mediacompose"
 
-@Suppress("UnstableApiUsage")
 android {
     namespace = applicationID
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -41,11 +38,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 
     signingConfigs {
@@ -80,9 +72,8 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
-    // Deprecated in AGP 8+, replaced by `packaging`
-    @Suppress("DEPRECATION")
-    packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+    packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+    useLibrary("android.car")
 }
 
 dependencies {

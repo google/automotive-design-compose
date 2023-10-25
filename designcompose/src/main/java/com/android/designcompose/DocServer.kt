@@ -16,40 +16,33 @@
 
 package com.android.designcompose
 
-import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.annotation.RestrictTo
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
-import androidx.core.util.Consumer
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.android.designcompose.common.DocumentServerParams
-import com.google.common.annotations.VisibleForTesting
-import io.grpc.StatusRuntimeException
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.lang.ref.WeakReference
 import java.net.ConnectException
 import java.net.SocketException
+import java.time.Instant
 import java.util.Optional
 import kotlin.concurrent.thread
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 internal const val TAG = "DesignCompose"
@@ -67,6 +60,25 @@ internal class LiveDocSubscriptions(
     val subscribers: ArrayList<LiveDocSubscription> = ArrayList(),
 )
 
+/**
+ * Design doc status
+ *
+ * Publicly accessible status for a DesignDoc. Accessible via DesignSettings.designDocStatuses
+ */
+class DesignDocStatus() {
+    // If set, the time when the doc was last loaded from storage. Otherwise, this has not happened
+    var lastLoadFromDisk: Instant? = null
+        internal set
+    // If set, the time when the doc's status was last updated from Figma, whether or not the doc
+    // had changed. If unset then the doc has not been successfully queried from Figma yet
+    var lastFetch: Instant? = null
+        internal set
+    // If set, the time when a full fetch of the doc from Figma was last performed.
+    // Otherwise this has not happened
+    var lastUpdateFromFetch: Instant? = null
+        internal set
+}
+
 object DesignSettings {
     internal var liveUpdatesEnabled = false
     // Toast.makeText causes a crash in AAOS on secondary displays with a
@@ -75,14 +87,15 @@ object DesignSettings {
     internal var toastsEnabled = true
     private var parentActivity = WeakReference<ComponentActivity>(null)
     internal var liveUpdateSettings: LiveUpdateSettingsRepository? = null
-    private var figmaApiKeyFlow: Flow<String?>? = null
-    internal var figmaApiKeyStateFlow: StateFlow<String?>? = null
-    internal var isDocumentLive: Flow<Boolean>? = null
+    internal var figmaToken = mutableStateOf<String?>(null)
+    internal var isDocumentLive = mutableStateOf(false)
     private var fontDb: HashMap<String, FontFamily> = HashMap()
+    internal var fileFetchStatus: HashMap<String, DesignDocStatus> = HashMap()
 
-    @VisibleForTesting internal var defaultIODispatcher = Dispatchers.IO
+    @VisibleForTesting
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    fun testOnlyFigmaFetchStatus(fileId: String) = fileFetchStatus[fileId]
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun enableLiveUpdates(
         activity: ComponentActivity,
     ) {
@@ -99,17 +112,32 @@ object DesignSettings {
         // This sets that all up.
         liveUpdateSettings =
             LiveUpdateSettingsRepository(activity.applicationContext.liveUpdateSettings)
-        figmaApiKeyFlow = liveUpdateSettings!!.settingsUpdateFlow
-        figmaApiKeyStateFlow =
-            figmaApiKeyFlow!!.stateIn(activity.lifecycleScope, SharingStarted.Eagerly, null)
 
-        isDocumentLive =
-            figmaApiKeyStateFlow!!.mapLatest { latestKey ->
-                latestKey != null && liveUpdatesEnabled
+        // Launch a coroutine that awaits updates to the Figma Token
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.settingsUpdateFlow.collectLatest { newTokenValue ->
+                // Store the new value locally
+                figmaToken.value = newTokenValue
+
+                if (liveUpdatesEnabled) {
+                    if (figmaToken.value != null) {
+                        // If live update's enabled and the new token isn't null then start live
+                        // updates
+                        isDocumentLive.value = true
+                        DocServer.startLiveUpdates()
+                        return@collectLatest
+                    } else {
+                        showMessageInToast(
+                            "No Figma API Key Set - LiveUpdate Disabled",
+                            Toast.LENGTH_LONG
+                        )
+                    }
+                }
+                // Otherwise stop them
+                isDocumentLive.value = false
+                DocServer.stopLiveUpdates()
             }
-
-        // Start listening for the setApiKey intent on the main activity
-        activity.addOnNewIntentListener(setApiKeyListener)
+        }
 
         DocServer.initializeLiveUpdate()
     }
@@ -117,28 +145,6 @@ object DesignSettings {
     fun disableToasts() {
         toastsEnabled = false
     }
-
-    // Intent consumer that checks for a new API Key and stores it.
-    private val setApiKeyListener =
-        Consumer<Intent> { intent ->
-            if (intent?.action == ACTION_SET_API_KEY) {
-                val activity = parentActivity.get()
-                if (activity == null) {
-                    Log.e(TAG, "Cannot set API Key, LiveUpdate not fully initialized")
-                    return@Consumer
-                } else {
-                    intent.getStringExtra(EXTRA_SET_API_KEY)?.let { newKey ->
-                        // Launch the coroutine to save the new value
-                        activity.lifecycleScope.launch(defaultIODispatcher) {
-                            // Grab an instance and set the key
-                            activity.applicationContext.let {
-                                liveUpdateSettings?.setFigmaApiKey(newKey)
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
     fun addFontFamily(name: String, family: FontFamily) {
         fontDb[name] = family
@@ -171,13 +177,11 @@ object DesignSettings {
 
 internal class ActivityLifecycleObserver : DefaultLifecycleObserver {
     override fun onResume(owner: LifecycleOwner) {
-        Log.d(TAG, "onResume.  Starting live updates.")
         super.onResume(owner)
         DocServer.startLiveUpdates()
     }
 
     override fun onPause(owner: LifecycleOwner) {
-        Log.d(TAG, "onPause.  Stopping live updates.")
         super.onPause(owner)
         DocServer.stopLiveUpdates()
     }
@@ -188,6 +192,7 @@ internal class ActivityLifecycleObserver : DefaultLifecycleObserver {
 // scrolling. We clear the cache whenever there is an update from the server.
 internal object SpanCache {
     private val nodeSpanHash: HashMap<DesignNodeData, LazyContentSpan> = HashMap()
+
     internal fun getSpan(nodeData: DesignNodeData): LazyContentSpan? {
         return nodeSpanHash[nodeData]
     }
@@ -215,27 +220,19 @@ internal object DocServer {
 }
 
 internal fun DocServer.initializeLiveUpdate() {
+    Log.i(TAG, "Live Updates initialized")
     periodicFetchRunnable =
         Runnable() {
             thread {
-                try {
-                    if (!fetchDocuments(firstFetch)) {
-                        Log.e(TAG, "Error occurred while fetching or decoding documents.")
-                        return@thread
-                    }
-                    firstFetch = false
-                } catch (e: StatusRuntimeException) {
-                    Log.e(TAG, "API error.  $e")
-                    DesignSettings.showMessageInToast(
-                        "Error accessing the Design Compose API.",
-                        Toast.LENGTH_LONG
-                    )
+                if (!fetchDocuments(firstFetch)) {
+                    Log.e(TAG, "Error occurred while fetching or decoding documents.")
                     return@thread
-                } finally {
-                    // Schedule another run after some time even if there were any
-                    // errors.
-                    scheduleLiveUpdate()
                 }
+                firstFetch = false
+
+                // Schedule another run after some time even if there were any
+                // errors.
+                scheduleLiveUpdate()
             }
         }
     // Kickstart periodic updates of documents
@@ -244,6 +241,7 @@ internal fun DocServer.initializeLiveUpdate() {
 
 internal fun DocServer.stopLiveUpdates() {
     if (DesignSettings.liveUpdatesEnabled) {
+        Log.i(TAG, "Stopping Live Updates")
         pauseUpdates = true
         removeScheduledPeriodicFetchRunnables()
     }
@@ -251,6 +249,7 @@ internal fun DocServer.stopLiveUpdates() {
 
 internal fun DocServer.startLiveUpdates() {
     if (DesignSettings.liveUpdatesEnabled) {
+        Log.i(TAG, "Starting Live Updates")
         pauseUpdates = false
         scheduleLiveUpdate()
     }
@@ -281,8 +280,7 @@ internal fun DocServer.getProxyConfig(): ProxyConfig {
 internal fun DocServer.fetchDocuments(
     firstFetch: Boolean,
 ): Boolean {
-
-    val figmaApiKey = DesignSettings.figmaApiKeyStateFlow?.value
+    val figmaApiKey = DesignSettings.figmaToken?.value
     if (figmaApiKey == null) {
         DesignSettings.showMessageInToast(
             "No Figma API Key Set - LiveUpdate Disabled",
@@ -324,6 +322,11 @@ internal fun DocServer.fetchDocuments(
 
                 // Remember the new document
                 synchronized(documents) { documents[id] = doc }
+                synchronized(DesignSettings.fileFetchStatus) {
+                    val now = Instant.now()
+                    DesignSettings.fileFetchStatus[id]?.lastFetch = now
+                    DesignSettings.fileFetchStatus[id]?.lastUpdateFromFetch = now
+                }
 
                 // Get the list of subscribers to this document id
                 val subs: Array<LiveDocSubscription> =
@@ -344,6 +347,9 @@ internal fun DocServer.fetchDocuments(
                 }
                 Feedback.documentUpdated(id, subs.size)
             } else {
+                synchronized(DesignSettings.fileFetchStatus) {
+                    DesignSettings.fileFetchStatus[id]?.lastFetch = Instant.now()
+                }
                 Feedback.documentUnchanged(id)
             }
         } catch (exception: Exception) {
@@ -426,12 +432,15 @@ internal fun DocServer.doc(
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }
+    synchronized(DesignSettings.fileFetchStatus) {
+        DesignSettings.fileFetchStatus.putIfAbsent(docId, DesignDocStatus())
+    }
 
     // See if we've already loaded this doc
     val preloadedDoc = synchronized(documents) { documents[docId] }
 
     val context = LocalContext.current
-    val saveFile = context.getFileStreamPath(id)
+    val saveFile = context.getFileStreamPath("$id.dcf")
 
     // We can manage the subscription lifecycle using a DisposableEffect (which
     // will run any time id changes, and also on first execution; and runs the
@@ -460,6 +469,10 @@ internal fun DocServer.doc(
                             )
                         if (targetDoc != null) {
                             documents[docId] = targetDoc
+                            synchronized(DesignSettings.fileFetchStatus) {
+                                DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk =
+                                    Instant.now()
+                            }
                         }
                     } catch (error: Throwable) {
                         Feedback.diskLoadFail(id, docId)
@@ -489,10 +502,13 @@ internal fun DocServer.doc(
     // Use the LocalContext to locate this doc in the precompiled serializedDesignDocuments
     val assetManager = context.assets
     try {
-        val assetDoc = assetManager.open("figma/$id")
+        val assetDoc = assetManager.open("figma/$id.dcf")
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }
+            synchronized(DesignSettings.fileFetchStatus) {
+                DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
+            }
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             return decodedDoc
         }

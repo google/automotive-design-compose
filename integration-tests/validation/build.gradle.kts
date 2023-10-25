@@ -15,18 +15,17 @@
  */
 
 plugins {
-    kotlin("android")
-    id("com.android.application")
-    @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
+    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.designcompose)
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices")
-    alias(libs.plugins.designcompose)
+    id("designcompose.conventions.roborazzi")
 }
 
 var applicationID = "com.android.designcompose.testapp.validation"
 
-@Suppress("UnstableApiUsage")
 android {
     namespace = applicationID
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -39,6 +38,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        if (designcompose.figmaToken.isPresent) {
+            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =
+                designcompose.figmaToken.get()
+        }
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -71,17 +74,14 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
-    packaging { resources { excludes.add("/META-INF/*") } }
+    packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
 }
 
 dependencies {
     implementation(libs.designcompose)
     ksp(libs.designcompose.codegen)
 
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
-    androidTestImplementation(composeBom)
-
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.ui.tooling.preview)
@@ -89,10 +89,23 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    testImplementation(kotlin("test"))
+    testImplementation(libs.google.truth)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit)
+    testImplementation(libs.androidx.test.espresso.core)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+
+    androidTestImplementation(testFixtures(project(":designcompose")))
+    androidTestImplementation(kotlin("test"))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.google.truth)
+    androidTestImplementation(libs.androidx.compose.ui.tooling)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.mockk.android)
-    androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.androidx.rules)
 }

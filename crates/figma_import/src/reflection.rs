@@ -98,6 +98,9 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::StrokeAlign>(&samples)
         .expect("couldn't trace StrokeAlign");
     tracer
+        .trace_type::<crate::toolkit_style::StrokeWeight>(&samples)
+        .expect("couldn't trace StrokeWeight");
+    tracer
         .trace_type::<crate::toolkit_style::TextAlign>(&samples)
         .expect("couldn't trace TextAlign");
     tracer

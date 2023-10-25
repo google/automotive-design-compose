@@ -17,7 +17,9 @@
 package com.android.designcompose.cargoplugin
 
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
+import com.android.build.api.variant.LibraryVariant
 import com.android.build.api.variant.Variant
+import com.android.builder.model.PROPERTY_BUILD_ABI
 import java.io.File
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.GradleException
@@ -26,6 +28,7 @@ import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.configurationcache.extensions.capitalized
 
 /**
@@ -38,6 +41,10 @@ import org.gradle.configurationcache.extensions.capitalized
 class CargoPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val cargoExtension = project.extensions.create("cargo", CargoPluginExtension::class.java)
+
+        // Filter the ABIs using configurable Gradle properties
+        val activeAbis = getActiveAbis(cargoExtension.abi, project)
+
         // withPlugin(String) will do the action once the plugin is applied, or immediately
         // if the plugin is already applied
         project.pluginManager.withPlugin("com.android.library") {
@@ -47,12 +54,65 @@ class CargoPlugin : Plugin<Project> {
                 // Create one task per variant and ABI
                 ace.onVariants { variant ->
                     cargoExtension.abi.get().forEach { abi ->
-                        createCargoTask(project, cargoExtension, variant, abi, ndkDir)
+                        val cargoTask =
+                            createCargoTask(project, cargoExtension, variant, abi, ndkDir)
+
+                        // If building a release or the ABI is active, add the task to the build
+                        if (variant.buildType == "release" || activeAbis.get().contains(abi)) {
+                            addDependencyOnTask(variant, cargoTask, project)
+                        }
                     }
                 }
             }
         }
     }
+
+    /**
+     * Add dependency on task
+     *
+     * @param variant The build variant
+     * @param cargoTask The task to add
+     * @param project The full project
+     */
+    private fun addDependencyOnTask(
+        variant: LibraryVariant,
+        cargoTask: TaskProvider<CargoBuildTask>,
+        project: Project
+    ) {
+        with(variant.sources.jniLibs) {
+            if (this != null) {
+                // Add the result to the variant's JNILibs sources. This is all we need to
+                // do to make sure the JNILibs are compiled and included in the library
+                this.addGeneratedSourceDirectory(cargoTask, CargoBuildTask::outLibDir)
+            } else
+                project.logger.error(
+                    "No JniLibs configured by Android Gradle Plugin, Cargo tasks may not run"
+                )
+        }
+    }
+
+    /**
+     * Get active abis
+     *
+     * @param configuredAbis The list of ABIs configured for the plugin
+     * @param project The project to work on
+     * @return
+     */
+    private fun getActiveAbis(
+        configuredAbis: Provider<MutableSet<String>>,
+        project: Project
+    ): Provider<Set<String>> =
+        configuredAbis.map {
+            if (project.findProperty(PROPERTY_ALLOW_ABI_OVERRIDE)?.toString() == "true") {
+                selectActiveAbis(
+                    configuredAbis.get(),
+                    project.findProperty(PROPERTY_BUILD_ABI)?.toString(),
+                    project.findProperty(PROPERTY_ABI_FILTER)?.toString()
+                )
+            } else {
+                it
+            }
+        }
 
     /**
      * Find ndk directory for a given Android configuration
@@ -100,7 +160,7 @@ class CargoPlugin : Plugin<Project> {
         variant: Variant,
         abi: String,
         ndkDir: Provider<Directory>
-    ) {
+    ): TaskProvider<CargoBuildTask> {
         val cargoTask =
             project.tasks.register(
                 "cargoBuild${abi.capitalized()}${variant.name.capitalized()}",
@@ -137,7 +197,7 @@ class CargoPlugin : Plugin<Project> {
                 task.androidAbi.set(abi)
                 task.useReleaseProfile.set(variant.buildType != "debug")
                 task.ndkDirectory.set(ndkDir)
-                task.compileApi.set(variant.minSdkVersion.apiLevel)
+                task.compileApi.set(variant.minSdk.apiLevel)
                 task.cargoTargetDir.set(
                     project.layout.buildDirectory.map { it.dir("intermediates/cargoTarget") }
                 )
@@ -147,15 +207,37 @@ class CargoPlugin : Plugin<Project> {
                 task.shouldRunAfter(project.tasks.named("preBuild"))
             }
 
-        // Add the result to the variant's JNILibs sources. This is all we need to do to make sure
-        // the JNILibs are compiled and included in the library
-        @Suppress("UnstableApiUsage")
-        with(variant.sources.jniLibs) {
-            if (this != null) this.addGeneratedSourceDirectory(cargoTask, CargoBuildTask::outLibDir)
-            else
-                project.logger.error(
-                    "No JniLibs configured by Android Gradle Plugin, Cargo tasks may not run"
-                )
-        }
+        return cargoTask
     }
+}
+
+/**
+ * Select active abis
+ *
+ * @param configuredAbis The Abis configured in the plugin
+ * @param androidInjectedAbis The Abis injected by an Android Studio Build
+ * @param abiFilter The Abi filter set via gradle property
+ * @return
+ */
+internal fun selectActiveAbis(
+    configuredAbis: Set<String>,
+    androidInjectedAbis: String?,
+    abiFilter: String?
+): Set<String> {
+    return if (androidInjectedAbis != null) {
+        // Android injects two ABIs for emulators. The first is the architecture of the host, the
+        // second is the architecture of the device that the AVD is emulating. We just want the
+        // host's architecture
+        val abi = androidInjectedAbis.split(",").first()
+        if (configuredAbis.contains(abi)) setOf(abi)
+        else throw GradleException("Unknown injected build ABI: $abi")
+    } else if (abiFilter != null) {
+        abiFilter
+            .split(",")
+            .map {
+                if (!configuredAbis.contains(it)) throw GradleException("Unknown abiOverride: $it")
+                else it
+            }
+            .toSet()
+    } else configuredAbis
 }

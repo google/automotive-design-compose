@@ -50,6 +50,7 @@ class ApiKeyService : Service() {
     inner class ApiKeyBinder : Binder() {
         fun getService(): ApiKeyService = this@ApiKeyService
     }
+
     private val binder = ApiKeyBinder()
 
     override fun onBind(intent: Intent): IBinder {

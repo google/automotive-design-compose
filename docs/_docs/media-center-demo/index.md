@@ -22,12 +22,12 @@ The Media Center demonstration app uses the DesignCompose library to create a
 fully functional AAOS Media Center app. Use this app to view demonstrations of
 the following:
 
-*   DesignCompose *Live Update* feature, which automatically downloads and
+* DesignCompose *Live Update* feature, which automatically downloads and
     displays Figma designs as they are updated in Figma. This enables designers,
     engineers, and product managers to quickly refine designs and try out new
     ideas in a car, on a test bench, or in an emulator.
 
-*   Full integration with the AAOS Car Media libraries, allowing control and
+* Full integration with the AAOS Car Media libraries, allowing control and
     browsing access of installed media apps. To learn more, see [Customizing
     Media][2]{:.external}
 
@@ -40,17 +40,17 @@ and shows you what DesignCompose can do.
 To run the MediaCompose demonstration app, you need the prerequisites for
 [DesignCompose][4] as well as these items:
 
-*   Access to an Android Automotive OS emulator or test device.
+* Access to an Android Automotive OS emulator or test device.
 
     The Media Center demonstration app requires an AAOS image to run. In
     addition, it's intended to be displayed on an 11-inch (or larger) screen
     with a resolution of at least 1024 x 1028. Ensure your emulator's device
     definition meets these minimum requirements.
 
-*   A platform signing key for your Android emulator or test device (see [Enable
+* A platform signing key for your Android emulator or test device (see [Enable
     browsing of other media apps][5].
 
-*   The current tested release of the [Android Automotive OS unbundled
+* The current tested release of the [Android Automotive OS unbundled
     repository][6]{:.external} (see below)
 
 ### AAOS unbundled setup {#aaos-ub-setup}
@@ -60,9 +60,9 @@ Android platform. These libraries are available outside of AAOS as part of the
 AAOS unbundled repository. Follow these instructions to download them and make
 them available to the Media Center app.
 
-1.  Install the `repo` tool, following the instructions in [Installing
+1. Install the `repo` tool, following the instructions in [Installing
     Repo][7]{:.external}
-1.  Create a directory and download the AAOS unbundled repositories:
+1. Create a directory and download the AAOS unbundled repositories:
 
     ```shell
     mkdir aaos-unbundled
@@ -74,18 +74,18 @@ them available to the Media Center app.
 
     For more information, see the [Unbundled Apps Integration Guide][8]{:.external}
 
-1.  The AAOS unbundled project requires the Android SDK location be set. You can
+1. The AAOS unbundled project requires the Android SDK location be set. You can
     do this in one of two ways:
-    *   Create
+    * Create
         `aaos-unbundled/packages/apps/Car/libs/aaos-apps-gradle-project/local.properties`
         and then set the `sdk.dir` property it contains. Android Studio can do
         this automatically when opening a project. For example, use
         `sdk.dir=/Users/MY-USERNAME/Library/Android/sdk`.
 
-    *   Set the `ANDROID_SDK_ROOT` environment variable with the path to the
+    * Set the `ANDROID_SDK_ROOT` environment variable with the path to the
         Android SDK.
 
-1.  Create a [Gradle property][9] called `unbundledAAOSDir` and set it to the
+1. Create a [Gradle property][9] called `unbundledAAOSDir` and set it to the
     absolute path to your downloaded repository. The Media Center's Gradle
     project uses this property to find the unbundled libraries.
 
@@ -94,9 +94,10 @@ them available to the Media Center app.
     For example, if you downloaded the repositories to
     `/data/git/aaos-unbundled`, you would add:
 
-    ```
+    ```bash
     unbundledAAOSDir=/data/git/aaos-unbundled
     ```
+
 ## Set up Figma {#setUpFigma}
 
 This section describes how to create a Figma Access Token (if one is not already
@@ -112,13 +113,13 @@ Figma Authentication ][12].
 
 The following steps describe how to import the Media Center design documents:
 
-1.  Visit [figma.com][13]{:.external} and log in to your account.
+1. Visit [figma.com][13]{:.external} and log in to your account.
 
-1.  Click **Import File** on the main Figma screen. Locate and import the
+1. Click **Import File** on the main Figma screen. Locate and import the
     `Media1_V2.fig` file in the
     `reference-apps/aaos-unbundled/mediacompose/figma_files` directory.
 
-1.  Open the uploaded design documents and note the **Figma Document ID** in the
+1. Open the uploaded design documents and note the **Figma Document ID** in the
     URLs between `file/` and the name of the document.
 
     For example, the **ID** of the document at
@@ -153,12 +154,12 @@ Typically, a key is used only to sign a release build. However, the Media Center
 app doesn't function without the permissions granted by a platform key.
 Therefore, all variants must be signed.
 
-1.  Acquire a copy of a [keystore file][5] that contains the platform signing
+1. Acquire a copy of a [keystore file][5] that contains the platform signing
     key for your test device or emulator. The key is typically provided as a
     `.keystore` file, with a password for the file and a separate password for
     the key file.
 
-1.  In
+1. In
     `reference-apps/aaos-unbundled/mediacompose/build.gradle.kts`,
     find the `signingConfigs` block in the `android{}` block. Replace the
     contents of the `signingConfigs` block with the path to your key and the
@@ -178,7 +179,7 @@ Therefore, all variants must be signed.
     }
     ```
 
-1.  The Media Center's app's source already sets `signingConfig` to be used by
+1. The Media Center's app's source already sets `signingConfig` to be used by
     all builds with the block below. If you changed the name of the config from
     `platform_UNSECURE`, then update it here as well.
 
@@ -197,25 +198,25 @@ app][17].
 
 Update the Media Center app to load your copy of the Figma Design:
 
-1.  Open the app's `MainActivity.kt` file, located within the Android project at
+1. Open the app's `MainActivity.kt` file, located within the Android project at
     `DC Unbundled Apps/mediacompose/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
 
     The actual file location is
     `reference-apps/aaos-unbundled/mediacompose/src/main/java/com/android/designcompose/reference/mediacompose/MainActivity.kt`.
 
-1.  Find the following line:
+1. Find the following line:
 
     ```kotlin
     @DesignDoc(id = "<A Figma Document ID>", version = "0.1")
     ```
 
-1.  Replace the document ID with the **Figma Document ID** of the Media Center
+1. Replace the document ID with the **Figma Document ID** of the Media Center
     Figma File that you uploaded previously. (See [Import Media Center Figma
     documents][18] for the document IDs).
 
 ## Run the Media Center app and set your Figma access token {#RunApp}
 
-1.  Build and launch the app on your device. You can do this with [Android
+1. Build and launch the app on your device. You can do this with [Android
     Studio][19]{:.external} or manually using Gradle.
 
     Warning: If the app launches and immediately crashes, this might indicate
@@ -224,20 +225,11 @@ Update the Media Center app to load your copy of the Figma Design:
     `java.lang.SecurityException: requires
     android.permission.MEDIA_CONTENT_CONTROL`.
 
-1.  Set your Figma access token in the app by running the `./gradlew
+1. Set your Figma access token in the app by running the `./gradlew
     setFigmaTokenDebug` task from the
     ``reference-apps/aaos-unbundled/mediacompose` directory.
 
-    *   The task reads the token from the `$FIGMA_ACCESS_TOKEN` environment
-        variable that was set in [Storing Your Figma Access Token][20].
-
-    *   Alternatively, you can set the token in one command by running:
-
-    ```shell
-    FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> ./gradlew setFigmaTokenDebug
-    ```
-
-1.  After this, the app fetches the Figma Design document. The rendered design
+1. After this, the app fetches the Figma Design document. The rendered design
     typically appears within one minute.
 
 ### Explore the app! {#ExploreApp}
@@ -262,21 +254,21 @@ A Live Update-enabled app fetches the Figma documents and stores them as a
 serialized file in the app's storage. You can download these files and add them
 to the app's source for inclusion in the APK.
 
-1.  Build and run the app. If necessary, sign in to the app and allow the app to
+1. Build and run the app. If necessary, sign in to the app and allow the app to
     fetch and render the Figma document to the screen.
 
-1.  If the app uses multiple Figma documents, then you must navigate to each
+1. If the app uses multiple Figma documents, then you must navigate to each
     screen that uses a separate document and allow the document to fetch and
     render.
 
-1.  Create a directory in
+1. Create a directory in
     `reference-apps/aaos-unbundled/mediacompose/src/main`
     named `assets` and a directory in `assets` named `figma`.
 
-1.  Open the **Device File Explorer** tool window in Android Studio and go to
+1. Open the **Device File Explorer** tool window in Android Studio and go to
     `/data/user`. This directory contains one or more numbered directories.
 
-1.  Open the directory named `10`. If a `10` directory doesn't exist, open the
+1. Open the directory named `10`. If a `10` directory doesn't exist, open the
     directory named `0`. Within this directory, locate the folder for the Media
     Center app, which is named after the app's package name
     ('com.android.designcompose.reference.mediacompose`). See below if the Media
@@ -294,10 +286,10 @@ to the app's source for inclusion in the APK.
     /data/user/10/com.android.designcompose.reference.mediacompose
     ```
 
-1.  Open the `files` directory, which contains the cached Figma documents, named
+1. Open the `files` directory, which contains the cached Figma documents, named
     `<Doc Name>_<Doc ID>` with no file extension.
 
-1.  Download the cached documents and copy them into the new assets directory
+1. Download the cached documents and copy them into the new assets directory
     created earlier
     (`reference-apps/aaos-unbundled/mediacompose/src/main/assets/figma`).
 
@@ -305,13 +297,13 @@ to the app's source for inclusion in the APK.
 
 You can deactivate Live Update.
 
-1.  Open your project's `MainActivity` file. (See [Configure the Figma document
+1. Open your project's `MainActivity` file. (See [Configure the Figma document
     ID in the Media Center app][22]).
 
-1.  Remove the line `DesignSettings.enableLiveUpdates(this)` from the
+1. Remove the line `DesignSettings.enableLiveUpdates(this)` from the
     `MainActivity.onCreate` function.
 
-1.  Build and run the app. The app displays the rendered design and the Document
+1. Build and run the app. The app displays the rendered design and the Document
     Switcher widget in the upper right corner is not displayed. The project's
     APK files can be installed on any device, with or without internet access.
 
@@ -324,22 +316,22 @@ authenticated as a system app. Ensure that the key being used to sign the app is
 the platform key for the emulator or device that you are installing on.
 
 [1]: {%link _docs/media-center-demo/example-designs.md %}
-[2]: https://source.android.com/docs/devices/automotive/hmi/media/
+[2]: <https://source.android.com/docs/devices/automotive/hmi/media/>
 [3]: {%link _docs/tutorial/index.md %}
 [4]: {%link _docs/index.md %}
 [5]: #MediaContentControl
-[6]: https://source.android.com/docs/devices/automotive/unbundled_apps/integration
-[7]: https://source.android.com/docs/setup/download#installing-repo
-[8]: https://source.android.com/docs/devices/automotive/unbundled_apps/integration#check-out
-[9]: https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_configuration_properties
+[6]: <https://source.android.com/docs/devices/automotive/unbundled_apps/integration>
+[7]: <https://source.android.com/docs/setup/download#installing-repo>
+[8]: <https://source.android.com/docs/devices/automotive/unbundled_apps/integration#check-out>
+[9]: <https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_configuration_properties>
 [10]: #aaos-ub-setup
 [12]: {%link _docs/live-update/setup.md %}
-[13]: https://www.figma.com
-[14]: https://source.android.com/devices/tech/ota/sign_builds#certificates-keys
+[13]: <https://www.figma.com>
+[14]: <https://source.android.com/devices/tech/ota/sign_builds#certificates-keys>
 [15]: #SetDocID
-[17]: https://developer.android.com/studio/build/building-cmdline#gradle_signing
+[17]: <https://developer.android.com/studio/build/building-cmdline#gradle_signing>
 [18]: #ImportDocsSection
-[19]: https://developer.android.com/studio/run
+[19]: <https://developer.android.com/studio/run>
 [20]: {%link _docs/live-update/setup.md %}#StoreFigmaToken
 [21]: {%link _docs/media-center-demo/example-designs.md %}
 [22]: #SetDocID

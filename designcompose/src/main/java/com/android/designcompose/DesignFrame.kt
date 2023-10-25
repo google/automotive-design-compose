@@ -94,10 +94,18 @@ internal fun DesignFrame(
     // it until frameRender() since that function is not a composable.
     val meterValue = customizations.getMeterFunction(name)?.let { it() }
     meterValue?.let { customizations.setMeterValue(name, it) }
-    var m =
-        Modifier.layoutStyle(name, style)
-            .frameRender(style, shape, customImage, document, name, customizations, maskInfo)
-            .then(modifier)
+
+    // Check to see if this node is part of a component set with variants and if any @DesignVariant
+    // annotations set variant properties that match. If so, variantNodeName will be set to the
+    // name of the node with all the variants set to the @DesignVariant parameters
+    val variantNodeName = customizations.getMatchingVariant(componentInfo)
+
+    var m = Modifier.layoutStyle(name, style)
+    // Only render the frame if we don't have a custom variant node that we are about to
+    // render instead
+    if (variantNodeName.isNullOrEmpty())
+        m = m.frameRender(style, shape, customImage, document, name, customizations, maskInfo)
+    m = m.then(modifier)
 
     val customModifier = customizations.getModifier(name)
     if (customModifier != null) {
@@ -114,20 +122,19 @@ internal fun DesignFrame(
             object : ComponentReplacementContext {
                 override val layoutModifier = layoutInfo.selfModifier
                 override val appearanceModifier = m
+
                 @Composable
                 override fun Content() {
                     content(absoluteParentLayoutInfo)
                 }
+
                 override val textStyle: TextStyle? = null
             }
         )
         return
     }
 
-    // Check to see if this node is part of a component set with variants and if any @DesignVariant
-    // annotations set variant properties that match. If so, variantNodeName will be set to the
-    // name of the node with all the variants set to the @DesignVariant parameters
-    val variantNodeName = customizations.getMatchingVariant(componentInfo)
+    // If we a custom variant, compose it instead and then return.
     if (variantNodeName != null) {
         // Get the generated CustomVariantComponent() function and call it with variantNodeName
         val customComposable = customizations.getCustomComposable()
@@ -320,7 +327,7 @@ internal fun DesignFrame(
             // one
             // is specified.
             val lazyItemContent: LazyGridScope.() -> Unit = {
-                val lContent = lazyContent!! { nodeData ->
+                val lContent = lazyContent { nodeData ->
                     getSpan(layoutInfo.gridSpanContent, nodeData)
                 }
 
@@ -457,6 +464,7 @@ internal fun DesignFrame(
                     horizontalArrangement =
                         object : Arrangement.Horizontal {
                             var customSpacing: Int = horizontalSpacing
+
                             init {
                                 if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
                                     customSpacing = layoutInfo.mainAxisSpacing.value
@@ -469,6 +477,7 @@ internal fun DesignFrame(
                                         else layoutInfo.mainAxisSpacing.field0
                                 }
                             }
+
                             override fun Density.arrange(
                                 totalSize: Int,
                                 sizes: IntArray,
@@ -481,6 +490,7 @@ internal fun DesignFrame(
                                         "sizes $sizes layout $layoutDirection out $outPositions"
                                 )
                             }
+
                             override val spacing = customSpacing.dp
                         },
                     verticalArrangement = Arrangement.spacedBy(verticalSpacing.dp),
@@ -523,6 +533,7 @@ internal fun DesignFrame(
                     verticalArrangement =
                         object : Arrangement.Vertical {
                             var customSpacing: Int = verticalSpacing
+
                             init {
                                 if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
                                     customSpacing = layoutInfo.mainAxisSpacing.value
@@ -535,6 +546,7 @@ internal fun DesignFrame(
                                         else layoutInfo.mainAxisSpacing.field0
                                 }
                             }
+
                             override fun Density.arrange(
                                 totalSize: Int,
                                 sizes: IntArray,
@@ -542,6 +554,7 @@ internal fun DesignFrame(
                             ) {
                                 println("verticalArrangement arrange")
                             }
+
                             override val spacing = customSpacing.dp
                         },
                     userScrollEnabled = layoutInfo.scrollingEnabled,

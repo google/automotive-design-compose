@@ -3,6 +3,7 @@ name = "live_update"
 version = "0.1.0"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]
 description = "Figma document serialization library for Android"
+license = "Apache-2.0"
 edition = "2018"
 # https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
 rust-version = "1.68"

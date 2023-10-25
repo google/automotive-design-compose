@@ -39,6 +39,7 @@ dependencies {
     implementation(libs.kotlin.gradlePlugin)
     implementation(libs.ktfmt.gradlePlugin)
     implementation(libs.ksp.gradlePlugin)
+    implementation(libs.roborazzi.gradlePlugin)
     implementation(libs.android.gms.strictVersionMatcher)
     // Allows the precompiled scripts to access our local directory, specifically to
     // Access the version catalog

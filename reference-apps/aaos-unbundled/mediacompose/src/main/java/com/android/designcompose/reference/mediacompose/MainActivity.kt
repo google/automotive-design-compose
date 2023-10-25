@@ -267,14 +267,18 @@ interface CenterDisplay : com.android.designcompose.reference.media.MediaInterfa
         @Design(node = "#media/search/auto-content")
         searchResultsContent: ListContent,
     )
+
     @DesignComponent(node = "#media/now-playing/custom-action-button", override = true)
     fun CustomActionButton(
         @Design(node = "#icon") icon: @Composable (ImageReplacementContext) -> Bitmap?,
         @Design(node = "#media/now-playing/custom-action-button") onTap: TapCallback
     )
+
     @DesignComponent(node = "#media/browse/loading", override = true) fun LoadingPage()
+
     @DesignComponent(node = "#media/browse/section-title", override = true)
     fun GroupHeader(@Design(node = "#title") title: String)
+
     @DesignComponent(node = "#media/source-button", override = true)
     fun SourceButton(
         @DesignVariant(property = "#media/source-button") sourceButtonType: SourceButtonType,
@@ -284,6 +288,7 @@ interface CenterDisplay : com.android.designcompose.reference.media.MediaInterfa
         @Design(node = "#num-results-container") showResults: Boolean,
         @Design(node = "#num-results") numResults: String,
     )
+
     @DesignComponent(node = "#media/page-header/nav-button", override = true)
     fun PageHeaderNavButton(
         @DesignVariant(property = "#media/page-header/nav-button") navButtonType: NavButtonType,
@@ -291,6 +296,7 @@ interface CenterDisplay : com.android.designcompose.reference.media.MediaInterfa
         @Design(node = "#name") name: String,
         @Design(node = "#icon") icon: @Composable (ImageReplacementContext) -> Bitmap?,
     )
+
     @DesignComponent(node = "#media/browse/item", override = true)
     fun BrowseItem(
         @DesignVariant(property = "#media/browse/item") browseType: BrowseItemType,
@@ -301,6 +307,7 @@ interface CenterDisplay : com.android.designcompose.reference.media.MediaInterfa
         @Design(node = "#subtitle") showSubtitle: Boolean,
         @Design(node = "#icon") icon: @Composable (ImageReplacementContext) -> Bitmap?,
     )
+
     @DesignComponent(node = "#media/error/frame", override = true)
     fun ErrorFrame(
         @Design(node = "#media/error/message") errorMessage: String,
@@ -308,7 +315,9 @@ interface CenterDisplay : com.android.designcompose.reference.media.MediaInterfa
         @Design(node = "#media/error/button") showErrorButton: Boolean,
         @Design(node = "#media/error/button") onTapErrorButton: TapCallback
     )
+
     @DesignComponent(node = "#media/browse/header-nav", override = true) fun BrowseHeaderNav()
+
     @DesignComponent(node = "#media/browse/header-drill-down", override = true)
     fun BrowseHeaderDrillDown()
 }

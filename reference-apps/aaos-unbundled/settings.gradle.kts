@@ -28,19 +28,6 @@ dependencyResolutionManagement {
             version("designcompose", "+")
         }
     }
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-        maven(uri(File(unbundledAAOSDir, "out/aaos-apps-gradle-build/unbundled_m2repo")))
-    }
-}
-
-pluginManagement {
-    repositories {
-        google()
-        gradlePluginPortal()
-    }
 }
 
 // Reference apps

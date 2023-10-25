@@ -170,6 +170,7 @@ data class ImageContext(
         }
         return null
     }
+
     fun getPixelWidth(): Int? {
         if (width is Dimension.Points) return width.value.toInt()
         if (minWidth is Dimension.Points) return minWidth.value.toInt()
@@ -404,7 +405,7 @@ fun CustomizationContext.getOpenLinkCallback(nodeName: String): OpenLinkCallback
 fun CustomizationContext.getMeterValue(nodeName: String): Float? {
     val c = cs[nodeName] ?: return null
     var value = if (c.meterValue.isPresent) c.meterValue.get() else return null
-    if (value?.isNaN() == true) value = 0F
+    if (!value.isFinite()) value = 0F
     return value
 }
 
@@ -430,4 +431,5 @@ fun CustomizationContext.mergeFrom(other: CustomizationContext) {
         cs[it.key] = it.value.clone()
     }
     other.variantProperties.forEach { variantProperties[it.key] = it.value }
+    customComposable = other.customComposable
 }

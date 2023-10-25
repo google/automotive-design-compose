@@ -16,45 +16,27 @@ apps with Figma.
 
 To configure access to your documents, you need to generate an access token.
 
-1.  From any page on [figma.com][1]{:.external}, click the drop-down in the
+1. From any page on [figma.com][1]{:.external}, click the drop-down in the
     upper right corner and select **Settings**.
 
     ![Settings](./mediacomposere--jvzkvorv2nc.png)
 
     **Figure 1.** Figma Settings Menu.
 
-1.  Scroll down to **Personal access tokens** and click **Generate new token**
+2. Scroll down to **Personal access tokens** and click **Generate new token**
 
-1.  Automotive Design for Compose requires a token with read-only File content access. All other scopes can be left set to "No access". Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
+3. Automotive Design for Compose requires a token with read-only File content access. All other scopes can be left set to "No access". Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
 
     ![Figma Token Generation Screen](figma-token.png)
 
-1.  Record the new **Figma Access Token** token. This token is used in the next
-    section.
+4. Save the token in the following well-known location on your file system. The location depends on your operating system:
+
+    - Linux, MacOS: `$HOME/.config/figma_access_token`
+
+    - Windows: `%APPDATA%\figma_access_token`
 
 To learn more about personal access tokens, see [Manage personal access
 tokens][2]{:.external} in the Figma help center.
-
-### Store your Figma access token {#StoreFigmaToken}
-
-The token grants full access to the contents of your Figma files, so don't
-commit the token into source control. You can store the token by writing it to a
-file on your local machine, such as `.figma_token.env`.
-
-Create the file by running:
-
-```shell
-echo FIGMA_ACCESS_TOKEN=<YOUR_ACCESS_TOKEN> > .figma_token.env
-```
-
-To load the key into the variable, run the following:
-
-```shell
-export $(cat .figma_token.env)
-```
-
-You can add the previous line to your `.bashrc` file to automatically set the
-variable when you log in.
 
 ## Set your Figma access token in an app {#SetUpFigmaToken}
 
@@ -64,14 +46,16 @@ method can be used for greater control.
 
 ### With a Gradle task {#FigmaTokenWithGradle}
 
-The DesignCompose Gradle plugin adds the `SetFigmaToken` tasks to the Gradle build. Individual tasks are generated for each 
-build variant, such as `Debug` and `Release`. Configure your Figma token to the
-environment variable `$FIGMA_ACCESS_TOKEN` and call the instance of the task for
-whichever app you're working with. For example:
+The DesignCompose Gradle plugin adds the `SetFigmaToken` tasks to the Gradle build. Individual tasks are generated for each
+build variant, such as `Debug` and `Release`. The tasks can be found in the `designcompose` menu in the Gradle panel of Android Studio.
+
+![setFigmaToken task location](image.png)
+
+The tasks can also be triggered from the command line:
 
 ```shell
 cd reference-apps/tutorial
-FIGMA_ACCESS_TOKEN=XXXXXX-XXXXXXXXXX-XXXX ./gradlew setFigmaTokenDebug
+./gradlew setFigmaTokenDebug
 ```
 
 The task uses adb to check whether the app is installed and skip execution if it

@@ -114,39 +114,45 @@ val interFont =
 
 const val TAG = "DesignCompose"
 
-val EXAMPLES: ArrayList<Pair<String, @Composable () -> Unit>> =
+val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
-        Pair("Hello", { HelloWorld() }),
-        Pair("Image Update", { ImageUpdateTest() }),
-        Pair("Telltales", { TelltaleTest() }),
-        Pair("OpenLink", { OpenLinkTest() }),
-        Pair("Variant *", { VariantAsteriskTest() }),
-        Pair("Alignment", { AlignmentTest() }),
-        Pair("Battleship", { BattleshipTest() }),
-        Pair("H Constraints", { HConstraintsTest() }),
-        Pair("V Constraints", { VConstraintsTest() }),
-        Pair("Interaction", { InteractionTest() }),
-        Pair("Shadows", { ShadowsTest() }),
-        Pair("Recurse Customization", { RecursiveCustomizations() }),
-        Pair("Item Spacing", { ItemSpacingTest() }),
-        Pair("Color Tint", { ColorTintTest() }),
-        Pair("Variant Properties", { VariantPropertiesTest() }),
-        Pair("Lazy Grid", { LazyGridItemSpans() }),
-        Pair("Grid Layout", { GridLayoutTest() }),
-        Pair("Grid Widget", { GridWidgetTest() }),
-        Pair("List Widget", { ListWidgetTest() }),
-        Pair("Variant Interactions", { VariantInteractionsTest() }),
-        Pair("1px Separator", { OnePxSeparatorTest() }),
-        Pair("Layout Replacement", { LayoutReplacementTest() }),
-        Pair("Text Elide", { TextElideTest() }),
-        Pair("Fancy Fills", { FancyFillTest() }),
-        Pair("Fill Container", { FillTest() }),
-        Pair("CrossAxis Fill", { CrossAxisFillTest() }),
-        Pair("Grid Layout Documentation", { GridLayoutDocumentation() }),
-        Pair("Blend Modes", { BlendModeTest() }),
-        Pair("Vector Rendering", { VectorRenderingTest() }),
-        Pair("Dials Gauges", { DialsGaugesTest() }),
-        Pair("Masks", { MaskTest() })
+        Triple("Hello", { HelloWorld() }, "pxVlixodJqZL95zo2RzTHl"),
+        Triple("Image Update", { ImageUpdateTest() }, "oQw7kiy94fvdVouCYBC9T0"),
+        Triple("Telltales", { TelltaleTest() }, "TZgHrKWx8wvQM7UPTyEpmz"),
+        Triple("OpenLink", { OpenLinkTest() }, "r7m4tqyKv6y9DWcg7QBEDf"),
+        Triple("Variant *", { VariantAsteriskTest() }, "gQeYHGCSaBE4zYSFpBrhre"),
+        Triple("Alignment", { AlignmentTest() }, "JIjE9oKQbq8ipi66ab5UaK"),
+        Triple("Battleship", { BattleshipTest() }, "RfGl9SWnBEvdg8T1Ex6ZAR"),
+        Triple("H Constraints", { HConstraintsTest() }, "KuHLbsKA23DjZPhhgHqt71"),
+        Triple("V Constraints", { VConstraintsTest() }, "KuHLbsKA23DjZPhhgHqt71"),
+        Triple("Interaction", { InteractionTest() }, "8Zg9viyjYTnyN29pbkR1CE"),
+        Triple("Shadows", { ShadowsTest() }, "OqK58Y46IqP4wIgKCWys48"),
+        Triple("Item Spacing", { ItemSpacingTest() }, "YXrHBp6C6OaW5ShcCYeGJc"),
+        Triple("Recurse Customization", { RecursiveCustomizations() }, "o0GWzcqdOWEgzj4kIeIlAu"),
+        Triple("Color Tint", { ColorTintTest() }, "MCtUD3yjONxK6rQm65yqM5"),
+        Triple("Variant Properties", { VariantPropertiesTest() }, "4P7zDdrQxj7FZsKJoIQcx1"),
+        // Lazy Grid doesn't actually use a doc
+        Triple("Lazy Grid", { LazyGridItemSpans() }, null),
+        Triple("Grid Layout", { GridLayoutTest() }, "JOSOEvsrjvMqanyQa5OpNR"),
+        Triple("Grid Widget", { GridWidgetTest() }, "OBhNItd9i9J2LwVYuLxEIx"),
+        Triple("List Widget", { ListWidgetTest() }, "9ev0MBNHFrgTqJOrAGcEpV"),
+        Triple("1px Separator", { OnePxSeparatorTest() }, "EXjTHxfMNBtXDrz8hr6MFB"),
+        Triple("Variant Interactions", { VariantInteractionsTest() }, "WcsgoLR4aDRSkZHY29Qdhq"),
+        Triple("Layout Replacement", { LayoutReplacementTest() }, "dwk2GF7RiNvlbbAKPjqldx"),
+        Triple("Text Elide", { TextElideTest() }, "oQ7nK49Ya5PJ3GpjI5iy8d"),
+        Triple("Fancy Fills", { FancyFillTest() }, "xQ9cunHt8VUm6xqJJ2Pjb2"),
+        Triple("Fill Container", { FillTest() }, "dB3q96FkxkTO4czn5NqnxV"),
+        Triple("CrossAxis Fill", { CrossAxisFillTest() }, "GPr1cx4n3zBPwLhqlSL1ba"),
+        Triple(
+            "Grid Layout Documentation",
+            { GridLayoutDocumentation() },
+            "MBNjjSbzzKeN7nBjVoewsl"
+        ),
+        Triple("Blend Modes", { BlendModeTest() }, "ZqX5i5g6inv9tANIwMMXUV"),
+        Triple("Vector Rendering", { VectorRenderingTest() }, "Z3ucY0wMAbIwZIa6mLEWIK"),
+        Triple("Dials Gauges", { DialsGaugesTest() }, "lZj6E9GtIQQE4HNLpzgETw"),
+        Triple("Masks", { MaskTest() }, "mEmdUVEIjvBBbV0kELPy37"),
+        Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67")
     )
 
 // TEST Basic Hello World example
@@ -468,8 +474,11 @@ interface InteractionTest {
     fun clickedShiftCtrlB()
     // Inject a meta-C key when the 'clickedC()' function is called
     @DesignKeyAction(key = 'C', metaKeys = [DesignMetaKey.MetaMeta]) fun clickedMetaC()
+
     @DesignKeyAction(key = 'A', metaKeys = []) fun clickedA()
+
     @DesignKeyAction(key = 'B', metaKeys = []) fun clickedB()
+
     @DesignKeyAction(key = 'C', metaKeys = []) fun clickedC()
 }
 
@@ -597,9 +606,15 @@ enum class SquareBorder {
     Curved
 }
 
+enum class Shape {
+    Circle,
+    Square,
+}
+
 // TEST Variant Extra Properties Test
 // This tests that even though the Figma doc has four variant properties for the component named
 // #SquareBorder, we can only use two in the code and pick a variant that matches the two.
+
 @DesignDoc(id = "4P7zDdrQxj7FZsKJoIQcx1")
 interface VariantPropertiesTest {
     @DesignComponent(node = "#MainFrame")
@@ -608,6 +623,10 @@ interface VariantPropertiesTest {
         @Design(node = "#Square2") square2: @Composable (ComponentReplacementContext) -> Unit,
         @Design(node = "#Square3") square3: @Composable (ComponentReplacementContext) -> Unit,
         @Design(node = "#Square4") square4: @Composable (ComponentReplacementContext) -> Unit,
+        @DesignVariant(property = "#bg1") bg1: Shape,
+        @DesignVariant(property = "#bg2") bg2: Shape,
+        @DesignVariant(property = "#SquareBorder") type: SquareBorder,
+        @DesignVariant(property = "#SquareColor") color: SquareColor,
     )
 
     @DesignComponent(node = "#SquareBorder")
@@ -619,6 +638,11 @@ interface VariantPropertiesTest {
 
 @Composable
 fun VariantPropertiesTest() {
+    val (bg1, setBg1) = remember { mutableStateOf(Shape.Circle) }
+    val (bg2, setBg2) = remember { mutableStateOf(Shape.Circle) }
+    val (borderType, setBorderType) = remember { mutableStateOf(SquareBorder.Sharp) }
+    val (color, setColor) = remember { mutableStateOf(SquareColor.Green) }
+
     VariantPropertiesTestDoc.MainFrame(
         square1 = {
             VariantPropertiesTestDoc.Square(type = SquareBorder.Sharp, color = SquareColor.Blue)
@@ -631,8 +655,37 @@ fun VariantPropertiesTest() {
         },
         square4 = {
             VariantPropertiesTestDoc.Square(type = SquareBorder.Curved, color = SquareColor.Green)
-        }
+        },
+        bg1 = bg1,
+        bg2 = bg2,
+        type = borderType,
+        color = color,
     )
+
+    Column(modifier = Modifier.absoluteOffset(x = 20.dp, y = 600.dp)) {
+        Row {
+            Text("Background 1 ", fontSize = 30.sp, color = Color.Black)
+            Button("Square", bg1 == Shape.Square) { setBg1(Shape.Square) }
+            Button("Circle", bg1 == Shape.Circle) { setBg1(Shape.Circle) }
+        }
+        Row {
+            Text("Background 2 ", fontSize = 30.sp, color = Color.Black)
+            Button("Square", bg2 == Shape.Square) { setBg2(Shape.Square) }
+            Button("Circle", bg2 == Shape.Circle) { setBg2(Shape.Circle) }
+        }
+        Row {
+            Text("Border ", fontSize = 30.sp, color = Color.Black)
+            Button("Sharp", borderType == SquareBorder.Sharp) { setBorderType(SquareBorder.Sharp) }
+            Button("Curved", borderType == SquareBorder.Curved) {
+                setBorderType(SquareBorder.Curved)
+            }
+        }
+        Row {
+            Text("Color ", fontSize = 30.sp, color = Color.Black)
+            Button("Green", color == SquareColor.Green) { setColor(SquareColor.Green) }
+            Button("Blue", color == SquareColor.Blue) { setColor(SquareColor.Blue) }
+        }
+    }
 }
 
 @Composable
@@ -848,18 +901,22 @@ interface GridLayoutTest {
         @Design(node = "#HorizontalGrid2")
         horizontal2: ListContent,
     )
+
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#VItem")
     fun VItem(
         @DesignVariant(property = "#VItem") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#SectionTitle")
     fun SectionTitle(@Design(node = "#Title") title: String)
+
     @DesignComponent(node = "#VSectionTitle")
     fun VSectionTitle(@Design(node = "#Title") title: String)
 }
@@ -1035,18 +1092,22 @@ interface GridWidgetTest {
         @Design(node = "#list-auto-content")
         items: ListContent,
     )
+
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#VItem")
     fun VItem(
         @DesignVariant(property = "#VItem") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#SectionTitle")
     fun SectionTitle(@Design(node = "#Title") title: String)
+
     @DesignComponent(node = "#VSectionTitle")
     fun VSectionTitle(@Design(node = "#Title") title: String)
 }
@@ -1196,11 +1257,13 @@ interface ListWidgetTest {
         @Design(node = "#col-content-scrolling")
         colScrollItems: ListContent,
     )
+
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") type: ItemType,
         @Design(node = "#Title") title: String,
     )
+
     @DesignComponent(node = "#VItem")
     fun VItem(
         @DesignVariant(property = "#VItem") type: ItemType,
@@ -1327,12 +1390,14 @@ interface VariantInteractionsTest {
         content: @Composable () -> Unit,
         @DesignVariant(property = "#ButtonCircle") buttonCircleState: ButtonState,
     )
+
     @DesignComponent(node = "#ButtonVariant1")
     fun ButtonVariant1(
         @DesignVariant(property = "#ButtonVariant1") type: ItemType,
         @Design(node = "#Title") title: String,
         @Design(node = "#ButtonVariant1") onTap: TapCallback
     )
+
     @DesignComponent(node = "#ButtonVariant2")
     fun ButtonVariant2(
         @DesignVariant(property = "#ButtonVariant2") type: ItemType,
@@ -1428,9 +1493,13 @@ interface LayoutReplacementTest {
         @Design(node = "#parent2") parent2: @Composable () -> Unit,
         @Design(node = "#parent3") parent3: @Composable () -> Unit,
     )
+
     @DesignComponent(node = "#fill") fun Fill()
+
     @DesignComponent(node = "#topleft") fun TopLeft()
+
     @DesignComponent(node = "#bottomright") fun BottomRight()
+
     @DesignComponent(node = "#center") fun Center()
 }
 
@@ -1504,7 +1573,9 @@ interface CrossAxisFillTest {
         @Design(node = "#FixedWidth") fixedWidth: Modifier,
         @Design(node = "#OuterColumn") outerColumnContents: @Composable () -> Unit,
     )
+
     @DesignComponent(node = "#LargeFixedWidth") fun LargeFixedWidth()
+
     @DesignComponent(node = "#FillParentWidth") fun FillParentWidth()
 }
 
@@ -1539,9 +1610,12 @@ interface GridLayout {
         @Design(node = "#BrowseList")
         items: ListContent,
     )
+
     @DesignComponent(node = "#SectionTitle")
     fun SectionTitle(@Design(node = "#Title") title: String)
+
     @DesignComponent(node = "#LoadingPage") fun LoadingPage()
+
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") itemType: ItemType,
@@ -1655,6 +1729,16 @@ interface MaskTest {
 @Composable
 fun MaskTest() {
     MaskTestDoc.Main()
+}
+
+@DesignDoc(id = "MWnVAfW3FupV4VMLNR1m67")
+interface VariableBorderTest {
+    @DesignComponent(node = "#MainFrame") fun Main()
+}
+
+@Composable
+fun VariableBorderTest() {
+    VariableBorderTestDoc.Main()
 }
 
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test

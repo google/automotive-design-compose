@@ -16,6 +16,20 @@
 
 rootProject.name = "DesignCompose Plugins"
 
+pluginManagement {
+    repositories {
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        gradlePluginPortal()
+    }
+    includeBuild("../build-logic")
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -25,17 +39,9 @@ dependencyResolutionManagement {
     versionCatalogs { create("libs") { from(files("../gradle/libs.versions.toml")) } }
 }
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-    }
-    includeBuild("../build-logic")
-}
-
 plugins {
     // Downloads the required Java Toolchain, if needed.
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
 }
 
 include("cargo-plugin")

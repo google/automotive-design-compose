@@ -15,12 +15,12 @@
  */
 
 plugins {
-    kotlin("android")
-    id("com.android.application")
-    @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
+    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
-    id("designcompose.conventions.base")
     alias(libs.plugins.designcompose)
+    id("designcompose.conventions.base")
+    id("designcompose.conventions.roborazzi")
 }
 
 var applicationID = "com.android.designcompose.testapp.helloworld"
@@ -38,6 +38,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        if (designcompose.figmaToken.isPresent) {
+            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =
+                designcompose.figmaToken.get()
+        }
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -70,16 +74,15 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
-    packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+    packaging.resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
 }
 
 dependencies {
     implementation(project(":designcompose"))
+    androidTestImplementation(testFixtures(project(":designcompose")))
     ksp(project(":codegen"))
 
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
-    androidTestImplementation(composeBom)
+    implementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material)
@@ -88,6 +91,17 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit)
+    testImplementation(libs.androidx.test.espresso.core)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+
+    androidTestImplementation(kotlin("test"))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espresso.core)

@@ -14,16 +14,7 @@
  * limitations under the License.
  */
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        // These are plugins that are published as external jars, integrating directly into the
-        // build scripts
-        classpath(libs.kotlin.gradlePlugin)
-    }
+plugins {
+    id("designcompose.conventions.base")
+    alias(libs.plugins.kotlinJvm) apply false
 }
-
-plugins { id("designcompose.conventions.base") }

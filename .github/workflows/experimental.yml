@@ -17,7 +17,7 @@
 # key build tools and dependencies
 name: Nightly Experimental Builds
 
-on: 
+on:
   schedule:
     - cron: "0 0 * * *"
   # Also run on pull requests that change this file
@@ -44,7 +44,7 @@ jobs:
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
       - uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43
-        with: 
+        with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build all
         run: cargo build --all-targets --all-features
@@ -56,7 +56,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         gradle_release: [current, release-candidate]
-    runs-on: ${{ matrix.os }}  
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
@@ -106,8 +106,8 @@ jobs:
     needs: sdk-build
     strategy:
       matrix:
-        ub-branch: [ub-automotive-master, ub-automotive-master-20230622]
-    steps:       
+        ub-branch: [ub-automotive-master, ub-automotive-master-20231011]
+    steps:
     - name: Harden Runner
       uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
       with:
@@ -153,4 +153,4 @@ jobs:
         cache-read-only: true
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
-          check 
+          check

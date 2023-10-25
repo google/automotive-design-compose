@@ -168,12 +168,16 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             { GridLayoutDocumentation() },
             GridLayoutDoc.javaClass.name
         ),
-        Triple("Blend Modes", { BlendModeTest() }, "ZqX5i5g6inv9tANIwMMXUV"),
-        Triple("Vector Rendering", { VectorRenderingTest() }, "Z3ucY0wMAbIwZIa6mLEWIK"),
-        Triple("Dials Gauges", { DialsGaugesTest() }, "lZj6E9GtIQQE4HNLpzgETw"),
-        Triple("Masks", { MaskTest() }, "mEmdUVEIjvBBbV0kELPy37"),
-        Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67"),
-        Triple("Layout Tests", { LayoutTests() }, "Gv63fYTzpeH2ZtxP4go31E")
+        Triple("Blend Modes", { BlendModeTest() }, BlendModeTestDoc.javaClass.name),
+        Triple(
+            "Vector Rendering",
+            { VectorRenderingTest() },
+            VectorRenderingTestDoc.javaClass.name
+        ),
+        Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
+        Triple("Masks", { MaskTest() }, MaskTestDoc.javaClass.name),
+        Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
+        Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name)
     )
 
 // TEST Basic Hello World example

@@ -16,22 +16,13 @@
 
 package com.android.designcompose.cargoplugin
 
-import com.android.build.api.attributes.BuildTypeAttr
-import com.android.build.api.variant.Component
-import com.android.build.api.variant.HasUnitTest
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.android.build.api.variant.LibraryVariant
-import com.android.build.gradle.tasks.factory.AndroidUnitTest
 import com.android.builder.model.PROPERTY_BUILD_ABI
 import org.gradle.api.GradleException
 import org.gradle.api.Named
-import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.LibraryElements
-import org.gradle.api.attributes.Usage
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
@@ -52,10 +43,11 @@ class CargoPlugin : Plugin<Project> {
         // Filter the ABIs using configurable Gradle properties
         val activeAbis = getActiveAbis(cargoExtension.abi, project)
 
-//        val cargoDebugHostTask =
-                project.registerHostCargoTask(cargoExtension, CargoBuildType.DEBUG)
+        // Hacky: GH-502
+        // Register the tasks, which is fine, but they need to be hooked up to an outgoing Gradle
+        // ConfigurationF
+        project.registerHostCargoTask(cargoExtension, CargoBuildType.DEBUG)
         project.registerHostCargoTask(cargoExtension, CargoBuildType.RELEASE)
-
 
         // withPlugin(String) will do the action once the plugin is applied, or immediately
         // if the plugin is already applied
@@ -69,6 +61,7 @@ class CargoPlugin : Plugin<Project> {
                 )
         }
     }
+
     private fun LibraryAndroidComponentsExtension.configureCargoPlugin(
         project: Project,
         cargoExtension: CargoPluginExtension,
@@ -76,73 +69,11 @@ class CargoPlugin : Plugin<Project> {
     ) {
         val ndkDir = this.findNdkDirectory(project)
 
-//        finalizeDsl { dsl ->
-//            dsl.testOptions.unitTests.all { testTask ->
-//                (testTask as? AndroidUnitTest)?.let {
-//                    val buildType =
-//                        it.variantName.removeSuffix("UnitTest").toCargoBuildType()
-//                            ?: throw GradleException("Unknown buildType ${it.variantName}")
-//                    testTask.dependsOn(project.tasks.named(makeHostCargoBuildTaskName(buildType)))
-//                    testTask.systemProperty(
-//                        "java.library.path",
-//                        makeHostCargoOutputDir(cargoExtension, buildType)
-//                    )
-//                }
-//            }
-//        }
-
-//        beforeVariants {
-//            (it as? HasUnitTest)?.unitTest?.sources
-//        }
-
         // Create one task per variant and ABI
         onVariants { variant ->
             val buildType =
                 if (variant.buildType == "release") CargoBuildType.RELEASE else CargoBuildType.DEBUG
-//
-//            println("Variant ${variant.name}")
-//            variant.components.forEach {
-//                println("${it.name}: ${it.runtimeConfiguration.attributes.toString()}")
-//            }
-//            variant.components
-//                .filter { it is HasUnitTest}
-//                .forEach { component ->
-////                    val nativeCargoTask = project.registerHostCargoTask(cargoExtension, buildType)
-//
-////                    component.sources.resources!!.addGeneratedSourceDirectory(nativeCargoTask, CargoBuildHostTask::outLibDir)
-//
-//
-////
-////                    val newConfig = project.registerHostCargoConfig(component)
-////
-////                    project.artifacts { artifacts ->
-////                        artifacts.add(newConfig.name, nativeCargoTask.get().outputFile) {
-////                            it.builtBy(nativeCargoTask)
-////                        }
-////                    }
-//
-//                    //
-//                    // variant.sources.resources!!.addGeneratedSourceDirectory(nativeCargoTask,
-//                    // CargoBuildHostTask::outLibDir)
-//
-//                    //                component.runtimeConfiguration.dependencies.add{
-//                    //
-//                    //                }
-//                    //                project.artifacts.add(component.runtimeConfiguration, )
-//                    //                component.runtimeConfiguration.dependencies.buildDependencies.
-//
-//                    //                component.artifacts.add(SingleArtifact.ASSETS,
-//                    // nativeCargoTask.map { it.outputFile })
-//                    //
-//                    //
-//                    // component.runtimeConfiguration.artifacts.add(project.configurations.named("hostlibs"),  nativeCargoTask.get().outputFile)
-//                    ////
-//                    // component.artifacts.add<SingleArtifact<RegularFile>(Artifact.FILE,
-//                    // Artifact.Category.OUTPUTS)>(nativeCargoTask:)
-//                    //
-//                    //
-//                }
-//
+
             cargoExtension.abi.get().forEach { abi ->
                 val cargoTask =
                     project.registerAndroidCargoTask(
@@ -155,7 +86,7 @@ class CargoPlugin : Plugin<Project> {
 
                 // If building a release or the ABI is active, add the task to the build
                 if (variant.buildType == "release" || activeAbis.get().contains(abi)) {
-                    addDependencyOnTask(variant, cargoTask, project)
+                    addDependencyOnTask(variant, cargoTask)
                 }
             }
         }
@@ -170,18 +101,16 @@ class CargoPlugin : Plugin<Project> {
      */
     private fun addDependencyOnTask(
         variant: LibraryVariant,
-        cargoTask: TaskProvider<CargoBuildAndroidTask>,
-        project: Project
+        cargoTask: TaskProvider<CargoBuildAndroidTask>
     ) {
         with(variant.sources.jniLibs) {
-            if (this != null) {
-                // Add the result to the variant's JNILibs sources. This is all we need to
-                // do to make sure the JNILibs are compiled and included in the library
-                this.addGeneratedSourceDirectory(cargoTask, CargoBuildAndroidTask::outLibDir)
-            } else
-                project.logger.error(
-                    "No JniLibs configured by Android Gradle Plugin, Cargo tasks may not run"
+            if (this == null)
+                throw GradleException(
+                    "Unexpected state: No JniLibs configured by Android Gradle Plugin"
                 )
+            // Add the result to the variant's JNILibs sources. This is all we need to
+            // do to make sure the JNILibs are compiled and included in the library
+            addGeneratedSourceDirectory(cargoTask, CargoBuildAndroidTask::outLibDir)
         }
     }
 
@@ -215,7 +144,6 @@ class CargoPlugin : Plugin<Project> {
      * We should be able to remove this once b/278740309 is fixed.
      *
      * @param project
-     * @param this@findNdkDirectory Android Components Extension
      * @return
      */
     @Suppress("UnstableApiUsage")

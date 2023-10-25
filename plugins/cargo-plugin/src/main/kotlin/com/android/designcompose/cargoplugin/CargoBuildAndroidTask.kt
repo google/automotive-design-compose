@@ -16,9 +16,9 @@
 
 package com.android.designcompose.cargoplugin
 
+import javax.inject.Inject
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
-import javax.inject.Inject
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -39,16 +39,10 @@ import org.gradle.process.ExecOperations
  * @constructor Create empty Cargo build task
  * @property executor The Gradle ExecOperations service which provides methods for running other
  *   binaries.
- * @property rustSrcs The collection of files that will be compiled. Provided as a collection to aid
- *   Gradle's build cache, but only the root is passed to Cargo
  * @property ndkDirectory The directory containing the NDK to build with
- * @property cargoBin The cargo binary
  * @property androidAbi The ABI to build
  * @property compileApi The API version to build
- * @property useReleaseProfile If set, compile a debug build. Otherwise compile release
- * @property outLibDir Where the libraries will be copied to. Actually set by the Android plugin
  */
-
 abstract class CargoBuildAndroidTask @Inject constructor(private val executor: ExecOperations) :
     CargoBuildTask() {
 
@@ -65,18 +59,20 @@ abstract class CargoBuildAndroidTask @Inject constructor(private val executor: E
         val toolchain =
             Toolchain(androidAbi.get(), compileApi.get(), ndkDirectory.get().asFile, hostOS.get())
         // The path (within the root Cargo target dir) that will contain the compiled .so file
-        val targetOutputDir = cargoTargetDir.get().dir(toolchain.cargoTriple).dir(buildType.get().toString())
+        val targetOutputDir =
+            cargoTargetDir.get().dir(toolchain.cargoTriple).dir(buildType.get().toString())
 
         cargoTargetDir.get().asFile.mkdirs()
 
         executor.exec {
-            baseExecOptions(it)
+            it.applyCommonCargoConfig()
             it.args("--target=${toolchain.cargoTriple}")
 
             it.environment("TARGET_CC", "${toolchain.cc}")
             it.environment(toolchain.linkerEnvName, "${toolchain.cc}")
             it.environment("TARGET_AR", "${toolchain.ar}")
         }
+
         // Copy the final compiled library to the correct location in the output dir.
         val finalOutLibDir = outLibDir.get().dir(androidAbi.get())
         fs.copy {
@@ -85,7 +81,6 @@ abstract class CargoBuildAndroidTask @Inject constructor(private val executor: E
             it.into(finalOutLibDir)
         }
     }
-
 }
 /**
  * Create cargo task
@@ -107,10 +102,9 @@ fun Project.registerAndroidCargoTask(
         "cargoBuild${abi.capitalized()}${buildType.toString().capitalized()}",
         CargoBuildAndroidTask::class.java
     ) { task ->
-        task.applyBaseConfig(cargoExtension, this, buildType)
+        task.applyCommonConfig(cargoExtension, this, buildType)
         task.androidAbi.set(abi)
         task.ndkDirectory.set(ndkDir)
         task.compileApi.set(compileApi)
         // Don't set the outLibDir, it's set by the task's consumer
     }
-

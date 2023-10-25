@@ -1,5 +1,23 @@
+/*
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.android.designcompose.cargoplugin
 
+import java.io.File
+import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -16,13 +34,21 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.UntrackedTask
 import org.gradle.process.ExecSpec
-import java.io.File
-import javax.inject.Inject
 
 @UntrackedTask(
     because =
         "Cargo has it's own up-to-date checks. Trying to reproduce them so that we don't need to run Cargo is infeasible, and any errors will cause out-of-date code to be included"
 )
+
+/**
+ * Cargo build task
+ *
+ * @constructor Create empty Cargo build task
+ * @property rustSrcs The collection of files that will be compiled. Provided as a collection to aid
+ *   Gradle's build cache, but only the root is passed to Cargo
+ * @property cargoBin The cargo binary
+ * @property outLibDir Where the libraries will be copied to. Actually set by the Android plugin
+ */
 abstract class CargoBuildTask : DefaultTask() {
     @get:Inject abstract val fs: FileSystemOperations
 
@@ -40,11 +66,19 @@ abstract class CargoBuildTask : DefaultTask() {
 
     @get:OutputDirectory abstract val outLibDir: DirectoryProperty
 
-
     @get:Internal abstract val cargoTargetDir: DirectoryProperty
 
+    /**
+     * Apply common configuration for the task
+     *
+     * All Cargo tasks will use this configuration
+     *
+     * @param cargoExtension
+     * @param project
+     * @param theBuildType
+     */
     @Internal
-    fun applyBaseConfig(
+    fun applyCommonConfig(
         cargoExtension: CargoPluginExtension,
         project: Project,
         theBuildType: CargoBuildType
@@ -81,16 +115,20 @@ abstract class CargoBuildTask : DefaultTask() {
         group = "build"
     }
 
-    fun baseExecOptions(
-        it: ExecSpec,
-    ) {
-        println("OutLibDir: ${outLibDir.get()}")
-        it.executable(cargoBin.get().absolutePath)
-        it.workingDir(rustSrcs.asPath)
+    /**
+     * Apply Common Cargo Config to an ExecSpec
+     *
+     * This is configuration of a Gradle ExecSpec that is common for all Cargo build tasks
+     *
+     * @param this@baseExecOptions The
+     */
+    fun ExecSpec.applyCommonCargoConfig() {
+        executable(cargoBin.get().absolutePath)
+        workingDir(rustSrcs.asPath)
 
-        it.args("build")
-        it.args("--target-dir=${cargoTargetDir.get().asFile.absolutePath}")
-        it.args("--quiet")
-        if (buildType.get() == CargoBuildType.RELEASE) it.args("--release")
+        args("build")
+        args("--target-dir=${cargoTargetDir.get().asFile.absolutePath}")
+        args("--quiet")
+        if (buildType.get() == CargoBuildType.RELEASE) args("--release")
     }
 }

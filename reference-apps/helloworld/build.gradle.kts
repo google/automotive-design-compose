@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-// Hacky
+// Hacky: GH-502
 import com.android.designcompose.cargoplugin.CargoBuildType
 import com.android.designcompose.cargoplugin.getHostCargoOutputDir
-evaluationDependsOn(":designcompose")
 
+evaluationDependsOn(":designcompose")
+// End Hacky
 plugins {
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.androidApplication)
@@ -81,10 +82,10 @@ android {
 
     packaging.resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
 
+    // Hacky: GH-502
     testOptions {
         unitTests {
             all { test ->
-                // hacky
                 val dcProject = project(":designcompose")
                 test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
                 test.systemProperty(
@@ -94,6 +95,8 @@ android {
             }
         }
     }
+    // End Hacky
+
 }
 
 dependencies {

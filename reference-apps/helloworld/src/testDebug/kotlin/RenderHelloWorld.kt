@@ -61,7 +61,7 @@ class RenderHelloWorld {
                 )
         )
 
-    @Test(expected = AssertionError::class)
+    @Test(expected = AssertionError::class) // TODO: GH-483
     fun testHello() {
         with(composeTestRule) {
             setContent { HelloWorldDoc.mainFrame(name = "Testers!") }

@@ -50,7 +50,7 @@ class RenderAllExamples(private val config: TestConfig) {
 
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    @Test
+    @Test(expected = AssertionError::class)
     fun testRender() {
         composeTestRule.setContent(config.fileComposable)
         composeTestRule

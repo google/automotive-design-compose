@@ -658,7 +658,7 @@ fun RecursiveCustomizations() {
             ),
         content =
             ReplacementContent(
-                count = 3,
+                count = 4,
                 content = { index ->
                     { replacementContext ->
                         when (index) {

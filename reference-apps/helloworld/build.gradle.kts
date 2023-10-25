@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+// Hacky
+import com.android.designcompose.cargoplugin.CargoBuildType
+import com.android.designcompose.cargoplugin.getHostCargoOutputDir
+evaluationDependsOn(":designcompose")
+
 plugins {
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.androidApplication)
@@ -75,6 +80,20 @@ android {
     }
 
     packaging.resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
+
+    testOptions {
+        unitTests {
+            all { test ->
+                // hacky
+                val dcProject = project(":designcompose")
+                test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
+                test.systemProperty(
+                    "java.library.path",
+                    dcProject.getHostCargoOutputDir(CargoBuildType.DEBUG).get().asFile.absolutePath
+                )
+            }
+        }
+    }
 }
 
 dependencies {

@@ -26,15 +26,15 @@ abstract class CargoBuildHostTask @Inject constructor(private val executor: Exec
     }
 
     companion object {
+        const val cargoBuildHostTaskBaseName = "cargoBuildHost"
+
         fun makeTaskName(buildType: CargoBuildType) =
             "$cargoBuildHostTaskBaseName${buildType.toString().capitalized()}"
-
-        fun makeTaskOutputProvider(
-            cargoExtension: CargoPluginExtension,
-            buildType: CargoBuildType
-        ): Provider<Directory> = cargoExtension.hostLibsOut.dir(buildType.toString())
     }
 }
+
+fun Project.getHostCargoOutputDir(buildType: CargoBuildType): Provider<Directory> =
+    layout.buildDirectory.dir("intermediates/host_rust_libs/$buildType")
 
 fun Project.registerHostCargoTask(
     cargoExtension: CargoPluginExtension,
@@ -46,6 +46,6 @@ fun Project.registerHostCargoTask(
         CargoBuildHostTask::class.java
     ) { task ->
         task.applyBaseConfig(cargoExtension, this, buildType)
-        task.outLibDir.set(CargoBuildHostTask.makeTaskOutputProvider(cargoExtension, buildType))
+        task.outLibDir.set(getHostCargoOutputDir( buildType))
     }
 }

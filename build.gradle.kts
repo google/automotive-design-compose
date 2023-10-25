@@ -39,6 +39,10 @@ plugins {
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.roborazzi) apply false
+
+    //Hacky
+    id("com.android.designcompose.rust-in-android") apply (false)
+
 }
 
 // Format all *.gradle.kts files in the repository. This should catch all buildscripts.

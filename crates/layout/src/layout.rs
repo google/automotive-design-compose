@@ -208,6 +208,8 @@ impl LayoutManager {
         style: ViewStyle,
         name: String,
         measure_func: Option<taffy::node::MeasureFunc>,
+        fixed_width: Option<i32>,
+        fixed_height: Option<i32>,
     ) {
         let mut taffy = taffy();
 
@@ -218,6 +220,7 @@ impl LayoutManager {
         }
 
         self.apply_customizations(layout_id, &mut node_style);
+        self.apply_fixed_size(&mut node_style, fixed_width, fixed_height);
 
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
@@ -313,6 +316,8 @@ impl LayoutManager {
         }
 
         if compute_layout {
+            // TODO return unchanged for widget children
+            //LayoutChangedResponse::unchanged(self.layout_state)
             self.recompute_layouts(taffy)
         } else {
             LayoutChangedResponse::unchanged(self.layout_state)
@@ -397,6 +402,24 @@ impl LayoutManager {
         }
     }
 
+    fn apply_fixed_size(
+        &self,
+        style: &mut taffy::style::Style,
+        fixed_width: Option<i32>,
+        fixed_height: Option<i32>,
+    ) {
+        if let Some(fixed_width) = fixed_width {
+            style.min_size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
+            style.max_size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
+            style.size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
+        }
+        if let Some(fixed_height) = fixed_height {
+            style.min_size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
+            style.max_size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
+            style.size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
+        }
+    }
+
     // Compute the layout on the node with the given layout_id. This should always be
     // a root level node.
     fn compute_node_layout(&mut self, layout_id: i32) -> LayoutChangedResponse {
@@ -459,8 +482,19 @@ pub fn add_style(
     child_index: i32,
     style: ViewStyle,
     name: String,
+    fixed_width: Option<i32>,
+    fixed_height: Option<i32>,
 ) {
-    manager().add_style(layout_id, parent_layout_id, child_index, style, name, None)
+    manager().add_style(
+        layout_id,
+        parent_layout_id,
+        child_index,
+        style,
+        name,
+        None,
+        fixed_width,
+        fixed_height,
+    )
 }
 
 pub fn add_style_measure(
@@ -497,6 +531,8 @@ pub fn add_style_measure(
         style,
         name,
         Some(taffy::node::MeasureFunc::Boxed(Box::new(layout_measure_func))),
+        None,
+        None,
     )
 }
 

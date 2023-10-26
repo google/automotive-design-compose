@@ -141,7 +141,7 @@ internal fun DesignFrame(
         val childIndex = parentLayout?.childIndex ?: -1
         Log.d(
             TAG,
-            "Subscribe Frame ${view.name} layoutId $layoutId parent $parentLayoutId index $childIndex"
+            "Subscribe Frame ${view.name} layoutId $layoutId parent $parentLayoutId index $childIndex isWidgetChild ${parentLayout?.isWidgetChild}"
         )
         // Subscribe to layout changes when the view changes or is added
         LayoutManager.subscribeFrame(
@@ -157,7 +157,10 @@ internal fun DesignFrame(
     DisposableEffect(Unit) {
         onDispose {
             // Unsubscribe to layout changes when the view is removed
-            Log.d(TAG, "Unsubscribe ${view.name} layoutId $layoutId")
+            Log.d(
+                TAG,
+                "Unsubscribe ${view.name} layoutId $layoutId isWidgetChild ${parentLayout?.isWidgetChild}"
+            )
             LayoutManager.unsubscribe(layoutId)
         }
     }
@@ -375,8 +378,7 @@ internal fun DesignFrame(
 
             // Content for the lazy content parameter. This uses the grid layout but also supports
             // limiting the number of children to style.max_children, and using an overflow node if
-            // one
-            // is specified.
+            // one is specified.
             val lazyItemContent: LazyGridScope.() -> Unit = {
                 val lContent = lazyContent { nodeData ->
                     getSpan(layoutInfo.gridSpanContent, nodeData)
@@ -453,8 +455,7 @@ internal fun DesignFrame(
             }
 
             // Given the frame size, number of columns/rows, and spacing between them, return a list
-            // of
-            // column/row widths/heights
+            // of column/row widths/heights
             fun calculateCellsCrossAxisSizeImpl(
                 gridSize: Int,
                 slotCount: Int,

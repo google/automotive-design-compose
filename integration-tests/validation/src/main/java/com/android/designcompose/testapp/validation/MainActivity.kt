@@ -27,7 +27,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -1450,8 +1449,17 @@ fun ListWidgetTest() {
     fun itemComposable(items: ArrayList<Pair<GridItemType, String>>, index: Int) {
         when (items[index].first) {
             GridItemType.RowGrid ->
-                ListWidgetTestDoc.Item(type = ItemType.Grid, title = items[index].second)
-            else -> ListWidgetTestDoc.VItem(type = ItemType.Grid, title = items[index].second)
+                ListWidgetTestDoc.Item(
+                    type = ItemType.Grid,
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
+            else ->
+                ListWidgetTestDoc.VItem(
+                    type = ItemType.Grid,
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
         }
     }
 

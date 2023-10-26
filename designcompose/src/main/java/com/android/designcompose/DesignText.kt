@@ -232,40 +232,66 @@ internal fun DesignText(
             maxLines,
             style.min_width.pointsAsDp(density.density).value
         )
-    val useMeasure = isAutoHeightFillWidth(style)
 
     // Get the layout for this view that describes its size and position.
     val (layout, setLayout) = remember { mutableStateOf<Layout?>(null) }
     // Keep track of the layout state, which changes whenever this view's layout changes
     val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
-    // Subscribe for layout changes whenever the text data changes.
+    // The height and top offset of the text might be slightly different than the height and top
+    // that is used in layout. This is because we want to honor the position from Figma used for
+    // layout, but when rendering we sometimes need to adjust the position because Compose text is
+    // slightly different than Figma text.
+    val (renderHeight, setRenderHeight) = remember { mutableStateOf<Int?>(null) }
+    val (renderTop, setRenderTop) = remember { mutableStateOf<Int?>(null) }
+    // Measure the text and subscribe for layout changes whenever the text data changes.
     DisposableEffect(textMeasureData, style) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
+        val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
         val childIndex = parentLayout?.childIndex ?: -1
         Log.d(
             TAG,
             "Subscribe TEXT $nodeName  layoutId $layoutId parent $parentLayoutId index $childIndex"
         )
-        if (useMeasure) {
+
+        // Only measure the text and subscribe with the resulting size if isAutoHeightFillWidth() is
+        // false, because otherwise the measureFunc is used
+        if (!isAutoHeightFillWidth(style)) {
+            val textBounds = measureTextBounds(style, textLayoutData, density)
+            Log.d(
+                TAG,
+                "Text measure $nodeName: textBounds ${textBounds.width} ${textBounds.layoutHeight} vertOffset ${textBounds.verticalOffset} renderHeight ${textBounds.renderHeight}"
+            )
+            setRenderHeight(textBounds.renderHeight)
+            setRenderTop(textBounds.verticalOffset)
+
+            LayoutManager.subscribeText(
+                layoutId,
+                setLayoutState,
+                parentLayoutId,
+                rootLayoutId,
+                childIndex,
+                style,
+                view.name,
+                textBounds.width,
+                textBounds.layoutHeight
+            )
+        } else {
+            // Use default layout for render height and 0 for top
+            setRenderHeight(null)
+            setRenderTop(0)
+
             LayoutManager.subscribeWithMeasure(
                 layoutId,
                 setLayoutState,
                 parentLayoutId,
-                parentLayout?.rootLayoutId ?: layoutId,
+                rootLayoutId,
                 childIndex,
                 style,
                 view.name,
                 textMeasureData
             )
-        } else
-            LayoutManager.subscribeText(
-                layoutId,
-                setLayoutState,
-                parentLayoutId,
-                childIndex,
-                style,
-                view.name
-            )
+        }
+
         onDispose {}
     }
     // Unsubscribe to layout changes when the composable is no longer in view.
@@ -278,36 +304,6 @@ internal fun DesignText(
     LaunchedEffect(layoutState) {
         val newLayout = LayoutManager.getLayout(layoutId)
         setLayout(newLayout)
-    }
-
-    // The height and top offset of the text might be slightly different than the height and top
-    // that is used in layout. This is because we want to honor the position from Figma used for
-    // layout, but when rendering we sometimes need to adjust the position because Compose text is
-    // slightly different than Figma text.
-    val (renderHeight, setRenderHeight) = remember { mutableStateOf<Int?>(null) }
-    val (renderTop, setRenderTop) = remember { mutableStateOf<Int?>(null) }
-    LaunchedEffect(style, textLayoutData, density, layout) {
-        // Only set the size if useMeasure is false, because otherwise the measureFunc is used
-        if (!useMeasure) {
-            val textBounds = measureTextBounds(style, textLayoutData, density)
-            Log.d(
-                TAG,
-                "Text measure $nodeName: textBounds ${textBounds.width} ${textBounds.layoutHeight} vertOffset ${textBounds.verticalOffset} renderHeight ${textBounds.renderHeight}"
-            )
-            setRenderHeight(textBounds.renderHeight)
-            setRenderTop(textBounds.verticalOffset)
-
-            LayoutManager.setNodeSize(
-                layoutId,
-                parentLayout?.rootLayoutId ?: layoutId,
-                textBounds.width,
-                textBounds.layoutHeight,
-            )
-        } else {
-            // Use default layout for render height and 0 for top
-            setRenderHeight(null)
-            setRenderTop(0)
-        }
     }
 
     val content =

@@ -54,6 +54,7 @@ import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
+import java.util.Optional
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -126,13 +127,30 @@ internal object LayoutManager {
         layoutId: Int,
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
+        rootLayoutId: Int,
         childIndex: Int,
         style: ViewStyle,
         name: String,
+        fixedWidth: Int,
+        fixedHeight: Int,
     ) {
-        // Text cannot have children and already recomputes layout after it measures itself and
-        // tells Rust its size, so don't call beginLayout()
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, false)
+        val adjustedWidth = (fixedWidth.toFloat() / density).roundToInt()
+        val adjustedHeight = (fixedHeight.toFloat() / density).roundToInt()
+        subscribe(
+            layoutId,
+            setLayoutState,
+            parentLayoutId,
+            childIndex,
+            style,
+            name,
+            false,
+            Optional.ofNullable(adjustedWidth),
+            Optional.ofNullable(adjustedHeight)
+        )
+
+        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is the
+        // text or text style changed when no other nodes changed, we recompute layout
+        computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
     internal fun subscribeWithMeasure(
@@ -145,14 +163,11 @@ internal object LayoutManager {
         name: String,
         textMeasureData: TextMeasureData,
     ) {
-        subscribers[layoutId] = setLayoutState
         textMeasures[layoutId] = textMeasureData
-
         subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
 
-        // Text with a measure func is measured when Rust computes layout, so call
-        // computeLayoutIfComplete() here. This is needed to trigger a layout recompute when the
-        // text is the only node changed
+        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is the
+        // text or text style changed when no other nodes changed, we recompute layout
         computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
@@ -164,6 +179,8 @@ internal object LayoutManager {
         style: ViewStyle,
         name: String,
         useMeasureFunc: Boolean,
+        fixedWidth: Optional<Int> = Optional.empty(),
+        fixedHeight: Optional<Int> = Optional.empty(),
     ) {
         subscribers[layoutId] = setLayoutState
 
@@ -176,6 +193,8 @@ internal object LayoutManager {
                 style,
                 name,
                 useMeasureFunc,
+                fixedWidth,
+                fixedHeight,
             )
         )
     }
@@ -206,11 +225,13 @@ internal object LayoutManager {
         computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
-    // Check if any layouts are still in progres and if not, trigger a layout computation on the
-    // given root layout ID
+    // Check if we are ready to compute layout. If layoutId is the same as rootLayoutId, then a root
+    // node has completed adding all of its children and we can compute layout on this root node. If
+    // layoutsInProgress is empty, this could also be true -- or, a node that is the child of a
+    // widget has completed adding all of its children and we can compute layout on the widget
+    // child.
     private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
-        if (layoutsInProgress.isEmpty()) {
-            Log.d(TAG, "Finished layout $layoutId, root $rootLayoutId, computing layout")
+        if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
             val layoutNodeList = LayoutNodeList(layoutNodes)
             val nodeListSerializer = BincodeSerializer()
             layoutNodeList.serialize(nodeListSerializer)

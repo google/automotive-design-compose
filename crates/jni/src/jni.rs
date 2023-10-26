@@ -182,6 +182,8 @@ fn jni_add_nodes<'local>(
                             node.child_index,
                             node.style,
                             node.name,
+                            node.fixed_width,
+                            node.fixed_height,
                         );
                     }
                 }

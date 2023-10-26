@@ -153,6 +153,8 @@ fn test_layout(
                 child_index,
                 fixed_view.style.clone(),
                 fixed_view.name.clone(),
+                Some(view.style.bounding_box.width as i32),
+                Some(view.style.bounding_box.height as i32),
             );
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
@@ -165,10 +167,20 @@ fn test_layout(
                     child_index,
                     square.style.clone(),
                     square.name.clone(),
+                    None,
+                    None,
                 );
             }
         } else {
-            add_style(my_id, parent_layout_id, child_index, view.style.clone(), view.name.clone());
+            add_style(
+                my_id,
+                parent_layout_id,
+                child_index,
+                view.style.clone(),
+                view.name.clone(),
+                None,
+                None,
+            );
         }
         let mut index = 0;
         for child in children {

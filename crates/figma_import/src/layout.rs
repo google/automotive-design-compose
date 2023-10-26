@@ -45,6 +45,8 @@ pub struct LayoutNode {
     pub style: ViewStyle,
     pub name: String,
     pub use_measure_func: bool,
+    pub fixed_width: Option<i32>,
+    pub fixed_height: Option<i32>,
 }
 
 // A list of Figma nodes to register for layout

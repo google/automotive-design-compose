@@ -59,7 +59,7 @@ internal object Jni {
     ): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniRemoveNode(layoutId: Int, computeLayout: Boolean): ByteArray?
+    external fun jniRemoveNode(layoutId: Int, rootLayoutId: Int, computeLayout: Boolean): ByteArray?
 
     init {
         System.loadLibrary("jni")

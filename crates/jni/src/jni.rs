@@ -17,7 +17,6 @@ use std::ffi::c_void;
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
 use figma_import::layout::{LayoutChangedResponse, LayoutNodeList};
-use figma_import::toolkit_style::ViewStyle;
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
@@ -204,9 +203,10 @@ fn jni_remove_node<'local>(
     env: JNIEnv<'local>,
     _class: JClass,
     layout_id: jint,
+    root_layout_id: jint,
     compute_layout: jboolean,
 ) -> JByteArray<'local> {
-    let layout_response = remove_view(layout_id, compute_layout != 0);
+    let layout_response = remove_view(layout_id, root_layout_id, compute_layout != 0);
     layout_response_to_bytearray(env, &layout_response)
 }
 
@@ -309,7 +309,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                 },
                 jni::NativeMethod {
                     name: "jniRemoveNode".into(),
-                    sig: "(IZ)[B".into(),
+                    sig: "(IIZ)[B".into(),
                     fn_ptr: jni_remove_node as *mut c_void,
                 },
             ],

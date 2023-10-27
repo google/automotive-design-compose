@@ -243,10 +243,10 @@ internal fun DesignText(
     // slightly different than Figma text.
     val (renderHeight, setRenderHeight) = remember { mutableStateOf<Int?>(null) }
     val (renderTop, setRenderTop) = remember { mutableStateOf<Int?>(null) }
+    val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
     // Measure the text and subscribe for layout changes whenever the text data changes.
     DisposableEffect(textMeasureData, style) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
-        val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
         val childIndex = parentLayout?.childIndex ?: -1
         Log.d(
             TAG,
@@ -298,7 +298,11 @@ internal fun DesignText(
     DisposableEffect(Unit) {
         onDispose {
             Log.d(TAG, "Unsubscribe TEXT $nodeName layoutId $layoutId")
-            LayoutManager.unsubscribe(layoutId)
+            LayoutManager.unsubscribe(
+                layoutId,
+                rootLayoutId,
+                parentLayout?.isWidgetAncestor == true
+            )
         }
     }
     LaunchedEffect(layoutState) {

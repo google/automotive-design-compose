@@ -154,14 +154,21 @@ internal fun DesignFrame(
         )
         onDispose {}
     }
+
+    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+    if (rootLayoutId == -1) rootLayoutId = layoutId
     DisposableEffect(Unit) {
         onDispose {
             // Unsubscribe to layout changes when the view is removed
             Log.d(
                 TAG,
-                "Unsubscribe ${view.name} layoutId $layoutId isWidgetChild ${parentLayout?.isWidgetChild}"
+                "Unsubscribe ${view.name} layoutId $layoutId rootLayoutId $rootLayoutId isWidgetAncestor ${parentLayout?.isWidgetAncestor}"
             )
-            LayoutManager.unsubscribe(layoutId)
+            LayoutManager.unsubscribe(
+                layoutId,
+                rootLayoutId,
+                parentLayout?.isWidgetAncestor == true
+            )
         }
     }
 
@@ -172,8 +179,6 @@ internal fun DesignFrame(
             // there are no other parent frames performing layout, layout computation can be
             // performed.
             DisposableEffect(view) {
-                var rootLayoutId = parentLayout?.rootLayoutId ?: -1
-                if (rootLayoutId == -1) rootLayoutId = layoutId
                 LayoutManager.finishLayout(layoutId, rootLayoutId)
                 onDispose {}
             }
@@ -190,7 +195,6 @@ internal fun DesignFrame(
     // row or column (with or without wrapping/flow), or absolute positioning (similar to the CSS2
     // model).
     val layout = LayoutManager.getLayout(layoutId)
-    val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
     when (layoutInfo) {
         is LayoutInfoRow -> {
             if (lazyContent != null) {

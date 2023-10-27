@@ -199,16 +199,17 @@ internal object LayoutManager {
         )
     }
 
-    internal fun unsubscribe(layoutId: Int) {
+    internal fun unsubscribe(layoutId: Int, rootLayoutId: Int, isWidgetAncestor: Boolean) {
         subscribers.remove(layoutId)
         textMeasures.remove(layoutId)
         layoutCache.remove(layoutId)
-        val responseBytes = Jni.jniRemoveNode(layoutId, performLayoutComputation)
-        handleResponse(responseBytes)
 
-        // TODO for children of a lazy grid view, don't recompute layout when removing views since
-        // they are completely gone from the grid view. Need to be able to detect, when removing the
-        // view, if it is an ancestor of the child of a lazy grid view.
+        // Perform layout computation after removing the node only if performLayoutComputation is
+        // true, or if we are not a widget ancestor. We don't want to compute layout when ancestors
+        // of a widget are removed because this happens constantly in a lazy grid view.
+        val computeLayout = performLayoutComputation && !isWidgetAncestor
+        val responseBytes = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
+        handleResponse(responseBytes)
     }
 
     private fun beginLayout(layoutId: Int) {
@@ -404,6 +405,7 @@ class ParentLayoutInfo(
     val childIndex: Int = 0,
     val rootLayoutId: Int = -1,
     val isWidgetChild: Boolean = false,
+    val isWidgetAncestor: Boolean = false,
 )
 
 internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutInfo {
@@ -413,11 +415,12 @@ internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutI
         this.childIndex,
         rootLayoutId,
         this.isWidgetChild,
+        this.isWidgetAncestor,
     )
 }
 
 internal val rootParentLayoutInfo = ParentLayoutInfo()
-val widgetParent = ParentLayoutInfo(isWidgetChild = true)
+val widgetParent = ParentLayoutInfo(isWidgetChild = true, isWidgetAncestor = true)
 
 internal open class SimplifiedLayoutInfo(val selfModifier: Modifier) {
     internal fun shouldRender(): Boolean {

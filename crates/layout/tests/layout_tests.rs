@@ -100,10 +100,20 @@ fn add_view_to_layout(
                 child_index,
                 fixed_view.style.clone(),
                 fixed_view.name.clone(),
+                None,
+                None,
             );
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
-        add_style(my_id, parent_layout_id, child_index, view.style.clone(), view.name.clone());
+        add_style(
+            my_id,
+            parent_layout_id,
+            child_index,
+            view.style.clone(),
+            view.name.clone(),
+            None,
+            None,
+        );
         let mut index = 0;
         for child in children {
             add_view_to_layout(child, id, my_id, index, replacements, views);

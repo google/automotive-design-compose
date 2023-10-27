@@ -76,31 +76,6 @@ impl LayoutManager {
         }
     }
 
-    fn recompute_layouts(&mut self, taffy: &mut Taffy) -> LayoutChangedResponse {
-        info!("recompute_layouts {}", self.root_layout_ids.len());
-        for layout_id in &self.root_layout_ids {
-            let node = self.layout_id_to_taffy_node.get(layout_id);
-            if let Some(node) = node {
-                let result = taffy.compute_layout(
-                    *node,
-                    Size {
-                        // TODO get this size from somewhere
-                        height: AvailableSpace::Definite(500.0),
-                        width: AvailableSpace::Definite(500.0),
-                    },
-                );
-                if let Some(e) = result.err() {
-                    error!("recompute_layout: compute_layoute error: {}", e);
-                }
-            }
-        }
-
-        let changed_layouts = self.update_layouts(taffy);
-        self.layout_state = self.layout_state + 1;
-
-        LayoutChangedResponse { layout_state: self.layout_state, changed_layouts: changed_layouts }
-    }
-
     fn update_layout_internal(
         &mut self,
         layout_id: i32,
@@ -174,15 +149,6 @@ impl LayoutManager {
     ) -> HashMap<i32, toolkit_schema::Layout> {
         let mut changed: HashMap<i32, toolkit_schema::Layout> = HashMap::new();
         self.update_layout_internal(layout_id, -1, &taffy, &mut changed);
-        changed
-    }
-
-    // Update the hash of all layouts and return a hash of layouts that changed
-    fn update_layouts(&mut self, taffy: &Taffy) -> HashMap<i32, toolkit_schema::Layout> {
-        let mut changed: HashMap<i32, toolkit_schema::Layout> = HashMap::new();
-        for layout_id in &self.root_layout_ids.clone() {
-            self.update_layout_internal(*layout_id, -1, &taffy, &mut changed);
-        }
         changed
     }
 
@@ -274,14 +240,20 @@ impl LayoutManager {
         }
     }
 
-    fn remove_view(&mut self, layout_id: i32, compute_layout: bool) -> LayoutChangedResponse {
+    fn remove_view(
+        &mut self,
+        layout_id: i32,
+        root_layout_id: i32,
+        compute_layout: bool,
+    ) -> LayoutChangedResponse {
         let mut taffy = taffy();
-        self.remove_view_internal(layout_id, compute_layout, &mut taffy)
+        self.remove_view_internal(layout_id, root_layout_id, compute_layout, &mut taffy)
     }
 
     fn remove_view_internal(
         &mut self,
         layout_id: i32,
+        root_layout_id: i32,
         compute_layout: bool,
         taffy: &mut Taffy,
     ) -> LayoutChangedResponse {
@@ -316,16 +288,14 @@ impl LayoutManager {
         }
 
         if compute_layout {
-            // TODO return unchanged for widget children
-            //LayoutChangedResponse::unchanged(self.layout_state)
-            self.recompute_layouts(taffy)
+            self.compute_node_layout_internal(root_layout_id, taffy)
         } else {
             LayoutChangedResponse::unchanged(self.layout_state)
         }
     }
 
     // Recursively remove a node's children and then the node itself
-    fn remove_recursive(&mut self, layout_id: i32, taffy: &mut Taffy) {
+    fn remove_recursive(&mut self, layout_id: i32, root_layout_id: i32, taffy: &mut Taffy) {
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
             let children_result = taffy.children(*node);
@@ -333,19 +303,19 @@ impl LayoutManager {
                 for child in children.iter() {
                     let child_layout_id = self.taffy_node_to_layout_id.get(child);
                     if let Some(child_layout_id) = child_layout_id {
-                        self.remove_recursive(*child_layout_id, taffy);
+                        self.remove_recursive(*child_layout_id, root_layout_id, taffy);
                     }
                 }
             }
         }
-        self.remove_view_internal(layout_id, false, taffy);
+        self.remove_view_internal(layout_id, root_layout_id, false, taffy);
     }
 
     // Remove all nodes
     fn clear(&mut self) {
         let mut taffy = taffy();
         for layout_id in &self.root_layout_ids.clone() {
-            self.remove_recursive(*layout_id, &mut taffy);
+            self.remove_recursive(*layout_id, *layout_id, &mut taffy);
         }
     }
 
@@ -536,8 +506,12 @@ pub fn add_style_measure(
     )
 }
 
-pub fn remove_view(layout_id: i32, compute_layout: bool) -> LayoutChangedResponse {
-    manager().remove_view(layout_id, compute_layout)
+pub fn remove_view(
+    layout_id: i32,
+    root_layout_id: i32,
+    compute_layout: bool,
+) -> LayoutChangedResponse {
+    manager().remove_view(layout_id, root_layout_id, compute_layout)
 }
 
 pub fn clear_views() {

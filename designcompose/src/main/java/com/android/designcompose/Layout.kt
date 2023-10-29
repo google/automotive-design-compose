@@ -171,6 +171,19 @@ internal object LayoutManager {
         computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
+    internal fun squooshSetTextMeasureData(
+        layoutId: Int,
+        textMeasureData: TextMeasureData
+    ) {
+        textMeasures[layoutId] = textMeasureData
+    }
+
+    internal fun squooshClearTextMeasureData(
+        layoutId: Int
+    ) {
+        textMeasures.remove(layoutId)
+    }
+
     private fun subscribe(
         layoutId: Int,
         setLayoutState: (Int) -> Unit,

@@ -8,11 +8,30 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFontLoader
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.Paragraph
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.android.designcompose.CustomizationContext
+import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocContent
 import com.android.designcompose.DocServer
 import com.android.designcompose.DocumentSwitcher
@@ -21,18 +40,30 @@ import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
 import com.android.designcompose.ParentComponentInfo
+import com.android.designcompose.TextLayoutData
+import com.android.designcompose.TextMeasureData
+import com.android.designcompose.asBrush
+import com.android.designcompose.blurFudgeFactor
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.convertColor
 import com.android.designcompose.doc
 import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
+import com.android.designcompose.getText
+import com.android.designcompose.getTextStyle
+import com.android.designcompose.getVisible
+import com.android.designcompose.isAutoHeightFillWidth
+import com.android.designcompose.measureTextBounds
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.nodeVariant
+import com.android.designcompose.pointsAsDp
 import com.android.designcompose.render
 import com.android.designcompose.rootNode
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
+import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
@@ -46,6 +77,7 @@ import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
 import kotlin.system.measureTimeMillis
 import java.util.Optional
+import kotlin.math.roundToInt
 
 const val TAG: String = "DC_SQUOOSH"
 
@@ -93,18 +125,172 @@ internal object SquooshLayout {
         val serializeTime = measureTimeMillis {
             layoutNodeList.serialize(nodeListSerializer)
         }
-        Log.d(TAG, "doLayout serialize time $serializeTime ms")
+        Log.d(TAG, "doLayout serialize time $serializeTime ms for ${ln.size} nodes")
         return nodeListSerializer._bytes
     }
 }
 
+internal class SquooshTextInfo(
+    val textMeasureData: TextMeasureData,
+    val overflow: TextOverflow
+)
+
 internal class SquooshResolvedNode(
     val view: View,
     val style: ViewStyle,
+    val textInfo: SquooshTextInfo?,
     var firstChild: SquooshResolvedNode? = null,
     var nextSibling: SquooshResolvedNode? = null,
     var computedLayout: Layout? = null
 )
+
+val newlineChars =
+    arrayOf(
+        Char(0xD).toString() + Char(0xA).toString(), // CRLF
+        Char(0xD).toString(), // CR
+        Char(0xA).toString(), // LF
+        Char(0x85).toString(), // NEL
+        Char(0xB).toString(), // VT
+        Char(0xC).toString(), // FF
+        Char(0x2028).toString(), // LS
+        Char(0x2029).toString(), // PS
+    )
+val lineSeparator = System.getProperty("line.separator")
+
+internal fun computeTextInfo(
+    v: View,
+    density: Density,
+    document: DocContent,
+    customizations: CustomizationContext,
+    fontResourceLoader: Font.ResourceLoader
+): SquooshTextInfo? {
+    val customizedText = customizations.getText(v.name)
+    val customTextStyle = customizations.getTextStyle(v.name)
+    val fontFamily = DesignSettings.fontFamily(v.style.font_family)
+
+    val annotatedText = if (customizedText != null) {
+        val builder = AnnotatedString.Builder()
+        builder.append(customizedText)
+        builder.toAnnotatedString()
+    } else when (v.data) {
+        is ViewData.Text -> {
+            val builder = AnnotatedString.Builder()
+            builder.append((v.data as ViewData.Text).content)
+            builder.toAnnotatedString()
+        }
+        is ViewData.StyledText -> {
+            val builder = AnnotatedString.Builder()
+            for (run in (v.data as ViewData.StyledText).content) {
+                val textBrushAndOpacity = run.style.text_color.asBrush(document, density.density)
+                builder.pushStyle(
+                    @OptIn(ExperimentalTextApi::class)
+                    SpanStyle(
+                        brush = textBrushAndOpacity?.first,
+                        alpha = textBrushAndOpacity?.second ?: 1.0f,
+                        fontSize = run.style.font_size.sp,
+                        fontWeight =
+                            FontWeight(
+                                run.style.font_weight.value.roundToInt()
+                            ),
+                        fontStyle =
+                            when (run.style.font_style) {
+                                is com.android.designcompose.serdegen.FontStyle.Italic -> FontStyle.Italic
+                                else -> FontStyle.Normal
+                            },
+                        fontFamily = DesignSettings.fontFamily(run.style.font_family, fontFamily),
+                        fontFeatureSettings =
+                            run.style.font_features.joinToString(", ") { feature ->
+                                String(feature.tag.toByteArray())
+                            }
+                    )
+                )
+                builder.append(run.text)
+                builder.pop()
+            }
+            builder.toAnnotatedString()
+        }
+        else -> return null
+    }
+
+    val lineHeight =
+        customTextStyle?.lineHeight
+            ?: when (v.style.line_height) {
+                is LineHeight.Pixels ->
+                    when (v.data) {
+                        is ViewData.StyledText -> ((v.style.line_height as LineHeight.Pixels).value / v.style.font_size).em
+                        else -> (v.style.line_height as LineHeight.Pixels).value.sp
+                    }
+                else -> TextUnit.Unspecified
+            }
+    val fontWeight =
+        customTextStyle?.fontWeight
+            ?: FontWeight(v.style.font_weight.value.roundToInt())
+    val fontStyle =
+        customTextStyle?.fontStyle
+            ?: when (v.style.font_style) {
+                is com.android.designcompose.serdegen.FontStyle.Italic -> FontStyle.Italic
+                else -> FontStyle.Normal
+            }
+    // Compose only supports a single outset shadow on text; we must use a canvas and perform
+    // manual text layout (and editing, and accessibility) to do fancier text.
+    val shadow =
+        v.style.text_shadow.flatMap { textShadow ->
+            Optional.of(
+                Shadow(
+                    // Ensure that blur radius is never zero, because Compose interprets that as no
+                    // shadow (rather than as a hard-edged shadow).
+                    blurRadius = textShadow.blur_radius * density.density * blurFudgeFactor + 0.1f,
+                    offset =
+                    Offset(
+                        textShadow.offset[0] * density.density,
+                        textShadow.offset[1] * density.density
+                    ),
+                    color = convertColor(textShadow.color)
+                )
+            )
+        }
+    val textBrushAndOpacity = v.style.text_color.asBrush(document, density.density)
+    val textStyle =
+        @OptIn(ExperimentalTextApi::class)
+        (TextStyle(
+        brush = textBrushAndOpacity?.first,
+        alpha = textBrushAndOpacity?.second ?: 1.0f,
+        fontSize = customTextStyle?.fontSize ?: v.style.font_size.sp,
+        fontFamily = fontFamily,
+        fontFeatureSettings =
+        v.style.font_features.joinToString(", ") { feature ->
+            String(feature.tag.toByteArray())
+        },
+        lineHeight = lineHeight,
+        fontWeight = fontWeight,
+        fontStyle = fontStyle,
+        textAlign =
+        customTextStyle?.textAlign
+            ?: when (v.style.text_align) {
+                is com.android.designcompose.serdegen.TextAlign.Center -> TextAlign.Center
+                is com.android.designcompose.serdegen.TextAlign.Right -> TextAlign.Right
+                else -> TextAlign.Left
+            },
+        shadow = shadow.orElse(null),
+    ))
+    val overflow =
+        if (v.style.text_overflow is com.android.designcompose.serdegen.TextOverflow.Clip)
+            TextOverflow.Clip
+        else TextOverflow.Ellipsis
+
+    val textLayoutData =
+        TextLayoutData(annotatedText, textStyle, fontResourceLoader, v.style.text_size)
+    val maxLines = if (v.style.line_count.isPresent) v.style.line_count.get().toInt() else Int.MAX_VALUE
+    val textMeasureData =
+        TextMeasureData(
+            textLayoutData,
+            density,
+            maxLines,
+            v.style.min_width.pointsAsDp(density.density).value
+        )
+
+    return SquooshTextInfo(textMeasureData, overflow)
+}
 
 /// Iterate over a given view tree recursively, applying customizations that will select
 /// variants or affect layout. The output of this function is a `SquooshResolvedNode` which
@@ -118,6 +304,8 @@ internal fun resolveVariantsRecursively(
     customizations: CustomizationContext,
     interactionState: InteractionState,
     parentComponents: List<ParentComponentInfo>,
+    density: Density,
+    fontResourceLoader: Font.ResourceLoader,
     variantParentName: String = ""): SquooshResolvedNode
 {
     // XXX: This seems to do a lot of extra allocations. We'll realloc this list all the way
@@ -183,13 +371,22 @@ internal fun resolveVariantsRecursively(
     // Now we know the view we want to render, the style we want to use, etc. We can create
     // a record of it. After this, another pass can be done to build a layout tree. Finally,
     // layout can be performed and rendering done.
-    val resolvedView = SquooshResolvedNode(view, style)
+    val textInfo = computeTextInfo(view, density, document, customizations, fontResourceLoader)
+    val resolvedView = SquooshResolvedNode(view, style, textInfo)
 
     if (view.data is ViewData.Container) {
         val viewData = view.data as ViewData.Container
         var previousChild: SquooshResolvedNode? = null
         for (child in viewData.children) {
-            val childResolvedNode = resolveVariantsRecursively(child, document, customizations, interactionState, parentComps)
+            val childResolvedNode = resolveVariantsRecursively(
+                child,
+                document,
+                customizations,
+                interactionState,
+                parentComps,
+                density,
+                fontResourceLoader
+            )
             if (resolvedView.firstChild == null)
                 resolvedView.firstChild = childResolvedNode
             if (previousChild != null)
@@ -221,6 +418,37 @@ internal fun updateLayoutTree(
     val needsLayoutUpdate = layoutCache[layoutId] != layoutCacheKey
 
     if (needsLayoutUpdate) {
+        var useMeasureFunc = false
+        var fixedWidth: Optional<Int> = Optional.empty()
+        var fixedHeight: Optional<Int> = Optional.empty()
+
+        // Text needs some additional work to measure, and to let layout measure interactively
+        // to account for wrapping.
+        if (resolvedNode.textInfo != null) {
+            val density = resolvedNode.textInfo.textMeasureData.density
+            if (isAutoHeightFillWidth(resolvedNode.style)) {
+                // We need layout to measure this text.
+                useMeasureFunc = true
+
+                // This is used by the callback logic in DesignText.kt to compute width-for-height
+                // computations for the layout implementation in Rust.
+                LayoutManager.squooshSetTextMeasureData(
+                    layoutId,
+                    resolvedNode.textInfo.textMeasureData
+                )
+
+            } else {
+                // We can measure the text now because it's constrained.
+                val textBounds = measureTextBounds(
+                    resolvedNode.style,
+                    resolvedNode.textInfo.textMeasureData.textLayout,
+                    resolvedNode.textInfo.textMeasureData.density
+                )
+                fixedWidth = Optional.of((textBounds.width / density.density).roundToInt())
+                fixedHeight = Optional.of((textBounds.layoutHeight / density.density).roundToInt())
+            }
+        }
+
         layoutNodes.add(
             LayoutNode(
                 layoutId,
@@ -228,9 +456,9 @@ internal fun updateLayoutTree(
                 childIndex,
                 resolvedNode.style,
                 resolvedNode.view.name,
-                false, // useMeasureFunc
-                Optional.empty(),
-                Optional.empty()
+                useMeasureFunc,
+                fixedWidth,
+                fixedHeight
             )
         )
         layoutCache[layoutId] = layoutCacheKey
@@ -293,15 +521,15 @@ fun SquooshRoot(
         return
     }
 
-    val density = LocalDensity.current.density
-    LaunchedEffect(density) { LayoutManager.setDensity(density) }
+    val density = LocalDensity.current
+    LaunchedEffect(density.density) { LayoutManager.setDensity(density.density) }
 
     val variantParentName = when (rootNodeQuery) {
         is NodeQuery.NodeVariant -> rootNodeQuery.field1
         else -> ""
     }
 
-    val rootLayoutId = remember { LayoutManager.getNextLayoutId() * 1000000 }
+    val rootLayoutId = remember { SquooshLayout.getNextLayoutId() * 1000000 }
     val layoutCache = remember { HashMap<Int, Int>() }
     val layoutValueCache = remember { HashMap<Int, Layout>() }
 
@@ -317,6 +545,8 @@ fun SquooshRoot(
             customizationContext,
             interactionState,
             emptyList(),
+            density,
+            LocalFontLoader.current,
             variantParentName
         )
     }
@@ -356,14 +586,15 @@ fun SquooshRoot(
         Modifier.size(
             width = root!!.computedLayout!!.width.dp,
             height = root!!.computedLayout!!.height.dp
-        ).squooshRender(root!!, doc, customizationContext)
+        ).squooshRender(root!!, doc, customizationContext, LocalFontLoader.current)
     )
 }
 
 internal fun Modifier.squooshRender(
     node: SquooshResolvedNode,
     document: DocContent,
-    customizations: CustomizationContext
+    customizations: CustomizationContext,
+    fontResourceLoader: Font.ResourceLoader
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -374,7 +605,11 @@ internal fun Modifier.squooshRender(
                     val computedLayout = node.computedLayout ?: return
                     val shape = when (node.view.data) {
                         is ViewData.Container -> (node.view.data as ViewData.Container).shape
-                        else -> return
+                        else -> {
+                            if (node.textInfo != null)
+                                squooshTextRender(drawContext, this, node.textInfo, computedLayout, fontResourceLoader)
+                            return
+                        }
                     }
                     squooshShapeRender(
                         drawContext,
@@ -406,3 +641,22 @@ internal fun Modifier.squooshRender(
         }
     )
 
+internal fun squooshTextRender(
+    drawContext: DrawContext,
+    density: Density,
+    textInfo: SquooshTextInfo,
+    computedLayout: Layout,
+    fontResourceLoader: Font.ResourceLoader
+) {
+    val paragraph = Paragraph(
+        text = textInfo.textMeasureData.textLayout.annotatedString.text,
+        style = textInfo.textMeasureData.textLayout.textStyle,
+        spanStyles = textInfo.textMeasureData.textLayout.annotatedString.spanStyles,
+        width = computedLayout.width * density.density,
+        density = density,
+        resourceLoader = fontResourceLoader,
+        //maxLines = maxLines XXX
+    )
+
+    paragraph.paint(drawContext.canvas)
+}

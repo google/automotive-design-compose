@@ -105,8 +105,8 @@ internal fun DesignText(
             Char(0xB).toString(), // VT
             Char(0xC).toString(), // FF
             Char(0x2028).toString(), // LS
-            Char(0x2029).toString(),
-        ) // PS
+            Char(0x2029).toString(), // PS
+        )
     var newlineFixedText = text
     val ls = System.getProperty("line.separator")
     ls?.let { newlineChars.forEach { newlineFixedText = newlineFixedText?.replace(it, ls) } }
@@ -398,7 +398,7 @@ fun measureTextBoundsFunc(
     return Pair(rectBounds.width().toFloat() / density, outHeight / density)
 }
 
-private class TextBounds(
+/*private*/ internal class TextBounds(
     // Width of the measured text
     val width: Int,
     // Height of the text for layout purposes. This is usually the height of the text in Figma,
@@ -412,7 +412,7 @@ private class TextBounds(
     val verticalOffset: Int,
 )
 
-private fun measureTextBounds(
+/*private*/ internal fun measureTextBounds(
     style: ViewStyle,
     textLayoutData: TextLayoutData,
     density: Density

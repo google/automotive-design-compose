@@ -47,7 +47,7 @@ mockk = "1.13.8"
 junit5 = "5.10.0"
 truth = "1.1.5"
 robolectric = "4.10.3"
-roborazzi = "1.8.0-alpha-2"
+roborazzi = "1.8.0-alpha-4"
 
 [libraries]
 android-car-ui = { module = "com.android.car.ui:car-ui-lib", version.ref = "android-car-ui" } # Used in MediaCompose

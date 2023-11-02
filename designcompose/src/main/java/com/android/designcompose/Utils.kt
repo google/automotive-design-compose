@@ -392,6 +392,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.grid_adaptive_min_size
         }
     style.grid_span_content = override.grid_span_content.ifEmpty { base.grid_span_content }
+    style.grid_node_sizes = override.grid_node_sizes.ifEmpty { base.grid_node_sizes }
     style.overflow =
         if (override.overflow !is Overflow.Visible) {
             override.overflow

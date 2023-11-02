@@ -248,10 +248,6 @@ internal fun DesignText(
     DisposableEffect(textMeasureData, style) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
         val childIndex = parentLayout?.childIndex ?: -1
-        Log.d(
-            TAG,
-            "Subscribe TEXT $nodeName  layoutId $layoutId parent $parentLayoutId index $childIndex"
-        )
 
         // Only measure the text and subscribe with the resulting size if isAutoHeightFillWidth() is
         // false, because otherwise the measureFunc is used

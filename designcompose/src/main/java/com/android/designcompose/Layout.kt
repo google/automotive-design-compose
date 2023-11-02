@@ -38,6 +38,7 @@ import androidx.compose.ui.text.Paragraph
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.android.designcompose.common.createSortedVariantName
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
@@ -80,6 +81,7 @@ internal object LayoutManager {
     private var nextLayoutId: Int = 0
     private var performLayoutComputation: Boolean = false
     private var density: Float = 1F
+    private var gridNodeSizes: HashMap<String, Pair<Int, Int>> = HashMap()
     private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
     private var layoutCache: HashMap<Int, Layout> = HashMap()
 
@@ -103,6 +105,11 @@ internal object LayoutManager {
     internal fun setDensity(pixelDensity: Float) {
         Log.i(TAG, "setDensity $pixelDensity")
         density = pixelDensity
+    }
+
+    internal fun setGridNodeSize(nodeName: String, width: Int, height: Int) {
+        val sortedName = createSortedVariantName(nodeName)
+        gridNodeSizes[sortedName] = Pair(width, height)
     }
 
     internal fun getDensity(): Float {
@@ -275,6 +282,21 @@ internal object LayoutManager {
     // Ask for the layout for the associated node via JNI
     internal fun getLayout(layoutId: Int): Layout? {
         return layoutCache[layoutId]
+    }
+
+    // Get the default size of a node in a grid layout. This is provided from
+    // the list widget and is used when the layout for the child of a widget
+    // is not yet available.
+    internal fun getGridNodeSize(nodeName: String): Layout? {
+        val sortedName = createSortedVariantName(nodeName)
+        val nodeSize = gridNodeSizes[sortedName]
+        return if (nodeSize != null) {
+            val width = nodeSize.first.toFloat()
+            val height = nodeSize.second.toFloat()
+            Layout(0, width, height, 0F, 0F)
+        } else {
+            null
+        }
     }
 
     // Tell the Rust layout manager that a node size has changed. In the returned response, get all
@@ -567,6 +589,9 @@ internal fun calcLayoutInfo(
                     is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> true
                     else -> false
                 }
+            style.grid_node_sizes.forEach {
+                LayoutManager.setGridNodeSize(it.nodeName, it.width, it.height)
+            }
             return LayoutInfoGrid(
                 layout = style.grid_layout.get(),
                 minColumnRowSize = style.grid_adaptive_min_size,

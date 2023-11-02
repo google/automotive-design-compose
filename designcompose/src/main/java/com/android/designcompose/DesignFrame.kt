@@ -139,10 +139,6 @@ internal fun DesignFrame(
     DisposableEffect(view) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
         val childIndex = parentLayout?.childIndex ?: -1
-        Log.d(
-            TAG,
-            "Subscribe Frame ${view.name} layoutId $layoutId parent $parentLayoutId index $childIndex isWidgetChild ${parentLayout?.isWidgetChild}"
-        )
         // Subscribe to layout changes when the view changes or is added
         LayoutManager.subscribeFrame(
             layoutId,
@@ -623,9 +619,10 @@ internal fun DesignFrame(
         }
         is LayoutInfoAbsolute -> {
             if (parentLayout?.isWidgetChild == true) {
+                val childLayout = layout ?: LayoutManager.getGridNodeSize(name)
                 // For direct children of a widget, render the frame as a box with the calculated
                 // layout size, then compose the frame's children with our custom layout
-                Box(m.layoutSizeToModifier(layout)) {
+                Box(m.layoutSizeToModifier(childLayout)) {
                     DesignFrameLayout(modifier, name, layoutId, layoutState) { content() }
                 }
             } else {

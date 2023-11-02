@@ -45,6 +45,20 @@ pub struct SpanData {
     pub max_span: bool,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct GridNodeSize {
+    /// The node name of an item that goes into a grid layout
+    #[serde(default)]
+    pub node_name: String,
+    /// Width of the node in Figma
+    #[serde(default)]
+    pub width: u32,
+    /// Height of the node in Figma
+    #[serde(default)]
+    pub height: u32,
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[derive(Default)]
@@ -181,6 +195,9 @@ pub struct GridLayoutData {
     /// The number of columns or rows that each type of item that can go into this grid occupies
     #[serde(default)]
     pub span_content: Vec<SpanData>,
+    /// The sizes of the nodes that can populate this grid
+    #[serde(default)]
+    pub content_sizes: Vec<GridNodeSize>,
 }
 
 impl Default for GridLayoutData {
@@ -193,6 +210,7 @@ impl Default for GridLayoutData {
             vertical_spacing: 0,
             horizontal_spacing: 0,
             span_content: vec![],
+            content_sizes: vec![],
         }
     }
 }

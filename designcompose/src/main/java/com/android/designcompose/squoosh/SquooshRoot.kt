@@ -9,7 +9,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.drawscope.translate
@@ -18,17 +20,18 @@ import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.Paragraph
+import androidx.compose.ui.text.ParagraphIntrinsics
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignSettings
@@ -43,6 +46,8 @@ import com.android.designcompose.ParentComponentInfo
 import com.android.designcompose.TextLayoutData
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.asBrush
+import com.android.designcompose.asComposeBlendMode
+import com.android.designcompose.asComposeTransform
 import com.android.designcompose.blurFudgeFactor
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.convertColor
@@ -51,13 +56,10 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getText
 import com.android.designcompose.getTextStyle
-import com.android.designcompose.getVisible
 import com.android.designcompose.isAutoHeightFillWidth
 import com.android.designcompose.measureTextBounds
 import com.android.designcompose.mergeStyles
-import com.android.designcompose.nodeVariant
 import com.android.designcompose.pointsAsDp
-import com.android.designcompose.render
 import com.android.designcompose.rootNode
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutChangedResponse
@@ -65,6 +67,8 @@ import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.TextAlignVertical
+import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
@@ -72,7 +76,7 @@ import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.stateForDoc
-import com.android.designcompose.width
+import com.android.designcompose.useLayer
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
 import kotlin.system.measureTimeMillis
@@ -132,7 +136,6 @@ internal object SquooshLayout {
 
 internal class SquooshTextInfo(
     val textMeasureData: TextMeasureData,
-    val overflow: TextOverflow
 )
 
 internal class SquooshResolvedNode(
@@ -201,7 +204,8 @@ internal fun computeTextInfo(
                         fontFeatureSettings =
                             run.style.font_features.joinToString(", ") { feature ->
                                 String(feature.tag.toByteArray())
-                            }
+                            },
+                        //platformStyle = PlatformSpanStyle(includeFontPadding = false),
                     )
                 )
                 builder.append(run.text)
@@ -215,11 +219,12 @@ internal fun computeTextInfo(
     val lineHeight =
         customTextStyle?.lineHeight
             ?: when (v.style.line_height) {
-                is LineHeight.Pixels ->
+                is LineHeight.Pixels -> (v.style.line_height as LineHeight.Pixels).value.sp
+                /*
                     when (v.data) {
                         is ViewData.StyledText -> ((v.style.line_height as LineHeight.Pixels).value / v.style.font_size).em
                         else -> (v.style.line_height as LineHeight.Pixels).value.sp
-                    }
+                    }*/
                 else -> TextUnit.Unspecified
             }
     val fontWeight =
@@ -252,34 +257,43 @@ internal fun computeTextInfo(
     val textBrushAndOpacity = v.style.text_color.asBrush(document, density.density)
     val textStyle =
         @OptIn(ExperimentalTextApi::class)
-        (TextStyle(
-        brush = textBrushAndOpacity?.first,
-        alpha = textBrushAndOpacity?.second ?: 1.0f,
-        fontSize = customTextStyle?.fontSize ?: v.style.font_size.sp,
-        fontFamily = fontFamily,
-        fontFeatureSettings =
-        v.style.font_features.joinToString(", ") { feature ->
-            String(feature.tag.toByteArray())
-        },
-        lineHeight = lineHeight,
-        fontWeight = fontWeight,
-        fontStyle = fontStyle,
-        textAlign =
-        customTextStyle?.textAlign
-            ?: when (v.style.text_align) {
-                is com.android.designcompose.serdegen.TextAlign.Center -> TextAlign.Center
-                is com.android.designcompose.serdegen.TextAlign.Right -> TextAlign.Right
-                else -> TextAlign.Left
-            },
-        shadow = shadow.orElse(null),
-    ))
-    val overflow =
-        if (v.style.text_overflow is com.android.designcompose.serdegen.TextOverflow.Clip)
-            TextOverflow.Clip
-        else TextOverflow.Ellipsis
+        TextStyle(
+            brush = textBrushAndOpacity?.first,
+            alpha = textBrushAndOpacity?.second ?: 1.0f,
+            fontSize = customTextStyle?.fontSize ?: v.style.font_size.sp,
+            fontFamily = fontFamily,
+            fontFeatureSettings =
+                v.style.font_features.joinToString(", ") { feature ->
+                    String(feature.tag.toByteArray())
+                },
+            lineHeight = lineHeight,
+            fontWeight = fontWeight,
+            fontStyle = fontStyle,
+            textAlign =
+                customTextStyle?.textAlign
+                    ?: when (v.style.text_align) {
+                        is com.android.designcompose.serdegen.TextAlign.Center -> TextAlign.Center
+                        is com.android.designcompose.serdegen.TextAlign.Right -> TextAlign.Right
+                        else -> TextAlign.Left
+                    },
+            shadow = shadow.orElse(null),
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center,
+                trim = LineHeightStyle.Trim.Both
+            )
+        )
+
+    val paragraph = ParagraphIntrinsics(
+        text = annotatedText.text,
+        style = textStyle,
+        spanStyles = annotatedText.spanStyles,
+        density = density,
+        resourceLoader = fontResourceLoader
+    )
 
     val textLayoutData =
-        TextLayoutData(annotatedText, textStyle, fontResourceLoader, v.style.text_size)
+        TextLayoutData(annotatedText, textStyle, fontResourceLoader, v.style.text_size, paragraph)
     val maxLines = if (v.style.line_count.isPresent) v.style.line_count.get().toInt() else Int.MAX_VALUE
     val textMeasureData =
         TextMeasureData(
@@ -289,7 +303,7 @@ internal fun computeTextInfo(
             v.style.min_width.pointsAsDp(density.density).value
         )
 
-    return SquooshTextInfo(textMeasureData, overflow)
+    return SquooshTextInfo(textMeasureData)
 }
 
 /// Iterate over a given view tree recursively, applying customizations that will select
@@ -426,7 +440,7 @@ internal fun updateLayoutTree(
         // to account for wrapping.
         if (resolvedNode.textInfo != null) {
             val density = resolvedNode.textInfo.textMeasureData.density
-            if (isAutoHeightFillWidth(resolvedNode.style)) {
+            if (isAutoHeightFillWidth(resolvedNode.style) || true) {
                 // We need layout to measure this text.
                 useMeasureFunc = true
 
@@ -586,7 +600,7 @@ fun SquooshRoot(
         Modifier.size(
             width = root!!.computedLayout!!.width.dp,
             height = root!!.computedLayout!!.height.dp
-        ).squooshRender(root!!, doc, customizationContext, LocalFontLoader.current)
+        ).squooshRender(root!!, doc, customizationContext)
     )
 }
 
@@ -594,7 +608,6 @@ internal fun Modifier.squooshRender(
     node: SquooshResolvedNode,
     document: DocContent,
     customizations: CustomizationContext,
-    fontResourceLoader: Font.ResourceLoader
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -607,7 +620,7 @@ internal fun Modifier.squooshRender(
                         is ViewData.Container -> (node.view.data as ViewData.Container).shape
                         else -> {
                             if (node.textInfo != null)
-                                squooshTextRender(drawContext, this, node.textInfo, computedLayout, fontResourceLoader)
+                                squooshTextRender(drawContext, this, node.textInfo, node.style, computedLayout)
                             return
                         }
                     }
@@ -645,18 +658,52 @@ internal fun squooshTextRender(
     drawContext: DrawContext,
     density: Density,
     textInfo: SquooshTextInfo,
+    style: ViewStyle,
     computedLayout: Layout,
-    fontResourceLoader: Font.ResourceLoader
 ) {
     val paragraph = Paragraph(
-        text = textInfo.textMeasureData.textLayout.annotatedString.text,
-        style = textInfo.textMeasureData.textLayout.textStyle,
-        spanStyles = textInfo.textMeasureData.textLayout.annotatedString.spanStyles,
+        paragraphIntrinsics = textInfo.textMeasureData.textLayout.paragraph,
         width = computedLayout.width * density.density,
-        density = density,
-        resourceLoader = fontResourceLoader,
-        //maxLines = maxLines XXX
+        maxLines = textInfo.textMeasureData.maxLines,
+        ellipsis = style.text_overflow is TextOverflow.Ellipsis
     )
+    
+    // Apply any styled transform or blend mode.
+    // XXX: transform customization?
+    val transform = style.transform.asComposeTransform(density.density)
+    val blendMode = style.blend_mode.asComposeBlendMode()
+    val useBlendModeLayer = style.blend_mode.useLayer()
 
+    if (useBlendModeLayer) {
+        val paint = Paint()
+        paint.blendMode = blendMode
+        drawContext.canvas.saveLayer(
+            Rect(
+                0f,
+                0f,
+                computedLayout.width * density.density,
+                computedLayout.height * density.density
+            ),
+            paint
+        )
+    } else if (transform != null) {
+        drawContext.canvas.save()
+    }
+
+    if (transform != null)
+        drawContext.transform.transform(transform)
+
+    // Apply vertical centering; this would be better done in layout.
+    val verticalCenterOffset = when (style.text_align_vertical) {
+        is TextAlignVertical.Center -> (computedLayout.height * density.density - paragraph.height) / 2f
+        is TextAlignVertical.Bottom -> computedLayout.height * density.density - paragraph.height
+        else -> 0.0f
+    }
+
+    drawContext.canvas.translate(0.0f, verticalCenterOffset)
     paragraph.paint(drawContext.canvas)
+    drawContext.canvas.translate(0.0f, -verticalCenterOffset)
+
+    if (useBlendModeLayer || transform != null)
+        drawContext.canvas.restore()
 }

@@ -380,13 +380,13 @@ impl LayoutManager {
     ) {
         if let Some(fixed_width) = fixed_width {
             style.min_size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
-            style.max_size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
-            style.size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
+            //style.max_size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
+            //style.size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
         }
         if let Some(fixed_height) = fixed_height {
             style.min_size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
-            style.max_size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
-            style.size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
+            //style.max_size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
+            //style.size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
         }
     }
 

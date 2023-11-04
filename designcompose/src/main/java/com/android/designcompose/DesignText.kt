@@ -37,8 +37,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.Paragraph
+import androidx.compose.ui.text.ParagraphIntrinsics
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
@@ -54,7 +58,9 @@ import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
+import kotlin.math.ceil
 import kotlin.math.roundToInt
+import kotlin.system.measureTimeMillis
 
 internal fun Modifier.textTransform(style: ViewStyle) =
     this.then(
@@ -216,14 +222,27 @@ internal fun DesignText(
                         else -> androidx.compose.ui.text.style.TextAlign.Left
                     },
             shadow = shadow.orElse(null),
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center,
+                trim = LineHeightStyle.Trim.Both
+            )
         )
     val overflow =
         if (style.text_overflow is com.android.designcompose.serdegen.TextOverflow.Clip)
             TextOverflow.Clip
         else TextOverflow.Ellipsis
 
+    val paragraph = ParagraphIntrinsics(
+        text = annotatedText.text,
+        style = textStyle,
+        spanStyles = annotatedText.spanStyles,
+        density = density,
+        resourceLoader = LocalFontLoader.current
+    )
+
     val textLayoutData =
-        TextLayoutData(annotatedText, textStyle, LocalFontLoader.current, style.text_size)
+        TextLayoutData(annotatedText, textStyle, LocalFontLoader.current, style.text_size, paragraph)
     val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE
     val textMeasureData =
         TextMeasureData(
@@ -360,7 +379,7 @@ internal fun DesignText(
 // Measure text height given a width. Called from Rust as a measure function for text that has auto
 // height and variable width. Layout computes the width, then calls this function to get the
 // corresponding text height.
-fun measureTextBoundsFunc(
+fun measureTextBoundsFunc2(
     layoutId: Int,
     width: Float,
     height: Float,
@@ -383,7 +402,7 @@ fun measureTextBoundsFunc(
         if (width > 0F) width.toInt()
         else if (textMeasureData.styleWidth > 0F && textMeasureData.styleWidth <= availableWidth)
             textMeasureData.styleWidth.toInt()
-        // else if (availableWidth > 0F) availableWidth.toInt()
+        else if (availableWidth > 0F) availableWidth.toInt()
         else 0 // Int.MAX_VALUE
     val (rectBounds, _) =
         textMeasureData.textLayout.boundsForWidth(
@@ -395,7 +414,51 @@ fun measureTextBoundsFunc(
         if (availableHeight > 0f && rectBounds.height().toFloat() > availableHeight) availableHeight
         else rectBounds.height().toFloat()
 
+    Log.d(TAG, "Measure text: wh: ${width}x${height} available: ${availableWidth}x${availableHeight} settled upon: ${inWidth} measured to: ${rectBounds.width().toFloat() / density}x${outHeight / density} (${textMeasureData.textLayout.annotatedString.text})")
+
+
     return Pair(rectBounds.width().toFloat() / density, outHeight / density)
+}
+
+fun measureTextBoundsFunc(
+    layoutId: Int,
+    width: Float,
+    @Suppress("unused") height: Float,
+    availableWidth: Float,
+    @Suppress("unused") availableHeight: Float
+): Pair<Float, Float> {
+    // We currently don't support vertical text, only horizontal, so this function just performs
+    // height-for-width queries on text, and ignores the `height` and `availableHeight` args.
+
+    // Look up the measure data -- this map is created/updated when building the layout tree.
+    val textMeasureData = LayoutManager.getTextMeasureData(layoutId)
+    if (textMeasureData == null) {
+        Log.d(TAG, "measureTextBoundsFunc() error: no textMeasureData for layoutId $layoutId")
+        return Pair(0F, 0F)
+    }
+    val density = textMeasureData.density.density
+
+    // Some distinct values are being collapsed, so we can't tell the difference between no
+    // available space, and a request to report the minimum space.
+    val layoutWidth = if (width > 0.0f) { width * density }
+        else if (availableWidth <= 0.0f) { textMeasureData.textLayout.paragraph.minIntrinsicWidth }
+        else if (availableWidth >= Float.MAX_VALUE) { textMeasureData.textLayout.paragraph.maxIntrinsicWidth }
+        else { availableWidth * density }
+
+    // Perform a layout using the given width.
+    val textLayout = Paragraph(
+        paragraphIntrinsics = textMeasureData.textLayout.paragraph,
+        width = layoutWidth,
+        maxLines = textMeasureData.maxLines
+    )
+
+    // The `textLayout.width` field doesn't give the tightest bounds.
+    var maxLineWidth = 0.0f
+    for (i in 0 until textLayout.lineCount) {
+        maxLineWidth = textLayout.getLineWidth(i).coerceAtLeast(maxLineWidth)
+    }
+
+    return Pair(ceil(maxLineWidth / density), ceil(textLayout.height/ density))
 }
 
 /*private*/ internal class TextBounds(

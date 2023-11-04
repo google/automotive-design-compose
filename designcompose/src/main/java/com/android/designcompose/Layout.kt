@@ -35,6 +35,8 @@ import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Paragraph
+import androidx.compose.ui.text.ParagraphIntrinsics
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -64,6 +66,7 @@ internal data class TextLayoutData(
     val textStyle: androidx.compose.ui.text.TextStyle,
     val resourceLoader: Font.ResourceLoader,
     val textBoxSize: Size,
+    val paragraph: ParagraphIntrinsics
 )
 
 internal data class TextMeasureData(
@@ -349,22 +352,24 @@ internal fun TextLayoutData.boundsForWidth(
     // quite differently.
     val firstLineTextLayout =
         Paragraph(
-            text = annotatedString.text,
-            style = textStyle,
-            spanStyles = annotatedString.spanStyles,
+            paragraphIntrinsics = paragraph,
+            //text = annotatedString.text,
+            //style = textStyle,
+            //spanStyles = annotatedString.spanStyles,
             width = inWidth.toFloat(),
-            density = density,
-            resourceLoader = resourceLoader,
+            //density = density,
+            //resourceLoader = resourceLoader,
             maxLines = 1
         )
     val textLayout =
         Paragraph(
-            text = annotatedString.text,
-            style = textStyle,
-            spanStyles = annotatedString.spanStyles,
+            paragraphIntrinsics = paragraph,
+            //text = annotatedString.text,
+            //style = textStyle,
+            //spanStyles = annotatedString.spanStyles,
             width = inWidth.toFloat(),
-            density = density,
-            resourceLoader = resourceLoader,
+            //density = density,
+            //resourceLoader = resourceLoader,
             maxLines = maxLines
         )
 
@@ -378,6 +383,7 @@ internal fun TextLayoutData.boundsForWidth(
     firstLineTextLayout.paint(Canvas(measureCanvas))
     var designLineHeight = measureCanvas.maxHeight
     var designBaseline = measureCanvas.maxAscent
+
 
     // If there's an explicit line height, then figure out where we lie within it
     if (textStyle.lineHeight.isSp) {

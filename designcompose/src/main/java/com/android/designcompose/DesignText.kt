@@ -32,7 +32,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.isIdentity
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.text.AnnotatedString
@@ -60,7 +59,6 @@ import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
 import kotlin.math.ceil
 import kotlin.math.roundToInt
-import kotlin.system.measureTimeMillis
 
 internal fun Modifier.textTransform(style: ViewStyle) =
     this.then(

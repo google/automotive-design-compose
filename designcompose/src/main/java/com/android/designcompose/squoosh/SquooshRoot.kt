@@ -11,6 +11,8 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawContext
@@ -56,7 +58,9 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getText
 import com.android.designcompose.getTextStyle
+import com.android.designcompose.hasChildMask
 import com.android.designcompose.isAutoHeightFillWidth
+import com.android.designcompose.isMask
 import com.android.designcompose.measureTextBounds
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.pointsAsDp
@@ -134,14 +138,10 @@ internal object SquooshLayout {
     }
 }
 
-internal class SquooshTextInfo(
-    val textMeasureData: TextMeasureData,
-)
-
 internal class SquooshResolvedNode(
     val view: View,
     val style: ViewStyle,
-    val textInfo: SquooshTextInfo?,
+    val textInfo: TextMeasureData?,
     var firstChild: SquooshResolvedNode? = null,
     var nextSibling: SquooshResolvedNode? = null,
     var computedLayout: Layout? = null
@@ -158,7 +158,14 @@ val newlineChars =
         Char(0x2028).toString(), // LS
         Char(0x2029).toString(), // PS
     )
+val newlineRegex = Regex("\\R+")
 val lineSeparator = System.getProperty("line.separator")
+
+private fun normalizeNewlines(text: String): String {
+    if (lineSeparator != null)
+        return text.replace(newlineRegex, lineSeparator)
+    return text
+}
 
 internal fun computeTextInfo(
     v: View,
@@ -166,19 +173,19 @@ internal fun computeTextInfo(
     document: DocContent,
     customizations: CustomizationContext,
     fontResourceLoader: Font.ResourceLoader
-): SquooshTextInfo? {
+): TextMeasureData? {
     val customizedText = customizations.getText(v.name)
     val customTextStyle = customizations.getTextStyle(v.name)
     val fontFamily = DesignSettings.fontFamily(v.style.font_family)
 
     val annotatedText = if (customizedText != null) {
         val builder = AnnotatedString.Builder()
-        builder.append(customizedText)
+        builder.append(normalizeNewlines(customizedText))
         builder.toAnnotatedString()
     } else when (v.data) {
         is ViewData.Text -> {
             val builder = AnnotatedString.Builder()
-            builder.append((v.data as ViewData.Text).content)
+            builder.append(normalizeNewlines((v.data as ViewData.Text).content))
             builder.toAnnotatedString()
         }
         is ViewData.StyledText -> {
@@ -295,15 +302,13 @@ internal fun computeTextInfo(
     val textLayoutData =
         TextLayoutData(annotatedText, textStyle, fontResourceLoader, v.style.text_size, paragraph)
     val maxLines = if (v.style.line_count.isPresent) v.style.line_count.get().toInt() else Int.MAX_VALUE
-    val textMeasureData =
-        TextMeasureData(
-            textLayoutData,
-            density,
-            maxLines,
-            v.style.min_width.pointsAsDp(density.density).value
-        )
 
-    return SquooshTextInfo(textMeasureData)
+    return TextMeasureData(
+        textLayoutData,
+        density,
+        maxLines,
+        v.style.min_width.pointsAsDp(density.density).value
+    )
 }
 
 /// Iterate over a given view tree recursively, applying customizations that will select
@@ -391,6 +396,7 @@ internal fun resolveVariantsRecursively(
     if (view.data is ViewData.Container) {
         val viewData = view.data as ViewData.Container
         var previousChild: SquooshResolvedNode? = null
+
         for (child in viewData.children) {
             val childResolvedNode = resolveVariantsRecursively(
                 child,
@@ -405,8 +411,10 @@ internal fun resolveVariantsRecursively(
                 resolvedView.firstChild = childResolvedNode
             if (previousChild != null)
                 previousChild.nextSibling = childResolvedNode
+
             previousChild = childResolvedNode
         }
+
     }
 
     return resolvedView
@@ -439,7 +447,7 @@ internal fun updateLayoutTree(
         // Text needs some additional work to measure, and to let layout measure interactively
         // to account for wrapping.
         if (resolvedNode.textInfo != null) {
-            val density = resolvedNode.textInfo.textMeasureData.density
+            val density = resolvedNode.textInfo.density
             if (isAutoHeightFillWidth(resolvedNode.style) || true) {
                 // We need layout to measure this text.
                 useMeasureFunc = true
@@ -448,15 +456,15 @@ internal fun updateLayoutTree(
                 // computations for the layout implementation in Rust.
                 LayoutManager.squooshSetTextMeasureData(
                     layoutId,
-                    resolvedNode.textInfo.textMeasureData
+                    resolvedNode.textInfo
                 )
 
             } else {
                 // We can measure the text now because it's constrained.
                 val textBounds = measureTextBounds(
                     resolvedNode.style,
-                    resolvedNode.textInfo.textMeasureData.textLayout,
-                    resolvedNode.textInfo.textMeasureData.density
+                    resolvedNode.textInfo.textLayout,
+                    resolvedNode.textInfo.density
                 )
                 fixedWidth = Optional.of((textBounds.width / density.density).roundToInt())
                 fixedHeight = Optional.of((textBounds.layoutHeight / density.density).roundToInt())
@@ -585,9 +593,6 @@ fun SquooshRoot(
 
     // Now our tree of resolved nodes is ready to use!
 
-    if (root != null && root!!.computedLayout != null) {
-        Log.d(TAG, "$docName root size: ${root!!.computedLayout!!.width}x${root!!.computedLayout!!.height}")
-    }
     // Ok, good enough, we can make a composable that will:
     //  1. occupy the space of the root,
     //  2. place any child composables
@@ -624,10 +629,14 @@ internal fun Modifier.squooshRender(
                             return
                         }
                     }
+                    // If we have masked children, then we need to do create a layer for the parent
+                    // and have the child draw into a layer that's blended with DstIn.
+                    val nodeSize = Size(computedLayout.width * density, computedLayout.height * density)
+
                     squooshShapeRender(
                         drawContext,
                         density,
-                        Size(computedLayout.width * density, computedLayout.height * density),
+                        nodeSize,
                         node.style,
                         shape,
                         null, // customImageWithContext
@@ -636,14 +645,76 @@ internal fun Modifier.squooshRender(
                         customizations
                     ) {
                         var child = node.firstChild
+                        var pendingMask: SquooshResolvedNode? = null
+
                         while (child != null) {
-                            val childLayout = child.computedLayout
-                            if (childLayout != null) {
-                                translate(childLayout.left * density, childLayout.top * density) {
-                                    renderNode(child!!)
+                            if (child.view.isMask()) {
+                                // We were already drawing a mask! Wrap it up...
+                                if (pendingMask != null) {
+                                    val dstInPaint = Paint()
+                                    dstInPaint.blendMode = BlendMode.DstIn
+
+                                    // Draw the mask as DstIn
+                                    drawContext.canvas.saveLayer(
+                                        nodeSize.toRect(),
+                                        dstInPaint
+                                    )
+                                    translate(
+                                        pendingMask.computedLayout!!.left * density,
+                                        pendingMask.computedLayout!!.top * density)
+                                    {
+                                        renderNode(pendingMask!!)
+                                    }
+
+                                    drawContext.canvas.restore()
+
+                                    // Restore the layer that got saved for the mask and content.
+                                    drawContext.canvas.restore()
                                 }
+
+                                // We're starting a mask operation, so save a layer, and go on to
+                                // render children. If we encounter another mask, or if we get to
+                                // the end of the children, then we need to pop the mask.
+                                pendingMask = child
+                                child = child.nextSibling
+
+                                drawContext.canvas.saveLayer(
+                                    nodeSize.toRect(),
+                                    Paint()
+                                )
+                            } else {
+                                val childLayout = child.computedLayout
+                                if (childLayout != null) {
+                                    translate(childLayout.left * density, childLayout.top * density) {
+                                        renderNode(child!!)
+                                    }
+                                }
+                                child = child.nextSibling
                             }
-                            child = child.nextSibling
+                        }
+
+                        // XXX: This logic is duplicated above; it needs to be factored out
+                        //      somehow.
+                        if (pendingMask != null) {
+                            val dstInPaint = Paint()
+                            dstInPaint.blendMode = BlendMode.DstIn
+
+                            // Draw the mask as DstIn
+                            drawContext.canvas.saveLayer(
+                                nodeSize.toRect(),
+                                dstInPaint
+                            )
+                            translate(
+                                pendingMask.computedLayout!!.left * density,
+                                pendingMask.computedLayout!!.top * density)
+                            {
+                                renderNode(pendingMask)
+                            }
+
+                            drawContext.canvas.restore()
+
+                            // Restore the layer that got saved for the mask and content.
+                            drawContext.canvas.restore()
                         }
                     }
                     frameRenderCount++
@@ -657,17 +728,17 @@ internal fun Modifier.squooshRender(
 internal fun squooshTextRender(
     drawContext: DrawContext,
     density: Density,
-    textInfo: SquooshTextInfo,
+    textInfo: TextMeasureData,
     style: ViewStyle,
     computedLayout: Layout,
 ) {
     val paragraph = Paragraph(
-        paragraphIntrinsics = textInfo.textMeasureData.textLayout.paragraph,
+        paragraphIntrinsics = textInfo.textLayout.paragraph,
         width = computedLayout.width * density.density,
-        maxLines = textInfo.textMeasureData.maxLines,
+        maxLines = textInfo.maxLines,
         ellipsis = style.text_overflow is TextOverflow.Ellipsis
     )
-    
+
     // Apply any styled transform or blend mode.
     // XXX: transform customization?
     val transform = style.transform.asComposeTransform(density.density)

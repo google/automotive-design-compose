@@ -214,14 +214,9 @@ internal object DocServer {
     internal val branchHash: HashMap<String, HashMap<String, String>> =
         HashMap() // doc ID -> { docID -> docName }
     internal val mainHandler = Handler(Looper.getMainLooper())
-    internal var periodicFetchRunnable: Runnable? = null
     internal var firstFetch = true
     internal var pauseUpdates = false
-}
-
-internal fun DocServer.initializeLiveUpdate() {
-    Log.i(TAG, "Live Updates initialized")
-    periodicFetchRunnable =
+    internal var periodicFetchRunnable: Runnable =
         Runnable() {
             thread {
                 if (!fetchDocuments(firstFetch)) {
@@ -235,6 +230,10 @@ internal fun DocServer.initializeLiveUpdate() {
                 scheduleLiveUpdate()
             }
         }
+}
+
+internal fun DocServer.initializeLiveUpdate() {
+    Log.i(TAG, "Live Updates initialized")
     // Kickstart periodic updates of documents
     scheduleLiveUpdate()
 }
@@ -256,14 +255,14 @@ internal fun DocServer.startLiveUpdates() {
 }
 
 internal fun DocServer.removeScheduledPeriodicFetchRunnables() {
-    mainHandler.removeCallbacks(periodicFetchRunnable!!)
+    mainHandler.removeCallbacks(periodicFetchRunnable)
 }
 
 internal fun DocServer.scheduleLiveUpdate() {
     if (DesignSettings.liveUpdatesEnabled && !pauseUpdates) {
         // Stop any live updates that have already been scheduled.
         removeScheduledPeriodicFetchRunnables()
-        mainHandler.postDelayed(periodicFetchRunnable!!, FETCH_INTERVAL_MILLIS)
+        mainHandler.postDelayed(periodicFetchRunnable, FETCH_INTERVAL_MILLIS)
     }
 }
 
@@ -280,7 +279,7 @@ internal fun DocServer.getProxyConfig(): ProxyConfig {
 internal fun DocServer.fetchDocuments(
     firstFetch: Boolean,
 ): Boolean {
-    val figmaApiKey = DesignSettings.figmaToken?.value
+    val figmaApiKey = DesignSettings.figmaToken.value
     if (figmaApiKey == null) {
         DesignSettings.showMessageInToast(
             "No Figma API Key Set - LiveUpdate Disabled",

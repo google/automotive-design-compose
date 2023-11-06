@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -68,6 +69,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.ContentReplacementContext
 import com.android.designcompose.DesignComposeCallbacks
@@ -157,7 +162,8 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Dials Gauges", { DialsGaugesTest() }, "lZj6E9GtIQQE4HNLpzgETw"),
         Triple("Masks", { MaskTest() }, "mEmdUVEIjvBBbV0kELPy37"),
         Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67"),
-        Triple("Layout Tests", { LayoutTests() }, "Gv63fYTzpeH2ZtxP4go31E")
+        Triple("Layout Tests", { LayoutTests() }, "Gv63fYTzpeH2ZtxP4go31E"),
+        Triple("Compositing Views", { TestCompositingViews() }, "9g0jn7KXNloRmOZIGze2Rr")
     )
 
 // TEST Basic Hello World example
@@ -416,7 +422,8 @@ private fun Button(name: String, selected: Boolean, select: () -> Unit) {
     val textColor = if (selected) Color.Black else Color.Gray
     val borderColor = if (selected) Color.Black else Color.Gray
     var modifier =
-        Modifier.padding(10.dp)
+        Modifier
+            .padding(10.dp)
             .clickable { select() }
             .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(8.dp))
             .absolutePadding(10.dp, 2.dp, 10.dp, 2.dp)
@@ -818,8 +825,17 @@ fun VariantPropertiesTest() {
 
 @Composable
 fun FakeBrowseItem(name: String) {
-    Column(Modifier.border(1.dp, Color.Red).width(200.dp).height(240.dp)) {
-        Box(Modifier.border(1.dp, Color.Black).background(Color.Blue).width(200.dp).height(200.dp))
+    Column(
+        Modifier
+            .border(1.dp, Color.Red)
+            .width(200.dp)
+            .height(240.dp)) {
+        Box(
+            Modifier
+                .border(1.dp, Color.Black)
+                .background(Color.Blue)
+                .width(200.dp)
+                .height(200.dp))
         Text(name, fontSize = 20.sp)
     }
 }
@@ -827,7 +843,10 @@ fun FakeBrowseItem(name: String) {
 @Composable
 fun NumColumnButton(num: Int, setNum: (Int) -> Unit, setAdaptive: (Boolean) -> Unit) {
     Box(
-        modifier = Modifier.border(1.dp, Color.Black).width(30.dp).height(30.dp),
+        modifier = Modifier
+            .border(1.dp, Color.Black)
+            .width(30.dp)
+            .height(30.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -847,7 +866,10 @@ fun NumColumnButton(num: Int, setNum: (Int) -> Unit, setAdaptive: (Boolean) -> U
 @Composable
 fun AdaptiveButton(setAdaptive: (Boolean) -> Unit) {
     Box(
-        modifier = Modifier.border(1.dp, Color.Black).width(130.dp).height(30.dp),
+        modifier = Modifier
+            .border(1.dp, Color.Black)
+            .width(130.dp)
+            .height(30.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -867,28 +889,30 @@ private fun Slider(value: MutableState<Float>, min: Float, max: Float) {
     val v = remember { mutableStateOf(sliderMax * (value.value - min) / (max - min)) }
     Box(
         modifier =
-            Modifier.width(440.dp)
-                .height(40.dp)
-                .border(width = 2.dp, color = Color.Gray, shape = RoundedCornerShape(8.dp))
+        Modifier
+            .width(440.dp)
+            .height(40.dp)
+            .border(width = 2.dp, color = Color.Gray, shape = RoundedCornerShape(8.dp))
     ) {
         Box(
             modifier =
-                Modifier.offset {
-                        IntOffset(
-                            v.value.roundToInt() + (5 * density).toInt(),
-                            (5 * density).toInt()
-                        )
-                    }
-                    .draggable(
-                        orientation = Orientation.Horizontal,
-                        state =
-                            rememberDraggableState { delta ->
-                                v.value = max(min(v.value + delta, sliderMax), 0f)
-                                value.value = min + (max - min) * v.value / sliderMax
-                            }
+            Modifier
+                .offset {
+                    IntOffset(
+                        v.value.roundToInt() + (5 * density).toInt(),
+                        (5 * density).toInt()
                     )
-                    .size(30.dp)
-                    .border(width = 25.dp, color = Color.Black, shape = RoundedCornerShape(5.dp))
+                }
+                .draggable(
+                    orientation = Orientation.Horizontal,
+                    state =
+                    rememberDraggableState { delta ->
+                        v.value = max(min(v.value + delta, sliderMax), 0f)
+                        value.value = min + (max - min) * v.value / sliderMax
+                    }
+                )
+                .size(30.dp)
+                .border(width = 25.dp, color = Color.Black, shape = RoundedCornerShape(5.dp))
         )
     }
 }
@@ -929,10 +953,16 @@ fun LazyGridItemSpans() {
 
     val adaptiveMinDp = (adaptiveMin.value.toInt()).dp
     val sections = (0 until 100).toList().chunked(5)
-    Box(Modifier.offset(20.dp, 230.dp).border(2.dp, Color.Black)) {
+    Box(
+        Modifier
+            .offset(20.dp, 230.dp)
+            .border(2.dp, Color.Black)) {
         LazyVerticalGrid(
             modifier =
-                Modifier.verticalScroll(rememberScrollState()).padding(20.dp, 0.dp).height(1000.dp),
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp, 0.dp)
+                .height(1000.dp),
             columns =
                 if (adaptive) GridCells.Adaptive(adaptiveMinDp) else GridCells.Fixed(numColumns),
             horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.value.toInt().dp),
@@ -942,7 +972,10 @@ fun LazyGridItemSpans() {
                 item(span = { GridItemSpan(if (adaptive) maxLineSpan else numColumns) }) {
                     Text(
                         "This is section $index",
-                        Modifier.border(2.dp, Color.Black).height(80.dp).wrapContentSize(),
+                        Modifier
+                            .border(2.dp, Color.Black)
+                            .height(80.dp)
+                            .wrapContentSize(),
                         fontSize = 26.sp,
                     )
                 }
@@ -1917,7 +1950,9 @@ fun DialsGaugesTest() {
     )
 
     Row(
-        Modifier.absoluteOffset(0.dp, 1410.dp).height(50.dp),
+        Modifier
+            .absoluteOffset(0.dp, 1410.dp)
+            .height(50.dp),
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text("Dial angle: ", Modifier.width(120.dp), fontSize = 20.sp)
@@ -1925,7 +1960,9 @@ fun DialsGaugesTest() {
         Text(angle.value.toString(), fontSize = 20.sp)
     }
     Row(
-        Modifier.absoluteOffset(0.dp, 1460.dp).height(50.dp),
+        Modifier
+            .absoluteOffset(0.dp, 1460.dp)
+            .height(50.dp),
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text("Dial rotation: ", Modifier.width(120.dp), fontSize = 20.sp)
@@ -1933,7 +1970,9 @@ fun DialsGaugesTest() {
         Text(rotation.value.toString(), fontSize = 20.sp)
     }
     Row(
-        Modifier.absoluteOffset(0.dp, 1510.dp).height(50.dp),
+        Modifier
+            .absoluteOffset(0.dp, 1510.dp)
+            .height(50.dp),
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
@@ -1941,7 +1980,9 @@ fun DialsGaugesTest() {
         Text(progress.value.toString(), fontSize = 20.sp)
     }
     Row(
-        Modifier.absoluteOffset(0.dp, 1560.dp).height(50.dp),
+        Modifier
+            .absoluteOffset(0.dp, 1560.dp)
+            .height(50.dp),
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text("Progress Indicator: ", Modifier.width(120.dp), fontSize = 20.sp)
@@ -2191,6 +2232,50 @@ fun LayoutTests() {
     }
 }
 
+@DesignDoc(id ="9g0jn7KXNloRmOZIGze2Rr")
+interface CompositingViewsTest {
+    @DesignComponent(node = "#MainFrame")
+    fun MainFrame(
+        @Design(node = "#Child1")
+        child1: @Composable (ComponentReplacementContext) -> Unit,
+
+        @Design(node = "#Child2")
+        child2: @Composable (ComponentReplacementContext) -> Unit,
+    )
+}
+
+@Composable
+fun TestCompositingViews() {
+    val context = LocalContext.current
+    val player = remember {
+        val exoPlayer = ExoPlayer.Builder(context).build()
+        val mediaItem = MediaItem.fromUri("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.prepare()
+        exoPlayer.play()
+
+        exoPlayer
+    }
+
+
+    CompositingViewsTestDoc.MainFrame(
+        child1 = { Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Red)) },
+        child2 = {
+            AndroidView(
+                factory = { cx ->
+                    val playerView = PlayerView(cx)
+                    playerView.player = player
+                    playerView
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    )
+}
+
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test
 // on the left and the currently selected test on the right.
 class MainActivity : ComponentActivity() {
@@ -2204,7 +2289,9 @@ class MainActivity : ComponentActivity() {
             val index = remember { mutableStateOf(0) }
             Row {
                 TestButtons(index)
-                Divider(color = Color.Black, modifier = Modifier.fillMaxHeight().width(1.dp))
+                Divider(color = Color.Black, modifier = Modifier
+                    .fillMaxHeight()
+                    .width(1.dp))
                 TestContent(index.value)
             }
         }
@@ -2215,7 +2302,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TestButtons(index: MutableState<Int>) {
 
-    Column(Modifier.width(110.dp).verticalScroll(rememberScrollState())) {
+    Column(
+        Modifier
+            .width(110.dp)
+            .verticalScroll(rememberScrollState())) {
         var count = 0
         EXAMPLES.forEach {
             TestButton(it.first, index, count)

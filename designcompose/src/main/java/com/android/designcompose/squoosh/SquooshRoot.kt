@@ -13,10 +13,12 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.text.AnnotatedString
@@ -35,6 +37,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocContent
@@ -45,6 +48,8 @@ import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
 import com.android.designcompose.ParentComponentInfo
+import com.android.designcompose.ParentLayoutInfo
+import com.android.designcompose.ReplacementContent
 import com.android.designcompose.TextLayoutData
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.asBrush
@@ -54,6 +59,8 @@ import com.android.designcompose.blurFudgeFactor
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.convertColor
 import com.android.designcompose.doc
+import com.android.designcompose.getComponent
+import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getText
@@ -144,7 +151,27 @@ internal class SquooshResolvedNode(
     val textInfo: TextMeasureData?,
     var firstChild: SquooshResolvedNode? = null,
     var nextSibling: SquooshResolvedNode? = null,
+    var parent: SquooshResolvedNode? = null,
     var computedLayout: Layout? = null
+)
+
+// Remember if there's a child composable for a given node, and also we return an ordered
+// list of all the child composables we need to render, along with transforms etc.
+internal class SquooshChildComposable(
+    // One of these should be populated...
+    val component: @Composable ((ComponentReplacementContext) -> Unit)?,
+    val content: ReplacementContent?,
+
+    // We use this to look up the transform and layout translation.
+    val node: SquooshResolvedNode
+)
+
+// This is a holder for the current child composable that we want to draw. Compose doesn't
+// let us draw children individually, so instead, any time we want to draw a child we set it
+// in an instance of the holder, and draw all children, and have each child filter if it draws
+// or not. Terrible hack, but it's not clear what the alternatives are.
+internal class SquooshChildRenderSelector(
+    var selectedRenderChild: SquooshResolvedNode? = null
 )
 
 val newlineChars =
@@ -325,6 +352,10 @@ internal fun resolveVariantsRecursively(
     parentComponents: List<ParentComponentInfo>,
     density: Density,
     fontResourceLoader: Font.ResourceLoader,
+    // XXX: This probably won't show up in any profile, but I used linked lists everywhere
+    //      else to reduce the number of objects we make (especially since we run this code
+    //      every recompose.
+    composableList: ArrayList<SquooshChildComposable>,
     variantParentName: String = ""): SquooshResolvedNode
 {
     // XXX: This seems to do a lot of extra allocations. We'll realloc this list all the way
@@ -405,8 +436,12 @@ internal fun resolveVariantsRecursively(
                 interactionState,
                 parentComps,
                 density,
-                fontResourceLoader
+                fontResourceLoader,
+                composableList,
             )
+
+            childResolvedNode.parent = resolvedView
+
             if (resolvedView.firstChild == null)
                 resolvedView.firstChild = childResolvedNode
             if (previousChild != null)
@@ -414,7 +449,20 @@ internal fun resolveVariantsRecursively(
 
             previousChild = childResolvedNode
         }
+    }
 
+    // If this node has a content customization, then we make a special record of it so that we can
+    // zip through all of them after layout and render them in the right location.
+    val replacementContent = customizations.getContent(view.name)
+    val replacementComponent = customizations.getComponent(view.name)
+    if (replacementContent != null || replacementComponent != null) {
+        composableList.add(
+            SquooshChildComposable(
+                component = replacementComponent,
+                content = replacementContent,
+                node = resolvedView
+            )
+        )
     }
 
     return resolvedView
@@ -560,6 +608,7 @@ fun SquooshRoot(
     // what's different from last time? Does the Rust side track
 
     var root: SquooshResolvedNode? = null
+    val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
     val resolveVariantsTime = measureTimeMillis {
         root = resolveVariantsRecursively(
             startFrame,
@@ -569,6 +618,7 @@ fun SquooshRoot(
             emptyList(),
             density,
             LocalFontLoader.current,
+            childComposables,
             variantParentName
         )
     }
@@ -593,26 +643,51 @@ fun SquooshRoot(
 
     // Now our tree of resolved nodes is ready to use!
 
-    // Ok, good enough, we can make a composable that will:
-    //  1. occupy the space of the root,
-    //  2. place any child composables
-    //  3. draw the content
-
-    // We will also need a sort of "draw/interact" child that accepts derivative
-    // layout
+    // Select which child to draw using this holder.
+    val childRenderSelector = SquooshChildRenderSelector()
 
     Box(
         Modifier.size(
             width = root!!.computedLayout!!.width.dp,
             height = root!!.computedLayout!!.height.dp
-        ).squooshRender(root!!, doc, customizationContext)
-    )
+        ).squooshRender(root!!, doc, customizationContext, childRenderSelector)
+    ) {
+        // Now render all of the children
+        for (child in childComposables) {
+            if (child.node.computedLayout == null) { continue }
+
+            val width = child.node.computedLayout!!.width.dp // Dp are pre-density
+            val height = child.node.computedLayout!!.height.dp
+            Box(
+                Modifier
+                    .size(width = width, height = height)
+                    .drawWithContent {
+                        if (child.node == childRenderSelector.selectedRenderChild)
+                            drawContent()
+                    }
+            )
+            {
+                if (child.component != null) {
+                    child.component!!(object : ComponentReplacementContext {
+                        override val appearanceModifier: Modifier = Modifier
+                        override val layoutModifier: Modifier = Modifier
+                        @Composable override fun Content() {}
+                        override val textStyle: TextStyle? = null
+                        override val parentLayout: ParentLayoutInfo? = null
+                    })
+                } else if (child.content != null) {
+                    Log.d(TAG, "Unimplemented: child.content")
+                }
+            }
+        }
+    }
 }
 
 internal fun Modifier.squooshRender(
     node: SquooshResolvedNode,
     document: DocContent,
     customizations: CustomizationContext,
+    childRenderSelector: SquooshChildRenderSelector
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -629,8 +704,19 @@ internal fun Modifier.squooshRender(
                             return
                         }
                     }
+
+                    // XXX: How to support text?
+                    if (customizations.getComponent(node.view.name) != null) {
+                        childRenderSelector.selectedRenderChild = node
+                        drawContent()
+                        childRenderSelector.selectedRenderChild = null
+                    }
+
                     // If we have masked children, then we need to do create a layer for the parent
                     // and have the child draw into a layer that's blended with DstIn.
+                    //
+                    // XXX: We could take the smallest of the mask size and common parent size, and
+                    //      then transform children appropriately.
                     val nodeSize = Size(computedLayout.width * density, computedLayout.height * density)
 
                     squooshShapeRender(

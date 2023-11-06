@@ -19,8 +19,9 @@ name: CompareScreenshot
 on:
   push:
     branches:
-      - main
-      - 'stable/**'
+    - main
+    - 'stable/**'
+    - 'feature/**'
   pull_request:
 
 permissions: {}

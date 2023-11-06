@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath(libs.kotlin.gradlePlugin)
-        classpath(libs.android.gradlePlugin.minimumSupportedVersion)
-    }
+plugins {
+    alias(libs.plugins.kotlinAndroid) apply false
+    alias(libs.plugins.androidApplicationMinimumSupportedVersion) apply false
 }

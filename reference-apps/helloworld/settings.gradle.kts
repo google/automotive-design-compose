@@ -14,13 +14,30 @@
  * limitations under the License.
  */
 
-buildscript {
+rootProject.name = "DesignCompose HelloWorld App"
+
+@Suppress("UnstableApiUsage")
+dependencyResolutionManagement {
+    // Use the same version catalog that we use for the core SDK
+    versionCatalogs {
+        create("libs") {
+            from(files("../../gradle/libs.versions.toml"))
+            // Use the latest published version of the SDK
+            version("designcompose", "+")
+        }
+    }
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
     }
-    dependencies {
-        classpath(libs.kotlin.gradlePlugin)
-        classpath(libs.android.gradlePlugin.minimumSupportedVersion)
+}
+
+pluginManagement {
+    repositories {
+        google()
+        gradlePluginPortal()
     }
 }
+
+include("app")

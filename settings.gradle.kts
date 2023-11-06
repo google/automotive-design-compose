@@ -54,7 +54,7 @@ project(":validation-app").projectDir = File("integration-tests/validation")
 
 include(":helloworld-app")
 
-project(":helloworld-app").projectDir = File("reference-apps/helloworld")
+project(":helloworld-app").projectDir = File("reference-apps/helloworld/app")
 
 include(":tutorial-app")
 

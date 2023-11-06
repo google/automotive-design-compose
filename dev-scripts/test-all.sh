@@ -18,7 +18,7 @@ usage() {
 cat  <<END
 This script should run all of the tests that CI will run. (It'll need to be kept up to date though)
 Options:
-  -f: Run a basic format of the Kotlin code before testing. 
+  -f: Run a basic format of the Kotlin code before testing.
     Won't catch everything but shouldn't cause everything to rebuild either.
   -s: Skip emulator tests
   -u: Set Unbundled AAOS path
@@ -96,6 +96,9 @@ cd "$GIT_ROOT" || exit
 if [[ $run_emulator_tests == 1 ]]; then
   ./gradlew gmdTestStandard -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 fi
+
+cd "$GIT_ROOT/reference-apps/helloworld" || exit
+./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check
 
 cd "$GIT_ROOT/reference-apps/tutorial" || exit
 ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check

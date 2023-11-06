@@ -105,6 +105,7 @@ roborazzi-junit = {module = "io.github.takahirom.roborazzi:roborazzi-junit-rule"
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidApplicationMinimumSupportedVersion = { id = "com.android.application",version.ref = "agp-minSupported" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

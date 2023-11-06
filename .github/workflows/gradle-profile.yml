@@ -19,7 +19,9 @@ on:
     branches:
     - main
     - 'stable/**'
+    - 'feature/**'
   pull_request:
+  merge_group:
 
 permissions:
   contents: read

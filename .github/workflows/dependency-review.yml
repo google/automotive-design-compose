@@ -22,7 +22,14 @@
 # Source repository: https://github.com/actions/dependency-review-action
 
 name: 'PR Dependency Change Review'
-on: [pull_request]
+on:
+  push:
+    branches:
+    - main
+    - 'stable/**'
+    - 'feature/**'
+  pull_request:
+  merge_group:
 
 permissions:
   contents: read

@@ -23,13 +23,7 @@
 
 name: 'PR Dependency Change Review'
 on:
-  push:
-    branches:
-    - main
-    - 'stable/**'
-    - 'feature/**'
   pull_request:
-  merge_group:
 
 permissions:
   contents: read

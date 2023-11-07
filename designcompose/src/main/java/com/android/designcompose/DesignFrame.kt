@@ -87,7 +87,6 @@ internal fun DesignFrame(
     // (row/column/etc) to the replacement component at some point.
     val replacementComponent = customizations.getComponent(name)
     if (replacementComponent != null) {
-        val myParentLayout = parentLayout?.withBaseView(view)
         replacementComponent(
             object : ComponentReplacementContext {
                 override val layoutModifier = layoutInfo.selfModifier
@@ -99,7 +98,7 @@ internal fun DesignFrame(
                 }
 
                 override val textStyle: TextStyle? = null
-                override val parentLayout = myParentLayout
+                override val parentLayout = parentLayout
             }
         )
         return true
@@ -142,7 +141,7 @@ internal fun DesignFrame(
         val childIndex = parentLayout?.childIndex ?: -1
         Log.d(
             TAG,
-            "Subscribe Frame ${view.name} layoutId $layoutId parent $parentLayoutId index $childIndex"
+            "Subscribe Frame ${view.name} layoutId $layoutId parent $parentLayoutId index $childIndex isWidgetChild ${parentLayout?.isWidgetChild}"
         )
         // Subscribe to layout changes when the view changes or is added
         LayoutManager.subscribeFrame(
@@ -150,16 +149,26 @@ internal fun DesignFrame(
             setLayoutState,
             parentLayoutId,
             childIndex,
-            view,
-            parentLayout?.baseView
+            style,
+            view.name
         )
         onDispose {}
     }
+
+    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+    if (rootLayoutId == -1) rootLayoutId = layoutId
     DisposableEffect(Unit) {
         onDispose {
             // Unsubscribe to layout changes when the view is removed
-            Log.d(TAG, "Unsubscribe ${view.name} layoutId $layoutId")
-            LayoutManager.unsubscribe(layoutId)
+            Log.d(
+                TAG,
+                "Unsubscribe ${view.name} layoutId $layoutId rootLayoutId $rootLayoutId isWidgetAncestor ${parentLayout?.isWidgetAncestor}"
+            )
+            LayoutManager.unsubscribe(
+                layoutId,
+                rootLayoutId,
+                parentLayout?.isWidgetAncestor == true
+            )
         }
     }
 
@@ -170,7 +179,7 @@ internal fun DesignFrame(
             // there are no other parent frames performing layout, layout computation can be
             // performed.
             DisposableEffect(view) {
-                LayoutManager.finishLayout(layoutId)
+                LayoutManager.finishLayout(layoutId, rootLayoutId)
                 onDispose {}
             }
         }
@@ -205,7 +214,7 @@ internal fun DesignFrame(
                 val rowModifier =
                     if (hugContents)
                         Modifier.onSizeChanged {
-                            LayoutManager.setNodeSize(layoutId, it.width, it.height)
+                            LayoutManager.setNodeSize(layoutId, rootLayoutId, it.width, it.height)
                         }
                     else Modifier.layoutSizeToModifier(layout)
                 Row(
@@ -263,7 +272,7 @@ internal fun DesignFrame(
                 val columnModifier =
                     if (hugContents)
                         Modifier.onSizeChanged {
-                            LayoutManager.setNodeSize(layoutId, it.width, it.height)
+                            LayoutManager.setNodeSize(layoutId, rootLayoutId, it.width, it.height)
                         }
                     else Modifier.layoutSizeToModifier(layout)
                 Column(
@@ -373,8 +382,7 @@ internal fun DesignFrame(
 
             // Content for the lazy content parameter. This uses the grid layout but also supports
             // limiting the number of children to style.max_children, and using an overflow node if
-            // one
-            // is specified.
+            // one is specified.
             val lazyItemContent: LazyGridScope.() -> Unit = {
                 val lContent = lazyContent { nodeData ->
                     getSpan(layoutInfo.gridSpanContent, nodeData)
@@ -451,8 +459,7 @@ internal fun DesignFrame(
             }
 
             // Given the frame size, number of columns/rows, and spacing between them, return a list
-            // of
-            // column/row widths/heights
+            // of column/row widths/heights
             fun calculateCellsCrossAxisSizeImpl(
                 gridSize: Int,
                 slotCount: Int,

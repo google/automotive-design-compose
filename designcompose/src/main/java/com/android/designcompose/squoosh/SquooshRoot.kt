@@ -1,5 +1,6 @@
 package com.android.designcompose.squoosh
 
+import android.graphics.PointF
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -13,12 +14,11 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.text.AnnotatedString
@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -65,7 +66,6 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getText
 import com.android.designcompose.getTextStyle
-import com.android.designcompose.hasChildMask
 import com.android.designcompose.isAutoHeightFillWidth
 import com.android.designcompose.isMask
 import com.android.designcompose.measureTextBounds
@@ -153,7 +153,25 @@ internal class SquooshResolvedNode(
     var nextSibling: SquooshResolvedNode? = null,
     var parent: SquooshResolvedNode? = null,
     var computedLayout: Layout? = null
-)
+) {
+    fun offsetFromAncestor(ancestor: SquooshResolvedNode? = null): PointF
+    {
+        var n: SquooshResolvedNode? = this
+        var x = 0f
+        var y = 0f
+        while (n != ancestor && n != null) {
+            val layout = n.computedLayout
+            if (layout != null) {
+                x += layout.left
+                y += layout.top
+            }
+            n = n.parent
+        }
+        return PointF(x, y)
+    }
+}
+
+
 
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
@@ -166,6 +184,12 @@ internal class SquooshChildComposable(
     val node: SquooshResolvedNode
 )
 
+// We want to provide the node to a Compose layout customization, and we do that using
+// the ParentDataModifier.
+private data class SquooshParentData(val node: SquooshResolvedNode) : ParentDataModifier {
+    override fun Density.modifyParentData(parentData: Any?): Any? { return this@SquooshParentData }
+}
+
 // This is a holder for the current child composable that we want to draw. Compose doesn't
 // let us draw children individually, so instead, any time we want to draw a child we set it
 // in an instance of the holder, and draw all children, and have each child filter if it draws
@@ -174,19 +198,8 @@ internal class SquooshChildRenderSelector(
     var selectedRenderChild: SquooshResolvedNode? = null
 )
 
-val newlineChars =
-    arrayOf(
-        Char(0xD).toString() + Char(0xA).toString(), // CRLF
-        Char(0xD).toString(), // CR
-        Char(0xA).toString(), // LF
-        Char(0x85).toString(), // NEL
-        Char(0xB).toString(), // VT
-        Char(0xC).toString(), // FF
-        Char(0x2028).toString(), // LS
-        Char(0x2029).toString(), // PS
-    )
 val newlineRegex = Regex("\\R+")
-val lineSeparator = System.getProperty("line.separator")
+val lineSeparator: String? = System.getProperty("line.separator")
 
 private fun normalizeNewlines(text: String): String {
     if (lineSeparator != null)
@@ -646,69 +659,139 @@ fun SquooshRoot(
     // Select which child to draw using this holder.
     val childRenderSelector = SquooshChildRenderSelector()
 
-    Box(
-        Modifier.size(
-            width = root!!.computedLayout!!.width.dp,
-            height = root!!.computedLayout!!.height.dp
-        ).squooshRender(root!!, doc, customizationContext, childRenderSelector)
-    ) {
-        // Now render all of the children
-        for (child in childComposables) {
-            if (child.node.computedLayout == null) { continue }
-
-            val width = child.node.computedLayout!!.width.dp // Dp are pre-density
-            val height = child.node.computedLayout!!.height.dp
-            Box(
-                Modifier
-                    .size(width = width, height = height)
-                    .drawWithContent {
-                        if (child.node == childRenderSelector.selectedRenderChild)
-                            drawContent()
-                    }
+    androidx.compose.ui.layout.Layout(
+        modifier = Modifier
+            .size(
+                width = root!!.computedLayout!!.width.dp,
+                height = root!!.computedLayout!!.height.dp
             )
-            {
-                if (child.component != null) {
-                    child.component!!(object : ComponentReplacementContext {
-                        override val appearanceModifier: Modifier = Modifier
-                        override val layoutModifier: Modifier = Modifier
-                        @Composable override fun Content() {}
-                        override val textStyle: TextStyle? = null
-                        override val parentLayout: ParentLayoutInfo? = null
-                    })
-                } else if (child.content != null) {
-                    Log.d(TAG, "Unimplemented: child.content")
+            .squooshRender(
+                root!!,
+                doc,
+                docName,
+                customizationContext,
+                childRenderSelector
+            ),
+        measurePolicy = { measurables, constraints ->
+            val placeables = measurables.map { measurable ->
+                val squooshData = measurable.parentData as? SquooshParentData
+                if (squooshData == null || squooshData.node.computedLayout == null) {
+                    // Oops! No data, just lay it out however it wants.
+                    Pair(measurable.measure(constraints), null)
+                } else {
+                    // Ok, we can get some layout data. This lets us determine a width
+                    // and height from layout. We also need to extract a transform, then
+                    // we can position this view appropriately, and create a layer for it
+                    // if it has a rotation applied (unfortunately Compose doesn't seem to
+                    // accept a full matrix transform, so we can't support shears).
+                    val w = (squooshData.node.computedLayout!!.width * density.density).roundToInt()
+                    val h = (squooshData.node.computedLayout!!.height * density.density).roundToInt()
+
+                    Pair(measurable.measure(Constraints(
+                        minWidth = w,
+                        maxWidth = w,
+                        minHeight = h,
+                        maxHeight = h
+                    )), squooshData.node)
+                }
+            }
+
+            layout(constraints.maxWidth, constraints.maxHeight) {
+                // Place children in the parent layout
+                placeables.forEach { (placeable, node) ->
+                    // If we don't have a node, then just place this and finish.
+                    if (node == null) {
+                        placeable.placeRelative(x = 0, y = 0)
+                    } else {
+                        // Ok, we can look up the position and transform by iterating over the
+                        // parents. We don't support transforms here yet. Child composables will
+                        // be rendered with transforms, but won't use them for input.
+                        //
+                        // We always take the offset from the root, but if there are layers of
+                        // custom composables (containing each other) then this will give the
+                        // wrong offset.
+                        //
+                        // XXX XXX: Create ticket to implement transformed input.
+                        val offsetFromRoot = node.offsetFromAncestor()
+
+                        placeable.placeRelative(
+                            x = (offsetFromRoot.x * density.density).roundToInt(),
+                            y = (offsetFromRoot.y * density.density).roundToInt()
+                        )
+                    }
+                }
+            }
+        },
+        content = {
+            // Now render all of the children
+            for (child in childComposables) {
+                if (child.node.computedLayout == null) { continue }
+                Box(
+                    Modifier
+                        .drawWithContent {
+                            if (child.node == childRenderSelector.selectedRenderChild)
+                                drawContent()
+                        }
+                        .then(SquooshParentData(node = child.node))
+                )
+                {
+                    if (child.component != null) {
+                        child.component!!(object : ComponentReplacementContext {
+                            override val appearanceModifier: Modifier = Modifier
+                            override val layoutModifier: Modifier = Modifier
+                            @Composable override fun Content() {}
+                            override val textStyle: TextStyle? = null
+                            override val parentLayout: ParentLayoutInfo? = null
+                        })
+                    } else if (child.content != null) {
+                        Log.d(TAG, "Unimplemented: child.content")
+                    }
                 }
             }
         }
-    }
+    )
 }
 
 internal fun Modifier.squooshRender(
     node: SquooshResolvedNode,
     document: DocContent,
+    docName: String,
     customizations: CustomizationContext,
     childRenderSelector: SquooshChildRenderSelector
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
-            // no masking yet :(
-            var frameRenderCount = 0
+            var nodeRenderCount = 0
             val renderTime = measureTimeMillis {
                 fun renderNode(node: SquooshResolvedNode) {
                     val computedLayout = node.computedLayout ?: return
                     val shape = when (node.view.data) {
                         is ViewData.Container -> (node.view.data as ViewData.Container).shape
                         else -> {
-                            if (node.textInfo != null)
-                                squooshTextRender(drawContext, this, node.textInfo, node.style, computedLayout)
+                            if (node.textInfo != null) {
+                                squooshTextRender(
+                                    drawContext,
+                                    this,
+                                    node.textInfo,
+                                    node.style,
+                                    computedLayout
+                                )
+                                nodeRenderCount++
+                            }
                             return
                         }
                     }
 
-                    // XXX: How to support text?
                     if (customizations.getComponent(node.view.name) != null) {
+                        // We need to offset the translation that we did to position the child
+                        // Composable for Compose's layout phase. We lay the child out in the
+                        // correct position so that hit testing works, but we've already got the
+                        // full transform computed here... so we need to invert that.
+                        val offsetFromRoot = node.offsetFromAncestor()
                         childRenderSelector.selectedRenderChild = node
+                        drawContext.canvas.translate(-offsetFromRoot.x * density, -offsetFromRoot.y * density)
                         drawContent()
+                        drawContext.canvas.translate(offsetFromRoot.x * density, offsetFromRoot.y * density)
                         childRenderSelector.selectedRenderChild = null
                     }
 
@@ -803,11 +886,11 @@ internal fun Modifier.squooshRender(
                             drawContext.canvas.restore()
                         }
                     }
-                    frameRenderCount++
+                    nodeRenderCount++
                 }
                 renderNode(node)
             }
-            Log.d(TAG, "render $frameRenderCount frames only recursively $renderTime ms")
+            Log.d(TAG, "$docName rendered $nodeRenderCount nodes in ${renderTime}ms")
         }
     )
 

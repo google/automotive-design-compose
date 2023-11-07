@@ -2257,12 +2257,19 @@ fun TestCompositingViews() {
         exoPlayer
     }
 
+    var (counter, setCounter) = remember { mutableStateOf(0) }
+    val color = when (counter % 5) {
+        0 -> Color.Black
+        1 -> Color.Blue
+        2 -> Color.Red
+        3 -> Color.Green
+        4 -> Color.Cyan
+        5 -> Color.Magenta
+        else -> Color.Yellow
+    }
 
     CompositingViewsTestDoc.MainFrame(
-        child1 = { Box(
-            Modifier
-                .fillMaxSize()
-                .background(Color.Red)) },
+        child1 = { Box(Modifier.fillMaxSize().background(color).clickable { setCounter(counter + 1) }) },
         child2 = {
             AndroidView(
                 factory = { cx ->

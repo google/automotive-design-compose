@@ -661,6 +661,7 @@ internal fun DesignView(
     // Use blue for DesignFrame nodes and green for DesignText nodes
     m = positionModifierFunc(Color(0f, 0f, 0.8f, 0.7f)).then(m)
 
+    val parentLayout = parentLayout?.withRootIdIfNone(layoutId)
     when (view.data) {
         is ViewData.Text ->
             return DesignText(
@@ -697,10 +698,6 @@ internal fun DesignView(
                 parentSize = remember { mutableStateOf(Size(0F, 0F)) }
             }
 
-            // Set the base view in parentLayout if there is a variant replacement
-            val myParentLayout =
-                if (hasVariantReplacement) parentLayout?.withBaseView(v) else parentLayout
-
             return DesignFrame(
                 m,
                 view,
@@ -708,15 +705,17 @@ internal fun DesignView(
                 viewLayoutInfo,
                 document,
                 customizations,
-                myParentLayout,
+                parentLayout,
                 layoutId,
                 parentComponents,
                 MaskInfo(parentSize, maskViewType),
             ) {
                 val customContent = customizations.getContent(view.name)
                 if (customContent != null) {
+                    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+                    if (rootLayoutId == -1) rootLayoutId = layoutId
                     for (i in 0 until customContent.count) {
-                        customContent.content(i)(ContentReplacementContext(layoutId))
+                        customContent.content(i)(ContentReplacementContext(layoutId, rootLayoutId))
                     }
                 } else {
                     if ((view.data as ViewData.Container).children.isNotEmpty()) {
@@ -749,6 +748,10 @@ internal fun DesignView(
                                 }
                             }
                         }
+                        val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
+                        val isWidgetAncestor =
+                            parentLayout?.isWidgetChild == true ||
+                                parentLayout?.isWidgetAncestor == true
                         var childIndex = 0
                         viewList.forEach {
                             val childView = it.first
@@ -756,6 +759,13 @@ internal fun DesignView(
                             var maskViewType = MaskViewType.None
                             if (maskedChildren.isNotEmpty()) {
                                 maskedChildren.forEach { maskedChild ->
+                                    val parentLayoutInfo =
+                                        ParentLayoutInfo(
+                                            layoutId,
+                                            childIndex,
+                                            rootLayoutId,
+                                            isWidgetAncestor = isWidgetAncestor
+                                        )
                                     val show =
                                         DesignView(
                                             Modifier,
@@ -767,13 +777,20 @@ internal fun DesignView(
                                             interactionState,
                                             interactionScope,
                                             parentComps,
-                                            ParentLayoutInfo(layoutId, childIndex),
+                                            parentLayoutInfo,
                                             MaskInfo(parentSize, maskViewType),
                                         )
                                     if (show) ++childIndex
                                 }
                                 maskViewType = MaskViewType.MaskNode
                             }
+                            val parentLayoutInfo =
+                                ParentLayoutInfo(
+                                    layoutId,
+                                    childIndex,
+                                    rootLayoutId,
+                                    isWidgetAncestor = isWidgetAncestor
+                                )
                             val show =
                                 DesignView(
                                     Modifier,
@@ -785,7 +802,7 @@ internal fun DesignView(
                                     interactionState,
                                     interactionScope,
                                     parentComps,
-                                    ParentLayoutInfo(layoutId, childIndex),
+                                    parentLayoutInfo,
                                     MaskInfo(parentSize, maskViewType),
                                 )
                             if (show) ++childIndex

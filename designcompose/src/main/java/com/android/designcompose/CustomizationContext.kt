@@ -61,6 +61,7 @@ fun EmptyListContent(): ListContent {
 
 data class ContentReplacementContext(
     val parentLayoutId: Int,
+    val rootLayoutId: Int,
 )
 
 data class ReplacementContent(

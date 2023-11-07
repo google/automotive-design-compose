@@ -29,7 +29,7 @@ use figma_import::{
     NodeQuery, SerializedDesignDoc, ViewData,
 };
 use layout::{
-    add_view, add_view_measure, clear_views, compute_layout, get_node_layout, print_layout,
+    add_style, add_style_measure, clear_views, compute_node_layout, get_node_layout, print_layout,
     remove_view, set_node_size,
 };
 use std::collections::HashMap;
@@ -82,22 +82,38 @@ fn add_view_to_layout(
             }
         }
         if use_measure_func {
-            add_view_measure(
+            add_style_measure(
                 my_id,
                 parent_layout_id,
                 child_index,
-                view.clone(),
+                view.style.clone(),
+                view.name.clone(),
                 measure_func,
-                false,
             );
         } else {
             let mut fixed_view = view.clone();
             fixed_view.style.width = Dimension::Points(view.style.bounding_box.width);
             fixed_view.style.height = Dimension::Points(view.style.bounding_box.height);
-            add_view(my_id, parent_layout_id, child_index, fixed_view, None, false);
+            add_style(
+                my_id,
+                parent_layout_id,
+                child_index,
+                fixed_view.style.clone(),
+                fixed_view.name.clone(),
+                None,
+                None,
+            );
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
-        add_view(my_id, parent_layout_id, child_index, view.clone(), None, false);
+        add_style(
+            my_id,
+            parent_layout_id,
+            child_index,
+            view.style.clone(),
+            view.name.clone(),
+            None,
+            None,
+        );
         let mut index = 0;
         for child in children {
             add_view_to_layout(child, id, my_id, index, replacements, views);
@@ -106,7 +122,7 @@ fn add_view_to_layout(
     }
 
     if parent_layout_id == -1 {
-        compute_layout();
+        compute_node_layout(my_id);
     }
 }
 
@@ -256,9 +272,9 @@ fn test_vertical_fill_resize() {
     load_view("VerticalFill", &figma_doc_result.unwrap());
 
     // Increase fixed left node height by 30 pixels
-    let result = set_node_size(1, 50, 140);
-    assert!(result.changed_layout_ids.contains(&2));
-    assert!(result.changed_layout_ids.contains(&3));
+    let result = set_node_size(1, 0, 50, 140);
+    assert!(result.changed_layouts.contains_key(&2));
+    assert!(result.changed_layouts.contains_key(&3));
 
     // Right node should be taller by 30 pixels
     let right_layout_result = get_node_layout(2);
@@ -316,9 +332,9 @@ fn test_horizontal_fill_resize() {
     load_view("HorizontalFill", &figma_doc_result.unwrap());
 
     // Increase fixed top node width by 30 pixels
-    let result = set_node_size(1, 140, 50);
-    assert!(result.changed_layout_ids.contains(&2));
-    assert!(result.changed_layout_ids.contains(&3));
+    let result = set_node_size(1, 0, 140, 50);
+    assert!(result.changed_layouts.contains_key(&2));
+    assert!(result.changed_layouts.contains_key(&3));
 
     // Bottom node should be wider by 30 pixels
     let bottom_layout_result = get_node_layout(2);

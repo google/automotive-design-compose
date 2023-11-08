@@ -338,7 +338,6 @@ internal fun DesignText(
     val layoutWithDensity = layout?.withDensity(density.density)
     DesignTextLayout(
         layoutModifier,
-        name,
         layoutWithDensity,
         layoutState,
         renderHeight,

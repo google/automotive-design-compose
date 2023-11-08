@@ -30,12 +30,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Paragraph
 import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.common.createSortedVariantName
@@ -662,6 +664,9 @@ internal class DesignLayoutData(val name: String, val layoutId: Int) : ParentDat
     }
 }
 
+internal val Measurable.designLayoutData: DesignLayoutData?
+    get() = parentData as? DesignLayoutData
+
 internal val Placeable.designLayoutData: DesignLayoutData?
     get() = parentData as? DesignLayoutData
 
@@ -680,24 +685,48 @@ internal fun Layout.top() = this.top.roundToInt()
 @Composable
 internal inline fun DesignFrameLayout(
     modifier: Modifier,
-    name: String,
+    view: View,
     layoutId: Int,
     layoutState: Int,
     content: @Composable () -> Unit
 ) {
-    val measurePolicy = remember(layoutState) { designMeasurePolicy(name, layoutId) }
+    val measurePolicy = remember(layoutState) { designMeasurePolicy(view, layoutId) }
     Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
 }
 
 // Measure policy for DesignFrame.
-internal fun designMeasurePolicy(name: String, layoutId: Int) =
+internal fun designMeasurePolicy(view: View, layoutId: Int) =
     MeasurePolicy { measurables, constraints ->
-        val placeables = measurables.map { measurable -> measurable.measure(constraints) }
+        val name = view.name
+        val placeables =
+            measurables.map { measurable ->
+                val layoutData = measurable.designLayoutData
+                // Initialize constraints to those passed in. If the view is the parent of a widget,
+                // use default infinity contraints because widgets don't use this custom layout and
+                // instead use layout from the build in Row, Column or LazyGrid. If we have layout
+                // data for the child, use them to create fixed constraints for the child.
+                var childConstraints = constraints
+                if (view.isWidgetParent()) childConstraints = Constraints()
+                else if (layoutData != null) {
+                    val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
+                    if (childLayout != null) {
+                        val childWidth = childLayout.width()
+                        val childHeight = childLayout.height()
+                        childConstraints =
+                            Constraints(childWidth, childWidth, childHeight, childHeight)
+                    }
+                }
+                measurable.measure(childConstraints)
+            }
+
         var myLayout = LayoutManager.getLayoutWithDensity(layoutId)
         if (myLayout == null)
             Log.d(TAG, "designMeasurePolicy error: null layout $name layoutId $layoutId")
-        val myWidth = myLayout?.width() ?: 0
-        val myHeight = myLayout?.height() ?: 0
+        // Get width and height from constraints if they are fixed. Otherwise get them from layout.
+        val myWidth =
+            if (constraints.hasFixedWidth) constraints.maxWidth else myLayout?.width() ?: 0
+        val myHeight =
+            if (constraints.hasFixedHeight) constraints.maxHeight else myLayout?.height() ?: 0
         layout(myWidth, myHeight) {
             // Place children in the parent layout
             placeables.forEachIndexed { index, placeable ->
@@ -722,7 +751,6 @@ internal fun designMeasurePolicy(name: String, layoutId: Int) =
 @Composable
 internal inline fun DesignTextLayout(
     modifier: Modifier,
-    name: String,
     layout: Layout?,
     layoutState: Int,
     renderHeight: Int?,
@@ -731,29 +759,27 @@ internal inline fun DesignTextLayout(
 ) {
     val measurePolicy =
         remember(layoutState, layout, renderHeight, renderTop) {
-            designTextMeasurePolicy(name, layout, renderHeight, renderTop)
+            designTextMeasurePolicy(layout, renderHeight, renderTop)
         }
     Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
 }
 
-internal fun designTextMeasurePolicy(
-    name: String,
-    layout: Layout?,
-    renderHeight: Int?,
-    renderTop: Int?
-) = MeasurePolicy { measurables, constraints ->
-    val placeables = measurables.map { measurable -> measurable.measure(constraints) }
+internal fun designTextMeasurePolicy(layout: Layout?, renderHeight: Int?, renderTop: Int?) =
+    MeasurePolicy { measurables, constraints ->
+        val placeables = measurables.map { measurable -> measurable.measure(constraints) }
 
-    val myWidth = layout?.width() ?: 0
-    val myHeight = renderHeight ?: layout?.height() ?: 0
-    val myX = 0
-    val myY = renderTop ?: layout?.top() ?: 0
-    layout(myWidth, myHeight) {
-        // Text has no children, so placeables is always just a list of 1 for this text, which
-        // we place at the calculated offset.
-        // There are two offsets that we need to consider. The offset used here myX, myY
-        // take into account the text's vertical offset, but not layout offset from its parent.
-        // The layout offset is used when this text node is placed by its parent.
-        if (layout != null) placeables.forEach { placeable -> placeable.place(myX, myY) }
+        val myWidth = if (constraints.hasFixedWidth) constraints.maxWidth else layout?.width() ?: 0
+        val myHeight =
+            if (constraints.hasFixedHeight) constraints.maxHeight
+            else renderHeight ?: layout?.height() ?: 0
+        val myX = 0
+        val myY = renderTop ?: layout?.top() ?: 0
+        layout(myWidth, myHeight) {
+            // Text has no children, so placeables is always just a list of 1 for this text, which
+            // we place at the calculated offset.
+            // There are two offsets that we need to consider. The offset used here myX, myY
+            // take into account the text's vertical offset, but not layout offset from its parent.
+            // The layout offset is used when this text node is placed by its parent.
+            if (layout != null) placeables.forEach { placeable -> placeable.place(myX, myY) }
+        }
     }
-}

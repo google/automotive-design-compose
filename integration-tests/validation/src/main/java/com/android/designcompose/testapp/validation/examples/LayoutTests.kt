@@ -56,22 +56,21 @@ interface LayoutTests {
         @DesignVariant(property = "#ButtonSquare") buttonSquare: ButtonSquare,
         @Design(node = "#HorizontalContent") horizontalContent: ReplacementContent,
         @Design(node = "#Parent") parent: ReplacementContent,
-        @DesignContentTypes(nodes = ["#BlueSquare", "#RedSquare", "#ButtonSquare"])
+        @DesignContentTypes(nodes = ["#SectionTitle", "#Item", "#LoadingPage", "#ErrorPage"])
         @DesignPreviewContent(
             name = "Items",
             nodes =
                 [
-                    PreviewNode(1, "#ButtonSquare=Green"),
-                    PreviewNode(1, "#ButtonSquare=Blue"),
-                    PreviewNode(1, "#RedSquare"),
-                    PreviewNode(1, "#BlueSquare"),
-                    PreviewNode(1, "#ButtonSquare=Green"),
-                    PreviewNode(1, "#ButtonSquare=Blue"),
-                    PreviewNode(1, "#RedSquare"),
-                    PreviewNode(1, "#BlueSquare"),
+                    PreviewNode(1, "#SectionTitle"),
+                    PreviewNode(2, "#Item=Grid, #Playing=Off"),
+                    PreviewNode(1, "#Item=Grid, #Playing=On"),
+                    PreviewNode(6, "#Item=Grid, #Playing=Off"),
+                    PreviewNode(1, "#SectionTitle"),
+                    PreviewNode(1, "#Item=List, #Playing=On"),
+                    PreviewNode(3, "#Item=List, #Playing=Off")
                 ]
         )
-        @Design(node = "#WidgetContent")
+        @Design(node = "#column-auto-content")
         widgetItems: ListContent,
         @Design(node = "#Rect1") showRect1: Boolean,
         @Design(node = "#Rect2") showRect2: Boolean,
@@ -96,6 +95,12 @@ interface LayoutTests {
     @DesignComponent(node = "#ButtonSquare")
     fun ButtonSquare(
         @DesignVariant(property = "#ButtonSquare") type: ButtonSquare,
+    )
+
+    @DesignComponent(node = "#Item")
+    fun Item(
+        @DesignVariant(property = "#Item") type: ItemType,
+        @Design(node = "#Title") title: String,
     )
 }
 
@@ -151,19 +156,17 @@ fun LayoutTests() {
             ),
         widgetItems = { spanFunc ->
             ListContentData(
-                count = 10,
+                count = 4,
                 span = { index ->
-                    val nodeData =
-                        if (index % 4 == 0) {
-                            { LayoutTestsDoc.RedSquareDesignNodeData() }
-                        } else {
-                            { LayoutTestsDoc.BlueSquareDesignNodeData() }
-                        }
+                    val nodeData = { LayoutTestsDoc.ItemDesignNodeData(type = ItemType.Grid) }
                     spanFunc(nodeData)
                 },
             ) { index, parentLayout ->
-                if (index % 4 == 0) LayoutTestsDoc.RedSquare(parentLayout = parentLayout)
-                else LayoutTestsDoc.BlueSquare(parentLayout = parentLayout)
+                LayoutTestsDoc.Item(
+                    title = "Hello",
+                    type = ItemType.Grid,
+                    parentLayout = parentLayout
+                )
             }
         },
         showRect1 = showRect1,

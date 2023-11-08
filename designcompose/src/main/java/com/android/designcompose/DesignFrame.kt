@@ -18,7 +18,6 @@ package com.android.designcompose
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -613,20 +612,11 @@ internal fun DesignFrame(
             }
         }
         is LayoutInfoAbsolute -> {
-            if (parentLayout?.listLayoutType == ListLayoutType.Grid) {
-                // For direct children of a widget, render the frame as a box with the calculated
-                // layout size, then compose the frame's children with our custom layout. If the
-                // size has not been calculated by layout yet, check for a cached size provided by
-                // the list widget
-                val childLayout = layout ?: LayoutManager.getGridNodeSize(name)
-                Box(m.layoutSizeToModifier(childLayout)) {
-                    DesignFrameLayout(Modifier, name, layoutId, layoutState) { content() }
-                }
-            } else {
-                // Otherwise, use our custom layout to render the frame and to place its children
-                m = m.then(Modifier.layoutStyle(name, layoutId))
-                DesignFrameLayout(m, name, layoutId, layoutState) { content() }
-            }
+            // Use our custom layout to render the frame and to place its children
+            m = m.then(Modifier.layoutStyle(name, layoutId))
+            // TODO add support to use layout modifiers passed in
+            // m = m.then(layoutInfo.selfModifier)
+            DesignFrameLayout(m, view, layoutId, layoutState) { content() }
         }
     }
 

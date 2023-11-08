@@ -2,11 +2,13 @@ package com.android.designcompose.squoosh
 
 import android.graphics.PointF
 import android.util.Log
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -18,6 +20,7 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
@@ -59,6 +62,7 @@ import com.android.designcompose.asComposeTransform
 import com.android.designcompose.blurFudgeFactor
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.convertColor
+import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
@@ -72,6 +76,7 @@ import com.android.designcompose.measureTextBounds
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.pointsAsDp
 import com.android.designcompose.rootNode
+import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
@@ -80,6 +85,7 @@ import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
+import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
@@ -87,12 +93,16 @@ import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.stateForDoc
+import com.android.designcompose.undoDispatch
 import com.android.designcompose.useLayer
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlin.system.measureTimeMillis
 import java.util.Optional
 import kotlin.math.roundToInt
+import kotlin.time.measureTime
 
 const val TAG: String = "DC_SQUOOSH"
 
@@ -149,10 +159,12 @@ internal class SquooshResolvedNode(
     val view: View,
     val style: ViewStyle,
     val textInfo: TextMeasureData?,
+    val unresolvedNodeId: String, // The node id before we resolved variants
     var firstChild: SquooshResolvedNode? = null,
     var nextSibling: SquooshResolvedNode? = null,
     var parent: SquooshResolvedNode? = null,
-    var computedLayout: Layout? = null
+    var computedLayout: Layout? = null,
+    var needsChildRender: Boolean = false,
 ) {
     fun offsetFromAncestor(ancestor: SquooshResolvedNode? = null): PointF
     {
@@ -179,6 +191,9 @@ internal class SquooshChildComposable(
     // One of these should be populated...
     val component: @Composable ((ComponentReplacementContext) -> Unit)?,
     val content: ReplacementContent?,
+
+    // Used for node resolution for interactions
+    val parentComponents: List<ParentComponentInfo>,
 
     // We use this to look up the transform and layout translation.
     val node: SquooshResolvedNode
@@ -429,13 +444,12 @@ internal fun resolveVariantsRecursively(
         } else {
             mergeStyles(view.style, overrideStyle)
         }
-    // XXX: Skip figuring out grid info, scrolling, interactions.
 
     // Now we know the view we want to render, the style we want to use, etc. We can create
     // a record of it. After this, another pass can be done to build a layout tree. Finally,
     // layout can be performed and rendering done.
     val textInfo = computeTextInfo(view, density, document, customizations, fontResourceLoader)
-    val resolvedView = SquooshResolvedNode(view, style, textInfo)
+    val resolvedView = SquooshResolvedNode(view, style, textInfo, v.id)
 
     if (view.data is ViewData.Container) {
         val viewData = view.data as ViewData.Container
@@ -464,6 +478,15 @@ internal fun resolveVariantsRecursively(
         }
     }
 
+    // Find out if we have some supported interactions; currently that's just on press and on click.
+    // We'll add timeouts and the others later...
+    var hasSupportedInteraction = false
+    view.reactions.ifPresent { reactions ->
+        reactions.forEach { r ->
+            hasSupportedInteraction = hasSupportedInteraction || r.trigger is Trigger.OnClick || r.trigger is Trigger.OnPress
+        }
+    }
+
     // If this node has a content customization, then we make a special record of it so that we can
     // zip through all of them after layout and render them in the right location.
     val replacementContent = customizations.getContent(view.name)
@@ -473,7 +496,21 @@ internal fun resolveVariantsRecursively(
             SquooshChildComposable(
                 component = replacementComponent,
                 content = replacementContent,
-                node = resolvedView
+                node = resolvedView,
+                parentComponents = parentComps
+            )
+        )
+        // Make sure that the renderer knows that it needs to do an external render for this
+        // node.
+        resolvedView.needsChildRender = true
+    } else if (hasSupportedInteraction) {
+        // Add a SquooshChildComposable to handle the interaction.
+        composableList.add(
+            SquooshChildComposable(
+                component = null,
+                content = null,
+                node = resolvedView,
+                parentComponents = parentComps
             )
         )
     }
@@ -579,6 +616,90 @@ internal fun populateComputedLayout(
         child = child.nextSibling
     }
 }
+
+internal fun findTargetInstanceId(
+    document: DocContent,
+    parentComponents: List<ParentComponentInfo>,
+    action: Action): String?
+{
+    val destinationId =
+        when (action) {
+            is Action.Node -> action.destination_id.orElse(null)
+            else -> null
+        } ?: return null
+
+    val componentSetId = document.c.document.component_sets[destinationId] ?: return null
+
+    // Look up our list of parent components and try to find one that is a member of
+    // this component set.
+    for (i in 0..parentComponents.size) {
+        val parentComponentInfo = parentComponents[parentComponents.size - i - 1]
+        if (
+            componentSetId ==
+            document.c.document.component_sets[parentComponentInfo.componentInfo.id]
+        ) {
+            return parentComponentInfo.instanceId
+        }
+    }
+
+    return null
+}
+
+internal fun squooshInteractionModifier(
+    document: DocContent,
+    interactionState: InteractionState,
+    interactionScope: CoroutineScope,
+    customizations: CustomizationContext,
+    childComposable: SquooshChildComposable
+): Modifier {
+    val node = childComposable.node
+    return Modifier.pointerInput(node.view.reactions) {
+        interactionScope.launch {
+            detectTapGestures(
+                onPress = {
+                    if (!node.view.reactions.isPresent) return@detectTapGestures
+                    val reactions = node.view.reactions.get()
+
+                    // Set the "pressed" state.
+                    for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
+                        interactionState.dispatch(
+                            r.action,
+                            findTargetInstanceId(document, childComposable.parentComponents, r.action),
+                            customizations.getKey(),
+                            node.unresolvedNodeId
+                        )
+                    }
+                    // XXX XXX ralph: we need to remember that we're pressed and keep emitting
+                    //                this pointerInput modifier.
+                    val dispatchClickEvent = tryAwaitRelease()
+
+                    // Clear the "pressed" state.
+                    for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
+                        interactionState.undoDispatch(
+                            findTargetInstanceId(document, childComposable.parentComponents, r.action),
+                            node.unresolvedNodeId,
+                            customizations.getKey()
+                        )
+                    }
+
+                    // If the tap wasn't cancelled (turned into a drag, a window opened on top of
+                    // us, etc) then we can run the action.
+                    if (dispatchClickEvent) {
+                        for (r in reactions.filter { r -> r.trigger is Trigger.OnClick }) {
+                            interactionState.dispatch(
+                                r.action,
+                                findTargetInstanceId(document, childComposable.parentComponents, r.action),
+                                customizations.getKey(),
+                                null // no undo
+                            )
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
 // Experiment -- minimal DesignCompose root node; no switcher, no interactions, etc.
 @Composable
 fun SquooshRoot(
@@ -595,6 +716,7 @@ fun SquooshRoot(
         return
     }
 
+    val interactionScope = rememberCoroutineScope()
     val interactionState = InteractionStateManager.stateForDoc(docId)
     val startFrame = interactionState.rootNode(initialNode = rootNodeQuery, doc = doc, isRoot = true)
 
@@ -724,30 +846,48 @@ fun SquooshRoot(
         },
         content = {
             // Now render all of the children
-            for (child in childComposables) {
-                if (child.node.computedLayout == null) { continue }
-                Box(
-                    Modifier
+            val renderChildComposableDuration = measureTimeMillis {
+                for (child in childComposables) {
+                    if (child.node.computedLayout == null) {
+                        continue
+                    }
+                    var composableChildModifier = Modifier
                         .drawWithContent {
                             if (child.node == childRenderSelector.selectedRenderChild)
                                 drawContent()
                         }
                         .then(SquooshParentData(node = child.node))
-                )
-                {
-                    if (child.component != null) {
-                        child.component!!(object : ComponentReplacementContext {
-                            override val appearanceModifier: Modifier = Modifier
-                            override val layoutModifier: Modifier = Modifier
-                            @Composable override fun Content() {}
-                            override val textStyle: TextStyle? = null
-                            override val parentLayout: ParentLayoutInfo? = null
-                        })
-                    } else if (child.content != null) {
-                        Log.d(TAG, "Unimplemented: child.content")
+
+                    if (child.component == null && child.content == null) {
+                        val interactionModifier = squooshInteractionModifier(
+                            doc,
+                            interactionState,
+                            interactionScope,
+                            customizationContext,
+                            child
+                        )
+                        composableChildModifier = composableChildModifier.then(interactionModifier)
+                    }
+
+                    Box(modifier = composableChildModifier) {
+                        if (child.component != null) {
+                            child.component!!(object : ComponentReplacementContext {
+                                override val appearanceModifier: Modifier = Modifier
+                                override val layoutModifier: Modifier = Modifier
+                                @Composable
+                                override fun Content() {
+                                }
+
+                                override val textStyle: TextStyle? = null
+                                override val parentLayout: ParentLayoutInfo? = null
+                            })
+                        } else if (child.content != null) {
+                            Log.d(TAG, "Unimplemented: child.content")
+                        }
                     }
                 }
             }
+            Log.d(TAG, "$docName generate child composables took ${renderChildComposableDuration}ms")
         }
     )
 }
@@ -782,7 +922,7 @@ internal fun Modifier.squooshRender(
                         }
                     }
 
-                    if (customizations.getComponent(node.view.name) != null) {
+                    if (node.needsChildRender) {
                         // We need to offset the translation that we did to position the child
                         // Composable for Compose's layout phase. We lay the child out in the
                         // correct position so that hit testing works, but we've already got the

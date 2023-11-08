@@ -425,6 +425,11 @@ internal fun InteractionState.invalNavOverlay() {
 }
 
 internal fun InteractionState.invalVariant(id: String) {
+    // Just for squoosh, because it doesn't subscribe to individual variant invals; this will
+    // completely break the performance of regular DC.
+    this.invalNavOverlay()
+
+
     val list = variantSubscriptions[id] ?: return
     for (sub in list.toList()) {
         sub()

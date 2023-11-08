@@ -294,7 +294,7 @@ internal fun designMeasurePolicy(name: String, layoutId: Int, space: String) =
     }
 
 @Composable
-private fun Button(name: String, selected: Boolean, select: () -> Unit) {
+internal fun Button(name: String, selected: Boolean, select: () -> Unit) {
     val textColor = if (selected) Color.Black else Color.Gray
     val borderColor = if (selected) Color.Black else Color.Gray
     var modifier =

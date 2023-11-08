@@ -53,6 +53,7 @@ class RenderAllExamples(private val config: TestConfig) {
     @Test(expected = AssertionError::class) // TODO: GH-483
     fun testRender() {
         composeTestRule.setContent(config.fileComposable)
+        composeTestRule.waitForIdle()
         composeTestRule
             .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
             .onFirst()

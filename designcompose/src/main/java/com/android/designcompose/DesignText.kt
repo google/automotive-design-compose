@@ -318,9 +318,7 @@ internal fun DesignText(
                     object : ComponentReplacementContext {
                         override val layoutModifier = modifier
                         override val appearanceModifier = Modifier
-
                         @Composable override fun Content() {}
-
                         override val textStyle = textStyle
                         override val parentLayout = parentLayout
                     }

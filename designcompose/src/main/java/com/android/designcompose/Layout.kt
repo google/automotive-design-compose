@@ -217,6 +217,7 @@ internal object LayoutManager {
         val computeLayout = performLayoutComputation && !isWidgetAncestor
         val responseBytes = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
         handleResponse(responseBytes)
+        if (computeLayout) Log.d(TAG, "Unsubscribe $layoutId, compute layout")
     }
 
     private fun beginLayout(layoutId: Int) {
@@ -426,7 +427,7 @@ class ParentLayoutInfo(
     val parentLayoutId: Int = -1,
     val childIndex: Int = 0,
     val rootLayoutId: Int = -1,
-    val isWidgetChild: Boolean = false,
+    val listLayoutType: ListLayoutType = ListLayoutType.None,
     val isWidgetAncestor: Boolean = false,
 )
 
@@ -436,13 +437,16 @@ internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutI
         this.parentLayoutId,
         this.childIndex,
         rootLayoutId,
-        this.isWidgetChild,
+        this.listLayoutType,
         this.isWidgetAncestor,
     )
 }
 
 internal val rootParentLayoutInfo = ParentLayoutInfo()
-val widgetParent = ParentLayoutInfo(isWidgetChild = true, isWidgetAncestor = true)
+
+internal fun listLayout(listLayoutType: ListLayoutType): ParentLayoutInfo {
+    return ParentLayoutInfo(listLayoutType = listLayoutType, isWidgetAncestor = true)
+}
 
 internal open class SimplifiedLayoutInfo(val selfModifier: Modifier) {
     internal fun shouldRender(): Boolean {
@@ -489,6 +493,13 @@ internal fun itemSpacingAbs(itemSpacing: ItemSpacing): Int {
         is ItemSpacing.Auto -> itemSpacing.field0
         else -> 0
     }
+}
+
+enum class ListLayoutType {
+    None,
+    Grid,
+    Row,
+    Column,
 }
 
 internal fun calcLayoutInfo(
@@ -682,31 +693,24 @@ internal inline fun DesignFrameLayout(
 internal fun designMeasurePolicy(name: String, layoutId: Int) =
     MeasurePolicy { measurables, constraints ->
         val placeables = measurables.map { measurable -> measurable.measure(constraints) }
-
         var myLayout = LayoutManager.getLayoutWithDensity(layoutId)
-        if (myLayout == null) {
+        if (myLayout == null)
             Log.d(TAG, "designMeasurePolicy error: null layout $name layoutId $layoutId")
-        }
         val myWidth = myLayout?.width() ?: 0
         val myHeight = myLayout?.height() ?: 0
-        Log.d(TAG, "Layout $name $myWidth, $myHeight")
         layout(myWidth, myHeight) {
             // Place children in the parent layout
             placeables.forEachIndexed { index, placeable ->
                 val layoutData = placeable.designLayoutData
                 if (layoutData == null) {
-                    // This should only be null for index == 0, this frame
-                    val myX = myLayout?.left() ?: 0
-                    val myY = myLayout?.top() ?: 0
-                    Log.d(TAG, "Place $name index $index: $myX, $myY}")
-                    placeable.place(myX, myY)
+                    // A null layout should only happen if the child is a node that uses one of
+                    // Compose's built in layouts such as Row, Column, or LazyGrid.
+                    placeable.place(0, 0)
+                    if (index != 0) Log.d(TAG, "Place error no layoutData: $name index $index")
                 } else {
                     val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
                     if (childLayout == null) {
-                        Log.d(
-                            TAG,
-                            "Place error null layout: parent $name child $index layoutId $layoutId"
-                        )
+                        Log.d(TAG, "Place error null layout: $name child $index layoutId $layoutId")
                     } else {
                         placeable.place(x = childLayout.left(), y = childLayout.top())
                     }
@@ -744,13 +748,12 @@ internal fun designTextMeasurePolicy(
     val myHeight = renderHeight ?: layout?.height() ?: 0
     val myX = 0
     val myY = renderTop ?: layout?.top() ?: 0
-    Log.d(TAG, "LayoutText $name w $myWidth h $myHeight x $myX y $myY left ${layout?.left}")
     layout(myWidth, myHeight) {
         // Text has no children, so placeables is always just a list of 1 for this text, which
         // we place at the calculated offset.
         // There are two offsets that we need to consider. The offset used here myX, myY
         // take into account the text's vertical offset, but not layout offset from its parent.
         // The layout offset is used when this text node is placed by its parent.
-        placeables.forEach { placeable -> placeable.place(myX, myY) }
+        if (layout != null) placeables.forEach { placeable -> placeable.place(myX, myY) }
     }
 }

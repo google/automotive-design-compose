@@ -68,9 +68,14 @@ fun GridLayoutDocumentation() {
                 if (index == 0) spanFunc { GridLayoutDoc.SectionTitleDesignNodeData() }
                 else spanFunc { GridLayoutDoc.ItemDesignNodeData(itemType = ItemType.Grid) }
             },
-        ) { index ->
+        ) { index, parentLayout ->
             if (index == 0) GridLayoutDoc.SectionTitle(title = "Recently Played")
-            else GridLayoutDoc.Item(itemType = ItemType.Grid, title = "Item $index")
+            else
+                GridLayoutDoc.Item(
+                    itemType = ItemType.Grid,
+                    title = "Item $index",
+                    parentLayout = parentLayout
+                )
         }
     }
 }

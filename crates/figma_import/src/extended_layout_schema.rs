@@ -51,10 +51,10 @@ pub struct GridNodeSize {
     /// The node name of an item that goes into a grid layout
     #[serde(default)]
     pub node_name: String,
-    /// Width of the node in Figma
+    /// Width of the node in the design source
     #[serde(default)]
     pub width: u32,
-    /// Height of the node in Figma
+    /// Height of the node in design source
     #[serde(default)]
     pub height: u32,
 }

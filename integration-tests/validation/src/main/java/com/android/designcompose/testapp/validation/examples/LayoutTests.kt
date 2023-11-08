@@ -42,7 +42,6 @@ import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignPreviewContent
 import com.android.designcompose.annotation.DesignVariant
 import com.android.designcompose.annotation.PreviewNode
-import com.android.designcompose.widgetParent
 
 // TEST Various layout tests for new Rust based layout system
 @DesignDoc(id = "Gv63fYTzpeH2ZtxP4go31E")
@@ -162,9 +161,9 @@ fun LayoutTests() {
                         }
                     spanFunc(nodeData)
                 },
-            ) { index ->
-                if (index % 4 == 0) LayoutTestsDoc.RedSquare(parentLayout = widgetParent)
-                else LayoutTestsDoc.BlueSquare(parentLayout = widgetParent)
+            ) { index, parentLayout ->
+                if (index % 4 == 0) LayoutTestsDoc.RedSquare(parentLayout = parentLayout)
+                else LayoutTestsDoc.BlueSquare(parentLayout = parentLayout)
             }
         },
         showRect1 = showRect1,

@@ -253,10 +253,6 @@ internal fun DesignText(
         // false, because otherwise the measureFunc is used
         if (!isAutoHeightFillWidth(style)) {
             val textBounds = measureTextBounds(style, textLayoutData, density)
-            Log.d(
-                TAG,
-                "Text measure $nodeName: textBounds ${textBounds.width} ${textBounds.layoutHeight} vertOffset ${textBounds.verticalOffset} renderHeight ${textBounds.renderHeight}"
-            )
             setRenderHeight(textBounds.renderHeight)
             setRenderTop(textBounds.verticalOffset)
 
@@ -293,7 +289,6 @@ internal fun DesignText(
     // Unsubscribe to layout changes when the composable is no longer in view.
     DisposableEffect(Unit) {
         onDispose {
-            Log.d(TAG, "Unsubscribe TEXT $nodeName layoutId $layoutId")
             LayoutManager.unsubscribe(
                 layoutId,
                 rootLayoutId,

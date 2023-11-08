@@ -750,7 +750,7 @@ internal fun DesignView(
                         }
                         val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
                         val isWidgetAncestor =
-                            parentLayout?.isWidgetChild == true ||
+                            parentLayout?.listLayoutType != ListLayoutType.None ||
                                 parentLayout?.isWidgetAncestor == true
                         var childIndex = 0
                         viewList.forEach {

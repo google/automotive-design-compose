@@ -40,13 +40,13 @@ dependencyResolutionManagement {
 
 rootProject.name = "DesignCompose"
 
-include(":designcompose")
+include("designcompose")
 
-include(":annotation")
+include("annotation")
 
-include(":codegen")
+include("codegen")
 
-include(":common")
+include("common")
 
 include("validation-app")
 

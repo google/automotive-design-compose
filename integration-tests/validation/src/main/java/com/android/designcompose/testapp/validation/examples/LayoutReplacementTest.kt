@@ -39,13 +39,21 @@ interface LayoutReplacementTest {
 @Composable
 fun LayoutReplacementTestCase(idx: Int, rc: ContentReplacementContext) {
     if (idx == 0) {
-        LayoutReplacementTestDoc.Fill(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
+        LayoutReplacementTestDoc.Fill(
+            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
+        )
     } else if (idx == 1) {
-        LayoutReplacementTestDoc.TopLeft(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
+        LayoutReplacementTestDoc.TopLeft(
+            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
+        )
     } else if (idx == 2) {
-        LayoutReplacementTestDoc.BottomRight(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
+        LayoutReplacementTestDoc.BottomRight(
+            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
+        )
     } else if (idx == 3) {
-        LayoutReplacementTestDoc.Center(parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0))
+        LayoutReplacementTestDoc.Center(
+            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
+        )
     }
 }
 

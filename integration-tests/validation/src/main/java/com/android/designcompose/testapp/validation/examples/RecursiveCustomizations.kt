@@ -33,9 +33,9 @@ fun RecursiveCustomizations() {
             ReplacementContent(
                 count = 1,
                 content = {
-                    { replacementContext ->
+                    { rc ->
                         RecursiveCustomizationsDoc.NameFrame(
-                            parentLayout = ParentLayoutInfo(replacementContext.parentLayoutId, 0)
+                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                         )
                     }
                 }
@@ -44,24 +44,24 @@ fun RecursiveCustomizations() {
             ReplacementContent(
                 count = 3,
                 content = { index ->
-                    { replacementContext ->
+                    { rc ->
                         when (index) {
                             0 ->
                                 RecursiveCustomizationsDoc.TitleFrame(
                                     parentLayout =
-                                        ParentLayoutInfo(replacementContext.parentLayoutId, 0),
+                                        ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId),
                                     title = "First"
                                 )
                             1 ->
                                 RecursiveCustomizationsDoc.TitleFrame(
                                     parentLayout =
-                                        ParentLayoutInfo(replacementContext.parentLayoutId, 1),
+                                        ParentLayoutInfo(rc.parentLayoutId, 1, rc.rootLayoutId),
                                     title = "Second"
                                 )
                             else ->
                                 RecursiveCustomizationsDoc.TitleFrame(
                                     parentLayout =
-                                        ParentLayoutInfo(replacementContext.parentLayoutId, 2),
+                                        ParentLayoutInfo(rc.parentLayoutId, 2, rc.rootLayoutId),
                                     title = "Third"
                                 )
                         }

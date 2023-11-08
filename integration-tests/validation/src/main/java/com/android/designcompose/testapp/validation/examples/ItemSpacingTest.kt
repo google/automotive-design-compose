@@ -30,7 +30,8 @@ fun ItemSpacingTest() {
                 content = { index ->
                     { rc ->
                         ItemSpacingTestDoc.Square(
-                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                            parentLayout =
+                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                         )
                     }
                 }
@@ -41,7 +42,8 @@ fun ItemSpacingTest() {
                 content = { index ->
                     { rc ->
                         ItemSpacingTestDoc.Square(
-                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                            parentLayout =
+                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                         )
                     }
                 }

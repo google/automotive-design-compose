@@ -13,6 +13,7 @@ import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignPreviewContent
 import com.android.designcompose.annotation.DesignVariant
 import com.android.designcompose.annotation.PreviewNode
+import com.android.designcompose.widgetParent
 
 // TEST List Preview Widget
 @DesignDoc(id = "9ev0MBNHFrgTqJOrAGcEpV")
@@ -109,8 +110,17 @@ fun ListWidgetTest() {
     fun itemComposable(items: ArrayList<Pair<GridItemType, String>>, index: Int) {
         when (items[index].first) {
             GridItemType.RowGrid ->
-                ListWidgetTestDoc.Item(type = ItemType.Grid, title = items[index].second)
-            else -> ListWidgetTestDoc.VItem(type = ItemType.Grid, title = items[index].second)
+                ListWidgetTestDoc.Item(
+                    type = ItemType.Grid,
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
+            else ->
+                ListWidgetTestDoc.VItem(
+                    type = ItemType.Grid,
+                    title = items[index].second,
+                    parentLayout = widgetParent
+                )
         }
     }
 

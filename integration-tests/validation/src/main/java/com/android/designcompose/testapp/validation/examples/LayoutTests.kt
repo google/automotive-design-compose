@@ -97,7 +97,7 @@ fun LayoutTests() {
     val (showRect1, setShowRect1) = remember { mutableStateOf(false) }
     val (showRect2, setShowRect2) = remember { mutableStateOf(true) }
 
-    LayoutTestsDoc.Main(
+     LayoutTestsDoc.Main(
         name = "LongerText",
         nameAutoWidth = loremText.subSequence(0, autoWidthLen).toString(),
         nameAutoHeight = loremText.subSequence(0, autoHeightLen).toString(),
@@ -108,27 +108,28 @@ fun LayoutTests() {
             ReplacementContent(
                 count = numChildren,
                 content = { index ->
-                    { replacementContext ->
+                    { rc ->
                         if (index % 2 == 0)
                             LayoutTestsDoc.BlueSquare(
                                 parentLayout =
-                                    ParentLayoutInfo(replacementContext.parentLayoutId, index)
+                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                             )
                         else
                             LayoutTestsDoc.RedSquare(
                                 parentLayout =
-                                    ParentLayoutInfo(replacementContext.parentLayoutId, index)
+                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                             )
                     }
                 }
             ),
         parent =
             ReplacementContent(
-                count = 1,
+                count = 3,
                 content = { index ->
                     { rc ->
-                        LayoutTestsDoc.Fill(
-                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                        LayoutTestsDoc.BlueSquare(
+                            parentLayout =
+                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                         )
                     }
                 }

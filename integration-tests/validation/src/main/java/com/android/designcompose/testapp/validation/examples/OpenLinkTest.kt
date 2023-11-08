@@ -65,7 +65,7 @@ fun OpenLinkTest() {
             openLinkTwo
         }
 
-    OpenLinkTestDoc.MainFrame(
+      OpenLinkTestDoc.MainFrame(
         name = "Rob",
         openLinkCallback = openLinkFunc,
         content =
@@ -76,15 +76,18 @@ fun OpenLinkTest() {
                         when (index) {
                             0 ->
                                 OpenLinkTestDoc.Red(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             1 ->
                                 OpenLinkTestDoc.Green(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             2 ->
                                 OpenLinkTestDoc.Blue(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             3 ->
                                 OpenLinkTestDoc.Square(
@@ -97,12 +100,17 @@ fun OpenLinkTest() {
                                                 { irc ->
                                                     OpenLinkTestDoc.PurpleCircle(
                                                         parentLayout =
-                                                            ParentLayoutInfo(irc.parentLayoutId, i)
+                                                            ParentLayoutInfo(
+                                                                irc.parentLayoutId,
+                                                                i,
+                                                                rc.rootLayoutId
+                                                            )
                                                     )
                                                 }
                                             }
                                         ),
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             else ->
                                 OpenLinkTestDoc.Square(
@@ -115,12 +123,17 @@ fun OpenLinkTest() {
                                                 { irc ->
                                                     OpenLinkTestDoc.PurpleCircle(
                                                         parentLayout =
-                                                            ParentLayoutInfo(irc.parentLayoutId, i)
+                                                            ParentLayoutInfo(
+                                                                irc.parentLayoutId,
+                                                                i,
+                                                                rc.rootLayoutId
+                                                            )
                                                     )
                                                 }
                                             }
                                         ),
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                         }
                     }

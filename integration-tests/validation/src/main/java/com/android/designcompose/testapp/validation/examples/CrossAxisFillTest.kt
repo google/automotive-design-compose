@@ -37,12 +37,14 @@ fun CrossAxisFillTest() {
                     { rc ->
                         if (index == 0)
                             CrossAxisFillTestDoc.LargeFixedWidth(
-                                parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                parentLayout =
+                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                 modifier = Modifier.width(200.dp)
                             )
                         else
                             CrossAxisFillTestDoc.FillParentWidth(
-                                parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                                parentLayout =
+                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                             )
                     }
                 }

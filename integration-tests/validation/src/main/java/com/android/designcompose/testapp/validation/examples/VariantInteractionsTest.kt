@@ -57,7 +57,8 @@ fun VariantInteractionsTest() {
                         when (index) {
                             0 ->
                                 VariantInteractionsTestDoc.ButtonVariant1(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     title = "One",
                                     onTap = { println("Tap One") },
@@ -65,7 +66,8 @@ fun VariantInteractionsTest() {
                                 )
                             1 ->
                                 VariantInteractionsTestDoc.ButtonVariant1(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     title = "Two",
                                     onTap = { println("Tap Two") },
@@ -73,7 +75,8 @@ fun VariantInteractionsTest() {
                                 )
                             2 ->
                                 VariantInteractionsTestDoc.ButtonVariant1(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     title = "Three",
                                     onTap = { println("Tap Three") },
@@ -81,7 +84,8 @@ fun VariantInteractionsTest() {
                                 )
                             3 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.Grid,
                                     playState = PlayState.Play,
                                     title = "Four",
@@ -90,7 +94,8 @@ fun VariantInteractionsTest() {
                                 )
                             4 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.Grid,
                                     playState = PlayState.Play,
                                     title = "Five",
@@ -99,7 +104,8 @@ fun VariantInteractionsTest() {
                                 )
                             5 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.Grid,
                                     playState = PlayState.Pause,
                                     title = "Six",
@@ -108,7 +114,8 @@ fun VariantInteractionsTest() {
                                 )
                             6 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.Grid,
                                     playState = PlayState.Pause,
                                     title = "Seven",
@@ -117,7 +124,8 @@ fun VariantInteractionsTest() {
                                 )
                             7 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     playState = PlayState.Pause,
                                     title = "Eight",
@@ -126,7 +134,8 @@ fun VariantInteractionsTest() {
                                 )
                             8 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
-                                    parentLayout = ParentLayoutInfo(rc.parentLayoutId, index),
+                                    parentLayout =
+                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                                     type = ItemType.List,
                                     playState = PlayState.Pause,
                                     title = "Nine",

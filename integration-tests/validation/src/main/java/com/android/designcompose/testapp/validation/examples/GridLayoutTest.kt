@@ -19,6 +19,7 @@ package com.android.designcompose.testapp.validation.examples
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import com.android.designcompose.GetDesignNodeData
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
@@ -117,6 +118,7 @@ interface GridLayoutTest {
     fun VSectionTitle(@Design(node = "#Title") title: String)
 }
 
+@Preview()
 @Composable
 fun GridLayoutTest() {
     val vertItems: ArrayList<Pair<GridItemType, String>> = arrayListOf()

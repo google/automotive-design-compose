@@ -32,19 +32,20 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.isIdentity
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.Paragraph
+import androidx.compose.ui.text.ParagraphIntrinsics
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LineHeight
@@ -54,6 +55,7 @@ import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 internal fun Modifier.textTransform(style: ViewStyle) =
@@ -105,8 +107,8 @@ internal fun DesignText(
             Char(0xB).toString(), // VT
             Char(0xC).toString(), // FF
             Char(0x2028).toString(), // LS
-            Char(0x2029).toString(),
-        ) // PS
+            Char(0x2029).toString(), // PS
+        )
     var newlineFixedText = text
     val ls = System.getProperty("line.separator")
     ls?.let { newlineChars.forEach { newlineFixedText = newlineFixedText?.replace(it, ls) } }
@@ -216,73 +218,64 @@ internal fun DesignText(
                         else -> androidx.compose.ui.text.style.TextAlign.Left
                     },
             shadow = shadow.orElse(null),
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+            lineHeightStyle =
+                LineHeightStyle(
+                    alignment = LineHeightStyle.Alignment.Center,
+                    trim = LineHeightStyle.Trim.Both
+                )
         )
     val overflow =
         if (style.text_overflow is com.android.designcompose.serdegen.TextOverflow.Clip)
             TextOverflow.Clip
         else TextOverflow.Ellipsis
 
+    val paragraph =
+        ParagraphIntrinsics(
+            text = annotatedText.text,
+            style = textStyle,
+            spanStyles = annotatedText.spanStyles,
+            density = density,
+            resourceLoader = LocalFontLoader.current
+        )
+
     val textLayoutData =
-        TextLayoutData(annotatedText, textStyle, LocalFontLoader.current, style.text_size)
+        TextLayoutData(
+            annotatedText,
+            textStyle,
+            LocalFontLoader.current,
+            style.text_size,
+            paragraph
+        )
     val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE
     val textMeasureData =
         TextMeasureData(
             textLayoutData,
             density,
             maxLines,
-            style.min_width.pointsAsDp(density.density).value
+            style.isAutoWidthText(),
         )
 
     // Get the layout for this view that describes its size and position.
     val (layout, setLayout) = remember { mutableStateOf<Layout?>(null) }
     // Keep track of the layout state, which changes whenever this view's layout changes
     val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
-    // The height and top offset of the text might be slightly different than the height and top
-    // that is used in layout. This is because we want to honor the position from Figma used for
-    // layout, but when rendering we sometimes need to adjust the position because Compose text is
-    // slightly different than Figma text.
-    val (renderHeight, setRenderHeight) = remember { mutableStateOf<Int?>(null) }
-    val (renderTop, setRenderTop) = remember { mutableStateOf<Int?>(null) }
     val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
-    // Measure the text and subscribe for layout changes whenever the text data changes.
+    // Subscribe for layout changes whenever the text data changes, and use a measure function to
+    // measure the text width and height
     DisposableEffect(textMeasureData, style) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
         val childIndex = parentLayout?.childIndex ?: -1
-
-        // Only measure the text and subscribe with the resulting size if isAutoHeightFillWidth() is
-        // false, because otherwise the measureFunc is used
-        if (!isAutoHeightFillWidth(style)) {
-            val textBounds = measureTextBounds(style, textLayoutData, density)
-            setRenderHeight(textBounds.renderHeight)
-            setRenderTop(textBounds.verticalOffset)
-
-            LayoutManager.subscribeText(
-                layoutId,
-                setLayoutState,
-                parentLayoutId,
-                rootLayoutId,
-                childIndex,
-                style,
-                view.name,
-                textBounds.width,
-                textBounds.layoutHeight
-            )
-        } else {
-            // Use default layout for render height and 0 for top
-            setRenderHeight(null)
-            setRenderTop(0)
-
-            LayoutManager.subscribeWithMeasure(
-                layoutId,
-                setLayoutState,
-                parentLayoutId,
-                rootLayoutId,
-                childIndex,
-                style,
-                view.name,
-                textMeasureData
-            )
-        }
+        LayoutManager.subscribeWithMeasure(
+            layoutId,
+            setLayoutState,
+            parentLayoutId,
+            rootLayoutId,
+            childIndex,
+            style,
+            view.name,
+            textMeasureData
+        )
 
         onDispose {}
     }
@@ -318,7 +311,7 @@ internal fun DesignText(
                 )
             } else {
                 // Text needs to use a modifier that sets the size so that it wraps properly
-                val height = renderHeight ?: layout?.height() ?: 0
+                val height = layout?.height() ?: 0
                 val textModifier = modifier.sizeToModifier(layout?.width() ?: 0, height)
                 BasicText(
                     annotatedText,
@@ -336,12 +329,33 @@ internal fun DesignText(
             .textTransform(style)
             .layoutStyle(name, layoutId)
     val layoutWithDensity = layout?.withDensity(density.density)
+
+    // Measure and compre to layout to apply vertical centering
+    val verticalOffset =
+        if (layoutWithDensity != null) {
+            val paragraph =
+                Paragraph(
+                    paragraphIntrinsics = textMeasureData.textLayout.paragraph,
+                    width = layoutWithDensity.width,
+                    maxLines = textMeasureData.maxLines,
+                    ellipsis =
+                        style.text_overflow
+                            is com.android.designcompose.serdegen.TextOverflow.Ellipsis
+                )
+
+            when (style.text_align_vertical) {
+                is TextAlignVertical.Center -> (layoutWithDensity.height - paragraph.height) / 2F
+                is TextAlignVertical.Bottom -> layoutWithDensity.height - paragraph.height
+                else -> 0F
+            }
+        } else {
+            0F
+        }
     DesignTextLayout(
         layoutModifier,
         layoutWithDensity,
         layoutState,
-        renderHeight,
-        renderTop,
+        verticalOffset.roundToInt(),
         content
     )
     return true
@@ -353,110 +367,49 @@ internal fun DesignText(
 fun measureTextBoundsFunc(
     layoutId: Int,
     width: Float,
-    height: Float,
+    @Suppress("unused") height: Float,
     availableWidth: Float,
-    availableHeight: Float
+    @Suppress("unused") availableHeight: Float
 ): Pair<Float, Float> {
-    val density = LayoutManager.getDensity()
-    val width = width * density
-    val availableWidth = availableWidth * density
-    val availableHeight = availableHeight * density
+    // We currently don't support vertical text, only horizontal, so this function just performs
+    // height-for-width queries on text, and ignores the `height` and `availableHeight` args.
 
+    // Look up the measure data -- this map is created/updated when building the layout tree.
     val textMeasureData = LayoutManager.getTextMeasureData(layoutId)
     if (textMeasureData == null) {
         Log.d(TAG, "measureTextBoundsFunc() error: no textMeasureData for layoutId $layoutId")
         return Pair(0F, 0F)
     }
+    val density = textMeasureData.density.density
 
-    // textMeasureData.textLayout.
-    val inWidth =
-        if (width > 0F) width.toInt()
-        else if (textMeasureData.styleWidth > 0F && textMeasureData.styleWidth <= availableWidth)
-            textMeasureData.styleWidth.toInt()
-        // else if (availableWidth > 0F) availableWidth.toInt()
-        else 0 // Int.MAX_VALUE
-    val (rectBounds, _) =
-        textMeasureData.textLayout.boundsForWidth(
-            inWidth,
-            textMeasureData.maxLines,
-            textMeasureData.density
+    // Some distinct values are being collapsed, so we can't tell the difference between no
+    // available space, and a request to report the minimum space.
+    val layoutWidth =
+        if (textMeasureData.autoWidth) {
+            textMeasureData.textLayout.paragraph.maxIntrinsicWidth
+        } else if (width > 0.0f) {
+            width * density
+        } else if (availableWidth <= 0.0f) {
+            textMeasureData.textLayout.paragraph.minIntrinsicWidth
+        } else if (availableWidth >= Float.MAX_VALUE) {
+            textMeasureData.textLayout.paragraph.maxIntrinsicWidth
+        } else {
+            availableWidth * density
+        }
+
+    // Perform a layout using the given width.
+    val textLayout =
+        Paragraph(
+            paragraphIntrinsics = textMeasureData.textLayout.paragraph,
+            width = layoutWidth,
+            maxLines = textMeasureData.maxLines
         )
-    val outHeight =
-        if (availableHeight > 0f && rectBounds.height().toFloat() > availableHeight) availableHeight
-        else rectBounds.height().toFloat()
 
-    return Pair(rectBounds.width().toFloat() / density, outHeight / density)
-}
-
-private class TextBounds(
-    // Width of the measured text
-    val width: Int,
-    // Height of the text for layout purposes. This is usually the height of the text in Figma,
-    // which is used so that text is laid out in a way to match Figma.
-    val layoutHeight: Int,
-    // Height of the text for rendering purposes. Since text in Compose is a bit different than in
-    // Figma, this is usually taller than layoutHeight and is used to render text so that it does
-    // not get cut off at the bottom.
-    val renderHeight: Int,
-    // Vertical offset to render text, calculated from the text vertical alignment
-    val verticalOffset: Int,
-)
-
-private fun measureTextBounds(
-    style: ViewStyle,
-    textLayoutData: TextLayoutData,
-    density: Density
-): TextBounds {
-    var textWidth: Int
-    // renderHeight tracks the height used to render the text. This can be slightly different than
-    // layoutHeight below because Compose measures text differently than Figma.
-    var renderHeight: Int
-    // layoutHeight tracks the height used for calculating layout. This is typically the same height
-    // defined in Figma, but when the text is set to auto height then this gets set to the height
-    // calculated by boundsForWidth().
-    var rectBounds: android.graphics.Rect
-    var layoutHeight: Int
-    when (val width = style.width) {
-        is Dimension.Points -> {
-            // Fixed width
-            textWidth = width.pointsAsDp(density.density).value.roundToInt()
-            when (style.height) {
-                is Dimension.Points -> {
-                    // Fixed height. Get actual height so we can calculate vertical alignment
-                    rectBounds = textLayoutData.boundsForWidth(Int.MAX_VALUE, 1, density).first
-                    renderHeight = style.bounding_box.height.roundToInt()
-                    layoutHeight = style.height.pointsAsDp(density.density).value.roundToInt()
-                }
-                else -> {
-                    // Auto height
-                    val maxLines =
-                        if (style.line_count.isPresent) style.line_count.get().toInt()
-                        else Int.MAX_VALUE
-                    rectBounds = textLayoutData.boundsForWidth(textWidth, maxLines, density).first
-                    renderHeight = (rectBounds.height().toFloat() / density.density).roundToInt()
-                    layoutHeight = rectBounds.height()
-                }
-            }
-        }
-        else -> {
-            // Auto width, meaning everything is in one line
-            // TODO auto width can also span multiple lines; support this
-            rectBounds = textLayoutData.boundsForWidth(Int.MAX_VALUE, 1, density).first
-            textWidth = rectBounds.width()
-            renderHeight = (rectBounds.height().toFloat() / density.density).roundToInt()
-            layoutHeight = (textLayoutData.textBoxSize.height * density.density).roundToInt()
-        }
+    // The `textLayout.width` field doesn't give the tightest bounds.
+    var maxLineWidth = 0.0f
+    for (i in 0 until textLayout.lineCount) {
+        maxLineWidth = textLayout.getLineWidth(i).coerceAtLeast(maxLineWidth)
     }
 
-    var verticalAlignmentOffset = rectBounds.top
-    if (layoutHeight > rectBounds.height()) {
-        when (style.text_align_vertical) {
-            is TextAlignVertical.Center ->
-                verticalAlignmentOffset = (layoutHeight - rectBounds.height()) / 2
-            is TextAlignVertical.Bottom ->
-                verticalAlignmentOffset = (layoutHeight - rectBounds.height())
-        }
-    }
-
-    return TextBounds(textWidth, layoutHeight, renderHeight, verticalAlignmentOffset)
+    return Pair(ceil(maxLineWidth / density), ceil(textLayout.height / density))
 }

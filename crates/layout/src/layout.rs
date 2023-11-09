@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use lazy_static::lazy_static;
-use log::{error, info};
+use log::{error, info, warn};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Mutex, MutexGuard};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
@@ -166,6 +166,26 @@ impl LayoutManager {
         None
     }
 
+    fn update_children(
+        &mut self,
+        parent_layout_id: i32,
+        children: &Vec<i32>
+    ) {
+        let mut taffy = taffy();
+
+        if let Some(parent_node) = self.layout_id_to_taffy_node.get(&parent_layout_id) {
+            let child_nodes: Vec<_> = children.iter().filter_map(|child_id| self.layout_id_to_taffy_node.get(child_id).copied()).collect();
+            if let Err(e) = taffy.set_children(
+                *parent_node,
+                child_nodes.as_slice()
+            ) {
+                error!("error setting children! {:?}", e);
+            } else {
+                warn!("set children of {} to {:?}", parent_layout_id, child_nodes);
+            }
+        }
+    }
+
     fn add_style(
         &mut self,
         layout_id: i32,
@@ -206,23 +226,34 @@ impl LayoutManager {
                 Ok(node) => {
                     let parent_node = self.layout_id_to_taffy_node.get(&parent_layout_id);
                     if let Some(parent_node) = parent_node {
-                        // This has a parent node, so add it as a child
-                        let children_result = taffy.children(*parent_node);
-                        match children_result {
-                            Ok(mut children) => {
-                                children.insert(child_index as usize, node);
-                                let set_children_result =
-                                    taffy.set_children(*parent_node, children.as_ref());
-                                if let Some(e) = set_children_result.err() {
-                                    error!("taffy set_children error: {}", e);
-                                } else {
-                                    self.taffy_node_to_layout_id.insert(node, layout_id);
-                                    self.layout_id_to_taffy_node.insert(layout_id, node);
-                                    self.layout_id_to_name.insert(layout_id, name.clone());
+                        if child_index < 0 {
+                            // Don't bother inserting into the parent's child list. The caller will invoke set_children
+                            // manually instead.
+                            self.taffy_node_to_layout_id.insert(node, layout_id);
+                            self.layout_id_to_taffy_node.insert(layout_id, node);
+                            self.layout_id_to_name.insert(layout_id, name.clone());
+                        } else {
+                            // This has a parent node, so add it as a child
+                            let children_result = taffy.children(*parent_node);
+                            match children_result {
+                                Ok(mut children) => {
+                                    if child_index as usize > children.len() {
+                                        error!("omg! child index {} > children.len {} for node {} going into node {:?}", child_index, children.len(), name, self.layout_id_to_name.get(&parent_layout_id));
+                                    }
+                                    children.insert(child_index as usize, node);
+                                    let set_children_result =
+                                        taffy.set_children(*parent_node, children.as_ref());
+                                    if let Some(e) = set_children_result.err() {
+                                        error!("taffy set_children error: {}", e);
+                                    } else {
+                                        self.taffy_node_to_layout_id.insert(node, layout_id);
+                                        self.layout_id_to_taffy_node.insert(layout_id, node);
+                                        self.layout_id_to_name.insert(layout_id, name.clone());
+                                    }
                                 }
-                            }
-                            Err(e) => {
-                                error!("taffy_children error: {}", e);
+                                Err(e) => {
+                                    error!("taffy_children error: {}", e);
+                                }
                             }
                         }
                     } else {
@@ -504,6 +535,13 @@ pub fn add_style_measure(
         None,
         None,
     )
+}
+
+pub fn update_children(
+    parent_layout_id: i32,
+    children: &Vec<i32>
+) {
+    manager().update_children(parent_layout_id, children)
 }
 
 pub fn remove_view(

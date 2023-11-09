@@ -70,9 +70,7 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getText
 import com.android.designcompose.getTextStyle
-import com.android.designcompose.isAutoHeightFillWidth
 import com.android.designcompose.isMask
-import com.android.designcompose.measureTextBounds
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.pointsAsDp
 import com.android.designcompose.rootNode
@@ -81,6 +79,7 @@ import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
+import com.android.designcompose.serdegen.LayoutParentChildren
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.TextAlignVertical
@@ -92,6 +91,7 @@ import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
 import com.android.designcompose.squooshShapeRender
+import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
 import com.android.designcompose.undoDispatch
 import com.android.designcompose.useLayer
@@ -102,7 +102,6 @@ import kotlinx.coroutines.launch
 import kotlin.system.measureTimeMillis
 import java.util.Optional
 import kotlin.math.roundToInt
-import kotlin.time.measureTime
 
 const val TAG: String = "DC_SQUOOSH"
 
@@ -120,22 +119,22 @@ internal object SquooshLayout {
     }
 
     internal fun removeNode(rootLayoutId: Int, layoutId: Int) {
-        Jni.jniRemoveNode(rootLayoutId, layoutId, false)
+        Jni.jniRemoveNode(layoutId, rootLayoutId, false)
     }
 
     internal fun keepJniBits() {
         Jni.jniSetNodeSize(0, 0, 0, 0)
-        Jni.jniRemoveNode(0, 0, false)
+        Jni.jniUpdateChildren(0, intArrayOf())
     }
 
-    internal fun doLayout(rootLayoutId: Int, layoutNodes: ArrayList<LayoutNode>): Map<Int, Layout> {
-        val serializedNodes = serialize(layoutNodes)
-        var response: ByteArray? = null
+    internal fun doLayout(rootLayoutId: Int, layoutNodeList: LayoutNodeList): Map<Int, Layout> {
+        val serializedNodes = serialize(layoutNodeList)
+        var response: ByteArray?
         val performLayoutTime = measureTimeMillis {
             response = Jni.jniAddNodes(rootLayoutId, serializedNodes)
         }
         if (response == null) return emptyMap()
-        var layoutChangedResponse: LayoutChangedResponse? = null
+        var layoutChangedResponse: LayoutChangedResponse?
         val layoutDeserializeTime = measureTimeMillis {
             layoutChangedResponse =
                 LayoutChangedResponse.deserialize(BincodeDeserializer(response))
@@ -144,22 +143,63 @@ internal object SquooshLayout {
         return layoutChangedResponse!!.changed_layouts
     }
 
-    private fun serialize(ln: List<LayoutNode>): ByteArray {
-        val layoutNodeList = LayoutNodeList(ln)
+    internal fun updateChildren(layoutId: Int, children: IntArray) {
+        Jni.jniUpdateChildren(layoutId, children)
+    }
+
+    private fun serialize(layoutNodeList: LayoutNodeList): ByteArray {
         val nodeListSerializer = BincodeSerializer()
         val serializeTime = measureTimeMillis {
             layoutNodeList.serialize(nodeListSerializer)
         }
-        Log.d(TAG, "doLayout serialize time $serializeTime ms for ${ln.size} nodes")
+        Log.d(TAG, "doLayout serialize time $serializeTime ms for ${layoutNodeList.layout_nodes.size} nodes")
         return nodeListSerializer._bytes
     }
 }
 
+internal class SquooshLayoutIdAllocator(
+    private var lastAllocatedId: Int = 1,
+    private val idMap: HashMap<List<ParentComponentInfo>, Int> = HashMap(),
+    // We can also track referenced layout IDs from one generation to the next, which lets us
+    // build the set of nodes to remove from the native layout tree.
+    private var visitedSet: HashSet<Int> = HashSet(),
+    private var remainingSet: HashSet<Int> = HashSet(),
+)
+{
+    /// Return a new "root layout id" for a tree node that is an instance of a component. This
+    /// ensures that component instance children get unique layout ids even though there might
+    /// be many instances of the same component in one tree.
+    fun componentLayoutId(component: List<ParentComponentInfo>): Int {
+        val maybeId = idMap[component]
+        if (maybeId != null) return maybeId
+        val id = lastAllocatedId++
+        idMap[component] = id
+        return id
+    }
+
+    /// Note that we've visited a layout node; this protects it from removal and adds it to the
+    /// set of nodes that might get removed next iteration.
+    fun visitLayoutId(id: Int) {
+        visitedSet.add(id)
+        remainingSet.remove(id)
+    }
+
+    /// Get the set of layout nodes to remove.
+    fun removalNodes(): Set<Int> {
+        val removalSet = remainingSet
+        remainingSet = visitedSet
+        visitedSet = HashSet()
+        return removalSet
+    }
+}
+
+
 internal class SquooshResolvedNode(
     val view: View,
     val style: ViewStyle,
+    val layoutId: Int,
     val textInfo: TextMeasureData?,
-    val unresolvedNodeId: String, // The node id before we resolved variants
+    val unresolvedNodeId: String, // The node id before we resolved variants; used for interactions
     var firstChild: SquooshResolvedNode? = null,
     var nextSibling: SquooshResolvedNode? = null,
     var parent: SquooshResolvedNode? = null,
@@ -374,6 +414,7 @@ internal fun computeTextInfo(
 /// the computed layout values, and finally render the view tree.
 internal fun resolveVariantsRecursively(
     v: View,
+    rootLayoutId: Int,
     document: DocContent,
     customizations: CustomizationContext,
     interactionState: InteractionState,
@@ -384,20 +425,24 @@ internal fun resolveVariantsRecursively(
     //      else to reduce the number of objects we make (especially since we run this code
     //      every recompose.
     composableList: ArrayList<SquooshChildComposable>,
+    layoutIdAllocator: SquooshLayoutIdAllocator,
     variantParentName: String = ""): SquooshResolvedNode
 {
+    var rootLayoutId = rootLayoutId
     // XXX: This seems to do a lot of extra allocations. We'll realloc this list all the way
     //      down, when I think we could simply push and pop. It would be nice if there was a
     //      way to avoid even that, since the list is a static property of the View and not
     //      a dynamic thing at all.
-    val parentComps =
-        if (v.component_info.isPresent) {
-            val pc = parentComponents.toMutableList()
-            pc.add(ParentComponentInfo(v.id, v.component_info.get()))
-            pc
-        } else {
-            parentComponents
-        }
+    var parentComps = parentComponents
+    if (v.component_info.isPresent) {
+        val pc = parentComponents.toMutableList()
+        pc.add(ParentComponentInfo(v.id, v.component_info.get()))
+        parentComps = pc
+
+        // Ensure that the children of this component get unique layout ids, even though there
+        // may be multiple instances of the same component in one tree.
+        rootLayoutId = layoutIdAllocator.componentLayoutId(pc) * 1000000
+    }
 
     // Do we have an override style? This is style data which we should apply to the final style
     // even if we're swapping out our view definition for a variant.
@@ -448,8 +493,11 @@ internal fun resolveVariantsRecursively(
     // Now we know the view we want to render, the style we want to use, etc. We can create
     // a record of it. After this, another pass can be done to build a layout tree. Finally,
     // layout can be performed and rendering done.
+    val layoutId = rootLayoutId + v.unique_id
+    layoutIdAllocator.visitLayoutId(layoutId)
+
     val textInfo = computeTextInfo(view, density, document, customizations, fontResourceLoader)
-    val resolvedView = SquooshResolvedNode(view, style, textInfo, v.id)
+    val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id)
 
     if (view.data is ViewData.Container) {
         val viewData = view.data as ViewData.Container
@@ -458,6 +506,7 @@ internal fun resolveVariantsRecursively(
         for (child in viewData.children) {
             val childResolvedNode = resolveVariantsRecursively(
                 child,
+                rootLayoutId,
                 document,
                 customizations,
                 interactionState,
@@ -465,6 +514,7 @@ internal fun resolveVariantsRecursively(
                 density,
                 fontResourceLoader,
                 composableList,
+                layoutIdAllocator,
             )
 
             childResolvedNode.parent = resolvedView
@@ -521,64 +571,49 @@ internal fun resolveVariantsRecursively(
 /// Takes a `SquooshResolvedNode` and recursively builds or updates a native layout tree via
 /// the `SquooshLayout` wrapper of `JniLayout`.
 internal fun updateLayoutTree(
-    rootLayoutId: Int,
     resolvedNode: SquooshResolvedNode,
     layoutCache: HashMap<Int, Int>,
     layoutNodes: ArrayList<LayoutNode>,
+    layoutParentChildren: ArrayList<LayoutParentChildren>,
     parentLayoutId: Int = 0,
-    childIndex: Int = 0,
-) {
+): Boolean {
     // Make a unique layout id for this node by taking the root's unique id and adding the
     // file specific unique id (which is a u16).
-    val layoutId = rootLayoutId + resolvedNode.view.unique_id
+    val layoutId = resolvedNode.layoutId
 
     // Compute a cache key for the layout; we use this to determine if we need to update the
     // node with a new layout value or not.
     val layoutCacheKey = resolvedNode.style.hashCode()
     val needsLayoutUpdate = layoutCache[layoutId] != layoutCacheKey
+    val layoutChildren: ArrayList<Int> = arrayListOf()
 
     if (needsLayoutUpdate) {
         var useMeasureFunc = false
-        var fixedWidth: Optional<Int> = Optional.empty()
-        var fixedHeight: Optional<Int> = Optional.empty()
 
         // Text needs some additional work to measure, and to let layout measure interactively
         // to account for wrapping.
         if (resolvedNode.textInfo != null) {
-            val density = resolvedNode.textInfo.density
-            if (isAutoHeightFillWidth(resolvedNode.style) || true) {
-                // We need layout to measure this text.
-                useMeasureFunc = true
+            // We need layout to measure this text.
+            useMeasureFunc = true
 
-                // This is used by the callback logic in DesignText.kt to compute width-for-height
-                // computations for the layout implementation in Rust.
-                LayoutManager.squooshSetTextMeasureData(
-                    layoutId,
-                    resolvedNode.textInfo
-                )
-
-            } else {
-                // We can measure the text now because it's constrained.
-                val textBounds = measureTextBounds(
-                    resolvedNode.style,
-                    resolvedNode.textInfo.textLayout,
-                    resolvedNode.textInfo.density
-                )
-                fixedWidth = Optional.of((textBounds.width / density.density).roundToInt())
-                fixedHeight = Optional.of((textBounds.layoutHeight / density.density).roundToInt())
-            }
+            // This is used by the callback logic in DesignText.kt to compute width-for-height
+            // computations for the layout implementation in Rust.
+            LayoutManager.squooshSetTextMeasureData(
+                layoutId,
+                resolvedNode.textInfo
+            )
         }
 
         layoutNodes.add(
             LayoutNode(
                 layoutId,
                 parentLayoutId,
-                childIndex,
+                -1, // not childIdx!
                 resolvedNode.style,
                 resolvedNode.view.name,
                 useMeasureFunc,
-                fixedWidth,
-                fixedHeight
+                Optional.empty(),
+                Optional.empty()
             )
         )
         layoutCache[layoutId] = layoutCacheKey
@@ -586,24 +621,29 @@ internal fun updateLayoutTree(
     // XXX: We might want separate (cheaper) calls to assert the tree structure.
     // XXX XXX: This code doesn't ever update the tree structure.
 
-    var childIdx = 0
+    var updateLayoutChildren = needsLayoutUpdate
     var child = resolvedNode.firstChild
     while (child != null) {
-        updateLayoutTree(rootLayoutId, child, layoutCache, layoutNodes, layoutId, childIdx)
-        childIdx++
+        layoutChildren.add(child.layoutId)
+        updateLayoutChildren = updateLayoutTree(child, layoutCache, layoutNodes, layoutParentChildren, layoutId) || updateLayoutChildren
         child = child.nextSibling
     }
+
+    if (updateLayoutChildren) {
+        layoutParentChildren.add(LayoutParentChildren(layoutId, layoutChildren))
+    }
+
+    return needsLayoutUpdate
 }
 
 /// Iterate over a `SquooshComputedNode` tree and populate the computed layout values
 /// so that the nodes can be used for presentation or interaction (hit testing).
 internal fun populateComputedLayout(
-    rootLayoutId: Int,
     resolvedNode: SquooshResolvedNode,
     layoutValueCache: HashMap<Int, Layout>
 )
 {
-    val layoutId = rootLayoutId + resolvedNode.view.unique_id
+    val layoutId = resolvedNode.layoutId
     val layoutValue = layoutValueCache[layoutId]
     if (layoutValue == null) {
         Log.d(TAG, "Unable to fetch computed layout for ${resolvedNode.view.name} and its children")
@@ -612,7 +652,7 @@ internal fun populateComputedLayout(
 
     var child = resolvedNode.firstChild
     while (child != null) {
-        populateComputedLayout(rootLayoutId, child, layoutValueCache)
+        populateComputedLayout(child, layoutValueCache)
         child = child.nextSibling
     }
 }
@@ -726,6 +766,9 @@ fun SquooshRoot(
         return
     }
 
+    // Ensure we get invalidated when the variant memory is updated from an interaction.
+    interactionState.squooshVariantMemory(doc)
+
     val density = LocalDensity.current
     LaunchedEffect(density.density) { LayoutManager.setDensity(density.density) }
 
@@ -734,7 +777,8 @@ fun SquooshRoot(
         else -> ""
     }
 
-    val rootLayoutId = remember { SquooshLayout.getNextLayoutId() * 1000000 }
+    val rootLayoutId = remember { 0 /*SquooshLayout.getNextLayoutId() * 1000000*/ }
+    val layoutIdAllocator = remember { SquooshLayoutIdAllocator() }
     val layoutCache = remember { HashMap<Int, Int>() }
     val layoutValueCache = remember { HashMap<Int, Layout>() }
 
@@ -747,6 +791,7 @@ fun SquooshRoot(
     val resolveVariantsTime = measureTimeMillis {
         root = resolveVariantsRecursively(
             startFrame,
+            rootLayoutId,
             doc,
             customizationContext,
             interactionState,
@@ -754,27 +799,43 @@ fun SquooshRoot(
             density,
             LocalFontLoader.current,
             childComposables,
+            layoutIdAllocator,
             variantParentName
         )
     }
-    val layoutNodes: ArrayList<LayoutNode> = arrayListOf()
-    val buildLayoutTreeTime = measureTimeMillis {
-        updateLayoutTree(rootLayoutId, root!!, layoutCache, layoutNodes)
-    }
-    val performLayoutTime = measureTimeMillis {
-        val updatedLayouts = SquooshLayout.doLayout(
-            rootLayoutId + root!!.view.unique_id,
-            layoutNodes
-        )
-        layoutValueCache.putAll(updatedLayouts)
-        // XXX: layoutValueCache doesn't remove nodes that are no longer in the tree.
-        Log.d(TAG, "$docName layout invalidated ${updatedLayouts.size} nodes")
-    }
-    val populateLayoutTime = measureTimeMillis {
-        populateComputedLayout(rootLayoutId, root!!, layoutValueCache)
+
+    val removeOldLayoutNodesTime = measureTimeMillis {
+        val removalNodes = layoutIdAllocator.removalNodes()
+        for (layoutId in removalNodes) {
+            SquooshLayout.removeNode(rootLayoutId, layoutId)
+            layoutValueCache.remove(layoutId)
+            layoutCache.remove(layoutId)
+        }
+        Log.d(TAG, "$docName remove ${removalNodes.size} nodes from layout value cache")
     }
 
-    Log.d(TAG, "$docName resolveVariants: $resolveVariantsTime ms, buildLayout: $buildLayoutTreeTime ms, eval. layout $performLayoutTime ms, populate layout values: $populateLayoutTime ms")
+    var layoutNodeList = LayoutNodeList(emptyList(), emptyList())
+    val buildLayoutTreeTime = measureTimeMillis {
+        val layoutNodes: ArrayList<LayoutNode> = arrayListOf()
+        val layoutParentChildren: ArrayList<LayoutParentChildren> = arrayListOf()
+        updateLayoutTree(root!!, layoutCache, layoutNodes, layoutParentChildren)
+        layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
+    }
+
+    val performLayoutTime = measureTimeMillis {
+        val updatedLayouts = SquooshLayout.doLayout(
+            root!!.layoutId,
+            layoutNodeList
+        )
+        val priorLayoutCacheSize = layoutValueCache.size
+        layoutValueCache.putAll(updatedLayouts)
+        Log.d(TAG, "$docName layout invalidated ${updatedLayouts.size} nodes; layout cache size: ${layoutValueCache.size}; prior layout cache size: ${priorLayoutCacheSize}")
+    }
+    val populateLayoutTime = measureTimeMillis {
+        populateComputedLayout(root!!, layoutValueCache)
+    }
+
+    Log.d(TAG, "$docName resolveVariants: $resolveVariantsTime ms, buildLayout: $buildLayoutTreeTime ms, remove old nodes: $removeOldLayoutNodesTime ms, eval. layout $performLayoutTime ms, populate layout values: $populateLayoutTime ms")
 
     // Now our tree of resolved nodes is ready to use!
 

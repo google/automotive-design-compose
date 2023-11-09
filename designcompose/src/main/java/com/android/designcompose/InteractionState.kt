@@ -523,6 +523,21 @@ internal fun InteractionState.rootOverlays(doc: DocContent): List<View> {
     }
 }
 
+/// Hacky hack to give squoosh something to subscribe to that invalidates when the variant
+/// memory changes.
+@Composable
+internal fun InteractionState.squooshVariantMemory(doc: DocContent): Map<String, String> {
+    val (vm, setVm) = remember { mutableStateOf(variantMemory.toMap()) }
+    val updateVm = { setVm(variantMemory.toMap())}
+
+    DisposableEffect(doc.c.docId) {
+        navOverlaySubscriptions.add(updateVm)
+        onDispose { navOverlaySubscriptions.remove(updateVm) }
+    }
+
+    return vm
+}
+
 /// Find the variant to use for the specified instanceId, in case a CHANGE_TO interaction has
 /// modified it. An optional key is used to differentiate multiple component instances that share
 /// the same instanceId.

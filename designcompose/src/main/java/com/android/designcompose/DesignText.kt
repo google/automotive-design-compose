@@ -248,19 +248,11 @@ internal fun DesignText(
     DisposableEffect(textMeasureData, style) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
         val childIndex = parentLayout?.childIndex ?: -1
-        Log.d(
-            TAG,
-            "Subscribe TEXT $nodeName  layoutId $layoutId parent $parentLayoutId index $childIndex"
-        )
 
         // Only measure the text and subscribe with the resulting size if isAutoHeightFillWidth() is
         // false, because otherwise the measureFunc is used
         if (!isAutoHeightFillWidth(style)) {
             val textBounds = measureTextBounds(style, textLayoutData, density)
-            Log.d(
-                TAG,
-                "Text measure $nodeName: textBounds ${textBounds.width} ${textBounds.layoutHeight} vertOffset ${textBounds.verticalOffset} renderHeight ${textBounds.renderHeight}"
-            )
             setRenderHeight(textBounds.renderHeight)
             setRenderTop(textBounds.verticalOffset)
 
@@ -297,7 +289,6 @@ internal fun DesignText(
     // Unsubscribe to layout changes when the composable is no longer in view.
     DisposableEffect(Unit) {
         onDispose {
-            Log.d(TAG, "Unsubscribe TEXT $nodeName layoutId $layoutId")
             LayoutManager.unsubscribe(
                 layoutId,
                 rootLayoutId,
@@ -347,7 +338,6 @@ internal fun DesignText(
     val layoutWithDensity = layout?.withDensity(density.density)
     DesignTextLayout(
         layoutModifier,
-        name,
         layoutWithDensity,
         layoutState,
         renderHeight,

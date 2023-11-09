@@ -21,6 +21,7 @@ use taffy::prelude as taffy;
 
 use crate::{
     color::Color,
+    extended_layout_schema::GridNodeSize,
     toolkit_font_style::{FontStretch, FontStyle, FontWeight},
     toolkit_layout_style::{
         AlignContent, AlignItems, AlignSelf, Dimension, Display, FlexDirection, FlexWrap,
@@ -543,6 +544,7 @@ pub struct ViewStyle {
     pub grid_columns_rows: u32,
     pub grid_adaptive_min_size: u32,
     pub grid_span_content: Vec<GridSpan>,
+    pub grid_node_sizes: Vec<GridNodeSize>,
     pub overflow: Overflow,
     pub max_children: Option<u32>,
     pub overflow_node_id: Option<String>,
@@ -609,6 +611,7 @@ impl Default for ViewStyle {
             grid_columns_rows: 0,
             grid_adaptive_min_size: 1,
             grid_span_content: vec![],
+            grid_node_sizes: vec![],
             overflow: Overflow::default(),
             max_children: None,
             overflow_node_id: None,
@@ -797,6 +800,9 @@ impl ViewStyle {
         }
         if self.grid_span_content != other.grid_span_content {
             delta.grid_span_content = other.grid_span_content.clone();
+        }
+        if self.grid_node_sizes != other.grid_node_sizes {
+            delta.grid_node_sizes = other.grid_node_sizes.clone();
         }
         if self.overflow != other.overflow {
             delta.overflow = other.overflow;

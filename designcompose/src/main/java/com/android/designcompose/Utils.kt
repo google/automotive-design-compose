@@ -392,6 +392,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.grid_adaptive_min_size
         }
     style.grid_span_content = override.grid_span_content.ifEmpty { base.grid_span_content }
+    style.grid_node_sizes = override.grid_node_sizes.ifEmpty { base.grid_node_sizes }
     style.overflow =
         if (override.overflow !is Overflow.Visible) {
             override.overflow
@@ -637,6 +638,25 @@ internal fun View.hasChildMask(): Boolean {
 
 internal fun View.isMask(): Boolean {
     return this.data is ViewData.Container && (this.data as ViewData.Container).shape.isMask()
+}
+
+// Returns whether this view is the parent view of a list widget preview node. Since the list
+// widget preview node also has a child that is the actual parent of the custom content, we need
+// to check that the grandchild of this view has the grid_layout set in its style.
+internal fun View.isWidgetParent(): Boolean {
+    if (data !is ViewData.Container) return false
+
+    val container = data as ViewData.Container
+    if (container == null || container.children.size != 1) return false
+
+    val child = container.children.first()
+    if (child.data !is ViewData.Container) return false
+
+    val childContainer = child.data as ViewData.Container
+    if (childContainer == null || childContainer.children.size != 1) return false
+
+    val grandChild = childContainer.children.first()
+    return grandChild.style.grid_layout.isPresent
 }
 
 internal fun ViewShape.isMask(): Boolean {

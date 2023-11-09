@@ -262,7 +262,7 @@ jobs:
         with:
           arguments: verifyRoborazziDebug
 
-########### Tutorial app
+########### Reference apps
   reference-apps:
     strategy:
       matrix:
@@ -307,7 +307,6 @@ jobs:
       run: |
         chcp 65001 #set code page to utf-8
         echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$env:GITHUB_WORKSPACE/designcompose_m2repo" >> "$env:GITHUB_ENV"
-
 
     - name: Check HelloWorld App
       uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.7.1

@@ -66,6 +66,10 @@ android {
     // Deprecated in AGP 8+, replaced by `packaging`
     @Suppress("DEPRECATION")
     packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+
+    testOptions.unitTests {
+        isIncludeAndroidResources = true // For Roborazzi
+    }
 }
 
 dependencies {
@@ -73,7 +77,6 @@ dependencies {
     ksp(libs.designcompose.codegen)
 
     implementation(platform(libs.androidx.compose.bom))
-
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.ui.tooling.preview)

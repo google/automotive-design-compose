@@ -80,7 +80,7 @@ jobs:
           name: pr
           path: pr/
 
-  Comment-CompareScreenshot:
+  Update-Comment:
     needs: compare-with-base-branch
     timeout-minutes: 2
 
@@ -88,6 +88,7 @@ jobs:
       actions: read # for downloading artifacts
       contents: write # for pushing screenshot-diff to companion branch
       pull-requests: write # for creating a comment on pull requests
+      issues: write
 
     runs-on: ubuntu-latest
 

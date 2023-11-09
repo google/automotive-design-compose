@@ -124,7 +124,6 @@ internal object SquooshLayout {
 
     internal fun keepJniBits() {
         Jni.jniSetNodeSize(0, 0, 0, 0)
-        Jni.jniUpdateChildren(0, intArrayOf())
     }
 
     internal fun doLayout(rootLayoutId: Int, layoutNodeList: LayoutNodeList): Map<Int, Layout> {
@@ -141,10 +140,6 @@ internal object SquooshLayout {
         }
         Log.d(TAG, "doLayout: perform layout $performLayoutTime ms, response deser.: $layoutDeserializeTime ms")
         return layoutChangedResponse!!.changed_layouts
-    }
-
-    internal fun updateChildren(layoutId: Int, children: IntArray) {
-        Jni.jniUpdateChildren(layoutId, children)
     }
 
     private fun serialize(layoutNodeList: LayoutNodeList): ByteArray {

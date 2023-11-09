@@ -163,7 +163,8 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Masks", { MaskTest() }, "mEmdUVEIjvBBbV0kELPy37"),
         Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67"),
         Triple("Layout Tests", { LayoutTests() }, "Gv63fYTzpeH2ZtxP4go31E"),
-        Triple("Compositing Views", { TestCompositingViews() }, "9g0jn7KXNloRmOZIGze2Rr")
+        Triple("Compositing Views", { CompositingViewsTest() }, "9g0jn7KXNloRmOZIGze2Rr"),
+        Triple("Smart Animate", { SmartAnimateTest() }, "RW3lFurXCoVDeqY2Y7bf4v")
     )
 
 // TEST Basic Hello World example
@@ -2245,7 +2246,7 @@ interface CompositingViewsTest {
 }
 
 @Composable
-fun TestCompositingViews() {
+fun CompositingViewsTest() {
     val context = LocalContext.current
     val player = remember {
         val exoPlayer = ExoPlayer.Builder(context).build()
@@ -2269,7 +2270,11 @@ fun TestCompositingViews() {
     }
 
     CompositingViewsTestDoc.MainFrame(
-        child1 = { Box(Modifier.fillMaxSize().background(color).clickable { setCounter(counter + 1) }) },
+        child1 = { Box(
+            Modifier
+                .fillMaxSize()
+                .background(color)
+                .clickable { setCounter(counter + 1) }) },
         child2 = {
             AndroidView(
                 factory = { cx ->
@@ -2281,6 +2286,17 @@ fun TestCompositingViews() {
             )
         }
     )
+}
+
+@DesignDoc(id = "RW3lFurXCoVDeqY2Y7bf4v")
+interface SmartAnimateTest {
+    @DesignComponent(node = "#MainFrame")
+    fun MainFrame()
+}
+
+@Composable
+fun SmartAnimateTest() {
+    SmartAnimateTestDoc.MainFrame()
 }
 
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test

@@ -18,7 +18,7 @@ use crate::error_map::map_err_to_exception;
 use android_logger::Config;
 use figma_import::layout::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
-use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen, JIntArray};
+use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 use layout::{
@@ -202,40 +202,6 @@ fn jni_add_nodes<'local>(
     layout_response_to_bytearray(env, &layout_response)
 }
 
-fn jni_update_children<'local>(
-    env: JNIEnv<'local>,
-    _class: JClass,
-    parent_layout_id: jint,
-    children: JIntArray
-)
-{
-    let children_length = match env.get_array_length(&children) {
-        Ok(len) => {
-            // Impose some limits on tree breadth
-            if len < 0 || len > 50000 {
-                error!("Children array is too large or negatively sized: {} for parent {}", len, parent_layout_id);
-                return
-            }
-            len as usize
-        },
-        Err(e) => {
-            error!("Unable to get length of children array {:?}", e);
-            return;
-        }
-    };
-    let mut children_buffer: Vec<i32> = Vec::with_capacity(children_length);
-    children_buffer.resize(children_length, -1);
-
-    match env.get_int_array_region(children, 0, children_buffer.as_mut()) {
-        Ok(_) => {
-            update_children(parent_layout_id, &children_buffer)
-        },
-        Err(e) => {
-            error!("Unable to get children index array {:?} for parent {}", e, parent_layout_id)
-        }
-    }
-}
-
 fn jni_remove_node<'local>(
     env: JNIEnv<'local>,
     _class: JClass,
@@ -348,11 +314,6 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                     name: "jniRemoveNode".into(),
                     sig: "(IIZ)[B".into(),
                     fn_ptr: jni_remove_node as *mut c_void,
-                },
-                jni::NativeMethod {
-                    name: "jniUpdateChildren".into(),
-                    sig: "(I[I)V".into(),
-                    fn_ptr: jni_update_children as *mut c_void,
                 },
             ],
         )

@@ -101,7 +101,10 @@ class InternalGradlePlugin : Plugin<Project> {
                         // Make sure we have a figmaToken set
                         val figmaToken =
                             figmaTokenProvider.orNull
-                                ?: throw GradleException("FigmaToken must be set to run a fetch")
+                                ?: throw GradleException(
+                                    """FigmaToken must be set to run a fetch.
+                                https://google.github.io/automotive-design-compose/docs/live-update/setup#GetFigmaToken"""
+                                )
 
                         // Clear the results of the previous test run
                         val outDir = dcfOutDir.get().asFile

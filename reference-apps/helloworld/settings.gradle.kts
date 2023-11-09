@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-pluginManagement {
-    repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
-        gradlePluginPortal()
-    }
-    includeBuild("plugins")
-    includeBuild("build-logic")
-}
+rootProject.name = "DesignCompose HelloWorld App"
 
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
+    // Use the same version catalog that we use for the core SDK
+    versionCatalogs {
+        create("libs") {
+            from(files("../../gradle/libs.versions.toml"))
+            // Use the latest published version of the SDK
+            version("designcompose", "+")
+        }
+    }
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
@@ -38,24 +33,11 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "DesignCompose"
+pluginManagement {
+    repositories {
+        google()
+        gradlePluginPortal()
+    }
+}
 
-include("designcompose")
-
-include("annotation")
-
-include("codegen")
-
-include("common")
-
-include("validation-app")
-
-project(":validation-app").projectDir = File("integration-tests/validation")
-
-include("helloworld-app")
-
-project(":helloworld-app").projectDir = File("reference-apps/helloworld/app")
-
-include("tutorial-app")
-
-project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
+include("app")

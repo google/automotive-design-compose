@@ -14,95 +14,13 @@
  * limitations under the License.
  */
 
-plugins {
-    alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.designcompose)
-    id("designcompose.conventions.base")
-    id("designcompose.conventions.roborazzi")
-}
-
-var applicationID = "com.android.designcompose.testapp.helloworld"
-
-@Suppress("UnstableApiUsage")
-android {
-    namespace = applicationID
-    compileSdk = libs.versions.compileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = applicationID
-        minSdk = libs.versions.appMinSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        if (designcompose.figmaToken.isPresent) {
-            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =
-                designcompose.figmaToken.get()
-        }
-        vectorDrawables.useSupportLibrary = true
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
     }
-
-    signingConfigs {
-        // We use a bundled debug keystore, to allow debug builds from CI to be upgradable
-        named("debug") {
-            storeFile = rootProject.file("debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
+    dependencies {
+        classpath(libs.kotlin.gradlePlugin)
+        classpath(libs.android.gradlePlugin.minimumSupportedVersion)
     }
-
-    buildTypes {
-        getByName("debug") { signingConfig = signingConfigs.getByName("debug") }
-
-        getByName("release") {
-            isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("debug")
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-
-    buildFeatures { compose = true }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
-    }
-
-    packaging.resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
-}
-
-dependencies {
-    implementation(project(":designcompose"))
-    androidTestImplementation(testFixtures(project(":designcompose")))
-    ksp(project(":codegen"))
-
-    implementation(platform(libs.androidx.compose.bom))
-
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.compose.material)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.material)
-
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-    testImplementation(libs.robolectric)
-    testImplementation(libs.roborazzi)
-    testImplementation(libs.roborazzi.compose)
-    testImplementation(libs.roborazzi.junit)
-    testImplementation(libs.androidx.test.espresso.core)
-    testImplementation(libs.androidx.compose.ui.test.junit4)
-
-    androidTestImplementation(kotlin("test"))
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.google.truth)
-    androidTestImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.test.espresso.core)
 }

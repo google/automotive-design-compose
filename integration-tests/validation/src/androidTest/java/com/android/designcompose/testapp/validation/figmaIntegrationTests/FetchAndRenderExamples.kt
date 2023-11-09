@@ -27,7 +27,7 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.docRenderStatusSemanticsKey
-import com.android.designcompose.testapp.validation.EXAMPLES
+import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import com.android.designcompose.testapp.validation.interFont
 import org.junit.Before
 import org.junit.Rule

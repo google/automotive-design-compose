@@ -162,8 +162,6 @@ jobs:
           BRANCH_NAME: roborazzi_companion_${{ github.event.pull_request.head.ref }}
         shell: bash
         run: |
-          # Find all the files ending with _compare.png in roborazzi folder
-          files=$(find . -type f -name "*_compare.png" | grep "roborazzi/" | grep -E "^[a-zA-Z0-9_./-]+$")
           delimiter="$(openssl rand -hex 8)"
           {
             echo "reports<<${delimiter}"
@@ -174,6 +172,8 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
           if [[ ${{ steps.check-if-there-are-valid-files.outputs.exist_valid_files }} == 'true' ]]; then
+            # Find all the files ending with _compare.png in roborazzi folder
+            files=$(find . -type f -name "*_compare.png" | grep "roborazzi/" | grep -E "^[a-zA-Z0-9_./-]+$")
             {
               echo "| File name | Image |"
               echo "|-------|-------|"

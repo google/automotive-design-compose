@@ -69,9 +69,10 @@ if [[ -z "$FIGMA_ACCESS_TOKEN" ]]; then
     exit 1
   fi
 fi
-GRADLE_OPTS="-Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOverride=true "
+
+export GRADLE_OPTS=" -Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOverride=true"
 # Both are needed for the GMD Tests
-GRADLE_OPTS+="-Dorg.gradle.project.designcompose.cargoPlugin.abiOverride=x86,x86_64"
+export GRADLE_OPTS+=" -Dorg.gradle.project.designcompose.cargoPlugin.abiOverride=x86,x86_64"
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"
 
 cd "$GIT_ROOT" || exit

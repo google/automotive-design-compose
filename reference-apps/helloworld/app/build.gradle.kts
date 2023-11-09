@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 /*
  * Copyright 2023 Google LLC
  *
@@ -69,6 +71,15 @@ android {
 
     testOptions.unitTests {
         isIncludeAndroidResources = true // For Roborazzi
+    }
+}
+
+afterEvaluate {
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        tasks.withType<Test>().configureEach {
+            logger.warn("Robolectic native tests not suppoted on Windows, disabling $name")
+            enabled = false
+        }
     }
 }
 

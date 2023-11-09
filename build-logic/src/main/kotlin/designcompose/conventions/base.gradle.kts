@@ -46,7 +46,7 @@ val ktfmtCheckBuildScripts =
 
 project.plugins.withType(JavaBasePlugin::class.java) {
     project.extensions.getByType(JavaPluginExtension::class.java).toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 

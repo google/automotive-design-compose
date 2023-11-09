@@ -17,9 +17,7 @@
 package com.android.designcompose
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -139,10 +137,6 @@ internal fun DesignFrame(
     DisposableEffect(view) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
         val childIndex = parentLayout?.childIndex ?: -1
-        Log.d(
-            TAG,
-            "Subscribe Frame ${view.name} layoutId $layoutId parent $parentLayoutId index $childIndex isWidgetChild ${parentLayout?.isWidgetChild}"
-        )
         // Subscribe to layout changes when the view changes or is added
         LayoutManager.subscribeFrame(
             layoutId,
@@ -160,10 +154,6 @@ internal fun DesignFrame(
     DisposableEffect(Unit) {
         onDispose {
             // Unsubscribe to layout changes when the view is removed
-            Log.d(
-                TAG,
-                "Unsubscribe ${view.name} layoutId $layoutId rootLayoutId $rootLayoutId isWidgetAncestor ${parentLayout?.isWidgetAncestor}"
-            )
             LayoutManager.unsubscribe(
                 layoutId,
                 rootLayoutId,
@@ -240,7 +230,7 @@ internal fun DesignFrame(
                                 )
                             }
                         } else {
-                            content.itemContent(i)
+                            content.itemContent(i, listLayout(ListLayoutType.Row))
                         }
                     }
                 }
@@ -298,7 +288,7 @@ internal fun DesignFrame(
                                 )
                             }
                         } else {
-                            content.itemContent(i)
+                            content.itemContent(i, listLayout(ListLayoutType.Column))
                         }
                     }
                 }
@@ -402,7 +392,7 @@ internal fun DesignFrame(
                             GridItemSpan(if (span.maxLineSpan) maxLineSpan else span.span)
                         }
                     ) {
-                        lContent.initialContent()
+                        lContent.initialContent(listLayout(ListLayoutType.Grid))
                     }
                 else {
                     var count = lContent.count
@@ -451,7 +441,7 @@ internal fun DesignFrame(
                                     )
                                 }
                             } else {
-                                lContent.itemContent(index)
+                                lContent.itemContent(index, listLayout(ListLayoutType.Grid))
                             }
                         }
                     )
@@ -622,20 +612,11 @@ internal fun DesignFrame(
             }
         }
         is LayoutInfoAbsolute -> {
-            if (parentLayout?.isWidgetChild == true) {
-                // For direct children of a widget, render the frame as a box with the calculated
-                // layout size, then compose the frame's children with our custom layout
-                Box(m.layoutSizeToModifier(layout)) {
-                    DesignFrameLayout(modifier, name, layoutId, layoutState) { content() }
-                }
-            } else {
-                // Otherwise, use our custom layout to render the frame and to place its children
-                m = m.then(Modifier.layoutStyle(name, layoutId))
-                DesignFrameLayout(m, name, layoutId, layoutState) {
-                    Box(Modifier) // Need this for some reason
-                    content()
-                }
-            }
+            // Use our custom layout to render the frame and to place its children
+            m = m.then(Modifier.layoutStyle(name, layoutId))
+            // TODO add support to use layout modifiers passed in
+            // m = m.then(layoutInfo.selfModifier)
+            DesignFrameLayout(m, view, layoutId, layoutState) { content() }
         }
     }
 

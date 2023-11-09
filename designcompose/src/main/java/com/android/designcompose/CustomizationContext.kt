@@ -49,14 +49,14 @@ data class ListContentData(
     var span: ((index: Int) -> LazyContentSpan)? = null,
     var contentType: (index: Int) -> Any? = { null },
     var initialSpan: (() -> LazyContentSpan)? = null,
-    var initialContent: @Composable () -> Unit = {},
-    var itemContent: @Composable (index: Int) -> Unit
+    var initialContent: @Composable (parentLayoutInfo: ParentLayoutInfo) -> Unit = {},
+    var itemContent: @Composable (index: Int, parentLayoutInfo: ParentLayoutInfo) -> Unit
 )
 
 typealias ListContent = (GridSpanFunc) -> ListContentData
 
 fun EmptyListContent(): ListContent {
-    return { ListContentData {} }
+    return { ListContentData { _, _ -> } }
 }
 
 data class ContentReplacementContext(

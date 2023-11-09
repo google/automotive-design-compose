@@ -19,12 +19,6 @@ name: CompareScreenshot
 on:
   pull_request:
 
-permissions:
-  actions: read # for downloading artifacts
-  contents: write # for pushing screenshot-diff to companion branch
-  pull-requests: write # for creating a comment on pull requests
-  issues: write
-
 jobs:
   compare-with-base-branch:
     runs-on: ubuntu-latest
@@ -92,7 +86,6 @@ jobs:
       actions: read # for downloading artifacts
       contents: write # for pushing screenshot-diff to companion branch
       pull-requests: write # for creating a comment on pull requests
-      issues: write
 
     runs-on: ubuntu-latest
 

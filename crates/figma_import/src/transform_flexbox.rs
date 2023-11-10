@@ -944,7 +944,6 @@ fn visit_node(
                     max_span: grid_span.max_span,
                 })
             }
-            style.grid_node_sizes = extended_auto_layout.grid_layout_data.content_sizes.clone();
         } else if layout.is_row_or_column() {
             // For a horizontal or vertical autolayout, the widget uses the
             // standard Figma autolayout properties which is already handled by the frame layout

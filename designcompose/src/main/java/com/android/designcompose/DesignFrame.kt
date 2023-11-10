@@ -42,7 +42,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
@@ -510,37 +509,18 @@ internal fun DesignFrame(
                             }
                         },
                     horizontalArrangement =
-                        object : Arrangement.Horizontal {
-                            var customSpacing: Int = horizontalSpacing
-
-                            init {
-                                if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
-                                    customSpacing = layoutInfo.mainAxisSpacing.value
+                        Arrangement.spacedBy(
+                            (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
+                                    layoutInfo.mainAxisSpacing.value
                                 } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
-                                    customSpacing =
-                                        if (columnCount > 1)
-                                            (gridMainAxisSize -
-                                                (layoutInfo.mainAxisSpacing.field1 * columnCount)) /
-                                                (columnCount - 1)
-                                        else layoutInfo.mainAxisSpacing.field0
-                                }
-                            }
-
-                            override fun Density.arrange(
-                                totalSize: Int,
-                                sizes: IntArray,
-                                layoutDirection: LayoutDirection,
-                                outPositions: IntArray,
-                            ) {
-                                // Apparently this function does not get called
-                                println(
-                                    "horizontalArrangement arrange() totalSize $totalSize " +
-                                        "sizes $sizes layout $layoutDirection out $outPositions"
-                                )
-                            }
-
-                            override val spacing = customSpacing.dp
-                        },
+                                    if (columnCount > 1)
+                                        (gridMainAxisSize -
+                                            (layoutInfo.mainAxisSpacing.field1 * columnCount)) /
+                                            (columnCount - 1)
+                                    else layoutInfo.mainAxisSpacing.field0
+                                } else horizontalSpacing)
+                                .dp
+                        ),
                     verticalArrangement = Arrangement.spacedBy(verticalSpacing.dp),
                     userScrollEnabled = layoutInfo.scrollingEnabled,
                     contentPadding =
@@ -579,32 +559,19 @@ internal fun DesignFrame(
                         },
                     horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.dp),
                     verticalArrangement =
-                        object : Arrangement.Vertical {
-                            var customSpacing: Int = verticalSpacing
-
-                            init {
-                                if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
-                                    customSpacing = layoutInfo.mainAxisSpacing.value
+                        Arrangement.spacedBy(
+                            (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
+                                    layoutInfo.mainAxisSpacing.value
                                 } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
-                                    customSpacing =
-                                        if (rowCount > 1)
-                                            (gridMainAxisSize -
-                                                (layoutInfo.mainAxisSpacing.field1 * rowCount)) /
-                                                (rowCount - 1)
-                                        else layoutInfo.mainAxisSpacing.field0
-                                }
-                            }
 
-                            override fun Density.arrange(
-                                totalSize: Int,
-                                sizes: IntArray,
-                                outPositions: IntArray,
-                            ) {
-                                println("verticalArrangement arrange")
-                            }
-
-                            override val spacing = customSpacing.dp
-                        },
+                                    if (rowCount > 1)
+                                        (gridMainAxisSize -
+                                            (layoutInfo.mainAxisSpacing.field1 * rowCount)) /
+                                            (rowCount - 1)
+                                    else layoutInfo.mainAxisSpacing.field0
+                                } else verticalSpacing)
+                                .dp
+                        ),
                     userScrollEnabled = layoutInfo.scrollingEnabled,
                 ) {
                     lazyItemContent()

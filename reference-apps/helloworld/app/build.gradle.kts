@@ -20,10 +20,10 @@
 // evaluationDependsOn(":designcompose")
 // End Hacky
 plugins {
-  kotlin("android")
-  id("com.android.application")
-  alias(libs.plugins.ksp)
-  alias(libs.plugins.designcompose)
+    kotlin("android")
+    id("com.android.application")
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.designcompose)
 }
 
 java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
@@ -32,86 +32,93 @@ var applicationID = "com.android.designcompose.testapp.helloworld"
 
 @Suppress("UnstableApiUsage")
 android {
-  namespace = applicationID
-  compileSdk = libs.versions.compileSdk.get().toInt()
+    namespace = applicationID
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
-  defaultConfig {
-    applicationId = applicationID
-    minSdk = libs.versions.appMinSdk.get().toInt()
-    targetSdk = libs.versions.targetSdk.get().toInt()
-    versionCode = 1
-    versionName = "1.0"
+    defaultConfig {
+        applicationId = applicationID
+        minSdk = libs.versions.appMinSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = 1
+        versionName = "1.0"
 
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-    vectorDrawables.useSupportLibrary = true
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-  }
-
-  buildTypes {
-    getByName("release") {
-      isMinifyEnabled = true
-      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        vectorDrawables.useSupportLibrary = true
     }
-  }
 
-  buildFeatures { compose = true }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
-  composeOptions { kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get() }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
 
-  // Deprecated in AGP 8+, replaced by `packaging`
-  @Suppress("DEPRECATION")
-  packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+    buildFeatures { compose = true }
 
-  testOptions.unitTests {
-    isIncludeAndroidResources = true // For Roborazzi
-  }
-  /* Disabled for now, need to make a designcompsoe test library
-      // Hacky: GH-502
-      testOptions {
-          unitTests {
-              all { test ->
-                  val dcProject = project(":designcompose")
-                  test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
-                  test.systemProperty(
-                      "java.library.path",
-                      dcProject.getHostCargoOutputDir(CargoBuildType.DEBUG).get().asFile.absolutePath
-                  )
-              }
-          }
-      }
-      // End Hacky
-  */
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
+    }
+
+    // Deprecated in AGP 8+, replaced by `packaging`
+    @Suppress("DEPRECATION")
+    packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+
+    testOptions.unitTests {
+        isIncludeAndroidResources = true // For Roborazzi
+    }
+    /* Disabled for now, need to make a designcompsoe test library
+        // Hacky: GH-502
+        testOptions {
+            unitTests {
+                all { test ->
+                    val dcProject = project(":designcompose")
+                    test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
+                    test.systemProperty(
+                        "java.library.path",
+                        dcProject.getHostCargoOutputDir(CargoBuildType.DEBUG).get().asFile.absolutePath
+                    )
+                }
+            }
+        }
+        // End Hacky
+    */
 }
 
 afterEvaluate {
-  tasks.withType<Test>().configureEach {
-    logger.warn("Disabling ${project.name}:$name. Cannot support unit tests in standalone apps at this time.")
-    enabled = false
-  }
+    tasks.withType<Test>().configureEach {
+        logger.warn(
+            "Disabling ${project.name}:$name. Cannot support unit tests in standalone apps at this time."
+        )
+        enabled = false
+    }
 }
 
 dependencies {
-  implementation(libs.designcompose)
-  ksp(libs.designcompose.codegen)
+    implementation(libs.designcompose)
+    ksp(libs.designcompose.codegen)
 
-  implementation(platform(libs.androidx.compose.bom))
-  implementation(libs.androidx.activity.compose)
-  implementation(libs.androidx.compose.material)
-  implementation(libs.androidx.compose.ui.tooling.preview)
-  implementation(libs.material)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.material)
 
-  debugImplementation(libs.androidx.compose.ui.tooling)
-  debugImplementation(libs.androidx.compose.ui.test.manifest)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-  testImplementation(libs.robolectric)
-  testImplementation(libs.roborazzi)
-  testImplementation(libs.roborazzi.compose)
-  testImplementation(libs.roborazzi.junit)
-  testImplementation(libs.androidx.test.espresso.core)
-  testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit)
+    testImplementation(libs.androidx.test.espresso.core)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
 }

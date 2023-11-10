@@ -318,9 +318,6 @@ function ListPreview() {
   // Keep track of the item size of the first preview item that has a span of 1. This is used
   // for auto (edge-to-edge) spacing calculations
   const [itemSize, setItemSize] = useSyncedState("itemSize", [0, 0]);
-  // For each item that can be a child of the list widget, store its size as defined in its
-  // Figma node. This is useful for the application to use before calculating its actual size
-  const contentSizes = useSyncedMap<[number, number]>("contentSizes");
   // Current layout options (spacing, margins, etc)
   const [layoutOptions, setLayoutOptions] = useSyncedState("layoutOptions", new LayoutOptions(null));
   // Hash of span sizes for all possible items
@@ -362,11 +359,6 @@ function ListPreview() {
     if (nodeContentData && nodeContentData.has(widgetContentNodeName)) {
       for (const [nodeName, nodeId] of nodeContentData.get(widgetContentNodeName).content.entries()) {
         content.push({ nodeName: nodeName, nodeId: nodeId });
-
-        let contentNode = figma.getNodeById(nodeId) as DefaultFrameMixin;
-        if (contentNode != null) {
-          contentSizes.set(nodeName, [contentNode.width, contentNode.height]);
-        }
       }
     }
 
@@ -834,19 +826,6 @@ function ListPreview() {
         // This replaces autoSpacingItemSize with our 1 span item size
         let isColumns = isColumnLayout(extendedLayout.layout);
         extendedLayout.gridLayoutData.autoSpacingItemSize = isColumns ? itemSize[0] : itemSize[1];
-
-        // Make a list of content sizes
-        let sizes = [];
-        for (const nodeName of contentSizes.keys()) {
-          let size = contentSizes.get(nodeName);
-          let sizeData = {
-            nodeName: nodeName,
-            width: size[0],
-            height: size[1]
-          };
-          sizes.push(sizeData);
-        }
-        extendedLayout.gridLayoutData.contentSizes = sizes;
 
         let extendedLayoutStr = JSON.stringify(msg.extendedLayout);
         let widgetNode = figma.getNodeById(widgetId);

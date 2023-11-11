@@ -149,6 +149,14 @@ fun interface OpenLinkCallback {
     fun openLink(url: String)
 }
 
+
+internal class AnimatedTransition(
+    val instanceNodeId: String,
+    val key: String?,
+    val newVariantId: String,
+    val undoInstanceId: String?,
+    val transition: Transition
+)
 // XXX: Add subscriptions? Use Kotlin setters to trigger invalidations? How to batch invals?
 
 internal class InteractionState {
@@ -194,11 +202,18 @@ internal class InteractionState {
     /// these actions is executed, all registered callbacks are called
     var openLinkCallbacks: HashSet<OpenLinkCallback> = HashSet()
 
-    // XXX: transitions, key actions, open link callbacks
+    // Classic DesignCompose does not support animated transitions, so when
+    // running there, we just default to always immediately applying the
+    // change.
+    var supportAnimations: Boolean = false
+
+    /// A list of animated transitions that are currently in play.
+    var animations: ArrayList<AnimatedTransition> = ArrayList()
 
     /// Subscriptions...
     var navOverlaySubscriptions: ArrayList<() -> Unit> = ArrayList()
     var variantSubscriptions: HashMap<String, ArrayList<() -> Unit>> = HashMap()
+    var transitionSubscriptions: ArrayList<() -> Unit> = ArrayList()
 }
 
 /// Perform the "navigate" action, by appending the given node id to
@@ -324,6 +339,7 @@ internal fun InteractionState.changeTo(
     newVariantId: String,
     undoInstanceId: String?
 ) {
+    Log.d("DC_SQUOOSH", "variant from: ${instanceNodeId} to ${newVariantId}")
     val varKey = getInstanceIdWithKey(instanceNodeId, key)
     val previousVariant = this.variantMemory.put(varKey, newVariantId)
     if (undoInstanceId != null) {
@@ -386,18 +402,32 @@ internal fun InteractionState.dispatch(
                     else Log.i(TAG, "Unable to dispatch SWAP; missing destination id")
                 }
                 is Navigation.CHANGE_TO -> {
-                    if (action.destination_id.isPresent && targetInstanceId != null)
-                        this.changeTo(
-                            targetInstanceId,
-                            key,
-                            action.destination_id.get(),
-                            undoInstanceId
-                        )
-                    else
+                    if (action.destination_id.isPresent && targetInstanceId != null) {
+                        // If animated transitions are supported, and there's an animation on this
+                        // action, then queue up the animation and notify.
+                        if (action.transition.isPresent && supportAnimations) {
+                            animations.add(AnimatedTransition(
+                                targetInstanceId,
+                                key,
+                                action.destination_id.get(),
+                                undoInstanceId,
+                                action.transition.get()
+                            ))
+                            invalAnimations()
+                        } else {
+                            this.changeTo(
+                                targetInstanceId,
+                                key,
+                                action.destination_id.get(),
+                                undoInstanceId
+                            )
+                        }
+                    } else {
                         Log.i(
                             TAG,
                             "Unable to dispatch CHANGE_TO; missing instance id or destination id"
                         )
+                    }
                 }
                 else -> Log.i(TAG, "Unsupported node action")
             }
@@ -417,6 +447,28 @@ internal fun InteractionState.undoDispatch(
     undoAction?.apply(this, targetNodeId, key)
 }
 
+/// Make a clone of this InteractionState, and apply all of the transition values to it. The
+/// cloned InteractionState can then be used to generate a tree of the "post transition" world
+/// which can be used as a target to transition to.
+internal fun InteractionState.clonedWithTransitionsApplied(): InteractionState? {
+    if (animations.size == 0) return null
+    val deltaInteractionState = InteractionState()
+    deltaInteractionState.variantMemory = HashMap(variantMemory)
+    deltaInteractionState.navigationHistory = ArrayList(navigationHistory)
+    deltaInteractionState.overlayMemory = ArrayList(overlayMemory)
+    deltaInteractionState.undoMemory = HashMap(undoMemory)
+    // Apply all of our transition actions.
+    for (anim in animations) {
+        deltaInteractionState.changeTo(
+            instanceNodeId = anim.instanceNodeId,
+            key = anim.key,
+            newVariantId = anim.newVariantId,
+            undoInstanceId = anim.undoInstanceId
+        )
+    }
+    return deltaInteractionState
+}
+
 internal fun InteractionState.invalNavOverlay() {
     // Clone the list while we iterate it to avoid any reentrancy issues.
     for (sub in navOverlaySubscriptions.toList()) {
@@ -429,9 +481,14 @@ internal fun InteractionState.invalVariant(id: String) {
     // completely break the performance of regular DC.
     this.invalNavOverlay()
 
-
     val list = variantSubscriptions[id] ?: return
     for (sub in list.toList()) {
+        sub()
+    }
+}
+
+internal fun InteractionState.invalAnimations() {
+    for (sub in transitionSubscriptions.toList()) {
         sub()
     }
 }
@@ -536,6 +593,31 @@ internal fun InteractionState.squooshVariantMemory(doc: DocContent): Map<String,
     }
 
     return vm
+}
+
+/// Hacky hack to give squoosh something to subscribe to for transitions.
+@Composable
+internal fun InteractionState.squooshAnimatedTransitions(doc: DocContent): List<AnimatedTransition> {
+    val (anims, setAnims) = remember { mutableStateOf(animations.toList()) }
+    val updateAnims = { setAnims(animations.toList()) }
+
+    DisposableEffect(doc.c.docId) {
+        transitionSubscriptions.add(updateAnims)
+        onDispose { transitionSubscriptions.remove(updateAnims) }
+    }
+
+    return anims
+}
+
+internal fun InteractionState.squooshCompleteTransition(transition: AnimatedTransition) {
+    if (!animations.remove(transition)) return
+    changeTo(
+        instanceNodeId = transition.instanceNodeId,
+        key = transition.key,
+        newVariantId = transition.newVariantId,
+        undoInstanceId = transition.undoInstanceId
+    )
+    invalAnimations()
 }
 
 /// Find the variant to use for the specified instanceId, in case a CHANGE_TO interaction has

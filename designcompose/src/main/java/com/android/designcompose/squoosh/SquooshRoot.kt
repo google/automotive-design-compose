@@ -2,11 +2,17 @@ package com.android.designcompose.squoosh
 
 import android.graphics.PointF
 import android.util.Log
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateValueAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -60,6 +66,7 @@ import com.android.designcompose.asBrush
 import com.android.designcompose.asComposeBlendMode
 import com.android.designcompose.asComposeTransform
 import com.android.designcompose.blurFudgeFactor
+import com.android.designcompose.clonedWithTransitionsApplied
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.convertColor
 import com.android.designcompose.dispatch
@@ -88,6 +95,8 @@ import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.squooshAnimatedTransitions
+import com.android.designcompose.squooshCompleteTransition
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
 import com.android.designcompose.squooshShapeRender
@@ -191,7 +200,7 @@ internal class SquooshLayoutIdAllocator(
 
 internal class SquooshResolvedNode(
     val view: View,
-    val style: ViewStyle,
+    var style: ViewStyle,
     val layoutId: Int,
     val textInfo: TextMeasureData?,
     val unresolvedNodeId: String, // The node id before we resolved variants; used for interactions
@@ -665,10 +674,13 @@ internal fun findTargetInstanceId(
 
     val componentSetId = document.c.document.component_sets[destinationId] ?: return null
 
+    Log.d(TAG, "Looking for component set $componentSetId...")
+
     // Look up our list of parent components and try to find one that is a member of
     // this component set.
-    for (i in 0..parentComponents.size) {
-        val parentComponentInfo = parentComponents[parentComponents.size - i - 1]
+    for (parentComponentInfo in parentComponents.reversed()) {//(i in 0..parentComponents.size) {
+        Log.d(TAG, "  inspecting ${parentComponentInfo.instanceId} / ${parentComponentInfo.componentInfo.id} / ${parentComponentInfo.componentInfo.component_set_name}")
+        Log.d(TAG, "   doc has component set id: ${document.c.document.component_sets[parentComponentInfo.componentInfo.id]}")
         if (
             componentSetId ==
             document.c.document.component_sets[parentComponentInfo.componentInfo.id]
@@ -676,6 +688,8 @@ internal fun findTargetInstanceId(
             return parentComponentInfo.instanceId
         }
     }
+
+    Log.d(TAG, "Looked for action dest ${destinationId} got component set id ${componentSetId} but didn't find it in ${parentComponents.size}")
 
     return null
 }
@@ -735,6 +749,8 @@ internal fun squooshInteractionModifier(
     }
 }
 
+internal class SquooshRenderTransition(val control: SquooshAnimate, val value: State<Float>)
+
 // Experiment -- minimal DesignCompose root node; no switcher, no interactions, etc.
 @Composable
 fun SquooshRoot(
@@ -753,6 +769,10 @@ fun SquooshRoot(
 
     val interactionScope = rememberCoroutineScope()
     val interactionState = InteractionStateManager.stateForDoc(docId)
+
+    // We're starting to support animated transitions
+    interactionState.supportAnimations = true
+
     val startFrame = interactionState.rootNode(initialNode = rootNodeQuery, doc = doc, isRoot = true)
 
     if (startFrame == null) {
@@ -832,7 +852,78 @@ fun SquooshRoot(
 
     Log.d(TAG, "$docName resolveVariants: $resolveVariantsTime ms, buildLayout: $buildLayoutTreeTime ms, remove old nodes: $removeOldLayoutNodesTime ms, eval. layout $performLayoutTime ms, populate layout values: $populateLayoutTime ms")
 
-    // Now our tree of resolved nodes is ready to use!
+    // ok, now "root" is good. If we have a transition then we need to make another one with the
+    // transition applied! omg!
+    val transitions = interactionState.squooshAnimatedTransitions(doc)
+    val transitionAnimationState = interactionState.clonedWithTransitionsApplied()
+    val animatedTransitionValue = animateFloatAsState(
+        targetValue = if (transitions.isEmpty()) { 0.0f } else { 1.0f },
+        animationSpec = spring<Float>(Spring.DampingRatioNoBouncy, Spring.StiffnessVeryLow),
+        finishedListener = { v ->
+            Log.e(TAG, "transition complete val: $v")
+            if (interactionState.animations.size > 0) {
+                Log.e(TAG, "completing transition ${interactionState.animations[0]}")
+                interactionState.squooshCompleteTransition(interactionState.animations[0])
+            }
+        }
+    )
+
+    var renderTransition: SquooshRenderTransition? = null
+    if (transitionAnimationState != null && transitions.isNotEmpty()) {
+        Log.d(TAG, "$docName: creating a new root with transitions applied...")
+        // We need to make a new root with this interaction state applied, and then compute the
+        // animation control between the trees.
+        var transitionRoot: SquooshResolvedNode? = null
+        val createTransitionTargetTime = measureTimeMillis {
+            childComposables.clear()
+            transitionRoot = resolveVariantsRecursively(
+                startFrame,
+                rootLayoutId,
+                doc,
+                customizationContext,
+                transitionAnimationState,
+                emptyList(),
+                density,
+                LocalFontLoader.current,
+                childComposables,
+                layoutIdAllocator,
+                variantParentName
+            )
+            // Layout maintenance
+            val removalNodes = layoutIdAllocator.removalNodes()
+            for (layoutId in removalNodes) {
+                SquooshLayout.removeNode(rootLayoutId, layoutId)
+                layoutValueCache.remove(layoutId)
+                layoutCache.remove(layoutId)
+            }
+            // Build layout tree
+            val layoutNodes: ArrayList<LayoutNode> = arrayListOf()
+            val layoutParentChildren: ArrayList<LayoutParentChildren> = arrayListOf()
+            updateLayoutTree(transitionRoot!!, layoutCache, layoutNodes, layoutParentChildren)
+            layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
+            // Perform layout
+            val updatedLayouts = SquooshLayout.doLayout(
+                transitionRoot!!.layoutId,
+                layoutNodeList
+            )
+            val priorLayoutCacheSize = layoutValueCache.size
+            layoutValueCache.putAll(updatedLayouts)
+            // Populate layouts
+            populateComputedLayout(transitionRoot!!, layoutValueCache)
+        }
+        Log.d(TAG, "Creating transition root took $createTransitionTargetTime ms")
+        // we only bother with the first one.
+        val anim = interactionState.animations[0]
+        val animatedThing = newSquooshAnimate(root!!, anim.instanceNodeId, transitionRoot!!, anim.newVariantId)
+        if (animatedThing != null) {
+            Log.d(TAG, "Got an animated thing to manipulate!")
+            root = transitionRoot
+            renderTransition = SquooshRenderTransition(animatedThing, animatedTransitionValue)
+        } else {
+            Log.d(TAG, "NOTHING TO ANIMATE :( ${anim.instanceNodeId} to ${anim.newVariantId}")
+        }
+    }
+
 
     // Select which child to draw using this holder.
     val childRenderSelector = SquooshChildRenderSelector()
@@ -848,7 +939,8 @@ fun SquooshRoot(
                 doc,
                 docName,
                 customizationContext,
-                childRenderSelector
+                childRenderSelector,
+                renderTransition
             ),
         measurePolicy = { measurables, constraints ->
             val placeables = measurables.map { measurable ->
@@ -953,10 +1045,13 @@ internal fun Modifier.squooshRender(
     document: DocContent,
     docName: String,
     customizations: CustomizationContext,
-    childRenderSelector: SquooshChildRenderSelector
+    childRenderSelector: SquooshChildRenderSelector,
+    renderTransition: SquooshRenderTransition?
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
+            renderTransition?.control?.apply(renderTransition.value.value)
+
             var nodeRenderCount = 0
             val renderTime = measureTimeMillis {
                 fun renderNode(node: SquooshResolvedNode) {

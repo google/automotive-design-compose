@@ -249,7 +249,7 @@ internal object LayoutManager {
     // child.
     private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
         if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
-            val layoutNodeList = LayoutNodeList(layoutNodes)
+            val layoutNodeList = LayoutNodeList(layoutNodes, arrayListOf())
             val nodeListSerializer = BincodeSerializer()
             layoutNodeList.serialize(nodeListSerializer)
             val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()

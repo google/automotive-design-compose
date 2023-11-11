@@ -455,7 +455,7 @@ internal fun ContentDrawScope.render(
         drawContent()
     }
 
-    if (useBlendMode) {
+    if (useBlendMode || opacity < 1.0f) {
         drawContext.canvas.restore()
     }
     drawContext.canvas.restore()
@@ -701,7 +701,7 @@ internal fun squooshShapeRender(
         drawContent()
     }
 
-    if (useBlendMode) {
+    if (useBlendMode || opacity < 1.0f) {
         drawContext.canvas.restore()
     }
     drawContext.canvas.restore()

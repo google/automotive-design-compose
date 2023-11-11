@@ -1239,12 +1239,11 @@ internal fun StrokeWeight.right(): Float {
     return 0.0f
 }
 
-// Return whether a text node is both auto height and auto width with a width layout mode of FILL.
-// This layout type requires a measure function to be passed into the layout system.
-internal fun isAutoHeightFillWidth(style: ViewStyle) =
-    style.width is Dimension.Auto &&
-        style.height is Dimension.Auto &&
-        style.horizontal_sizing is LayoutSizing.FILL
+// Return whether a text node is auto width without a FILL sizing mode. This is a check used by the
+// text measure func that, when it returns true, means the text can expand past the available width
+// passed into it.
+internal fun ViewStyle.isAutoWidthText() =
+    width is Dimension.Auto && horizontal_sizing !is LayoutSizing.FILL
 
 internal fun Layout.withDensity(density: Float): Layout {
     return Layout(

@@ -16,8 +16,6 @@
 
 package com.android.designcompose
 
-import android.graphics.Bitmap
-import android.graphics.Paint
 import android.graphics.Rect
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -28,14 +26,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.Paragraph
+import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -57,7 +54,6 @@ import com.android.designcompose.serdegen.ViewStyle
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
 import java.util.Optional
-import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 /// TextLayoutData is used so that a parent can perform a height-for-width calculation on
@@ -66,13 +62,14 @@ internal data class TextLayoutData(
     val textStyle: androidx.compose.ui.text.TextStyle,
     val resourceLoader: Font.ResourceLoader,
     val textBoxSize: Size,
+    val paragraph: ParagraphIntrinsics
 )
 
 internal data class TextMeasureData(
     val textLayout: TextLayoutData,
     val density: Density,
     val maxLines: Int,
-    val styleWidth: Float,
+    val autoWidth: Boolean,
 )
 
 internal object LayoutManager {
@@ -123,36 +120,6 @@ internal object LayoutManager {
         // children have been added.
         beginLayout(layoutId)
         subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, false)
-    }
-
-    internal fun subscribeText(
-        layoutId: Int,
-        setLayoutState: (Int) -> Unit,
-        parentLayoutId: Int,
-        rootLayoutId: Int,
-        childIndex: Int,
-        style: ViewStyle,
-        name: String,
-        fixedWidth: Int,
-        fixedHeight: Int,
-    ) {
-        val adjustedWidth = (fixedWidth.toFloat() / density).roundToInt()
-        val adjustedHeight = (fixedHeight.toFloat() / density).roundToInt()
-        subscribe(
-            layoutId,
-            setLayoutState,
-            parentLayoutId,
-            childIndex,
-            style,
-            name,
-            false,
-            Optional.ofNullable(adjustedWidth),
-            Optional.ofNullable(adjustedHeight)
-        )
-
-        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is the
-        // text or text style changed when no other nodes changed, we recompute layout
-        computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
     internal fun subscribeWithMeasure(
@@ -301,106 +268,6 @@ internal object LayoutManager {
     internal fun notifyAllSubscribers(layoutState: Int) {
         subscribers.values.forEach { it(layoutState) }
     }
-}
-
-private class LayoutDeltaCanvas :
-    android.graphics.Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) {
-    var maxHeight = 0
-    var maxAscent = 0
-
-    override fun drawTextRun(
-        text: CharSequence,
-        start: Int,
-        end: Int,
-        contextStart: Int,
-        contextEnd: Int,
-        x: Float,
-        y: Float,
-        isRtl: Boolean,
-        paint: Paint
-    ) {
-
-        val fontMetricsInt = paint.fontMetricsInt
-        val height = fontMetricsInt.descent - fontMetricsInt.ascent
-        val ascent = -fontMetricsInt.ascent
-
-        maxHeight = maxHeight.coerceAtLeast(height)
-        maxAscent = maxAscent.coerceAtLeast(ascent)
-    }
-}
-
-internal fun TextLayoutData.boundsForWidth(
-    inWidth: Int,
-    maxLines: Int,
-    density: Density
-): Pair<Rect, Int> {
-    // Create a text layout so we can figure out the size we need to allocate for the
-    // text box. It will be taller than the Figma box because Compose measures text
-    // quite differently.
-    val firstLineTextLayout =
-        Paragraph(
-            text = annotatedString.text,
-            style = textStyle,
-            spanStyles = annotatedString.spanStyles,
-            width = inWidth.toFloat(),
-            density = density,
-            resourceLoader = resourceLoader,
-            maxLines = 1
-        )
-    val textLayout =
-        Paragraph(
-            text = annotatedString.text,
-            style = textStyle,
-            spanStyles = annotatedString.spanStyles,
-            width = inWidth.toFloat(),
-            density = density,
-            resourceLoader = resourceLoader,
-            maxLines = maxLines
-        )
-
-    // The design tool allocates height for text based on the "ascent" and "descent"
-    // glyph values. Compose uses "top" and "bottom", which are bigger and provide inclusive
-    // bounds. We make it work by determining where the baseline would be in the design
-    // tool, and then offsetting the text in Compose to match up.
-    //
-    // We use this canvas to get the glyph metrics of the largest glyph in the first line.
-    val measureCanvas = LayoutDeltaCanvas()
-    firstLineTextLayout.paint(Canvas(measureCanvas))
-    var designLineHeight = measureCanvas.maxHeight
-    var designBaseline = measureCanvas.maxAscent
-
-    // If there's an explicit line height, then figure out where we lie within it
-    if (textStyle.lineHeight.isSp) {
-        val lineHeightPx = textStyle.lineHeight.value * density.density
-
-        // center within measured height
-        val dy = (lineHeightPx - designLineHeight) / 2
-        designBaseline += dy.toInt()
-        designLineHeight = lineHeightPx.toInt()
-    }
-
-    val baselineDelta = (firstLineTextLayout.firstBaseline - designBaseline).toInt()
-
-    // Sometimes the line width is much less than the layout width; we want to
-    // have the tightest bounds possible that preserve the line breaking that
-    // Figma produces. So we take the max line width, and then the minimum of
-    // that against the layout width.
-    //
-    // The interaction test doc has several text elements that reproduce bad
-    // behavior here.
-    var maxLineWidth = 0.0f
-    for (i in 0 until textLayout.lineCount) {
-        maxLineWidth = textLayout.getLineWidth(i).coerceAtLeast(maxLineWidth)
-    }
-    val width = ceil(maxLineWidth.coerceAtMost(textLayout.width)).toInt()
-    val height = ceil(textLayout.height).toInt()
-
-    // Now we can place the text, giving it exactly the constraints it needs to
-    // lay out, and offsetting in y by the computed layout delta.
-    return Pair(
-        Rect(0, -baselineDelta, width, height - baselineDelta),
-        designLineHeight * textLayout.lineCount
-    )
 }
 
 class ParentLayoutInfo(
@@ -728,25 +595,21 @@ internal inline fun DesignTextLayout(
     modifier: Modifier,
     layout: Layout?,
     layoutState: Int,
-    renderHeight: Int?,
     renderTop: Int?,
     content: @Composable () -> Unit
 ) {
     val measurePolicy =
-        remember(layoutState, layout, renderHeight, renderTop) {
-            designTextMeasurePolicy(layout, renderHeight, renderTop)
-        }
+        remember(layoutState, layout, renderTop) { designTextMeasurePolicy(layout, renderTop) }
     Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
 }
 
-internal fun designTextMeasurePolicy(layout: Layout?, renderHeight: Int?, renderTop: Int?) =
+internal fun designTextMeasurePolicy(layout: Layout?, renderTop: Int?) =
     MeasurePolicy { measurables, constraints ->
         val placeables = measurables.map { measurable -> measurable.measure(constraints) }
 
         val myWidth = if (constraints.hasFixedWidth) constraints.maxWidth else layout?.width() ?: 0
         val myHeight =
-            if (constraints.hasFixedHeight) constraints.maxHeight
-            else renderHeight ?: layout?.height() ?: 0
+            if (constraints.hasFixedHeight) constraints.maxHeight else layout?.height() ?: 0
         val myX = 0
         val myY = renderTop ?: layout?.top() ?: 0
         layout(myWidth, myHeight) {

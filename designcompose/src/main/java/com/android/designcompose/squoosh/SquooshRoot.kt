@@ -867,12 +867,15 @@ fun SquooshRoot(
 
     Log.d(TAG, "$docName resolveVariants: $resolveVariantsTime ms, buildLayout: $buildLayoutTreeTime ms, remove old nodes: $removeOldLayoutNodesTime ms, eval. layout $performLayoutTime ms, populate layout values: $populateLayoutTime ms")
 
-    // ok, now "root" is good. If we have a transition then we need to make another one with the
-    // transition applied! omg!
+    // We can render "root", it's a full tree with layout info.
+    //
+    // But, if we have any transitions then we need to prepare another tree with all of the target
+    // states for the transitions. Then we construct transitions between the states.
     val transitions = interactionState.squooshAnimatedTransitions(doc)
     val animations = remember { HashMap<Int, SquooshRenderTransition>() }
     val animationValues: MutableState<Map<Int, Float>> = remember { mutableStateOf(mapOf()) }
     val transitionAnimationState = interactionState.clonedWithTransitionsApplied()
+    var lastAnimationId = -1
 
     if (transitionAnimationState != null && transitions.isNotEmpty()) {
         Log.d(TAG, "$docName: creating a new root with transitions applied...")
@@ -911,7 +914,6 @@ fun SquooshRoot(
                 transitionRoot!!.layoutId,
                 layoutNodeList
             )
-            val priorLayoutCacheSize = layoutValueCache.size
             layoutValueCache.putAll(updatedLayouts)
             // Populate layouts
             populateComputedLayout(transitionRoot!!, layoutValueCache)
@@ -920,6 +922,7 @@ fun SquooshRoot(
 
         val nextAnimations = HashMap<Int, SquooshRenderTransition>()
         for (anim in interactionState.animations) {
+            lastAnimationId = anim.id
             val animationControl =
                 newSquooshAnimate(root!!, anim.instanceNodeId, transitionRoot!!, anim.newVariantId)
             if (animationControl == null) {
@@ -930,18 +933,27 @@ fun SquooshRoot(
             }
             val transition = animations.get(anim.id)
             if (transition == null) {
+                // If this transition interrupted another one operating on the same element, then
+                // sample the position of the interrupted animation.
+                // XXX: This won't be correct for more than two states.
+                val initialValue: Float =
+                    if (anim.interruptedId != null) {
+                        val interruptedAnimation = animationValues.value.get(anim.interruptedId)
+                        interruptedAnimation ?: 1f
+                    } else {
+                        1f
+                    }
                 val animatable = TargetBasedAnimation(
                     animationSpec = spring<Float>(Spring.DampingRatioNoBouncy, Spring.StiffnessVeryLow),
                     typeConverter = Float.VectorConverter,
-                    initialValue = 0f,
+                    initialValue = 1f - initialValue,
                     targetValue = 1f
                 )
-                val rt = SquooshRenderTransition(animationControl, animatable, anim)
-                nextAnimations.put(anim.id, rt)
+                nextAnimations[anim.id] = SquooshRenderTransition(animationControl, animatable, anim)
             } else {
                 // Update the control with one that knows about new nodes.
                 transition.control = animationControl
-                nextAnimations.put(anim.id, transition)
+                nextAnimations[anim.id] = transition
             }
         }
         // Make sure we draw from the target root
@@ -952,9 +964,8 @@ fun SquooshRoot(
         animations.clear()
         animations.putAll(nextAnimations)
     }
-
-    // XXX: We could maybe use the most recent unique id to avoid this?
-    LaunchedEffect(transitions.map { tx -> tx.id }) {
+    
+    LaunchedEffect(lastAnimationId) {
         // While there are transitions to be run, we should run them; we just update the floats
         // in the mutable state. Those are then used by the render function, and we thus avoid
         // needing to recompose in order to propagate the animation state.
@@ -1125,7 +1136,7 @@ internal fun Modifier.squooshRender(
                     // LaunchedEffect has run. It doesn't seem OK to drop a frame at the start of
                     // each animation, so we should figure out how to run the effect immediately.
                     // (Compose's animation code seems to do this, but it's a bit complicated).
-                    transition.control.apply(0.0f)
+                    transition.control.apply(transition.animation.initialValue)
                     continue
                 }
                 transition.control.apply(animationOffset)

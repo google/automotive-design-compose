@@ -156,6 +156,7 @@ internal class AnimatedTransition(
     val newVariantId: String,
     val undoInstanceId: String?,
     val transition: Transition,
+    val interruptedId: Int?,
     val id: Int // just a counted value
 )
 // XXX: Add subscriptions? Use Kotlin setters to trigger invalidations? How to batch invals?
@@ -341,7 +342,6 @@ internal fun InteractionState.changeTo(
     newVariantId: String,
     undoInstanceId: String?
 ) {
-    Log.d("DC_SQUOOSH", "variant from: ${instanceNodeId} to ${newVariantId}")
     val varKey = getInstanceIdWithKey(instanceNodeId, key)
     val previousVariant = this.variantMemory.put(varKey, newVariantId)
     if (undoInstanceId != null) {
@@ -408,12 +408,26 @@ internal fun InteractionState.dispatch(
                         // If animated transitions are supported, and there's an animation on this
                         // action, then queue up the animation and notify.
                         if (action.transition.isPresent && supportAnimations) {
+                            // If we already have a transition running for the target instance id
+                            // then we need to stop it, and tell the animation system to start the
+                            // new transition from the point where the previous one was interrupted.
+                            var interruptedId: Int? = null
+                            animations.removeIf { anim ->
+                                if (anim.instanceNodeId == targetInstanceId) {
+                                    this.changeTo(anim.instanceNodeId, anim.key, anim.newVariantId, anim.undoInstanceId)
+                                    interruptedId = anim.id
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
                             animations.add(AnimatedTransition(
                                 targetInstanceId,
                                 key,
                                 action.destination_id.get(),
                                 undoInstanceId,
                                 action.transition.get(),
+                                interruptedId,
                                 lastAnimationId++,
                             ))
                             invalAnimations()

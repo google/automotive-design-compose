@@ -155,7 +155,8 @@ internal class AnimatedTransition(
     val key: String?,
     val newVariantId: String,
     val undoInstanceId: String?,
-    val transition: Transition
+    val transition: Transition,
+    val id: Int // just a counted value
 )
 // XXX: Add subscriptions? Use Kotlin setters to trigger invalidations? How to batch invals?
 
@@ -209,6 +210,7 @@ internal class InteractionState {
 
     /// A list of animated transitions that are currently in play.
     var animations: ArrayList<AnimatedTransition> = ArrayList()
+    var lastAnimationId: Int = 0
 
     /// Subscriptions...
     var navOverlaySubscriptions: ArrayList<() -> Unit> = ArrayList()
@@ -411,7 +413,8 @@ internal fun InteractionState.dispatch(
                                 key,
                                 action.destination_id.get(),
                                 undoInstanceId,
-                                action.transition.get()
+                                action.transition.get(),
+                                lastAnimationId++,
                             ))
                             invalAnimations()
                         } else {

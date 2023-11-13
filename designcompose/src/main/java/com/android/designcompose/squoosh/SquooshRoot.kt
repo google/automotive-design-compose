@@ -2,7 +2,13 @@ package com.android.designcompose.squoosh
 
 import android.graphics.PointF
 import android.util.Log
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Animation
+import androidx.compose.animation.core.AnimationVector
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.TargetBasedAnimation
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateValueAsState
 import androidx.compose.animation.core.spring
@@ -11,10 +17,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -47,6 +56,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.designcompose.AnimatedTransition
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignSettings
@@ -749,7 +759,12 @@ internal fun squooshInteractionModifier(
     }
 }
 
-internal class SquooshRenderTransition(val control: SquooshAnimate, val value: State<Float>)
+internal class SquooshRenderTransition(
+    var control: SquooshAnimate,
+    val animation: TargetBasedAnimation<Float, AnimationVector1D>,
+    val source: AnimatedTransition,
+    var startTimeNanos: Long = 0L,
+)
 
 // Experiment -- minimal DesignCompose root node; no switcher, no interactions, etc.
 @Composable
@@ -855,20 +870,10 @@ fun SquooshRoot(
     // ok, now "root" is good. If we have a transition then we need to make another one with the
     // transition applied! omg!
     val transitions = interactionState.squooshAnimatedTransitions(doc)
+    val animations = remember { HashMap<Int, SquooshRenderTransition>() }
+    val animationValues: MutableState<Map<Int, Float>> = remember { mutableStateOf(mapOf()) }
     val transitionAnimationState = interactionState.clonedWithTransitionsApplied()
-    val animatedTransitionValue = animateFloatAsState(
-        targetValue = if (transitions.isEmpty()) { 0.0f } else { 1.0f },
-        animationSpec = spring<Float>(Spring.DampingRatioNoBouncy, Spring.StiffnessVeryLow),
-        finishedListener = { v ->
-            Log.e(TAG, "transition complete val: $v")
-            if (interactionState.animations.size > 0) {
-                Log.e(TAG, "completing transition ${interactionState.animations[0]}")
-                interactionState.squooshCompleteTransition(interactionState.animations[0])
-            }
-        }
-    )
 
-    var renderTransition: SquooshRenderTransition? = null
     if (transitionAnimationState != null && transitions.isNotEmpty()) {
         Log.d(TAG, "$docName: creating a new root with transitions applied...")
         // We need to make a new root with this interaction state applied, and then compute the
@@ -912,18 +917,77 @@ fun SquooshRoot(
             populateComputedLayout(transitionRoot!!, layoutValueCache)
         }
         Log.d(TAG, "Creating transition root took $createTransitionTargetTime ms")
-        // we only bother with the first one.
-        val anim = interactionState.animations[0]
-        val animatedThing = newSquooshAnimate(root!!, anim.instanceNodeId, transitionRoot!!, anim.newVariantId)
-        if (animatedThing != null) {
-            Log.d(TAG, "Got an animated thing to manipulate!")
-            root = transitionRoot
-            renderTransition = SquooshRenderTransition(animatedThing, animatedTransitionValue)
-        } else {
-            Log.d(TAG, "NOTHING TO ANIMATE :( ${anim.instanceNodeId} to ${anim.newVariantId}")
+
+        val nextAnimations = HashMap<Int, SquooshRenderTransition>()
+        for (anim in interactionState.animations) {
+            val animationControl =
+                newSquooshAnimate(root!!, anim.instanceNodeId, transitionRoot!!, anim.newVariantId)
+            if (animationControl == null) {
+                Log.d(TAG, "Unable to animate ${anim.instanceNodeId} to ${anim.newVariantId}")
+                // XXX: Should we just commit the action here with no transition as if the transition
+                //      had ended?
+                continue
+            }
+            val transition = animations.get(anim.id)
+            if (transition == null) {
+                val animatable = TargetBasedAnimation(
+                    animationSpec = spring<Float>(Spring.DampingRatioNoBouncy, Spring.StiffnessVeryLow),
+                    typeConverter = Float.VectorConverter,
+                    initialValue = 0f,
+                    targetValue = 1f
+                )
+                val rt = SquooshRenderTransition(animationControl, animatable, anim)
+                nextAnimations.put(anim.id, rt)
+            } else {
+                // Update the control with one that knows about new nodes.
+                transition.control = animationControl
+                nextAnimations.put(anim.id, transition)
+            }
         }
+        // Make sure we draw from the target root
+        root = transitionRoot
+
+        // Evolve the animations list; it would be better to just remove everything that doesn't
+        // have a key in transitions...
+        animations.clear()
+        animations.putAll(nextAnimations)
     }
 
+    // XXX: We could maybe use the most recent unique id to avoid this?
+    LaunchedEffect(transitions.map { tx -> tx.id }) {
+        // While there are transitions to be run, we should run them; we just update the floats
+        // in the mutable state. Those are then used by the render function, and we thus avoid
+        // needing to recompose in order to propagate the animation state.
+        //
+        // We also complete transitions in this block, and that action does cause a recomposition
+        // via the subscription that SquooshRoot makes to the InteractionState's list of transitions.
+        while (interactionState.animations.isNotEmpty()) {
+            withFrameNanos { frameTimeNanos ->
+                val animState = HashMap(animationValues.value)
+                for ((id, anim) in animations) {
+                    // If we haven't started this animation yet, then start it now.
+                    if (anim.startTimeNanos == 0L) {
+                        anim.startTimeNanos = frameTimeNanos
+                    }
+
+                    val playTimeNanos = frameTimeNanos - anim.startTimeNanos
+
+                    // Compute where it's meant to be, and update the value in animState.
+                    val position =
+                        anim.animation.getValueFromNanos(playTimeNanos)
+                    animState[id] = position
+
+                    // If the animation is complete, then we need to remove it from the transitions
+                    // list, and apply it to the base interaction state.
+                    if (anim.animation.isFinishedFromNanos(playTimeNanos)) {
+                        animState.remove(id)
+                        interactionState.squooshCompleteTransition(anim.source)
+                    }
+                }
+                animationValues.value = animState
+            }
+        }
+    }
 
     // Select which child to draw using this holder.
     val childRenderSelector = SquooshChildRenderSelector()
@@ -940,7 +1004,9 @@ fun SquooshRoot(
                 docName,
                 customizationContext,
                 childRenderSelector,
-                renderTransition
+                // Is there a nicer way of passing these two?
+                animations,
+                animationValues,
             ),
         measurePolicy = { measurables, constraints ->
             val placeables = measurables.map { measurable ->
@@ -1046,11 +1112,24 @@ internal fun Modifier.squooshRender(
     docName: String,
     customizations: CustomizationContext,
     childRenderSelector: SquooshChildRenderSelector,
-    renderTransition: SquooshRenderTransition?
+    animations: Map<Int, SquooshRenderTransition>,
+    animationValues: State<Map<Int, Float>>
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
-            renderTransition?.control?.apply(renderTransition.value.value)
+            val animValues = animationValues.value
+            for ((id, transition) in animations) {
+                val animationOffset = animValues[id]
+                if (animationOffset == null) {
+                    // This happens the first time through, because we manage to render before our
+                    // LaunchedEffect has run. It doesn't seem OK to drop a frame at the start of
+                    // each animation, so we should figure out how to run the effect immediately.
+                    // (Compose's animation code seems to do this, but it's a bit complicated).
+                    transition.control.apply(0.0f)
+                    continue
+                }
+                transition.control.apply(animationOffset)
+            }
 
             var nodeRenderCount = 0
             val renderTime = measureTimeMillis {

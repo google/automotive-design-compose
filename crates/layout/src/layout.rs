@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use lazy_static::lazy_static;
-use log::{error, info};
+use log::{debug, error, info};
 use std::collections::{HashMap, HashSet};
-use std::sync::{Mutex, MutexGuard};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
 
@@ -43,7 +41,9 @@ impl Customizations {
     }
 }
 
-struct LayoutManager {
+pub struct LayoutManager {
+    // taffy object that does all the layout computations
+    taffy: Taffy,
     // node id -> Taffy layout
     layouts: HashMap<taffy::node::Node, toolkit_schema::Layout>,
     // A struct that keeps track of all customizations
@@ -63,8 +63,9 @@ struct LayoutManager {
     root_layout_ids: HashSet<i32>,
 }
 impl LayoutManager {
-    fn new() -> Self {
+    pub fn new() -> Self {
         LayoutManager {
+            taffy: Taffy::new(),
             layouts: HashMap::new(),
             customizations: Customizations::new(),
             layout_state: 0,
@@ -80,12 +81,11 @@ impl LayoutManager {
         &mut self,
         layout_id: i32,
         parent_layout_id: i32,
-        taffy: &Taffy,
         changed: &mut HashMap<i32, toolkit_schema::Layout>,
     ) {
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
-            let layout = taffy.layout(*node);
+            let layout = self.taffy.layout(*node);
             if let Ok(layout) = layout {
                 let layout = toolkit_schema::Layout::from_taffy_layout(layout);
                 let old_layout = self.layouts.get(node);
@@ -118,18 +118,13 @@ impl LayoutManager {
                 }
             }
 
-            let children_result = taffy.children(*node);
+            let children_result = self.taffy.children(*node);
             match children_result {
                 Ok(children) => {
                     for child in children {
                         let child_layout_id = self.taffy_node_to_layout_id.get(&child);
                         if let Some(child_layout_id) = child_layout_id {
-                            self.update_layout_internal(
-                                *child_layout_id,
-                                layout_id,
-                                taffy,
-                                changed,
-                            );
+                            self.update_layout_internal(*child_layout_id, layout_id, changed);
                         }
                     }
                 }
@@ -142,23 +137,17 @@ impl LayoutManager {
 
     // Update the layout for the specified layout_id and its children, and
     // return a hash of layouts that changed.
-    fn update_layout(
-        &mut self,
-        layout_id: i32,
-        taffy: &Taffy,
-    ) -> HashMap<i32, toolkit_schema::Layout> {
+    fn update_layout(&mut self, layout_id: i32) -> HashMap<i32, toolkit_schema::Layout> {
         let mut changed: HashMap<i32, toolkit_schema::Layout> = HashMap::new();
-        self.update_layout_internal(layout_id, -1, &taffy, &mut changed);
+        self.update_layout_internal(layout_id, -1, &mut changed);
         changed
     }
 
     // Get the computed layout for the given node
-    fn get_node_layout(&self, layout_id: i32) -> Option<toolkit_schema::Layout> {
-        let taffy = taffy();
-
+    pub fn get_node_layout(&self, layout_id: i32) -> Option<toolkit_schema::Layout> {
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
-            let layout = taffy.layout(*node);
+            let layout = self.taffy.layout(*node);
             if let Ok(layout) = layout {
                 return Some(toolkit_schema::Layout::from_taffy_layout(layout));
             }
@@ -166,7 +155,48 @@ impl LayoutManager {
         None
     }
 
-    fn add_style(
+    pub fn add_style_measure(
+        &mut self,
+        layout_id: i32,
+        parent_layout_id: i32,
+        child_index: i32,
+        style: ViewStyle,
+        name: String,
+        measure_func: impl Send + Sync + 'static + Fn(i32, f32, f32, f32, f32) -> (f32, f32),
+    ) {
+        info!("add_view_measure layoutId {}", layout_id);
+        let layout_measure_func = move |size: Size<Option<f32>>,
+                                        available_size: Size<AvailableSpace>|
+              -> Size<f32> {
+            let width = if let Some(w) = size.width { w } else { 0.0 };
+            let height = if let Some(h) = size.height { h } else { 0.0 };
+            let available_width = match available_size.width {
+                AvailableSpace::Definite(w) => w,
+                AvailableSpace::MaxContent => f32::MAX,
+                AvailableSpace::MinContent => 0.0,
+            };
+            let available_height = match available_size.height {
+                AvailableSpace::Definite(h) => h,
+                AvailableSpace::MaxContent => f32::MAX,
+                AvailableSpace::MinContent => 0.0,
+            };
+            let result = measure_func(layout_id, width, height, available_width, available_height);
+            Size { width: result.0, height: result.1 }
+        };
+
+        self.add_style(
+            layout_id,
+            parent_layout_id,
+            child_index,
+            style,
+            name,
+            Some(taffy::node::MeasureFunc::Boxed(Box::new(layout_measure_func))),
+            None,
+            None,
+        )
+    }
+
+    pub fn add_style(
         &mut self,
         layout_id: i32,
         parent_layout_id: i32,
@@ -177,13 +207,7 @@ impl LayoutManager {
         fixed_width: Option<i32>,
         fixed_height: Option<i32>,
     ) {
-        let mut taffy = taffy();
-
         let mut node_style: taffy::style::Style = (&style).into();
-        if name.starts_with("FrameTop") {
-            println!("{} VIEWSTYLE:", name);
-            println!("{:#?}", style);
-        }
 
         self.apply_customizations(layout_id, &mut node_style);
         self.apply_fixed_size(&mut node_style, fixed_width, fixed_height);
@@ -191,28 +215,28 @@ impl LayoutManager {
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
             // We already have this view in our tree. Update it's style
-            let result = taffy.set_style(*node, node_style);
+            let result = self.taffy.set_style(*node, node_style);
             if let Some(e) = result.err() {
                 error!("taffy set_style error: {}", e);
             }
         } else {
             // This is a new view to add to our tree. Create a new node and add it
             let result = if let Some(measure_func) = measure_func {
-                taffy.new_leaf_with_measure(node_style, measure_func)
+                self.taffy.new_leaf_with_measure(node_style, measure_func)
             } else {
-                taffy.new_leaf(node_style)
+                self.taffy.new_leaf(node_style)
             };
             match result {
                 Ok(node) => {
                     let parent_node = self.layout_id_to_taffy_node.get(&parent_layout_id);
                     if let Some(parent_node) = parent_node {
                         // This has a parent node, so add it as a child
-                        let children_result = taffy.children(*parent_node);
+                        let children_result = self.taffy.children(*parent_node);
                         match children_result {
                             Ok(mut children) => {
                                 children.insert(child_index as usize, node);
                                 let set_children_result =
-                                    taffy.set_children(*parent_node, children.as_ref());
+                                    self.taffy.set_children(*parent_node, children.as_ref());
                                 if let Some(e) = set_children_result.err() {
                                     error!("taffy set_children error: {}", e);
                                 } else {
@@ -240,36 +264,25 @@ impl LayoutManager {
         }
     }
 
-    fn remove_view(
+    pub fn remove_view(
         &mut self,
         layout_id: i32,
         root_layout_id: i32,
         compute_layout: bool,
-    ) -> LayoutChangedResponse {
-        let mut taffy = taffy();
-        self.remove_view_internal(layout_id, root_layout_id, compute_layout, &mut taffy)
-    }
-
-    fn remove_view_internal(
-        &mut self,
-        layout_id: i32,
-        root_layout_id: i32,
-        compute_layout: bool,
-        taffy: &mut Taffy,
     ) -> LayoutChangedResponse {
         let taffy_node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(taffy_node) = taffy_node {
-            let parent = taffy.parent(*taffy_node);
+            let parent = self.taffy.parent(*taffy_node);
             if let Some(parent) = parent {
                 // We need to mark the parent as dirty, otherwise layout doesn't get recomputed
                 // on the parent, so if this node is in middle of a list, there will be a gap.
                 // This may be a bug with taffy.
-                let dirty_result = taffy.mark_dirty(parent);
+                let dirty_result = self.taffy.mark_dirty(parent);
                 if let Some(e) = dirty_result.err() {
                     error!("taffy dirty error: {}", e);
                 }
             }
-            let remove_result = taffy.remove(*taffy_node);
+            let remove_result = self.taffy.remove(*taffy_node);
             match remove_result {
                 Ok(removed_node) => {
                     // Remove from all our hashes
@@ -288,51 +301,24 @@ impl LayoutManager {
         }
 
         if compute_layout {
-            self.compute_node_layout_internal(root_layout_id, taffy)
+            self.compute_node_layout(root_layout_id)
         } else {
             LayoutChangedResponse::unchanged(self.layout_state)
         }
     }
 
-    // Recursively remove a node's children and then the node itself
-    fn remove_recursive(&mut self, layout_id: i32, root_layout_id: i32, taffy: &mut Taffy) {
-        let node = self.layout_id_to_taffy_node.get(&layout_id);
-        if let Some(node) = node {
-            let children_result = taffy.children(*node);
-            if let Ok(children) = children_result {
-                for child in children.iter() {
-                    let child_layout_id = self.taffy_node_to_layout_id.get(child);
-                    if let Some(child_layout_id) = child_layout_id {
-                        self.remove_recursive(*child_layout_id, root_layout_id, taffy);
-                    }
-                }
-            }
-        }
-        self.remove_view_internal(layout_id, root_layout_id, false, taffy);
-    }
-
-    // Remove all nodes
-    fn clear(&mut self) {
-        let mut taffy = taffy();
-        for layout_id in &self.root_layout_ids.clone() {
-            self.remove_recursive(*layout_id, *layout_id, &mut taffy);
-        }
-    }
-
     // Set the given node's size to a fixed value, recompute layout, and return
     // the changed nodes
-    fn set_node_size(
+    pub fn set_node_size(
         &mut self,
         layout_id: i32,
         root_layout_id: i32,
         width: u32,
         height: u32,
     ) -> LayoutChangedResponse {
-        let mut taffy = taffy();
-
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
-            let result = taffy.style(*node);
+            let result = self.taffy.style(*node);
             match result {
                 Ok(style) => {
                     let mut new_style = style.clone();
@@ -343,7 +329,7 @@ impl LayoutManager {
                     new_style.max_size.width = taffy::prelude::Dimension::Points(width as f32);
                     new_style.max_size.height = taffy::prelude::Dimension::Points(height as f32);
 
-                    let result = taffy.set_style(*node, new_style);
+                    let result = self.taffy.set_style(*node, new_style);
                     if let Some(e) = result.err() {
                         error!("taffy set_style error: {}", e);
                     } else {
@@ -356,7 +342,7 @@ impl LayoutManager {
             }
         }
 
-        self.compute_node_layout_internal(root_layout_id, &mut taffy)
+        self.compute_node_layout(root_layout_id)
     }
 
     // Apply any customizations that have been saved for this node
@@ -388,20 +374,11 @@ impl LayoutManager {
 
     // Compute the layout on the node with the given layout_id. This should always be
     // a root level node.
-    fn compute_node_layout(&mut self, layout_id: i32) -> LayoutChangedResponse {
-        let mut taffy = taffy();
-        self.compute_node_layout_internal(layout_id, &mut taffy)
-    }
-
-    fn compute_node_layout_internal(
-        &mut self,
-        layout_id: i32,
-        taffy: &mut Taffy,
-    ) -> LayoutChangedResponse {
+    pub fn compute_node_layout(&mut self, layout_id: i32) -> LayoutChangedResponse {
         info!("compute_node_layout {}", layout_id);
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
-            let result = taffy.compute_layout(
+            let result = self.taffy.compute_layout(
                 *node,
                 Size {
                     // TODO get this size from somewhere
@@ -414,147 +391,38 @@ impl LayoutManager {
             }
         }
 
-        let changed_layouts = self.update_layout(layout_id, &taffy);
+        let changed_layouts = self.update_layout(layout_id);
         self.layout_state = self.layout_state + 1;
 
         LayoutChangedResponse { layout_state: self.layout_state, changed_layouts: changed_layouts }
     }
-}
 
-lazy_static! {
-    static ref LAYOUT_MANAGER: Mutex<LayoutManager> = Mutex::new(LayoutManager::new());
-    static ref TAFFY: Mutex<Taffy> = Mutex::new(Taffy::new());
-}
+    pub fn print_layout(self, layout_id: i32, print_func: fn(String) -> ()) {
+        self.print_layout_recurse(layout_id, "".to_string(), print_func);
+    }
 
-fn manager() -> MutexGuard<'static, LayoutManager> {
-    LAYOUT_MANAGER.lock().unwrap()
-}
+    fn print_layout_recurse(&self, layout_id: i32, space: String, print_func: fn(String) -> ()) {
+        let layout_node = self.layout_id_to_taffy_node.get(&layout_id);
+        if let Some(layout_node) = layout_node {
+            let layout = self.taffy.layout(*layout_node);
+            if let Ok(layout) = layout {
+                let name_result = self.layout_id_to_name.get(&layout_id);
+                if let Some(name) = name_result {
+                    print_func(format!("{}Node {} {}:", space, name, layout_id));
+                    print_func(format!("  {}{:?}", space, layout));
+                }
 
-fn taffy() -> MutexGuard<'static, Taffy> {
-    TAFFY.lock().unwrap()
-}
-
-pub fn unchanged_response() -> LayoutChangedResponse {
-    LayoutChangedResponse::unchanged(manager().layout_state)
-}
-
-pub fn get_node_layout(layout_id: i32) -> Option<toolkit_schema::Layout> {
-    manager().get_node_layout(layout_id)
-}
-
-pub fn add_style(
-    layout_id: i32,
-    parent_layout_id: i32,
-    child_index: i32,
-    style: ViewStyle,
-    name: String,
-    fixed_width: Option<i32>,
-    fixed_height: Option<i32>,
-) {
-    manager().add_style(
-        layout_id,
-        parent_layout_id,
-        child_index,
-        style,
-        name,
-        None,
-        fixed_width,
-        fixed_height,
-    )
-}
-
-pub fn add_style_measure(
-    layout_id: i32,
-    parent_layout_id: i32,
-    child_index: i32,
-    style: ViewStyle,
-    name: String,
-    measure_func: impl Send + Sync + 'static + Fn(i32, f32, f32, f32, f32) -> (f32, f32),
-) {
-    info!("add_view_measure layoutId {}", layout_id);
-    let layout_measure_func =
-        move |size: Size<Option<f32>>, available_size: Size<AvailableSpace>| -> Size<f32> {
-            let width = if let Some(w) = size.width { w } else { 0.0 };
-            let height = if let Some(h) = size.height { h } else { 0.0 };
-            let available_width = match available_size.width {
-                AvailableSpace::Definite(w) => w,
-                AvailableSpace::MaxContent => f32::MAX,
-                AvailableSpace::MinContent => 0.0,
-            };
-            let available_height = match available_size.height {
-                AvailableSpace::Definite(h) => h,
-                AvailableSpace::MaxContent => f32::MAX,
-                AvailableSpace::MinContent => 0.0,
-            };
-            let result = measure_func(layout_id, width, height, available_width, available_height);
-            Size { width: result.0, height: result.1 }
-        };
-
-    manager().add_style(
-        layout_id,
-        parent_layout_id,
-        child_index,
-        style,
-        name,
-        Some(taffy::node::MeasureFunc::Boxed(Box::new(layout_measure_func))),
-        None,
-        None,
-    )
-}
-
-pub fn remove_view(
-    layout_id: i32,
-    root_layout_id: i32,
-    compute_layout: bool,
-) -> LayoutChangedResponse {
-    manager().remove_view(layout_id, root_layout_id, compute_layout)
-}
-
-pub fn clear_views() {
-    manager().clear()
-}
-
-pub fn set_node_size(
-    layout_id: i32,
-    root_layout_id: i32,
-    width: u32,
-    height: u32,
-) -> LayoutChangedResponse {
-    manager().set_node_size(layout_id, root_layout_id, width, height)
-}
-
-pub fn compute_node_layout(layout_id: i32) -> LayoutChangedResponse {
-    manager().compute_node_layout(layout_id)
-}
-
-pub fn print_layout(layout_id: i32) {
-    let manager = &mut LAYOUT_MANAGER.lock().unwrap();
-    let taffy = &mut TAFFY.lock().unwrap();
-    print_layout_recurse(layout_id, manager, taffy, "".to_string());
-}
-
-fn print_layout_recurse(layout_id: i32, manager: &LayoutManager, taffy: &Taffy, space: String) {
-    let layout_node = manager.layout_id_to_taffy_node.get(&layout_id);
-    if let Some(layout_node) = layout_node {
-        let layout = taffy.layout(*layout_node);
-        if let Ok(layout) = layout {
-            let name_result = manager.layout_id_to_name.get(&layout_id);
-            if let Some(name) = name_result {
-                println!("{}Node {} {}:", space, name, layout_id);
-                println!("  {}{:?}", space, layout);
-            }
-
-            let children_result = taffy.children(*layout_node);
-            if let Ok(children) = children_result {
-                for child in children {
-                    let layout_id = manager.taffy_node_to_layout_id.get(&child);
-                    if let Some(child_layout_id) = layout_id {
-                        print_layout_recurse(
-                            *child_layout_id,
-                            manager,
-                            taffy,
-                            format!("{}  ", space),
-                        );
+                let children_result = self.taffy.children(*layout_node);
+                if let Ok(children) = children_result {
+                    for child in children {
+                        let layout_id = self.taffy_node_to_layout_id.get(&child);
+                        if let Some(child_layout_id) = layout_id {
+                            self.print_layout_recurse(
+                                *child_layout_id,
+                                format!("{}  ", space),
+                                print_func,
+                            );
+                        }
                     }
                 }
             }

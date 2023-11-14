@@ -21,12 +21,42 @@ use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
-use layout::{
-    add_style, add_style_measure, compute_node_layout, get_node_layout, remove_view, set_node_size,
-};
+use layout::LayoutManager;
 use lazy_static::lazy_static;
-use log::{error, info, warn, LevelFilter};
-use std::sync::{Mutex, MutexGuard};
+use log::{error, info, LevelFilter};
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard};
+
+lazy_static! {
+    static ref JAVA_VM: Mutex<Option<JavaVM>> = Mutex::new(None);
+    static ref LAYOUT_MANAGERS: Mutex<HashMap<i32, Arc<Mutex<LayoutManager>>>> =
+        Mutex::new(HashMap::new());
+}
+static LAYOUT_MANAGER_ID: AtomicI32 = AtomicI32::new(0);
+
+fn javavm() -> MutexGuard<'static, Option<JavaVM>> {
+    JAVA_VM.lock().unwrap()
+}
+
+fn create_layout_manager() -> i32 {
+    let manager = Arc::new(Mutex::new(LayoutManager::new()));
+    let mut hash = LAYOUT_MANAGERS.lock().unwrap();
+
+    let manager_id = LAYOUT_MANAGER_ID.fetch_add(1, Ordering::SeqCst);
+    hash.insert(manager_id, manager);
+    manager_id
+}
+
+fn manager(id: i32) -> Option<Arc<Mutex<LayoutManager>>> {
+    let managers = LAYOUT_MANAGERS.lock().unwrap();
+    let manager = managers.get(&id);
+    if let Some(manager) = manager {
+        Some(manager.clone())
+    } else {
+        None
+    }
+}
 
 fn throw_basic_exception(env: &mut JNIEnv, msg: String) {
     // An error occurring while trying to throw an exception shouldn't happen,
@@ -135,87 +165,109 @@ fn layout_response_to_bytearray<'local>(
     }
 }
 
+fn jni_create_layout_manager<'local>(_env: JNIEnv<'local>, _class: JClass) -> i32 {
+    create_layout_manager()
+}
+
 fn jni_set_node_size<'local>(
-    env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _class: JClass,
+    manager_id: jint,
     layout_id: jint,
     root_layout_id: jint,
     width: jint,
     height: jint,
 ) -> JByteArray<'local> {
-    let layout_response = set_node_size(layout_id, root_layout_id, width as u32, height as u32);
-    layout_response_to_bytearray(env, &layout_response)
+    let manager = manager(manager_id);
+    if let Some(manager_ref) = manager {
+        let mut mgr = manager_ref.lock().unwrap();
+        let layout_response =
+            mgr.set_node_size(layout_id, root_layout_id, width as u32, height as u32);
+        layout_response_to_bytearray(env, &layout_response)
+    } else {
+        throw_basic_exception(&mut env, format!("No manager with id {}", manager_id));
+        JObject::null().into()
+    }
 }
 
 fn jni_add_nodes<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
+    manager_id: jint,
     root_layout_id: jint,
     serialized_views: JByteArray,
 ) -> JByteArray<'local> {
-    let bytes_views = env.convert_byte_array(serialized_views);
-    if let Ok(bytes_views) = bytes_views {
-        let result: Result<LayoutNodeList, Box<bincode::ErrorKind>> =
-            bincode::deserialize(&bytes_views);
-        match result {
-            Ok(node_list) => {
-                info!(
-                    "jni_add_nodes: {} nodes, layout_id {}",
-                    node_list.layout_nodes.len(),
-                    root_layout_id
-                );
-                for node in node_list.layout_nodes.into_iter() {
-                    if node.use_measure_func {
-                        add_style_measure(
-                            node.layout_id,
-                            node.parent_layout_id,
-                            node.child_index,
-                            node.style,
-                            node.name,
-                            java_jni_measure_text,
-                        );
-                    } else {
-                        add_style(
-                            node.layout_id,
-                            node.parent_layout_id,
-                            node.child_index,
-                            node.style,
-                            node.name,
-                            node.fixed_width,
-                            node.fixed_height,
-                        );
+    let manager = manager(manager_id);
+    if let Some(manager_ref) = manager {
+        let mut manager = manager_ref.lock().unwrap();
+        let bytes_views = env.convert_byte_array(serialized_views);
+        if let Ok(bytes_views) = bytes_views {
+            let result: Result<LayoutNodeList, Box<bincode::ErrorKind>> =
+                bincode::deserialize(&bytes_views);
+            match result {
+                Ok(node_list) => {
+                    info!(
+                        "jni_add_nodes: {} nodes, layout_id {}",
+                        node_list.layout_nodes.len(),
+                        root_layout_id
+                    );
+                    for node in node_list.layout_nodes.into_iter() {
+                        if node.use_measure_func {
+                            manager.add_style_measure(
+                                node.layout_id,
+                                node.parent_layout_id,
+                                node.child_index,
+                                node.style,
+                                node.name,
+                                java_jni_measure_text,
+                            );
+                        } else {
+                            manager.add_style(
+                                node.layout_id,
+                                node.parent_layout_id,
+                                node.child_index,
+                                node.style,
+                                node.name,
+                                None,
+                                node.fixed_width,
+                                node.fixed_height,
+                            );
+                        }
                     }
                 }
+                Err(e) => {
+                    throw_basic_exception(&mut env, format!("Internal JNI Error: {}", e));
+                }
             }
-            Err(e) => {
-                throw_basic_exception(&mut env, format!("Internal JNI Error: {}", e));
-            }
+        } else {
+            throw_basic_exception(&mut env, format!("Internal JNI Error: {:?}", bytes_views.err()));
         }
-    } else {
-        throw_basic_exception(&mut env, format!("Internal JNI Error: {:?}", bytes_views.err()));
-    }
 
-    let layout_response = compute_node_layout(root_layout_id);
-    layout_response_to_bytearray(env, &layout_response)
+        let layout_response = manager.compute_node_layout(root_layout_id);
+        layout_response_to_bytearray(env, &layout_response)
+    } else {
+        throw_basic_exception(&mut env, format!("No manager with id {}", manager_id));
+        JObject::null().into()
+    }
 }
 
 fn jni_remove_node<'local>(
-    env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _class: JClass,
+    manager_id: jint,
     layout_id: jint,
     root_layout_id: jint,
     compute_layout: jboolean,
 ) -> JByteArray<'local> {
-    let layout_response = remove_view(layout_id, root_layout_id, compute_layout != 0);
-    layout_response_to_bytearray(env, &layout_response)
-}
-
-lazy_static! {
-    static ref JAVA_VM: Mutex<Option<JavaVM>> = Mutex::new(None);
-}
-
-fn javavm() -> MutexGuard<'static, Option<JavaVM>> {
-    JAVA_VM.lock().unwrap()
+    let manager = manager(manager_id);
+    if let Some(manager_ref) = manager {
+        let mut manager = manager_ref.lock().unwrap();
+        let layout_response = manager.remove_view(layout_id, root_layout_id, compute_layout != 0);
+        layout_response_to_bytearray(env, &layout_response)
+    } else {
+        throw_basic_exception(&mut env, format!("No manager with id {}", manager_id));
+        JObject::null().into()
+    }
 }
 
 fn get_text_size(env: &mut JNIEnv, input: &JObject) -> Result<(f32, f32), jni::errors::Error> {
@@ -298,18 +350,23 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                     fn_ptr: jni_fetch_doc as *mut c_void,
                 },
                 jni::NativeMethod {
+                    name: "jniCreateLayoutManager".into(),
+                    sig: "()I".into(),
+                    fn_ptr: jni_create_layout_manager as *mut c_void,
+                },
+                jni::NativeMethod {
                     name: "jniSetNodeSize".into(),
-                    sig: "(IIII)[B".into(),
+                    sig: "(IIIII)[B".into(),
                     fn_ptr: jni_set_node_size as *mut c_void,
                 },
                 jni::NativeMethod {
                     name: "jniAddNodes".into(),
-                    sig: "(I[B)[B".into(),
+                    sig: "(II[B)[B".into(),
                     fn_ptr: jni_add_nodes as *mut c_void,
                 },
                 jni::NativeMethod {
                     name: "jniRemoveNode".into(),
-                    sig: "(IIZ)[B".into(),
+                    sig: "(IIIZ)[B".into(),
                     fn_ptr: jni_remove_node as *mut c_void,
                 },
             ],

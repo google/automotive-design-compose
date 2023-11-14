@@ -28,10 +28,7 @@ use figma_import::{
     toolkit_schema::View,
     NodeQuery, SerializedDesignDoc, ViewData,
 };
-use layout::{
-    add_style, add_style_measure, clear_views, compute_node_layout, get_node_layout, print_layout,
-    remove_view, set_node_size,
-};
+use layout::LayoutManager;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -63,6 +60,7 @@ fn measure_func(
 
 fn add_view_to_layout(
     view: &View,
+    manager: &mut LayoutManager,
     id: &mut i32,
     parent_layout_id: i32,
     child_index: i32,
@@ -82,7 +80,7 @@ fn add_view_to_layout(
             }
         }
         if use_measure_func {
-            add_style_measure(
+            manager.add_style_measure(
                 my_id,
                 parent_layout_id,
                 child_index,
@@ -94,7 +92,7 @@ fn add_view_to_layout(
             let mut fixed_view = view.clone();
             fixed_view.style.width = Dimension::Points(view.style.bounding_box.width);
             fixed_view.style.height = Dimension::Points(view.style.bounding_box.height);
-            add_style(
+            manager.add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
@@ -102,10 +100,11 @@ fn add_view_to_layout(
                 fixed_view.name.clone(),
                 None,
                 None,
+                None,
             );
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
-        add_style(
+        manager.add_style(
             my_id,
             parent_layout_id,
             child_index,
@@ -113,16 +112,17 @@ fn add_view_to_layout(
             view.name.clone(),
             None,
             None,
+            None,
         );
         let mut index = 0;
         for child in children {
-            add_view_to_layout(child, id, my_id, index, replacements, views);
+            add_view_to_layout(child, manager, id, my_id, index, replacements, views);
             index = index + 1;
         }
     }
 
     if parent_layout_id == -1 {
-        compute_node_layout(my_id);
+        manager.compute_node_layout(my_id);
     }
 }
 
@@ -136,55 +136,55 @@ fn load_doc() -> std::io::Result<SerializedDesignDoc> {
     Ok(figma_doc)
 }
 
-fn load_view(node_name: &str, doc: &SerializedDesignDoc) {
+fn load_view(node_name: &str, doc: &SerializedDesignDoc) -> LayoutManager {
     let view_result = doc.views.get(&NodeQuery::NodeName(node_name.into()));
     assert!(view_result.is_some());
     let view = view_result.unwrap();
     let mut id = 0;
-    add_view_to_layout(&view, &mut id, -1, -1, &HashMap::new(), &doc.views);
+    let mut manager = LayoutManager::new();
+    add_view_to_layout(&view, &mut manager, &mut id, -1, -1, &HashMap::new(), &doc.views);
+    manager
 }
 
 // Test for vertical autolayout frames with some fixed width children
 #[test]
 fn test_vertical_layout() {
     let figma_doc_result = load_doc();
-    load_view("VerticalAutoLayout", &figma_doc_result.unwrap());
+    let manager = load_view("VerticalAutoLayout", &figma_doc_result.unwrap());
 
-    let root_layout_result = get_node_layout(0);
+    let root_layout_result = manager.get_node_layout(0);
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
     assert!(root_layout.width == 100.0);
     assert!(root_layout.height == 110.0);
 
-    let child1_layout_result = get_node_layout(1);
+    let child1_layout_result = manager.get_node_layout(1);
     assert!(child1_layout_result.is_some());
     let child1_layout = child1_layout_result.unwrap();
     assert!(child1_layout.width == 50.0);
     assert!(child1_layout.height == 50.0);
 
-    let child2_layout_result = get_node_layout(2);
+    let child2_layout_result = manager.get_node_layout(2);
     assert!(child2_layout_result.is_some());
     let child2_layout = child2_layout_result.unwrap();
     assert!(child2_layout.width == 80.0);
     assert!(child2_layout.height == 30.0);
-
-    clear_views();
 }
 
 // Test replacement nodes in auto layout
 #[test]
 fn test_replacement_autolayout() {
     let figma_doc_result = load_doc();
-    load_view("ReplacementAutoLayout", &figma_doc_result.unwrap());
+    let manager = load_view("ReplacementAutoLayout", &figma_doc_result.unwrap());
 
-    let root_layout_result = get_node_layout(0);
+    let root_layout_result = manager.get_node_layout(0);
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
 
     assert!(root_layout.width == 140.0);
     assert!(root_layout.height == 70.0);
 
-    let child1_layout_result = get_node_layout(1);
+    let child1_layout_result = manager.get_node_layout(1);
     assert!(child1_layout_result.is_some());
     let child1_layout = child1_layout_result.unwrap();
     assert!(child1_layout.width == 50.0);
@@ -192,31 +192,29 @@ fn test_replacement_autolayout() {
     assert!(child1_layout.left == 10.0);
     assert!(child1_layout.top == 10.0);
 
-    let child2_layout_result = get_node_layout(2);
+    let child2_layout_result = manager.get_node_layout(2);
     assert!(child2_layout_result.is_some());
     let child2_layout = child2_layout_result.unwrap();
     assert!(child2_layout.width == 50.0);
     assert!(child2_layout.height == 50.0);
     assert!(child2_layout.left == 80.0);
     assert!(child2_layout.top == 10.0);
-
-    clear_views();
 }
 
 // Test replacement nodes in fixed layout
 #[test]
 fn test_replacement_fixedlayout() {
     let figma_doc_result = load_doc();
-    load_view("ReplacementFixedLayout", &figma_doc_result.unwrap());
+    let manager = load_view("ReplacementFixedLayout", &figma_doc_result.unwrap());
 
-    let root_layout_result = get_node_layout(0);
+    let root_layout_result = manager.get_node_layout(0);
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
 
     assert!(root_layout.width == 140.0);
     assert!(root_layout.height == 70.0);
 
-    let child1_layout_result = get_node_layout(1);
+    let child1_layout_result = manager.get_node_layout(1);
     assert!(child1_layout_result.is_some());
     let child1_layout = child1_layout_result.unwrap();
     assert!(child1_layout.width == 50.0);
@@ -224,23 +222,21 @@ fn test_replacement_fixedlayout() {
     assert!(child1_layout.left == 10.0);
     assert!(child1_layout.top == 10.0);
 
-    let child2_layout_result = get_node_layout(2);
+    let child2_layout_result = manager.get_node_layout(2);
     assert!(child2_layout_result.is_some());
     let child2_layout = child2_layout_result.unwrap();
     assert!(child2_layout.width == 50.0);
     assert!(child2_layout.height == 50.0);
     assert!(child2_layout.left == 80.0);
     assert!(child2_layout.top == 10.0);
-
-    clear_views();
 }
 
 #[test]
 fn test_vertical_fill() {
     let figma_doc_result = load_doc();
-    load_view("VerticalFill", &figma_doc_result.unwrap());
+    let manager = load_view("VerticalFill", &figma_doc_result.unwrap());
 
-    let root_layout_result = get_node_layout(0);
+    let root_layout_result = manager.get_node_layout(0);
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
 
@@ -248,7 +244,7 @@ fn test_vertical_fill() {
     assert!(root_layout.height == 130.0);
 
     // Right node should fill to fit root
-    let right_layout_result = get_node_layout(2);
+    let right_layout_result = manager.get_node_layout(2);
     assert!(right_layout_result.is_some());
     let right_layout = right_layout_result.unwrap();
     assert!(right_layout.width == 70.0);
@@ -257,27 +253,25 @@ fn test_vertical_fill() {
     assert!(right_layout.top == 10.0);
 
     // Auto fill height node should fill to fit Right
-    let auto_fill_height_result = get_node_layout(3);
+    let auto_fill_height_result = manager.get_node_layout(3);
     assert!(auto_fill_height_result.is_some());
     let auto_fill_height = auto_fill_height_result.unwrap();
     assert!(auto_fill_height.width == 70.0);
     assert!(auto_fill_height.height == 30.0);
-
-    clear_views();
 }
 
 #[test]
 fn test_vertical_fill_resize() {
     let figma_doc_result = load_doc();
-    load_view("VerticalFill", &figma_doc_result.unwrap());
+    let mut manager = load_view("VerticalFill", &figma_doc_result.unwrap());
 
     // Increase fixed left node height by 30 pixels
-    let result = set_node_size(1, 0, 50, 140);
+    let result = manager.set_node_size(1, 0, 50, 140);
     assert!(result.changed_layouts.contains_key(&2));
     assert!(result.changed_layouts.contains_key(&3));
 
     // Right node should be taller by 30 pixels
-    let right_layout_result = get_node_layout(2);
+    let right_layout_result = manager.get_node_layout(2);
     assert!(right_layout_result.is_some());
     let right_layout = right_layout_result.unwrap();
     assert!(right_layout.width == 70.0);
@@ -286,21 +280,19 @@ fn test_vertical_fill_resize() {
     assert!(right_layout.top == 10.0);
 
     // Auto fill height node should be taller by 30 pixels
-    let auto_fill_height_result = get_node_layout(3);
+    let auto_fill_height_result = manager.get_node_layout(3);
     assert!(auto_fill_height_result.is_some());
     let auto_fill_height = auto_fill_height_result.unwrap();
     assert!(auto_fill_height.width == 70.0);
     assert!(auto_fill_height.height == 60.0);
-
-    clear_views();
 }
 
 #[test]
 fn test_horizontal_fill() {
     let figma_doc_result = load_doc();
-    load_view("HorizontalFill", &figma_doc_result.unwrap());
+    let manager = load_view("HorizontalFill", &figma_doc_result.unwrap());
 
-    let root_layout_result = get_node_layout(0);
+    let root_layout_result = manager.get_node_layout(0);
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
 
@@ -308,7 +300,7 @@ fn test_horizontal_fill() {
     assert!(root_layout.height == 150.0);
 
     // Bottom node should fill to fit root
-    let bottom_layout_result = get_node_layout(2);
+    let bottom_layout_result = manager.get_node_layout(2);
     assert!(bottom_layout_result.is_some());
     let bottom_layout = bottom_layout_result.unwrap();
     assert!(bottom_layout.width == 110.0);
@@ -317,27 +309,25 @@ fn test_horizontal_fill() {
     assert!(bottom_layout.top == 70.0);
 
     // Auto fill width node should fill to fit Bottom
-    let auto_fill_width_result = get_node_layout(3);
+    let auto_fill_width_result = manager.get_node_layout(3);
     assert!(auto_fill_width_result.is_some());
     let auto_fill_width = auto_fill_width_result.unwrap();
     assert!(auto_fill_width.width == 30.0);
     assert!(auto_fill_width.height == 70.0);
-
-    clear_views();
 }
 
 #[test]
 fn test_horizontal_fill_resize() {
     let figma_doc_result = load_doc();
-    load_view("HorizontalFill", &figma_doc_result.unwrap());
+    let mut manager = load_view("HorizontalFill", &figma_doc_result.unwrap());
 
     // Increase fixed top node width by 30 pixels
-    let result = set_node_size(1, 0, 140, 50);
+    let result = manager.set_node_size(1, 0, 140, 50);
     assert!(result.changed_layouts.contains_key(&2));
     assert!(result.changed_layouts.contains_key(&3));
 
     // Bottom node should be wider by 30 pixels
-    let bottom_layout_result = get_node_layout(2);
+    let bottom_layout_result = manager.get_node_layout(2);
     assert!(bottom_layout_result.is_some());
     let bottom_layout = bottom_layout_result.unwrap();
     assert!(bottom_layout.width == 140.0);
@@ -346,13 +336,11 @@ fn test_horizontal_fill_resize() {
     assert!(bottom_layout.top == 70.0);
 
     // Auto fill width node should be wider by 30 pixels
-    let auto_fill_width_result = get_node_layout(3);
+    let auto_fill_width_result = manager.get_node_layout(3);
     assert!(auto_fill_width_result.is_some());
     let auto_fill_width = auto_fill_width_result.unwrap();
     assert!(auto_fill_width.width == 60.0);
     assert!(auto_fill_width.height == 70.0);
-
-    clear_views();
 }
 
 // Add tests:

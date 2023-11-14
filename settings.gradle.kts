@@ -62,10 +62,7 @@ project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
 
 include(":battleship-app")
 
-project(":battleship-app").projectDir = File("integration-tests/battleship")
-
-include(":benchmark-battleship")
-
-project(":benchmark-battleship").projectDir = File("integration-tests/benchmark-battleship")
+project(":battleship-app").projectDir = File("benchmarks/battleship/app")
+include(":benchmarks:battleship:benchmark")
 
 include(":test:internal")

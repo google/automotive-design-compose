@@ -166,8 +166,7 @@ class CargoPlugin : Plugin<Project> {
         val ndkDir = project.objects.directoryProperty()
 
         finalizeDsl { androidDsl ->
-            val ndkVersion =
-                androidDsl.ndkVersion ?: throw GradleException("android.ndkVersion must be set!")
+            val ndkVersion = androidDsl.ndkVersion
             if (ndkVersion.substringBefore(".").toInt() < 25)
             // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
             throw GradleException("ndkVersion must be at least r25")

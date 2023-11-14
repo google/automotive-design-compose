@@ -41,8 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.DesignSettings
+import com.android.designcompose.test.internal.interFont
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
-import com.android.designcompose.testapp.validation.ui.interFont
 
 const val TAG = "DesignCompose"
 

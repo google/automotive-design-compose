@@ -101,9 +101,10 @@ android {
 }
 
 dependencies {
-    implementation(libs.designcompose)
+    implementation(project(":designcompose"))
+    implementation(project(":test:internal"))
     testImplementation(project(":designcompose"))
-    ksp(libs.designcompose.codegen)
+    ksp(project(":codegen"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

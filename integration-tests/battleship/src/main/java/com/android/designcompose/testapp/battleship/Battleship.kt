@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.testapp.validation.examples
+package com.android.designcompose.testapp.battleship
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

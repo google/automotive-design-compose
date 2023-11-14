@@ -31,6 +31,7 @@ import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.docRenderStatusSemanticsKey
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
+import com.android.designcompose.testapp.validation.ui.interFont
 import com.github.takahirom.roborazzi.RoborazziRule
 import java.io.File
 import org.junit.BeforeClass

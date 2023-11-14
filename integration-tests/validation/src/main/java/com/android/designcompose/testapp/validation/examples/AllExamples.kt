@@ -26,7 +26,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
         Triple("Variant *", { VariantAsteriskTest() }, VariantAsteriskTestDoc.javaClass.name),
         Triple("Alignment", { AlignmentTest() }, AlignmentTestDoc.javaClass.name),
-        Triple("Battleship", { BattleshipTest() }, BattleshipDoc.javaClass.name),
+//        Triple("Battleship", { BattleshipTest() }, BattleshipDoc.javaClass.name),
         Triple("H Constraints", { HConstraintsTest() }, ConstraintsDoc.javaClass.name),
         Triple("V Constraints", { VConstraintsTest() }, ConstraintsDoc.javaClass.name),
         Triple("Interaction", { InteractionTest() }, InteractionTestDoc.javaClass.name),

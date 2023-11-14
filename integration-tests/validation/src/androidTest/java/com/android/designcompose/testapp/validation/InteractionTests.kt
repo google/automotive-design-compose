@@ -24,6 +24,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.testapp.validation.examples.InteractionTest
+import com.android.designcompose.testapp.validation.ui.interFont
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

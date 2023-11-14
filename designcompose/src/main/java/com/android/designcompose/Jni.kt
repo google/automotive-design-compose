@@ -35,6 +35,7 @@ internal class TextSize(
     var height: Float = 0F,
 )
 
+@Keep
 internal object Jni {
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)

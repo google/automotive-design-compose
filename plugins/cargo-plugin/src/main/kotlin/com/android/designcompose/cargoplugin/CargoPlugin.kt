@@ -69,48 +69,62 @@ class CargoPlugin : Plugin<Project> {
     ) {
         val ndkDir = this.findNdkDirectory(project)
 
-        // Create one task per variant and ABI
-        onVariants { variant ->
-            val buildType =
-                if (variant.buildType == "release") CargoBuildType.RELEASE else CargoBuildType.DEBUG
+        var androidCargoTasks:
+            Map<Pair<CargoBuildType, String>, TaskProvider<CargoBuildAndroidTask>> =
+            mapOf()
 
-            cargoExtension.abi.get().forEach { abi ->
-                val cargoTask =
+        finalizeDsl { androidExtension ->
+            cargoExtension.abi.finalizeValue()
+
+            // Register the cargo tasks for all abi's and build types.
+            val newTasks:
+                MutableMap<Pair<CargoBuildType, String>, TaskProvider<CargoBuildAndroidTask>> =
+                mutableMapOf()
+
+            for (buildType in CargoBuildType.entries) for (abi in cargoExtension.abi.get()) {
+                newTasks[Pair(buildType, abi)] =
                     project.registerAndroidCargoTask(
                         cargoExtension,
                         buildType,
-                        variant.minSdk.apiLevel,
+                        // Not ideal: Technically, each variant can set it's own minSdk, but because
+                        // we register the tasks outside of the variants we only have access to the
+                        // defaultConfig minSdk.
+                        androidExtension.defaultConfig.minSdk!!,
                         abi,
                         ndkDir
                     )
+            }
+            androidCargoTasks = newTasks
+        }
 
-                // If building a release or the ABI is active, add the task to the build
-                if (variant.buildType == "release" || activeAbis.get().contains(abi)) {
-                    addDependencyOnTask(variant, cargoTask)
+        // For each variant, add dependencies on the appropriate Cargo tasks.
+        onVariants { variant ->
+            variant.sources.jniLibs?.let { sourceDirs ->
+                val tasks =
+                    // The main release variant must include all abi's.
+                    // Clunky: A better solution here would be to add a DSL setting to specify which
+                    // ABIs to include in each variant.
+                    // (something like com.android.build.api.dsl.Split)
+                    if (variant.name == "release") {
+                        androidCargoTasks.filter { it.key.first == CargoBuildType.RELEASE }
+                    }
+                    // All other variants only include the active ABIs (specified by
+                    // designcompose.cargoPlugin.abiOverride)
+                    else {
+                        val buildType =
+                            if (variant.debuggable) CargoBuildType.DEBUG else CargoBuildType.RELEASE
+                        androidCargoTasks.filter {
+                            it.key.first == buildType && activeAbis.get().contains(it.key.second)
+                        }
+                    }
+                assert(tasks.isNotEmpty())
+
+                for (task in tasks.values) {
+                    // Todo: This does not handle variants with minSdks that differ from the
+                    // DefaultConfig
+                    sourceDirs.addGeneratedSourceDirectory(task, CargoBuildAndroidTask::outLibDir)
                 }
             }
-        }
-    }
-
-    /**
-     * Add dependency on task
-     *
-     * @param variant The build variant
-     * @param cargoTask The task to add
-     * @param project The full project
-     */
-    private fun addDependencyOnTask(
-        variant: LibraryVariant,
-        cargoTask: TaskProvider<CargoBuildAndroidTask>
-    ) {
-        with(variant.sources.jniLibs) {
-            if (this == null)
-                throw GradleException(
-                    "Unexpected state: No JniLibs configured by Android Gradle Plugin"
-                )
-            // Add the result to the variant's JNILibs sources. This is all we need to
-            // do to make sure the JNILibs are compiled and included in the library
-            addGeneratedSourceDirectory(cargoTask, CargoBuildAndroidTask::outLibDir)
         }
     }
 
@@ -157,8 +171,9 @@ class CargoPlugin : Plugin<Project> {
                 androidDsl.ndkVersion
                     ?: throw GradleException(
                         "android.ndkVersion must be set!"
-                    ) // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
+                    )
             if (ndkVersion.substringBefore(".").toInt() < 25)
+            // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
                 throw GradleException("ndkVersion must be at least r25")
             ndkDir.set(sdkComponents.sdkDirectory.map { it.dir("ndk/$ndkVersion") })
         }

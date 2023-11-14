@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.designcompose.benchmarks.battleship.lib
 
-package com.android.designcompose.benchmarks.battleship.ui.theme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.android.designcompose.annotation.DesignComponent
+import com.android.designcompose.annotation.DesignDoc
 
-import androidx.compose.ui.graphics.Color
+// TEST Battleship
+@DesignDoc(id = "RfGl9SWnBEvdg8T1Ex6ZAR")
+interface Battleship {
+    @DesignComponent(node = "Start Board") fun MainFrame()
+}
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+@Composable
+fun BattleshipTest() {
+    BattleshipDoc.MainFrame(Modifier)
+}

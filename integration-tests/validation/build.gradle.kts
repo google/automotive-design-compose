@@ -103,6 +103,7 @@ android {
 dependencies {
     implementation(project(":designcompose"))
     implementation(project(":test:internal"))
+    implementation(project(":benchmarks:battleship:lib"))
     testImplementation(project(":designcompose"))
     ksp(project(":codegen"))
 

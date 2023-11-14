@@ -38,8 +38,8 @@ import org.junit.runner.RunWith
  * Run this benchmark from Studio to see startup measurements, and captured system traces for
  * investigating your app's performance.
  */
-
 const val PACKAGE_NAME = "com.android.designcompose.benchmarks.battleship"
+
 @RunWith(AndroidJUnit4::class)
 class StartupBenchmarks {
     @get:Rule val benchmarkRule = MacrobenchmarkRule()

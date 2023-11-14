@@ -50,12 +50,6 @@ android {
         create("benchmark") {
             initWith(buildTypes.getByName("release"))
             matchingFallbacks += listOf("release")
-            isDebuggable = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-                "benchmark-proguard-rules.pro"
-            )
         }
     }
     buildFeatures { compose = true }
@@ -68,6 +62,7 @@ android {
 dependencies {
     implementation(project(":designcompose"))
     implementation(project(":test:internal"))
+    implementation(project(":benchmarks:battleship:lib"))
     ksp(project(":codegen"))
 
     implementation(libs.androidx.core.ktx)

@@ -17,11 +17,13 @@
 plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.ksp)
+
     id("designcompose.conventions.base")
 }
 
 android {
-    namespace = "com.android.designcompose.test.internal"
+    namespace = "com.android.designcompose.benchmarks.battleship.lib"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -38,11 +40,16 @@ android {
             )
         }
     }
+    buildFeatures { compose = true }
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
+    }
+    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui.text)
+    implementation(project(":designcompose"))
+    ksp(project(":codegen"))
 
-    implementation(libs.androidx.core.ktx)
+    implementation(platform(libs.androidx.compose.bom))
 }

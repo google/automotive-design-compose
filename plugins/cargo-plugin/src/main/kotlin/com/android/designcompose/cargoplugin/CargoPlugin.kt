@@ -17,7 +17,6 @@
 package com.android.designcompose.cargoplugin
 
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
-import com.android.build.api.variant.LibraryVariant
 import com.android.builder.model.PROPERTY_BUILD_ABI
 import org.gradle.api.GradleException
 import org.gradle.api.Named
@@ -168,13 +167,10 @@ class CargoPlugin : Plugin<Project> {
 
         finalizeDsl { androidDsl ->
             val ndkVersion =
-                androidDsl.ndkVersion
-                    ?: throw GradleException(
-                        "android.ndkVersion must be set!"
-                    )
+                androidDsl.ndkVersion ?: throw GradleException("android.ndkVersion must be set!")
             if (ndkVersion.substringBefore(".").toInt() < 25)
             // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
-                throw GradleException("ndkVersion must be at least r25")
+            throw GradleException("ndkVersion must be at least r25")
             ndkDir.set(sdkComponents.sdkDirectory.map { it.dir("ndk/$ndkVersion") })
         }
         return ndkDir

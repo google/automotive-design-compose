@@ -22,10 +22,10 @@ use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 use layout::{
-    add_style, add_style_measure, compute_node_layout, remove_view, set_node_size,
+    add_style, add_style_measure, compute_node_layout, get_node_layout, remove_view, set_node_size,
 };
 use lazy_static::lazy_static;
-use log::{error, info, LevelFilter};
+use log::{error, info, warn, LevelFilter};
 use std::sync::{Mutex, MutexGuard};
 
 fn throw_basic_exception(env: &mut JNIEnv, msg: String) {

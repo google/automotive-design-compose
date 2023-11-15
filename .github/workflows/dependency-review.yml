@@ -39,7 +39,7 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@9f45b2463b475767b61721ccfef113fef513e6aa # v3.1.1
+        uses: actions/dependency-review-action@7bbfa034e752445ea40215fff1c3bf9597993d3f # v3.1.3
         with:
           # This will cause the dependency graph workflow to re-run if new dependencies are uploaded
           # by a job that finishes after this one. Specifically needed for the Gradle dependency snapshot upload

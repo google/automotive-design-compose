@@ -45,6 +45,13 @@ android {
         }
     }
 
+    buildTypes {
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            matchingFallbacks.add("release")
+        }
+    }
+
     buildFeatures { compose = true }
 
     composeOptions {

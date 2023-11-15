@@ -16,7 +16,6 @@
 
 package com.android.designcompose
 
-import android.graphics.Rect
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
@@ -37,6 +36,8 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.tracing.Trace.beginAsyncSection
+import androidx.tracing.Trace.endAsyncSection
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
@@ -183,6 +184,7 @@ internal object LayoutManager {
     }
 
     private fun beginLayout(layoutId: Int) {
+        beginAsyncSection("DCLayout", layoutId)
         // Add a layout ID to a set of IDs that are in progress. As a view recursively calls its
         // children, this set grows. Each time a view has finished calling its children it calls
         // finishLayout().
@@ -194,6 +196,7 @@ internal object LayoutManager {
         // Remove a layout ID from the set of IDs that are in progress.
         layoutsInProgress.remove(layoutId)
         computeLayoutIfComplete(layoutId, rootLayoutId)
+        endAsyncSection("DCLayout", layoutId)
     }
 
     // Check if we are ready to compute layout. If layoutId is the same as rootLayoutId, then a root

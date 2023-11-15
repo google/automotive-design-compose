@@ -75,8 +75,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.profileinstaller)
-    implementation("androidx.compose.runtime:runtime-tracing:1.0.0-alpha03")
-
+//    implementation(libs.androidx.tracing.ktx)
+    implementation(libs.androidx.compose.runtime.tracing)
+//    implementation(libs.androidx.tracing.perfetto)
+//    implementation(libs.androidx.tracing.perfettoBinary)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

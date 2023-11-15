@@ -23,14 +23,15 @@ plugins {
 
 android {
     namespace = "com.android.designcompose.benchmarks.battleship.benchmark"
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 34
-        targetSdk = 34
+        minSdk = libs.versions.appMinSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["androidx.benchmark.fullTracing.enable"] = "true"
+        testInstrumentationRunnerArguments["androidx.benchmark.perfettoSdkTracing.enable"] = "true"
         testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
     }
 
@@ -54,8 +55,10 @@ dependencies {
     implementation(libs.androidx.test.espresso.core)
     implementation(libs.androidx.uiautomator)
     implementation(libs.androidx.benchmark.macro.junit4)
-    implementation("androidx.tracing:tracing-perfetto:1.0.0")
-    implementation("androidx.tracing:tracing-perfetto-binary:1.0.0")
+//    implementation(libs.androidx.tracing.ktx)
+
+    implementation(libs.androidx.tracing.perfetto)
+    implementation(libs.androidx.tracing.perfettoBinary)
 }
 
 androidComponents { beforeVariants(selector().all()) { it.enable = it.buildType == "benchmark" } }

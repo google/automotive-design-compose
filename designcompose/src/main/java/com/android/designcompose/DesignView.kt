@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import android.os.Trace.beginSection
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.runtime.traceEventStart
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -70,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.tracing.trace
 import com.android.designcompose.annotation.DesignMetaKey
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.serdegen.Action
@@ -346,6 +349,7 @@ internal fun DesignView(
     parentLayout: ParentLayoutInfo?,
     maskInfo: MaskInfo? = null,
 ): Boolean {
+//    beginSection("DesignView")
     val parentComps =
         if (v.component_info.isPresent) {
             val pc = parentComponents.toMutableList()
@@ -905,20 +909,22 @@ fun DesignDoc(
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
 ) =
-    DesignDocInternal(
-        docName,
-        docId,
-        rootNodeQuery,
-        modifier = modifier,
-        placeholder = placeholder,
-        customizations = customizations,
-        serverParams = serverParams,
-        setDocId = setDocId,
-        designSwitcherPolicy = designSwitcherPolicy,
-        designComposeCallbacks = designComposeCallbacks,
-        parentComponents = parentComponents,
-        parentLayout = parentLayout,
-    )
+//    trace("DesignDoc") {
+        DesignDocInternal(
+            docName,
+            docId,
+            rootNodeQuery,
+            modifier = modifier,
+            placeholder = placeholder,
+            customizations = customizations,
+            serverParams = serverParams,
+            setDocId = setDocId,
+            designSwitcherPolicy = designSwitcherPolicy,
+            designComposeCallbacks = designComposeCallbacks,
+            parentComponents = parentComponents,
+            parentLayout = parentLayout,
+        )
+//    }
 
 @Composable
 internal fun DesignDocInternal(

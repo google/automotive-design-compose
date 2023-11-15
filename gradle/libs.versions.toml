@@ -19,7 +19,7 @@ ksp = "1.9.20-1.0.13"
 androidx-compose-compiler = "1.5.4"
 androidx-compose-bom = "2023.10.01"
 androidx-compose-components = "1.5.4"
-androidx-compose-runtimeTracing = "1.0.0-alpha03"
+androidx-compose-runtime-tracing = "1.0.0-alpha05"
 
 # Everything else
 android-car-ui = "2.5.1"
@@ -38,6 +38,8 @@ androidx-rules = "1.5.0"
 androidx-profileinstaller = "1.3.1"
 androidx-uiautomator = "2.3.0-alpha05"
 androidx-benchmarkMacroJunit4 = "1.2.0"
+androidx-tracing = "1.1.0"
+androidx-tracing-perfetto = "1.0.0"
 dokka = "1.9.10"
 gson = "2.10.1"
 guavaAndroid = "32.1.3-android"
@@ -68,7 +70,7 @@ androidx-compose-foundation-layout = { module = "androidx.compose.foundation:fou
 androidx-compose-material = { module = "androidx.compose.material:material" }
 androidx-compose-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "androidx-compose-components" }
 androidx-compose-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "androidx-compose-components" }
-androidx-compose-runtime-tracing = { module = "androidx.compose.runtime:runtime-tracing", version.ref = "androidx-compose-runtimeTracing" }
+androidx-compose-runtime-tracing = { module = "androidx.compose.runtime:runtime-tracing", version.ref = "androidx-compose-runtime-tracing" }
 androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "androidx-compose-components" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "androidx-compose-components" }
 androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "androidx-compose-components" }
@@ -82,10 +84,13 @@ androidx-legacy-support-v4 = { module = "androidx.legacy:legacy-support-v4", ver
 androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-media = { module = "androidx.media:media", version.ref = "androidx-media" } # Used in MediaCompose
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidx-profileinstaller"}
 androidx-rules = { module = "androidx.test:rules", version.ref = "androidx-rules" }
+androidx-tracing-ktx = {module = "androidx.tracing:tracing-ktx", version.ref = "androidx-tracing"}
+androidx-tracing-perfetto = { module = "androidx.tracing:tracing-perfetto", version.ref = "androidx-tracing-perfetto"}
+androidx-tracing-perfettoBinary = { module = "androidx.tracing:tracing-perfetto-binary", version.ref = "androidx-tracing-perfetto"}
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
-androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidx-profileinstaller"}
 designcompose = { module = "com.android.designcompose:designcompose", version.ref = "designcompose" }
 designcompose-codegen = { module = "com.android.designcompose:codegen", version.ref = "designcompose" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }

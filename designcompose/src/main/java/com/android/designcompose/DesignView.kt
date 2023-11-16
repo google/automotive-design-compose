@@ -17,6 +17,7 @@
 package com.android.designcompose
 
 import android.os.Trace.beginSection
+import android.os.Trace.endSection
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -942,6 +943,7 @@ internal fun DesignDocInternal(
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
 ) {
+    beginSection("DesignDocInternal")
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
     val doc =
@@ -1022,6 +1024,7 @@ internal fun DesignDocInternal(
                     }
                 }
 
+                beginSection("DesignView")
                 DesignView(
                     modifier.semantics { sDocRenderStatus = docRenderStatus },
                     startFrame,
@@ -1038,6 +1041,7 @@ internal fun DesignDocInternal(
                         parentLayout
                     }
                 )
+                endSection()
                 docRenderStatus = DocRenderStatus.Rendered
                 // If we're the root, then also paint overlays
                 if (isRoot || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {
@@ -1067,6 +1071,7 @@ internal fun DesignDocInternal(
                 if (isRoot) DisposableEffect(startFrame) { onDispose {} }
             }
 
+            endSection()
             return
         }
         // We have a document, we have a starting frame name, but couldn't find the frame.
@@ -1104,4 +1109,6 @@ internal fun DesignDocInternal(
             designSwitcher()
         }
     }
+
+    endSection()
 }

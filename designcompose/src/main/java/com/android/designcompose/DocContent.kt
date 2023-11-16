@@ -18,6 +18,7 @@ package com.android.designcompose
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.tracing.trace
 import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.GenericDocContent
 import com.android.designcompose.common.decodeDiskBaseDoc
@@ -92,8 +93,12 @@ fun decodeDiskDoc(
     docId: String,
     feedback: FeedbackImpl
 ): DocContent? {
-    val baseDoc = decodeDiskBaseDoc(docStream, docId, feedback) ?: return null
-    return DocContent(baseDoc, previousDoc)
+    var docContent: DocContent? = null
+    trace("DecodeDiskDoc") {
+        val baseDoc = decodeDiskBaseDoc(docStream, docId, feedback) ?: return@trace
+        docContent = DocContent(baseDoc, previousDoc)
+    }
+    return docContent
 }
 
 fun decodeServerDoc(

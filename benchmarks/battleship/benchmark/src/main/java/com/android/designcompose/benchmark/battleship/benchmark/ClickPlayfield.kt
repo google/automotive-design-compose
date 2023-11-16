@@ -6,6 +6,8 @@ import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.Until
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,17 +21,54 @@ class ClickPlayfield {
     fun clickOnce() =
         benchmarkRule.measureRepeated(
             packageName = PACKAGE_NAME,
-            metrics = listOf(StartupTimingMetric(), TraceSectionMetric("DCLayout")),
+            metrics =
+                listOf(
+                    TraceSectionMetric("DesignDocInternal"),
+                    TraceSectionMetric("DesignView"),
+                    TraceSectionMetric("DocServer.doc"),
+                    TraceSectionMetric("DecodeDiskDoc"),
+                    StartupTimingMetric(),
+                    TraceSectionMetric("DCLayout")
+                ),
+            iterations = 2,
+            startupMode = StartupMode.COLD,
+            setupBlock = { pressHome() }
+        ) {
+            startActivityAndWait()
+            //            with(device) {
+            //                click(256, 437)
+            //                click(256, 437)
+            //            }
+        }
+
+    @Test
+    fun changePlayers() =
+        benchmarkRule.measureRepeated(
+            packageName = PACKAGE_NAME,
+            metrics =
+                listOf(
+                    TraceSectionMetric("DesignDocInternal"),
+                    TraceSectionMetric("DesignView"),
+                    TraceSectionMetric("DocServer.doc"),
+                    TraceSectionMetric("DecodeDiskDoc"),
+                    TraceSectionMetric("DCLayout")
+                ),
             iterations = 2,
             startupMode = StartupMode.COLD,
             setupBlock = {
                 pressHome()
+                startActivityAndWait()
             }
         ) {
-            startActivityAndWait()
-//            with(device) {
-//                click(256, 437)
-//                click(256, 437)
-//            }
+
+               device. click(700, 120)
+                device. click(700, 120)
+
+                device.wait(Until.findObject(By.text("<- Your Basdfsadf`oard")), 4000 )
+//                wait(Until.textContains("<- Your Board"))
+//                opponentButton.click()
+//                opponentButton.clickAndWait(Until.newWindow(), 1000)
+//                assertNotNull(findObject(By.text("<- Your Board")))
+
         }
 }

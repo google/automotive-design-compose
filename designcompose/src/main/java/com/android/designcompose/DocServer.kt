@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.tracing.Trace.beginSection
+import androidx.tracing.Trace.endSection
 import com.android.designcompose.common.DocumentServerParams
 import java.io.BufferedInputStream
 import java.io.File
@@ -421,6 +423,8 @@ internal fun DocServer.doc(
     docUpdateCallback: ((String, ByteArray?) -> Unit)?,
     disableLiveMode: Boolean,
 ): DocContent? {
+
+    beginSection("DocServer.doc")
     // Check that the document ID is valid
     if (!validateFigmaDocId(docId)) {
         Log.w(TAG, "Invalid Figma document ID: $docId")
@@ -495,6 +499,7 @@ internal fun DocServer.doc(
     if (liveDoc != null && liveDoc.c.docId == docId) return liveDoc
     if (preloadedDoc != null && preloadedDoc.c.docId == docId) {
         docUpdateCallback?.invoke(docId, preloadedDoc.c.toSerializedBytes(Feedback))
+        endSection()
         return preloadedDoc
     }
 
@@ -509,6 +514,7 @@ internal fun DocServer.doc(
                 DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
             }
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
+            endSection()
             return decodedDoc
         }
     } catch (error: Throwable) {

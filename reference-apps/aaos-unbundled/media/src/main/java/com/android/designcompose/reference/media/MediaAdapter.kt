@@ -73,8 +73,8 @@ import com.android.designcompose.EmptyListContent
 import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
-import com.android.designcompose.TapCallback
 import com.android.designcompose.ParentLayoutInfo
+import com.android.designcompose.TapCallback
 import java.lang.reflect.Field
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -564,7 +564,9 @@ class MediaAdapter(
 
         // Custom action buttons
         nowPlaying.customActions = {
-            ListContentData(count = itemData.size) { index, parentLayout -> itemData[index].composable(parentLayout) }
+            ListContentData(count = itemData.size) { index, parentLayout ->
+                itemData[index].composable(parentLayout)
+            }
         }
 
         // Album art
@@ -832,7 +834,9 @@ class MediaAdapter(
                 span = { index -> spans[index] },
                 key = { index -> itemData[index].key },
                 initialSpan = { spanFunc { media.LoadingPageDesignNodeData() } },
-                initialContent = { parentLayout -> media.LoadingPage(Modifier, parentLayout = parentLayout) }
+                initialContent = { parentLayout ->
+                    media.LoadingPage(Modifier, parentLayout = parentLayout)
+                }
             ) { index, parentLayout ->
                 itemData[index].composable(parentLayout)
             }
@@ -917,12 +921,16 @@ class MediaAdapter(
                     if (it.id == browseStack.selectedRootId()) NavButtonType.Selected
                     else NavButtonType.Unselected
                 itemData.nodeData = media.PageHeaderNavButtonDesignNodeData(navButtonType)
-                itemData.composable = { parentLayout -> MediaNavButton(it, browseStack, parentLayout, media) }
+                itemData.composable = { parentLayout ->
+                    MediaNavButton(it, browseStack, parentLayout, media)
+                }
                 navItemData.add(itemData)
             }
         }
         browse.navContent = {
-            ListContentData(count = navItemData.size) { index, parentLayout -> navItemData[index].composable(parentLayout) }
+            ListContentData(count = navItemData.size) { index, parentLayout ->
+                navItemData[index].composable(parentLayout)
+            }
         }
 
         val parent = topPage!!.parent

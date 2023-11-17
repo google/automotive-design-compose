@@ -1,5 +1,5 @@
 [workspace]
-
+resolver = "2"
 members = ["crates/figma_import", "crates/jni", "crates/layout"]
 
 [profile.release] # https://github.com/johnthagen/min-sized-rust

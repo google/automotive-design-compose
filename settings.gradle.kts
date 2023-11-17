@@ -59,3 +59,13 @@ project(":helloworld-app").projectDir = File("reference-apps/helloworld/app")
 include("tutorial-app")
 
 project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
+
+include(":battleship-app")
+
+project(":battleship-app").projectDir = File("benchmarks/battleship/app")
+
+include(":benchmarks:battleship:lib")
+
+include(":benchmarks:battleship:benchmark")
+
+include(":test:internal")

@@ -17,6 +17,8 @@
 package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
+import com.android.designcompose.benchmarks.battleship.lib.BattleshipDoc
+import com.android.designcompose.benchmarks.battleship.lib.BattleshipTest
 
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(

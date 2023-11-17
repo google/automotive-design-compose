@@ -48,7 +48,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
-import androidx.compose.runtime.traceEventStart
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -73,7 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.tracing.trace
 import com.android.designcompose.annotation.DesignMetaKey
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.serdegen.Action
@@ -86,10 +84,10 @@ import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
-import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.min
 
 // This debugging modifier draws a border around elements that are recomposing. The border increases
 // in size and interpolates from red to green as more recompositions occur before a timeout. This
@@ -350,7 +348,7 @@ internal fun DesignView(
     parentLayout: ParentLayoutInfo?,
     maskInfo: MaskInfo? = null,
 ): Boolean {
-//    beginSection("DesignView")
+    //    beginSection("DesignView")
     val parentComps =
         if (v.component_info.isPresent) {
             val pc = parentComponents.toMutableList()
@@ -910,22 +908,20 @@ fun DesignDoc(
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
 ) =
-//    trace("DesignDoc") {
-        DesignDocInternal(
-            docName,
-            docId,
-            rootNodeQuery,
-            modifier = modifier,
-            placeholder = placeholder,
-            customizations = customizations,
-            serverParams = serverParams,
-            setDocId = setDocId,
-            designSwitcherPolicy = designSwitcherPolicy,
-            designComposeCallbacks = designComposeCallbacks,
-            parentComponents = parentComponents,
-            parentLayout = parentLayout,
-        )
-//    }
+    DesignDocInternal(
+        docName,
+        docId,
+        rootNodeQuery,
+        modifier = modifier,
+        placeholder = placeholder,
+        customizations = customizations,
+        serverParams = serverParams,
+        setDocId = setDocId,
+        designSwitcherPolicy = designSwitcherPolicy,
+        designComposeCallbacks = designComposeCallbacks,
+        parentComponents = parentComponents,
+        parentLayout = parentLayout,
+    )
 
 @Composable
 internal fun DesignDocInternal(

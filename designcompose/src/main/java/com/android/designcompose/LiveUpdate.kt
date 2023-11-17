@@ -21,7 +21,7 @@ import com.novi.bincode.BincodeDeserializer
 
 internal object LiveUpdate {
     fun fetchDocBytes(docId: String, requestJson: String, proxyConfig: ProxyConfig): ByteArray? {
-        val serializedResponse: ByteArray = Jni.jniFetchDoc(docId, requestJson, proxyConfig)
+        val serializedResponse: ByteArray = TracedJni.jniFetchDoc(docId, requestJson, proxyConfig)
         val deserializer = BincodeDeserializer(serializedResponse)
         val convResp = ConvertResponse.deserialize(deserializer)
         if (convResp is ConvertResponse.Document) return convResp.value.toByteArray()

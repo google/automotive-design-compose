@@ -53,18 +53,22 @@ class ClickPlayfield {
                     TraceSectionMetric("DecodeDiskDoc"),
                     TraceSectionMetric("DCLayout")
                 ),
-            iterations = 2,
-            startupMode = StartupMode.COLD,
+            iterations = 3,
+            startupMode = StartupMode.WARM,
             setupBlock = {
+
                 pressHome()
+                killProcess()
                 startActivityAndWait()
+                device.wait(Until.hasObject(By.clickable(true)), 4000)
+//                device.wait(Until.findObject(By.textContains("Your Opponent's Board")), 4000 )
             }
         ) {
+            val opponentBoardButton = device.findObject(By.textContains("Your Opponent"))
+            opponentBoardButton.click()
+            opponentBoardButton.click()
 
-               device. click(700, 120)
-                device. click(700, 120)
-
-                device.wait(Until.findObject(By.text("<- Your Basdfsadf`oard")), 4000 )
+                device.wait(Until.findObject(By.text("<- Your Board")), 4000 )
 //                wait(Until.textContains("<- Your Board"))
 //                opponentButton.click()
 //                opponentButton.clickAndWait(Until.newWindow(), 1000)

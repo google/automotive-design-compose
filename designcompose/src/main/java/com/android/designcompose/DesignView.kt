@@ -84,10 +84,10 @@ import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
+import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.min
 
 // This debugging modifier draws a border around elements that are recomposing. The border increases
 // in size and interpolates from red to green as more recompositions occur before a timeout. This
@@ -940,7 +940,7 @@ internal fun DesignDocInternal(
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
 ) {
-    beginSection(DCTrace.DESIGNDOCINTERNAL)
+    beginSection(DCTraces.DESIGNDOCINTERNAL)
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
     val doc =
@@ -1021,7 +1021,7 @@ internal fun DesignDocInternal(
                     }
                 }
 
-                beginSection("DesignView")
+                beginSection(DCTraces.DESIGNVIEW)
                 DesignView(
                     modifier.semantics { sDocRenderStatus = docRenderStatus },
                     startFrame,
@@ -1038,7 +1038,6 @@ internal fun DesignDocInternal(
                         parentLayout
                     }
                 )
-                endSection()
                 docRenderStatus = DocRenderStatus.Rendered
                 // If we're the root, then also paint overlays
                 if (isRoot || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {
@@ -1068,7 +1067,6 @@ internal fun DesignDocInternal(
                 if (isRoot) DisposableEffect(startFrame) { onDispose {} }
             }
 
-            endSection()
             return
         }
         // We have a document, we have a starting frame name, but couldn't find the frame.
@@ -1106,6 +1104,4 @@ internal fun DesignDocInternal(
             designSwitcher()
         }
     }
-
-    endSection()
 }

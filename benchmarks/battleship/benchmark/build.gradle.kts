@@ -56,7 +56,6 @@ dependencies {
     implementation(libs.androidx.uiautomator)
     implementation(libs.androidx.benchmark.macro.junit4)
     implementation(libs.google.truth)
-//    implementation(libs.androidx.tracing.ktx)
 
     implementation(libs.androidx.tracing.perfetto)
     implementation(libs.androidx.tracing.perfettoBinary)

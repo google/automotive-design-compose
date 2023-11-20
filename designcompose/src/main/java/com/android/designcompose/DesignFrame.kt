@@ -54,7 +54,6 @@ import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 
-
 @Composable
 internal fun DesignFrame(
     modifier: Modifier = Modifier,

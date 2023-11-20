@@ -221,7 +221,7 @@ internal object DocServer {
     internal var periodicFetchRunnable: Runnable =
         Runnable() {
             thread {
-                beginSection("FetchDocuments")
+                beginSection(DCTraces.FETCHDOCUMENTS)
                 if (!fetchDocuments(firstFetch)) {
                     endSection()
                     Log.e(TAG, "Error occurred while fetching or decoding documents.")
@@ -426,13 +426,13 @@ internal fun DocServer.doc(
     docUpdateCallback: ((String, ByteArray?) -> Unit)?,
     disableLiveMode: Boolean,
 ): DocContent? {
-
-    beginSection("DocServer.doc")
     // Check that the document ID is valid
     if (!validateFigmaDocId(docId)) {
         Log.w(TAG, "Invalid Figma document ID: $docId")
         return null
     }
+
+    beginSection(DCTraces.DOCSERVER_DOC)
 
     val id = "${resourceName}_$docId"
 
@@ -524,6 +524,7 @@ internal fun DocServer.doc(
         Feedback.assetLoadFail(id, docId)
     }
 
+    endSection()
     // We didn't manage to load the doc. Hopefully there's an access token
     // and it'll get loaded live.
     return null

@@ -68,7 +68,9 @@ internal object TracedJni : JniIntefrace {
         height: Int
     ): ByteArray? {
         var result: ByteArray? = null
-        trace(DCTraces.JNISETNODESIZE) { result = Jni.jniSetNodeSize(layoutId, rootLayoutId, width, height) }
+        trace(DCTraces.JNISETNODESIZE) {
+            result = Jni.jniSetNodeSize(layoutId, rootLayoutId, width, height)
+        }
         return result
     }
 
@@ -84,7 +86,9 @@ internal object TracedJni : JniIntefrace {
         computeLayout: Boolean
     ): ByteArray? {
         var result: ByteArray? = null
-        trace(DCTraces.JNIREMOVENODE) { result = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout) }
+        trace(DCTraces.JNIREMOVENODE) {
+            result = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
+        }
         return result
     }
 }

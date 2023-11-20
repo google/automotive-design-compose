@@ -41,7 +41,10 @@ class StartupBenchmarks {
                     StartupTimingMetric(),
                     TraceSectionMetric(DCTraces.DECODEDISKDOC),
                     TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL),
-                    TraceSectionMetric(DCTraces.DESIGNFRAME_DE_SUBSCRIBE, TraceSectionMetric.Mode.Sum),
+                    TraceSectionMetric(
+                        DCTraces.DESIGNFRAME_DE_SUBSCRIBE,
+                        TraceSectionMetric.Mode.Sum
+                    ),
                     TraceSectionMetric(DCTraces.FETCHDOCUMENTS)
                 ),
             iterations = 5,

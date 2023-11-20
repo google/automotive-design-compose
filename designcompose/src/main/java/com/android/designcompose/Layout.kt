@@ -36,8 +36,6 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import androidx.tracing.Trace.beginAsyncSection
-import androidx.tracing.Trace.endAsyncSection
 import androidx.tracing.trace
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.Dimension

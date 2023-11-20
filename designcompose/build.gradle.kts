@@ -50,19 +50,12 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                // Strips out compose trace strings
-                // https://developer.android.com/jetpack/compose/tooling/tracing#apk_size_overhead
-//                "production-proguard-rules.pro",
                 "proguard-rules.pro"
             )
         }
         create("benchmark") {
             initWith(buildTypes.getByName("release"))
             matchingFallbacks.add("release")
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
         }
     }
 

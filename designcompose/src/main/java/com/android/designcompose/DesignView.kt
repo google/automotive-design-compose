@@ -348,7 +348,6 @@ internal fun DesignView(
     parentLayout: ParentLayoutInfo?,
     maskInfo: MaskInfo? = null,
 ): Boolean {
-    //    beginSection("DesignView")
     val parentComps =
         if (v.component_info.isPresent) {
             val pc = parentComponents.toMutableList()
@@ -504,6 +503,7 @@ internal fun DesignView(
                     //
                     // The interaction test document covers all of these cases.
                     interactionScope.launch {
+                        beginSection("DesignView InteractionScope")
                         detectTapGestures(
                             onPress = {
                                 for (onPressReaction in onPressReactions) {
@@ -538,6 +538,7 @@ internal fun DesignView(
                                 setIsPressed(false)
                             }
                         )
+                        endSection()
                     }
                 }
             )
@@ -939,7 +940,7 @@ internal fun DesignDocInternal(
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
 ) {
-    beginSection("DesignDocInternal")
+    beginSection(DCTrace.DESIGNDOCINTERNAL)
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
     val doc =

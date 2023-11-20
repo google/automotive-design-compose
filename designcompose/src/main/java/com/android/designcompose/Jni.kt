@@ -57,7 +57,7 @@ internal object TracedJni : JniIntefrace {
         proxyConfig: ProxyConfig
     ): ByteArray {
         lateinit var result: ByteArray
-        trace("jniFetchDoc") { result = Jni.jniFetchDoc(docId, requestJson, proxyConfig) }
+        trace(DCTraces.JNIFETCHDOC) { result = Jni.jniFetchDoc(docId, requestJson, proxyConfig) }
         return result
     }
 
@@ -68,13 +68,13 @@ internal object TracedJni : JniIntefrace {
         height: Int
     ): ByteArray? {
         var result: ByteArray? = null
-        trace("jniSetNodeSize") { result = Jni.jniSetNodeSize(layoutId, rootLayoutId, width, height) }
+        trace(DCTraces.JNISETNODESIZE) { result = Jni.jniSetNodeSize(layoutId, rootLayoutId, width, height) }
         return result
     }
 
     override fun jniAddNodes(rootLayoutId: Int, serializedNodes: ByteArray): ByteArray? {
         var result: ByteArray? = null
-        trace("jniAddNodes") { result = Jni.jniAddNodes(rootLayoutId, serializedNodes) }
+        trace(DCTraces.JNIADDNODES) { result = Jni.jniAddNodes(rootLayoutId, serializedNodes) }
         return result
     }
 
@@ -84,7 +84,7 @@ internal object TracedJni : JniIntefrace {
         computeLayout: Boolean
     ): ByteArray? {
         var result: ByteArray? = null
-        trace("jniRemoveNode") { result = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout) }
+        trace(DCTraces.JNIREMOVENODE) { result = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout) }
         return result
     }
 }

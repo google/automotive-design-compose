@@ -221,10 +221,13 @@ internal object DocServer {
     internal var periodicFetchRunnable: Runnable =
         Runnable() {
             thread {
+                beginSection("FetchDocuments")
                 if (!fetchDocuments(firstFetch)) {
+                    endSection()
                     Log.e(TAG, "Error occurred while fetching or decoding documents.")
                     return@thread
                 }
+                endSection()
                 firstFetch = false
 
                 // Schedule another run after some time even if there were any

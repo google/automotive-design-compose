@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.tracing.trace
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
@@ -52,6 +53,7 @@ import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
+
 
 @Composable
 internal fun DesignFrame(
@@ -134,17 +136,19 @@ internal fun DesignFrame(
     // component instance that changes to another variant. It can also change due to a live update.
     // Subscribing when already subscribed simply updates the view in the layout system.
     DisposableEffect(view) {
-        val parentLayoutId = parentLayout?.parentLayoutId ?: -1
-        val childIndex = parentLayout?.childIndex ?: -1
-        // Subscribe to layout changes when the view changes or is added
-        LayoutManager.subscribeFrame(
-            layoutId,
-            setLayoutState,
-            parentLayoutId,
-            childIndex,
-            style,
-            view.name
-        )
+        trace(DCTraces.DESIGNFRAME_DE_SUBSCRIBE) {
+            val parentLayoutId = parentLayout?.parentLayoutId ?: -1
+            val childIndex = parentLayout?.childIndex ?: -1
+            // Subscribe to layout changes when the view changes or is added
+            LayoutManager.subscribeFrame(
+                layoutId,
+                setLayoutState,
+                parentLayoutId,
+                childIndex,
+                style,
+                view.name
+            )
+        }
         onDispose {}
     }
 
@@ -168,7 +172,9 @@ internal fun DesignFrame(
             // there are no other parent frames performing layout, layout computation can be
             // performed.
             DisposableEffect(view) {
-                LayoutManager.finishLayout(layoutId, rootLayoutId)
+                trace(DCTraces.DESIGNFRAME_FINISHLAYOUT) {
+                    LayoutManager.finishLayout(layoutId, rootLayoutId)
+                }
                 onDispose {}
             }
         }

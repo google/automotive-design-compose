@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.tracing.Trace.beginAsyncSection
 import androidx.tracing.Trace.endAsyncSection
+import androidx.tracing.trace
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
@@ -133,12 +134,15 @@ internal object LayoutManager {
         name: String,
         textMeasureData: TextMeasureData,
     ) {
-        textMeasures[layoutId] = textMeasureData
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
+        trace(DCTraces.LAYOUTMANAGER_SUBSCRIBEWITHMEASURE) {
+            textMeasures[layoutId] = textMeasureData
+            subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
 
-        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is the
-        // text or text style changed when no other nodes changed, we recompute layout
-        computeLayoutIfComplete(layoutId, rootLayoutId)
+            // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
+            // the
+            // text or text style changed when no other nodes changed, we recompute layout
+            computeLayoutIfComplete(layoutId, rootLayoutId)
+        }
     }
 
     private fun subscribe(
@@ -184,7 +188,6 @@ internal object LayoutManager {
     }
 
     private fun beginLayout(layoutId: Int) {
-        beginAsyncSection("DCLayout", layoutId)
         // Add a layout ID to a set of IDs that are in progress. As a view recursively calls its
         // children, this set grows. Each time a view has finished calling its children it calls
         // finishLayout().
@@ -196,7 +199,6 @@ internal object LayoutManager {
         // Remove a layout ID from the set of IDs that are in progress.
         layoutsInProgress.remove(layoutId)
         computeLayoutIfComplete(layoutId, rootLayoutId)
-        endAsyncSection("DCLayout", layoutId)
     }
 
     // Check if we are ready to compute layout. If layoutId is the same as rootLayoutId, then a root

@@ -60,6 +60,7 @@ dependencies {
 
     implementation(libs.androidx.tracing.perfetto)
     implementation(libs.androidx.tracing.perfettoBinary)
+    implementation(project(":designcompose"))
 }
 
 androidComponents { beforeVariants(selector().all()) { it.enable = it.buildType == "benchmark" } }

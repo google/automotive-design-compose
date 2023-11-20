@@ -94,7 +94,7 @@ fun decodeDiskDoc(
     feedback: FeedbackImpl
 ): DocContent? {
     var docContent: DocContent? = null
-    trace("DecodeDiskDoc") {
+    trace(DCTraces.DECODEDISKDOC) {
         val baseDoc = decodeDiskBaseDoc(docStream, docId, feedback) ?: return@trace
         docContent = DocContent(baseDoc, previousDoc)
     }

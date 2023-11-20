@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.tracing.trace
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LineHeight
@@ -264,19 +265,20 @@ internal fun DesignText(
     // Subscribe for layout changes whenever the text data changes, and use a measure function to
     // measure the text width and height
     DisposableEffect(textMeasureData, style) {
-        val parentLayoutId = parentLayout?.parentLayoutId ?: -1
-        val childIndex = parentLayout?.childIndex ?: -1
-        LayoutManager.subscribeWithMeasure(
-            layoutId,
-            setLayoutState,
-            parentLayoutId,
-            rootLayoutId,
-            childIndex,
-            style,
-            view.name,
-            textMeasureData
-        )
-
+        trace(DCTraces.DESIGNTEXT_DE) {
+            val parentLayoutId = parentLayout?.parentLayoutId ?: -1
+            val childIndex = parentLayout?.childIndex ?: -1
+            LayoutManager.subscribeWithMeasure(
+                layoutId,
+                setLayoutState,
+                parentLayoutId,
+                rootLayoutId,
+                childIndex,
+                style,
+                view.name,
+                textMeasureData
+            )
+        }
         onDispose {}
     }
     // Unsubscribe to layout changes when the composable is no longer in view.

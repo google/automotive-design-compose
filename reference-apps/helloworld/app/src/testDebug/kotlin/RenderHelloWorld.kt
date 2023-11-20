@@ -21,13 +21,12 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.docRenderStatusSemanticsKey
+import com.android.designcompose.test.internal.defaultRoborazziRule
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
-import com.github.takahirom.roborazzi.RoborazziRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,19 +46,7 @@ import org.robolectric.annotation.GraphicsMode
 class RenderHelloWorld {
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    @get:Rule
-    val roborazziRule =
-        RoborazziRule(
-            composeRule = composeTestRule,
-            // Specify the node to capture for the last image
-            captureRoot = composeTestRule.onRoot(),
-            options =
-                RoborazziRule.Options(
-                    outputDirectoryPath = "src/testDebug/roborazzi",
-                    // Always capture the last image of the test
-                    captureType = RoborazziRule.CaptureType.LastImage()
-                )
-        )
+    @get:Rule val roborazziRule = defaultRoborazziRule(composeTestRule)
 
     @Test(expected = AssertionError::class) // TODO: GH-483
     fun testHello() {

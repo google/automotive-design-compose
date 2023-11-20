@@ -43,6 +43,11 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui.text)
-
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.compose.ui.test.junit4)
+    implementation(libs.robolectric)
+    implementation(libs.roborazzi)
+    implementation(libs.roborazzi.compose)
+    implementation(libs.roborazzi.junit)
+    implementation(project(":designcompose"))
 }

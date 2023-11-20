@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.android.designcompose
+package com.android.designcompose.test.internal
 
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import com.android.designcompose.DocRenderStatus
+import com.android.designcompose.docClassSemanticsKey
+import com.android.designcompose.docRenderStatusSemanticsKey
 
 fun ComposeContentTestRule.onDCDoc(genDoc: Any) =
     onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, genDoc.javaClass.name))

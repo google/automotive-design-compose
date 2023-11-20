@@ -21,6 +21,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.designcompose.test.internal.assertDCRenderStatus
+import com.android.designcompose.test.internal.onDCDoc
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import org.junit.Before

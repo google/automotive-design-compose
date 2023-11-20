@@ -29,9 +29,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * This is a rough example of a benchmark, though one that doesn't focus on any behavior well.
+ * Essentially it benchmarks a large recomposition, by clicking the Opponent's Playfield button,
+ * which causes the full screen to re-draw.
+ */
 @OptIn(ExperimentalMetricApi::class)
 @RunWith(AndroidJUnit4::class)
 class ClickPlayfield {
+
     @get:Rule val benchmarkRule = MacrobenchmarkRule()
 
     @Test
@@ -40,16 +46,22 @@ class ClickPlayfield {
             packageName = PACKAGE_NAME,
             metrics =
                 listOf(
+                    TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL),
+                    TraceSectionMetric(DCTraces.DESIGNVIEW),
                     TraceSectionMetric(DCTraces.DESIGNFRAME_DE_SUBSCRIBE, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNFRAME_FINISHLAYOUT, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNTEXT_DE, Mode.Sum),
-                    TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL),
                     TraceSectionMetric(DCTraces.JNIADDNODES, Mode.Sum),
-                    TraceSectionMetric(DCTraces.DESIGNVIEW, Mode.Sum),
                     TraceSectionMetric(DCTraces.DOCSERVER_DOC, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNVIEW_INTERACTIONSCOPE, Mode.Sum),
                 ),
-            iterations = 2,
+            iterations = 5,
+            /**
+             * I'd like to run this benchmark with StartupMode Cold, but something is stopping the
+             * app before the benchmark runs. We need to reset the app's state between runs so that
+             * we can click the playfield button again. The setupBlock kills the process between
+             * runs.
+             */
             startupMode = StartupMode.WARM,
             setupBlock = {
                 pressHome()
@@ -59,6 +71,7 @@ class ClickPlayfield {
         ) {
             val opponentBoardButton = device.findObject(By.textContains("Your Opponent"))
             opponentBoardButton.click()
+            // Bug: GH-553 Shouldn't need to click twice
             opponentBoardButton.click()
 
             device.wait(Until.findObject(By.text("<- Your Board")), 4000)

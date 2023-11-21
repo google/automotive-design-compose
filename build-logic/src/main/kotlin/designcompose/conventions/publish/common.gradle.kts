@@ -40,20 +40,14 @@ publishing {
         // See `dev-scripts/test-standalone-projects.sh` for an example.
         val DesignComposeMavenRepo: String? by project
 
-        // The default publish dir is meant to be within the main build's buildDir.
-        // If the publishing project (like the plugin) is an included build then put the output in
-        // the parent's buildDir
-        // Wrap it in a property to delay checking for the parent repo. This fixes build scans
-        val defaultPublishDir =
-            objects.directoryProperty().map {
-                gradle.parent?.rootProject?.layout?.buildDirectory
-                    ?: rootProject.layout.buildDirectory
-            }
-
         // This will create the `publish*ToLocalDirRepository` tasks
         maven {
             name = "localDir"
-            url = uri(DesignComposeMavenRepo ?: defaultPublishDir.get().dir("designcompose_m2repo"))
+            url =
+                uri(
+                    DesignComposeMavenRepo
+                        ?: project.layout.buildDirectory.dir("designcompose_m2repo")
+                )
         }
     }
 }

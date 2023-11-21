@@ -179,11 +179,19 @@ internal fun DesignText(
                 )
             )
         }
+    val customBrushFunction = customizations.getBrushFunction(nodeName)
+    val customBrush =
+        if (customBrushFunction != null) {
+            customBrushFunction()
+        } else {
+            customizations.getBrush(nodeName)
+        }
+
     val textBrushAndOpacity = style.text_color.asBrush(document, density.density)
     val textStyle =
         @OptIn(ExperimentalTextApi::class)
         TextStyle(
-            brush = textBrushAndOpacity?.first,
+            brush = customBrush ?: textBrushAndOpacity?.first,
             alpha = textBrushAndOpacity?.second ?: 1.0f,
             fontSize = customTextStyle?.fontSize ?: style.font_size.sp,
             fontFamily = fontFamily,

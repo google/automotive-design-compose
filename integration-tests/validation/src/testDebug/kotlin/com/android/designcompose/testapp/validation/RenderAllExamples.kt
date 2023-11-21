@@ -20,7 +20,6 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
@@ -29,8 +28,8 @@ import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
-import com.android.designcompose.docRenderStatusSemanticsKey
-import com.android.designcompose.test.internal.interFont
+import com.android.designcompose.test.internal.assertRenderStatus
+import com.android.designcompose.testapp.common.interFont
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import com.github.takahirom.roborazzi.RoborazziRule
 import java.io.File
@@ -82,9 +81,7 @@ class RenderAllExamples(private val config: TestConfig) {
         composeTestRule
             .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
             .onFirst()
-            .assert(
-                SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, DocRenderStatus.Rendered)
-            )
+            .assertRenderStatus(DocRenderStatus.Rendered)
     }
 
     @get:Rule

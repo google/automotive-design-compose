@@ -21,7 +21,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.benchmarks.battleship.lib.BattleshipTest
-import com.android.designcompose.test.internal.interFont
+import com.android.designcompose.testapp.common.interFont
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

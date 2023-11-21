@@ -48,6 +48,8 @@ include("codegen")
 
 include("common")
 
+include("integration-tests:app-common")
+
 include("validation-app")
 
 project(":validation-app").projectDir = File("integration-tests/validation")
@@ -62,7 +64,7 @@ project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
 
 include("battleship-app")
 
-project(":battleship-app").projectDir = File("benchmarks/battleship/app")
+project(":battleship-app").projectDir = File("integration-tests/benchmarks/battleship/app")
 
 include("integration-tests:benchmarks:battleship:lib")
 

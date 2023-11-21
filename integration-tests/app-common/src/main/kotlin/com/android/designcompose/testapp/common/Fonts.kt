@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.test.internal
+package com.android.designcompose.testapp.common
 
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily

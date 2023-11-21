@@ -62,8 +62,8 @@ android {
 
 dependencies {
     implementation(project(":designcompose"))
-    implementation(project(":test:internal"))
     implementation(project(":integration-tests:benchmarks:battleship:lib"))
+    implementation(project(":integration-tests:app-common"))
     ksp(project(":codegen"))
 
     implementation(libs.androidx.core.ktx)

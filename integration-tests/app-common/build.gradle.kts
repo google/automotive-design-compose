@@ -21,11 +21,11 @@ plugins {
 }
 
 android {
-    namespace = "com.android.designcompose.test.internal"
+    namespace = "com.android.designcompose.testapp.common"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
+        minSdk = libs.versions.appMinSdk.get().toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -43,11 +43,4 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui.text)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.compose.ui.test.junit4)
-    implementation(libs.robolectric)
-    implementation(libs.roborazzi)
-    implementation(libs.roborazzi.compose)
-    implementation(libs.roborazzi.junit)
-    implementation(project(":designcompose"))
 }

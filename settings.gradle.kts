@@ -60,12 +60,12 @@ include("tutorial-app")
 
 project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
 
-include(":battleship-app")
+include("battleship-app")
 
 project(":battleship-app").projectDir = File("benchmarks/battleship/app")
 
-include(":benchmarks:battleship:lib")
+include("integration-tests:benchmarks:battleship:lib")
 
-include(":benchmarks:battleship:benchmark")
+include("integration-tests:benchmarks:battleship:benchmark")
 
 include(":test:internal")

@@ -122,6 +122,57 @@ called `artwork`, which is a nullable `android.graphics.Bitmap` instance. To use
 the background fill from the document, pass a value to replace the background
 fill or pass `null`.
 
+### Brush content {#brush-content}
+
+Jetpack Compose's `Brush` type can be used to fill text or a frame. A `Brush`
+can render gradients, images, colors, and AGSL Fragment Shaders (on Android T
+and above).
+
+The `Brush` customization can take either a `Brush` directly, or a function
+`() -> Brush`, for example:
+
+```kotlin
+@DesignDoc(id = "<your figma doc id>")
+interface HelloWorld {
+    @DesignComponent(node = "#MainFrame")
+    fun MainFrame(
+        @Design(node = "#background") background: Brush,
+        @Design(node = "#animated-background") animatedBackground: () -> Brush,
+    )
+}
+```
+
+In this example, the generated Composable, `MainFrame`, takes a `Brush` and
+a function that generates a `Brush`. We could use `MainFrame` like so:
+```kotlin
+// Create a State<Float> that is animated by Compose's animation system.
+val infiniteTransition = rememberInfiniteTransition(label = "animate shader")
+val movingValue = infiniteTransition.animateFloat(
+    label = "moving value for shader",
+    initialValue = 0.0f,
+    targetValue = 100.0f,
+    animationSpec = infiniteRepeatable(
+        animation = tween(1000, easing = FastOutSlowInEasing),
+        repeatMode = RepeatMode.Reverse
+    )
+)
+
+// Now present our MainFrame.
+MainFrame(
+    background = Brush.verticalGradient(listOf(Color.Red, Color.Blue)),
+    animatedBackground = {
+        Brush.verticalGradient(
+            listOf(Color.Red, Color.Blue),
+            startY = 0.0f,
+            // By reading `movingValue.value` here, inside the Brush generator function, we avoid
+            // recomposing the UI every frame and instead only trigger a redraw.
+            endY = movingValue.value
+        )
+    }
+)
+```
+
+
 ### Visibility {#visibility}
 
 The following example illustrates how to create a visibility customization to

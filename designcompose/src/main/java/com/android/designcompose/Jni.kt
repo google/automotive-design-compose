@@ -36,92 +36,44 @@ internal class TextSize(
     var height: Float = 0F,
 )
 
-internal interface UniInterface {
-    fun jniFetchDoc(docId: String, requestJson: String, proxyConfig: ProxyConfig): ByteArray
-
-    fun jniSetNodeSize(layoutId: Int, rootLayoutId: Int, width: Int, height: Int): ByteArray?
-
-    fun jniAddNodes(
-        rootLayoutId: Int,
-        serializedNodes: ByteArray,
-    ): ByteArray?
-
-    fun jniRemoveNode(layoutId: Int, rootLayoutId: Int, computeLayout: Boolean): ByteArray?
-}
-
 @Keep
-internal object TracedJni : UniInterface {
-    override fun jniFetchDoc(
-        docId: String,
-        requestJson: String,
-        proxyConfig: ProxyConfig
-    ): ByteArray {
+internal object Jni {
+
+    fun tracedJnifetchdoc(docId: String, requestJson: String, proxyConfig: ProxyConfig): ByteArray {
         lateinit var result: ByteArray
-        trace(DCTraces.JNIFETCHDOC) { result = Jni.jniFetchDoc(docId, requestJson, proxyConfig) }
+        trace(DCTraces.JNIFETCHDOC) { result = jniFetchDoc(docId, requestJson, proxyConfig) }
         return result
     }
 
-    override fun jniSetNodeSize(
-        layoutId: Int,
-        rootLayoutId: Int,
-        width: Int,
-        height: Int
-    ): ByteArray? {
-        var result: ByteArray? = null
-        trace(DCTraces.JNISETNODESIZE) {
-            result = Jni.jniSetNodeSize(layoutId, rootLayoutId, width, height)
-        }
-        return result
-    }
-
-    override fun jniAddNodes(rootLayoutId: Int, serializedNodes: ByteArray): ByteArray? {
-        var result: ByteArray? = null
-        trace(DCTraces.JNIADDNODES) { result = Jni.jniAddNodes(rootLayoutId, serializedNodes) }
-        return result
-    }
-
-    override fun jniRemoveNode(
-        layoutId: Int,
-        rootLayoutId: Int,
-        computeLayout: Boolean
-    ): ByteArray? {
-        var result: ByteArray? = null
-        trace(DCTraces.JNIREMOVENODE) {
-            result = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
-        }
-        return result
-    }
-}
-
-@Keep
-internal object Jni : UniInterface {
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external override fun jniFetchDoc(
+    external fun jniFetchDoc(
         docId: String,
         requestJson: String,
         proxyConfig: ProxyConfig
     ): ByteArray
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external override fun jniSetNodeSize(
+    external fun jniSetNodeSize(
         layoutId: Int,
         rootLayoutId: Int,
         width: Int,
         height: Int
     ): ByteArray?
 
+    fun tracedJniAddNodes(rootLayoutId: Int, serializedNodes: ByteArray): ByteArray? {
+        var result: ByteArray? = null
+        trace(DCTraces.JNIADDNODES) { result = jniAddNodes(rootLayoutId, serializedNodes) }
+        return result
+    }
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external override fun jniAddNodes(
+    external fun jniAddNodes(
         rootLayoutId: Int,
         serializedNodes: ByteArray,
     ): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external override fun jniRemoveNode(
-        layoutId: Int,
-        rootLayoutId: Int,
-        computeLayout: Boolean
-    ): ByteArray?
+    external fun jniRemoveNode(layoutId: Int, rootLayoutId: Int, computeLayout: Boolean): ByteArray?
 
     init {
         System.loadLibrary("jni")

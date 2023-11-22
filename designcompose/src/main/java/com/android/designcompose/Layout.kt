@@ -180,7 +180,7 @@ internal object LayoutManager {
         // true, or if we are not a widget ancestor. We don't want to compute layout when ancestors
         // of a widget are removed because this happens constantly in a lazy grid view.
         val computeLayout = performLayoutComputation && !isWidgetAncestor
-        val responseBytes = TracedJni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
+        val responseBytes = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
         handleResponse(responseBytes)
         if (computeLayout) Log.d(TAG, "Unsubscribe $layoutId, compute layout")
     }
@@ -210,7 +210,7 @@ internal object LayoutManager {
             val nodeListSerializer = BincodeSerializer()
             layoutNodeList.serialize(nodeListSerializer)
             val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-            val responseBytes = TracedJni.jniAddNodes(rootLayoutId, serializedNodeList)
+            val responseBytes = Jni.tracedJniAddNodes(rootLayoutId, serializedNodeList)
             handleResponse(responseBytes)
             layoutNodes.clear()
         }
@@ -256,7 +256,7 @@ internal object LayoutManager {
         val adjustedWidth = (width.toFloat() / density).roundToInt()
         val adjustedHeight = (height.toFloat() / density).roundToInt()
         val responseBytes =
-            TracedJni.jniSetNodeSize(layoutId, rootLayoutId, adjustedWidth, adjustedHeight)
+            Jni.jniSetNodeSize(layoutId, rootLayoutId, adjustedWidth, adjustedHeight)
         handleResponse(responseBytes)
     }
 

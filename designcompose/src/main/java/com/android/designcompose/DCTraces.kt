@@ -23,8 +23,6 @@ object DCTraces {
     const val DESIGNDOCINTERNAL = "DesignDocInternal"
     const val JNIFETCHDOC = "jniFetchDoc"
     const val JNIADDNODES = "jniAddNodes"
-    const val JNISETNODESIZE = "jniSetNodeSize"
-    const val JNIREMOVENODE = "jniRemoveNode"
     const val DESIGNVIEW = "DesignView"
     const val DOCSERVER_DOC = "DocServer.doc"
     const val DESIGNVIEW_INTERACTIONSCOPE = "DesignView InteractionScope"

@@ -361,8 +361,13 @@ fun CustomizationContext.getComponent(
     return null
 }
 
+// XXX-PERF: This function shows up on profiles because we call it for every component during render
+//      and it does a lot of hashing and string operations. We can optimize this by parsing the node
+//      variants and sorting them in Rust during doc generation, and by interning strings in the
+//      serialized doc so that we don't need to hash.
 fun CustomizationContext.getMatchingVariant(maybeComponentInfo: Optional<ComponentInfo>): String? {
     if (!maybeComponentInfo.isPresent) return null
+    if (variantProperties.isEmpty()) return null
 
     val componentInfo = maybeComponentInfo.get()
     val nodeVariants = parseNodeVariants(componentInfo.name)
@@ -380,7 +385,7 @@ fun CustomizationContext.getMatchingVariant(maybeComponentInfo: Optional<Compone
     }
 
     if (variantChanged) {
-        var newVariantList: ArrayList<String> = ArrayList()
+        val newVariantList: ArrayList<String> = ArrayList()
         val sortedKeys = nodeVariants.keys.sorted()
         sortedKeys.forEach { newVariantList.add(it + "=" + nodeVariants[it]) }
         return newVariantList.joinToString(",")

@@ -1342,8 +1342,8 @@ fn visit_node(
             path: fill_paths,
             stroke: stroke_paths,
             stroke_cap: node.stroke_cap.clone(),
-            start_angle_degrees: arc_data.starting_angle,
-            sweep_angle_degrees: arc_data.ending_angle,
+            start_angle_degrees: euclid::Angle::radians(arc_data.starting_angle).to_degrees(),
+            sweep_angle_degrees: euclid::Angle::radians(arc_data.ending_angle).to_degrees(),
             inner_radius: arc_data.inner_radius,
             corner_radius: 0.0, // corner radius is only exposed in the plugin data
             size: vector_size,

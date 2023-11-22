@@ -42,6 +42,47 @@ internal class SquooshAnimatedLayout(private val target: SquooshResolvedNode, pr
         )
     }
 }
+
+internal class SquooshAnimatedArc(private val target: SquooshResolvedNode, private val from: ViewShape.Arc, private val to: ViewShape.Arc): SquooshAnimatedItem {
+    override fun apply(value: Float) {
+        val iv = 1.0f - value
+        val arcBuilder = ViewShape.Arc.Builder()
+
+        arcBuilder.path = listOf()
+        arcBuilder.stroke = listOf()
+        arcBuilder.corner_radius = from.corner_radius * iv + to.corner_radius * value
+        arcBuilder.inner_radius = from.inner_radius * iv + to.inner_radius * value
+        arcBuilder.is_mask = to.is_mask
+        arcBuilder.start_angle_degrees = from.start_angle_degrees * iv + to.start_angle_degrees * value
+        arcBuilder.stroke_cap = to.stroke_cap
+        arcBuilder.sweep_angle_degrees = from.sweep_angle_degrees * iv + to.sweep_angle_degrees * value
+        arcBuilder.size = to.size // XXX
+        val arc = arcBuilder.build()
+
+        // Unfortunately, the ViewData and View objects are also immutable.
+        val viewDataBuilder = ViewData.Container.Builder()
+        viewDataBuilder.shape = arc
+        viewDataBuilder.children = (target.view.data as ViewData.Container).children
+        val viewData = viewDataBuilder.build()
+
+        val viewBuilder = View.Builder()
+        viewBuilder.data = viewData
+        viewBuilder.id = target.view.id
+        viewBuilder.name = target.view.name
+        viewBuilder.style = target.view.style
+        viewBuilder.component_info = target.view.component_info
+        viewBuilder.design_absolute_bounding_box = target.view.design_absolute_bounding_box // didn't we delete this?
+        viewBuilder.frame_extras = target.view.frame_extras
+        viewBuilder.reactions = target.view.reactions
+        viewBuilder.render_method = target.view.render_method
+        viewBuilder.scroll_info = target.view.scroll_info
+        viewBuilder.unique_id = target.view.unique_id
+        val view = viewBuilder.build()
+
+        target.view = view
+    }
+}
+
 // XXX: No transform, coz no decomposition implemented yet.
 //      No colors or strokes or corners.
 
@@ -120,11 +161,33 @@ internal fun mergeTreesWithAnimation(from: SquooshResolvedNode, to: SquooshResol
         // If both objects are the same kind of shape, then we can recurse into the children.
         // If not then we just do a crossfade and layout animation on the parents.
         if (matchInFromTree != null) {
-            if (isTweenable(toChild.view, matchInFromTree.view)) {
+            if (isTweenable(toChild.view, matchInFromTree.view) && !needsStyleTween(toChild.view.style, matchInFromTree.view.style)) {
                 // We want to add all of `matchInFromTree`'s children to `toChild`, or match them.
                 mergeTreesWithAnimation(matchInFromTree, toChild, anims)
                 // Animate the node we're keeping from the old place to its current place.
-                anims.add(SquooshAnimatedLayout(toChild, matchInFromTree.computedLayout!!, toChild.computedLayout!!))
+                if (matchInFromTree.computedLayout!! != toChild.computedLayout) {
+                    anims.add(
+                        SquooshAnimatedLayout(
+                            toChild,
+                            matchInFromTree.computedLayout!!,
+                            toChild.computedLayout!!
+                        )
+                    )
+                }
+                // If they're both arcs, then they might need an arc animation.
+                // XXX: Refactor this so we don't inspect every type right here.
+                if (matchInFromTree.view.data is ViewData.Container &&
+                    (matchInFromTree.view.data as ViewData.Container).shape is ViewShape.Arc &&
+                    toChild.view.data is ViewData.Container &&
+                    (toChild.view.data as ViewData.Container).shape is ViewShape.Arc)
+                {
+                    val fromArc: ViewShape.Arc = (matchInFromTree.view.data as ViewData.Container).shape as ViewShape.Arc
+                    val toArc: ViewShape.Arc = (toChild.view.data as ViewData.Container).shape as ViewShape.Arc
+
+                    if (fromArc != toArc) {
+                        anims.add(SquooshAnimatedArc(toChild, fromArc, toArc))
+                    }
+                }
             } else {
                 // We're doing a layout crossfade.
                 anims.add(SquooshAnimatedFadeIn(toChild))
@@ -197,8 +260,24 @@ internal fun isTweenable(a: View, b: View): Boolean {
     val aData = a.data
     val bData = b.data
     if (aData is ViewData.Container && bData is ViewData.Container) {
-        return (aData.shape is ViewShape.Rect && bData.shape is ViewShape.Rect) || (aData.shape is ViewShape.RoundRect && bData.shape is ViewShape.RoundRect)
+        // Rects and RoundRects can be tweened.
+        if ((aData.shape is ViewShape.Rect && bData.shape is ViewShape.Rect) || (aData.shape is ViewShape.RoundRect && bData.shape is ViewShape.RoundRect))
+            return true
+
+        if ((aData.shape is ViewShape.VectorRect && bData.shape is ViewShape.VectorRect))
+            return true
+
+        // Arcs can be tweened.
+        if (aData.shape is ViewShape.Arc && bData.shape is ViewShape.Arc)
+            return true
     }
+    return false
+}
+
+internal fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
+    // Compare some style things and decide if we need to tween the styles.
+    if (a.background != b.background) return true
+    if (a.stroke != b.stroke) return true
     return false
 }
 

@@ -1,6 +1,8 @@
 package com.android.designcompose.squoosh
 
 import android.graphics.PointF
+import android.os.SystemClock
+import android.os.Trace
 import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Animation
@@ -93,6 +95,7 @@ import com.android.designcompose.mergeStyles
 import com.android.designcompose.pointsAsDp
 import com.android.designcompose.rootNode
 import com.android.designcompose.serdegen.Action
+import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
@@ -174,7 +177,7 @@ internal object SquooshLayout {
 
 internal class SquooshLayoutIdAllocator(
     private var lastAllocatedId: Int = 1,
-    private val idMap: HashMap<List<ParentComponentInfo>, Int> = HashMap(),
+    private val idMap: HashMap<ParentComponentData, Int> = HashMap(),
     // We can also track referenced layout IDs from one generation to the next, which lets us
     // build the set of nodes to remove from the native layout tree.
     private var visitedSet: HashSet<Int> = HashSet(),
@@ -184,7 +187,7 @@ internal class SquooshLayoutIdAllocator(
     /// Return a new "root layout id" for a tree node that is an instance of a component. This
     /// ensures that component instance children get unique layout ids even though there might
     /// be many instances of the same component in one tree.
-    fun componentLayoutId(component: List<ParentComponentInfo>): Int {
+    fun componentLayoutId(component: ParentComponentData): Int {
         val maybeId = idMap[component]
         if (maybeId != null) return maybeId
         val id = lastAllocatedId++
@@ -210,7 +213,7 @@ internal class SquooshLayoutIdAllocator(
 
 
 internal class SquooshResolvedNode(
-    val view: View,
+    var view: View, // updated by animations
     var style: ViewStyle,
     val layoutId: Int,
     val textInfo: TextMeasureData?,
@@ -248,7 +251,7 @@ internal class SquooshChildComposable(
     val content: ReplacementContent?,
 
     // Used for node resolution for interactions
-    val parentComponents: List<ParentComponentInfo>,
+    val parentComponents: ParentComponentData?,
 
     // We use this to look up the transform and layout translation.
     val node: SquooshResolvedNode
@@ -421,6 +424,25 @@ internal fun computeTextInfo(
     )
 }
 
+/// Record parent component info with a singly linked list; each child sees a straight path
+/// up through the tree. This saves on allocating a new array for each node with a parent, and
+/// allows us to do some optimizations like caching the hashcode to make indexing off of
+/// ParentComponent O(1) instead of O(log n).
+internal class ParentComponentData(
+    val parent: ParentComponentData?,
+    val instanceId: String,
+    val componentInfo: ComponentInfo
+) {
+    private val preComputedHashCode: Int = if (parent != null) {
+        (parent.preComputedHashCode * 31 + instanceId.hashCode()) * 31 + componentInfo.id.hashCode()
+    } else {
+        instanceId.hashCode() * 31 + componentInfo.id.hashCode()
+    }
+    override fun hashCode(): Int {
+        return preComputedHashCode
+    }
+}
+
 /// Iterate over a given view tree recursively, applying customizations that will select
 /// variants or affect layout. The output of this function is a `SquooshResolvedNode` which
 /// has links to siblings and children (but no layout value).
@@ -433,7 +455,7 @@ internal fun resolveVariantsRecursively(
     document: DocContent,
     customizations: CustomizationContext,
     interactionState: InteractionState,
-    parentComponents: List<ParentComponentInfo>,
+    parentComponents: ParentComponentData?,
     density: Density,
     fontResourceLoader: Font.ResourceLoader,
     // XXX: This probably won't show up in any profile, but I used linked lists everywhere
@@ -444,38 +466,36 @@ internal fun resolveVariantsRecursively(
     variantParentName: String = ""): SquooshResolvedNode
 {
     var rootLayoutId = rootLayoutId
-    // XXX: This seems to do a lot of extra allocations. We'll realloc this list all the way
-    //      down, when I think we could simply push and pop. It would be nice if there was a
-    //      way to avoid even that, since the list is a static property of the View and not
-    //      a dynamic thing at all.
     var parentComps = parentComponents
+    var overrideStyle: ViewStyle? = null
+
+    // If we have a component then we might need to get an override style, and we definitely
+    // need to get a different layout id.
     if (v.component_info.isPresent) {
-        val pc = parentComponents.toMutableList()
-        pc.add(ParentComponentInfo(v.id, v.component_info.get()))
-        parentComps = pc
+        val componentInfo = v.component_info.get()
+        parentComps = ParentComponentData(parentComponents, v.id, componentInfo)
 
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
-        rootLayoutId = layoutIdAllocator.componentLayoutId(pc) * 1000000
-    }
+        rootLayoutId = layoutIdAllocator.componentLayoutId(parentComps) * 1000000
 
-    // Do we have an override style? This is style data which we should apply to the final style
-    // even if we're swapping out our view definition for a variant.
-    var overrideStyle: ViewStyle? = null
-    if (v.component_info.isPresent) {
-        val componentInfo = v.component_info.get()
+        // Do we have an override style? This is style data which we should apply to the final style
+        // even if we're swapping out our view definition for a variant.
         if (componentInfo.overrides.isPresent) {
             val overrides = componentInfo.overrides.get()
             if (overrides.style.isPresent) {
                 overrideStyle = overrides.style.get()
             }
+
+            // XXX: override data?
         }
     }
 
     // See if we've got a replacement node from an interaction
     var view = interactionState.squooshNodeVariant(v.id, customizations.getKey(), document) ?: v
-    var hasVariantReplacement = view.name != v.name
+    val hasVariantReplacement = view.name != v.name
     var variantParentName = variantParentName
+
     if (!hasVariantReplacement) {
         // If an interaction has not changed the current variant, then check to see if this node
         // is part of a component set with variants and if any @DesignVariant annotations
@@ -490,7 +510,6 @@ internal fun resolveVariantsRecursively(
             val variantView = interactionState.squooshRootNode(variantNodeQuery, document, isRoot)
             if (variantView != null) {
                 view = variantView
-                hasVariantReplacement = true
                 variantView.component_info.ifPresent { variantParentName = it.component_set_name }
             }
         }
@@ -502,6 +521,8 @@ internal fun resolveVariantsRecursively(
         if (overrideStyle == null) {
             view.style
         } else {
+            // XXX-PERF: This is not needed by Battleship, and takes over 50% of the runtime of
+            //           resolveVariants (not including computeTextInfo).
             mergeStyles(view.style, overrideStyle)
         }
 
@@ -511,6 +532,7 @@ internal fun resolveVariantsRecursively(
     val layoutId = rootLayoutId + v.unique_id
     layoutIdAllocator.visitLayoutId(layoutId)
 
+    // XXX-PERF: computeTextInfo is *super* slow. It needs to use a cache between frames.
     val textInfo = computeTextInfo(view, density, document, customizations, fontResourceLoader)
     val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id)
 
@@ -674,7 +696,7 @@ internal fun populateComputedLayout(
 
 internal fun findTargetInstanceId(
     document: DocContent,
-    parentComponents: List<ParentComponentInfo>,
+    parentComponents: ParentComponentData?,
     action: Action): String?
 {
     val destinationId =
@@ -689,18 +711,23 @@ internal fun findTargetInstanceId(
 
     // Look up our list of parent components and try to find one that is a member of
     // this component set.
-    for (parentComponentInfo in parentComponents.reversed()) {//(i in 0..parentComponents.size) {
-        Log.d(TAG, "  inspecting ${parentComponentInfo.instanceId} / ${parentComponentInfo.componentInfo.id} / ${parentComponentInfo.componentInfo.component_set_name}")
-        Log.d(TAG, "   doc has component set id: ${document.c.document.component_sets[parentComponentInfo.componentInfo.id]}")
+    var currentParent = parentComponents
+    var debugInspectedParentCount = 0
+    while (currentParent != null) {
+        debugInspectedParentCount++
+        Log.d(TAG, "  inspecting ${currentParent.instanceId} / ${currentParent.componentInfo.id} / ${currentParent.componentInfo.component_set_name}")
+        Log.d(TAG, "   doc has component set id: ${document.c.document.component_sets[currentParent.componentInfo.id]}")
         if (
             componentSetId ==
-            document.c.document.component_sets[parentComponentInfo.componentInfo.id]
+            document.c.document.component_sets[currentParent.componentInfo.id]
         ) {
-            return parentComponentInfo.instanceId
+            return currentParent.instanceId
         }
+
+        currentParent = currentParent.parent
     }
 
-    Log.d(TAG, "Looked for action dest ${destinationId} got component set id ${componentSetId} but didn't find it in ${parentComponents.size}")
+    Log.d(TAG, "Looked for action dest ${destinationId} got component set id ${componentSetId} but didn't find it in $debugInspectedParentCount")
 
     return null
 }
@@ -708,55 +735,53 @@ internal fun findTargetInstanceId(
 internal fun squooshInteractionModifier(
     document: DocContent,
     interactionState: InteractionState,
-    interactionScope: CoroutineScope,
     customizations: CustomizationContext,
     childComposable: SquooshChildComposable
 ): Modifier {
     val node = childComposable.node
-    return Modifier.pointerInput(node.view.reactions) {
-        interactionScope.launch {
-            detectTapGestures(
-                onPress = {
-                    if (!node.view.reactions.isPresent) return@detectTapGestures
-                    val reactions = node.view.reactions.get()
+    val maybeReactions = node.view.reactions
+    if (!maybeReactions.isPresent) return Modifier
+    val reactions = maybeReactions.get()
 
-                    // Set the "pressed" state.
-                    for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
+    return Modifier.pointerInput(reactions) {
+        detectTapGestures(
+            onPress = {
+                // Set the "pressed" state.
+                for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
+                    interactionState.dispatch(
+                        r.action,
+                        findTargetInstanceId(document, childComposable.parentComponents, r.action),
+                        customizations.getKey(),
+                        node.unresolvedNodeId
+                    )
+                }
+                // XXX XXX ralph: we need to remember that we're pressed and keep emitting
+                //                this pointerInput modifier.
+                val dispatchClickEvent = tryAwaitRelease()
+
+                // Clear the "pressed" state.
+                for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
+                    interactionState.undoDispatch(
+                        findTargetInstanceId(document, childComposable.parentComponents, r.action),
+                        node.unresolvedNodeId,
+                        customizations.getKey()
+                    )
+                }
+
+                // If the tap wasn't cancelled (turned into a drag, a window opened on top of
+                // us, etc) then we can run the action.
+                if (dispatchClickEvent) {
+                    for (r in reactions.filter { r -> r.trigger is Trigger.OnClick }) {
                         interactionState.dispatch(
                             r.action,
                             findTargetInstanceId(document, childComposable.parentComponents, r.action),
                             customizations.getKey(),
-                            node.unresolvedNodeId
+                            null // no undo
                         )
-                    }
-                    // XXX XXX ralph: we need to remember that we're pressed and keep emitting
-                    //                this pointerInput modifier.
-                    val dispatchClickEvent = tryAwaitRelease()
-
-                    // Clear the "pressed" state.
-                    for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
-                        interactionState.undoDispatch(
-                            findTargetInstanceId(document, childComposable.parentComponents, r.action),
-                            node.unresolvedNodeId,
-                            customizations.getKey()
-                        )
-                    }
-
-                    // If the tap wasn't cancelled (turned into a drag, a window opened on top of
-                    // us, etc) then we can run the action.
-                    if (dispatchClickEvent) {
-                        for (r in reactions.filter { r -> r.trigger is Trigger.OnClick }) {
-                            interactionState.dispatch(
-                                r.action,
-                                findTargetInstanceId(document, childComposable.parentComponents, r.action),
-                                customizations.getKey(),
-                                null // no undo
-                            )
-                        }
                     }
                 }
-            )
-        }
+            }
+        )
     }
 }
 
@@ -775,6 +800,7 @@ fun SquooshRoot(
     rootNodeQuery: NodeQuery,
     customizationContext: CustomizationContext = CustomizationContext()
 ) {
+    val debugStartTime = SystemClock.elapsedRealtime()
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
     val doc = DocServer.doc(docName, docId, DocumentServerParams(), null, false)
 
@@ -783,7 +809,6 @@ fun SquooshRoot(
         return
     }
 
-    val interactionScope = rememberCoroutineScope()
     val interactionState = InteractionStateManager.stateForDoc(docId)
 
     // We're starting to support animated transitions
@@ -817,56 +842,63 @@ fun SquooshRoot(
     // the correct variants etc and then build/update the tree. How do we know
     // what's different from last time? Does the Rust side track
 
-    var root: SquooshResolvedNode? = null
+    val debugResolveVariantsStartTime = SystemClock.elapsedRealtime()
+    val debugStartDuration = debugResolveVariantsStartTime - debugStartTime
+
     val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
-    val resolveVariantsTime = measureTimeMillis {
-        root = resolveVariantsRecursively(
-            startFrame,
-            rootLayoutId,
-            doc,
-            customizationContext,
-            interactionState,
-            emptyList(),
-            density,
-            LocalFontLoader.current,
-            childComposables,
-            layoutIdAllocator,
-            variantParentName
-        )
+    var root = resolveVariantsRecursively(
+        startFrame,
+        rootLayoutId,
+        doc,
+        customizationContext,
+        interactionState,
+        null,
+        density,
+        LocalFontLoader.current,
+        childComposables,
+        layoutIdAllocator,
+        variantParentName
+    )
+
+    val debugRemoveOldLayoutNodesStartTime = SystemClock.elapsedRealtime()
+    val debugResolveVariantsDuration = debugRemoveOldLayoutNodesStartTime - debugResolveVariantsStartTime
+
+    val removalNodes = layoutIdAllocator.removalNodes()
+    for (layoutId in removalNodes) {
+        SquooshLayout.removeNode(rootLayoutId, layoutId)
+        layoutValueCache.remove(layoutId)
+        layoutCache.remove(layoutId)
     }
 
-    val removeOldLayoutNodesTime = measureTimeMillis {
-        val removalNodes = layoutIdAllocator.removalNodes()
-        for (layoutId in removalNodes) {
-            SquooshLayout.removeNode(rootLayoutId, layoutId)
-            layoutValueCache.remove(layoutId)
-            layoutCache.remove(layoutId)
-        }
-        Log.d(TAG, "$docName remove ${removalNodes.size} nodes from layout value cache")
-    }
+    val debugBuildLayoutTreeStartTime = SystemClock.elapsedRealtime()
+    val debugRemoveOldLayoutNodesDuration = debugBuildLayoutTreeStartTime - debugRemoveOldLayoutNodesStartTime
 
-    var layoutNodeList = LayoutNodeList(emptyList(), emptyList())
-    val buildLayoutTreeTime = measureTimeMillis {
-        val layoutNodes: ArrayList<LayoutNode> = arrayListOf()
-        val layoutParentChildren: ArrayList<LayoutParentChildren> = arrayListOf()
-        updateLayoutTree(root!!, layoutCache, layoutNodes, layoutParentChildren)
-        layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
-    }
+    val layoutNodes: ArrayList<LayoutNode> = arrayListOf()
+    val layoutParentChildren: ArrayList<LayoutParentChildren> = arrayListOf()
+    updateLayoutTree(root, layoutCache, layoutNodes, layoutParentChildren)
+    val layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
 
-    val performLayoutTime = measureTimeMillis {
-        val updatedLayouts = SquooshLayout.doLayout(
-            root!!.layoutId,
-            layoutNodeList
-        )
-        val priorLayoutCacheSize = layoutValueCache.size
-        layoutValueCache.putAll(updatedLayouts)
-        Log.d(TAG, "$docName layout invalidated ${updatedLayouts.size} nodes; layout cache size: ${layoutValueCache.size}; prior layout cache size: ${priorLayoutCacheSize}")
-    }
-    val populateLayoutTime = measureTimeMillis {
-        populateComputedLayout(root!!, layoutValueCache)
-    }
+    val debugPerformLayoutStartTime = SystemClock.elapsedRealtime()
+    val debugBuildLayoutTreeDuration = debugPerformLayoutStartTime - debugBuildLayoutTreeStartTime
 
-    Log.d(TAG, "$docName resolveVariants: $resolveVariantsTime ms, buildLayout: $buildLayoutTreeTime ms, remove old nodes: $removeOldLayoutNodesTime ms, eval. layout $performLayoutTime ms, populate layout values: $populateLayoutTime ms")
+    val updatedLayouts = SquooshLayout.doLayout(
+        root.layoutId,
+        layoutNodeList
+    )
+    val priorLayoutCacheSize = layoutValueCache.size
+    layoutValueCache.putAll(updatedLayouts)
+
+    val debugPopulateLayoutStartTime = SystemClock.elapsedRealtime()
+    val debugPerformLayoutDuration = debugPopulateLayoutStartTime - debugPerformLayoutStartTime
+
+    populateComputedLayout(root, layoutValueCache)
+
+    val debugTransitionTreeStartTime = SystemClock.elapsedRealtime()
+    val debugPopulateComputedLayoutDuration = debugTransitionTreeStartTime - debugPopulateLayoutStartTime
+
+    Log.d(TAG, "$docName remove ${removalNodes.size} nodes from layout value cache")
+    Log.d(TAG, "$docName layout invalidated ${updatedLayouts.size} nodes; layout cache size: ${layoutValueCache.size}; prior layout cache size: ${priorLayoutCacheSize}")
+    Log.d(TAG, "$docName init: ${debugStartDuration} resolveVariants: $debugResolveVariantsDuration ms, buildLayout: $debugBuildLayoutTreeDuration ms, remove old nodes: $debugRemoveOldLayoutNodesDuration ms, eval. layout $debugPerformLayoutDuration ms, populate layout values: $debugPopulateComputedLayoutDuration ms")
 
     // We can render "root", it's a full tree with layout info.
     //
@@ -882,44 +914,45 @@ fun SquooshRoot(
         Log.d(TAG, "$docName: creating a new root with transitions applied...")
         // We need to make a new root with this interaction state applied, and then compute the
         // animation control between the trees.
-        var transitionRoot: SquooshResolvedNode? = null
-        val createTransitionTargetTime = measureTimeMillis {
-            childComposables.clear()
-            transitionRoot = resolveVariantsRecursively(
-                startFrame,
-                rootLayoutId,
-                doc,
-                customizationContext,
-                transitionAnimationState,
-                emptyList(),
-                density,
-                LocalFontLoader.current,
-                childComposables,
-                layoutIdAllocator,
-                variantParentName
-            )
-            // Layout maintenance
-            val removalNodes = layoutIdAllocator.removalNodes()
-            for (layoutId in removalNodes) {
-                SquooshLayout.removeNode(rootLayoutId, layoutId)
-                layoutValueCache.remove(layoutId)
-                layoutCache.remove(layoutId)
-            }
-            // Build layout tree
-            val layoutNodes: ArrayList<LayoutNode> = arrayListOf()
-            val layoutParentChildren: ArrayList<LayoutParentChildren> = arrayListOf()
-            updateLayoutTree(transitionRoot!!, layoutCache, layoutNodes, layoutParentChildren)
-            layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
-            // Perform layout
-            val updatedLayouts = SquooshLayout.doLayout(
-                transitionRoot!!.layoutId,
-                layoutNodeList
-            )
-            layoutValueCache.putAll(updatedLayouts)
-            // Populate layouts
-            populateComputedLayout(transitionRoot!!, layoutValueCache)
+        childComposables.clear()
+        val transitionRoot = resolveVariantsRecursively(
+            startFrame,
+            rootLayoutId,
+            doc,
+            customizationContext,
+            transitionAnimationState,
+            null,
+            density,
+            LocalFontLoader.current,
+            childComposables,
+            layoutIdAllocator,
+            variantParentName
+        )
+        // Layout maintenance
+        val txRemovalNodes = layoutIdAllocator.removalNodes()
+        for (layoutId in txRemovalNodes) {
+            SquooshLayout.removeNode(rootLayoutId, layoutId)
+            layoutValueCache.remove(layoutId)
+            layoutCache.remove(layoutId)
         }
-        Log.d(TAG, "Creating transition root took $createTransitionTargetTime ms")
+        // Build layout tree
+        val txLayoutNodes: ArrayList<LayoutNode> = arrayListOf()
+        val txLayoutParentChildren: ArrayList<LayoutParentChildren> = arrayListOf()
+        updateLayoutTree(transitionRoot, layoutCache, txLayoutNodes, txLayoutParentChildren)
+        val txLayoutNodeList = LayoutNodeList(txLayoutNodes, txLayoutParentChildren)
+        // Perform layout
+        val txUpdatedLayouts = SquooshLayout.doLayout(
+            transitionRoot.layoutId,
+            txLayoutNodeList
+        )
+        layoutValueCache.putAll(txUpdatedLayouts)
+        // Populate layouts
+        populateComputedLayout(transitionRoot, layoutValueCache)
+
+        val debugProcessAnimationsStartTime = SystemClock.elapsedRealtime()
+        val debugTransitionTreeDuration = debugProcessAnimationsStartTime - debugTransitionTreeStartTime
+
+        Log.d(TAG, "Creating transition root took $debugTransitionTreeDuration ms")
 
         val nextAnimations = HashMap<Int, SquooshRenderTransition>()
         for (anim in interactionState.animations) {
@@ -939,6 +972,10 @@ fun SquooshRoot(
                 // XXX: This won't be correct for more than two states.
                 val initialValue: Float =
                     if (anim.interruptedId != null) {
+                        // XXX: This is a read of volatile animation state during Composition; this
+                        //      means we will do a recompose on the next animation frame. We might
+                        //      need a shadow cache of last animation values that Compose isn't
+                        //      tracking to avoid this.
                         val interruptedAnimation = animationValues.value.get(anim.interruptedId)
                         interruptedAnimation ?: 1f
                     } else {
@@ -964,8 +1001,10 @@ fun SquooshRoot(
         // have a key in transitions...
         animations.clear()
         animations.putAll(nextAnimations)
+
+        Log.d(TAG, "Updating animations took ${SystemClock.elapsedRealtime() - debugProcessAnimationsStartTime} ms")
     }
-    
+
     LaunchedEffect(lastAnimationId) {
         // While there are transitions to be run, we should run them; we just update the floats
         // in the mutable state. Those are then used by the render function, and we thus avoid
@@ -1007,11 +1046,11 @@ fun SquooshRoot(
     androidx.compose.ui.layout.Layout(
         modifier = Modifier
             .size(
-                width = root!!.computedLayout!!.width.dp,
-                height = root!!.computedLayout!!.height.dp
+                width = root.computedLayout!!.width.dp,
+                height = root.computedLayout!!.height.dp
             )
             .squooshRender(
-                root!!,
+                root,
                 doc,
                 docName,
                 customizationContext,
@@ -1072,48 +1111,46 @@ fun SquooshRoot(
         },
         content = {
             // Now render all of the children
-            val renderChildComposableDuration = measureTimeMillis {
-                for (child in childComposables) {
-                    if (child.node.computedLayout == null) {
-                        continue
+            val debugRenderChildComposablesStartTime = SystemClock.elapsedRealtime()
+            for (child in childComposables) {
+                if (child.node.computedLayout == null) {
+                    continue
+                }
+                var composableChildModifier = Modifier
+                    .drawWithContent {
+                        if (child.node == childRenderSelector.selectedRenderChild)
+                            drawContent()
                     }
-                    var composableChildModifier = Modifier
-                        .drawWithContent {
-                            if (child.node == childRenderSelector.selectedRenderChild)
-                                drawContent()
-                        }
-                        .then(SquooshParentData(node = child.node))
+                    .then(SquooshParentData(node = child.node))
 
-                    if (child.component == null && child.content == null) {
-                        val interactionModifier = squooshInteractionModifier(
-                            doc,
-                            interactionState,
-                            interactionScope,
-                            customizationContext,
-                            child
-                        )
-                        composableChildModifier = composableChildModifier.then(interactionModifier)
-                    }
+                if (child.component == null && child.content == null) {
+                    val interactionModifier = squooshInteractionModifier(
+                        doc,
+                        interactionState,
+                        customizationContext,
+                        child
+                    )
+                    composableChildModifier = composableChildModifier.then(interactionModifier)
+                }
 
-                    Box(modifier = composableChildModifier) {
-                        if (child.component != null) {
-                            child.component!!(object : ComponentReplacementContext {
-                                override val appearanceModifier: Modifier = Modifier
-                                override val layoutModifier: Modifier = Modifier
-                                @Composable
-                                override fun Content() {
-                                }
+                Box(modifier = composableChildModifier) {
+                    if (child.component != null) {
+                        child.component!!(object : ComponentReplacementContext {
+                            override val appearanceModifier: Modifier = Modifier
+                            override val layoutModifier: Modifier = Modifier
+                            @Composable
+                            override fun Content() {
+                            }
 
-                                override val textStyle: TextStyle? = null
-                                override val parentLayout: ParentLayoutInfo? = null
-                            })
-                        } else if (child.content != null) {
-                            Log.d(TAG, "Unimplemented: child.content")
-                        }
+                            override val textStyle: TextStyle? = null
+                            override val parentLayout: ParentLayoutInfo? = null
+                        })
+                    } else if (child.content != null) {
+                        Log.d(TAG, "Unimplemented: child.content")
                     }
                 }
             }
-            Log.d(TAG, "$docName generate child composables took ${renderChildComposableDuration}ms")
+            Log.d(TAG, "$docName generate child composables took ${SystemClock.elapsedRealtime() - debugRenderChildComposablesStartTime}ms")
         }
     )
 }

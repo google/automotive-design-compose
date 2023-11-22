@@ -84,10 +84,10 @@ fun CustomBrushTest() {
             initialValue = 0.0f,
             targetValue = 10.0f,
             animationSpec =
-            infiniteRepeatable(
-                animation = tween(10 * 1000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            )
+                infiniteRepeatable(
+                    animation = tween(10 * 1000, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                )
         )
 
     // Android T introduces AGSL and RuntimeShader. Robolectric (part of our test infrastructure)
@@ -95,7 +95,7 @@ fun CustomBrushTest() {
     val brush: () -> Brush =
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            "robolectric" != Build.FINGERPRINT
+                "robolectric" != Build.FINGERPRINT
         ) {
             val shader = RuntimeShader(CUSTOM_SHADER)
             val shaderBrush = SizingShaderBrush(shader)

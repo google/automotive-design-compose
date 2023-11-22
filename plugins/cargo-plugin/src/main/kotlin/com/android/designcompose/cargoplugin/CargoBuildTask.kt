@@ -77,7 +77,6 @@ abstract class CargoBuildTask : DefaultTask() {
      * @param project
      * @param theBuildType
      */
-    @Internal
     fun applyCommonConfig(
         cargoExtension: CargoPluginExtension,
         project: Project,

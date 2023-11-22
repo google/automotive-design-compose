@@ -24,11 +24,11 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
-import assertRenderStatus
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
+import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.testapp.common.interFont
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import com.github.takahirom.roborazzi.RoborazziRule

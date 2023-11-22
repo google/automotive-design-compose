@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.benchmark.battleship.benchmark
+package com.android.designcompose.benchmarks.battleship.benchmark
 
 import androidx.benchmark.macro.ExperimentalMetricApi
 import androidx.benchmark.macro.StartupMode

@@ -29,7 +29,7 @@ Benchmarks use a separate build variant (`benchmark`) which extends from the `re
 
 When writing a new benchmark, use [Dry Run mode](https://developer.android.com/topic/performance/benchmarking/macrobenchmark-instrumentation-args#dryrunmode-enable) to test benchmark behavior using only a single iteration, rather than altering the number of runs in the test.
 
-Whenever investigating traces, use the Perfetto WebUI, it's much better than Android Studio's.
+Whenever investigating traces, use the [Perfetto WebUI](https://ui.perfetto.dev/), it's much better than Android Studio's.
 
 Benchmarks will output traces of each run. This can be helpful for tracing the same behavior with different code changes.
 

@@ -52,6 +52,5 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui.test.junit4)
 
-
     implementation(project(":designcompose"))
 }

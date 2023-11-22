@@ -49,7 +49,7 @@ class ClickPlayfield {
                     TraceSectionMetric(DCTraces.DESIGNVIEW),
                     TraceSectionMetric(DCTraces.DESIGNFRAME_DE_SUBSCRIBE, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNFRAME_FINISHLAYOUT, Mode.Sum),
-                    TraceSectionMetric(DCTraces.DESIGNTEXT_DE, Mode.Sum),
+                    TraceSectionMetric(DCTraces.DESIGNTEXT_DE_SUBSCRIBE, Mode.Sum),
                     TraceSectionMetric(DCTraces.JNIADDNODES, Mode.Sum),
                     TraceSectionMetric(DCTraces.DOCSERVER_DOC, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNVIEW_INTERACTIONSCOPE, Mode.Sum),

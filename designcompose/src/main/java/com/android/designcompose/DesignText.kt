@@ -273,7 +273,7 @@ internal fun DesignText(
     // Subscribe for layout changes whenever the text data changes, and use a measure function to
     // measure the text width and height
     DisposableEffect(textMeasureData, style) {
-        trace(DCTraces.DESIGNTEXT_DE) {
+        trace(DCTraces.DESIGNTEXT_DE_SUBSCRIBE) {
             val parentLayoutId = parentLayout?.parentLayoutId ?: -1
             val childIndex = parentLayout?.childIndex ?: -1
             LayoutManager.subscribeWithMeasure(

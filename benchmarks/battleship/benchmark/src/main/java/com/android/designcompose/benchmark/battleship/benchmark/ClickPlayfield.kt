@@ -17,7 +17,6 @@
 package com.android.designcompose.benchmark.battleship.benchmark
 
 import androidx.benchmark.macro.ExperimentalMetricApi
-import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.TraceSectionMetric.Mode
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
@@ -55,14 +54,12 @@ class ClickPlayfield {
                     TraceSectionMetric(DCTraces.DOCSERVER_DOC, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNVIEW_INTERACTIONSCOPE, Mode.Sum),
                 ),
-            iterations = 5,
+            iterations = 10,
             /**
-             * I'd like to run this benchmark with StartupMode Cold, but something is stopping the
-             * app before the benchmark runs. We need to reset the app's state between runs so that
-             * we can click the playfield button again. The setupBlock kills the process between
-             * runs.
+             * We want to measure a fresh start of the app, but don't want to capture the startup,
+             * so we manually kill and restart the app in the setupBlock.
              */
-            startupMode = StartupMode.WARM,
+            startupMode = null,
             setupBlock = {
                 pressHome()
                 killProcess()

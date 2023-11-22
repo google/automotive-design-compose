@@ -79,5 +79,6 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
         Triple("Masks", { MaskTest() }, MaskTestDoc.javaClass.name),
         Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
-        Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name)
+        Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
+        Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
     )

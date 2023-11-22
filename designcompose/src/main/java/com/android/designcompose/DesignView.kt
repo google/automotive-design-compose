@@ -928,6 +928,11 @@ fun DesignDoc(
         parentLayout = parentLayout,
     )
 
+// Enable the "Squoosh" refactor. Squoosh implements its own view tree, rather than using Compose,
+// which brings some performance and flexibility benefits. Squoosh isn't feature complete, but does
+// render most of the basic test docs in the validation app.
+private const val USE_SQUOOSH = true
+
 @Composable
 internal fun DesignDocInternal(
     docName: String,
@@ -944,6 +949,18 @@ internal fun DesignDocInternal(
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
 ) {
+    if (USE_SQUOOSH) {
+        SquooshRoot(
+            docName = docName,
+            incomingDocId = incomingDocId,
+            rootNodeQuery = rootNodeQuery,
+            customizationContext = customizations,
+            serverParams = serverParams,
+            liveUpdateMode = liveUpdateMode,
+            designComposeCallbacks = designComposeCallbacks
+        )
+        return
+    }
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
     val doc =
@@ -1006,13 +1023,6 @@ internal fun DesignDocInternal(
     var noFrameErrorMessage = ""
     var noFrameBgColor = Color(0x00000000)
 
-    // TESTING
-    SquooshRoot(docName = docName, incomingDocId = incomingDocId, rootNodeQuery = rootNodeQuery, customizationContext = customizations)
-
-    return
-    val (renderCount, setRenderCount) = remember { mutableStateOf(0) }
-    if (renderCount > 0) return
-    setRenderCount(1)
     // Reset the isRendered flag, only set it back to true if the DesignView properly displays
     if (doc != null) {
         val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)

@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import com.android.designcompose.AnimatedTransition
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
+import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocContent
 import com.android.designcompose.DocServer
@@ -69,6 +70,7 @@ import com.android.designcompose.InteractionState
 import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
+import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.ParentComponentInfo
 import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.ReplacementContent
@@ -798,11 +800,20 @@ fun SquooshRoot(
     docName: String,
     incomingDocId: String,
     rootNodeQuery: NodeQuery,
-    customizationContext: CustomizationContext = CustomizationContext()
+    customizationContext: CustomizationContext = CustomizationContext(),
+    serverParams: DocumentServerParams = DocumentServerParams(),
+    liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
+    designComposeCallbacks: DesignComposeCallbacks? = null,
 ) {
     val debugStartTime = SystemClock.elapsedRealtime()
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
-    val doc = DocServer.doc(docName, docId, DocumentServerParams(), null, false)
+    val doc = DocServer.doc(
+        docName,
+        docId,
+        serverParams,
+        designComposeCallbacks?.newDocDataCallback,
+        liveUpdateMode == LiveUpdateMode.OFFLINE
+    )
 
     if (doc == null) {
         Log.d(TAG, "No doc! $docName / $incomingDocId")
@@ -821,6 +832,7 @@ fun SquooshRoot(
         SquooshLayout.keepJniBits() // XXX: Must call this from somewhere otherwise it gets stripped and the jni lib won't link.
         return
     }
+    LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
 
     // Ensure we get invalidated when the variant memory is updated from an interaction.
     interactionState.squooshVariantMemory(doc)

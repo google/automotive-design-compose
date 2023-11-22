@@ -211,6 +211,10 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: "Set environment variables"
+        run: |
+          echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
 
       - name: Set up Java
@@ -248,7 +252,7 @@ jobs:
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: designcompose_m2repo
-          path: build/designcompose_m2repo/
+          path: designcompose_m2repo/
 
   # These tests run on the local JVM and don't need the rust code,
   # so it makes sense to put them in a seperate job

@@ -115,8 +115,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    testImplementation(project(":designcompose"))
     testImplementation(testFixtures(project(":designcompose")))
+    testImplementation(project(":test"))
     testImplementation(project(":test:internal"))
     testImplementation(kotlin("test"))
     testImplementation(libs.google.truth)
@@ -128,6 +128,7 @@ dependencies {
     testImplementation(libs.androidx.compose.ui.test.junit4)
 
     androidTestImplementation(testFixtures(project(":designcompose")))
+    androidTestImplementation(project(":test"))
     androidTestImplementation(project(":test:internal"))
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(platform(libs.androidx.compose.bom))

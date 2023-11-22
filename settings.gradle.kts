@@ -40,27 +40,26 @@ dependencyResolutionManagement {
 
 rootProject.name = "DesignCompose"
 
+// Published modules
 include("designcompose")
+
+include("common")
 
 include("annotation")
 
 include("codegen")
 
-include("common")
+include("test")
 
+// Internal support
+include("test:internal")
+
+// Integration (and benchmark) tests
 include("integration-tests:app-common")
 
 include("validation-app")
 
 project(":validation-app").projectDir = File("integration-tests/validation")
-
-include("helloworld-app")
-
-project(":helloworld-app").projectDir = File("reference-apps/helloworld/app")
-
-include("tutorial-app")
-
-project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
 
 include("battleship-app")
 
@@ -70,4 +69,11 @@ include("integration-tests:benchmarks:battleship:lib")
 
 include("integration-tests:benchmarks:battleship:benchmark")
 
-include(":test:internal")
+// Reference apps (Can only use published libraries)
+include("helloworld-app")
+
+project(":helloworld-app").projectDir = File("reference-apps/helloworld/app")
+
+include("tutorial-app")
+
+project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")

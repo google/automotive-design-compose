@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.test.internal
+package com.android.designcompose.test
 
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction

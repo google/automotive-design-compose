@@ -105,6 +105,7 @@ androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling
 
 designcompose = { module = "com.android.designcompose:designcompose", version.ref = "designcompose" }
 designcompose-codegen = { module = "com.android.designcompose:codegen", version.ref = "designcompose" }
+designcompose-test = { module = "com.android.designcompose:test", version.ref = "designcompose" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guavaAndroid = { module = "com.google.guava:guava", version.ref = "guavaAndroid" }

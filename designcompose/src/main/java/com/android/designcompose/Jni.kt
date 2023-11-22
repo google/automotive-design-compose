@@ -36,7 +36,7 @@ internal class TextSize(
     var height: Float = 0F,
 )
 
-internal interface JniIntefrace {
+internal interface UniInterface {
     fun jniFetchDoc(docId: String, requestJson: String, proxyConfig: ProxyConfig): ByteArray
 
     fun jniSetNodeSize(layoutId: Int, rootLayoutId: Int, width: Int, height: Int): ByteArray?
@@ -50,7 +50,7 @@ internal interface JniIntefrace {
 }
 
 @Keep
-internal object TracedJni : JniIntefrace {
+internal object TracedJni : UniInterface {
     override fun jniFetchDoc(
         docId: String,
         requestJson: String,
@@ -94,7 +94,7 @@ internal object TracedJni : JniIntefrace {
 }
 
 @Keep
-internal object Jni : JniIntefrace {
+internal object Jni : UniInterface {
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external override fun jniFetchDoc(
         docId: String,

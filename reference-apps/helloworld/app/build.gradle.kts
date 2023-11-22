@@ -104,7 +104,6 @@ afterEvaluate {
 
 dependencies {
     implementation(libs.designcompose)
-    testImplementation(project(":test:internal"))
     ksp(libs.designcompose.codegen)
 
     implementation(platform(libs.androidx.compose.bom))

@@ -639,6 +639,25 @@ internal fun View.isMask(): Boolean {
     return this.data is ViewData.Container && (this.data as ViewData.Container).shape.isMask()
 }
 
+// Returns whether this view is the parent view of a list widget preview node. Since the list
+// widget preview node also has a child that is the actual parent of the custom content, we need
+// to check that the grandchild of this view has the grid_layout set in its style.
+internal fun View.isWidgetParent(): Boolean {
+    if (data !is ViewData.Container) return false
+
+    val container = data as ViewData.Container
+    if (container == null || container.children.size != 1) return false
+
+    val child = container.children.first()
+    if (child.data !is ViewData.Container) return false
+
+    val childContainer = child.data as ViewData.Container
+    if (childContainer == null || childContainer.children.size != 1) return false
+
+    val grandChild = childContainer.children.first()
+    return grandChild.style.grid_layout.isPresent
+}
+
 internal fun ViewShape.isMask(): Boolean {
     when (this) {
         is ViewShape.Rect -> return is_mask
@@ -1220,12 +1239,11 @@ internal fun StrokeWeight.right(): Float {
     return 0.0f
 }
 
-// Return whether a text node is both auto height and auto width with a width layout mode of FILL.
-// This layout type requires a measure function to be passed into the layout system.
-internal fun isAutoHeightFillWidth(style: ViewStyle) =
-    style.width is Dimension.Auto &&
-        style.height is Dimension.Auto &&
-        style.horizontal_sizing is LayoutSizing.FILL
+// Return whether a text node is auto width without a FILL sizing mode. This is a check used by the
+// text measure func that, when it returns true, means the text can expand past the available width
+// passed into it.
+internal fun ViewStyle.isAutoWidthText() =
+    width is Dimension.Auto && horizontal_sizing !is LayoutSizing.FILL
 
 internal fun Layout.withDensity(density: Float): Layout {
     return Layout(

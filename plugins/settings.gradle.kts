@@ -47,3 +47,5 @@ plugins {
 include("cargo-plugin")
 
 include("gradle-plugin")
+
+include("gradle-plugin-internal")

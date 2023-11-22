@@ -22,9 +22,10 @@ on:
   pull_request:
     paths:
       - "docs/**"
-    branches: 
+    branches:
       - main
       - 'wb/**'
+  merge_group:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -49,14 +50,14 @@ jobs:
         working-directory: docs
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
         with:
           egress-policy: audit
 
       - name: Checkout
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - name: Setup Ruby
-        uses: ruby/setup-ruby@d37167af451eb51448db3354e1057b75c4b268f7 # v1.155.0
+        uses: ruby/setup-ruby@8575951200e472d5f2d95c625da0c7bec8217c42 # v1.161.0
         with:
           ruby-version: '3.1' # Not needed with a .ruby-version file
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
@@ -88,7 +89,7 @@ jobs:
     needs: build
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
         with:
           egress-policy: audit
 

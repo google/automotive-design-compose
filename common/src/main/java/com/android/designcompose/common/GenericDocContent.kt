@@ -40,12 +40,13 @@ class GenericDocContent(
     val branches: List<FigmaDocInfo>? = null,
     val project_files: List<FigmaDocInfo>? = null,
 ) {
+    @OptIn(ExperimentalUnsignedTypes::class)
     fun save(filepath: File, feedback: FeedbackImpl) {
         feedback.documentSaveTo(filepath.absolutePath, docId)
         try {
             val bytes = toSerializedBytes(feedback)
             val output = FileOutputStream(filepath)
-            output.write(bytes)
+            output.write(bytes!!) // Any NPE will be caught and reported.
             output.close()
             feedback.documentSaveSuccess(docId)
         } catch (error: Throwable) {

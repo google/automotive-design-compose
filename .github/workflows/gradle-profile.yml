@@ -19,7 +19,9 @@ on:
     branches:
     - main
     - 'stable/**'
+    - 'feature/**'
   pull_request:
+  merge_group:
 
 permissions:
   contents: read
@@ -37,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
         with:
           egress-policy: audit
 
@@ -56,7 +58,7 @@ jobs:
 
       - name: Set up Rust Cache
         if: ${{matrix.cache == 'cache-enabled'}}
-        uses: Swatinem/rust-cache@a95ba195448af2da9b00fb742d14ffaaf3c21f43
+        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"

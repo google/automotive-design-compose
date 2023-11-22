@@ -87,6 +87,7 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getText
 import com.android.designcompose.getTextStyle
+import com.android.designcompose.isAutoWidthText
 import com.android.designcompose.isMask
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.pointsAsDp
@@ -416,7 +417,7 @@ internal fun computeTextInfo(
         textLayoutData,
         density,
         maxLines,
-        v.style.min_width.pointsAsDp(density.density).value
+        v.style.isAutoWidthText()
     )
 }
 

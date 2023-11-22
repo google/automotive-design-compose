@@ -35,10 +35,15 @@ plugins {
     id("designcompose.conventions.roborazzi") apply false
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.androidTest) apply false
     alias(libs.plugins.kotlinAndroid) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.roborazzi) apply false
+
+    // Hacky: GH-502
+    id("com.android.designcompose.rust-in-android") apply (false)
+    // End Hacky
 }
 
 // Format all *.gradle.kts files in the repository. This should catch all buildscripts.
@@ -67,7 +72,10 @@ tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfm
 tasks.named("ktfmtFormat") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtFormat") }) }
 
 // Apply some of our convention plugins to the tutorial app
-project("tutorial-app") {
-    plugins.apply("designcompose.conventions.base")
-    plugins.apply("designcompose.conventions.android-test-devices")
+subprojects {
+    if (listOf("tutorial-app", "helloworld-app").contains(name)) {
+        plugins.apply("designcompose.conventions.base")
+        plugins.apply("designcompose.conventions.android-test-devices")
+        plugins.apply("designcompose.conventions.roborazzi")
+    }
 }

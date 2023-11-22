@@ -228,18 +228,14 @@ impl LayoutManager {
                     if let Some(parent_node) = parent_node {
                         if child_index < 0 {
                             // Don't bother inserting into the parent's child list. The caller will invoke set_children
-                            // manually instead.
+                            // manually instead, by setting the `parent_children` field in the layout update request.
                             self.taffy_node_to_layout_id.insert(node, layout_id);
                             self.layout_id_to_taffy_node.insert(layout_id, node);
                             self.layout_id_to_name.insert(layout_id, name.clone());
                         } else {
                             // This has a parent node, so add it as a child
-                            let children_result = taffy.children(*parent_node);
-                            match children_result {
+                            match taffy.children(*parent_node) {
                                 Ok(mut children) => {
-                                    if child_index as usize > children.len() {
-                                        error!("omg! child index {} > children.len {} for node {} going into node {:?}", child_index, children.len(), name, self.layout_id_to_name.get(&parent_layout_id));
-                                    }
                                     children.insert(child_index as usize, node);
                                     let set_children_result =
                                         taffy.set_children(*parent_node, children.as_ref());
@@ -411,13 +407,9 @@ impl LayoutManager {
     ) {
         if let Some(fixed_width) = fixed_width {
             style.min_size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
-            //style.max_size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
-            //style.size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
         }
         if let Some(fixed_height) = fixed_height {
             style.min_size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
-            //style.max_size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
-            //style.size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
         }
     }
 

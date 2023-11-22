@@ -45,6 +45,20 @@ android {
         }
     }
 
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            matchingFallbacks.add("release")
+        }
+    }
+
     buildFeatures { compose = true }
 
     composeOptions {

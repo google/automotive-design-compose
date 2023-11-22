@@ -17,13 +17,7 @@
 name: CompareScreenshot
 
 on:
-  push:
-    branches:
-      - main
-      - 'stable/**'
   pull_request:
-
-permissions: {}
 
 jobs:
   compare-with-base-branch:
@@ -53,7 +47,7 @@ jobs:
         uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
 
       - name: Download screenshots from base branch
-        uses: dawidd6/action-download-artifact@246dbf436b23d7c49e21a7ab8204ca9ecd1fe615 # v2.27.0
+        uses: dawidd6/action-download-artifact@268677152d06ba59fcec7a7f0b5d961b6ccd7e1e # v2.28.0
         continue-on-error: true
         with:
           name: screenshots
@@ -83,3 +77,150 @@ jobs:
         with:
           name: pr
           path: pr/
+
+  Update-Comment:
+    needs: compare-with-base-branch
+    timeout-minutes: 2
+
+    permissions:
+      actions: read # for downloading artifacts
+      contents: write # for pushing screenshot-diff to companion branch
+      pull-requests: write # for creating a comment on pull requests
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout base
+        id: checkout-base
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Switch to companion branch
+        id: switch-companion-branch
+        env:
+          BRANCH_NAME: roborazzi_companion_${{ github.event.pull_request.head.ref }}
+        run: |
+          # orphan means it will create no history branch
+          git branch -D "$BRANCH_NAME" || true
+          git checkout --orphan "$BRANCH_NAME"
+          git rm -rf .
+
+      - name: Download diff
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: diff-vs-base-branch
+          path: screenshot-diff
+
+      - id: check-if-there-are-valid-files
+        name: Check if there are valid files
+        shell: bash
+        run: |
+          # Find all the files ending with _compare.png
+          mapfile -t files_to_add < <(find . -type f -name "*_compare.png")
+
+          # Check for invalid file names and add only valid ones
+          exist_valid_files="false"
+          for file in "${files_to_add[@]}"; do
+            if [[ $file =~ ^[a-zA-Z0-9_./-]+$ ]]; then
+              exist_valid_files="true"
+              break
+            fi
+          done
+          echo "exist_valid_files=$exist_valid_files" >> "$GITHUB_OUTPUT"
+
+      - id: push-screenshot-diff
+        shell: bash
+        if: steps.check-if-there-are-valid-files.outputs.exist_valid_files == 'true'
+        env:
+          BRANCH_NAME: roborazzi_companion_${{ github.event.pull_request.head.ref }}
+        run: |
+          # Find all the files ending with _compare.png
+          files_to_add=$(find . -type f -name "*_compare.png")
+
+          # Check for invalid file names and add only valid ones
+          for file in $files_to_add; do
+            if [[ "$file" =~ ^[a-zA-Z0-9_./-]+$ ]]; then
+              git add "$file"
+            fi
+          done
+          git config --global user.name ScreenshotBot
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "Add screenshot diff"
+          git push origin HEAD:"$BRANCH_NAME" -f
+
+      - id: generate-diff-reports
+        name: Generate diff reports
+        env:
+          BRANCH_NAME: roborazzi_companion_${{ github.event.pull_request.head.ref }}
+        shell: bash
+        run: |
+          delimiter="$(openssl rand -hex 8)"
+          {
+            echo "reports<<${delimiter}"
+
+            # Create markdown table header
+            echo "Snapshot diff report vs base branch: ${{ github.event.pull_request.base.ref }}"
+            echo "Last updated: $(TZ='America/Los_Angeles' date), Sha: ${{ github.event.pull_request.head.sha }}"
+          } >> "$GITHUB_OUTPUT"
+
+          if [[ ${{ steps.check-if-there-are-valid-files.outputs.exist_valid_files }} == 'true' ]]; then
+            # Find all the files ending with _compare.png in roborazzi folder
+            files=$(find . -type f -name "*_compare.png" | grep "roborazzi/" | grep -E "^[a-zA-Z0-9_./-]+$")
+            {
+              echo "| File name | Image |"
+              echo "|-------|-------|"
+            } >> "$GITHUB_OUTPUT"
+
+            # Iterate over the files and create table rows
+            for file in $files; do
+              # Get the file name and insert newlines every 20 characters
+              fileName=$(basename "$file" | sed -r 's/(.{20})/\1<br>/g')
+              echo "| [$fileName](https://github.com/${{ github.repository }}/blob/$BRANCH_NAME/$file) | ![](https://github.com/${{ github.repository }}/blob/$BRANCH_NAME/$file?raw=true) |" >> "$GITHUB_OUTPUT"
+            done
+
+          ### Else there were no differences
+          else
+            {
+              echo "No differences detected"
+            } >> "$GITHUB_OUTPUT"
+          fi
+          echo "${delimiter}" >> "$GITHUB_OUTPUT"
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@a54c31d7fa095754bfef525c0c8e5e5674c4b4b1 # v2.4.0
+        id: fc
+        if: steps.generate-diff-reports.outputs.reports != ''
+        with:
+          issue-number: ${{ github.event.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Snapshot diff report
+
+      - name: Add or update comment on PR
+        uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3.1.0
+        if: steps.generate-diff-reports.outputs.reports != ''
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.number }}
+          body: ${{ steps.generate-diff-reports.outputs.reports }}
+          edit-mode: replace
+
+      - name: Cleanup outdated companion branches
+        run: |
+          # Find outdated companion branches with last commit date
+          git branch -r --format="%(refname:lstrip=3)" | grep roborazzi_companion_ | while read -r branch; do
+            last_commit_date_timestamp=$(git log -1 --format=%ct "origin/$branch")
+            now_timestamp=$(date +%s)
+
+            # Delete branch if it's older than 1 month
+            if [ $((now_timestamp - last_commit_date_timestamp)) -gt 2592000 ]; then
+              echo "Deleting $branch"
+
+              git push origin --delete "$branch"
+            fi
+          done

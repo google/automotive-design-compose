@@ -27,8 +27,12 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "main", stable/* ]
+    branches:
+    - main
+    - 'stable/**'
+    - 'feature/**'
   pull_request:
+  merge_group:
   schedule:
     - cron: '30 16 * * 0'
 
@@ -55,13 +59,13 @@ jobs:
 
     steps:
     - name: Harden Runner
-      uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+      uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
       with:
         egress-policy: audit
 
     - name: Checkout repository
       uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
-      
+
     - uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
       with:
         distribution: "temurin"
@@ -69,7 +73,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@ddccb873888234080b77e9bc2d4764d5ccaaccf9 # v2.20.3
+      uses: github/codeql-action/init@689fdc5193eeb735ecb2e52e819e3382876f93f4 # v2.20.3
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -83,7 +87,7 @@ jobs:
     # Autobuild attempts to build any compiled languages  (C/C++, C#, Go, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
-      uses: github/codeql-action/autobuild@ddccb873888234080b77e9bc2d4764d5ccaaccf9 # v2.20.3
+      uses: github/codeql-action/autobuild@689fdc5193eeb735ecb2e52e819e3382876f93f4 # v2.20.3
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
@@ -96,6 +100,6 @@ jobs:
     #     ./location_of_script_within_repo/buildscript.sh
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@ddccb873888234080b77e9bc2d4764d5ccaaccf9 # v2.20.3
+      uses: github/codeql-action/analyze@689fdc5193eeb735ecb2e52e819e3382876f93f4 # v2.20.3
       with:
         category: "/language:${{matrix.language}}"

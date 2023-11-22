@@ -22,7 +22,7 @@ plugins {
     alias(libs.plugins.designcompose)
 }
 
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(11)) } }
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
 var applicationID = "com.android.designcompose.tutorial"
 
@@ -43,8 +43,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildTypes {

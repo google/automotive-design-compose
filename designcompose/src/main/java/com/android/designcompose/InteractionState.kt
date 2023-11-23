@@ -150,7 +150,10 @@ fun interface OpenLinkCallback {
 }
 
 
-internal class AnimatedTransition(
+/// This refers to an action which hasn't been committed to the state, and is held in a separate
+/// list so that the renderer can animate from the state without this action committed to the state
+/// with this animation committed.
+internal class AnimatedAction(
     val instanceNodeId: String,
     val key: String?,
     val newVariantId: String,
@@ -210,13 +213,13 @@ internal class InteractionState {
     var supportAnimations: Boolean = false
 
     /// A list of animated transitions that are currently in play.
-    var animations: ArrayList<AnimatedTransition> = ArrayList()
+    var animations: ArrayList<AnimatedAction> = ArrayList()
     var lastAnimationId: Int = 0
 
     /// Subscriptions...
     var navOverlaySubscriptions: ArrayList<() -> Unit> = ArrayList()
     var variantSubscriptions: HashMap<String, ArrayList<() -> Unit>> = HashMap()
-    var transitionSubscriptions: ArrayList<() -> Unit> = ArrayList()
+    var animationSubscriptions: ArrayList<() -> Unit> = ArrayList()
 }
 
 /// Perform the "navigate" action, by appending the given node id to
@@ -421,7 +424,7 @@ internal fun InteractionState.dispatch(
                                     false
                                 }
                             }
-                            animations.add(AnimatedTransition(
+                            animations.add(AnimatedAction(
                                 targetInstanceId,
                                 key,
                                 action.destination_id.get(),
@@ -467,7 +470,7 @@ internal fun InteractionState.undoDispatch(
 /// Make a clone of this InteractionState, and apply all of the transition values to it. The
 /// cloned InteractionState can then be used to generate a tree of the "post transition" world
 /// which can be used as a target to transition to.
-internal fun InteractionState.clonedWithTransitionsApplied(): InteractionState? {
+internal fun InteractionState.clonedWithAnimatedActionsApplied(): InteractionState? {
     if (animations.size == 0) return null
     val deltaInteractionState = InteractionState()
     deltaInteractionState.variantMemory = HashMap(variantMemory)
@@ -505,7 +508,7 @@ internal fun InteractionState.invalVariant(id: String) {
 }
 
 internal fun InteractionState.invalAnimations() {
-    for (sub in transitionSubscriptions.toList()) {
+    for (sub in animationSubscriptions.toList()) {
         sub()
     }
 }
@@ -614,19 +617,19 @@ internal fun InteractionState.squooshVariantMemory(doc: DocContent): Map<String,
 
 /// Hacky hack to give squoosh something to subscribe to for transitions.
 @Composable
-internal fun InteractionState.squooshAnimatedTransitions(doc: DocContent): List<AnimatedTransition> {
+internal fun InteractionState.squooshAnimatedActions(doc: DocContent): List<AnimatedAction> {
     val (anims, setAnims) = remember { mutableStateOf(animations.toList()) }
     val updateAnims = { setAnims(animations.toList()) }
 
     DisposableEffect(doc.c.docId) {
-        transitionSubscriptions.add(updateAnims)
-        onDispose { transitionSubscriptions.remove(updateAnims) }
+        animationSubscriptions.add(updateAnims)
+        onDispose { animationSubscriptions.remove(updateAnims) }
     }
 
     return anims
 }
 
-internal fun InteractionState.squooshCompleteTransition(transition: AnimatedTransition) {
+internal fun InteractionState.squooshCompleteAnimatedAction(transition: AnimatedAction) {
     if (!animations.remove(transition)) return
     changeTo(
         instanceNodeId = transition.instanceNodeId,

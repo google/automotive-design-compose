@@ -59,7 +59,7 @@ internal fun Modifier.squooshRender(
     docName: String,
     customizations: CustomizationContext,
     childRenderSelector: SquooshChildRenderSelector,
-    animations: Map<Int, SquooshRenderTransition>,
+    animations: Map<Int, SquooshAnimationRenderingInfo>,
     animationValues: State<Map<Int, Float>>
 ): Modifier =
     this.then(

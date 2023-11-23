@@ -85,7 +85,7 @@ internal class SquooshAnimatedArc(private val target: SquooshResolvedNode, priva
 // XXX: No transform, coz no decomposition-recomposition implemented yet.
 //      No colors or strokes or corners.
 
-internal class SquooshAnimate(
+internal class SquooshAnimationControl(
     val root: SquooshResolvedNode,
     private val items: List<SquooshAnimatedItem>
 ) {
@@ -96,13 +96,19 @@ internal class SquooshAnimate(
     }
 }
 
-internal fun newSquooshAnimate(from: SquooshResolvedNode, fromNodeId: String, to: SquooshResolvedNode, toNodeId: String): SquooshAnimate? {
+internal fun mergeTreesAndCreateSquooshAnimationControl(
+    from: SquooshResolvedNode,
+    fromNodeId: String,
+    to: SquooshResolvedNode,
+    toNodeId: String
+): SquooshAnimationControl?
+{
     val items = ArrayList<SquooshAnimatedItem>()
     val start = findNode(from, fromNodeId)
     val end = findNode(to, toNodeId)
     if (start != null && end != null) {
         mergeTreesWithAnimation(start, end, items)
-        return SquooshAnimate(root = to, items = items)
+        return SquooshAnimationControl(root = to, items = items)
     }
     return null
 }

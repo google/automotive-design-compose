@@ -136,7 +136,6 @@ internal fun DesignFrame(
     DisposableEffect(view) {
         val parentLayoutId = parentLayout?.parentLayoutId ?: -1
         val childIndex = parentLayout?.childIndex ?: -1
-
         // Subscribe to layout changes when the view changes or is added
         LayoutManager.subscribeFrame(
             layoutId,

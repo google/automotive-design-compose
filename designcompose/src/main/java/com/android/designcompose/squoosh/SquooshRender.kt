@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.Paragraph
 import androidx.compose.ui.unit.Density
 import com.android.designcompose.CustomizationContext
@@ -34,6 +35,8 @@ import com.android.designcompose.DocContent
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.asComposeBlendMode
 import com.android.designcompose.asComposeTransform
+import com.android.designcompose.getBrush
+import com.android.designcompose.getBrushFunction
 import com.android.designcompose.isMask
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.TextAlignVertical
@@ -91,7 +94,9 @@ internal fun Modifier.squooshRender(
                                     this,
                                     node.textInfo,
                                     node.style,
-                                    computedLayout
+                                    computedLayout,
+                                    customizations,
+                                    node.view.name,
                                 )
                                 nodeRenderCount++
                             }
@@ -211,12 +216,16 @@ internal fun Modifier.squooshRender(
         }
     )
 
+@OptIn(ExperimentalTextApi::class)
 private fun squooshTextRender(
     drawContext: DrawContext,
     density: Density,
     textInfo: TextMeasureData,
     style: ViewStyle,
     computedLayout: Layout,
+
+    customizations: CustomizationContext,
+    nodeName: String,
 ) {
     val paragraph = Paragraph(
         paragraphIntrinsics = textInfo.textLayout.paragraph,
@@ -257,8 +266,19 @@ private fun squooshTextRender(
         else -> 0.0f
     }
 
+    val customFillBrushFunction = customizations.getBrushFunction(nodeName)
+    val customFillBrush =
+        if (customFillBrushFunction != null) {
+            customFillBrushFunction()
+        } else {
+            customizations.getBrush(nodeName)
+        }
+
     drawContext.canvas.translate(0.0f, verticalCenterOffset)
-    paragraph.paint(drawContext.canvas)
+    if (customFillBrush != null)
+        paragraph.paint(drawContext.canvas, brush = customFillBrush)
+    else
+        paragraph.paint(drawContext.canvas)
     drawContext.canvas.translate(0.0f, -verticalCenterOffset)
 
     if (useBlendModeLayer || transform != null)

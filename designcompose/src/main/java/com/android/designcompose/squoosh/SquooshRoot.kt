@@ -136,7 +136,7 @@ fun SquooshRoot(
         else -> ""
     }
 
-    val rootLayoutId = remember { 0 /*SquooshLayout.getNextLayoutId() * 1000000*/ }
+    val rootLayoutId = remember(docId) { SquooshLayout.getNextLayoutId() * 100000000 }
     val layoutIdAllocator = remember { SquooshLayoutIdAllocator() }
     val layoutCache = remember { HashMap<Int, Int>() }
     val layoutValueCache = remember { HashMap<Int, Layout>() }

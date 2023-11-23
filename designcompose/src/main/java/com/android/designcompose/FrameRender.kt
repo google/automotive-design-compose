@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
@@ -579,16 +578,30 @@ internal fun squooshShapeRender(
             vectorScaleY
         )
 
-    val fillBrush =
-        style.background.mapNotNull { background ->
+    val customFillBrushFunction = customizations.getBrushFunction(name)
+    val customFillBrush =
+        if (customFillBrushFunction != null) {
+            customFillBrushFunction()
+        } else {
+            customizations.getBrush(name)
+        }
+
+    val fillBrush: List<Paint> =
+        if (customFillBrush != null) {
             val p = Paint()
-            val b = background.asBrush(document, density)
-            if (b != null) {
-                val (brush, fillOpacity) = b
-                brush.applyTo(size, p, fillOpacity)
-                p
-            } else {
-                null
+            customFillBrush.applyTo(size, p, 1.0f)
+            listOf(p)
+        } else {
+            style.background.mapNotNull { background ->
+                val p = Paint()
+                val b = background.asBrush(document, density)
+                if (b != null) {
+                    val (brush, fillOpacity) = b
+                    brush.applyTo(size, p, fillOpacity)
+                    p
+                } else {
+                    null
+                }
             }
         }
     val strokeBrush =

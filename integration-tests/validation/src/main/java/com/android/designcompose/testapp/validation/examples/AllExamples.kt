@@ -82,5 +82,6 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
         Triple("Compositing Views", { CompositingViewsTest() }, CompositingViewsTestDoc.javaClass.name),
         Triple("SA: Basics", { SmartAnimateTest() }, SmartAnimateTestDoc.javaClass.name),
-        Triple("SA: Instances", { SmartAnimateOneInstanceTest() }, SmartAnimateTestDoc.javaClass.name)
+        Triple("SA: Instances", { SmartAnimateOneInstanceTest() }, SmartAnimateTestDoc.javaClass.name),
+        Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
     )

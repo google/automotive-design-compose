@@ -1,6 +1,5 @@
 package com.android.designcompose.squoosh
 
-import android.util.Log
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
@@ -83,7 +82,7 @@ internal class SquooshAnimatedArc(private val target: SquooshResolvedNode, priva
     }
 }
 
-// XXX: No transform, coz no decomposition implemented yet.
+// XXX: No transform, coz no decomposition-recomposition implemented yet.
 //      No colors or strokes or corners.
 
 internal class SquooshAnimate(
@@ -101,9 +100,6 @@ internal fun newSquooshAnimate(from: SquooshResolvedNode, fromNodeId: String, to
     val items = ArrayList<SquooshAnimatedItem>()
     val start = findNode(from, fromNodeId)
     val end = findNode(to, toNodeId)
-    if (start == null) { Log.e("DC_SQUOOSH", "did not find node ${fromNodeId} in from tree"); dumpTree(from); Log.e("DC_SQUOOSH", "to..."); dumpTree(to)
-    }
-    if (end == null) { Log.e("DC_SQUOOSH", "did not find node ${toNodeId} in dest tree") }
     if (start != null && end != null) {
         mergeTreesWithAnimation(start, end, items)
         return SquooshAnimate(root = to, items = items)
@@ -112,7 +108,7 @@ internal fun newSquooshAnimate(from: SquooshResolvedNode, fromNodeId: String, to
 }
 
 // Find nodes where we want to have animation; this is typically from a component CHANGE_TO
-internal fun findNode(n: SquooshResolvedNode, id: String): SquooshResolvedNode? {
+private fun findNode(n: SquooshResolvedNode, id: String): SquooshResolvedNode? {
     if (n.view.id == id || n.unresolvedNodeId == id) return n
     var child = n.firstChild
     while (child != null) {
@@ -122,15 +118,6 @@ internal fun findNode(n: SquooshResolvedNode, id: String): SquooshResolvedNode? 
         child = child.nextSibling
     }
     return null
-}
-
-internal fun dumpTree(n: SquooshResolvedNode, indent: String = "") {
-    Log.d("DC_SQUOOSH", "$indent ${n.view.name} (${n.view.id} unresolved: ${n.unresolvedNodeId} component info: ${n.view.component_info})")
-    var child = n.firstChild
-    while (child != null) {
-        dumpTree(child, "$indent ")
-        child = child.nextSibling
-    }
 }
 
 // The algorithm for generating the transition tree from the source and dest trees is as follows:
@@ -149,7 +136,7 @@ internal fun dumpTree(n: SquooshResolvedNode, indent: String = "") {
 //
 // Another model for this is that the rendering part of each node is done in isolation. So none of
 // the nodes that render are parents after this.
-internal fun mergeTreesWithAnimation(from: SquooshResolvedNode, to: SquooshResolvedNode, anims: ArrayList<SquooshAnimatedItem>) {
+private fun mergeTreesWithAnimation(from: SquooshResolvedNode, to: SquooshResolvedNode, anims: ArrayList<SquooshAnimatedItem>) {
     var toChild = to.firstChild
     var prevChild: SquooshResolvedNode? = null
 
@@ -233,7 +220,7 @@ internal fun mergeTreesWithAnimation(from: SquooshResolvedNode, to: SquooshResol
     from.firstChild = null
 }
 
-internal fun extractChildNamed(parent: SquooshResolvedNode, name: String): SquooshResolvedNode? {
+private fun extractChildNamed(parent: SquooshResolvedNode, name: String): SquooshResolvedNode? {
     var child = parent.firstChild
     var previousChild: SquooshResolvedNode? = null
     while (child != null) {
@@ -256,7 +243,7 @@ internal fun extractChildNamed(parent: SquooshResolvedNode, name: String): Squoo
 // We can tween between two views (and thus don't need one of them in the tree) if:
 //  - They are both Containers
 //  - They both have a Rect or RoundRect shape (for now we need the shapes to be the same).
-internal fun isTweenable(a: View, b: View): Boolean {
+private fun isTweenable(a: View, b: View): Boolean {
     val aData = a.data
     val bData = b.data
     if (aData is ViewData.Container && bData is ViewData.Container) {
@@ -274,7 +261,7 @@ internal fun isTweenable(a: View, b: View): Boolean {
     return false
 }
 
-internal fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
+private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     // Compare some style things and decide if we need to tween the styles.
     if (a.background != b.background) return true
     if (a.stroke != b.stroke) return true
@@ -283,7 +270,7 @@ internal fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
 
 // XXX: Horrible code to deal with our terrible generated types. Maybe if style moves to proto then
 //      we'll get some more egonomic generated classes.
-internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
+private fun ViewStyle.asBuilder(): ViewStyle.Builder {
     val builder = ViewStyle.Builder()
     builder.text_color = text_color
     builder.font_size = font_size
@@ -354,7 +341,7 @@ internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
     return builder
 }
 
-internal fun ViewStyle.with(delta: (ViewStyle.Builder) -> Unit): ViewStyle {
+private fun ViewStyle.with(delta: (ViewStyle.Builder) -> Unit): ViewStyle {
     val builder = asBuilder()
     delta(builder)
     return builder.build()

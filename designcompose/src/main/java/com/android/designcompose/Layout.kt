@@ -132,15 +132,13 @@ internal object LayoutManager {
         name: String,
         textMeasureData: TextMeasureData,
     ) {
-        trace(DCTraces.LAYOUTMANAGER_SUBSCRIBEWITHMEASURE) {
-            textMeasures[layoutId] = textMeasureData
-            subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
+        textMeasures[layoutId] = textMeasureData
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
 
-            // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
-            // the
-            // text or text style changed when no other nodes changed, we recompute layout
-            computeLayoutIfComplete(layoutId, rootLayoutId)
-        }
+        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
+        // the
+        // text or text style changed when no other nodes changed, we recompute layout
+        computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
     private fun subscribe(
@@ -206,13 +204,15 @@ internal object LayoutManager {
     // child.
     private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
         if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
-            val layoutNodeList = LayoutNodeList(layoutNodes)
-            val nodeListSerializer = BincodeSerializer()
-            layoutNodeList.serialize(nodeListSerializer)
-            val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-            val responseBytes = Jni.tracedJniAddNodes(rootLayoutId, serializedNodeList)
-            handleResponse(responseBytes)
-            layoutNodes.clear()
+            trace(DCTraces.LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE) {
+                val layoutNodeList = LayoutNodeList(layoutNodes)
+                val nodeListSerializer = BincodeSerializer()
+                layoutNodeList.serialize(nodeListSerializer)
+                val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
+                val responseBytes = Jni.tracedJniAddNodes(rootLayoutId, serializedNodeList)
+                handleResponse(responseBytes)
+                layoutNodes.clear()
+            }
         }
     }
 

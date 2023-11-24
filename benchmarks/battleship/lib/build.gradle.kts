@@ -52,4 +52,5 @@ dependencies {
     ksp(project(":codegen"))
 
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.runtime.tracing)
 }

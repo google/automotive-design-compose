@@ -39,6 +39,13 @@ class StartupBenchmarks {
             metrics =
                 listOf(
                     StartupTimingMetric(),
+                    // This is how you capture a trace for a specific Composable. The "%" a wildcard
+                    // and is required at the end because the trace string includes the line number
+                    // of the composable.
+                    TraceSectionMetric(
+                        "com.android.designcompose.benchmarks.battleship.lib.BattleshipGen.MainFrame %",
+                        TraceSectionMetric.Mode.Sum
+                    ),
                     TraceSectionMetric(DCTraces.DECODEDISKDOC),
                     TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL),
                     TraceSectionMetric(

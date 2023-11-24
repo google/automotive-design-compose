@@ -1040,6 +1040,7 @@ internal fun DesignDocInternal(
                         parentLayout
                     }
                 )
+                endSection()
                 docRenderStatus = DocRenderStatus.Rendered
                 // If we're the root, then also paint overlays
                 if (isRoot || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {

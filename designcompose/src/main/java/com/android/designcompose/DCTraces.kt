@@ -28,5 +28,5 @@ object DCTraces {
     const val DESIGNVIEW_INTERACTIONSCOPE = "DesignView InteractionScope"
     const val DECODEDISKDOC = "DecodeDiskDoc"
     const val FETCHDOCUMENTS = "FetchDocuments"
-    const val LAYOUTMANAGER_SUBSCRIBEWITHMEASURE = "LayoutManager.subscribeWithMeasure"
+    const val LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE = "LayoutManager.computeLayoutIfComplete"
 }

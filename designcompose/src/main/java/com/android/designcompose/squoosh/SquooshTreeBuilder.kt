@@ -96,6 +96,7 @@ internal fun resolveVariantsRecursively(
     rootLayoutId: Int,
     document: DocContent,
     customizations: CustomizationContext,
+    variantTransition: SquooshVariantTransition,
     interactionState: InteractionState,
     parentComponents: ParentComponentData?,
     density: Density,
@@ -110,6 +111,7 @@ internal fun resolveVariantsRecursively(
     var componentLayoutId = rootLayoutId
     var parentComps = parentComponents
     var overrideStyle: ViewStyle? = null
+    var view = v
 
     // If we have a component then we might need to get an override style, and we definitely
     // need to get a different layout id.
@@ -131,27 +133,40 @@ internal fun resolveVariantsRecursively(
 
             // XXX: override data?
         }
-    }
 
-    // See if we've got a replacement node from an interaction
-    var view = interactionState.squooshNodeVariant(v.id, customizations.getKey(), document) ?: v
-    val hasVariantReplacement = view.name != v.name
+        // See if we have a variant replacement; this only happens for component instances (for both
+        // interaction-driven and customization-driven variant changes).
 
-    if (!hasVariantReplacement) {
-        // If an interaction has not changed the current variant, then check to see if this node
-        // is part of a component set with variants and if any @DesignVariant annotations
-        // set variant properties that match. If so, variantNodeName will be set to the
-        // name of the node with all the variants set to the @DesignVariant parameters
-        val variantNodeName = customizations.getMatchingVariant(view.component_info)
-        if (variantNodeName != null) {
-            // Find the view associated with the variant name
-            val variantNodeQuery =
-                NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { view.name })
-            val isRoot = true // XXX-SQUOOSH: Need to support non-root components.
-            val variantView = interactionState.squooshRootNode(variantNodeQuery, document, isRoot)
-            if (variantView != null) {
-                view = variantView
+        // First ask the interaction state if there's a variant we should render instead.
+        view = interactionState.squooshNodeVariant(v.id, customizations.getKey(), document) ?: v
+
+        // If we didn't replace the component because of an interaction, we might want to replace it
+        // because of a variant customization.
+        if (view.name == v.name) {
+            // If an interaction has not changed the current variant, then check to see if this node
+            // is part of a component set with variants and if any @DesignVariant annotations
+            // set variant properties that match. If so, variantNodeName will be set to the
+            // name of the node with all the variants set to the @DesignVariant parameters
+            //
+            // We also give the variant transition system an opportunity to change the component
+            // that we look up. It uses this to ensure that we have one tree with the "from"
+            // variant rendered.
+            val variantNodeName = variantTransition.selectVariant(
+                v.id,
+                customizations.getMatchingVariant(view.component_info)
+            )
+            if (variantNodeName != null) {
+                // Find the view associated with the variant name
+                val variantNodeQuery =
+                    NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { view.name })
+                val isRoot = true // XXX-SQUOOSH: Need to support non-root components.
+                val variantView =
+                    interactionState.squooshRootNode(variantNodeQuery, document, isRoot)
+                if (variantView != null) {
+                    view = variantView
+                }
             }
+            variantTransition.selectedVariant(v.id, view.id)
         }
     }
 
@@ -186,6 +201,7 @@ internal fun resolveVariantsRecursively(
                 componentLayoutId,
                 document,
                 customizations,
+                variantTransition,
                 interactionState,
                 parentComps,
                 density,

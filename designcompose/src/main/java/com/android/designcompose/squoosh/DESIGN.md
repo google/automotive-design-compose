@@ -38,8 +38,9 @@ Squoosh has a few key modules and functions:
  - `SquooshLayout.doLayout` calls the JNI layout implementation to perform a layout iteration.
  - `populateComputedLayout` iterates a `SquooshResolvedNode` tree and copies values from the JNI
    layout iteration into the relevant `SquooshResolvedNode`.
- - `newSquooshAnimate` inspects two `SquooshResolvedNode` trees and updates the destination tree
-   to have all of the nodes needed to show a transition from the "from" tree into the "to" tree.
+ - `mergeTreesAndCreateSquooshAnimationControl` inspects two `SquooshResolvedNode` trees and updates
+   the destination tree to have all of the nodes needed to show a transition from the "from" tree
+   into the "to" tree.
  - `Modifier.squooshRender` knows how to render an entire `SquooshResolvedNode`--typically
    corresponding to the entire Composable.
 

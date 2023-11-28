@@ -16,6 +16,8 @@
 
 package com.android.designcompose
 
+import android.os.Trace.beginSection
+import android.os.Trace.endSection
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -501,6 +503,7 @@ internal fun DesignView(
                     //
                     // The interaction test document covers all of these cases.
                     interactionScope.launch {
+                        beginSection("DesignView InteractionScope")
                         detectTapGestures(
                             onPress = {
                                 for (onPressReaction in onPressReactions) {
@@ -535,6 +538,7 @@ internal fun DesignView(
                                 setIsPressed(false)
                             }
                         )
+                        endSection()
                     }
                 }
             )
@@ -904,7 +908,8 @@ fun DesignDoc(
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
-) =
+) {
+    beginSection(DCTraces.DESIGNDOCINTERNAL)
     DesignDocInternal(
         docName,
         docId,
@@ -919,6 +924,8 @@ fun DesignDoc(
         parentComponents = parentComponents,
         parentLayout = parentLayout,
     )
+    endSection()
+}
 
 @Composable
 internal fun DesignDocInternal(
@@ -1016,6 +1023,7 @@ internal fun DesignDocInternal(
                     }
                 }
 
+                beginSection(DCTraces.DESIGNVIEW)
                 DesignView(
                     modifier.semantics { sDocRenderStatus = docRenderStatus },
                     startFrame,
@@ -1032,6 +1040,7 @@ internal fun DesignDocInternal(
                         parentLayout
                     }
                 )
+                endSection()
                 docRenderStatus = DocRenderStatus.Rendered
                 // If we're the root, then also paint overlays
                 if (isRoot || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {

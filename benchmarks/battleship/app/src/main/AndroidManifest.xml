@@ -28,6 +28,7 @@
             android:name="com.android.designcompose.benchmarks.battleship.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:screenOrientation="nosensor"
             android:theme="@style/Theme.DesignCompose">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,6 +36,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <profileable android:shell="true"/>
     </application>
 
 </manifest>

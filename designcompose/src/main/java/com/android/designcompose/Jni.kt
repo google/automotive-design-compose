@@ -18,6 +18,7 @@ package com.android.designcompose
 
 import androidx.annotation.Keep
 import androidx.annotation.VisibleForTesting
+import androidx.tracing.trace
 
 // HTTP Proxy configuration.
 internal data class HttpProxyConfig(val proxySpec: String)
@@ -38,6 +39,12 @@ internal class TextSize(
 @Keep
 internal object Jni {
 
+    fun tracedJnifetchdoc(docId: String, requestJson: String, proxyConfig: ProxyConfig): ByteArray {
+        lateinit var result: ByteArray
+        trace(DCTraces.JNIFETCHDOC) { result = jniFetchDoc(docId, requestJson, proxyConfig) }
+        return result
+    }
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniFetchDoc(
         docId: String,
@@ -52,6 +59,12 @@ internal object Jni {
         width: Int,
         height: Int
     ): ByteArray?
+
+    fun tracedJniAddNodes(rootLayoutId: Int, serializedNodes: ByteArray): ByteArray? {
+        var result: ByteArray? = null
+        trace(DCTraces.JNIADDNODES) { result = jniAddNodes(rootLayoutId, serializedNodes) }
+        return result
+    }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniAddNodes(

@@ -16,7 +16,6 @@
 
 package com.android.designcompose
 
-import android.graphics.Rect
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.tracing.trace
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
@@ -135,7 +135,8 @@ internal object LayoutManager {
         textMeasures[layoutId] = textMeasureData
         subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
 
-        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is the
+        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
+        // the
         // text or text style changed when no other nodes changed, we recompute layout
         computeLayoutIfComplete(layoutId, rootLayoutId)
     }
@@ -203,13 +204,15 @@ internal object LayoutManager {
     // child.
     private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
         if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
-            val layoutNodeList = LayoutNodeList(layoutNodes)
-            val nodeListSerializer = BincodeSerializer()
-            layoutNodeList.serialize(nodeListSerializer)
-            val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-            val responseBytes = Jni.jniAddNodes(rootLayoutId, serializedNodeList)
-            handleResponse(responseBytes)
-            layoutNodes.clear()
+            trace(DCTraces.LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE) {
+                val layoutNodeList = LayoutNodeList(layoutNodes)
+                val nodeListSerializer = BincodeSerializer()
+                layoutNodeList.serialize(nodeListSerializer)
+                val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
+                val responseBytes = Jni.tracedJniAddNodes(rootLayoutId, serializedNodeList)
+                handleResponse(responseBytes)
+                layoutNodes.clear()
+            }
         }
     }
 

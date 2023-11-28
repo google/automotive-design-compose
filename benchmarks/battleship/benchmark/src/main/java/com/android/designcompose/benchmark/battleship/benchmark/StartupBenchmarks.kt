@@ -16,65 +16,45 @@
 
 package com.android.designcompose.benchmark.battleship.benchmark
 
-import androidx.benchmark.macro.CompilationMode
+import androidx.benchmark.macro.ExperimentalMetricApi
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
+import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.DCTraces
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-
-const val PACKAGE_NAME = "com.android.designcompose.benchmarks.battleship"
 
 @RunWith(AndroidJUnit4::class)
 class StartupBenchmarks {
     @get:Rule val benchmarkRule = MacrobenchmarkRule()
 
+    @OptIn(ExperimentalMetricApi::class)
     @Test
     fun coldStartup() =
         benchmarkRule.measureRepeated(
             packageName = PACKAGE_NAME,
-            metrics = listOf(StartupTimingMetric()),
+            metrics =
+                listOf(
+                    StartupTimingMetric(),
+                    // This is how you capture a trace for a specific Composable. The "%" a wildcard
+                    // and is required at the end because the trace string includes the line number
+                    // of the composable.
+                    TraceSectionMetric(
+                        "com.android.designcompose.benchmarks.battleship.lib.BattleshipGen.MainFrame %",
+                        TraceSectionMetric.Mode.Sum
+                    ),
+                    TraceSectionMetric(DCTraces.DECODEDISKDOC),
+                    TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL),
+                    TraceSectionMetric(
+                        DCTraces.DESIGNFRAME_DE_SUBSCRIBE,
+                        TraceSectionMetric.Mode.Sum
+                    ),
+                    TraceSectionMetric(DCTraces.FETCHDOCUMENTS)
+                ),
             iterations = 5,
-            startupMode = StartupMode.COLD
-        ) {
-            pressHome()
-            startActivityAndWait()
-        }
-
-    @Test
-    fun hotStartup() =
-        benchmarkRule.measureRepeated(
-            packageName = PACKAGE_NAME,
-            metrics = listOf(StartupTimingMetric()),
-            iterations = 5,
-            startupMode = StartupMode.HOT
-        ) {
-            pressHome()
-            startActivityAndWait()
-        }
-
-    @Test
-    fun noPrecompileStartup() =
-        benchmarkRule.measureRepeated(
-            packageName = PACKAGE_NAME,
-            metrics = listOf(StartupTimingMetric()),
-            iterations = 5,
-            compilationMode = CompilationMode.None(),
-            startupMode = StartupMode.COLD
-        ) {
-            pressHome()
-            startActivityAndWait()
-        }
-
-    @Test
-    fun fullPrecompileStartup() =
-        benchmarkRule.measureRepeated(
-            packageName = PACKAGE_NAME,
-            metrics = listOf(StartupTimingMetric()),
-            iterations = 5,
-            compilationMode = CompilationMode.Full(),
             startupMode = StartupMode.COLD
         ) {
             pressHome()

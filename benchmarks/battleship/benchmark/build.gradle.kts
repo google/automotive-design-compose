@@ -23,14 +23,13 @@ plugins {
 
 android {
     namespace = "com.android.designcompose.benchmarks.battleship.benchmark"
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 34
-        targetSdk = 34
+        minSdk = libs.versions.appMinSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
     }
 
     buildTypes {
@@ -53,6 +52,11 @@ dependencies {
     implementation(libs.androidx.test.espresso.core)
     implementation(libs.androidx.uiautomator)
     implementation(libs.androidx.benchmark.macro.junit4)
+    implementation(libs.google.truth)
+
+    implementation(libs.androidx.tracing.perfetto)
+    implementation(libs.androidx.tracing.perfettoBinary)
+    implementation(project(":designcompose"))
 }
 
 androidComponents { beforeVariants(selector().all()) { it.enable = it.buildType == "benchmark" } }

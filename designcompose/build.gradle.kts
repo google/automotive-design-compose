@@ -113,6 +113,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.guavaAndroid)
+    implementation(libs.androidx.tracing.ktx)
+    implementation(libs.androidx.compose.runtime.tracing)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 

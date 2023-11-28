@@ -20,7 +20,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.AccessDeniedException
 import com.android.designcompose.Feedback
 import com.android.designcompose.FigmaFileNotFoundException
-import com.android.designcompose.LiveUpdateJni
+import com.android.designcompose.Jni
+import com.android.designcompose.LiveUpdate
 import com.android.designcompose.ProxyConfig
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.constructPostJson
@@ -93,7 +94,7 @@ class JniFetchTests {
     @Test
     fun invalidToken() {
         assertFailsWith(AccessDeniedException::class) {
-            LiveUpdateJni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson, ProxyConfig())
+            Jni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson, ProxyConfig())
         }
     }
 }

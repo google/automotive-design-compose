@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.tracing.Trace.beginSection
+import androidx.tracing.Trace.endSection
 import com.android.designcompose.common.DocumentServerParams
 import java.io.BufferedInputStream
 import java.io.File
@@ -219,10 +221,13 @@ internal object DocServer {
     internal var periodicFetchRunnable: Runnable =
         Runnable() {
             thread {
+                beginSection(DCTraces.FETCHDOCUMENTS)
                 if (!fetchDocuments(firstFetch)) {
+                    endSection()
                     Log.e(TAG, "Error occurred while fetching or decoding documents.")
                     return@thread
                 }
+                endSection()
                 firstFetch = false
 
                 // Schedule another run after some time even if there were any
@@ -427,6 +432,8 @@ internal fun DocServer.doc(
         return null
     }
 
+    beginSection(DCTraces.DOCSERVER_DOC)
+
     val id = "${resourceName}_$docId"
 
     // Create a state var to remember the document contents and update it when the doc changes
@@ -495,6 +502,7 @@ internal fun DocServer.doc(
     if (liveDoc != null && liveDoc.c.docId == docId) return liveDoc
     if (preloadedDoc != null && preloadedDoc.c.docId == docId) {
         docUpdateCallback?.invoke(docId, preloadedDoc.c.toSerializedBytes(Feedback))
+        endSection()
         return preloadedDoc
     }
 
@@ -509,12 +517,14 @@ internal fun DocServer.doc(
                 DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
             }
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
+            endSection()
             return decodedDoc
         }
     } catch (error: Throwable) {
         Feedback.assetLoadFail(id, docId)
     }
 
+    endSection()
     // We didn't manage to load the doc. Hopefully there's an access token
     // and it'll get loaded live.
     return null

@@ -171,6 +171,8 @@ fun SquooshRoot(
         layoutIdAllocator,
         variantParentName
     )
+    if (root == null)
+        return
 
     val debugRemoveOldLayoutNodesStartTime = SystemClock.elapsedRealtime()
     val debugResolveVariantsDuration = debugRemoveOldLayoutNodesStartTime - debugResolveVariantsStartTime
@@ -260,6 +262,8 @@ fun SquooshRoot(
             layoutIdAllocator,
             variantParentName
         )
+        if (transitionRoot == null)
+            return
         // Layout maintenance
         val txRemovalNodes = layoutIdAllocator.removalNodes()
         for (layoutId in txRemovalNodes) {

@@ -28,6 +28,7 @@ import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
+import com.android.designcompose.getVisible
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.NodeQuery
@@ -106,8 +107,10 @@ internal fun resolveVariantsRecursively(
     //      every recompose.
     composableList: ArrayList<SquooshChildComposable>,
     layoutIdAllocator: SquooshLayoutIdAllocator,
-    variantParentName: String = ""): SquooshResolvedNode
+    variantParentName: String = ""): SquooshResolvedNode?
 {
+    if (!customizations.getVisible(v.name))
+        return null
     var componentLayoutId = rootLayoutId
     var parentComps = parentComponents
     var overrideStyle: ViewStyle? = null
@@ -208,7 +211,7 @@ internal fun resolveVariantsRecursively(
                 fontResourceLoader,
                 composableList,
                 layoutIdAllocator,
-            )
+            ) ?: continue
 
             childResolvedNode.parent = resolvedView
 

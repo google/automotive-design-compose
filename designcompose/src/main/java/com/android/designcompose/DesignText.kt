@@ -394,17 +394,26 @@ fun measureTextBoundsFunc(
 
     // Some distinct values are being collapsed, so we can't tell the difference between no
     // available space, and a request to report the minimum space.
-    val layoutWidth = if (width > 0.0f) { width * density }
-        else if (availableWidth <= 0.0f) { textMeasureData.textLayout.paragraph.minIntrinsicWidth }
-        else if (availableWidth >= Float.MAX_VALUE) { textMeasureData.textLayout.paragraph.maxIntrinsicWidth }
-        else { availableWidth * density }
+    val layoutWidth =
+        if (textMeasureData.autoWidth) {
+            textMeasureData.textLayout.paragraph.maxIntrinsicWidth
+        } else if (width > 0.0f) {
+            width * density
+        } else if (availableWidth <= 0.0f) {
+            textMeasureData.textLayout.paragraph.minIntrinsicWidth
+        } else if (availableWidth >= Float.MAX_VALUE) {
+            textMeasureData.textLayout.paragraph.maxIntrinsicWidth
+        } else {
+            availableWidth * density
+        }
 
     // Perform a layout using the given width.
-    val textLayout = Paragraph(
-        paragraphIntrinsics = textMeasureData.textLayout.paragraph,
-        width = layoutWidth,
-        maxLines = textMeasureData.maxLines
-    )
+    val textLayout =
+        Paragraph(
+            paragraphIntrinsics = textMeasureData.textLayout.paragraph,
+            width = layoutWidth,
+            maxLines = textMeasureData.maxLines
+        )
 
     // The `textLayout.width` field doesn't give the tightest bounds.
     var maxLineWidth = 0.0f
@@ -412,5 +421,5 @@ fun measureTextBoundsFunc(
         maxLineWidth = textLayout.getLineWidth(i).coerceAtLeast(maxLineWidth)
     }
 
-    return Pair(ceil(maxLineWidth / density), ceil(textLayout.height/ density))
+    return Pair(ceil(maxLineWidth / density), ceil(textLayout.height / density))
 }

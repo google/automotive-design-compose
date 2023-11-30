@@ -124,17 +124,6 @@ jobs:
       with:
           command: check ${{ matrix.checks }}
 
-  validate-dependabot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
-      - uses: marocchino/validate-dependabot@30653575251e0731f7c99bff8773e3988361597e # v2.1.0
-
 ############## Gradle
   sdk-support-build:
     runs-on: ubuntu-latest

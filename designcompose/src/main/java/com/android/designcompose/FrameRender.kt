@@ -334,17 +334,17 @@ internal fun ContentDrawScope.render(
             listOf(p)
         } else {
             style.background.mapNotNull { background ->
-            val p = Paint()
-            val b = background.asBrush(document, density)
-            if (b != null) {
-                val (brush, fillOpacity) = b
-                brush.applyTo(size, p, fillOpacity)
-                p
-            } else {
-                null
+                val p = Paint()
+                val b = background.asBrush(document, density)
+                if (b != null) {
+                    val (brush, fillOpacity) = b
+                    brush.applyTo(size, p, fillOpacity)
+                    p
+                } else {
+                    null
+                }
             }
         }
-}
 
     val strokeBrush =
         style.stroke.strokes.mapNotNull { background ->

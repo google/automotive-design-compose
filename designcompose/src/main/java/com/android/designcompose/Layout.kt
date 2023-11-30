@@ -206,13 +206,15 @@ internal object LayoutManager {
     // child.
     private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
         if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
-            val layoutNodeList = LayoutNodeList(layoutNodes)
-            val nodeListSerializer = BincodeSerializer()
-            layoutNodeList.serialize(nodeListSerializer)
-            val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-            val responseBytes = TracedJni.jniAddNodes(rootLayoutId, serializedNodeList)
-            handleResponse(responseBytes)
-            layoutNodes.clear()
+            trace(DCTraces.LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE) {
+                val layoutNodeList = LayoutNodeList(layoutNodes)
+                val nodeListSerializer = BincodeSerializer()
+                layoutNodeList.serialize(nodeListSerializer)
+                val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
+                val responseBytes = Jni.tracedJniAddNodes(rootLayoutId, serializedNodeList)
+                handleResponse(responseBytes)
+                layoutNodes.clear()
+            }
         }
     }
 

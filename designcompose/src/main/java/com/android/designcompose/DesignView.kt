@@ -908,7 +908,8 @@ fun DesignDoc(
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
-) =
+) {
+    beginSection(DCTraces.DESIGNDOCINTERNAL)
     DesignDocInternal(
         docName,
         docId,
@@ -923,6 +924,8 @@ fun DesignDoc(
         parentComponents = parentComponents,
         parentLayout = parentLayout,
     )
+    endSection()
+}
 
 @Composable
 internal fun DesignDocInternal(
@@ -1038,6 +1041,7 @@ internal fun DesignDocInternal(
                         parentLayout
                     }
                 )
+                endSection()
                 docRenderStatus = DocRenderStatus.Rendered
                 // If we're the root, then also paint overlays
                 if (isRoot || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {

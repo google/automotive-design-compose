@@ -36,7 +36,6 @@ internal class TextSize(
     var height: Float = 0F,
 )
 
-
 @Keep
 internal object Jni {
 

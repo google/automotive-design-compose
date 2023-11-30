@@ -943,7 +943,6 @@ internal fun DesignDocInternal(
     parentComponents: List<ParentComponentInfo> = listOf(),
     parentLayout: ParentLayoutInfo? = null,
 ) {
-    beginSection(DCTraces.DESIGNDOCINTERNAL)
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
     val doc =

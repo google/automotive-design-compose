@@ -45,11 +45,18 @@ class ClickPlayfield {
             packageName = PACKAGE_NAME,
             metrics =
                 listOf(
-                    TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL),
+                    // This is how you capture a trace for a specific Composable. The "%" a wildcard
+                    // and is required at the end because the trace string includes the line number
+                    // of the composable.
+                    TraceSectionMetric(
+                        "com.android.designcompose.benchmarks.battleship.lib.BattleshipGen.MainFrame %",
+                        Mode.Sum
+                    ),
+                    TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNVIEW),
                     TraceSectionMetric(DCTraces.DESIGNFRAME_DE_SUBSCRIBE, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNFRAME_FINISHLAYOUT, Mode.Sum),
-                    TraceSectionMetric(DCTraces.DESIGNTEXT_DE, Mode.Sum),
+                    TraceSectionMetric(DCTraces.DESIGNTEXT_DE_SUBSCRIBE, Mode.Sum),
                     TraceSectionMetric(DCTraces.JNIADDNODES, Mode.Sum),
                     TraceSectionMetric(DCTraces.DOCSERVER_DOC, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNVIEW_INTERACTIONSCOPE, Mode.Sum),

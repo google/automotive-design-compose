@@ -132,15 +132,13 @@ internal object LayoutManager {
         name: String,
         textMeasureData: TextMeasureData,
     ) {
-        trace(DCTraces.LAYOUTMANAGER_SUBSCRIBEWITHMEASURE) {
-            textMeasures[layoutId] = textMeasureData
-            subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
+        textMeasures[layoutId] = textMeasureData
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
 
-            // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
-            // the
-            // text or text style changed when no other nodes changed, we recompute layout
-            computeLayoutIfComplete(layoutId, rootLayoutId)
-        }
+        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
+        // the
+        // text or text style changed when no other nodes changed, we recompute layout
+        computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
     private fun subscribe(
@@ -180,7 +178,7 @@ internal object LayoutManager {
         // true, or if we are not a widget ancestor. We don't want to compute layout when ancestors
         // of a widget are removed because this happens constantly in a lazy grid view.
         val computeLayout = performLayoutComputation && !isWidgetAncestor
-        val responseBytes = TracedJni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
+        val responseBytes = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
         handleResponse(responseBytes)
         if (computeLayout) Log.d(TAG, "Unsubscribe $layoutId, compute layout")
     }
@@ -258,7 +256,7 @@ internal object LayoutManager {
         val adjustedWidth = (width.toFloat() / density).roundToInt()
         val adjustedHeight = (height.toFloat() / density).roundToInt()
         val responseBytes =
-            TracedJni.jniSetNodeSize(layoutId, rootLayoutId, adjustedWidth, adjustedHeight)
+            Jni.jniSetNodeSize(layoutId, rootLayoutId, adjustedWidth, adjustedHeight)
         handleResponse(responseBytes)
     }
 

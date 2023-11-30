@@ -46,14 +46,14 @@ internal object Jni {
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external override fun jniFetchDoc(
+    external fun jniFetchDoc(
         docId: String,
         requestJson: String,
         proxyConfig: ProxyConfig
     ): ByteArray
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external override fun jniSetNodeSize(
+    external fun jniSetNodeSize(
         layoutId: Int,
         rootLayoutId: Int,
         width: Int,
@@ -67,17 +67,13 @@ internal object Jni {
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external override fun jniAddNodes(
+    external fun jniAddNodes(
         rootLayoutId: Int,
         serializedNodes: ByteArray,
     ): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external override fun jniRemoveNode(
-        layoutId: Int,
-        rootLayoutId: Int,
-        computeLayout: Boolean
-    ): ByteArray?
+    external fun jniRemoveNode(layoutId: Int, rootLayoutId: Int, computeLayout: Boolean): ByteArray?
 
     init {
         System.loadLibrary("jni")

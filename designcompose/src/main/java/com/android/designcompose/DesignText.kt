@@ -252,7 +252,7 @@ internal fun DesignText(
             annotatedText,
             textStyle,
             LocalFontLoader.current,
-            style.text_size,
+            style.node_size,
             paragraph
         )
 

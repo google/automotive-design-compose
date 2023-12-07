@@ -294,7 +294,7 @@ private fun ViewStyle.asBuilder(): ViewStyle.Builder {
     builder.text_align_vertical = text_align_vertical
     builder.text_overflow = text_overflow
     builder.text_shadow = text_shadow
-    builder.text_size = text_size
+    builder.node_size = node_size
     builder.line_height = line_height
     builder.line_count = line_count
     builder.font_features = font_features

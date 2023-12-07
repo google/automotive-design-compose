@@ -288,6 +288,9 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                 style.width = Dimension::Points(size.x());
                 style.height = Dimension::Points(size.y());
             }
+
+            style.node_size.width = size.x();
+            style.node_size.height = size.y();
         }
     }
 
@@ -303,11 +306,6 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
         }
         style.horizontal_sizing = vector.layout_sizing_horizontal.into();
         style.vertical_sizing = vector.layout_sizing_vertical.into();
-
-        if let Some(Vector { x: Some(x), y: Some(y) }) = &node.size {
-            style.text_size.width = *x;
-            style.text_size.height = *y;
-        }
 
         // The text style also contains some layout information. We previously exposed
         // auto-width text in our plugin.

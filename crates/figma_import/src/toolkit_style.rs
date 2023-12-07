@@ -527,7 +527,7 @@ pub struct ViewStyle {
     pub text_align_vertical: TextAlignVertical,
     pub text_overflow: TextOverflow,
     pub text_shadow: Option<TextShadow>,
-    pub text_size: Size<f32>,
+    pub node_size: Size<f32>,
     pub line_height: LineHeight,
     pub line_count: Option<usize>, // None means no limit on # lines.
     pub font_features: Vec<FontFeature>,
@@ -594,7 +594,7 @@ impl Default for ViewStyle {
             text_align_vertical: TextAlignVertical::Top,
             text_overflow: TextOverflow::Clip,
             text_shadow: None,
-            text_size: Size::default(),
+            node_size: Size::default(),
             line_height: LineHeight::Percent(1.0),
             line_count: None,
             font_features: Vec::new(),
@@ -753,8 +753,8 @@ impl ViewStyle {
         if self.text_shadow != other.text_shadow {
             delta.text_shadow = other.text_shadow;
         }
-        if self.text_size != other.text_size {
-            delta.text_size = other.text_size;
+        if self.node_size != other.node_size {
+            delta.node_size = other.node_size;
         }
         if self.line_height != other.line_height {
             delta.line_height = other.line_height;

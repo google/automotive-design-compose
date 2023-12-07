@@ -194,7 +194,7 @@ internal fun squooshComputeTextInfo(
     )
 
     val textLayoutData =
-        TextLayoutData(annotatedText, textStyle, fontResourceLoader, v.style.text_size, paragraph)
+        TextLayoutData(annotatedText, textStyle, fontResourceLoader, v.style.node_size, paragraph)
     val maxLines =
         if (v.style.line_count.isPresent) v.style.line_count.get().toInt() else Int.MAX_VALUE
 

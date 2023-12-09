@@ -68,6 +68,12 @@ internal class VariantAnimationInfo(
     /// The node id that we're transitioning to.
     val toNodeId: String,
 
+    /// The variant name we're transitioning from.
+    val fromName: String?,
+
+    /// The variant name we're transitioning to.
+    val toName: String?,
+
     /// The details on the transition that we are running.
     val transition: Transition
 )
@@ -128,10 +134,15 @@ internal class SquooshVariantTransition {
             nextState[viewId] = targetNodeName ?: NullNodeName
             // Did we know about this from before?
             val lastVariantName = lastState[viewId]
-            // XXX: There might be something that we should do when a node is being transitioned;
-            //      currently we'll just fail to generate the correct variants, and the transition
-            //      will be removed via `failedAnimatedTransition` below. Ideally we'd be able to
-            //      do interruption gracefully if it's between two states.
+
+            // If we're currently transitioning this view, then if the most recent update didn't
+            // change the targetNodeName, we still want to run the transition.
+            val transition = transitions[viewId]
+            if (transition != null) {
+                Log.d(TAG, "selectVariant ${viewId} is already transitioning from: ${transition.fromNodeId} to ${transition.toNodeId}; updated is ${targetNodeName}")
+                if (targetNodeName == transition.toName) return transition.fromName
+            }
+
             if (lastVariantName == targetNodeName || (targetNodeName == null && lastVariantName == NullNodeName) || lastVariantName == null) {
                 // Nothing to do; it didn't change.
                 Log.d(TAG, "selectVariant base to ${targetNodeName} no change! (given target for ${viewId})")
@@ -185,6 +196,13 @@ internal class SquooshVariantTransition {
         val fromId = newTransitions.remove(viewId)
         if (fromId != null) {
             val toId = variantViewId
+
+            // Remember these in the transition; when a transition is running we want to
+            // keep it going, even if there are other changes going on (due to re-rendering
+            // from some other value changing, for example).
+            val fromName = lastState[viewId]
+            val toName = nextState[viewId]
+
             // This will wipe out any existing transition; we probably want to make a smooth
             // function here, like we do for the interaction-based transitions.
             if (toId != fromId) {
@@ -195,6 +213,8 @@ internal class SquooshVariantTransition {
                     nodeId = viewId,
                     fromNodeId = fromId,
                     toNodeId = toId,
+                    fromName = fromName,
+                    toName = toName,
                     transition = Transition.SmartAnimate(
                         Bezier(0f, 0f, 1f, 1f),
                         1f
@@ -222,6 +242,7 @@ internal class SquooshVariantTransition {
 
     internal fun failedAnimatedVariant(anim: VariantAnimationInfo) {
         transitions.remove(anim.nodeId)
+        newTransitions.remove(anim.nodeId)
         Log.d(TAG, "failed to execute variant anim: ${anim.nodeId}, now there are ${transitions.size} active transitions")
     }
 }

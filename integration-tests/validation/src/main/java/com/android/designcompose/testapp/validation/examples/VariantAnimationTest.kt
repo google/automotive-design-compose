@@ -21,15 +21,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignVariant
+import kotlinx.coroutines.delay
 
 enum class State {
     X,
@@ -40,15 +43,26 @@ enum class State {
 interface VariantAnimationTest {
     @DesignComponent(node = "#MainFrame")
     fun MainFrame(
-        @DesignVariant(property = "#state") state: State
+        @DesignVariant(property = "#state") state: State,
+        @Design(node = "#text") text: String,
     )
 }
 
 @Composable
 fun VariantAnimationTest() {
     val (state, setState) = remember { mutableStateOf(State.X) }
+    val (text, setText) = remember { mutableStateOf("0") }
 
-    VariantAnimationTestDoc.MainFrame(state = state)
+    LaunchedEffect("") {
+        var idx = 0
+        while (true) {
+            setText("${idx % 100}")
+            idx += 1
+            delay(100)
+        }
+    }
+
+    VariantAnimationTestDoc.MainFrame(state = state, text = text)
 
     Column(modifier = Modifier.absoluteOffset(x = 20.dp, y = 600.dp)) {
         Row {

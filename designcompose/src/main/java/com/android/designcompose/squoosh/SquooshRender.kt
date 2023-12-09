@@ -239,10 +239,12 @@ private fun squooshTextRender(
     val transform = style.transform.asComposeTransform(density.density)
     val blendMode = style.blend_mode.asComposeBlendMode()
     val useBlendModeLayer = style.blend_mode.useLayer()
+    val opacity = style.opacity.orElse(1.0f)
 
-    if (useBlendModeLayer) {
+    if (useBlendModeLayer || opacity < 1.0f) {
         val paint = Paint()
         paint.blendMode = blendMode
+        paint.alpha = opacity
         drawContext.canvas.saveLayer(
             Rect(
                 0f,
@@ -281,6 +283,6 @@ private fun squooshTextRender(
         paragraph.paint(drawContext.canvas)
     drawContext.canvas.translate(0.0f, -verticalCenterOffset)
 
-    if (useBlendModeLayer || transform != null)
+    if (useBlendModeLayer || opacity < 1.0f || transform != null)
         drawContext.canvas.restore()
 }

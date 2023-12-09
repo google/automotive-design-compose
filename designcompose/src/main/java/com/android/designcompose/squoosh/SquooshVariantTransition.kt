@@ -128,6 +128,10 @@ internal class SquooshVariantTransition {
             nextState[viewId] = targetNodeName ?: NullNodeName
             // Did we know about this from before?
             val lastVariantName = lastState[viewId]
+            // XXX: There might be something that we should do when a node is being transitioned;
+            //      currently we'll just fail to generate the correct variants, and the transition
+            //      will be removed via `failedAnimatedTransition` below. Ideally we'd be able to
+            //      do interruption gracefully if it's between two states.
             if (lastVariantName == targetNodeName || (targetNodeName == null && lastVariantName == NullNodeName) || lastVariantName == null) {
                 // Nothing to do; it didn't change.
                 Log.d(TAG, "selectVariant base to ${targetNodeName} no change! (given target for ${viewId})")
@@ -214,5 +218,10 @@ internal class SquooshVariantTransition {
     internal fun completedAnimatedVariant(anim: VariantAnimationInfo) {
         transitions.remove(anim.nodeId)
         Log.d(TAG, "completed variant animation: ${anim.nodeId}, now there are ${transitions.size} active transitions")
+    }
+
+    internal fun failedAnimatedVariant(anim: VariantAnimationInfo) {
+        transitions.remove(anim.nodeId)
+        Log.d(TAG, "failed to execute variant anim: ${anim.nodeId}, now there are ${transitions.size} active transitions")
     }
 }

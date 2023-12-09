@@ -261,9 +261,7 @@ fun SquooshRoot(
             childComposables,
             layoutIdAllocator,
             variantParentName
-        )
-        if (transitionRoot == null)
-            return
+        ) ?: return
         // Layout maintenance
         val txRemovalNodes = layoutIdAllocator.removalNodes()
         for (layoutId in txRemovalNodes) {
@@ -341,7 +339,7 @@ fun SquooshRoot(
         }
 
         // Now do the same for the variant animations
-        for (variantTransition in variantTransitions.transitions.values) {
+        for (variantTransition in variantTransitions.transitions.values.toList()) {
             lastAnimationId = variantTransition.id
 
             val animationControl =
@@ -351,6 +349,7 @@ fun SquooshRoot(
                 )
             if (animationControl == null) {
                 Log.e(TAG, "Unable to animate variant transition ${variantTransition.fromNodeId} to ${variantTransition.toNodeId}")
+                variantTransitions.failedAnimatedVariant(variantTransition)
                 continue
             }
             val animationRenderingInfo = currentAnimations[variantTransition.id]

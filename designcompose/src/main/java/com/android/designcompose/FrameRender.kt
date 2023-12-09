@@ -42,8 +42,10 @@ import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
 import com.android.designcompose.serdegen.ProgressMarkerMeterData
 import com.android.designcompose.serdegen.RotationMeterData
+import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
+import java.lang.Float.max
 import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.cos
@@ -558,6 +560,21 @@ internal fun squooshShapeRender(
         drawContext.transform.transform(transform)
     }
 
+    // Compute the paths we will render from the shape.
+    // This could benefit from more optimization:
+    //  - Extract from the "draw" phase, or cache across draws (as the path generally doesn't change)
+    //  - Generate "rect" and "rounded rect" as special cases, because Skia has fastpaths for those.
+    val shapePaths =
+        shape.computePaths(
+            style,
+            density,
+            size,
+            rectSize,
+            customArcAngle,
+            vectorScaleX,
+            vectorScaleY
+        )
+
     // Blend mode
     val blendMode = style.blend_mode.asComposeBlendMode()
     val useBlendMode = style.blend_mode.useLayer()
@@ -569,18 +586,35 @@ internal fun squooshShapeRender(
         val paint = Paint()
         paint.alpha = opacity
         paint.blendMode = blendMode
-        drawContext.canvas.saveLayer(Rect(Offset.Zero, size), paint)
+        // Compute the outset of the layer - it must include the bounds of any outset
+        // stroke or shadow.
+        var shadowOutset = 0.0f
+        for (shadow in shapePaths.shadowFills) {
+            if (shadow.shadowStyle is BoxShadow.Outset) {
+                shadowOutset = max(
+                    shadowOutset,
+                    shadow.shadowStyle.blur_radius * blurFudgeFactor +
+                            shadow.shadowStyle.spread_radius +
+                            max(shadow.shadowStyle.offset[0], shadow.shadowStyle.offset[1])
+                )
+            }
+        }
+        var strokeOutset = 0.0f
+        if (style.stroke.strokes.isNotEmpty()) {
+            strokeOutset = max(strokeOutset,
+                when (style.stroke.stroke_align) {
+                    is StrokeAlign.Outside -> style.stroke.stroke_weight.max()
+                    is StrokeAlign.Center -> style.stroke.stroke_weight.max() / 2.0f
+                    else -> 0.0f
+                }
+            )
+        }
+        // The shadow outset is additive to the stroke outset, as shadows are applied to the stroke
+        // bounds, not the node bounds.
+        val outset = strokeOutset + shadowOutset
+        // Now we can save the layer with the appropriate bounds.
+        drawContext.canvas.saveLayer(Rect(Offset.Zero, size).inflate(outset * density), paint)
     }
-    val shapePaths =
-        shape.computePaths(
-            style,
-            density,
-            size,
-            rectSize,
-            customArcAngle,
-            vectorScaleX,
-            vectorScaleY
-        )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
     val customFillBrush =

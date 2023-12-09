@@ -1207,6 +1207,16 @@ internal fun StrokeWeight.toUniform(): Float {
     return 0.0f
 }
 
+// Return a maximum stroke weight. This is used for computing the layer bounds when creating a
+// layer for compositing (transparency, blend modes, etc).
+internal fun StrokeWeight.max(): Float {
+    when (this) {
+        is StrokeWeight.Uniform -> return this.value
+        is StrokeWeight.Individual -> return maxOf(this.top, this.left, this.bottom, this.right)
+    }
+    return 0.0f
+}
+
 internal fun StrokeWeight.top(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value

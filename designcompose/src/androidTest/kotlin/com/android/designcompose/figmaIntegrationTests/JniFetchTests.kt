@@ -35,7 +35,7 @@ import org.junit.Test
 
 const val smallDocID = "pxVlixodJqZL95zo2RzTHl" // HelloWorld Doc
 const val largeDocID = "RfGl9SWnBEvdg8T1Ex6ZAR" // Battleship Doc
-const val veryLargeDocID = "KKvsSWtfwRYxYibnaVKBQK" // Cluster Doc
+const val veryLargeDocID = "2pkWM0BAgwN94HKYM4Nwlm" // Cluster Doc
 val dummyFigmaTokenJson = constructPostJson("NOT_A_FIGMA_TOKEN", null, DocumentServerParams())
 
 /**
@@ -86,7 +86,8 @@ class JniFetchTests {
         testFetch(largeDocID)
     }
     // Currently failing due to #98
-    @Test(expected = RuntimeException::class)
+//    @Test(expected = RuntimeException::class)
+    @Test
     fun veryLargeFetch() {
         testFetch(veryLargeDocID)
     }

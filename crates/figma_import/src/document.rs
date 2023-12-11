@@ -50,8 +50,13 @@ fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<
         .get(url.as_str())
         .set(FIGMA_TOKEN_HEADER, api_key)
         .timeout(Duration::from_secs(90))
-        .call()?
-        .into_string()?;
+        .call()?;
+
+    let mut body_reader = body.into_reader();
+    let mut buffer = Vec::new();
+    let _sz = body_reader.read_to_end(&mut buffer).unwrap();
+    let body = String::from_utf8(buffer).unwrap();
+
     Ok(body)
 }
 

@@ -81,4 +81,5 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
         Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
         Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
+        Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

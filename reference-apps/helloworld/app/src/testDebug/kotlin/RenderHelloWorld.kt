@@ -17,15 +17,13 @@
 package com.android.designcompose.testapp.helloworld
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DocRenderStatus
-import com.android.designcompose.docClassSemanticsKey
-import com.android.designcompose.docRenderStatusSemanticsKey
+import com.android.designcompose.test.assertRenderStatus
+import com.android.designcompose.test.onDCDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.RoborazziRule
 import org.junit.Rule
@@ -65,13 +63,7 @@ class RenderHelloWorld {
     fun testHello() {
         with(composeTestRule) {
             setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
-            onNode(SemanticsMatcher.expectValue(docClassSemanticsKey, HelloWorldDoc.javaClass.name))
-                .assert(
-                    SemanticsMatcher.expectValue(
-                        docRenderStatusSemanticsKey,
-                        DocRenderStatus.Rendered
-                    )
-                )
+            onDCDoc(HelloWorldDoc).assertRenderStatus(DocRenderStatus.Rendered)
             onNodeWithText("Testers!", substring = true).assertExists()
         }
     }

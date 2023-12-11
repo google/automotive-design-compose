@@ -18,10 +18,11 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinAndroid)
     id("designcompose.conventions.base")
+    id("designcompose.conventions.publish.android")
 }
 
 android {
-    namespace = "com.android.designcompose.test.internal"
+    namespace = "com.android.designcompose.test"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -38,16 +39,18 @@ android {
             )
         }
     }
+    packaging {
+        resources.excludes.apply {
+            add("META-INF/LICENSE*")
+            add("META-INF/AL2.0")
+            add("META-INF/LGPL2.1")
+        }
+    }
 }
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui.text)
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.ui.test.junit4)
-    implementation(libs.robolectric)
-    implementation(libs.roborazzi)
-    implementation(libs.roborazzi.compose)
-    implementation(libs.roborazzi.junit)
+
     implementation(project(":designcompose"))
 }

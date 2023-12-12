@@ -41,11 +41,12 @@ const BASE_PROJECT_URL: &str = "https://api.figma.com/v1/projects/";
 #[cfg(not(feature = "http_mock"))]
 fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<String, Error> {
     let mut agent_builder = ureq::AgentBuilder::new();
+    let mut buffer = Vec::new();
     // Only HttpProxyConfig is supported.
     if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
         agent_builder = agent_builder.proxy(ureq::Proxy::new(spec)?);
     }
-    let mut buffer = Vec::new();
+
     agent_builder
         .build()
         .get(url.as_str())
@@ -56,9 +57,6 @@ fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<
         .read_to_end(&mut buffer)?;
 
     let body = String::from_utf8(buffer)?;
-
-    // body.into_reader().read_to_end(&mut buffer)?;
-    // let body_str = String::from_utf8(buffer)?;
 
     Ok(body)
 }

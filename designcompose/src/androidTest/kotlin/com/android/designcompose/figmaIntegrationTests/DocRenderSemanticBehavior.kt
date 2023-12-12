@@ -22,9 +22,9 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.HelloWorldDoc
 import com.android.designcompose.HelloWorldWrongNodeDoc
 import com.android.designcompose.TestUtils
-import com.android.designcompose.assertDCRenderStatus
-import com.android.designcompose.assertRenderStatus
-import com.android.designcompose.onDCDoc
+import com.android.designcompose.test.assertDCRenderStatus
+import com.android.designcompose.test.assertRenderStatus
+import com.android.designcompose.test.onDCDoc
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

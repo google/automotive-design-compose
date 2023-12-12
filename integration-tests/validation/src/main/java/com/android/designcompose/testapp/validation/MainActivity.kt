@@ -41,7 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.DesignSettings
-import com.android.designcompose.test.internal.interFont
+import com.android.designcompose.testapp.common.interFont
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
 
 const val TAG = "DesignCompose"
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        DesignSettings.addFontFamily("Inter", interFont)
+        DesignSettings.run { addFontFamily("Inter", interFont) }
         DesignSettings.enableLiveUpdates(this)
 
         setContent {

@@ -61,6 +61,7 @@ project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
                 substitute(module("com.android.designcompose:designcompose"))
                     .using(project(":designcompose"))
                 substitute(module("com.android.designcompose:codegen")).using(project(":codegen"))
+                substitute(module("com.android.designcompose:test")).using(project(":test"))
             }
         }
     }

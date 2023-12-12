@@ -102,9 +102,8 @@ android {
 
 dependencies {
     implementation(project(":designcompose"))
-    implementation(project(":test:internal"))
-    implementation(project(":benchmarks:battleship:lib"))
-    testImplementation(project(":designcompose"))
+    implementation(project(":integration-tests:benchmarks:battleship:lib"))
+    implementation(project(":integration-tests:app-common"))
     ksp(project(":codegen"))
 
     implementation(platform(libs.androidx.compose.bom))
@@ -117,6 +116,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(testFixtures(project(":designcompose")))
+    testImplementation(project(":test"))
+    testImplementation(project(":test:internal"))
     testImplementation(kotlin("test"))
     testImplementation(libs.google.truth)
     testImplementation(libs.robolectric)
@@ -127,6 +128,8 @@ dependencies {
     testImplementation(libs.androidx.compose.ui.test.junit4)
 
     androidTestImplementation(testFixtures(project(":designcompose")))
+    androidTestImplementation(project(":test"))
+    androidTestImplementation(project(":test:internal"))
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.junit)

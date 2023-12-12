@@ -45,17 +45,20 @@ fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<
     if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
         agent_builder = agent_builder.proxy(ureq::Proxy::new(spec)?);
     }
-    let body = agent_builder
+    let mut buffer = Vec::new();
+    agent_builder
         .build()
         .get(url.as_str())
         .set(FIGMA_TOKEN_HEADER, api_key)
         .timeout(Duration::from_secs(90))
-        .call()?;
+        .call()?
+        .into_reader()
+        .read_to_end(&mut buffer)?;
 
-    let mut body_reader = body.into_reader();
-    let mut buffer = Vec::new();
-    let _sz = body_reader.read_to_end(&mut buffer).unwrap();
-    let body = String::from_utf8(buffer).unwrap();
+    let body = String::from_utf8(buffer)?;
+
+    // body.into_reader().read_to_end(&mut buffer)?;
+    // let body_str = String::from_utf8(buffer)?;
 
     Ok(body)
 }

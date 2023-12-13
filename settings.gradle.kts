@@ -63,7 +63,8 @@ project(":validation-app").projectDir = File("integration-tests/validation")
 
 include("battleship-app")
 
-project(":battleship-app").projectDir = File("integration-tests/benchmarks/battleship/app")
+project(":battleship-app").projectDir =
+    File("integration-tests/benchmarks/battleship/battleship-app")
 
 include("integration-tests:benchmarks:battleship:lib")
 
@@ -72,7 +73,7 @@ include("integration-tests:benchmarks:battleship:benchmark")
 // Reference apps (Can only use published libraries)
 include("helloworld-app")
 
-project(":helloworld-app").projectDir = File("reference-apps/helloworld/app")
+project(":helloworld-app").projectDir = File("reference-apps/helloworld/helloworld-app")
 
 include("tutorial-app")
 

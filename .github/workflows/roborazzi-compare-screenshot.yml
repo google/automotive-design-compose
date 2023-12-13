@@ -47,7 +47,7 @@ jobs:
         uses: gradle/gradle-build-action@87a9a15658c426a54dd469d4fc7dc1a73ca9d4a6 # v2.10.0
 
       - name: Download screenshots from base branch
-        uses: dawidd6/action-download-artifact@268677152d06ba59fcec7a7f0b5d961b6ccd7e1e # v2.28.0
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d # v3.0.0
         continue-on-error: true
         with:
           name: screenshots

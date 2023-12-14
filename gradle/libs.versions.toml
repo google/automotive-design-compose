@@ -19,7 +19,7 @@ ksp = "1.9.20-1.0.13"
 androidx-compose-compiler = "1.5.4"
 androidx-compose-bom = "2023.10.01"
 androidx-compose-components = "1.5.4"
-androidx-compose-runtime-tracing = "1.0.0-alpha05"
+androidx-compose-runtime-tracing = "1.0.0-beta01"
 
 # Everything else
 android-car-ui = "2.5.1"

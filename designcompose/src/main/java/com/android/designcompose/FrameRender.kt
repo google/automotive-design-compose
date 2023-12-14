@@ -343,7 +343,8 @@ internal fun ContentDrawScope.render(
                 val b = background.asBrush(document, density)
                 if (b != null) {
                     val (brush, fillOpacity) = b
-                    brush.applyTo(size, p, fillOpacity)
+                    val brushSize = getNodeRenderSize(rectSize, size, style, density)
+                    brush.applyTo(brushSize, p, fillOpacity)
                     p
                 } else {
                     null
@@ -357,7 +358,8 @@ internal fun ContentDrawScope.render(
             val b = background.asBrush(document, density)
             if (b != null) {
                 val (brush, strokeOpacity) = b
-                brush.applyTo(size, p, strokeOpacity)
+                val brushSize = getNodeRenderSize(rectSize, size, style, density)
+                brush.applyTo(brushSize, p, strokeOpacity)
                 p
             } else {
                 null

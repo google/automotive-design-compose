@@ -485,14 +485,12 @@ internal fun DesignView(
     // This is covered in the interaction test document's "Combos" screen; the purple button has no
     // interactions in its ON_PRESS variant.
     val (isPressed, setIsPressed) = remember { mutableStateOf(false) }
-//    Log.i("debugfroeht", "isPressed $isPressed")
     if (
         onClickReactions.isNotEmpty() ||
             onPressReactions.isNotEmpty() ||
             isPressed ||
             tapCallback != null
     ) {
-//        Log.i("debugfroeht", "Add pointerInput Modifier")
         m =
             m.then(
                 Modifier.pointerInput(onClickReactions, onPressReactions, isPressed, tapCallback) {
@@ -505,15 +503,11 @@ internal fun DesignView(
                     // event so that the interaction state can revert the change).
                     //
                     // The interaction test document covers all of these cases.
-                    Log.i("debugfroeht", "pointerInput")
                     interactionScope.launch (start = CoroutineStart.UNDISPATCHED){
-                        Log.i("debugfroeht", "interactionScopeLaunch")
                         beginSection("DesignView InteractionScope")
                         detectTapGestures(
                             onPress = {
-                                Log.i("debugfroeht", "onpress")
                                 for (onPressReaction in onPressReactions) {
-                                    Log.i("debugfroeht","Dispatch ${onPressReaction.action}")
                                     interactionState.dispatch(
                                         onPressReaction.action,
                                         findTargetInstanceId(onPressReaction.action),
@@ -522,12 +516,8 @@ internal fun DesignView(
                                     )
                                 }
                                 setIsPressed(true)
-                                Log.i("debugfroeht","GoingtoAwait")
                                 val dispatchClickEvent = tryAwaitRelease()
-                                Log.i("debugfroeht","afterrelease ")
-
                                 for (onPressReaction in onPressReactions) {
-                                    Log.i("debugfroeht","Dispatch ${onPressReaction.action}")
                                     interactionState.undoDispatch(
                                         findTargetInstanceId(onPressReaction.action),
                                         v.id,
@@ -536,7 +526,6 @@ internal fun DesignView(
                                 }
                                 if (dispatchClickEvent) {
                                     for (onClickReaction in onClickReactions) {
-                                        Log.i("debugfroeht","OnClickReaction Dispatch ${onClickReaction.action}")
                                         interactionState.dispatch(
                                             onClickReaction.action,
                                             findTargetInstanceId(onClickReaction.action),
@@ -547,8 +536,6 @@ internal fun DesignView(
                                     // Execute tap callback if one exists
                                     if (tapCallback != null) tapCallback()
                                 }
-
-                                Log.i("debugfroeht","clearSetisPressed")
                                 setIsPressed(false)
                             }
                         )

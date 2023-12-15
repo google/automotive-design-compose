@@ -24,7 +24,6 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
@@ -38,8 +37,7 @@ class InteractionTriggers {
                 RoborazziRule.Options(outputDirectoryPath = "$ROBO_CAPTURE_DIR/interactionTriggers")
         )
 
-    @get:Rule
-    var testName = TestName()
+    @get:Rule var testName = TestName()
 
     fun ComposeTestRule.captureImg(name: String) {
         onRoot().captureRoboImage("${testName.methodName}/$name.png")
@@ -47,9 +45,7 @@ class InteractionTriggers {
 
     @Before
     fun setup() {
-        with(composeTestRule) {
-            setContent { InteractionTest() }
-        }
+        with(composeTestRule) { setContent { InteractionTest() } }
     }
 
     @OptIn(ExperimentalTestApi::class)
@@ -74,5 +70,4 @@ class InteractionTriggers {
             captureImg("final")
         }
     }
-
 }

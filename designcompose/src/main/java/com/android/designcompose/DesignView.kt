@@ -503,7 +503,7 @@ internal fun DesignView(
                     // event so that the interaction state can revert the change).
                     //
                     // The interaction test document covers all of these cases.
-                    interactionScope.launch (start = CoroutineStart.UNDISPATCHED){
+                    interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
                         beginSection("DesignView InteractionScope")
                         detectTapGestures(
                             onPress = {

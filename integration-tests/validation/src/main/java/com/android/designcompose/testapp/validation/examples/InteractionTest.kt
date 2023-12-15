@@ -52,7 +52,6 @@ interface InteractionTest {
     @DesignKeyAction(key = 'C', metaKeys = []) fun clickedC()
 }
 
-@Preview
 @Composable
 fun InteractionTest() {
     InteractionTestDoc.MainFrame(

@@ -82,5 +82,5 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
         Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
-        //Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
+        // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

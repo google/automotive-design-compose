@@ -53,12 +53,13 @@ fun VariantAnimationTest() {
     val (state, setState) = remember { mutableStateOf(State.X) }
     val (text, setText) = remember { mutableStateOf("0") }
 
+
     LaunchedEffect("") {
         var idx = 0
         while (true) {
             setText("${idx % 100}")
             idx += 1
-            delay(100)
+            delay(400)
         }
     }
 

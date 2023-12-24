@@ -118,7 +118,7 @@ internal class SquooshVariantTransition {
     /// The set of view ids that we need to create transitions for on this iteration. We'll make
     /// the transitions during the second phase. In the first phase we just record the "from" id
     /// after the variant name has been resolved to a view.
-    private val newTransitions: HashMap<String, String> = HashMap()
+    /*private*/ internal val newTransitions: HashMap<String, String> = HashMap()
 
     /// Some counter of ids for transitions. We count down instead of up, to be unique from the
     /// interaction state ids.
@@ -128,10 +128,11 @@ internal class SquooshVariantTransition {
     /// AND we previously rendered a different variant AND there's a transition defined between
     /// the variants, then we add the transition reocrd to transitions and tell resolveVariants
     /// to use the "from" variant.
-    internal fun selectVariant(viewId: String, targetNodeName: String?): String? {
+    internal fun selectVariant(viewId: String, maybeNullTargetNodeName: String?): String? {
+        val targetNodeName = maybeNullTargetNodeName ?: NullNodeName
         if (treeBuildPhase == TreeBuildPhase.BasePhase) {
             // Remember this for next time.
-            nextState[viewId] = targetNodeName ?: NullNodeName
+            nextState[viewId] = targetNodeName
             // Did we know about this from before?
             val lastVariantName = lastState[viewId]
 
@@ -139,13 +140,13 @@ internal class SquooshVariantTransition {
             // change the targetNodeName, we still want to run the transition.
             val transition = transitions[viewId]
             if (transition != null) {
-                Log.d(TAG, "selectVariant ${viewId} is already transitioning from: ${transition.fromNodeId} to ${transition.toNodeId}; updated is ${targetNodeName}")
+                Log.d(TAG, "selectVariant $viewId is already transitioning from: ${transition.fromNodeId} to ${transition.toNodeId}; updated is ${targetNodeName}")
                 if (targetNodeName == transition.toName) return transition.fromName
             }
 
-            if (lastVariantName == targetNodeName || (targetNodeName == null && lastVariantName == NullNodeName) || lastVariantName == null) {
+            if (lastVariantName == targetNodeName || lastVariantName == null) {
                 // Nothing to do; it didn't change.
-                Log.d(TAG, "selectVariant base to ${targetNodeName} no change! (given target for ${viewId})")
+                Log.d(TAG, "selectVariant base to $targetNodeName no change! (given target for ${viewId})")
                 return targetNodeName
             }
             // Ok, we've observed a change. If the old variant has a transition to this one
@@ -223,7 +224,7 @@ internal class SquooshVariantTransition {
             } else {
                 // Hmm! What do we do here? We probably need to remember a different
                 // "fromId", but what could that be?
-
+                Log.w(TAG, "Not recording a transition for $viewId - no from id")
             }
             return
         }
@@ -233,6 +234,7 @@ internal class SquooshVariantTransition {
     internal fun afterRenderPhases() {
         lastState = nextState
         nextState = HashMap()
+        newTransitions.clear()
     }
 
     internal fun completedAnimatedVariant(anim: VariantAnimationInfo) {

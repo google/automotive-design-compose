@@ -244,7 +244,7 @@ fun SquooshRoot(
 
     if ((transitionedInteractionState != null && animatedActions.isNotEmpty()) || variantTransitions.needsTransitionPhase()) {
         variantTransitions.treeBuildPhase = TreeBuildPhase.TransitionTargetPhase
-        Log.d(TAG, "$docName: creating a new root with transitions applied... ${variantTransitions.transitions.size} variant transitions; variant needs second phase: ${variantTransitions.needsTransitionPhase()}; ${animatedActions.size} animated actions;")
+        Log.d(TAG, "$docName: creating a new root with transitions applied... ${variantTransitions.transitions.size} variant transitions; variant needs second phase: ${variantTransitions.needsTransitionPhase()} (${variantTransitions.transitions.size} transitions; ${variantTransitions.newTransitions.keys} new transitions); ${animatedActions.size} animated actions;")
         // We need to make a new root with this interaction state applied, and then compute the
         // animation control between the trees.
         childComposables.clear()

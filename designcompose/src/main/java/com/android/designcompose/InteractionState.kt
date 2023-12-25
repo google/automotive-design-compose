@@ -629,6 +629,7 @@ internal fun InteractionState.squooshAnimatedActions(doc: DocContent): List<Anim
     return anims
 }
 
+/// An animated action completed successfully.
 internal fun InteractionState.squooshCompleteAnimatedAction(transition: AnimatedAction) {
     if (!animations.remove(transition)) return
     changeTo(
@@ -638,6 +639,12 @@ internal fun InteractionState.squooshCompleteAnimatedAction(transition: Animated
         undoInstanceId = transition.undoInstanceId
     )
     invalAnimations()
+}
+
+/// An animated action failed; log it and advance the interaction state appropriately.
+internal fun InteractionState.squooshFailedAnimatedAction(transition: AnimatedAction) {
+    Log.w(TAG, "Failed to complete animated action on: ${transition.instanceNodeId}")
+    squooshCompleteAnimatedAction(transition)
 }
 
 /// Find the variant to use for the specified instanceId, in case a CHANGE_TO interaction has

@@ -26,6 +26,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,6 +63,7 @@ import com.android.designcompose.serdegen.LayoutParentChildren
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.squooshAnimatedActions
 import com.android.designcompose.squooshCompleteAnimatedAction
+import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
 import kotlin.math.roundToInt
@@ -127,21 +129,17 @@ fun SquooshRoot(
     // Ensure we get invalidated when the variant memory is updated from an interaction.
     interactionState.squooshVariantMemory(doc)
 
-    // XXX: This may not be needed since density gets packed into the TextMeasureData now
-    //      (originally the `measureTextBoundsFunc` in DesignText.kt read the density from
-    //      a global).
     val density = LocalDensity.current
-    LaunchedEffect(density.density) { LayoutManager.setDensity(density.density) }
 
     val variantParentName = when (rootNodeQuery) {
         is NodeQuery.NodeVariant -> rootNodeQuery.field1
         else -> ""
     }
 
-    val rootLayoutId = remember(docId) { SquooshLayout.getNextLayoutId() * 100000000 }
     val layoutIdAllocator = remember { SquooshLayoutIdAllocator() }
-    val layoutCache = remember { HashMap<Int, Int>() }
-    val layoutValueCache = remember { HashMap<Int, Layout>() }
+    val rootLayoutId = remember(docId) { SquooshLayout.getNextLayoutId() * 100000000 }
+    val layoutCache = remember(docId) { HashMap<Int, Int>() }
+    val layoutValueCache = remember(docId) { HashMap<Int, Layout>() }
 
     // We need to remember the previous set of variant properties that we rendered
     // with so we can see if there are any transitions caused by changing variant props.
@@ -289,7 +287,7 @@ fun SquooshRoot(
         Log.d(TAG, "Creating transition root took $debugTransitionTreeDuration ms")
 
         val nextAnimations = HashMap<Int, SquooshAnimationRenderingInfo>()
-        for (animatedAction in interactionState.animations) { // XXX: in animatedActions?
+        for (animatedAction in animatedActions) {
             lastAnimationId = animatedAction.id
             val animationControl =
                 mergeTreesAndCreateSquooshAnimationControl(
@@ -298,9 +296,7 @@ fun SquooshRoot(
                 )
 
             if (animationControl == null) {
-                Log.d(TAG, "Unable to animate ${animatedAction.instanceNodeId} to ${animatedAction.newVariantId}")
-                // XXX: Should we just commit the action here with no transition as if the transition
-                //      had ended?
+                interactionState.squooshFailedAnimatedAction(animatedAction)
                 continue
             }
             val animationRenderingInfo = currentAnimations[animatedAction.id]
@@ -348,7 +344,6 @@ fun SquooshRoot(
                     transitionRoot, variantTransition.toNodeId
                 )
             if (animationControl == null) {
-                Log.e(TAG, "Unable to animate variant transition ${variantTransition.fromNodeId} to ${variantTransition.toNodeId}")
                 variantTransitions.failedAnimatedVariant(variantTransition)
                 continue
             }

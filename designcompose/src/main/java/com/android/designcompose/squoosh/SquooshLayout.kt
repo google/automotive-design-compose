@@ -32,7 +32,6 @@ import kotlin.system.measureTimeMillis
 
 internal object SquooshLayout {
     private var nextLayoutId: Int = 0
-    var density: Float = 1f
 
     internal fun getNextLayoutId(): Int {
         return ++nextLayoutId
@@ -58,7 +57,7 @@ internal object SquooshLayout {
             layoutChangedResponse =
                 LayoutChangedResponse.deserialize(BincodeDeserializer(response))
         }
-        Log.d(TAG, "doLayout: perform layout $performLayoutTime ms, response deser.: $layoutDeserializeTime ms")
+        Log.d(TAG, "doLayout: perform layout $performLayoutTime ms, response deser.: $layoutDeserializeTime ms, computed ${layoutChangedResponse!!.changed_layouts.size} nodes, for root: $rootLayoutId")
         return layoutChangedResponse!!.changed_layouts
     }
 

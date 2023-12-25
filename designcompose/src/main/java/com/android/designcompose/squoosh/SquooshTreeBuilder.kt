@@ -124,7 +124,7 @@ internal fun resolveVariantsRecursively(
 
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
-        componentLayoutId = layoutIdAllocator.componentLayoutId(parentComps) * 1000000
+        componentLayoutId = rootLayoutId + layoutIdAllocator.componentLayoutId(parentComps) * 100000
 
         // Do we have an override style? This is style data which we should apply to the final style
         // even if we're swapping out our view definition for a variant.

@@ -133,8 +133,6 @@ internal fun resolveVariantsRecursively(
             if (overrides.style.isPresent) {
                 overrideStyle = overrides.style.get()
             }
-
-            // XXX: override data?
         }
 
         // See if we have a variant replacement; this only happens for component instances (for both

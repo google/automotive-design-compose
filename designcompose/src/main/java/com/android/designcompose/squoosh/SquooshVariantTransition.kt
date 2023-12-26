@@ -48,7 +48,6 @@ import com.android.designcompose.serdegen.Transition
 //  - Now we can enter the transition logic in SquooshRoot, and build a new tree with all of the
 //    destination nodes, and then run the regular animation code.
 //
-// The code in this file has utilities to do the following things:
 
 internal class VariantAnimationInfo(
     /// A unique id to use for this animation request

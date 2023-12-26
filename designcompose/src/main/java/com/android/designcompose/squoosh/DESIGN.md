@@ -82,3 +82,11 @@ the `squooshRender` Modifier. When `squooshRender` wants to paint a particular c
 updates the boxed object (a `SquooshRenderSelector`) to have the id of the node that should be
 rendered. All of the child Composables have a Modifier that customizes drawing to completely skip
 drawing unless the id in the `SquooshRenderSelector` matches. Yuck! But good enough...
+
+## Animated transitions and enum-driven variant changes
+Squoosh implements animated transitions, and can also animate variant changes caused by enum values
+changing.
+
+This is described above in the "typical flow". When there are animations to be run, they are always
+between states of some kind. We generate two trees, merge parts of them that need to be animated
+between, and then do 

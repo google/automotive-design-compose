@@ -176,7 +176,7 @@ internal fun updateLayoutTree(
     return needsLayoutUpdate
 }
 
-/// Iterate over a `SquooshComputedNode` tree and populate the computed layout values
+/// Iterate over a `SquooshResolvedNode` tree and populate the computed layout values
 /// so that the nodes can be used for presentation or interaction (hit testing).
 internal fun populateComputedLayout(
     resolvedNode: SquooshResolvedNode,
@@ -195,4 +195,36 @@ internal fun populateComputedLayout(
         populateComputedLayout(child, layoutValueCache)
         child = child.nextSibling
     }
+}
+
+/// Take a freshly computed `SquooshResolvedNode` tree and compute and populate layout for it.
+internal fun layoutTree(
+    root: SquooshResolvedNode,
+    rootLayoutId: Int,
+    layoutIdAllocator: SquooshLayoutIdAllocator,
+    layoutCache: HashMap<Int, Int>,
+    layoutValueCache: HashMap<Int, Layout>)
+{
+    // Remove any nodes that are no longer needed in this iteration
+    val removalNodes = layoutIdAllocator.removalNodes()
+    for (layoutId in removalNodes) {
+        SquooshLayout.removeNode(rootLayoutId, layoutId)
+        layoutValueCache.remove(layoutId)
+        layoutCache.remove(layoutId)
+    }
+
+    // Update the layout tree which the Rust JNI code is maintaining
+    val layoutNodes = arrayListOf<LayoutNode>()
+    val layoutParentChildren = arrayListOf<LayoutParentChildren>()
+    updateLayoutTree(root, layoutCache, layoutNodes, layoutParentChildren)
+    val layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
+
+    // Now we can give the new layoutNodeList to the Rust JNI layout implementation
+    val updatedLayouts = SquooshLayout.doLayout(
+        root.layoutId,
+        layoutNodeList
+    )
+    // Save the updated layouts and quickly iterate the tree and populate the layout values.
+    layoutValueCache.putAll(updatedLayouts)
+    populateComputedLayout(root, layoutValueCache)
 }

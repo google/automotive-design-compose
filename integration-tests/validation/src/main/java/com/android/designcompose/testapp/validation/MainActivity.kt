@@ -17,10 +17,19 @@
 package com.android.designcompose.testapp.validation
 
 import android.graphics.Bitmap
+import android.graphics.RuntimeShader
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,7 +66,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
@@ -91,6 +105,7 @@ import com.android.designcompose.annotation.PreviewNode
 import java.lang.Float.max
 import java.lang.Float.min
 import kotlin.math.roundToInt
+import org.intellij.lang.annotations.Language
 
 val interFont =
     FontFamily(
@@ -116,43 +131,64 @@ const val TAG = "DesignCompose"
 
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
-        Triple("Hello", { HelloWorld() }, "pxVlixodJqZL95zo2RzTHl"),
-        Triple("Image Update", { ImageUpdateTest() }, "oQw7kiy94fvdVouCYBC9T0"),
-        Triple("Telltales", { TelltaleTest() }, "TZgHrKWx8wvQM7UPTyEpmz"),
-        Triple("OpenLink", { OpenLinkTest() }, "r7m4tqyKv6y9DWcg7QBEDf"),
-        Triple("Variant *", { VariantAsteriskTest() }, "gQeYHGCSaBE4zYSFpBrhre"),
-        Triple("Alignment", { AlignmentTest() }, "JIjE9oKQbq8ipi66ab5UaK"),
-        Triple("Battleship", { BattleshipTest() }, "RfGl9SWnBEvdg8T1Ex6ZAR"),
-        Triple("H Constraints", { HConstraintsTest() }, "KuHLbsKA23DjZPhhgHqt71"),
-        Triple("V Constraints", { VConstraintsTest() }, "KuHLbsKA23DjZPhhgHqt71"),
-        Triple("Interaction", { InteractionTest() }, "8Zg9viyjYTnyN29pbkR1CE"),
-        Triple("Shadows", { ShadowsTest() }, "OqK58Y46IqP4wIgKCWys48"),
-        Triple("Item Spacing", { ItemSpacingTest() }, "YXrHBp6C6OaW5ShcCYeGJc"),
-        Triple("Recurse Customization", { RecursiveCustomizations() }, "o0GWzcqdOWEgzj4kIeIlAu"),
-        Triple("Color Tint", { ColorTintTest() }, "MCtUD3yjONxK6rQm65yqM5"),
-        Triple("Variant Properties", { VariantPropertiesTest() }, "4P7zDdrQxj7FZsKJoIQcx1"),
+        Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
+        Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
+        Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
+        Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
+        Triple("Variant *", { VariantAsteriskTest() }, VariantAsteriskTestDoc.javaClass.name),
+        Triple("Alignment", { AlignmentTest() }, AlignmentTestDoc.javaClass.name),
+        Triple("Battleship", { BattleshipTest() }, BattleshipDoc.javaClass.name),
+        Triple("H Constraints", { HConstraintsTest() }, ConstraintsDoc.javaClass.name),
+        Triple("V Constraints", { VConstraintsTest() }, ConstraintsDoc.javaClass.name),
+        Triple("Interaction", { InteractionTest() }, InteractionTestDoc.javaClass.name),
+        Triple("Shadows", { ShadowsTest() }, ShadowsTestDoc.javaClass.name),
+        Triple("Item Spacing", { ItemSpacingTest() }, ItemSpacingTestDoc.javaClass.name),
+        Triple(
+            "Recurse Customization",
+            { RecursiveCustomizations() },
+            RecursiveCustomizationsDoc.javaClass.name
+        ),
+        Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
+        Triple(
+            "Variant Properties",
+            { VariantPropertiesTest() },
+            VariantPropertiesTestDoc.javaClass.name
+        ),
         // Lazy Grid doesn't actually use a doc
         Triple("Lazy Grid", { LazyGridItemSpans() }, null),
-        Triple("Grid Layout", { GridLayoutTest() }, "JOSOEvsrjvMqanyQa5OpNR"),
-        Triple("Grid Widget", { GridWidgetTest() }, "OBhNItd9i9J2LwVYuLxEIx"),
-        Triple("List Widget", { ListWidgetTest() }, "9ev0MBNHFrgTqJOrAGcEpV"),
-        Triple("1px Separator", { OnePxSeparatorTest() }, "EXjTHxfMNBtXDrz8hr6MFB"),
-        Triple("Variant Interactions", { VariantInteractionsTest() }, "WcsgoLR4aDRSkZHY29Qdhq"),
-        Triple("Layout Replacement", { LayoutReplacementTest() }, "dwk2GF7RiNvlbbAKPjqldx"),
-        Triple("Text Elide", { TextElideTest() }, "oQ7nK49Ya5PJ3GpjI5iy8d"),
-        Triple("Fancy Fills", { FancyFillTest() }, "xQ9cunHt8VUm6xqJJ2Pjb2"),
-        Triple("Fill Container", { FillTest() }, "dB3q96FkxkTO4czn5NqnxV"),
-        Triple("CrossAxis Fill", { CrossAxisFillTest() }, "GPr1cx4n3zBPwLhqlSL1ba"),
+        Triple("Grid Layout", { GridLayoutTest() }, GridLayoutTestDoc.javaClass.name),
+        Triple("Grid Widget", { GridWidgetTest() }, GridWidgetTestDoc.javaClass.name),
+        Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
+        Triple("1px Separator", { OnePxSeparatorTest() }, OnePxSeparatorDoc.javaClass.name),
+        Triple(
+            "Variant Interactions",
+            { VariantInteractionsTest() },
+            VariantInteractionsTestDoc.javaClass.name
+        ),
+        Triple(
+            "Layout Replacement",
+            { LayoutReplacementTest() },
+            LayoutReplacementTestDoc.javaClass.name
+        ),
+        Triple("Text Elide", { TextElideTest() }, TextElideTestDoc.javaClass.name),
+        Triple("Fancy Fills", { FancyFillTest() }, FancyFillTestDoc.javaClass.name),
+        Triple("Fill Container", { FillTest() }, FillTestDoc.javaClass.name),
+        Triple("CrossAxis Fill", { CrossAxisFillTest() }, CrossAxisFillTestDoc.javaClass.name),
         Triple(
             "Grid Layout Documentation",
             { GridLayoutDocumentation() },
-            "MBNjjSbzzKeN7nBjVoewsl"
+            GridLayoutDoc.javaClass.name
         ),
-        Triple("Blend Modes", { BlendModeTest() }, "ZqX5i5g6inv9tANIwMMXUV"),
-        Triple("Vector Rendering", { VectorRenderingTest() }, "Z3ucY0wMAbIwZIa6mLEWIK"),
-        Triple("Dials Gauges", { DialsGaugesTest() }, "lZj6E9GtIQQE4HNLpzgETw"),
-        Triple("Masks", { MaskTest() }, "mEmdUVEIjvBBbV0kELPy37"),
-        Triple("Variable Borders", { VariableBorderTest() }, "MWnVAfW3FupV4VMLNR1m67")
+        Triple("Blend Modes", { BlendModeTest() }, BlendModeTestDoc.javaClass.name),
+        Triple(
+            "Vector Rendering",
+            { VectorRenderingTest() },
+            VectorRenderingTestDoc.javaClass.name
+        ),
+        Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
+        Triple("Masks", { MaskTest() }, MaskTestDoc.javaClass.name),
+        Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
+        Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
     )
 
 // TEST Basic Hello World example
@@ -1741,6 +1777,83 @@ fun VariableBorderTest() {
     VariableBorderTestDoc.Main()
 }
 
+@DesignDoc(id = "oetCBVw8gCAxmCNllXx7zO")
+interface CustomBrushTest {
+    @DesignComponent(node = "#MainFrame") fun Main(@Design(node = "#CustomBrush") fill: () -> Brush)
+}
+
+// From: https://shaders.skia.org/
+@Language("AGSL")
+val CUSTOM_SHADER =
+    """
+uniform float3 iResolution;      // Viewport resolution (pixels)
+uniform float  iTime;            // Shader playback time (s)
+// Source: @notargs https://twitter.com/notargs/status/1250468645030858753
+float f(vec3 p) {
+    p.z -= iTime * 10.;
+    float a = p.z * .1;
+    p.xy *= mat2(cos(a), sin(a), -sin(a), cos(a));
+    return .1 - length(cos(p.xy) + sin(p.yz));
+}
+
+half4 main(vec2 fragcoord) { 
+    vec3 d = .5 - fragcoord.xy1 / iResolution.y;
+    vec3 p=vec3(0);
+    for (int i = 0; i < 32; i++) {
+      p += f(p) * d;
+    }
+    return ((sin(p) + vec3(2, 5, 9)) / length(p)).xyz1;
+}
+"""
+        .trimIndent()
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+class SizingShaderBrush(val shader: RuntimeShader) : ShaderBrush() {
+    override fun createShader(size: Size): Shader {
+        shader.setFloatUniform("iResolution", size.width, size.height, 0.0f)
+        return shader
+    }
+}
+
+@Composable
+fun CustomBrushTest() {
+    val infiniteTransition = rememberInfiniteTransition(label = "animate shader")
+    val movingValue =
+        infiniteTransition.animateFloat(
+            label = "moving value for shader",
+            initialValue = 0.0f,
+            targetValue = 10.0f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(10 * 1000, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                )
+        )
+
+    // Android T introduces AGSL and RuntimeShader. Robolectric (part of our test infrastructure)
+    // only supports software rendering.
+    val brush: () -> Brush =
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                !"robolectric".equals(Build.FINGERPRINT)
+        ) {
+            val shader = RuntimeShader(CUSTOM_SHADER)
+            val shaderBrush = SizingShaderBrush(shader)
+            // The kotlin compiler seems to get confused without semicolons on these statements.
+            shader.setFloatUniform("iTime", 0.0f);
+
+            {
+                // Only sample the state in the generator function; this means that we avoid
+                // recomposition and only do the redraw phase.
+                shader.setFloatUniform("iTime", movingValue.value)
+                shaderBrush
+            }
+        } else {
+            { SolidColor(Color.Blue) }
+        }
+
+    CustomBrushTestDoc.Main(fill = brush)
+}
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test
 // on the left and the currently selected test on the right.
 class MainActivity : ComponentActivity() {

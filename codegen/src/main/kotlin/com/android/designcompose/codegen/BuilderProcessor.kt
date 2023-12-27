@@ -91,7 +91,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import androidx.compose.runtime.Composable\n"
         file += "import androidx.compose.ui.text.TextStyle\n"
         file += "import android.graphics.Bitmap\n"
+        file += "import androidx.compose.ui.graphics.Brush\n"
         file += "import androidx.compose.ui.Modifier\n"
+        file += "import androidx.compose.ui.semantics.semantics\n"
         file += "import androidx.compose.runtime.mutableStateOf\n"
         file += "import androidx.compose.runtime.remember\n"
         file += "import androidx.compose.ui.platform.ComposeView\n"
@@ -124,6 +126,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import com.android.designcompose.setCustomComposable\n"
         file += "import com.android.designcompose.setImage\n"
         file += "import com.android.designcompose.setImageWithContext\n"
+        file += "import com.android.designcompose.setBrush\n"
+        file += "import com.android.designcompose.setBrushFunction\n"
         file += "import com.android.designcompose.setMeterValue\n"
         file += "import com.android.designcompose.setMeterFunction\n"
         file += "import com.android.designcompose.setModifier\n"
@@ -135,6 +139,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import com.android.designcompose.setVisible\n"
         file += "import com.android.designcompose.TapCallback\n"
         file += "import com.android.designcompose.ParentComponentInfo\n"
+        file += "import com.android.designcompose.sDocClass\n"
         file += "import com.android.designcompose.LocalCustomizationContext\n\n"
 
         return file
@@ -204,6 +209,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         TextFunction,
         Image,
         ImageWithContext,
+        Brush,
+        BrushFunction,
         Modifier,
         TapCallback,
         ContentReplacement,
@@ -227,6 +234,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var textFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var imageCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
+        private var brushCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
+        private var brushFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+            HashMap()
         private var modifierCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var tapCallbackCustomizations: HashMap<String, Vector<Pair<String, String>>> =
@@ -655,6 +665,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 val ignore =
                     when (getParamCustomizationType(param)) {
                         CustomizationType.Image -> true
+                        CustomizationType.Brush -> true
+                        CustomizationType.BrushFunction -> true
                         CustomizationType.ContentReplacement -> true
                         CustomizationType.ComponentReplacement -> true
                         CustomizationType.ListContent -> true
@@ -714,6 +726,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             return when (getParamTypeString(param)) {
                 "String" -> CustomizationType.Text
                 "@Composable () -> String" -> CustomizationType.TextFunction
+                "Brush" -> CustomizationType.Brush
+                "() -> Brush" -> CustomizationType.BrushFunction
                 "Bitmap?" -> CustomizationType.Image
                 "Modifier" -> CustomizationType.Modifier
                 "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
@@ -816,6 +830,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Generate the function body by filling out customizations and then returning
             // the @Composable DesignDoc function
             out.appendText("    ) {\n")
+            // Embed the Doc's class to allow matching on in tests
+            out.appendText("        val className = javaClass.name\n")
             out.appendText("        val customizations = remember { CustomizationContext() }\n")
             out.appendText("        customizations.setKey(key)\n")
             out.appendText("        customizations.mergeFrom(LocalCustomizationContext.current)\n")
@@ -858,6 +874,18 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 imageCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
             for ((node, value) in imageCustom) {
                 out.appendText("        customizations.setImage(\"$node\", $value)\n")
+            }
+
+            val brushCustom =
+                brushCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in brushCustom) {
+                out.appendText("        customizations.setBrush(\"$node\", $value)\n")
+            }
+
+            val brushFunctionCustom =
+                brushFunctionCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in brushFunctionCustom) {
+                out.appendText("        customizations.setBrushFunction(\"$node\", $value)\n")
             }
 
             val modifierCustom =
@@ -955,7 +983,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("                placeholder = $placeholderComposable,")
             }
             out.appendText("                customizations = customizations,\n")
-            out.appendText("                modifier = modifier,\n")
+            out.appendText(
+                "                modifier = modifier.semantics { sDocClass = className},\n"
+            )
             out.appendText(
                 "                serverParams = DocumentServerParams(queries, ignoredImages()),\n"
             )
@@ -1007,6 +1037,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, textFunctionCustomizations)
                 CustomizationType.Image ->
                     addCustomization(valueParameter, annotation, imageCustomizations)
+                CustomizationType.Brush ->
+                    addCustomization(valueParameter, annotation, brushCustomizations)
+                CustomizationType.BrushFunction ->
+                    addCustomization(valueParameter, annotation, brushFunctionCustomizations)
                 CustomizationType.Modifier ->
                     addCustomization(valueParameter, annotation, modifierCustomizations)
                 CustomizationType.TapCallback ->

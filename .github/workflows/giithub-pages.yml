@@ -49,14 +49,14 @@ jobs:
         working-directory: docs
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
           egress-policy: audit
 
       - name: Checkout
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - name: Setup Ruby
-        uses: ruby/setup-ruby@5cfe23c062c0aac352e765b1b7cc12ea5255ccc4 # v1.156.0
+        uses: ruby/setup-ruby@af848b40be8bb463a751551a1180d74782ba8a72 # v1.162.0
         with:
           ruby-version: '3.1' # Not needed with a .ruby-version file
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
@@ -64,7 +64,7 @@ jobs:
           working-directory: '${{ github.workspace }}/docs'
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@f156874f8191504dae5b037505266ed5dda6c382 # v3.0.6
+        uses: actions/configure-pages@1f0c5cde4bc74cd7e1254d0cb4de8d49e9068c7d # v4.0.0
       - name: Build with Jekyll
         # Outputs to the './_site' directory by default
         run: |
@@ -88,10 +88,10 @@ jobs:
     needs: build
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
           egress-policy: audit
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@9dbe3824824f8a1377b8e298bafde1a50ede43e5 # v2.0.4
+        uses: actions/deploy-pages@13b55b33dd8996121833dbc1db458c793a334630 # v3.0.1

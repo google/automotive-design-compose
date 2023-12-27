@@ -32,11 +32,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
           egress-policy: audit
 
       - name: 'Checkout Repository'
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@6c5ccdad469c9f8a2996bfecaec55a631a347034 # v3.1.0
+        uses: actions/dependency-review-action@01bc87099ba56df1e897b6874784491ea6309bc4 # v3.1.4
+        with:
+          # This will cause the dependency graph workflow to re-run if new dependencies are uploaded
+          # by a job that finishes after this one. Specifically needed for the Gradle dependency snapshot upload
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 1200

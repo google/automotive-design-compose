@@ -28,6 +28,7 @@ updates:
     directory: /
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
+    target-branch: "feature/rustlayout"
     groups:
       github-workflow-dependency-patches:
         update-types:
@@ -43,6 +44,7 @@ updates:
     directory: "/.github/actions/build-figma-resource"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
+    target-branch: "feature/rustlayout"
     groups:
       github-action-dependency-patches:
         update-types:
@@ -56,6 +58,7 @@ updates:
     directory: /
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
+    target-branch: "feature/rustlayout"
     allow:
       - dependency-type: "all"
     groups:
@@ -71,6 +74,7 @@ updates:
     directory: /docs
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
+    target-branch: "feature/rustlayout"
     groups:
       jekyll-dependency-patches:
         update-types:
@@ -83,6 +87,7 @@ updates:
     directory: /support-figma/auto-content-preview-widget
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
+    target-branch: "feature/rustlayout"
     groups:
       figma-widget-dependency-patches:
         update-types:
@@ -95,6 +100,7 @@ updates:
     directory: /support-figma/extended-layout-plugin
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
+    target-branch: "feature/rustlayout"
     groups:
       figma-plugin-dependency-patches:
         update-types:
@@ -110,6 +116,7 @@ updates:
     - gradle-plugin-portal
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
+    target-branch: "feature/rustlayout"
     # Dependabot groups seem to be busted for Gradle. Uncommenting this will prevent
     # PRs from being created for Gradle dependencies.
     # groups:

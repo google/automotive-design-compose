@@ -17,7 +17,6 @@
 package com.android.designcompose
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.tooling.preview.Preview
@@ -58,9 +57,7 @@ class RenderTests {
 
         composeTestRule.waitForIdle()
 
-        composeTestRule
-            .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, designSwitcherDocId()))
-            .assertExists()
+        composeTestRule.onDCDoc(DesignSwitcherDoc).assertExists()
         with(DesignSettings.testOnlyFigmaFetchStatus(designSwitcherDocId())) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)
@@ -72,20 +69,16 @@ class RenderTests {
     /** Test that a missing serialized file will cause the correct behavior */
     @Test
     fun missingSerializedFileDoesNotRender() {
-        composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "No one") }
-        composeTestRule.waitForIdle()
+        with(composeTestRule) {
+            setContent { HelloWorldDoc.mainFrame(name = "No one") }
 
-        // Test that...
-        // No doc is rendered with this ID
-        composeTestRule
-            .onNode(SemanticsMatcher.keyIsDefined(docIdSemanticsKey))
-            .assertDoesNotExist()
+            onDCDoc(HelloWorldDoc).assertDoesNotExist()
+            assertDCRenderStatus(DocRenderStatus.NotAvailable)
 
-        // The Node not found screen is shown
-        composeTestRule
-            .onNodeWithText("Document $helloWorldDocId not available", substring = true)
-            .assertExists()
-
+            // The Node not found screen is shown
+            onNodeWithText("Document $helloWorldDocId not available", substring = true)
+                .assertExists()
+        }
         // It was not loaded from disk and did not render
         with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
             assertNotNull(this)

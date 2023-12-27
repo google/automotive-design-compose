@@ -14,44 +14,46 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.testapp.helloworld
+package com.android.designcompose.figmaIntegrationTests
 
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.designcompose.DesignSettings
+import com.android.designcompose.DocRenderStatus
+import com.android.designcompose.HelloWorldDoc
+import com.android.designcompose.HelloWorldWrongNodeDoc
 import com.android.designcompose.TestUtils
-import com.android.designcompose.docIdSemanticsKey
-import kotlin.test.assertNotNull
+import com.android.designcompose.assertDCRenderStatus
+import com.android.designcompose.assertRenderStatus
+import com.android.designcompose.onDCDoc
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class TestFetchAndRender {
+class DocRenderSemanticBehavior {
     @get:Rule val composeTestRule = createComposeRule()
 
     @Before
     fun setup() {
+        // Clear any previously cached files
         InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
     }
 
     @Test
-    fun testHello() {
-        composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
-        TestUtils.triggerLiveUpdate()
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onNode(SemanticsMatcher.expectValue(docIdSemanticsKey, helloWorldDocId))
-            .assertExists()
-
-        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
-            assertNotNull(this)
-            assertNotNull(lastLoadFromDisk)
-            assertNotNull(lastFetch)
-            assertNotNull(lastUpdateFromFetch)
+    fun docIsRenderedAfterLoad() {
+        with(composeTestRule) {
+            setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
+            TestUtils.triggerLiveUpdate()
+            onDCDoc(HelloWorldDoc).assertRenderStatus(DocRenderStatus.Rendered)
         }
+    }
 
-        composeTestRule.onNodeWithText("Testers!", substring = true).assertExists()
+    @Test
+    fun docWithBadNodeSaysNodeNotFound() {
+        with(composeTestRule) {
+            setContent { HelloWorldWrongNodeDoc.nonExistentFrame() }
+            TestUtils.triggerLiveUpdate()
+            onDCDoc(HelloWorldWrongNodeDoc).assertDoesNotExist()
+            assertDCRenderStatus(DocRenderStatus.NodeNotFound)
+        }
     }
 }

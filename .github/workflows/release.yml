@@ -55,6 +55,10 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: "Set environment variables"
+        run: |
+          echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.5.2
 
       - name: Set up Java
@@ -90,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: designcompose_m2repo
-          path: build/designcompose_m2repo
+          path: designcompose_m2repo
 
   upload-release:
     runs-on: ubuntu-latest
@@ -112,7 +116,7 @@ jobs:
           zip -q -r designcompose_m2repo-${{ github.ref_name }}.zip designcompose_m2repo/
           zip -q -r extended-layout-plugin-${{ github.ref_name }}.zip extended-layout-plugin/
           zip -q -r auto-content-preview-widget-${{ github.ref_name }}.zip auto-content-preview-widget/
-      
+
       - name: Upload release artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -47,26 +47,14 @@ internal object SquooshLayout {
 
     internal fun doLayout(rootLayoutId: Int, layoutNodeList: LayoutNodeList): Map<Int, Layout> {
         val serializedNodes = serialize(layoutNodeList)
-        var response: ByteArray?
-        val performLayoutTime = measureTimeMillis {
-            response = Jni.jniAddNodes(rootLayoutId, serializedNodes)
-        }
-        if (response == null) return emptyMap()
-        var layoutChangedResponse: LayoutChangedResponse?
-        val layoutDeserializeTime = measureTimeMillis {
-            layoutChangedResponse =
-                LayoutChangedResponse.deserialize(BincodeDeserializer(response))
-        }
-        Log.d(TAG, "doLayout: perform layout $performLayoutTime ms, response deser.: $layoutDeserializeTime ms, computed ${layoutChangedResponse!!.changed_layouts.size} nodes, for root: $rootLayoutId")
-        return layoutChangedResponse!!.changed_layouts
+        val response = Jni.jniAddNodes(rootLayoutId, serializedNodes) ?: return emptyMap()
+        val layoutChangedResponse = LayoutChangedResponse.deserialize(BincodeDeserializer(response))
+        return layoutChangedResponse.changed_layouts
     }
 
     private fun serialize(layoutNodeList: LayoutNodeList): ByteArray {
         val nodeListSerializer = BincodeSerializer()
-        val serializeTime = measureTimeMillis {
-            layoutNodeList.serialize(nodeListSerializer)
-        }
-        Log.d(TAG, "doLayout serialize time $serializeTime ms for ${layoutNodeList.layout_nodes.size} nodes")
+        layoutNodeList.serialize(nodeListSerializer)
         return nodeListSerializer._bytes
     }
 }

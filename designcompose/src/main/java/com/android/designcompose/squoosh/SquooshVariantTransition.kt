@@ -17,6 +17,10 @@
 package com.android.designcompose.squoosh
 
 import android.util.Log
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.serdegen.Bezier
 import com.android.designcompose.serdegen.Transition
@@ -117,11 +121,15 @@ internal class SquooshVariantTransition {
     /// The set of view ids that we need to create transitions for on this iteration. We'll make
     /// the transitions during the second phase. In the first phase we just record the "from" id
     /// after the variant name has been resolved to a view.
-    /*private*/ internal val newTransitions: HashMap<String, String> = HashMap()
+    private val newTransitions: HashMap<String, String> = HashMap()
 
     /// Some counter of ids for transitions. We count down instead of up, to be unique from the
     /// interaction state ids.
     private var transitionId: Int = -1
+
+    /// Did we add or update transitions on the most recent pass? If so, we might need to invalidate
+    /// the list of transitions that our clients are listening to.
+    private var didUpdateTransitions = false
 
     /// resolveVariantsRecursively asks us which variant to render. If we're in the base phase
     /// AND we previously rendered a different variant AND there's a transition defined between
@@ -138,14 +146,12 @@ internal class SquooshVariantTransition {
             // If we're currently transitioning this view, then if the most recent update didn't
             // change the targetNodeName, we still want to run the transition.
             val transition = transitions[viewId]
-            if (transition != null) {
-                Log.d(TAG, "selectVariant $viewId is already transitioning from: ${transition.fromNodeId} to ${transition.toNodeId}; updated is ${targetNodeName}")
-                if (targetNodeName == transition.toName) return transition.fromName
-            }
+            if (transition != null && targetNodeName == transition.toName)return transition.fromName
 
+            // If this variant hasn't changed since the last render then just let it continue to
+            // be.
             if (lastVariantName == targetNodeName || lastVariantName == null) {
                 // Nothing to do; it didn't change.
-                Log.d(TAG, "selectVariant base to $targetNodeName no change! (given target for ${viewId})")
                 return targetNodeName
             }
             // Ok, we've observed a change. If the old variant has a transition to this one
@@ -165,14 +171,11 @@ internal class SquooshVariantTransition {
             newTransitions[viewId] = NullNodeName // Use NullNodeName because we don't know the node id yet.
 
             if (lastVariantName == NullNodeName) {
-                Log.d(TAG, "selectVariant old variant on base phase to null (previous was null) for $viewId")
                 return null
             }
-            Log.d(TAG, "selectVariant base to $lastVariantName for $viewId")
             return lastVariantName
         }
 
-        Log.d(TAG, "selectVariant transition to target $targetNodeName for $viewId")
         // Ok, now we're in the second phase. We always transition *to* the current value from
         // whatever the old value was. So we just return the targetNodeName here.
         return targetNodeName
@@ -220,6 +223,7 @@ internal class SquooshVariantTransition {
                         1f
                     )
                 )
+                didUpdateTransitions = true
             } else {
                 // Hmm! What do we do here? We probably need to remember a different
                 // "fromId", but what could that be?
@@ -234,16 +238,41 @@ internal class SquooshVariantTransition {
         lastState = nextState
         nextState = HashMap()
         newTransitions.clear()
+        if (didUpdateTransitions)
+            invalTransitions()
+        didUpdateTransitions = false
     }
 
     internal fun completedAnimatedVariant(anim: VariantAnimationInfo) {
         transitions.remove(anim.nodeId)
         Log.d(TAG, "completed variant animation: ${anim.nodeId}, now there are ${transitions.size} active transitions")
+        invalTransitions()
     }
 
     internal fun failedAnimatedVariant(anim: VariantAnimationInfo) {
         transitions.remove(anim.nodeId)
         newTransitions.remove(anim.nodeId)
         Log.d(TAG, "failed to execute variant anim: ${anim.nodeId}, now there are ${transitions.size} active transitions")
+        invalTransitions()
+    }
+
+    private val transitionSubscriptions: ArrayList<() -> Unit> = ArrayList()
+    @Composable
+    internal fun transitions(): List<VariantAnimationInfo> {
+        val (txs, setTxs) = remember { mutableStateOf(transitions.values.toList()) }
+        val updateTxs = { setTxs(transitions.values.toList()) }
+
+        DisposableEffect(0) {
+            transitionSubscriptions.add(updateTxs)
+            onDispose { transitionSubscriptions.remove(updateTxs) }
+        }
+
+        return txs
+    }
+
+    private fun invalTransitions() {
+        for (sub in transitionSubscriptions.toList()) {
+            sub()
+        }
     }
 }

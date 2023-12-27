@@ -331,7 +331,7 @@ class MediaAdapter(
             MediaBrowserConnector.ConnectionStatus.CONNECTED -> {
                 Log.i(
                     TAG,
-                    "Media Browse State CONNECTED ${newBrowsingState.mMediaSource.displayName}"
+                    "Media Browse State CONNECTED ${newBrowsingState.mMediaSource.getDisplayName(context)}"
                 )
                 val browser = newBrowsingState.mBrowser
                 canSearch.value = MediaBrowserViewModelImpl.getSupportsSearch(browser)
@@ -655,7 +655,7 @@ class MediaAdapter(
                     },
                     openLinkCallback = null,
                     sourceButtonType = getSourceButtonType(index),
-                    title = source.displayName as String,
+                    title = source.getDisplayName(context) as String,
                     icon = source.croppedPackageIcon,
                     showResults = false,
                     numResults = "",

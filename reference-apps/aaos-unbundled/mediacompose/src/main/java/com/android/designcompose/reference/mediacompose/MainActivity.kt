@@ -348,7 +348,7 @@ class MainActivity : ComponentActivity() {
             album = nowPlaying.album,
             albumArt = nowPlaying.albumArt,
             appIcon = mediaSource?.croppedPackageIcon,
-            appName = mediaSource?.displayName as String,
+            appName = mediaSource?.getDisplayName(applicationContext) as String,
             timeElapsed = { mediaAdapter.getNowPlayingProgress().currentTimeText },
             timeDuration = { mediaAdapter.getNowPlayingProgress().maxTimeText },
             progress = { mediaAdapter.getNowPlayingProgress().progressWidth * 100F },

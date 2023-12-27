@@ -145,7 +145,6 @@ The properties file that is committed already includes the following optimizatio
 - Parallel builds
 - Build caching
 - Configuration caching
-- Android's Jetifier is disabled
 - Increased the JVM memory allotment to 4GB
 
 You can optionally add these to your personal gradle.properties:

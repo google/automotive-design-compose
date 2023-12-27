@@ -10,7 +10,7 @@ The directories here contain reference apps for DesignCompose. They are:
 
 All three apps are included in the core DesignCompose Gradle project and should be built from and developed there.
 
-The Tutorial and MediaCompose apps have their own standalone projects, allowing them to be built using published DesignCompose releases and without needing to build the DesignCompose SDK. 
+Each app also has their own standalone project, allowing them to be built using published DesignCompose releases and without needing to build the DesignCompose SDK.
 
 ## Depending on the DesignCompose SDK
 

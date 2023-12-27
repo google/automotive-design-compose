@@ -19,6 +19,8 @@ settingsEvaluated {
         "Init script is overwriting declared repositories to use a local DesignCompose maven repo"
     )
     val DesignComposeMavenRepo: String by settings
+    val unbundledAAOSDir: String? by settings
+
     dependencyResolutionManagement {
         repositories.clear()
         repositories {
@@ -29,6 +31,20 @@ settingsEvaluated {
             google() { content { excludeGroupByRegex("com\\.android\\.designcompose.*") } }
 
             mavenCentral()
+        }
+        if (!unbundledAAOSDir.isNullOrBlank()) {
+            val unbundledRepo =
+                File(unbundledAAOSDir, "out/aaos-apps-gradle-build/unbundled_m2repo")
+            if (unbundledRepo.exists()) {
+                dependencyResolutionManagement { repositories { maven(uri(unbundledRepo)) } }
+            } else {
+                throw GradleException(
+                    "Cannot find compiled Unbundled libraries, cannot proceed with build.\n" +
+                        "Go to $unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project \n" +
+                        "and run:\n" +
+                        "./gradlew publishAllPublicationsToLocalRepository"
+                )
+            }
         }
     }
     pluginManagement {

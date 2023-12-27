@@ -60,14 +60,15 @@ include("tutorial-app")
 
 project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
 
-val unbundledAAOSDir: String? by settings
+// Optionally include the AAOS Unbundled projects if `unbundledAAOSDir` is set.
 
-println(unbundledAAOSDir)
+val unbundledAAOSDir: String? by settings
 
 if (unbundledAAOSDir.isNullOrBlank()) {
     logger.warn("unbundledAAOSDir not set, cannot include MediaCompose in the project")
 } else {
-    logger.info("unbundledAAOSDir set, including MediaCompose in the project")
+    logger.warn("unbundledAAOSDir set, including MediaCompose in the project")
+    logger.warn("See reference-apps/aaos-unbundled/README.md for set-up")
 
     val unbundledRepo = File(unbundledAAOSDir, "out/aaos-apps-gradle-build/unbundled_m2repo")
     if (unbundledRepo.exists()) {
@@ -81,7 +82,8 @@ if (unbundledAAOSDir.isNullOrBlank()) {
     } else {
         throw GradleException(
             "Cannot find compiled Unbundled libraries, cannot proceed with build.\n" +
-                "Go to $unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project \n" +
+                "Make sure your Unbundled repo is up to date, then \n" +
+                "go to $unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project \n" +
                 "and run:\n" +
                 "./gradlew publishAllPublicationsToLocalRepository"
         )

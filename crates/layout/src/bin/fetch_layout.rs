@@ -192,6 +192,7 @@ fn test_layout(
     }
 
     if parent_layout_id == -1 {
+        layout_manager.set_node_size(0, 0, 1200, 800);
         layout_manager.compute_node_layout(my_id);
     }
 }

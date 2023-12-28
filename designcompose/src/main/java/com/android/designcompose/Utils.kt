@@ -639,23 +639,22 @@ internal fun View.isMask(): Boolean {
     return this.data is ViewData.Container && (this.data as ViewData.Container).shape.isMask()
 }
 
-// Returns whether this view is the parent view of a list widget preview node. Since the list
-// widget preview node also has a child that is the actual parent of the custom content, we need
-// to check that the grandchild of this view has the grid_layout set in its style.
-internal fun View.isWidgetParent(): Boolean {
+// Returns whether this view should use infinite constraints on its children. This is true if two
+// things are true:
+// First, the view has a child that has a grid_layout field in its style, meaning it was created
+// using the list preview widget.
+// Second, the position_type is relative, which is only set if the widget layout parameters are set
+// to hug contents.
+internal fun View.useInfiniteConstraints(): Boolean {
+    if (style.position_type !is PositionType.Relative) return false
+
     if (data !is ViewData.Container) return false
 
     val container = data as ViewData.Container
     if (container == null || container.children.size != 1) return false
 
     val child = container.children.first()
-    if (child.data !is ViewData.Container) return false
-
-    val childContainer = child.data as ViewData.Container
-    if (childContainer == null || childContainer.children.size != 1) return false
-
-    val grandChild = childContainer.children.first()
-    return grandChild.style.grid_layout.isPresent
+    return child.style.grid_layout.isPresent
 }
 
 internal fun ViewShape.isMask(): Boolean {
@@ -1250,22 +1249,27 @@ internal fun getNodeRenderSize(
     overrideSize: Size?,
     layoutSize: Size,
     style: ViewStyle,
+    layoutId: Int,
     density: Float
 ): Size {
     // If an override size exists, use it. This is typically a size programmatically set for a dial
     // or gauge.
     if (overrideSize != null) return overrideSize
-    // If the style in the node is fixed width, use it instead of the layout size so that we respect
-    // rotations, since the layout size is the bounding box for a rotated node. Otherwise use the
-    // layout size. We do not yet support rotated nodes with non-fixed constraints.
+    // If the layout manager has saved this node as one whose size has been modified, or if the size
+    // in the style of the node is not fixed, use the layout size. Otherwise, use the fixed size
+    // specified in the style so that we respect rotations, since the layout size is the bounding
+    // box for a rotated node. We do not yet support rotated nodes with non-fixed constraints.
+    val hasModifiedSize = LayoutManager.hasModifiedSize(layoutId)
     val width =
-        if (style.width is Dimension.Points) style.width.pointsAsDp(density).value
-        else layoutSize.width
+        if (hasModifiedSize || style.width !is Dimension.Points) layoutSize.width
+        else style.width.pointsAsDp(density).value
     val height =
-        if (style.height is Dimension.Points) style.height.pointsAsDp(density).value
-        else layoutSize.height
+        if (hasModifiedSize || style.height !is Dimension.Points) layoutSize.height
+        else style.height.pointsAsDp(density).value
     return Size(width, height)
 }
+
+internal fun com.android.designcompose.serdegen.Size.isValid(): Boolean = width >= 0 && height >= 0
 
 internal fun Layout.withDensity(density: Float): Layout {
     return Layout(

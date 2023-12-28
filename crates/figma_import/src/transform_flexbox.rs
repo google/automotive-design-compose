@@ -35,7 +35,7 @@ use crate::{
         BlendMode, Component, ComponentSet, EffectType, HorizontalLayoutConstraintValue,
         LayoutAlign, LayoutAlignItems, LayoutMode, LayoutSizing, LayoutSizingMode, LineHeightUnit,
         Node, NodeData, PaintData, StrokeAlign, TextAlignHorizontal, TextAlignVertical,
-        TextAutoResize, TextTruncation, Vector, VerticalLayoutConstraintValue,
+        TextAutoResize, TextTruncation, VerticalLayoutConstraintValue,
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
@@ -240,7 +240,13 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
     }
 
     // Setup widget size to expand to its parent
-    if node.is_widget() {
+    let mut is_widget_or_parent_widget = node.is_widget();
+    if let Some(parent) = parent {
+        if !is_widget_or_parent_widget {
+            is_widget_or_parent_widget = parent.is_widget();
+        }
+    }
+    if is_widget_or_parent_widget {
         style.position_type = PositionType::Absolute;
         style.width = Dimension::Auto;
         style.height = Dimension::Auto;
@@ -1303,25 +1309,15 @@ fn visit_node(
         }
     };
 
-    // Save the vector frame size which is needed to compare against the
-    // runtime frame size to calculate the scaling factor if a vector's
-    // constraints are set to scale.
-    let vector_size: Option<(f32, f32)> = None;
-    //if let Some(Vector { x: Some(x), y: Some(y) }) = &node.size {
-    //vector_size = Some((*x, *y));
-    //}
     // Figure out the ViewShape from the node type.
     let view_shape = match &node.data {
         NodeData::BooleanOperation { vector, .. }
         | NodeData::Line { vector }
         | NodeData::RegularPolygon { vector }
         | NodeData::Star { vector }
-        | NodeData::Vector { vector } => ViewShape::Path {
-            path: fill_paths,
-            stroke: stroke_paths,
-            size: vector_size,
-            is_mask: vector.is_mask,
-        },
+        | NodeData::Vector { vector } => {
+            ViewShape::Path { path: fill_paths, stroke: stroke_paths, is_mask: vector.is_mask }
+        }
         // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
         // to support progress bars. If this node is set up as a progress bar, the renderer will
         // construct the rectangle, modified by progress bar parameters. Otherwise it will be
@@ -1344,7 +1340,6 @@ fn visit_node(
             sweep_angle_degrees: arc_data.ending_angle,
             inner_radius: arc_data.inner_radius,
             corner_radius: 0.0, // corner radius is only exposed in the plugin data
-            size: vector_size,
             is_mask: vector.is_mask,
         },
         NodeData::Frame { frame }

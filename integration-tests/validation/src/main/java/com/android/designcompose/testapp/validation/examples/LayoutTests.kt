@@ -19,6 +19,7 @@ package com.android.designcompose.testapp.validation.examples
 import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -118,6 +119,7 @@ fun LayoutTests() {
     val (showRect2, setShowRect2) = remember { mutableStateOf(true) }
 
     LayoutTestsDoc.Main(
+        modifier = Modifier.fillMaxWidth(0.5F),
         name = "LongerText",
         nameAutoWidth = loremText.subSequence(0, autoWidthLen).toString(),
         nameAutoHeight = loremText.subSequence(0, autoHeightLen).toString(),

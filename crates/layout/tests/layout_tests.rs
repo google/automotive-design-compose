@@ -343,6 +343,105 @@ fn test_horizontal_fill_resize() {
     assert!(auto_fill_width.height == 70.0);
 }
 
+#[test]
+fn test_constraints_lr() {
+    let figma_doc_result = load_doc();
+    let mut manager = load_view("ConstraintsLayoutLR", &figma_doc_result.unwrap());
+
+    // Change root node size and check that child stretches correctly
+    let result = manager.set_node_size(0, 0, 200, 200);
+    assert!(result.changed_layouts.contains_key(&1));
+
+    let child_layout_result = manager.get_node_layout(1);
+    assert!(child_layout_result.is_some());
+    let child_layout = child_layout_result.unwrap();
+    assert!(child_layout.width == 150.0);
+    assert!(child_layout.height == 50.0);
+}
+
+#[test]
+fn test_constraints_tb() {
+    let figma_doc_result = load_doc();
+    let mut manager = load_view("ConstraintsLayoutTB", &figma_doc_result.unwrap());
+
+    // Change root node size and check that child stretches correctly
+    let result = manager.set_node_size(0, 0, 200, 200);
+    assert!(result.changed_layouts.contains_key(&1));
+
+    let child_layout_result = manager.get_node_layout(1);
+    assert!(child_layout_result.is_some());
+    let child_layout = child_layout_result.unwrap();
+    assert!(child_layout.width == 50.0);
+    assert!(child_layout.height == 150.0);
+}
+
+#[test]
+fn test_constraints_lrtb() {
+    let figma_doc_result = load_doc();
+    let mut manager = load_view("ConstraintsLayoutLRTB", &figma_doc_result.unwrap());
+
+    // Change root node size and check that child stretches correctly
+    let result = manager.set_node_size(0, 0, 200, 200);
+    assert!(result.changed_layouts.contains_key(&1));
+
+    let child_layout_result = manager.get_node_layout(1);
+    assert!(child_layout_result.is_some());
+    let child_layout = child_layout_result.unwrap();
+    assert!(child_layout.width == 150.0);
+    assert!(child_layout.height == 150.0);
+}
+
+#[test]
+fn test_constraints_center() {
+    let figma_doc_result = load_doc();
+    let mut manager = load_view("ConstraintsLayoutCenter", &figma_doc_result.unwrap());
+
+    // Change root node size and check that child stretches correctly
+    let result = manager.set_node_size(0, 0, 200, 200);
+    assert!(result.changed_layouts.contains_key(&1));
+
+    let child_layout_result = manager.get_node_layout(1);
+    assert!(child_layout_result.is_some());
+    let child_layout = child_layout_result.unwrap();
+    assert!(child_layout.width == 50.0);
+    assert!(child_layout.height == 50.0);
+    assert!(child_layout.left == 75.0);
+    assert!(child_layout.top == 75.0);
+}
+
+#[test]
+fn test_constraints_widget() {
+    let figma_doc_result = load_doc();
+    let mut manager = load_view("ConstraintsLayoutWidget", &figma_doc_result.unwrap());
+
+    // Change root node size and check that the widget stretches correctly
+    let result = manager.set_node_size(0, 0, 200, 200);
+    assert!(result.changed_layouts.contains_key(&1));
+    assert!(result.changed_layouts.contains_key(&2));
+    assert!(result.changed_layouts.contains_key(&3));
+
+    // Widget parent has constraints set, so it should stretch
+    let widget_parent_layout_result = manager.get_node_layout(1);
+    assert!(widget_parent_layout_result.is_some());
+    let widget_parent_layout = widget_parent_layout_result.unwrap();
+    assert!(widget_parent_layout.width == 150.0);
+    assert!(widget_parent_layout.height == 150.0);
+
+    // Widget itself should fit to size of parent
+    let widget_layout_result = manager.get_node_layout(2);
+    assert!(widget_layout_result.is_some());
+    let widget_layout = widget_layout_result.unwrap();
+    assert!(widget_layout.width == 150.0);
+    assert!(widget_layout.height == 150.0);
+
+    // Widget child contains the actual data and should also be the same size
+    let widget_child_layout_result = manager.get_node_layout(3);
+    assert!(widget_child_layout_result.is_some());
+    let widget_child_layout = widget_child_layout_result.unwrap();
+    assert!(widget_child_layout.width == 150.0);
+    assert!(widget_child_layout.height == 150.0);
+}
+
 // Add tests:
 //
 // 2. Nodes in horizontal layout

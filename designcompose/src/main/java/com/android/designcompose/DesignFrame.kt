@@ -181,7 +181,17 @@ internal fun DesignFrame(
     // Only render the frame if we don't have a replacement node and layout is absolute
     val shape = (view.data as ViewData.Container).shape
     if (replacementComponent == null && layoutInfo.shouldRender())
-        m = m.frameRender(style, shape, customImage, document, name, customizations, maskInfo)
+        m =
+            m.frameRender(
+                style,
+                shape,
+                customImage,
+                document,
+                name,
+                customizations,
+                maskInfo,
+                layoutId
+            )
 
     val lazyContent = customizations.getListContent(name)
 
@@ -586,9 +596,8 @@ internal fun DesignFrame(
         is LayoutInfoAbsolute -> {
             // Use our custom layout to render the frame and to place its children
             m = m.then(Modifier.layoutStyle(name, layoutId))
-            // TODO add support to use layout modifiers passed in
-            // m = m.then(layoutInfo.selfModifier)
-            DesignFrameLayout(m, view, layoutId, layoutState) { content() }
+            m = m.then(layoutInfo.selfModifier)
+            DesignFrameLayout(m, view, layoutId, rootLayoutId, layoutState) { content() }
         }
     }
 
@@ -604,6 +613,7 @@ internal fun Modifier.frameRender(
     name: String,
     customizations: CustomizationContext,
     maskInfo: MaskInfo?,
+    layoutId: Int,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -616,6 +626,7 @@ internal fun Modifier.frameRender(
                     document,
                     name,
                     customizations,
+                    layoutId
                 )
 
             when (maskInfo?.type ?: MaskViewType.None) {

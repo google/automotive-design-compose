@@ -41,10 +41,25 @@ We recommend writing TypeScript code using Visual Studio code:
 That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
 
 ## Adding the widget to Figma
+
 To add the development version of the widget, you need to be running the Figma desktop application on a Windows or MacOS machine.
 
-* In a doc, right-click and open the widget menu.
-* Select "Development"
-* Select "Import widget from manifest"
-* Navigate to your `manifest.json` and press OK.
-* Once you've done this once, the widget will be available directly in the "Development" menu option.
+- In a doc, right-click and open the widget menu.
+- Select "Development"
+- Select "Import widget from manifest"
+- Navigate to your `manifest.json` and press OK.
+- Once you've done this once, the widget will be available directly in the "Development" menu option.
+
+## Network access restrictions
+
+> [!TIP]
+> You can use the `devAllowedDomains` field to define domains that you need
+> access to for development purposes.
+
+The [manifest.json](manifest.json) file defines an allowlist of domains that the
+widget is permitted to load [cross-origin resources] from. Any changes that
+introduce dependencies on origins not covered by the existing allowlist will
+need to update the [networkAccess] field in the widget's manifest file.
+
+[cross-origin resources]: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+[networkAccess]: https://www.figma.com/widget-docs/widget-manifest/#networkaccess

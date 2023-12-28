@@ -155,8 +155,6 @@ run_cmd "Main Project: Build" . \
 run_cmd "Build and Test Build Logic" build-logic ./gradlew build
 run_cmd "Build and Test Plugins" plugins ./gradlew build
 
-run_cmd "Build Unbundled projects" reference-apps/aaos-unbundled ./gradlew build
-
 run_cmd "Build plugin" support-figma/extended-layout-plugin \
   npm ci run build
 

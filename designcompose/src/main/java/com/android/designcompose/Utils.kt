@@ -1245,6 +1245,28 @@ internal fun StrokeWeight.right(): Float {
 internal fun ViewStyle.isAutoWidthText() =
     width is Dimension.Auto && horizontal_sizing !is LayoutSizing.FILL
 
+// Return the size of a node used to render the node.
+internal fun getNodeRenderSize(
+    overrideSize: Size?,
+    layoutSize: Size,
+    style: ViewStyle,
+    density: Float
+): Size {
+    // If an override size exists, use it. This is typically a size programmatically set for a dial
+    // or gauge.
+    if (overrideSize != null) return overrideSize
+    // If the style in the node is fixed width, use it instead of the layout size so that we respect
+    // rotations, since the layout size is the bounding box for a rotated node. Otherwise use the
+    // layout size. We do not yet support rotated nodes with non-fixed constraints.
+    val width =
+        if (style.width is Dimension.Points) style.width.pointsAsDp(density).value
+        else layoutSize.width
+    val height =
+        if (style.height is Dimension.Points) style.height.pointsAsDp(density).value
+        else layoutSize.height
+    return Size(width, height)
+}
+
 internal fun Layout.withDensity(density: Float): Layout {
     return Layout(
         this.order,

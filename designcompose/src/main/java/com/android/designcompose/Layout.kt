@@ -73,6 +73,7 @@ internal data class TextMeasureData(
 )
 
 internal object LayoutManager {
+    private var managerId: Int = 0
     private val subscribers: HashMap<Int, (Int) -> Unit> = HashMap()
     private val layoutsInProgress: HashSet<Int> = HashSet()
     private var textMeasures: HashMap<Int, TextMeasureData> = HashMap()
@@ -81,6 +82,10 @@ internal object LayoutManager {
     private var density: Float = 1F
     private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
     private var layoutCache: HashMap<Int, Layout> = HashMap()
+
+    init {
+        managerId = Jni.jniCreateLayoutManager()
+    }
 
     internal fun getNextLayoutId(): Int {
         return ++nextLayoutId
@@ -178,7 +183,7 @@ internal object LayoutManager {
         // true, or if we are not a widget ancestor. We don't want to compute layout when ancestors
         // of a widget are removed because this happens constantly in a lazy grid view.
         val computeLayout = performLayoutComputation && !isWidgetAncestor
-        val responseBytes = Jni.jniRemoveNode(layoutId, rootLayoutId, computeLayout)
+        val responseBytes = Jni.jniRemoveNode(managerId, layoutId, rootLayoutId, computeLayout)
         handleResponse(responseBytes)
         if (computeLayout) Log.d(TAG, "Unsubscribe $layoutId, compute layout")
     }
@@ -209,7 +214,8 @@ internal object LayoutManager {
                 val nodeListSerializer = BincodeSerializer()
                 layoutNodeList.serialize(nodeListSerializer)
                 val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-                val responseBytes = Jni.tracedJniAddNodes(rootLayoutId, serializedNodeList)
+                val responseBytes =
+                    Jni.tracedJniAddNodes(managerId, rootLayoutId, serializedNodeList)
                 handleResponse(responseBytes)
                 layoutNodes.clear()
             }
@@ -256,7 +262,7 @@ internal object LayoutManager {
         val adjustedWidth = (width.toFloat() / density).roundToInt()
         val adjustedHeight = (height.toFloat() / density).roundToInt()
         val responseBytes =
-            Jni.jniSetNodeSize(layoutId, rootLayoutId, adjustedWidth, adjustedHeight)
+            Jni.jniSetNodeSize(managerId, layoutId, rootLayoutId, adjustedWidth, adjustedHeight)
         handleResponse(responseBytes)
     }
 

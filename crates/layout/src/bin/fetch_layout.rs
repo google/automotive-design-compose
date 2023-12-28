@@ -19,9 +19,7 @@ use figma_import::{
     toolkit_schema::View,
     Document, NodeQuery, ProxyConfig, SerializedDesignDoc, ViewData,
 };
-use layout::{
-    add_style, add_style_measure, compute_node_layout, print_layout, remove_view, set_node_size,
-};
+use layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;
 use std::io::prelude::*;
@@ -116,6 +114,7 @@ fn measure_func(
     (result_width, result_height)
 }
 fn test_layout(
+    layout_manager: &mut LayoutManager,
     view: &View,
     id: &mut i32,
     parent_layout_id: i32,
@@ -135,7 +134,7 @@ fn test_layout(
             }
         }
         if use_measure_func {
-            add_style_measure(
+            layout_manager.add_style_measure(
                 my_id,
                 parent_layout_id,
                 child_index,
@@ -147,12 +146,13 @@ fn test_layout(
             let mut fixed_view = view.clone();
             fixed_view.style.width = Dimension::Points(view.style.bounding_box.width);
             fixed_view.style.height = Dimension::Points(view.style.bounding_box.height);
-            add_style(
+            layout_manager.add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
                 fixed_view.style.clone(),
                 fixed_view.name.clone(),
+                None,
                 Some(view.style.bounding_box.width as i32),
                 Some(view.style.bounding_box.height as i32),
             );
@@ -161,7 +161,7 @@ fn test_layout(
         if view.name.starts_with("#Replacement") {
             let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
             if let Some(square) = square {
-                add_style(
+                layout_manager.add_style(
                     my_id,
                     parent_layout_id,
                     child_index,
@@ -169,10 +169,11 @@ fn test_layout(
                     square.name.clone(),
                     None,
                     None,
+                    None,
                 );
             }
         } else {
-            add_style(
+            layout_manager.add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
@@ -180,17 +181,18 @@ fn test_layout(
                 view.name.clone(),
                 None,
                 None,
+                None,
             );
         }
         let mut index = 0;
         for child in children {
-            test_layout(child, id, my_id, index, views);
+            test_layout(layout_manager, child, id, my_id, index, views);
             index = index + 1;
         }
     }
 
     if parent_layout_id == -1 {
-        compute_node_layout(my_id);
+        layout_manager.compute_node_layout(my_id);
     }
 }
 fn fetch_impl(args: Args) -> Result<(), ConvertError> {
@@ -214,8 +216,9 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     let stage = views.get(&NodeQuery::NodeName("#stage".to_string()));
     if let Some(stage) = stage {
         let mut id = 0;
-        test_layout(stage, &mut id, -1, -1, &views);
-        print_layout(0);
+        let mut layout_manager = LayoutManager::new();
+        test_layout(&mut layout_manager, stage, &mut id, -1, -1, &views);
+        layout_manager.print_layout(0, |msg| println!("{}", msg));
     }
 
     /*

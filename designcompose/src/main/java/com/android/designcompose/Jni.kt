@@ -53,27 +53,43 @@ internal object Jni {
     ): ByteArray
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    external fun jniCreateLayoutManager(): Int
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniSetNodeSize(
+        managerId: Int,
         layoutId: Int,
         rootLayoutId: Int,
         width: Int,
         height: Int
     ): ByteArray?
 
-    fun tracedJniAddNodes(rootLayoutId: Int, serializedNodes: ByteArray): ByteArray? {
+    fun tracedJniAddNodes(
+        managerId: Int,
+        rootLayoutId: Int,
+        serializedNodes: ByteArray
+    ): ByteArray? {
         var result: ByteArray? = null
-        trace(DCTraces.JNIADDNODES) { result = jniAddNodes(rootLayoutId, serializedNodes) }
+        trace(DCTraces.JNIADDNODES) {
+            result = jniAddNodes(managerId, rootLayoutId, serializedNodes)
+        }
         return result
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniAddNodes(
+        managerId: Int,
         rootLayoutId: Int,
         serializedNodes: ByteArray,
     ): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniRemoveNode(layoutId: Int, rootLayoutId: Int, computeLayout: Boolean): ByteArray?
+    external fun jniRemoveNode(
+        managerId: Int,
+        layoutId: Int,
+        rootLayoutId: Int,
+        computeLayout: Boolean
+    ): ByteArray?
 
     init {
         System.loadLibrary("jni")

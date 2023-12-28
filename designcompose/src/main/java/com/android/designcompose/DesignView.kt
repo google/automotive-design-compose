@@ -86,6 +86,7 @@ import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -502,7 +503,7 @@ internal fun DesignView(
                     // event so that the interaction state can revert the change).
                     //
                     // The interaction test document covers all of these cases.
-                    interactionScope.launch {
+                    interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
                         beginSection("DesignView InteractionScope")
                         detectTapGestures(
                             onPress = {

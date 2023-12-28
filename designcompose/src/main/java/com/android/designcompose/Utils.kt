@@ -307,11 +307,11 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.text_shadow
         }
-    style.text_size =
-        if (override.text_size.width != 0.0f || override.text_size.height != 0.0f) {
-            override.text_size
+    style.node_size =
+        if (override.node_size.width != 0.0f || override.node_size.height != 0.0f) {
+            override.node_size
         } else {
-            base.text_size
+            base.node_size
         }
     style.line_height =
         if (!override.line_height.equals(LineHeight.Percent(1.0f))) {

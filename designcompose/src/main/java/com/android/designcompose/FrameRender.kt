@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
+import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.MeterData
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
@@ -106,8 +107,12 @@ private fun calculateRotationData(
         (rotationData.start + meterValue / 100f * (rotationData.end - rotationData.start))
             .coerceDiscrete(rotationData.discrete, rotationData.discreteValue)
 
-    val nodeWidth = style.width.pointsAsDp(density).value
-    val nodeHeight = style.height.pointsAsDp(density).value
+    val nodeWidth =
+        if (style.width is Dimension.Points) style.width.pointsAsDp(density).value
+        else style.node_size.width
+    val nodeHeight =
+        if (style.height is Dimension.Points) style.height.pointsAsDp(density).value
+        else style.node_size.height
 
     // Calculate offsets from parent when the rotation is 0
     val offsets =

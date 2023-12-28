@@ -253,7 +253,7 @@ internal fun DesignText(
             annotatedText,
             textStyle,
             LocalFontLoader.current,
-            style.text_size,
+            style.node_size,
             paragraph
         )
     val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE

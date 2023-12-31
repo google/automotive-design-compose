@@ -583,7 +583,6 @@ internal fun DesignSwitcher(
     val miniMessage = if (miniMessagesChecked) getMiniMessage() else ""
 
     DesignSwitcherDoc.SettingsView(
-        modifier = Modifier,
         mini_view_message = miniMessage,
         current_doc_name = doc?.c?.document?.name ?: "",
         last_mod_time = lastModifiedString,

@@ -286,6 +286,14 @@ internal fun resolveVariantsRecursively(
         for (overlay in overlays) {
             val overlayExtras = overlay.frame_extras.getOrNull() ?: continue
 
+            // We want to ensure that the background close interaction appears after the regular
+            // content but before the child content. We can't construct a `SquooshChildComposable`
+            // without the background node, which we use the style of the overlay itself to
+            // construct (although perhaps we should construct the overlay background from entirely
+            // whole cloth).
+            val interactionInsertionPoint = composableList.size
+
+            // Resolve the tree for the overlay content.
             val overlayContent = resolveVariantsRecursively(
                 overlay,
                 rootLayoutId,
@@ -303,7 +311,12 @@ internal fun resolveVariantsRecursively(
             ) ?: continue
 
             // Make a synthetic parent for the overlay.
-            val overlayContainer = generateOverlayNode(overlayExtras, overlayContent)
+            val overlayContainer = generateOverlayNode(
+                overlayExtras,
+                overlayContent,
+                rootLayoutId,
+                layoutIdAllocator
+            )
             // Append to the root
             var lastSibling = resolvedView.firstChild
             while (lastSibling?.nextSibling != null)
@@ -317,6 +330,7 @@ internal fun resolveVariantsRecursively(
             // click and closes, or takes the click and does nothing, so either way this is
             // the correct thing to do.
             composableList.add(
+                interactionInsertionPoint,
                 SquooshChildComposable(
                     component = null,
                     content = null,
@@ -331,7 +345,12 @@ internal fun resolveVariantsRecursively(
 }
 
 /// Create a SquooshResolvedNode for an overlay, with the appropriate layout style set up.
-private fun generateOverlayNode(overlay: FrameExtras, node: SquooshResolvedNode): SquooshResolvedNode {
+private fun generateOverlayNode(
+    overlay: FrameExtras,
+    node: SquooshResolvedNode,
+    rootLayoutId: Int,
+    layoutIdAllocator: SquooshLayoutIdAllocator
+): SquooshResolvedNode {
     // Make a view based on the child node which uses a synthesized style.
     val overlayStyle = node.style.asBuilder()
     overlayStyle.position_type = PositionType.Absolute()
@@ -353,9 +372,22 @@ private fun generateOverlayNode(overlay: FrameExtras, node: SquooshResolvedNode)
         }
         is OverlayPositionType.TOP_RIGHT -> {
             overlayStyle.justify_content = JustifyContent.FlexStart() // Y
-            overlayStyle.align_items = AlignItems.FlexEnd()
+            overlayStyle.align_items = AlignItems.FlexEnd() // X
         }
-        // XXX: COMPLETE
+        is OverlayPositionType.BOTTOM_LEFT -> {
+            overlayStyle.justify_content = JustifyContent.FlexEnd() // Y
+            overlayStyle.align_items = AlignItems.FlexStart() // X
+        }
+        is OverlayPositionType.BOTTOM_CENTER -> {
+            overlayStyle.justify_content = JustifyContent.FlexEnd() // Y
+            overlayStyle.align_items = AlignItems.Center() // X
+        }
+        is OverlayPositionType.BOTTOM_RIGHT -> {
+            overlayStyle.justify_content = JustifyContent.FlexEnd() // Y
+            overlayStyle.align_items = AlignItems.FlexEnd() // X
+        }
+        // Center and Manual both are centered; not clear how to implement manual positioning
+        // without making a layout-dependent query.
         else -> {
             overlayStyle.justify_content = JustifyContent.Center()
             overlayStyle.align_items = AlignItems.Center()
@@ -407,10 +439,13 @@ private fun generateOverlayNode(overlay: FrameExtras, node: SquooshResolvedNode)
     overlayView.design_absolute_bounding_box = Optional.empty()
     overlayView.render_method = RenderMethod.None()
 
+    val layoutId = rootLayoutId + node.layoutId + 0x20000000
+    layoutIdAllocator.visitLayoutId(layoutId)
+
     val overlayNode = SquooshResolvedNode(
         view = overlayView.build(),
         style = style,
-        layoutId = 0x20000000 + node.layoutId, // XXX: Dubious, need to rationalize all the ID mods
+        layoutId = layoutId,
         textInfo = null,
         unresolvedNodeId = "overlay-${node.unresolvedNodeId}",
         firstChild = node,

@@ -954,8 +954,11 @@ internal fun DesignDocInternal(
             docName = docName,
             incomingDocId = incomingDocId,
             rootNodeQuery = rootNodeQuery,
+            modifier = modifier,
             customizationContext = customizations,
             serverParams = serverParams,
+            setDocId = setDocId,
+            designSwitcherPolicy = designSwitcherPolicy,
             liveUpdateMode = liveUpdateMode,
             designComposeCallbacks = designComposeCallbacks
         )
@@ -976,8 +979,8 @@ internal fun DesignDocInternal(
     val isRoot = LocalDesignIsRootContext.current.isRoot
     val showDesignSwitcher =
         isRoot &&
-            designSwitcherPolicy == DesignSwitcherPolicy.SHOW_IF_ROOT &&
-            DesignSettings.liveUpdatesEnabled
+                designSwitcherPolicy == DesignSwitcherPolicy.SHOW_IF_ROOT &&
+                DesignSettings.liveUpdatesEnabled
     val rootFrameName =
         when (rootNodeQuery) {
             is NodeQuery.NodeName -> rootNodeQuery.value
@@ -1015,7 +1018,7 @@ internal fun DesignDocInternal(
             // Render debug node names, if turned on
             Box(Modifier.fillMaxSize()) { DebugNodeManager.DrawNodeNames() }
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
-                // DesignSwitcher(doc, docId, branchHash, switchDocId)
+                DesignSwitcher(doc, docId, branchHash, switchDocId)
             }
         }
     }

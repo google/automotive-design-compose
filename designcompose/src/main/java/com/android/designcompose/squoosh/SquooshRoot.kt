@@ -24,6 +24,7 @@ import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -34,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.ParentDataModifier
@@ -47,12 +49,16 @@ import com.android.designcompose.AnimatedAction
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignComposeCallbacks
+import com.android.designcompose.DesignSettings
+import com.android.designcompose.DesignSwitcher
+import com.android.designcompose.DesignSwitcherPolicy
 import com.android.designcompose.DocServer
 import com.android.designcompose.DocumentSwitcher
 import com.android.designcompose.InteractionState
 import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.ParentLayoutInfo
+import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
@@ -184,11 +190,16 @@ fun SquooshRoot(
     docName: String,
     incomingDocId: String,
     rootNodeQuery: NodeQuery,
+    modifier: Modifier = Modifier,
     customizationContext: CustomizationContext = CustomizationContext(),
     serverParams: DocumentServerParams = DocumentServerParams(),
+    setDocId: (String) -> Unit = {},
+    designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
 ) {
+    // Basic init and doc loading.
+    val isRoot = LocalSquooshIsRootContext.current.isRoot
     val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
     val doc = DocServer.doc(
         docName,
@@ -198,8 +209,32 @@ fun SquooshRoot(
         liveUpdateMode == LiveUpdateMode.OFFLINE
     )
 
+    // Design Switcher support
+    val showDesignSwitcher =
+        isRoot &&
+                designSwitcherPolicy == DesignSwitcherPolicy.SHOW_IF_ROOT &&
+                DesignSettings.liveUpdatesEnabled
+
+    val originalDocId = remember {
+        DocumentSwitcher.subscribe(docId, setDocId)
+        docId
+    }
+    val switchDocId: (String) -> Unit = { newDocId: String ->
+        run { DocumentSwitcher.switch(originalDocId, newDocId) }
+    }
+
+    val designSwitcher: @Composable () -> Unit = {
+        if (showDesignSwitcher) {
+            val branchHash = DocServer.branches(docId)
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+                DesignSwitcher(doc, docId, branchHash, switchDocId)
+            }
+        }
+    }
+
     if (doc == null) {
         Log.d(TAG, "No doc! $docName / $incomingDocId")
+        designSwitcher()
         return
     }
 
@@ -208,8 +243,11 @@ fun SquooshRoot(
     // We're starting to support animated transitions
     interactionState.supportAnimations = true
 
-    val isRoot = LocalSquooshIsRootContext.current.isRoot
-    val startFrame = interactionState.rootNode(initialNode = rootNodeQuery, doc = doc, isRoot = isRoot)
+    val startFrame = interactionState.rootNode(
+        initialNode = rootNodeQuery,
+        doc = doc,
+        isRoot = isRoot
+    )
 
     if (startFrame == null) {
         Log.d(TAG, "No start frame $docName / $incomingDocId")
@@ -220,7 +258,11 @@ fun SquooshRoot(
 
     // Ensure we get invalidated when the variant memory is updated from an interaction.
     interactionState.squooshVariantMemory(doc)
-    val overlays = if (isRoot) { interactionState.rootOverlays(doc) } else { null }
+    val overlays = if (isRoot  || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {
+        interactionState.rootOverlays(doc)
+    } else {
+        null
+    }
 
     val density = LocalDensity.current
 
@@ -308,7 +350,7 @@ fun SquooshRoot(
             childComposables,
             layoutIdAllocator,
             variantParentName,
-            true,
+            isRoot,
             overlays
         ) ?: return
 
@@ -420,7 +462,7 @@ fun SquooshRoot(
 
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
         androidx.compose.ui.layout.Layout(
-            modifier = Modifier
+            modifier = modifier
                 .size(
                     width = root.computedLayout!!.width.dp,
                     height = root.computedLayout!!.height.dp
@@ -539,5 +581,6 @@ fun SquooshRoot(
                 )
             }
         )
+        designSwitcher()
     }
 }

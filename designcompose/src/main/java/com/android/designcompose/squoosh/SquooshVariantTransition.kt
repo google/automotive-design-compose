@@ -152,6 +152,9 @@ internal class SquooshVariantTransition {
             // be.
             if (lastVariantName == targetNodeName || lastVariantName == null) {
                 // Nothing to do; it didn't change.
+                if (targetNodeName == NullNodeName) {
+                    return null
+                }
                 return targetNodeName
             }
             // Ok, we've observed a change. If the old variant has a transition to this one
@@ -178,6 +181,9 @@ internal class SquooshVariantTransition {
 
         // Ok, now we're in the second phase. We always transition *to* the current value from
         // whatever the old value was. So we just return the targetNodeName here.
+        if (targetNodeName == NullNodeName) {
+            return null
+        }
         return targetNodeName
     }
 

@@ -30,14 +30,32 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getVisible
 import com.android.designcompose.mergeStyles
+import com.android.designcompose.serdegen.Action
+import com.android.designcompose.serdegen.AlignItems
+import com.android.designcompose.serdegen.Background
+import com.android.designcompose.serdegen.Color
 import com.android.designcompose.serdegen.ComponentInfo
+import com.android.designcompose.serdegen.Dimension
+import com.android.designcompose.serdegen.FlexDirection
+import com.android.designcompose.serdegen.FrameExtras
+import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.OverflowDirection
+import com.android.designcompose.serdegen.OverlayBackgroundInteraction
+import com.android.designcompose.serdegen.OverlayPositionType
+import com.android.designcompose.serdegen.PositionType
+import com.android.designcompose.serdegen.Reaction
+import com.android.designcompose.serdegen.RenderMethod
+import com.android.designcompose.serdegen.ScrollInfo
 import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
+import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
@@ -107,7 +125,10 @@ internal fun resolveVariantsRecursively(
     //      every recompose.
     composableList: ArrayList<SquooshChildComposable>,
     layoutIdAllocator: SquooshLayoutIdAllocator,
-    variantParentName: String = ""): SquooshResolvedNode?
+    variantParentName: String = "",
+    isRoot: Boolean,
+    overlays: List<View>? = null)
+: SquooshResolvedNode?
 {
     if (!customizations.getVisible(v.name))
         return null
@@ -160,7 +181,6 @@ internal fun resolveVariantsRecursively(
                 // Find the view associated with the variant name
                 val variantNodeQuery =
                     NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { view.name })
-                val isRoot = true // XXX-SQUOOSH: Need to support non-root components.
                 val variantView =
                     interactionState.squooshRootNode(variantNodeQuery, document, isRoot)
                 if (variantView != null) {
@@ -209,6 +229,8 @@ internal fun resolveVariantsRecursively(
                 fontResourceLoader,
                 composableList,
                 layoutIdAllocator,
+                "",
+                false,
             ) ?: continue
 
             childResolvedNode.parent = resolvedView
@@ -259,5 +281,145 @@ internal fun resolveVariantsRecursively(
         )
     }
 
+    // Roots also get overlays
+    if (overlays != null) {
+        for (overlay in overlays) {
+            val overlayExtras = overlay.frame_extras.getOrNull() ?: continue
+
+            val overlayContent = resolveVariantsRecursively(
+                overlay,
+                rootLayoutId,
+                document,
+                customizations,
+                variantTransition,
+                interactionState,
+                null,
+                density,
+                fontResourceLoader,
+                composableList,
+                layoutIdAllocator,
+                "",
+                false
+            ) ?: continue
+
+            // Make a synthetic parent for the overlay.
+            val overlayContainer = generateOverlayNode(overlayExtras, overlayContent)
+            // Append to the root
+            var lastSibling = resolvedView.firstChild
+            while (lastSibling?.nextSibling != null)
+                lastSibling = lastSibling.nextSibling
+            if (lastSibling != null)
+                lastSibling.nextSibling = overlayContainer
+            else
+                resolvedView.firstChild = overlayContainer
+
+            // Add a SquooshChildComposable to handle the click. An overlay either takes the
+            // click and closes, or takes the click and does nothing, so either way this is
+            // the correct thing to do.
+            composableList.add(
+                SquooshChildComposable(
+                    component = null,
+                    content = null,
+                    node = overlayContainer,
+                    parentComponents = parentComps
+                )
+            )
+        }
+    }
+
     return resolvedView
+}
+
+/// Create a SquooshResolvedNode for an overlay, with the appropriate layout style set up.
+private fun generateOverlayNode(overlay: FrameExtras, node: SquooshResolvedNode): SquooshResolvedNode {
+    // Make a view based on the child node which uses a synthesized style.
+    val overlayStyle = node.style.asBuilder()
+    overlayStyle.position_type = PositionType.Absolute()
+    overlayStyle.top = Dimension.Percent(0.0f)
+    overlayStyle.left = Dimension.Percent(0.0f)
+    overlayStyle.right = Dimension.Percent(0.0f)
+    overlayStyle.bottom = Dimension.Percent(0.0f)
+    overlayStyle.width = Dimension.Percent(1.0f)
+    overlayStyle.height = Dimension.Percent(1.0f)
+    overlayStyle.flex_direction = FlexDirection.Column()
+    when (overlay.overlayPositionType) {
+        is OverlayPositionType.TOP_LEFT -> {
+            overlayStyle.justify_content = JustifyContent.FlexStart() // Y
+            overlayStyle.align_items = AlignItems.FlexStart() // X
+        }
+        is OverlayPositionType.TOP_CENTER -> {
+            overlayStyle.justify_content = JustifyContent.FlexStart() // Y
+            overlayStyle.align_items = AlignItems.Center() // X
+        }
+        is OverlayPositionType.TOP_RIGHT -> {
+            overlayStyle.justify_content = JustifyContent.FlexStart() // Y
+            overlayStyle.align_items = AlignItems.FlexEnd()
+        }
+        // XXX: COMPLETE
+        else -> {
+            overlayStyle.justify_content = JustifyContent.Center()
+            overlayStyle.align_items = AlignItems.Center()
+        }
+    }
+    overlayStyle.background = listOf()
+
+    overlay.overlayBackground.color.ifPresent {
+        color ->
+            val c = listOf(
+                (color.r * 255.0).toInt().toByte(),
+                (color.g * 255.0).toInt().toByte(),
+                (color.b * 255.0).toInt().toByte(),
+                (color.a * 255.0).toInt().toByte(),
+            )
+            val colorBuilder = Color.Builder()
+            colorBuilder.color = c
+            overlayStyle.background = listOf(Background.Solid(colorBuilder.build()))
+    }
+    val style = overlayStyle.build()
+
+    // Now synthesize a view.
+    val overlayViewData = ViewData.Container.Builder()
+    overlayViewData.shape = ViewShape.Rect(false)
+    overlayViewData.children = listOf(node.view)
+
+    val overlayScrollInfo = ScrollInfo.Builder()
+    overlayScrollInfo.paged_scrolling = false
+    overlayScrollInfo.overflow = OverflowDirection.NONE()
+
+    val overlayView = View.Builder()
+    overlayView.unique_id = (node.view.unique_id + 0x2000).toShort()
+    overlayView.id = "overlay-${node.view.id}"
+    overlayView.name = "Overlay ${node.view.name}"
+    overlayView.component_info = Optional.empty()
+    overlayView.reactions = if (overlay.overlayBackgroundInteraction is OverlayBackgroundInteraction.CLOSE_ON_CLICK_OUTSIDE) {
+        // Synthesize a reaction that will close the overlay.
+        val r = Reaction.Builder()
+        r.trigger = Trigger.OnClick()
+        r.action = Action.Close()
+        Optional.of(listOf(r.build()))
+    } else {
+        Optional.empty()
+    }
+    overlayView.frame_extras = Optional.empty()
+    overlayView.scroll_info = overlayScrollInfo.build()
+    overlayView.style = style
+    overlayView.data = overlayViewData.build()
+    overlayView.design_absolute_bounding_box = Optional.empty()
+    overlayView.render_method = RenderMethod.None()
+
+    val overlayNode = SquooshResolvedNode(
+        view = overlayView.build(),
+        style = style,
+        layoutId = 0x20000000 + node.layoutId, // XXX: Dubious, need to rationalize all the ID mods
+        textInfo = null,
+        unresolvedNodeId = "overlay-${node.unresolvedNodeId}",
+        firstChild = node,
+        nextSibling = null,
+        parent = node.parent,
+        computedLayout = null,
+        needsChildRender = false,
+    )
+    node.parent = overlayNode
+
+    return overlayNode
 }

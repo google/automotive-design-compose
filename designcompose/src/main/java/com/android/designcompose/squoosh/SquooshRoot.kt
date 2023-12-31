@@ -26,9 +26,10 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
@@ -55,6 +56,7 @@ import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
 import com.android.designcompose.rootNode
+import com.android.designcompose.rootOverlays
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.squooshAnimatedActions
@@ -169,6 +171,12 @@ private fun createOrUpdateAnimation(
     return animationId
 }
 
+// Track if we're the root component, or (in the near future) if we are a list item so that we can
+// share information across similar list items.
+internal data class SquooshIsRoot(val isRoot: Boolean)
+
+internal val LocalSquooshIsRootContext = compositionLocalOf { SquooshIsRoot(true) }
+
 // Experiment -- minimal DesignCompose root node; no switcher, no interactions, etc.
 @Composable
 fun SquooshRoot(
@@ -199,7 +207,8 @@ fun SquooshRoot(
     // We're starting to support animated transitions
     interactionState.supportAnimations = true
 
-    val startFrame = interactionState.rootNode(initialNode = rootNodeQuery, doc = doc, isRoot = true)
+    val isRoot = LocalSquooshIsRootContext.current.isRoot
+    val startFrame = interactionState.rootNode(initialNode = rootNodeQuery, doc = doc, isRoot = isRoot)
 
     if (startFrame == null) {
         Log.d(TAG, "No start frame $docName / $incomingDocId")
@@ -210,6 +219,7 @@ fun SquooshRoot(
 
     // Ensure we get invalidated when the variant memory is updated from an interaction.
     interactionState.squooshVariantMemory(doc)
+    val overlays = if (isRoot) { interactionState.rootOverlays(doc) } else { null }
 
     val density = LocalDensity.current
 
@@ -244,7 +254,9 @@ fun SquooshRoot(
         LocalFontLoader.current,
         childComposables,
         layoutIdAllocator,
-        variantParentName
+        variantParentName,
+        isRoot,
+        overlays
     ) ?: return
 
     // Perform layout on our resolved tree.
@@ -294,7 +306,9 @@ fun SquooshRoot(
             LocalFontLoader.current,
             childComposables,
             layoutIdAllocator,
-            variantParentName
+            variantParentName,
+            true,
+            overlays
         ) ?: return
 
         // Layout the transition root tree.
@@ -395,114 +409,125 @@ fun SquooshRoot(
     // Select which child to draw using this holder.
     val childRenderSelector = SquooshChildRenderSelector()
 
-    androidx.compose.ui.layout.Layout(
-        modifier = Modifier
-            .size(
-                width = root.computedLayout!!.width.dp,
-                height = root.computedLayout!!.height.dp
-            )
-            .squooshRender(
-                root,
-                doc,
-                docName,
-                customizationContext,
-                childRenderSelector,
-                // Is there a nicer way of passing these two?
-                currentAnimations,
-                animationValues,
-            ),
-        measurePolicy = { measurables, constraints ->
-            val placeables = measurables.map { measurable ->
-                val squooshData = measurable.parentData as? SquooshParentData
-                if (squooshData == null || squooshData.node.computedLayout == null) {
-                    // Oops! No data, just lay it out however it wants.
-                    Pair(measurable.measure(constraints), null)
-                } else {
-                    // Ok, we can get some layout data. This lets us determine a width
-                    // and height from layout. We also need to extract a transform, then
-                    // we can position this view appropriately, and create a layer for it
-                    // if it has a rotation applied (unfortunately Compose doesn't seem to
-                    // accept a full matrix transform, so we can't support shears).
-                    val w = (squooshData.node.computedLayout!!.width * density.density).roundToInt()
-                    val h = (squooshData.node.computedLayout!!.height * density.density).roundToInt()
-
-                    Pair(measurable.measure(Constraints(
-                        minWidth = w,
-                        maxWidth = w,
-                        minHeight = h,
-                        maxHeight = h
-                    )), squooshData.node)
-                }
-            }
-
-            layout(constraints.maxWidth, constraints.maxHeight) {
-                // Place children in the parent layout
-                placeables.forEach { (placeable, node) ->
-                    // If we don't have a node, then just place this and finish.
-                    if (node == null) {
-                        placeable.placeRelative(x = 0, y = 0)
+    CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
+        androidx.compose.ui.layout.Layout(
+            modifier = Modifier
+                .size(
+                    width = root.computedLayout!!.width.dp,
+                    height = root.computedLayout!!.height.dp
+                )
+                .squooshRender(
+                    root,
+                    doc,
+                    docName,
+                    customizationContext,
+                    childRenderSelector,
+                    // Is there a nicer way of passing these two?
+                    currentAnimations,
+                    animationValues,
+                ),
+            measurePolicy = { measurables, constraints ->
+                val placeables = measurables.map { measurable ->
+                    val squooshData = measurable.parentData as? SquooshParentData
+                    if (squooshData == null || squooshData.node.computedLayout == null) {
+                        // Oops! No data, just lay it out however it wants.
+                        Pair(measurable.measure(constraints), null)
                     } else {
-                        // Ok, we can look up the position and transform by iterating over the
-                        // parents. We don't support transforms here yet. Child composables will
-                        // be rendered with transforms, but won't use them for input.
-                        //
-                        // We always take the offset from the root, but if there are layers of
-                        // custom composables (containing each other) then this will give the
-                        // wrong offset.
-                        //
-                        // XXX XXX: Create ticket to implement transformed input.
-                        val offsetFromRoot = node.offsetFromAncestor()
+                        // Ok, we can get some layout data. This lets us determine a width
+                        // and height from layout. We also need to extract a transform, then
+                        // we can position this view appropriately, and create a layer for it
+                        // if it has a rotation applied (unfortunately Compose doesn't seem to
+                        // accept a full matrix transform, so we can't support shears).
+                        val w =
+                            (squooshData.node.computedLayout!!.width * density.density).roundToInt()
+                        val h =
+                            (squooshData.node.computedLayout!!.height * density.density).roundToInt()
 
-                        placeable.placeRelative(
-                            x = (offsetFromRoot.x * density.density).roundToInt(),
-                            y = (offsetFromRoot.y * density.density).roundToInt()
+                        Pair(
+                            measurable.measure(
+                                Constraints(
+                                    minWidth = w,
+                                    maxWidth = w,
+                                    minHeight = h,
+                                    maxHeight = h
+                                )
+                            ), squooshData.node
                         )
                     }
                 }
-            }
-        },
-        content = {
-            // Now render all of the children
-            val debugRenderChildComposablesStartTime = SystemClock.elapsedRealtime()
-            for (child in childComposables) {
-                if (child.node.computedLayout == null) {
-                    continue
-                }
-                var composableChildModifier = Modifier
-                    .drawWithContent {
-                        if (child.node == childRenderSelector.selectedRenderChild)
-                            drawContent()
-                    }
-                    .then(SquooshParentData(node = child.node))
 
-                if (child.component == null && child.content == null) {
-                    composableChildModifier = composableChildModifier.squooshInteraction(
-                        doc,
-                        interactionState,
-                        customizationContext,
-                        child
-                    )
-                }
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    // Place children in the parent layout
+                    placeables.forEach { (placeable, node) ->
+                        // If we don't have a node, then just place this and finish.
+                        if (node == null) {
+                            placeable.placeRelative(x = 0, y = 0)
+                        } else {
+                            // Ok, we can look up the position and transform by iterating over the
+                            // parents. We don't support transforms here yet. Child composables will
+                            // be rendered with transforms, but won't use them for input.
+                            //
+                            // We always take the offset from the root, but if there are layers of
+                            // custom composables (containing each other) then this will give the
+                            // wrong offset.
+                            //
+                            // XXX XXX: Create ticket to implement transformed input.
+                            val offsetFromRoot = node.offsetFromAncestor()
 
-                Box(modifier = composableChildModifier) {
-                    if (child.component != null) {
-                        child.component.invoke(object : ComponentReplacementContext {
-                            override val appearanceModifier: Modifier = Modifier
-                            override val layoutModifier: Modifier = Modifier
-
-                            @Composable
-                            override fun Content() {
-                            }
-
-                            override val textStyle: TextStyle? = null
-                            override val parentLayout: ParentLayoutInfo? = null
-                        })
-                    } else if (child.content != null) {
-                        Log.d(TAG, "Unimplemented: child.content")
+                            placeable.placeRelative(
+                                x = (offsetFromRoot.x * density.density).roundToInt(),
+                                y = (offsetFromRoot.y * density.density).roundToInt()
+                            )
+                        }
                     }
                 }
+            },
+            content = {
+                // Now render all of the children
+                val debugRenderChildComposablesStartTime = SystemClock.elapsedRealtime()
+                for (child in childComposables) {
+                    if (child.node.computedLayout == null) {
+                        continue
+                    }
+                    var composableChildModifier = Modifier
+                        .drawWithContent {
+                            if (child.node == childRenderSelector.selectedRenderChild)
+                                drawContent()
+                        }
+                        .then(SquooshParentData(node = child.node))
+
+                    if (child.component == null && child.content == null) {
+                        composableChildModifier = composableChildModifier.squooshInteraction(
+                            doc,
+                            interactionState,
+                            customizationContext,
+                            child
+                        )
+                    }
+
+                    Box(modifier = composableChildModifier) {
+                        if (child.component != null) {
+                            child.component.invoke(object : ComponentReplacementContext {
+                                override val appearanceModifier: Modifier = Modifier
+                                override val layoutModifier: Modifier = Modifier
+
+                                @Composable
+                                override fun Content() {
+                                }
+
+                                override val textStyle: TextStyle? = null
+                                override val parentLayout: ParentLayoutInfo? = null
+                            })
+                        } else if (child.content != null) {
+                            Log.d(TAG, "Unimplemented: child.content")
+                        }
+                    }
+                }
+                Log.d(
+                    TAG,
+                    "$docName generate child composables took ${SystemClock.elapsedRealtime() - debugRenderChildComposablesStartTime}ms"
+                )
             }
-            Log.d(TAG, "$docName generate child composables took ${SystemClock.elapsedRealtime() - debugRenderChildComposablesStartTime}ms")
-        }
-    )
+        )
+    }
 }

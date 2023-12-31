@@ -276,7 +276,7 @@ private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
 
 // XXX: Horrible code to deal with our terrible generated types. Maybe if style moves to proto then
 //      we'll get some more egonomic generated classes.
-private fun ViewStyle.asBuilder(): ViewStyle.Builder {
+internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
     val builder = ViewStyle.Builder()
     builder.text_color = text_color
     builder.font_size = font_size

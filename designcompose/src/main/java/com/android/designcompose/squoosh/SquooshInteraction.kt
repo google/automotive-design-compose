@@ -27,6 +27,9 @@ import com.android.designcompose.getKey
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.undoDispatch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
 
 private fun findTargetInstanceId(
     document: DocContent,
@@ -62,6 +65,7 @@ private fun findTargetInstanceId(
 internal fun Modifier.squooshInteraction(
     document: DocContent,
     interactionState: InteractionState,
+    interactionScope: CoroutineScope,
     customizations: CustomizationContext,
     childComposable: SquooshChildComposable
 ): Modifier {
@@ -72,44 +76,60 @@ internal fun Modifier.squooshInteraction(
 
     return this.then(
         Modifier.pointerInput(reactions) {
-            detectTapGestures(
-                onPress = {
-                    // Set the "pressed" state.
-                    for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
-                        interactionState.dispatch(
-                            r.action,
-                            findTargetInstanceId(document, childComposable.parentComponents, r.action),
-                            customizations.getKey(),
-                            node.unresolvedNodeId
-                        )
-                    }
-                    // XXX XXX ralph: we need to remember that we're pressed and keep emitting
-                    //                this pointerInput modifier.
-                    val dispatchClickEvent = tryAwaitRelease()
-
-                    // Clear the "pressed" state.
-                    for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
-                        interactionState.undoDispatch(
-                            findTargetInstanceId(document, childComposable.parentComponents, r.action),
-                            node.unresolvedNodeId,
-                            customizations.getKey()
-                        )
-                    }
-
-                    // If the tap wasn't cancelled (turned into a drag, a window opened on top of
-                    // us, etc) then we can run the action.
-                    if (dispatchClickEvent) {
-                        for (r in reactions.filter { r -> r.trigger is Trigger.OnClick }) {
+            // Use the interaction scope so that we don't have our event handler removed when our
+            // Modifier node is removed from the tree (allowing interactions like "close the overlay
+            // while pressed" applied to an overlay to actually receive the touch release event and
+            // dispatch the "undo" action).
+            interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                detectTapGestures(
+                    onPress = {
+                        // Set the "pressed" state.
+                        for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
                             interactionState.dispatch(
                                 r.action,
-                                findTargetInstanceId(document, childComposable.parentComponents, r.action),
+                                findTargetInstanceId(
+                                    document,
+                                    childComposable.parentComponents,
+                                    r.action
+                                ),
                                 customizations.getKey(),
-                                null // no undo
+                                node.unresolvedNodeId
                             )
                         }
+                        val dispatchClickEvent = tryAwaitRelease()
+
+                        // Clear the "pressed" state.
+                        for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
+                            interactionState.undoDispatch(
+                                findTargetInstanceId(
+                                    document,
+                                    childComposable.parentComponents,
+                                    r.action
+                                ),
+                                node.unresolvedNodeId,
+                                customizations.getKey()
+                            )
+                        }
+
+                        // If the tap wasn't cancelled (turned into a drag, a window opened on top of
+                        // us, etc) then we can run the action.
+                        if (dispatchClickEvent) {
+                            for (r in reactions.filter { r -> r.trigger is Trigger.OnClick }) {
+                                interactionState.dispatch(
+                                    r.action,
+                                    findTargetInstanceId(
+                                        document,
+                                        childComposable.parentComponents,
+                                        r.action
+                                    ),
+                                    customizations.getKey(),
+                                    null // no undo
+                                )
+                            }
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     )
 }

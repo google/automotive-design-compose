@@ -32,6 +32,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -406,6 +407,14 @@ fun SquooshRoot(
         }
     }
 
+    // Run interactions in a dedicated scope. This means that events continue to be handled by a
+    // given coroutine after its hosting Composable has been removed from the tree. Some interactions
+    // (e.g.: "close an overlay, while pressed" applied to the overlay itself) will result in the
+    // hosting Composable being removed from the tree on touch start, but the event handler still
+    // wants to receive the drag (for press-cancel) and release events in order to run the appropriate
+    // "undo" action.
+    val interactionScope = rememberCoroutineScope()
+
     // Select which child to draw using this holder.
     val childRenderSelector = SquooshChildRenderSelector()
 
@@ -500,6 +509,7 @@ fun SquooshRoot(
                         composableChildModifier = composableChildModifier.squooshInteraction(
                             doc,
                             interactionState,
+                            interactionScope,
                             customizationContext,
                             child
                         )

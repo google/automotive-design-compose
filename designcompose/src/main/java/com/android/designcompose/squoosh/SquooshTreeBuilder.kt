@@ -40,6 +40,7 @@ import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FrameExtras
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.OverlayBackgroundInteraction
 import com.android.designcompose.serdegen.OverlayPositionType
@@ -353,6 +354,7 @@ private fun generateOverlayNode(
 ): SquooshResolvedNode {
     // Make a view based on the child node which uses a synthesized style.
     val overlayStyle = node.style.asBuilder()
+    overlayStyle.overflow = Overflow.Visible()
     overlayStyle.position_type = PositionType.Absolute()
     overlayStyle.top = Dimension.Percent(0.0f)
     overlayStyle.left = Dimension.Percent(0.0f)

@@ -69,7 +69,17 @@ internal data class TextMeasureData(
     val density: Density,
     val maxLines: Int,
     val autoWidth: Boolean,
-)
+) {
+    override fun hashCode(): Int {
+        // Don't hash all of TextLayoutData because it's derived from style, which is
+        // already hashed everywhere we use TextMeasureData's hashCode.
+        var result = density.hashCode()
+        result = 31 * result + textLayout.annotatedString.text.hashCode()
+        result = 31 * result + maxLines.hashCode()
+        result = 31 * result + autoWidth.hashCode()
+        return result
+    }
+}
 
 internal object LayoutManager {
     private val subscribers: HashMap<Int, (Int) -> Unit> = HashMap()

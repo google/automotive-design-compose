@@ -27,7 +27,6 @@ import com.android.designcompose.serdegen.LayoutParentChildren
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
 import java.util.Optional
-import kotlin.system.measureTimeMillis
 
 
 internal object SquooshLayout {
@@ -111,7 +110,7 @@ internal fun updateLayoutTree(
 
     // Compute a cache key for the layout; we use this to determine if we need to update the
     // node with a new layout value or not.
-    val layoutCacheKey = resolvedNode.style.hashCode()
+    val layoutCacheKey = resolvedNode.style.hashCode() + resolvedNode.textInfo.hashCode()
     val needsLayoutUpdate = layoutCache[layoutId] != layoutCacheKey
     val layoutChildren: ArrayList<Int> = arrayListOf()
 

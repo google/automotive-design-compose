@@ -14,33 +14,7 @@
  * limitations under the License.
  */
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        // These are plugins that are published as external jars, integrating directly into the
-        // build scripts
-        classpath(unbundledLibs.android.gradlePlugin)
-        classpath(libs.kotlin.gradlePlugin)
-        classpath(libs.dokka.gradlePlugin)
-        classpath(libs.android.gms.strictVersionMatcher)
-    }
-}
-
-@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
-plugins { alias(libs.plugins.ktfmt) apply false }
-
-subprojects {
-    apply {
-        plugin(rootProject.libs.plugins.ktfmt.get().pluginId)
-        plugin(rootProject.libs.plugins.strictVersionMatcher.get().pluginId)
-    }
-    configure<com.ncorti.ktfmt.gradle.KtfmtExtension> { kotlinLangStyle() }
-
-    tasks.withType<JavaCompile>().configureEach {
-        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-        targetCompatibility = JavaVersion.VERSION_1_8.toString()
-    }
+plugins {
+    alias(libs.plugins.kotlinAndroid) apply false
+    alias(libs.plugins.androidApplicationMinimumSupportedVersion) apply false
 }

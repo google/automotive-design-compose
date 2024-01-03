@@ -139,10 +139,13 @@ run_cmd "Main Project: Publish" . \
   ./gradlew publishAllPublicationsToLocalDirRepository
 
 run_cmd "Build HelloWorld" reference-apps/helloworld \
-  ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts Build
+  ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts build
 
 run_cmd "Build Tutorial" reference-apps/tutorial \
-  ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts Build
+  ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts build
+
+run_cmd "Build MediaCompose" reference-apps/aaos-unbundled \
+  ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts build
 
 run_cmd "Cargo build" . cargo build --all-targets --all-features
 
@@ -151,8 +154,6 @@ run_cmd "Main Project: Build" . \
 
 run_cmd "Build and Test Build Logic" build-logic ./gradlew build
 run_cmd "Build and Test Plugins" plugins ./gradlew build
-
-run_cmd "Build Unbundled projects" reference-apps/aaos-unbundled ./gradlew build
 
 run_cmd "Build plugin" support-figma/extended-layout-plugin \
   npm ci run build

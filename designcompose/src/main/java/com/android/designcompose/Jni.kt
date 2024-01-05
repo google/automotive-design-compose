@@ -92,6 +92,6 @@ internal object Jni {
     ): ByteArray?
 
     init {
-        System.loadLibrary("jni")
+        System.loadLibrary("dc_jni")
     }
 }

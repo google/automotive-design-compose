@@ -233,6 +233,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "dc_jni"
+version = "0.1.0"
+dependencies = [
+ "android_logger",
+ "bincode",
+ "figma_import",
+ "jni",
+ "layout",
+ "lazy_static",
+ "log",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
 name = "deranged"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -406,23 +423,6 @@ name = "itoa"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1a46d1a171d865aa5f83f92695765caa047a9b4cbae2cbf37dbd613a793fd4c"
-
-[[package]]
-name = "jni"
-version = "0.1.0"
-dependencies = [
- "android_logger",
- "bincode",
- "figma_import",
- "jni 0.21.1",
- "layout",
- "lazy_static",
- "log",
- "serde",
- "serde_bytes",
- "serde_json",
- "ureq",
-]
 
 [[package]]
 name = "jni"

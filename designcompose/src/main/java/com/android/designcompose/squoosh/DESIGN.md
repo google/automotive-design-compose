@@ -22,8 +22,8 @@ advantages:
 ## Status
 - most rendering is OK, no divergence from regular DesignCompose.
 - some customizations aren't implemented; custom images and custom content notably.
+- scrolling isn't implemented.
 - Lists and Grids is entirely unimplemented.
-- overlays are unimplemented, thus no design switcher.
 
 ## Modules
 Squoosh has a few key modules and functions:

@@ -16,7 +16,6 @@
 
 package com.android.designcompose.squoosh
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density

@@ -212,7 +212,8 @@ internal fun Modifier.squooshRender(
                 }
                 renderNode(node)
             }
-            Log.d(TAG, "$docName rendered $nodeRenderCount nodes in ${renderTime}ms")
+            if (renderTime > 16)
+                Log.d(TAG, "$docName rendered $nodeRenderCount nodes in ${renderTime}ms")
         }
     )
 

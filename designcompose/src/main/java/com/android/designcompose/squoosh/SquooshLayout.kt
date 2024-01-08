@@ -188,12 +188,11 @@ internal fun populateComputedLayout(
 internal fun layoutTree(
     root: SquooshResolvedNode,
     rootLayoutId: Int,
-    layoutIdAllocator: SquooshLayoutIdAllocator,
+    removalNodes: Set<Int>,
     layoutCache: HashMap<Int, Int>,
     layoutValueCache: HashMap<Int, Layout>)
 {
     // Remove any nodes that are no longer needed in this iteration
-    val removalNodes = layoutIdAllocator.removalNodes()
     for (layoutId in removalNodes) {
         SquooshLayout.removeNode(rootLayoutId, layoutId)
         layoutValueCache.remove(layoutId)

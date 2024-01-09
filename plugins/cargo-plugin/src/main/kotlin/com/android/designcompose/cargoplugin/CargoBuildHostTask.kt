@@ -28,7 +28,7 @@ import org.gradle.process.ExecOperations
 
 @UntrackedTask(
     because =
-    "Cargo has it's own up-to-date checks. Trying to reproduce them so that we don't need " +
+        "Cargo has it's own up-to-date checks. Trying to reproduce them so that we don't need " +
             "to run Cargo is infeasible, and any errors will cause out-of-date code to be included"
 )
 abstract class CargoBuildHostTask @Inject constructor(private val executor: ExecOperations) :

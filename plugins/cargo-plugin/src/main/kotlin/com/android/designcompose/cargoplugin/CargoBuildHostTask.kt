@@ -22,9 +22,15 @@ import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.UntrackedTask
 import org.gradle.configurationcache.extensions.capitalized
 import org.gradle.process.ExecOperations
 
+@UntrackedTask(
+    because =
+        "Cargo has it's own up-to-date checks. Trying to reproduce them so that we don't need " +
+            "to run Cargo is infeasible, and any errors will cause out-of-date code to be included"
+)
 abstract class CargoBuildHostTask @Inject constructor(private val executor: ExecOperations) :
     CargoBuildTask() {
 

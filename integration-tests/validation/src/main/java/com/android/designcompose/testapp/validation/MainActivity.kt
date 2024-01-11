@@ -84,6 +84,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignComposeCallbacks
+import com.android.designcompose.DesignDocOverride
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.GetDesignNodeData
 import com.android.designcompose.ImageReplacementContext
@@ -132,6 +133,7 @@ const val TAG = "DesignCompose"
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
+        Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
         Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
         Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
@@ -214,6 +216,17 @@ fun HelloWorld() {
                 },
             )
     )
+}
+
+// Hello World with override to change doc ID
+@DesignDoc(id = "pxVlixodJqZL95zo2RzTHl")
+interface HelloBye {
+    @DesignComponent(node = "#MainFrame") fun Main(@Design(node = "#Name") name: String)
+}
+
+@Composable
+fun HelloBye() {
+    DesignDocOverride("MCHaMYcIEnRpbvU9Ms7a0o") { HelloByeDoc.Main(name = "World") }
 }
 
 // TEST Image Update Test. After this loads, rename #Stage in the Figma doc. After the app

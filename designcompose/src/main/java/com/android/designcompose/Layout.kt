@@ -17,11 +17,13 @@
 package com.android.designcompose
 
 import android.util.Log
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -314,7 +316,11 @@ internal open class SimplifiedLayoutInfo(val selfModifier: Modifier) {
     }
 }
 
-internal class LayoutInfoAbsolute(selfModifier: Modifier) : SimplifiedLayoutInfo(selfModifier)
+internal class LayoutInfoAbsolute(
+    selfModifier: Modifier,
+    val horizontalScroll: Boolean,
+    val verticalScroll: Boolean,
+) : SimplifiedLayoutInfo(selfModifier)
 
 internal class LayoutInfoRow(
     val arrangement: Arrangement.Horizontal,
@@ -490,7 +496,22 @@ internal fun calcLayoutInfo(
             )
         }
     } else {
-        return LayoutInfoAbsolute(modifier)
+        var horizontalScroll = false
+        var verticalScroll = false
+        when (view.scroll_info.overflow) {
+            is OverflowDirection.VERTICAL_SCROLLING -> {
+                verticalScroll = true
+            }
+            is OverflowDirection.HORIZONTAL_SCROLLING -> {
+                horizontalScroll = true
+            }
+            is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> {
+                // Currently we don't support both horizontal and vertical scrolling so disable both
+                verticalScroll = false
+                horizontalScroll = false
+            }
+        }
+        return LayoutInfoAbsolute(modifier, horizontalScroll, verticalScroll)
     }
 }
 
@@ -533,6 +554,12 @@ internal fun Layout.left() = this.left.roundToInt()
 
 internal fun Layout.top() = this.top.roundToInt()
 
+internal class DesignScroll(
+    val scrollOffset: Float,
+    val orientation: Orientation,
+    val scrollMax: MutableFloatState,
+)
+
 // Layout function for DesignFrame
 @Composable
 internal inline fun DesignFrameLayout(
@@ -541,81 +568,116 @@ internal inline fun DesignFrameLayout(
     layoutId: Int,
     rootLayoutId: Int,
     layoutState: Int,
+    designScroll: DesignScroll?,
     content: @Composable () -> Unit
 ) {
     val measurePolicy =
-        remember(layoutState) { designMeasurePolicy(view, layoutId, rootLayoutId, layoutState) }
+        remember(layoutState, designScroll) {
+            designMeasurePolicy(view, layoutId, rootLayoutId, layoutState, designScroll)
+        }
     Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
 }
 
 // Measure policy for DesignFrame.
-internal fun designMeasurePolicy(view: View, layoutId: Int, rootLayoutId: Int, layoutState: Int) =
-    MeasurePolicy { measurables, constraints ->
-        val name = view.name
-        val placeables =
-            measurables.map { measurable ->
-                val layoutData = measurable.designLayoutData
-                // Initialize constraints to those passed in. If the view should use infinite
-                // constraints for its children because it has a child that uses a built-in
-                // container such as a Row() or Column(), construct infinite contraints. Otherwise,
-                // if we have layout data for the child, use them to create fixed constraints.
-                var childConstraints = constraints
-                if (view.useInfiniteConstraints()) childConstraints = Constraints()
-                else if (layoutData != null) {
-                    val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
-                    if (childLayout != null) {
-                        val childWidth = childLayout.width()
-                        val childHeight = childLayout.height()
-                        childConstraints =
-                            Constraints(childWidth, childWidth, childHeight, childHeight)
-                    }
+internal fun designMeasurePolicy(
+    view: View,
+    layoutId: Int,
+    rootLayoutId: Int,
+    layoutState: Int,
+    designScroll: DesignScroll?
+) = MeasurePolicy { measurables, constraints ->
+    val name = view.name
+    val placeables =
+        measurables.map { measurable ->
+            val layoutData = measurable.designLayoutData
+            // Initialize constraints to those passed in. If the view should use infinite
+            // constraints for its children because it has a child that uses a built-in
+            // container such as a Row() or Column(), construct infinite contraints. Otherwise,
+            // if we have layout data for the child, use them to create fixed constraints.
+            var childConstraints = constraints
+            if (view.useInfiniteConstraints()) childConstraints = Constraints()
+            else if (layoutData != null) {
+                val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
+                if (childLayout != null) {
+                    val childWidth = childLayout.width()
+                    val childHeight = childLayout.height()
+                    childConstraints = Constraints(childWidth, childWidth, childHeight, childHeight)
                 }
-                measurable.measure(childConstraints)
             }
+            measurable.measure(childConstraints)
+        }
 
-        var myLayout = LayoutManager.getLayoutWithDensity(layoutId)
-        if (myLayout == null)
-            Log.d(TAG, "designMeasurePolicy error: null layout $name layoutId $layoutId")
-        // Get width and height from constraints if they are fixed. Otherwise get them from layout.
-        val myWidth =
-            if (constraints.hasFixedWidth && constraints.maxWidth != 0) constraints.maxWidth
-            else myLayout?.width() ?: 0
-        val myHeight =
-            if (constraints.hasFixedHeight && constraints.maxHeight != 0) constraints.maxHeight
-            else myLayout?.height() ?: 0
+    var myLayout = LayoutManager.getLayoutWithDensity(layoutId)
+    if (myLayout == null)
+        Log.d(TAG, "designMeasurePolicy error: null layout $name layoutId $layoutId")
+    // Get width and height from constraints if they are fixed. Otherwise get them from layout.
+    val myWidth =
+        if (constraints.hasFixedWidth && constraints.maxWidth != 0) constraints.maxWidth
+        else myLayout?.width() ?: 0
+    val myHeight =
+        if (constraints.hasFixedHeight && constraints.maxHeight != 0) constraints.maxHeight
+        else myLayout?.height() ?: 0
 
-        // If constraints have forced a size that does not match our layout size, set this size into
-        // the layout manager so that it can set this size in the Rust layout manager and then
-        // recalculate any layouts that many have changed. However, only do this if the layout state
-        // has not changed after computing child layouts. This is necessary in the case where
-        // calling setNodeSize on a node causes an ancestor to resize.
-        val layoutState2 = LayoutManager.getLayoutState(layoutId)
-        if (
-            layoutState == layoutState2 &&
-                myLayout != null &&
-                (myWidth != myLayout?.width() || myHeight != myLayout?.height())
-        )
-            LayoutManager.setNodeSize(layoutId, rootLayoutId, myWidth, myHeight)
-        layout(myWidth, myHeight) {
-            // Place children in the parent layout
-            placeables.forEachIndexed { index, placeable ->
-                val layoutData = placeable.designLayoutData
-                if (layoutData == null) {
-                    // A null layout should only happen if the child is a node that uses one of
-                    // Compose's built in layouts such as Row, Column, or LazyGrid.
-                    placeable.place(0, 0)
-                    if (index != 0) Log.d(TAG, "Place error no layoutData: $name index $index")
+    // If constraints have forced a size that does not match our layout size, set this size into
+    // the layout manager so that it can set this size in the Rust layout manager and then
+    // recalculate any layouts that many have changed. However, only do this if the layout state
+    // has not changed after computing child layouts. This is necessary in the case where
+    // calling setNodeSize on a node causes an ancestor to resize.
+    val layoutState2 = LayoutManager.getLayoutState(layoutId)
+    if (
+        layoutState == layoutState2 &&
+            myLayout != null &&
+            (myWidth != myLayout?.width() || myHeight != myLayout?.height())
+    )
+        LayoutManager.setNodeSize(layoutId, rootLayoutId, myWidth, myHeight)
+    layout(myWidth, myHeight) {
+        // Place children in the parent layout
+        placeables.forEachIndexed { index, placeable ->
+            val layoutData = placeable.designLayoutData
+            if (layoutData == null) {
+                // A null layout should only happen if the child is a node that uses one of
+                // Compose's built in layouts such as Row, Column, or LazyGrid.
+                placeable.place(0, 0)
+                if (index != 0) Log.d(TAG, "Place error no layoutData: $name index $index")
+            } else {
+                val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
+                if (childLayout == null) {
+                    Log.d(TAG, "Place error null layout: $name child $index layoutId $layoutId")
                 } else {
-                    val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
-                    if (childLayout == null) {
-                        Log.d(TAG, "Place error null layout: $name child $index layoutId $layoutId")
-                    } else {
-                        placeable.place(x = childLayout.left(), y = childLayout.top())
+                    var hScrollOffset = 0
+                    var vScrollOffset = 0
+                    if (designScroll != null) {
+                        // If designScroll is not null, scroll is enabled on this node. Get the
+                        // scroll offset and offset all children
+                        if (designScroll.orientation == Orientation.Horizontal)
+                            hScrollOffset = designScroll.scrollOffset.roundToInt()
+                        else vScrollOffset = designScroll.scrollOffset.roundToInt()
+                        if (index == placeables.size - 1) {
+                            // Calculate the extents of the children by using the last item's size
+                            // and position
+                            val density = LayoutManager.getDensity()
+                            if (designScroll.orientation == Orientation.Horizontal) {
+                                val hMargin = view.style.padding.end.pointsAsDp(density).value
+                                designScroll.scrollMax.value =
+                                    (childLayout.left + childLayout.width - myWidth + hMargin)
+                                        .coerceAtLeast(0F)
+                            } else {
+                                val vMargin = view.style.padding.bottom.pointsAsDp(density).value
+                                designScroll.scrollMax.value =
+                                    (childLayout.top + childLayout.height - myHeight + vMargin)
+                                        .coerceAtLeast(0F)
+                            }
+                        }
                     }
+                    placeable.place(
+                        x = childLayout.left() + hScrollOffset,
+                        y = childLayout.top() + vScrollOffset
+                    )
                 }
             }
         }
     }
+}
 
 @Composable
 internal inline fun DesignTextLayout(

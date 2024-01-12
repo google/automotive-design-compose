@@ -2,13 +2,13 @@
 
 This plugin adds some additional capabilities to Figma specifically for Automotive Design for Compose. It writes additional data into Figma nodes using Figma's JS API that can be read from Figma's REST API. It uses a Figma UI2 stylesheet from <https://github.com/thomas-lowry/figma-plugin-ds> to look more like Figma. There are five plugin menu options, detailed below.
 
-* Live text format: Additional controls to set:
-    * The maximum line count (or zero for unlimited lines).
-    * Whether the text should be ellipsized.
-* Dials and Gauges: Configure nodes to act as a type of dial or gauge
-* Check document for errors: Using a JSON file created from the application's DesignCompose annotations, check for possible errors in the document such as missing or incorrectly named nodes
-* Check/update keywords: Upload a new JSON file created from the application's DesignCompose annotations
-* Sync Prototype changes: Copies the interactive fields from the JS API to a data area that the REST API can fetch (since our webservice can't talk to the JS API). This needs to be run anytime an interaction changes.
+- Live text format: Additional controls to set:
+  - The maximum line count (or zero for unlimited lines).
+  - Whether the text should be ellipsized.
+- Dials and Gauges: Configure nodes to act as a type of dial or gauge
+- Check document for errors: Using a JSON file created from the application's DesignCompose annotations, check for possible errors in the document such as missing or incorrectly named nodes
+- Check/update keywords: Upload a new JSON file created from the application's DesignCompose annotations
+- Sync Prototype changes: Copies the interactive fields from the JS API to a data area that the REST API can fetch (since our webservice can't talk to the JS API). This needs to be run anytime an interaction changes.
 
 ## Building the plugin
 
@@ -55,10 +55,25 @@ That's it! Visual Studio Code will regenerate the JavaScript file every time you
 Add the plugin to your local Figma:
 
 ## Running the plugin in Figma
+
 To run the development version of the plugin, you need to be running the Figma desktop application on a Windows or MacOS machine.
 
-* In a doc, right-click and open the plugins menu.
-* Select "Development"
-* Select "Import plugin from manifest"
-* Navigate to your `manifest.json` and press OK.
-* Once you've done this once, the plugin will be available directly in the "Development" menu option.
+- In a doc, right-click and open the plugins menu.
+- Select "Development"
+- Select "Import plugin from manifest"
+- Navigate to your `manifest.json` and press OK.
+- Once you've done this once, the plugin will be available directly in the "Development" menu option.
+
+## Network access restrictions
+
+> [!TIP]
+> You can use the `devAllowedDomains` field to define domains that you need
+> access to for development purposes.
+
+The [manifest.json](manifest.json) file defines an allowlist of domains that the
+plugin is permitted to load [cross-origin resources] from. Any changes that
+introduce dependencies on origins not covered by the existing allowlist will
+need to update the [networkAccess] field in the plugins's manifest file.
+
+[cross-origin resources]: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+[networkAccess]: https://www.figma.com/plugin-docs/manifest/#networkaccess

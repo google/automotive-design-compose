@@ -17,7 +17,7 @@
 # key build tools and dependencies
 name: Nightly Experimental Builds
 
-on: 
+on:
   schedule:
     - cron: "0 0 * * *"
   # Also run on pull requests that change this file
@@ -44,7 +44,7 @@ jobs:
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
       - uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8
-        with: 
+        with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build all
         run: cargo build --all-targets --all-features
@@ -56,7 +56,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         gradle_release: [current, release-candidate]
-    runs-on: ${{ matrix.os }}  
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
@@ -66,13 +66,13 @@ jobs:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
 
       - name: Set up Java
-        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
         with:
           distribution: "temurin"
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.4.2
+        uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.4.2
         with:
           cache-read-only: true
           gradle-version: ${{matrix.gradle_release}}
@@ -90,7 +90,7 @@ jobs:
           shared-key: "gradle-rust"
 
       - name: Gradle Build
-        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
+        uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.11.0
         with:
 
           arguments: build publishAllPublicationsToLocalDirRepository
@@ -106,8 +106,8 @@ jobs:
     needs: sdk-build
     strategy:
       matrix:
-        ub-branch: [ub-automotive-master, ub-automotive-master-20230622]
-    steps:       
+        ub-branch: [ub-automotive-master, ub-automotive-master-20231102]
+    steps:
     - name: Harden Runner
       uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
       with:
@@ -116,13 +116,13 @@ jobs:
     - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
 
     - name: Set up Java
-      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+      uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
       with:
         distribution: "temurin"
         java-version: "17"
 
     - name: Set up Gradle
-      uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.4.2
+      uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.4.2
       with:
         cache-read-only: true
 
@@ -148,9 +148,10 @@ jobs:
         repo sync -cq -j4
 
     - name: Check MediaCompose
-      uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
+      uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.11.0
       with:
         cache-read-only: true
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
-          check 
+          --init-script ../local-design-compose-repo.init.gradle.kts
+          check

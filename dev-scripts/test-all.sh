@@ -15,7 +15,7 @@
 
 set -e
 usage() {
-cat  <<END
+  cat <<END
 This script should run all of the tests that CI will run. (It'll need to be kept up to date though)
 Options:
   -f: Run a basic format of the Kotlin code before testing.
@@ -29,28 +29,27 @@ Pre-requisites:
 END
 }
 
-OPTIND=1         # Reset in case getopts has been used previously in the shell.
+OPTIND=1 # Reset in case getopts has been used previously in the shell.
 run_emulator_tests=1
 RUN_FORMAT=false
 while getopts "fsu:" opt; do
   case "$opt" in
-    s)
-      run_emulator_tests=0
-      ;;
-    u)
-      ORG_GRADLE_PROJECT_unbundledAAOSDir=$(realpath "${OPTARG}")
-      ;;
-    f)
-      RUN_FORMAT=true
-      ;;
-    *)
-      usage
-      exit 0
-      ;;
+  s)
+    run_emulator_tests=0
+    ;;
+  u)
+    ORG_GRADLE_PROJECT_unbundledAAOSDir=$(realpath "${OPTARG}")
+    ;;
+  f)
+    RUN_FORMAT=true
+    ;;
+  *)
+    usage
+    exit 0
+    ;;
 
   esac
 done
-
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
@@ -80,9 +79,9 @@ cd "$GIT_ROOT" || exit
 if [[ $RUN_FORMAT == "true" ]]; then ./gradlew ktfmtFormat; fi
 
 # if https://github.com/rhysd/actionlint is installed then run it. This is a low priority check so it's fine to not run it
-if which actionlint > /dev/null; then actionlint; fi
+if which actionlint >/dev/null; then actionlint; fi
 cargo-fmt --all --check
-./gradlew  ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
+./gradlew ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
 cargo build --all-targets --all-features
 cargo test --all-targets --all-features
 
@@ -104,6 +103,9 @@ cd "$GIT_ROOT/reference-apps/helloworld" || exit
 cd "$GIT_ROOT/reference-apps/tutorial" || exit
 ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check
 
+cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit
+./gradlew --init-script ../local-design-compose-repo.init.gradle.kts check
+
 cd "$GIT_ROOT/support-figma/extended-layout-plugin" || exit
 npm ci
 npm run build
@@ -111,6 +113,3 @@ npm run build
 cd "$GIT_ROOT/support-figma/auto-content-preview-widget" || exit
 npm ci
 npm run build
-
-cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit
-./gradlew build

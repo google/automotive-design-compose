@@ -81,9 +81,9 @@ internal class VariantAnimationInfo(
     val transition: Transition
 )
 
-// Sometimes we have a "null" variantNodeName, and we need to remember that and detect
-// it next time. HashMap can't store "null" as a value
-private const val NullNodeName = "<<null>>"
+// We make a note that we saw a node in the first phase, before we populate it with details
+// in the second phase.
+private const val PendingNodeName = "<<pending>>"
 
 // Which phase are we in? On the base phase, we have to look at the variant selections,
 // compare them with the previous phase, and if there's a transition from the old state
@@ -135,8 +135,7 @@ internal class SquooshVariantTransition {
     /// AND we previously rendered a different variant AND there's a transition defined between
     /// the variants, then we add the transition reocrd to transitions and tell resolveVariants
     /// to use the "from" variant.
-    internal fun selectVariant(viewId: String, maybeNullTargetNodeName: String?): String? {
-        val targetNodeName = maybeNullTargetNodeName ?: NullNodeName
+    internal fun selectVariant(viewId: String, targetNodeName: String): String? {
         if (treeBuildPhase == TreeBuildPhase.BasePhase) {
             // Remember this for next time.
             nextState[viewId] = targetNodeName
@@ -146,17 +145,18 @@ internal class SquooshVariantTransition {
             // If we're currently transitioning this view, then if the most recent update didn't
             // change the targetNodeName, we still want to run the transition.
             val transition = transitions[viewId]
-            if (transition != null && targetNodeName == transition.toName)return transition.fromName
+            if (transition != null && targetNodeName == transition.toName) return transition.fromName
 
             // If this variant hasn't changed since the last render then just let it continue to
             // be.
             if (lastVariantName == targetNodeName || lastVariantName == null) {
                 // Nothing to do; it didn't change.
-                if (targetNodeName == NullNodeName) {
-                    return null
-                }
                 return targetNodeName
             }
+
+            // We can filter the variant transitions that we animate on here, if desired. We have
+            // the keywords in `lastVariantName` and `targetNodeName`, so we can see what changed.
+
             // Ok, we've observed a change. If the old variant has a transition to this one
             // then let's use it. We remember the transitions from the old view because otherwise
             // we have to do a much slower lookup. We really shouldn't do this because we are
@@ -171,19 +171,13 @@ internal class SquooshVariantTransition {
 
             // We need to record that we're starting a transition, but we aren't ready to say what
             // it is yet, because we don't know the "to" id.
-            newTransitions[viewId] = NullNodeName // Use NullNodeName because we don't know the node id yet.
+            newTransitions[viewId] = PendingNodeName // Use NullNodeName because we don't know the node id yet.
 
-            if (lastVariantName == NullNodeName) {
-                return null
-            }
             return lastVariantName
         }
 
         // Ok, now we're in the second phase. We always transition *to* the current value from
         // whatever the old value was. So we just return the targetNodeName here.
-        if (targetNodeName == NullNodeName) {
-            return null
-        }
         return targetNodeName
     }
 
@@ -197,13 +191,13 @@ internal class SquooshVariantTransition {
     internal fun selectedVariant(viewId: String, variantViewId: String) {
         if (treeBuildPhase == TreeBuildPhase.BasePhase) {
             if (newTransitions.contains(viewId)) {
-                newTransitions[viewId] = variantViewId // This is the "from" id.
+                newTransitions[viewId] = variantViewId // This is the "from" id, replacing PendingNodeName
             }
             return
         }
         // If we're planning on doing a transition for this node, then build it now.
         val fromId = newTransitions.remove(viewId)
-        if (fromId != null) {
+        if (fromId != null && fromId != PendingNodeName) {
             val toId = variantViewId
 
             // Remember these in the transition; when a transition is running we want to

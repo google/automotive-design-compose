@@ -16,6 +16,7 @@
 
 package com.android.designcompose.squoosh
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density
@@ -174,11 +175,12 @@ internal fun resolveVariantsRecursively(
             // We also give the variant transition system an opportunity to change the component
             // that we look up. It uses this to ensure that we have one tree with the "from"
             // variant rendered.
+
             val variantNodeName = variantTransition.selectVariant(
                 v.id,
-                customizations.getMatchingVariant(view.component_info)
+                customizations.getMatchingVariant(view.component_info) ?: componentInfo.name
             )
-            if (variantNodeName != null) {
+            if (variantNodeName != null && variantNodeName != componentInfo.name) {
                 // Find the view associated with the variant name
                 val variantNodeQuery =
                     NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { view.name })

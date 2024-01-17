@@ -58,7 +58,7 @@ jobs:
 
       - name: Set up Rust Cache
         if: ${{matrix.cache == 'cache-enabled'}}
-        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"

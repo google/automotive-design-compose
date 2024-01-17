@@ -27,12 +27,10 @@ import androidx.compose.ui.graphics.asComposePath
 import androidx.core.graphics.minus
 import androidx.core.graphics.plus
 import com.android.designcompose.serdegen.BoxShadow
-import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
-import java.util.Optional
 
 /// ComputedPaths is a set of paths derived from a shape and style definition. These
 /// paths are based on the style information (known at document conversion time)
@@ -77,44 +75,22 @@ internal fun ViewShape.computePaths(
     customArcAngle: Boolean,
     vectorScaleX: Float,
     vectorScaleY: Float,
+    layoutId: Int,
 ): ComputedPaths {
     fun getPaths(
         path: List<com.android.designcompose.serdegen.Path>,
         stroke: List<com.android.designcompose.serdegen.Path>,
-        vectorSize: Optional<List<Float>>,
     ): Pair<List<Path>, List<Path>> {
-        // If we have a vector size different than the frameSize, then constraints or a transform
-        // have caused the container frame to resize. We then check if constraints caused the resize
-        // by checking the style's left/right/top/bottom attributes. If left/right are both Percent,
-        // the vector should scale horizontally. If top/bottom are both Percent, the vector should
-        // scale vertically. Use the vector size and frameSize to calculate the scaling factor.
-        // We don't yet support constraint scaled and transformed vectors.
+        // TODO GH-673 support vector paths with scale constraints. Use vectorScaleX, vectorScaleY
         var scaleX = 1F
         var scaleY = 1F
-        vectorSize.ifPresent {
-            val sizeList = vectorSize.get()
-            if (sizeList.size == 2) {
-                val scaleHorizontal =
-                    (style.left is Dimension.Percent && style.right is Dimension.Percent)
-                val scaleVertical =
-                    (style.top is Dimension.Percent && style.bottom is Dimension.Percent)
-                if (scaleHorizontal) {
-                    val vecWidth = sizeList[0] * vectorScaleX * density
-                    scaleX = frameSize.width / vecWidth
-                }
-                if (scaleVertical) {
-                    val vecHeight = sizeList[1] * vectorScaleY * density
-                    scaleY = frameSize.height / vecHeight
-                }
-            }
-        }
         return Pair(
             path.map { p -> p.asPath(density, scaleX, scaleY) },
             stroke.map { p -> p.asPath(density, scaleX, scaleY) }
         )
     }
     fun getRectSize(overrideSize: Size?, style: ViewStyle, density: Float): Size {
-        return getNodeRenderSize(overrideSize, frameSize, style, density)
+        return getNodeRenderSize(overrideSize, frameSize, style, layoutId, density)
     }
     // Fill then stroke.
     val (fills: List<Path>, precomputedStrokes: List<Path>) =
@@ -144,12 +120,12 @@ internal fun ViewShape.computePaths(
                 )
             }
             is ViewShape.Path -> {
-                getPaths(this.path, this.stroke, this.size)
+                getPaths(this.path, this.stroke)
             }
             is ViewShape.Arc -> {
                 if (!customArcAngle) {
                     // Render normally with Figma provided fill/stroke path
-                    getPaths(this.path, this.stroke, this.size)
+                    getPaths(this.path, this.stroke)
                 } else {
                     // We have a custom angle set by a meter customization, so we can't use
                     // the path provided by Figma. Instead, we construct our own path given

@@ -77,11 +77,13 @@ internal object LayoutManager {
     private val subscribers: HashMap<Int, (Int) -> Unit> = HashMap()
     private val layoutsInProgress: HashSet<Int> = HashSet()
     private var textMeasures: HashMap<Int, TextMeasureData> = HashMap()
+    private var modifiedSizes: HashSet<Int> = HashSet()
     private var nextLayoutId: Int = 0
     private var performLayoutComputation: Boolean = false
     private var density: Float = 1F
     private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
     private var layoutCache: HashMap<Int, Layout> = HashMap()
+    private var layoutStateCache: HashMap<Int, Int> = HashMap()
 
     init {
         managerId = Jni.jniCreateLayoutManager()
@@ -178,6 +180,8 @@ internal object LayoutManager {
         subscribers.remove(layoutId)
         textMeasures.remove(layoutId)
         layoutCache.remove(layoutId)
+        layoutStateCache.remove(layoutId)
+        modifiedSizes.remove(layoutId)
 
         // Perform layout computation after removing the node only if performLayoutComputation is
         // true, or if we are not a widget ancestor. We don't want to compute layout when ancestors
@@ -230,6 +234,7 @@ internal object LayoutManager {
             // Add all the layouts to our cache
             response.changed_layouts.forEach { (layoutId, layout) ->
                 layoutCache[layoutId] = layout
+                layoutStateCache[layoutId] = response.layout_state
             }
             notifySubscribers(response.changed_layouts.keys, response.layout_state)
             if (response.changed_layouts.isNotEmpty())
@@ -242,23 +247,21 @@ internal object LayoutManager {
         }
     }
 
-    internal fun getTextMeasureData(layoutId: Int): TextMeasureData? {
-        return textMeasures[layoutId]
-    }
+    internal fun getTextMeasureData(layoutId: Int): TextMeasureData? = textMeasures[layoutId]
 
     // Ask for the layout for the associated node via JNI
-    internal fun getLayoutWithDensity(layoutId: Int): Layout? {
-        return getLayout(layoutId)?.withDensity(density)
-    }
+    internal fun getLayoutWithDensity(layoutId: Int): Layout? =
+        getLayout(layoutId)?.withDensity(density)
 
     // Ask for the layout for the associated node via JNI
-    internal fun getLayout(layoutId: Int): Layout? {
-        return layoutCache[layoutId]
-    }
+    internal fun getLayout(layoutId: Int): Layout? = layoutCache[layoutId]
+
+    internal fun getLayoutState(layoutId: Int): Int? = layoutStateCache[layoutId]
 
     // Tell the Rust layout manager that a node size has changed. In the returned response, get all
     // the nodes that have changed and notify subscribers of this change.
     internal fun setNodeSize(layoutId: Int, rootLayoutId: Int, width: Int, height: Int) {
+        modifiedSizes.add(layoutId)
         val adjustedWidth = (width.toFloat() / density).roundToInt()
         val adjustedHeight = (height.toFloat() / density).roundToInt()
         val responseBytes =
@@ -266,16 +269,14 @@ internal object LayoutManager {
         handleResponse(responseBytes)
     }
 
+    internal fun hasModifiedSize(layoutId: Int): Boolean = modifiedSizes.contains(layoutId)
+
     // For every node in nodes, inform the subscribers of the new layout ID
     private fun notifySubscribers(nodes: Set<Int>, layoutState: Int) {
         for (layoutId in nodes) {
             val updateLayout = subscribers[layoutId]
             updateLayout?.let { it.invoke(layoutState) }
         }
-    }
-
-    internal fun notifyAllSubscribers(layoutState: Int) {
-        subscribers.values.forEach { it(layoutState) }
     }
 }
 
@@ -538,26 +539,28 @@ internal inline fun DesignFrameLayout(
     modifier: Modifier,
     view: View,
     layoutId: Int,
+    rootLayoutId: Int,
     layoutState: Int,
     content: @Composable () -> Unit
 ) {
-    val measurePolicy = remember(layoutState) { designMeasurePolicy(view, layoutId) }
+    val measurePolicy =
+        remember(layoutState) { designMeasurePolicy(view, layoutId, rootLayoutId, layoutState) }
     Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
 }
 
 // Measure policy for DesignFrame.
-internal fun designMeasurePolicy(view: View, layoutId: Int) =
+internal fun designMeasurePolicy(view: View, layoutId: Int, rootLayoutId: Int, layoutState: Int) =
     MeasurePolicy { measurables, constraints ->
         val name = view.name
         val placeables =
             measurables.map { measurable ->
                 val layoutData = measurable.designLayoutData
-                // Initialize constraints to those passed in. If the view is the parent of a widget,
-                // use default infinity contraints because widgets don't use this custom layout and
-                // instead use layout from the build in Row, Column or LazyGrid. If we have layout
-                // data for the child, use them to create fixed constraints for the child.
+                // Initialize constraints to those passed in. If the view should use infinite
+                // constraints for its children because it has a child that uses a built-in
+                // container such as a Row() or Column(), construct infinite contraints. Otherwise,
+                // if we have layout data for the child, use them to create fixed constraints.
                 var childConstraints = constraints
-                if (view.isWidgetParent()) childConstraints = Constraints()
+                if (view.useInfiniteConstraints()) childConstraints = Constraints()
                 else if (layoutData != null) {
                     val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
                     if (childLayout != null) {
@@ -575,9 +578,24 @@ internal fun designMeasurePolicy(view: View, layoutId: Int) =
             Log.d(TAG, "designMeasurePolicy error: null layout $name layoutId $layoutId")
         // Get width and height from constraints if they are fixed. Otherwise get them from layout.
         val myWidth =
-            if (constraints.hasFixedWidth) constraints.maxWidth else myLayout?.width() ?: 0
+            if (constraints.hasFixedWidth && constraints.maxWidth != 0) constraints.maxWidth
+            else myLayout?.width() ?: 0
         val myHeight =
-            if (constraints.hasFixedHeight) constraints.maxHeight else myLayout?.height() ?: 0
+            if (constraints.hasFixedHeight && constraints.maxHeight != 0) constraints.maxHeight
+            else myLayout?.height() ?: 0
+
+        // If constraints have forced a size that does not match our layout size, set this size into
+        // the layout manager so that it can set this size in the Rust layout manager and then
+        // recalculate any layouts that many have changed. However, only do this if the layout state
+        // has not changed after computing child layouts. This is necessary in the case where
+        // calling setNodeSize on a node causes an ancestor to resize.
+        val layoutState2 = LayoutManager.getLayoutState(layoutId)
+        if (
+            layoutState == layoutState2 &&
+                myLayout != null &&
+                (myWidth != myLayout?.width() || myHeight != myLayout?.height())
+        )
+            LayoutManager.setNodeSize(layoutId, rootLayoutId, myWidth, myHeight)
         layout(myWidth, myHeight) {
             // Place children in the parent layout
             placeables.forEachIndexed { index, placeable ->

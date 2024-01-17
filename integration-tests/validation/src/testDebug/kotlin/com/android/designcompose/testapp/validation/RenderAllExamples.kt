@@ -72,7 +72,7 @@ class RenderAllExamples(private val config: TestConfig) {
     val dcfOutPath = System.getProperty("designcompose.test.dcfOutPath")
     val runFigmaFetch = System.getProperty("designcompose.test.fetchFigma")
 
-    @Test(expected = AssertionError::class) // TODO: GH-483
+    @Test
     fun testRender() {
         composeTestRule.setContent(config.fileComposable)
 

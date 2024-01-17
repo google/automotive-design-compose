@@ -206,7 +206,6 @@ private fun calculateArcData(
                 arcAngleMeter,
                 shape.inner_radius,
                 arcData.cornerRadius,
-                shape.size,
                 shape.is_mask,
             )
     }
@@ -229,6 +228,7 @@ internal fun ContentDrawScope.render(
     document: DocContent,
     name: String,
     customizations: CustomizationContext,
+    layoutId: Int,
 ) {
     if (size.width <= 0F && size.height <= 0F) return
 
@@ -321,7 +321,8 @@ internal fun ContentDrawScope.render(
             rectSize,
             customArcAngle,
             vectorScaleX,
-            vectorScaleY
+            vectorScaleY,
+            layoutId
         )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
@@ -343,7 +344,7 @@ internal fun ContentDrawScope.render(
                 val b = background.asBrush(document, density)
                 if (b != null) {
                     val (brush, fillOpacity) = b
-                    val brushSize = getNodeRenderSize(rectSize, size, style, density)
+                    val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
                     brush.applyTo(brushSize, p, fillOpacity)
                     p
                 } else {
@@ -358,7 +359,7 @@ internal fun ContentDrawScope.render(
             val b = background.asBrush(document, density)
             if (b != null) {
                 val (brush, strokeOpacity) = b
-                val brushSize = getNodeRenderSize(rectSize, size, style, density)
+                val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
                 brush.applyTo(brushSize, p, strokeOpacity)
                 p
             } else {

@@ -582,51 +582,53 @@ internal fun DesignSwitcher(
     val (showRecompositionChecked, setShowRecompositionChecked) = remember { mutableStateOf(false) }
     val miniMessage = if (miniMessagesChecked) getMiniMessage() else ""
 
-    DesignSwitcherDoc.SettingsView(
-        modifier = Modifier,
-        mini_view_message = miniMessage,
-        current_doc_name = doc?.c?.document?.name ?: "",
-        last_mod_time = lastModifiedString,
-        branch_file_count = branchHash?.size.toString(),
-        project_file_count = GetProjectFileCount(doc),
-        branch_list = GetBranches(branchHash, setDocId, interactionState),
-        show_branch_section = !branchHash.isNullOrEmpty(),
-        project_file_list = GetProjectList(doc, setDocId, interactionState),
-        status_message_list = GetMessages(currentDocId),
-        doc_text_edit = { context ->
-            BasicTextField(
-                value = docIdText,
-                onValueChange = setDocIdText,
-                textStyle = context.textStyle ?: TextStyle.Default,
-                modifier =
-                    Modifier.onKeyEvent {
-                        if (it.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
-                            interactionState.close(null)
-                            setDocId(docIdText.trim())
-                            true
-                        } else {
-                            false
+    CompositionLocalProvider(LocalDocOverrideContext provides designSwitcherDocId()) {
+        DesignSwitcherDoc.SettingsView(
+            modifier = Modifier,
+            mini_view_message = miniMessage,
+            current_doc_name = doc?.c?.document?.name ?: "",
+            last_mod_time = lastModifiedString,
+            branch_file_count = branchHash?.size.toString(),
+            project_file_count = GetProjectFileCount(doc),
+            branch_list = GetBranches(branchHash, setDocId, interactionState),
+            show_branch_section = !branchHash.isNullOrEmpty(),
+            project_file_list = GetProjectList(doc, setDocId, interactionState),
+            status_message_list = GetMessages(currentDocId),
+            doc_text_edit = { context ->
+                BasicTextField(
+                    value = docIdText,
+                    onValueChange = setDocIdText,
+                    textStyle = context.textStyle ?: TextStyle.Default,
+                    modifier =
+                        Modifier.onKeyEvent {
+                            if (it.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
+                                interactionState.close(null)
+                                setDocId(docIdText.trim())
+                                true
+                            } else {
+                                false
+                            }
                         }
-                    }
-            )
-        },
-        show_help_text = docIdText.isEmpty(),
-        on_tap_go =
-            Modifier.clickable {
-                if (docIdText.isNotEmpty()) {
-                    interactionState.close(null)
-                    setDocId(docIdText)
-                }
+                )
             },
-        node_names_checkbox = GetNodeNamesCheckbox(nodeNamesChecked, setNodeNamesChecked),
-        mini_messages_checkbox =
-            GetMiniMessagesCheckbox(miniMessagesChecked, setMiniMessagesChecked),
-        show_recomposition_checkbox =
-            GetShowRecompositionCheckbox(showRecompositionChecked, setShowRecompositionChecked),
-        on_tap_logout = Modifier.clickable { Log.i(TAG, "TODO: Re-implement Logging out") },
-        live_mode =
-            if (DesignSettings.isDocumentLive.value) DesignSwitcher.LiveMode.Live
-            else DesignSwitcher.LiveMode.Offline,
-        top_status_bar = topStatusBar,
-    )
+            show_help_text = docIdText.isEmpty(),
+            on_tap_go =
+                Modifier.clickable {
+                    if (docIdText.isNotEmpty()) {
+                        interactionState.close(null)
+                        setDocId(docIdText)
+                    }
+                },
+            node_names_checkbox = GetNodeNamesCheckbox(nodeNamesChecked, setNodeNamesChecked),
+            mini_messages_checkbox =
+                GetMiniMessagesCheckbox(miniMessagesChecked, setMiniMessagesChecked),
+            show_recomposition_checkbox =
+                GetShowRecompositionCheckbox(showRecompositionChecked, setShowRecompositionChecked),
+            on_tap_logout = Modifier.clickable { Log.i(TAG, "TODO: Re-implement Logging out") },
+            live_mode =
+                if (DesignSettings.isDocumentLive.value) DesignSwitcher.LiveMode.Live
+                else DesignSwitcher.LiveMode.Offline,
+            top_status_bar = topStatusBar,
+        )
+    }
 }

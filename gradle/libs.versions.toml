@@ -22,7 +22,7 @@ androidx-compose-components = "1.5.4"
 androidx-compose-runtime-tracing = "1.0.0-beta01"
 
 # Everything else
-android-car-ui = "2.5.1"
+android-car-ui = "2.6.0"
 android-gms-strictVersionMatcher = "1.2.4" # Used in build-logic
 androidx-core = "1.12.0"
 androidx-activity = "1.8.2"

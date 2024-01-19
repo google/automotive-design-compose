@@ -19,6 +19,7 @@ package com.android.designcompose
 import android.os.Trace.beginSection
 import android.os.Trace.endSection
 import android.util.Log
+import androidx.annotation.Discouraged
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -834,6 +835,22 @@ internal val LocalDesignIsRootContext = compositionLocalOf { DesignIsRoot(true) 
 // Current customization context that contains all customizations passed through from any ancestor
 val LocalCustomizationContext = compositionLocalOf { CustomizationContext() }
 
+// Current document override ID that can be used to override the document ID specified from the
+// @DesignDoc annotation
+internal val LocalDocOverrideContext = compositionLocalOf { String() }
+
+// Public function to set the document override ID
+@Composable
+@Discouraged(
+    message =
+        "Use of this function will override all document IDs in the tree. If more" +
+            " than one root document is used, all will instead use this document ID. Use this function only" +
+            " when there is no other way to set the document ID."
+)
+fun DesignDocOverride(docId: String, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalDocOverrideContext provides docId) { content() }
+}
+
 // A global object that keeps track of the current document ID we are subscribed to.
 // When switching document IDs, we notify all subscribers of the change to trigger
 // a recomposition.
@@ -945,7 +962,10 @@ internal fun DesignDocInternal(
     parentLayout: ParentLayoutInfo? = null,
 ) {
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
-    val docId = DocumentSwitcher.getSwitchedDocId(incomingDocId)
+    val overrideDocId = LocalDocOverrideContext.current
+    // Use the override document ID if it is not empty
+    val currentDocId = if (overrideDocId.isNotEmpty()) overrideDocId else incomingDocId
+    val docId = DocumentSwitcher.getSwitchedDocId(currentDocId)
     val doc =
         DocServer.doc(
             docName,

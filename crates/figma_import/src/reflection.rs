@@ -110,6 +110,9 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::TextOverflow>(&samples)
         .expect("couldn't trace TextOverflow");
     tracer
+        .trace_type::<crate::toolkit_layout_style::LayoutSizing>(&samples)
+        .expect("couldn't trace LayoutSizing");
+    tracer
         .trace_type::<crate::toolkit_style::ViewStyle>(&samples)
         .expect("couldn't trace ViewStyle");
 
@@ -164,6 +167,14 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_schema::ViewData>(&samples)
         .expect("couldn't trace ViewData");
     tracer.trace_type::<crate::toolkit_schema::View>(&samples).expect("couldn't trace View");
+    tracer.trace_type::<crate::toolkit_schema::Layout>(&samples).expect("couldn't trace Layout");
+    tracer
+        .trace_type::<crate::layout::LayoutChangedResponse>(&samples)
+        .expect("couldn't trace LayoutChangedResponse");
+    tracer.trace_type::<crate::layout::LayoutNode>(&samples).expect("couldn't trace LayoutNode");
+    tracer
+        .trace_type::<crate::layout::LayoutNodeList>(&samples)
+        .expect("couldn't trace LayoutNodeList");
 
     tracer
         .trace_type::<crate::image_context::EncodedImageMap>(&samples)

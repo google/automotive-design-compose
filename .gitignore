@@ -35,3 +35,7 @@ local.properties
 .settings
 .classpath
 .project
+
+# Gradle profiler files
+/profile-out*
+/gradle-user-home

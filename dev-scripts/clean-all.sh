@@ -18,12 +18,8 @@
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
-( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit; 
- ./gradlew  -P designComposeAAOSUnbundledUseSource=false clean; 
- rm -r buildSrc/build # Need to clean that one manually
- )
-
 ( cd "$GIT_ROOT/reference-apps/tutorial" || exit; ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts clean)
+( cd "$GIT_ROOT/reference-apps/aaos-unbundled" || exit; ./gradlew --init-script ../local-design-compose-repo.init.gradle.kts clean)
 ( cd "$GIT_ROOT" || exit; ./gradlew clean; cargo clean)
 
 ( cd "$GIT_ROOT/plugins" || exit; ./gradlew clean)

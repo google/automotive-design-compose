@@ -17,13 +17,14 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use taffy::prelude as taffy;
 
 use crate::{
     color::Color,
     toolkit_font_style::{FontStretch, FontStyle, FontWeight},
     toolkit_layout_style::{
         AlignContent, AlignItems, AlignSelf, Dimension, Display, FlexDirection, FlexWrap,
-        JustifyContent, Number, Overflow, PositionType, Rect,
+        JustifyContent, LayoutSizing, Number, Overflow, PositionType, Rect, Size,
     },
 };
 
@@ -437,6 +438,14 @@ impl Default for ItemSpacing {
         ItemSpacing::Fixed(0)
     }
 }
+impl Into<taffy::LengthPercentage> for &ItemSpacing {
+    fn into(self) -> taffy::LengthPercentage {
+        match self {
+            ItemSpacing::Fixed(s) => taffy::LengthPercentage::Points(*s as f32),
+            ItemSpacing::Auto(..) => taffy::LengthPercentage::Points(0.0),
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub enum GridLayoutType {
@@ -445,6 +454,8 @@ pub enum GridLayoutType {
     FixedRows,
     AutoColumns,
     AutoRows,
+    Horizontal,
+    Vertical,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
@@ -516,6 +527,7 @@ pub struct ViewStyle {
     pub text_align_vertical: TextAlignVertical,
     pub text_overflow: TextOverflow,
     pub text_shadow: Option<TextShadow>,
+    pub node_size: Size<f32>,
     pub line_height: LineHeight,
     pub line_count: Option<usize>, // None means no limit on # lines.
     pub font_features: Vec<FontFeature>,
@@ -550,6 +562,9 @@ pub struct ViewStyle {
     pub flex_grow: f32,
     pub flex_shrink: f32,
     pub flex_basis: Dimension,
+    pub bounding_box: Size<f32>,
+    pub horizontal_sizing: LayoutSizing,
+    pub vertical_sizing: LayoutSizing,
     pub width: Dimension,
     pub height: Dimension,
     pub min_width: Dimension,
@@ -579,6 +594,7 @@ impl Default for ViewStyle {
             text_align_vertical: TextAlignVertical::Top,
             text_overflow: TextOverflow::Clip,
             text_shadow: None,
+            node_size: Size::default(),
             line_height: LineHeight::Percent(1.0),
             line_count: None,
             font_features: Vec::new(),
@@ -612,6 +628,9 @@ impl Default for ViewStyle {
             flex_grow: 0.0,
             flex_shrink: 0.0,
             flex_basis: Dimension::default(),
+            bounding_box: Size::default(),
+            horizontal_sizing: LayoutSizing::default(),
+            vertical_sizing: LayoutSizing::default(),
             width: Dimension::default(),
             height: Dimension::default(),
             min_width: Dimension::default(),
@@ -622,6 +641,63 @@ impl Default for ViewStyle {
             pointer_events: PointerEvents::default(),
             meter_data: None,
         }
+    }
+}
+impl Into<taffy::Style> for &ViewStyle {
+    fn into(self) -> taffy::Style {
+        let mut tstyle = taffy::Style::default();
+
+        tstyle.padding.left = (&self.padding.start).into();
+        tstyle.padding.right = (&self.padding.end).into();
+        tstyle.padding.top = (&self.padding.top).into();
+        tstyle.padding.bottom = (&self.padding.bottom).into();
+
+        tstyle.flex_grow = self.flex_grow;
+        tstyle.flex_shrink = self.flex_shrink;
+        tstyle.flex_basis = (&self.flex_basis).into();
+        tstyle.gap.width = (&self.item_spacing).into();
+        tstyle.gap.height = (&self.item_spacing).into();
+
+        tstyle.align_content = Some((&self.align_content).into());
+        tstyle.justify_content = Some((&self.justify_content).into());
+        tstyle.align_items = Some((&self.align_items).into());
+        tstyle.flex_direction = (&self.flex_direction).into();
+        tstyle.align_self = (&self.align_self).into();
+
+        tstyle.size.width = (&self.width).into();
+        tstyle.size.height = (&self.height).into();
+        tstyle.min_size.width = (&self.min_width).into();
+        tstyle.min_size.height = (&self.min_height).into();
+        tstyle.max_size.width = (&self.max_width).into();
+        tstyle.max_size.height = (&self.max_height).into();
+
+        // If we have a fixed size, use the bounding box since that takes into
+        // account scale and rotation, and disregard min/max sizes.
+        // TODO support this with non-fixed sizes also!
+        if self.width.is_points() {
+            tstyle.size.width = taffy::Dimension::Points(self.bounding_box.width);
+            tstyle.min_size.width = taffy::Dimension::Auto;
+            tstyle.max_size.width = taffy::Dimension::Auto;
+        }
+        if self.height.is_points() {
+            tstyle.size.height = taffy::Dimension::Points(self.bounding_box.height);
+            tstyle.min_size.height = taffy::Dimension::Auto;
+            tstyle.max_size.height = taffy::Dimension::Auto;
+        }
+
+        tstyle.position = (&self.position_type).into();
+        tstyle.inset.left = (&self.left).into();
+        tstyle.inset.right = (&self.right).into();
+        tstyle.inset.top = (&self.top).into();
+        tstyle.inset.bottom = (&self.bottom).into();
+
+        tstyle.margin.left = (&self.margin.start).into();
+        tstyle.margin.right = (&self.margin.end).into();
+        tstyle.margin.top = (&self.margin.top).into();
+        tstyle.margin.bottom = (&self.margin.bottom).into();
+
+        tstyle.display = taffy::Display::Flex; // TODO set to None to hide
+        tstyle
     }
 }
 impl ViewStyle {
@@ -676,6 +752,9 @@ impl ViewStyle {
         }
         if self.text_shadow != other.text_shadow {
             delta.text_shadow = other.text_shadow;
+        }
+        if self.node_size != other.node_size {
+            delta.node_size = other.node_size;
         }
         if self.line_height != other.line_height {
             delta.line_height = other.line_height;

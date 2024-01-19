@@ -18,7 +18,6 @@ package com.android.designcompose.testapp.validation.figmaIntegrationTests
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.test.platform.app.InstrumentationRegistry
@@ -26,9 +25,9 @@ import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
-import com.android.designcompose.docRenderStatusSemanticsKey
-import com.android.designcompose.testapp.validation.EXAMPLES
-import com.android.designcompose.testapp.validation.interFont
+import com.android.designcompose.test.assertRenderStatus
+import com.android.designcompose.testapp.common.interFont
+import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -87,8 +86,6 @@ class FetchAndRenderExamples(
         composeTestRule
             .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, fileClass))
             .onFirst()
-            .assert(
-                SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, DocRenderStatus.Rendered)
-            )
+            .assertRenderStatus(DocRenderStatus.Rendered)
     }
 }

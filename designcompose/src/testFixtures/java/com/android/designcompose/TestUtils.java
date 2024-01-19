@@ -31,6 +31,9 @@ public class TestUtils {
     public static void triggerLiveUpdate() {
         String actualFigmaToken =
                 InstrumentationRegistry.getArguments().getString("FIGMA_ACCESS_TOKEN");
+        // Check for a system property as a backup
+        if (actualFigmaToken == null)
+            actualFigmaToken = System.getProperty("designcompose.test.figmaToken");
         if (actualFigmaToken == null)
             throw new RuntimeException("This test requires a Figma Access Token");
 

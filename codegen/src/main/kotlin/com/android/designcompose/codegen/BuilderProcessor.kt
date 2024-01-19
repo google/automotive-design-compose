@@ -91,6 +91,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import androidx.compose.runtime.Composable\n"
         file += "import androidx.compose.ui.text.TextStyle\n"
         file += "import android.graphics.Bitmap\n"
+        file += "import androidx.compose.ui.graphics.Brush\n"
         file += "import androidx.compose.ui.Modifier\n"
         file += "import androidx.compose.ui.semantics.semantics\n"
         file += "import androidx.compose.runtime.mutableStateOf\n"
@@ -125,6 +126,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import com.android.designcompose.setCustomComposable\n"
         file += "import com.android.designcompose.setImage\n"
         file += "import com.android.designcompose.setImageWithContext\n"
+        file += "import com.android.designcompose.setBrush\n"
+        file += "import com.android.designcompose.setBrushFunction\n"
         file += "import com.android.designcompose.setMeterValue\n"
         file += "import com.android.designcompose.setMeterFunction\n"
         file += "import com.android.designcompose.setModifier\n"
@@ -136,6 +139,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import com.android.designcompose.setVisible\n"
         file += "import com.android.designcompose.TapCallback\n"
         file += "import com.android.designcompose.ParentComponentInfo\n"
+        file += "import com.android.designcompose.ParentLayoutInfo\n"
         file += "import com.android.designcompose.sDocClass\n"
         file += "import com.android.designcompose.LocalCustomizationContext\n\n"
 
@@ -143,7 +147,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-
         fun createJsonFile(packageName: String, dependencies: Set<KSFile>): OutputStream {
             val fileName = packageName.replace('.', '_') + "_gen"
             return codeGenerator.createNewFile(
@@ -206,6 +209,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         TextFunction,
         Image,
         ImageWithContext,
+        Brush,
+        BrushFunction,
         Modifier,
         TapCallback,
         ContentReplacement,
@@ -229,6 +234,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var textFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var imageCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
+        private var brushCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
+        private var brushFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+            HashMap()
         private var modifierCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var tapCallbackCustomizations: HashMap<String, Vector<Pair<String, String>>> =
@@ -657,6 +665,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 val ignore =
                     when (getParamCustomizationType(param)) {
                         CustomizationType.Image -> true
+                        CustomizationType.Brush -> true
+                        CustomizationType.BrushFunction -> true
                         CustomizationType.ContentReplacement -> true
                         CustomizationType.ComponentReplacement -> true
                         CustomizationType.ListContent -> true
@@ -716,10 +726,13 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             return when (getParamTypeString(param)) {
                 "String" -> CustomizationType.Text
                 "@Composable () -> String" -> CustomizationType.TextFunction
+                "Brush" -> CustomizationType.Brush
+                "() -> Brush" -> CustomizationType.BrushFunction
                 "Bitmap?" -> CustomizationType.Image
                 "Modifier" -> CustomizationType.Modifier
                 "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
-                "@Composable () -> Unit" -> CustomizationType.ContentReplacement
+                "com.android.designcompose.ReplacementContent" ->
+                    CustomizationType.ContentReplacement
                 "@Composable (ComponentReplacementContext) -> Unit" ->
                     CustomizationType.ComponentReplacement
                 "com.android.designcompose.ListContent" -> CustomizationType.ListContent
@@ -762,6 +775,11 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Add optional key that can be used to uniquely identify this particular instance
             val keyDefault = if (override) "" else " = null"
             args.add(Pair("key", "String?$keyDefault"))
+
+            // Add an optional replacement index that should be populated if the composable is
+            // replacing children of a node through a content replacement customization
+            val parentLayoutInfoDefault = if (override) "" else " = null"
+            args.add(Pair("parentLayout", "ParentLayoutInfo?$parentLayoutInfoDefault"))
 
             // Get the @DesignComponent annotation object, or return if none
             val annotation: KSAnnotation =
@@ -862,6 +880,18 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 imageCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
             for ((node, value) in imageCustom) {
                 out.appendText("        customizations.setImage(\"$node\", $value)\n")
+            }
+
+            val brushCustom =
+                brushCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in brushCustom) {
+                out.appendText("        customizations.setBrush(\"$node\", $value)\n")
+            }
+
+            val brushFunctionCustom =
+                brushFunctionCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in brushFunctionCustom) {
+                out.appendText("        customizations.setBrushFunction(\"$node\", $value)\n")
             }
 
             val modifierCustom =
@@ -971,6 +1001,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 else "DesignSwitcherPolicy.SHOW_IF_ROOT"
             out.appendText("                designSwitcherPolicy = $switchPolicy,\n")
             out.appendText("                designComposeCallbacks = designComposeCallbacks,\n")
+            out.appendText("                parentLayout = parentLayout,\n")
             out.appendText("            )\n")
             out.appendText("        }\n")
             out.appendText("    }\n\n")
@@ -1013,6 +1044,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, textFunctionCustomizations)
                 CustomizationType.Image ->
                     addCustomization(valueParameter, annotation, imageCustomizations)
+                CustomizationType.Brush ->
+                    addCustomization(valueParameter, annotation, brushCustomizations)
+                CustomizationType.BrushFunction ->
+                    addCustomization(valueParameter, annotation, brushFunctionCustomizations)
                 CustomizationType.Modifier ->
                     addCustomization(valueParameter, annotation, modifierCustomizations)
                 CustomizationType.TapCallback ->

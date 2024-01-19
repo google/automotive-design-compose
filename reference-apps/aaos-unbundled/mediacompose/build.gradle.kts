@@ -15,16 +15,16 @@
  */
 
 plugins {
-    kotlin("android")
+    alias(libs.plugins.kotlinAndroid)
     id("com.android.application")
-    @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
 }
 
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(11)) } }
+
 var applicationID = "com.android.designcompose.reference.mediacompose"
 
-@Suppress("UnstableApiUsage")
 android {
     namespace = applicationID
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -47,7 +47,7 @@ android {
             // emulator builds.
             //
             // For a production project, you should replace this with your own platform key.
-            storeFile = rootProject.file("aosp_platform.keystore")
+            storeFile = project.layout.projectDirectory.file("../aosp_platform.keystore").asFile
             storePassword = "UNSECURE"
             keyAlias = "platform"
             keyPassword = "UNSECURE"
@@ -67,8 +67,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures { compose = true }
@@ -77,13 +77,17 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
+    // Deprecated in AGP 8+, replaced by `packaging`
+    @Suppress("DEPRECATION")
     packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+
+    useLibrary("android.car")
 }
 
 dependencies {
     implementation(libs.designcompose)
     ksp(libs.designcompose.codegen)
-    implementation(project(":media"))
+    implementation(project(":media-lib"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

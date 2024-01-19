@@ -40,22 +40,71 @@ dependencyResolutionManagement {
 
 rootProject.name = "DesignCompose"
 
-include(":designcompose")
+// Published modules
+include("designcompose")
 
-include(":annotation")
+include("common")
 
-include(":codegen")
+include("annotation")
 
-include(":common")
+include("codegen")
 
-include(":validation-app")
+include("test")
+
+// Internal support
+include("test:internal")
+
+// Integration (and benchmark) tests
+include("integration-tests:app-common")
+
+include("validation-app")
 
 project(":validation-app").projectDir = File("integration-tests/validation")
 
-include(":helloworld-app")
+include("battleship-app")
 
-project(":helloworld-app").projectDir = File("reference-apps/helloworld")
+project(":battleship-app").projectDir =
+    File("integration-tests/benchmarks/battleship/battleship-app")
 
-include(":tutorial-app")
+include("integration-tests:benchmarks:battleship:lib")
+
+include("integration-tests:benchmarks:battleship:benchmark")
+
+// Reference apps (Can only use published libraries)
+include("helloworld-app")
+
+project(":helloworld-app").projectDir = File("reference-apps/helloworld/helloworld-app")
+
+include("tutorial-app")
 
 project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")
+
+// Optionally include the AAOS Unbundled projects if `unbundledAAOSDir` is set.
+
+val unbundledAAOSDir: String? by settings
+
+if (unbundledAAOSDir.isNullOrBlank()) {
+    logger.warn("unbundledAAOSDir not set, cannot include MediaCompose in the project")
+} else {
+    logger.warn("unbundledAAOSDir set, including MediaCompose in the project")
+    logger.warn("See reference-apps/aaos-unbundled/README.md for set-up")
+
+    val unbundledRepo = File(unbundledAAOSDir, "out/aaos-apps-gradle-build/unbundled_m2repo")
+    if (unbundledRepo.exists()) {
+
+        include(":media-lib")
+        project(":media-lib").projectDir = File("reference-apps/aaos-unbundled/media")
+        include(":mediacompose-app")
+        project(":mediacompose-app").projectDir = File("reference-apps/aaos-unbundled/mediacompose")
+
+        dependencyResolutionManagement { repositories { maven(uri(unbundledRepo)) } }
+    } else {
+        throw GradleException(
+            "Cannot find compiled Unbundled libraries, cannot proceed with build.\n" +
+                "Make sure your Unbundled repo is up to date, then \n" +
+                "go to $unbundledAAOSDir/packages/apps/Car/libs/aaos-apps-gradle-project \n" +
+                "and run:\n" +
+                "./gradlew publishAllPublicationsToLocalRepository"
+        )
+    }
+}

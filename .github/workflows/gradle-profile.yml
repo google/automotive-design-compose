@@ -19,7 +19,9 @@ on:
     branches:
     - main
     - 'stable/**'
+    - 'feature/**'
   pull_request:
+  merge_group:
 
 permissions:
   contents: read
@@ -37,26 +39,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.5.2
 
       - name: Set up Java
-        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
         with:
           distribution: "temurin"
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
+        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.11.1
         with:
           cache-disabled: ${{matrix.cache == 'cache-disabled'}}
 
       - name: Set up Rust Cache
         if: ${{matrix.cache == 'cache-enabled'}}
-        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
@@ -68,7 +70,7 @@ jobs:
         run: ./install-rust-toolchains.sh
 
       - name: Run the profiled build
-        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a # v2.9.0
+        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.11.1
         with:
           arguments:
             ${{matrix.task}} --profile

@@ -73,6 +73,7 @@ import com.android.designcompose.EmptyListContent
 import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
+import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.TapCallback
 import java.lang.reflect.Field
 import java.util.concurrent.LinkedBlockingQueue
@@ -117,7 +118,7 @@ private class MediaArtCache {
 
 private class ItemData(
     var nodeData: DesignNodeData = DesignNodeData(),
-    var composable: @Composable () -> Unit = {},
+    var composable: @Composable (parentLayout: ParentLayoutInfo) -> Unit = {},
     var key: String = "",
 )
 
@@ -330,7 +331,7 @@ class MediaAdapter(
             MediaBrowserConnector.ConnectionStatus.CONNECTED -> {
                 Log.i(
                     TAG,
-                    "Media Browse State CONNECTED ${newBrowsingState.mMediaSource.displayName}"
+                    "Media Browse State CONNECTED ${newBrowsingState.mMediaSource.getDisplayName(context)}"
                 )
                 val browser = newBrowsingState.mBrowser
                 canSearch.value = MediaBrowserViewModelImpl.getSupportsSearch(browser)
@@ -397,6 +398,7 @@ class MediaAdapter(
         currentMetadata: MediaItemMetadata?,
         onTap: TapCallback,
         key: String?,
+        parentLayout: ParentLayoutInfo,
         media: MediaInterface,
     ) {
         val (icon, setIcon) = remember { mutableStateOf<Bitmap?>(null) }
@@ -420,6 +422,7 @@ class MediaAdapter(
                 cachedIcon ?: icon
             },
             key = key,
+            parentLayout = parentLayout,
         )
     }
 
@@ -427,6 +430,7 @@ class MediaAdapter(
     private fun MediaNavButton(
         item: MediaItemMetadata,
         browseStack: MediaBrowseStack,
+        parentLayout: ParentLayoutInfo,
         media: MediaInterface,
     ) {
         val (icon, setIcon) = remember { mutableStateOf<Bitmap?>(null) }
@@ -446,7 +450,8 @@ class MediaAdapter(
                 val cachedIcon = getArtwork(item, width, height, color, setIcon)
                 cachedIcon ?: icon
             },
-            key = item.id
+            key = item.id,
+            parentLayout = parentLayout,
         )
     }
 
@@ -516,6 +521,7 @@ class MediaAdapter(
                     errorMessage = playbackState?.errorMessage?.toString() ?: "",
                     errorButtonText = buttonText,
                     showErrorButton = hasActionLabel,
+                    parentLayout = c.parentLayout,
                     onTapErrorButton = {
                         val pendingIntent =
                             extras?.get(
@@ -529,7 +535,7 @@ class MediaAdapter(
                             Log.i(TAG, "Opening authentication PendingIntent")
                             pendingIntent.send(context, 0, intent)
                         }
-                    }
+                    },
                 )
             }
         }
@@ -538,7 +544,7 @@ class MediaAdapter(
         playbackState?.customActions?.forEach {
             val item = ItemData()
             item.nodeData = media.CustomActionButtonDesignNodeData()
-            item.composable = {
+            item.composable = { parentLayout ->
                 media.CustomActionButton(
                     modifier = Modifier,
                     openLinkCallback = null,
@@ -549,7 +555,8 @@ class MediaAdapter(
                         getCustomActionIcon(it, context, width, height, color)
                     },
                     onTap = { playController?.doCustomAction(it.mAction, null) },
-                    key = it.mAction
+                    key = it.mAction,
+                    parentLayout = parentLayout,
                 )
             }
             itemData.add(item)
@@ -557,7 +564,9 @@ class MediaAdapter(
 
         // Custom action buttons
         nowPlaying.customActions = {
-            ListContentData(count = itemData.size) { index -> itemData[index].composable() }
+            ListContentData(count = itemData.size) { index, parentLayout ->
+                itemData[index].composable(parentLayout)
+            }
         }
 
         // Album art
@@ -637,7 +646,7 @@ class MediaAdapter(
                     spanFunc { media.SourceButtonDesignNodeData(getSourceButtonType(index)) }
                 },
                 key = { index -> sources.list[index].toString() }
-            ) { index ->
+            ) { index, parentLayout ->
                 val source = sources.list[index]
                 media.SourceButton(
                     modifier = Modifier,
@@ -646,11 +655,12 @@ class MediaAdapter(
                     },
                     openLinkCallback = null,
                     sourceButtonType = getSourceButtonType(index),
-                    title = source.displayName as String,
+                    title = source.getDisplayName(context) as String,
                     icon = source.croppedPackageIcon,
                     showResults = false,
                     numResults = "",
                     key = source.packageName,
+                    parentLayout = parentLayout,
                 )
             }
         }
@@ -664,21 +674,21 @@ class MediaAdapter(
         media: MediaInterface,
         showSectionTitles: Boolean = true,
     ): ListContent {
-        if (list == null) return { ListContentData {} }
+        if (list == null) return { ListContentData { _, _ -> } }
 
         if (list.isLoading) {
             return { spanFunc ->
                 ListContentData(
                     count = 1,
                     span = { spanFunc { media.LoadingPageDesignNodeData() } }
-                ) {
-                    media.LoadingPage(Modifier)
+                ) { index, parentLayout ->
+                    media.LoadingPage(Modifier, parentLayout = parentLayout)
                 }
             }
         }
 
         if (list.data == null) {
-            return { ListContentData {} }
+            return { ListContentData { _, _ -> } }
         }
 
         return getBrowseLazyGridContent(list.data, browseFunc, playFunc, media, showSectionTitles)
@@ -692,7 +702,7 @@ class MediaAdapter(
         media: MediaInterface,
         showSectionTitles: Boolean = true,
     ): ListContent {
-        if (list == null) return { ListContentData {} }
+        if (list == null) return { ListContentData { _, _ -> } }
         val playController: PlaybackViewModel.PlaybackController? by
             playbackViewModel.playbackController.observeAsState()
         val metadata: MediaItemMetadata? by playbackViewModel.metadata.observeAsState()
@@ -749,11 +759,12 @@ class MediaAdapter(
                 if (prevGroup != group) {
                     val groupItem = ItemData()
                     groupItem.nodeData = media.GroupHeaderDesignNodeData()
-                    groupItem.composable = {
+                    groupItem.composable = { parentLayout ->
                         media.GroupHeader(
                             modifier = Modifier,
                             openLinkCallback = null,
-                            title = group
+                            title = group,
+                            parentLayout = parentLayout,
                         )
                     }
                     groupItem.key = group
@@ -771,7 +782,7 @@ class MediaAdapter(
                         if (groupGridType[group]!!) BrowseItemType.Grid else BrowseItemType.List,
                     currentlyPlaying = currentlyPlaying
                 )
-            item.composable = {
+            item.composable = { parentLayout ->
                 // Use `key` to tell Compose not to try to morph one item into another
                 // when processing an update. Compose will do this across multiple presented
                 // frames, which leads to some very odd intermediate states (that our app
@@ -786,6 +797,7 @@ class MediaAdapter(
                             if (it.isBrowsable) browseFunc(it) else playFunc(playController, it)
                         },
                         key = it.id,
+                        parentLayout,
                         media,
                     )
                 }
@@ -822,9 +834,11 @@ class MediaAdapter(
                 span = { index -> spans[index] },
                 key = { index -> itemData[index].key },
                 initialSpan = { spanFunc { media.LoadingPageDesignNodeData() } },
-                initialContent = { media.LoadingPage(Modifier) }
-            ) { index ->
-                itemData[index].composable()
+                initialContent = { parentLayout ->
+                    media.LoadingPage(Modifier, parentLayout = parentLayout)
+                }
+            ) { index, parentLayout ->
+                itemData[index].composable(parentLayout)
             }
         }
     }
@@ -868,8 +882,8 @@ class MediaAdapter(
                 ListContentData(
                     count = 1,
                     span = { spanFunc { media.LoadingPageDesignNodeData() } }
-                ) {
-                    media.LoadingPage(Modifier)
+                ) { _, parentLayout ->
+                    media.LoadingPage(Modifier, parentLayout = parentLayout)
                 }
             }
             return browse
@@ -907,20 +921,25 @@ class MediaAdapter(
                     if (it.id == browseStack.selectedRootId()) NavButtonType.Selected
                     else NavButtonType.Unselected
                 itemData.nodeData = media.PageHeaderNavButtonDesignNodeData(navButtonType)
-                itemData.composable = { MediaNavButton(it, browseStack, media) }
+                itemData.composable = { parentLayout ->
+                    MediaNavButton(it, browseStack, parentLayout, media)
+                }
                 navItemData.add(itemData)
             }
         }
         browse.navContent = {
-            ListContentData(count = navItemData.size) { index -> navItemData[index].composable() }
+            ListContentData(count = navItemData.size) { index, parentLayout ->
+                navItemData[index].composable(parentLayout)
+            }
         }
 
         val parent = topPage!!.parent
         val childPage = parent != null && browseStack.size() > 1
         browse.headerContent = {
-            ListContentData(count = 1) {
-                if (childPage) media.BrowseHeaderDrillDown(modifier = Modifier)
-                else media.BrowseHeaderNav(modifier = Modifier)
+            ListContentData(count = 1) { _, parentLayout ->
+                if (childPage)
+                    media.BrowseHeaderDrillDown(modifier = Modifier, parentLayout = parentLayout)
+                else media.BrowseHeaderNav(modifier = Modifier, parentLayout = parentLayout)
             }
         }
         browse.title = parent?.title?.toString() ?: ""

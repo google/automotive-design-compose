@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema, NodeQuery};
 
-static CURRENT_VERSION: u32 = 15;
+static CURRENT_VERSION: u32 = 16;
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
@@ -35,7 +35,7 @@ impl SerializedDesignDocHeader {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SerializedDesignDoc {
     pub last_modified: String,
-    pub nodes: HashMap<NodeQuery, toolkit_schema::View>,
+    pub views: HashMap<NodeQuery, toolkit_schema::View>,
     pub images: EncodedImageMap,
     pub name: String,
     pub component_sets: HashMap<String, String>,

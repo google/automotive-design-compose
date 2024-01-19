@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+// Hacky: GH-502
+import com.android.designcompose.cargoplugin.CargoBuildType
+import com.android.designcompose.cargoplugin.getHostCargoOutputDir
+
+evaluationDependsOn(":designcompose")
+// End Hacky
 plugins {
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.androidApplication)
@@ -22,6 +28,7 @@ plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices")
     id("designcompose.conventions.roborazzi")
+    id("com.android.designcompose.internal")
 }
 
 var applicationID = "com.android.designcompose.testapp.validation"
@@ -38,9 +45,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        if (designcompose.figmaToken.isPresent) {
-            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] =
-                designcompose.figmaToken.get()
+        designcompose.figmaToken.orNull?.let {
+            testInstrumentationRunnerArguments["FIGMA_ACCESS_TOKEN"] = it
         }
         vectorDrawables.useSupportLibrary = true
     }
@@ -75,11 +81,30 @@ android {
     }
 
     packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+
+    // Hacky: GH-502
+    testOptions {
+        unitTests {
+            all { test ->
+                // hacky
+                val dcProject = project(":designcompose")
+                test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
+                test.systemProperty(
+                    "java.library.path",
+                    dcProject.getHostCargoOutputDir(CargoBuildType.DEBUG).get().asFile.absolutePath
+                )
+            }
+        }
+    }
+    // End Hacky
+
 }
 
 dependencies {
-    implementation(libs.designcompose)
-    ksp(libs.designcompose.codegen)
+    implementation(project(":designcompose"))
+    implementation(project(":integration-tests:benchmarks:battleship:lib"))
+    implementation(project(":integration-tests:app-common"))
+    ksp(project(":codegen"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -90,6 +115,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    testImplementation(testFixtures(project(":designcompose")))
+    testImplementation(project(":test"))
+    testImplementation(project(":test:internal"))
     testImplementation(kotlin("test"))
     testImplementation(libs.google.truth)
     testImplementation(libs.robolectric)
@@ -100,6 +128,8 @@ dependencies {
     testImplementation(libs.androidx.compose.ui.test.junit4)
 
     androidTestImplementation(testFixtures(project(":designcompose")))
+    androidTestImplementation(project(":test"))
+    androidTestImplementation(project(":test:internal"))
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.junit)

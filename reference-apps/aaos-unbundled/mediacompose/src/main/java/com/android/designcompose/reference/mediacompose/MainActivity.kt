@@ -20,12 +20,10 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -72,6 +70,11 @@ val notosansFont =
         Font(R.font.notosans_thin, FontWeight.Thin, FontStyle.Normal),
     )
 
+// Media 1 7rvM6aVWe0jZCm7jhO9ITx
+// Media 2 S3n4mhNgoHzNxCCHhmrVcR
+// Media 4 5n0LhOQ6wOiDxrH0YUVhJS
+// Media 5 dui99iAKZ273s7RN11Z9Ak
+// Media Nova 2DQtQOf6U26mA8dqBie3gT
 @DesignDoc(id = "7rvM6aVWe0jZCm7jhO9ITx", version = "0.1")
 interface CenterDisplay : com.android.designcompose.reference.media.MediaInterface {
     @DesignComponent(node = "#stage", isRoot = true)
@@ -342,13 +345,13 @@ class MainActivity : ComponentActivity() {
         val search = mediaAdapter.getSearch(CenterDisplayDoc)
 
         CenterDisplayDoc.MainFrame(
-            modifier = Modifier.fillMaxSize().background(Color.Black),
+            modifier = Modifier.fillMaxSize(),
             title = nowPlaying.title,
             artist = nowPlaying.artist,
             album = nowPlaying.album,
             albumArt = nowPlaying.albumArt,
             appIcon = mediaSource?.croppedPackageIcon,
-            appName = mediaSource?.displayName as String,
+            appName = mediaSource?.getDisplayName(applicationContext) as String,
             timeElapsed = { mediaAdapter.getNowPlayingProgress().currentTimeText },
             timeDuration = { mediaAdapter.getNowPlayingProgress().maxTimeText },
             progress = { mediaAdapter.getNowPlayingProgress().progressWidth * 100F },

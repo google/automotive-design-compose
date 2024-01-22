@@ -43,6 +43,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -79,6 +80,15 @@ internal fun Modifier.textTransform(style: ViewStyle) =
             }
         }
     )
+
+// Data class that holds all the data that, if changed, should trigger a layout resubscription so
+// that the text can be remeasured.
+internal data class TextData(
+    val annotatedText: AnnotatedString,
+    val textStyle: TextStyle,
+    val style: ViewStyle,
+    val density: Density,
+)
 
 @Composable
 internal fun DesignText(
@@ -248,18 +258,10 @@ internal fun DesignText(
             resourceLoader = LocalFontLoader.current
         )
 
-    val textLayoutData =
-        TextLayoutData(
-            annotatedText,
-            textStyle,
-            LocalFontLoader.current,
-            style.node_size,
-            paragraph
-        )
     val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE
     val textMeasureData =
         TextMeasureData(
-            textLayoutData,
+            paragraph,
             density,
             maxLines,
             style.isAutoWidthText(),
@@ -272,7 +274,8 @@ internal fun DesignText(
     val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
     // Subscribe for layout changes whenever the text data changes, and use a measure function to
     // measure the text width and height
-    DisposableEffect(textMeasureData, style) {
+    val textData = TextData(annotatedText, textStyle, style, density)
+    DisposableEffect(textData) {
         trace(DCTraces.DESIGNTEXT_DE_SUBSCRIBE) {
             val parentLayoutId = parentLayout?.parentLayoutId ?: -1
             val childIndex = parentLayout?.childIndex ?: -1
@@ -345,7 +348,7 @@ internal fun DesignText(
         if (layoutWithDensity != null) {
             val paragraph =
                 Paragraph(
-                    paragraphIntrinsics = textMeasureData.textLayout.paragraph,
+                    paragraphIntrinsics = textMeasureData.paragraph,
                     width = layoutWithDensity.width,
                     maxLines = textMeasureData.maxLines,
                     ellipsis =
@@ -396,13 +399,13 @@ fun measureTextBoundsFunc(
     // available space, and a request to report the minimum space.
     val layoutWidth =
         if (textMeasureData.autoWidth) {
-            textMeasureData.textLayout.paragraph.maxIntrinsicWidth
+            textMeasureData.paragraph.maxIntrinsicWidth
         } else if (width > 0.0f) {
             width * density
         } else if (availableWidth <= 0.0f) {
-            textMeasureData.textLayout.paragraph.minIntrinsicWidth
+            textMeasureData.paragraph.minIntrinsicWidth
         } else if (availableWidth >= Float.MAX_VALUE) {
-            textMeasureData.textLayout.paragraph.maxIntrinsicWidth
+            textMeasureData.paragraph.maxIntrinsicWidth
         } else {
             availableWidth * density
         }
@@ -410,7 +413,7 @@ fun measureTextBoundsFunc(
     // Perform a layout using the given width.
     val textLayout =
         Paragraph(
-            paragraphIntrinsics = textMeasureData.textLayout.paragraph,
+            paragraphIntrinsics = textMeasureData.paragraph,
             width = layoutWidth,
             maxLines = textMeasureData.maxLines
         )

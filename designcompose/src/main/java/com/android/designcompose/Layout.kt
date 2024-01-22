@@ -32,9 +32,7 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphIntrinsics
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -50,7 +48,6 @@ import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.OverflowDirection
-import com.android.designcompose.serdegen.Size
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import com.novi.bincode.BincodeDeserializer
@@ -58,17 +55,8 @@ import com.novi.bincode.BincodeSerializer
 import java.util.Optional
 import kotlin.math.roundToInt
 
-/// TextLayoutData is used so that a parent can perform a height-for-width calculation on
-internal data class TextLayoutData(
-    val annotatedString: AnnotatedString,
-    val textStyle: androidx.compose.ui.text.TextStyle,
-    val resourceLoader: Font.ResourceLoader,
-    val textBoxSize: Size,
-    val paragraph: ParagraphIntrinsics
-)
-
 internal data class TextMeasureData(
-    val textLayout: TextLayoutData,
+    val paragraph: ParagraphIntrinsics,
     val density: Density,
     val maxLines: Int,
     val autoWidth: Boolean,
@@ -669,7 +657,7 @@ internal fun designMeasurePolicy(
                             }
                         }
                     }
-                    placeable.place(
+                    placeable.placeWithLayer(
                         x = childLayout.left() + hScrollOffset,
                         y = childLayout.top() + vScrollOffset
                     )

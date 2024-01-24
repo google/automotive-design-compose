@@ -42,6 +42,12 @@ enum class Shape {
     Circle,
     Square,
 }
+
+enum class CompType {
+    one,
+    two
+}
+
 // TEST Variant Extra Properties Test
 // This tests that even though the Figma doc has four variant properties for the component named
 // #SquareBorder, we can only use two in the code and pick a variant that matches the two.
@@ -58,6 +64,10 @@ interface VariantPropertiesTest {
         @DesignVariant(property = "#bg2") bg2: Shape,
         @DesignVariant(property = "#SquareBorder") type: SquareBorder,
         @DesignVariant(property = "#SquareColor") color: SquareColor,
+        @DesignVariant(property = "#comp1") comp1: CompType,
+        @DesignVariant(property = "#comp2") comp2: CompType,
+        @DesignVariant(property = "#comp3") comp3: CompType,
+        @DesignVariant(property = "#border") border: Shape,
     )
 
     @DesignComponent(node = "#SquareBorder")
@@ -73,6 +83,10 @@ fun VariantPropertiesTest() {
     val (bg2, setBg2) = remember { mutableStateOf(Shape.Circle) }
     val (borderType, setBorderType) = remember { mutableStateOf(SquareBorder.Sharp) }
     val (color, setColor) = remember { mutableStateOf(SquareColor.Green) }
+    val (comp1, setComp1) = remember { mutableStateOf(CompType.two) }
+    val (comp2, setComp2) = remember { mutableStateOf(CompType.two) }
+    val (comp3, setComp3) = remember { mutableStateOf(CompType.two) }
+    val (border, setBorder) = remember { mutableStateOf(Shape.Square) }
 
     VariantPropertiesTestDoc.MainFrame(
         square1 = {
@@ -111,6 +125,10 @@ fun VariantPropertiesTest() {
         bg2 = bg2,
         type = borderType,
         color = color,
+        comp1 = comp1,
+        comp2 = comp2,
+        comp3 = comp3,
+        border = border,
     )
 
     Column(modifier = Modifier.absoluteOffset(x = 20.dp, y = 600.dp)) {
@@ -157,6 +175,42 @@ fun VariantPropertiesTest() {
             }
             com.android.designcompose.testapp.validation.Button("Blue", color == SquareColor.Blue) {
                 setColor(SquareColor.Blue)
+            }
+        }
+        Row {
+            Text("Comp 1 ", fontSize = 30.sp, color = Color.Black)
+            com.android.designcompose.testapp.validation.Button("One", comp1 == CompType.one) {
+                setComp1(CompType.one)
+            }
+            com.android.designcompose.testapp.validation.Button("Two", comp1 == CompType.two) {
+                setComp1(CompType.two)
+            }
+        }
+        Row {
+            Text("Comp 2 ", fontSize = 30.sp, color = Color.Black)
+            com.android.designcompose.testapp.validation.Button("One", comp2 == CompType.one) {
+                setComp2(CompType.one)
+            }
+            com.android.designcompose.testapp.validation.Button("Two", comp2 == CompType.two) {
+                setComp2(CompType.two)
+            }
+        }
+        Row {
+            Text("Comp 3 ", fontSize = 30.sp, color = Color.Black)
+            com.android.designcompose.testapp.validation.Button("One", comp3 == CompType.one) {
+                setComp3(CompType.one)
+            }
+            com.android.designcompose.testapp.validation.Button("Two", comp3 == CompType.two) {
+                setComp3(CompType.two)
+            }
+        }
+        Row {
+            Text("Border ", fontSize = 30.sp, color = Color.Black)
+            com.android.designcompose.testapp.validation.Button("Curved", border == Shape.Circle) {
+                setBorder(Shape.Circle)
+            }
+            com.android.designcompose.testapp.validation.Button("Square", border == Shape.Square) {
+                setBorder(Shape.Square)
             }
         }
     }

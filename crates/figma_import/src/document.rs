@@ -561,12 +561,16 @@ impl Document {
                     let component_set = component_set_index.get(component_id);
                     if let Some(cs) = component_set {
                         node_name_hash.insert(NodeQuery::NodeComponentSet(cs.name.clone()));
+
+                        // Recurse on the children of the component set since variants can change
+                        // to any of them at runtime
+                        let cs_children: Vec<&Node> = cs.children.iter().collect();
+                        find_component_sets(&cs_children, component_set_index, node_name_hash);
                     }
                 }
 
-                for child in &node.children {
-                    find_component_sets(&vec![child], component_set_index, node_name_hash);
-                }
+                let children: Vec<&Node> = node.children.iter().collect();
+                find_component_sets(&children, component_set_index, node_name_hash);
             }
         }
 

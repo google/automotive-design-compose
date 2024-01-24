@@ -371,7 +371,7 @@ private fun GetBranches(
                         interactionState.close(null)
                         setDocId(branchList[index].first)
                     },
-                    ParentLayoutInfo(rc.parentLayoutId, index),
+                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                 )
             }
         }
@@ -399,7 +399,7 @@ private fun GetProjectList(
                         interactionState.close(null)
                         setDocId(doc?.c?.project_files?.get(index)?.id ?: "")
                     },
-                    ParentLayoutInfo(rc.parentLayoutId, index),
+                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                 )
             }
         }
@@ -426,13 +426,13 @@ private fun GetMessages(docId: String): ReplacementContent {
                     DesignSwitcherDoc.MessageFailed(
                         message,
                         elapsedTimeString(secondsAgo),
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                     )
                 else
                     DesignSwitcherDoc.Message(
                         message,
                         elapsedTimeString(secondsAgo),
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, index)
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                     )
             }
         }
@@ -471,13 +471,13 @@ private fun GetNodeNamesCheckbox(state: Boolean, setState: (Boolean) -> Unit): R
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         true,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
                 else
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         false,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
             }
         }
@@ -498,13 +498,13 @@ private fun GetMiniMessagesCheckbox(
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         true,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
                 else
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         false,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
             }
         }
@@ -529,13 +529,13 @@ private fun GetShowRecompositionCheckbox(
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         true,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
                 else
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         false,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0)
+                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
             }
         }

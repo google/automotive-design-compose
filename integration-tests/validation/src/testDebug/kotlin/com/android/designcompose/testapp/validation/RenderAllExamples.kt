@@ -32,7 +32,7 @@ import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.interFont
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import java.io.File
-import org.junit.BeforeClass
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,6 +72,11 @@ class RenderAllExamples(private val config: TestConfig) {
     val dcfOutPath = System.getProperty("designcompose.test.dcfOutPath")
     val runFigmaFetch = System.getProperty("designcompose.test.fetchFigma")
 
+    @Before
+    fun setUp() {
+        DesignSettings.addFontFamily("Inter", interFont)
+    }
+
     @Test
     fun testRender() {
         composeTestRule.setContent(config.fileComposable)
@@ -93,12 +98,6 @@ class RenderAllExamples(private val config: TestConfig) {
                 .map {
                     TestConfig(it.first.replace("[\\s*]".toRegex(), "-"), it.second, it.third!!)
                 }
-        }
-
-        @JvmStatic
-        @BeforeClass
-        fun setUp() {
-            DesignSettings.addFontFamily("Inter", interFont)
         }
     }
 }

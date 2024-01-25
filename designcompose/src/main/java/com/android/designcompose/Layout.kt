@@ -16,559 +16,315 @@
 
 package com.android.designcompose
 
-import android.graphics.Bitmap
-import android.graphics.Paint
-import android.graphics.Rect
+import android.util.Log
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.Paragraph
-import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.tracing.trace
 import com.android.designcompose.serdegen.AlignItems
-import com.android.designcompose.serdegen.AlignSelf
 import com.android.designcompose.serdegen.Dimension
-import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
+import com.android.designcompose.serdegen.Layout
+import com.android.designcompose.serdegen.LayoutChangedResponse
+import com.android.designcompose.serdegen.LayoutNode
+import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.OverflowDirection
-import com.android.designcompose.serdegen.PositionType
-import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
-import kotlin.math.ceil
+import com.novi.bincode.BincodeDeserializer
+import com.novi.bincode.BincodeSerializer
+import java.util.Optional
+import kotlin.math.roundToInt
 
-@Composable
-internal inline fun DesignLayout(
-    modifier: Modifier = Modifier,
-    style: ViewStyle,
-    name: String = "unnamed",
-    content: @Composable () -> Unit
-) {
-    val measurePolicy = rememberDesignMeasurePolicy(name, style)
-    Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
-}
-
-// We need to put the parent layout properties in here; but for now
-// since we're doing absolute positioning only, we don't have anything
-// to consult.
-//
-// Do we need width/height and min/max variants? Or do we just hope the
-// parent layout does the right thing with them?
-@Composable
-internal fun rememberDesignMeasurePolicy(name: String, style: ViewStyle) =
-    remember(name, style) { designMeasurePolicy(name, style) }
-
-internal fun designMeasurePolicy(name: String, style: ViewStyle) =
-    MeasurePolicy { measurables, constraints ->
-        var selfWidth = constraints.minWidth
-        var selfHeight = constraints.minHeight
-
-        // If we're absolutely positioned then we can extract our bounds directly from our style.
-        when (style.position_type) {
-            is PositionType.Absolute -> {
-                val absBounds = absoluteLayout(style, constraints, density)
-                selfWidth = absBounds.width()
-                selfHeight = absBounds.height()
-            }
-            is PositionType.Relative -> {
-                val relBounds = relativeLayout(style, constraints, density)
-                if (style.width !is Dimension.Undefined) {
-                    selfWidth = relBounds.width()
-                }
-                if (style.height !is Dimension.Undefined) {
-                    selfHeight = relBounds.height()
-                }
-            }
-        }
-
-        // Restrict to the parent constraints; we do not honor max constraints; if we exceed them
-        // then it's because we are required to by the specified layout.
-        if (constraints.minWidth > selfWidth) selfWidth = constraints.minWidth
-        if (constraints.minHeight > selfHeight) selfHeight = constraints.minHeight
-
-        // If we have no children, then bail out here.
-        if (measurables.isEmpty()) {
-            return@MeasurePolicy layout(selfWidth, selfHeight) {}
-        }
-
-        val placeables = arrayOfNulls<Placeable>(measurables.size)
-        val childBounds = arrayOfNulls<Rect>(measurables.size)
-
-        measurables.forEachIndexed { index, measurable ->
-            val childConstraints =
-                Constraints(
-                    minWidth = 0,
-                    minHeight = 0,
-                    maxWidth = selfWidth,
-                    maxHeight = selfHeight
-                )
-            val designChildData = measurable.designChildData
-
-            if (designChildData != null) {
-                // This block replicates some of the logic in `absoluteLayout` and `relativeLayout`
-                // because we use the width and height from `measurable.measure` instead of whatever
-                // is in the style (which allows for elements to take more or less space at runtime
-                // than in the design -- e.g.: if a text node had its content replaced with
-                // something
-                // shorter or longer, and it is set to have Auto Width or Auto Width and Height in
-                // the design tool).
-                val top = designChildData.style.top.resolve(selfHeight, density)
-                val left = designChildData.style.left.resolve(selfWidth, density)
-                val bottom = designChildData.style.bottom.resolve(selfHeight, density)
-                val right = designChildData.style.right.resolve(selfWidth, density)
-                var childWidth = designChildData.style.width.resolve(selfWidth, density)
-                var childHeight = designChildData.style.height.resolve(selfHeight, density)
-
-                if (left != null && right != null && childWidth == null) {
-                    childWidth = (selfWidth - right) - left
-                }
-                if (top != null && bottom != null && childHeight == null) {
-                    childHeight = (selfHeight - bottom) - top
-                }
-
-                // If we have a specified width/height then don't bother with min/max constraints.
-                val minChildWidth =
-                    childWidth ?: (designChildData.style.min_width.resolve(selfWidth, density) ?: 0)
-                val minChildHeight =
-                    childHeight
-                        ?: (designChildData.style.min_height.resolve(selfHeight, density) ?: 0)
-                val maxChildWidth =
-                    childWidth
-                        ?: (designChildData.style.max_width.resolve(selfWidth, density)
-                            ?: selfWidth)
-                val maxChildHeight =
-                    childHeight
-                        ?: (designChildData.style.max_height.resolve(selfHeight, density)
-                            ?: selfHeight)
-                val placeable =
-                    measurable.measure(
-                        Constraints(
-                            minWidth = minChildWidth,
-                            // Avoid asserting on impossible constraints; in general we shouldn't
-                            // encounter this
-                            // situation.
-                            maxWidth = maxOf(maxChildWidth, minChildWidth),
-                            minHeight = minChildHeight,
-                            maxHeight = maxOf(maxChildHeight, minChildHeight),
-                        )
-                    )
-
-                val leftMargin = designChildData.style.margin.start.resolve(selfWidth, density) ?: 0
-                val topMargin = designChildData.style.margin.top.resolve(selfHeight, density) ?: 0
-
-                val bounds = Rect()
-                bounds.left = leftMargin
-                bounds.top = topMargin
-                bounds.right = leftMargin + placeable.measuredWidth
-                bounds.bottom = topMargin + placeable.measuredHeight
-                if (designChildData.style.position_type is PositionType.Absolute) {
-                    if (right != null) {
-                        bounds.right = selfWidth - right
-                        bounds.left = bounds.right - placeable.measuredWidth
-                    }
-                    if (bottom != null) {
-                        bounds.bottom = selfHeight - bottom
-                        bounds.top = bounds.bottom - placeable.measuredHeight
-                    }
-                    if (left != null) {
-                        bounds.left = left + leftMargin
-                        bounds.right = bounds.left + placeable.measuredWidth
-                    }
-                    if (top != null) {
-                        bounds.top = top + topMargin
-                        bounds.bottom = bounds.top + placeable.measuredHeight
-                    }
-                }
-                placeables[index] = placeable
-                childBounds[index] = bounds
-            } else {
-                val placeable = measurable.measure(childConstraints)
-                val bounds = Rect(0, 0, placeable.measuredWidth, placeable.measuredHeight)
-
-                placeables[index] = placeable
-                childBounds[index] = bounds
-            }
-        }
-
-        // In order to work nicely with the scrollable modifiers, we report our width and height as
-        // the extents of our children; that way the scrollable layout modifier knows the extents to
-        // scroll to.
-        var horizontalExtent = 0
-        var verticalExtent = 0
-
-        placeables.forEachIndexed { index, placeable ->
-            placeable!!
-            val bounds = childBounds[index]!!
-            val designChildData = measurables[index].designChildData
-            // Use the child style if we have it; absolutely positioned elements get
-            // placed as requested and all others go into the flow.
-            if (
-                designChildData != null &&
-                    designChildData.style.position_type is PositionType.Absolute
-            ) {
-                val undoCenteringOffsetX = -(placeable.width - placeable.measuredWidth) / 2
-                val undoCenteringOffsetY = -(placeable.height - placeable.measuredHeight) / 2
-
-                bounds.offsetTo(
-                    bounds.left + undoCenteringOffsetX,
-                    bounds.top + undoCenteringOffsetY
-                )
-            } else {
-                bounds.offsetTo(0, 0)
-            }
-            horizontalExtent = horizontalExtent.coerceAtLeast(bounds.right)
-            verticalExtent = verticalExtent.coerceAtLeast(bounds.bottom)
-        }
-
-        if (horizontalExtent > selfWidth && constraints.maxWidth == Constraints.Infinity)
-            selfWidth = horizontalExtent
-        if (verticalExtent > selfHeight && constraints.maxHeight == Constraints.Infinity)
-            selfHeight = verticalExtent
-
-        layout(selfWidth, selfHeight) {
-            placeables.forEachIndexed { index, placeable ->
-                val bounds = childBounds[index]!!
-                placeable!!.place(bounds.left, bounds.top)
-            }
-        }
-    }
-
-private class LayoutDeltaCanvas :
-    android.graphics.Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) {
-    var maxHeight = 0
-    var maxAscent = 0
-
-    override fun drawTextRun(
-        text: CharSequence,
-        start: Int,
-        end: Int,
-        contextStart: Int,
-        contextEnd: Int,
-        x: Float,
-        y: Float,
-        isRtl: Boolean,
-        paint: Paint
-    ) {
-
-        val fontMetricsInt = paint.fontMetricsInt
-        val height = fontMetricsInt.descent - fontMetricsInt.ascent
-        val ascent = -fontMetricsInt.ascent
-
-        maxHeight = maxHeight.coerceAtLeast(height)
-        maxAscent = maxAscent.coerceAtLeast(ascent)
-    }
-}
-
-/// TextLayoutData is used so that a parent can perform a height-for-width calculation on
-internal class TextLayoutData(
-    val annotatedString: AnnotatedString,
-    val textStyle: androidx.compose.ui.text.TextStyle,
-    val resourceLoader: Font.ResourceLoader
+internal data class TextMeasureData(
+    val paragraph: ParagraphIntrinsics,
+    val density: Density,
+    val maxLines: Int,
+    val autoWidth: Boolean,
 )
 
-internal fun TextLayoutData.boundsForWidth(
-    inWidth: Int,
-    maxLines: Int,
-    density: Density
-): Pair<Rect, Int> {
-    // Create a text layout so we can figure out the size we need to allocate for the
-    // text box. It will be taller than the Figma box because Compose measures text
-    // quite differently.
-    val firstLineTextLayout =
-        Paragraph(
-            text = annotatedString.text,
-            style = textStyle,
-            spanStyles = annotatedString.spanStyles,
-            width = inWidth + 5.0f,
-            density = density,
-            resourceLoader = resourceLoader,
-            maxLines = 1
-        )
-    val textLayout =
-        Paragraph(
-            text = annotatedString.text,
-            style = textStyle,
-            spanStyles = annotatedString.spanStyles,
-            width = inWidth + 5.0f,
-            density = density,
-            resourceLoader = resourceLoader,
-            maxLines = maxLines
-        )
+internal object LayoutManager {
+    private var managerId: Int = 0
+    private val subscribers: HashMap<Int, (Int) -> Unit> = HashMap()
+    private val layoutsInProgress: HashSet<Int> = HashSet()
+    private var textMeasures: HashMap<Int, TextMeasureData> = HashMap()
+    private var modifiedSizes: HashSet<Int> = HashSet()
+    private var nextLayoutId: Int = 0
+    private var performLayoutComputation: Boolean = false
+    private var density: Float = 1F
+    private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
+    private var layoutCache: HashMap<Int, Layout> = HashMap()
+    private var layoutStateCache: HashMap<Int, Int> = HashMap()
 
-    // The design tool allocates height for text based on the "ascent" and "descent"
-    // glyph values. Compose uses "top" and "bottom", which are bigger and provide inclusive
-    // bounds. We make it work by determining where the baseline would be in the design
-    // tool, and then offsetting the text in Compose to match up.
-    //
-    // We use this canvas to get the glyph metrics of the largest glyph in the first line.
-    val measureCanvas = LayoutDeltaCanvas()
-    firstLineTextLayout.paint(Canvas(measureCanvas))
-    var designLineHeight = measureCanvas.maxHeight
-    var designBaseline = measureCanvas.maxAscent
-
-    // If there's an explicit line height, then figure out where we lie within it
-    if (textStyle.lineHeight.isSp) {
-        val lineHeightPx = textStyle.lineHeight.value * density.density
-
-        // center within measured height
-        val dy = (lineHeightPx - designLineHeight) / 2
-        designBaseline += dy.toInt()
-        designLineHeight = lineHeightPx.toInt()
+    init {
+        managerId = Jni.jniCreateLayoutManager()
     }
 
-    val baselineDelta = (firstLineTextLayout.firstBaseline - designBaseline).toInt()
-
-    // Sometimes the line width is much less than the layout width; we want to
-    // have the tightest bounds possible that preserve the line breaking that
-    // Figma produces. So we take the max line width, and then the minimum of
-    // that against the layout width.
-    //
-    // The interaction test doc has several text elements that reproduce bad
-    // behavior here.
-    var maxLineWidth = 0.0f
-    for (i in 0 until textLayout.lineCount) {
-        maxLineWidth = textLayout.getLineWidth(i).coerceAtLeast(maxLineWidth)
+    internal fun getNextLayoutId(): Int {
+        return ++nextLayoutId
     }
-    val width = ceil(maxLineWidth.coerceAtMost(textLayout.width)).toInt()
-    val height = ceil(textLayout.height).toInt()
 
-    // Now we can place the text, giving it exactly the constraints it needs to
-    // lay out, and offsetting in y by the computed layout delta.
-    return Pair(
-        Rect(0, -baselineDelta, width, height - baselineDelta),
-        designLineHeight * textLayout.lineCount
+    internal fun deferComputations() {
+        // Defer layout computations when removing views. This is an optimization to prevent layout
+        // from being calculated after every view unsubscribe. Currently we only defer computations
+        // when performing an navigation interaction that changes the root view.
+        Log.d(TAG, "deferComputations")
+        performLayoutComputation = false
+    }
+
+    private fun resumeComputations() {
+        // Resume layout computations. This happens as soon as we start adding (subscribing) views.
+        performLayoutComputation = true
+    }
+
+    internal fun setDensity(pixelDensity: Float) {
+        Log.i(TAG, "setDensity $pixelDensity")
+        density = pixelDensity
+    }
+
+    internal fun getDensity(): Float {
+        return density
+    }
+
+    internal fun subscribeFrame(
+        layoutId: Int,
+        setLayoutState: (Int) -> Unit,
+        parentLayoutId: Int,
+        childIndex: Int,
+        style: ViewStyle,
+        name: String,
+    ) {
+        // Frames can have children so call beginLayout() to optimize layout computation until all
+        // children have been added.
+        beginLayout(layoutId)
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, false)
+    }
+
+    internal fun subscribeWithMeasure(
+        layoutId: Int,
+        setLayoutState: (Int) -> Unit,
+        parentLayoutId: Int,
+        rootLayoutId: Int,
+        childIndex: Int,
+        style: ViewStyle,
+        name: String,
+        textMeasureData: TextMeasureData,
+    ) {
+        textMeasures[layoutId] = textMeasureData
+        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
+
+        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
+        // the
+        // text or text style changed when no other nodes changed, we recompute layout
+        computeLayoutIfComplete(layoutId, rootLayoutId)
+    }
+
+    private fun subscribe(
+        layoutId: Int,
+        setLayoutState: (Int) -> Unit,
+        parentLayoutId: Int,
+        childIndex: Int,
+        style: ViewStyle,
+        name: String,
+        useMeasureFunc: Boolean,
+        fixedWidth: Optional<Int> = Optional.empty(),
+        fixedHeight: Optional<Int> = Optional.empty(),
+    ) {
+        subscribers[layoutId] = setLayoutState
+
+        // Add the node to a list of nodes
+        layoutNodes.add(
+            LayoutNode(
+                layoutId,
+                parentLayoutId,
+                childIndex,
+                style,
+                name,
+                useMeasureFunc,
+                fixedWidth,
+                fixedHeight,
+            )
+        )
+    }
+
+    internal fun unsubscribe(layoutId: Int, rootLayoutId: Int, isWidgetAncestor: Boolean) {
+        subscribers.remove(layoutId)
+        textMeasures.remove(layoutId)
+        layoutCache.remove(layoutId)
+        layoutStateCache.remove(layoutId)
+        modifiedSizes.remove(layoutId)
+
+        // Perform layout computation after removing the node only if performLayoutComputation is
+        // true, or if we are not a widget ancestor. We don't want to compute layout when ancestors
+        // of a widget are removed because this happens constantly in a lazy grid view.
+        val computeLayout = performLayoutComputation && !isWidgetAncestor
+        val responseBytes = Jni.jniRemoveNode(managerId, layoutId, rootLayoutId, computeLayout)
+        handleResponse(responseBytes)
+        if (computeLayout) Log.d(TAG, "Unsubscribe $layoutId, compute layout")
+    }
+
+    private fun beginLayout(layoutId: Int) {
+        // Add a layout ID to a set of IDs that are in progress. As a view recursively calls its
+        // children, this set grows. Each time a view has finished calling its children it calls
+        // finishLayout().
+        layoutsInProgress.add(layoutId)
+        resumeComputations()
+    }
+
+    internal fun finishLayout(layoutId: Int, rootLayoutId: Int) {
+        // Remove a layout ID from the set of IDs that are in progress.
+        layoutsInProgress.remove(layoutId)
+        computeLayoutIfComplete(layoutId, rootLayoutId)
+    }
+
+    // Check if we are ready to compute layout. If layoutId is the same as rootLayoutId, then a root
+    // node has completed adding all of its children and we can compute layout on this root node. If
+    // layoutsInProgress is empty, this could also be true -- or, a node that is the child of a
+    // widget has completed adding all of its children and we can compute layout on the widget
+    // child.
+    private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
+        if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
+            trace(DCTraces.LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE) {
+                val layoutNodeList = LayoutNodeList(layoutNodes)
+                val nodeListSerializer = BincodeSerializer()
+                layoutNodeList.serialize(nodeListSerializer)
+                val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
+                val responseBytes =
+                    Jni.tracedJniAddNodes(managerId, rootLayoutId, serializedNodeList)
+                handleResponse(responseBytes)
+                layoutNodes.clear()
+            }
+        }
+    }
+
+    private fun handleResponse(responseBytes: ByteArray?) {
+        if (responseBytes != null) {
+            val deserializer = BincodeDeserializer(responseBytes)
+            val response: LayoutChangedResponse = LayoutChangedResponse.deserialize(deserializer)
+
+            // Add all the layouts to our cache
+            response.changed_layouts.forEach { (layoutId, layout) ->
+                layoutCache[layoutId] = layout
+                layoutStateCache[layoutId] = response.layout_state
+            }
+            notifySubscribers(response.changed_layouts.keys, response.layout_state)
+            if (response.changed_layouts.isNotEmpty())
+                Log.d(
+                    TAG,
+                    "HandleResponse ${response.layout_state}, changed: ${response.changed_layouts.keys}"
+                )
+        } else {
+            Log.d(TAG, "HandleResponse NULL")
+        }
+    }
+
+    internal fun getTextMeasureData(layoutId: Int): TextMeasureData? = textMeasures[layoutId]
+
+    // Ask for the layout for the associated node via JNI
+    internal fun getLayoutWithDensity(layoutId: Int): Layout? =
+        getLayout(layoutId)?.withDensity(density)
+
+    // Ask for the layout for the associated node via JNI
+    internal fun getLayout(layoutId: Int): Layout? = layoutCache[layoutId]
+
+    internal fun getLayoutState(layoutId: Int): Int? = layoutStateCache[layoutId]
+
+    // Tell the Rust layout manager that a node size has changed. In the returned response, get all
+    // the nodes that have changed and notify subscribers of this change.
+    internal fun setNodeSize(layoutId: Int, rootLayoutId: Int, width: Int, height: Int) {
+        modifiedSizes.add(layoutId)
+        val adjustedWidth = (width.toFloat() / density).roundToInt()
+        val adjustedHeight = (height.toFloat() / density).roundToInt()
+        val responseBytes =
+            Jni.jniSetNodeSize(managerId, layoutId, rootLayoutId, adjustedWidth, adjustedHeight)
+        handleResponse(responseBytes)
+    }
+
+    internal fun hasModifiedSize(layoutId: Int): Boolean = modifiedSizes.contains(layoutId)
+
+    // For every node in nodes, inform the subscribers of the new layout ID
+    private fun notifySubscribers(nodes: Set<Int>, layoutState: Int) {
+        for (layoutId in nodes) {
+            val updateLayout = subscribers[layoutId]
+            updateLayout?.let { it.invoke(layoutState) }
+        }
+    }
+}
+
+class ParentLayoutInfo(
+    val parentLayoutId: Int = -1,
+    val childIndex: Int = 0,
+    val rootLayoutId: Int = -1,
+    val listLayoutType: ListLayoutType = ListLayoutType.None,
+    val isWidgetAncestor: Boolean = false,
+)
+
+internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutInfo {
+    val rootLayoutId = if (this.rootLayoutId == -1) rootLayoutId else this.rootLayoutId
+    return ParentLayoutInfo(
+        this.parentLayoutId,
+        this.childIndex,
+        rootLayoutId,
+        this.listLayoutType,
+        this.isWidgetAncestor,
     )
 }
 
-@Composable
-internal inline fun DesignTextLayout(
-    modifier: Modifier = Modifier,
-    style: ViewStyle,
-    textLayoutData: TextLayoutData,
-    name: String = "unnamed",
-    content: @Composable () -> Unit
-) {
-    val measurePolicy = rememberDesignTextMeasurePolicy(name, textLayoutData, style)
-    Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
+internal val rootParentLayoutInfo = ParentLayoutInfo()
+
+internal fun listLayout(listLayoutType: ListLayoutType): ParentLayoutInfo {
+    return ParentLayoutInfo(listLayoutType = listLayoutType, isWidgetAncestor = true)
 }
 
-@Composable
-internal fun rememberDesignTextMeasurePolicy(
-    name: String,
-    textLayoutData: TextLayoutData,
-    style: ViewStyle
-) = remember(name, textLayoutData, style) { designTextMeasurePolicy(name, textLayoutData, style) }
-
-/**
- * Compose measures text differently to Figma. Compose allocates space from the glyph "top" to
- * "bottom", where Figma ignores the "top" and "bottom" and just uses the "ascent" and "descent"
- * which define the vertical bounds for most latin glyphs (but glyphs are allowed to draw outside of
- * the bounds defined by Figma using the ascent and descent).
- *
- * Because text from Figma can be embedded anywhere (e.g: it could be the top level of a component
- * and get laid out by Compose, or it could be nested in an Auto Layout, or positioned absolutely)
- * we want to have a Composable that matches the Figma measurements, and appropriately offsets the
- * text it contains.
- *
- * If we make a text view with tight bounds (to match the Figma bounds) then text gets clipped. We
- * could adjust that with a transform, but that might break accessibility and selection rect
- * rendering.
- *
- * So instead we make a parent container that takes the smaller text size, and offsets its text
- * child to be in the correct vertical location.
- */
-internal fun designTextMeasurePolicy(
-    name: String,
-    textLayoutData: TextLayoutData,
-    style: ViewStyle
-) = MeasurePolicy { measurables, constraints ->
-    var selfWidth = constraints.minWidth
-    var selfHeight = constraints.minHeight
-    var hasWidth = false
-    var hasHeight = false
-    var minWidth = constraints.minWidth
-    var minHeight = constraints.minHeight
-
-    // If we're absolutely positioned then we can extract our bounds directly from our style.
-    when (style.position_type) {
-        is PositionType.Absolute -> {
-            val absBounds = absoluteLayout(style, constraints, density)
-            selfWidth = absBounds.width()
-            selfHeight = absBounds.height()
-            if (style.width !is Dimension.Undefined && selfWidth > 0) hasWidth = true
-            if (style.height !is Dimension.Undefined && selfHeight > 0) hasHeight = true
-        }
-        is PositionType.Relative -> {
-            val relBounds = relativeLayout(style, constraints, density)
-            if (style.min_width !is Dimension.Undefined && relBounds.width() > minWidth) {
-                minWidth = relBounds.width()
-            }
-            if (style.width !is Dimension.Undefined) {
-                selfWidth = relBounds.width()
-                hasWidth = true
-            }
-            if (style.min_height !is Dimension.Undefined && relBounds.height() > minHeight) {
-                minHeight = relBounds.height()
-            }
-            if (style.height !is Dimension.Undefined) {
-                selfHeight = relBounds.height()
-                hasHeight = true
-            }
-        }
-    }
-
-    // If we don't have a width in style, then we can measure within the width given to us
-    // in our constraints.
-    val measureWidth =
-        if (hasWidth) {
-            selfWidth
-        } else {
-            constraints.maxWidth
-        }
-
-    // Measure our text and figure out the offset to match baselines, and the intrinsic
-    // height of the layout.
-    val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE
-    val (textBounds, textHeight) = textLayoutData.boundsForWidth(measureWidth, maxLines, this)
-
-    // If the style doesn't define a fixed width or height, then use the bounds we just
-    // measured. We use the height from our own measurement, which matches the height that
-    // the design tool would have assigned to text (rather than the more generous height
-    // that Compose would assign).
-    if (!hasHeight) selfHeight = textHeight
-    if (!hasWidth && textBounds.width() > selfWidth) selfWidth = textBounds.width()
-
-    // Restrict to the parent constraints; we do not honor max constraints; if we exceed them
-    // then it's because we are required to by the specified layout.
-    if (minWidth > selfWidth) selfWidth = minWidth
-    if (minHeight > selfHeight) selfHeight = minHeight
-
-    // If our allocated width is wider than our measured width, then give the extra width
-    // when we place our text child. This allows it to implement horizontal alignment.
-    val placeWidth =
-        if (selfWidth > textBounds.width()) {
-            selfWidth
-        } else {
-            textBounds.width()
-        }
-
-    // Allocate the Compose-derived space to our text element child.
-    val placeables = arrayOfNulls<Placeable>(measurables.size)
-    measurables.forEachIndexed { index, measurable ->
-        placeables[index] = measurable.measure(Constraints.fixed(placeWidth, textBounds.height()))
-    }
-
-    // Perform vertical alignment
-    val verticalAlignmentOffset =
-        when (style.text_align_vertical) {
-            is TextAlignVertical.Center -> (selfHeight - textHeight) / 2
-            is TextAlignVertical.Bottom -> (selfHeight - textHeight)
-            else -> 0
-        }
-
-    // Ensure we don't overfill, causing crazy alignment.
-    selfWidth = selfWidth.coerceAtMost(constraints.maxWidth)
-
-    // We take the design tool allocated space for ourselves, so that our parent view
-    // gets the correct amount of space subtracted from its layout.
-    layout(selfWidth, selfHeight) {
-        placeables.forEach { placeable ->
-            placeable!!
-
-            val undoCenteringOffsetX = -(placeable.width - placeable.measuredWidth) / 2
-            val undoCenteringOffsetY = -(placeable.height - placeable.measuredHeight) / 2
-
-            placeable.place(
-                textBounds.left + undoCenteringOffsetX,
-                textBounds.top + undoCenteringOffsetY + verticalAlignmentOffset
-            )
-        }
+internal open class SimplifiedLayoutInfo(val selfModifier: Modifier) {
+    internal fun shouldRender(): Boolean {
+        // We only want to render if the layout is an absolute layout, meaning we are using our
+        // custom Rust layout implementation. All other layout types mean we are using the list
+        // widget, and any special visual styles applied in Figma should be on the widget's parent.
+        return this is LayoutInfoAbsolute
     }
 }
 
-// Surface the layout data to our parent container.
-private class DesignChildData(val style: ViewStyle, val name: String) : ParentDataModifier {
-    override fun Density.modifyParentData(parentData: Any?) = this@DesignChildData
-
-    override fun hashCode(): Int = style.hashCode()
-
-    override fun toString(): String = "DesignChildData($name, $style)"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        val otherModifier = other as? DesignChildData ?: return false
-
-        return style == otherModifier.style
-    }
-}
-
-private val Measurable.designChildData: DesignChildData?
-    get() = parentData as? DesignChildData
-
-internal fun Modifier.layoutStyle(name: String, style: ViewStyle) =
-    this.then(DesignChildData(style, name))
-
-internal enum class LayoutType {
-    Compose,
-    Row,
-    Column
-}
-
-internal class ParentLayoutInfo(
-    val type: LayoutType,
-    val isRoot: Boolean,
-    val weight: (weight: Float) -> Modifier
-)
-
-internal val rootParentLayoutInfo = ParentLayoutInfo(LayoutType.Compose, true) { Modifier }
-internal val absoluteParentLayoutInfo = ParentLayoutInfo(LayoutType.Compose, false) { Modifier }
-internal val flowRowParentLayoutInfo = ParentLayoutInfo(LayoutType.Row, false) { Modifier }
-internal val flowColumnParentLayoutInfo = ParentLayoutInfo(LayoutType.Column, false) { Modifier }
-
-internal open class SimplifiedLayoutInfo(val selfModifier: Modifier, val marginModifier: Modifier)
-
-internal class LayoutInfoAbsolute(selfModifier: Modifier, marginModifier: Modifier) :
-    SimplifiedLayoutInfo(selfModifier, marginModifier)
+internal class LayoutInfoAbsolute(
+    selfModifier: Modifier,
+    val horizontalScroll: Boolean,
+    val verticalScroll: Boolean,
+) : SimplifiedLayoutInfo(selfModifier)
 
 internal class LayoutInfoRow(
     val arrangement: Arrangement.Horizontal,
     val alignment: Alignment.Vertical,
     selfModifier: Modifier,
-    val childModifier: Modifier,
-    marginModifier: Modifier,
-) : SimplifiedLayoutInfo(selfModifier, marginModifier)
+    val marginModifier: Modifier,
+    val padding: com.android.designcompose.serdegen.Rect,
+) : SimplifiedLayoutInfo(selfModifier)
 
 internal class LayoutInfoColumn(
     val arrangement: Arrangement.Vertical,
     val alignment: Alignment.Horizontal,
     selfModifier: Modifier,
-    val childModifier: Modifier,
-    marginModifier: Modifier,
-) : SimplifiedLayoutInfo(selfModifier, marginModifier)
+    val marginModifier: Modifier,
+    val padding: com.android.designcompose.serdegen.Rect,
+) : SimplifiedLayoutInfo(selfModifier)
 
 internal class LayoutInfoGrid(
     val layout: GridLayoutType,
@@ -578,11 +334,9 @@ internal class LayoutInfoGrid(
     val numColumnsRows: Int,
     val gridSpanContent: List<GridSpan>,
     selfModifier: Modifier,
-    val childModifier: Modifier,
-    marginModifier: Modifier,
     val scrollingEnabled: Boolean,
     val padding: com.android.designcompose.serdegen.Rect,
-) : SimplifiedLayoutInfo(selfModifier, marginModifier)
+) : SimplifiedLayoutInfo(selfModifier)
 
 internal fun itemSpacingAbs(itemSpacing: ItemSpacing): Int {
     return when (itemSpacing) {
@@ -592,236 +346,355 @@ internal fun itemSpacingAbs(itemSpacing: ItemSpacing): Int {
     }
 }
 
-// Layout utils to help use Compose layout primitives for AutoLayout frames
+enum class ListLayoutType {
+    None,
+    Grid,
+    Row,
+    Column,
+}
+
 internal fun calcLayoutInfo(
     modifier: Modifier,
     view: View,
     style: ViewStyle,
-    parentInfo: ParentLayoutInfo
 ): SimplifiedLayoutInfo {
-    val viewData = view.data
-    val name = view.name
-
-    var isAbsolute = false
-
-    if (viewData != null && viewData is ViewData.Container) {
-        for (child in viewData.children) {
-            if (child.style.position_type is PositionType.Absolute) isAbsolute = true
-        }
-    }
-    val isRow = style.flex_direction is FlexDirection.Row
-
-    // First populate the common layout values into the modifier. These are used by either a Compose
-    // layout parent, or by an absolute layout container.
-    var selfModifier = modifier
-    if (style.position_type is PositionType.Absolute)
-        selfModifier = selfModifier.then(DesignChildData(style, name))
-
-    // Apply our "align self" value to control our size in the cross space.
-    //    if (style.align_self is AlignSelf.Stretch) {
-    //        if (parentInfo.type == LayoutType.Row) {
-    //            selfModifier = selfModifier.fillMaxHeight()
-    //        }
-    //        else if (parentInfo.type == LayoutType.Column)
-    //            selfModifier = selfModifier.fillMaxWidth()
-    //    }
-    //
-    // We can't implement "align-self: stretch" using Compose's Row and Column containers. Those
-    // containers provide the parent constraints for the cross axis, so we end up growing elements
-    // much more than desired (so instead of an element filling its parent, it actually causes its
-    // parent to fill the root dimensions -- this happens in the Day Mode Standalone media document
-    // "Search Overlay" popup.
-    //
-    // So instead we just leave "align-self: stretch" unimplemented for now. In the future, perhaps
-    // we could extend Row/Column to use their children's intrinsic cross size and provide that as a
-    // reasonable "stretch" cross size.
-
-    // Apply any margin L T R B
-    //
-    // We only use top OR left within AutoLayout, and Absolute Layout applies it itself.
-    var marginModifier = Modifier as Modifier
-    if (style.margin.start is Dimension.Points)
-        marginModifier =
-            marginModifier.padding(
-                (style.margin.start as Dimension.Points).value.dp,
-                0.dp,
-                0.dp,
-                0.dp
-            )
-    if (style.margin.top is Dimension.Points)
-        marginModifier =
-            marginModifier.padding(
-                0.dp,
-                (style.margin.top as Dimension.Points).value.dp,
-                0.dp,
-                0.dp
-            )
-
-    // If we flex, then we need to add a weight modifier
-    if (style.flex_grow > 0.0)
-        marginModifier = marginModifier.then(parentInfo.weight(style.flex_grow))
-    else if (parentInfo.type != LayoutType.Compose && !isAbsolute) {
-        marginModifier =
-            if (isRow) marginModifier.wrapContentHeight(unbounded = true)
-            else marginModifier.wrapContentWidth(unbounded = true)
-    }
-    selfModifier = selfModifier.then(marginModifier)
-
-    // If we have a given width and height then use them.
-    if (style.width is Dimension.Points)
-        selfModifier = selfModifier.width((style.width as Dimension.Points).value.dp)
-    else if (style.min_width is Dimension.Points)
-        selfModifier = selfModifier.widthIn(min = (style.min_width as Dimension.Points).value.dp)
-    if (style.height is Dimension.Points)
-        selfModifier = selfModifier.height((style.height as Dimension.Points).value.dp)
-    else if (style.min_height is Dimension.Points)
-        selfModifier = selfModifier.heightIn(min = (style.min_height as Dimension.Points).value.dp)
-
-    // If our parent is a Compose view, then we probably don't have "weight" implementation.
-    // We assume that it's a row, and map our align_self and flex properties appropriately.
-    if (parentInfo.type == LayoutType.Compose) {
-        if (style.flex_grow > 0.0) {
-            selfModifier = selfModifier.fillMaxWidth()
-        } else {
-            // If this is a root element and it doesn't fill, then we need to enforce a width
-            // constraint on it, otherwise Compose makes it fill.
-            if (parentInfo.isRoot && style.min_width is Dimension.Points)
-                selfModifier = selfModifier.width((style.min_width as Dimension.Points).value.dp)
-        }
-        // We use fillMaxHeight on root containers, because it's OK for them to occupy all of the
-        // parent space.
-        if (style.align_self is AlignSelf.Stretch) {
-            selfModifier = selfModifier.fillMaxHeight()
-        } else {
-            if (parentInfo.isRoot && style.min_height is Dimension.Points)
-                selfModifier = selfModifier.height((style.min_height as Dimension.Points).value.dp)
-        }
-    }
-
-    // Absolute layout scheme applies padding itself. For rows and columns, we use a modifier
-    // to apply padding.
-    val childModifier =
-        Modifier.padding(
-            style.padding.start.pointsAsDp(),
-            style.padding.top.pointsAsDp(),
-            style.padding.end.pointsAsDp(),
-            style.padding.bottom.pointsAsDp()
-        )
-
     if (style.grid_layout.isPresent) {
         val gridLayout = style.grid_layout.get()
-        val isColumnLayout =
-            gridLayout is GridLayoutType.FixedColumns || gridLayout is GridLayoutType.AutoColumns
-        val scrollingEnabled =
-            when (view.scroll_info.overflow) {
-                is OverflowDirection.VERTICAL_SCROLLING -> isColumnLayout
-                is OverflowDirection.HORIZONTAL_SCROLLING -> !isColumnLayout
-                is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> true
-                else -> false
-            }
-        return LayoutInfoGrid(
-            layout = style.grid_layout.get(),
-            minColumnRowSize = style.grid_adaptive_min_size,
-            mainAxisSpacing = style.item_spacing,
-            crossAxisSpacing = style.cross_axis_item_spacing.toInt(),
-            // TODO support these other alignments?
-            /*
-            mainAxisAlignment =
-            when (style.justify_content) {
-              is JustifyContent.FlexStart -> MainAxisAlignment.Start
-              is JustifyContent.Center -> MainAxisAlignment.Center
-              is JustifyContent.FlexEnd -> MainAxisAlignment.End
-              is JustifyContent.SpaceAround -> MainAxisAlignment.SpaceAround
-              is JustifyContent.SpaceBetween -> MainAxisAlignment.SpaceBetween
-              is JustifyContent.SpaceEvenly -> MainAxisAlignment.SpaceEvenly
-              else -> MainAxisAlignment.Start
-            },
-            crossAxisAlignment =
-            when (style.align_items) {
-              is AlignItems.FlexStart -> FlowCrossAxisAlignment.Start
-              is AlignItems.Center -> FlowCrossAxisAlignment.Center
-              is AlignItems.FlexEnd -> FlowCrossAxisAlignment.End
-              else -> FlowCrossAxisAlignment.Start
-            },
-            */
-            numColumnsRows = style.grid_columns_rows,
-            gridSpanContent = style.grid_span_content,
-            selfModifier = selfModifier,
-            childModifier = childModifier,
-            marginModifier = marginModifier,
-            scrollingEnabled = scrollingEnabled,
-            padding = style.padding,
-        )
-    }
-
-    if (isAbsolute || style.flex_direction is FlexDirection.None) {
-        // Apply our "align self" value to control our size in the cross space.
-        if (style.align_self is AlignSelf.Stretch) {
-            if (parentInfo.type == LayoutType.Row) selfModifier = selfModifier.fillMaxHeight()
-            else if (parentInfo.type == LayoutType.Column)
-                selfModifier = selfModifier.fillMaxWidth()
-        }
-        return LayoutInfoAbsolute(selfModifier, marginModifier)
-    }
-
-    val itemSpacing = itemSpacingAbs(style.item_spacing)
-    if (isRow) {
-        return LayoutInfoRow(
-            arrangement =
+        val isHorizontalLayout = gridLayout is GridLayoutType.Horizontal
+        val isVerticalLayout = gridLayout is GridLayoutType.Vertical
+        val itemSpacing = itemSpacingAbs(style.item_spacing)
+        val marginModifier =
+            Modifier.padding(
+                if (style.padding.start is Dimension.Points)
+                    (style.padding.start as Dimension.Points).value.dp
+                else 0.dp,
+                if (style.padding.top is Dimension.Points)
+                    (style.padding.top as Dimension.Points).value.dp
+                else 0.dp,
+                if (style.padding.end is Dimension.Points)
+                    (style.padding.end as Dimension.Points).value.dp
+                else 0.dp,
+                if (style.padding.bottom is Dimension.Points)
+                    (style.padding.bottom as Dimension.Points).value.dp
+                else 0.dp,
+            )
+        if (isHorizontalLayout) {
+            return LayoutInfoRow(
+                arrangement =
+                    when (style.justify_content) {
+                        is JustifyContent.FlexStart ->
+                            if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp)
+                            else Arrangement.Start
+                        is JustifyContent.Center ->
+                            if (itemSpacing != 0)
+                                Arrangement.spacedBy(itemSpacing.dp, Alignment.CenterHorizontally)
+                            else Arrangement.Center
+                        is JustifyContent.FlexEnd ->
+                            if (itemSpacing != 0)
+                                Arrangement.spacedBy(itemSpacing.dp, Alignment.End)
+                            else Arrangement.End
+                        is JustifyContent.SpaceAround -> Arrangement.SpaceAround
+                        is JustifyContent.SpaceBetween -> Arrangement.SpaceBetween
+                        is JustifyContent.SpaceEvenly -> Arrangement.SpaceEvenly
+                        else -> Arrangement.Start
+                    },
+                alignment =
+                    when (style.align_items) {
+                        is AlignItems.FlexStart -> Alignment.Top
+                        is AlignItems.Center -> Alignment.CenterVertically
+                        is AlignItems.FlexEnd -> Alignment.Bottom
+                        else -> Alignment.Top
+                    },
+                selfModifier = modifier,
+                marginModifier = marginModifier,
+                padding = style.padding,
+            )
+        } else if (isVerticalLayout) {
+            return LayoutInfoColumn(
+                arrangement =
+                    when (style.justify_content) {
+                        is JustifyContent.FlexStart ->
+                            if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp)
+                            else Arrangement.Top
+                        is JustifyContent.Center ->
+                            if (itemSpacing != 0)
+                                Arrangement.spacedBy(itemSpacing.dp, Alignment.CenterVertically)
+                            else Arrangement.Center
+                        is JustifyContent.FlexEnd ->
+                            if (itemSpacing != 0)
+                                Arrangement.spacedBy(itemSpacing.dp, Alignment.Bottom)
+                            else Arrangement.Bottom
+                        is JustifyContent.SpaceAround -> Arrangement.SpaceAround
+                        is JustifyContent.SpaceBetween -> Arrangement.SpaceBetween
+                        is JustifyContent.SpaceEvenly -> Arrangement.SpaceEvenly
+                        else -> Arrangement.Top
+                    },
+                alignment =
+                    when (style.align_items) {
+                        is AlignItems.FlexStart -> Alignment.Start
+                        is AlignItems.Center -> Alignment.CenterHorizontally
+                        is AlignItems.FlexEnd -> Alignment.End
+                        else -> Alignment.End
+                    },
+                selfModifier = modifier,
+                marginModifier = marginModifier,
+                padding = style.padding,
+            )
+        } else {
+            val isColumnLayout =
+                gridLayout is GridLayoutType.FixedColumns ||
+                    gridLayout is GridLayoutType.AutoColumns
+            val scrollingEnabled =
+                when (view.scroll_info.overflow) {
+                    is OverflowDirection.VERTICAL_SCROLLING -> isColumnLayout
+                    is OverflowDirection.HORIZONTAL_SCROLLING -> !isColumnLayout
+                    is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> true
+                    else -> false
+                }
+            return LayoutInfoGrid(
+                layout = style.grid_layout.get(),
+                minColumnRowSize = style.grid_adaptive_min_size,
+                mainAxisSpacing = style.item_spacing,
+                crossAxisSpacing = style.cross_axis_item_spacing.toInt(),
+                // TODO support these other alignments?
+                /*
+                mainAxisAlignment =
                 when (style.justify_content) {
-                    is JustifyContent.FlexStart ->
-                        if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp)
-                        else Arrangement.Start
-                    is JustifyContent.Center ->
-                        if (itemSpacing != 0)
-                            Arrangement.spacedBy(itemSpacing.dp, Alignment.CenterHorizontally)
-                        else Arrangement.Center
-                    is JustifyContent.FlexEnd ->
-                        if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp, Alignment.End)
-                        else Arrangement.End
-                    is JustifyContent.SpaceAround -> Arrangement.SpaceAround
-                    is JustifyContent.SpaceBetween -> Arrangement.SpaceBetween
-                    is JustifyContent.SpaceEvenly -> Arrangement.SpaceEvenly
-                    else -> Arrangement.Start
+                  is JustifyContent.FlexStart -> MainAxisAlignment.Start
+                  is JustifyContent.Center -> MainAxisAlignment.Center
+                  is JustifyContent.FlexEnd -> MainAxisAlignment.End
+                  is JustifyContent.SpaceAround -> MainAxisAlignment.SpaceAround
+                  is JustifyContent.SpaceBetween -> MainAxisAlignment.SpaceBetween
+                  is JustifyContent.SpaceEvenly -> MainAxisAlignment.SpaceEvenly
+                  else -> MainAxisAlignment.Start
                 },
-            alignment =
+                crossAxisAlignment =
                 when (style.align_items) {
-                    is AlignItems.FlexStart -> Alignment.Top
-                    is AlignItems.Center -> Alignment.CenterVertically
-                    is AlignItems.FlexEnd -> Alignment.Bottom
-                    else -> Alignment.Top
+                  is AlignItems.FlexStart -> FlowCrossAxisAlignment.Start
+                  is AlignItems.Center -> FlowCrossAxisAlignment.Center
+                  is AlignItems.FlexEnd -> FlowCrossAxisAlignment.End
+                  else -> FlowCrossAxisAlignment.Start
                 },
-            selfModifier = selfModifier,
-            childModifier = childModifier,
-            marginModifier = marginModifier,
-        )
+                */
+                numColumnsRows = style.grid_columns_rows,
+                gridSpanContent = style.grid_span_content,
+                selfModifier = modifier,
+                scrollingEnabled = scrollingEnabled,
+                padding = style.padding,
+            )
+        }
+    } else {
+        var horizontalScroll = false
+        var verticalScroll = false
+        when (view.scroll_info.overflow) {
+            is OverflowDirection.VERTICAL_SCROLLING -> {
+                verticalScroll = true
+            }
+            is OverflowDirection.HORIZONTAL_SCROLLING -> {
+                horizontalScroll = true
+            }
+            is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> {
+                // Currently we don't support both horizontal and vertical scrolling so disable both
+                verticalScroll = false
+                horizontalScroll = false
+            }
+        }
+        return LayoutInfoAbsolute(modifier, horizontalScroll, verticalScroll)
     }
-    return LayoutInfoColumn(
-        arrangement =
-            when (style.justify_content) {
-                is JustifyContent.FlexStart ->
-                    if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp) else Arrangement.Top
-                is JustifyContent.Center ->
-                    if (itemSpacing != 0)
-                        Arrangement.spacedBy(itemSpacing.dp, Alignment.CenterVertically)
-                    else Arrangement.Center
-                is JustifyContent.FlexEnd ->
-                    if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp, Alignment.Bottom)
-                    else Arrangement.Bottom
-                is JustifyContent.SpaceAround -> Arrangement.SpaceAround
-                is JustifyContent.SpaceBetween -> Arrangement.SpaceBetween
-                is JustifyContent.SpaceEvenly -> Arrangement.SpaceEvenly
-                else -> Arrangement.Top
-            },
-        alignment =
-            when (style.align_items) {
-                is AlignItems.FlexStart -> Alignment.Start
-                is AlignItems.Center -> Alignment.CenterHorizontally
-                is AlignItems.FlexEnd -> Alignment.End
-                else -> Alignment.End
-            },
-        selfModifier = selfModifier,
-        childModifier = childModifier,
-        marginModifier = marginModifier,
-    )
 }
+
+// Converts a layout from Rust into a width/height Modifier
+internal fun Modifier.layoutSizeToModifier(layout: Layout?) =
+    this.then(Modifier.width(layout?.width?.dp ?: 0.dp).height(layout?.height?.dp ?: 0.dp))
+
+internal fun Modifier.sizeToModifier(width: Int, height: Int) =
+    this.then(Modifier.width(width.dp).height(height.dp))
+
+// Surface the layout data to our parent container.
+internal class DesignLayoutData(val name: String, val layoutId: Int) : ParentDataModifier {
+    override fun Density.modifyParentData(parentData: Any?) = this@DesignLayoutData
+
+    override fun hashCode(): Int = layoutId // style.hashCode()
+
+    override fun toString(): String = "DesignLayoutData($name, $layoutId)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        val otherModifier = other as? DesignLayoutData ?: return false
+        return name == otherModifier.name && layoutId == otherModifier.layoutId
+    }
+}
+
+internal val Measurable.designLayoutData: DesignLayoutData?
+    get() = parentData as? DesignLayoutData
+
+internal val Placeable.designLayoutData: DesignLayoutData?
+    get() = parentData as? DesignLayoutData
+
+internal fun Modifier.layoutStyle(name: String, layoutId: Int) =
+    this.then(DesignLayoutData(name, layoutId))
+
+internal fun Layout.width() = this.width.roundToInt()
+
+internal fun Layout.height() = this.height.roundToInt()
+
+internal fun Layout.left() = this.left.roundToInt()
+
+internal fun Layout.top() = this.top.roundToInt()
+
+internal class DesignScroll(
+    val scrollOffset: Float,
+    val orientation: Orientation,
+    val scrollMax: MutableFloatState,
+)
+
+// Layout function for DesignFrame
+@Composable
+internal inline fun DesignFrameLayout(
+    modifier: Modifier,
+    view: View,
+    layoutId: Int,
+    rootLayoutId: Int,
+    layoutState: Int,
+    designScroll: DesignScroll?,
+    content: @Composable () -> Unit
+) {
+    val measurePolicy =
+        remember(layoutState, designScroll) {
+            designMeasurePolicy(view, layoutId, rootLayoutId, layoutState, designScroll)
+        }
+    Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
+}
+
+// Measure policy for DesignFrame.
+internal fun designMeasurePolicy(
+    view: View,
+    layoutId: Int,
+    rootLayoutId: Int,
+    layoutState: Int,
+    designScroll: DesignScroll?
+) = MeasurePolicy { measurables, constraints ->
+    val name = view.name
+    val placeables =
+        measurables.map { measurable ->
+            val layoutData = measurable.designLayoutData
+            // Initialize constraints to those passed in. If the view should use infinite
+            // constraints for its children because it has a child that uses a built-in
+            // container such as a Row() or Column(), construct infinite contraints. Otherwise,
+            // if we have layout data for the child, use them to create fixed constraints.
+            var childConstraints = constraints
+            if (view.useInfiniteConstraints()) childConstraints = Constraints()
+            else if (layoutData != null) {
+                val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
+                if (childLayout != null) {
+                    val childWidth = childLayout.width()
+                    val childHeight = childLayout.height()
+                    childConstraints = Constraints(childWidth, childWidth, childHeight, childHeight)
+                }
+            }
+            measurable.measure(childConstraints)
+        }
+
+    var myLayout = LayoutManager.getLayoutWithDensity(layoutId)
+    if (myLayout == null)
+        Log.d(TAG, "designMeasurePolicy error: null layout $name layoutId $layoutId")
+    // Get width and height from constraints if they are fixed. Otherwise get them from layout.
+    val myWidth =
+        if (constraints.hasFixedWidth && constraints.maxWidth != 0) constraints.maxWidth
+        else myLayout?.width() ?: 0
+    val myHeight =
+        if (constraints.hasFixedHeight && constraints.maxHeight != 0) constraints.maxHeight
+        else myLayout?.height() ?: 0
+
+    // If constraints have forced a size that does not match our layout size, set this size into
+    // the layout manager so that it can set this size in the Rust layout manager and then
+    // recalculate any layouts that many have changed. However, only do this if the layout state
+    // has not changed after computing child layouts. This is necessary in the case where
+    // calling setNodeSize on a node causes an ancestor to resize.
+    val layoutState2 = LayoutManager.getLayoutState(layoutId)
+    if (
+        layoutState == layoutState2 &&
+            myLayout != null &&
+            (myWidth != myLayout?.width() || myHeight != myLayout?.height())
+    )
+        LayoutManager.setNodeSize(layoutId, rootLayoutId, myWidth, myHeight)
+    layout(myWidth, myHeight) {
+        // Place children in the parent layout
+        placeables.forEachIndexed { index, placeable ->
+            val layoutData = placeable.designLayoutData
+            if (layoutData == null) {
+                // A null layout should only happen if the child is a node that uses one of
+                // Compose's built in layouts such as Row, Column, or LazyGrid.
+                placeable.place(0, 0)
+                if (index != 0) Log.d(TAG, "Place error no layoutData: $name index $index")
+            } else {
+                val childLayout = LayoutManager.getLayoutWithDensity(layoutData.layoutId)
+                if (childLayout == null) {
+                    Log.d(TAG, "Place error null layout: $name child $index layoutId $layoutId")
+                } else {
+                    var hScrollOffset = 0
+                    var vScrollOffset = 0
+                    if (designScroll != null) {
+                        // If designScroll is not null, scroll is enabled on this node. Get the
+                        // scroll offset and offset all children
+                        if (designScroll.orientation == Orientation.Horizontal)
+                            hScrollOffset = designScroll.scrollOffset.roundToInt()
+                        else vScrollOffset = designScroll.scrollOffset.roundToInt()
+                        if (index == placeables.size - 1) {
+                            // Calculate the extents of the children by using the last item's size
+                            // and position
+                            val density = LayoutManager.getDensity()
+                            if (designScroll.orientation == Orientation.Horizontal) {
+                                val hMargin = view.style.padding.end.pointsAsDp(density).value
+                                designScroll.scrollMax.value =
+                                    (childLayout.left + childLayout.width - myWidth + hMargin)
+                                        .coerceAtLeast(0F)
+                            } else {
+                                val vMargin = view.style.padding.bottom.pointsAsDp(density).value
+                                designScroll.scrollMax.value =
+                                    (childLayout.top + childLayout.height - myHeight + vMargin)
+                                        .coerceAtLeast(0F)
+                            }
+                        }
+                    }
+                    placeable.placeWithLayer(
+                        x = childLayout.left() + hScrollOffset,
+                        y = childLayout.top() + vScrollOffset
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal inline fun DesignTextLayout(
+    modifier: Modifier,
+    layout: Layout?,
+    layoutState: Int,
+    renderTop: Int?,
+    content: @Composable () -> Unit
+) {
+    val measurePolicy =
+        remember(layoutState, layout, renderTop) { designTextMeasurePolicy(layout, renderTop) }
+    Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
+}
+
+internal fun designTextMeasurePolicy(layout: Layout?, renderTop: Int?) =
+    MeasurePolicy { measurables, constraints ->
+        val placeables = measurables.map { measurable -> measurable.measure(constraints) }
+
+        val myWidth = if (constraints.hasFixedWidth) constraints.maxWidth else layout?.width() ?: 0
+        val myHeight =
+            if (constraints.hasFixedHeight) constraints.maxHeight else layout?.height() ?: 0
+        val myX = 0
+        val myY = renderTop ?: layout?.top() ?: 0
+        layout(myWidth, myHeight) {
+            // Text has no children, so placeables is always just a list of 1 for this text, which
+            // we place at the calculated offset.
+            // There are two offsets that we need to consider. The offset used here myX, myY
+            // take into account the text's vertical offset, but not layout offset from its parent.
+            // The layout offset is used when this text node is placed by its parent.
+            if (layout != null) placeables.forEach { placeable -> placeable.place(myX, myY) }
+        }
+    }

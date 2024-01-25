@@ -1,6 +1,6 @@
 [workspace]
-
-members = ["crates/figma_import", "crates/live_update"]
+resolver = "2"
+members = ["crates/figma_import", "crates/dc_jni", "crates/layout"]
 
 [profile.release] # https://github.com/johnthagen/min-sized-rust
 opt-level = 'z'

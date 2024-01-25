@@ -46,7 +46,7 @@ val ktfmtCheckBuildScripts =
 
 project.plugins.withType(JavaBasePlugin::class.java) {
     project.extensions.getByType(JavaPluginExtension::class.java).toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
@@ -61,6 +61,7 @@ project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
                 substitute(module("com.android.designcompose:designcompose"))
                     .using(project(":designcompose"))
                 substitute(module("com.android.designcompose:codegen")).using(project(":codegen"))
+                substitute(module("com.android.designcompose:test")).using(project(":test"))
             }
         }
     }

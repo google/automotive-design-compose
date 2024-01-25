@@ -42,8 +42,8 @@ jobs:
           egress-policy: audit
 
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
-      - uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.5.2
+      - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build all
@@ -63,7 +63,11 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v3.5.2
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.5.2
+
+      - name: "Set environment variables"
+        run: |
+          echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
 
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
@@ -72,7 +76,7 @@ jobs:
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.4.2
+        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.4.2
         with:
           cache-read-only: true
           gradle-version: ${{matrix.gradle_release}}
@@ -84,13 +88,13 @@ jobs:
         run: ./install-rust-toolchains.sh
 
       - name: Set up Rust Cache
-        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
 
       - name: Gradle Build
-        uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.11.0
+        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.11.1
         with:
 
           arguments: build publishAllPublicationsToLocalDirRepository
@@ -99,21 +103,21 @@ jobs:
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         with:
           name: designcompose_m2repo
-          path: build/designcompose_m2repo/
+          path: designcompose_m2repo/
 
   unbundled-apps:
     runs-on: ubuntu-latest
     needs: sdk-build
     strategy:
       matrix:
-        ub-branch: [ub-automotive-master, ub-automotive-master-20231102]
+        ub-branch: [ub-automotive-master, ub-automotive-master-20230622]
     steps:
     - name: Harden Runner
       uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
     - name: Set up Java
       uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
@@ -122,7 +126,7 @@ jobs:
         java-version: "17"
 
     - name: Set up Gradle
-      uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.4.2
+      uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.4.2
       with:
         cache-read-only: true
 
@@ -148,10 +152,9 @@ jobs:
         repo sync -cq -j4
 
     - name: Check MediaCompose
-      uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.11.0
+      uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.11.1
       with:
         cache-read-only: true
         build-root-directory: reference-apps/aaos-unbundled
         arguments: |
-          --init-script ../local-design-compose-repo.init.gradle.kts
           check

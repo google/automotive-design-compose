@@ -27,4 +27,8 @@ pub enum Error {
     JsonError(#[from] serde_json::Error),
     #[error("Serialization Error")]
     BincodeError(#[from] bincode::Error),
+    #[error("Layout Error")]
+    LayoutError(#[from] taffy::error::TaffyError),
+    #[error("String translation Error")]
+    Utf8Error(#[from] std::string::FromUtf8Error),
 }

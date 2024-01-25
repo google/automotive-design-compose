@@ -17,6 +17,9 @@
 package com.android.designcompose
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +30,8 @@ import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,36 +42,69 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.withSaveLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.android.designcompose.serdegen.ComponentInfo
+import androidx.tracing.trace
+import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.View
+import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
-import java.util.Optional
 
 @Composable
 internal fun DesignFrame(
     modifier: Modifier = Modifier,
+    view: View,
     style: ViewStyle,
-    shape: ViewShape,
-    name: String,
-    variantParentName: String,
     layoutInfo: SimplifiedLayoutInfo,
     document: DocContent,
     customizations: CustomizationContext,
-    componentInfo: Optional<ComponentInfo>,
+    parentLayout: ParentLayoutInfo?,
+    layoutId: Int,
     parentComponents: List<ParentComponentInfo>,
     maskInfo: MaskInfo?,
-    content: @Composable (parentLayoutInfo: ParentLayoutInfo) -> Unit,
-) {
-    if (!customizations.getVisible(name)) return
+    content: @Composable () -> Unit,
+): Boolean {
+    val name = view.name
+    if (!customizations.getVisible(name)) return false
+
+    var m = Modifier as Modifier
+    m = m.then(modifier)
+    val customModifier = customizations.getModifier(name)
+    if (customModifier != null) {
+        // We may need more control over where a custom modifier is placed in the list
+        // than just always adding at the end.
+        m = m.then(customModifier)
+    }
+
+    // Check for a customization that replaces this component completely
+    // If we're replaced, then invoke the replacement here. We may want to pass more layout info
+    // (row/column/etc) to the replacement component at some point.
+    val replacementComponent = customizations.getComponent(name)
+    if (replacementComponent != null) {
+        replacementComponent(
+            object : ComponentReplacementContext {
+                override val layoutModifier = layoutInfo.selfModifier
+                override val appearanceModifier = m
+
+                @Composable
+                override fun Content() {
+                    content()
+                }
+
+                override val textStyle: TextStyle? = null
+                override val parentLayout = parentLayout
+            }
+        )
+        return true
+    }
 
     // Check for an image customization with context. If it exists, call the custom image function
     // and provide it with the frame's background and size.
@@ -95,67 +133,76 @@ internal fun DesignFrame(
     val meterValue = customizations.getMeterFunction(name)?.let { it() }
     meterValue?.let { customizations.setMeterValue(name, it) }
 
-    // Check to see if this node is part of a component set with variants and if any @DesignVariant
-    // annotations set variant properties that match. If so, variantNodeName will be set to the
-    // name of the node with all the variants set to the @DesignVariant parameters
-    val variantNodeName = customizations.getMatchingVariant(componentInfo)
-
-    var m = Modifier.layoutStyle(name, style)
-    // Only render the frame if we don't have a custom variant node that we are about to
-    // render instead
-    if (variantNodeName.isNullOrEmpty())
-        m = m.frameRender(style, shape, customImage, document, name, customizations, maskInfo)
-    m = m.then(modifier)
-
-    val customModifier = customizations.getModifier(name)
-    if (customModifier != null) {
-        // We may need more control over where a custom modifier is placed in the list
-        // than just always adding at the end.
-        m = m.then(customModifier)
-    }
-
-    // If we're replaced, then invoke the replacement here. We may want to pass more layout info
-    // (row/column/etc) to the replacement component at some point.
-    val replacementComponent = customizations.getComponent(name)
-    if (replacementComponent != null) {
-        replacementComponent(
-            object : ComponentReplacementContext {
-                override val layoutModifier = layoutInfo.selfModifier
-                override val appearanceModifier = m
-
-                @Composable
-                override fun Content() {
-                    content(absoluteParentLayoutInfo)
-                }
-
-                override val textStyle: TextStyle? = null
-            }
-        )
-        return
-    }
-
-    // If we a custom variant, compose it instead and then return.
-    if (variantNodeName != null) {
-        // Get the generated CustomVariantComponent() function and call it with variantNodeName
-        val customComposable = customizations.getCustomComposable()
-        if (customComposable != null) {
-            val tapCallback = customizations.getTapCallback(name)
-            customComposable(
-                layoutInfo.selfModifier.then(m),
-                variantNodeName,
-                NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { name }),
-                parentComponents,
-                tapCallback
+    // Keep track of the layout state, which changes whenever this view's layout changes
+    val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
+    // Subscribe for layout changes whenever the view changes. The view can change if it is a
+    // component instance that changes to another variant. It can also change due to a live update.
+    // Subscribing when already subscribed simply updates the view in the layout system.
+    DisposableEffect(view) {
+        trace(DCTraces.DESIGNFRAME_DE_SUBSCRIBE) {
+            val parentLayoutId = parentLayout?.parentLayoutId ?: -1
+            val childIndex = parentLayout?.childIndex ?: -1
+            // Subscribe to layout changes when the view changes or is added
+            LayoutManager.subscribeFrame(
+                layoutId,
+                setLayoutState,
+                parentLayoutId,
+                childIndex,
+                style,
+                view.name
             )
-            return
+        }
+        onDispose {}
+    }
+
+    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+    if (rootLayoutId == -1) rootLayoutId = layoutId
+    DisposableEffect(Unit) {
+        onDispose {
+            // Unsubscribe to layout changes when the view is removed
+            LayoutManager.unsubscribe(
+                layoutId,
+                rootLayoutId,
+                parentLayout?.isWidgetAncestor == true
+            )
         }
     }
+
+    val finishLayout =
+        @Composable {
+            // This must be called at the end of DesignFrame just before returning, after adding all
+            // children. This lets the LayoutManager know that this frame has completed, and so if
+            // there are no other parent frames performing layout, layout computation can be
+            // performed.
+            DisposableEffect(view) {
+                trace(DCTraces.DESIGNFRAME_FINISHLAYOUT) {
+                    LayoutManager.finishLayout(layoutId, rootLayoutId)
+                }
+                onDispose {}
+            }
+        }
+
+    // Only render the frame if we don't have a replacement node and layout is absolute
+    val shape = (view.data as ViewData.Container).shape
+    if (replacementComponent == null && layoutInfo.shouldRender())
+        m =
+            m.frameRender(
+                style,
+                shape,
+                customImage,
+                document,
+                name,
+                customizations,
+                maskInfo,
+                layoutId
+            )
 
     val lazyContent = customizations.getListContent(name)
 
     // Select the appropriate representation for ourselves based on our layout style;
     // row or column (with or without wrapping/flow), or absolute positioning (similar to the CSS2
     // model).
+    val layout = LayoutManager.getLayout(layoutId)
     when (layoutInfo) {
         is LayoutInfoRow -> {
             if (lazyContent != null) {
@@ -167,8 +214,22 @@ internal fun DesignFrame(
                     if (style.overflow_node_id.isPresent)
                         overflowNodeId = style.overflow_node_id.get()
                 }
+
+                // If the widget is set to hug contents, don't give Row() a size and let it size
+                // itself. Then when the size is determined, inform the layout manager. Otherwise,
+                // get the fixed size from the layout manager and use it in a Modifier.
+                val hugContents = view.style.width is Dimension.Auto
+                val rowModifier =
+                    if (hugContents)
+                        Modifier.onSizeChanged {
+                            LayoutManager.setNodeSize(layoutId, rootLayoutId, it.width, it.height)
+                        }
+                    else Modifier.layoutSizeToModifier(layout)
                 Row(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    rowModifier
+                        .then(layoutInfo.selfModifier)
+                        .then(m)
+                        .then(layoutInfo.marginModifier),
                     horizontalArrangement = layoutInfo.arrangement,
                     verticalAlignment = layoutInfo.alignment,
                 ) {
@@ -187,23 +248,17 @@ internal fun DesignFrame(
                                 )
                             }
                         } else {
-                            content.itemContent(i)
+                            content.itemContent(i, listLayout(ListLayoutType.Row))
                         }
                     }
                 }
             } else {
                 Row(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
                     horizontalArrangement = layoutInfo.arrangement,
                     verticalAlignment = layoutInfo.alignment
                 ) {
-                    val childLayoutInfo =
-                        ParentLayoutInfo(
-                            type = LayoutType.Row,
-                            isRoot = false,
-                            weight = { w -> Modifier.weight(w) }
-                        )
-                    content(childLayoutInfo)
+                    content()
                 }
             }
         }
@@ -217,8 +272,22 @@ internal fun DesignFrame(
                     if (style.overflow_node_id.isPresent)
                         overflowNodeId = style.overflow_node_id.get()
                 }
+
+                // If the widget is set to hug contents, don't give Column() a size and let it size
+                // itself. Then when the size is determined, inform the layout manager. Otherwise,
+                // get the fixed size from the layout manager and use it in a Modifier.
+                val hugContents = view.style.height is Dimension.Auto
+                val columnModifier =
+                    if (hugContents)
+                        Modifier.onSizeChanged {
+                            LayoutManager.setNodeSize(layoutId, rootLayoutId, it.width, it.height)
+                        }
+                    else Modifier.layoutSizeToModifier(layout)
                 Column(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    columnModifier
+                        .then(layoutInfo.selfModifier)
+                        .then(m)
+                        .then(layoutInfo.marginModifier),
                     verticalArrangement = layoutInfo.arrangement,
                     horizontalAlignment = layoutInfo.alignment,
                 ) {
@@ -237,28 +306,25 @@ internal fun DesignFrame(
                                 )
                             }
                         } else {
-                            content.itemContent(i)
+                            content.itemContent(i, listLayout(ListLayoutType.Column))
                         }
                     }
                 }
             } else {
                 Column(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
                     verticalArrangement = layoutInfo.arrangement,
                     horizontalAlignment = layoutInfo.alignment
                 ) {
-                    val childLayoutInfo =
-                        ParentLayoutInfo(
-                            type = LayoutType.Column,
-                            isRoot = false,
-                            weight = { w -> Modifier.weight(w) }
-                        )
-                    content(childLayoutInfo)
+                    content()
                 }
             }
         }
         is LayoutInfoGrid -> {
-            if (lazyContent == null) return
+            if (lazyContent == null) {
+                finishLayout()
+                return false
+            }
 
             // Given the list of possible content that goes into this grid layout, try to find a
             // matching
@@ -324,8 +390,7 @@ internal fun DesignFrame(
 
             // Content for the lazy content parameter. This uses the grid layout but also supports
             // limiting the number of children to style.max_children, and using an overflow node if
-            // one
-            // is specified.
+            // one is specified.
             val lazyItemContent: LazyGridScope.() -> Unit = {
                 val lContent = lazyContent { nodeData ->
                     getSpan(layoutInfo.gridSpanContent, nodeData)
@@ -345,7 +410,7 @@ internal fun DesignFrame(
                             GridItemSpan(if (span.maxLineSpan) maxLineSpan else span.span)
                         }
                     ) {
-                        lContent.initialContent()
+                        lContent.initialContent(listLayout(ListLayoutType.Grid))
                     }
                 else {
                     var count = lContent.count
@@ -394,7 +459,7 @@ internal fun DesignFrame(
                                     )
                                 }
                             } else {
-                                lContent.itemContent(index)
+                                lContent.itemContent(index, listLayout(ListLayoutType.Grid))
                             }
                         }
                     )
@@ -402,8 +467,7 @@ internal fun DesignFrame(
             }
 
             // Given the frame size, number of columns/rows, and spacing between them, return a list
-            // of
-            // column/row widths/heights
+            // of column/row widths/heights
             fun calculateCellsCrossAxisSizeImpl(
                 gridSize: Int,
                 slotCount: Int,
@@ -432,6 +496,8 @@ internal fun DesignFrame(
                 return if (count > 0) count else 1
             }
 
+            val gridSizeModifier = Modifier.layoutSizeToModifier(layout)
+
             val density = LocalDensity.current.density
             if (
                 layoutInfo.layout is GridLayoutType.FixedColumns ||
@@ -445,7 +511,7 @@ internal fun DesignFrame(
                 val verticalSpacing = layoutInfo.crossAxisSpacing
 
                 LazyVerticalGrid(
-                    modifier = layoutInfo.selfModifier.then(m),
+                    modifier = gridSizeModifier.then(layoutInfo.selfModifier).then(m),
                     columns =
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(
@@ -462,45 +528,26 @@ internal fun DesignFrame(
                             }
                         },
                     horizontalArrangement =
-                        object : Arrangement.Horizontal {
-                            var customSpacing: Int = horizontalSpacing
-
-                            init {
-                                if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
-                                    customSpacing = layoutInfo.mainAxisSpacing.value
+                        Arrangement.spacedBy(
+                            (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
+                                    layoutInfo.mainAxisSpacing.value
                                 } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
-                                    customSpacing =
-                                        if (columnCount > 1)
-                                            (gridMainAxisSize -
-                                                (layoutInfo.mainAxisSpacing.field1 * columnCount)) /
-                                                (columnCount - 1)
-                                        else layoutInfo.mainAxisSpacing.field0
-                                }
-                            }
-
-                            override fun Density.arrange(
-                                totalSize: Int,
-                                sizes: IntArray,
-                                layoutDirection: LayoutDirection,
-                                outPositions: IntArray,
-                            ) {
-                                // Apparently this function does not get called
-                                println(
-                                    "horizontalArrangement arrange() totalSize $totalSize " +
-                                        "sizes $sizes layout $layoutDirection out $outPositions"
-                                )
-                            }
-
-                            override val spacing = customSpacing.dp
-                        },
+                                    if (columnCount > 1)
+                                        (gridMainAxisSize -
+                                            (layoutInfo.mainAxisSpacing.field1 * columnCount)) /
+                                            (columnCount - 1)
+                                    else layoutInfo.mainAxisSpacing.field0
+                                } else horizontalSpacing)
+                                .dp
+                        ),
                     verticalArrangement = Arrangement.spacedBy(verticalSpacing.dp),
                     userScrollEnabled = layoutInfo.scrollingEnabled,
                     contentPadding =
                         PaddingValues(
-                            layoutInfo.padding.start.pointsAsDp(),
-                            layoutInfo.padding.top.pointsAsDp(),
-                            layoutInfo.padding.end.pointsAsDp(),
-                            layoutInfo.padding.bottom.pointsAsDp(),
+                            layoutInfo.padding.start.pointsAsDp(density),
+                            layoutInfo.padding.top.pointsAsDp(density),
+                            layoutInfo.padding.end.pointsAsDp(density),
+                            layoutInfo.padding.bottom.pointsAsDp(density),
                         ),
                 ) {
                     lazyItemContent()
@@ -513,7 +560,7 @@ internal fun DesignFrame(
                         layoutInfo.mainAxisSpacing.value
                     else 0
                 LazyHorizontalGrid(
-                    modifier = layoutInfo.selfModifier.then(m).then(layoutInfo.childModifier),
+                    modifier = layoutInfo.selfModifier.then(gridSizeModifier).then(m),
                     rows =
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(
@@ -531,32 +578,19 @@ internal fun DesignFrame(
                         },
                     horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.dp),
                     verticalArrangement =
-                        object : Arrangement.Vertical {
-                            var customSpacing: Int = verticalSpacing
-
-                            init {
-                                if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
-                                    customSpacing = layoutInfo.mainAxisSpacing.value
+                        Arrangement.spacedBy(
+                            (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
+                                    layoutInfo.mainAxisSpacing.value
                                 } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
-                                    customSpacing =
-                                        if (rowCount > 1)
-                                            (gridMainAxisSize -
-                                                (layoutInfo.mainAxisSpacing.field1 * rowCount)) /
-                                                (rowCount - 1)
-                                        else layoutInfo.mainAxisSpacing.field0
-                                }
-                            }
 
-                            override fun Density.arrange(
-                                totalSize: Int,
-                                sizes: IntArray,
-                                outPositions: IntArray,
-                            ) {
-                                println("verticalArrangement arrange")
-                            }
-
-                            override val spacing = customSpacing.dp
-                        },
+                                    if (rowCount > 1)
+                                        (gridMainAxisSize -
+                                            (layoutInfo.mainAxisSpacing.field1 * rowCount)) /
+                                            (rowCount - 1)
+                                    else layoutInfo.mainAxisSpacing.field0
+                                } else verticalSpacing)
+                                .dp
+                        ),
                     userScrollEnabled = layoutInfo.scrollingEnabled,
                 ) {
                     lazyItemContent()
@@ -564,11 +598,45 @@ internal fun DesignFrame(
             }
         }
         is LayoutInfoAbsolute -> {
-            DesignLayout(modifier = layoutInfo.selfModifier.then(m), style = style, name = name) {
-                content(absoluteParentLayoutInfo)
+            val hasScroll = layoutInfo.horizontalScroll || layoutInfo.verticalScroll
+            var designScroll: DesignScroll? = null
+            if (hasScroll) {
+                // Setup a DesignScroll object used to both provide layout with the scroll offset
+                // as well as have layout set the max scroll contents based on the position of the
+                // last child
+                val scrollOffset = remember { mutableFloatStateOf(0F) }
+                val scrollMax = remember { mutableFloatStateOf(0F) }
+                var scrollOrientation = Orientation.Horizontal
+                if (layoutInfo.horizontalScroll) scrollOrientation = Orientation.Horizontal
+                else if (layoutInfo.verticalScroll) scrollOrientation = Orientation.Vertical
+                designScroll = DesignScroll(scrollOffset.value, scrollOrientation, scrollMax)
+                m =
+                    m.then(
+                        Modifier.scrollable(
+                            orientation = scrollOrientation,
+                            state =
+                                rememberScrollableState { delta ->
+                                    // Calculate the current scroll positioned, bounded by the
+                                    // extents of the children
+                                    scrollOffset.value =
+                                        (scrollOffset.value + delta).coerceIn(-scrollMax.value, 0F)
+                                    delta
+                                }
+                        )
+                    )
+            }
+
+            // Use our custom layout to render the frame and to place its children
+            m = m.then(Modifier.layoutStyle(name, layoutId))
+            m = m.then(layoutInfo.selfModifier)
+            DesignFrameLayout(m, view, layoutId, rootLayoutId, layoutState, designScroll) {
+                content()
             }
         }
     }
+
+    finishLayout()
+    return true
 }
 
 internal fun Modifier.frameRender(
@@ -579,6 +647,7 @@ internal fun Modifier.frameRender(
     name: String,
     customizations: CustomizationContext,
     maskInfo: MaskInfo?,
+    layoutId: Int,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -591,7 +660,9 @@ internal fun Modifier.frameRender(
                     document,
                     name,
                     customizations,
+                    layoutId
                 )
+
             when (maskInfo?.type ?: MaskViewType.None) {
                 MaskViewType.MaskNode -> {
                     // When rendering a mask, call saveLayer with blendmode DSTIN so that we blend
@@ -601,7 +672,10 @@ internal fun Modifier.frameRender(
                     val paint = Paint()
                     paint.blendMode = BlendMode.DstIn
                     val offset =
-                        Offset(-style.left.pointsAsDp().value, -style.top.pointsAsDp().value)
+                        Offset(
+                            -style.margin.start.pointsAsDp(density).value,
+                            -style.margin.top.pointsAsDp(density).value
+                        )
                     val parentSize = maskInfo?.parentSize?.value ?: size
                     drawContext.canvas.withSaveLayer(Rect(offset, parentSize), paint) { render() }
                 }

@@ -40,4 +40,4 @@ pluginManagement {
     }
 }
 
-include("app")
+include("helloworld-app")

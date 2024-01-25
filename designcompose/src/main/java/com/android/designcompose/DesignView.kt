@@ -16,6 +16,8 @@
 
 package com.android.designcompose
 
+import android.os.Trace.beginSection
+import android.os.Trace.endSection
 import android.util.Log
 import androidx.annotation.Discouraged
 import androidx.compose.foundation.background
@@ -62,6 +64,7 @@ import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -82,9 +85,9 @@ import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
-import java.util.Optional
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -344,9 +347,9 @@ internal fun DesignView(
     interactionState: InteractionState,
     interactionScope: CoroutineScope,
     parentComponents: List<ParentComponentInfo>,
-    parentLayoutInfo: ParentLayoutInfo,
+    parentLayout: ParentLayoutInfo?,
     maskInfo: MaskInfo? = null,
-) {
+): Boolean {
     val parentComps =
         if (v.component_info.isPresent) {
             val pc = parentComponents.toMutableList()
@@ -370,7 +373,29 @@ internal fun DesignView(
     }
 
     // See if we've got a replacement node from an interaction
-    val view = interactionState.nodeVariant(v.id, customizations.getKey(), document) ?: v
+    var view = interactionState.nodeVariant(v.id, customizations.getKey(), document) ?: v
+    var hasVariantReplacement = view.name != v.name
+    var variantParentName = variantParentName
+    if (!hasVariantReplacement) {
+        // If an interaction has not changed the current variant, then check to see if this node
+        // is part of a component set with variants and if any @DesignVariant annotations
+        // set variant properties that match. If so, variantNodeName will be set to the
+        // name of the node with all the variants set to the @DesignVariant parameters
+        var variantNodeName = customizations.getMatchingVariant(view.component_info)
+        if (variantNodeName != null) {
+            // Find the view associated with the variant name
+            val variantNodeQuery =
+                NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { view.name })
+            val isRoot = LocalDesignIsRootContext.current.isRoot
+            val variantView = interactionState.rootNode(variantNodeQuery, document, isRoot)
+            if (variantView != null) {
+                view = variantView
+                hasVariantReplacement = true
+                variantView.component_info.ifPresent { variantParentName = it.component_set_name }
+            }
+        }
+    }
+
     var m = Modifier as Modifier
 
     // Use the recompose highlighter to show what is being recomposed, if the design switcher
@@ -411,6 +436,10 @@ internal fun DesignView(
         }
         targetInstanceId
     }
+
+    // Get a unique ID identifying this composable. We use this to register and unregister
+    // this view for layout and as a parent ID for children
+    val layoutId = remember { LayoutManager.getNextLayoutId() }
 
     var currentTimeout = Float.MAX_VALUE
     var onTimeout: Reaction? = null
@@ -475,7 +504,8 @@ internal fun DesignView(
                     // event so that the interaction state can revert the change).
                     //
                     // The interaction test document covers all of these cases.
-                    interactionScope.launch {
+                    interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                        beginSection("DesignView InteractionScope")
                         detectTapGestures(
                             onPress = {
                                 for (onPressReaction in onPressReactions) {
@@ -510,6 +540,7 @@ internal fun DesignView(
                                 setIsPressed(false)
                             }
                         )
+                        endSection()
                     }
                 }
             )
@@ -576,11 +607,11 @@ internal fun DesignView(
             view.style
         }
 
-    val viewLayoutInfo = calcLayoutInfo(modifier, view, style, parentLayoutInfo)
+    val viewLayoutInfo = calcLayoutInfo(modifier, view, style)
 
     // Add various scroll modifiers depending on the overflow flag.
     // Only add scroll modifiers if not a grid layout because grid layout adds its own scrolling
-    if (viewLayoutInfo !is LayoutInfoGrid) {
+    if (viewLayoutInfo !is LayoutInfoGrid && viewLayoutInfo !is LayoutInfoAbsolute) {
         when (view.scroll_info.overflow) {
             is OverflowDirection.VERTICAL_SCROLLING -> {
                 m = Modifier.verticalScroll(rememberScrollState()).then(m)
@@ -636,35 +667,33 @@ internal fun DesignView(
     // Use blue for DesignFrame nodes and green for DesignText nodes
     m = positionModifierFunc(Color(0f, 0f, 0.8f, 0.7f)).then(m)
 
+    val parentLayout = parentLayout?.withRootIdIfNone(layoutId)
     when (view.data) {
         is ViewData.Text ->
-            DesignText(
+            return DesignText(
                 modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
+                view = view,
                 text = (view.data as ViewData.Text).content,
                 style = style,
                 document = document,
                 nodeName = view.name,
-                viewLayoutInfo = viewLayoutInfo,
-                customizations = customizations
+                customizations = customizations,
+                parentLayout = parentLayout,
+                layoutId = layoutId,
             )
         is ViewData.StyledText ->
-            DesignText(
+            return DesignText(
                 modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
+                view = view,
                 runs = (view.data as ViewData.StyledText).content,
                 style = style,
                 document = document,
                 nodeName = view.name,
-                viewLayoutInfo = viewLayoutInfo,
-                customizations = customizations
+                customizations = customizations,
+                parentLayout = parentLayout,
+                layoutId = layoutId,
             )
         is ViewData.Container -> {
-            // Check to see whether an interaction has changed the current variant. If it did, then
-            // we
-            // ignore any variant properties set from @DesignVariant annotations by passing
-            // Optional.empty
-            // into DesignFrame's componentInfo parameter.
-            val hasVariantReplacement = view.name != v.name
-
             // Get the mask info from parameters unless we have a child that is a mask, in which
             // case we know the mask view type is MaskParent and we create a new parent size
             // mutable state.
@@ -675,22 +704,25 @@ internal fun DesignView(
                 parentSize = remember { mutableStateOf(Size(0F, 0F)) }
             }
 
-            DesignFrame(
+            return DesignFrame(
                 m,
+                view,
                 style,
-                (view.data as ViewData.Container).shape,
-                view.name,
-                variantParentName,
                 viewLayoutInfo,
                 document,
                 customizations,
-                if (hasVariantReplacement) Optional.empty() else view.component_info,
+                parentLayout,
+                layoutId,
                 parentComponents,
                 MaskInfo(parentSize, maskViewType),
-            ) { parentLayoutInfoForChildren ->
+            ) {
                 val customContent = customizations.getContent(view.name)
                 if (customContent != null) {
-                    customContent()
+                    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+                    if (rootLayoutId == -1) rootLayoutId = layoutId
+                    for (i in 0 until customContent.count) {
+                        customContent.content(i)(ContentReplacementContext(layoutId, rootLayoutId))
+                    }
                 } else {
                     if ((view.data as ViewData.Container).children.isNotEmpty()) {
                         // Create  a list of views to render. If the view is a mask, the second item
@@ -722,47 +754,71 @@ internal fun DesignView(
                                 }
                             }
                         }
+                        val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
+                        val isWidgetAncestor =
+                            parentLayout?.listLayoutType != ListLayoutType.None ||
+                                parentLayout?.isWidgetAncestor == true
+                        var childIndex = 0
                         viewList.forEach {
                             val childView = it.first
                             val maskedChildren = it.second
                             var maskViewType = MaskViewType.None
                             if (maskedChildren.isNotEmpty()) {
                                 maskedChildren.forEach { maskedChild ->
-                                    DesignView(
-                                        Modifier,
-                                        maskedChild,
-                                        "",
-                                        docId,
-                                        document,
-                                        customizations,
-                                        interactionState,
-                                        interactionScope,
-                                        parentComps,
-                                        parentLayoutInfoForChildren,
-                                        MaskInfo(parentSize, maskViewType),
-                                    )
+                                    val parentLayoutInfo =
+                                        ParentLayoutInfo(
+                                            layoutId,
+                                            childIndex,
+                                            rootLayoutId,
+                                            isWidgetAncestor = isWidgetAncestor
+                                        )
+                                    val show =
+                                        DesignView(
+                                            Modifier,
+                                            maskedChild,
+                                            "",
+                                            docId,
+                                            document,
+                                            customizations,
+                                            interactionState,
+                                            interactionScope,
+                                            parentComps,
+                                            parentLayoutInfo,
+                                            MaskInfo(parentSize, maskViewType),
+                                        )
+                                    if (show) ++childIndex
                                 }
                                 maskViewType = MaskViewType.MaskNode
                             }
-                            DesignView(
-                                Modifier,
-                                childView,
-                                "",
-                                docId,
-                                document,
-                                customizations,
-                                interactionState,
-                                interactionScope,
-                                parentComps,
-                                parentLayoutInfoForChildren,
-                                MaskInfo(parentSize, maskViewType),
-                            )
+                            val parentLayoutInfo =
+                                ParentLayoutInfo(
+                                    layoutId,
+                                    childIndex,
+                                    rootLayoutId,
+                                    isWidgetAncestor = isWidgetAncestor
+                                )
+                            val show =
+                                DesignView(
+                                    Modifier,
+                                    childView,
+                                    "",
+                                    docId,
+                                    document,
+                                    customizations,
+                                    interactionState,
+                                    interactionScope,
+                                    parentComps,
+                                    parentLayoutInfo,
+                                    MaskInfo(parentSize, maskViewType),
+                                )
+                            if (show) ++childIndex
                         }
                     }
                 }
             }
         }
     }
+    return false
 }
 
 // We want to know if we're the "root" component. For now, we'll do that using a local composition
@@ -869,7 +925,9 @@ fun DesignDoc(
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
-) =
+    parentLayout: ParentLayoutInfo? = null,
+) {
+    beginSection(DCTraces.DESIGNDOCINTERNAL)
     DesignDocInternal(
         docName,
         docId,
@@ -882,7 +940,10 @@ fun DesignDoc(
         designSwitcherPolicy = designSwitcherPolicy,
         designComposeCallbacks = designComposeCallbacks,
         parentComponents = parentComponents,
+        parentLayout = parentLayout,
     )
+    endSection()
+}
 
 @Composable
 internal fun DesignDocInternal(
@@ -898,6 +959,7 @@ internal fun DesignDocInternal(
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
+    parentLayout: ParentLayoutInfo? = null,
 ) {
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val overrideDocId = LocalDocOverrideContext.current
@@ -970,6 +1032,19 @@ internal fun DesignDocInternal(
         if (startFrame != null) {
             LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
+                // Whenever the root view changes, call deferComputations() so that we defer layout
+                // calculation
+                // until all views have been added
+                if (isRoot) {
+                    DisposableEffect(startFrame) { onDispose {} }
+                    val density = LocalDensity.current.density
+                    DisposableEffect(density) {
+                        LayoutManager.setDensity(density)
+                        onDispose {}
+                    }
+                }
+
+                beginSection(DCTraces.DESIGNVIEW)
                 DesignView(
                     modifier.semantics { sDocRenderStatus = docRenderStatus },
                     startFrame,
@@ -983,9 +1058,10 @@ internal fun DesignDocInternal(
                     if (isRoot) {
                         rootParentLayoutInfo
                     } else {
-                        absoluteParentLayoutInfo
+                        parentLayout
                     }
                 )
+                endSection()
                 docRenderStatus = DocRenderStatus.Rendered
                 // If we're the root, then also paint overlays
                 if (isRoot || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {
@@ -1009,6 +1085,10 @@ internal fun DesignDocInternal(
                     }
                 }
                 designSwitcher()
+
+                // For root views, tell the layout manager that it is done loading after all
+                // child composables have been called so that it can trigger a layout compute.
+                if (isRoot) DisposableEffect(startFrame) { onDispose {} }
             }
 
             return

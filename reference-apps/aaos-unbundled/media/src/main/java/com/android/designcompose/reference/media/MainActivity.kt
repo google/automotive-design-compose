@@ -25,6 +25,7 @@ import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.ListContent
 import com.android.designcompose.OpenLinkCallback
 import com.android.designcompose.ParentComponentInfo
+import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.TapCallback
 import com.android.designcompose.serdegen.NodeQuery
 
@@ -65,6 +66,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
         icon: @Composable (ImageReplacementContext) -> Bitmap?,
         onTap: TapCallback,
     ) {}
@@ -79,6 +81,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
         pageHeaderType: PageHeaderType,
         showHeader: Boolean,
         title: String,
@@ -97,6 +100,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
     ) {}
 
     fun LoadingPageDesignNodeData(): DesignNodeData {
@@ -109,6 +113,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
         title: String,
     ) {}
 
@@ -122,6 +127,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
         sourceButtonType: SourceButtonType,
         onTap: TapCallback,
         title: String,
@@ -140,6 +146,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
         navButtonType: NavButtonType,
         onTap: TapCallback,
         name: String,
@@ -156,6 +163,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
         browseType: BrowseItemType,
         currentlyPlaying: CurrentlyPlaying,
         onTap: TapCallback,
@@ -178,6 +186,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
         errorMessage: String,
         errorButtonText: String,
         showErrorButton: Boolean,
@@ -194,6 +203,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
     ) {}
 
     fun BrowseHeaderNavDesignNodeData(): DesignNodeData {
@@ -206,6 +216,7 @@ interface MediaInterface {
         openLinkCallback: OpenLinkCallback? = null,
         designComposeCallbacks: DesignComposeCallbacks? = null,
         key: String? = null,
+        parentLayout: ParentLayoutInfo?,
     ) {}
 
     fun BrowseHeaderDrillDownDesignNodeData(): DesignNodeData {

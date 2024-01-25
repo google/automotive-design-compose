@@ -39,7 +39,6 @@ pub enum ViewShape {
     Path {
         path: Vec<crate::vector_schema::Path>,
         stroke: Vec<crate::vector_schema::Path>,
-        size: Option<(f32, f32)>,
         is_mask: bool,
     },
     Arc {
@@ -50,7 +49,6 @@ pub enum ViewShape {
         sweep_angle_degrees: f32,
         inner_radius: f32,
         corner_radius: f32,
-        size: Option<(f32, f32)>,
         is_mask: bool,
     },
     VectorRect {
@@ -217,6 +215,30 @@ impl View {
     pub(crate) fn add_child(&mut self, child: View) {
         if let ViewData::Container { children, .. } = &mut self.data {
             children.push(child);
+        }
+    }
+}
+
+/// The final result of a layout algorithm for a single taffy Node
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Layout {
+    // Relative ordering of the node. Render nodes with a higher order on top
+    // of nodes with lower order
+    pub order: u32,
+    pub width: f32,
+    pub height: f32,
+    /// The top-left corner of the node
+    pub left: f32,
+    pub top: f32,
+}
+impl Layout {
+    pub fn from_taffy_layout(l: &taffy::prelude::Layout) -> Layout {
+        Layout {
+            order: l.order,
+            width: l.size.width,
+            height: l.size.height,
+            left: l.location.x,
+            top: l.location.y,
         }
     }
 }

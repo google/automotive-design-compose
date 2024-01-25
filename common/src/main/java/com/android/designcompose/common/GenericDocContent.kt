@@ -83,8 +83,8 @@ fun decodeServerBaseDoc(
     val imageSessionData = decodeImageSession(docBytes, deserializer)
     feedback.documentDecodeSuccess(header.version, content.name, content.last_modified, docId)
 
-    val variantViewMap = createVariantViewMap(content.nodes)
-    val variantPropertyMap = createVariantPropertyMap(content.nodes)
+    val variantViewMap = createVariantViewMap(content.views)
+    val variantPropertyMap = createVariantPropertyMap(content.views)
     return GenericDocContent(
         docId,
         header,
@@ -108,8 +108,8 @@ fun decodeDiskBaseDoc(doc: InputStream, docId: String, feedback: FeedbackImpl): 
     // Disk loads are in the format of SerializedDesignDoc
     val content = SerializedDesignDoc.deserialize(deserializer)
     val imageSessionData = decodeImageSession(docBytes, deserializer)
-    val variantMap = createVariantViewMap(content.nodes)
-    val variantPropertyMap = createVariantPropertyMap(content.nodes)
+    val variantMap = createVariantViewMap(content.views)
+    val variantPropertyMap = createVariantPropertyMap(content.views)
 
     feedback.documentDecodeSuccess(header.version, content.name, content.last_modified, docId)
 

@@ -35,7 +35,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Set up JDK 17
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
@@ -44,10 +44,10 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@8cbcb9948b5892387aed077daf6f90e1f0ba5b27 # v2.11.0
+        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.11.1
 
       - name: Download screenshots from base branch
-        uses: dawidd6/action-download-artifact@f29d1b6a8930683e80acedfbe6baa2930cd646b4 # v2.28.1
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d # v3.0.0
         continue-on-error: true
         with:
           name: screenshots
@@ -97,7 +97,7 @@ jobs:
 
       - name: Checkout base
         id: checkout-base
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           ref: ${{ github.event.pull_request.base.ref }}
 

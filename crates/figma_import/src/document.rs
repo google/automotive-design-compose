@@ -41,17 +41,23 @@ const BASE_PROJECT_URL: &str = "https://api.figma.com/v1/projects/";
 #[cfg(not(feature = "http_mock"))]
 fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<String, Error> {
     let mut agent_builder = ureq::AgentBuilder::new();
+    let mut buffer = Vec::new();
     // Only HttpProxyConfig is supported.
     if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
         agent_builder = agent_builder.proxy(ureq::Proxy::new(spec)?);
     }
-    let body = agent_builder
+
+    agent_builder
         .build()
         .get(url.as_str())
         .set(FIGMA_TOKEN_HEADER, api_key)
         .timeout(Duration::from_secs(90))
         .call()?
-        .into_string()?;
+        .into_reader()
+        .read_to_end(&mut buffer)?;
+
+    let body = String::from_utf8(buffer)?;
+
     Ok(body)
 }
 
@@ -76,6 +82,7 @@ pub enum NodeQuery {
     /// Node by name that is a variant, so the name may have multiple properties
     /// The first string is the node name and the second is its parent's name
     NodeVariant(String, String),
+    NodeComponentSet(String),
 }
 // Helper methods for NodeQuery construction.
 impl NodeQuery {
@@ -92,6 +99,10 @@ impl NodeQuery {
     /// Construct a NodeQuery::NodeVariant from the given node name
     pub fn variant(name: impl ToString, parent: impl ToString) -> NodeQuery {
         NodeQuery::NodeVariant(name.to_string(), parent.to_string())
+    }
+
+    pub fn component_set(name: impl ToString) -> NodeQuery {
+        NodeQuery::NodeComponentSet(name.to_string())
     }
 }
 
@@ -127,7 +138,6 @@ pub struct Document {
     api_key: String,
     document_id: String,
     proxy_config: ProxyConfig,
-
     document_root: FileResponse,
     image_context: ImageContext,
     variant_nodes: Vec<Node>,
@@ -135,6 +145,9 @@ pub struct Document {
     pub branches: Vec<FigmaDocInfo>,
 }
 impl Document {
+    pub fn root_node(&self) -> &Node {
+        &self.document_root.document
+    }
     /// Fetch a document from Figma and return a Document instance that can be used
     /// to extract toolkit nodes.
     pub fn new(
@@ -547,13 +560,17 @@ impl Document {
                 if let NodeData::Instance { frame: _, component_id } = &node.data {
                     let component_set = component_set_index.get(component_id);
                     if let Some(cs) = component_set {
-                        node_name_hash.insert(NodeQuery::NodeName(cs.name.clone()));
+                        node_name_hash.insert(NodeQuery::NodeComponentSet(cs.name.clone()));
+
+                        // Recurse on the children of the component set since variants can change
+                        // to any of them at runtime
+                        let cs_children: Vec<&Node> = cs.children.iter().collect();
+                        find_component_sets(&cs_children, component_set_index, node_name_hash);
                     }
                 }
 
-                for child in &node.children {
-                    find_component_sets(&vec![child], component_set_index, node_name_hash);
-                }
+                let children: Vec<&Node> = node.children.iter().collect();
+                find_component_sets(&children, component_set_index, node_name_hash);
             }
         }
 
@@ -568,8 +585,9 @@ impl Document {
             if let NodeData::ComponentSet { .. } = &node.data {
                 // Add the component set's children to node_name_has if either the component set itself
                 // is in the node_name_hash, or one of the child variants is in node_name_hash
-                let mut add_children =
-                    node_name_hash.contains(&NodeQuery::NodeName(node.name.clone()));
+                let mut add_children = node_name_hash
+                    .contains(&NodeQuery::NodeName(node.name.clone()))
+                    || node_name_hash.contains(&NodeQuery::NodeComponentSet(node.name.clone()));
                 if !add_children {
                     'outer: for child in &node.children {
                         let child_name_parts = child.name.split(',');
@@ -707,6 +725,7 @@ impl Document {
                 let maybe_node = match &name {
                     NodeQuery::NodeId(id) => id_index.get(id),
                     NodeQuery::NodeName(node_name) => name_index.get(node_name),
+                    NodeQuery::NodeComponentSet(node_name) => name_index.get(node_name),
                     NodeQuery::NodeVariant(node_name, parent_name) => {
                         variant_index.get(&(node_name.clone(), parent_name.clone()))
                     }
@@ -736,6 +755,7 @@ impl Document {
                 let maybe_node = match &name {
                     NodeQuery::NodeId(id) => id_index.get(id),
                     NodeQuery::NodeName(node_name) => name_index.get(node_name),
+                    NodeQuery::NodeComponentSet(node_name) => name_index.get(node_name),
                     NodeQuery::NodeVariant(node_name, parent_name) => {
                         variant_index.get(&(node_name.clone(), parent_name.clone()))
                     }

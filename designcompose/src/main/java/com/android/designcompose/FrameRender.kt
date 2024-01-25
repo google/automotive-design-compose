@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
+import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.MeterData
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
@@ -62,9 +63,9 @@ private fun calculateParentOffsets(
     val decomposed = style.transform.decompose(density)
 
     // X Node position offset by the X translation value of the transform matrix
-    val nodeX = style.left.pointsAsDp().value.toDouble() + decomposed.translateX
+    val nodeX = style.margin.start.pointsAsDp(density).value.toDouble() + decomposed.translateX
     // Y Node position offset by the Y translation value of the transform matrix
-    val nodeY = style.top.pointsAsDp().value.toDouble() + decomposed.translateY
+    val nodeY = style.margin.top.pointsAsDp(density).value.toDouble() + decomposed.translateY
 
     // Radius of the circle encapsulating the node
     val r = sqrt(nodeWidth * nodeWidth + nodeHeight * nodeHeight) / 2
@@ -100,29 +101,30 @@ private fun calculateRotationData(
     rotationData: RotationMeterData,
     meterValue: Float,
     style: ViewStyle,
-    frameSize: Size,
     density: Float
 ): androidx.compose.ui.graphics.Matrix {
     val rotation =
         (rotationData.start + meterValue / 100f * (rotationData.end - rotationData.start))
             .coerceDiscrete(rotationData.discrete, rotationData.discreteValue)
 
+    val nodeWidth =
+        if (style.width is Dimension.Points) style.width.pointsAsDp(density).value
+        else style.node_size.width
+    val nodeHeight =
+        if (style.height is Dimension.Points) style.height.pointsAsDp(density).value
+        else style.node_size.height
+
     // Calculate offsets from parent when the rotation is 0
     val offsets =
-        calculateParentOffsets(
-            style,
-            frameSize.width.toDouble(),
-            frameSize.height.toDouble(),
-            density
-        )
+        calculateParentOffsets(style, nodeWidth.toDouble(), nodeHeight.toDouble(), density)
     val xOffsetParent = offsets.first
     val yOffsetParent = offsets.second
 
     // Calculate a rotation transform that rotates about the center of the
     // node and then moves by xOffset and yOffset
     val overrideTransform = androidx.compose.ui.graphics.Matrix()
-    val moveX = frameSize.width / 2
-    val moveY = frameSize.height / 2
+    val moveX = nodeWidth / 2
+    val moveY = nodeHeight / 2
 
     // First translate so we rotate about the center
     val translateOrigin = androidx.compose.ui.graphics.Matrix()
@@ -137,8 +139,8 @@ private fun calculateRotationData(
     // Translate back, with an additional offset from the parent
     val translateBack = androidx.compose.ui.graphics.Matrix()
     translateBack.translate(
-        moveX - style.left.pointsAsDp().value + xOffsetParent.toFloat(),
-        moveY - style.top.pointsAsDp().value + yOffsetParent.toFloat(),
+        moveX - style.margin.start.pointsAsDp(density).value + xOffsetParent.toFloat(),
+        moveY - style.margin.top.pointsAsDp(density).value + yOffsetParent.toFloat(),
         0f
     )
     overrideTransform.timesAssign(translateBack)
@@ -148,7 +150,7 @@ private fun calculateRotationData(
 private fun calculateProgressBarData(
     progressBarData: ProgressBarMeterData,
     meterValue: Float,
-    size: Size,
+    height: Float,
     density: Float
 ): Size {
     // Progress bar discrete values are done by percentage
@@ -157,7 +159,7 @@ private fun calculateProgressBarData(
 
     // Resize the progress bar by interpolating between 0 and endX
     val barWidth = lerp(0F, progressBarData.endX, discretizedMeterValue, density)
-    return Size(barWidth, size.height)
+    return Size(barWidth, height)
 }
 
 private fun calculateProgressMarkerData(
@@ -174,7 +176,7 @@ private fun calculateProgressMarkerData(
     // along the x axis
     val moveX = lerp(markerData.startX, markerData.endX, discretizedMeterValue, density)
     val overrideTransform = style.getTransform(density)
-    val leftOffset = style.left.pointsAsDp().value
+    val leftOffset = style.margin.start.pointsAsDp(density).value
     overrideTransform.setXTranslation(moveX - leftOffset)
 
     return overrideTransform
@@ -204,7 +206,6 @@ private fun calculateArcData(
                 arcAngleMeter,
                 shape.inner_radius,
                 arcData.cornerRadius,
-                shape.size,
                 shape.is_mask,
             )
     }
@@ -227,11 +228,14 @@ internal fun ContentDrawScope.render(
     document: DocContent,
     name: String,
     customizations: CustomizationContext,
+    layoutId: Int,
 ) {
+    if (size.width <= 0F && size.height <= 0F) return
+
     drawContext.canvas.save()
 
     var overrideTransform: androidx.compose.ui.graphics.Matrix? = null
-    var frameSize = size
+    var rectSize: Size? = null
     var shape = frameShape
     var customArcAngle = false
 
@@ -244,23 +248,17 @@ internal fun ContentDrawScope.render(
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
                         overrideTransform =
-                            calculateRotationData(
-                                rotationData,
-                                meterValue,
-                                style,
-                                frameSize,
-                                density
-                            )
+                            calculateRotationData(rotationData, meterValue, style, density)
                     }
                 }
                 is MeterData.progressBarData -> {
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
-                        frameSize =
+                        rectSize =
                             calculateProgressBarData(
                                 progressBarData,
                                 meterValue,
-                                frameSize,
+                                style.height.pointsAsDp(density).value,
                                 density
                             )
                     }
@@ -313,10 +311,19 @@ internal fun ContentDrawScope.render(
         val paint = Paint()
         paint.alpha = opacity
         paint.blendMode = blendMode
-        drawContext.canvas.saveLayer(Rect(Offset.Zero, frameSize), paint)
+        drawContext.canvas.saveLayer(Rect(Offset.Zero, size), paint)
     }
     val shapePaths =
-        shape.computePaths(style, density, frameSize, customArcAngle, vectorScaleX, vectorScaleY)
+        shape.computePaths(
+            style,
+            density,
+            size,
+            rectSize,
+            customArcAngle,
+            vectorScaleX,
+            vectorScaleY,
+            layoutId
+        )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
     val customFillBrush =
@@ -329,7 +336,7 @@ internal fun ContentDrawScope.render(
     val fillBrush: List<Paint> =
         if (customFillBrush != null) {
             val p = Paint()
-            customFillBrush.applyTo(frameSize, p, 1.0f)
+            customFillBrush.applyTo(size, p, 1.0f)
             listOf(p)
         } else {
             style.background.mapNotNull { background ->
@@ -337,7 +344,8 @@ internal fun ContentDrawScope.render(
                 val b = background.asBrush(document, density)
                 if (b != null) {
                     val (brush, fillOpacity) = b
-                    brush.applyTo(frameSize, p, fillOpacity)
+                    val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
+                    brush.applyTo(brushSize, p, fillOpacity)
                     p
                 } else {
                     null
@@ -351,7 +359,8 @@ internal fun ContentDrawScope.render(
             val b = background.asBrush(document, density)
             if (b != null) {
                 val (brush, strokeOpacity) = b
-                brush.applyTo(frameSize, p, strokeOpacity)
+                val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
+                brush.applyTo(brushSize, p, strokeOpacity)
                 p
             } else {
                 null
@@ -406,7 +415,7 @@ internal fun ContentDrawScope.render(
         }
         drawImage(
             customImage.asImageBitmap(),
-            dstSize = IntSize(frameSize.width.roundToInt(), frameSize.height.roundToInt())
+            dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt())
         )
         drawContext.canvas.restore()
     } else {

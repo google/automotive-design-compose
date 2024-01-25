@@ -139,6 +139,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         file += "import com.android.designcompose.setVisible\n"
         file += "import com.android.designcompose.TapCallback\n"
         file += "import com.android.designcompose.ParentComponentInfo\n"
+        file += "import com.android.designcompose.ParentLayoutInfo\n"
         file += "import com.android.designcompose.sDocClass\n"
         file += "import com.android.designcompose.LocalCustomizationContext\n\n"
 
@@ -146,7 +147,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-
         fun createJsonFile(packageName: String, dependencies: Set<KSFile>): OutputStream {
             val fileName = packageName.replace('.', '_') + "_gen"
             return codeGenerator.createNewFile(
@@ -731,7 +731,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 "Bitmap?" -> CustomizationType.Image
                 "Modifier" -> CustomizationType.Modifier
                 "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
-                "@Composable () -> Unit" -> CustomizationType.ContentReplacement
+                "com.android.designcompose.ReplacementContent" ->
+                    CustomizationType.ContentReplacement
                 "@Composable (ComponentReplacementContext) -> Unit" ->
                     CustomizationType.ComponentReplacement
                 "com.android.designcompose.ListContent" -> CustomizationType.ListContent
@@ -774,6 +775,11 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Add optional key that can be used to uniquely identify this particular instance
             val keyDefault = if (override) "" else " = null"
             args.add(Pair("key", "String?$keyDefault"))
+
+            // Add an optional replacement index that should be populated if the composable is
+            // replacing children of a node through a content replacement customization
+            val parentLayoutInfoDefault = if (override) "" else " = null"
+            args.add(Pair("parentLayout", "ParentLayoutInfo?$parentLayoutInfoDefault"))
 
             // Get the @DesignComponent annotation object, or return if none
             val annotation: KSAnnotation =
@@ -995,6 +1001,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 else "DesignSwitcherPolicy.SHOW_IF_ROOT"
             out.appendText("                designSwitcherPolicy = $switchPolicy,\n")
             out.appendText("                designComposeCallbacks = designComposeCallbacks,\n")
+            out.appendText("                parentLayout = parentLayout,\n")
             out.appendText("            )\n")
             out.appendText("        }\n")
             out.appendText("    }\n\n")

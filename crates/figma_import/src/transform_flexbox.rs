@@ -30,12 +30,12 @@ use crate::toolkit_style::{
 use crate::vector_schema;
 use crate::{
     component_context::ComponentContext,
-    extended_layout_schema::{ExtendedAutoLayout, ExtendedTextLayout, LayoutType, SizePolicy},
+    extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy}, //ExtendedTextLayout
     figma_schema::{
         BlendMode, Component, ComponentSet, EffectType, HorizontalLayoutConstraintValue,
-        LayoutAlign, LayoutAlignItems, LayoutMode, LayoutSizingMode, LineHeightUnit, Node,
-        NodeData, PaintData, StrokeAlign, TextAlignHorizontal, TextAlignVertical, TextAutoResize,
-        Vector, VerticalLayoutConstraintValue,
+        LayoutAlign, LayoutAlignItems, LayoutMode, LayoutSizing, LayoutSizingMode, LineHeightUnit,
+        Node, NodeData, PaintData, StrokeAlign, TextAlignHorizontal, TextAlignVertical,
+        TextAutoResize, TextTruncation, VerticalLayoutConstraintValue,
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
@@ -43,6 +43,7 @@ use crate::{
 };
 
 use unicode_segmentation::UnicodeSegmentation;
+//::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
 // overrides a fixed size sizing policy on its parent to allow it to grow to fit
@@ -75,13 +76,21 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
     // Determine if the parent is using Auto Layout (and thus is a Flexbox parent) or if it isn't.
     let parent_frame = parent.and_then(|p| p.frame());
     let parent_bounding_box = parent.and_then(|p| p.absolute_bounding_box);
-    let parent_is_root = parent.is_none();
+    //let parent_is_root = parent.is_none();
     let parent_is_flexbox = if let Some(frame) = parent_frame {
         !frame.layout_mode.is_none()
     } else {
         // The root container is from our toolkit, and uses flexbox.
-        parent_is_root
+        //parent_is_root
+        false
     };
+    let mut hug_width = false;
+    let mut hug_height = false;
+
+    if let Some(bounds) = node.absolute_bounding_box {
+        style.bounding_box.width = bounds.width();
+        style.bounding_box.height = bounds.height();
+    }
 
     // Frames can implement Auto Layout on their children.
     if let Some(frame) = node.frame() {
@@ -89,7 +98,16 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
         style.width = Dimension::Auto;
         style.height = Dimension::Auto;
         style.flex_grow = frame.layout_grow;
+        if frame.layout_grow == 1.0 {
+            // When the value of layout_grow is 1, it is because the node has
+            // its width or height set to FILL. Figma's node properties don't
+            // specify this, but flex_basis needs to be set to 0 so that it
+            // starts out small and grows to fill the container
+            style.flex_basis = Dimension::Points(0.0);
+        }
         style.flex_shrink = 0.0;
+        style.horizontal_sizing = frame.layout_sizing_horizontal.into();
+        style.vertical_sizing = frame.layout_sizing_vertical.into();
 
         // Check for a flex direction override, which can happen if this node has a child widget
         let flex_direction_override = check_child_size_override(node);
@@ -141,7 +159,8 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
             // If align_self is set to stretch, we want width/height to be Auto, even if the
             // frame's primary or counter axis sizing mode is set to Fixed.
             let dim_points_or_auto = |points| {
-                if align_self_stretch || parent_is_root {
+                if align_self_stretch {
+                    //|| parent_is_root {
                     Dimension::Auto
                 } else {
                     Dimension::Points(points)
@@ -149,6 +168,8 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
             };
             match frame.layout_mode {
                 LayoutMode::Horizontal => {
+                    hug_width = frame.primary_axis_sizing_mode == LayoutSizingMode::Auto;
+                    hug_height = frame.counter_axis_sizing_mode == LayoutSizingMode::Auto;
                     style.width = match frame.primary_axis_sizing_mode {
                         LayoutSizingMode::Fixed => dim_points_or_auto(bounds.width().ceil()),
                         LayoutSizingMode::Auto => Dimension::Auto,
@@ -157,8 +178,13 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                         LayoutSizingMode::Fixed => dim_points_or_auto(bounds.height().ceil()),
                         LayoutSizingMode::Auto => Dimension::Auto,
                     };
+                    if hug_width {
+                        style.min_width = Dimension::Auto;
+                    }
                 }
-                _ => {
+                LayoutMode::Vertical => {
+                    hug_width = frame.counter_axis_sizing_mode == LayoutSizingMode::Auto;
+                    hug_height = frame.primary_axis_sizing_mode == LayoutSizingMode::Auto;
                     style.width = match frame.counter_axis_sizing_mode {
                         LayoutSizingMode::Fixed => dim_points_or_auto(bounds.width().ceil()),
                         LayoutSizingMode::Auto => Dimension::Auto,
@@ -167,13 +193,60 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                         LayoutSizingMode::Fixed => dim_points_or_auto(bounds.height().ceil()),
                         LayoutSizingMode::Auto => Dimension::Auto,
                     };
+                    if hug_height {
+                        style.min_height = Dimension::Auto;
+                    }
                 }
+                _ => {
+                    // Frame is not autolayout, so use the layout sizing mode
+                    // to determine size. If we have a node size specified, use
+                    // that instead of the bounds since the node size is the
+                    // size without rotation and scale.
+                    let (width, height) = if let Some(size) = &node.size {
+                        (size.x(), size.y())
+                    } else {
+                        (bounds.width().ceil(), bounds.height().ceil())
+                    };
+
+                    if frame.layout_sizing_horizontal == LayoutSizing::Fill {
+                        style.width = Dimension::Auto;
+                    } else {
+                        style.width = Dimension::Points(width);
+                    }
+
+                    if frame.layout_sizing_vertical == LayoutSizing::Fill {
+                        style.height = Dimension::Auto;
+                    } else {
+                        style.height = Dimension::Points(height);
+                    }
+                }
+            }
+
+            if frame.layout_mode != LayoutMode::None {
+                let width_points = bounds.width().ceil();
+                let height_points = bounds.height().ceil();
+                style.width = match frame.layout_sizing_horizontal {
+                    LayoutSizing::Fixed => Dimension::Points(width_points),
+                    LayoutSizing::Fill => Dimension::Auto,
+                    LayoutSizing::Hug => Dimension::Auto,
+                };
+                style.height = match frame.layout_sizing_vertical {
+                    LayoutSizing::Fixed => Dimension::Points(height_points),
+                    LayoutSizing::Fill => Dimension::Auto,
+                    LayoutSizing::Hug => Dimension::Auto,
+                };
             }
         }
     }
 
     // Setup widget size to expand to its parent
-    if node.is_widget() {
+    let mut is_widget_or_parent_widget = node.is_widget();
+    if let Some(parent) = parent {
+        if !is_widget_or_parent_widget {
+            is_widget_or_parent_widget = parent.is_widget();
+        }
+    }
+    if is_widget_or_parent_widget {
         style.position_type = PositionType::Absolute;
         style.width = Dimension::Auto;
         style.height = Dimension::Auto;
@@ -197,22 +270,69 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
         style.height = Dimension::Auto;
     }
     if let Some(bounds) = node.absolute_bounding_box {
-        style.min_width = Dimension::Points(bounds.width().ceil());
-        style.min_height = Dimension::Points(bounds.height().ceil());
+        if !hug_width {
+            style.min_width = Dimension::Points(bounds.width().ceil());
+        }
+        if !hug_height {
+            style.min_height = Dimension::Points(bounds.height().ceil());
+        }
     }
 
     if let Some(size) = &node.size {
         if size.is_valid() {
-            style.min_width = Dimension::Points(size.x());
-            style.min_height = Dimension::Points(size.y());
+            if !hug_width {
+                style.min_width = Dimension::Points(size.x());
+            }
+            if !hug_height {
+                style.min_height = Dimension::Points(size.y());
+            }
+            // Set fixed vector size
+            // TODO need to change to support scale?
+            if node.vector().is_some() {
+                style.width = Dimension::Points(size.x());
+                style.height = Dimension::Points(size.y());
+            }
+
+            style.node_size.width = size.x();
+            style.node_size.height = size.y();
         }
     }
 
     // For text we want to force the width.
-    if let NodeData::Text { vector, .. } = &node.data {
+    if let NodeData::Text { vector, style: text_style, .. } = &node.data {
         style.flex_grow = vector.layout_grow;
-        if style.flex_grow <= 0.0 {
-            style.width = style.min_width;
+        if vector.layout_grow == 1.0 {
+            // When the value of layout_grow is 1, it is because the node has
+            // its width or height set to FILL. Figma's node properties don't
+            // specify this, but flex_basis needs to be set to 0 so that it
+            // starts out small and grows to fill the container
+            style.flex_basis = Dimension::Points(0.0);
+        }
+        style.horizontal_sizing = vector.layout_sizing_horizontal.into();
+        style.vertical_sizing = vector.layout_sizing_vertical.into();
+
+        // The text style also contains some layout information. We previously exposed
+        // auto-width text in our plugin.
+        match text_style.text_auto_resize {
+            TextAutoResize::Height => {
+                if vector.layout_sizing_horizontal == LayoutSizing::Fill {
+                    style.width = Dimension::Auto;
+                } else {
+                    style.width = style.min_width;
+                }
+                style.height = Dimension::Auto;
+            }
+            TextAutoResize::WidthAndHeight => {
+                style.min_width = Dimension::Auto;
+                style.width = Dimension::Auto;
+                style.height = Dimension::Auto;
+            }
+            // TextAutoResize::Truncate is deprecated
+            // Use fixed width and height
+            _ => {
+                style.width = style.min_width;
+                style.height = style.min_height;
+            }
         }
     }
 
@@ -234,16 +354,26 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
 
                 match node.constraints().map(|c| c.horizontal) {
                     Some(HorizontalLayoutConstraintValue::Left) | None => {
-                        style.left = Dimension::Points(left);
-                        style.width = Dimension::Points(width);
+                        style.left = Dimension::Percent(0.0);
+                        style.right = Dimension::Auto;
+                        style.margin.start = Dimension::Points(left);
+                        if !hug_width && !node.is_text() {
+                            style.width = Dimension::Points(width);
+                        }
                     }
                     Some(HorizontalLayoutConstraintValue::Right) => {
-                        style.right = Dimension::Points(right);
-                        style.width = Dimension::Points(width);
+                        style.left = Dimension::Auto;
+                        style.right = Dimension::Percent(0.0);
+                        style.margin.end = Dimension::Points(right);
+                        if !hug_width && !node.is_text() {
+                            style.width = Dimension::Points(width);
+                        }
                     }
                     Some(HorizontalLayoutConstraintValue::LeftRight) => {
-                        style.left = Dimension::Points(left);
-                        style.right = Dimension::Points(right);
+                        style.left = Dimension::Percent(0.0);
+                        style.right = Dimension::Percent(0.0);
+                        style.margin.start = Dimension::Points(left);
+                        style.margin.end = Dimension::Points(right);
                         style.width = Dimension::Auto;
                     }
                     Some(HorizontalLayoutConstraintValue::Center) => {
@@ -253,40 +383,60 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                         // location using the left/top property. All of this adds up to position the
                         // component where it was in Figma, but anchored to the horizontal/vertical
                         // centerpoint.
-                        style.margin.start = Dimension::Percent(0.5);
-                        style.left = Dimension::Points(left - parent_bounds.width().ceil() / 2.0);
-                        style.width = Dimension::Points(width);
+                        style.left = Dimension::Percent(0.5);
+                        style.right = Dimension::Auto;
+                        style.margin.start =
+                            Dimension::Points(left - parent_bounds.width().ceil() / 2.0);
+                        if !hug_width && !node.is_text() {
+                            style.width = Dimension::Points(width);
+                        }
                     }
                     Some(HorizontalLayoutConstraintValue::Scale) => {
                         style.left = Dimension::Percent(left / parent_bounds.width().ceil());
                         style.right = Dimension::Percent(right / parent_bounds.width().ceil());
                         style.width = Dimension::Auto;
+                        style.min_width = Dimension::Auto;
                     }
                 }
 
                 match node.constraints().map(|c| c.vertical) {
                     Some(VerticalLayoutConstraintValue::Top) | None => {
-                        style.top = Dimension::Points(top);
-                        style.height = Dimension::Points(height);
+                        style.top = Dimension::Percent(0.0);
+                        style.bottom = Dimension::Auto;
+                        style.margin.top = Dimension::Points(top);
+                        if !hug_height && !node.is_text() {
+                            style.height = Dimension::Points(height);
+                        }
                     }
                     Some(VerticalLayoutConstraintValue::Bottom) => {
-                        style.bottom = Dimension::Points(bottom);
-                        style.height = Dimension::Points(height);
+                        style.top = Dimension::Auto;
+                        style.bottom = Dimension::Percent(0.0);
+                        style.margin.bottom = Dimension::Points(bottom);
+                        if !hug_height && !node.is_text() {
+                            style.height = Dimension::Points(height);
+                        }
                     }
                     Some(VerticalLayoutConstraintValue::TopBottom) => {
-                        style.top = Dimension::Points(top);
-                        style.bottom = Dimension::Points(bottom);
+                        style.top = Dimension::Percent(0.0);
+                        style.bottom = Dimension::Percent(0.0);
+                        style.margin.top = Dimension::Points(top);
+                        style.margin.bottom = Dimension::Points(bottom);
                         style.height = Dimension::Auto;
                     }
                     Some(VerticalLayoutConstraintValue::Center) => {
-                        style.margin.top = Dimension::Percent(0.5);
-                        style.top = Dimension::Points(top - parent_bounds.height().ceil() / 2.0);
-                        style.height = Dimension::Points(height);
+                        style.top = Dimension::Percent(0.5);
+                        style.bottom = Dimension::Auto;
+                        style.margin.top =
+                            Dimension::Points(top - parent_bounds.height().ceil() / 2.0);
+                        if !hug_height && !node.is_text() {
+                            style.height = Dimension::Points(height);
+                        }
                     }
                     Some(VerticalLayoutConstraintValue::Scale) => {
                         style.top = Dimension::Percent(top / parent_bounds.height().ceil());
                         style.bottom = Dimension::Percent(bottom / parent_bounds.height().ceil());
                         style.height = Dimension::Auto;
+                        style.min_height = Dimension::Auto;
                     }
                 }
             }
@@ -690,6 +840,8 @@ fn visit_node(
 
     // We have a plugin to set layout information that Figma doesn't have an interface for.
     // It sets values on two keys.
+    // TODO remove this? Probably can just use Figma now.
+    /*
     let extended_text_layout: Option<ExtendedTextLayout> = {
         if let Some(vsw_data) = plugin_data {
             if let Some(text_layout) = vsw_data.get("vsw-extended-text-layout") {
@@ -701,6 +853,7 @@ fn visit_node(
             None
         }
     };
+    */
     let extended_auto_layout: Option<ExtendedAutoLayout> = {
         if let Some(vsw_data) = plugin_data {
             if let Some(text_layout) = vsw_data.get("vsw-extended-auto-layout") {
@@ -713,26 +866,34 @@ fn visit_node(
         }
     };
 
-    let has_extended_auto_layout = extended_auto_layout.is_some();
+    let mut has_extended_auto_layout = false;
     let mut is_widget_list = false;
     let mut size_policy = SizePolicy::default();
 
     // Apply the extra auto layout properties.
     if let Some(extended_auto_layout) = extended_auto_layout {
         let layout = extended_auto_layout.layout;
+        // Only consider extended auto layout if the layout is not None. This filters out old
+        // extended layout data that may have been written to Figma nodes using an old widget
+        // or our old extended layout plugin.
+        has_extended_auto_layout = layout != LayoutType::None;
         style.flex_wrap = if extended_auto_layout.wrap { FlexWrap::Wrap } else { FlexWrap::NoWrap };
+
+        style.grid_layout = match layout {
+            LayoutType::AutoColumns => Some(GridLayoutType::AutoColumns),
+            LayoutType::FixedColumns => Some(GridLayoutType::FixedColumns),
+            LayoutType::FixedRows => Some(GridLayoutType::FixedRows),
+            LayoutType::AutoRows => Some(GridLayoutType::AutoRows),
+            LayoutType::Horizontal => Some(GridLayoutType::Horizontal),
+            LayoutType::Vertical => Some(GridLayoutType::Vertical),
+            _ => None,
+        };
+
         if layout.is_grid() {
             let cld = &extended_auto_layout.common_data;
             let gld = &extended_auto_layout.grid_layout_data;
             let horizontal =
                 layout == LayoutType::FixedColumns || layout == LayoutType::AutoColumns;
-
-            style.grid_layout = Some(match layout {
-                LayoutType::AutoColumns => GridLayoutType::AutoColumns,
-                LayoutType::FixedRows => GridLayoutType::FixedRows,
-                LayoutType::AutoRows => GridLayoutType::AutoRows,
-                _ => GridLayoutType::FixedColumns,
-            });
 
             style.grid_adaptive_min_size = gld.adaptive_min_size;
             style.grid_columns_rows = extended_auto_layout.grid_layout_data.columns_rows;
@@ -824,7 +985,7 @@ fn visit_node(
                 let extended_auto_layout: Option<ExtendedAutoLayout> =
                     serde_json::from_str(auto_layout_str.as_str()).ok();
                 if let Some(extended_auto_layout) = extended_auto_layout {
-                    is_widget_list = !extended_auto_layout.layout.is_grid();
+                    is_widget_list = extended_auto_layout.layout.is_row_or_column();
                     size_policy = extended_auto_layout.auto_layout_data.size_policy;
                 }
             }
@@ -934,6 +1095,7 @@ fn visit_node(
             }
         }
 
+        /*
         // Apply any extra text properties specified by our plugin.
         if let Some(extended_text_layout) = extended_text_layout {
             if extended_text_layout.line_count > 0 {
@@ -945,11 +1107,12 @@ fn visit_node(
                 TextOverflow::Clip
             };
         }
+        */
 
+        /*
         // The text style also contains some layout information. We previously exposed
         // auto-width text in our plugin.
         match text_style.text_auto_resize {
-            TextAutoResize::None => {}
             TextAutoResize::Height => {
                 style.height = Dimension::Undefined;
             }
@@ -958,6 +1121,20 @@ fn visit_node(
                 style.width = Dimension::Undefined;
                 style.height = Dimension::Undefined;
             }
+            // TextAutoResize::Truncate is deprecated
+            // Use fixed width and height
+            _ => {
+
+            }
+        }
+        */
+
+        if text_style.text_truncation == TextTruncation::Ending {
+            style.text_overflow = TextOverflow::Ellipsis;
+        }
+
+        if text_style.max_lines > 0 {
+            style.line_count = Some(text_style.max_lines as _);
         }
 
         if character_style_overrides.is_empty() {
@@ -1132,25 +1309,15 @@ fn visit_node(
         }
     };
 
-    // Save the vector frame size which is needed to compare against the
-    // runtime frame size to calculate the scaling factor if a vector's
-    // constraints are set to scale.
-    let mut vector_size: Option<(f32, f32)> = None;
-    if let Some(Vector { x: Some(x), y: Some(y) }) = &node.size {
-        vector_size = Some((*x, *y));
-    }
     // Figure out the ViewShape from the node type.
     let view_shape = match &node.data {
         NodeData::BooleanOperation { vector, .. }
         | NodeData::Line { vector }
         | NodeData::RegularPolygon { vector }
         | NodeData::Star { vector }
-        | NodeData::Vector { vector } => ViewShape::Path {
-            path: fill_paths,
-            stroke: stroke_paths,
-            size: vector_size,
-            is_mask: vector.is_mask,
-        },
+        | NodeData::Vector { vector } => {
+            ViewShape::Path { path: fill_paths, stroke: stroke_paths, is_mask: vector.is_mask }
+        }
         // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
         // to support progress bars. If this node is set up as a progress bar, the renderer will
         // construct the rectangle, modified by progress bar parameters. Otherwise it will be
@@ -1173,7 +1340,6 @@ fn visit_node(
             sweep_angle_degrees: arc_data.ending_angle,
             inner_radius: arc_data.inner_radius,
             corner_radius: 0.0, // corner radius is only exposed in the plugin data
-            size: vector_size,
             is_mask: vector.is_mask,
         },
         NodeData::Frame { frame }

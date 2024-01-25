@@ -27,12 +27,10 @@ import androidx.compose.ui.graphics.asComposePath
 import androidx.core.graphics.minus
 import androidx.core.graphics.plus
 import com.android.designcompose.serdegen.BoxShadow
-import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
-import java.util.Optional
 
 /// ComputedPaths is a set of paths derived from a shape and style definition. These
 /// paths are based on the style information (known at document conversion time)
@@ -73,34 +71,26 @@ internal fun ViewShape.computePaths(
     style: ViewStyle,
     density: Float,
     frameSize: Size,
+    overrideSize: Size?,
     customArcAngle: Boolean,
     vectorScaleX: Float,
     vectorScaleY: Float,
+    layoutId: Int,
 ): ComputedPaths {
     fun getPaths(
         path: List<com.android.designcompose.serdegen.Path>,
         stroke: List<com.android.designcompose.serdegen.Path>,
-        vectorSize: Optional<List<Float>>,
     ): Pair<List<Path>, List<Path>> {
-        // If we have a vector size different than the frameSize, then constraints have caused the
-        // container frame to resize. We then check our style.left and style.top attributes and if
-        // they are of type Dimension.Percent, we know that the vector should scale. Use the vector
-        // size and frameSize to calculate the scaling factor.
+        // TODO GH-673 support vector paths with scale constraints. Use vectorScaleX, vectorScaleY
         var scaleX = 1F
         var scaleY = 1F
-        vectorSize.ifPresent {
-            val sizeList = vectorSize.get()
-            if (sizeList.size == 2) {
-                val vecWidth = sizeList[0] * vectorScaleX * density
-                val vecHeight = sizeList[1] * vectorScaleY * density
-                if (style.left is Dimension.Percent) scaleX = frameSize.width / vecWidth
-                if (style.top is Dimension.Percent) scaleY = frameSize.height / vecHeight
-            }
-        }
         return Pair(
             path.map { p -> p.asPath(density, scaleX, scaleY) },
             stroke.map { p -> p.asPath(density, scaleX, scaleY) }
         )
+    }
+    fun getRectSize(overrideSize: Size?, style: ViewStyle, density: Float): Size {
+        return getNodeRenderSize(overrideSize, frameSize, style, layoutId, density)
     }
     // Fill then stroke.
     val (fills: List<Path>, precomputedStrokes: List<Path>) =
@@ -110,22 +100,32 @@ internal fun ViewShape.computePaths(
                     style,
                     listOf(0.0f, 0.0f, 0.0f, 0.0f),
                     density,
-                    frameSize
+                    getRectSize(overrideSize, style, density),
                 )
             }
             is ViewShape.RoundRect -> {
-                return computeRoundRectPathsFast(style, this.corner_radius, density, frameSize)
+                return computeRoundRectPathsFast(
+                    style,
+                    this.corner_radius,
+                    density,
+                    getRectSize(overrideSize, style, density)
+                )
             }
             is ViewShape.VectorRect -> {
-                return computeRoundRectPathsFast(style, this.corner_radius, density, frameSize)
+                return computeRoundRectPathsFast(
+                    style,
+                    this.corner_radius,
+                    density,
+                    getRectSize(overrideSize, style, density)
+                )
             }
             is ViewShape.Path -> {
-                getPaths(this.path, this.stroke, this.size)
+                getPaths(this.path, this.stroke)
             }
             is ViewShape.Arc -> {
                 if (!customArcAngle) {
                     // Render normally with Figma provided fill/stroke path
-                    getPaths(this.path, this.stroke, this.size)
+                    getPaths(this.path, this.stroke)
                 } else {
                     // We have a custom angle set by a meter customization, so we can't use
                     // the path provided by Figma. Instead, we construct our own path given
@@ -139,7 +139,8 @@ internal fun ViewShape.computePaths(
             }
             else -> {
                 val path = Path()
-                path.addRect(Rect(0.0f, 0.0f, frameSize.width, frameSize.height))
+                val size = getRectSize(overrideSize, style, density)
+                path.addRect(Rect(0.0f, 0.0f, size.width, size.height))
                 Pair(listOf(path), listOf())
             }
         }

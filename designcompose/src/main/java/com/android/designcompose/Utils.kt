@@ -53,6 +53,8 @@ import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
+import com.android.designcompose.serdegen.Layout
+import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
@@ -67,7 +69,6 @@ import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.serdegen.WindingRule
-import java.util.Optional
 import kotlin.math.roundToInt
 
 /** Convert a serialized color to a Compose color */
@@ -88,9 +89,9 @@ internal fun Dimension.resolve(available: Int, density: Float): Int? {
     }
 }
 
-internal fun Dimension.pointsAsDp(): Dp {
+internal fun Dimension.pointsAsDp(density: Float): Dp {
     return when (this) {
-        is Dimension.Points -> value.dp
+        is Dimension.Points -> (value * density).dp
         else -> 0.dp
     }
 }
@@ -306,6 +307,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.text_shadow
         }
+    style.node_size =
+        if (override.node_size.width != 0.0f || override.node_size.height != 0.0f) {
+            override.node_size
+        } else {
+            base.node_size
+        }
     style.line_height =
         if (!override.line_height.equals(LineHeight.Percent(1.0f))) {
             override.line_height
@@ -508,6 +515,24 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.flex_basis
         }
+    style.bounding_box =
+        if (override.bounding_box.width != 0.0f || override.bounding_box.height != 0.0f) {
+            override.bounding_box
+        } else {
+            base.bounding_box
+        }
+    style.horizontal_sizing =
+        if (override.horizontal_sizing !is LayoutSizing.FIXED) {
+            override.horizontal_sizing
+        } else {
+            base.horizontal_sizing
+        }
+    style.vertical_sizing =
+        if (override.vertical_sizing !is LayoutSizing.FIXED) {
+            override.vertical_sizing
+        } else {
+            base.vertical_sizing
+        }
     style.width =
         if (override.width !is Dimension.Undefined) {
             override.width
@@ -614,6 +639,24 @@ internal fun View.isMask(): Boolean {
     return this.data is ViewData.Container && (this.data as ViewData.Container).shape.isMask()
 }
 
+// Returns whether this view should use infinite constraints on its children. This is true if two
+// things are true:
+// First, the view has a child that has a grid_layout field in its style, meaning it was created
+// using the list preview widget.
+// Second, the position_type is relative, which is only set if the widget layout parameters are set
+// to hug contents.
+internal fun View.useInfiniteConstraints(): Boolean {
+    if (style.position_type !is PositionType.Relative) return false
+
+    if (data !is ViewData.Container) return false
+
+    val container = data as ViewData.Container
+    if (container == null || container.children.size != 1) return false
+
+    val child = container.children.first()
+    return child.style.grid_layout.isPresent
+}
+
 internal fun ViewShape.isMask(): Boolean {
     when (this) {
         is ViewShape.Rect -> return is_mask
@@ -710,14 +753,16 @@ internal constructor(
                 if (center.y == Float.POSITIVE_INFINITY) size.height else center.y * size.height
         }
 
+        // Don't let radius be 0
+        val radius =
+            if (radiusX == Float.POSITIVE_INFINITY) size.minDimension / 2
+            else if (size.width > 0F) radiusX * size.width else 0.01F
         val shader =
             RadialGradientShader(
                 colors = colors,
                 colorStops = stops,
                 center = Offset(centerX, centerY),
-                radius =
-                    if (radiusX == Float.POSITIVE_INFINITY) size.minDimension / 2
-                    else radiusX * size.width,
+                radius = radius,
                 tileMode = tileMode
             )
 
@@ -1153,7 +1198,7 @@ internal fun com.android.designcompose.serdegen.Path.log() {
 
 // Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
 // vectors that don't have sides.
-internal fun com.android.designcompose.serdegen.StrokeWeight.toUniform(): Float {
+internal fun StrokeWeight.toUniform(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.top
@@ -1161,7 +1206,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.toUniform(): Float 
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.top(): Float {
+internal fun StrokeWeight.top(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.top
@@ -1169,7 +1214,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.top(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.left(): Float {
+internal fun StrokeWeight.left(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.left
@@ -1177,7 +1222,7 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.left(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.bottom(): Float {
+internal fun StrokeWeight.bottom(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.bottom
@@ -1185,10 +1230,53 @@ internal fun com.android.designcompose.serdegen.StrokeWeight.bottom(): Float {
     return 0.0f
 }
 
-internal fun com.android.designcompose.serdegen.StrokeWeight.right(): Float {
+internal fun StrokeWeight.right(): Float {
     when (this) {
         is StrokeWeight.Uniform -> return this.value
         is StrokeWeight.Individual -> return this.right
     }
     return 0.0f
+}
+
+// Return whether a text node is auto width without a FILL sizing mode. This is a check used by the
+// text measure func that, when it returns true, means the text can expand past the available width
+// passed into it.
+internal fun ViewStyle.isAutoWidthText() =
+    width is Dimension.Auto && horizontal_sizing !is LayoutSizing.FILL
+
+// Return the size of a node used to render the node.
+internal fun getNodeRenderSize(
+    overrideSize: Size?,
+    layoutSize: Size,
+    style: ViewStyle,
+    layoutId: Int,
+    density: Float
+): Size {
+    // If an override size exists, use it. This is typically a size programmatically set for a dial
+    // or gauge.
+    if (overrideSize != null) return overrideSize
+    // If the layout manager has saved this node as one whose size has been modified, or if the size
+    // in the style of the node is not fixed, use the layout size. Otherwise, use the fixed size
+    // specified in the style so that we respect rotations, since the layout size is the bounding
+    // box for a rotated node. We do not yet support rotated nodes with non-fixed constraints.
+    val hasModifiedSize = LayoutManager.hasModifiedSize(layoutId)
+    val width =
+        if (hasModifiedSize || style.width !is Dimension.Points) layoutSize.width
+        else style.width.pointsAsDp(density).value
+    val height =
+        if (hasModifiedSize || style.height !is Dimension.Points) layoutSize.height
+        else style.height.pointsAsDp(density).value
+    return Size(width, height)
+}
+
+internal fun com.android.designcompose.serdegen.Size.isValid(): Boolean = width >= 0 && height >= 0
+
+internal fun Layout.withDensity(density: Float): Layout {
+    return Layout(
+        this.order,
+        this.width * density,
+        this.height * density,
+        this.left * density,
+        this.top * density
+    )
 }

@@ -344,7 +344,7 @@ fn test_horizontal_fill_resize() {
 }
 
 #[test]
-fn test_constraints_lr() {
+fn test_constraints_left_right() {
     let figma_doc_result = load_doc();
     let mut manager = load_view("ConstraintsLayoutLR", &figma_doc_result.unwrap());
 
@@ -360,7 +360,7 @@ fn test_constraints_lr() {
 }
 
 #[test]
-fn test_constraints_tb() {
+fn test_constraints_top_bottom() {
     let figma_doc_result = load_doc();
     let mut manager = load_view("ConstraintsLayoutTB", &figma_doc_result.unwrap());
 
@@ -376,7 +376,7 @@ fn test_constraints_tb() {
 }
 
 #[test]
-fn test_constraints_lrtb() {
+fn test_constraints_left_right_top_bottom() {
     let figma_doc_result = load_doc();
     let mut manager = load_view("ConstraintsLayoutLRTB", &figma_doc_result.unwrap());
 

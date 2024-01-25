@@ -17,6 +17,9 @@
 package com.android.designcompose
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,6 +31,7 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -594,10 +598,40 @@ internal fun DesignFrame(
             }
         }
         is LayoutInfoAbsolute -> {
+            val hasScroll = layoutInfo.horizontalScroll || layoutInfo.verticalScroll
+            var designScroll: DesignScroll? = null
+            if (hasScroll) {
+                // Setup a DesignScroll object used to both provide layout with the scroll offset
+                // as well as have layout set the max scroll contents based on the position of the
+                // last child
+                val scrollOffset = remember { mutableFloatStateOf(0F) }
+                val scrollMax = remember { mutableFloatStateOf(0F) }
+                var scrollOrientation = Orientation.Horizontal
+                if (layoutInfo.horizontalScroll) scrollOrientation = Orientation.Horizontal
+                else if (layoutInfo.verticalScroll) scrollOrientation = Orientation.Vertical
+                designScroll = DesignScroll(scrollOffset.value, scrollOrientation, scrollMax)
+                m =
+                    m.then(
+                        Modifier.scrollable(
+                            orientation = scrollOrientation,
+                            state =
+                                rememberScrollableState { delta ->
+                                    // Calculate the current scroll positioned, bounded by the
+                                    // extents of the children
+                                    scrollOffset.value =
+                                        (scrollOffset.value + delta).coerceIn(-scrollMax.value, 0F)
+                                    delta
+                                }
+                        )
+                    )
+            }
+
             // Use our custom layout to render the frame and to place its children
             m = m.then(Modifier.layoutStyle(name, layoutId))
             m = m.then(layoutInfo.selfModifier)
-            DesignFrameLayout(m, view, layoutId, rootLayoutId, layoutState) { content() }
+            DesignFrameLayout(m, view, layoutId, rootLayoutId, layoutState, designScroll) {
+                content()
+            }
         }
     }
 

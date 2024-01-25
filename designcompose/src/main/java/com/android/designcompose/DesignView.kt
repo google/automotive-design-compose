@@ -611,7 +611,7 @@ internal fun DesignView(
 
     // Add various scroll modifiers depending on the overflow flag.
     // Only add scroll modifiers if not a grid layout because grid layout adds its own scrolling
-    if (viewLayoutInfo !is LayoutInfoGrid) {
+    if (viewLayoutInfo !is LayoutInfoGrid && viewLayoutInfo !is LayoutInfoAbsolute) {
         when (view.scroll_info.overflow) {
             is OverflowDirection.VERTICAL_SCROLLING -> {
                 m = Modifier.verticalScroll(rememberScrollState()).then(m)
@@ -1018,7 +1018,7 @@ internal fun DesignDocInternal(
             // Render debug node names, if turned on
             Box(Modifier.fillMaxSize()) { DebugNodeManager.DrawNodeNames() }
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
-                // DesignSwitcher(doc, docId, branchHash, switchDocId)
+                DesignSwitcher(doc, docId, branchHash, switchDocId)
             }
         }
     }

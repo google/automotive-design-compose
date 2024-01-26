@@ -618,54 +618,6 @@ else if (figma.command === "move-plugin-data") {
 
   // Close our plugin with a success message.
   figma.closePlugin("Moved plugin data to shared location");
-} else if (figma.command == "extended-layout-text") {
-  // Edit layout properties that Figma doesn't yet provide (but that we need for applications).
-  let pluginMode = "TEXT";
-  // Show the plugin UI, and then send a message regarding the extended properties
-  // of the currently selected node, and its type.
-  figma.showUI(__html__, { width: 360, height: 480 });
-
-  function onSelectionChange() {
-    let selection = figma.currentPage.selection;
-
-    // We don't support multiple selections.
-    if (!selection || selection.length != 1 || !selection[0]) {
-      figma.ui.postMessage({ msg: 'selection-cleared', pluginMode });
-      return;
-    }
-    let node = selection[0];
-    let extendedLayoutData = node.type == 'TEXT' ? node.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-extended-text-layout') : null;
-    let extendedLayout = (extendedLayoutData && extendedLayoutData.length) ? JSON.parse(extendedLayoutData) : {};
-
-    if (node.type == 'TEXT' || node.type == 'FRAME') {
-      figma.ui.postMessage({
-        msg: 'selection',
-        extendedLayout,
-        nodeType: node.type,
-        pluginMode: pluginMode,
-      });
-    } else {
-      figma.ui.postMessage({ msg: 'selection-cleared', pluginMode: pluginMode });
-    }
-  }
-
-  onSelectionChange();
-
-  // Update the UI whenever the selection changes.
-  figma.on('selectionchange', onSelectionChange);
-
-  // Listen for save messages from the UI.
-  figma.ui.onmessage = msg => {
-    if (msg.msg === 'save-extended-layout') {
-      let extendedLayout = JSON.stringify(msg.extendedLayout);
-      let selection = figma.currentPage.selection;
-      if (selection && selection.length == 1 && selection[0]) {
-        selection[0].setSharedPluginData(SHARED_PLUGIN_NAMESPACE, msg.key, extendedLayout);
-      }    
-    }
-    if (msg.msg == 'show-node')
-      showNode(msg.node);
-  };
 } else if (figma.command == "meters") {
   figma.showUI(__html__, { width: 400, height: 400 });
   figma.ui.postMessage({

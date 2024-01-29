@@ -485,7 +485,12 @@ pub struct ProgressBarMeterData {
     pub enabled: bool,
     pub discrete: bool,
     pub discrete_value: f32,
+    #[serde(default)]
+    pub vertical: bool,
+    #[serde(default)]
     pub end_x: f32,
+    #[serde(default)]
+    pub end_y: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
@@ -494,8 +499,16 @@ pub struct ProgressMarkerMeterData {
     pub enabled: bool,
     pub discrete: bool,
     pub discrete_value: f32,
+    #[serde(default)]
+    pub vertical: bool,
+    #[serde(default)]
     pub start_x: f32,
+    #[serde(default)]
     pub end_x: f32,
+    #[serde(default)]
+    pub start_y: f32,
+    #[serde(default)]
+    pub end_y: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

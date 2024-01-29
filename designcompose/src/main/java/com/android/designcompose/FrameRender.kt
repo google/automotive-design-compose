@@ -150,16 +150,28 @@ private fun calculateRotationData(
 private fun calculateProgressBarData(
     progressBarData: ProgressBarMeterData,
     meterValue: Float,
-    height: Float,
+    style: ViewStyle,
     density: Float
-): Size {
+): Pair<Size, androidx.compose.ui.graphics.Matrix?> {
     // Progress bar discrete values are done by percentage
     val discretizedMeterValue =
         meterValue.coerceDiscrete(progressBarData.discrete, progressBarData.discreteValue)
 
-    // Resize the progress bar by interpolating between 0 and endX
-    val barWidth = lerp(0F, progressBarData.endX, discretizedMeterValue, density)
-    return Size(barWidth, height)
+    // Resize the progress bar by interpolating between 0 and endX or endY depending on whether it
+    // is a horizontal or vertical progress bar
+    if (progressBarData.vertical) {
+        val width = style.width.pointsAsDp(density).value
+        val barHeight = lerp(0F, progressBarData.endY, discretizedMeterValue, density)
+        val moveY = (progressBarData.endY * density - barHeight)
+        val topOffset = style.margin.top.pointsAsDp(density).value
+        val overrideTransform = style.getTransform(density)
+        overrideTransform.setYTranslation(moveY - topOffset)
+        return Pair(Size(width, barHeight), overrideTransform)
+    } else {
+        val height = style.height.pointsAsDp(density).value
+        val barWidth = lerp(0F, progressBarData.endX, discretizedMeterValue, density)
+        return Pair(Size(barWidth, height), null)
+    }
 }
 
 private fun calculateProgressMarkerData(
@@ -173,11 +185,17 @@ private fun calculateProgressMarkerData(
         meterValue.coerceDiscrete(markerData.discrete, markerData.discreteValue)
 
     // The indicator mode means we don't resize the node; we just move it
-    // along the x axis
-    val moveX = lerp(markerData.startX, markerData.endX, discretizedMeterValue, density)
+    // along the x or y axis depending on whether it is horizontal or vertical
     val overrideTransform = style.getTransform(density)
-    val leftOffset = style.margin.start.pointsAsDp(density).value
-    overrideTransform.setXTranslation(moveX - leftOffset)
+    if (markerData.vertical) {
+        val moveY = lerp(markerData.startY, markerData.endY, discretizedMeterValue, density)
+        val topOffset = style.margin.top.pointsAsDp(density).value
+        overrideTransform.setYTranslation(moveY - topOffset)
+    } else {
+        val moveX = lerp(markerData.startX, markerData.endX, discretizedMeterValue, density)
+        val leftOffset = style.margin.start.pointsAsDp(density).value
+        overrideTransform.setXTranslation(moveX - leftOffset)
+    }
 
     return overrideTransform
 }
@@ -254,13 +272,10 @@ internal fun ContentDrawScope.render(
                 is MeterData.progressBarData -> {
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
-                        rectSize =
-                            calculateProgressBarData(
-                                progressBarData,
-                                meterValue,
-                                style.height.pointsAsDp(density).value,
-                                density
-                            )
+                        val progressBarSizeTransform =
+                            calculateProgressBarData(progressBarData, meterValue, style, density)
+                        rectSize = progressBarSizeTransform.first
+                        overrideTransform = progressBarSizeTransform.second
                     }
                 }
                 is MeterData.progressMarkerData -> {

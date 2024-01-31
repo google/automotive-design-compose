@@ -19,27 +19,6 @@
 <link rel="stylesheet" href="style.css"/>
 </head>
 
-<div id="text" style="margin: 8px; display: none;">
-  <div class="label" style="color: rgba(0, 0, 0, 0.8)">Select the text box or text area to configure for live content.</div>
-  <div class="switch" >
-    <input id="allowLineCount" type="checkbox" class="switch__toggle">
-    <label for="allowLineCount" class="switch__label">Limit wrapping</label>
-  </div>
-
-  <div class="input" style="margin-left: 43px;" id="lineCountDetails">
-    <label for="lineCount" class="label" style="margin-top: -6px; font-size: 12; color: rgba(0, 0, 0, 0.6);">Number of lines your text will wrap before cutting off:</label>
-    <input id="lineCount" type="input" class="input__field" placeholder="Line Count" style="margin-left: 6px; width: 40" value="1">
-  </div>
-
-  <div class="switch">
-    <input id="ellipsize" type="checkbox" class="switch__toggle" disabled>
-    <label for="ellipsize" class="switch__label">Add ellipses at the end of text ...</label>
-  </div>
-  <div style="margin-left: 43px">
-    <label class="label" style="font-size: 12; color: rgba(0, 0, 0, 0.6);">When text reaches the end of its text box, add ellipses instead of cutting off</label>
-  </div>
-</div>
-
 <div id="errors" style="margin: 8px; display: none; overflow-y: hidden; overflow-x: hidden">
   <div id="errorsMissingKeywords" style="display: none;">
     <span style="font-size: 14">Keywords document not found. Run the "Check keyword definitions" plugin to upload a keyword document.</span>
@@ -258,24 +237,12 @@
 </div>
 
 <script>
-  let textPanel = document.getElementById('text');
-  let allowLineCount = document.getElementById('allowLineCount');
-  let lineCountDetails = document.getElementById('lineCountDetails');
-  let lineCount = document.getElementById('lineCount');
-  let ellipsize = document.getElementById('ellipsize');
-
   let jsonInputFile = document.getElementById('jsonInputFile');
   let errorPanel = document.getElementById('errors');
   let errorList = document.getElementById('errorList');
 
   let keywordsPanel = document.getElementById('keywords');
 
-  const PluginMode = {
-    Text: 'Text',
-    Clippy: 'Clippy',
-  };
-
-  let pluginMode = PluginMode.Text;
   let currentSelection = null;
   let currentNodeType = null;
   let parentNodeType = null;
@@ -287,57 +254,6 @@
       return def;
     }
     return num;
-  }
-
-  // Hide/show/enable/disable elements based on the form state.
-  function ensureTextFormState() {
-    textPanel.style.display = 'block';
-    errorPanel.style.display = 'none';
-    keywordsPanel.style.display = 'none';
-    meters.style.display = 'none';
-
-    // Update the selectionAppropriate flag; ensureFormState will enable/disable as appropriate.
-    let selectionAppropriate = currentSelection != null && currentSelection.nodeType == 'TEXT';
-    textPanel.style.display = 'block';
-
-    if (allowLineCount.checked && selectionAppropriate) {
-      allowLineCount.disabled = false;
-      if (lineCount.value != "") {
-        let lineCountValue = toNumber(lineCount.value, 1);
-        if (lineCountValue < 1) lineCountValue = 1;
-        lineCount.value = lineCountValue;
-      }
-      ellipsize.disabled = false;
-    } else {
-      allowLineCount.disabled = !selectionAppropriate;
-      allowLineCount.checked = false;
-      ellipsize.disabled = true;
-      ellipsize.checked = false;    }
-  }
-
-  function setTextFormData(el) {
-    let selectionAppropriate = currentSelection != null && currentSelection.nodeType == 'TEXT';
-    if (selectionAppropriate) {
-      lineCount.value = el.lineCount ? el.lineCount : '0';
-      ellipsize.checked = el.ellipsize || false;
-      allowLineCount.checked = el.lineCount && el.lineCount > 0;
-    }
-
-    ensureTextFormState();
-  }
-
-  function textFormUpdated() {
-    ensureTextFormState();
-
-    // Make a message and send it back to the plugin to save in the node.
-    parent.postMessage({ pluginMessage: {
-      msg: 'save-extended-layout',
-      key: 'vsw-extended-text-layout',
-      extendedLayout: {
-        lineCount: allowLineCount.checked ? toNumber(lineCount.value, 0) : 0,
-        ellipsize: ellipsize.checked || false,
-      }
-    }}, '*');
   }
 
   function jsonInputFileChanged() {
@@ -628,17 +544,11 @@
     updateMeterDisabledStates();
   }
 
-  textPanel.addEventListener('change', textFormUpdated, false);
   jsonInputFile.addEventListener('change', jsonInputFileChanged, false);
 
   // Update the form from a selection change.
   window.onmessage = function(event) {
     let msg = event.data.pluginMessage;
-
-    if (msg.pluginMode == 'TEXT')
-      pluginMode = PluginMode.Text;
-    else
-      pluginMode = PluginMode.Clippy;
 
     if (msg.msg == 'selection-cleared') {
       currentSelection = null;
@@ -649,14 +559,8 @@
         extendedLayout: msg.extendedLayout,
       };
     }
-
-    if (pluginMode == PluginMode.Text) {
-      ensureTextFormState();
-      setTextFormData(msg.extendedLayout);
-    }
     
     if (msg.msg == 'clippy') {
-      textPanel.style.display = 'none';
       errorPanel.style.display = 'block';
       keywordsPanel.style.display = 'none';
       meters.style.display = 'none';
@@ -732,7 +636,6 @@
     }
 
     if (msg.msg == "check-keywords") {
-      textPanel.style.display = 'none';
       errorPanel.style.display = 'none';
       meters.style.display = 'none';
       keywordsPanel.style.display = 'block';
@@ -746,7 +649,6 @@
       keywordsVersion.textContent = msg.version ? msg.version : ""
     }
     else if (msg.msg == "meters") {
-      textPanel.style.display = 'none';
       errorPanel.style.display = 'none';
       keywordsPanel.style.display = 'none';
       meters.style.display = 'block';

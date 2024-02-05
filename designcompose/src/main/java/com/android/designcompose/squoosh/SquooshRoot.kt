@@ -25,7 +25,6 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -44,7 +43,6 @@ import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
@@ -64,13 +62,18 @@ import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
+import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.Size
 import com.android.designcompose.squooshAnimatedActions
 import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 const val TAG: String = "DC_SQUOOSH"
@@ -91,11 +94,8 @@ internal class SquooshAnimationRenderingInfo(
     var startTimeNanos: Long = 0L,
 )
 
-
-
 /// Glue Squoosh animations and transitions into Compose's animation system.
 private fun createOrUpdateAnimation(
-    lastAnimationId: Int,
     root: SquooshResolvedNode,
     transitionRoot: SquooshResolvedNode,
     interactionState: InteractionState,
@@ -105,21 +105,21 @@ private fun createOrUpdateAnimation(
     animationValues: MutableState<Map<Int, Float>>,
     action: AnimatedAction? = null,
     variant: VariantAnimationInfo? = null
-): Int {
+){
     // Extract common info -- perhaps we should try to refactor to a common interface for
     // this?
     val fromNodeId = if (action != null) action.instanceNodeId
         else if (variant != null) variant.fromNodeId
-        else return lastAnimationId
+        else return
     val toNodeId = if (action != null) action.newVariantId
         else if (variant != null) variant.toNodeId
-        else return lastAnimationId
+        else return
     val animationId = if (action != null) action.id
         else if (variant != null) variant.id
-        else return lastAnimationId
+        else return
     val interruptedId = if (action != null) action.interruptedId
         else if (variant != null) variant.interruptedId
-        else return lastAnimationId
+        else return
 
     // Make a `SquooshAnimationControl` for this animated action or variant. The animation
     // control updates node style values in a merged tree allowing an animation to "play"
@@ -131,7 +131,7 @@ private fun createOrUpdateAnimation(
     if (animationControl == null) {
         if (action != null) interactionState.squooshFailedAnimatedAction(action)
         if (variant != null) variantTransitions.failedAnimatedVariant(variant)
-        return lastAnimationId
+        return
     }
 
     // Now that we have an animation control instance, we can create or update the animation
@@ -175,8 +175,39 @@ private fun createOrUpdateAnimation(
         nextAnimations[animationId] = animationRenderingInfo
     }
 
-    return animationId
+    return
 }
+
+/// Apply layout constraints to a node; this is only used for the root node and gives the DC
+/// layout system the context of what it is being embedded in.
+private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, density: Density) {
+    val rootStyleBuilder = style.asBuilder()
+    if (constraints.minWidth != 0)
+        rootStyleBuilder.min_width = Dimension.Points(constraints.minWidth.toFloat() / density.density)
+    if (constraints.maxWidth != Constraints.Infinity)
+        rootStyleBuilder.max_width = Dimension.Points(constraints.maxWidth.toFloat() / density.density)
+    if (constraints.hasFixedWidth) {
+        rootStyleBuilder.width = Dimension.Points(constraints.minWidth.toFloat() / density.density)
+        // Layout implementation looks for width/height being set and then uses bounding box.
+        rootStyleBuilder.bounding_box = Size(constraints.minWidth.toFloat() / density.density, rootStyleBuilder.bounding_box.height)
+    }
+    if (constraints.minHeight != 0)
+        rootStyleBuilder.min_height = Dimension.Points(constraints.minHeight.toFloat() / density.density)
+    if (constraints.maxHeight != Constraints.Infinity)
+        rootStyleBuilder.max_height = Dimension.Points(constraints.maxHeight.toFloat() / density.density)
+    if (constraints.hasFixedHeight) {
+        rootStyleBuilder.height = Dimension.Points(constraints.minHeight.toFloat() / density.density)
+        // Layout implementation looks for width/height being set and then uses bounding box.
+        rootStyleBuilder.bounding_box = Size(rootStyleBuilder.bounding_box.width, constraints.minHeight.toFloat() / density.density)
+    }
+    style = rootStyleBuilder.build()
+}
+
+// Mutable field to remember animation information that is computed during the layout phase which
+// shouldn't invalidate anything as it mutates.
+internal class AnimationValueHolder(
+    var animationJob: Job?,
+)
 
 // Track if we're the root component, or (in the near future) if we are a list item so that we can
 // share information across similar list items.
@@ -227,7 +258,7 @@ fun SquooshRoot(
         if (showDesignSwitcher) {
             val branchHash = DocServer.branches(docId)
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
-                DesignSwitcher(doc, docId, branchHash, switchDocId)
+                //DesignSwitcher(doc, docId, branchHash, switchDocId)
             }
         }
     }
@@ -265,6 +296,7 @@ fun SquooshRoot(
     }
 
     val density = LocalDensity.current
+    val fontLoader = LocalFontLoader.current
 
     val variantParentName = when (rootNodeQuery) {
         is NodeQuery.NodeVariant -> rootNodeQuery.field1
@@ -281,11 +313,15 @@ fun SquooshRoot(
     val variantTransitions = remember(docId) { SquooshVariantTransition() }
     variantTransitions.treeBuildPhase = TreeBuildPhase.BasePhase
 
+    // Bogus -- needs refactor -- this ensures we don't have a bad frame at the end of
+    // an enum transition (we generate a new tree with the enum change fully applied).
+    val bogusUnusedVariantTransitions = variantTransitions.transitions()
+
     // Ok, now we have done the dull stuff, we need to build a tree applying
     // the correct variants etc and then build/update the tree. How do we know
     // what's different from last time? Does the Rust side track
     val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
-    var root = resolveVariantsRecursively(
+    val root = resolveVariantsRecursively(
         startFrame,
         rootLayoutId,
         doc,
@@ -294,21 +330,14 @@ fun SquooshRoot(
         interactionState,
         null,
         density,
-        LocalFontLoader.current,
+        fontLoader,
         childComposables,
         layoutIdAllocator,
         variantParentName,
         isRoot,
         overlays
     ) ?: return
-
-    // Perform layout on our resolved tree.
-    layoutTree(root, rootLayoutId, layoutIdAllocator, layoutCache, layoutValueCache)
-
-    // We can render "root", it's a full tree with layout info.
-    //
-    // But, if we have any transitions then we need to prepare another tree with all of the target
-    // states for the transitions. Then we construct transitions between the states.
+    val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
     // Get the list of actions that currently need to be animated from the interaction state.
     val animatedActions = interactionState.squooshAnimatedActions(doc)
@@ -326,18 +355,20 @@ fun SquooshRoot(
     // the tree with all actions applied (which is then used as the "dest" in the animation).
     val transitionedInteractionState = interactionState.clonedWithAnimatedActionsApplied()
 
-    // Track the most recent animation that was added to the interaction state so that we know
-    // to restart the coroutine that updates the animation clock when a new animation is added.
-    var lastAnimationId = Int.MAX_VALUE
-
+    var transitionRoot: SquooshResolvedNode? = null
+    var transitionRootRemovalNodes: Set<Int>? = null
+    // Now see if we need to compute a transition root and generate animated transitions.
     if ((transitionedInteractionState != null && animatedActions.isNotEmpty()) || variantTransitions.needsTransitionPhase()) {
         variantTransitions.treeBuildPhase = TreeBuildPhase.TransitionTargetPhase
-        Log.d(TAG, "$docName: creating a new root with transitions applied... ${variantTransitions.transitions.size} variant transitions; variant needs second phase: ${variantTransitions.needsTransitionPhase()} (${variantTransitions.transitions.size} transitions); ${animatedActions.size} animated actions;")
+        Log.d(
+            TAG,
+            "$docName: creating a new root with transitions applied... ${variantTransitions.transitions.size} variant transitions; variant needs second phase: ${variantTransitions.needsTransitionPhase()} (${variantTransitions.transitions.size} transitions); ${animatedActions.size} animated actions;"
+        )
 
         // We need to make a new root with this interaction state applied, and then compute the
         // animation control between the trees.
         childComposables.clear()
-        val transitionRoot = resolveVariantsRecursively(
+        transitionRoot = resolveVariantsRecursively(
             startFrame,
             rootLayoutId,
             doc,
@@ -346,108 +377,21 @@ fun SquooshRoot(
             transitionedInteractionState ?: interactionState,
             null,
             density,
-            LocalFontLoader.current,
+            fontLoader,
             childComposables,
             layoutIdAllocator,
             variantParentName,
             isRoot,
             overlays
-        ) ?: return
-
-        // Layout the transition root tree.
-        layoutTree(transitionRoot, rootLayoutId, layoutIdAllocator, layoutCache, layoutValueCache)
-
-        // We completed all of the tree work for the transition root, so we can tell the
-        // variantTransitions that we're done potentially updating things, and it will clean
-        // up its state.
-        variantTransitions.afterRenderPhases()
-
-        // Record all of the animations in progress or to be started in `nextAnimations`.
-        val nextAnimations = HashMap<Int, SquooshAnimationRenderingInfo>()
-
-        // Process all of the animated actions from the InteractionState. These are generated by
-        // performing actions that were specified in the design doc.
-        for (animatedAction in animatedActions) {
-            lastAnimationId = createOrUpdateAnimation(
-                lastAnimationId,
-                root, transitionRoot,
-                interactionState, variantTransitions,
-                currentAnimations, nextAnimations, animationValues,
-                action = animatedAction
-            )
-        }
-
-        // Now do the same for the variant animations. These are generated by enums specified by
-        // the application state changing over time.
-        for (variantTransition in variantTransitions.transitions()) {
-            lastAnimationId = createOrUpdateAnimation(
-                lastAnimationId,
-                root, transitionRoot,
-                interactionState, variantTransitions,
-                currentAnimations, nextAnimations, animationValues,
-                variant = variantTransition
-            )
-        }
-
-        // Make sure we draw from the target root
-        root = transitionRoot
-
-        // Evolve the animations list; it would be better to just remove everything that doesn't
-        // have a key in transitions...
-        currentAnimations.clear()
-        currentAnimations.putAll(nextAnimations)
-
-        Log.d(TAG, "Updating animations resulted in ${nextAnimations.size} animations")
-    } else {
-        // The Variant Transitions system needs to know that we've finished doing render stuff and
-        // won't be telling it about new nodes.
-        variantTransitions.afterRenderPhases()
+        )
+        transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }
 
-    LaunchedEffect(lastAnimationId) {
-        // While there are transitions to be run, we should run them; we just update the floats
-        // in the mutable state. Those are then used by the render function, and we thus avoid
-        // needing to recompose in order to propagate the animation state.
-        //
-        // We also complete transitions in this block, and that action does cause a recomposition
-        // via the subscription that SquooshRoot makes to the InteractionState's list of transitions.
-        while (interactionState.animations.isNotEmpty() || variantTransitions.transitions.isNotEmpty()) {
-            // withFrameNanos runs its closure outside of this recomposition phase -- because the
-            // body of the code only changes mutable state which is only used at render time,
-            // Compose only re-runs the render block.
-            withFrameNanos { frameTimeNanos ->
-                val animState = HashMap(animationValues.value)
-                for ((id, anim) in currentAnimations) {
-                    // If we haven't started this animation yet, then start it now.
-                    if (anim.startTimeNanos == 0L) {
-                        anim.startTimeNanos = frameTimeNanos
-                    }
+    variantTransitions.afterRenderPhases()
 
-                    val playTimeNanos = frameTimeNanos - anim.startTimeNanos
-
-                    // Compute where it's meant to be, and update the value in animState.
-                    val position =
-                        anim.animation.getValueFromNanos(playTimeNanos)
-                    animState[id] = position
-
-                    // If the animation is complete, then we need to remove it from the transitions
-                    // list, and apply it to the base interaction state.
-                    if (anim.animation.isFinishedFromNanos(playTimeNanos)) {
-                        animState.remove(id)
-                        if (anim.action != null)
-                            interactionState.squooshCompleteAnimatedAction(anim.action)
-                        if (anim.variant != null) {
-                            variantTransitions.completedAnimatedVariant(anim.variant)
-                            // Hack to ensure that we recompose and run through the transitions
-                            // again, removing completed ones.
-                            //setLastVariantAnimCompleted(id)
-                        }
-                    }
-                }
-                animationValues.value = animState
-            }
-        }
-    }
+    // We run the animation in a coroutine; remember the job so we can see if the coroutine is
+    // still running.
+    val animationJob: AnimationValueHolder = remember { AnimationValueHolder(null) }
 
     // Run interactions in a dedicated scope. This means that events continue to be handled by a
     // given coroutine after its hosting Composable has been removed from the tree. Some interactions
@@ -455,6 +399,8 @@ fun SquooshRoot(
     // hosting Composable being removed from the tree on touch start, but the event handler still
     // wants to receive the drag (for press-cancel) and release events in order to run the appropriate
     // "undo" action.
+    //
+    // We also run animated transitions in this coroutine scope.
     val interactionScope = rememberCoroutineScope()
 
     // Select which child to draw using this holder.
@@ -463,12 +409,8 @@ fun SquooshRoot(
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
         androidx.compose.ui.layout.Layout(
             modifier = modifier
-                .size(
-                    width = root.computedLayout!!.width.dp,
-                    height = root.computedLayout!!.height.dp
-                )
                 .squooshRender(
-                    root,
+                    transitionRoot ?: root,
                     doc,
                     docName,
                     customizationContext,
@@ -478,6 +420,118 @@ fun SquooshRoot(
                     animationValues,
                 ),
             measurePolicy = { measurables, constraints ->
+                // Update the root node style to have the incoming width/height from our parent
+                // Composable.
+                root.applyLayoutConstraints(constraints, density)
+
+                // Perform layout on our resolved tree.
+                layoutTree(root, rootLayoutId, rootRemovalNodes, layoutCache, layoutValueCache)
+
+                // If we have a transition root, then lay it out and compute any animations that
+                // are needed.
+                //
+                // Yuck - we should really not be destructive of the tree when creating animations,
+                //        then we could still perform layout on both trees during a transition.
+                val tRoot = transitionRoot
+                if (tRoot != null && transitionRootRemovalNodes != null) {
+                    // Ensure that the transition target also has the incoming width/height applied.
+                    tRoot.applyLayoutConstraints(constraints, density)
+
+                    // Layout the transition root tree.
+                    layoutTree(
+                        tRoot,
+                        rootLayoutId,
+                        transitionRootRemovalNodes,
+                        layoutCache,
+                        layoutValueCache
+                    )
+
+                    // Record all of the animations in progress or to be started in `nextAnimations`.
+                    val nextAnimations = HashMap<Int, SquooshAnimationRenderingInfo>()
+
+                    // Process all of the animated actions from the InteractionState. These are generated by
+                    // performing actions that were specified in the design doc.
+                    for (animatedAction in animatedActions) {
+                        createOrUpdateAnimation(
+                            root, tRoot,
+                            interactionState, variantTransitions,
+                            currentAnimations, nextAnimations, animationValues,
+                            action = animatedAction
+                        )
+                    }
+
+                    // Now do the same for the variant animations. These are generated by enums specified by
+                    // the application state changing over time.
+                    for (variantTransition in variantTransitions.transitions.values.toList()) {
+                        createOrUpdateAnimation(
+                            root, tRoot,
+                            interactionState, variantTransitions,
+                            currentAnimations, nextAnimations, animationValues,
+                            variant = variantTransition
+                        )
+                    }
+
+                    // Evolve the animations list; it would be better to just remove everything that doesn't
+                    // have a key in transitions...
+                    currentAnimations.clear()
+                    currentAnimations.putAll(nextAnimations)
+
+                    Log.d(
+                        TAG,
+                        "Updating animations resulted in ${nextAnimations.size} animations"
+                    )
+
+                    // Clear transition root so that we don't accidentally try to create animations
+                    // if we haven't computed a new layout.
+                    transitionRoot = null
+                }
+
+                val currentAnimationJob = animationJob.animationJob
+                val needsAnimationJob = interactionState.animations.isNotEmpty() || variantTransitions.transitions.isNotEmpty()
+                val hasAnimationJob = currentAnimationJob != null && currentAnimationJob.isActive
+                if (needsAnimationJob && !hasAnimationJob) {
+                    animationJob.animationJob = interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                        // While there are transitions to be run, we should run them; we just update the floats
+                        // in the mutable state. Those are then used by the render function, and we thus avoid
+                        // needing to recompose in order to propagate the animation state.
+                        //
+                        // We also complete transitions in this block, and that action does cause a recomposition
+                        // via the subscription that SquooshRoot makes to the InteractionState's list of transitions.
+                        while (interactionState.animations.isNotEmpty() || variantTransitions.transitions.isNotEmpty()) {
+                            // withFrameNanos runs its closure outside of this recomposition phase -- because the
+                            // body of the code only changes mutable state which is only used at render time,
+                            // Compose only re-runs the render block.
+                            withFrameNanos { frameTimeNanos ->
+                                val animState = HashMap(animationValues.value)
+                                for ((id, anim) in currentAnimations) {
+                                    // If we haven't started this animation yet, then start it now.
+                                    if (anim.startTimeNanos == 0L) {
+                                        anim.startTimeNanos = frameTimeNanos
+                                    }
+
+                                    val playTimeNanos = frameTimeNanos - anim.startTimeNanos
+
+                                    // Compute where it's meant to be, and update the value in animState.
+                                    val position =
+                                        anim.animation.getValueFromNanos(playTimeNanos)
+                                    animState[id] = position
+
+                                    // If the animation is complete, then we need to remove it from the transitions
+                                    // list, and apply it to the base interaction state.
+                                    if (anim.animation.isFinishedFromNanos(playTimeNanos)) {
+                                        animState.remove(id)
+                                        if (anim.action != null)
+                                            interactionState.squooshCompleteAnimatedAction(anim.action)
+                                        if (anim.variant != null)
+                                            variantTransitions.completedAnimatedVariant(anim.variant)
+                                    }
+                                }
+                                animationValues.value = animState
+                            }
+                        }
+                    }
+                }
+
                 val placeables = measurables.map { measurable ->
                     val squooshData = measurable.parentData as? SquooshParentData
                     if (squooshData == null || squooshData.node.computedLayout == null) {
@@ -507,7 +561,10 @@ fun SquooshRoot(
                     }
                 }
 
-                layout(constraints.maxWidth, constraints.maxHeight) {
+                layout(
+                    (root.computedLayout!!.width * density.density).roundToInt(),
+                    (root.computedLayout!!.height * density.density).roundToInt()
+                ) {
                     // Place children in the parent layout
                     placeables.forEach { (placeable, node) ->
                         // If we don't have a node, then just place this and finish.
@@ -537,9 +594,6 @@ fun SquooshRoot(
                 // Now render all of the children
                 val debugRenderChildComposablesStartTime = SystemClock.elapsedRealtime()
                 for (child in childComposables) {
-                    if (child.node.computedLayout == null) {
-                        continue
-                    }
                     var composableChildModifier = Modifier
                         .drawWithContent {
                             if (child.node == childRenderSelector.selectedRenderChild)

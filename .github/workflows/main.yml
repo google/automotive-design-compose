@@ -121,7 +121,7 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    - uses: EmbarkStudios/cargo-deny-action@748857f070c53667b2b8de8bdf468ac75a6b757c # v1.5.12
+    - uses: EmbarkStudios/cargo-deny-action@5def368d93be6684ad20a0fdec5f23c8ea11e022 # v1.5.13
       with:
           command: check ${{ matrix.checks }}
 

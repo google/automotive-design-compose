@@ -68,7 +68,7 @@ jobs:
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.4.2
+        uses: gradle/gradle-build-action@3b1b3b9a2104c2b47fbae53f3938079c00c9bb87 # v2.4.2
         with:
           cache-read-only: true
 
@@ -86,7 +86,7 @@ jobs:
           save-if: false
 
       - name: Build Maven repo
-        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.7.1
+        uses: gradle/gradle-build-action@3b1b3b9a2104c2b47fbae53f3938079c00c9bb87 # v2.7.1
         with:
           arguments: -PdesignComposeReleaseVersion=${{ github.ref_name }} publishAllPublicationsToLocalDirRepository
 

@@ -52,7 +52,7 @@ jobs:
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.11.1
+        uses: gradle/gradle-build-action@3b1b3b9a2104c2b47fbae53f3938079c00c9bb87 # v3.0.0
         with:
           cache-disabled: ${{matrix.cache == 'cache-disabled'}}
 
@@ -70,7 +70,7 @@ jobs:
         run: ./install-rust-toolchains.sh
 
       - name: Run the profiled build
-        uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.11.1
+        uses: gradle/gradle-build-action@3b1b3b9a2104c2b47fbae53f3938079c00c9bb87 # v3.0.0
         with:
           arguments:
             ${{matrix.task}} --profile

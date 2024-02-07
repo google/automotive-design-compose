@@ -71,7 +71,12 @@ jobs:
       - uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.7.1
         with:
           cache-read-only: true
-          arguments: ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
+          arguments: ktfmtCheckBuildScripts --no-configuration-cache
+
+      - uses: gradle/gradle-build-action@982da8e78c05368c70dac0351bb82647a9e9a5d2 # v2.7.1
+        with:
+          cache-read-only: true
+          arguments: ktfmtCheck
 
   actionlint:
     runs-on: ubuntu-latest

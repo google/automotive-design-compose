@@ -129,7 +129,6 @@ dependencies {
 
     androidTestImplementation(testFixtures(project(":designcompose")))
     androidTestImplementation(project(":test"))
-    androidTestImplementation(project(":test:internal"))
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.junit)

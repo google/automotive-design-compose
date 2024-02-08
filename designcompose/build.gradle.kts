@@ -119,7 +119,6 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    androidTestImplementation(project(":test:internal"))
     androidTestImplementation(project(":test"))
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(libs.google.truth)

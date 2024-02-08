@@ -124,7 +124,8 @@ else
   echo "actionlint not installed, skipping."
 fi
 
-run_cmd "KTFmt Check" . ./gradlew ktfmtCheck ktfmtCheckBuildScripts --no-configuration-cache
+run_cmd "KTFmt Check Build Scripts" . ./gradlew ktfmtCheckBuildScripts --no-configuration-cache
+run_cmd "KTFmt Check" . ./gradlew ktfmtCheck
 run_cmd "Cargo Fmt" . cargo-fmt --all --check
 
 run_cmd "Cargo Test" . cargo test --all-targets --all-features

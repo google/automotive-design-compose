@@ -16,12 +16,17 @@
 
 package com.android.designcompose
 
-import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.test.internal.ROBO_CAPTURE_DIR
 import com.android.designcompose.test.internal.defaultRoborazziRule
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import com.github.takahirom.roborazzi.RoborazziRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,14 +40,38 @@ fun DesignSwitcherDeadbeef() {
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
+@Config(qualifiers = RobolectricDeviceQualifiers.SmallPhone, sdk = [34])
 class DesignSwitcherBasicTests {
-    @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+    @get:Rule val composeTestRule = createComposeRule()
 
-    @get:Rule val roborazziRule = defaultRoborazziRule(composeTestRule)
+    @get:Rule
+    val roborazziRule = defaultRoborazziRule(composeTestRule)
 
     @Test
     fun displaysMiniVersion() {
         with(composeTestRule) { setContent { DesignSwitcherDeadbeef() } }
+    }
+
+    private fun ComposeContentTestRule.openSettingsView() {
+        setContent { DesignSwitcherDeadbeef() }
+        onNodeWithTag("#SettingsView").performClick()
+    }
+
+    @Test
+    fun expandMiniVersion() {
+        with(composeTestRule) {
+            openSettingsView()
+            onNodeWithTag("#ChangeButtonFrame", true).assertExists()
+        }
+    }
+
+    @Test
+    fun changeButtonOpensFileLoader() {
+        with(composeTestRule) {
+            openSettingsView()
+            onNodeWithTag("#GoButton").assertDoesNotExist()
+            onNodeWithTag("#ChangeButtonFrame", true).performClick()
+            onNodeWithTag("#GoButton").assertExists()
+        }
     }
 }

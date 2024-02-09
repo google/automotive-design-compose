@@ -18,15 +18,23 @@ package com.android.designcompose.test.internal
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.github.takahirom.roborazzi.RoborazziRule
+import com.github.takahirom.roborazzi.captureRoboImage
+import org.junit.rules.TestName
 
 const val ROBO_CAPTURE_DIR = "src/testDebug/roborazzi"
 
+fun ComposeTestRule.captureImg(testName: TestName, screenshotName: String) {
+    onRoot().captureRoboImage("${testName.methodName}/$screenshotName.png")
+}
+
 fun defaultRoborazziRule(
     composeTestRule:
-        AndroidComposeTestRule<ActivityScenarioRule<ComponentActivity>, ComponentActivity>
+        ComposeContentTestRule
 ) =
     RoborazziRule(
         composeRule = composeTestRule,

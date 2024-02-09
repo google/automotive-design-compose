@@ -66,6 +66,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntSize
@@ -666,6 +667,8 @@ internal fun DesignView(
 
     // Use blue for DesignFrame nodes and green for DesignText nodes
     m = positionModifierFunc(Color(0f, 0f, 0.8f, 0.7f)).then(m)
+
+    m = m.testTag(view.name)
 
     val parentLayout = parentLayout?.withRootIdIfNone(layoutId)
     when (view.data) {

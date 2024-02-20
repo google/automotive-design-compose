@@ -183,8 +183,12 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             jsonStreams[it.key] = createJsonFile(it.key, it.value.toSet())
         }
 
+        // Visit each DesignDoc interface to build a hash of doc IDs
+        val classToDocIdHash = HashMap<String, String>()
+        symbols.forEach { it.accept(DesignDocIDVisitor(classToDocIdHash), Unit) }
+
         // Visit each symbol and generate all files
-        symbols.forEach { it.accept(DesignDocVisitor(jsonStreams), Unit) }
+        symbols.forEach { it.accept(DesignDocVisitor(jsonStreams, classToDocIdHash), Unit) }
 
         // Finish up
         jsonStreams.values.forEach { it.close() }
@@ -224,8 +228,32 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         Unknown
     }
 
+    // A class that visits all @DesignDoc annotations to build a hash of doc IDs
+    inner class DesignDocIDVisitor(
+        private val classToDocIdHash: HashMap<String, String>,
+    ) : KSVisitorVoid() {
+        override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
+            if (classDeclaration.classKind != ClassKind.INTERFACE) {
+                logger.error("Invalid class kind with @DesignDoc", classDeclaration)
+                return
+            }
+
+            // Get the @DesignDoc annotation object
+            val annotation: KSAnnotation =
+                classDeclaration.annotations.first { it.shortName.asString() == "DesignDoc" }
+
+            // Get the 'id' argument object from @DesignDoc.
+            val idArg: KSValueArgument =
+                annotation.arguments.first { arg -> arg.name?.asString() == "id" }
+            val docId = idArg.value as String
+            val className = classDeclaration.simpleName.asString()
+            classToDocIdHash[className] = docId
+        }
+    }
+
     inner class DesignDocVisitor(
         private val jsonStreams: HashMap<String, OutputStream>,
+        private val classToDocIdHash: HashMap<String, String>,
     ) : KSVisitorVoid() {
         private var docName: String = ""
         private var docId: String = ""
@@ -260,7 +288,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var queriesNameSet: HashSet<String> = HashSet()
         private var ignoredImages: HashMap<String, HashSet<String>> = HashMap()
 
-        private var overrideInterface: String = ""
+        // List of normal (non-generated DesignDoc) parent classes/interfaces
+        private var superclassesNormal: ArrayList<String> = ArrayList()
+        // List of generated DesignDoc parent classes/interfaces
+        private var superclassesDesignDoc: ArrayList<String> = ArrayList()
 
         private lateinit var out: OutputStream
         private var currentJsonStream: OutputStream? = null
@@ -281,21 +312,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             currentJsonStream = jsonStreams[packageName]
 
-            // If the interface inherits from another interface, get the name of it
-            classDeclaration.superTypes.forEach {
-                val superType = it.resolve()
-                // All classes that don't declare a superclass inherit from "Any", so ignore it
-                if (superType.toString() != "Any") {
-                    if (superType.isError)
-                        logger.error("Invalid supertype for interface hg $classDeclaration")
-                    overrideInterface = superType.declaration.qualifiedName?.asString() ?: ""
-                    if (overrideInterface.endsWith("Gen"))
-                        logger.error(
-                            "Extending a generated interface $overrideInterface not supported"
-                        )
-                }
-            }
-
             // Get the @DesignDoc annotation object
             val annotation: KSAnnotation =
                 classDeclaration.annotations.first { it.shortName.asString() == "DesignDoc" }
@@ -306,23 +322,78 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             docName = className + "Doc"
             docId = idArg.value as String
 
+            // Gather parent classes into superclassesDesignDoc and superclassesNormal
+            classDeclaration.superTypes.forEach { superTypeRef ->
+                val superType = superTypeRef.resolve()
+                // All classes that don't declare a superclass inherit from "Any", so ignore it
+                if (superType.toString() != "Any") {
+                    if (superType.isError) {
+                        // If the super type cannot be resolved, check to see if it ends with "Gen",
+                        // meaning it should inherit from a generated class
+                        val superTypeName = superTypeRef.toString()
+                        if (superTypeName.endsWith("Gen")) {
+                            superclassesDesignDoc.add(superTypeName)
+                            // Inheriting from a DesignDoc generated class requires that the doc ID
+                            // be the same. Check that the doc ID matches.
+                            val superTypeBasename =
+                                superTypeName.substring(0, superTypeName.length - 3)
+                            val superTypeDocId = classToDocIdHash[superTypeBasename]
+                            superTypeDocId?.let {
+                                if (it != docId)
+                                    logger.error(
+                                        "class $className with doc ID $docId cannot extend $superTypeName with different doc ID $it"
+                                    )
+                            }
+                        } else
+                            logger.error(
+                                "Invalid supertype $superType for interface $classDeclaration"
+                            )
+                    } else {
+                        val superTypeName = superType.declaration.qualifiedName?.asString()
+                        superTypeName?.let {
+                            superclassesNormal.add(it)
+                            if (it.endsWith("Gen"))
+                                logger.error("Extending a generated interface $it not supported")
+                        }
+                    }
+                }
+            }
+            val hasDesignDocParent = superclassesDesignDoc.isNotEmpty()
+
             // Declare a global document ID that can be changed by the Design Switcher
             val docIdVarName = className + "GenId"
             out.appendText("private var $docIdVarName: String = \"$docId\"\n\n")
 
             // Create an interface for each interface declaration
             val interfaceName = className + "Gen"
-            // Inherit from the specified superclass interface if it exists
-            val overrideInterfaceDecl =
-                if (overrideInterface.isNotEmpty()) ": $overrideInterface " else ""
+            // Inherit from the specified superclasses
+            var overrideInterfaceDecl = ""
+            if (superclassesDesignDoc.isNotEmpty() || superclassesNormal.isNotEmpty()) {
+                // Build a string of all the superclasses separated by commas
+                val allSuperclasses = ArrayList<String>()
+                allSuperclasses.addAll(superclassesDesignDoc)
+                allSuperclasses.addAll(superclassesNormal)
+                overrideInterfaceDecl = ": " + allSuperclasses.joinToString(", ") + " "
+            }
             out.appendText("interface $interfaceName $overrideInterfaceDecl{\n")
 
             // Create a list of all node names used in this interface
             visitPhase = VisitPhase.Queries
-            out.appendText("    fun queries(): ArrayList<String> {\n")
-            out.appendText("        return arrayListOf(\n")
-            classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
-            out.appendText("        )\n")
+            val overrideDecl = if (hasDesignDocParent) "override " else ""
+            out.appendText("    ${overrideDecl}fun queries(): ArrayList<String> {\n")
+            if (hasDesignDocParent) {
+                // If deriving from a generated DesignCompose interface, combine the interface's
+                // queries with our own.
+                out.appendText("        val queries = super.queries()\n")
+                out.appendText("        queries.addAll(arrayListOf(\n")
+                classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
+                out.appendText("        ))\n")
+                out.appendText("        return queries\n")
+            } else {
+                out.appendText("        return arrayListOf(\n")
+                classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
+                out.appendText("        )\n")
+            }
             out.appendText("    }\n\n")
 
             // Create a list of all customization node names used in this interface
@@ -335,21 +406,39 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             classDeclaration.getAllFunctions().forEach { it.accept(this, data) }
 
             // Output the list of all images to ignore using the ignoredImages HashMap
-            out.appendText("    fun ignoredImages(): HashMap<String, Array<String>> {\n")
-            out.appendText("        return hashMapOf(\n")
-            for ((node, images) in ignoredImages) {
-                out.appendText("            \"$node\" to arrayOf(\n")
-                for (image in images) {
-                    out.appendText("                \"$image\",\n")
+            out.appendText(
+                "    ${overrideDecl}fun ignoredImages(): HashMap<String, Array<String>> {\n"
+            )
+            val outputIgnoredImages = {
+                for ((node, images) in ignoredImages) {
+                    out.appendText("            \"$node\" to arrayOf(\n")
+                    for (image in images) {
+                        out.appendText("                \"$image\",\n")
+                    }
+                    out.appendText("            ),\n")
                 }
-                out.appendText("            ),\n")
             }
-            out.appendText("        )\n")
+            if (hasDesignDocParent) {
+                // If deriving from a generated DesignCompose interface, combine the interface's
+                // ignored images with our own.
+                out.appendText("        val ignored = super.ignoredImages()\n")
+                out.appendText("        ignored.putAll(hashMapOf(\n")
+                outputIgnoredImages()
+                out.appendText("        ))\n")
+                out.appendText("        return ignored\n")
+            } else {
+                out.appendText("        return hashMapOf(\n")
+                outputIgnoredImages()
+                out.appendText("        )\n")
+            }
             out.appendText("    }\n\n")
 
             // Add a @Composable function that can be used to show the design switcher
+            val defaultModifierDecl = if (!hasDesignDocParent) " = Modifier" else ""
             out.appendText("    @Composable\n")
-            out.appendText("    fun DesignSwitcher(modifier: Modifier = Modifier) {\n")
+            out.appendText(
+                "    ${overrideDecl}fun DesignSwitcher(modifier: Modifier $defaultModifierDecl) {\n"
+            )
             out.appendText(
                 "        val (docId, setDocId) = remember { mutableStateOf(\"$docId\") }\n"
             )
@@ -357,38 +446,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("            modifier = modifier,\n")
             out.appendText("            setDocId = setDocId\n")
             out.appendText("        )\n")
-            out.appendText("    }\n\n")
-
-            // Add a function that lets you add the Design Switcher to a view group at the top right
-            // corner
-            out.appendText(
-                "    fun addDesignSwitcherToViewGroup(activity: Activity, view: ViewGroup) {\n"
-            )
-            out.appendText(
-                "        val composeView = ComposeView(activity.applicationContext).apply {\n"
-            )
-            out.appendText("            setContent { DesignSwitcher() }\n")
-            out.appendText("        }\n")
-            out.appendText("        var width: Int\n")
-            out.appendText("        var height: Int\n")
-            out.appendText("        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {\n")
-            out.appendText(
-                "            val displayMetrics = activity.windowManager.currentWindowMetrics\n"
-            )
-            out.appendText("            width = displayMetrics.bounds.width()\n")
-            out.appendText("            height = displayMetrics.bounds.height()\n")
-            out.appendText("        } else {\n")
-            out.appendText("            val displayMetrics = DisplayMetrics()\n")
-            out.appendText(
-                "            activity.windowManager.defaultDisplay.getMetrics(displayMetrics)\n"
-            )
-            out.appendText("            height = displayMetrics.heightPixels\n")
-            out.appendText("            width = displayMetrics.widthPixels\n")
-            out.appendText("        }\n")
-            out.appendText("        val params = FrameLayout.LayoutParams(width, height)\n")
-            out.appendText("        params.leftMargin = 0\n")
-            out.appendText("        params.topMargin = 0\n")
-            out.appendText("        view.addView(composeView, params)\n")
             out.appendText("    }\n\n")
 
             visitPhase = VisitPhase.ComposableFunctions
@@ -401,10 +458,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // contains all the variant properties and values
             out.appendText("    @Composable\n")
             // Add an override declaration if this interface inherits from another
-            val overrideDecl = if (overrideInterface.isNotEmpty()) "override " else ""
             out.appendText("    ${overrideDecl}fun CustomComponent(\n")
             // Default parameters are not allowed when overriding a function
-            val defaultModifierDecl = if (overrideInterface.isEmpty()) " = Modifier" else ""
             out.appendText("        modifier: Modifier$defaultModifierDecl,\n")
             out.appendText("        nodeName: String,\n")
             out.appendText("        rootNodeQuery: NodeQuery,\n")

@@ -1018,7 +1018,7 @@ internal fun DesignDocInternal(
             // Render debug node names, if turned on
             Box(Modifier.fillMaxSize()) { DebugNodeManager.DrawNodeNames() }
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
-                DesignSwitcher(doc, docId, branchHash, switchDocId)
+                // DesignSwitcher(doc, docId, branchHash, switchDocId)
             }
         }
     }

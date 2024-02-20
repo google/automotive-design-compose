@@ -24,10 +24,8 @@ import com.android.designcompose.DesignNodeData
 import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.ListContent
 import com.android.designcompose.OpenLinkCallback
-import com.android.designcompose.ParentComponentInfo
 import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.TapCallback
-import com.android.designcompose.serdegen.NodeQuery
 
 enum class PlayState {
     Play,
@@ -222,13 +220,4 @@ interface MediaInterface {
     fun BrowseHeaderDrillDownDesignNodeData(): DesignNodeData {
         return DesignNodeData()
     }
-
-    @Composable
-    fun CustomComponent(
-        modifier: Modifier = Modifier,
-        nodeName: String,
-        rootNodeQuery: NodeQuery,
-        parentComponents: List<ParentComponentInfo>,
-        tapCallback: TapCallback?,
-    ) {}
 }

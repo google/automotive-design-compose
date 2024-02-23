@@ -12,9 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::io::Write;
+
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use figma_import::{Document, NodeQuery, ProxyConfig, SerializedDesignDoc};
+use figma_import::{
+    Document, NodeQuery, ProxyConfig, SerializedDesignDoc, SerializedDesignDocHeader,
+};
 #[derive(Debug)]
 struct ConvertError(String);
 impl From<figma_import::Error> for ConvertError {
@@ -86,14 +90,17 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
         id: doc.get_document_id(),
     };
     println!("Fetched document");
+    println!("  DC Version: {}", SerializedDesignDocHeader::current().version);
     println!("  Doc ID: {}", doc.get_document_id());
     println!("  Version: {}", doc.get_version());
     println!("  Name: {}", doc.get_name());
     println!("  Last Modified: {}", doc.last_modified().clone());
-    // We don't bother with serialization headers or image sessions with
-    // this tool.
-    let output = std::fs::File::create(args.output)?;
-    bincode::serialize_into(output, &serializable_doc)?;
+    // We don't bother with serialization of image sessions with this tool.
+    let mut output = std::fs::File::create(args.output)?;
+    let header = bincode::serialize(&SerializedDesignDocHeader::current())?;
+    let doc = bincode::serialize(&serializable_doc)?;
+    output.write_all(header.as_slice())?;
+    output.write_all(doc.as_slice())?;
     Ok(())
 }
 fn main() {

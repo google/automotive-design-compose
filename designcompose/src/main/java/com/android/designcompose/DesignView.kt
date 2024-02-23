@@ -374,7 +374,7 @@ internal fun DesignView(
 
     // See if we've got a replacement node from an interaction
     var view = interactionState.nodeVariant(v.id, customizations.getKey(), document) ?: v
-    var hasVariantReplacement = view.name != v.name
+    val hasVariantReplacement = view.name != v.name
     var variantParentName = variantParentName
     if (!hasVariantReplacement) {
         // If an interaction has not changed the current variant, then check to see if this node
@@ -385,12 +385,19 @@ internal fun DesignView(
         if (variantNodeName != null) {
             // Find the view associated with the variant name
             val variantNodeQuery =
-                NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { view.name })
+                NodeQuery.NodeVariant(
+                    variantNodeName,
+                    variantParentName.ifEmpty {
+                        // Get the component set name out of component_info and use it to construct
+                        // the NodeVariant. We know component_info is present here since
+                        // variantNodeName is not null.
+                        view.component_info.get().component_set_name
+                    }
+                )
             val isRoot = LocalDesignIsRootContext.current.isRoot
             val variantView = interactionState.rootNode(variantNodeQuery, document, isRoot)
             if (variantView != null) {
                 view = variantView
-                hasVariantReplacement = true
                 variantView.component_info.ifPresent { variantParentName = it.component_set_name }
             }
         }

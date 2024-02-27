@@ -65,85 +65,8 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
-fun OutputStream.appendText(str: String) {
-    this.write(str.toByteArray())
-}
-
 class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSPLogger) :
     SymbolProcessor {
-    operator fun OutputStream.plusAssign(str: String) {
-        this.write(str.toByteArray())
-    }
-
-    fun createNewFile(
-        className: String,
-        packageName: String,
-        dependencies: Set<KSFile>
-    ): OutputStream {
-        val fileName = className.replace('.', '_') + "_gen"
-        val file =
-            codeGenerator.createNewFile(
-                dependencies = Dependencies(false, *dependencies.toTypedArray()),
-                packageName = packageName,
-                fileName = fileName
-            )
-        file += "package $packageName\n\n"
-        file += "import androidx.compose.runtime.Composable\n"
-        file += "import androidx.compose.ui.text.TextStyle\n"
-        file += "import android.graphics.Bitmap\n"
-        file += "import androidx.compose.ui.graphics.Brush\n"
-        file += "import androidx.compose.ui.Modifier\n"
-        file += "import androidx.compose.ui.semantics.semantics\n"
-        file += "import androidx.compose.runtime.mutableStateOf\n"
-        file += "import androidx.compose.runtime.remember\n"
-        file += "import androidx.compose.ui.platform.ComposeView\n"
-        file += "import androidx.compose.runtime.CompositionLocalProvider\n"
-        file += "import androidx.compose.runtime.compositionLocalOf\n"
-        file += "import android.widget.FrameLayout\n"
-        file += "import android.util.DisplayMetrics\n"
-        file += "import android.app.Activity\n"
-        file += "import android.view.ViewGroup\n"
-        file += "import android.os.Build\n"
-
-        file += "import com.android.designcompose.annotation.DesignMetaKey\n"
-        file += "import com.android.designcompose.serdegen.NodeQuery\n"
-        file += "import com.android.designcompose.common.DocumentServerParams\n"
-        file += "import com.android.designcompose.ComponentReplacementContext\n"
-        file += "import com.android.designcompose.ImageReplacementContext\n"
-        file += "import com.android.designcompose.CustomizationContext\n"
-        file += "import com.android.designcompose.DesignDoc\n"
-        file += "import com.android.designcompose.DesignComposeCallbacks\n"
-        file += "import com.android.designcompose.DesignSwitcherPolicy\n"
-        file += "import com.android.designcompose.OpenLinkCallback\n"
-        file += "import com.android.designcompose.DesignNodeData\n"
-        file += "import com.android.designcompose.DesignInjectKey\n"
-        file += "import com.android.designcompose.ListContent\n"
-        file += "import com.android.designcompose.setKey\n"
-        file += "import com.android.designcompose.mergeFrom\n"
-        file += "import com.android.designcompose.setComponent\n"
-        file += "import com.android.designcompose.setContent\n"
-        file += "import com.android.designcompose.setListContent\n"
-        file += "import com.android.designcompose.setCustomComposable\n"
-        file += "import com.android.designcompose.setImage\n"
-        file += "import com.android.designcompose.setImageWithContext\n"
-        file += "import com.android.designcompose.setBrush\n"
-        file += "import com.android.designcompose.setBrushFunction\n"
-        file += "import com.android.designcompose.setMeterValue\n"
-        file += "import com.android.designcompose.setMeterFunction\n"
-        file += "import com.android.designcompose.setModifier\n"
-        file += "import com.android.designcompose.setTapCallback\n"
-        file += "import com.android.designcompose.setOpenLinkCallback\n"
-        file += "import com.android.designcompose.setText\n"
-        file += "import com.android.designcompose.setTextFunction\n"
-        file += "import com.android.designcompose.setVariantProperties\n"
-        file += "import com.android.designcompose.setVisible\n"
-        file += "import com.android.designcompose.TapCallback\n"
-        file += "import com.android.designcompose.ParentComponentInfo\n"
-        file += "import com.android.designcompose.sDocClass\n"
-        file += "import com.android.designcompose.LocalCustomizationContext\n\n"
-
-        return file
-    }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         fun createJsonFile(packageName: String, dependencies: Set<KSFile>): OutputStream {
@@ -155,6 +78,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 extensionName = "json"
             )
         }
+
+        // Process DesignModules first
+        processDesignModulesClasses(resolver, codeGenerator, logger)
 
         // DesignDoc annotation
         val symbols =
@@ -203,26 +129,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         KeyActionFunctions,
     }
 
-    private enum class CustomizationType {
-        Text,
-        TextFunction,
-        Image,
-        ImageWithContext,
-        Brush,
-        BrushFunction,
-        Modifier,
-        TapCallback,
-        ContentReplacement,
-        ComponentReplacement,
-        ListContent,
-        Visibility,
-        TextStyle,
-        VariantProperty,
-        Meter,
-        MeterFunction,
-        Unknown
-    }
-
     inner class DesignDocVisitor(
         private val jsonStreams: HashMap<String, OutputStream>,
     ) : KSVisitorVoid() {
@@ -252,6 +158,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var meterCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var meterFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
+        private var moduleCustomizations: HashMap<String, Vector<String>> = HashMap()
         private var nodeNameBuilder: ArrayList<String> = ArrayList()
         private var variantProperties: HashMap<String, String> = HashMap()
 
@@ -276,7 +183,14 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             val className = classDeclaration.simpleName.asString()
 
             // Create a new file for each @DesignDoc annotation
-            out = createNewFile(className, packageName, setOf(classDeclaration.containingFile!!))
+            out =
+                createNewFile(
+                    codeGenerator,
+                    className,
+                    packageName,
+                    setOf(classDeclaration.containingFile!!),
+                    logger
+                )
 
             currentJsonStream = jsonStreams[packageName]
 
@@ -546,6 +460,14 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 queriesNameSet.add(nodeName)
             }
 
+            findVariantProperties(function.parameters) { propertyName ->
+                if (!queriesNameSet.contains(propertyName)) {
+                    out.appendText("            \"$propertyName\",\n")
+                    queriesNameSet.add(propertyName)
+                }
+            }
+
+            /*
             // If there are any @DesignVariant annotations, add the property names to the list of
             // queries
             function.parameters.forEach { param ->
@@ -561,6 +483,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     }
                 }
             }
+            */
         }
 
         @OptIn(KspExperimental::class)
@@ -591,7 +514,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
                 // Add a customization for this arg to the json list
                 val jsonHash = JsonObject()
-                val paramType = getParamCustomizationType(param)
+                val paramType = param.customizationType()
                 jsonHash.addProperty("name", param.name?.asString())
                 jsonHash.addProperty("node", nodeName)
                 jsonHash.addProperty("kind", paramType.name)
@@ -661,17 +584,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         ) {
             val nodeImageSet = ignoredImages[nodeName] ?: HashSet<String>()
             function.parameters.forEach { param ->
-                val ignore =
-                    when (getParamCustomizationType(param)) {
-                        CustomizationType.Image -> true
-                        CustomizationType.Brush -> true
-                        CustomizationType.BrushFunction -> true
-                        CustomizationType.ContentReplacement -> true
-                        CustomizationType.ComponentReplacement -> true
-                        CustomizationType.ListContent -> true
-                        CustomizationType.ImageWithContext -> true
-                        else -> false
-                    }
+                val ignore = param.customizationType().shouldIgnoreImage()
 
                 // Get the 'node' argument
                 val annotation: KSAnnotation =
@@ -683,66 +596,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 if (ignore) nodeImageSet.add(paramNodeName)
             }
             ignoredImages[nodeName] = nodeImageSet
-        }
-
-        private fun getParamTypeString(param: KSValueParameter): String {
-            // Add any annotations specified for this type
-            val typeAnnotations = param.type.annotations
-            var typeName = ""
-            typeAnnotations.forEach { typeName += "$it " }
-            val ksType = param.type.resolve()
-            val qualifiedName = ksType.declaration.qualifiedName
-            val qualifier = qualifiedName?.getQualifier()
-            // For kotlin and android types, use just the typename without the qualifier. Otherwise,
-            // use the qualifier, since the macro specified an explicit qualifier
-            typeName +=
-                if (qualifier?.startsWith("kotlin")?.or(qualifier.startsWith("android")) == true)
-                    param.type.toString()
-                else qualifiedName?.asString() ?: param.type.toString()
-
-            // Add template parameters if there are any
-            if (!ksType.isFunctionType && ksType.arguments.isNotEmpty()) {
-                typeName += "<${ksType.arguments.joinToString(",") { arg -> arg.type.toString() }}>"
-            }
-
-            // Add nullability operator to types in typeName that are nullable
-            ksType.arguments.forEach {
-                if (it.type?.resolve()?.nullability == Nullability.NULLABLE)
-                    typeName = typeName.replace(it.type.toString(), "${it.type}?")
-            }
-
-            // Add Nullability operator if the type is nullable
-            if (param.type.resolve().nullability == Nullability.NULLABLE) typeName += "?"
-
-            return typeName
-        }
-
-        private fun getParamCustomizationType(param: KSValueParameter): CustomizationType {
-            val variantAnnotation: KSAnnotation? =
-                param.annotations.find { it.shortName.asString() == "DesignVariant" }
-            if (variantAnnotation != null) return CustomizationType.VariantProperty
-
-            return when (getParamTypeString(param)) {
-                "String" -> CustomizationType.Text
-                "@Composable () -> String" -> CustomizationType.TextFunction
-                "Brush" -> CustomizationType.Brush
-                "() -> Brush" -> CustomizationType.BrushFunction
-                "Bitmap?" -> CustomizationType.Image
-                "Modifier" -> CustomizationType.Modifier
-                "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
-                "com.android.designcompose.ReplacementContent" ->
-                    CustomizationType.ContentReplacement
-                "@Composable (ComponentReplacementContext) -> Unit" ->
-                    CustomizationType.ComponentReplacement
-                "com.android.designcompose.ListContent" -> CustomizationType.ListContent
-                "@Composable (ImageReplacementContext) -> Bitmap?" ->
-                    CustomizationType.ImageWithContext
-                "Boolean" -> CustomizationType.Visibility
-                "TextStyle" -> CustomizationType.TextStyle
-                "com.android.designcompose.Meter" -> CustomizationType.Meter
-                "com.android.designcompose.MeterFunction" -> CustomizationType.MeterFunction
-                else -> CustomizationType.Unknown
-            }
         }
 
         private fun visitFunctionComposables(
@@ -802,8 +655,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 param.accept(this, data)
                 val name = param.name!!.asString()
 
-                val customizationType = getParamCustomizationType(param)
-                val typeName = getParamTypeString(param)
+                val customizationType = param.customizationType()
+                val typeName = param.type.typeString()
                 args.add(Pair(name, typeName))
                 if (customizationType == CustomizationType.VariantProperty)
                     variantFuncParameters += "        $name: $typeName,\n"
@@ -951,6 +804,11 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setMeterFunction(\"$node\", $value)\n")
             }
 
+            val moduleCustom = moduleCustomizations[function.toString()] ?: Vector()
+            for (value in moduleCustom) {
+                out.appendText("        customizations.mergeFrom($value.customizations2())\n")
+            }
+
             out.appendText("\n")
 
             // Generate code to set variant properties if there are any @DesignVariant parameters
@@ -1030,10 +888,12 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 nodeNameBuilder.add("        nodeName += \"$propertyName=\" + $param.name")
             }
 
-            val annotation: KSAnnotation =
-                valueParameter.annotations.find { it.shortName.asString() == "Design" } ?: return
+            val annotation = valueParameter.annotations.find {
+                val annotationName = it.shortName.asString()
+                annotationName == "Design" || annotationName == "DesignModule"
+            } ?: return
 
-            when (getParamCustomizationType(valueParameter)) {
+            when (valueParameter.customizationType()) {
                 CustomizationType.Text ->
                     addCustomization(valueParameter, annotation, textCustomizations)
                 CustomizationType.TextFunction ->
@@ -1064,9 +924,15 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, meterCustomizations)
                 CustomizationType.MeterFunction ->
                     addCustomization(valueParameter, annotation, meterFunctionCustomizations)
+                CustomizationType.Module -> {
+                    val name = valueParameter.name!!.asString()
+                    val vec = moduleCustomizations[currentFunc] ?: Vector()
+                    vec.add(name)
+                    moduleCustomizations[currentFunc] = vec
+                }
                 else ->
                     logger.error(
-                        "Invalid @Design parameter type ${getParamTypeString(valueParameter)}"
+                        "Invalid @Design parameter type ${valueParameter.type.typeString()}"
                     )
             }
         }

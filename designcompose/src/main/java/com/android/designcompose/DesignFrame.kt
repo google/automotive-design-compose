@@ -143,6 +143,7 @@ internal fun DesignFrame(
     // (row/column/etc) to the replacement component at some point.
     val replacementComponent = customizations.getComponent(name)
     if (replacementComponent != null) {
+        println("### Replacement $name")
         val replacementParentLayout =
             parentLayout?.withReplacementLayoutData(viewStyle.externalLayoutData())
         DesignParentLayout(replacementParentLayout) {

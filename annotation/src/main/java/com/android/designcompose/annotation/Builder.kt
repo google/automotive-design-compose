@@ -50,7 +50,15 @@ annotation class DesignComponent(
  *
  * @param node the name of the Figma node
  */
-@Target(AnnotationTarget.VALUE_PARAMETER) annotation class Design(val node: String)
+// TODO adding AnnotationTarget.PROPERTY to the list in @Target doesn't work. Either it will cause
+// a weird "IR lowering failed" error or it won't be found when iterating through annotations of
+// the property. Is this a KSP bug?
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY)
+annotation class Design(val node: String)
+
+// TODO remove this once the above bug is fixed. This is only because when @Design annotations for
+// some reason cannot be found in class properties.
+@Target(AnnotationTarget.PROPERTY) annotation class Design2(val node: String)
 
 /**
  * Specify a variant name for a component set that contains variant children.
@@ -108,3 +116,17 @@ enum class DesignMetaKey {
  */
 @Target(AnnotationTarget.FUNCTION)
 annotation class DesignKeyAction(val key: Char, val metaKeys: Array<DesignMetaKey>)
+
+/**
+ * Generate a class that contains customizations created by other DesignCompose annotations. This
+ * class can be used in other classes and interfaces that want to reuse these customizations without
+ * declaring them again.
+ */
+@Target(AnnotationTarget.CLASS)
+annotation class DesignModuleClass
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+annotation class DesignModule
+
+@Target(AnnotationTarget.PROPERTY)
+annotation class DesignModule2

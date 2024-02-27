@@ -29,7 +29,7 @@ unicode-segmentation = "1"
 "phf" = { version = "0.11", features = ["macros"], optional = true }
 
 # layout dependencies
-taffy = "0.3.18"
+taffy = "0.4.0"
 lazy_static = "1.4.0"
 
 # reflection dependencies

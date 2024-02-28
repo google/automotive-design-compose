@@ -112,7 +112,7 @@ jobs:
           git rm -rf .
 
       - name: Download diff
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4.1.3
         with:
           name: diff-vs-base-branch
           path: screenshot-diff

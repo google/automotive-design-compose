@@ -333,7 +333,7 @@ jobs:
         dependency-graph: ${{ matrix.os == 'ubuntu-latest' && 'generate' ||  'disabled' }}
         gradle-home-cache-cleanup: true
 
-    - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+    - uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4.1.3
       with:
         name: designcompose_m2repo
         path: designcompose_m2repo
@@ -433,12 +433,12 @@ jobs:
         dependency-graph: generate
         gradle-home-cache-cleanup: true
 
-    - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+    - uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4.1.3
       with:
         name: designcompose_m2repo
         path: designcompose_m2repo
 
-    - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+    - uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4.1.3
       with:
         name: unbundled_m2repo
         path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/

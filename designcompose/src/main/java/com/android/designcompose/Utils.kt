@@ -590,6 +590,122 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
     return style.build()
 }
 
+// XXX: Horrible code to deal with our terrible generated types. Maybe if style moves to proto then
+//      we'll get some more egonomic generated classes.
+internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
+    val builder = ViewStyle.Builder()
+    builder.text_color = text_color
+    builder.font_size = font_size
+    builder.font_family = font_family
+    builder.font_weight = font_weight
+    builder.font_style = font_style
+    builder.font_stretch = font_stretch
+    builder.background = background
+    builder.box_shadow = box_shadow
+    builder.stroke = stroke
+    builder.opacity = opacity
+    builder.transform = transform
+    builder.relative_transform = relative_transform
+    builder.text_align = text_align
+    builder.text_align_vertical = text_align_vertical
+    builder.text_overflow = text_overflow
+    builder.text_shadow = text_shadow
+    builder.node_size = node_size
+    builder.line_height = line_height
+    builder.line_count = line_count
+    builder.font_features = font_features
+    builder.filter = filter
+    builder.backdrop_filter = backdrop_filter
+    builder.blend_mode = blend_mode
+    // We don't need to copy any of the layout properties, but do it anyway to
+    // avoid confusion if this function later gets used more generally; we should
+    // refactor ViewStyle to separate the fields used for rendering from those used
+    // for layout.
+    builder.display_type = display_type
+    builder.position_type = position_type
+    builder.flex_direction = flex_direction
+    builder.flex_wrap = flex_wrap
+    builder.grid_layout = grid_layout
+    builder.grid_columns_rows = grid_columns_rows
+    builder.grid_adaptive_min_size = grid_adaptive_min_size
+    builder.grid_span_content = grid_span_content
+    builder.overflow = overflow
+    builder.max_children = max_children
+    builder.overflow_node_id = overflow_node_id
+    builder.overflow_node_name = overflow_node_name
+    builder.align_items = align_items
+    builder.align_self = align_self
+    builder.align_content = align_content
+    builder.justify_content = justify_content
+    builder.top = top
+    builder.left = left
+    builder.bottom = bottom
+    builder.right = right
+    builder.margin = margin
+    builder.padding = padding
+    builder.item_spacing = item_spacing
+    builder.cross_axis_item_spacing = cross_axis_item_spacing
+    builder.flex_grow = flex_grow
+    builder.flex_shrink = flex_shrink
+    builder.flex_basis = flex_basis
+    builder.bounding_box = bounding_box
+    builder.horizontal_sizing = horizontal_sizing
+    builder.vertical_sizing = vertical_sizing
+    builder.width = width
+    builder.height = height
+    builder.min_width = min_width
+    builder.min_height = min_height
+    builder.max_width = max_width
+    builder.max_height = max_height
+    builder.aspect_ratio = aspect_ratio
+    builder.pointer_events = pointer_events
+    builder.meter_data = meter_data
+    return builder
+}
+
+// Take the external layout fields of ViewStyle and put them into an ExternalLayoutData object.
+internal fun ViewStyle.externalLayoutData(): ExternalLayoutData {
+    return ExternalLayoutData(
+        margin,
+        top,
+        left,
+        bottom,
+        right,
+        // If width/height are fixed point values, don't override them since we want to use the
+        // new node's width/height. If not fixed point values, use the values in order to support
+        // auto layout properties such as constraints.
+        if (width !is Dimension.Points) width else null,
+        if (height !is Dimension.Points) height else null,
+        flex_grow,
+        flex_basis,
+        align_self,
+        position_type,
+        transform,
+        relative_transform,
+    )
+}
+
+// Take the external layout data and merge it into this ViewStyle, overriding its values and
+// returning a new ViewStyle.
+internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewStyle {
+    val overrideStyle = this.asBuilder()
+    overrideStyle.margin = data.margin
+    overrideStyle.top = data.top
+    overrideStyle.left = data.left
+    overrideStyle.bottom = data.bottom
+    overrideStyle.right = data.right
+    // Only override the width and height if not null
+    data.width?.let { overrideStyle.width = it }
+    data.height?.let { overrideStyle.height = it }
+    overrideStyle.flex_grow = data.flexGrow
+    overrideStyle.flex_basis = data.flexBasis
+    overrideStyle.align_self = data.alignSelf
+    overrideStyle.position_type = data.positionType
+    overrideStyle.transform = data.transform
+    overrideStyle.relative_transform = data.relativeTransform
+    return overrideStyle.build()
+}
+
 internal fun validateFigmaDocId(id: String): Boolean {
     val alphanumericRegex = "[a-zA-Z0-9]+".toRegex()
     return alphanumericRegex.matches(id)

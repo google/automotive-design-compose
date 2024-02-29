@@ -82,8 +82,7 @@ class RenderAllExamples(private val config: TestConfig) {
             .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
             .onFirst()
             .assertRenderStatus(DocRenderStatus.Rendered)
-        composeTestRule.captureRootRoboImage(config.fileName.replace(Regex("[^a-zA-Z0-9-_\\.]"), "_"))
-
+        composeTestRule.captureRootRoboImage(config.fileName)
     }
 
     companion object {
@@ -91,7 +90,7 @@ class RenderAllExamples(private val config: TestConfig) {
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun createTestSet(): List<TestConfig> {
             return EXAMPLES.filter { it.third != null }
-                .map { TestConfig(it.first, it.second, it.third!!) }
+                .map { TestConfig(it.first.replace("[\\s*]".toRegex(), "-"), it.second, it.third!!) }
         }
 
         @JvmStatic

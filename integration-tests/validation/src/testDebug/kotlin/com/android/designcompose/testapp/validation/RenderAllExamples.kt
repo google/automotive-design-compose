@@ -90,7 +90,9 @@ class RenderAllExamples(private val config: TestConfig) {
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun createTestSet(): List<TestConfig> {
             return EXAMPLES.filter { it.third != null }
-                .map { TestConfig(it.first.replace("[\\s*]".toRegex(), "-"), it.second, it.third!!) }
+                .map {
+                    TestConfig(it.first.replace("[\\s*]".toRegex(), "-"), it.second, it.third!!)
+                }
         }
 
         @JvmStatic

@@ -41,7 +41,7 @@ import org.robolectric.annotation.GraphicsMode
 @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
 class InteractionTriggers {
     @get:Rule val composeTestRule = createComposeRule()
-    @get:Rule val roborazziRule = designComposeRoborazziRule( javaClass.simpleName)
+    @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
 
     @Before
     fun setup() {

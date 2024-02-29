@@ -23,6 +23,7 @@ import com.android.designcompose.benchmarks.battleship.lib.BattleshipTest
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
+        Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
         Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
         Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),

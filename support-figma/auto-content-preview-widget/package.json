@@ -12,7 +12,7 @@
   "devDependencies": {
     "@figma/plugin-typings": "^1.85.0",
     "@figma/widget-typings": "*",
-    "css-loader": "^6.8.1",
+    "css-loader": "^6.10.0",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-loader": "^5.0.0",
     "html-webpack-plugin": "^5.6.0",

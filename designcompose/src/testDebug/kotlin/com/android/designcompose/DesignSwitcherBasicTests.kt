@@ -22,17 +22,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.designcompose.test.internal.ROBO_CAPTURE_DIR
-import com.android.designcompose.test.internal.captureImg
-import com.android.designcompose.test.internal.defaultRoborazziRule
+import com.android.designcompose.test.internal.captureRootRoboImage
+import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.test.onDCDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
-import com.github.takahirom.roborazzi.RoborazziOptions
-import com.github.takahirom.roborazzi.RoborazziRule
-import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -53,49 +48,43 @@ fun DesignSwitcherTest(testName: TestName) {
 class DesignSwitcherBasicTests {
     @get:Rule val composeTestRule = createComposeRule()
     @get:Rule val testName = TestName()
-    @get:Rule val roborazziRule = RoborazziRule(
-        options = RoborazziRule.Options(outputDirectoryPath = "$ROBO_CAPTURE_DIR/${javaClass.simpleName}")
-    )
+    @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
 
     @Before
     fun resetState() {
-        // Must reset the interaction state so that the DesignSwitcher starts off consistently
-        // closed.
+        // Must reset the interaction state so that the DesignSwitcher starts off closed.
         InteractionStateManager.states.clear()
+        composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
     }
 
     @Test
-    fun designSwitcherCanClickExpandButton() {
+    fun canExpandDesignSwitcher() {
         with(composeTestRule) {
-            setContent { DesignSwitcherTest(testName) }
-            captureImg(testName.methodName, "CollapsedSwitcher")
+            captureRootRoboImage("CollapsedSwitcher")
             onDCDoc(DesignSwitcherDoc).performClick()
-            val DesignSwitcherMatcher =  onNodeWithText("Design Switcher").fetchSemanticsNode()
-            DesignSwitcherMatcher.onNodeWithText("Change").assertExists()
-           captureImg(testName.methodName, "ExpandedSwitcher")
+            onNodeWithText("Change").assertExists()
+            captureRootRoboImage("ExpandedSwitcher")
         }
-        composeTestRule.onRoot().captureRoboImage("filemane.png")
     }
 
     @Test
     fun showChangeScreen() {
         with(composeTestRule) {
-            setContent { DesignSwitcherTest(testName) }
             onDCDoc(DesignSwitcherDoc).performClick()
             onNodeWithText("Change", useUnmergedTree = true).performClick()
             onNodeWithText("Load", useUnmergedTree = true).assertExists()
-            captureImg( testName.methodName, "ChangeFileScreen")
+            captureRootRoboImage("ChangeFileScreen")
         }
     }
 
     @Test
-    fun designSwitcherCheckBoxRespondsToClick() {
+    fun canCheckACheckBox() {
         with(composeTestRule) {
-            setContent { DesignSwitcherTest(testName) }
             onDCDoc(DesignSwitcherDoc).performClick()
             onNodeWithText("Options", useUnmergedTree = true).performClick()
-            captureImg(testName.methodName, "OptionsScreenBeforeClick")
+            captureRootRoboImage("OptionsScreenBeforeCheckingBox")
             onAllNodes(hasClickAction())[2].performClick() // Currently the only way to find it
+            captureRootRoboImage("OptionsScreenAfterCheckingBox")
         }
     }
 }

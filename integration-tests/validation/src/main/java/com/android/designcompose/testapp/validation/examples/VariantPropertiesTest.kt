@@ -38,6 +38,11 @@ enum class SquareBorder {
     Curved
 }
 
+enum class Shadow {
+    On,
+    Off
+}
+
 enum class Shape {
     Circle,
     Square,
@@ -45,7 +50,8 @@ enum class Shape {
 
 enum class CompType {
     one,
-    two
+    two,
+    three,
 }
 
 // TEST Variant Extra Properties Test
@@ -68,12 +74,14 @@ interface VariantPropertiesTest {
         @DesignVariant(property = "#comp2") comp2: CompType,
         @DesignVariant(property = "#comp3") comp3: CompType,
         @DesignVariant(property = "#border") border: Shape,
+        @DesignVariant(property = "#shade") shade: CompType,
     )
 
     @DesignComponent(node = "#SquareBorder")
     fun Square(
         @DesignVariant(property = "#SquareBorder") type: SquareBorder,
         @DesignVariant(property = "#SquareColor") color: SquareColor,
+        @DesignVariant(property = "#SquareShadow") shadow: Shadow,
     )
 }
 
@@ -81,12 +89,14 @@ interface VariantPropertiesTest {
 fun VariantPropertiesTest() {
     val (bg1, setBg1) = remember { mutableStateOf(Shape.Circle) }
     val (bg2, setBg2) = remember { mutableStateOf(Shape.Circle) }
-    val (borderType, setBorderType) = remember { mutableStateOf(SquareBorder.Sharp) }
-    val (color, setColor) = remember { mutableStateOf(SquareColor.Green) }
+    val (innerBorder, setInnerBorder) = remember { mutableStateOf(SquareBorder.Sharp) }
+
+    val (color, setColor) = remember { mutableStateOf(SquareColor.Blue) }
     val (comp1, setComp1) = remember { mutableStateOf(CompType.two) }
     val (comp2, setComp2) = remember { mutableStateOf(CompType.two) }
     val (comp3, setComp3) = remember { mutableStateOf(CompType.two) }
     val (border, setBorder) = remember { mutableStateOf(Shape.Square) }
+    val (shade, setShade) = remember { mutableStateOf(CompType.three) }
 
     VariantPropertiesTestDoc.MainFrame(
         square1 = {
@@ -94,7 +104,8 @@ fun VariantPropertiesTest() {
                 modifier = it.layoutModifier.then(it.appearanceModifier),
                 parentLayout = it.parentLayout,
                 type = SquareBorder.Sharp,
-                color = SquareColor.Blue
+                color = SquareColor.Blue,
+                shadow = Shadow.Off,
             )
         },
         square2 = {
@@ -102,7 +113,8 @@ fun VariantPropertiesTest() {
                 modifier = it.layoutModifier.then(it.appearanceModifier),
                 parentLayout = it.parentLayout,
                 type = SquareBorder.Sharp,
-                color = SquareColor.Green
+                color = SquareColor.Green,
+                shadow = Shadow.On,
             )
         },
         square3 = {
@@ -110,7 +122,8 @@ fun VariantPropertiesTest() {
                 modifier = it.layoutModifier.then(it.appearanceModifier),
                 parentLayout = it.parentLayout,
                 type = SquareBorder.Curved,
-                color = SquareColor.Blue
+                color = SquareColor.Blue,
+                shadow = Shadow.Off,
             )
         },
         square4 = {
@@ -118,51 +131,53 @@ fun VariantPropertiesTest() {
                 modifier = it.layoutModifier.then(it.appearanceModifier),
                 parentLayout = it.parentLayout,
                 type = SquareBorder.Curved,
-                color = SquareColor.Green
+                color = SquareColor.Blue,
+                shadow = Shadow.On,
             )
         },
         bg1 = bg1,
         bg2 = bg2,
-        type = borderType,
+        type = innerBorder,
         color = color,
         comp1 = comp1,
         comp2 = comp2,
         comp3 = comp3,
         border = border,
+        shade = shade,
     )
 
     Column(modifier = Modifier.absoluteOffset(x = 20.dp, y = 600.dp)) {
         Row {
             Text("Background 1 ", fontSize = 30.sp, color = Color.Black)
-            com.android.designcompose.testapp.validation.Button("Square", bg1 == Shape.Square) {
+            com.android.designcompose.testapp.validation.Button("BG1 Square", bg1 == Shape.Square) {
                 setBg1(Shape.Square)
             }
-            com.android.designcompose.testapp.validation.Button("Circle", bg1 == Shape.Circle) {
+            com.android.designcompose.testapp.validation.Button("BG1 Circle", bg1 == Shape.Circle) {
                 setBg1(Shape.Circle)
             }
         }
         Row {
             Text("Background 2 ", fontSize = 30.sp, color = Color.Black)
-            com.android.designcompose.testapp.validation.Button("Square", bg2 == Shape.Square) {
+            com.android.designcompose.testapp.validation.Button("BG2 Square", bg2 == Shape.Square) {
                 setBg2(Shape.Square)
             }
-            com.android.designcompose.testapp.validation.Button("Circle", bg2 == Shape.Circle) {
+            com.android.designcompose.testapp.validation.Button("BG2 Circle", bg2 == Shape.Circle) {
                 setBg2(Shape.Circle)
             }
         }
         Row {
-            Text("Border ", fontSize = 30.sp, color = Color.Black)
+            Text("Inner Border ", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
-                "Sharp",
-                borderType == SquareBorder.Sharp
+                "Inner Sharp",
+                innerBorder == SquareBorder.Sharp
             ) {
-                setBorderType(SquareBorder.Sharp)
+                setInnerBorder(SquareBorder.Sharp)
             }
             com.android.designcompose.testapp.validation.Button(
-                "Curved",
-                borderType == SquareBorder.Curved
+                "Inner Curved",
+                innerBorder == SquareBorder.Curved
             ) {
-                setBorderType(SquareBorder.Curved)
+                setInnerBorder(SquareBorder.Curved)
             }
         }
         Row {
@@ -176,31 +191,52 @@ fun VariantPropertiesTest() {
             com.android.designcompose.testapp.validation.Button("Blue", color == SquareColor.Blue) {
                 setColor(SquareColor.Blue)
             }
+            com.android.designcompose.testapp.validation.Button("Red", color == SquareColor.Red) {
+                setColor(SquareColor.Red)
+            }
         }
         Row {
             Text("Comp 1 ", fontSize = 30.sp, color = Color.Black)
-            com.android.designcompose.testapp.validation.Button("One", comp1 == CompType.one) {
+            com.android.designcompose.testapp.validation.Button(
+                "Comp1 One",
+                comp1 == CompType.one
+            ) {
                 setComp1(CompType.one)
             }
-            com.android.designcompose.testapp.validation.Button("Two", comp1 == CompType.two) {
+            com.android.designcompose.testapp.validation.Button(
+                "Comp1 Two",
+                comp1 == CompType.two
+            ) {
                 setComp1(CompType.two)
             }
         }
         Row {
             Text("Comp 2 ", fontSize = 30.sp, color = Color.Black)
-            com.android.designcompose.testapp.validation.Button("One", comp2 == CompType.one) {
+            com.android.designcompose.testapp.validation.Button(
+                "Comp2 One",
+                comp2 == CompType.one
+            ) {
                 setComp2(CompType.one)
             }
-            com.android.designcompose.testapp.validation.Button("Two", comp2 == CompType.two) {
+            com.android.designcompose.testapp.validation.Button(
+                "Comp2 Two",
+                comp2 == CompType.two
+            ) {
                 setComp2(CompType.two)
             }
         }
         Row {
             Text("Comp 3 ", fontSize = 30.sp, color = Color.Black)
-            com.android.designcompose.testapp.validation.Button("One", comp3 == CompType.one) {
+            com.android.designcompose.testapp.validation.Button(
+                "Comp3 One",
+                comp3 == CompType.one
+            ) {
                 setComp3(CompType.one)
             }
-            com.android.designcompose.testapp.validation.Button("Two", comp3 == CompType.two) {
+            com.android.designcompose.testapp.validation.Button(
+                "Comp3 Two",
+                comp3 == CompType.two
+            ) {
                 setComp3(CompType.two)
             }
         }
@@ -211,6 +247,27 @@ fun VariantPropertiesTest() {
             }
             com.android.designcompose.testapp.validation.Button("Square", border == Shape.Square) {
                 setBorder(Shape.Square)
+            }
+        }
+        Row {
+            Text("Shade ", fontSize = 30.sp, color = Color.Black)
+            com.android.designcompose.testapp.validation.Button(
+                "Shade One",
+                shade == CompType.one
+            ) {
+                setShade(CompType.one)
+            }
+            com.android.designcompose.testapp.validation.Button(
+                "Shade Two",
+                shade == CompType.two
+            ) {
+                setShade(CompType.two)
+            }
+            com.android.designcompose.testapp.validation.Button(
+                "Shade Three",
+                shade == CompType.three
+            ) {
+                setShade(CompType.three)
             }
         }
     }

@@ -447,12 +447,17 @@ private fun searchNodes(
 
     if (q is NodeQuery.NodeVariant) {
         val nodeName = q.field0
-        val parentNodeName = q.field1
-        val variantViewMap = parentViewMap[parentNodeName]
+        val componentSetName = q.field1
+        val variantViewMap = parentViewMap[componentSetName]
         if (variantViewMap != null) {
             // Using the properties and variant names in the node name, try to find a view that
             // matches
-            val view = variantPropertyMap.resolveVariantNameToView(nodeName, variantViewMap)
+            val view =
+                variantPropertyMap.resolveVariantNameToView(
+                    nodeName,
+                    componentSetName,
+                    variantViewMap
+                )
             if (view != null) return view
         }
     }

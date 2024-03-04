@@ -12,6 +12,7 @@ default = []
 reflection = ["serde-reflection", "serde-generate", "clap"]
 http_mock = ["phf"]
 fetch = ["clap"]
+dcf_info = ["clap"]
 
 [dependencies]
 "ureq" = "2"
@@ -35,7 +36,7 @@ lazy_static = "1.4.0"
 # reflection dependencies
 "serde-reflection" = { version = "0.3", optional = true }
 "serde-generate" = { version = "0.25.1", optional = true }
-clap = { version = "4.4", features = ["derive"], optional = true }
+clap = { version = "4.5", features = ["derive"], optional = true }
 
 # logging
 log = "0.4"
@@ -53,3 +54,8 @@ required-features = ["reflection"]
 name = "fetch"
 path = "src/bin/fetch.rs"
 required-features = ["fetch"]
+
+[[bin]]
+name = "dcf_info"
+path = "src/bin/dcf_info.rs"
+required-features = ["dcf_info"]

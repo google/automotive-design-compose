@@ -85,6 +85,11 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
         version: doc.get_version(),
         id: doc.get_document_id(),
     };
+    println!("Fetched document");
+    println!("  Doc ID: {}", doc.get_document_id());
+    println!("  Version: {}", doc.get_version());
+    println!("  Name: {}", doc.get_name());
+    println!("  Last Modified: {}", doc.last_modified().clone());
     // We don't bother with serialization headers or image sessions with
     // this tool.
     let output = std::fs::File::create(args.output)?;

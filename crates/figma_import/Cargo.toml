@@ -12,6 +12,7 @@ default = []
 reflection = ["serde-reflection", "serde-generate", "clap"]
 http_mock = ["phf"]
 fetch = ["clap"]
+dcf_info = ["clap"]
 
 [dependencies]
 "ureq" = "2"
@@ -53,3 +54,8 @@ required-features = ["reflection"]
 name = "fetch"
 path = "src/bin/fetch.rs"
 required-features = ["fetch"]
+
+[[bin]]
+name = "dcf_info"
+path = "src/bin/dcf_info.rs"
+required-features = ["dcf_info"]

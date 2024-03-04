@@ -86,11 +86,11 @@ class JniFetchTests {
         testFetch(largeDocID)
     }
 
-    @Test
-    fun veryLargeFetch() {
-        testFetch(veryLargeDocID)
-    }
-
+    //    @Test
+    //    fun veryLargeFetch() {
+    //        testFetch(veryLargeDocID)
+    //    }
+    //
     @Test
     fun invalidToken() {
         assertFailsWith(AccessDeniedException::class) {

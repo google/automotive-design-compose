@@ -34,3 +34,7 @@ Currently `figma_import` uses the Rust `bincode` serialization format to encode 
 ### Application binaries
 
 * `reflection` generates Java code to deserialize the `bincode` encoded `toolkit_schema` and `serialized_document` types.
+* `dcf_info` deserializes a serialized DesignCompose file (.dcf) and prints out some basic data about the file.
+  * Usage: `cargo run --bin dcf_info --features=dcf_info <path>`
+* `fetch` queries Figma for a file with specified nodes, then processes and serializes the response, and saves it into a .dcf file.
+  * Usage: `cargo run --bin fetch --features=fetch -- --doc-id=<figma doc ID> --api-key=<figma API key>--output=<output file> --nodes=<nodes to retrieve>`

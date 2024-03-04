@@ -16,26 +16,21 @@
 
 package com.android.designcompose.test.internal
 
-import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onRoot
-import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.github.takahirom.roborazzi.RoborazziRule
+import com.github.takahirom.roborazzi.captureRoboImage
 
 const val ROBO_CAPTURE_DIR = "src/testDebug/roborazzi"
 
-fun defaultRoborazziRule(
-    composeTestRule:
-        AndroidComposeTestRule<ActivityScenarioRule<ComponentActivity>, ComponentActivity>
-) =
+fun ComposeContentTestRule.captureRootRoboImage(screenshotName: String) {
+    onRoot().captureRoboImage("$screenshotName.png")
+}
+
+fun designComposeRoborazziRule(className: String) =
     RoborazziRule(
-        composeRule = composeTestRule,
-        // Specify the node to capture for the last image
-        captureRoot = composeTestRule.onRoot(),
         options =
             RoborazziRule.Options(
-                outputDirectoryPath = ROBO_CAPTURE_DIR,
-                // Always capture the last image of the test
-                captureType = RoborazziRule.CaptureType.LastImage()
+                outputDirectoryPath = "$ROBO_CAPTURE_DIR/$className",
             )
     )

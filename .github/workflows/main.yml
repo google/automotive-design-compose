@@ -254,7 +254,7 @@ jobs:
           arguments: publishAllPublicationsToLocalDirRepository
 
       - name: Upload maven repo
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo/
@@ -290,7 +290,7 @@ jobs:
           arguments: compareRoborazziDebug
 
       - name: Upload diff report
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: screenshot-diff-report
           path: |
@@ -403,7 +403,7 @@ jobs:
         arguments: publishAllPublicationsToLocalRepository
 
     - name: Upload maven repo
-      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
       with:
         name: unbundled_m2repo
         path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/

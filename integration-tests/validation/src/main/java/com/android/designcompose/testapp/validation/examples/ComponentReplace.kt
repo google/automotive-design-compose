@@ -16,9 +16,12 @@
 
 package com.android.designcompose.testapp.validation.examples
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -38,6 +41,8 @@ interface ComponentReplace {
         replaceVertical: @Composable (ComponentReplacementContext) -> Unit,
         @Design(node = "#replace-node-absolute")
         replaceAbsolute: @Composable (ComponentReplacementContext) -> Unit,
+        @Design(node = "#replace-node-box")
+        replaceBox: @Composable (ComponentReplacementContext) -> Unit,
     )
 
     @DesignComponent(node = "#BlueReplacement") fun BlueNode()
@@ -52,5 +57,6 @@ fun ComponentReplaceTest() {
         replaceHorizontal = { ComponentReplaceDoc.BlueNode(parentLayout = it.parentLayout) },
         replaceVertical = { ComponentReplaceDoc.RedNode(parentLayout = it.parentLayout) },
         replaceAbsolute = { ComponentReplaceDoc.BlueNode(parentLayout = it.parentLayout) },
+        replaceBox = { Box(Modifier.background(Color.Green)) }
     )
 }

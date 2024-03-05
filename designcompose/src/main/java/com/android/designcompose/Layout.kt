@@ -51,6 +51,7 @@ import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Rect
+import com.android.designcompose.serdegen.Size
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import com.novi.bincode.BincodeDeserializer
@@ -282,8 +283,14 @@ data class ExternalLayoutData(
     val left: Dimension,
     val bottom: Dimension,
     val right: Dimension,
-    val width: Dimension?,
-    val height: Dimension?,
+    val width: Dimension,
+    val height: Dimension,
+    val minWidth: Dimension,
+    val minHeight: Dimension,
+    val maxWidth: Dimension,
+    val maxHeight: Dimension,
+    val nodeSize: Size,
+    val boundingBox: Size,
     val flexGrow: Float,
     val flexBasis: Dimension,
     val alignSelf: AlignSelf,

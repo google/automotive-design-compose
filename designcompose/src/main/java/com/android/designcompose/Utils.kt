@@ -671,11 +671,14 @@ internal fun ViewStyle.externalLayoutData(): ExternalLayoutData {
         left,
         bottom,
         right,
-        // If width/height are fixed point values, don't override them since we want to use the
-        // new node's width/height. If not fixed point values, use the values in order to support
-        // auto layout properties such as constraints.
-        if (width !is Dimension.Points) width else null,
-        if (height !is Dimension.Points) height else null,
+        width,
+        height,
+        min_width,
+        min_height,
+        max_width,
+        max_height,
+        node_size,
+        bounding_box,
         flex_grow,
         flex_basis,
         align_self,
@@ -694,9 +697,14 @@ internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewSty
     overrideStyle.left = data.left
     overrideStyle.bottom = data.bottom
     overrideStyle.right = data.right
-    // Only override the width and height if not null
-    data.width?.let { overrideStyle.width = it }
-    data.height?.let { overrideStyle.height = it }
+    overrideStyle.node_size = data.nodeSize
+    overrideStyle.bounding_box = data.boundingBox
+    overrideStyle.width = data.width
+    overrideStyle.height = data.height
+    overrideStyle.min_width = data.minWidth
+    overrideStyle.min_height = data.minHeight
+    overrideStyle.max_width = data.maxWidth
+    overrideStyle.max_height = data.maxHeight
     overrideStyle.flex_grow = data.flexGrow
     overrideStyle.flex_basis = data.flexBasis
     overrideStyle.align_self = data.alignSelf

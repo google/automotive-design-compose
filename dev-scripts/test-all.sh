@@ -112,7 +112,7 @@ function output_results {
 
 trap output_results EXIT
 
-if [[ $RUN_FORMAT == "true" ]]; then ./gradlew ktfmtFormat; fi
+if [[ $RUN_FORMAT == "true" ]]; then ./gradlew spotApply; fi
 
 # The tests:
 # Roughly ordered by importance and speed. Less imporant, but quick, checks can go early.
@@ -124,8 +124,9 @@ else
   echo "actionlint not installed, skipping."
 fi
 
-run_cmd "KTFmt Check Build Scripts" . ./gradlew ktfmtCheckBuildScripts --no-configuration-cache
-run_cmd "KTFmt Check" . ./gradlew ktfmtCheck
+run_cmd "SpotCheck BuildLogic" build-logic ./gradlew spotCheck
+run_cmd "SpotCheck Plugins" plugins ./gradlew spotCheck
+run_cmd "SpotCheck Main Project" . ./gradlew spotCheck
 run_cmd "Cargo Fmt" . cargo-fmt --all --check
 
 run_cmd "Cargo Test" . cargo test --all-targets --all-features

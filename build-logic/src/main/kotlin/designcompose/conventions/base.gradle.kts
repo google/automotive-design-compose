@@ -17,32 +17,12 @@
 package designcompose.conventions
 
 import com.google.devtools.ksp.gradle.KspTask
-import com.ncorti.ktfmt.gradle.tasks.KtfmtCheckTask
+import org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin
 
 plugins {
-    id("com.ncorti.ktfmt.gradle")
     id("com.google.android.gms.strict-version-matcher-plugin")
+    id("com.diffplug.spotless")
 }
-
-ktfmt {
-    // KotlinLang style - 4 space indentation - From kotlinlang.org/docs/coding-conventions.html
-    kotlinLangStyle()
-}
-
-val ktfmtCheckBuildScripts =
-    tasks.register<KtfmtCheckTask>("ktfmtCheckBuildScripts") {
-        source = project.layout.projectDirectory.asFileTree
-        include("*.gradle.kts")
-        doFirst {
-            @Suppress("UnstableApiUsage")
-            if (this.project.gradle.startParameter.isConfigurationCacheRequested) {
-                throw GradleException(
-                    "This task will not run properly with the Configuration Cache. " +
-                        "You must rerun with '--no-configuration-cache'"
-                )
-            }
-        }
-    }
 
 project.plugins.withType(JavaBasePlugin::class.java) {
     project.extensions.getByType(JavaPluginExtension::class.java).toolchain {
@@ -51,7 +31,6 @@ project.plugins.withType(JavaBasePlugin::class.java) {
 }
 
 project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
-
     // Replace dependencies on DesignCompose with our project. Because of the way we include our
     // reference apps, we need to only do so the gradle project being run actually includes
     // DesiggnCompose
@@ -68,3 +47,16 @@ project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
 }
 
 tasks.withType<KspTask>() { group = "DesignCompose Developer" }
+
+// Keep in sync with gradle/libs.versions.toml
+val ktfmtVersion = "0.47"
+
+configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+    kotlinGradle { ktfmt(ktfmtVersion).kotlinlangStyle() }
+}
+
+project.plugins.withType(KotlinBasePlugin::class.java) {
+    configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+        kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
+    }
+}

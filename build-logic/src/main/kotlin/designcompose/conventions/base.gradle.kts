@@ -20,8 +20,26 @@ import com.google.devtools.ksp.gradle.KspTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin
 
 plugins {
-    id("com.google.android.gms.strict-version-matcher-plugin")
     id("com.diffplug.spotless")
+    id("com.google.android.gms.strict-version-matcher-plugin")
+}
+
+// Keep in sync with gradle/libs.versions.toml
+val ktfmtVersion = "0.47"
+
+// Apply Spotless Kotlin configuration to projects with Kotlin
+project.plugins.withType(KotlinBasePlugin::class.java) {
+    configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+        kotlin {
+            target("src/**/*.kt")
+            ktfmt(ktfmtVersion).kotlinlangStyle()
+        }
+    }
+}
+
+// Apply Spotless KotlinScript configuration globally to cover our build scripts
+configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+    kotlinGradle { ktfmt(ktfmtVersion).kotlinlangStyle() }
 }
 
 project.plugins.withType(JavaBasePlugin::class.java) {
@@ -47,22 +65,3 @@ project.plugins.withType(com.android.build.gradle.BasePlugin::class.java) {
 }
 
 tasks.withType<KspTask>() { group = "DesignCompose Developer" }
-
-// Keep in sync with gradle/libs.versions.toml
-val ktfmtVersion = "0.47"
-
-configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-    kotlinGradle {
-        target("**/*.gradle.kts")
-        ktfmt(ktfmtVersion).kotlinlangStyle()
-    }
-}
-
-project.plugins.withType(KotlinBasePlugin::class.java) {
-    configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-        kotlin {
-            target("**/*.kt")
-            ktfmt(ktfmtVersion).kotlinlangStyle()
-        }
-    }
-}

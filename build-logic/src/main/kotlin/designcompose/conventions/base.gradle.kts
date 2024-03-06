@@ -53,12 +53,16 @@ val ktfmtVersion = "0.47"
 
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
     kotlinGradle {
-        target("**/*.kt")
-        ktfmt(ktfmtVersion).kotlinlangStyle() }
+        target("**/*.gradle.kts")
+        ktfmt(ktfmtVersion).kotlinlangStyle()
+    }
 }
 
 project.plugins.withType(KotlinBasePlugin::class.java) {
-        configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-        kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
+    configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+        kotlin {
+            target("**/*.kt")
+            ktfmt(ktfmtVersion).kotlinlangStyle()
+        }
     }
 }

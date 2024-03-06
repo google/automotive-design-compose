@@ -19,7 +19,7 @@ import designcompose.conventions.publish.basePom
 plugins {
     kotlin("jvm")
     `java-gradle-plugin`
-        id("designcompose.conventions.base")
+    id("designcompose.conventions.base")
     id("designcompose.conventions.publish.common")
 }
 

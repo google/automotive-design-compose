@@ -52,11 +52,13 @@ tasks.withType<KspTask>() { group = "DesignCompose Developer" }
 val ktfmtVersion = "0.47"
 
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-    kotlinGradle { ktfmt(ktfmtVersion).kotlinlangStyle() }
+    kotlinGradle {
+        target("**/*.kt")
+        ktfmt(ktfmtVersion).kotlinlangStyle() }
 }
 
 project.plugins.withType(KotlinBasePlugin::class.java) {
-    configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+        configure<com.diffplug.gradle.spotless.SpotlessExtension> {
         kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
     }
 }

@@ -38,6 +38,11 @@ dependencyResolutionManagement {
     }
 }
 
+plugins {
+    // Downloads the required Java Toolchain, if needed.
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
+
 rootProject.name = "DesignCompose"
 
 // Published modules

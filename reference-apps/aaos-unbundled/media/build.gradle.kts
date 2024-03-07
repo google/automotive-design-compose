@@ -16,13 +16,11 @@
 
 plugins {
     alias(libs.plugins.kotlinAndroid)
-    id("com.android.library")
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.ksp)
+    id("designcompose.conventions.base")
 }
 
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(11)) } }
-
-@Suppress("UnstableApiUsage")
 android {
     namespace = "com.android.designcompose.reference.media"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -31,20 +29,13 @@ android {
         minSdk = libs.versions.appMinSdk.get().toInt()
         consumerProguardFiles("consumer-proguard-rules.pro")
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures { compose = true }
 
+    buildFeatures { compose = true }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
-    // Deprecated in AGP 8+, replaced by `packaging`
-    @Suppress("DEPRECATION")
-    packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
-
+    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
     useLibrary("android.car")
 }
 

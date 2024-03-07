@@ -605,6 +605,7 @@ pub enum LayoutAlignItems {
     Center,
     Max,
     SpaceBetween,
+    Baseline, // Not supported
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -769,6 +770,7 @@ pub enum StrokeCap {
     LineArrow,
     TriangleArrow,
     CircleFilled,
+    DiamondFilled, // Not supported
 }
 
 fn default_stroke_cap() -> StrokeCap {

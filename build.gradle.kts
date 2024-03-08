@@ -53,18 +53,6 @@ tasks.register<KtfmtFormatTask>("ktfmtFormatBuildScripts") {
     source = project.layout.projectDirectory.asFileTree
     exclude { it.path.contains("/build/") }
     include("**/*.gradle.kts")
-    notCompatibleWithConfigurationCache(
-        "Doesn't seem to read the codestyle set in the ktfmt extension"
-    )
-    doFirst {
-        @Suppress("UnstableApiUsage")
-        if (this.project.gradle.startParameter.isConfigurationCacheRequested) {
-            throw GradleException(
-                "This task will not run properly with the Configuration Cache. " +
-                    "You must rerun with '--no-configuration-cache'"
-            )
-        }
-    }
 }
 
 tasks.named("ktfmtCheck") { dependsOn(gradle.includedBuilds.map { it.task(":ktfmtCheck") }) }

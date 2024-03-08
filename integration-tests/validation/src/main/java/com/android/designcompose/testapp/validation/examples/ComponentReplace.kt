@@ -54,9 +54,9 @@ interface ComponentReplace {
 fun ComponentReplaceTest() {
     ComponentReplaceDoc.Main(
         modifier = Modifier.fillMaxWidth(),
-        replaceHorizontal = { ComponentReplaceDoc.BlueNode(parentLayout = it.parentLayout) },
-        replaceVertical = { ComponentReplaceDoc.RedNode(parentLayout = it.parentLayout) },
-        replaceAbsolute = { ComponentReplaceDoc.BlueNode(parentLayout = it.parentLayout) },
+        replaceHorizontal = { ComponentReplaceDoc.BlueNode() },
+        replaceVertical = { ComponentReplaceDoc.RedNode() },
+        replaceAbsolute = { ComponentReplaceDoc.BlueNode() },
         replaceBox = { Box(Modifier.background(Color.Green)) }
     )
 }

@@ -214,7 +214,6 @@ private interface DesignSwitcher {
         name: String,
         id: String,
         modifier: Modifier,
-        parentLayout: ParentLayoutInfo,
     ) {
         val customizations = CustomizationContext()
         customizations.setText("#Name", name)
@@ -229,7 +228,6 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
-                parentLayout = parentLayout,
             )
         }
     }
@@ -238,7 +236,6 @@ private interface DesignSwitcher {
     fun Message(
         text: String,
         timestamp: String,
-        parentLayout: ParentLayoutInfo,
     ) {
         val customizations = CustomizationContext()
         customizations.setText("#Text", text)
@@ -252,7 +249,6 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
-                parentLayout = parentLayout,
             )
         }
     }
@@ -261,7 +257,6 @@ private interface DesignSwitcher {
     fun MessageFailed(
         text: String,
         timestamp: String,
-        parentLayout: ParentLayoutInfo,
     ) {
         val customizations = CustomizationContext()
         customizations.setText("#Text", text)
@@ -275,7 +270,6 @@ private interface DesignSwitcher {
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
-                parentLayout = parentLayout,
             )
         }
     }
@@ -284,7 +278,6 @@ private interface DesignSwitcher {
     fun Checkbox(
         modifier: Modifier,
         checked: Boolean,
-        parentLayout: ParentLayoutInfo,
     ) {
         val nodeName = "#Checkbox=" + (if (checked) "On" else "Off")
         val queries = queries()
@@ -297,7 +290,6 @@ private interface DesignSwitcher {
             modifier = modifier,
             serverParams = DocumentServerParams(queries, ignoredImages()),
             liveUpdateMode = getLiveMode(),
-            parentLayout = parentLayout,
         )
     }
 }
@@ -363,7 +355,7 @@ private fun GetBranches(
     return ReplacementContent(
         count = branchList.size,
         content = { index ->
-            { rc ->
+            {
                 DesignSwitcherDoc.FigmaDoc(
                     branchList[index].second,
                     branchList[index].first,
@@ -371,7 +363,6 @@ private fun GetBranches(
                         interactionState.close(null)
                         setDocId(branchList[index].first)
                     },
-                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                 )
             }
         }
@@ -391,7 +382,7 @@ private fun GetProjectList(
     return ReplacementContent(
         count = doc?.c?.project_files?.size ?: 0,
         content = { index ->
-            { rc ->
+            {
                 DesignSwitcherDoc.FigmaDoc(
                     doc?.c?.project_files?.get(index)?.name ?: "",
                     doc?.c?.project_files?.get(index)?.id ?: "",
@@ -399,7 +390,6 @@ private fun GetProjectList(
                         interactionState.close(null)
                         setDocId(doc?.c?.project_files?.get(index)?.id ?: "")
                     },
-                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
                 )
             }
         }
@@ -418,7 +408,7 @@ private fun GetMessages(docId: String): ReplacementContent {
     return ReplacementContent(
         count = messages.size,
         content = { index ->
-            { rc ->
+            {
                 val it = messages[index]
                 val message = if (it.count > 1) it.message + "(${it.count})" else it.message
                 val secondsAgo = (System.currentTimeMillis() - it.timestamp) / 1000
@@ -426,13 +416,11 @@ private fun GetMessages(docId: String): ReplacementContent {
                     DesignSwitcherDoc.MessageFailed(
                         message,
                         elapsedTimeString(secondsAgo),
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                     )
                 else
                     DesignSwitcherDoc.Message(
                         message,
                         elapsedTimeString(secondsAgo),
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                     )
             }
         }
@@ -466,18 +454,16 @@ private fun GetNodeNamesCheckbox(state: Boolean, setState: (Boolean) -> Unit): R
     return ReplacementContent(
         count = 1,
         content = {
-            { rc ->
+            {
                 if (state)
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         true,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
                 else
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         false,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
             }
         }
@@ -493,18 +479,16 @@ private fun GetMiniMessagesCheckbox(
     return ReplacementContent(
         count = 1,
         content = {
-            { rc ->
+            {
                 if (state)
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         true,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
                 else
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         false,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
             }
         }
@@ -524,18 +508,16 @@ private fun GetShowRecompositionCheckbox(
     return ReplacementContent(
         count = 1,
         content = {
-            { rc ->
+            {
                 if (state)
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         true,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
                 else
                     DesignSwitcherDoc.Checkbox(
                         modifier = clickModifier,
                         false,
-                        parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
                     )
             }
         }

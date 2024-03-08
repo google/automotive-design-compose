@@ -243,30 +243,21 @@ fun TutorialMain() {
                     spanFunc { TutorialDoc.GridItemDesignNodeData(getItemType(index)) }
                 },
                 key = { index -> index },
-            ) { index, parentLayout ->
-                TutorialDoc.GridItem(itemType = getItemType(index), parentLayout = parentLayout)
+            ) { index ->
+                TutorialDoc.GridItem(itemType = getItemType(index))
             }
         },
         trackContent = {
-            ListContentData(count = 8) { index, parentLayout ->
+            ListContentData(count = 8) { index ->
                 when (index) {
-                    0 -> TutorialDoc.Track(title = "Reflection", parentLayout = parentLayout)
-                    1 -> TutorialDoc.Track(title = "Selfies Everyday", parentLayout = parentLayout)
-                    2 ->
-                        TutorialDoc.Track(title = "Who Can Look Away?", parentLayout = parentLayout)
-                    3 -> TutorialDoc.Track(title = "Hey Girl", parentLayout = parentLayout)
-                    4 -> TutorialDoc.Track(title = "Bye Girl", parentLayout = parentLayout)
-                    5 ->
-                        TutorialDoc.Track(
-                            title = "I Don't Need a Filter",
-                            parentLayout = parentLayout
-                        )
-                    6 -> TutorialDoc.Track(title = "I'm an Empath", parentLayout = parentLayout)
-                    7 ->
-                        TutorialDoc.Track(
-                            title = "Don't Tell Me What To Do",
-                            parentLayout = parentLayout
-                        )
+                    0 -> TutorialDoc.Track(title = "Reflection")
+                    1 -> TutorialDoc.Track(title = "Selfies Everyday")
+                    2 -> TutorialDoc.Track(title = "Who Can Look Away?")
+                    3 -> TutorialDoc.Track(title = "Hey Girl")
+                    4 -> TutorialDoc.Track(title = "Bye Girl")
+                    5 -> TutorialDoc.Track(title = "I Don't Need a Filter")
+                    6 -> TutorialDoc.Track(title = "I'm an Empath")
+                    7 -> TutorialDoc.Track(title = "Don't Tell Me What To Do")
                 }
             }
         },
@@ -280,8 +271,8 @@ fun TutorialMain() {
                     spanFunc { TutorialDoc.GridItem2DesignNodeData(getItemType(index)) }
                 },
                 key = { index -> index },
-            ) { index, parentLayout ->
-                TutorialDoc.GridItem2(itemType = getItemType(index), parentLayout = parentLayout)
+            ) { index ->
+                TutorialDoc.GridItem2(itemType = getItemType(index))
             }
         },
     )

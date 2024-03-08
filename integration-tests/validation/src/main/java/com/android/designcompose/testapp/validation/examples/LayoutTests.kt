@@ -34,7 +34,6 @@ import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
-import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -130,51 +129,31 @@ fun LayoutTests() {
             ReplacementContent(
                 count = numChildren,
                 content = { index ->
-                    { rc ->
-                        if (index % 2 == 0)
-                            LayoutTestsDoc.BlueSquare(
-                                parentLayout =
-                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                            )
-                        else
-                            LayoutTestsDoc.RedSquare(
-                                parentLayout =
-                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                            )
+                    {
+                        if (index % 2 == 0) LayoutTestsDoc.BlueSquare()
+                        else LayoutTestsDoc.RedSquare()
                     }
                 }
             ),
-        parent =
-            ReplacementContent(
-                count = 3,
-                content = { index ->
-                    { rc ->
-                        LayoutTestsDoc.BlueSquare(
-                            parentLayout =
-                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                        )
-                    }
-                }
-            ),
+        parent = ReplacementContent(count = 3, content = { { LayoutTestsDoc.BlueSquare() } }),
         widgetItems = { spanFunc ->
             ListContentData(
                 count = 4,
-                span = { index ->
+                span = {
                     val nodeData = { LayoutTestsDoc.ItemDesignNodeData(type = ItemType.Grid) }
                     spanFunc(nodeData)
                 },
-            ) { index, parentLayout ->
+            ) {
                 LayoutTestsDoc.Item(
                     title = "Hello",
                     type = ItemType.Grid,
-                    parentLayout = parentLayout
                 )
             }
         },
         showRect1 = showRect1,
         showRect2 = showRect2,
-        replacement1 = { LayoutTestsDoc.BlueSquare(parentLayout = it.parentLayout) },
-        replacement2 = { LayoutTestsDoc.BlueSquare(parentLayout = it.parentLayout) },
+        replacement1 = { LayoutTestsDoc.BlueSquare() },
+        replacement2 = { LayoutTestsDoc.BlueSquare() },
         designComposeCallbacks =
             DesignComposeCallbacks(
                 docReadyCallback = { id ->

@@ -23,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.android.designcompose.OpenLinkCallback
-import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -88,23 +87,11 @@ fun OpenLinkTest() {
             ReplacementContent(
                 count = 5,
                 content = { index ->
-                    { rc ->
+                    {
                         when (index) {
-                            0 ->
-                                OpenLinkTestDoc.Red(
-                                    parentLayout =
-                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                                )
-                            1 ->
-                                OpenLinkTestDoc.Green(
-                                    parentLayout =
-                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                                )
-                            2 ->
-                                OpenLinkTestDoc.Blue(
-                                    parentLayout =
-                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                                )
+                            0 -> OpenLinkTestDoc.Red()
+                            1 -> OpenLinkTestDoc.Green()
+                            2 -> OpenLinkTestDoc.Blue()
                             3 ->
                                 OpenLinkTestDoc.Square(
                                     shadow = SquareShadow.On,
@@ -112,21 +99,8 @@ fun OpenLinkTest() {
                                     icon =
                                         ReplacementContent(
                                             count = 1,
-                                            content = { i ->
-                                                { irc ->
-                                                    OpenLinkTestDoc.PurpleCircle(
-                                                        parentLayout =
-                                                            ParentLayoutInfo(
-                                                                irc.parentLayoutId,
-                                                                i,
-                                                                rc.rootLayoutId
-                                                            )
-                                                    )
-                                                }
-                                            }
+                                            content = { { OpenLinkTestDoc.PurpleCircle() } }
                                         ),
-                                    parentLayout =
-                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                             else ->
                                 OpenLinkTestDoc.Square(
@@ -135,21 +109,8 @@ fun OpenLinkTest() {
                                     icon =
                                         ReplacementContent(
                                             count = 1,
-                                            content = { i ->
-                                                { irc ->
-                                                    OpenLinkTestDoc.PurpleCircle(
-                                                        parentLayout =
-                                                            ParentLayoutInfo(
-                                                                irc.parentLayoutId,
-                                                                i,
-                                                                rc.rootLayoutId
-                                                            )
-                                                    )
-                                                }
-                                            }
+                                            content = { { OpenLinkTestDoc.PurpleCircle() } }
                                         ),
-                                    parentLayout =
-                                        ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
                                 )
                         }
                     }

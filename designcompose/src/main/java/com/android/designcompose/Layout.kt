@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -299,6 +301,10 @@ data class ExternalLayoutData(
     val relativeTransform: Optional<List<Float>>,
 )
 
+// ParentLayoutInfo holds data necessary to perform layout. When a node subscribes to layout, it
+// needs to know it's own layout ID as well as its parent's and root node's. The other bits of data
+// are used for list widgets that perform their own layout and replacement data that take the layout
+// of the original node being replaced.
 class ParentLayoutInfo(
     val parentLayoutId: Int = -1,
     val childIndex: Int = 0,
@@ -333,10 +339,22 @@ internal fun ParentLayoutInfo.withReplacementLayoutData(
     )
 }
 
+// Construct a ParentLayoutInfo object for the root node
 internal val rootParentLayoutInfo = ParentLayoutInfo()
 
-internal fun listLayout(listLayoutType: ListLayoutType): ParentLayoutInfo {
-    return ParentLayoutInfo(listLayoutType = listLayoutType, isWidgetAncestor = true)
+// A CompositionLocal ParentLayoutInfo object to be used in the UI tree
+internal val LocalParentLayoutInfo = compositionLocalOf<ParentLayoutInfo?> { ParentLayoutInfo() }
+
+// Declare a CompositionLocal object of the specified ParentLayoutInfo
+@Composable
+internal fun DesignParentLayout(parentLayout: ParentLayoutInfo?, content: @Composable () -> Unit) =
+    CompositionLocalProvider(LocalParentLayoutInfo provides parentLayout) { content() }
+
+// Declare a CompositionLocal object of the specified ParentLayoutInfo meant for list widget layouts
+@Composable
+internal fun DesignListLayout(listLayoutType: ListLayoutType, content: @Composable () -> Unit) {
+    val parentLayout = ParentLayoutInfo(listLayoutType = listLayoutType, isWidgetAncestor = true)
+    CompositionLocalProvider(LocalParentLayoutInfo provides parentLayout) { content() }
 }
 
 internal open class SimplifiedLayoutInfo(val selfModifier: Modifier) {

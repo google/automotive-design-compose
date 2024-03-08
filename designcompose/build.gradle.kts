@@ -1,3 +1,6 @@
+import com.android.designcompose.cargoplugin.CargoBuildType
+import com.android.designcompose.cargoplugin.getHostCargoOutputDir
+
 /*
  * Copyright 2023 Google LLC
  *
@@ -24,6 +27,7 @@ plugins {
     // Plugins from our buildSrc
     id("designcompose.conventions.base")
     id("designcompose.conventions.publish.android")
+    id("designcompose.conventions.roborazzi")
     id("designcompose.conventions.android-test-devices")
 }
 
@@ -71,6 +75,23 @@ android {
             add("META-INF/LGPL2.1")
         }
     }
+
+    // Hacky: GH-502
+    testOptions {
+        unitTests {
+            all { test ->
+
+                // hacky
+                val dcProject = project(":designcompose")
+                test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
+                test.systemProperty(
+                    "java.library.path",
+                    dcProject.getHostCargoOutputDir(CargoBuildType.DEBUG).get().asFile.absolutePath
+                )
+            }
+        }
+    }
+    // End Hacky
 }
 
 // To simplify publishing of the entire SDK, make the DesignCompose publish tasks depend on the
@@ -118,6 +139,19 @@ dependencies {
     implementation(libs.androidx.compose.runtime.tracing)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    testImplementation(testFixtures(project(":designcompose")))
+    testImplementation(project(":test"))
+    testImplementation(project(":test:internal"))
+    testImplementation(kotlin("test"))
+    testImplementation(libs.google.truth)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit)
+    testImplementation(libs.androidx.test.espresso.core)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
 
     androidTestImplementation(project(":test"))
     androidTestImplementation(kotlin("test"))

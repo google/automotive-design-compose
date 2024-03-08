@@ -21,8 +21,8 @@ plugins {
 
 spotless {
     kotlin {
+        target("src/**/*.kt")
         ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle()
-        targetExclude("build/**")
     }
     kotlinGradle { ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle() }
 }

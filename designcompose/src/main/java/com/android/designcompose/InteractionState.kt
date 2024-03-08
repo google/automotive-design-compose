@@ -34,7 +34,7 @@ import com.android.designcompose.serdegen.View
 // to a specific component instance instead of all of them, such as changing to a different variant.
 private fun getInstanceIdWithKey(instanceId: String, key: String?): String {
     var varKey = instanceId
-     if (key != null) varKey += key
+    if (key != null) varKey += key
     return varKey
 }
 

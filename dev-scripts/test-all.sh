@@ -112,7 +112,7 @@ function output_results {
 
 trap output_results EXIT
 
-if [[ $RUN_FORMAT == "true" ]]; then ./gradlew spotApply; fi
+if [[ $RUN_FORMAT == "true" ]]; then ./gradlew spotlessApply; fi
 
 # The tests:
 # Roughly ordered by importance and speed. Less imporant, but quick, checks can go early.

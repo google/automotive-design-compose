@@ -143,12 +143,14 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
             LayoutAlignItems::Max => AlignItems::FlexEnd,
             LayoutAlignItems::Min => AlignItems::FlexStart,
             LayoutAlignItems::SpaceBetween => AlignItems::FlexStart, // XXX
+            LayoutAlignItems::Baseline => AlignItems::FlexStart, // Not supported, default to FlexStart
         };
         style.justify_content = match frame.primary_axis_align_items {
             LayoutAlignItems::Center => JustifyContent::Center,
             LayoutAlignItems::Max => JustifyContent::FlexEnd,
             LayoutAlignItems::Min => JustifyContent::FlexStart,
             LayoutAlignItems::SpaceBetween => JustifyContent::SpaceBetween,
+            LayoutAlignItems::Baseline => JustifyContent::FlexStart, // Not supported, default to FlexStart
         };
         // The toolkit picks "Stretch" as a sensible default, but we don't
         // want that for Figma elements.

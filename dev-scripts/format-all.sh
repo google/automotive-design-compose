@@ -30,7 +30,7 @@ fi
 
 (
     cd "$GIT_ROOT/build-logic" || exit
-    ./gradlew spotlessApply
+    ./gradlew spotlessApply --stacktrace
 )
 (
     cd "$GIT_ROOT/plugins" || exit
@@ -38,6 +38,6 @@ fi
 )
 (
     cd "$GIT_ROOT" || exit
-    ./gradlew spotlessApply
+    ./gradlew spotlessApply --stacktrace
     cargo fmt
 )

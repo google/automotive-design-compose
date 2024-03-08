@@ -1,3 +1,5 @@
+import com.diffplug.gradle.spotless.SpotlessTask
+
 /*
  * Copyright 2023 Google LLC
  *
@@ -19,13 +21,17 @@ plugins {
     id("com.diffplug.spotless") version "6.25.0"
 }
 
-spotless {
-    kotlin {
-        target("src/**/*.kt")
-        ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle()
-    }
-    kotlinGradle { ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle() }
-}
+//spotless {
+//    kotlin {
+//        target("src/**/*.kt")
+//        ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle()
+//    }
+//    kotlinGradle { ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle() }
+//}
+
+//tasks.withType<SpotlessTask>().configureEach {
+//    notCompatibleWithConfigurationCache("https://github.com/diffplug/spotless/issues/987")
+//}
 
 dependencies {
     implementation(libs.android.gradlePlugin)

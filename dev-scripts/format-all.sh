@@ -26,18 +26,23 @@ if ! which "$GOPATH"/addlicense; then
     exit 1
 fi
 
-"$GOPATH"/addlicense -c "Google LLC" -l apache "$GIT_ROOT"
+"$GOPATH"/addlicense \
+    -ignore "**/.gradle/**" \
+    -ignore "**/build/**" \
+    -c "Google LLC" \
+    -l apache \
+    "$GIT_ROOT"
 
 (
     cd "$GIT_ROOT/build-logic" || exit
-    ./gradlew spotlessApply
+    ./gradlew spotlessApply --no-configuration-cache
 )
 (
     cd "$GIT_ROOT/plugins" || exit
-    ./gradlew spotlessApply
+    ./gradlew spotlessApply --no-configuration-cache
 )
 (
     cd "$GIT_ROOT" || exit
-    ./gradlew spotlessApply
+    ./gradlew spotlessApply --no-configuration-cache
     cargo fmt
 )

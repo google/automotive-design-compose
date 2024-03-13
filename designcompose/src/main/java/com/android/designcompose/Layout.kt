@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.tracing.trace
 import com.android.designcompose.serdegen.AlignItems
+import com.android.designcompose.serdegen.AlignSelf
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
@@ -48,6 +49,9 @@ import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.OverflowDirection
+import com.android.designcompose.serdegen.PositionType
+import com.android.designcompose.serdegen.Rect
+import com.android.designcompose.serdegen.Size
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import com.novi.bincode.BincodeDeserializer
@@ -270,12 +274,38 @@ internal object LayoutManager {
     }
 }
 
+// ExternalLayoutData holds layout properties of a node that affect its layout with respect to its
+// parent. When doing component replacement, these properties are saved from the node being
+// replaced so that the new node can use its values.
+data class ExternalLayoutData(
+    val margin: Rect,
+    val top: Dimension,
+    val left: Dimension,
+    val bottom: Dimension,
+    val right: Dimension,
+    val width: Dimension,
+    val height: Dimension,
+    val minWidth: Dimension,
+    val minHeight: Dimension,
+    val maxWidth: Dimension,
+    val maxHeight: Dimension,
+    val nodeSize: Size,
+    val boundingBox: Size,
+    val flexGrow: Float,
+    val flexBasis: Dimension,
+    val alignSelf: AlignSelf,
+    val positionType: PositionType,
+    val transform: Optional<List<Float>>,
+    val relativeTransform: Optional<List<Float>>,
+)
+
 class ParentLayoutInfo(
     val parentLayoutId: Int = -1,
     val childIndex: Int = 0,
     val rootLayoutId: Int = -1,
     val listLayoutType: ListLayoutType = ListLayoutType.None,
     val isWidgetAncestor: Boolean = false,
+    val replacementLayoutData: ExternalLayoutData? = null,
 )
 
 internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutInfo {
@@ -286,6 +316,20 @@ internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutI
         rootLayoutId,
         this.listLayoutType,
         this.isWidgetAncestor,
+        this.replacementLayoutData,
+    )
+}
+
+internal fun ParentLayoutInfo.withReplacementLayoutData(
+    replacementLayoutData: ExternalLayoutData
+): ParentLayoutInfo {
+    return ParentLayoutInfo(
+        this.parentLayoutId,
+        this.childIndex,
+        this.rootLayoutId,
+        this.listLayoutType,
+        this.isWidgetAncestor,
+        replacementLayoutData,
     )
 }
 
@@ -557,7 +601,7 @@ internal inline fun DesignFrameLayout(
     rootLayoutId: Int,
     layoutState: Int,
     designScroll: DesignScroll?,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val measurePolicy =
         remember(layoutState, designScroll) {
@@ -572,7 +616,7 @@ internal fun designMeasurePolicy(
     layoutId: Int,
     rootLayoutId: Int,
     layoutState: Int,
-    designScroll: DesignScroll?
+    designScroll: DesignScroll?,
 ) = MeasurePolicy { measurables, constraints ->
     val name = view.name
     val placeables =
@@ -673,7 +717,7 @@ internal inline fun DesignTextLayout(
     layout: Layout?,
     layoutState: Int,
     renderTop: Int?,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val measurePolicy =
         remember(layoutState, layout, renderTop) { designTextMeasurePolicy(layout, renderTop) }

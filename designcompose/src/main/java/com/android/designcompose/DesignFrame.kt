@@ -62,7 +62,7 @@ import com.android.designcompose.serdegen.ViewStyle
 internal fun DesignFrame(
     modifier: Modifier = Modifier,
     view: View,
-    style: ViewStyle,
+    viewStyle: ViewStyle,
     layoutInfo: SimplifiedLayoutInfo,
     document: DocContent,
     customizations: CustomizationContext,
@@ -100,11 +100,21 @@ internal fun DesignFrame(
                 }
 
                 override val textStyle: TextStyle? = null
-                override val parentLayout = parentLayout
+
+                // Set the replacementLayoutData field in parentLayout so that the replacement
+                // component can use the same layout data from its parent as the original node.
+                override val parentLayout =
+                    parentLayout?.withReplacementLayoutData(viewStyle.externalLayoutData())
             }
         )
         return true
     }
+
+    // If parentLayout has replacementLayoutData set, use it to override fields in viewStyle.
+    // This ensures that a replacement component uses the same layout data as the original node.
+    val style =
+        parentLayout?.replacementLayoutData?.let { viewStyle.withExternalLayoutData(it) }
+            ?: viewStyle
 
     // Check for an image customization with context. If it exists, call the custom image function
     // and provide it with the frame's background and size.

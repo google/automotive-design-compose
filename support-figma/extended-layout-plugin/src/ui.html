@@ -171,7 +171,16 @@
       </div>
     </div>
     <div id="barControls" style="margin-left:58; display:none">
-      <div style="display: flex; margin-top: 2">
+      <div style="margin-top: 10">
+        <div style="display: flex; align-items: center;">
+          <div class="directionbox">
+            <img id="barHorizontalIcon" src="images/dials/icon-progress-horizontal.svg" style="display: none" onclick="barLayoutChanged(false);">
+            <img id="barHorizontalSelectedIcon" src="images/dials/icon-progress-horizontal-selected.svg">
+            <img id="barVerticalIcon" src="images/dials/icon-progress-vertical.svg" onclick="barLayoutChanged(true);">
+            <img id="barVerticalSelectedIcon" src="images/dials/icon-progress-vertical-selected.svg" style="display: none">
+          </div>
+          <label class="normallabel" style="margin-left: 6">Progress bar direction</label>
+        </div>
         <div class="checkbox" style="margin-left: -3">
           <input id="barDiscreteSwitch" type="checkbox" class="checkbox">
           <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
@@ -215,7 +224,16 @@
       </div>
     </div>
     <div id="markerControls" style="margin-left:58; display:none">
-      <div style="display: flex; margin-top: 2">
+      <div style="margin-top: 10">
+        <div style="display: flex; align-items: center;">
+          <div class="directionbox">
+            <img id="markerHorizontalIcon" src="images/dials/icon-progress-horizontal.svg" style="display: none" onclick="markerLayoutChanged(false);">
+            <img id="markerHorizontalSelectedIcon" src="images/dials/icon-progress-horizontal-selected.svg">
+            <img id="markerVerticalIcon" src="images/dials/icon-progress-vertical.svg" onclick="markerLayoutChanged(true);">
+            <img id="markerVerticalSelectedIcon" src="images/dials/icon-progress-vertical-selected.svg" style="display: none">
+          </div>
+          <label class="normallabel" style="margin-left: 6">Progress bar direction</label>
+        </div>
         <div class="checkbox" style="margin-left: -3">
           <input id="markerDiscreteSwitch" type="checkbox" class="checkbox">
           <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
@@ -428,10 +446,22 @@
       }}, '*');
   }
 
+  function setBarLayout(vertical) {
+    barHorizontalIcon.style.display = vertical ? 'block' : 'none';
+    barHorizontalSelectedIcon.style.display = vertical ? 'none' : 'block';
+    barVerticalIcon.style.display = vertical ? 'none' : 'block';
+    barVerticalSelectedIcon.style.display = vertical ? 'block' : 'none';
+  }
+
   function barInputFormat() {
     barDiscreteValue.value = addPercent(barDiscreteValue.value);
     barValuePercent.textContent = addPercent(barValue.value.toString());
     makeStepListValues(barStepList, barTicks, 0, 100, barDiscreteSwitch, barDiscreteValue);
+  }
+
+  function barLayoutChanged(vertical) {
+    setBarLayout(vertical);
+    barChanged();
   }
 
   function barChanged() {
@@ -440,13 +470,23 @@
     barDiscreteValue.style.display = barDiscreteSwitch.checked ? 'block' : 'none';
     barInputFormat();
 
+    const vertical = barVerticalSelectedIcon.style.display != 'none';
     parent.postMessage({ pluginMessage: {
         msg: 'bar-changed',
         enabled: barSwitch.checked,
         value: toNumber(barValue.value, 0),
         discrete: barDiscreteSwitch.checked,
         discreteValue: toNumber(barDiscreteValue.value, 20),
+        vertical: vertical,
       }}, '*');
+  }
+
+
+  function setMarkerLayout(vertical) {
+    markerHorizontalIcon.style.display = vertical ? 'block' : 'none';
+    markerHorizontalSelectedIcon.style.display = vertical ? 'none' : 'block';
+    markerVerticalIcon.style.display = vertical ? 'none' : 'block';
+    markerVerticalSelectedIcon.style.display = vertical ? 'block' : 'none';
   }
 
   function markerInputFormat() {
@@ -455,18 +495,25 @@
     makeStepListValues(markerStepList, markerTicks, 0, 100, markerDiscreteSwitch, markerDiscreteValue);
   }
 
+  function markerLayoutChanged(vertical) {
+    setMarkerLayout(vertical);
+    markerChanged();
+  }
+
   function markerChanged() {
     updateMeterDisabledStates();
     markerControls.style.display = markerSwitch.checked ? 'block' : 'none';
     markerDiscreteValue.style.display = markerDiscreteSwitch.checked ? 'block' : 'none';
     markerInputFormat();
 
+    const vertical = markerVerticalSelectedIcon.style.display != 'none';
     parent.postMessage({ pluginMessage: {
         msg: 'marker-changed',
         enabled: markerSwitch.checked,
         value: toNumber(markerValue.value, 0),
         discrete: markerDiscreteSwitch.checked,
         discreteValue: toNumber(markerDiscreteValue.value, 20),
+        vertical: vertical,
       }}, '*');
   }
 
@@ -528,6 +575,7 @@
     barDiscreteSwitch.checked = bd && bd.discrete;
     barDiscreteValue.value = bd ? bd.discreteValue : 20;
     barDiscreteValue.style.display = (bd && bd.discrete) ? 'block' : 'none';
+    setBarLayout(bd && bd.vertical);
     barInputFormat();
 
     let md = meterData.progressMarkerData;
@@ -539,6 +587,7 @@
     markerDiscreteSwitch.checked = md && md.discrete;
     markerDiscreteValue.value = md ? md.discreteValue : 20;
     markerDiscreteValue.style.display = (md && md.discrete) ? 'block' : 'none';
+    setMarkerLayout(md && md.vertical);
     markerInputFormat();
 
     updateMeterDisabledStates();

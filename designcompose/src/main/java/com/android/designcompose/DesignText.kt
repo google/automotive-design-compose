@@ -100,7 +100,6 @@ internal fun DesignText(
     document: DocContent,
     nodeName: String,
     customizations: CustomizationContext,
-    parentLayout: ParentLayoutInfo?,
     layoutId: Int,
 ): Boolean {
     if (!customizations.getVisible(nodeName)) return false
@@ -271,6 +270,7 @@ internal fun DesignText(
     val (layout, setLayout) = remember { mutableStateOf<Layout?>(null) }
     // Keep track of the layout state, which changes whenever this view's layout changes
     val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
+    val parentLayout = LocalParentLayoutInfo.current
     val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
     // Subscribe for layout changes whenever the text data changes, and use a measure function to
     // measure the text width and height
@@ -319,7 +319,6 @@ internal fun DesignText(
                         @Composable override fun Content() {}
 
                         override val textStyle = textStyle
-                        override val parentLayout = parentLayout
                     }
                 )
             } else {

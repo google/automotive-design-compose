@@ -347,9 +347,9 @@ internal fun DesignView(
     interactionState: InteractionState,
     interactionScope: CoroutineScope,
     parentComponents: List<ParentComponentInfo>,
-    parentLayout: ParentLayoutInfo?,
     maskInfo: MaskInfo? = null,
 ): Boolean {
+    var parentLayout = LocalParentLayoutInfo.current
     val parentComps =
         if (v.component_info.isPresent) {
             val pc = parentComponents.toMutableList()
@@ -674,104 +674,136 @@ internal fun DesignView(
     // Use blue for DesignFrame nodes and green for DesignText nodes
     m = positionModifierFunc(Color(0f, 0f, 0.8f, 0.7f)).then(m)
 
-    val parentLayout = parentLayout?.withRootIdIfNone(layoutId)
-    when (view.data) {
-        is ViewData.Text ->
-            return DesignText(
-                modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
-                view = view,
-                text = (view.data as ViewData.Text).content,
-                style = style,
-                document = document,
-                nodeName = view.name,
-                customizations = customizations,
-                parentLayout = parentLayout,
-                layoutId = layoutId,
-            )
-        is ViewData.StyledText ->
-            return DesignText(
-                modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
-                view = view,
-                runs = (view.data as ViewData.StyledText).content,
-                style = style,
-                document = document,
-                nodeName = view.name,
-                customizations = customizations,
-                parentLayout = parentLayout,
-                layoutId = layoutId,
-            )
-        is ViewData.Container -> {
-            // Get the mask info from parameters unless we have a child that is a mask, in which
-            // case we know the mask view type is MaskParent and we create a new parent size
-            // mutable state.
-            var maskViewType = maskInfo?.type
-            var parentSize = maskInfo?.parentSize
-            if (view.hasChildMask()) {
-                maskViewType = MaskViewType.MaskParent
-                parentSize = remember { mutableStateOf(Size(0F, 0F)) }
-            }
+    parentLayout = parentLayout?.withRootIdIfNone(layoutId)
+    var visible = false
+    DesignParentLayout(parentLayout) {
+        when (view.data) {
+            is ViewData.Text ->
+                visible =
+                    DesignText(
+                        modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
+                        view = view,
+                        text = (view.data as ViewData.Text).content,
+                        style = style,
+                        document = document,
+                        nodeName = view.name,
+                        customizations = customizations,
+                        layoutId = layoutId,
+                    )
+            is ViewData.StyledText ->
+                visible =
+                    DesignText(
+                        modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
+                        view = view,
+                        runs = (view.data as ViewData.StyledText).content,
+                        style = style,
+                        document = document,
+                        nodeName = view.name,
+                        customizations = customizations,
+                        layoutId = layoutId,
+                    )
+            is ViewData.Container -> {
+                // Get the mask info from parameters unless we have a child that is a mask, in which
+                // case we know the mask view type is MaskParent and we create a new parent size
+                // mutable state.
+                var maskViewType = maskInfo?.type
+                var parentSize = maskInfo?.parentSize
+                if (view.hasChildMask()) {
+                    maskViewType = MaskViewType.MaskParent
+                    parentSize = remember { mutableStateOf(Size(0F, 0F)) }
+                }
 
-            return DesignFrame(
-                m,
-                view,
-                style,
-                viewLayoutInfo,
-                document,
-                customizations,
-                parentLayout,
-                layoutId,
-                parentComponents,
-                MaskInfo(parentSize, maskViewType),
-            ) {
-                val customContent = customizations.getContent(view.name)
-                if (customContent != null) {
-                    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
-                    if (rootLayoutId == -1) rootLayoutId = layoutId
-                    for (i in 0 until customContent.count) {
-                        customContent.content(i)(ContentReplacementContext(layoutId, rootLayoutId))
-                    }
-                } else {
-                    if ((view.data as ViewData.Container).children.isNotEmpty()) {
-                        // Create  a list of views to render. If the view is a mask, the second item
-                        // in the pair is a list of views that they mask. This lets us iterate
-                        // through all the views that a mask affects first, render them to a layer,
-                        // and then render the mask itself on top with appropriate alpha blending.
-                        // Note that we currently only support one mask under a parent, and we
-                        // don't support unmasked nodes under a parent when there exists a mask.
-                        val viewList: ArrayList<Pair<View, ArrayList<View>>> = ArrayList()
-                        var currentMask: View? = null
-                        (view.data as ViewData.Container).children.forEach { child ->
-                            val shouldClip = child.style.overflow is Overflow.Hidden
-                            if (child.isMask()) {
-                                // Add the mask to the list and set the current mask
-                                viewList.add(Pair(child, ArrayList()))
-                                currentMask = child
-                            } else if (shouldClip) {
-                                // A node with clip contents ends the reach of the last mask, so
-                                // add this view to the list and clear the current mask
-                                viewList.add(Pair(child, ArrayList()))
-                                currentMask = null
-                            } else {
-                                if (currentMask != null) {
-                                    // This view is masked so add it to the mask's list
-                                    viewList.last().second.add(child)
-                                } else {
-                                    // This view is not masked so add it to the main list
-                                    viewList.add(Pair(child, ArrayList()))
+                visible =
+                    DesignFrame(
+                        m,
+                        view,
+                        style,
+                        viewLayoutInfo,
+                        document,
+                        customizations,
+                        layoutId,
+                        parentComponents,
+                        MaskInfo(parentSize, maskViewType),
+                    ) {
+                        val customContent = customizations.getContent(view.name)
+                        if (customContent != null) {
+                            var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+                            if (rootLayoutId == -1) rootLayoutId = layoutId
+                            for (i in 0 until customContent.count) {
+                                DesignParentLayout(ParentLayoutInfo(layoutId, i, rootLayoutId)) {
+                                    customContent.content(i)()
                                 }
                             }
-                        }
-                        val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
-                        val isWidgetAncestor =
-                            parentLayout?.listLayoutType != ListLayoutType.None ||
-                                parentLayout?.isWidgetAncestor == true
-                        var childIndex = 0
-                        viewList.forEach {
-                            val childView = it.first
-                            val maskedChildren = it.second
-                            var maskViewType = MaskViewType.None
-                            if (maskedChildren.isNotEmpty()) {
-                                maskedChildren.forEach { maskedChild ->
+                        } else {
+                            if ((view.data as ViewData.Container).children.isNotEmpty()) {
+                                // Create  a list of views to render. If the view is a mask, the
+                                // second item in the pair is a list of views that they mask. This
+                                // lets us iterate through all the views that a mask affects first,
+                                // render them to a layer, and then render the mask itself on top
+                                // with appropriate alpha blending. Note that we currently only
+                                // support one mask under a parent, and we don't support unmasked
+                                // nodes under a parent when there exists a mask.
+                                val viewList: ArrayList<Pair<View, ArrayList<View>>> = ArrayList()
+                                var currentMask: View? = null
+                                (view.data as ViewData.Container).children.forEach { child ->
+                                    val shouldClip = child.style.overflow is Overflow.Hidden
+                                    if (child.isMask()) {
+                                        // Add the mask to the list and set the current mask
+                                        viewList.add(Pair(child, ArrayList()))
+                                        currentMask = child
+                                    } else if (shouldClip) {
+                                        // A node with clip contents ends the reach of the last
+                                        // mask, so add this view to the list and clear the current
+                                        // mask
+                                        viewList.add(Pair(child, ArrayList()))
+                                        currentMask = null
+                                    } else {
+                                        if (currentMask != null) {
+                                            // This view is masked so add it to the mask's list
+                                            viewList.last().second.add(child)
+                                        } else {
+                                            // This view is not masked so add it to the main list
+                                            viewList.add(Pair(child, ArrayList()))
+                                        }
+                                    }
+                                }
+                                val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
+                                val isWidgetAncestor =
+                                    parentLayout?.listLayoutType != ListLayoutType.None ||
+                                        parentLayout?.isWidgetAncestor == true
+                                var childIndex = 0
+                                viewList.forEach {
+                                    val childView = it.first
+                                    val maskedChildren = it.second
+                                    var maskViewType = MaskViewType.None
+                                    if (maskedChildren.isNotEmpty()) {
+                                        maskedChildren.forEach { maskedChild ->
+                                            val parentLayoutInfo =
+                                                ParentLayoutInfo(
+                                                    layoutId,
+                                                    childIndex,
+                                                    rootLayoutId,
+                                                    isWidgetAncestor = isWidgetAncestor
+                                                )
+                                            DesignParentLayout(parentLayoutInfo) {
+                                                val show =
+                                                    DesignView(
+                                                        Modifier,
+                                                        maskedChild,
+                                                        "",
+                                                        docId,
+                                                        document,
+                                                        customizations,
+                                                        interactionState,
+                                                        interactionScope,
+                                                        parentComps,
+                                                        MaskInfo(parentSize, maskViewType),
+                                                    )
+                                                if (show) ++childIndex
+                                            }
+                                        }
+                                        maskViewType = MaskViewType.MaskNode
+                                    }
                                     val parentLayoutInfo =
                                         ParentLayoutInfo(
                                             layoutId,
@@ -779,53 +811,30 @@ internal fun DesignView(
                                             rootLayoutId,
                                             isWidgetAncestor = isWidgetAncestor
                                         )
-                                    val show =
-                                        DesignView(
-                                            Modifier,
-                                            maskedChild,
-                                            "",
-                                            docId,
-                                            document,
-                                            customizations,
-                                            interactionState,
-                                            interactionScope,
-                                            parentComps,
-                                            parentLayoutInfo,
-                                            MaskInfo(parentSize, maskViewType),
-                                        )
-                                    if (show) ++childIndex
+                                    DesignParentLayout(parentLayoutInfo) {
+                                        val show =
+                                            DesignView(
+                                                Modifier,
+                                                childView,
+                                                "",
+                                                docId,
+                                                document,
+                                                customizations,
+                                                interactionState,
+                                                interactionScope,
+                                                parentComps,
+                                                MaskInfo(parentSize, maskViewType),
+                                            )
+                                        if (show) ++childIndex
+                                    }
                                 }
-                                maskViewType = MaskViewType.MaskNode
                             }
-                            val parentLayoutInfo =
-                                ParentLayoutInfo(
-                                    layoutId,
-                                    childIndex,
-                                    rootLayoutId,
-                                    isWidgetAncestor = isWidgetAncestor
-                                )
-                            val show =
-                                DesignView(
-                                    Modifier,
-                                    childView,
-                                    "",
-                                    docId,
-                                    document,
-                                    customizations,
-                                    interactionState,
-                                    interactionScope,
-                                    parentComps,
-                                    parentLayoutInfo,
-                                    MaskInfo(parentSize, maskViewType),
-                                )
-                            if (show) ++childIndex
                         }
                     }
-                }
             }
         }
     }
-    return false
+    return visible
 }
 
 // We want to know if we're the "root" component. For now, we'll do that using a local composition
@@ -932,7 +941,6 @@ fun DesignDoc(
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
-    parentLayout: ParentLayoutInfo? = null,
 ) {
     beginSection(DCTraces.DESIGNDOCINTERNAL)
     DesignDocInternal(
@@ -947,7 +955,6 @@ fun DesignDoc(
         designSwitcherPolicy = designSwitcherPolicy,
         designComposeCallbacks = designComposeCallbacks,
         parentComponents = parentComponents,
-        parentLayout = parentLayout,
     )
     endSection()
 }
@@ -966,7 +973,6 @@ internal fun DesignDocInternal(
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
-    parentLayout: ParentLayoutInfo? = null,
 ) {
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val overrideDocId = LocalDocOverrideContext.current
@@ -1052,42 +1058,46 @@ internal fun DesignDocInternal(
                 }
 
                 beginSection(DCTraces.DESIGNVIEW)
-                DesignView(
-                    modifier.semantics { sDocRenderStatus = docRenderStatus },
-                    startFrame,
-                    variantParentName,
-                    docId,
-                    doc,
-                    customizations,
-                    interactionState,
-                    interactionScope,
-                    parentComponents,
+                val designViewParentLayout =
                     if (isRoot) {
                         rootParentLayoutInfo
                     } else {
-                        parentLayout
+                        LocalParentLayoutInfo.current
                     }
-                )
+                DesignParentLayout(designViewParentLayout) {
+                    DesignView(
+                        modifier.semantics { sDocRenderStatus = docRenderStatus },
+                        startFrame,
+                        variantParentName,
+                        docId,
+                        doc,
+                        customizations,
+                        interactionState,
+                        interactionScope,
+                        parentComponents,
+                    )
+                }
                 endSection()
                 docRenderStatus = DocRenderStatus.Rendered
                 // If we're the root, then also paint overlays
                 if (isRoot || designSwitcherPolicy == DesignSwitcherPolicy.IS_DESIGN_SWITCHER) {
                     for (overlay in interactionState.rootOverlays(doc)) {
                         DesignOverlay(overlay.frame_extras.get(), interactionState) {
-                            DesignView(
-                                // Consume clicks inside the overlay so that it doesn't close the
-                                // overlay
-                                Modifier.clickable {},
-                                overlay,
-                                "",
-                                docId,
-                                doc,
-                                customizations,
-                                interactionState,
-                                interactionScope,
-                                listOf(),
-                                rootParentLayoutInfo
-                            )
+                            DesignParentLayout(rootParentLayoutInfo) {
+                                DesignView(
+                                    // Consume clicks inside the overlay so that it doesn't close
+                                    // the overlay
+                                    Modifier.clickable {},
+                                    overlay,
+                                    "",
+                                    docId,
+                                    doc,
+                                    customizations,
+                                    interactionState,
+                                    interactionScope,
+                                    listOf(),
+                                )
+                            }
                         }
                     }
                 }

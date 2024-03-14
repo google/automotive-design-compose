@@ -309,22 +309,20 @@ internal fun DesignText(
 
     val content =
         @Composable {
+            // Text needs to use a modifier that sets the size so that it wraps properly
+            val height = layout?.height() ?: 0
+            val textModifier = modifier.sizeToModifier(layout?.width() ?: 0, height)
             val replacementComponent = customizations.getComponent(nodeName)
             if (replacementComponent != null) {
                 replacementComponent(
                     object : ComponentReplacementContext {
-                        override val layoutModifier = modifier
-                        override val appearanceModifier = Modifier
+                        override val layoutModifier = textModifier
+                        override val textStyle = textStyle
 
                         @Composable override fun Content() {}
-
-                        override val textStyle = textStyle
                     }
                 )
             } else {
-                // Text needs to use a modifier that sets the size so that it wraps properly
-                val height = layout?.height() ?: 0
-                val textModifier = modifier.sizeToModifier(layout?.width() ?: 0, height)
                 BasicText(
                     annotatedText,
                     modifier = textModifier,

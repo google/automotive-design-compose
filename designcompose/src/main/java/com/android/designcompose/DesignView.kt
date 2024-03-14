@@ -350,6 +350,9 @@ internal fun DesignView(
     maskInfo: MaskInfo? = null,
 ): Boolean {
     var parentLayout = LocalParentLayoutInfo.current
+    // Set the 'designComposeRendered' flag to true so that the caller knows that some child in
+    // the call tree was composed with DesignView.
+    LocalParentLayoutInfo.current?.designComposeRendered = true
     val parentComps =
         if (v.component_info.isPresent) {
             val pc = parentComponents.toMutableList()

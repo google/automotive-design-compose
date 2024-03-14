@@ -254,15 +254,12 @@ fun CustomizationContext.setKey(key: String?) {
 // offering more behavioral changes than are permitted with simple Modifier customizations
 // (for example, replacing a styled text node with a complete text field.
 interface ComponentReplacementContext {
-    // Return the layout modifier that would have been used to present this component.
-    // This modifier doesn't contain any appearance information, and should be the first
-    // in the modifier chain.
+    // Return the custom layout modifier that this component would have used so that the layout
+    // function can retrieve the component's layout properties. When replacing a node with a
+    // composable that is not a DesignCompose generated function, such as a simple Box() or an
+    // AndroidView, this modifier should be used as a modifier for that component in order for it to
+    // retain the original node's layout (size, position) properties.
     val layoutModifier: Modifier
-
-    // Return the appearance modifier. This causes the view to be presented as specified
-    // by the designer. It also includes any modifier customizations that may have been
-    // specified elsewhere in the program.
-    val appearanceModifier: Modifier
 
     // Render the content of this replaced component, if any.
     @Composable fun Content(): Unit

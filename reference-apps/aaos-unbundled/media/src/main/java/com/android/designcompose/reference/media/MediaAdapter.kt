@@ -511,7 +511,7 @@ class MediaAdapter(
                 }
             nowPlaying.errorFrame = { c ->
                 media.ErrorFrame(
-                    modifier = c.layoutModifier.then(c.appearanceModifier),
+                    modifier = Modifier,
                     openLinkCallback = null,
                     errorMessage = playbackState?.errorMessage?.toString() ?: "",
                     errorButtonText = buttonText,
@@ -963,15 +963,17 @@ class MediaAdapter(
                     },
                     textStyle = context.textStyle ?: TextStyle.Default,
                     modifier =
-                        Modifier.onKeyEvent {
-                            if (it.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER) {
-                                setQuery(query.substring(0, query.length - 1))
-                                focusManager.clearFocus()
-                                true
-                            } else {
-                                false
+                        context.layoutModifier.then(
+                            Modifier.onKeyEvent {
+                                if (it.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER) {
+                                    setQuery(query.substring(0, query.length - 1))
+                                    focusManager.clearFocus()
+                                    true
+                                } else {
+                                    false
+                                }
                             }
-                        },
+                        ),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 )

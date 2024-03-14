@@ -101,7 +101,6 @@ fun VariantPropertiesTest() {
     VariantPropertiesTestDoc.MainFrame(
         square1 = {
             VariantPropertiesTestDoc.Square(
-                modifier = it.layoutModifier.then(it.appearanceModifier),
                 type = SquareBorder.Sharp,
                 color = SquareColor.Blue,
                 shadow = Shadow.Off,
@@ -109,7 +108,6 @@ fun VariantPropertiesTest() {
         },
         square2 = {
             VariantPropertiesTestDoc.Square(
-                modifier = it.layoutModifier.then(it.appearanceModifier),
                 type = SquareBorder.Sharp,
                 color = SquareColor.Green,
                 shadow = Shadow.On,
@@ -117,7 +115,6 @@ fun VariantPropertiesTest() {
         },
         square3 = {
             VariantPropertiesTestDoc.Square(
-                modifier = it.layoutModifier.then(it.appearanceModifier),
                 type = SquareBorder.Curved,
                 color = SquareColor.Blue,
                 shadow = Shadow.Off,
@@ -125,7 +122,6 @@ fun VariantPropertiesTest() {
         },
         square4 = {
             VariantPropertiesTestDoc.Square(
-                modifier = it.layoutModifier.then(it.appearanceModifier),
                 type = SquareBorder.Curved,
                 color = SquareColor.Blue,
                 shadow = Shadow.On,

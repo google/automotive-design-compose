@@ -50,8 +50,7 @@ import kotlinx.coroutines.launch
 internal const val TAG = "DesignCompose"
 
 internal class LiveDocSubscription(
-    val id: String,
-    val docId: String,
+    val key: LiveDocKey,
     val onUpdate: (DocContent?) -> Unit,
     val docUpdateCallback: ((String, ByteArray?) -> Unit)?,
 )
@@ -61,6 +60,15 @@ internal class LiveDocSubscriptions(
     val saveFile: File?,
     val subscribers: ArrayList<LiveDocSubscription> = ArrayList(),
 )
+
+internal data class LiveDocKey(
+    val docId: String,
+    val resourceName: String,
+) {
+    fun id(): String {
+        return "${resourceName}_$docId"
+    }
+}
 
 /**
  * Design doc status
@@ -92,11 +100,12 @@ object DesignSettings {
     internal var figmaToken = mutableStateOf<String?>(null)
     internal var isDocumentLive = mutableStateOf(false)
     private var fontDb: HashMap<String, FontFamily> = HashMap()
-    internal var fileFetchStatus: HashMap<String, DesignDocStatus> = HashMap()
+    internal var fileFetchStatus: HashMap<LiveDocKey, DesignDocStatus> = HashMap()
 
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
-    fun testOnlyFigmaFetchStatus(fileId: String) = fileFetchStatus[fileId]
+    fun testOnlyFigmaFetchStatus(fileId: String, resourceName: String) =
+        fileFetchStatus[LiveDocKey(fileId, resourceName)]
 
     fun enableLiveUpdates(
         activity: ComponentActivity,
@@ -211,30 +220,28 @@ internal object SpanCache {
 internal object DocServer {
     internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
     internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
-    internal val documents: HashMap<String, DocContent> = HashMap()
-    internal val subscriptions: HashMap<String, LiveDocSubscriptions> = HashMap()
+    internal val documents: HashMap<LiveDocKey, DocContent> = HashMap()
+    internal val subscriptions: HashMap<LiveDocKey, LiveDocSubscriptions> = HashMap()
     internal val branchHash: HashMap<String, HashMap<String, String>> =
         HashMap() // doc ID -> { docID -> docName }
     internal val mainHandler = Handler(Looper.getMainLooper())
     internal var firstFetch = true
     internal var pauseUpdates = false
-    internal var periodicFetchRunnable: Runnable =
-        Runnable() {
-            thread {
-                beginSection(DCTraces.FETCHDOCUMENTS)
-                if (!fetchDocuments(firstFetch)) {
-                    endSection()
-                    Log.e(TAG, "Error occurred while fetching or decoding documents.")
-                    return@thread
-                }
+    internal var periodicFetchRunnable: Runnable = Runnable {
+        thread {
+            beginSection(DCTraces.FETCHDOCUMENTS)
+            if (!fetchDocuments(firstFetch)) {
                 endSection()
-                firstFetch = false
-
-                // Schedule another run after some time even if there were any
-                // errors.
-                scheduleLiveUpdate()
+                Log.e(TAG, "Error occurred while fetching or decoding documents.")
+                return@thread
             }
+            endSection()
+            firstFetch = false
+
+            // Schedule another run after some time even if there were any errors.
+            scheduleLiveUpdate()
         }
+    }
 }
 
 internal fun DocServer.initializeLiveUpdate() {
@@ -296,46 +303,49 @@ internal fun DocServer.fetchDocuments(
     val proxyConfig = getProxyConfig()
     Log.i(TAG, "HTTP Proxy: ${proxyConfig.httpProxyConfig?.proxySpec ?: "not set"}")
 
-    val docIds =
+    val liveDocKeys =
         synchronized(subscriptions) {
             // Collect the docs
             subscriptions.keys.toList()
         }
-    for (id in docIds) {
-        val previousDoc = synchronized(documents) { documents[id] }
-        Feedback.startLiveUpdate(id)
+    println("### Fetch ${liveDocKeys.size} documents")
+    for (key in liveDocKeys) {
+        val previousDoc = synchronized(documents) { documents[key] }
+        Feedback.startLiveUpdate(key.id())
 
         val params =
             synchronized(subscriptions) {
-                subscriptions[id]?.serverParams ?: DocumentServerParams()
+                subscriptions[key]?.serverParams ?: DocumentServerParams()
             }
-        val saveFile = synchronized(subscriptions) { subscriptions[id]?.saveFile }
+        val saveFile = synchronized(subscriptions) { subscriptions[key]?.saveFile }
         try {
             val postData = constructPostJson(figmaApiKey, previousDoc?.c, params, firstFetch)
-            val documentData: ByteArray? = LiveUpdate.fetchDocBytes(id, postData, proxyConfig)
+            println("  ### Fetch $key")
+            val documentData: ByteArray? =
+                LiveUpdate.fetchDocBytes(key.docId, postData, proxyConfig)
 
             if (documentData != null) {
-                Feedback.documentDecodeReadBytes(documentData.size, id)
-                val doc = decodeServerDoc(documentData, previousDoc, id, saveFile, Feedback)
+                Feedback.documentDecodeReadBytes(documentData.size, key.id())
+                val doc = decodeServerDoc(documentData, previousDoc, key.docId, saveFile, Feedback)
                 if (doc == null) {
-                    Feedback.documentDecodeError(id)
+                    Feedback.documentDecodeError(key.id())
                     Log.e(TAG, "Error decoding doc.")
                     break
                 }
-                updateBranches(id, doc)
+                updateBranches(key.docId, doc)
 
                 // Remember the new document
-                synchronized(documents) { documents[id] = doc }
+                synchronized(documents) { documents[key] = doc }
                 synchronized(DesignSettings.fileFetchStatus) {
                     val now = Instant.now()
-                    DesignSettings.fileFetchStatus[id]?.lastFetch = now
-                    DesignSettings.fileFetchStatus[id]?.lastUpdateFromFetch = now
+                    DesignSettings.fileFetchStatus[key]?.lastFetch = now
+                    DesignSettings.fileFetchStatus[key]?.lastUpdateFromFetch = now
                 }
 
                 // Get the list of subscribers to this document id
                 val subs: Array<LiveDocSubscription> =
                     synchronized(subscriptions) {
-                        subscriptions[id]?.subscribers?.toTypedArray() ?: arrayOf()
+                        subscriptions[key]?.subscribers?.toTypedArray() ?: arrayOf()
                     }
 
                 // On the main thread, tell all of the subscribers about the new document.
@@ -344,17 +354,17 @@ internal fun DocServer.fetchDocuments(
                     for (subscriber in subs) {
                         subscriber.onUpdate(doc)
                         subscriber.docUpdateCallback?.invoke(
-                            id,
+                            key.docId,
                             doc?.c?.toSerializedBytes(Feedback)
                         )
                     }
                 }
-                Feedback.documentUpdated(id, subs.size)
+                Feedback.documentUpdated(key.id(), subs.size)
             } else {
                 synchronized(DesignSettings.fileFetchStatus) {
-                    DesignSettings.fileFetchStatus[id]?.lastFetch = Instant.now()
+                    DesignSettings.fileFetchStatus[key]?.lastFetch = Instant.now()
                 }
-                Feedback.documentUnchanged(id)
+                Feedback.documentUnchanged(key.id())
             }
         } catch (exception: Exception) {
             val msg =
@@ -370,11 +380,11 @@ internal fun DocServer.fetchDocuments(
                         "Unhandled ${exception.javaClass}"
                     }
                 }
-            if (DocumentSwitcher.isNotOriginalDocId(id)) {
-                Feedback.documentUpdateErrorRevert(id, msg)
-                DocumentSwitcher.revertToOriginal(id)
+            if (DocumentSwitcher.isNotOriginalDocId(key.docId)) {
+                Feedback.documentUpdateErrorRevert(key.id(), msg)
+                DocumentSwitcher.revertToOriginal(key.docId)
             } else {
-                Feedback.documentUpdateError(id, msg)
+                Feedback.documentUpdateError(key.id(), msg)
             }
         }
     }
@@ -386,27 +396,27 @@ internal fun DocServer.subscribe(
     serverParams: DocumentServerParams,
     saveFile: File?,
 ) {
-    Feedback.addSubscriber(doc.docId)
+    Feedback.addSubscriber(doc.key.id())
     synchronized(subscriptions) {
-        val subList = subscriptions[doc.docId] ?: LiveDocSubscriptions(serverParams, saveFile)
+        val subList = subscriptions[doc.key] ?: LiveDocSubscriptions(serverParams, saveFile)
         subList.subscribers.add(doc)
-        subscriptions[doc.docId] = subList
+        subscriptions[doc.key] = subList
     }
 }
 
 internal fun DocServer.unsubscribe(doc: LiveDocSubscription) {
-    Feedback.removeSubscriber(doc.docId)
+    Feedback.removeSubscriber(doc.key.id())
     synchronized(subscriptions) {
-        val subList = subscriptions[doc.docId] ?: return
+        val subList = subscriptions[doc.key] ?: return
         subList.subscribers.remove(doc)
         if (subList.subscribers.size == 0) {
-            subscriptions.remove(doc.docId)
+            subscriptions.remove(doc.key)
         }
     }
 }
 
 private fun DocServer.updateBranches(docId: String, doc: DocContent) {
-    val docBranches = branchHash[docId] ?: HashMap<String, String>()
+    val docBranches = branchHash[docId] ?: HashMap()
     doc.c.branches?.forEach { if (!docBranches.containsKey(it.id)) docBranches[it.id] = it.name }
 
     // Create a "Main" branch for this doc ID so that we can go back to it after switching to a
@@ -426,7 +436,6 @@ internal fun DocServer.doc(
     docUpdateCallback: ((String, ByteArray?) -> Unit)?,
     disableLiveMode: Boolean,
 ): DocContent? {
-    println("### Doc $resourceName, $docId")
     // Check that the document ID is valid
     if (!validateFigmaDocId(docId)) {
         Log.w(TAG, "Invalid Figma document ID: $docId")
@@ -435,16 +444,17 @@ internal fun DocServer.doc(
 
     beginSection(DCTraces.DOCSERVER_DOC)
 
-    val id = "${resourceName}_$docId"
+    val key = LiveDocKey(docId, resourceName)
+    val id = key.id()
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }
     synchronized(DesignSettings.fileFetchStatus) {
-        DesignSettings.fileFetchStatus.putIfAbsent(docId, DesignDocStatus())
+        DesignSettings.fileFetchStatus.putIfAbsent(key, DesignDocStatus())
     }
 
     // See if we've already loaded this doc
-    val preloadedDoc = synchronized(documents) { documents[docId] }
+    val preloadedDoc = synchronized(documents) { documents[key] }
 
     val context = LocalContext.current
     val saveFile = context.getFileStreamPath("$id.dcf")
@@ -454,7 +464,6 @@ internal fun DocServer.doc(
     // onDispose closure prior to running a change, or when the parent Composable
     // is no longer in use).
     DisposableEffect(id) {
-        println("### DisposableEffect $resourceName, $docId")
         // DisposableEffect can cause execution of the hosting Composable to be
         // suspended, OR the closure we're in here is run later. That means that
         // another Composable could have loaded `docId` before we were run, so
@@ -464,7 +473,7 @@ internal fun DocServer.doc(
         // up loading it many times in a row, eventually leading to heap exhaustion.
         val targetDoc =
             synchronized(documents) {
-                var targetDoc = documents[docId]
+                var targetDoc = documents[key]
                 if (targetDoc == null) {
                     try {
                         // Attempt to load it from disk synchronously.
@@ -477,9 +486,9 @@ internal fun DocServer.doc(
                             )
                         if (targetDoc != null) {
                             println("### Save $resourceName, $docId")
-                            documents[docId] = targetDoc
+                            documents[key] = targetDoc
                             synchronized(DesignSettings.fileFetchStatus) {
-                                DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk =
+                                DesignSettings.fileFetchStatus[key]?.lastLoadFromDisk =
                                     Instant.now()
                             }
                         }
@@ -495,7 +504,7 @@ internal fun DocServer.doc(
         // Subscribe to live updates, if we have an access token.
         var subscription: LiveDocSubscription? = null
         if (!disableLiveMode) {
-            subscription = LiveDocSubscription(id, docId, setLiveDoc, docUpdateCallback)
+            subscription = LiveDocSubscription(key, setLiveDoc, docUpdateCallback)
             subscribe(subscription, serverParams, saveFile)
         }
         onDispose { if (subscription != null) unsubscribe(subscription) }
@@ -515,9 +524,9 @@ internal fun DocServer.doc(
         val assetDoc = assetManager.open("figma/$id.dcf")
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
-            synchronized(documents) { documents[docId] = decodedDoc }
+            synchronized(documents) { documents[key] = decodedDoc }
             synchronized(DesignSettings.fileFetchStatus) {
-                DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
+                DesignSettings.fileFetchStatus[key]?.lastLoadFromDisk = Instant.now()
             }
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             endSection()

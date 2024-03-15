@@ -60,7 +60,7 @@ class RenderTests {
         composeTestRule.waitForIdle()
 
         composeTestRule.onDCDoc(DesignSwitcherDoc).assertExists()
-        with(DesignSettings.testOnlyFigmaFetchStatus(designSwitcherDocId())) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(designSwitcherDocId(), "DesignSwitcherDoc")) {
             assertNotNull(this)
             assertNotNull(lastLoadFromDisk)
             assertNull(lastFetch)
@@ -82,7 +82,7 @@ class RenderTests {
                 .assertExists()
         }
         // It was not loaded from disk and did not render
-        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId, "HelloWorldDoc")) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
             assertNull(lastFetch)

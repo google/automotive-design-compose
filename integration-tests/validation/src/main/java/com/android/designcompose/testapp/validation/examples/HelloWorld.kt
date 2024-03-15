@@ -32,8 +32,10 @@ interface HelloWorld {
 
 @DesignDoc(id = "x9JgFP4Jfn406130rRc30Y")
 interface TestMain {
-    @DesignComponent(node = "#stage") fun Main1(
-        @Design(node = "#replace-node") replaceNode: @Composable (ComponentReplacementContext) -> Unit,
+    @DesignComponent(node = "#stage")
+    fun Main1(
+        @Design(node = "#replace-node")
+        replaceNode: @Composable (ComponentReplacementContext) -> Unit,
     )
 }
 
@@ -44,11 +46,7 @@ interface TestBlue {
 
 @Composable
 fun HelloWorld() {
-    TestMainDoc.Main1(
-        replaceNode = {
-            TestBlueDoc.Node1()
-        }
-    )
+    TestMainDoc.Main1(replaceNode = { TestBlueDoc.Node1() })
 }
 
 @Composable

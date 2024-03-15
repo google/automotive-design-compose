@@ -63,7 +63,7 @@ class LiveUpdateBehaviorTests {
         composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
         TestUtils.triggerLiveUpdate()
 
-        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId, "HelloWorldWrongNode")) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
             assertNotNull(lastFetch)
@@ -84,7 +84,7 @@ class LiveUpdateBehaviorTests {
             .assertExists()
 
         // The doc was fetched
-        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId, "HelloWorldWrongNode")) {
             assertNotNull(this)
             assertNotNull(lastUpdateFromFetch)
             assertNotNull(lastFetch)

@@ -261,9 +261,6 @@ interface ComponentReplacementContext {
     // retain the original node's layout (size, position) properties.
     val layoutModifier: Modifier
 
-    // Render the content of this replaced component, if any.
-    @Composable fun Content(): Unit
-
     // Return the text style, if the component being replaced is a text node in the Figma
     // document.
     val textStyle: TextStyle?

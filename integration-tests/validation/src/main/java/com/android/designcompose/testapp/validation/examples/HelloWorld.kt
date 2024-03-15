@@ -18,6 +18,7 @@ package com.android.designcompose.testapp.validation.examples
 
 import android.util.Log
 import androidx.compose.runtime.Composable
+import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -29,8 +30,29 @@ interface HelloWorld {
     @DesignComponent(node = "#MainFrame") fun Main(@Design(node = "#Name") name: String)
 }
 
+@DesignDoc(id = "x9JgFP4Jfn406130rRc30Y")
+interface TestMain {
+    @DesignComponent(node = "#stage") fun Main1(
+        @Design(node = "#replace-node") replaceNode: @Composable (ComponentReplacementContext) -> Unit,
+    )
+}
+
+@DesignDoc(id = "x9JgFP4Jfn406130rRc30Y")
+interface TestBlue {
+    @DesignComponent(node = "#BlueReplacement") fun Node1()
+}
+
 @Composable
 fun HelloWorld() {
+    TestMainDoc.Main1(
+        replaceNode = {
+            TestBlueDoc.Node1()
+        }
+    )
+}
+
+@Composable
+fun HelloWorld2() {
     HelloWorldDoc.Main(
         name = "World",
         designComposeCallbacks =

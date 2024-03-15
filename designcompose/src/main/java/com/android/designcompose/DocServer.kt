@@ -426,6 +426,7 @@ internal fun DocServer.doc(
     docUpdateCallback: ((String, ByteArray?) -> Unit)?,
     disableLiveMode: Boolean,
 ): DocContent? {
+    println("### Doc $resourceName, $docId")
     // Check that the document ID is valid
     if (!validateFigmaDocId(docId)) {
         Log.w(TAG, "Invalid Figma document ID: $docId")
@@ -453,6 +454,7 @@ internal fun DocServer.doc(
     // onDispose closure prior to running a change, or when the parent Composable
     // is no longer in use).
     DisposableEffect(id) {
+        println("### DisposableEffect $resourceName, $docId")
         // DisposableEffect can cause execution of the hosting Composable to be
         // suspended, OR the closure we're in here is run later. That means that
         // another Composable could have loaded `docId` before we were run, so
@@ -474,6 +476,7 @@ internal fun DocServer.doc(
                                 Feedback
                             )
                         if (targetDoc != null) {
+                            println("### Save $resourceName, $docId")
                             documents[docId] = targetDoc
                             synchronized(DesignSettings.fileFetchStatus) {
                                 DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk =

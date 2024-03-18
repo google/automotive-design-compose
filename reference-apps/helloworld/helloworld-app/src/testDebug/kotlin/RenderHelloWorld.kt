@@ -16,8 +16,7 @@
 
 package com.android.designcompose.testapp.helloworld
 
-import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -43,7 +42,7 @@ import org.robolectric.annotation.GraphicsMode
 @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class RenderHelloWorld {
-    @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+    @get:Rule val composeTestRule = createComposeRule()
 
     @get:Rule
     val roborazziRule =
@@ -59,7 +58,7 @@ class RenderHelloWorld {
                 )
         )
 
-    @Test(expected = AssertionError::class) // TODO: GH-483
+    @Test
     fun testHello() {
         with(composeTestRule) {
             setContent { HelloWorldDoc.mainFrame(name = "Testers!") }

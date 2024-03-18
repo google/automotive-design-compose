@@ -57,6 +57,6 @@ fun ComponentReplaceTest() {
         replaceHorizontal = { ComponentReplaceDoc.BlueNode() },
         replaceVertical = { ComponentReplaceDoc.RedNode() },
         replaceAbsolute = { ComponentReplaceDoc.BlueNode() },
-        replaceBox = { Box(Modifier.background(Color.Green)) }
+        replaceBox = { Box(Modifier.background(Color.Green).then(it.layoutModifier)) }
     )
 }

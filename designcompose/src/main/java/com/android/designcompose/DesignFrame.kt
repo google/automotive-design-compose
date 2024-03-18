@@ -84,6 +84,60 @@ internal fun DesignFrame(
         m = m.then(customModifier)
     }
 
+    // Keep track of the layout state, which changes whenever this view's layout changes
+    val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
+    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+    if (rootLayoutId == -1) rootLayoutId = layoutId
+
+    val subscribeLayout =
+        @Composable { style: ViewStyle ->
+            // Subscribe for layout changes whenever the view changes. The view can change if it is
+            // a component instance that changes to another variant. It can also change due to a
+            // live update. Subscribing when already subscribed simply updates the view in the
+            // layout system.
+            DisposableEffect(view) {
+                trace(DCTraces.DESIGNFRAME_DE_SUBSCRIBE) {
+                    val parentLayoutId = parentLayout?.parentLayoutId ?: -1
+                    val childIndex = parentLayout?.childIndex ?: -1
+                    // Subscribe to layout changes when the view changes or is added
+                    LayoutManager.subscribeFrame(
+                        layoutId,
+                        setLayoutState,
+                        parentLayoutId,
+                        childIndex,
+                        style,
+                        view.name
+                    )
+                }
+                onDispose {}
+            }
+
+            DisposableEffect(Unit) {
+                onDispose {
+                    // Unsubscribe to layout changes when the view is removed
+                    LayoutManager.unsubscribe(
+                        layoutId,
+                        rootLayoutId,
+                        parentLayout?.isWidgetAncestor == true
+                    )
+                }
+            }
+        }
+
+    val finishLayout =
+        @Composable {
+            // This must be called at the end of DesignFrame just before returning, after adding all
+            // children. This lets the LayoutManager know that this frame has completed, and so if
+            // there are no other parent frames performing layout, layout computation can be
+            // performed.
+            DisposableEffect(view) {
+                trace(DCTraces.DESIGNFRAME_FINISHLAYOUT) {
+                    LayoutManager.finishLayout(layoutId, rootLayoutId)
+                }
+                onDispose {}
+            }
+        }
+
     // Check for a customization that replaces this component completely
     // If we're replaced, then invoke the replacement here. We may want to pass more layout info
     // (row/column/etc) to the replacement component at some point.
@@ -94,17 +148,25 @@ internal fun DesignFrame(
         DesignParentLayout(replacementParentLayout) {
             replacementComponent(
                 object : ComponentReplacementContext {
-                    override val layoutModifier = layoutInfo.selfModifier
-                    override val appearanceModifier = m
+                    override val layoutModifier = Modifier.layoutStyle(name, layoutId)
+                    override val textStyle: TextStyle? = null
 
                     @Composable
                     override fun Content() {
                         content()
                     }
-
-                    override val textStyle: TextStyle? = null
                 }
             )
+
+            // If the replacement component was a DesignCompose node, designComposeRendered would
+            // have been set to true. If false, the replacement component was some other type of
+            // Jetpack Compose composable. In that case, DesignView would not have been called, so
+            // we need to subscribe to layout with the original node's view style so that the
+            // replacement component is able to use the same layout.
+            if (LocalParentLayoutInfo.current?.designComposeRendered == false) {
+                subscribeLayout(viewStyle)
+                finishLayout()
+            }
         }
         return true
     }
@@ -142,54 +204,7 @@ internal fun DesignFrame(
     val meterValue = customizations.getMeterFunction(name)?.let { it() }
     meterValue?.let { customizations.setMeterValue(name, it) }
 
-    // Keep track of the layout state, which changes whenever this view's layout changes
-    val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
-    // Subscribe for layout changes whenever the view changes. The view can change if it is a
-    // component instance that changes to another variant. It can also change due to a live update.
-    // Subscribing when already subscribed simply updates the view in the layout system.
-    DisposableEffect(view) {
-        trace(DCTraces.DESIGNFRAME_DE_SUBSCRIBE) {
-            val parentLayoutId = parentLayout?.parentLayoutId ?: -1
-            val childIndex = parentLayout?.childIndex ?: -1
-            // Subscribe to layout changes when the view changes or is added
-            LayoutManager.subscribeFrame(
-                layoutId,
-                setLayoutState,
-                parentLayoutId,
-                childIndex,
-                style,
-                view.name
-            )
-        }
-        onDispose {}
-    }
-
-    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
-    if (rootLayoutId == -1) rootLayoutId = layoutId
-    DisposableEffect(Unit) {
-        onDispose {
-            // Unsubscribe to layout changes when the view is removed
-            LayoutManager.unsubscribe(
-                layoutId,
-                rootLayoutId,
-                parentLayout?.isWidgetAncestor == true
-            )
-        }
-    }
-
-    val finishLayout =
-        @Composable {
-            // This must be called at the end of DesignFrame just before returning, after adding all
-            // children. This lets the LayoutManager know that this frame has completed, and so if
-            // there are no other parent frames performing layout, layout computation can be
-            // performed.
-            DisposableEffect(view) {
-                trace(DCTraces.DESIGNFRAME_FINISHLAYOUT) {
-                    LayoutManager.finishLayout(layoutId, rootLayoutId)
-                }
-                onDispose {}
-            }
-        }
+    subscribeLayout(style)
 
     // Only render the frame if we don't have a replacement node and layout is absolute
     val shape = (view.data as ViewData.Container).shape

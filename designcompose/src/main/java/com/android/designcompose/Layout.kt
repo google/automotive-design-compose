@@ -312,6 +312,7 @@ class ParentLayoutInfo(
     val listLayoutType: ListLayoutType = ListLayoutType.None,
     val isWidgetAncestor: Boolean = false,
     val replacementLayoutData: ExternalLayoutData? = null,
+    var designComposeRendered: Boolean = false,
 )
 
 internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutInfo {
@@ -323,6 +324,7 @@ internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutI
         this.listLayoutType,
         this.isWidgetAncestor,
         this.replacementLayoutData,
+        this.designComposeRendered,
     )
 }
 
@@ -336,6 +338,7 @@ internal fun ParentLayoutInfo.withReplacementLayoutData(
         this.listLayoutType,
         this.isWidgetAncestor,
         replacementLayoutData,
+        false,
     )
 }
 

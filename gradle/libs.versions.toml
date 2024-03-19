@@ -53,7 +53,7 @@ junit5 = "5.10.2"
 truth = "1.4.2"
 spotless = "6.25.0"
 robolectric = "4.11.1"
-roborazzi = "1.10.1"
+roborazzi = "1.11.0"
 coreKtx = "1.12.0"
 appcompat = "1.6.1"
 

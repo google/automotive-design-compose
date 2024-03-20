@@ -150,11 +150,6 @@ internal fun DesignFrame(
                 object : ComponentReplacementContext {
                     override val layoutModifier = Modifier.layoutStyle(name, layoutId)
                     override val textStyle: TextStyle? = null
-
-                    @Composable
-                    override fun Content() {
-                        content()
-                    }
                 }
             )
 

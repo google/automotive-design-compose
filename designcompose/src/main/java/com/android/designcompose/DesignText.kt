@@ -318,8 +318,6 @@ internal fun DesignText(
                     object : ComponentReplacementContext {
                         override val layoutModifier = textModifier
                         override val textStyle = textStyle
-
-                        @Composable override fun Content() {}
                     }
                 )
             } else {

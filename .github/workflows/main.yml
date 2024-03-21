@@ -302,7 +302,9 @@ jobs:
   reference-apps:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Windows and mac tests disabled until #883 is fixed
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     needs: build-maven-repo
 

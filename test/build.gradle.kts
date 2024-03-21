@@ -51,6 +51,10 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui.test.junit4)
-
     implementation(project(":designcompose"))
+
+    // Set an API dependency on the JNI libs so that users of this lib don't need to specify it
+    // manually
+    // (This library is useless without the native libraries)
+    api(project(":test:test-native"))
 }

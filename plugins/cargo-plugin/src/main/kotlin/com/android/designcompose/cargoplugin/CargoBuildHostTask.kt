@@ -78,5 +78,6 @@ fun Project.registerHostCargoTask(
     ) { task ->
         task.applyCommonConfig(cargoExtension, this, buildType)
         task.outLibDir.set(getHostCargoOutputDir(buildType))
+        task.enabled = cargoExtension.buildHost.getOrElse(false)
     }
 }

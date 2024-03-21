@@ -16,9 +16,13 @@
 
 package com.android.designcompose
 
+import android.os.Build
 import androidx.annotation.Keep
 import androidx.annotation.VisibleForTesting
 import androidx.tracing.trace
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
 
 // HTTP Proxy configuration.
 internal data class HttpProxyConfig(val proxySpec: String)
@@ -92,6 +96,24 @@ internal object Jni {
     ): ByteArray?
 
     init {
-        System.loadLibrary("dc_jni")
+        // XXX This is a not great workaround for loading the library when running robolectric
+        // tests.
+        if (Build.FINGERPRINT == "robolectric") {
+
+            // Find the JNI library and set up an input stream
+            val jniStream =
+                javaClass.classLoader?.getResourceAsStream("libdc_jni.so")
+                    ?: throw FileNotFoundException("JNI missing")
+
+            // Copy the library out of the jar file into the filesystem so we can load it.
+            val tempFile = File.createTempFile("libdc_jni", ".so")
+            FileOutputStream(tempFile).use { jniStream.copyTo(it) }
+
+            @Suppress("UnsafeDynamicallyLoadedCode") // Loading the library from module's resources
+            System.load(tempFile.absolutePath)
+        } else {
+
+            System.loadLibrary("dc_jni")
+        }
     }
 }

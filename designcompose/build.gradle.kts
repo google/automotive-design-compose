@@ -1,6 +1,3 @@
-import com.android.designcompose.cargoplugin.CargoBuildType
-import com.android.designcompose.cargoplugin.getHostCargoOutputDir
-
 /*
  * Copyright 2023 Google LLC
  *
@@ -75,23 +72,6 @@ android {
             add("META-INF/LGPL2.1")
         }
     }
-
-    // Hacky: GH-502
-    testOptions {
-        unitTests {
-            all { test ->
-
-                // hacky
-                val dcProject = project(":designcompose")
-                test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
-                test.systemProperty(
-                    "java.library.path",
-                    dcProject.getHostCargoOutputDir(CargoBuildType.DEBUG).get().asFile.absolutePath
-                )
-            }
-        }
-    }
-    // End Hacky
 }
 
 // To simplify publishing of the entire SDK, make the DesignCompose publish tasks depend on the

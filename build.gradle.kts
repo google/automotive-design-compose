@@ -38,10 +38,6 @@ plugins {
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.roborazzi) apply false
-
-    // Hacky: GH-502
-    id("com.android.designcompose.rust-in-android") apply (false)
-    // End Hacky
 }
 
 // Apply some of our convention plugins to the reference apps

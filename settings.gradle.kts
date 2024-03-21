@@ -56,6 +56,8 @@ include("codegen")
 
 include("test")
 
+include("test:test-native")
+
 // Internal support
 include("test:internal")
 

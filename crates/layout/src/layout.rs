@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use log::{debug, error, info};
+use log::{error, info};
 use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
@@ -155,6 +155,18 @@ impl LayoutManager {
         None
     }
 
+    pub fn update_children(&mut self, parent_layout_id: i32, children: &Vec<i32>) {
+        if let Some(parent_node) = self.layout_id_to_taffy_node.get(&parent_layout_id) {
+            let child_nodes: Vec<_> = children
+                .iter()
+                .filter_map(|child_id| self.layout_id_to_taffy_node.get(child_id).copied())
+                .collect();
+            if let Err(e) = self.taffy.set_children(*parent_node, child_nodes.as_slice()) {
+                error!("error setting children! {:?}", e);
+            }
+        }
+    }
+
     pub fn add_style_measure(
         &mut self,
         layout_id: i32,
@@ -230,23 +242,34 @@ impl LayoutManager {
                 Ok(node) => {
                     let parent_node = self.layout_id_to_taffy_node.get(&parent_layout_id);
                     if let Some(parent_node) = parent_node {
-                        // This has a parent node, so add it as a child
-                        let children_result = self.taffy.children(*parent_node);
-                        match children_result {
-                            Ok(mut children) => {
-                                children.insert(child_index as usize, node);
-                                let set_children_result =
-                                    self.taffy.set_children(*parent_node, children.as_ref());
-                                if let Some(e) = set_children_result.err() {
-                                    error!("taffy set_children error: {}", e);
-                                } else {
-                                    self.taffy_node_to_layout_id.insert(node, layout_id);
-                                    self.layout_id_to_taffy_node.insert(layout_id, node);
-                                    self.layout_id_to_name.insert(layout_id, name.clone());
+                        if child_index < 0 {
+                            // Don't bother inserting into the parent's child list. The caller will invoke set_children
+                            // manually instead.
+                            self.taffy_node_to_layout_id.insert(node, layout_id);
+                            self.layout_id_to_taffy_node.insert(layout_id, node);
+                            self.layout_id_to_name.insert(layout_id, name.clone());
+                        } else {
+                            // This has a parent node, so add it as a child
+                            let children_result = self.taffy.children(*parent_node);
+                            match children_result {
+                                Ok(mut children) => {
+                                    if child_index as usize > children.len() {
+                                        error!("omg! child index {} > children.len {} for node {} going into node {:?}", child_index, children.len(), name, self.layout_id_to_name.get(&parent_layout_id));
+                                    }
+                                    children.insert(child_index as usize, node);
+                                    let set_children_result =
+                                        self.taffy.set_children(*parent_node, children.as_ref());
+                                    if let Some(e) = set_children_result.err() {
+                                        error!("taffy set_children error: {}", e);
+                                    } else {
+                                        self.taffy_node_to_layout_id.insert(node, layout_id);
+                                        self.layout_id_to_taffy_node.insert(layout_id, node);
+                                        self.layout_id_to_name.insert(layout_id, name.clone());
+                                    }
                                 }
-                            }
-                            Err(e) => {
-                                error!("taffy_children error: {}", e);
+                                Err(e) => {
+                                    error!("taffy_children error: {}", e);
+                                }
                             }
                         }
                     } else {

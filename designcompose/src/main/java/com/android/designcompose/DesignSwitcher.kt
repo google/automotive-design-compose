@@ -114,7 +114,7 @@ private interface DesignSwitcher {
 
     @Composable
     fun CustomComponent(
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
         nodeName: String,
         rootNodeQuery: NodeQuery,
         parentComponents: List<ParentComponentInfo>,
@@ -144,7 +144,7 @@ private interface DesignSwitcher {
 
     @Composable
     fun SettingsView(
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
         mini_view_message: String,
         current_doc_name: String,
         last_mod_time: String,

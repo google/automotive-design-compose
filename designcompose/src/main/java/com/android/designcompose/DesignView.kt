@@ -85,6 +85,7 @@ import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.squoosh.SquooshRoot
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -962,6 +963,13 @@ fun DesignDoc(
     endSection()
 }
 
+// Enable the "Squoosh" refactor. Squoosh implements its own view tree, rather than using Compose,
+// which brings some performance and flexibility benefits. Squoosh isn't feature complete (no
+// scrolling, no lists, no transformed input), but it does add animations and is likely the
+// direction that DesignCompose will move in to be lighter weight and better integrate with
+// external layout.
+private const val USE_SQUOOSH = false
+
 @Composable
 internal fun DesignDocInternal(
     docName: String,
@@ -977,6 +985,21 @@ internal fun DesignDocInternal(
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) {
+    if (USE_SQUOOSH) {
+        SquooshRoot(
+            docName = docName,
+            incomingDocId = incomingDocId,
+            rootNodeQuery = rootNodeQuery,
+            modifier = modifier,
+            customizationContext = customizations,
+            serverParams = serverParams,
+            setDocId = setDocId,
+            designSwitcherPolicy = designSwitcherPolicy,
+            liveUpdateMode = liveUpdateMode,
+            designComposeCallbacks = designComposeCallbacks
+        )
+        return
+    }
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val overrideDocId = LocalDocOverrideContext.current
     // Use the override document ID if it is not empty

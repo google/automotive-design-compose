@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.tracing.trace
 import com.android.designcompose.serdegen.AlignItems
+import com.android.designcompose.serdegen.AlignSelf
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
@@ -48,6 +51,9 @@ import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.OverflowDirection
+import com.android.designcompose.serdegen.PositionType
+import com.android.designcompose.serdegen.Rect
+import com.android.designcompose.serdegen.Size
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import com.novi.bincode.BincodeDeserializer
@@ -56,11 +62,36 @@ import java.util.Optional
 import kotlin.math.roundToInt
 
 internal data class TextMeasureData(
+    val textHash: Int,
     val paragraph: ParagraphIntrinsics,
     val density: Density,
     val maxLines: Int,
     val autoWidth: Boolean,
-)
+) {
+    override fun hashCode(): Int {
+        // Don't hash all of TextLayoutData because it's derived from style, which is
+        // already hashed everywhere we use TextMeasureData's hashCode.
+        var result = density.hashCode()
+        result = 31 * result + textHash
+        result = 31 * result + maxLines.hashCode()
+        result = 31 * result + autoWidth.hashCode()
+        return result
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TextMeasureData
+
+        if (density != other.density) return false
+        if (textHash != other.textHash) return false
+        if (maxLines != other.maxLines) return false
+        if (autoWidth != other.autoWidth) return false
+
+        return true
+    }
+}
 
 internal object LayoutManager {
     private var managerId: Int = 0
@@ -138,6 +169,14 @@ internal object LayoutManager {
         computeLayoutIfComplete(layoutId, rootLayoutId)
     }
 
+    internal fun squooshSetTextMeasureData(layoutId: Int, textMeasureData: TextMeasureData) {
+        textMeasures[layoutId] = textMeasureData
+    }
+
+    internal fun squooshClearTextMeasureData(layoutId: Int) {
+        textMeasures.remove(layoutId)
+    }
+
     private fun subscribe(
         layoutId: Int,
         setLayoutState: (Int) -> Unit,
@@ -204,12 +243,11 @@ internal object LayoutManager {
     private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
         if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
             trace(DCTraces.LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE) {
-                val layoutNodeList = LayoutNodeList(layoutNodes)
+                val layoutNodeList = LayoutNodeList(layoutNodes, arrayListOf())
                 val nodeListSerializer = BincodeSerializer()
                 layoutNodeList.serialize(nodeListSerializer)
                 val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-                val responseBytes =
-                    Jni.tracedJniAddNodes(managerId, rootLayoutId, serializedNodeList)
+                val responseBytes = Jni.jniAddNodes(managerId, rootLayoutId, serializedNodeList)
                 handleResponse(responseBytes)
                 layoutNodes.clear()
             }
@@ -270,12 +308,43 @@ internal object LayoutManager {
     }
 }
 
+// ExternalLayoutData holds layout properties of a node that affect its layout with respect to its
+// parent. When doing component replacement, these properties are saved from the node being
+// replaced so that the new node can use its values.
+data class ExternalLayoutData(
+    val margin: Rect,
+    val top: Dimension,
+    val left: Dimension,
+    val bottom: Dimension,
+    val right: Dimension,
+    val width: Dimension,
+    val height: Dimension,
+    val minWidth: Dimension,
+    val minHeight: Dimension,
+    val maxWidth: Dimension,
+    val maxHeight: Dimension,
+    val nodeSize: Size,
+    val boundingBox: Size,
+    val flexGrow: Float,
+    val flexBasis: Dimension,
+    val alignSelf: AlignSelf,
+    val positionType: PositionType,
+    val transform: Optional<List<Float>>,
+    val relativeTransform: Optional<List<Float>>,
+)
+
+// ParentLayoutInfo holds data necessary to perform layout. When a node subscribes to layout, it
+// needs to know it's own layout ID as well as its parent's and root node's. The other bits of data
+// are used for list widgets that perform their own layout and replacement data that take the layout
+// of the original node being replaced.
 class ParentLayoutInfo(
     val parentLayoutId: Int = -1,
     val childIndex: Int = 0,
     val rootLayoutId: Int = -1,
     val listLayoutType: ListLayoutType = ListLayoutType.None,
     val isWidgetAncestor: Boolean = false,
+    val replacementLayoutData: ExternalLayoutData? = null,
+    var designComposeRendered: Boolean = false,
 )
 
 internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutInfo {
@@ -286,13 +355,41 @@ internal fun ParentLayoutInfo.withRootIdIfNone(rootLayoutId: Int): ParentLayoutI
         rootLayoutId,
         this.listLayoutType,
         this.isWidgetAncestor,
+        this.replacementLayoutData,
+        this.designComposeRendered,
     )
 }
 
+internal fun ParentLayoutInfo.withReplacementLayoutData(
+    replacementLayoutData: ExternalLayoutData
+): ParentLayoutInfo {
+    return ParentLayoutInfo(
+        this.parentLayoutId,
+        this.childIndex,
+        this.rootLayoutId,
+        this.listLayoutType,
+        this.isWidgetAncestor,
+        replacementLayoutData,
+        false,
+    )
+}
+
+// Construct a ParentLayoutInfo object for the root node
 internal val rootParentLayoutInfo = ParentLayoutInfo()
 
-internal fun listLayout(listLayoutType: ListLayoutType): ParentLayoutInfo {
-    return ParentLayoutInfo(listLayoutType = listLayoutType, isWidgetAncestor = true)
+// A CompositionLocal ParentLayoutInfo object to be used in the UI tree
+internal val LocalParentLayoutInfo = compositionLocalOf<ParentLayoutInfo?> { ParentLayoutInfo() }
+
+// Declare a CompositionLocal object of the specified ParentLayoutInfo
+@Composable
+internal fun DesignParentLayout(parentLayout: ParentLayoutInfo?, content: @Composable () -> Unit) =
+    CompositionLocalProvider(LocalParentLayoutInfo provides parentLayout) { content() }
+
+// Declare a CompositionLocal object of the specified ParentLayoutInfo meant for list widget layouts
+@Composable
+internal fun DesignListLayout(listLayoutType: ListLayoutType, content: @Composable () -> Unit) {
+    val parentLayout = ParentLayoutInfo(listLayoutType = listLayoutType, isWidgetAncestor = true)
+    CompositionLocalProvider(LocalParentLayoutInfo provides parentLayout) { content() }
 }
 
 internal open class SimplifiedLayoutInfo(val selfModifier: Modifier) {
@@ -557,7 +654,7 @@ internal inline fun DesignFrameLayout(
     rootLayoutId: Int,
     layoutState: Int,
     designScroll: DesignScroll?,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val measurePolicy =
         remember(layoutState, designScroll) {
@@ -572,7 +669,7 @@ internal fun designMeasurePolicy(
     layoutId: Int,
     rootLayoutId: Int,
     layoutState: Int,
-    designScroll: DesignScroll?
+    designScroll: DesignScroll?,
 ) = MeasurePolicy { measurables, constraints ->
     val name = view.name
     val placeables =
@@ -673,7 +770,7 @@ internal inline fun DesignTextLayout(
     layout: Layout?,
     layoutState: Int,
     renderTop: Int?,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val measurePolicy =
         remember(layoutState, layout, renderTop) { designTextMeasurePolicy(layout, renderTop) }

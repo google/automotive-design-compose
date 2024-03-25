@@ -100,7 +100,6 @@ internal fun DesignText(
     document: DocContent,
     nodeName: String,
     customizations: CustomizationContext,
-    parentLayout: ParentLayoutInfo?,
     layoutId: Int,
 ): Boolean {
     if (!customizations.getVisible(nodeName)) return false
@@ -261,6 +260,7 @@ internal fun DesignText(
     val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE
     val textMeasureData =
         TextMeasureData(
+            annotatedText.text.hashCode(),
             paragraph,
             density,
             maxLines,
@@ -271,6 +271,7 @@ internal fun DesignText(
     val (layout, setLayout) = remember { mutableStateOf<Layout?>(null) }
     // Keep track of the layout state, which changes whenever this view's layout changes
     val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
+    val parentLayout = LocalParentLayoutInfo.current
     val rootLayoutId = parentLayout?.rootLayoutId ?: layoutId
     // Subscribe for layout changes whenever the text data changes, and use a measure function to
     // measure the text width and height
@@ -309,23 +310,18 @@ internal fun DesignText(
 
     val content =
         @Composable {
+            // Text needs to use a modifier that sets the size so that it wraps properly
+            val height = layout?.height() ?: 0
+            val textModifier = modifier.sizeToModifier(layout?.width() ?: 0, height)
             val replacementComponent = customizations.getComponent(nodeName)
             if (replacementComponent != null) {
                 replacementComponent(
                     object : ComponentReplacementContext {
-                        override val layoutModifier = modifier
-                        override val appearanceModifier = Modifier
-
-                        @Composable override fun Content() {}
-
+                        override val layoutModifier = textModifier
                         override val textStyle = textStyle
-                        override val parentLayout = parentLayout
                     }
                 )
             } else {
-                // Text needs to use a modifier that sets the size so that it wraps properly
-                val height = layout?.height() ?: 0
-                val textModifier = modifier.sizeToModifier(layout?.width() ?: 0, height)
                 BasicText(
                     annotatedText,
                     modifier = textModifier,

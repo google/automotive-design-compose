@@ -62,11 +62,10 @@ import com.android.designcompose.serdegen.ViewStyle
 internal fun DesignFrame(
     modifier: Modifier = Modifier,
     view: View,
-    style: ViewStyle,
+    viewStyle: ViewStyle,
     layoutInfo: SimplifiedLayoutInfo,
     document: DocContent,
     customizations: CustomizationContext,
-    parentLayout: ParentLayoutInfo?,
     layoutId: Int,
     parentComponents: List<ParentComponentInfo>,
     maskInfo: MaskInfo?,
@@ -74,6 +73,7 @@ internal fun DesignFrame(
 ): Boolean {
     val name = view.name
     if (!customizations.getVisible(name)) return false
+    val parentLayout = LocalParentLayoutInfo.current
 
     var m = Modifier as Modifier
     m = m.then(modifier)
@@ -84,27 +84,93 @@ internal fun DesignFrame(
         m = m.then(customModifier)
     }
 
+    // Keep track of the layout state, which changes whenever this view's layout changes
+    val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
+    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
+    if (rootLayoutId == -1) rootLayoutId = layoutId
+
+    val subscribeLayout =
+        @Composable { style: ViewStyle ->
+            // Subscribe for layout changes whenever the view changes. The view can change if it is
+            // a component instance that changes to another variant. It can also change due to a
+            // live update. Subscribing when already subscribed simply updates the view in the
+            // layout system.
+            DisposableEffect(view) {
+                trace(DCTraces.DESIGNFRAME_DE_SUBSCRIBE) {
+                    val parentLayoutId = parentLayout?.parentLayoutId ?: -1
+                    val childIndex = parentLayout?.childIndex ?: -1
+                    // Subscribe to layout changes when the view changes or is added
+                    LayoutManager.subscribeFrame(
+                        layoutId,
+                        setLayoutState,
+                        parentLayoutId,
+                        childIndex,
+                        style,
+                        view.name
+                    )
+                }
+                onDispose {}
+            }
+
+            DisposableEffect(Unit) {
+                onDispose {
+                    // Unsubscribe to layout changes when the view is removed
+                    LayoutManager.unsubscribe(
+                        layoutId,
+                        rootLayoutId,
+                        parentLayout?.isWidgetAncestor == true
+                    )
+                }
+            }
+        }
+
+    val finishLayout =
+        @Composable {
+            // This must be called at the end of DesignFrame just before returning, after adding all
+            // children. This lets the LayoutManager know that this frame has completed, and so if
+            // there are no other parent frames performing layout, layout computation can be
+            // performed.
+            DisposableEffect(view) {
+                trace(DCTraces.DESIGNFRAME_FINISHLAYOUT) {
+                    LayoutManager.finishLayout(layoutId, rootLayoutId)
+                }
+                onDispose {}
+            }
+        }
+
     // Check for a customization that replaces this component completely
     // If we're replaced, then invoke the replacement here. We may want to pass more layout info
     // (row/column/etc) to the replacement component at some point.
     val replacementComponent = customizations.getComponent(name)
     if (replacementComponent != null) {
-        replacementComponent(
-            object : ComponentReplacementContext {
-                override val layoutModifier = layoutInfo.selfModifier
-                override val appearanceModifier = m
-
-                @Composable
-                override fun Content() {
-                    content()
+        val replacementParentLayout =
+            parentLayout?.withReplacementLayoutData(viewStyle.externalLayoutData())
+        DesignParentLayout(replacementParentLayout) {
+            replacementComponent(
+                object : ComponentReplacementContext {
+                    override val layoutModifier = Modifier.layoutStyle(name, layoutId)
+                    override val textStyle: TextStyle? = null
                 }
+            )
 
-                override val textStyle: TextStyle? = null
-                override val parentLayout = parentLayout
+            // If the replacement component was a DesignCompose node, designComposeRendered would
+            // have been set to true. If false, the replacement component was some other type of
+            // Jetpack Compose composable. In that case, DesignView would not have been called, so
+            // we need to subscribe to layout with the original node's view style so that the
+            // replacement component is able to use the same layout.
+            if (LocalParentLayoutInfo.current?.designComposeRendered == false) {
+                subscribeLayout(viewStyle)
+                finishLayout()
             }
-        )
+        }
         return true
     }
+
+    // If parentLayout has replacementLayoutData set, use it to override fields in viewStyle.
+    // This ensures that a replacement component uses the same layout data as the original node.
+    val style =
+        parentLayout?.replacementLayoutData?.let { viewStyle.withExternalLayoutData(it) }
+            ?: viewStyle
 
     // Check for an image customization with context. If it exists, call the custom image function
     // and provide it with the frame's background and size.
@@ -133,54 +199,7 @@ internal fun DesignFrame(
     val meterValue = customizations.getMeterFunction(name)?.let { it() }
     meterValue?.let { customizations.setMeterValue(name, it) }
 
-    // Keep track of the layout state, which changes whenever this view's layout changes
-    val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
-    // Subscribe for layout changes whenever the view changes. The view can change if it is a
-    // component instance that changes to another variant. It can also change due to a live update.
-    // Subscribing when already subscribed simply updates the view in the layout system.
-    DisposableEffect(view) {
-        trace(DCTraces.DESIGNFRAME_DE_SUBSCRIBE) {
-            val parentLayoutId = parentLayout?.parentLayoutId ?: -1
-            val childIndex = parentLayout?.childIndex ?: -1
-            // Subscribe to layout changes when the view changes or is added
-            LayoutManager.subscribeFrame(
-                layoutId,
-                setLayoutState,
-                parentLayoutId,
-                childIndex,
-                style,
-                view.name
-            )
-        }
-        onDispose {}
-    }
-
-    var rootLayoutId = parentLayout?.rootLayoutId ?: -1
-    if (rootLayoutId == -1) rootLayoutId = layoutId
-    DisposableEffect(Unit) {
-        onDispose {
-            // Unsubscribe to layout changes when the view is removed
-            LayoutManager.unsubscribe(
-                layoutId,
-                rootLayoutId,
-                parentLayout?.isWidgetAncestor == true
-            )
-        }
-    }
-
-    val finishLayout =
-        @Composable {
-            // This must be called at the end of DesignFrame just before returning, after adding all
-            // children. This lets the LayoutManager know that this frame has completed, and so if
-            // there are no other parent frames performing layout, layout computation can be
-            // performed.
-            DisposableEffect(view) {
-                trace(DCTraces.DESIGNFRAME_FINISHLAYOUT) {
-                    LayoutManager.finishLayout(layoutId, rootLayoutId)
-                }
-                onDispose {}
-            }
-        }
+    subscribeLayout(style)
 
     // Only render the frame if we don't have a replacement node and layout is absolute
     val shape = (view.data as ViewData.Container).shape
@@ -205,118 +224,137 @@ internal fun DesignFrame(
     val layout = LayoutManager.getLayout(layoutId)
     when (layoutInfo) {
         is LayoutInfoRow -> {
-            if (lazyContent != null) {
-                val content = lazyContent { LazyContentSpan() }
-                var count = content.count
-                var overflowNodeId: String? = null
-                if (style.max_children.isPresent && style.max_children.get() < count) {
-                    count = style.max_children.get()
-                    if (style.overflow_node_id.isPresent)
-                        overflowNodeId = style.overflow_node_id.get()
-                }
+            DesignParentLayout(rootParentLayoutInfo) {
+                if (lazyContent != null) {
+                    val content = lazyContent { LazyContentSpan() }
+                    var count = content.count
+                    var overflowNodeId: String? = null
+                    if (style.max_children.isPresent && style.max_children.get() < count) {
+                        count = style.max_children.get()
+                        if (style.overflow_node_id.isPresent)
+                            overflowNodeId = style.overflow_node_id.get()
+                    }
 
-                // If the widget is set to hug contents, don't give Row() a size and let it size
-                // itself. Then when the size is determined, inform the layout manager. Otherwise,
-                // get the fixed size from the layout manager and use it in a Modifier.
-                val hugContents = view.style.width is Dimension.Auto
-                val rowModifier =
-                    if (hugContents)
-                        Modifier.onSizeChanged {
-                            LayoutManager.setNodeSize(layoutId, rootLayoutId, it.width, it.height)
-                        }
-                    else Modifier.layoutSizeToModifier(layout)
-                Row(
-                    rowModifier
-                        .then(layoutInfo.selfModifier)
-                        .then(m)
-                        .then(layoutInfo.marginModifier),
-                    horizontalArrangement = layoutInfo.arrangement,
-                    verticalAlignment = layoutInfo.alignment,
-                ) {
-                    for (i in 0 until count) {
-                        if (overflowNodeId != null && i == count - 1) {
-                            // This is the last item we can show and there are more, and there is an
-                            // overflow node, so show the overflow node here
-                            val customComposable = customizations.getCustomComposable()
-                            if (customComposable != null) {
-                                customComposable(
-                                    Modifier,
-                                    style.overflow_node_name.get(),
-                                    NodeQuery.NodeId(style.overflow_node_id.get()),
-                                    parentComponents,
-                                    null
+                    // If the widget is set to hug contents, don't give Row() a size and let it size
+                    // itself. Then when the size is determined, inform the layout manager.
+                    // Otherwise,
+                    // get the fixed size from the layout manager and use it in a Modifier.
+                    val hugContents = view.style.width is Dimension.Auto
+                    val rowModifier =
+                        if (hugContents)
+                            Modifier.onSizeChanged {
+                                LayoutManager.setNodeSize(
+                                    layoutId,
+                                    rootLayoutId,
+                                    it.width,
+                                    it.height
                                 )
                             }
-                        } else {
-                            content.itemContent(i, listLayout(ListLayoutType.Row))
+                        else Modifier.layoutSizeToModifier(layout)
+                    Row(
+                        rowModifier
+                            .then(layoutInfo.selfModifier)
+                            .then(m)
+                            .then(layoutInfo.marginModifier),
+                        horizontalArrangement = layoutInfo.arrangement,
+                        verticalAlignment = layoutInfo.alignment,
+                    ) {
+                        for (i in 0 until count) {
+                            if (overflowNodeId != null && i == count - 1) {
+                                // This is the last item we can show and there are more, and there
+                                // is an
+                                // overflow node, so show the overflow node here
+                                val customComposable = customizations.getCustomComposable()
+                                if (customComposable != null) {
+                                    customComposable(
+                                        Modifier,
+                                        style.overflow_node_name.get(),
+                                        NodeQuery.NodeId(style.overflow_node_id.get()),
+                                        parentComponents,
+                                        null
+                                    )
+                                }
+                            } else {
+                                DesignListLayout(ListLayoutType.Row) { content.itemContent(i) }
+                            }
                         }
                     }
-                }
-            } else {
-                Row(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
-                    horizontalArrangement = layoutInfo.arrangement,
-                    verticalAlignment = layoutInfo.alignment
-                ) {
-                    content()
+                } else {
+                    Row(
+                        layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
+                        horizontalArrangement = layoutInfo.arrangement,
+                        verticalAlignment = layoutInfo.alignment
+                    ) {
+                        content()
+                    }
                 }
             }
         }
         is LayoutInfoColumn -> {
-            if (lazyContent != null) {
-                val content = lazyContent { LazyContentSpan() }
-                var count = content.count
-                var overflowNodeId: String? = null
-                if (style.max_children.isPresent && style.max_children.get() < count) {
-                    count = style.max_children.get()
-                    if (style.overflow_node_id.isPresent)
-                        overflowNodeId = style.overflow_node_id.get()
-                }
+            DesignParentLayout(rootParentLayoutInfo) {
+                if (lazyContent != null) {
+                    val content = lazyContent { LazyContentSpan() }
+                    var count = content.count
+                    var overflowNodeId: String? = null
+                    if (style.max_children.isPresent && style.max_children.get() < count) {
+                        count = style.max_children.get()
+                        if (style.overflow_node_id.isPresent)
+                            overflowNodeId = style.overflow_node_id.get()
+                    }
 
-                // If the widget is set to hug contents, don't give Column() a size and let it size
-                // itself. Then when the size is determined, inform the layout manager. Otherwise,
-                // get the fixed size from the layout manager and use it in a Modifier.
-                val hugContents = view.style.height is Dimension.Auto
-                val columnModifier =
-                    if (hugContents)
-                        Modifier.onSizeChanged {
-                            LayoutManager.setNodeSize(layoutId, rootLayoutId, it.width, it.height)
-                        }
-                    else Modifier.layoutSizeToModifier(layout)
-                Column(
-                    columnModifier
-                        .then(layoutInfo.selfModifier)
-                        .then(m)
-                        .then(layoutInfo.marginModifier),
-                    verticalArrangement = layoutInfo.arrangement,
-                    horizontalAlignment = layoutInfo.alignment,
-                ) {
-                    for (i in 0 until count) {
-                        if (overflowNodeId != null && i == count - 1) {
-                            // This is the last item we can show and there are more, and there is an
-                            // overflow node, so show the overflow node here
-                            val customComposable = customizations.getCustomComposable()
-                            if (customComposable != null) {
-                                customComposable(
-                                    Modifier,
-                                    style.overflow_node_name.get(),
-                                    NodeQuery.NodeId(style.overflow_node_id.get()),
-                                    parentComponents,
-                                    null
+                    // If the widget is set to hug contents, don't give Column() a size and let it
+                    // size
+                    // itself. Then when the size is determined, inform the layout manager.
+                    // Otherwise,
+                    // get the fixed size from the layout manager and use it in a Modifier.
+                    val hugContents = view.style.height is Dimension.Auto
+                    val columnModifier =
+                        if (hugContents)
+                            Modifier.onSizeChanged {
+                                LayoutManager.setNodeSize(
+                                    layoutId,
+                                    rootLayoutId,
+                                    it.width,
+                                    it.height
                                 )
                             }
-                        } else {
-                            content.itemContent(i, listLayout(ListLayoutType.Column))
+                        else Modifier.layoutSizeToModifier(layout)
+                    Column(
+                        columnModifier
+                            .then(layoutInfo.selfModifier)
+                            .then(m)
+                            .then(layoutInfo.marginModifier),
+                        verticalArrangement = layoutInfo.arrangement,
+                        horizontalAlignment = layoutInfo.alignment,
+                    ) {
+                        for (i in 0 until count) {
+                            if (overflowNodeId != null && i == count - 1) {
+                                // This is the last item we can show and there are more, and there
+                                // is an
+                                // overflow node, so show the overflow node here
+                                val customComposable = customizations.getCustomComposable()
+                                if (customComposable != null) {
+                                    customComposable(
+                                        Modifier,
+                                        style.overflow_node_name.get(),
+                                        NodeQuery.NodeId(style.overflow_node_id.get()),
+                                        parentComponents,
+                                        null
+                                    )
+                                }
+                            } else {
+                                DesignListLayout(ListLayoutType.Column) { content.itemContent(i) }
+                            }
                         }
                     }
-                }
-            } else {
-                Column(
-                    layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
-                    verticalArrangement = layoutInfo.arrangement,
-                    horizontalAlignment = layoutInfo.alignment
-                ) {
-                    content()
+                } else {
+                    Column(
+                        layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
+                        verticalArrangement = layoutInfo.arrangement,
+                        horizontalAlignment = layoutInfo.alignment
+                    ) {
+                        content()
+                    }
                 }
             }
         }
@@ -410,7 +448,7 @@ internal fun DesignFrame(
                             GridItemSpan(if (span.maxLineSpan) maxLineSpan else span.span)
                         }
                     ) {
-                        lContent.initialContent(listLayout(ListLayoutType.Grid))
+                        DesignListLayout(ListLayoutType.Grid) { lContent.initialContent() }
                     }
                 else {
                     var count = lContent.count
@@ -459,7 +497,9 @@ internal fun DesignFrame(
                                     )
                                 }
                             } else {
-                                lContent.itemContent(index, listLayout(ListLayoutType.Grid))
+                                DesignListLayout(ListLayoutType.Grid) {
+                                    lContent.itemContent(index)
+                                }
                             }
                         }
                     )
@@ -510,47 +550,49 @@ internal fun DesignFrame(
                     else 0
                 val verticalSpacing = layoutInfo.crossAxisSpacing
 
-                LazyVerticalGrid(
-                    modifier = gridSizeModifier.then(layoutInfo.selfModifier).then(m),
-                    columns =
-                        object : GridCells {
-                            override fun Density.calculateCrossAxisCellSizes(
-                                availableSize: Int,
-                                spacing: Int,
-                            ): List<Int> {
-                                val mainAxisSize = (availableSize.toFloat() / density).toInt()
-                                setGridMainAxisSize(mainAxisSize)
-                                return calculateCellsCrossAxisSizeImpl(
-                                    availableSize,
-                                    columnCount,
-                                    spacing
-                                )
-                            }
-                        },
-                    horizontalArrangement =
-                        Arrangement.spacedBy(
-                            (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
-                                    layoutInfo.mainAxisSpacing.value
-                                } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
-                                    if (columnCount > 1)
-                                        (gridMainAxisSize -
-                                            (layoutInfo.mainAxisSpacing.field1 * columnCount)) /
-                                            (columnCount - 1)
-                                    else layoutInfo.mainAxisSpacing.field0
-                                } else horizontalSpacing)
-                                .dp
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(verticalSpacing.dp),
-                    userScrollEnabled = layoutInfo.scrollingEnabled,
-                    contentPadding =
-                        PaddingValues(
-                            layoutInfo.padding.start.pointsAsDp(density),
-                            layoutInfo.padding.top.pointsAsDp(density),
-                            layoutInfo.padding.end.pointsAsDp(density),
-                            layoutInfo.padding.bottom.pointsAsDp(density),
-                        ),
-                ) {
-                    lazyItemContent()
+                DesignParentLayout(rootParentLayoutInfo) {
+                    LazyVerticalGrid(
+                        modifier = gridSizeModifier.then(layoutInfo.selfModifier).then(m),
+                        columns =
+                            object : GridCells {
+                                override fun Density.calculateCrossAxisCellSizes(
+                                    availableSize: Int,
+                                    spacing: Int,
+                                ): List<Int> {
+                                    val mainAxisSize = (availableSize.toFloat() / density).toInt()
+                                    setGridMainAxisSize(mainAxisSize)
+                                    return calculateCellsCrossAxisSizeImpl(
+                                        availableSize,
+                                        columnCount,
+                                        spacing
+                                    )
+                                }
+                            },
+                        horizontalArrangement =
+                            Arrangement.spacedBy(
+                                (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
+                                        layoutInfo.mainAxisSpacing.value
+                                    } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
+                                        if (columnCount > 1)
+                                            (gridMainAxisSize -
+                                                (layoutInfo.mainAxisSpacing.field1 * columnCount)) /
+                                                (columnCount - 1)
+                                        else layoutInfo.mainAxisSpacing.field0
+                                    } else horizontalSpacing)
+                                    .dp
+                            ),
+                        verticalArrangement = Arrangement.spacedBy(verticalSpacing.dp),
+                        userScrollEnabled = layoutInfo.scrollingEnabled,
+                        contentPadding =
+                            PaddingValues(
+                                layoutInfo.padding.start.pointsAsDp(density),
+                                layoutInfo.padding.top.pointsAsDp(density),
+                                layoutInfo.padding.end.pointsAsDp(density),
+                                layoutInfo.padding.bottom.pointsAsDp(density),
+                            ),
+                    ) {
+                        lazyItemContent()
+                    }
                 }
             } else {
                 val rowCount = calculateColumnRowCount(layoutInfo, gridMainAxisSize)
@@ -559,41 +601,43 @@ internal fun DesignFrame(
                     if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed)
                         layoutInfo.mainAxisSpacing.value
                     else 0
-                LazyHorizontalGrid(
-                    modifier = layoutInfo.selfModifier.then(gridSizeModifier).then(m),
-                    rows =
-                        object : GridCells {
-                            override fun Density.calculateCrossAxisCellSizes(
-                                availableSize: Int,
-                                spacing: Int,
-                            ): List<Int> {
-                                val mainAxisSize = (availableSize.toFloat() / density).toInt()
-                                setGridMainAxisSize(mainAxisSize)
-                                return calculateCellsCrossAxisSizeImpl(
-                                    availableSize,
-                                    rowCount,
-                                    spacing
-                                )
-                            }
-                        },
-                    horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.dp),
-                    verticalArrangement =
-                        Arrangement.spacedBy(
-                            (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
-                                    layoutInfo.mainAxisSpacing.value
-                                } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
+                DesignParentLayout(rootParentLayoutInfo) {
+                    LazyHorizontalGrid(
+                        modifier = layoutInfo.selfModifier.then(gridSizeModifier).then(m),
+                        rows =
+                            object : GridCells {
+                                override fun Density.calculateCrossAxisCellSizes(
+                                    availableSize: Int,
+                                    spacing: Int,
+                                ): List<Int> {
+                                    val mainAxisSize = (availableSize.toFloat() / density).toInt()
+                                    setGridMainAxisSize(mainAxisSize)
+                                    return calculateCellsCrossAxisSizeImpl(
+                                        availableSize,
+                                        rowCount,
+                                        spacing
+                                    )
+                                }
+                            },
+                        horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
+                                        layoutInfo.mainAxisSpacing.value
+                                    } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
 
-                                    if (rowCount > 1)
-                                        (gridMainAxisSize -
-                                            (layoutInfo.mainAxisSpacing.field1 * rowCount)) /
-                                            (rowCount - 1)
-                                    else layoutInfo.mainAxisSpacing.field0
-                                } else verticalSpacing)
-                                .dp
-                        ),
-                    userScrollEnabled = layoutInfo.scrollingEnabled,
-                ) {
-                    lazyItemContent()
+                                        if (rowCount > 1)
+                                            (gridMainAxisSize -
+                                                (layoutInfo.mainAxisSpacing.field1 * rowCount)) /
+                                                (rowCount - 1)
+                                        else layoutInfo.mainAxisSpacing.field0
+                                    } else verticalSpacing)
+                                    .dp
+                            ),
+                        userScrollEnabled = layoutInfo.scrollingEnabled,
+                    ) {
+                        lazyItemContent()
+                    }
                 }
             }
         }

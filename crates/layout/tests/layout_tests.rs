@@ -26,7 +26,7 @@
 use figma_import::{
     toolkit_layout_style::{Dimension, LayoutSizing},
     toolkit_schema::View,
-    NodeQuery, SerializedDesignDoc, ViewData,
+    NodeQuery, SerializedDesignDoc, SerializedDesignDocHeader, ViewData,
 };
 use layout::LayoutManager;
 use std::collections::HashMap;
@@ -129,10 +129,14 @@ fn add_view_to_layout(
 fn load_doc() -> std::io::Result<SerializedDesignDoc> {
     let mut file = File::open("tests/layout-unit-tests.dcf")?;
     let mut buf: Vec<u8> = vec![];
-    let bytes = file.read_to_end(&mut buf)?;
-    println!("Read {} bytes", bytes);
+    let bytes_read = file.read_to_end(&mut buf)?;
+    let bytes = buf.as_slice();
+    println!("Read {} bytes", bytes_read);
 
-    let figma_doc: SerializedDesignDoc = bincode::deserialize(buf.as_slice()).unwrap();
+    let header: SerializedDesignDocHeader = bincode::deserialize(bytes).unwrap();
+    let header_size = bincode::serialized_size(&header).unwrap() as usize;
+
+    let figma_doc: SerializedDesignDoc = bincode::deserialize(&bytes[header_size..]).unwrap();
     Ok(figma_doc)
 }
 

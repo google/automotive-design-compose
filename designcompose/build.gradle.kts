@@ -24,6 +24,7 @@ plugins {
     // Plugins from our buildSrc
     id("designcompose.conventions.base")
     id("designcompose.conventions.publish.android")
+    id("designcompose.conventions.roborazzi")
     id("designcompose.conventions.android-test-devices")
 }
 
@@ -118,8 +119,20 @@ dependencies {
     implementation(libs.androidx.compose.runtime.tracing)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    androidTestImplementation(project(":test:internal"))
+    testImplementation(testFixtures(project(":designcompose")))
+    testImplementation(project(":test"))
+    testImplementation(project(":test:internal"))
+    testImplementation(kotlin("test"))
+    testImplementation(libs.google.truth)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit)
+    testImplementation(libs.androidx.test.espresso.core)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+
     androidTestImplementation(project(":test"))
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(libs.google.truth)

@@ -949,27 +949,48 @@ else if (figma.command === "move-plugin-data") {
       enabled: msg.enabled,
       discrete: msg.discrete,
       discreteValue: msg.discreteValue,
+      vertical: msg.vertical,
     }
     
     let meterData: any = {};
     if (progressMarker) {
       // The progress marker means we don't resize the node; we just move it along the x axis
-      const startX = -node.width / 2;
-      const endX = parent.width - node.width / 2;
-      const moveX = percentToValue(value, startX, endX);
-      node.x = moveX;
+      // if horizontal or y axis if vertical
+      if (msg.vertical) {
+        const startY = parent.height - node.height / 2;
+        const endY = -node.height / 2;
+        const moveY = percentToValue(value, startY, endY);
+        node.y = moveY;
+  
+        barData.startY = startY;
+        barData.endY = endY;
+      } else {
+        const startX = -node.width / 2;
+        const endX = parent.width - node.width / 2;
+        const moveX = percentToValue(value, startX, endX);
+        node.x = moveX;
+  
+        barData.startX = startX;
+        barData.endX = endX;
+      }
 
-      barData.startX = startX;
-      barData.endX = endX;
       meterData.progressMarkerData = barData;
     }
     else {
       // Normal progress bar mode means we resize the progress bar between a width of 0.01
-      // and a max size based on the parent width.
-      const width = percentToValue(value, 0.01, parent.width);
-      node.resize(width, node.height);
+      // and a max size based on the parent width if horizontal or height if vertical
+      if (msg.vertical) {
+        const height = percentToValue(value, 0.01, parent.height);
+        node.resize(parent.width, height);
+        node.y = parent.height - height;
+        barData.endY = parent.height;
+      } else {
+        const width = percentToValue(value, 0.01, parent.width);
+        node.resize(width, parent.height);
+        node.y = 0;
+        barData.endX = parent.width;
+      }
 
-      barData.endX = parent.width;
       meterData.progressBarData = barData;
     }
 

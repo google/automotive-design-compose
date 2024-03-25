@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Hacky: GH-502
-// import com.android.designcompose.cargoplugin.CargoBuildType
-// import com.android.designcompose.cargoplugin.getHostCargoOutputDir
 
-// evaluationDependsOn(":designcompose")
-// End Hacky
 plugins {
     kotlin("android")
     id("com.android.application")
@@ -74,31 +69,6 @@ android {
 
     testOptions.unitTests {
         isIncludeAndroidResources = true // For Roborazzi
-    }
-    /* Disabled for now, need to make a designcompsoe test library
-        // Hacky: GH-502
-        testOptions {
-            unitTests {
-                all { test ->
-                    val dcProject = project(":designcompose")
-                    test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
-                    test.systemProperty(
-                        "java.library.path",
-                        dcProject.getHostCargoOutputDir(CargoBuildType.DEBUG).get().asFile.absolutePath
-                    )
-                }
-            }
-        }
-        // End Hacky
-    */
-}
-
-afterEvaluate {
-    tasks.withType<Test>().configureEach {
-        logger.warn(
-            "Disabling ${project.name}:$name. Cannot support unit tests in standalone apps at this time."
-        )
-        enabled = false
     }
 }
 

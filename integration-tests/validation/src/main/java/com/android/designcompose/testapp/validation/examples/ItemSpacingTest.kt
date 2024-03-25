@@ -18,7 +18,6 @@ package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -41,28 +40,7 @@ interface ItemSpacingTest {
 fun ItemSpacingTest() {
     ItemSpacingTestDoc.MainFrame(
         horizontalItems =
-            ReplacementContent(
-                count = 3,
-                content = { index ->
-                    { rc ->
-                        ItemSpacingTestDoc.Square(
-                            parentLayout =
-                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                        )
-                    }
-                }
-            ),
-        verticalItems =
-            ReplacementContent(
-                count = 3,
-                content = { index ->
-                    { rc ->
-                        ItemSpacingTestDoc.Square(
-                            parentLayout =
-                                ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                        )
-                    }
-                }
-            )
+            ReplacementContent(count = 3, content = { { ItemSpacingTestDoc.Square() } }),
+        verticalItems = ReplacementContent(count = 3, content = { { ItemSpacingTestDoc.Square() } })
     )
 }

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-// Hacky: GH-502
-import com.android.designcompose.cargoplugin.CargoBuildType
-import com.android.designcompose.cargoplugin.getHostCargoOutputDir
-
-evaluationDependsOn(":designcompose")
-// End Hacky
 plugins {
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.androidApplication)
@@ -81,23 +75,6 @@ android {
     }
 
     packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
-
-    // Hacky: GH-502
-    testOptions {
-        unitTests {
-            all { test ->
-                // hacky
-                val dcProject = project(":designcompose")
-                test.dependsOn(dcProject.tasks.named("cargoBuildHostDebug").get())
-                test.systemProperty(
-                    "java.library.path",
-                    dcProject.getHostCargoOutputDir(CargoBuildType.DEBUG).get().asFile.absolutePath
-                )
-            }
-        }
-    }
-    // End Hacky
-
 }
 
 dependencies {
@@ -111,6 +88,9 @@ dependencies {
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.material)
+    implementation("androidx.media3:media3-exoplayer:1.3.0")
+    implementation("androidx.media3:media3-exoplayer-dash:1.3.0")
+    implementation("androidx.media3:media3-ui:1.3.0")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -129,7 +109,6 @@ dependencies {
 
     androidTestImplementation(testFixtures(project(":designcompose")))
     androidTestImplementation(project(":test"))
-    androidTestImplementation(project(":test:internal"))
     androidTestImplementation(kotlin("test"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.junit)

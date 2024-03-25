@@ -17,7 +17,6 @@
 package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
-import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -46,40 +45,16 @@ fun RecursiveCustomizations() {
     RecursiveCustomizationsDoc.MainFrame(
         name = "Google",
         child =
-            ReplacementContent(
-                count = 1,
-                content = {
-                    { rc ->
-                        RecursiveCustomizationsDoc.NameFrame(
-                            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
-                        )
-                    }
-                }
-            ),
+            ReplacementContent(count = 1, content = { { RecursiveCustomizationsDoc.NameFrame() } }),
         content =
             ReplacementContent(
                 count = 3,
                 content = { index ->
-                    { rc ->
+                    {
                         when (index) {
-                            0 ->
-                                RecursiveCustomizationsDoc.TitleFrame(
-                                    parentLayout =
-                                        ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId),
-                                    title = "First"
-                                )
-                            1 ->
-                                RecursiveCustomizationsDoc.TitleFrame(
-                                    parentLayout =
-                                        ParentLayoutInfo(rc.parentLayoutId, 1, rc.rootLayoutId),
-                                    title = "Second"
-                                )
-                            else ->
-                                RecursiveCustomizationsDoc.TitleFrame(
-                                    parentLayout =
-                                        ParentLayoutInfo(rc.parentLayoutId, 2, rc.rootLayoutId),
-                                    title = "Third"
-                                )
+                            0 -> RecursiveCustomizationsDoc.TitleFrame(title = "First")
+                            1 -> RecursiveCustomizationsDoc.TitleFrame(title = "Second")
+                            else -> RecursiveCustomizationsDoc.TitleFrame(title = "Third")
                         }
                     }
                 }

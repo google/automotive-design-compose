@@ -27,6 +27,7 @@ interface CargoPluginExtension {
     val crateDir: DirectoryProperty // The cargo workspace to compile
     val abi:
         SetProperty<String> // The ABI's to compile https://developer.android.com/ndk/guides/abis
+    val buildHost: Property<Boolean> // Whether to build for the host platform
 }
 
 fun Project.initializeExtension(): CargoPluginExtension {

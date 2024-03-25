@@ -74,7 +74,11 @@ class VariantPropertyMap {
         propertyMap[parentNodeName] = propertyToVariantValueMap
     }
 
-    fun resolveVariantNameToView(nodeName: String, variantViewMap: HashMap<String, View>): View? {
+    fun resolveVariantNameToView(
+        nodeName: String,
+        componentSetName: String,
+        variantViewMap: HashMap<String, View>
+    ): View? {
         // Map this node's properties to their values
         val nodePropertyHash = HashMap<String, String>()
         val propertyValueList = nodeNameToPropertyValueList(nodeName)
@@ -82,42 +86,9 @@ class VariantPropertyMap {
             nodePropertyHash[p.first] = p.second
         }
 
-        // Given all the properties used in this node, find parent components that use these
-        // properties.
-        val possibleParentNodes: ArrayList<HashSet<String>> = ArrayList()
-        for (property in nodePropertyHash.keys) {
-            val parentComponentNodes = propertyToParentNodes[property]
-            if (parentComponentNodes != null) possibleParentNodes.add(parentComponentNodes)
-        }
-
-        // There can be multiple parent components that use these properties. We try and find the
-        // one that uses the greatest number of these properties. If there are multiple parent
-        // components that share the same number of properties, we just pick one. This typically
-        // will not happen much, and only when a designer is experimenting with variants.
-        val parentNodeCounts: HashMap<String, Int> = HashMap()
-        for (set in possibleParentNodes) {
-            for (name in set) {
-                val count = (parentNodeCounts[name] ?: 0) + 1
-                parentNodeCounts[name] = count
-            }
-        }
-        var parentNodeToUse: String? = null
-        var maxCount = 0
-        var index = 0
-        parentNodeCounts.forEach {
-            if (it.value > maxCount) {
-                maxCount = it.value
-                parentNodeToUse = it.key
-            }
-            index += 1
-        }
-
-        // If we could not find any parent component, there's nothing else to do
-        if (parentNodeToUse == null) return null
-
         // nodePropertyPossibleValues is the set of all possible variant names corresponding to
         // propertyName found in the Figma doc
-        val nodePropertyPossibleValues = propertyMap[parentNodeToUse]
+        val nodePropertyPossibleValues = propertyMap[componentSetName]
 
         if (nodePropertyHash.isEmpty() || nodePropertyPossibleValues?.isEmpty() != false)
             return null

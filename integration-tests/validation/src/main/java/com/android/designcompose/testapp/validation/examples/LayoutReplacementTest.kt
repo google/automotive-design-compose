@@ -19,8 +19,6 @@ package com.android.designcompose.testapp.validation.examples
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.android.designcompose.ContentReplacementContext
-import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
@@ -53,23 +51,15 @@ interface LayoutReplacementTest {
 }
 
 @Composable
-fun LayoutReplacementTestCase(idx: Int, rc: ContentReplacementContext) {
+fun LayoutReplacementTestCase(idx: Int) {
     if (idx == 0) {
-        LayoutReplacementTestDoc.Fill(
-            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
-        )
+        LayoutReplacementTestDoc.Fill()
     } else if (idx == 1) {
-        LayoutReplacementTestDoc.TopLeft(
-            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
-        )
+        LayoutReplacementTestDoc.TopLeft()
     } else if (idx == 2) {
-        LayoutReplacementTestDoc.BottomRight(
-            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
-        )
+        LayoutReplacementTestDoc.BottomRight()
     } else if (idx == 3) {
-        LayoutReplacementTestDoc.Center(
-            parentLayout = ParentLayoutInfo(rc.parentLayoutId, 0, rc.rootLayoutId)
-        )
+        LayoutReplacementTestDoc.Center()
     }
 }
 
@@ -78,20 +68,8 @@ fun LayoutReplacementTest() {
     val (idx, setIdx) = remember { mutableStateOf(0) }
     LayoutReplacementTestDoc.MainFrame(
         onNext = { setIdx((idx + 1) % 4) },
-        parent1 =
-            ReplacementContent(
-                count = 1,
-                content = { { rc -> LayoutReplacementTestCase(idx, rc) } }
-            ),
-        parent2 =
-            ReplacementContent(
-                count = 1,
-                content = { { rc -> LayoutReplacementTestCase(idx, rc) } }
-            ),
-        parent3 =
-            ReplacementContent(
-                count = 1,
-                content = { { rc -> LayoutReplacementTestCase(idx, rc) } }
-            ),
+        parent1 = ReplacementContent(count = 1, content = { { LayoutReplacementTestCase(idx) } }),
+        parent2 = ReplacementContent(count = 1, content = { { LayoutReplacementTestCase(idx) } }),
+        parent3 = ReplacementContent(count = 1, content = { { LayoutReplacementTestCase(idx) } }),
     )
 }

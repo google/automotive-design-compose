@@ -23,7 +23,6 @@ import com.android.designcompose.GetDesignNodeData
 import com.android.designcompose.LazyContentSpan
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
-import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignContentTypes
@@ -151,42 +150,35 @@ fun GridWidgetTest() {
     fun itemComposable(
         items: ArrayList<Pair<GridItemType, String>>,
         index: Int,
-        parentLayout: ParentLayoutInfo
     ) {
         when (items[index].first) {
             GridItemType.SectionTitle ->
                 GridWidgetTestDoc.SectionTitle(
                     title = items[index].second,
-                    parentLayout = parentLayout
                 )
             GridItemType.VSectionTitle ->
                 GridWidgetTestDoc.VSectionTitle(
                     title = items[index].second,
-                    parentLayout = parentLayout
                 )
             GridItemType.RowGrid ->
                 GridWidgetTestDoc.Item(
                     type = ItemType.Grid,
                     title = items[index].second,
-                    parentLayout = parentLayout
                 )
             GridItemType.RowList ->
                 GridWidgetTestDoc.Item(
                     type = ItemType.List,
                     title = items[index].second,
-                    parentLayout = parentLayout
                 )
             GridItemType.ColGrid ->
                 GridWidgetTestDoc.VItem(
                     type = ItemType.Grid,
                     title = items[index].second,
-                    parentLayout = parentLayout
                 )
             GridItemType.ColList ->
                 GridWidgetTestDoc.VItem(
                     type = ItemType.List,
                     title = items[index].second,
-                    parentLayout = parentLayout
                 )
         }
     }
@@ -200,8 +192,8 @@ fun GridWidgetTest() {
                     val nodeData = getNodeData(vertItems, index)
                     spanFunc(nodeData)
                 },
-            ) { index, parentLayout ->
-                itemComposable(vertItems, index, parentLayout)
+            ) { index ->
+                itemComposable(vertItems, index)
             }
         },
         rows = { spanFunc ->
@@ -211,19 +203,18 @@ fun GridWidgetTest() {
                     val nodeData = getNodeData(horizItems, index)
                     spanFunc(nodeData)
                 },
-            ) { index, parentLayout ->
-                itemComposable(horizItems, index, parentLayout)
+            ) { index ->
+                itemComposable(horizItems, index)
             }
         },
         items = {
             ListContentData(
                 count = 10,
                 span = { LazyContentSpan(1) },
-            ) { index, parentLayout ->
+            ) { index ->
                 GridWidgetTestDoc.Item(
                     type = ItemType.Grid,
                     title = "Item $index",
-                    parentLayout = parentLayout
                 )
             }
         },

@@ -15,19 +15,21 @@
  */
 
 plugins {
-    alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
     id("designcompose.conventions.base")
 }
 
+var applicationID = "com.android.designcompose.benchmarks.battleship"
+
 android {
-    namespace = "com.android.designcompose.benchmarks.battleship"
+    namespace = applicationID
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.android.designcompose.benchmarks.battleship"
+        applicationId = applicationID
         minSdk = libs.versions.appMinSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
@@ -53,6 +55,7 @@ android {
             matchingFallbacks += listOf("release")
         }
     }
+
     buildFeatures { compose = true }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()

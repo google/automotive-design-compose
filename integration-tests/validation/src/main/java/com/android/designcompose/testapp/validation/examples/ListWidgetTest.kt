@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import com.android.designcompose.GetDesignNodeData
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
-import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignContentTypes
@@ -126,20 +125,17 @@ fun ListWidgetTest() {
     fun itemComposable(
         items: ArrayList<Pair<GridItemType, String>>,
         index: Int,
-        parentLayout: ParentLayoutInfo
     ) {
         when (items[index].first) {
             GridItemType.RowGrid ->
                 ListWidgetTestDoc.Item(
                     type = ItemType.Grid,
                     title = items[index].second,
-                    parentLayout = parentLayout
                 )
             else ->
                 ListWidgetTestDoc.VItem(
                     type = ItemType.Grid,
                     title = items[index].second,
-                    parentLayout = parentLayout
                 )
         }
     }
@@ -153,8 +149,8 @@ fun ListWidgetTest() {
                     val nodeData = getNodeData(rowItems, index)
                     spanFunc(nodeData)
                 },
-            ) { index, parentLayout ->
-                itemComposable(rowItems, index, parentLayout)
+            ) { index ->
+                itemComposable(rowItems, index)
             }
         },
         rowScrollItems = { spanFunc ->
@@ -164,8 +160,8 @@ fun ListWidgetTest() {
                     val nodeData = getNodeData(rowScrollItems, index)
                     spanFunc(nodeData)
                 },
-            ) { index, parentLayout ->
-                itemComposable(rowScrollItems, index, parentLayout)
+            ) { index ->
+                itemComposable(rowScrollItems, index)
             }
         },
         colItems = { spanFunc ->
@@ -175,8 +171,8 @@ fun ListWidgetTest() {
                     val nodeData = getNodeData(colItems, index)
                     spanFunc(nodeData)
                 },
-            ) { index, parentLayout ->
-                itemComposable(colItems, index, parentLayout)
+            ) { index ->
+                itemComposable(colItems, index)
             }
         },
         colScrollItems = { spanFunc ->
@@ -186,8 +182,8 @@ fun ListWidgetTest() {
                     val nodeData = getNodeData(colScrollItems, index)
                     spanFunc(nodeData)
                 },
-            ) { index, parentLayout ->
-                itemComposable(colScrollItems, index, parentLayout)
+            ) { index ->
+                itemComposable(colScrollItems, index)
             }
         },
     )

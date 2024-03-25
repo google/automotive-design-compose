@@ -50,24 +50,19 @@ data class ListContentData(
     var span: ((index: Int) -> LazyContentSpan)? = null,
     var contentType: (index: Int) -> Any? = { null },
     var initialSpan: (() -> LazyContentSpan)? = null,
-    var initialContent: @Composable (parentLayoutInfo: ParentLayoutInfo) -> Unit = {},
-    var itemContent: @Composable (index: Int, parentLayoutInfo: ParentLayoutInfo) -> Unit
+    var initialContent: @Composable () -> Unit = {},
+    var itemContent: @Composable (index: Int) -> Unit
 )
 
 typealias ListContent = (GridSpanFunc) -> ListContentData
 
 fun EmptyListContent(): ListContent {
-    return { ListContentData { _, _ -> } }
+    return { ListContentData { _ -> } }
 }
-
-data class ContentReplacementContext(
-    val parentLayoutId: Int,
-    val rootLayoutId: Int,
-)
 
 data class ReplacementContent(
     var count: Int = 0,
-    var content: ((index: Int) -> @Composable (ContentReplacementContext) -> Unit),
+    var content: ((index: Int) -> @Composable () -> Unit),
 )
 
 typealias TapCallback = () -> Unit
@@ -259,25 +254,16 @@ fun CustomizationContext.setKey(key: String?) {
 // offering more behavioral changes than are permitted with simple Modifier customizations
 // (for example, replacing a styled text node with a complete text field.
 interface ComponentReplacementContext {
-    // Return the layout modifier that would have been used to present this component.
-    // This modifier doesn't contain any appearance information, and should be the first
-    // in the modifier chain.
+    // Return the custom layout modifier that this component would have used so that the layout
+    // function can retrieve the component's layout properties. When replacing a node with a
+    // composable that is not a DesignCompose generated function, such as a simple Box() or an
+    // AndroidView, this modifier should be used as a modifier for that component in order for it to
+    // retain the original node's layout (size, position) properties.
     val layoutModifier: Modifier
-
-    // Return the appearance modifier. This causes the view to be presented as specified
-    // by the designer. It also includes any modifier customizations that may have been
-    // specified elsewhere in the program.
-    val appearanceModifier: Modifier
-
-    // Render the content of this replaced component, if any.
-    @Composable fun Content(): Unit
 
     // Return the text style, if the component being replaced is a text node in the Figma
     // document.
     val textStyle: TextStyle?
-
-    // Data needed to perform layout
-    val parentLayout: ParentLayoutInfo?
 }
 
 fun CustomizationContext.setComponent(
@@ -389,8 +375,13 @@ fun CustomizationContext.getComponent(
     return null
 }
 
+// XXX-PERF: This function shows up on profiles because we call it for every component during render
+//      and it does a lot of hashing and string operations. We can optimize this by parsing the node
+//      variants and sorting them in Rust during doc generation, and by interning strings in the
+//      serialized doc so that we don't need to hash.
 fun CustomizationContext.getMatchingVariant(maybeComponentInfo: Optional<ComponentInfo>): String? {
     if (!maybeComponentInfo.isPresent) return null
+    if (variantProperties.isEmpty()) return null
 
     val componentInfo = maybeComponentInfo.get()
     val nodeVariants = parseNodeVariants(componentInfo.name)
@@ -408,7 +399,7 @@ fun CustomizationContext.getMatchingVariant(maybeComponentInfo: Optional<Compone
     }
 
     if (variantChanged) {
-        var newVariantList: ArrayList<String> = ArrayList()
+        val newVariantList: ArrayList<String> = ArrayList()
         val sortedKeys = nodeVariants.keys.sorted()
         sortedKeys.forEach { newVariantList.add(it + "=" + nodeVariants[it]) }
         return newVariantList.joinToString(",")

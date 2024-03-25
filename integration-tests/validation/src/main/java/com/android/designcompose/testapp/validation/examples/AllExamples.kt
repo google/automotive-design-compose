@@ -23,6 +23,7 @@ import com.android.designcompose.benchmarks.battleship.lib.BattleshipTest
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
+        Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
         Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
         Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
@@ -81,6 +82,13 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
         Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
         Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
+        Triple("Component Replace", { ComponentReplaceTest() }, ComponentReplaceDoc.javaClass.name),
+        Triple("SA", { SmartAnimateTest() }, SmartAnimateTestDoc.javaClass.name),
+        Triple("SA Variant", { VariantAnimationTest() }, VariantAnimationTestDoc.javaClass.name),
+        // Don't run in CI, need an annotation.
+        // Triple("Compositing", { CompositingViewsTest() },
+        // CompositingViewsTestDoc.javaClass.name),
+        Triple("Text Inval", { TextResizingTest() }, TextResizingTestDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

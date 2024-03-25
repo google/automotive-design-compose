@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.android.designcompose.ParentLayoutInfo
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -50,18 +49,10 @@ fun CrossAxisFillTest() {
             ReplacementContent(
                 count = 2,
                 content = { index ->
-                    { rc ->
+                    {
                         if (index == 0)
-                            CrossAxisFillTestDoc.LargeFixedWidth(
-                                parentLayout =
-                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId),
-                                modifier = Modifier.width(200.dp)
-                            )
-                        else
-                            CrossAxisFillTestDoc.FillParentWidth(
-                                parentLayout =
-                                    ParentLayoutInfo(rc.parentLayoutId, index, rc.rootLayoutId)
-                            )
+                            CrossAxisFillTestDoc.LargeFixedWidth(modifier = Modifier.width(200.dp))
+                        else CrossAxisFillTestDoc.FillParentWidth()
                     }
                 }
             )

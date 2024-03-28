@@ -50,13 +50,13 @@ class CheckStartupPage {
 
     @Test
     fun testStartupPage() {
-        composeTestRule.setContent { TutorialMain() }
-
-        composeTestRule
-            .onNodeWithText(
-                "Congratulations on running the Automotive Design for Compose Tutorial app!",
-                substring = true
-            )
-            .assertExists()
+        with(composeTestRule) {
+            setContent { TutorialMain() }
+            onNodeWithText(
+                    "Congratulations on running the Automotive Design for Compose Tutorial app!",
+                    substring = true
+                )
+                .assertExists()
+        }
     }
 }

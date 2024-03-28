@@ -66,6 +66,10 @@ android {
     // Deprecated in AGP 8+, replaced by `packaging`
     @Suppress("DEPRECATION")
     packagingOptions { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }
+
+    testOptions.unitTests {
+        isIncludeAndroidResources = true // For Roborazzi
+    }
 }
 
 dependencies {
@@ -78,9 +82,17 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.material)
 
-    testImplementation(libs.junit)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    testImplementation(libs.designcompose.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit)
+    testImplementation(libs.androidx.test.espresso.core)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

@@ -40,6 +40,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -49,6 +50,7 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DesignSwitcherPolicy
+import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.DocServer
 import com.android.designcompose.DocumentSwitcher
 import com.android.designcompose.InteractionState
@@ -60,6 +62,7 @@ import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
+import com.android.designcompose.sDocRenderStatus
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeQuery
@@ -252,6 +255,8 @@ fun SquooshRoot(
             liveUpdateMode == LiveUpdateMode.OFFLINE
         )
 
+    LaunchedEffect(docName) { Log.i(TAG, "Squooshing $docName") }
+
     // Design Switcher support
     val showDesignSwitcher =
         isRoot &&
@@ -430,16 +435,18 @@ fun SquooshRoot(
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
         androidx.compose.ui.layout.Layout(
             modifier =
-                modifier.squooshRender(
-                    transitionRoot ?: root,
-                    doc,
-                    docName,
-                    customizationContext,
-                    childRenderSelector,
-                    // Is there a nicer way of passing these two?
-                    currentAnimations,
-                    animationValues,
-                ),
+                modifier
+                    .squooshRender(
+                        transitionRoot ?: root,
+                        doc,
+                        docName,
+                        customizationContext,
+                        childRenderSelector,
+                        // Is there a nicer way of passing these two?
+                        currentAnimations,
+                        animationValues,
+                    )
+                    .semantics { sDocRenderStatus = DocRenderStatus.Rendered },
             measurePolicy = { measurables, constraints ->
                 // Update the root node style to have the incoming width/height from our parent
                 // Composable.

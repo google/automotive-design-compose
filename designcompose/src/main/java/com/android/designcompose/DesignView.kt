@@ -938,6 +938,7 @@ fun DesignDoc(
     docId: String,
     rootNodeQuery: NodeQuery,
     modifier: Modifier = Modifier,
+    squoosh: Boolean = false,
     placeholder: (@Composable () -> Unit)? = null,
     customizations: CustomizationContext = CustomizationContext(),
     serverParams: DocumentServerParams = DocumentServerParams(),
@@ -952,6 +953,7 @@ fun DesignDoc(
         docId,
         rootNodeQuery,
         modifier = modifier,
+        squoosh = squoosh,
         placeholder = placeholder,
         customizations = customizations,
         serverParams = serverParams,
@@ -968,7 +970,6 @@ fun DesignDoc(
 // scrolling, no lists, no transformed input), but it does add animations and is likely the
 // direction that DesignCompose will move in to be lighter weight and better integrate with
 // external layout.
-private const val USE_SQUOOSH = false
 
 @Composable
 internal fun DesignDocInternal(
@@ -976,6 +977,7 @@ internal fun DesignDocInternal(
     incomingDocId: String,
     rootNodeQuery: NodeQuery,
     modifier: Modifier = Modifier,
+    squoosh: Boolean = false,
     placeholder: (@Composable () -> Unit)? = null,
     customizations: CustomizationContext = CustomizationContext(),
     serverParams: DocumentServerParams = DocumentServerParams(),
@@ -985,7 +987,7 @@ internal fun DesignDocInternal(
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) {
-    if (USE_SQUOOSH) {
+    if (squoosh) {
         SquooshRoot(
             docName = docName,
             incomingDocId = incomingDocId,

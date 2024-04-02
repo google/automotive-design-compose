@@ -66,7 +66,7 @@ GEM
       rspec-html-matchers (~> 0.9)
     jekyll-watch (2.2.1)
       listen (~> 3.0)
-    just-the-docs (0.8.1)
+    just-the-docs (0.8.2)
       jekyll (>= 3.8.5)
       jekyll-include-cache
       jekyll-seo-tag (>= 2.0)
@@ -88,7 +88,7 @@ GEM
     parallel (1.23.0)
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
-    public_suffix (5.0.4)
+    public_suffix (5.0.5)
     racc (1.7.3)
     rainbow (3.1.1)
     rake (13.1.0)
@@ -136,7 +136,7 @@ DEPENDENCIES
   jekyll (~> 4.3.3)
   jekyll-github-metadata
   jekyll-test
-  just-the-docs (= 0.8.1)
+  just-the-docs (= 0.8.2)
   kramdown-parser-gfm
   rake
   tzinfo (>= 1, < 3)

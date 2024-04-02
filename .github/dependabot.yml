@@ -30,9 +30,9 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      github-workflow-dependency-patches:
+      non-breaking-github-workflow:
         update-types:
-        - "patch"
+        - "minor"
     open-pull-requests-limit: 5
     schedule:
       interval: weekly
@@ -46,9 +46,9 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      github-action-dependency-patches:
+      non-breaking-github-action:
         update-types:
-        - "patch"
+        - "minor"
     open-pull-requests-limit: 5
     schedule:
       interval: weekly
@@ -62,9 +62,9 @@ updates:
     allow:
       - dependency-type: "all"
     groups:
-      rust-dependency-patches:
+      non-breaking-rust:
         update-types:
-        - "patch"
+        - "minor"
     open-pull-requests-limit: 5
     schedule:
       interval: weekly
@@ -76,9 +76,9 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      jekyll-dependency-patches:
+      non-breaking-bundler:
         update-types:
-        - "patch"
+        - "minor"
     open-pull-requests-limit: 5
     schedule:
       interval: weekly
@@ -90,9 +90,9 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      figma-widget-dependency-patches:
+      non-breaking-figma-widget:
         update-types:
-        - "patch"
+        - "minor"
     open-pull-requests-limit: 5
     schedule:
       interval: weekly
@@ -104,9 +104,9 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      figma-plugin-dependency-patches:
+      non-breaking-figma-plugin:
         update-types:
-        - "patch"
+        - "minor"
     open-pull-requests-limit: 5
     schedule:
       interval: weekly
@@ -121,9 +121,9 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      gradle-dependencies-patches:
+      non-breaking-gradle:
         update-types:
-        - "patch"
+        - "minor"
     open-pull-requests-limit: 5
     schedule:
       interval: weekly

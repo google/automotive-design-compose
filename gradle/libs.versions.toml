@@ -1,6 +1,6 @@
 [versions]
 # DesignCompose
-designcompose = "0.25.0-SNAPSHOT"
+designcompose = "0.25.0"
 
 #Android Gradle Plugin
 agp = "8.3.0"

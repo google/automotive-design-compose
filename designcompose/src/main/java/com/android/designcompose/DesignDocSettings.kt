@@ -16,8 +16,6 @@
 
 package com.android.designcompose
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 
 /**
@@ -34,9 +32,4 @@ class DesignDocSettings(
     val useSquoosh: Boolean = false,
 )
 
-internal val LocalDesignDocSettingsContext = compositionLocalOf { DesignDocSettings() }
-
-@Composable
-fun WithDesignDocSettings(settings: DesignDocSettings, content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalDesignDocSettingsContext provides settings) { content() }
-}
+val LocalDesignDocSettings = compositionLocalOf { DesignDocSettings() }

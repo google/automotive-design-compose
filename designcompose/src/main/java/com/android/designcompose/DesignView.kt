@@ -978,7 +978,7 @@ internal fun DesignDocInternal(
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) {
-    if (LocalDesignDocSettingsContext.current.useSquoosh) {
+    if (LocalDesignDocSettings.current.useSquoosh) {
         SquooshRoot(
             docName = docName,
             incomingDocId = incomingDocId,

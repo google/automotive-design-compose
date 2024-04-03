@@ -17,13 +17,13 @@
 package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import com.android.designcompose.DesignDocSettings
-import com.android.designcompose.WithDesignDocSettings
+import com.android.designcompose.LocalDesignDocSettings
 
 @Composable
 fun HelloSquoosh() {
-
-    WithDesignDocSettings(DesignDocSettings(useSquoosh = true)) {
+    CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
         HelloWorldDoc.Main(
             name = "Squoosh",
         )

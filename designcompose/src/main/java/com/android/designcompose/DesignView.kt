@@ -963,13 +963,6 @@ fun DesignDoc(
     endSection()
 }
 
-// Enable the "Squoosh" refactor. Squoosh implements its own view tree, rather than using Compose,
-// which brings some performance and flexibility benefits. Squoosh isn't feature complete (no
-// scrolling, no lists, no transformed input), but it does add animations and is likely the
-// direction that DesignCompose will move in to be lighter weight and better integrate with
-// external layout.
-private const val USE_SQUOOSH = false
-
 @Composable
 internal fun DesignDocInternal(
     docName: String,
@@ -985,7 +978,7 @@ internal fun DesignDocInternal(
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) {
-    if (USE_SQUOOSH) {
+    if (LocalDesignDocSettingsContext.current.useSquoosh) {
         SquooshRoot(
             docName = docName,
             incomingDocId = incomingDocId,

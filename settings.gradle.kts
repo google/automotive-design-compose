@@ -115,3 +115,5 @@ if (unbundledAAOSDir.isNullOrBlank()) {
         )
     }
 }
+
+include(":proto")

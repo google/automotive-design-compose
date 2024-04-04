@@ -1,0 +1,17 @@
+[package]
+name = "dc_proto"
+version ="0.26.0"
+edition = "2021"
+license = "Apache-2.0"
+rust-version = "1.68"
+
+[lib]
+path = "src/main/rust/lib.rs"
+
+[build-dependencies]
+prost-build = "0.12.3"
+
+[dependencies]
+prost = "0.12.3"
+tempfile = "3"
+

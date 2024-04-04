@@ -30,13 +30,13 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      github-workflow-dependency-patches:
+      non-breaking-github-workflow:
         update-types:
-        - "patch"
-    open-pull-requests-limit: 3
+        - "minor"
+    open-pull-requests-limit: 5
     schedule:
       interval: weekly
-      day: wednesday
+      day: friday
 
   # A directory of "/" only actually includes .github/workflows.
   # A separate section is needed for our custom actions
@@ -46,13 +46,13 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      github-action-dependency-patches:
+      non-breaking-github-action:
         update-types:
-        - "patch"
-    open-pull-requests-limit: 3
+        - "minor"
+    open-pull-requests-limit: 5
     schedule:
       interval: weekly
-      day: wednesday
+      day: friday
 
   - package-ecosystem: cargo
     directory: /
@@ -62,13 +62,13 @@ updates:
     allow:
       - dependency-type: "all"
     groups:
-      rust-dependency-patches:
+      non-breaking-rust:
         update-types:
-        - "patch"
-    open-pull-requests-limit: 3
+        - "minor"
+    open-pull-requests-limit: 5
     schedule:
       interval: weekly
-      day: tuesday
+      day: friday
 
   - package-ecosystem: bundler
     directory: /docs
@@ -76,12 +76,13 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      jekyll-dependency-patches:
+      non-breaking-bundler:
         update-types:
-        - "patch"
-    open-pull-requests-limit: 3
+        - "minor"
+    open-pull-requests-limit: 5
     schedule:
-      interval: monthly
+      interval: weekly
+      day: friday
 
   - package-ecosystem: npm
     directory: /support-figma/auto-content-preview-widget
@@ -89,12 +90,13 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      figma-widget-dependency-patches:
+      non-breaking-figma-widget:
         update-types:
-        - "patch"
-    open-pull-requests-limit: 3
+        - "minor"
+    open-pull-requests-limit: 5
     schedule:
-      interval: monthly
+      interval: weekly
+      day: friday
 
   - package-ecosystem: npm
     directory: /support-figma/extended-layout-plugin
@@ -102,12 +104,13 @@ updates:
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
-      figma-plugin-dependency-patches:
+      non-breaking-figma-plugin:
         update-types:
-        - "patch"
-    open-pull-requests-limit: 3
+        - "minor"
+    open-pull-requests-limit: 5
     schedule:
-      interval: monthly
+      interval: weekly
+      day: friday
 
   - package-ecosystem: gradle
     directory: "/"
@@ -117,12 +120,11 @@ updates:
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
     target-branch: "main"
-    # Dependabot groups seem to be busted for Gradle. Uncommenting this will prevent
-    # PRs from being created for Gradle dependencies.
-    # groups:
-    #   gradle-dependencies-patches:
-    #     update-types:
-    #     - "patch"
-    open-pull-requests-limit: 3
+    groups:
+      non-breaking-gradle:
+        update-types:
+        - "minor"
+    open-pull-requests-limit: 5
     schedule:
-      interval: daily
+      interval: weekly
+      day: friday

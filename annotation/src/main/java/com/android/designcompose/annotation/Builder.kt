@@ -50,14 +50,39 @@ annotation class DesignComponent(
  *
  * @param node the name of the Figma node
  */
+// TODO adding AnnotationTarget.PROPERTY to the list in @Target doesn't work. The annotation will
+// not be found when iterating through annotations of the property due to a KSP bug:
+// https://github.com/google/ksp/issues/1812. Once this is fixed, add AnnotationTarget.PROPERTY to
+// this list so that @Design can be used in @DesignModuleClass class properties instead of
+// @DesignProperty
 @Target(AnnotationTarget.VALUE_PARAMETER) annotation class Design(val node: String)
+
+/**
+ * Specify a node customization property within a @DesignModule class.
+ *
+ * @param node the name of the Figma node
+ */
+// TODO remove this once the KSP bug is fixed. This is only because when @Design annotations for
+// class properties cannot be found due to a bug in KSP.
+@Target(AnnotationTarget.PROPERTY) annotation class DesignProperty(val node: String)
 
 /**
  * Specify a variant name for a component set that contains variant children.
  *
  * @param property the name of the variant property
  */
+// TODO add AnnotationTarget.PROPERTY to the list of targets when the KSP bug is fixed
 @Target(AnnotationTarget.VALUE_PARAMETER) annotation class DesignVariant(val property: String)
+
+/**
+ * Specify a variant name for a component set that contains variant children. This annotation should
+ * be used for @DesignModule class properties only
+ *
+ * @param property the name of the variant property
+ */
+// TODO remove this once the KSP bug is fixed. This is only needed because @DesignVariant
+// annotations for class properties cannot be found due to a bug in KSP
+@Target(AnnotationTarget.PROPERTY) annotation class DesignVariantProperty(val property: String)
 
 /**
  * An optional annotation that goes with a @Design annotation of type @Composable() -> Unit, which
@@ -108,3 +133,26 @@ enum class DesignMetaKey {
  */
 @Target(AnnotationTarget.FUNCTION)
 annotation class DesignKeyAction(val key: Char, val metaKeys: Array<DesignMetaKey>)
+
+/**
+ * Generates a customizations() extension function for the class specified for this annotation. This
+ * function returns a CustomizationContext that contains customizations for all the DesignCompose
+ * annotated properties of the class. This class can be used in other classes and interfaces that
+ * want to reuse these customizations without declaring them again.
+ */
+@Target(AnnotationTarget.CLASS) annotation class DesignModuleClass
+
+/**
+ * Add a module object as a parameter to a @DesignComponent function. All customizations within the
+ * module object will be added to the function.
+ */
+// TODO add the annotation target PROPERTY to this once the KSP bug is fixed.
+@Target(AnnotationTarget.VALUE_PARAMETER) annotation class DesignModule
+
+/**
+ * Add a module object as a property of another @DesignModuleClass object. All customizations within
+ * the module object will be added to the containing class's customizations.
+ */
+// TODO remove this once the KSP bug is fixed. This is only because when @DesignModule annotations
+//  for class properties cannot be found due to a bug in KSP.
+@Target(AnnotationTarget.PROPERTY) annotation class DesignModuleProperty

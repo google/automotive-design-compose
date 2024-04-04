@@ -47,7 +47,7 @@ jobs:
         uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
 
       - name: Download screenshots from base branch
-        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d # v3.0.0
+        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
         continue-on-error: true
         with:
           name: screenshots
@@ -193,7 +193,7 @@ jobs:
           echo "${delimiter}" >> "$GITHUB_OUTPUT"
 
       - name: Find Comment
-        uses: peter-evans/find-comment@d5fe37641ad8451bdd80312415672ba26c86575e # v3.0.0
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: fc
         if: steps.generate-diff-reports.outputs.reports != ''
         with:

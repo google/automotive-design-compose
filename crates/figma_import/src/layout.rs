@@ -22,6 +22,7 @@
 use crate::{toolkit_schema::Layout, toolkit_style::ViewStyle};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use crate::toolkit_layout_style::layout_style::LayoutStyle;
 
 // The layout response sent back to client which contains a layout state ID and
 // a list of layout IDs that have changed.
@@ -42,7 +43,7 @@ pub struct LayoutNode {
     pub layout_id: i32,
     pub parent_layout_id: i32,
     pub child_index: i32,
-    pub style: ViewStyle,
+    pub style: LayoutStyle,
     pub name: String,
     pub use_measure_func: bool,
     pub fixed_width: Option<i32>,

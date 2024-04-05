@@ -16,9 +16,15 @@
 //! https://github.com/vislyhq/stretch
 
 use serde::{Deserialize, Serialize};
+use layout_style::LayoutStyle;
 use taffy::prelude as taffy;
 
 use crate::figma_schema;
+
+pub(crate) mod layout_style;
+pub(crate) mod compute_layout;
+
+
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Number {

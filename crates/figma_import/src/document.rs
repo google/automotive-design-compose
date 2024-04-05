@@ -15,9 +15,10 @@
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
-    iter::FromIterator,
-    time::Duration,
+    iter::FromIterator
+    ,
 };
+use std::time::Duration;
 
 use crate::{
     component_context::ComponentContext,
@@ -30,7 +31,6 @@ use crate::{
     },
     image_context::{EncodedImageMap, ImageContext, ImageContextSession, ImageKey},
     toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
-    transform_flexbox::create_component_flexbox,
 };
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
@@ -63,6 +63,7 @@ fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<
 
 #[cfg(feature = "http_mock")]
 use crate::figma_v1_document_mocks::http_fetch;
+use crate::toolkit_layout_style::compute_layout::create_component_flexbox;
 
 /// Document update requests return this value to indicate if an update was
 /// made or not.

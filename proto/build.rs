@@ -15,7 +15,10 @@
 use std::io::Result;
 
 fn main() -> Result<()> {
-    prost_build::compile_protos(&["src/main/proto/helloworld.proto"], &["src/main/proto"])?;
+    prost_build::compile_protos(
+        &["src/main/proto/helloworld.proto", "src/main/proto/layout.proto"],
+        &["src/main/proto"],
+    )?;
 
     Ok(())
 }

@@ -328,6 +328,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "clap",
+ "dc_proto",
  "euclid",
  "image",
  "lazy_static",

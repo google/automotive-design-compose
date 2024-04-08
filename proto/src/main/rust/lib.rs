@@ -14,6 +14,7 @@
 
 pub mod dc_proto {
     include!(concat!(env!("OUT_DIR"), "/com.android.designcompose.proto.rs"));
+    include!(concat!(env!("OUT_DIR"), "/com.android.designcompose.rs"));
 }
 
 #[cfg(test)]
@@ -37,7 +38,6 @@ mod tests {
         // Write the bytes buffer to a file.
         let mut file = tempfile().unwrap();
         file.write_all(&buf).unwrap();
-        println!("buf: {:?}", buf);
 
         file.seek(SeekFrom::Start(0)).unwrap();
 

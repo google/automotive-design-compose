@@ -99,8 +99,6 @@ if (unbundledAAOSDir.isNullOrBlank()) {
     val unbundledRepo = File(unbundledAAOSDir, "out/aaos-apps-gradle-build/unbundled_m2repo")
     if (unbundledRepo.exists()) {
 
-        include(":media-lib")
-        project(":media-lib").projectDir = File("reference-apps/aaos-unbundled/media")
         include(":mediacompose-app")
         project(":mediacompose-app").projectDir = File("reference-apps/aaos-unbundled/mediacompose")
 

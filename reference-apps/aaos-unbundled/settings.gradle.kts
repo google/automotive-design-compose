@@ -54,10 +54,6 @@ if (unbundledRepo.exists()) {
     )
 }
 
-include(":media-lib")
-
-project(":media-lib").projectDir = File("media")
-
 include(":mediacompose-app")
 
 project(":mediacompose-app").projectDir = File("mediacompose")

@@ -87,15 +87,20 @@ android {
 dependencies {
     implementation(libs.designcompose)
     ksp(libs.designcompose.codegen)
-    implementation(project(":media-lib"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.compose.runtime.livedata)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.material)
+
+    implementation("com.android.car:car-apps-common:UNBUNDLED")
+    api("com.android.car:car-media-common:UNBUNDLED")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

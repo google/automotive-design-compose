@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.reference.media
+package com.android.designcompose.reference.mediacompose
 
 import android.app.Application
 import android.app.PendingIntent
@@ -397,7 +397,7 @@ class MediaAdapter(
         currentMetadata: MediaItemMetadata?,
         onTap: TapCallback,
         key: String?,
-        media: MediaInterface,
+        media: CenterDisplayDoc,
     ) {
         val (icon, setIcon) = remember { mutableStateOf<Bitmap?>(null) }
 
@@ -427,7 +427,7 @@ class MediaAdapter(
     private fun MediaNavButton(
         item: MediaItemMetadata,
         browseStack: MediaBrowseStack,
-        media: MediaInterface,
+        media: CenterDisplayDoc,
     ) {
         val (icon, setIcon) = remember { mutableStateOf<Bitmap?>(null) }
         val navButtonType =
@@ -458,7 +458,7 @@ class MediaAdapter(
     }
 
     @Composable
-    fun getNowPlaying(media: MediaInterface): MediaNowPlaying {
+    fun getNowPlaying(media: CenterDisplayDoc): MediaNowPlaying {
         val nowPlaying = MediaNowPlaying()
 
         // Observe now playing metadata
@@ -623,7 +623,7 @@ class MediaAdapter(
     private fun getSourceButtons(
         sources: MediaSourcesProvider,
         selectedPackageName: ComponentName?,
-        media: MediaInterface,
+        media: CenterDisplayDoc,
     ): ListContent {
         val getSourceButtonType = { index: Int ->
             val source = sources.list[index]
@@ -661,7 +661,7 @@ class MediaAdapter(
         list: FutureData<List<MediaItemMetadata>>?,
         browseFunc: (MediaItemMetadata?) -> Unit,
         playFunc: (PlaybackViewModel.PlaybackController?, MediaItemMetadata) -> Unit,
-        media: MediaInterface,
+        media: CenterDisplayDoc,
         showSectionTitles: Boolean = true,
     ): ListContent {
         if (list == null) return { ListContentData { _ -> } }
@@ -689,7 +689,7 @@ class MediaAdapter(
         list: List<MediaItemMetadata>?,
         browseFunc: (MediaItemMetadata?) -> Unit,
         playFunc: (PlaybackViewModel.PlaybackController?, MediaItemMetadata) -> Unit,
-        media: MediaInterface,
+        media: CenterDisplayDoc,
         showSectionTitles: Boolean = true,
     ): ListContent {
         if (list == null) return { ListContentData { _ -> } }
@@ -830,7 +830,7 @@ class MediaAdapter(
     }
 
     @Composable
-    fun getBrowse(media: MediaInterface): MediaBrowse {
+    fun getBrowse(media: CenterDisplayDoc): MediaBrowse {
         val browse = MediaBrowse()
 
         // Observer the currently browsing media source
@@ -937,7 +937,7 @@ class MediaAdapter(
     }
 
     @Composable
-    fun getSearch(media: MediaInterface): MediaSearch {
+    fun getSearch(media: CenterDisplayDoc): MediaSearch {
         var search = MediaSearch()
 
         val (query, setQuery) = remember { mutableStateOf("") }

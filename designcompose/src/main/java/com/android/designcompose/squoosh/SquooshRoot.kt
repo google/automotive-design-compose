@@ -49,6 +49,7 @@ import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.DesignSettings
+import com.android.designcompose.DesignSwitcher
 import com.android.designcompose.DesignSwitcherPolicy
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.DocServer
@@ -275,7 +276,7 @@ fun SquooshRoot(
         if (showDesignSwitcher) {
             val branchHash = DocServer.branches(docId)
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
-                // DesignSwitcher(doc, docId, branchHash, switchDocId)
+                DesignSwitcher(doc, docId, branchHash, switchDocId)
             }
         }
     }

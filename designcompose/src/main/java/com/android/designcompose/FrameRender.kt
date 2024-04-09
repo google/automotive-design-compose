@@ -586,7 +586,11 @@ internal fun squooshShapeRender(
             style,
             density,
             size,
-            rectSize,
+            // Pass in the actual layout-calculated size to ensure that layout size animations work
+            // correctly. This likely breaks size calculation for rotated nodes, because
+            // DesignCompose weirdly considers the size to be "post rotation bounding box" but
+            // layout doesn't actually consider rotation yet.
+            rectSize ?: size,
             customArcAngle,
             vectorScaleX,
             vectorScaleY,

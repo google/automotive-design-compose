@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.designcompose.DesignDocSettings
+import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -62,7 +65,9 @@ fun VariantAnimationTest() {
         }
     }
 
-    VariantAnimationTestDoc.MainFrame(state = state, text = text)
+    CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
+        VariantAnimationTestDoc.MainFrame(state = state, text = text)
+    }
 
     Column(modifier = Modifier.absoluteOffset(x = 20.dp, y = 600.dp)) {
         Row {

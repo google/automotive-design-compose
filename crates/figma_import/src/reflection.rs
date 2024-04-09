@@ -133,6 +133,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::reaction_schema::TransitionDirection>(&samples)
         .expect("couldn't trace TransitionDirection");
+    tracer.trace_type::<crate::reaction_schema::Easing>(&samples).expect("couldn't trace Easing");
 
     tracer
         .trace_type::<crate::vector_schema::WindingRule>(&samples)

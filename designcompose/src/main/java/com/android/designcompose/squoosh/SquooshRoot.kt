@@ -19,10 +19,8 @@ package com.android.designcompose.squoosh
 import android.os.SystemClock
 import android.util.Log
 import androidx.compose.animation.core.AnimationVector1D
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -57,6 +55,7 @@ import com.android.designcompose.DocumentSwitcher
 import com.android.designcompose.InteractionState
 import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.LiveUpdateMode
+import com.android.designcompose.asAnimationSpec
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DocumentServerParams
@@ -122,6 +121,9 @@ private fun createOrUpdateAnimation(
     val interruptedId =
         if (action != null) action.interruptedId
         else if (variant != null) variant.interruptedId else return
+    val transition =
+        if (action != null) action.transition
+        else if (variant != null) variant.transition else return
 
     // Make a `SquooshAnimationControl` for this animated action or variant. The animation
     // control updates node style values in a merged tree allowing an animation to "play"
@@ -159,7 +161,7 @@ private fun createOrUpdateAnimation(
             }
         val animatable =
             TargetBasedAnimation(
-                animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessVeryLow),
+                animationSpec = transition.asAnimationSpec(),
                 typeConverter = Float.VectorConverter,
                 initialValue = 1f - initialValue,
                 targetValue = 1f
@@ -420,12 +422,10 @@ fun SquooshRoot(
 
     // Run interactions in a dedicated scope. This means that events continue to be handled by a
     // given coroutine after its hosting Composable has been removed from the tree. Some
-    // interactions
-    // (e.g.: "close an overlay, while pressed" applied to the overlay itself) will result in the
-    // hosting Composable being removed from the tree on touch start, but the event handler still
-    // wants to receive the drag (for press-cancel) and release events in order to run the
-    // appropriate
-    // "undo" action.
+    // interactions (e.g.: "close an overlay, while pressed" applied to the overlay itself) will
+    // result in the hosting Composable being removed from the tree on touch start, but the
+    // event handler still wants to receive the drag (for press-cancel) and release events in
+    // order to run the appropriate "undo" action.
     //
     // We also run animated transitions in this coroutine scope.
     val interactionScope = rememberCoroutineScope()

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.reference.media
+package com.android.designcompose.reference.mediacompose
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.LiveData

@@ -17,7 +17,7 @@ use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
 
-use figma_import::{layout::LayoutChangedResponse, toolkit_schema, toolkit_style::ViewStyle};
+use figma_import::{layout::LayoutChangedResponse, toolkit_schema, toolkit_style::LayoutStyle};
 
 // Customizations that can applied to a node
 struct Customizations {
@@ -172,7 +172,7 @@ impl LayoutManager {
         layout_id: i32,
         parent_layout_id: i32,
         child_index: i32,
-        style: ViewStyle,
+        style: LayoutStyle,
         name: String,
         measure_func: impl Send + Sync + 'static + Fn(i32, f32, f32, f32, f32) -> (f32, f32),
     ) {
@@ -213,7 +213,7 @@ impl LayoutManager {
         layout_id: i32,
         parent_layout_id: i32,
         child_index: i32,
-        style: ViewStyle,
+        style: LayoutStyle,
         name: String,
         measure_func: Option<taffy::node::MeasureFunc>,
         fixed_width: Option<i32>,

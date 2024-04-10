@@ -16,7 +16,10 @@
 
 package com.android.designcompose.squoosh
 
+import com.android.designcompose.asBuilder
 import com.android.designcompose.serdegen.Layout
+import com.android.designcompose.serdegen.LayoutStyle
+import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
@@ -40,14 +43,14 @@ internal interface SquooshAnimatedItem {
 internal class SquooshAnimatedFadeIn(private val target: SquooshResolvedNode) :
     SquooshAnimatedItem {
     override fun apply(value: Float) {
-        target.style = target.style.with { s -> s.opacity = Optional.of(value) }
+        target.style = target.style.withNodeStyle { s -> s.opacity = Optional.of(value) }
     }
 }
 
 internal class SquooshAnimatedFadeOut(private val target: SquooshResolvedNode) :
     SquooshAnimatedItem {
     override fun apply(value: Float) {
-        target.style = target.style.with { s -> s.opacity = Optional.of(1.0f - value) }
+        target.style = target.style.withNodeStyle { s -> s.opacity = Optional.of(1.0f - value) }
     }
 }
 
@@ -326,86 +329,29 @@ private fun isTweenable(a: View, b: View): Boolean {
 
 private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     // Compare some style things and decide if we need to tween the styles.
-    if (a.background != b.background) return true
-    if (a.stroke != b.stroke) return true
+    if (a.node_style.background != b.node_style.background) return true
+    if (a.node_style.stroke != b.node_style.stroke) return true
     return false
-}
-
-// XXX: Horrible code to deal with our terrible generated types. Maybe if style moves to proto then
-//      we'll get some more egonomic generated classes.
-internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
-    val builder = ViewStyle.Builder()
-    builder.text_color = text_color
-    builder.font_size = font_size
-    builder.font_family = font_family
-    builder.font_weight = font_weight
-    builder.font_style = font_style
-    builder.font_stretch = font_stretch
-    builder.background = background
-    builder.box_shadow = box_shadow
-    builder.stroke = stroke
-    builder.opacity = opacity
-    builder.transform = transform
-    builder.relative_transform = relative_transform
-    builder.text_align = text_align
-    builder.text_align_vertical = text_align_vertical
-    builder.text_overflow = text_overflow
-    builder.text_shadow = text_shadow
-    builder.node_size = node_size
-    builder.line_height = line_height
-    builder.line_count = line_count
-    builder.font_features = font_features
-    builder.filter = filter
-    builder.backdrop_filter = backdrop_filter
-    builder.blend_mode = blend_mode
-    // We don't need to copy any of the layout properties, but do it anyway to
-    // avoid confusion if this function later gets used more generally; we should
-    // refactor ViewStyle to separate the fields used for rendering from those used
-    // for layout.
-    builder.display_type = display_type
-    builder.position_type = position_type
-    builder.flex_direction = flex_direction
-    builder.flex_wrap = flex_wrap
-    builder.grid_layout = grid_layout
-    builder.grid_columns_rows = grid_columns_rows
-    builder.grid_adaptive_min_size = grid_adaptive_min_size
-    builder.grid_span_content = grid_span_content
-    builder.overflow = overflow
-    builder.max_children = max_children
-    builder.overflow_node_id = overflow_node_id
-    builder.overflow_node_name = overflow_node_name
-    builder.align_items = align_items
-    builder.align_self = align_self
-    builder.align_content = align_content
-    builder.justify_content = justify_content
-    builder.top = top
-    builder.left = left
-    builder.bottom = bottom
-    builder.right = right
-    builder.margin = margin
-    builder.padding = padding
-    builder.item_spacing = item_spacing
-    builder.cross_axis_item_spacing = cross_axis_item_spacing
-    builder.flex_grow = flex_grow
-    builder.flex_shrink = flex_shrink
-    builder.flex_basis = flex_basis
-    builder.bounding_box = bounding_box
-    builder.horizontal_sizing = horizontal_sizing
-    builder.vertical_sizing = vertical_sizing
-    builder.width = width
-    builder.height = height
-    builder.min_width = min_width
-    builder.min_height = min_height
-    builder.max_width = max_width
-    builder.max_height = max_height
-    builder.aspect_ratio = aspect_ratio
-    builder.pointer_events = pointer_events
-    builder.meter_data = meter_data
-    return builder
 }
 
 private fun ViewStyle.with(delta: (ViewStyle.Builder) -> Unit): ViewStyle {
     val builder = asBuilder()
     delta(builder)
+    return builder.build()
+}
+
+private fun ViewStyle.withLayoutStyle(delta: (LayoutStyle.Builder) -> Unit): ViewStyle {
+    val builder = asBuilder()
+    val layoutStyleBuilder = layout_style.asBuilder()
+    delta(layoutStyleBuilder)
+    builder.layout_style = layoutStyleBuilder.build()
+    return builder.build()
+}
+
+private fun ViewStyle.withNodeStyle(delta: (NodeStyle.Builder) -> Unit): ViewStyle {
+    val builder = asBuilder()
+    val nodeStyleBuilder = node_style.asBuilder()
+    delta(nodeStyleBuilder)
+    builder.node_style = nodeStyleBuilder.build()
     return builder.build()
 }

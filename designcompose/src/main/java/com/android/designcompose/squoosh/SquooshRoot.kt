@@ -56,6 +56,7 @@ import com.android.designcompose.InteractionState
 import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.asAnimationSpec
+import com.android.designcompose.asBuilder
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DocumentServerParams
@@ -186,37 +187,40 @@ private fun createOrUpdateAnimation(
 /// layout system the context of what it is being embedded in.
 private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, density: Density) {
     val rootStyleBuilder = style.asBuilder()
+    val layoutStyleBuilder = style.layout_style.asBuilder()
     if (constraints.minWidth != 0)
-        rootStyleBuilder.min_width =
+        layoutStyleBuilder.min_width =
             Dimension.Points(constraints.minWidth.toFloat() / density.density)
     if (constraints.maxWidth != Constraints.Infinity)
-        rootStyleBuilder.max_width =
+        layoutStyleBuilder.max_width =
             Dimension.Points(constraints.maxWidth.toFloat() / density.density)
     if (constraints.hasFixedWidth) {
-        rootStyleBuilder.width = Dimension.Points(constraints.minWidth.toFloat() / density.density)
+        layoutStyleBuilder.width =
+            Dimension.Points(constraints.minWidth.toFloat() / density.density)
         // Layout implementation looks for width/height being set and then uses bounding box.
-        rootStyleBuilder.bounding_box =
+        layoutStyleBuilder.bounding_box =
             Size(
                 constraints.minWidth.toFloat() / density.density,
-                rootStyleBuilder.bounding_box.height
+                layoutStyleBuilder.bounding_box.height
             )
     }
     if (constraints.minHeight != 0)
-        rootStyleBuilder.min_height =
+        layoutStyleBuilder.min_height =
             Dimension.Points(constraints.minHeight.toFloat() / density.density)
     if (constraints.maxHeight != Constraints.Infinity)
-        rootStyleBuilder.max_height =
+        layoutStyleBuilder.max_height =
             Dimension.Points(constraints.maxHeight.toFloat() / density.density)
     if (constraints.hasFixedHeight) {
-        rootStyleBuilder.height =
+        layoutStyleBuilder.height =
             Dimension.Points(constraints.minHeight.toFloat() / density.density)
         // Layout implementation looks for width/height being set and then uses bounding box.
-        rootStyleBuilder.bounding_box =
+        layoutStyleBuilder.bounding_box =
             Size(
-                rootStyleBuilder.bounding_box.width,
+                layoutStyleBuilder.bounding_box.width,
                 constraints.minHeight.toFloat() / density.density
             )
     }
+    rootStyleBuilder.layout_style = layoutStyleBuilder.build()
     style = rootStyleBuilder.build()
 }
 

@@ -750,7 +750,8 @@ internal fun DesignView(
                                 val viewList: ArrayList<Pair<View, ArrayList<View>>> = ArrayList()
                                 var currentMask: View? = null
                                 (view.data as ViewData.Container).children.forEach { child ->
-                                    val shouldClip = child.style.overflow is Overflow.Hidden
+                                    val shouldClip =
+                                        child.style.node_style.overflow is Overflow.Hidden
                                     if (child.isMask()) {
                                         // Add the mask to the list and set the current mask
                                         viewList.add(Pair(child, ArrayList()))

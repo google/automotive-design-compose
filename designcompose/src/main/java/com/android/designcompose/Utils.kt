@@ -61,7 +61,9 @@ import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutSizing
+import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.LineHeight
+import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
@@ -119,18 +121,18 @@ internal fun absoluteLayout(style: ViewStyle, constraints: Constraints, density:
             0
         }
 
-    val left = style.left.resolve(pw, density)
-    val top = style.top.resolve(ph, density)
+    val left = style.layout_style.left.resolve(pw, density)
+    val top = style.layout_style.top.resolve(ph, density)
     // Right and bottom are insets from the right/bottom edge, so convert them to be relative to
     // the top/left corner.
-    val right = style.right.resolve(pw, density)?.let { r -> pw - r }
-    val bottom = style.bottom.resolve(ph, density)?.let { b -> ph - b }
-    val width = style.width.resolve(pw, density)
-    val height = style.height.resolve(ph, density)
+    val right = style.layout_style.right.resolve(pw, density)?.let { r -> pw - r }
+    val bottom = style.layout_style.bottom.resolve(ph, density)?.let { b -> ph - b }
+    val width = style.layout_style.width.resolve(pw, density)
+    val height = style.layout_style.height.resolve(ph, density)
     // We use the top and left margins for center anchored items, so they can be safely applied
     // as an offset here.
-    val leftMargin = style.margin.start.resolve(pw, density) ?: 0
-    val topMargin = style.margin.top.resolve(ph, density) ?: 0
+    val leftMargin = style.layout_style.margin.start.resolve(pw, density) ?: 0
+    val topMargin = style.layout_style.margin.top.resolve(ph, density) ?: 0
 
     // XXX: Need layoutDirection; when left, right and width are specified we use left and
     //      width in LtoR direction, and use right and width in RtoL direction.
@@ -165,8 +167,8 @@ internal fun absoluteLayout(style: ViewStyle, constraints: Constraints, density:
                 0
             }
 
-    val minWidth = style.min_width.resolve(pw, density)
-    val minHeight = style.min_height.resolve(ph, density)
+    val minWidth = style.layout_style.min_width.resolve(pw, density)
+    val minHeight = style.layout_style.min_height.resolve(ph, density)
     if (minWidth != null && w < minWidth) {
         w = minWidth
     }
@@ -192,15 +194,15 @@ internal fun relativeLayout(style: ViewStyle, constraints: Constraints, density:
             0
         }
 
-    var w = style.width.resolve(pw, density) ?: 0
-    var h = style.height.resolve(ph, density) ?: 0
+    var w = style.layout_style.width.resolve(pw, density) ?: 0
+    var h = style.layout_style.height.resolve(ph, density) ?: 0
     // We use the top and left margins for center anchored items, so they can be safely applied
     // as an offset here.
-    val x = style.margin.start.resolve(pw, density) ?: 0
-    val y = style.margin.top.resolve(ph, density) ?: 0
+    val x = style.layout_style.margin.start.resolve(pw, density) ?: 0
+    val y = style.layout_style.margin.top.resolve(ph, density) ?: 0
 
-    val minWidth = style.min_width.resolve(pw, density)
-    val minHeight = style.min_height.resolve(ph, density)
+    val minWidth = style.layout_style.min_width.resolve(pw, density)
+    val minHeight = style.layout_style.min_height.resolve(ph, density)
     if (minWidth != null && w < minWidth) {
         w = minWidth
     }
@@ -219,258 +221,267 @@ internal const val blurFudgeFactor = 0.72f
 // Merge styles; any non-default properties of the override style are copied over the base style.
 internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
     val style = ViewStyle.Builder()
-    style.text_color =
-        if (override.text_color !is Background.None) {
-            override.text_color
+    val nodeStyle = NodeStyle.Builder()
+    val layoutStyle = LayoutStyle.Builder()
+    nodeStyle.text_color =
+        if (override.node_style.text_color !is Background.None) {
+            override.node_style.text_color
         } else {
-            base.text_color
+            base.node_style.text_color
         }
-    style.font_size =
-        if (override.font_size != 18.0f) {
-            override.font_size
+    nodeStyle.font_size =
+        if (override.node_style.font_size != 18.0f) {
+            override.node_style.font_size
         } else {
-            base.font_size
+            base.node_style.font_size
         }
-    style.font_weight =
-        if (override.font_weight.value != 400.0f) {
-            override.font_weight
+    nodeStyle.font_weight =
+        if (override.node_style.font_weight.value != 400.0f) {
+            override.node_style.font_weight
         } else {
-            base.font_weight
+            base.node_style.font_weight
         }
-    style.font_style =
-        if (override.font_style !is FontStyle.Normal) {
-            override.font_style
+    nodeStyle.font_style =
+        if (override.node_style.font_style !is FontStyle.Normal) {
+            override.node_style.font_style
         } else {
-            base.font_style
+            base.node_style.font_style
         }
-    style.font_family =
-        if (override.font_family.isPresent) {
-            override.font_family
+    nodeStyle.font_family =
+        if (override.node_style.font_family.isPresent) {
+            override.node_style.font_family
         } else {
-            base.font_family
+            base.node_style.font_family
         }
-    style.font_stretch =
-        if (override.font_stretch.value != 1.0f) {
-            override.font_stretch
+    nodeStyle.font_stretch =
+        if (override.node_style.font_stretch.value != 1.0f) {
+            override.node_style.font_stretch
         } else {
-            base.font_stretch
+            base.node_style.font_stretch
         }
-    style.background =
-        if (override.background.size > 0 && override.background[0] !is Background.None) {
-            override.background
+    nodeStyle.background =
+        if (
+            override.node_style.background.size > 0 &&
+                override.node_style.background[0] !is Background.None
+        ) {
+            override.node_style.background
         } else {
-            base.background
+            base.node_style.background
         }
-    style.box_shadow =
-        if (override.box_shadow.size > 0) {
-            override.box_shadow
+    nodeStyle.box_shadow =
+        if (override.node_style.box_shadow.size > 0) {
+            override.node_style.box_shadow
         } else {
-            base.box_shadow
+            base.node_style.box_shadow
         }
-    style.stroke =
-        if (override.stroke.strokes.size > 0) {
-            override.stroke
+    nodeStyle.stroke =
+        if (override.node_style.stroke.strokes.size > 0) {
+            override.node_style.stroke
         } else {
-            base.stroke
+            base.node_style.stroke
         }
-    style.opacity =
-        if (override.opacity.isPresent) {
-            override.opacity
+    nodeStyle.opacity =
+        if (override.node_style.opacity.isPresent) {
+            override.node_style.opacity
         } else {
-            base.opacity
+            base.node_style.opacity
         }
-    style.transform =
-        if (override.transform.isPresent) {
-            override.transform
+    nodeStyle.transform =
+        if (override.node_style.transform.isPresent) {
+            override.node_style.transform
         } else {
-            base.transform
+            base.node_style.transform
         }
-    style.relative_transform =
-        if (override.relative_transform.isPresent) {
-            override.relative_transform
+    nodeStyle.relative_transform =
+        if (override.node_style.relative_transform.isPresent) {
+            override.node_style.relative_transform
         } else {
-            base.relative_transform
+            base.node_style.relative_transform
         }
-    style.text_align =
-        if (override.text_align !is TextAlign.Left) {
-            override.text_align
+    nodeStyle.text_align =
+        if (override.node_style.text_align !is TextAlign.Left) {
+            override.node_style.text_align
         } else {
-            base.text_align
+            base.node_style.text_align
         }
-    style.text_align_vertical =
-        if (override.text_align_vertical !is TextAlignVertical.Top) {
-            override.text_align_vertical
+    nodeStyle.text_align_vertical =
+        if (override.node_style.text_align_vertical !is TextAlignVertical.Top) {
+            override.node_style.text_align_vertical
         } else {
-            base.text_align_vertical
+            base.node_style.text_align_vertical
         }
-    style.text_overflow =
-        if (override.text_overflow !is TextOverflow.Clip) {
-            override.text_overflow
+    nodeStyle.text_overflow =
+        if (override.node_style.text_overflow !is TextOverflow.Clip) {
+            override.node_style.text_overflow
         } else {
-            base.text_overflow
+            base.node_style.text_overflow
         }
-    style.text_shadow =
-        if (override.text_shadow.isPresent) {
-            override.text_shadow
+    nodeStyle.text_shadow =
+        if (override.node_style.text_shadow.isPresent) {
+            override.node_style.text_shadow
         } else {
-            base.text_shadow
+            base.node_style.text_shadow
         }
-    style.node_size =
-        if (override.node_size.width != 0.0f || override.node_size.height != 0.0f) {
-            override.node_size
+    nodeStyle.node_size =
+        if (
+            override.node_style.node_size.width != 0.0f ||
+                override.node_style.node_size.height != 0.0f
+        ) {
+            override.node_style.node_size
         } else {
-            base.node_size
+            base.node_style.node_size
         }
-    style.line_height =
-        if (!override.line_height.equals(LineHeight.Percent(1.0f))) {
-            override.line_height
+    nodeStyle.line_height =
+        if (!override.node_style.line_height.equals(LineHeight.Percent(1.0f))) {
+            override.node_style.line_height
         } else {
-            base.line_height
+            base.node_style.line_height
         }
-    style.line_count =
-        if (override.line_count.isPresent) {
-            override.line_count
+    nodeStyle.line_count =
+        if (override.node_style.line_count.isPresent) {
+            override.node_style.line_count
         } else {
-            base.line_count
+            base.node_style.line_count
         }
-    style.font_features =
-        if (override.font_features.size > 0) {
-            override.font_features
+    nodeStyle.font_features =
+        if (override.node_style.font_features.size > 0) {
+            override.node_style.font_features
         } else {
-            base.font_features
+            base.node_style.font_features
         }
-    style.filter =
-        if (override.filter.size > 0) {
-            override.filter
+    nodeStyle.filter =
+        if (override.node_style.filter.size > 0) {
+            override.node_style.filter
         } else {
-            base.filter
+            base.node_style.filter
         }
-    style.backdrop_filter =
-        if (override.backdrop_filter.size > 0) {
-            override.backdrop_filter
+    nodeStyle.backdrop_filter =
+        if (override.node_style.backdrop_filter.size > 0) {
+            override.node_style.backdrop_filter
         } else {
-            base.backdrop_filter
+            base.node_style.backdrop_filter
         }
-    style.blend_mode =
-        if (override.blend_mode is BlendMode.PassThrough) {
-            override.blend_mode
+    nodeStyle.blend_mode =
+        if (override.node_style.blend_mode is BlendMode.PassThrough) {
+            override.node_style.blend_mode
         } else {
-            base.blend_mode
+            base.node_style.blend_mode
         }
-    style.display_type =
-        if (override.display_type !is Display.flex) {
-            override.display_type
+    nodeStyle.display_type =
+        if (override.node_style.display_type !is Display.flex) {
+            override.node_style.display_type
         } else {
-            base.display_type
+            base.node_style.display_type
         }
-    style.position_type =
-        if (override.position_type !is PositionType.Relative) {
-            override.position_type
+    layoutStyle.position_type =
+        if (override.layout_style.position_type !is PositionType.Relative) {
+            override.layout_style.position_type
         } else {
-            base.position_type
+            base.layout_style.position_type
         }
-    style.flex_direction =
-        if (override.flex_direction !is FlexDirection.Row) {
-            override.flex_direction
+    layoutStyle.flex_direction =
+        if (override.layout_style.flex_direction !is FlexDirection.Row) {
+            override.layout_style.flex_direction
         } else {
-            base.flex_direction
+            base.layout_style.flex_direction
         }
-    style.flex_wrap =
-        if (override.flex_wrap !is FlexWrap.NoWrap) {
-            override.flex_wrap
+    nodeStyle.flex_wrap =
+        if (override.node_style.flex_wrap !is FlexWrap.NoWrap) {
+            override.node_style.flex_wrap
         } else {
-            base.flex_wrap
+            base.node_style.flex_wrap
         }
-    style.grid_layout =
-        if (override.grid_layout.isPresent) {
-            override.grid_layout
+    nodeStyle.grid_layout =
+        if (override.node_style.grid_layout.isPresent) {
+            override.node_style.grid_layout
         } else {
-            base.grid_layout
+            base.node_style.grid_layout
         }
-    style.grid_columns_rows =
-        if (override.grid_columns_rows > 0) {
-            override.grid_columns_rows
+    nodeStyle.grid_columns_rows =
+        if (override.node_style.grid_columns_rows > 0) {
+            override.node_style.grid_columns_rows
         } else {
-            base.grid_columns_rows
+            base.node_style.grid_columns_rows
         }
-    style.grid_adaptive_min_size =
-        if (override.grid_adaptive_min_size > 1) {
-            override.grid_adaptive_min_size
+    nodeStyle.grid_adaptive_min_size =
+        if (override.node_style.grid_adaptive_min_size > 1) {
+            override.node_style.grid_adaptive_min_size
         } else {
-            base.grid_adaptive_min_size
+            base.node_style.grid_adaptive_min_size
         }
-    style.grid_span_content = override.grid_span_content.ifEmpty { base.grid_span_content }
-    style.overflow =
-        if (override.overflow !is Overflow.Visible) {
-            override.overflow
+    nodeStyle.grid_span_content =
+        override.node_style.grid_span_content.ifEmpty { base.node_style.grid_span_content }
+    nodeStyle.overflow =
+        if (override.node_style.overflow !is Overflow.Visible) {
+            override.node_style.overflow
         } else {
-            base.overflow
+            base.node_style.overflow
         }
-    style.max_children =
-        if (override.max_children.isPresent) {
-            override.max_children
+    nodeStyle.max_children =
+        if (override.node_style.max_children.isPresent) {
+            override.node_style.max_children
         } else {
-            base.max_children
+            base.node_style.max_children
         }
-    style.overflow_node_id =
-        if (override.overflow_node_id.isPresent) {
-            override.overflow_node_id
+    nodeStyle.overflow_node_id =
+        if (override.node_style.overflow_node_id.isPresent) {
+            override.node_style.overflow_node_id
         } else {
-            base.overflow_node_id
+            base.node_style.overflow_node_id
         }
-    style.overflow_node_name =
-        if (override.overflow_node_name.isPresent) {
-            override.overflow_node_name
+    nodeStyle.overflow_node_name =
+        if (override.node_style.overflow_node_name.isPresent) {
+            override.node_style.overflow_node_name
         } else {
-            base.overflow_node_name
+            base.node_style.overflow_node_name
         }
-    style.align_items =
-        if (override.align_items !is AlignItems.Stretch) {
-            override.align_items
+    layoutStyle.align_items =
+        if (override.layout_style.align_items !is AlignItems.Stretch) {
+            override.layout_style.align_items
         } else {
-            base.align_items
+            base.layout_style.align_items
         }
-    style.align_self =
-        if (override.align_self !is AlignSelf.Auto) {
-            override.align_self
+    layoutStyle.align_self =
+        if (override.layout_style.align_self !is AlignSelf.Auto) {
+            override.layout_style.align_self
         } else {
-            base.align_self
+            base.layout_style.align_self
         }
-    style.align_content =
-        if (override.align_content !is AlignContent.Stretch) {
-            override.align_content
+    layoutStyle.align_content =
+        if (override.layout_style.align_content !is AlignContent.Stretch) {
+            override.layout_style.align_content
         } else {
-            base.align_content
+            base.layout_style.align_content
         }
-    style.justify_content =
-        if (override.justify_content !is JustifyContent.FlexStart) {
-            override.justify_content
+    layoutStyle.justify_content =
+        if (override.layout_style.justify_content !is JustifyContent.FlexStart) {
+            override.layout_style.justify_content
         } else {
-            base.justify_content
+            base.layout_style.justify_content
         }
-    style.top =
-        if (override.top !is Dimension.Undefined) {
-            override.top
+    layoutStyle.top =
+        if (override.layout_style.top !is Dimension.Undefined) {
+            override.layout_style.top
         } else {
-            base.top
+            base.layout_style.top
         }
-    style.left =
-        if (override.left !is Dimension.Undefined) {
-            override.left
+    layoutStyle.left =
+        if (override.layout_style.left !is Dimension.Undefined) {
+            override.layout_style.left
         } else {
-            base.left
+            base.layout_style.left
         }
-    style.bottom =
-        if (override.bottom !is Dimension.Undefined) {
-            override.bottom
+    layoutStyle.bottom =
+        if (override.layout_style.bottom !is Dimension.Undefined) {
+            override.layout_style.bottom
         } else {
-            base.bottom
+            base.layout_style.bottom
         }
-    style.right =
-        if (override.right !is Dimension.Undefined) {
-            override.right
+    layoutStyle.right =
+        if (override.layout_style.right !is Dimension.Undefined) {
+            override.layout_style.right
         } else {
-            base.right
+            base.layout_style.right
         }
     fun com.android.designcompose.serdegen.Rect.isDefault(): Boolean {
         return this.start is Dimension.Undefined &&
@@ -478,130 +489,163 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             this.top is Dimension.Undefined &&
             this.bottom is Dimension.Undefined
     }
-    style.margin =
-        if (!override.margin.isDefault()) {
-            override.margin
+    layoutStyle.margin =
+        if (!override.layout_style.margin.isDefault()) {
+            override.layout_style.margin
         } else {
-            base.margin
+            base.layout_style.margin
         }
-    style.padding =
-        if (!override.padding.isDefault()) {
-            override.padding
+    layoutStyle.padding =
+        if (!override.layout_style.padding.isDefault()) {
+            override.layout_style.padding
         } else {
-            base.padding
+            base.layout_style.padding
         }
     fun ItemSpacing.isDefault(): Boolean {
         return this is ItemSpacing.Fixed && this.value == 0
     }
-    style.item_spacing =
-        if (!override.item_spacing.isDefault()) {
-            override.item_spacing
+    layoutStyle.item_spacing =
+        if (!override.layout_style.item_spacing.isDefault()) {
+            override.layout_style.item_spacing
         } else {
-            base.item_spacing
+            base.layout_style.item_spacing
         }
-    style.cross_axis_item_spacing =
-        if (override.cross_axis_item_spacing != 0.0f) {
-            override.cross_axis_item_spacing
+    nodeStyle.cross_axis_item_spacing =
+        if (override.node_style.cross_axis_item_spacing != 0.0f) {
+            override.node_style.cross_axis_item_spacing
         } else {
-            base.cross_axis_item_spacing
+            base.node_style.cross_axis_item_spacing
         }
-    style.flex_grow =
-        if (override.flex_grow != 0.0f) {
-            override.flex_grow
+    layoutStyle.flex_grow =
+        if (override.layout_style.flex_grow != 0.0f) {
+            override.layout_style.flex_grow
         } else {
-            base.flex_grow
+            base.layout_style.flex_grow
         }
-    style.flex_shrink =
-        if (override.flex_shrink != 0.0f) {
-            override.flex_shrink
+    layoutStyle.flex_shrink =
+        if (override.layout_style.flex_shrink != 0.0f) {
+            override.layout_style.flex_shrink
         } else {
-            base.flex_shrink
+            base.layout_style.flex_shrink
         }
-    style.flex_basis =
-        if (override.flex_basis !is Dimension.Undefined) {
-            override.flex_basis
+    layoutStyle.flex_basis =
+        if (override.layout_style.flex_basis !is Dimension.Undefined) {
+            override.layout_style.flex_basis
         } else {
-            base.flex_basis
+            base.layout_style.flex_basis
         }
-    style.bounding_box =
-        if (override.bounding_box.width != 0.0f || override.bounding_box.height != 0.0f) {
-            override.bounding_box
+    layoutStyle.bounding_box =
+        if (
+            override.layout_style.bounding_box.width != 0.0f ||
+                override.layout_style.bounding_box.height != 0.0f
+        ) {
+            override.layout_style.bounding_box
         } else {
-            base.bounding_box
+            base.layout_style.bounding_box
         }
-    style.horizontal_sizing =
-        if (override.horizontal_sizing !is LayoutSizing.FIXED) {
-            override.horizontal_sizing
+    nodeStyle.horizontal_sizing =
+        if (override.node_style.horizontal_sizing !is LayoutSizing.FIXED) {
+            override.node_style.horizontal_sizing
         } else {
-            base.horizontal_sizing
+            base.node_style.horizontal_sizing
         }
-    style.vertical_sizing =
-        if (override.vertical_sizing !is LayoutSizing.FIXED) {
-            override.vertical_sizing
+    nodeStyle.vertical_sizing =
+        if (override.node_style.vertical_sizing !is LayoutSizing.FIXED) {
+            override.node_style.vertical_sizing
         } else {
-            base.vertical_sizing
+            base.node_style.vertical_sizing
         }
-    style.width =
-        if (override.width !is Dimension.Undefined) {
-            override.width
+    layoutStyle.width =
+        if (override.layout_style.width !is Dimension.Undefined) {
+            override.layout_style.width
         } else {
-            base.width
+            base.layout_style.width
         }
-    style.height =
-        if (override.height !is Dimension.Undefined) {
-            override.height
+    layoutStyle.height =
+        if (override.layout_style.height !is Dimension.Undefined) {
+            override.layout_style.height
         } else {
-            base.height
+            base.layout_style.height
         }
-    style.min_width =
-        if (override.min_width !is Dimension.Undefined) {
-            override.min_width
+    layoutStyle.min_width =
+        if (override.layout_style.min_width !is Dimension.Undefined) {
+            override.layout_style.min_width
         } else {
-            base.min_width
+            base.layout_style.min_width
         }
-    style.min_height =
-        if (override.min_height !is Dimension.Undefined) {
-            override.min_height
+    layoutStyle.min_height =
+        if (override.layout_style.min_height !is Dimension.Undefined) {
+            override.layout_style.min_height
         } else {
-            base.min_height
+            base.layout_style.min_height
         }
-    style.max_width =
-        if (override.max_width !is Dimension.Undefined) {
-            override.max_width
+    layoutStyle.max_width =
+        if (override.layout_style.max_width !is Dimension.Undefined) {
+            override.layout_style.max_width
         } else {
-            base.max_width
+            base.layout_style.max_width
         }
-    style.max_height =
-        if (override.max_height !is Dimension.Undefined) {
-            override.max_height
+    layoutStyle.max_height =
+        if (override.layout_style.max_height !is Dimension.Undefined) {
+            override.layout_style.max_height
         } else {
-            base.max_height
+            base.layout_style.max_height
         }
-    style.aspect_ratio =
-        if (override.aspect_ratio !is com.android.designcompose.serdegen.Number.Undefined) {
-            override.aspect_ratio
+    nodeStyle.aspect_ratio =
+        if (
+            override.node_style.aspect_ratio !is com.android.designcompose.serdegen.Number.Undefined
+        ) {
+            override.node_style.aspect_ratio
         } else {
-            base.aspect_ratio
+            base.node_style.aspect_ratio
         }
-    style.pointer_events =
-        if (override.pointer_events !is PointerEvents.Auto) {
-            override.pointer_events
+    nodeStyle.pointer_events =
+        if (override.node_style.pointer_events !is PointerEvents.Auto) {
+            override.node_style.pointer_events
         } else {
-            base.pointer_events
+            base.node_style.pointer_events
         }
-    style.meter_data =
-        if (override.meter_data.isPresent) {
-            override.meter_data
+    nodeStyle.meter_data =
+        if (override.node_style.meter_data.isPresent) {
+            override.node_style.meter_data
         } else {
-            base.meter_data
+            base.node_style.meter_data
         }
+    style.layout_style = layoutStyle.build()
+    style.node_style = nodeStyle.build()
     return style.build()
 }
 
-// XXX: Horrible code to deal with our terrible generated types. Maybe if style moves to proto then
-//      we'll get some more egonomic generated classes.
-internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
-    val builder = ViewStyle.Builder()
+internal fun LayoutStyle.asBuilder(): LayoutStyle.Builder {
+    val builder = LayoutStyle.Builder()
+    builder.position_type = position_type
+    builder.flex_direction = flex_direction
+    builder.align_items = align_items
+    builder.align_self = align_self
+    builder.align_content = align_content
+    builder.justify_content = justify_content
+    builder.top = top
+    builder.left = left
+    builder.bottom = bottom
+    builder.right = right
+    builder.margin = margin
+    builder.padding = padding
+    builder.item_spacing = item_spacing
+    builder.flex_grow = flex_grow
+    builder.flex_shrink = flex_shrink
+    builder.flex_basis = flex_basis
+    builder.bounding_box = bounding_box
+    builder.width = width
+    builder.height = height
+    builder.min_width = min_width
+    builder.min_height = min_height
+    builder.max_width = max_width
+    builder.max_height = max_height
+    return builder
+}
+
+internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
+    val builder = NodeStyle.Builder()
     builder.text_color = text_color
     builder.font_size = font_size
     builder.font_family = font_family
@@ -625,13 +669,7 @@ internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
     builder.filter = filter
     builder.backdrop_filter = backdrop_filter
     builder.blend_mode = blend_mode
-    // We don't need to copy any of the layout properties, but do it anyway to
-    // avoid confusion if this function later gets used more generally; we should
-    // refactor ViewStyle to separate the fields used for rendering from those used
-    // for layout.
     builder.display_type = display_type
-    builder.position_type = position_type
-    builder.flex_direction = flex_direction
     builder.flex_wrap = flex_wrap
     builder.grid_layout = grid_layout
     builder.grid_columns_rows = grid_columns_rows
@@ -641,84 +679,76 @@ internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
     builder.max_children = max_children
     builder.overflow_node_id = overflow_node_id
     builder.overflow_node_name = overflow_node_name
-    builder.align_items = align_items
-    builder.align_self = align_self
-    builder.align_content = align_content
-    builder.justify_content = justify_content
-    builder.top = top
-    builder.left = left
-    builder.bottom = bottom
-    builder.right = right
-    builder.margin = margin
-    builder.padding = padding
-    builder.item_spacing = item_spacing
     builder.cross_axis_item_spacing = cross_axis_item_spacing
-    builder.flex_grow = flex_grow
-    builder.flex_shrink = flex_shrink
-    builder.flex_basis = flex_basis
-    builder.bounding_box = bounding_box
     builder.horizontal_sizing = horizontal_sizing
     builder.vertical_sizing = vertical_sizing
-    builder.width = width
-    builder.height = height
-    builder.min_width = min_width
-    builder.min_height = min_height
-    builder.max_width = max_width
-    builder.max_height = max_height
     builder.aspect_ratio = aspect_ratio
     builder.pointer_events = pointer_events
     builder.meter_data = meter_data
+    return builder
+}
+// XXX: Horrible code to deal with our terrible generated types. Maybe if style moves to proto then
+//      we'll get some more egonomic generated classes.
+internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
+    val builder = ViewStyle.Builder()
+    builder.layout_style = layout_style
+    builder.node_style = node_style
     return builder
 }
 
 // Take the external layout fields of ViewStyle and put them into an ExternalLayoutData object.
 internal fun ViewStyle.externalLayoutData(): ExternalLayoutData {
     return ExternalLayoutData(
-        margin,
-        top,
-        left,
-        bottom,
-        right,
-        width,
-        height,
-        min_width,
-        min_height,
-        max_width,
-        max_height,
-        node_size,
-        bounding_box,
-        flex_grow,
-        flex_basis,
-        align_self,
-        position_type,
-        transform,
-        relative_transform,
+        layout_style.margin,
+        layout_style.top,
+        layout_style.left,
+        layout_style.bottom,
+        layout_style.right,
+        layout_style.width,
+        layout_style.height,
+        layout_style.min_width,
+        layout_style.min_height,
+        layout_style.max_width,
+        layout_style.max_height,
+        node_style.node_size,
+        layout_style.bounding_box,
+        layout_style.flex_grow,
+        layout_style.flex_basis,
+        layout_style.align_self,
+        layout_style.position_type,
+        node_style.transform,
+        node_style.relative_transform,
     )
 }
 
 // Take the external layout data and merge it into this ViewStyle, overriding its values and
 // returning a new ViewStyle.
 internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewStyle {
+    val layoutStyle = layout_style.asBuilder()
+    val nodeStyle = node_style.asBuilder()
+    layoutStyle.margin = data.margin
+    layoutStyle.top = data.top
+    layoutStyle.left = data.left
+    layoutStyle.bottom = data.bottom
+    layoutStyle.right = data.right
+    nodeStyle.node_size = data.nodeSize
+    layoutStyle.bounding_box = data.boundingBox
+    layoutStyle.width = data.width
+    layoutStyle.height = data.height
+    layoutStyle.min_width = data.minWidth
+    layoutStyle.min_height = data.minHeight
+    layoutStyle.max_width = data.maxWidth
+    layoutStyle.max_height = data.maxHeight
+    layoutStyle.flex_grow = data.flexGrow
+    layoutStyle.flex_basis = data.flexBasis
+    layoutStyle.align_self = data.alignSelf
+    layoutStyle.position_type = data.positionType
+    nodeStyle.transform = data.transform
+    nodeStyle.relative_transform = data.relativeTransform
+
     val overrideStyle = this.asBuilder()
-    overrideStyle.margin = data.margin
-    overrideStyle.top = data.top
-    overrideStyle.left = data.left
-    overrideStyle.bottom = data.bottom
-    overrideStyle.right = data.right
-    overrideStyle.node_size = data.nodeSize
-    overrideStyle.bounding_box = data.boundingBox
-    overrideStyle.width = data.width
-    overrideStyle.height = data.height
-    overrideStyle.min_width = data.minWidth
-    overrideStyle.min_height = data.minHeight
-    overrideStyle.max_width = data.maxWidth
-    overrideStyle.max_height = data.maxHeight
-    overrideStyle.flex_grow = data.flexGrow
-    overrideStyle.flex_basis = data.flexBasis
-    overrideStyle.align_self = data.alignSelf
-    overrideStyle.position_type = data.positionType
-    overrideStyle.transform = data.transform
-    overrideStyle.relative_transform = data.relativeTransform
+    overrideStyle.layout_style = layoutStyle.build()
+    overrideStyle.node_style = nodeStyle.build()
     return overrideStyle.build()
 }
 
@@ -778,7 +808,7 @@ internal fun View.isMask(): Boolean {
 // Second, the position_type is relative, which is only set if the widget layout parameters are set
 // to hug contents.
 internal fun View.useInfiniteConstraints(): Boolean {
-    if (style.position_type !is PositionType.Relative) return false
+    if (style.layout_style.position_type !is PositionType.Relative) return false
 
     if (data !is ViewData.Container) return false
 
@@ -786,7 +816,7 @@ internal fun View.useInfiniteConstraints(): Boolean {
     if (container == null || container.children.size != 1) return false
 
     val child = container.children.first()
-    return child.style.grid_layout.isPresent
+    return child.style.node_style.grid_layout.isPresent
 }
 
 internal fun ViewShape.isMask(): Boolean {
@@ -1384,7 +1414,7 @@ internal fun StrokeWeight.right(): Float {
 // text measure func that, when it returns true, means the text can expand past the available width
 // passed into it.
 internal fun ViewStyle.isAutoWidthText() =
-    width is Dimension.Auto && horizontal_sizing !is LayoutSizing.FILL
+    layout_style.width is Dimension.Auto && node_style.horizontal_sizing !is LayoutSizing.FILL
 
 // Return the size of a node used to render the node.
 internal fun getNodeRenderSize(
@@ -1403,11 +1433,11 @@ internal fun getNodeRenderSize(
     // box for a rotated node. We do not yet support rotated nodes with non-fixed constraints.
     val hasModifiedSize = LayoutManager.hasModifiedSize(layoutId)
     val width =
-        if (hasModifiedSize || style.width !is Dimension.Points) layoutSize.width
-        else style.width.pointsAsDp(density).value
+        if (hasModifiedSize || style.layout_style.width !is Dimension.Points) layoutSize.width
+        else style.layout_style.width.pointsAsDp(density).value
     val height =
-        if (hasModifiedSize || style.height !is Dimension.Points) layoutSize.height
-        else style.height.pointsAsDp(density).value
+        if (hasModifiedSize || style.layout_style.height !is Dimension.Points) layoutSize.height
+        else style.layout_style.height.pointsAsDp(density).value
     return Size(width, height)
 }
 

@@ -24,6 +24,7 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.InteractionState
 import com.android.designcompose.ReplacementContent
+import com.android.designcompose.asBuilder
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
@@ -354,48 +355,50 @@ private fun generateOverlayNode(
 ): SquooshResolvedNode {
     // Make a view based on the child node which uses a synthesized style.
     val overlayStyle = node.style.asBuilder()
-    overlayStyle.overflow = Overflow.Visible()
-    overlayStyle.position_type = PositionType.Absolute()
-    overlayStyle.top = Dimension.Percent(0.0f)
-    overlayStyle.left = Dimension.Percent(0.0f)
-    overlayStyle.right = Dimension.Percent(0.0f)
-    overlayStyle.bottom = Dimension.Percent(0.0f)
-    overlayStyle.width = Dimension.Percent(1.0f)
-    overlayStyle.height = Dimension.Percent(1.0f)
-    overlayStyle.flex_direction = FlexDirection.Column()
+    val layoutStyle = node.style.layout_style.asBuilder()
+    val nodeStyle = node.style.node_style.asBuilder()
+    nodeStyle.overflow = Overflow.Visible()
+    layoutStyle.position_type = PositionType.Absolute()
+    layoutStyle.top = Dimension.Percent(0.0f)
+    layoutStyle.left = Dimension.Percent(0.0f)
+    layoutStyle.right = Dimension.Percent(0.0f)
+    layoutStyle.bottom = Dimension.Percent(0.0f)
+    layoutStyle.width = Dimension.Percent(1.0f)
+    layoutStyle.height = Dimension.Percent(1.0f)
+    layoutStyle.flex_direction = FlexDirection.Column()
     when (overlay.overlayPositionType) {
         is OverlayPositionType.TOP_LEFT -> {
-            overlayStyle.justify_content = JustifyContent.FlexStart() // Y
-            overlayStyle.align_items = AlignItems.FlexStart() // X
+            layoutStyle.justify_content = JustifyContent.FlexStart() // Y
+            layoutStyle.align_items = AlignItems.FlexStart() // X
         }
         is OverlayPositionType.TOP_CENTER -> {
-            overlayStyle.justify_content = JustifyContent.FlexStart() // Y
-            overlayStyle.align_items = AlignItems.Center() // X
+            layoutStyle.justify_content = JustifyContent.FlexStart() // Y
+            layoutStyle.align_items = AlignItems.Center() // X
         }
         is OverlayPositionType.TOP_RIGHT -> {
-            overlayStyle.justify_content = JustifyContent.FlexStart() // Y
-            overlayStyle.align_items = AlignItems.FlexEnd() // X
+            layoutStyle.justify_content = JustifyContent.FlexStart() // Y
+            layoutStyle.align_items = AlignItems.FlexEnd() // X
         }
         is OverlayPositionType.BOTTOM_LEFT -> {
-            overlayStyle.justify_content = JustifyContent.FlexEnd() // Y
-            overlayStyle.align_items = AlignItems.FlexStart() // X
+            layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
+            layoutStyle.align_items = AlignItems.FlexStart() // X
         }
         is OverlayPositionType.BOTTOM_CENTER -> {
-            overlayStyle.justify_content = JustifyContent.FlexEnd() // Y
-            overlayStyle.align_items = AlignItems.Center() // X
+            layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
+            layoutStyle.align_items = AlignItems.Center() // X
         }
         is OverlayPositionType.BOTTOM_RIGHT -> {
-            overlayStyle.justify_content = JustifyContent.FlexEnd() // Y
-            overlayStyle.align_items = AlignItems.FlexEnd() // X
+            layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
+            layoutStyle.align_items = AlignItems.FlexEnd() // X
         }
         // Center and Manual both are centered; not clear how to implement manual positioning
         // without making a layout-dependent query.
         else -> {
-            overlayStyle.justify_content = JustifyContent.Center()
-            overlayStyle.align_items = AlignItems.Center()
+            layoutStyle.justify_content = JustifyContent.Center()
+            layoutStyle.align_items = AlignItems.Center()
         }
     }
-    overlayStyle.background = listOf()
+    nodeStyle.background = listOf()
 
     overlay.overlayBackground.color.ifPresent { color ->
         val c =
@@ -407,8 +410,10 @@ private fun generateOverlayNode(
             )
         val colorBuilder = Color.Builder()
         colorBuilder.color = c
-        overlayStyle.background = listOf(Background.Solid(colorBuilder.build()))
+        nodeStyle.background = listOf(Background.Solid(colorBuilder.build()))
     }
+    overlayStyle.layout_style = layoutStyle.build()
+    overlayStyle.node_style = nodeStyle.build()
     val style = overlayStyle.build()
 
     // Now synthesize a view.

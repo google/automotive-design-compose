@@ -22,6 +22,11 @@ import android.graphics.Rect
 import android.graphics.Shader
 import android.os.Build
 import android.util.Log
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
@@ -48,6 +53,7 @@ import com.android.designcompose.serdegen.Background
 import com.android.designcompose.serdegen.BlendMode
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Display
+import com.android.designcompose.serdegen.Easing
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStyle
@@ -64,12 +70,14 @@ import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
+import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.serdegen.WindingRule
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /** Convert a serialized color to a Compose color */
 internal fun convertColor(color: com.android.designcompose.serdegen.Color): Color {
@@ -1413,4 +1421,61 @@ internal fun Layout.withDensity(density: Float): Layout {
         this.left * density,
         this.top * density
     )
+}
+
+// Convert a DesignCompose animation transition into a Jetpack Compose animationSpec.
+internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
+    val easing =
+        when (this) {
+            is Transition.SmartAnimate -> this.easing
+            is Transition.ScrollAnimate -> this.easing
+            is Transition.Push -> this.easing
+            is Transition.MoveIn -> this.easing
+            is Transition.MoveOut -> this.easing
+            is Transition.Dissolve -> this.easing
+            is Transition.SlideIn -> this.easing
+            is Transition.SlideOut -> this.easing
+            else -> return snap(0)
+        }
+    val duration =
+        when (this) {
+            is Transition.SmartAnimate -> this.duration
+            is Transition.ScrollAnimate -> this.duration
+            is Transition.Push -> this.duration
+            is Transition.MoveIn -> this.duration
+            is Transition.MoveOut -> this.duration
+            is Transition.Dissolve -> this.duration
+            is Transition.SlideIn -> this.duration
+            is Transition.SlideOut -> this.duration
+            else -> return snap(0)
+        }
+    return when (easing) {
+        is Easing.Spring -> {
+            // Compose takes damping as a fraction of the amount required for critical damping,
+            // rather than as the actual damping value. So, we must calculate the damping required
+            // for criticality with the given stiffness and mass.
+            //
+            // Reference implementation of a simple spring based on integrating Hooke's law:
+            //  https://github.com/iamralpht/gravitas-rs/blob/master/src/spring.rs#L23
+
+            val critical = sqrt(4.0f * easing.value.stiffness * easing.value.mass)
+            spring(
+                dampingRatio = easing.value.damping / critical,
+                stiffness = easing.value.stiffness
+            )
+        }
+        is Easing.Bezier -> {
+            tween(
+                durationMillis = (duration * 1000.0).roundToInt(),
+                easing =
+                    CubicBezierEasing(
+                        easing.value.x1,
+                        easing.value.y1,
+                        easing.value.x2,
+                        easing.value.y2
+                    )
+            )
+        }
+        else -> snap(0)
+    }
 }

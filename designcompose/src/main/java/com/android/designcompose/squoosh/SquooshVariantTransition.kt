@@ -21,7 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.android.designcompose.serdegen.Bezier
+import com.android.designcompose.serdegen.Easing
+import com.android.designcompose.serdegen.Spring
 import com.android.designcompose.serdegen.Transition
 
 // We want to perform an animated transition when a variant customization causes a presented
@@ -221,7 +222,8 @@ internal class SquooshVariantTransition {
                         toNodeId = toId,
                         fromName = fromName,
                         toName = toName,
-                        transition = Transition.SmartAnimate(Bezier(0f, 0f, 1f, 1f), 1f)
+                        transition =
+                            Transition.SmartAnimate(Easing.Spring(Spring(1.0f, 200.0f, 30.0f)), 1f)
                     )
                 didUpdateTransitions = true
             } else {

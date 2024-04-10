@@ -58,10 +58,20 @@ pub struct Bezier {
     pub x2: f32,
     pub y2: f32,
 }
+
+/// Spring coefficients
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq)]
+pub struct Spring {
+    pub mass: f32,
+    pub stiffness: f32,
+    pub damping: f32,
+}
+
 /// The type of easing to perform in a transition.
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EasingJson {
+    // Cubic beziers
     EaseIn,
     EaseOut,
     EaseInAndOut,
@@ -69,9 +79,23 @@ pub enum EasingJson {
     EaseInBack,
     EaseOutBack,
     EaseInAndOutBack,
+
+    // Manually specified cubic bezier
     CustomCubicBezier {
         #[serde(rename = "easingFunctionCubicBezier")]
         bezier: Bezier,
+    },
+
+    // Springs
+    Gentle,
+    Quick,
+    Bouncy,
+    Slow,
+
+    // Manually specified spring
+    CustomSpring {
+        #[serde(rename = "easingFunctionSpring")]
+        spring: Spring,
     },
 }
 
@@ -265,19 +289,44 @@ impl From<TriggerJson> for Trigger {
     }
 }
 
+#[derive(Deserialize, Serialize, Debug, Copy, Clone, PartialEq)]
+pub enum Easing {
+    Bezier(Bezier),
+    Spring(Spring),
+}
+
 // We flatten the Easing type to a bezier for the toolkit. These values were taken from
 // https://easings.net/ and verified against Figma optically.
-impl From<EasingJson> for Bezier {
+impl From<EasingJson> for Easing {
     fn from(json: EasingJson) -> Self {
         match json {
-            EasingJson::EaseIn => Self { x1: 0.12, y1: 0.0, x2: 0.39, y2: 0.0 },
-            EasingJson::EaseOut => Self { x1: 0.61, y1: 1.0, x2: 0.88, y2: 1.0 },
-            EasingJson::EaseInAndOut => Self { x1: 0.37, y1: 0.0, x2: 0.63, y2: 1.0 },
-            EasingJson::Linear => Self { x1: 0.0, y1: 0.0, x2: 1.0, y2: 1.0 },
-            EasingJson::EaseInBack => Self { x1: 0.36, y1: 0.0, x2: 0.66, y2: -0.56 },
-            EasingJson::EaseOutBack => Self { x1: 0.34, y1: 1.56, x2: 0.64, y2: 1.0 },
-            EasingJson::EaseInAndOutBack => Self { x1: 0.68, y1: -0.6, x2: 0.32, y2: 1.6 },
-            EasingJson::CustomCubicBezier { bezier } => bezier,
+            EasingJson::EaseIn => Self::Bezier(Bezier { x1: 0.12, y1: 0.0, x2: 0.39, y2: 0.0 }),
+            EasingJson::EaseOut => Self::Bezier(Bezier { x1: 0.61, y1: 1.0, x2: 0.88, y2: 1.0 }),
+            EasingJson::EaseInAndOut => {
+                Self::Bezier(Bezier { x1: 0.37, y1: 0.0, x2: 0.63, y2: 1.0 })
+            }
+            EasingJson::Linear => Self::Bezier(Bezier { x1: 0.0, y1: 0.0, x2: 1.0, y2: 1.0 }),
+            EasingJson::EaseInBack => {
+                Self::Bezier(Bezier { x1: 0.36, y1: 0.0, x2: 0.66, y2: -0.56 })
+            }
+            EasingJson::EaseOutBack => {
+                Self::Bezier(Bezier { x1: 0.34, y1: 1.56, x2: 0.64, y2: 1.0 })
+            }
+            EasingJson::EaseInAndOutBack => {
+                Self::Bezier(Bezier { x1: 0.68, y1: -0.6, x2: 0.32, y2: 1.6 })
+            }
+            EasingJson::CustomCubicBezier { bezier } => Self::Bezier(bezier),
+            EasingJson::Gentle => {
+                Self::Spring(Spring { mass: 1.0, damping: 15.0, stiffness: 100.0 })
+            }
+            EasingJson::Quick => {
+                Self::Spring(Spring { mass: 1.0, damping: 20.0, stiffness: 300.0 })
+            }
+            EasingJson::Bouncy => {
+                Self::Spring(Spring { mass: 1.0, damping: 15.0, stiffness: 600.0 })
+            }
+            EasingJson::Slow => Self::Spring(Spring { mass: 1.0, damping: 20.0, stiffness: 80.0 }),
+            EasingJson::CustomSpring { spring } => Self::Spring(spring),
         }
     }
 }
@@ -286,42 +335,14 @@ impl From<EasingJson> for Bezier {
 /// https://www.figma.com/plugin-docs/api/Transition/
 #[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq)]
 pub enum Transition {
-    Dissolve { easing: Bezier, duration: f32 },
-    SmartAnimate { easing: Bezier, duration: f32 },
-    ScrollAnimate { easing: Bezier, duration: f32 },
-    MoveIn { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
-    MoveOut { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
-    Push { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
-    SlideIn { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
-    SlideOut { easing: Bezier, duration: f32, direction: TransitionDirection, match_layers: bool },
-}
-impl Transition {
-    /// Return the duration of the transiton (in seconds) (XXX: Make a Duration?)
-    pub fn duration(&self) -> f32 {
-        match self {
-            Transition::Dissolve { duration, .. } => *duration,
-            Transition::SmartAnimate { duration, .. } => *duration,
-            Transition::ScrollAnimate { duration, .. } => *duration,
-            Transition::MoveIn { duration, .. } => *duration,
-            Transition::MoveOut { duration, .. } => *duration,
-            Transition::Push { duration, .. } => *duration,
-            Transition::SlideIn { duration, .. } => *duration,
-            Transition::SlideOut { duration, .. } => *duration,
-        }
-    }
-    /// Return the easing curve.
-    pub fn easing(&self) -> Bezier {
-        match self {
-            Transition::Dissolve { easing, .. } => *easing,
-            Transition::SmartAnimate { easing, .. } => *easing,
-            Transition::ScrollAnimate { easing, .. } => *easing,
-            Transition::MoveIn { easing, .. } => *easing,
-            Transition::MoveOut { easing, .. } => *easing,
-            Transition::Push { easing, .. } => *easing,
-            Transition::SlideIn { easing, .. } => *easing,
-            Transition::SlideOut { easing, .. } => *easing,
-        }
-    }
+    Dissolve { easing: Easing, duration: f32 },
+    SmartAnimate { easing: Easing, duration: f32 },
+    ScrollAnimate { easing: Easing, duration: f32 },
+    MoveIn { easing: Easing, duration: f32, direction: TransitionDirection, match_layers: bool },
+    MoveOut { easing: Easing, duration: f32, direction: TransitionDirection, match_layers: bool },
+    Push { easing: Easing, duration: f32, direction: TransitionDirection, match_layers: bool },
+    SlideIn { easing: Easing, duration: f32, direction: TransitionDirection, match_layers: bool },
+    SlideOut { easing: Easing, duration: f32, direction: TransitionDirection, match_layers: bool },
 }
 impl From<TransitionJson> for Transition {
     fn from(json: TransitionJson) -> Self {

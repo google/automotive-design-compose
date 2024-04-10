@@ -182,13 +182,13 @@ internal fun DesignFrame(
                 object : ImageReplacementContext {
                     override val imageContext =
                         ImageContext(
-                            background = style.background,
-                            minWidth = style.min_width,
-                            maxWidth = style.max_width,
-                            width = style.width,
-                            minHeight = style.min_height,
-                            maxHeight = style.max_height,
-                            height = style.height,
+                            background = style.node_style.background,
+                            minWidth = style.layout_style.min_width,
+                            maxWidth = style.layout_style.max_width,
+                            width = style.layout_style.width,
+                            minHeight = style.layout_style.min_height,
+                            maxHeight = style.layout_style.max_height,
+                            height = style.layout_style.height,
                         )
                 }
             )
@@ -229,17 +229,20 @@ internal fun DesignFrame(
                     val content = lazyContent { LazyContentSpan() }
                     var count = content.count
                     var overflowNodeId: String? = null
-                    if (style.max_children.isPresent && style.max_children.get() < count) {
-                        count = style.max_children.get()
-                        if (style.overflow_node_id.isPresent)
-                            overflowNodeId = style.overflow_node_id.get()
+                    if (
+                        style.node_style.max_children.isPresent &&
+                            style.node_style.max_children.get() < count
+                    ) {
+                        count = style.node_style.max_children.get()
+                        if (style.node_style.overflow_node_id.isPresent)
+                            overflowNodeId = style.node_style.overflow_node_id.get()
                     }
 
                     // If the widget is set to hug contents, don't give Row() a size and let it size
                     // itself. Then when the size is determined, inform the layout manager.
                     // Otherwise,
                     // get the fixed size from the layout manager and use it in a Modifier.
-                    val hugContents = view.style.width is Dimension.Auto
+                    val hugContents = view.style.layout_style.width is Dimension.Auto
                     val rowModifier =
                         if (hugContents)
                             Modifier.onSizeChanged {
@@ -268,8 +271,8 @@ internal fun DesignFrame(
                                 if (customComposable != null) {
                                     customComposable(
                                         Modifier,
-                                        style.overflow_node_name.get(),
-                                        NodeQuery.NodeId(style.overflow_node_id.get()),
+                                        style.node_style.overflow_node_name.get(),
+                                        NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
                                         parentComponents,
                                         null
                                     )
@@ -296,10 +299,13 @@ internal fun DesignFrame(
                     val content = lazyContent { LazyContentSpan() }
                     var count = content.count
                     var overflowNodeId: String? = null
-                    if (style.max_children.isPresent && style.max_children.get() < count) {
-                        count = style.max_children.get()
-                        if (style.overflow_node_id.isPresent)
-                            overflowNodeId = style.overflow_node_id.get()
+                    if (
+                        style.node_style.max_children.isPresent &&
+                            style.node_style.max_children.get() < count
+                    ) {
+                        count = style.node_style.max_children.get()
+                        if (style.node_style.overflow_node_id.isPresent)
+                            overflowNodeId = style.node_style.overflow_node_id.get()
                     }
 
                     // If the widget is set to hug contents, don't give Column() a size and let it
@@ -307,7 +313,7 @@ internal fun DesignFrame(
                     // itself. Then when the size is determined, inform the layout manager.
                     // Otherwise,
                     // get the fixed size from the layout manager and use it in a Modifier.
-                    val hugContents = view.style.height is Dimension.Auto
+                    val hugContents = view.style.layout_style.height is Dimension.Auto
                     val columnModifier =
                         if (hugContents)
                             Modifier.onSizeChanged {
@@ -336,8 +342,8 @@ internal fun DesignFrame(
                                 if (customComposable != null) {
                                     customComposable(
                                         Modifier,
-                                        style.overflow_node_name.get(),
-                                        NodeQuery.NodeId(style.overflow_node_id.get()),
+                                        style.node_style.overflow_node_name.get(),
+                                        NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
                                         parentComponents,
                                         null
                                     )
@@ -453,10 +459,13 @@ internal fun DesignFrame(
                 else {
                     var count = lContent.count
                     var overflowNodeId: String? = null
-                    if (style.max_children.isPresent && style.max_children.get() < count) {
-                        count = style.max_children.get()
-                        if (style.overflow_node_id.isPresent)
-                            overflowNodeId = style.overflow_node_id.get()
+                    if (
+                        style.node_style.max_children.isPresent &&
+                            style.node_style.max_children.get() < count
+                    ) {
+                        count = style.node_style.max_children.get()
+                        if (style.node_style.overflow_node_id.isPresent)
+                            overflowNodeId = style.node_style.overflow_node_id.get()
                     }
                     items(
                         count,
@@ -490,8 +499,8 @@ internal fun DesignFrame(
                                 if (customComposable != null) {
                                     customComposable(
                                         Modifier,
-                                        style.overflow_node_name.get(),
-                                        NodeQuery.NodeId(style.overflow_node_id.get()),
+                                        style.node_style.overflow_node_name.get(),
+                                        NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
                                         parentComponents,
                                         null
                                     )
@@ -717,8 +726,8 @@ internal fun Modifier.frameRender(
                     paint.blendMode = BlendMode.DstIn
                     val offset =
                         Offset(
-                            -style.margin.start.pointsAsDp(density).value,
-                            -style.margin.top.pointsAsDp(density).value
+                            -style.layout_style.margin.start.pointsAsDp(density).value,
+                            -style.layout_style.margin.top.pointsAsDp(density).value
                         )
                     val parentSize = maskInfo?.parentSize?.value ?: size
                     drawContext.canvas.withSaveLayer(Rect(offset, parentSize), paint) { render() }

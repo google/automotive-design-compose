@@ -217,7 +217,7 @@ fn jni_add_nodes<'local>(
                                 node.layout_id,
                                 node.parent_layout_id,
                                 node.child_index,
-                                node.style,
+                                node.style.layout_style,
                                 node.name,
                                 java_jni_measure_text,
                             );
@@ -226,7 +226,7 @@ fn jni_add_nodes<'local>(
                                 node.layout_id,
                                 node.parent_layout_id,
                                 node.child_index,
-                                node.style,
+                                node.style.layout_style,
                                 node.name,
                                 None,
                                 node.fixed_width,

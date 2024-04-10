@@ -71,7 +71,7 @@ internal fun squooshComputeTextInfo(
 ): TextMeasureData? {
     val customizedText = customizations.getText(v.name)
     val customTextStyle = customizations.getTextStyle(v.name)
-    val fontFamily = DesignSettings.fontFamily(v.style.font_family)
+    val fontFamily = DesignSettings.fontFamily(v.style.node_style.font_family)
 
     val annotatedText =
         if (customizedText != null) {
@@ -122,22 +122,23 @@ internal fun squooshComputeTextInfo(
 
     val lineHeight =
         customTextStyle?.lineHeight
-            ?: when (v.style.line_height) {
-                is LineHeight.Pixels -> (v.style.line_height as LineHeight.Pixels).value.sp
+            ?: when (v.style.node_style.line_height) {
+                is LineHeight.Pixels ->
+                    (v.style.node_style.line_height as LineHeight.Pixels).value.sp
                 else -> TextUnit.Unspecified
             }
     val fontWeight =
-        customTextStyle?.fontWeight ?: FontWeight(v.style.font_weight.value.roundToInt())
+        customTextStyle?.fontWeight ?: FontWeight(v.style.node_style.font_weight.value.roundToInt())
     val fontStyle =
         customTextStyle?.fontStyle
-            ?: when (v.style.font_style) {
+            ?: when (v.style.node_style.font_style) {
                 is com.android.designcompose.serdegen.FontStyle.Italic -> FontStyle.Italic
                 else -> FontStyle.Normal
             }
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.
     val shadow =
-        v.style.text_shadow.flatMap { textShadow ->
+        v.style.node_style.text_shadow.flatMap { textShadow ->
             Optional.of(
                 Shadow(
                     // Ensure that blur radius is never zero, because Compose interprets that as no
@@ -152,16 +153,16 @@ internal fun squooshComputeTextInfo(
                 )
             )
         }
-    val textBrushAndOpacity = v.style.text_color.asBrush(document, density.density)
+    val textBrushAndOpacity = v.style.node_style.text_color.asBrush(document, density.density)
     val textStyle =
         @OptIn(ExperimentalTextApi::class)
         (TextStyle(
             brush = textBrushAndOpacity?.first,
             alpha = textBrushAndOpacity?.second ?: 1.0f,
-            fontSize = customTextStyle?.fontSize ?: v.style.font_size.sp,
+            fontSize = customTextStyle?.fontSize ?: v.style.node_style.font_size.sp,
             fontFamily = fontFamily,
             fontFeatureSettings =
-                v.style.font_features.joinToString(", ") { feature ->
+                v.style.node_style.font_features.joinToString(", ") { feature ->
                     String(feature.tag.toByteArray())
                 },
             lineHeight = lineHeight,
@@ -169,7 +170,7 @@ internal fun squooshComputeTextInfo(
             fontStyle = fontStyle,
             textAlign =
                 customTextStyle?.textAlign
-                    ?: when (v.style.text_align) {
+                    ?: when (v.style.node_style.text_align) {
                         is com.android.designcompose.serdegen.TextAlign.Center -> TextAlign.Center
                         is com.android.designcompose.serdegen.TextAlign.Right -> TextAlign.Right
                         else -> TextAlign.Left
@@ -193,7 +194,8 @@ internal fun squooshComputeTextInfo(
         )
 
     val maxLines =
-        if (v.style.line_count.isPresent) v.style.line_count.get().toInt() else Int.MAX_VALUE
+        if (v.style.node_style.line_count.isPresent) v.style.node_style.line_count.get().toInt()
+        else Int.MAX_VALUE
 
     return TextMeasureData(
         annotatedText.text.hashCode(),

@@ -63,12 +63,12 @@ import kotlin.math.roundToInt
 internal fun Modifier.textTransform(style: ViewStyle) =
     this.then(
         Modifier.drawWithContent {
-            val transform = style.transform.asComposeTransform(density)
+            val transform = style.node_style.transform.asComposeTransform(density)
             if (transform != null && !transform.isIdentity()) {
                 drawContext.transform.transform(transform)
             }
-            val blendMode = style.blend_mode.asComposeBlendMode()
-            val useBlendModeLayer = style.blend_mode.useLayer()
+            val blendMode = style.node_style.blend_mode.asComposeBlendMode()
+            val useBlendModeLayer = style.node_style.blend_mode.useLayer()
             if (useBlendModeLayer) {
                 val paint = Paint()
                 paint.blendMode = blendMode
@@ -130,7 +130,7 @@ internal fun DesignText(
     if (useText == null)
         useText = (customizations.getTextFunction(nodeName) ?: { newlineFixedText })()
 
-    val fontFamily = DesignSettings.fontFamily(style.font_family)
+    val fontFamily = DesignSettings.fontFamily(style.node_style.font_family)
     val customTextStyle = customizations.getTextStyle(nodeName)
     val textBuilder = AnnotatedString.Builder()
 
@@ -169,28 +169,32 @@ internal fun DesignText(
 
     val lineHeight =
         customTextStyle?.lineHeight
-            ?: when (style.line_height) {
+            ?: when (style.node_style.line_height) {
                 is LineHeight.Pixels ->
                     if (runs != null) {
-                        ((style.line_height as LineHeight.Pixels).value / style.font_size).em
+                        ((style.node_style.line_height as LineHeight.Pixels).value /
+                                style.node_style.font_size)
+                            .em
                     } else {
-                        (style.line_height as LineHeight.Pixels).value.sp
+                        (style.node_style.line_height as LineHeight.Pixels).value.sp
                     }
                 else -> TextUnit.Unspecified
             }
     val fontWeight =
         customTextStyle?.fontWeight
-            ?: androidx.compose.ui.text.font.FontWeight(style.font_weight.value.roundToInt())
+            ?: androidx.compose.ui.text.font.FontWeight(
+                style.node_style.font_weight.value.roundToInt()
+            )
     val fontStyle =
         customTextStyle?.fontStyle
-            ?: when (style.font_style) {
+            ?: when (style.node_style.font_style) {
                 is FontStyle.Italic -> androidx.compose.ui.text.font.FontStyle.Italic
                 else -> androidx.compose.ui.text.font.FontStyle.Normal
             }
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.
     val shadow =
-        style.text_shadow.flatMap { textShadow ->
+        style.node_style.text_shadow.flatMap { textShadow ->
             Optional.of(
                 Shadow(
                     // Ensure that blur radius is never zero, because Compose interprets that as no
@@ -213,16 +217,16 @@ internal fun DesignText(
             customizations.getBrush(nodeName)
         }
 
-    val textBrushAndOpacity = style.text_color.asBrush(document, density.density)
+    val textBrushAndOpacity = style.node_style.text_color.asBrush(document, density.density)
     val textStyle =
         @OptIn(ExperimentalTextApi::class)
         TextStyle(
             brush = customBrush ?: textBrushAndOpacity?.first,
             alpha = textBrushAndOpacity?.second ?: 1.0f,
-            fontSize = customTextStyle?.fontSize ?: style.font_size.sp,
+            fontSize = customTextStyle?.fontSize ?: style.node_style.font_size.sp,
             fontFamily = fontFamily,
             fontFeatureSettings =
-                style.font_features.joinToString(", ") { feature ->
+                style.node_style.font_features.joinToString(", ") { feature ->
                     String(feature.tag.toByteArray())
                 },
             lineHeight = lineHeight,
@@ -230,7 +234,7 @@ internal fun DesignText(
             fontStyle = fontStyle,
             textAlign =
                 customTextStyle?.textAlign
-                    ?: when (style.text_align) {
+                    ?: when (style.node_style.text_align) {
                         is TextAlign.Center -> androidx.compose.ui.text.style.TextAlign.Center
                         is TextAlign.Right -> androidx.compose.ui.text.style.TextAlign.Right
                         else -> androidx.compose.ui.text.style.TextAlign.Left
@@ -244,7 +248,7 @@ internal fun DesignText(
                 )
         )
     val overflow =
-        if (style.text_overflow is com.android.designcompose.serdegen.TextOverflow.Clip)
+        if (style.node_style.text_overflow is com.android.designcompose.serdegen.TextOverflow.Clip)
             TextOverflow.Clip
         else TextOverflow.Ellipsis
 
@@ -257,7 +261,9 @@ internal fun DesignText(
             resourceLoader = LocalFontLoader.current
         )
 
-    val maxLines = if (style.line_count.isPresent) style.line_count.get().toInt() else Int.MAX_VALUE
+    val maxLines =
+        if (style.node_style.line_count.isPresent) style.node_style.line_count.get().toInt()
+        else Int.MAX_VALUE
     val textMeasureData =
         TextMeasureData(
             annotatedText.text.hashCode(),
@@ -348,11 +354,11 @@ internal fun DesignText(
                     width = layoutWithDensity.width,
                     maxLines = textMeasureData.maxLines,
                     ellipsis =
-                        style.text_overflow
+                        style.node_style.text_overflow
                             is com.android.designcompose.serdegen.TextOverflow.Ellipsis
                 )
 
-            when (style.text_align_vertical) {
+            when (style.node_style.text_align_vertical) {
                 is TextAlignVertical.Center -> (layoutWithDensity.height - paragraph.height) / 2F
                 is TextAlignVertical.Bottom -> layoutWithDensity.height - paragraph.height
                 else -> 0F

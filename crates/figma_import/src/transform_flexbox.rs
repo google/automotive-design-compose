@@ -88,64 +88,64 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
     let mut hug_height = false;
 
     if let Some(bounds) = node.absolute_bounding_box {
-        style.bounding_box.width = bounds.width();
-        style.bounding_box.height = bounds.height();
+        style.layout_style.bounding_box.width = bounds.width();
+        style.layout_style.bounding_box.height = bounds.height();
     }
 
     // Frames can implement Auto Layout on their children.
     if let Some(frame) = node.frame() {
-        style.position_type = PositionType::Relative;
-        style.width = Dimension::Auto;
-        style.height = Dimension::Auto;
-        style.flex_grow = frame.layout_grow;
+        style.layout_style.position_type = PositionType::Relative;
+        style.layout_style.width = Dimension::Auto;
+        style.layout_style.height = Dimension::Auto;
+        style.layout_style.flex_grow = frame.layout_grow;
         if frame.layout_grow == 1.0 {
             // When the value of layout_grow is 1, it is because the node has
             // its width or height set to FILL. Figma's node properties don't
             // specify this, but flex_basis needs to be set to 0 so that it
             // starts out small and grows to fill the container
-            style.flex_basis = Dimension::Points(0.0);
+            style.layout_style.flex_basis = Dimension::Points(0.0);
         }
-        style.flex_shrink = 0.0;
-        style.horizontal_sizing = frame.layout_sizing_horizontal.into();
-        style.vertical_sizing = frame.layout_sizing_vertical.into();
+        style.layout_style.flex_shrink = 0.0;
+        style.node_style.horizontal_sizing = frame.layout_sizing_horizontal.into();
+        style.node_style.vertical_sizing = frame.layout_sizing_vertical.into();
 
         // Check for a flex direction override, which can happen if this node has a child widget
         let flex_direction_override = check_child_size_override(node);
         if let Some(dir) = flex_direction_override {
-            style.flex_direction = match dir {
+            style.layout_style.flex_direction = match dir {
                 LayoutType::Horizontal => FlexDirection::Row,
                 LayoutType::Vertical => FlexDirection::Column,
                 _ => FlexDirection::None,
             };
         } else {
-            style.flex_direction = match frame.layout_mode {
+            style.layout_style.flex_direction = match frame.layout_mode {
                 LayoutMode::Horizontal => FlexDirection::Row,
                 LayoutMode::Vertical => FlexDirection::Column,
                 LayoutMode::None => FlexDirection::None,
             };
         }
-        style.padding.start = Dimension::Points(frame.padding_left);
-        style.padding.end = Dimension::Points(frame.padding_right);
-        style.padding.top = Dimension::Points(frame.padding_top);
-        style.padding.bottom = Dimension::Points(frame.padding_bottom);
+        style.layout_style.padding.start = Dimension::Points(frame.padding_left);
+        style.layout_style.padding.end = Dimension::Points(frame.padding_right);
+        style.layout_style.padding.top = Dimension::Points(frame.padding_top);
+        style.layout_style.padding.bottom = Dimension::Points(frame.padding_bottom);
 
-        style.item_spacing = ItemSpacing::Fixed(frame.item_spacing as i32);
+        style.layout_style.item_spacing = ItemSpacing::Fixed(frame.item_spacing as i32);
 
         match frame.layout_align {
             // Counter axis stretch
             Some(LayoutAlign::Stretch) => {
-                style.align_self = AlignSelf::Stretch;
+                style.layout_style.align_self = AlignSelf::Stretch;
             }
             _ => (),
         };
-        style.align_items = match frame.counter_axis_align_items {
+        style.layout_style.align_items = match frame.counter_axis_align_items {
             LayoutAlignItems::Center => AlignItems::Center,
             LayoutAlignItems::Max => AlignItems::FlexEnd,
             LayoutAlignItems::Min => AlignItems::FlexStart,
             LayoutAlignItems::SpaceBetween => AlignItems::FlexStart, // XXX
             LayoutAlignItems::Baseline => AlignItems::FlexStart,
         };
-        style.justify_content = match frame.primary_axis_align_items {
+        style.layout_style.justify_content = match frame.primary_axis_align_items {
             LayoutAlignItems::Center => JustifyContent::Center,
             LayoutAlignItems::Max => JustifyContent::FlexEnd,
             LayoutAlignItems::Min => JustifyContent::FlexStart,
@@ -154,9 +154,9 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
         };
         // The toolkit picks "Stretch" as a sensible default, but we don't
         // want that for Figma elements.
-        style.align_content = AlignContent::FlexStart;
+        style.layout_style.align_content = AlignContent::FlexStart;
 
-        let align_self_stretch = style.align_self == AlignSelf::Stretch;
+        let align_self_stretch = style.layout_style.align_self == AlignSelf::Stretch;
         if let Some(bounds) = node.absolute_bounding_box {
             // If align_self is set to stretch, we want width/height to be Auto, even if the
             // frame's primary or counter axis sizing mode is set to Fixed.
@@ -172,31 +172,31 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                 LayoutMode::Horizontal => {
                     hug_width = frame.primary_axis_sizing_mode == LayoutSizingMode::Auto;
                     hug_height = frame.counter_axis_sizing_mode == LayoutSizingMode::Auto;
-                    style.width = match frame.primary_axis_sizing_mode {
+                    style.layout_style.width = match frame.primary_axis_sizing_mode {
                         LayoutSizingMode::Fixed => dim_points_or_auto(bounds.width().ceil()),
                         LayoutSizingMode::Auto => Dimension::Auto,
                     };
-                    style.height = match frame.counter_axis_sizing_mode {
+                    style.layout_style.height = match frame.counter_axis_sizing_mode {
                         LayoutSizingMode::Fixed => dim_points_or_auto(bounds.height().ceil()),
                         LayoutSizingMode::Auto => Dimension::Auto,
                     };
                     if hug_width {
-                        style.min_width = Dimension::Auto;
+                        style.layout_style.min_width = Dimension::Auto;
                     }
                 }
                 LayoutMode::Vertical => {
                     hug_width = frame.counter_axis_sizing_mode == LayoutSizingMode::Auto;
                     hug_height = frame.primary_axis_sizing_mode == LayoutSizingMode::Auto;
-                    style.width = match frame.counter_axis_sizing_mode {
+                    style.layout_style.width = match frame.counter_axis_sizing_mode {
                         LayoutSizingMode::Fixed => dim_points_or_auto(bounds.width().ceil()),
                         LayoutSizingMode::Auto => Dimension::Auto,
                     };
-                    style.height = match frame.primary_axis_sizing_mode {
+                    style.layout_style.height = match frame.primary_axis_sizing_mode {
                         LayoutSizingMode::Fixed => dim_points_or_auto(bounds.height().ceil()),
                         LayoutSizingMode::Auto => Dimension::Auto,
                     };
                     if hug_height {
-                        style.min_height = Dimension::Auto;
+                        style.layout_style.min_height = Dimension::Auto;
                     }
                 }
                 _ => {
@@ -211,15 +211,15 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                     };
 
                     if frame.layout_sizing_horizontal == LayoutSizing::Fill {
-                        style.width = Dimension::Auto;
+                        style.layout_style.width = Dimension::Auto;
                     } else {
-                        style.width = Dimension::Points(width);
+                        style.layout_style.width = Dimension::Points(width);
                     }
 
                     if frame.layout_sizing_vertical == LayoutSizing::Fill {
-                        style.height = Dimension::Auto;
+                        style.layout_style.height = Dimension::Auto;
                     } else {
-                        style.height = Dimension::Points(height);
+                        style.layout_style.height = Dimension::Points(height);
                     }
                 }
             }
@@ -227,12 +227,12 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
             if frame.layout_mode != LayoutMode::None {
                 let width_points = bounds.width().ceil();
                 let height_points = bounds.height().ceil();
-                style.width = match frame.layout_sizing_horizontal {
+                style.layout_style.width = match frame.layout_sizing_horizontal {
                     LayoutSizing::Fixed => Dimension::Points(width_points),
                     LayoutSizing::Fill => Dimension::Auto,
                     LayoutSizing::Hug => Dimension::Auto,
                 };
-                style.height = match frame.layout_sizing_vertical {
+                style.layout_style.height = match frame.layout_sizing_vertical {
                     LayoutSizing::Fixed => Dimension::Points(height_points),
                     LayoutSizing::Fill => Dimension::Auto,
                     LayoutSizing::Hug => Dimension::Auto,
@@ -249,13 +249,13 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
         }
     }
     if is_widget_or_parent_widget {
-        style.position_type = PositionType::Absolute;
-        style.width = Dimension::Auto;
-        style.height = Dimension::Auto;
-        style.left = Dimension::Points(0.0);
-        style.right = Dimension::Points(0.0);
-        style.top = Dimension::Points(0.0);
-        style.bottom = Dimension::Points(0.0);
+        style.layout_style.position_type = PositionType::Absolute;
+        style.layout_style.width = Dimension::Auto;
+        style.layout_style.height = Dimension::Auto;
+        style.layout_style.left = Dimension::Points(0.0);
+        style.layout_style.right = Dimension::Points(0.0);
+        style.layout_style.top = Dimension::Points(0.0);
+        style.layout_style.bottom = Dimension::Points(0.0);
     }
 
     // Vector layers have some layout properties for themselves, but not for their children.
@@ -263,77 +263,77 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
         match vector.layout_align {
             // Counter axis stretch
             Some(LayoutAlign::Stretch) => {
-                style.align_self = AlignSelf::Stretch;
+                style.layout_style.align_self = AlignSelf::Stretch;
             }
             _ => (),
         };
-        style.position_type = PositionType::Relative;
-        style.width = Dimension::Auto;
-        style.height = Dimension::Auto;
+        style.layout_style.position_type = PositionType::Relative;
+        style.layout_style.width = Dimension::Auto;
+        style.layout_style.height = Dimension::Auto;
     }
     if let Some(bounds) = node.absolute_bounding_box {
         if !hug_width {
-            style.min_width = Dimension::Points(bounds.width().ceil());
+            style.layout_style.min_width = Dimension::Points(bounds.width().ceil());
         }
         if !hug_height {
-            style.min_height = Dimension::Points(bounds.height().ceil());
+            style.layout_style.min_height = Dimension::Points(bounds.height().ceil());
         }
     }
 
     if let Some(size) = &node.size {
         if size.is_valid() {
             if !hug_width {
-                style.min_width = Dimension::Points(size.x());
+                style.layout_style.min_width = Dimension::Points(size.x());
             }
             if !hug_height {
-                style.min_height = Dimension::Points(size.y());
+                style.layout_style.min_height = Dimension::Points(size.y());
             }
             // Set fixed vector size
             // TODO need to change to support scale?
             if node.vector().is_some() {
-                style.width = Dimension::Points(size.x());
-                style.height = Dimension::Points(size.y());
+                style.layout_style.width = Dimension::Points(size.x());
+                style.layout_style.height = Dimension::Points(size.y());
             }
 
-            style.node_size.width = size.x();
-            style.node_size.height = size.y();
+            style.node_style.node_size.width = size.x();
+            style.node_style.node_size.height = size.y();
         }
     }
 
     // For text we want to force the width.
     if let NodeData::Text { vector, style: text_style, .. } = &node.data {
-        style.flex_grow = vector.layout_grow;
+        style.layout_style.flex_grow = vector.layout_grow;
         if vector.layout_grow == 1.0 {
             // When the value of layout_grow is 1, it is because the node has
             // its width or height set to FILL. Figma's node properties don't
             // specify this, but flex_basis needs to be set to 0 so that it
             // starts out small and grows to fill the container
-            style.flex_basis = Dimension::Points(0.0);
+            style.layout_style.flex_basis = Dimension::Points(0.0);
         }
-        style.horizontal_sizing = vector.layout_sizing_horizontal.into();
-        style.vertical_sizing = vector.layout_sizing_vertical.into();
+        style.node_style.horizontal_sizing = vector.layout_sizing_horizontal.into();
+        style.node_style.vertical_sizing = vector.layout_sizing_vertical.into();
 
         // The text style also contains some layout information. We previously exposed
         // auto-width text in our plugin.
         match text_style.text_auto_resize {
             TextAutoResize::Height => {
                 if vector.layout_sizing_horizontal == LayoutSizing::Fill {
-                    style.width = Dimension::Auto;
+                    style.layout_style.width = Dimension::Auto;
                 } else {
-                    style.width = style.min_width;
+                    style.layout_style.width = style.layout_style.min_width;
                 }
-                style.height = Dimension::Auto;
+                style.layout_style.height = Dimension::Auto;
             }
             TextAutoResize::WidthAndHeight => {
-                style.min_width = Dimension::Auto;
-                style.width = Dimension::Auto;
-                style.height = Dimension::Auto;
+                style.layout_style.min_width = Dimension::Auto;
+                style.layout_style.width = Dimension::Auto;
+                style.layout_style.height = Dimension::Auto;
             }
             // TextAutoResize::Truncate is deprecated
             // Use fixed width and height
             _ => {
-                style.width = style.min_width;
-                style.height = style.min_height;
+                style.layout_style.width = style.layout_style.min_width;
+                style.layout_style.height = style.layout_style.min_height;
             }
         }
     }
@@ -341,7 +341,7 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
     if !parent_is_flexbox {
         match (node.absolute_bounding_box, parent_bounding_box) {
             (Some(bounds), Some(parent_bounds)) => {
-                style.position_type = PositionType::Absolute;
+                style.layout_style.position_type = PositionType::Absolute;
 
                 // Figure out all the values we might need when calculating the layout constraints.
                 let (width, height) = if let Some(size) = &node.size {
@@ -356,27 +356,27 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
 
                 match node.constraints().map(|c| c.horizontal) {
                     Some(HorizontalLayoutConstraintValue::Left) | None => {
-                        style.left = Dimension::Percent(0.0);
-                        style.right = Dimension::Auto;
-                        style.margin.start = Dimension::Points(left);
+                        style.layout_style.left = Dimension::Percent(0.0);
+                        style.layout_style.right = Dimension::Auto;
+                        style.layout_style.margin.start = Dimension::Points(left);
                         if !hug_width && !node.is_text() {
-                            style.width = Dimension::Points(width);
+                            style.layout_style.width = Dimension::Points(width);
                         }
                     }
                     Some(HorizontalLayoutConstraintValue::Right) => {
-                        style.left = Dimension::Auto;
-                        style.right = Dimension::Percent(0.0);
-                        style.margin.end = Dimension::Points(right);
+                        style.layout_style.left = Dimension::Auto;
+                        style.layout_style.right = Dimension::Percent(0.0);
+                        style.layout_style.margin.end = Dimension::Points(right);
                         if !hug_width && !node.is_text() {
-                            style.width = Dimension::Points(width);
+                            style.layout_style.width = Dimension::Points(width);
                         }
                     }
                     Some(HorizontalLayoutConstraintValue::LeftRight) => {
-                        style.left = Dimension::Percent(0.0);
-                        style.right = Dimension::Percent(0.0);
-                        style.margin.start = Dimension::Points(left);
-                        style.margin.end = Dimension::Points(right);
-                        style.width = Dimension::Auto;
+                        style.layout_style.left = Dimension::Percent(0.0);
+                        style.layout_style.right = Dimension::Percent(0.0);
+                        style.layout_style.margin.start = Dimension::Points(left);
+                        style.layout_style.margin.end = Dimension::Points(right);
+                        style.layout_style.width = Dimension::Auto;
                     }
                     Some(HorizontalLayoutConstraintValue::Center) => {
                         // Centering with absolute positioning isn't directly possible; instead we
@@ -385,60 +385,64 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                         // location using the left/top property. All of this adds up to position the
                         // component where it was in Figma, but anchored to the horizontal/vertical
                         // centerpoint.
-                        style.left = Dimension::Percent(0.5);
-                        style.right = Dimension::Auto;
-                        style.margin.start =
+                        style.layout_style.left = Dimension::Percent(0.5);
+                        style.layout_style.right = Dimension::Auto;
+                        style.layout_style.margin.start =
                             Dimension::Points(left - parent_bounds.width().ceil() / 2.0);
                         if !hug_width && !node.is_text() {
-                            style.width = Dimension::Points(width);
+                            style.layout_style.width = Dimension::Points(width);
                         }
                     }
                     Some(HorizontalLayoutConstraintValue::Scale) => {
-                        style.left = Dimension::Percent(left / parent_bounds.width().ceil());
-                        style.right = Dimension::Percent(right / parent_bounds.width().ceil());
-                        style.width = Dimension::Auto;
-                        style.min_width = Dimension::Auto;
+                        style.layout_style.left =
+                            Dimension::Percent(left / parent_bounds.width().ceil());
+                        style.layout_style.right =
+                            Dimension::Percent(right / parent_bounds.width().ceil());
+                        style.layout_style.width = Dimension::Auto;
+                        style.layout_style.min_width = Dimension::Auto;
                     }
                 }
 
                 match node.constraints().map(|c| c.vertical) {
                     Some(VerticalLayoutConstraintValue::Top) | None => {
-                        style.top = Dimension::Percent(0.0);
-                        style.bottom = Dimension::Auto;
-                        style.margin.top = Dimension::Points(top);
+                        style.layout_style.top = Dimension::Percent(0.0);
+                        style.layout_style.bottom = Dimension::Auto;
+                        style.layout_style.margin.top = Dimension::Points(top);
                         if !hug_height && !node.is_text() {
-                            style.height = Dimension::Points(height);
+                            style.layout_style.height = Dimension::Points(height);
                         }
                     }
                     Some(VerticalLayoutConstraintValue::Bottom) => {
-                        style.top = Dimension::Auto;
-                        style.bottom = Dimension::Percent(0.0);
-                        style.margin.bottom = Dimension::Points(bottom);
+                        style.layout_style.top = Dimension::Auto;
+                        style.layout_style.bottom = Dimension::Percent(0.0);
+                        style.layout_style.margin.bottom = Dimension::Points(bottom);
                         if !hug_height && !node.is_text() {
-                            style.height = Dimension::Points(height);
+                            style.layout_style.height = Dimension::Points(height);
                         }
                     }
                     Some(VerticalLayoutConstraintValue::TopBottom) => {
-                        style.top = Dimension::Percent(0.0);
-                        style.bottom = Dimension::Percent(0.0);
-                        style.margin.top = Dimension::Points(top);
-                        style.margin.bottom = Dimension::Points(bottom);
-                        style.height = Dimension::Auto;
+                        style.layout_style.top = Dimension::Percent(0.0);
+                        style.layout_style.bottom = Dimension::Percent(0.0);
+                        style.layout_style.margin.top = Dimension::Points(top);
+                        style.layout_style.margin.bottom = Dimension::Points(bottom);
+                        style.layout_style.height = Dimension::Auto;
                     }
                     Some(VerticalLayoutConstraintValue::Center) => {
-                        style.top = Dimension::Percent(0.5);
-                        style.bottom = Dimension::Auto;
-                        style.margin.top =
+                        style.layout_style.top = Dimension::Percent(0.5);
+                        style.layout_style.bottom = Dimension::Auto;
+                        style.layout_style.margin.top =
                             Dimension::Points(top - parent_bounds.height().ceil() / 2.0);
                         if !hug_height && !node.is_text() {
-                            style.height = Dimension::Points(height);
+                            style.layout_style.height = Dimension::Points(height);
                         }
                     }
                     Some(VerticalLayoutConstraintValue::Scale) => {
-                        style.top = Dimension::Percent(top / parent_bounds.height().ceil());
-                        style.bottom = Dimension::Percent(bottom / parent_bounds.height().ceil());
-                        style.height = Dimension::Auto;
-                        style.min_height = Dimension::Auto;
+                        style.layout_style.top =
+                            Dimension::Percent(top / parent_bounds.height().ceil());
+                        style.layout_style.bottom =
+                            Dimension::Percent(bottom / parent_bounds.height().ceil());
+                        style.layout_style.height = Dimension::Auto;
+                        style.layout_style.min_height = Dimension::Auto;
                     }
                 }
             }
@@ -786,14 +790,14 @@ fn visit_node(
             );
 
             // Provide an unaltered transform from the last relevant parent.
-            style.relative_transform = Some(r.clone());
+            style.node_style.relative_transform = Some(r.clone());
             // And an additional transform with translation removed.
             let r = r.post_translate(euclid::vec3(
                 -(bounds.x() - parent_bounds.x()),
                 -(bounds.y() - parent_bounds.y()),
                 0.0,
             ));
-            style.transform = Some(r);
+            style.node_style.transform = Some(r);
         }
     }
 
@@ -840,22 +844,6 @@ fn visit_node(
 
     let mut scroll_info = ScrollInfo::default();
 
-    // We have a plugin to set layout information that Figma doesn't have an interface for.
-    // It sets values on two keys.
-    // TODO remove this? Probably can just use Figma now.
-    /*
-    let extended_text_layout: Option<ExtendedTextLayout> = {
-        if let Some(vsw_data) = plugin_data {
-            if let Some(text_layout) = vsw_data.get("vsw-extended-text-layout") {
-                serde_json::from_str(text_layout.as_str()).ok()
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    };
-    */
     let extended_auto_layout: Option<ExtendedAutoLayout> = {
         if let Some(vsw_data) = plugin_data {
             if let Some(text_layout) = vsw_data.get("vsw-extended-auto-layout") {
@@ -879,9 +867,10 @@ fn visit_node(
         // extended layout data that may have been written to Figma nodes using an old widget
         // or our old extended layout plugin.
         has_extended_auto_layout = layout != LayoutType::None;
-        style.flex_wrap = if extended_auto_layout.wrap { FlexWrap::Wrap } else { FlexWrap::NoWrap };
+        style.node_style.flex_wrap =
+            if extended_auto_layout.wrap { FlexWrap::Wrap } else { FlexWrap::NoWrap };
 
-        style.grid_layout = match layout {
+        style.node_style.grid_layout = match layout {
             LayoutType::AutoColumns => Some(GridLayoutType::AutoColumns),
             LayoutType::FixedColumns => Some(GridLayoutType::FixedColumns),
             LayoutType::FixedRows => Some(GridLayoutType::FixedRows),
@@ -897,13 +886,13 @@ fn visit_node(
             let horizontal =
                 layout == LayoutType::FixedColumns || layout == LayoutType::AutoColumns;
 
-            style.grid_adaptive_min_size = gld.adaptive_min_size;
-            style.grid_columns_rows = extended_auto_layout.grid_layout_data.columns_rows;
-            style.padding.start = Dimension::Points(cld.margin_left);
-            style.padding.end = Dimension::Points(cld.margin_right);
-            style.padding.top = Dimension::Points(cld.margin_top);
-            style.padding.bottom = Dimension::Points(cld.margin_bottom);
-            style.item_spacing = if gld.auto_spacing {
+            style.node_style.grid_adaptive_min_size = gld.adaptive_min_size;
+            style.node_style.grid_columns_rows = extended_auto_layout.grid_layout_data.columns_rows;
+            style.layout_style.padding.start = Dimension::Points(cld.margin_left);
+            style.layout_style.padding.end = Dimension::Points(cld.margin_right);
+            style.layout_style.padding.top = Dimension::Points(cld.margin_top);
+            style.layout_style.padding.bottom = Dimension::Points(cld.margin_bottom);
+            style.layout_style.item_spacing = if gld.auto_spacing {
                 if horizontal {
                     ItemSpacing::Auto(gld.horizontal_spacing, gld.auto_spacing_item_size)
                 } else {
@@ -914,7 +903,7 @@ fn visit_node(
             } else {
                 ItemSpacing::Fixed(gld.vertical_spacing)
             };
-            style.cross_axis_item_spacing = if horizontal {
+            style.node_style.cross_axis_item_spacing = if horizontal {
                 gld.vertical_spacing as f32
             } else {
                 gld.horizontal_spacing as f32
@@ -943,7 +932,7 @@ fn visit_node(
                     }
                 }
 
-                style.grid_span_content.push(GridSpan {
+                style.node_style.grid_span_content.push(GridSpan {
                     node_name: grid_span.node_name.clone(),
                     node_variant: variant_hash,
                     span: grid_span.span,
@@ -963,7 +952,7 @@ fn visit_node(
                 };
             }
             if extended_auto_layout.auto_layout_data.space_between {
-                style.justify_content = JustifyContent::SpaceBetween;
+                style.layout_style.justify_content = JustifyContent::SpaceBetween;
             }
             is_widget_list = true;
             size_policy = extended_auto_layout.auto_layout_data.size_policy;
@@ -974,9 +963,9 @@ fn visit_node(
         // Set parameters that limit the number of children for this frame
         if extended_auto_layout.limit_content {
             let lcd = extended_auto_layout.limit_content_data;
-            style.max_children = Some(lcd.max_num_items);
-            style.overflow_node_id = Some(lcd.overflow_node_id);
-            style.overflow_node_name = Some(lcd.overflow_node_name);
+            style.node_style.max_children = Some(lcd.max_num_items);
+            style.node_style.overflow_node_id = Some(lcd.overflow_node_id);
+            style.node_style.overflow_node_name = Some(lcd.overflow_node_name);
         }
     }
 
@@ -998,20 +987,21 @@ fn visit_node(
     // we need to set our size depending on whether the size policy is hug or fixed.
     if is_widget_list {
         if size_policy == SizePolicy::Hug {
-            style.position_type = PositionType::Relative;
-            style.width = Dimension::Auto;
-            style.height = Dimension::Auto;
+            style.layout_style.position_type = PositionType::Relative;
+            style.layout_style.width = Dimension::Auto;
+            style.layout_style.height = Dimension::Auto;
         } else {
-            style.position_type = PositionType::Absolute;
+            style.layout_style.position_type = PositionType::Absolute;
         }
     }
 
     // Blend mode is common to all elements.
-    style.blend_mode = convert_blend_mode(node.blend_mode);
+    style.node_style.blend_mode = convert_blend_mode(node.blend_mode);
 
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {
-        style.overflow = if frame.clips_content { Overflow::Hidden } else { Overflow::Visible };
+        style.node_style.overflow =
+            if frame.clips_content { Overflow::Hidden } else { Overflow::Visible };
         // Don't overwrite scroll behavior if it was already set from grid layout
         if scroll_info.overflow == OverflowDirection::None {
             scroll_info.overflow = frame.overflow_direction;
@@ -1025,26 +1015,26 @@ fn visit_node(
     } = &node.data
     {
         if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
-            style.text_color = compute_background(text_fill, images, &node.name);
+            style.node_style.text_color = compute_background(text_fill, images, &node.name);
         }
-        style.font_size = text_style.font_size;
-        style.font_weight = FontWeight(text_style.font_weight);
+        style.node_style.font_size = text_style.font_size;
+        style.node_style.font_weight = FontWeight(text_style.font_weight);
         if text_style.italic {
-            style.font_style = FontStyle::Italic;
+            style.node_style.font_style = FontStyle::Italic;
         }
-        style.font_family = text_style.font_family.clone();
+        style.node_style.font_family = text_style.font_family.clone();
         match text_style.text_align_horizontal {
-            TextAlignHorizontal::Center => style.text_align = TextAlign::Center,
-            TextAlignHorizontal::Left => style.text_align = TextAlign::Left,
-            TextAlignHorizontal::Right => style.text_align = TextAlign::Right,
-            TextAlignHorizontal::Justified => style.text_align = TextAlign::Center, // XXX
+            TextAlignHorizontal::Center => style.node_style.text_align = TextAlign::Center,
+            TextAlignHorizontal::Left => style.node_style.text_align = TextAlign::Left,
+            TextAlignHorizontal::Right => style.node_style.text_align = TextAlign::Right,
+            TextAlignHorizontal::Justified => style.node_style.text_align = TextAlign::Center, // XXX
         }
-        style.text_align_vertical = match text_style.text_align_vertical {
+        style.node_style.text_align_vertical = match text_style.text_align_vertical {
             TextAlignVertical::Center => crate::toolkit_style::TextAlignVertical::Center,
             TextAlignVertical::Top => crate::toolkit_style::TextAlignVertical::Top,
             TextAlignVertical::Bottom => crate::toolkit_style::TextAlignVertical::Bottom,
         };
-        style.line_height = match text_style.line_height_unit {
+        style.node_style.line_height = match text_style.line_height_unit {
             // It's a percentage of the font size.
             LineHeightUnit::FontSizePercentage => LineHeight::Pixels(
                 text_style.font_size * text_style.line_height_percent_font_size / 100.0,
@@ -1056,7 +1046,7 @@ fn visit_node(
             // It's an absolute value in pixels.
             LineHeightUnit::Pixels => LineHeight::Pixels(text_style.line_height_px),
         };
-        style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
+        style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
         let convert_opentype_flags = |flags: &HashMap<String, u32>| -> Vec<FontFeature> {
             let mut font_features = Vec::new();
             for (flag, value) in flags {
@@ -1071,7 +1061,7 @@ fn visit_node(
             }
             font_features
         };
-        style.font_features = convert_opentype_flags(&text_style.opentype_flags);
+        style.node_style.font_features = convert_opentype_flags(&text_style.opentype_flags);
 
         // We can map the "drop shadow" effect to our text shadow functionality, but we can't
         // map the other effects. (We either implement them on Rects, or we don't implement in
@@ -1082,7 +1072,7 @@ fn visit_node(
             }
             match effect.effect_type {
                 EffectType::DropShadow => {
-                    style.text_shadow = Some(crate::toolkit_style::TextShadow {
+                    style.node_style.text_shadow = Some(crate::toolkit_style::TextShadow {
                         blur_radius: effect.radius,
                         color: crate::Color::from_f32s(
                             effect.color.r,
@@ -1097,46 +1087,12 @@ fn visit_node(
             }
         }
 
-        /*
-        // Apply any extra text properties specified by our plugin.
-        if let Some(extended_text_layout) = extended_text_layout {
-            if extended_text_layout.line_count > 0 {
-                style.line_count = Some(extended_text_layout.line_count as _);
-            }
-            style.text_overflow = if extended_text_layout.ellipsize {
-                TextOverflow::Ellipsis
-            } else {
-                TextOverflow::Clip
-            };
-        }
-        */
-
-        /*
-        // The text style also contains some layout information. We previously exposed
-        // auto-width text in our plugin.
-        match text_style.text_auto_resize {
-            TextAutoResize::Height => {
-                style.height = Dimension::Undefined;
-            }
-            TextAutoResize::WidthAndHeight => {
-                style.min_width = Dimension::Undefined;
-                style.width = Dimension::Undefined;
-                style.height = Dimension::Undefined;
-            }
-            // TextAutoResize::Truncate is deprecated
-            // Use fixed width and height
-            _ => {
-
-            }
-        }
-        */
-
         if text_style.text_truncation == TextTruncation::Ending {
-            style.text_overflow = TextOverflow::Ellipsis;
+            style.node_style.text_overflow = TextOverflow::Ellipsis;
         }
 
         if text_style.max_lines > 0 {
-            style.line_count = Some(text_style.max_lines as _);
+            style.node_style.line_count = Some(text_style.max_lines as _);
         }
 
         if character_style_overrides.is_empty() {
@@ -1180,24 +1136,24 @@ fn visit_node(
                     if substyle_fill.is_some() {
                         substyle_fill
                     } else {
-                        style.text_color.clone()
+                        style.node_style.text_color.clone()
                     }
                 } else {
-                    style.text_color.clone()
+                    style.node_style.text_color.clone()
                 };
                 runs.push(StyledTextRun {
                     text: current_run.clone(),
                     style: TextStyle {
                         text_color,
-                        font_size: sub_style.font_size.unwrap_or(style.font_size),
+                        font_size: sub_style.font_size.unwrap_or(style.node_style.font_size),
                         font_family: sub_style.font_family.clone(),
                         font_weight: crate::toolkit_font_style::FontWeight(
-                            sub_style.font_weight.unwrap_or(style.font_weight.0),
+                            sub_style.font_weight.unwrap_or(style.node_style.font_weight.0),
                         ),
                         font_style: crate::toolkit_font_style::FontStyle::Normal, //sub_style.font_style.unwrap_or(style.font_style),
-                        font_stretch: style.font_stretch, // Not in SubTypeStyle.
+                        font_stretch: style.node_style.font_stretch, // Not in SubTypeStyle.
                         letter_spacing: sub_style.letter_spacing.unwrap_or(1.0), // no letter_spacing on ViewStyle.
-                        line_height: style.line_height,
+                        line_height: style.node_style.line_height,
                         font_features: convert_opentype_flags(
                             &sub_style
                                 .opentype_flags
@@ -1242,26 +1198,27 @@ fn visit_node(
     }
 
     for fill in node.fills.iter().filter(|paint| paint.visible) {
-        style.background.push(compute_background(fill, images, &node.name));
+        style.node_style.background.push(compute_background(fill, images, &node.name));
     }
 
     for stroke in node.strokes.iter().filter(|paint| paint.visible) {
-        style.stroke.strokes.push(compute_background(stroke, images, &node.name));
+        style.node_style.stroke.strokes.push(compute_background(stroke, images, &node.name));
     }
 
     // Copy out the common styles from frames and supported content.
-    style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
+    style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
     if let Some(individual_stroke_weights) = node.individual_stroke_weights {
-        style.stroke.stroke_weight = crate::toolkit_style::StrokeWeight::Individual {
+        style.node_style.stroke.stroke_weight = crate::toolkit_style::StrokeWeight::Individual {
             top: individual_stroke_weights.top,
             right: individual_stroke_weights.right,
             bottom: individual_stroke_weights.bottom,
             left: individual_stroke_weights.left,
         };
     } else if let Some(stroke_weight) = node.stroke_weight {
-        style.stroke.stroke_weight = crate::toolkit_style::StrokeWeight::Uniform(stroke_weight);
+        style.node_style.stroke.stroke_weight =
+            crate::toolkit_style::StrokeWeight::Uniform(stroke_weight);
     }
-    style.stroke.stroke_align = match node.stroke_align {
+    style.node_style.stroke.stroke_align = match node.stroke_align {
         Some(StrokeAlign::Inside) => crate::toolkit_style::StrokeAlign::Inside,
         Some(StrokeAlign::Center) => crate::toolkit_style::StrokeAlign::Center,
         Some(StrokeAlign::Outside) | None => crate::toolkit_style::StrokeAlign::Outside,
@@ -1358,7 +1315,7 @@ fn visit_node(
         }
         match effect.effect_type {
             EffectType::DropShadow => {
-                style.box_shadow.push(crate::toolkit_style::BoxShadow::Outset {
+                style.node_style.box_shadow.push(crate::toolkit_style::BoxShadow::Outset {
                     blur_radius: effect.radius,
                     spread_radius: effect.spread,
                     color: crate::Color::from_f32s(
@@ -1372,7 +1329,7 @@ fn visit_node(
                 });
             }
             EffectType::InnerShadow => {
-                style.box_shadow.push(crate::toolkit_style::BoxShadow::Inset {
+                style.node_style.box_shadow.push(crate::toolkit_style::BoxShadow::Inset {
                     blur_radius: effect.radius,
                     spread_radius: effect.spread,
                     color: crate::Color::from_f32s(
@@ -1386,10 +1343,10 @@ fn visit_node(
                 });
             }
             EffectType::LayerBlur => {
-                style.filter.push(FilterOp::Blur(effect.radius / 2.0));
+                style.node_style.filter.push(FilterOp::Blur(effect.radius / 2.0));
             }
             EffectType::BackgroundBlur => {
-                style.backdrop_filter.push(FilterOp::Blur(effect.radius / 2.0));
+                style.node_style.backdrop_filter.push(FilterOp::Blur(effect.radius / 2.0));
             }
         }
     }
@@ -1399,7 +1356,7 @@ fn visit_node(
     if let Some(vsw_data) = plugin_data {
         if let Some(data) = vsw_data.get("vsw-meter-data") {
             let meter_data: Option<MeterData> = serde_json::from_str(data.as_str()).ok();
-            style.meter_data = meter_data;
+            style.node_style.meter_data = meter_data;
         }
     }
 

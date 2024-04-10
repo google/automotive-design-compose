@@ -149,16 +149,19 @@ internal fun ViewShape.computePaths(
     // * Outer stroke -> double the stroke width, clip out the inner bit
     // * Inner stroke -> double the stroke width, clip out the outer bit.
     val rawStrokeWidth =
-        when (style.stroke.stroke_align) {
-            is StrokeAlign.Center -> style.stroke.stroke_weight.toUniform() * density
-            is StrokeAlign.Inside -> style.stroke.stroke_weight.toUniform() * 2.0f * density
-            is StrokeAlign.Outside -> style.stroke.stroke_weight.toUniform() * 2.0f * density
-            else -> style.stroke.stroke_weight.toUniform() * density
+        when (style.node_style.stroke.stroke_align) {
+            is StrokeAlign.Center -> style.node_style.stroke.stroke_weight.toUniform() * density
+            is StrokeAlign.Inside ->
+                style.node_style.stroke.stroke_weight.toUniform() * 2.0f * density
+            is StrokeAlign.Outside ->
+                style.node_style.stroke.stroke_weight.toUniform() * 2.0f * density
+            else -> style.node_style.stroke.stroke_weight.toUniform() * density
         }
     val shadowStrokeWidth =
-        when (style.stroke.stroke_align) {
-            is StrokeAlign.Center -> style.stroke.stroke_weight.toUniform() * density
-            is StrokeAlign.Outside -> style.stroke.stroke_weight.toUniform() * 2.0f * density
+        when (style.node_style.stroke.stroke_align) {
+            is StrokeAlign.Center -> style.node_style.stroke.stroke_weight.toUniform() * density
+            is StrokeAlign.Outside ->
+                style.node_style.stroke.stroke_weight.toUniform() * 2.0f * density
             else -> 0.0f
         }
     // Build a list of stroke paths, and also build a set of filled paths for shadow
@@ -178,7 +181,7 @@ internal fun ViewShape.computePaths(
             fills.map { fill ->
                 val strokePath = android.graphics.Path()
                 strokePaint.getFillPath(fill.asAndroidPath(), strokePath)
-                when (style.stroke.stroke_align) {
+                when (style.node_style.stroke.stroke_align) {
                     is StrokeAlign.Outside ->
                         strokePath.op(fill.asAndroidPath(), android.graphics.Path.Op.DIFFERENCE)
                     is StrokeAlign.Inside ->
@@ -207,7 +210,7 @@ internal fun ViewShape.computePaths(
 
     // Shadow path calculation
     val computedShadows: List<ComputedShadow> =
-        style.box_shadow.mapNotNull { shadow ->
+        style.node_style.box_shadow.mapNotNull { shadow ->
             when (shadow) {
                 is BoxShadow.Outset -> {
                     // To calculate the outset path, we must inflate our outer bounds (our fill
@@ -287,10 +290,10 @@ private fun computeArcStrokePath(
     var top = 0.0f
     var width = frameSize.width
     var height = frameSize.height
-    val strokeWidth = style.stroke.stroke_weight.toUniform() * density
+    val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density
     val halfStrokeWidth = strokeWidth * 0.5f
 
-    when (style.stroke.stroke_align) {
+    when (style.node_style.stroke.stroke_align) {
         is StrokeAlign.Inside -> {
             left += halfStrokeWidth
             top += halfStrokeWidth
@@ -553,10 +556,10 @@ private fun computeRoundRectPathsFast(
 
     val strokeInsets =
         Insets(
-            top = style.stroke.stroke_weight.top() * density,
-            left = style.stroke.stroke_weight.left() * density,
-            bottom = style.stroke.stroke_weight.bottom() * density,
-            right = style.stroke.stroke_weight.right() * density
+            top = style.node_style.stroke.stroke_weight.top() * density,
+            left = style.node_style.stroke.stroke_weight.left() * density,
+            bottom = style.node_style.stroke.stroke_weight.bottom() * density,
+            right = style.node_style.stroke.stroke_weight.right() * density
         )
 
     // We can generate the fill path directly from `r`, and can make the stroke
@@ -566,7 +569,7 @@ private fun computeRoundRectPathsFast(
     val fills = listOf(fill)
 
     val insetAmount =
-        when (style.stroke.stroke_align) {
+        when (style.node_style.stroke.stroke_align) {
             is StrokeAlign.Center -> -0.5f
             is StrokeAlign.Inside -> -1.0f
             is StrokeAlign.Outside -> 0.0f
@@ -586,7 +589,7 @@ private fun computeRoundRectPathsFast(
 
     // Generate the shadow descriptions from the style.
     val shadows =
-        style.box_shadow.mapNotNull { shadow ->
+        style.node_style.box_shadow.mapNotNull { shadow ->
             when (shadow) {
                 is BoxShadow.Inset -> {
                     val insetShadowInset = Insets.uniform(shadow.spread_radius * density)

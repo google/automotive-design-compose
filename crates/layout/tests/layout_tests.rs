@@ -72,9 +72,9 @@ fn add_view_to_layout(
     *id = *id + 1;
     if let ViewData::Text { content: _ } = &view.data {
         let mut use_measure_func = false;
-        if let Dimension::Auto = view.style.width {
-            if let Dimension::Auto = view.style.height {
-                if view.style.horizontal_sizing == LayoutSizing::Fill {
+        if let Dimension::Auto = view.style.layout_style.width {
+            if let Dimension::Auto = view.style.layout_style.height {
+                if view.style.node_style.horizontal_sizing == LayoutSizing::Fill {
                     use_measure_func = true;
                 }
             }
@@ -84,19 +84,21 @@ fn add_view_to_layout(
                 my_id,
                 parent_layout_id,
                 child_index,
-                view.style.clone(),
+                view.style.layout_style.clone(),
                 view.name.clone(),
                 measure_func,
             );
         } else {
             let mut fixed_view = view.clone();
-            fixed_view.style.width = Dimension::Points(view.style.bounding_box.width);
-            fixed_view.style.height = Dimension::Points(view.style.bounding_box.height);
+            fixed_view.style.layout_style.width =
+                Dimension::Points(view.style.layout_style.bounding_box.width);
+            fixed_view.style.layout_style.height =
+                Dimension::Points(view.style.layout_style.bounding_box.height);
             manager.add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
-                fixed_view.style.clone(),
+                fixed_view.style.layout_style.clone(),
                 fixed_view.name.clone(),
                 None,
                 None,
@@ -108,7 +110,7 @@ fn add_view_to_layout(
             my_id,
             parent_layout_id,
             child_index,
-            view.style.clone(),
+            view.style.layout_style.clone(),
             view.name.clone(),
             None,
             None,

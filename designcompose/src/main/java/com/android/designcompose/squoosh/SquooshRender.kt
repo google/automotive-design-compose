@@ -230,15 +230,15 @@ private fun squooshTextRender(
             paragraphIntrinsics = textInfo.paragraph,
             width = computedLayout.width * density.density,
             maxLines = textInfo.maxLines,
-            ellipsis = style.text_overflow is TextOverflow.Ellipsis
+            ellipsis = style.node_style.text_overflow is TextOverflow.Ellipsis
         )
 
     // Apply any styled transform or blend mode.
     // XXX: transform customization?
-    val transform = style.transform.asComposeTransform(density.density)
-    val blendMode = style.blend_mode.asComposeBlendMode()
-    val useBlendModeLayer = style.blend_mode.useLayer()
-    val opacity = style.opacity.orElse(1.0f)
+    val transform = style.node_style.transform.asComposeTransform(density.density)
+    val blendMode = style.node_style.blend_mode.asComposeBlendMode()
+    val useBlendModeLayer = style.node_style.blend_mode.useLayer()
+    val opacity = style.node_style.opacity.orElse(1.0f)
 
     if (useBlendModeLayer || opacity < 1.0f) {
         val paint = Paint()
@@ -261,7 +261,7 @@ private fun squooshTextRender(
 
     // Apply vertical centering; this would be better done in layout.
     val verticalCenterOffset =
-        when (style.text_align_vertical) {
+        when (style.node_style.text_align_vertical) {
             is TextAlignVertical.Center ->
                 (computedLayout.height * density.density - paragraph.height) / 2f
             is TextAlignVertical.Bottom ->

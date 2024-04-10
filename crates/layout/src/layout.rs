@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use log::{error, info};
+use log::{error, trace};
 use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
@@ -176,7 +176,7 @@ impl LayoutManager {
         name: String,
         measure_func: impl Send + Sync + 'static + Fn(i32, f32, f32, f32, f32) -> (f32, f32),
     ) {
-        info!("add_view_measure layoutId {}", layout_id);
+        trace!("add_view_measure layoutId {}", layout_id);
         let layout_measure_func = move |size: Size<Option<f32>>,
                                         available_size: Size<AvailableSpace>|
               -> Size<f32> {
@@ -398,7 +398,7 @@ impl LayoutManager {
     // Compute the layout on the node with the given layout_id. This should always be
     // a root level node.
     pub fn compute_node_layout(&mut self, layout_id: i32) -> LayoutChangedResponse {
-        info!("compute_node_layout {}", layout_id);
+        trace!("compute_node_layout {}", layout_id);
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
             let result = self.taffy.compute_layout(

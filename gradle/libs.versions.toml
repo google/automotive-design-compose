@@ -3,7 +3,7 @@
 designcompose = "0.26.0-SNAPSHOT"
 
 #Android Gradle Plugin
-agp = "8.3.1"
+agp = "8.3.2"
 # The minimum supported AGP version for DesignCompose Apps
 agp-minSupported = "7.3.1"
 

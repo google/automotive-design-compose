@@ -96,6 +96,9 @@ annotation class DesignComponent(
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class DesignContentTypes(val nodes: Array<String>)
 
+@Target(AnnotationTarget.PROPERTY)
+annotation class DesignContentTypesProperty(val nodes: Array<String>)
+
 annotation class PreviewNode(
     val count: Int,
     val node: String,
@@ -111,6 +114,10 @@ annotation class PreviewNode(
 @Repeatable
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class DesignPreviewContent(val name: String, val nodes: Array<PreviewNode>)
+
+@Repeatable
+@Target(AnnotationTarget.PROPERTY)
+annotation class DesignPreviewContentProperty(val name: String, val nodes: Array<PreviewNode>)
 
 /**
  * Meta keys that can be used with a character key to form a DesignKeyAction. For example, a list of

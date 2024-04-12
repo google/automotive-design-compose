@@ -16,14 +16,23 @@
 
 package com.android.designcompose.codegen
 
+import com.android.designcompose.annotation.DesignPreviewContent
+import com.android.designcompose.annotation.DesignPreviewContentProperty
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.closestClassDeclaration
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
+import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Nullability
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import java.io.OutputStream
 
 internal enum class CustomizationType {
@@ -260,4 +269,94 @@ internal fun KSAnnotated.getAnnotatedNodeName(): String? {
         val nodeArg = it.arguments.first { arg -> arg.name?.asString() == "node" }
         nodeArg.value as String
     }
+}
+
+// If there is a @DesignContentTypes annotation, use it to build a content list for this node. This
+// represents all node names that could be placed into this node as a child.
+internal fun KSAnnotated.buildDesignContentTypesJson(
+    test: String? = null,
+    logger: KSPLogger? = null
+): JsonArray? {
+    val contentTypesAnnotation =
+        annotations.find {
+            it.shortName.asString() == "DesignContentTypes" ||
+                it.shortName.asString() == "DesignContentTypesProperty"
+        }
+
+    if (contentTypesAnnotation != null) {
+        @Suppress("UNCHECKED_CAST")
+        val nodes =
+            contentTypesAnnotation.arguments.first { arg -> arg.name?.asString() == "nodes" }.value
+                as? ArrayList<String>
+        val jsonContentArray = JsonArray()
+        nodes?.forEach { jsonContentArray.add(it.trim()) }
+        return jsonContentArray
+    }
+    return null
+}
+
+// If there is a one or more @DesignPreviewContent annotations, build a JsonArray of preview
+// content. To get data for the @DesignPreviewContent annotation, we need to use
+// getAnnotationsByType() in order to parse out the custom class PreviewNode.
+@OptIn(KspExperimental::class)
+internal fun KSAnnotated.buildDesignPreviewContentJson(): JsonArray {
+    var designPreviewContentAnnotations = getAnnotationsByType(DesignPreviewContent::class)
+
+    val previewContentArray = JsonArray()
+    designPreviewContentAnnotations.forEach { content ->
+        val previewPageHash = JsonObject()
+        val jsonContentArray = JsonArray()
+        content.nodes.forEach {
+            for (i in 1..it.count) {
+                jsonContentArray.add(it.node.trim())
+            }
+        }
+        if (!jsonContentArray.isEmpty) {
+            previewPageHash.addProperty("name", content.name)
+            previewPageHash.add("content", jsonContentArray)
+            previewContentArray.add(previewPageHash)
+        }
+    }
+    return previewContentArray
+}
+
+// If there is a one or more @DesignPreviewContentProperty annotations, build a JsonArray of preview
+// content. To get data for the @DesignPreviewContentProperty annotation, we need to use
+// getAnnotationsByType() in order to parse out the custom class PreviewNode.
+@OptIn(KspExperimental::class)
+internal fun KSAnnotated.buildDesignPreviewContentPropertyJson(): JsonArray {
+    var designPreviewContentAnnotations = getAnnotationsByType(DesignPreviewContentProperty::class)
+
+    val previewContentArray = JsonArray()
+    designPreviewContentAnnotations.forEach { content ->
+        val previewPageHash = JsonObject()
+        val jsonContentArray = JsonArray()
+        content.nodes.forEach {
+            for (i in 1..it.count) {
+                jsonContentArray.add(it.node.trim())
+            }
+        }
+        if (!jsonContentArray.isEmpty) {
+            previewPageHash.addProperty("name", content.name)
+            previewPageHash.add("content", jsonContentArray)
+            previewContentArray.add(previewPageHash)
+        }
+    }
+    return previewContentArray
+}
+
+// For variants, build a list of all possible values using the enum associated with the variant.
+internal fun KSTypeReference.buildEnumValuesJson(): JsonArray? {
+    val classDecl = resolve().declaration.closestClassDeclaration()
+    if (classDecl != null && classDecl.classKind == ClassKind.ENUM_CLASS) {
+        val jsonVariantsArray = JsonArray()
+        classDecl.declarations.forEach {
+            val enumValue = it.simpleName.asString()
+            if (enumValue != "valueOf" && enumValue != "values" && enumValue != "<init>") {
+                jsonVariantsArray.add(it.simpleName.asString())
+            }
+        }
+        return jsonVariantsArray
+    }
+    return null
 }

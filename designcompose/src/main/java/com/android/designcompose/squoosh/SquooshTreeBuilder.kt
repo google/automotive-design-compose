@@ -226,7 +226,7 @@ internal fun resolveVariantsRecursively(
             fontResourceLoader,
             variableState
         )
-    val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id)
+    val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id, layoutNode = null)
 
     if (view.data is ViewData.Container) {
         val viewData = view.data as ViewData.Container

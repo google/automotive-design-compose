@@ -108,7 +108,7 @@ internal class SquooshLayoutIdAllocator(
 
 /// Takes a `SquooshResolvedNode` and recursively builds or updates a native layout tree via
 /// the `SquooshLayout` wrapper of `JniLayout`.
-internal fun updateLayoutTree(
+private fun updateLayoutTree(
     resolvedNode: SquooshResolvedNode,
     layoutCache: HashMap<Int, Int>,
     layoutNodes: ArrayList<LayoutNode>,
@@ -175,7 +175,7 @@ internal fun updateLayoutTree(
 
 /// Iterate over a `SquooshResolvedNode` tree and populate the computed layout values
 /// so that the nodes can be used for presentation or interaction (hit testing).
-internal fun populateComputedLayout(
+private fun populateComputedLayout(
     resolvedNode: SquooshResolvedNode,
     layoutValueCache: HashMap<Int, Layout>
 ) {
@@ -220,4 +220,12 @@ internal fun layoutTree(
     // Save the updated layouts and quickly iterate the tree and populate the layout values.
     layoutValueCache.putAll(updatedLayouts)
     populateComputedLayout(root, layoutValueCache)
+}
+
+/// Go over a tree that layout can't be applied to, and copy the
+/// layout values from whatever the source tree is.
+internal fun updateDerivedLayout(n: SquooshResolvedNode) {
+    if (n.layoutNode != null) n.computedLayout = n.layoutNode.computedLayout
+    if (n.firstChild != null) updateDerivedLayout(n.firstChild!!)
+    if (n.nextSibling != null) updateDerivedLayout(n.nextSibling!!)
 }

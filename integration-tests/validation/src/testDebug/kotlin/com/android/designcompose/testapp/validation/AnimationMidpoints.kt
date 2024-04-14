@@ -66,6 +66,37 @@ class AnimationMidpoints {
             }
         }
 
+        waitForContent()
+
+        state.value = State.Y
+        text.value = "Y"
+
+        recordAnimation("Variant")
+    }
+
+    @Test
+    fun allSameName() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(State.X)
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+            ) {
+                VariantAnimationTestDoc.AllSameName(state = state.value)
+            }
+        }
+
+        waitForContent()
+
+        state.value = State.Y
+
+        recordAnimation("AllSameName")
+    }
+
+    private fun waitForContent() {
         composeTestRule.waitForIdle()
         composeTestRule
             .onAllNodes(
@@ -76,25 +107,24 @@ class AnimationMidpoints {
             )
             .onFirst()
             .assertRenderStatus(DocRenderStatus.Rendered)
+    }
 
-        state.value = State.Y
-        text.value = "Y"
-
+    private fun recordAnimation(name: String) {
         // We need to both "advanceTimeByFrame" and then "waitForIdle" to capture the output after
         // recomposition.
         composeTestRule.mainClock.advanceTimeByFrame()
         composeTestRule.waitForIdle()
 
-        composeTestRule.captureRootRoboImage("VariantAnimation-Start")
+        composeTestRule.captureRootRoboImage("${name}Animation-Start")
 
         composeTestRule.mainClock.advanceTimeByFrame()
-        composeTestRule.mainClock.advanceTimeBy(300L)
+        composeTestRule.mainClock.advanceTimeBy(100L)
         composeTestRule.waitForIdle()
 
-        composeTestRule.captureRootRoboImage("VariantAnimation-MidPoint")
+        composeTestRule.captureRootRoboImage("${name}Animation-MidPoint")
 
-        composeTestRule.mainClock.advanceTimeBy(700L)
+        composeTestRule.mainClock.advanceTimeBy(900L)
         composeTestRule.waitForIdle()
-        composeTestRule.captureRootRoboImage("VariantAnimation-End")
+        composeTestRule.captureRootRoboImage("${name}Animation-End")
     }
 }

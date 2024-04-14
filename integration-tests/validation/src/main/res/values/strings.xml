@@ -16,5 +16,6 @@
 
 <resources>
   <string name="app_name">Validation</string>
+  <string name="layout_app_name">Layout Val</string>
 
 </resources>

@@ -49,6 +49,9 @@ interface VariantAnimationTest {
         @DesignVariant(property = "#state") state: State,
         @Design(node = "#text") text: String,
     )
+
+    @DesignComponent(node = "#AllSameName")
+    fun AllSameName(@DesignVariant(property = "#state") state: State)
 }
 
 @Composable

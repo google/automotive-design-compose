@@ -19,12 +19,12 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
-use figma_import::layout::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
+use figma_import::layout::{LayoutNodeList, LayoutParentChildren};
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
-use layout::LayoutManager;
+use layout::{LayoutChangedResponse, LayoutManager};
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
 

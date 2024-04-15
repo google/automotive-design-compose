@@ -15,17 +15,15 @@
 //! `toolkit_style` contains all of the style-related types that `toolkit_schema::View`
 //! uses.
 
+use layout::layout_style::LayoutStyle;
+use layout::types::{Dimension, Size};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use taffy::prelude as taffy;
 
 use crate::{
     color::Color,
     toolkit_font_style::{FontStretch, FontStyle, FontWeight},
-    toolkit_layout_style::{
-        AlignContent, AlignItems, AlignSelf, Dimension, Display, FlexDirection, FlexWrap,
-        JustifyContent, LayoutSizing, Number, Overflow, PositionType, Rect, Size,
-    },
+    toolkit_layout_style::{Display, FlexWrap, LayoutSizing, Number, Overflow},
 };
 
 pub trait Dimensionable {
@@ -428,25 +426,6 @@ pub struct GridSpan {
     pub max_span: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum ItemSpacing {
-    Fixed(i32),     // Fixed space between columns/rows
-    Auto(i32, i32), // Min space between columns/rows, item width/height
-}
-impl Default for ItemSpacing {
-    fn default() -> Self {
-        ItemSpacing::Fixed(0)
-    }
-}
-impl Into<taffy::LengthPercentage> for &ItemSpacing {
-    fn into(self) -> taffy::LengthPercentage {
-        match self {
-            ItemSpacing::Fixed(s) => taffy::LengthPercentage::Points(*s as f32),
-            ItemSpacing::Auto(..) => taffy::LengthPercentage::Points(0.0),
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub enum GridLayoutType {
     #[default]
@@ -518,119 +497,6 @@ pub enum MeterData {
     RotationData(RotationMeterData),
     ProgressBarData(ProgressBarMeterData),
     ProgressMarkerData(ProgressMarkerMeterData),
-}
-
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct LayoutStyle {
-    pub margin: Rect<Dimension>,
-    pub padding: Rect<Dimension>,
-    pub item_spacing: ItemSpacing,
-    pub top: Dimension,
-    pub left: Dimension,
-    pub bottom: Dimension,
-    pub right: Dimension,
-    pub width: Dimension,
-    pub height: Dimension,
-    pub min_width: Dimension,
-    pub max_width: Dimension,
-    pub min_height: Dimension,
-    pub max_height: Dimension,
-    pub bounding_box: Size<f32>,
-    pub flex_grow: f32,
-    pub flex_shrink: f32,
-    pub flex_basis: Dimension,
-    pub align_self: AlignSelf,
-    pub align_content: AlignContent,
-    pub align_items: AlignItems,
-    pub flex_direction: FlexDirection,
-    pub justify_content: JustifyContent,
-    pub position_type: PositionType,
-}
-impl Default for LayoutStyle {
-    fn default() -> LayoutStyle {
-        LayoutStyle {
-            margin: Rect::<Dimension>::default(),
-            padding: Rect::<Dimension>::default(),
-            item_spacing: ItemSpacing::default(),
-            top: Dimension::default(),
-            left: Dimension::default(),
-            bottom: Dimension::default(),
-            right: Dimension::default(),
-            width: Dimension::default(),
-            height: Dimension::default(),
-            min_width: Dimension::default(),
-            max_width: Dimension::default(),
-            min_height: Dimension::default(),
-            max_height: Dimension::default(),
-            bounding_box: Size::default(),
-            flex_grow: 0.0,
-            flex_shrink: 0.0,
-            flex_basis: Dimension::default(),
-            align_self: AlignSelf::default(),
-            align_content: AlignContent::default(),
-            align_items: AlignItems::default(),
-            flex_direction: FlexDirection::default(),
-            justify_content: JustifyContent::default(),
-            position_type: PositionType::default(),
-        }
-    }
-}
-impl Into<taffy::Style> for &LayoutStyle {
-    fn into(self) -> taffy::Style {
-        let mut tstyle = taffy::Style::default();
-
-        tstyle.padding.left = (&self.padding.start).into();
-        tstyle.padding.right = (&self.padding.end).into();
-        tstyle.padding.top = (&self.padding.top).into();
-        tstyle.padding.bottom = (&self.padding.bottom).into();
-
-        tstyle.flex_grow = self.flex_grow;
-        tstyle.flex_shrink = self.flex_shrink;
-        tstyle.flex_basis = (&self.flex_basis).into();
-        tstyle.gap.width = (&self.item_spacing).into();
-        tstyle.gap.height = (&self.item_spacing).into();
-
-        tstyle.align_content = Some((&self.align_content).into());
-        tstyle.justify_content = Some((&self.justify_content).into());
-        tstyle.align_items = Some((&self.align_items).into());
-        tstyle.flex_direction = (&self.flex_direction).into();
-        tstyle.align_self = (&self.align_self).into();
-
-        tstyle.size.width = (&self.width).into();
-        tstyle.size.height = (&self.height).into();
-        tstyle.min_size.width = (&self.min_width).into();
-        tstyle.min_size.height = (&self.min_height).into();
-        tstyle.max_size.width = (&self.max_width).into();
-        tstyle.max_size.height = (&self.max_height).into();
-
-        // If we have a fixed size, use the bounding box since that takes into
-        // account scale and rotation, and disregard min/max sizes.
-        // TODO support this with non-fixed sizes also!
-        if self.width.is_points() {
-            tstyle.size.width = taffy::Dimension::Points(self.bounding_box.width);
-            tstyle.min_size.width = taffy::Dimension::Auto;
-            tstyle.max_size.width = taffy::Dimension::Auto;
-        }
-        if self.height.is_points() {
-            tstyle.size.height = taffy::Dimension::Points(self.bounding_box.height);
-            tstyle.min_size.height = taffy::Dimension::Auto;
-            tstyle.max_size.height = taffy::Dimension::Auto;
-        }
-
-        tstyle.position = (&self.position_type).into();
-        tstyle.inset.left = (&self.left).into();
-        tstyle.inset.right = (&self.right).into();
-        tstyle.inset.top = (&self.top).into();
-        tstyle.inset.bottom = (&self.bottom).into();
-
-        tstyle.margin.left = (&self.margin.start).into();
-        tstyle.margin.right = (&self.margin.end).into();
-        tstyle.margin.top = (&self.margin.top).into();
-        tstyle.margin.bottom = (&self.margin.bottom).into();
-
-        tstyle.display = taffy::Display::Flex; // TODO set to None to hide
-        tstyle
-    }
 }
 
 /// ToolkitStyle contains all of the styleable parameters accepted by the Rect and Text components.

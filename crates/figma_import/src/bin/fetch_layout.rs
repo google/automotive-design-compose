@@ -15,10 +15,10 @@
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use figma_import::{
-    toolkit_layout_style::{Dimension, LayoutSizing},
-    toolkit_schema::View,
-    Document, NodeQuery, ProxyConfig, SerializedDesignDoc, ViewData,
+    toolkit_layout_style::LayoutSizing, toolkit_schema::View, Document, NodeQuery, ProxyConfig,
+    SerializedDesignDoc, ViewData,
 };
+use layout::types::Dimension;
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;

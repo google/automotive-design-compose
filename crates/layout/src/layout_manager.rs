@@ -13,11 +13,14 @@
 // limitations under the License.
 
 use log::{error, trace};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
 
-use figma_import::{layout::LayoutChangedResponse, toolkit_schema, toolkit_style::LayoutStyle};
+use crate::layout_style::LayoutStyle;
+use crate::types;
+use crate::types::Layout;
 
 // Customizations that can applied to a node
 struct Customizations {
@@ -45,7 +48,7 @@ pub struct LayoutManager {
     // taffy object that does all the layout computations
     taffy: Taffy,
     // node id -> Taffy layout
-    layouts: HashMap<taffy::node::Node, toolkit_schema::Layout>,
+    layouts: HashMap<taffy::node::Node, types::Layout>,
     // A struct that keeps track of all customizations
     customizations: Customizations,
     // Incrementing ID used to keep track of layout changes. Incremented
@@ -81,13 +84,13 @@ impl LayoutManager {
         &mut self,
         layout_id: i32,
         parent_layout_id: i32,
-        changed: &mut HashMap<i32, toolkit_schema::Layout>,
+        changed: &mut HashMap<i32, types::Layout>,
     ) {
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
             let layout = self.taffy.layout(*node);
             if let Ok(layout) = layout {
-                let layout = toolkit_schema::Layout::from_taffy_layout(layout);
+                let layout = types::Layout::from_taffy_layout(layout);
                 let old_layout = self.layouts.get(node);
                 let mut layout_changed = false;
                 if let Some(old_layout) = old_layout {
@@ -137,19 +140,19 @@ impl LayoutManager {
 
     // Update the layout for the specified layout_id and its children, and
     // return a hash of layouts that changed.
-    fn update_layout(&mut self, layout_id: i32) -> HashMap<i32, toolkit_schema::Layout> {
-        let mut changed: HashMap<i32, toolkit_schema::Layout> = HashMap::new();
+    fn update_layout(&mut self, layout_id: i32) -> HashMap<i32, types::Layout> {
+        let mut changed: HashMap<i32, types::Layout> = HashMap::new();
         self.update_layout_internal(layout_id, -1, &mut changed);
         changed
     }
 
     // Get the computed layout for the given node
-    pub fn get_node_layout(&self, layout_id: i32) -> Option<toolkit_schema::Layout> {
+    pub fn get_node_layout(&self, layout_id: i32) -> Option<types::Layout> {
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
             let layout = self.taffy.layout(*node);
             if let Ok(layout) = layout {
-                return Some(toolkit_schema::Layout::from_taffy_layout(layout));
+                return Some(types::Layout::from_taffy_layout(layout));
             }
         }
         None
@@ -450,5 +453,19 @@ impl LayoutManager {
                 }
             }
         }
+    }
+}
+
+// The layout response sent back to client which contains a layout state ID and
+// a list of layout IDs that have changed.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LayoutChangedResponse {
+    pub layout_state: i32,
+    pub changed_layouts: HashMap<i32, Layout>,
+}
+
+impl LayoutChangedResponse {
+    pub fn unchanged(layout_state: i32) -> Self {
+        LayoutChangedResponse { layout_state, changed_layouts: HashMap::new() }
     }
 }

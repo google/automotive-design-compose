@@ -24,10 +24,10 @@
 //
 
 use figma_import::{
-    toolkit_layout_style::{Dimension, LayoutSizing},
-    toolkit_schema::View,
-    NodeQuery, SerializedDesignDoc, SerializedDesignDocHeader, ViewData,
+    toolkit_layout_style::LayoutSizing, toolkit_schema::View, NodeQuery, SerializedDesignDoc,
+    SerializedDesignDocHeader, ViewData,
 };
+use layout::types::Dimension;
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::fs::File;

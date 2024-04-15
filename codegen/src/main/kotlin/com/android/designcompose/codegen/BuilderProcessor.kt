@@ -166,8 +166,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var queriesNameSet: HashSet<String> = HashSet()
         private var ignoredImages: HashMap<String, HashSet<String>> = HashMap()
 
-        private var overrideInterface: String = ""
-
         private lateinit var out: OutputStream
         private var currentJsonStream: OutputStream? = null
         private var designDocJson: JsonObject = JsonObject()
@@ -193,18 +191,14 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             currentJsonStream = jsonStreams[packageName]
 
-            // If the interface inherits from another interface, get the name of it
+            // We don't support inheritance from another interface. Check for this and emit an
+            // error if we find a superclass.
             classDeclaration.superTypes.forEach {
                 val superType = it.resolve()
                 // All classes that don't declare a superclass inherit from "Any", so ignore it
                 if (superType.toString() != "Any") {
-                    if (superType.isError)
-                        logger.error("Invalid supertype for interface hg $classDeclaration")
-                    overrideInterface = superType.declaration.qualifiedName?.asString() ?: ""
-                    if (overrideInterface.endsWith("Gen"))
-                        logger.error(
-                            "Extending a generated interface $overrideInterface not supported"
-                        )
+                    val overrideInterface = superType.declaration.qualifiedName?.asString() ?: ""
+                    logger.error("Extending a generated interface $overrideInterface not supported")
                 }
             }
 
@@ -224,10 +218,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             // Create an interface for each interface declaration
             val interfaceName = className + "Gen"
-            // Inherit from the specified superclass interface if it exists
-            val overrideInterfaceDecl =
-                if (overrideInterface.isNotEmpty()) ": $overrideInterface " else ""
-            out.appendText("interface $interfaceName $overrideInterfaceDecl{\n")
+            out.appendText("class $interfaceName {\n")
 
             // Create a list of all node names used in this interface
             visitPhase = VisitPhase.Queries
@@ -261,7 +252,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             // Add a @Composable function that can be used to show the design switcher
             out.appendText("    @Composable\n")
-            out.appendText("    fun DesignSwitcher(modifier: Modifier = Modifier) {\n")
+            out.appendText("    final fun DesignSwitcher(modifier: Modifier = Modifier) {\n")
             out.appendText(
                 "        val (docId, setDocId) = remember { mutableStateOf(\"$docId\") }\n"
             )
@@ -312,12 +303,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Add a function that composes a component with variants given a node name that
             // contains all the variant properties and values
             out.appendText("    @Composable\n")
-            // Add an override declaration if this interface inherits from another
-            val overrideDecl = if (overrideInterface.isNotEmpty()) "override " else ""
-            out.appendText("    ${overrideDecl}fun CustomComponent(\n")
-            // Default parameters are not allowed when overriding a function
-            val defaultModifierDecl = if (overrideInterface.isEmpty()) " = Modifier" else ""
-            out.appendText("        modifier: Modifier$defaultModifierDecl,\n")
+            out.appendText("    final fun CustomComponent(\n")
+            out.appendText("        modifier: Modifier,\n")
             out.appendText("        nodeName: String,\n")
             out.appendText("        rootNodeQuery: NodeQuery,\n")
             out.appendText("        parentComponents: List<ParentComponentInfo>,\n")
@@ -353,7 +340,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("}\n\n")
 
             val objectName = className + "Doc"
-            out.appendText("object $objectName: $interfaceName {}\n\n")
+            out.appendText("val $objectName = $interfaceName()\n\n")
 
             // Write the design doc JSON for our plugin
             designDocJson.addProperty("name", className)
@@ -410,20 +397,12 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             val isRootArg = annotation.arguments.find { arg -> arg.name?.asString() == "isRoot" }
             val isRoot = if (isRootArg != null) isRootArg.value as Boolean else false
 
-            // Get the 'override' argument, which should be set if this interface inherits from
-            // another interface and this function overrides one of the base functions
-            val overrideArg: KSValueArgument? =
-                annotation.arguments.find { it.name?.asString() == "override" }
-            var override = false
-            if (overrideArg != null) override = overrideArg.value as Boolean
-
             when (visitPhase) {
                 VisitPhase.Queries -> visitFunctionQueries(function, nodeName)
                 VisitPhase.NodeCustomizations ->
                     visitFunctionNodeCustomizations(function, nodeName, isRoot)
                 VisitPhase.IgnoredImages -> visitFunctionIgnoredImagesBuild(function, nodeName)
-                VisitPhase.ComposableFunctions ->
-                    visitFunctionComposables(function, data, nodeName, override)
+                VisitPhase.ComposableFunctions -> visitFunctionComposables(function, data, nodeName)
                 VisitPhase.KeyActionFunctions -> {}
             }
         }
@@ -599,31 +578,25 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             function: KSFunctionDeclaration,
             data: Unit,
             nodeName: String,
-            override: Boolean
         ) {
             // Generate the function name and args
             out.appendText("    @Composable\n")
-            val overrideKeyword = if (override) "override " else ""
-            out.appendText("    ${overrideKeyword}fun $function(\n")
+            out.appendText("    final fun $function(\n")
 
             // Collect arguments into a list so we can reuse them
             val args: ArrayList<Pair<String, String>> = ArrayList()
 
-            // Add a modifier for the root item. Default params not allowed with override
-            val defaultModifier = if (override) "" else " = Modifier"
-            args.add(Pair("modifier", "Modifier$defaultModifier"))
+            // Add a modifier for the root item.
+            args.add(Pair("modifier", "Modifier = Modifier"))
 
             // Add an option to register a function to handle open link callbacks
-            val defaultOpenLink = if (override) "" else " = null"
-            args.add(Pair("openLinkCallback", "OpenLinkCallback?$defaultOpenLink"))
+            args.add(Pair("openLinkCallback", "OpenLinkCallback? = null"))
 
             // Add optional callbacks to be called on certain document events
-            val defaultCallbacks = if (override) "" else " = null"
-            args.add(Pair("designComposeCallbacks", "DesignComposeCallbacks?$defaultCallbacks"))
+            args.add(Pair("designComposeCallbacks", "DesignComposeCallbacks? = null"))
 
             // Add optional key that can be used to uniquely identify this particular instance
-            val keyDefault = if (override) "" else " = null"
-            args.add(Pair("key", "String?$keyDefault"))
+            args.add(Pair("key", "String? = null"))
 
             // Add an optional replacement index that should be populated if the composable is
             // replacing children of a node through a content replacement customization
@@ -858,7 +831,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("    }\n\n")
 
             // New function for DesignNodeData
-            out.appendText("    ${overrideKeyword}fun ${function}DesignNodeData(\n")
+            out.appendText("    fun ${function}DesignNodeData(\n")
             out.appendText(variantFuncParameters)
             out.appendText("    ): DesignNodeData {\n")
             out.appendText("        val variantProperties = HashMap<String, String>()\n")

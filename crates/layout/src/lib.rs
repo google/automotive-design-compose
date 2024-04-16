@@ -14,6 +14,10 @@
 
 extern crate android_logger;
 extern crate log;
-mod layout;
+pub mod layout_manager;
+pub mod layout_style;
+pub mod styles;
+pub mod types;
 
-pub use layout::LayoutManager;
+pub use layout_manager::LayoutChangedResponse;
+pub use layout_manager::LayoutManager;

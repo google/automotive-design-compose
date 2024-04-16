@@ -16,15 +16,12 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 
 use crate::toolkit_font_style::{FontStyle, FontWeight};
-use crate::toolkit_layout_style::{
-    AlignContent, AlignItems, AlignSelf, Dimension, FlexDirection, FlexWrap, JustifyContent,
-    Overflow, PositionType,
-};
+use crate::toolkit_layout_style::{FlexWrap, Overflow};
 
 use crate::toolkit_schema::ViewShape;
 use crate::toolkit_style::{
-    Background, FilterOp, FontFeature, GridLayoutType, GridSpan, ItemSpacing, LayoutTransform,
-    LineHeight, MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
+    Background, FilterOp, FontFeature, GridLayoutType, GridSpan, LayoutTransform, LineHeight,
+    MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
 };
 
 use crate::vector_schema;
@@ -42,6 +39,10 @@ use crate::{
     toolkit_schema::{ComponentInfo, OverflowDirection, RenderMethod, ScrollInfo, View},
 };
 
+use layout::styles::{
+    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
+};
+use layout::types::Dimension;
 use unicode_segmentation::UnicodeSegmentation;
 //::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};
 

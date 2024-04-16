@@ -13,8 +13,11 @@ reflection = ["serde-reflection", "serde-generate", "clap"]
 http_mock = ["phf"]
 fetch = ["clap"]
 dcf_info = ["clap"]
+fetch_layout = ["clap"]
+
 
 [dependencies]
+layout = {path="../layout"}
 "ureq" = "2"
 "serde" = { version = "1.0", features = ["derive", "rc"] }
 "serde_json" = "1.0"
@@ -59,3 +62,8 @@ required-features = ["fetch"]
 name = "dcf_info"
 path = "src/bin/dcf_info.rs"
 required-features = ["dcf_info"]
+
+[[bin]]
+name = "fetch_layout"
+path = "src/bin/fetch_layout.rs"
+required-features = ["fetch_layout"]

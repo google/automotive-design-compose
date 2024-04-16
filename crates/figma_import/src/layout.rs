@@ -19,22 +19,8 @@
 //! The goal of this crate is to perform the mapping from Figma to the toolkit; it does
 //! not provide any kind of UI logic mapping.
 
-use crate::{toolkit_schema::Layout, toolkit_style::ViewStyle};
+use crate::toolkit_style::ViewStyle;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-
-// The layout response sent back to client which contains a layout state ID and
-// a list of layout IDs that have changed.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct LayoutChangedResponse {
-    pub layout_state: i32,
-    pub changed_layouts: HashMap<i32, Layout>,
-}
-impl LayoutChangedResponse {
-    pub fn unchanged(layout_state: i32) -> Self {
-        LayoutChangedResponse { layout_state, changed_layouts: HashMap::new() }
-    }
-}
 
 // A representation of a Figma node to register for layout.
 #[derive(Serialize, Deserialize, Debug)]

@@ -287,6 +287,7 @@ dependencies = [
  "clap",
  "euclid",
  "image",
+ "layout",
  "lazy_static",
  "log",
  "phf 0.11.2",
@@ -452,8 +453,6 @@ version = "0.1.0"
 dependencies = [
  "android_logger",
  "bincode",
- "clap",
- "figma_import",
  "lazy_static",
  "log",
  "serde",

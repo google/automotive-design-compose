@@ -30,7 +30,6 @@ annotation class DesignDoc(val id: String, val version: String = "0")
  * Generate a @Composable function that renders the given node
  *
  * @param node the name of the Figma node
- * @param override set to true if this function overrides a function. Defaulted to false
  * @param hideDesignSwitcher set to true if this is a root node and you do not want to show the
  *   design switcher. Defaulted to false
  * @param isRoot set to true if this is the root node. All customizations should be set in a root
@@ -40,7 +39,6 @@ annotation class DesignDoc(val id: String, val version: String = "0")
 @Target(AnnotationTarget.FUNCTION)
 annotation class DesignComponent(
     val node: String,
-    val override: Boolean = false,
     val hideDesignSwitcher: Boolean = false,
     val isRoot: Boolean = false
 )

@@ -53,7 +53,8 @@ annotation class DesignComponent(
 // https://github.com/google/ksp/issues/1812. Once this is fixed, add AnnotationTarget.PROPERTY to
 // this list so that @Design can be used in @DesignModuleClass class properties instead of
 // @DesignProperty
-@Target(AnnotationTarget.VALUE_PARAMETER) annotation class Design(val node: String)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER)
+annotation class Design(val node: String)
 
 /**
  * Specify a node customization property within a @DesignModule class.

@@ -598,9 +598,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Add optional key that can be used to uniquely identify this particular instance
             args.add(Pair("key", "String? = null"))
 
-            // Add an optional replacement index that should be populated if the composable is
-            // replacing children of a node through a content replacement customization
-
             // Get the @DesignComponent annotation object, or return if none
             val annotation: KSAnnotation =
                 function.annotations.find { it.shortName.asString() == "DesignComponent" } ?: return
@@ -626,7 +623,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 val name = param.name!!.asString()
 
                 val customizationType = param.customizationType()
-                val typeName = param.type.typeString()
+                val typeName = param.codeTypeString()
                 args.add(Pair(name, typeName))
                 if (customizationType == CustomizationType.VariantProperty)
                     variantFuncParameters += "        $name: $typeName,\n"
@@ -905,7 +902,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 }
                 else ->
                     logger.error(
-                        "Invalid @Design parameter type ${valueParameter.type.typeString()}"
+                        "Invalid @Design parameter type ${valueParameter.name?.asString()}: ${valueParameter.type.typeString()}"
                     )
             }
         }

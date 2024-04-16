@@ -45,7 +45,7 @@ enum class FakeVariant {
 
 @DesignModuleClass
 class TextModuleOne(
-    @DesignProperty(node = "#textA") val textA: String,
+    @Design(node = "#textA") val textA: String,
     @DesignProperty(node = "#textB") val textB: String,
     // This node should be added an ignored image in the generated ignoredImages() function
     @DesignProperty(node = "#replace")

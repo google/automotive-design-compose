@@ -86,7 +86,10 @@ internal fun createNewFile(
     file += "import android.view.ViewGroup\n"
     file += "import android.os.Build\n"
 
-    file += "import com.android.designcompose.annotation.DesignMetaKey\n"
+    file += "import com.android.designcompose.annotation.DesignMetaKey.MetaShift\n"
+    file += "import com.android.designcompose.annotation.DesignMetaKey.MetaCtrl\n"
+    file += "import com.android.designcompose.annotation.DesignMetaKey.MetaMeta\n"
+    file += "import com.android.designcompose.annotation.DesignMetaKey.MetaAlt\n"
     file += "import com.android.designcompose.serdegen.NodeQuery\n"
     file += "import com.android.designcompose.common.DocumentServerParams\n"
     file += "import com.android.designcompose.ComponentReplacementContext\n"
@@ -137,7 +140,8 @@ internal fun KSTypeReference.typeString(): String {
     // For kotlin and android types, use just the typename without the qualifier. Otherwise,
     // use the qualifier, since the macro specified an explicit qualifier
     typeName +=
-        if (qualifier?.startsWith("kotlin")?.or(qualifier.startsWith("android")) == true) toString()
+        if (qualifier?.startsWith("kotlin")?.or(qualifier.startsWith("android")) == true)
+            ksType.toString()
         else qualifiedName?.asString() ?: toString()
 
     // Add template parameters if there are any
@@ -151,9 +155,6 @@ internal fun KSTypeReference.typeString(): String {
             typeName = typeName.replace(it.type.toString(), "${it.type}?")
     }
 
-    // Add Nullability operator if the type is nullable
-    if (ksType.nullability == Nullability.NULLABLE) typeName += "?"
-
     return typeName
 }
 
@@ -161,22 +162,47 @@ internal fun KSTypeReference.typeString(): String {
 internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
     return when (strType) {
         "String" -> CustomizationType.Text
-        "@Composable () -> String" -> CustomizationType.TextFunction
+        "@Composable [@Composable] Function0<String>" -> CustomizationType.TextFunction
         "Brush" -> CustomizationType.Brush
-        "() -> Brush" -> CustomizationType.BrushFunction
+        "Function0<Brush>" -> CustomizationType.BrushFunction
         "Bitmap?" -> CustomizationType.Image
         "Modifier" -> CustomizationType.Modifier
         "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
         "com.android.designcompose.ReplacementContent" -> CustomizationType.ContentReplacement
-        "@Composable (ComponentReplacementContext) -> Unit" ->
+        "@Composable [@Composable] Function1<ComponentReplacementContext, Unit>" ->
             CustomizationType.ComponentReplacement
         "com.android.designcompose.ListContent" -> CustomizationType.ListContent
-        "@Composable (ImageReplacementContext) -> Bitmap?" -> CustomizationType.ImageWithContext
+        "@Composable [@Composable] Function1<ImageReplacementContext, Bitmap??>" ->
+            CustomizationType.ImageWithContext
         "Boolean" -> CustomizationType.Visibility
         "TextStyle" -> CustomizationType.TextStyle
         "com.android.designcompose.Meter" -> CustomizationType.Meter
         "com.android.designcompose.MeterFunction" -> CustomizationType.MeterFunction
         else -> CustomizationType.Unknown
+    }
+}
+
+private fun CustomizationType.codeTypeString(): String {
+    return when (this) {
+        CustomizationType.Text -> "String"
+        CustomizationType.TextFunction -> "@Composable () -> String"
+        CustomizationType.Image -> "Bitmap?"
+        CustomizationType.Brush -> "Brush"
+        CustomizationType.BrushFunction -> "() -> Brush"
+        CustomizationType.Modifier -> "Modifier"
+        CustomizationType.TapCallback -> "com.android.designcompose.TapCallback"
+        CustomizationType.ContentReplacement -> "com.android.designcompose.ReplacementContent"
+        CustomizationType.ComponentReplacement ->
+            "@Composable (ComponentReplacementContext) -> Unit"
+        CustomizationType.ListContent -> "com.android.designcompose.ListContent"
+        CustomizationType.ImageWithContext -> "@Composable (ImageReplacementContext) -> Bitmap?"
+        CustomizationType.Visibility -> "Boolean"
+        CustomizationType.TextStyle -> "TextStyle"
+        CustomizationType.Meter -> "com.android.designcompose.Meter"
+        CustomizationType.MeterFunction -> "com.android.designcompose.MeterFunction"
+        CustomizationType.VariantProperty -> error("No codeTypeString() for VariantProperty")
+        CustomizationType.Module -> error("No codeTypeString() for Module")
+        CustomizationType.Unknown -> error("No codeTypeString() for Unknown")
     }
 }
 
@@ -216,6 +242,29 @@ internal fun KSPropertyDeclaration.customizationType(): CustomizationType {
     if (moduleAnnotation != null) return CustomizationType.Module
 
     return stringTypeToCustomizationType(type.typeString())
+}
+
+// TODO KSAnnotated.codeTypeString(type: KSTypeReference): String
+internal fun KSValueParameter.codeTypeString(): String {
+    val moduleAnnotation =
+        annotations.find {
+            it.shortName.asString() == "DesignModule" ||
+                it.shortName.asString() == "DesignModuleProperty" ||
+                it.shortName.asString() == "DesignVariant" ||
+                it.shortName.asString() == "DesignVariantProperty"
+        }
+    return if (moduleAnnotation != null) type.typeString() else customizationType().codeTypeString()
+}
+
+internal fun KSPropertyDeclaration.codeTypeString(): String {
+    val moduleAnnotation =
+        annotations.find {
+            it.shortName.asString() == "DesignModule" ||
+                it.shortName.asString() == "DesignModuleProperty" ||
+                it.shortName.asString() == "DesignVariant" ||
+                it.shortName.asString() == "DesignVariantProperty"
+        }
+    return if (moduleAnnotation != null) type.typeString() else customizationType().codeTypeString()
 }
 
 // Returns true for customization types that replace content within a Figma node, thereby are

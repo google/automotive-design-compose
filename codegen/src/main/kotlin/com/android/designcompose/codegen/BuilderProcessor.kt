@@ -17,10 +17,7 @@
 package com.android.designcompose.codegen
 
 import com.android.designcompose.annotation.DesignMetaKey
-import com.android.designcompose.annotation.DesignPreviewContent
 import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.closestClassDeclaration
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -477,11 +474,19 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             val jsonCustomizations = JsonArray()
 
             function.parameters.forEach { param ->
+                val customizationType = param.customizationType()
+                if (customizationType == CustomizationType.Module) {
+                    // Add json content from the module
+                    val moduleClassName = param.type.typeString()
+                    val jsonContent = moduleNodeNameTable.getJsonContentArray(moduleClassName)
+                    jsonCustomizations.addAll(jsonContent)
+                }
+
                 val annotation: KSAnnotation =
                     param.annotations.find {
                         it.shortName.asString() == "Design" ||
                             it.shortName.asString() == "DesignVariant"
-                    } ?: return
+                    } ?: return@forEach
                 val nodeArg: KSValueArgument =
                     annotation.arguments.first { arg ->
                         arg.name?.asString() == "node" || arg.name?.asString() == "property"
@@ -495,60 +500,16 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 jsonHash.addProperty("node", nodeName)
                 jsonHash.addProperty("kind", paramType.name)
 
-                // If there is a @DesignContentTypes annotation, use it to build a content list
-                // for this node. This represents all node names that could be placed into this
-                // node as a child.
-                val contentTypesAnnotation =
-                    param.annotations.find { it.shortName.asString() == "DesignContentTypes" }
-                if (contentTypesAnnotation != null) {
-                    @Suppress("UNCHECKED_CAST")
-                    val nodes =
-                        contentTypesAnnotation.arguments
-                            .first { arg -> arg.name?.asString() == "nodes" }
-                            .value as? ArrayList<String>
-                    val jsonContentArray = JsonArray()
-                    nodes?.forEach { jsonContentArray.add(it.trim()) }
-                    jsonHash.add("content", jsonContentArray)
-                }
+                val jsonContentArray = param.buildDesignContentTypesJson()
+                jsonContentArray?.let { jsonHash.add("content", it) }
 
-                // To get data for the @DesignPreviewContent annotation, we need to use
-                // getAnnotationsByType() in order to parse out the custom class PreviewNode.
-                val designPreviewContentAnnotations =
-                    param.getAnnotationsByType(DesignPreviewContent::class)
-
-                val previewContentArray = JsonArray()
-                designPreviewContentAnnotations.forEach { content ->
-                    val previewPageHash = JsonObject()
-                    val jsonContentArray = JsonArray()
-                    content.nodes.forEach {
-                        for (i in 1..it.count) {
-                            jsonContentArray.add(it.node.trim())
-                        }
-                    }
-                    if (!jsonContentArray.isEmpty) {
-                        previewPageHash.addProperty("name", content.name)
-                        previewPageHash.add("content", jsonContentArray)
-                        previewContentArray.add(previewPageHash)
-                    }
-                }
+                val previewContentArray = param.buildDesignPreviewContentJson()
                 if (!previewContentArray.isEmpty)
                     jsonHash.add("previewContent", previewContentArray)
 
+                val enumValues = param.type.buildEnumValuesJson()
+                enumValues?.let { jsonHash.add("values", enumValues) }
                 jsonCustomizations.add(jsonHash)
-
-                val classDecl = param.type.resolve().declaration.closestClassDeclaration()
-                if (classDecl != null && classDecl.classKind == ClassKind.ENUM_CLASS) {
-                    val jsonVariantsArray = JsonArray()
-                    classDecl.declarations.forEach {
-                        val enumValue = it.simpleName.asString()
-                        if (
-                            enumValue != "valueOf" && enumValue != "values" && enumValue != "<init>"
-                        ) {
-                            jsonVariantsArray.add(it.simpleName.asString())
-                        }
-                    }
-                    jsonHash.add("values", jsonVariantsArray)
-                }
             }
 
             jsonComponent.add("customizations", jsonCustomizations)
@@ -564,7 +525,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 if (param.customizationType() == CustomizationType.Module) {
                     val moduleClassName = param.type.typeString()
                     val ignoredFromModule = moduleNodeNameTable.getIgnoredImages(moduleClassName)
-                    ignoredFromModule?.let { nodeImageSet.addAll(it) }
+                    ignoredFromModule.let { nodeImageSet.addAll(it) }
                 }
 
                 // Add ignored images from other @Design parameters

@@ -23,6 +23,8 @@ import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import java.io.OutputStream
 
 // Helper class that keeps track of query node names and ignored image node names from properties of
@@ -32,6 +34,7 @@ import java.io.OutputStream
 class ModuleNodeNameTable {
     private val queries: HashMap<String, HashSet<String>> = HashMap()
     private val ignoredImages: HashMap<String, HashSet<String>> = HashMap()
+    private val jsonContentArrays: HashMap<String, JsonArray> = HashMap()
     // Maps a module class name to a set of module class names that it references.
     private val nestedModules: HashMap<String, HashSet<String>> = HashMap()
 
@@ -56,7 +59,7 @@ class ModuleNodeNameTable {
 
     // Return a set of ignored image node names for the module named className. This includes any
     // node names from nested modules as well.
-    fun getIgnoredImages(className: String): HashSet<String>? {
+    fun getIgnoredImages(className: String): HashSet<String> {
         val allIgnored = HashSet<String>()
         // Call function to recursively add ignored image nodes
         addModuleIgnoredImages(className, allIgnored)
@@ -73,6 +76,25 @@ class ModuleNodeNameTable {
         nestedModules[className]?.forEach { addModuleIgnoredImages(it, allIgnored) }
     }
 
+    // Return a JsonArray of all the customizations for the module named className. This includes
+    // any customizations from nested modules as well.
+    fun getJsonContentArray(className: String): JsonArray {
+        val combinedArrays = JsonArray()
+        // Call function to recursively add json content arrays
+        addModuleJsonContentArray(className, combinedArrays)
+        return combinedArrays
+    }
+
+    // Add customizations into combinedArrays, then recurse on any classes that className references
+    // in its properties
+    private fun addModuleJsonContentArray(className: String, combinedArrays: JsonArray) {
+        // Add json content array for the specified class
+        val jsonContentArray = jsonContentArrays[className]
+        jsonContentArray?.let { combinedArrays.addAll(it) }
+        // Recurse on any modules that className references
+        nestedModules[className]?.forEach { addModuleJsonContentArray(it, combinedArrays) }
+    }
+
     internal fun addNodeToQueries(className: String, nodeName: String) {
         if (!queries.containsKey(className)) queries[className] = HashSet()
         queries[className]?.add(nodeName)
@@ -81,6 +103,10 @@ class ModuleNodeNameTable {
     internal fun addIgnoredImage(className: String, nodeName: String) {
         if (!ignoredImages.containsKey(className)) ignoredImages[className] = HashSet()
         ignoredImages[className]?.add(nodeName)
+    }
+
+    internal fun addJsonContentArray(className: String, jsonContentArray: JsonArray) {
+        jsonContentArrays[className] = jsonContentArray
     }
 
     internal fun addNestedModule(className: String, moduleName: String, logger: KSPLogger) {
@@ -136,6 +162,7 @@ private class DesignModuleVisitor(
     private val logger: KSPLogger,
     private val nodeNameTable: ModuleNodeNameTable,
 ) : KSVisitorVoid() {
+    private val jsonCustomizations: JsonArray = JsonArray()
     private lateinit var out: OutputStream
     private lateinit var className: String
     private lateinit var qualifiedclassName: String
@@ -175,6 +202,7 @@ private class DesignModuleVisitor(
         out += "}\n"
 
         out.close()
+        nodeNameTable.addJsonContentArray(qualifiedclassName, jsonCustomizations)
     }
 
     override fun visitPropertyDeclaration(property: KSPropertyDeclaration, data: Unit) {
@@ -182,12 +210,36 @@ private class DesignModuleVisitor(
         if (property.annotations.asIterable().toList().isEmpty()) return
 
         val propertyName = property.simpleName.asString()
-        val variantProperty = property.getVariantProperty()
-        variantProperty?.let {
-            out += "    variantProperties[\"$variantProperty\"] = $propertyName.name\n"
-            // Add any variants encountered to the set of node queries
-            nodeNameTable.addNodeToQueries(qualifiedclassName, it)
-            return
+
+        // Get the node name in the Design annotation or property name in the DesignVariant
+        // annotation.
+        val nodeName = property.getAnnotatedNodeName() ?: property.getVariantProperty()
+
+        // Add a customization for this arg to the json list
+        if (nodeName != null) {
+            val jsonHash = JsonObject()
+            val paramType = property.customizationType()
+            jsonHash.addProperty("name", propertyName)
+            jsonHash.addProperty("node", nodeName)
+            jsonHash.addProperty("kind", paramType.name)
+
+            val jsonContentArray = property.buildDesignContentTypesJson(propertyName, logger)
+            jsonContentArray?.let { jsonHash.add("content", it) }
+
+            val previewContentArray = property.buildDesignPreviewContentPropertyJson()
+            if (!previewContentArray.isEmpty) jsonHash.add("previewContent", previewContentArray)
+
+            val enumValues = property.type.buildEnumValuesJson()
+            enumValues?.let { jsonHash.add("values", enumValues) }
+            jsonCustomizations.add(jsonHash)
+
+            val variantProperty = property.getVariantProperty()
+            variantProperty?.let {
+                out += "    variantProperties[\"$variantProperty\"] = $propertyName.name\n"
+                // Add any variants encountered to the set of node queries
+                nodeNameTable.addNodeToQueries(qualifiedclassName, it)
+                return
+            }
         }
 
         val customizationType = property.customizationType()
@@ -202,9 +254,8 @@ private class DesignModuleVisitor(
             return
         }
 
-        // Get the node name in the Design annotation. If it can't be found, an annotation that is
-        // not part of DesignCompose was used, so ignore and return.
-        val nodeName = property.getAnnotatedNodeName() ?: return
+        // If at this point nodeName is null, do nothing and return
+        nodeName ?: return
 
         // Add to set of ignored images
         if (property.customizationType().shouldIgnoreImage())

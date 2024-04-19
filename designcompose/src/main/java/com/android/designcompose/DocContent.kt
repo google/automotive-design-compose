@@ -97,6 +97,8 @@ fun decodeDiskDoc(
     trace(DCTraces.DECODEDISKDOC) {
         val baseDoc = decodeDiskBaseDoc(docStream, docId, feedback) ?: return@trace
         docContent = DocContent(baseDoc, previousDoc)
+        // Debugging purposes only
+        baseDoc.document.style_table.print()
     }
     return docContent
 }

@@ -71,7 +71,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     let mut doc = Document::new(args.api_key.as_str(), args.doc_id, &proxy_config, None)?;
     let mut error_list = Vec::new();
     // Convert the requested nodes from the Figma doc.
-    let views = doc.nodes(
+    let (views, style_table) = doc.nodes(
         &args.nodes.iter().map(|name| NodeQuery::name(name)).collect(),
         &Vec::new(),
         &mut error_list,
@@ -88,6 +88,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
         name: doc.get_name(),
         version: doc.get_version(),
         id: doc.get_document_id(),
+        style_table: style_table,
     };
     println!("Fetched document");
     println!("  DC Version: {}", SerializedDesignDocHeader::current().version);

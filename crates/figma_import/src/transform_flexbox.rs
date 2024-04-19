@@ -27,7 +27,8 @@ use crate::toolkit_style::{
 use crate::vector_schema;
 use crate::{
     component_context::ComponentContext,
-    extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy}, //ExtendedTextLayout
+    document::StyleTable,
+    extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy},
     figma_schema::{
         BlendMode, Component, ComponentSet, EffectType, HorizontalLayoutConstraintValue,
         LayoutAlign, LayoutAlignItems, LayoutMode, LayoutSizing, LayoutSizingMode, LineHeightUnit,
@@ -710,6 +711,7 @@ fn visit_node(
     parent: Option<&Node>,
     component_map: &HashMap<String, Component>,
     component_set_map: &HashMap<String, ComponentSet>,
+    style_table: &StyleTable,
     component_context: &mut ComponentContext,
     images: &mut ImageContext,
     parent_plugin_data: Option<&HashMap<String, String>>,
@@ -1201,6 +1203,10 @@ fn visit_node(
     for fill in node.fills.iter().filter(|paint| paint.visible) {
         style.node_style.background.push(compute_background(fill, images, &node.name));
     }
+    // If this uses a style, set the design token
+    if let Some(style_id) = &node.styles.fills() {
+        style.node_style.background_style = Some(style_id.clone());
+    }
 
     for stroke in node.strokes.iter().filter(|paint| paint.visible) {
         style.node_style.stroke.strokes.push(compute_background(stroke, images, &node.name));
@@ -1386,6 +1392,7 @@ fn visit_node(
                     Some(node),
                     component_map,
                     component_set_map,
+                    style_table,
                     component_context,
                     images,
                     child_plugin_data,
@@ -1408,6 +1415,7 @@ pub fn create_component_flexbox(
     component: &Node,
     component_map: &HashMap<String, Component>,
     component_set_map: &HashMap<String, ComponentSet>,
+    style_table: &StyleTable,
     component_context: &mut ComponentContext,
     image_context: &mut ImageContext,
 ) -> View {
@@ -1416,6 +1424,7 @@ pub fn create_component_flexbox(
         None,
         component_map,
         component_set_map,
+        style_table,
         component_context,
         image_context,
         None,

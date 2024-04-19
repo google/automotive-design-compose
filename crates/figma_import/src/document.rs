@@ -25,12 +25,13 @@ use crate::{
     extended_layout_schema::ExtendedAutoLayout,
     fetch::ProxyConfig,
     figma_schema::{
-        Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse, Node,
-        NodeData, NodesResponse, ProjectFilesResponse,
+        self, Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse,
+        Node, NodeData, NodesResponse, PaintData, ProjectFilesResponse,
     },
     image_context::{EncodedImageMap, ImageContext, ImageContextSession, ImageKey},
     toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
     transform_flexbox::create_component_flexbox,
+    Color,
 };
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
@@ -129,6 +130,61 @@ fn get_branches(document_root: &FileResponse) -> Vec<FigmaDocInfo> {
         }
     }
     branches
+}
+
+// An enum that represents a style value. For now the only supported style type
+// is a color, but this should expand to include other styles such as stroke
+// width, font style, and others.
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Serialize, Deserialize)]
+pub enum StyleData {
+    Color(Color),
+}
+
+// The Style struct contains all data associated with a style
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Serialize, Deserialize)]
+pub struct Style {
+    // A unique ID representing this style
+    pub id: String,
+    // A unique key (currently unused)
+    pub key: String,
+    // A human readable name for the style
+    pub name: String,
+    // A boolean set to true if the style is defined in a different file
+    pub remote: bool,
+    // The actual style data associated with this style
+    pub data: StyleData,
+}
+impl Style {
+    // Construct a Style from a fill color
+    pub fn from_fill(color: Color, id: &String, doc_style: &figma_schema::Style) -> Style {
+        Style {
+            id: id.clone(),
+            key: doc_style.key.clone(),
+            name: doc_style.name.clone(),
+            remote: doc_style.remote,
+            data: StyleData::Color(color),
+        }
+    }
+}
+
+// A table of styles containing hash tables to find style data based off of an
+// ID or name
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct StyleTable {
+    pub id_map: HashMap<String, Style>,
+    pub name_map: HashMap<String, Style>,
+}
+impl StyleTable {
+    pub(crate) fn new() -> StyleTable {
+        StyleTable { id_map: HashMap::new(), name_map: HashMap::new() }
+    }
+    pub(crate) fn add_style(&mut self, style: &Style) {
+        let id = &style.id;
+        let name = &style.name;
+
+        self.id_map.insert(id.clone(), style.clone());
+        self.name_map.insert(name.clone(), style.clone());
+    }
 }
 
 /// Document is used to access and maintain an entire Figma document, including
@@ -494,7 +550,7 @@ impl Document {
         node_names: &Vec<NodeQuery>,
         ignored_images: &Vec<(NodeQuery, Vec<String>)>,
         error_list: &mut Vec<String>,
-    ) -> Result<HashMap<NodeQuery, View>, Error> {
+    ) -> Result<(HashMap<NodeQuery, View>, StyleTable), Error> {
         // First we gather all of nodes that we're going to convert and find all of the
         // child nodes that can't be rendered. Then we ask Figma to do a batch render on
         // them. Finally we convert and return the set of toolkit nodes.
@@ -652,6 +708,43 @@ impl Document {
             }
         }
 
+        // Iterate through all styles specified in the document and build a list of IDs.
+        // Then send a query for all of the nodes and use the response to build the style table.
+        fn get_styles(doc: &Document) -> Result<StyleTable, Error> {
+            let mut style_table = StyleTable::new();
+            let mut style_ids: Vec<String> = vec![];
+            for (id, _style) in doc.document_root.styles.iter() {
+                style_ids.push(id.clone());
+            }
+            if style_ids.is_empty() {
+                return Ok(style_table);
+            }
+            let nodes_url =
+                format!("{}{}/nodes?ids={}", BASE_FILE_URL, doc.document_id, style_ids.join(","));
+            let http_str = http_fetch(doc.api_key.as_str(), nodes_url.clone(), &doc.proxy_config)?;
+            let nodes_response: NodesResponse = serde_json::from_str(http_str.as_str())?;
+
+            for (node_id, node_response_data) in nodes_response.nodes {
+                let doc_style = doc.document_root.styles.get(&node_id);
+                if let Some(doc_style) = doc_style {
+                    for paint in node_response_data.document.fills {
+                        if let PaintData::Solid { color } = paint.data {
+                            let color = crate::Color::from_f32s(color.r, color.g, color.b, color.a);
+                            let style = Style::from_fill(color, &node_id, doc_style);
+                            style_table.add_style(&style);
+                            break;
+                        } else {
+                            println!("Unsupported fill type {:?} for node {}", paint.data, node_id);
+                        }
+                    }
+                } else {
+                    println!("Error style not found: {}", node_id);
+                }
+            }
+
+            Ok(style_table)
+        }
+
         let mut name_index = HashMap::new();
         let mut id_index = HashMap::new();
         let mut variant_index = HashMap::new();
@@ -773,6 +866,7 @@ impl Document {
         // satisfy reactions.
         let mut component_context = ComponentContext::new(&nodes);
         let mut views = HashMap::new();
+        let style_table = get_styles(&self)?;
 
         loop {
             // XXX: Very silly cloning here; why doesn't DocumentKey do this once?
@@ -812,6 +906,7 @@ impl Document {
                         node,
                         &self.document_root.components,
                         &self.document_root.component_sets,
+                        &style_table,
                         &mut component_context,
                         &mut self.image_context,
                     ),
@@ -847,7 +942,7 @@ impl Document {
             println!("Figma: Unable to find nodes referenced by interactions: {:?}", missing_nodes);
             println!("       These interactions won't work.");
         }
-        Ok(views)
+        Ok((views, style_table))
     }
 
     /// Return the EncodedImageMap containing the mapping from ImageKey references in Nodes returned by this document

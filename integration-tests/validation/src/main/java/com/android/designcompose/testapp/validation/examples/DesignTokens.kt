@@ -14,7 +14,19 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.common
+package com.android.designcompose.testapp.validation.examples
 
-// Current serialized doc version
-const val FSAAS_DOC_VERSION = 19
+import androidx.compose.runtime.Composable
+import com.android.designcompose.annotation.DesignComponent
+import com.android.designcompose.annotation.DesignDoc
+
+// Tests usage of design tokens to change day/night mode
+@DesignDoc(id = "WvJNxngFY3oL2wDdFdJZPt") // WvJNxngFY3oL2wDdFdJZPt pgCmWTalTPy9gKMEBEHQPe
+interface DesignTokens {
+    @DesignComponent(node = "#stage") fun Main()
+}
+
+@Composable
+fun DesignTokensTest() {
+    DesignTokensDoc.Main()
+}

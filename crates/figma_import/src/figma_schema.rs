@@ -550,12 +550,41 @@ pub enum StyleType {
     Effect,
     Grid,
 }
-#[derive(Deserialize, Serialize, Debug, Clone)]
+impl Default for StyleType {
+    fn default() -> Self {
+        StyleType::Fill
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Style {
     pub key: String,
     pub name: String,
+    pub remote: bool,
     pub description: String,
     pub style_type: StyleType,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct Styles {
+    // Figma sometimes returns "fills" and other times "fill". Parse both here and use
+    // the fills() function to extract whichever one is populated
+    #[serde(default)]
+    pub fills: Option<String>,
+    #[serde(default)]
+    pub fill: Option<String>,
+    #[serde(default)]
+    pub strokes: Option<String>,
+}
+impl Styles {
+    pub fn fills(&self) -> &Option<String> {
+        if self.fills.is_some() {
+            &self.fills
+        } else {
+            &self.fill
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -876,6 +905,8 @@ pub struct Node {
     #[serde(default)]
     pub strokes: Vec<Paint>,
     #[serde(default)]
+    pub styles: Styles,
+    #[serde(default)]
     pub children: Vec<Node>,
     #[serde(default = "default_visible")]
     pub visible: bool,
@@ -968,6 +999,7 @@ pub struct FileResponse {
     pub last_modified: String,
     pub name: String,
     pub branches: Option<Vec<HashMap<String, Option<String>>>>,
+    pub styles: HashMap<String, Style>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

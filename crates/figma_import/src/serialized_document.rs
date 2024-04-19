@@ -16,9 +16,13 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema, NodeQuery};
+use crate::{
+    document::{FigmaDocInfo, StyleTable},
+    image_context::EncodedImageMap,
+    toolkit_schema, NodeQuery,
+};
 
-static CURRENT_VERSION: u32 = 18;
+static CURRENT_VERSION: u32 = 19;
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
@@ -41,6 +45,7 @@ pub struct SerializedDesignDoc {
     pub component_sets: HashMap<String, String>,
     pub version: String,
     pub id: String,
+    pub style_table: StyleTable,
 }
 
 // This is the struct we send over to the client. It contains the serialized document

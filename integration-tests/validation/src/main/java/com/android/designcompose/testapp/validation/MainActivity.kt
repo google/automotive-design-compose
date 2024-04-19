@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
         DesignSettings.enableLiveUpdates(this)
 
         setContent {
-            val index = remember { mutableStateOf(0) }
+            val index = remember { mutableStateOf(EXAMPLES.size - 1) }
             Row {
                 TestButtons(index)
                 Divider(color = Color.Black, modifier = Modifier.fillMaxHeight().width(1.dp))

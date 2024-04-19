@@ -88,7 +88,7 @@ pub fn fetch_doc(
         // The document has changed since the version the client has, so we should fetch
         // a new copy.
         let mut error_list: Vec<String> = vec![];
-        let views = doc.nodes(
+        let (views, style_table) = doc.nodes(
             &rq.queries.iter().map(NodeQuery::name).collect(),
             &rq.ignored_images
                 .iter()
@@ -105,6 +105,7 @@ pub fn fetch_doc(
             name: doc.get_name(),
             version: doc.get_version(),
             id: doc.get_document_id(),
+            style_table: style_table,
         };
         let mut response = bincode::serialize(&SerializedDesignDocHeader::current())?;
         response.append(&mut bincode::serialize(&ServerFigmaDoc {

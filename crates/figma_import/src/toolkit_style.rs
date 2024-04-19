@@ -510,6 +510,7 @@ pub struct NodeStyle {
     pub font_style: FontStyle,
     pub font_stretch: FontStretch,
     pub background: Vec<Background>,
+    pub background_style: Option<String>,
     pub box_shadow: Vec<BoxShadow>,
     pub stroke: Stroke,
     pub opacity: Option<f32>,
@@ -554,6 +555,7 @@ impl Default for NodeStyle {
             font_style: FontStyle::Normal,
             font_stretch: FontStretch::NORMAL,
             background: Vec::new(),
+            background_style: None,
             box_shadow: Vec::new(),
             stroke: Stroke::default(),
             opacity: None,
@@ -620,6 +622,9 @@ impl ViewStyle {
         }
         if self.node_style.background != other.node_style.background {
             delta.node_style.background = other.node_style.background.clone();
+        }
+        if self.node_style.background_style != other.node_style.background_style {
+            delta.node_style.background_style = other.node_style.background_style.clone();
         }
         if self.node_style.box_shadow != other.node_style.box_shadow {
             delta.node_style.box_shadow = other.node_style.box_shadow.clone();

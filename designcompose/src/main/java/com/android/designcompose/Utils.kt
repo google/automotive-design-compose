@@ -69,6 +69,7 @@ import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
 import com.android.designcompose.serdegen.StrokeWeight
+import com.android.designcompose.serdegen.StyleTable
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
@@ -267,6 +268,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             override.node_style.background
         } else {
             base.node_style.background
+        }
+    nodeStyle.background_style =
+        if (override.node_style.background_style.isPresent) {
+            override.node_style.background_style
+        } else {
+            base.node_style.background_style
         }
     nodeStyle.box_shadow =
         if (override.node_style.box_shadow.size > 0) {
@@ -653,6 +660,7 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
     builder.font_style = font_style
     builder.font_stretch = font_stretch
     builder.background = background
+    builder.background_style = background_style
     builder.box_shadow = box_shadow
     builder.stroke = stroke
     builder.opacity = opacity
@@ -813,7 +821,7 @@ internal fun View.useInfiniteConstraints(): Boolean {
     if (data !is ViewData.Container) return false
 
     val container = data as ViewData.Container
-    if (container == null || container.children.size != 1) return false
+    if (container.children.size != 1) return false
 
     val child = container.children.first()
     return child.style.node_style.grid_layout.isPresent
@@ -1508,4 +1516,12 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
         }
         else -> snap(0)
     }
+}
+
+fun StyleTable.print() {
+    Log.v(TAG, "StyleTable:")
+    Log.v(TAG, "  ID Map:")
+    id_map.forEach { (id, style) -> Log.v(TAG, "    $id -> ${style.name}") }
+    Log.v(TAG, "  Name Map:")
+    name_map.forEach { (name, style) -> Log.v(TAG, "    $name -> ${style.id}") }
 }

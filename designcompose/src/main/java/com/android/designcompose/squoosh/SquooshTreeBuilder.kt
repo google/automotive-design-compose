@@ -24,6 +24,7 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.InteractionState
 import com.android.designcompose.ReplacementContent
+import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
@@ -35,6 +36,7 @@ import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.Background
 import com.android.designcompose.serdegen.Color
+import com.android.designcompose.serdegen.ColorOrVar
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.FlexDirection
@@ -132,7 +134,8 @@ internal fun resolveVariantsRecursively(
     layoutIdAllocator: SquooshLayoutIdAllocator,
     variantParentName: String = "",
     isRoot: Boolean,
-    overlays: List<View>? = null
+    variableState: VariableState,
+    overlays: List<View>? = null,
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(v.name)) return null
     var componentLayoutId = rootLayoutId
@@ -215,7 +218,14 @@ internal fun resolveVariantsRecursively(
 
     // XXX-PERF: computeTextInfo is *super* slow. It needs to use a cache between frames.
     val textInfo =
-        squooshComputeTextInfo(view, density, document, customizations, fontResourceLoader)
+        squooshComputeTextInfo(
+            view,
+            density,
+            document,
+            customizations,
+            fontResourceLoader,
+            variableState
+        )
     val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id)
 
     if (view.data is ViewData.Container) {
@@ -238,6 +248,7 @@ internal fun resolveVariantsRecursively(
                     layoutIdAllocator,
                     "",
                     false,
+                    variableState,
                 ) ?: continue
 
             childResolvedNode.parent = resolvedView
@@ -316,7 +327,8 @@ internal fun resolveVariantsRecursively(
                     composableList,
                     layoutIdAllocator,
                     "",
-                    false
+                    false,
+                    variableState,
                 ) ?: continue
 
             // Make a synthetic parent for the overlay.
@@ -410,7 +422,7 @@ private fun generateOverlayNode(
             )
         val colorBuilder = Color.Builder()
         colorBuilder.color = c
-        nodeStyle.background = listOf(Background.Solid(colorBuilder.build()))
+        nodeStyle.background = listOf(Background.Solid(ColorOrVar.Color(colorBuilder.build())))
     }
     overlayStyle.layout_style = layoutStyle.build()
     overlayStyle.node_style = nodeStyle.build()
@@ -449,6 +461,7 @@ private fun generateOverlayNode(
     overlayView.data = overlayViewData.build()
     overlayView.design_absolute_bounding_box = Optional.empty()
     overlayView.render_method = RenderMethod.None()
+    overlayView.explicit_variable_modes = Optional.empty()
 
     val layoutId = rootLayoutId + node.layoutId + 0x20000000
     layoutIdAllocator.visitLayoutId(layoutId)

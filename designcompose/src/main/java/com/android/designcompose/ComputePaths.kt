@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.asComposePath
 import androidx.core.graphics.minus
 import androidx.core.graphics.plus
 import com.android.designcompose.serdegen.BoxShadow
+import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.ViewShape
@@ -76,6 +77,7 @@ internal fun ViewShape.computePaths(
     vectorScaleX: Float,
     vectorScaleY: Float,
     layoutId: Int,
+    variableState: VariableState,
 ): ComputedPaths {
     fun getPaths(
         path: List<com.android.designcompose.serdegen.Path>,
@@ -98,9 +100,15 @@ internal fun ViewShape.computePaths(
             is ViewShape.Rect -> {
                 return computeRoundRectPathsFast(
                     style,
-                    listOf(0.0f, 0.0f, 0.0f, 0.0f),
+                    listOf(
+                        NumOrVar.Num(0.0f),
+                        NumOrVar.Num(0.0f),
+                        NumOrVar.Num(0.0f),
+                        NumOrVar.Num(0.0f)
+                    ),
                     density,
                     getRectSize(overrideSize, style, density),
+                    variableState
                 )
             }
             is ViewShape.RoundRect -> {
@@ -108,7 +116,8 @@ internal fun ViewShape.computePaths(
                     style,
                     this.corner_radius,
                     density,
-                    getRectSize(overrideSize, style, density)
+                    getRectSize(overrideSize, style, density),
+                    variableState
                 )
             }
             is ViewShape.VectorRect -> {
@@ -116,7 +125,8 @@ internal fun ViewShape.computePaths(
                     style,
                     this.corner_radius,
                     density,
-                    getRectSize(overrideSize, style, density)
+                    getRectSize(overrideSize, style, density),
+                    variableState
                 )
             }
             is ViewShape.Path -> {
@@ -538,20 +548,25 @@ private fun Path.addRoundRect(roundRect: RoundRect, dir: android.graphics.Path.D
 /// faster.
 private fun computeRoundRectPathsFast(
     style: ViewStyle,
-    cornerRadius: List<Float>,
+    cornerRadius: List<NumOrVar>,
     density: Float,
-    frameSize: Size
+    frameSize: Size,
+    variableState: VariableState,
 ): ComputedPaths {
+    val cornerRadius0 = cornerRadius[0].getValue(variableState)
+    val cornerRadius1 = cornerRadius[1].getValue(variableState)
+    val cornerRadius2 = cornerRadius[2].getValue(variableState)
+    val cornerRadius3 = cornerRadius[3].getValue(variableState)
     val r =
         RoundRect(
             0.0f,
             0.0f,
             frameSize.width,
             frameSize.height,
-            CornerRadius(cornerRadius[0] * density, cornerRadius[0] * density),
-            CornerRadius(cornerRadius[1] * density, cornerRadius[1] * density),
-            CornerRadius(cornerRadius[2] * density, cornerRadius[2] * density),
-            CornerRadius(cornerRadius[3] * density, cornerRadius[3] * density)
+            CornerRadius(cornerRadius0 * density, cornerRadius0 * density),
+            CornerRadius(cornerRadius1 * density, cornerRadius1 * density),
+            CornerRadius(cornerRadius2 * density, cornerRadius2 * density),
+            CornerRadius(cornerRadius3 * density, cornerRadius3 * density)
         )
 
     val strokeInsets =

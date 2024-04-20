@@ -54,6 +54,7 @@ import com.android.designcompose.serdegen.BlendMode
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Display
 import com.android.designcompose.serdegen.Easing
+import com.android.designcompose.serdegen.FigmaColor
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStyle
@@ -1203,10 +1204,15 @@ internal fun java.util.Optional<List<Float>>.asSkiaMatrix(): Matrix? {
 }
 
 /** Convert a Background to a Brush, returning a Pair of Brush and Opacity */
-internal fun Background.asBrush(document: DocContent, density: Float): Pair<Brush, Float>? {
+internal fun Background.asBrush(
+    document: DocContent,
+    density: Float,
+    variableState: VariableState
+): Pair<Brush, Float>? {
     when (this) {
         is Background.Solid -> {
-            return Pair(SolidColor(convertColor(value)), 1.0f)
+            val color = value.getValue(variableState)
+            return color?.let { Pair(SolidColor(color), 1.0f) }
         }
         is Background.Image -> {
             val backgroundImage = this
@@ -1550,4 +1556,16 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
         }
         else -> snap(0)
     }
+}
+
+internal fun FigmaColor.toColor(): Color {
+    return Color(r, g, b, a)
+}
+
+internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
+    val a = color[3].toInt()
+    val r = color[0].toInt()
+    val g = color[1].toInt()
+    val b = color[2].toInt()
+    return Color(r, g, b, a)
 }

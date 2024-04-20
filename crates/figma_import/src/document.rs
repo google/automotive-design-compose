@@ -26,10 +26,13 @@ use crate::{
     fetch::ProxyConfig,
     figma_schema::{
         Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse, Node,
-        NodeData, NodesResponse, ProjectFilesResponse,
+        NodeData, NodesResponse, ProjectFilesResponse, VariablesResponse,
     },
     image_context::{EncodedImageMap, ImageContext, ImageContextSession, ImageKey},
-    toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
+    toolkit_schema::{
+        Collection, ComponentContentOverride, ComponentOverrides, Mode, Variable, VariableMap,
+        View, ViewData,
+    },
     transform_flexbox::create_component_flexbox,
 };
 
@@ -142,6 +145,7 @@ pub struct Document {
     version_id: String,
     proxy_config: ProxyConfig,
     document_root: FileResponse,
+    variables_response: VariablesResponse,
     image_context: ImageContext,
     variant_nodes: Vec<Node>,
     component_sets: HashMap<String, String>,
@@ -183,6 +187,7 @@ impl Document {
         }
 
         let branches = get_branches(&document_root);
+        let variables_response = Self::fetch_variables(api_key, &document_id, proxy_config)?;
 
         Ok(Document {
             api_key: api_key.to_string(),
@@ -190,11 +195,24 @@ impl Document {
             version_id,
             proxy_config: proxy_config.clone(),
             document_root,
+            variables_response,
             image_context,
             variant_nodes: vec![],
             component_sets: HashMap::new(),
             branches,
         })
+    }
+
+    // Fetch and store all the variables, collections, and modes from the Figma document.
+    fn fetch_variables(
+        api_key: &str,
+        document_id: &String,
+        proxy_config: &ProxyConfig,
+    ) -> Result<VariablesResponse, Error> {
+        let variables_url = format!("{}{}/variables/local", BASE_FILE_URL, document_id);
+        let var_fetch = http_fetch(api_key, variables_url, proxy_config)?;
+        let var_response: VariablesResponse = serde_json::from_str(var_fetch.as_str())?;
+        Ok(var_response)
     }
 
     /// Fetch a document from Figma only if it has changed since the given last
@@ -871,6 +889,55 @@ impl Document {
             println!("       These interactions won't work.");
         }
         Ok(views)
+    }
+
+    // Parse through all the variables collected and store them into hash tables for easy access
+    pub fn build_variable_map(&self) -> VariableMap {
+        let mut collections: HashMap<String, Collection> = HashMap::new();
+        let mut collection_name_map: HashMap<String, String> = HashMap::new();
+        for (_, c) in self.variables_response.meta.variable_collections.iter() {
+            let mut mode_name_hash: HashMap<String, String> = HashMap::new();
+            let mut mode_id_hash: HashMap<String, Mode> = HashMap::new();
+            for m in &c.modes {
+                let mode = Mode { id: m.mode_id.clone(), name: m.name.clone() };
+                mode_name_hash.insert(mode.name.clone(), mode.id.clone());
+                mode_id_hash.insert(mode.id.clone(), mode);
+            }
+            let collection = Collection {
+                id: c.id.clone(),
+                name: c.name.clone(),
+                default_mode_id: c.default_mode_id.clone(),
+                mode_name_hash: mode_name_hash,
+                mode_id_hash: mode_id_hash,
+            };
+            collections.insert(collection.id.clone(), collection);
+            collection_name_map.insert(c.name.clone(), c.id.clone());
+        }
+
+        let mut variables: HashMap<String, Variable> = HashMap::new();
+        let mut variable_name_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+        for (id, v) in self.variables_response.meta.variables.iter() {
+            let var = Variable::from_figma_var(v);
+            let maybe_name_map = variable_name_map.get_mut(&var.variable_collection_id);
+            if let Some(name_map) = maybe_name_map {
+                name_map.insert(var.name.clone(), id.clone());
+            } else {
+                let mut name_to_id = HashMap::new();
+                name_to_id.insert(var.name.clone(), id.clone());
+                variable_name_map.insert(var.variable_collection_id.clone(), name_to_id);
+            }
+
+            variables.insert(id.clone(), var);
+        }
+
+        let var_map = VariableMap {
+            collections,
+            collection_name_map,
+            variables: variables.clone(),
+            variable_name_map,
+        };
+
+        var_map
     }
 
     /// Return the EncodedImageMap containing the mapping from ImageKey references in Nodes returned by this document

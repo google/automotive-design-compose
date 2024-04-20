@@ -86,6 +86,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.material)
     implementation("androidx.media3:media3-exoplayer:1.3.1")

@@ -19,13 +19,56 @@ use std::sync::atomic::AtomicU16;
 // retain image references.
 use serde::{Deserialize, Serialize};
 
-use crate::figma_schema::Rectangle;
+use crate::color::Color;
+use crate::figma_schema;
+use crate::figma_schema::VariableCommon;
 use crate::reaction_schema::FrameExtras;
 use crate::reaction_schema::Reaction;
 use crate::toolkit_style::{StyledTextRun, ViewStyle};
+use std::collections::HashMap;
 
-pub use crate::figma_schema::OverflowDirection;
-pub use crate::figma_schema::StrokeCap;
+pub use crate::figma_schema::{FigmaColor, OverflowDirection, Rectangle, StrokeCap, VariableAlias};
+
+// Enum for fields that represent either a fixed number or a number variable
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum NumOrVar {
+    Num(f32),
+    Var(String),
+}
+impl NumOrVar {
+    pub(crate) fn from_var(
+        bound_variables: &figma_schema::BoundVariables,
+        var_name: &str,
+        num: f32,
+    ) -> NumOrVar {
+        let var = bound_variables.get_variable(var_name);
+        if let Some(var) = var {
+            NumOrVar::Var(var)
+        } else {
+            NumOrVar::Num(num)
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum ColorOrVar {
+    Color(Color),
+    Var(String),
+}
+impl ColorOrVar {
+    pub(crate) fn from_var(
+        bound_variables: &figma_schema::BoundVariables,
+        var_name: &str,
+        color: &FigmaColor,
+    ) -> ColorOrVar {
+        let var = bound_variables.get_variable(var_name);
+        if let Some(var) = var {
+            ColorOrVar::Var(var)
+        } else {
+            ColorOrVar::Color(color.into())
+        }
+    }
+}
 
 /// Shape of a view, either a rect or a path of some kind.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -34,7 +77,7 @@ pub enum ViewShape {
         is_mask: bool,
     },
     RoundRect {
-        corner_radius: [f32; 4],
+        corner_radius: [NumOrVar; 4],
         corner_smoothing: f32,
         is_mask: bool,
     },
@@ -56,7 +99,7 @@ pub enum ViewShape {
     VectorRect {
         path: Vec<crate::vector_schema::Path>,
         stroke: Vec<crate::vector_schema::Path>,
-        corner_radius: [f32; 4],
+        corner_radius: [NumOrVar; 4],
         is_mask: bool,
     },
 }
@@ -144,6 +187,8 @@ pub struct View {
     pub data: ViewData,
     pub design_absolute_bounding_box: Option<Rectangle>,
     pub render_method: RenderMethod,
+    // a hash of variable collection id -> mode id if variable modes are set on this view
+    pub explicit_variable_modes: Option<HashMap<String, String>>,
 }
 impl View {
     fn next_unique_id() -> u16 {
@@ -161,6 +206,7 @@ impl View {
         frame_extras: Option<FrameExtras>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
+        explicit_variable_modes: Option<HashMap<String, String>>,
     ) -> View {
         View {
             unique_id: View::next_unique_id(),
@@ -174,6 +220,7 @@ impl View {
             data: ViewData::Container { shape, children: vec![] },
             design_absolute_bounding_box,
             render_method,
+            explicit_variable_modes,
         }
     }
     pub(crate) fn new_text(
@@ -198,6 +245,7 @@ impl View {
             data: ViewData::Text { content: text.into() },
             design_absolute_bounding_box,
             render_method,
+            explicit_variable_modes: None,
         }
     }
     pub(crate) fn new_styled_text(
@@ -222,6 +270,7 @@ impl View {
             data: ViewData::StyledText { content: text },
             design_absolute_bounding_box,
             render_method,
+            explicit_variable_modes: None,
         }
     }
     pub(crate) fn add_child(&mut self, child: View) {
@@ -229,4 +278,131 @@ impl View {
             children.push(child);
         }
     }
+}
+
+// Representation of a variable mode. Variables can have fixed values for each available mode
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Mode {
+    pub id: String,
+    pub name: String,
+}
+
+// Representation of a variable collection. Every variable belongs to a collection, and a
+// collection contains one or more modes.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Collection {
+    pub id: String,
+    pub name: String,
+    pub default_mode_id: String,
+    pub mode_name_hash: HashMap<String, String>, // name -> id
+    pub mode_id_hash: HashMap<String, Mode>,     // id -> Mode
+}
+
+// We redeclare VariableValue instead of using the one from figma_schema because
+// the "untagged" attribute there prevents serde_reflection from being able to
+// run properly.
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum VariableValue {
+    Bool(bool),
+    Number(f32),
+    Text(String),
+    Color(FigmaColor),
+    Alias(VariableAlias),
+}
+impl VariableValue {
+    fn from_figma_value(v: &figma_schema::VariableValue) -> VariableValue {
+        match v {
+            figma_schema::VariableValue::Boolean(b) => VariableValue::Bool(b.clone()),
+            figma_schema::VariableValue::Float(f) => VariableValue::Number(f.clone()),
+            figma_schema::VariableValue::String(s) => VariableValue::Text(s.clone()),
+            figma_schema::VariableValue::Color(c) => VariableValue::Color(c.clone()),
+            figma_schema::VariableValue::Alias(a) => VariableValue::Alias(a.clone()),
+        }
+    }
+}
+
+// Each variable contains a map of possible values. This data structure helps
+// keep track of that data and contains functions to retrieve the value of a
+// variable given a mode.
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct VariableValueMap {
+    pub values_by_mode: HashMap<String, VariableValue>,
+}
+impl VariableValueMap {
+    fn from_figma_map(map: &HashMap<String, figma_schema::VariableValue>) -> VariableValueMap {
+        let mut values_by_mode: HashMap<String, VariableValue> = HashMap::new();
+        for (mode_id, value) in map.iter() {
+            values_by_mode.insert(mode_id.clone(), VariableValue::from_figma_value(value));
+        }
+        VariableValueMap { values_by_mode }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+pub enum VariableType {
+    Bool,
+    Number,
+    Text,
+    Color,
+}
+
+// Representation of a Figma variable. We convert a figma_schema::Variable into
+// this format to make the fields a bit easier to access.
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct Variable {
+    pub id: String,
+    pub name: String,
+    pub remote: bool,
+    pub key: String,
+    pub variable_collection_id: String,
+    pub var_type: VariableType,
+    pub values_by_mode: VariableValueMap,
+}
+impl Variable {
+    fn create(
+        var_type: VariableType,
+        common: &VariableCommon,
+        values_by_mode: &HashMap<String, figma_schema::VariableValue>,
+    ) -> Self {
+        Variable {
+            id: common.id.clone(),
+            name: common.name.clone(),
+            remote: common.remote,
+            key: common.key.clone(),
+            variable_collection_id: common.variable_collection_id.clone(),
+            var_type,
+            values_by_mode: VariableValueMap::from_figma_map(values_by_mode),
+        }
+    }
+    pub fn from_figma_var(v: &figma_schema::Variable) -> Variable {
+        match v {
+            figma_schema::Variable::Boolean { common, values_by_mode } => {
+                Variable::create(VariableType::Bool, common, values_by_mode)
+            }
+            figma_schema::Variable::Float { common, values_by_mode } => {
+                Variable::create(VariableType::Number, common, values_by_mode)
+            }
+            figma_schema::Variable::String { common, values_by_mode } => {
+                Variable::create(VariableType::Bool, common, values_by_mode)
+            }
+            figma_schema::Variable::Color { common, values_by_mode } => {
+                Variable::create(VariableType::Text, common, values_by_mode)
+            }
+        }
+    }
+}
+
+/// Stores variable mappings
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct VariableMap {
+    pub collections: HashMap<String, Collection>, // ID -> Collection
+    pub collection_name_map: HashMap<String, String>, // Name -> ID
+    pub variables: HashMap<String, Variable>,     // ID -> Variable
+    pub variable_name_map: HashMap<String, HashMap<String, String>>, // Collection ID -> [Name -> ID]
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct BoundVariables {
+    pub variables: HashMap<String, VariableAlias>,
 }

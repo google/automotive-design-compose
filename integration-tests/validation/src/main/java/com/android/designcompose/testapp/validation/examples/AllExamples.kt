@@ -92,6 +92,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         // CompositingViewsTestDoc.javaClass.name),
         Triple("Text Inval", { TextResizingTest() }, TextResizingTestDoc.javaClass.name),
         Triple("Shared Customization", { ModuleExample() }, ModuleExampleDoc.javaClass.name),
+        Triple("Variable Modes", { VariableModesTest() }, VariablesTestDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

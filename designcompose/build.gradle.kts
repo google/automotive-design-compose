@@ -110,6 +110,7 @@ dependencies {
     implementation(libs.androidx.core)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.compose.runtime.livedata)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.lifecycle.runtime)

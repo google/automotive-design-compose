@@ -110,6 +110,7 @@ internal class SquooshAnimatedArc(
         viewBuilder.frame_extras = target.view.frame_extras
         viewBuilder.reactions = target.view.reactions
         viewBuilder.render_method = target.view.render_method
+        viewBuilder.explicit_variable_modes = target.view.explicit_variable_modes
         viewBuilder.scroll_info = target.view.scroll_info
         viewBuilder.unique_id = target.view.unique_id
         val view = viewBuilder.build()

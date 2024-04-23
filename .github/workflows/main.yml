@@ -15,7 +15,7 @@
 
 name: SDK Main Workflow
 
-# The on: and concurrencency: blocks should be the same for all core workflows
+# The on: and concurrency: blocks should be the same for all core workflows
 # Triggers nightly, on merges or pushes to main and stable and on pull requests.
 on:
   push:
@@ -205,6 +205,9 @@ jobs:
 
   build-maven-repo:
     runs-on: "ubuntu-latest"
+    permissions:
+        contents: read
+        packages: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
@@ -243,7 +246,7 @@ jobs:
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Full Gradle Test and publish
+      - name: Build maven repository
         uses: gradle/actions/setup-gradle@750cdda3edd6d51b7fdfc069d2e2818cf3c44f4c # v3.3.1
         with:
           arguments: publishAllPublicationsToLocalDirRepository
@@ -254,8 +257,15 @@ jobs:
           name: designcompose_m2repo
           path: designcompose_m2repo/
 
+      - name: Publish to GitHub Package Manager
+#        if:  ${{ github.ref == 'refs/heads/main' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
+          ./gradlew publishAllPublicationsToGitHubPackagesRepository -PGitHubPackagesUsername="$GITHUB_ACTOR" -PGitHubPackagesPassword="$GITHUB_TOKEN"
+
   # These tests run on the local JVM and don't need the rust code,
-  # so it makes sense to put them in a seperate job
+  # so it makes sense to put them in a separate job
   verify-roborazzi:
     runs-on: "ubuntu-latest"
     steps:

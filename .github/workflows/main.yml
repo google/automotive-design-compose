@@ -258,11 +258,11 @@ jobs:
           path: designcompose_m2repo/
 
       - name: Publish to GitHub Package Manager
-#        if:  ${{ github.ref == 'refs/heads/main' }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          ./gradlew publishAllPublicationsToGitHubPackagesRepository -PGitHubPackagesUsername="$GITHUB_ACTOR" -PGitHubPackagesPassword="$GITHUB_TOKEN"
+          ./gradlew publishAllPublicationsToDesignComposeSnapshotRepoRepository -PDesignComposeSnapshotRepoUsername="$GITHUB_ACTOR" -PDesignComposeSnapshotRepoPassword="$GITHUB_TOKEN"
 
   # These tests run on the local JVM and don't need the rust code,
   # so it makes sense to put them in a separate job

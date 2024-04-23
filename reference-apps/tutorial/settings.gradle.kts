@@ -16,8 +16,7 @@
 
 rootProject.name = "DesignCompose Tutorial App"
 
-@Suppress("UnstableApiUsage")
-dependencyResolutionManagement {
+@Suppress("UnstableApiUsage") dependencyResolutionManagement {
     // Use the same version catalog that we use for the core SDK
     versionCatalogs {
         create("libs") {
@@ -37,6 +36,43 @@ pluginManagement {
     repositories {
         google()
         gradlePluginPortal()
+    }
+}
+
+val DesignComposeSnapshotRepoUsername: String? by settings
+val DesignComposeSnapshotRepoPassword: String? by settings
+
+// To use a snapshot version, set Gradle properties for "DesignComposeSnapshotRepoUsername" and "DesignComposeSnapshotRepoPassword"
+@Suppress("UnstableApiUsage") if (!DesignComposeSnapshotRepoUsername.isNullOrBlank() && !DesignComposeSnapshotRepoPassword.isNullOrBlank()) {
+    dependencyResolutionManagement {
+        repositories {
+            exclusiveContent {
+                forRepository {
+                    maven {
+                        name = "DesignComposeSnapshotRepo"
+                        url =
+                            uri("https://maven.pkg.github.com/timothyfroehlich/automotive-design-compose")
+                        credentials(PasswordCredentials::class)
+                    }
+                }
+                filter { includeGroup("com.android.designcompose") }
+            }
+        }
+    }
+    pluginManagement {
+        repositories {
+            exclusiveContent {
+                forRepository {
+                    maven {
+                        name = "DesignComposeSnapshotRepo"
+                        url =
+                            uri("https://maven.pkg.github.com/timothyfroehlich/automotive-design-compose")
+                        credentials(PasswordCredentials::class)
+                    }
+                }
+                filter { includeGroup("com.android.designcompose") }
+            }
+        }
     }
 }
 

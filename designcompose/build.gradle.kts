@@ -77,7 +77,7 @@ android {
 // To simplify publishing of the entire SDK, make the DesignCompose publish tasks depend on the
 // Gradle Plugin's publish tasks
 // Necessary because the plugin must be in a separate Gradle build
-listOf("publish", "publishToMavenLocal", "publishAllPublicationsToLocalDirRepository").forEach {
+listOf("publish", "publishToMavenLocal", "publishAllPublicationsToLocalDirRepository", "publishAllPublicationsToDesignComposeSnapshotRepoRepository").forEach {
     tasks.named(it) { dependsOn(gradle.includedBuild("plugins").task(":gradle-plugin:${it}")) }
 }
 

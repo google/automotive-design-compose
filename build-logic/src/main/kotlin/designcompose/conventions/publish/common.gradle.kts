@@ -50,14 +50,11 @@ publishing {
                 )
         }
         // Snapshot publishing. Only configure if the username and password are set.
-        if(project.hasProperty("GitHubPackagesUsername") && project.hasProperty("GitHubPackagesPassword")) {
+        if(project.hasProperty("DesignComposeSnapshotRepoUsername") && project.hasProperty("DesignComposeSnapshotRepoPassword")) {
             maven {
-                name = "GitHubPackages"
+                name = "DesignComposeSnapshotRepo"
                 url = uri("https://maven.pkg.github.com/timothyfroehlich/automotive-design-compose")
-                credentials{
-                    username = project.property("GitHubPackagesUsername") as String
-                    password = project.property("GitHubPackagesPassword") as String
-                }
+                credentials(PasswordCredentials::class) // Grabs the username and password from the above properties
             }
         }
     }

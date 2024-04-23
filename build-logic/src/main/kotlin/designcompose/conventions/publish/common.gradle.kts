@@ -49,5 +49,13 @@ publishing {
                         ?: project.layout.buildDirectory.dir("designcompose_m2repo")
                 )
         }
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/timothyfroehlich/automotive-design-compose")
+            credentials {
+                username = project.providers.environmentVariable("GITHUB_ACTOR").get()
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }

@@ -43,15 +43,23 @@ internal class TextSize(
 @Keep
 internal object Jni {
 
-    fun tracedJnifetchdoc(docId: String, requestJson: String, proxyConfig: ProxyConfig): ByteArray {
+    fun tracedJnifetchdoc(
+        docId: String,
+        versionId: String,
+        requestJson: String,
+        proxyConfig: ProxyConfig
+    ): ByteArray {
         lateinit var result: ByteArray
-        trace(DCTraces.JNIFETCHDOC) { result = jniFetchDoc(docId, requestJson, proxyConfig) }
+        trace(DCTraces.JNIFETCHDOC) {
+            result = jniFetchDoc(docId, versionId, requestJson, proxyConfig)
+        }
         return result
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     external fun jniFetchDoc(
         docId: String,
+        versionId: String,
         requestJson: String,
         proxyConfig: ProxyConfig
     ): ByteArray

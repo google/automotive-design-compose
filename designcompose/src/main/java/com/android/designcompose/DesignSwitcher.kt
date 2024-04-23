@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.FeedbackLevel
 import com.android.designcompose.serdegen.NodeQuery
@@ -212,12 +213,12 @@ private interface DesignSwitcher {
     @Composable
     fun FigmaDoc(
         name: String,
-        id: String,
+        docId: String,
         modifier: Modifier,
     ) {
         val customizations = CustomizationContext()
         customizations.setText("#Name", name)
-        customizations.setText("#Id", id)
+        customizations.setText("#Id", docId)
         customizations.setModifier("#GoButton", modifier)
 
         CompositionLocalProvider(LocalCustomizationContext provides customizations) {
@@ -296,7 +297,7 @@ private interface DesignSwitcher {
 
 internal object DesignSwitcherDoc : DesignSwitcher {}
 
-internal fun designSwitcherDocId() = "Ljph4e3sC0lHcynfXpoh9f"
+internal fun designSwitcherDocId() = DesignDocId("Ljph4e3sC0lHcynfXpoh9f")
 
 internal fun designSwitcherDocName() = "DesignSwitcherDoc"
 
@@ -348,7 +349,7 @@ private fun elapsedTimeString(elapsedSeconds: Long): String {
 
 private fun GetBranches(
     branchHash: HashMap<String, String>?,
-    setDocId: (String) -> Unit,
+    setDocId: (DesignDocId) -> Unit,
     interactionState: InteractionState
 ): ReplacementContent {
     val branchList = branchHash?.toList() ?: listOf()
@@ -361,7 +362,7 @@ private fun GetBranches(
                     branchList[index].first,
                     Modifier.clickable {
                         interactionState.close(null)
-                        setDocId(branchList[index].first)
+                        setDocId(DesignDocId(branchList[index].first))
                     },
                 )
             }
@@ -376,19 +377,20 @@ private fun GetProjectFileCount(doc: DocContent?): String {
 
 private fun GetProjectList(
     doc: DocContent?,
-    setDocId: (String) -> Unit,
+    setDocId: (DesignDocId) -> Unit,
     interactionState: InteractionState
 ): ReplacementContent {
     return ReplacementContent(
         count = doc?.c?.project_files?.size ?: 0,
         content = { index ->
             {
+                val docId = doc?.c?.project_files?.get(index)?.id ?: ""
                 DesignSwitcherDoc.FigmaDoc(
                     doc?.c?.project_files?.get(index)?.name ?: "",
-                    doc?.c?.project_files?.get(index)?.id ?: "",
+                    docId,
                     Modifier.clickable {
                         interactionState.close(null)
-                        setDocId(doc?.c?.project_files?.get(index)?.id ?: "")
+                        setDocId(DesignDocId(docId))
                     },
                 )
             }
@@ -397,7 +399,7 @@ private fun GetProjectList(
 }
 
 @Composable
-private fun GetMessages(docId: String): ReplacementContent {
+private fun GetMessages(docId: DesignDocId): ReplacementContent {
     val (_, setMessagesId) = remember { mutableStateOf(0) }
     DisposableEffect(docId) {
         Feedback.register(docId, setMessagesId)
@@ -527,9 +529,9 @@ private fun GetShowRecompositionCheckbox(
 @Composable
 internal fun DesignSwitcher(
     doc: DocContent?,
-    currentDocId: String,
+    currentDocId: DesignDocId,
     branchHash: HashMap<String, String>?,
-    setDocId: (String) -> Unit
+    setDocId: (DesignDocId) -> Unit
 ) {
     remember { Feedback.addIgnoredDocument(designSwitcherDocId()) }
     val (docIdText, setDocIdText) = remember { mutableStateOf("") }
@@ -585,7 +587,7 @@ internal fun DesignSwitcher(
                         Modifier.onKeyEvent {
                             if (it.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
                                 interactionState.close(null)
-                                setDocId(docIdText.trim())
+                                setDocId(DesignDocId(docIdText.trim()))
                                 true
                             } else {
                                 false
@@ -598,7 +600,7 @@ internal fun DesignSwitcher(
                 Modifier.clickable {
                     if (docIdText.isNotEmpty()) {
                         interactionState.close(null)
-                        setDocId(docIdText)
+                        setDocId(DesignDocId(docIdText))
                     }
                 },
             node_names_checkbox = GetNodeNamesCheckbox(nodeNamesChecked, setNodeNamesChecked),

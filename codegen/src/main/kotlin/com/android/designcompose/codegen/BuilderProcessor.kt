@@ -131,6 +131,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
     ) : KSVisitorVoid() {
         private var docName: String = ""
         private var docId: String = ""
+        private var designVersion: String = ""
         private var currentFunc = ""
         private var textCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var textFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
@@ -209,6 +210,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             docName = className + "Doc"
             docId = idArg.value as String
 
+            val designVersionArg: KSValueArgument =
+                annotation.arguments.first { arg -> arg.name?.asString() == "designVersion" }
+            designVersion = designVersionArg.value as String
+
             // Declare a global document ID that can be changed by the Design Switcher
             val docIdVarName = className + "GenId"
             out.appendText("private var $docIdVarName: String = \"$docId\"\n\n")
@@ -251,7 +256,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("    @Composable\n")
             out.appendText("    final fun DesignSwitcher(modifier: Modifier = Modifier) {\n")
             out.appendText(
-                "        val (docId, setDocId) = remember { mutableStateOf(\"$docId\") }\n"
+                "        val (docId, setDocId) = remember { mutableStateOf(DesignDocId(\"$docId\", \"$designVersion\")) }\n"
             )
             out.appendText("        DesignDoc(\"$docName\", docId, NodeQuery.NodeName(\"\"),\n")
             out.appendText("            modifier = modifier,\n")
@@ -312,7 +317,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             out.appendText("            customizations.setTapCallback(nodeName, tapCallback)\n")
             out.appendText("        customizations.mergeFrom(LocalCustomizationContext.current)\n")
             out.appendText(
-                "        val (docId, setDocId) = remember { mutableStateOf(\"$docId\") }\n"
+                "        val (docId, setDocId) = remember { mutableStateOf(DesignDocId(\"$docId\", \"$designVersion\")) }\n"
             )
             out.appendText("        val queries = queries()\n")
             out.appendText("        queries.add(nodeName)\n")
@@ -342,10 +347,13 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Write the design doc JSON for our plugin
             designDocJson.addProperty("name", className)
             designDocJson.add("components", jsonComponents)
-            val versionArg = annotation.arguments.find { arg -> arg.name?.asString() == "version" }
-            if (versionArg != null) {
-                val versionString = versionArg.value as String
-                designDocJson.addProperty("version", versionString)
+            val customizationInterfaceVersionArg =
+                annotation.arguments.find { arg ->
+                    arg.name?.asString() == "customizationInterfaceVersion"
+                }
+            if (customizationInterfaceVersionArg != null) {
+                val customizationInterfaceVersion = customizationInterfaceVersionArg.value as String
+                designDocJson.addProperty("version", customizationInterfaceVersion)
             }
 
             val gson = GsonBuilder().setPrettyPrinting().create()
@@ -760,7 +768,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Create a mutable state so that the Design Switcher can dynamically change the
             // document ID
             out.appendText(
-                "        val (docId, setDocId) = remember { mutableStateOf(\"$docId\") }\n"
+                "        val (docId, setDocId) = remember { mutableStateOf(DesignDocId(\"$docId\", \"$designVersion\")) }\n"
             )
 
             // If there are variants, add the variant name to the list of queries

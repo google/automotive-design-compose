@@ -24,6 +24,7 @@ import com.android.designcompose.HelloWorldDoc
 import com.android.designcompose.TestUtils
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.helloWorldDocId
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -63,7 +64,7 @@ class LiveUpdateBehaviorTests {
         composeTestRule.setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
         TestUtils.triggerLiveUpdate()
 
-        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(DesignDocId(helloWorldDocId))) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
             assertNotNull(lastFetch)
@@ -84,7 +85,7 @@ class LiveUpdateBehaviorTests {
             .assertExists()
 
         // The doc was fetched
-        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(DesignDocId(helloWorldDocId))) {
             assertNotNull(this)
             assertNotNull(lastUpdateFromFetch)
             assertNotNull(lastFetch)

@@ -21,12 +21,13 @@ import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.FeedbackLevel
 
 object Feedback : FeedbackImpl() {
     private val lastMessage: MutableLiveData<String> = MutableLiveData("")
-    val subscribers: HashMap<String, (Int) -> Unit> = HashMap()
+    val subscribers: HashMap<DesignDocId, (Int) -> Unit> = HashMap()
 
     // Implementation-specific functions
     override fun logMessage(str: String, level: FeedbackLevel) {
@@ -44,39 +45,39 @@ object Feedback : FeedbackImpl() {
     }
 
     // Register and unregister a listener of feedback messages
-    fun register(id: String, setMessagesId: (Int) -> Unit) {
+    fun register(id: DesignDocId, setMessagesId: (Int) -> Unit) {
         subscribers[id] = setMessagesId
     }
 
-    fun unregister(id: String) {
+    fun unregister(id: DesignDocId) {
         subscribers.remove(id)
     }
 
     // Message functions
-    fun addSubscriber(docId: String) {
+    fun addSubscriber(docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Add subscriber for $truncatedId", FeedbackLevel.Debug, docId)
     }
 
-    fun removeSubscriber(docId: String) {
+    fun removeSubscriber(docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Remove subscriber for $truncatedId", FeedbackLevel.Debug, docId)
     }
 
-    internal fun assetLoadFail(id: String, docId: String) {
-        setStatus("Unable to open $id from assets", FeedbackLevel.Debug, docId)
+    internal fun assetLoadFail(dcfAssetId: String, docId: DesignDocId) {
+        setStatus("Unable to open $dcfAssetId from assets", FeedbackLevel.Debug, docId)
     }
 
-    internal fun startLiveUpdate(docId: String) {
+    internal fun startLiveUpdate(docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Live update fetching $truncatedId", FeedbackLevel.Debug, docId)
     }
 
-    fun documentDecodeImages(numImages: Int, name: String, docId: String) {
+    fun documentDecodeImages(numImages: Int, name: String, docId: DesignDocId) {
         setStatus("Decoded $numImages images for $name", FeedbackLevel.Info, docId)
     }
 
-    override fun setStatus(str: String, level: FeedbackLevel, docId: String) {
+    override fun setStatus(str: String, level: FeedbackLevel, docId: DesignDocId) {
         super.setStatus(str, level, docId)
 
         lastMessage.postValue(str)

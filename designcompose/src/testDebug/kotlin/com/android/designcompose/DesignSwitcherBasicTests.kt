@@ -24,6 +24,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.test.onDCDoc
@@ -39,7 +40,12 @@ import org.robolectric.annotation.GraphicsMode
 @Composable
 fun DesignSwitcherTest(testName: TestName) {
     val idState = remember { mutableStateOf(testName.methodName) }
-    DesignSwitcher(doc = null, currentDocId = idState.value, branchHash = null, setDocId = {})
+    DesignSwitcher(
+        doc = null,
+        currentDocId = DesignDocId(idState.value),
+        branchHash = null,
+        setDocId = {}
+    )
 }
 
 @RunWith(AndroidJUnit4::class)

@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.designcompose.annotation.DesignMetaKey
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.ComponentInfo
@@ -208,7 +209,7 @@ internal object DebugNodeManager {
         showRecomposition.postValue(show)
     }
 
-    internal fun addNode(docId: String, existingId: Int, node: NodePosition): Int {
+    internal fun addNode(docId: DesignDocId, existingId: Int, node: NodePosition): Int {
         if (
             !showNodes.value!! ||
                 !node.nodeName.startsWith("#") ||
@@ -342,7 +343,7 @@ internal fun DesignView(
     modifier: Modifier = Modifier,
     v: View,
     variantParentName: String,
-    docId: String,
+    docId: DesignDocId,
     document: DocContent,
     customizations: CustomizationContext,
     interactionState: InteractionState,
@@ -859,7 +860,7 @@ val LocalCustomizationContext = compositionLocalOf { CustomizationContext() }
 
 // Current document override ID that can be used to override the document ID specified from the
 // @DesignDoc annotation
-internal val LocalDocOverrideContext = compositionLocalOf { String() }
+internal val LocalDocOverrideContext = compositionLocalOf { DesignDocId("") }
 
 // Public function to set the document override ID
 @Composable
@@ -869,7 +870,7 @@ internal val LocalDocOverrideContext = compositionLocalOf { String() }
             " than one root document is used, all will instead use this document ID. Use this function only" +
             " when there is no other way to set the document ID."
 )
-fun DesignDocOverride(docId: String, content: @Composable () -> Unit) {
+fun DesignDocOverride(docId: DesignDocId, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalDocOverrideContext provides docId) { content() }
 }
 
@@ -877,18 +878,18 @@ fun DesignDocOverride(docId: String, content: @Composable () -> Unit) {
 // When switching document IDs, we notify all subscribers of the change to trigger
 // a recomposition.
 internal object DocumentSwitcher {
-    private val subscribers: HashMap<String, ArrayList<(String) -> Unit>> = HashMap()
-    private val documentSwitchHash: HashMap<String, String> = HashMap()
-    private val documentSwitchReverseHash: HashMap<String, String> = HashMap()
+    private val subscribers: HashMap<DesignDocId, ArrayList<(DesignDocId) -> Unit>> = HashMap()
+    private val documentSwitchHash: HashMap<DesignDocId, DesignDocId> = HashMap()
+    private val documentSwitchReverseHash: HashMap<DesignDocId, DesignDocId> = HashMap()
 
-    internal fun subscribe(originalDocId: String, setDocId: (String) -> Unit) {
+    internal fun subscribe(originalDocId: DesignDocId, setDocId: (DesignDocId) -> Unit) {
         val list = subscribers[originalDocId] ?: ArrayList()
         list.add(setDocId)
         subscribers[originalDocId] = list
     }
 
-    internal fun switch(originalDocId: String, newDocId: String) {
-        if (newDocId.isEmpty()) return
+    internal fun switch(originalDocId: DesignDocId, newDocId: DesignDocId) {
+        if (!newDocId.isValid()) return
         if (originalDocId != newDocId) {
             documentSwitchHash[originalDocId] = newDocId
             documentSwitchReverseHash[newDocId] = originalDocId
@@ -900,7 +901,7 @@ internal object DocumentSwitcher {
         list?.forEach { it(newDocId) }
     }
 
-    internal fun revertToOriginal(docId: String) {
+    internal fun revertToOriginal(docId: DesignDocId) {
         val originalDocId = documentSwitchReverseHash[docId]
         if (originalDocId != null) {
             switch(originalDocId, originalDocId)
@@ -908,12 +909,12 @@ internal object DocumentSwitcher {
         }
     }
 
-    internal fun isNotOriginalDocId(docId: String): Boolean {
+    internal fun isNotOriginalDocId(docId: DesignDocId): Boolean {
         val originalDocId = documentSwitchReverseHash[docId]
         return originalDocId != null
     }
 
-    internal fun getSwitchedDocId(docId: String): String {
+    internal fun getSwitchedDocId(docId: DesignDocId): DesignDocId {
         return documentSwitchHash[docId] ?: docId
     }
 }
@@ -930,20 +931,20 @@ enum class LiveUpdateMode {
 }
 
 class DesignComposeCallbacks(
-    val docReadyCallback: ((String) -> Unit)? = null,
-    val newDocDataCallback: ((String, ByteArray?) -> Unit)? = null,
+    val docReadyCallback: ((DesignDocId) -> Unit)? = null,
+    val newDocDataCallback: ((DesignDocId, ByteArray?) -> Unit)? = null,
 )
 
 @Composable
 fun DesignDoc(
     docName: String,
-    docId: String,
+    docId: DesignDocId,
     rootNodeQuery: NodeQuery,
     modifier: Modifier = Modifier,
     placeholder: (@Composable () -> Unit)? = null,
     customizations: CustomizationContext = CustomizationContext(),
     serverParams: DocumentServerParams = DocumentServerParams(),
-    setDocId: (String) -> Unit = {},
+    setDocId: (DesignDocId) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
@@ -968,13 +969,13 @@ fun DesignDoc(
 @Composable
 internal fun DesignDocInternal(
     docName: String,
-    incomingDocId: String,
+    incomingDocId: DesignDocId,
     rootNodeQuery: NodeQuery,
     modifier: Modifier = Modifier,
     placeholder: (@Composable () -> Unit)? = null,
     customizations: CustomizationContext = CustomizationContext(),
     serverParams: DocumentServerParams = DocumentServerParams(),
-    setDocId: (String) -> Unit = {},
+    setDocId: (DesignDocId) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
@@ -998,7 +999,7 @@ internal fun DesignDocInternal(
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
     val overrideDocId = LocalDocOverrideContext.current
     // Use the override document ID if it is not empty
-    val currentDocId = if (overrideDocId.isNotEmpty()) overrideDocId else incomingDocId
+    val currentDocId = if (overrideDocId.isValid()) overrideDocId else incomingDocId
     val docId = DocumentSwitcher.getSwitchedDocId(currentDocId)
     val doc =
         DocServer.doc(
@@ -1042,7 +1043,7 @@ internal fun DesignDocInternal(
         DocumentSwitcher.subscribe(docId, setDocId)
         docId
     }
-    val switchDocId: (String) -> Unit = { newDocId: String ->
+    val switchDocId: (DesignDocId) -> Unit = { newDocId: DesignDocId ->
         run { DocumentSwitcher.switch(originalDocId, newDocId) }
     }
 

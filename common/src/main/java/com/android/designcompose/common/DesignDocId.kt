@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-@Suppress("UnstableApiUsage")
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-    versionCatalogs { create("libs") { from(files("../gradle/libs.versions.toml")) } }
-}
+package com.android.designcompose.common
 
-plugins {
-    // Downloads the required Java Toolchain, if needed.
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+/**
+ * Id for the figma design doc with file id and version id. When version id is not specified, it
+ * will load head of the figma doc.
+ */
+data class DesignDocId(var id: String, var versionId: String = "") {
+    fun isValid(): Boolean {
+        return id.isNotEmpty()
+    }
+
+    override fun toString(): String {
+        return if (versionId.isEmpty()) id else "${id}_$versionId"
+    }
 }

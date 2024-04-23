@@ -34,6 +34,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.tracing.Trace.beginSection
 import androidx.tracing.Trace.endSection
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import java.io.BufferedInputStream
 import java.io.File
@@ -51,9 +52,9 @@ internal const val TAG = "DesignCompose"
 
 internal class LiveDocSubscription(
     val id: String,
-    val docId: String,
+    val docId: DesignDocId,
     val onUpdate: (DocContent?) -> Unit,
-    val docUpdateCallback: ((String, ByteArray?) -> Unit)?,
+    val docUpdateCallback: ((DesignDocId, ByteArray?) -> Unit)?,
 )
 
 internal class LiveDocSubscriptions(
@@ -92,11 +93,11 @@ object DesignSettings {
     internal var figmaToken = mutableStateOf<String?>(null)
     internal var isDocumentLive = mutableStateOf(false)
     private var fontDb: HashMap<String, FontFamily> = HashMap()
-    internal var fileFetchStatus: HashMap<String, DesignDocStatus> = HashMap()
+    internal var fileFetchStatus: HashMap<DesignDocId, DesignDocStatus> = HashMap()
 
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
-    fun testOnlyFigmaFetchStatus(fileId: String) = fileFetchStatus[fileId]
+    fun testOnlyFigmaFetchStatus(fileId: DesignDocId) = fileFetchStatus[fileId]
 
     fun enableLiveUpdates(
         activity: ComponentActivity,
@@ -211,10 +212,10 @@ internal object SpanCache {
 internal object DocServer {
     internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
     internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
-    internal val documents: HashMap<String, DocContent> = HashMap()
-    internal val subscriptions: HashMap<String, LiveDocSubscriptions> = HashMap()
+    internal val documents: HashMap<DesignDocId, DocContent> = HashMap()
+    internal val subscriptions: HashMap<DesignDocId, LiveDocSubscriptions> = HashMap()
     internal val branchHash: HashMap<String, HashMap<String, String>> =
-        HashMap() // doc ID -> { docID -> docName }
+        HashMap() // doc ID -> { docID -> docName }, branches always point to head of the figma doc
     internal val mainHandler = Handler(Looper.getMainLooper())
     internal var firstFetch = true
     internal var pauseUpdates = false
@@ -405,36 +406,37 @@ internal fun DocServer.unsubscribe(doc: LiveDocSubscription) {
     }
 }
 
-private fun DocServer.updateBranches(docId: String, doc: DocContent) {
-    val docBranches = branchHash[docId] ?: HashMap<String, String>()
+private fun DocServer.updateBranches(docId: DesignDocId, doc: DocContent) {
+    val id = docId.id
+    val docBranches = branchHash[id] ?: HashMap()
     doc.c.branches?.forEach { if (!docBranches.containsKey(it.id)) docBranches[it.id] = it.name }
 
     // Create a "Main" branch for this doc ID so that we can go back to it after switching to a
     // branch
-    if (doc.c.branches?.isNotEmpty() == true && !docBranches.containsKey(docId))
-        docBranches[docId] = "Main"
+    if (doc.c.branches?.isNotEmpty() == true && !docBranches.containsKey(id))
+        docBranches[id] = "Main"
     // Update the branch list for this ID as well as all branches of this ID
-    branchHash[docId] = docBranches
+    branchHash[id] = docBranches
     doc.c.branches?.forEach { branchHash[it.id] = docBranches }
 }
 
 @Composable
 internal fun DocServer.doc(
     resourceName: String,
-    docId: String,
+    docId: DesignDocId,
     serverParams: DocumentServerParams,
-    docUpdateCallback: ((String, ByteArray?) -> Unit)?,
+    docUpdateCallback: ((DesignDocId, ByteArray?) -> Unit)?,
     disableLiveMode: Boolean,
 ): DocContent? {
     // Check that the document ID is valid
-    if (!validateFigmaDocId(docId)) {
+    if (!validateFigmaDocId(docId.id)) {
         Log.w(TAG, "Invalid Figma document ID: $docId")
         return null
     }
 
     beginSection(DCTraces.DOCSERVER_DOC)
 
-    val id = "${resourceName}_$docId"
+    val id = "${resourceName}_${docId}"
 
     // Create a state var to remember the document contents and update it when the doc changes
     val (liveDoc, setLiveDoc) = remember { mutableStateOf<DocContent?>(null) }
@@ -530,6 +532,6 @@ internal fun DocServer.doc(
     return null
 }
 
-internal fun DocServer.branches(docId: String): HashMap<String, String>? {
-    return branchHash[docId]
+internal fun DocServer.branches(docId: DesignDocId): HashMap<String, String>? {
+    return branchHash[docId.id]
 }

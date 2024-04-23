@@ -30,7 +30,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 
 class GenericDocContent(
-    var docId: String,
+    var docId: DesignDocId,
     private val header: SerializedDesignDocHeader,
     val document: SerializedDesignDoc,
     val variantViewMap: HashMap<String, HashMap<String, View>>,
@@ -70,7 +70,7 @@ class GenericDocContent(
 /// Read a serialized server document from the given stream. Deserialize it and save it to disk.
 fun decodeServerBaseDoc(
     docBytes: ByteArray,
-    docId: String,
+    docId: DesignDocId,
     feedback: FeedbackImpl
 ): GenericDocContent? {
     val deserializer = BincodeDeserializer(docBytes)
@@ -99,7 +99,11 @@ fun decodeServerBaseDoc(
 }
 
 /// Read a serialized disk document from the given stream. Deserialize it and deserialize its images
-fun decodeDiskBaseDoc(doc: InputStream, docId: String, feedback: FeedbackImpl): GenericDocContent? {
+fun decodeDiskBaseDoc(
+    doc: InputStream,
+    docId: DesignDocId,
+    feedback: FeedbackImpl
+): GenericDocContent? {
     val docBytes = readDocBytes(doc, docId, feedback)
     val deserializer = BincodeDeserializer(docBytes)
 
@@ -166,7 +170,7 @@ private fun createVariantPropertyMap(nodes: Map<NodeQuery, View>?): VariantPrope
     return propertyMap
 }
 
-fun readDocBytes(doc: InputStream, docId: String, feedback: FeedbackImpl): ByteArray {
+fun readDocBytes(doc: InputStream, docId: DesignDocId, feedback: FeedbackImpl): ByteArray {
     // Read the doc from assets or network...
     feedback.documentDecodeStart(docId)
     val buffer = ByteArrayOutputStream()
@@ -201,7 +205,7 @@ fun readErrorBytes(errorStream: InputStream?): String {
 
 private fun decodeHeader(
     deserializer: BincodeDeserializer,
-    docId: String,
+    docId: DesignDocId,
     feedback: FeedbackImpl
 ): SerializedDesignDocHeader? {
     // Now attempt to deserialize the doc)

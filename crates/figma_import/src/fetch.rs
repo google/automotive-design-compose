@@ -74,12 +74,14 @@ pub enum ConvertResponse {
 
 pub fn fetch_doc(
     id: &str,
+    requested_version_id: &str,
     rq: ConvertRequest,
     proxy_config: &ProxyConfig,
 ) -> Result<ConvertResponse, crate::Error> {
     if let Some(mut doc) = Document::new_if_changed(
         rq.figma_api_key,
         id.into(),
+        requested_version_id.into(),
         proxy_config,
         rq.last_modified.unwrap_or(String::new()),
         rq.version.unwrap_or(String::new()),

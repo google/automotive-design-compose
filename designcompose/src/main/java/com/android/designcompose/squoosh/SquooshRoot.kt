@@ -59,6 +59,7 @@ import com.android.designcompose.asAnimationSpec
 import com.android.designcompose.asBuilder
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
 import com.android.designcompose.rootNode
@@ -240,12 +241,12 @@ internal val LocalSquooshIsRootContext = compositionLocalOf { SquooshIsRoot(true
 @Composable
 fun SquooshRoot(
     docName: String,
-    incomingDocId: String,
+    incomingDocId: DesignDocId,
     rootNodeQuery: NodeQuery,
     modifier: Modifier = Modifier,
     customizationContext: CustomizationContext = CustomizationContext(),
     serverParams: DocumentServerParams = DocumentServerParams(),
-    setDocId: (String) -> Unit = {},
+    setDocId: (DesignDocId) -> Unit = {},
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
@@ -274,7 +275,7 @@ fun SquooshRoot(
         DocumentSwitcher.subscribe(docId, setDocId)
         docId
     }
-    val switchDocId: (String) -> Unit = { newDocId: String ->
+    val switchDocId: (DesignDocId) -> Unit = { newDocId: DesignDocId ->
         run { DocumentSwitcher.switch(originalDocId, newDocId) }
     }
 

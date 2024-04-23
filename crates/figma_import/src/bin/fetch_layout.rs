@@ -74,6 +74,9 @@ struct Args {
     /// Figma Document ID to fetch and convert
     #[arg(short, long)]
     doc_id: String,
+    /// Figma Document Version ID to fetch and convert
+    #[arg(short, long)]
+    version_id: Option<String>,
     /// Figma API key to use for Figma requests
     #[arg(short, long)]
     api_key: String,
@@ -203,8 +206,13 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
         Some(x) => ProxyConfig::HttpProxyConfig(x),
         None => ProxyConfig::None,
     };
-    let mut doc: Document =
-        Document::new(args.api_key.as_str(), args.doc_id.clone(), &proxy_config, None)?;
+    let mut doc: Document = Document::new(
+        args.api_key.as_str(),
+        args.doc_id.clone(),
+        args.version_id.unwrap_or(String::new()),
+        &proxy_config,
+        None,
+    )?;
     let mut error_list = Vec::new();
     // Convert the requested nodes from the Figma doc.
     let views = doc.nodes(

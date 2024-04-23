@@ -112,19 +112,21 @@ impl NodeQuery {
 pub struct FigmaDocInfo {
     pub name: String,
     pub id: String,
+    pub version_id: String,
 }
 impl FigmaDocInfo {
-    pub(crate) fn new(name: String, id: String) -> FigmaDocInfo {
-        FigmaDocInfo { name, id }
+    pub(crate) fn new(name: String, id: String, version_id: String) -> FigmaDocInfo {
+        FigmaDocInfo { name, id, version_id }
     }
 }
 
+/// Branches alwasy return head of file, i.e. no version returned
 fn get_branches(document_root: &FileResponse) -> Vec<FigmaDocInfo> {
     let mut branches = vec![];
     if let Some(doc_branches) = &document_root.branches {
         for hash in doc_branches {
             if let (Some(Some(id)), Some(Some(name))) = (hash.get("key"), hash.get("name")) {
-                branches.push(FigmaDocInfo::new(name.clone(), id.clone()));
+                branches.push(FigmaDocInfo::new(name.clone(), id.clone(), String::new()));
             }
         }
     }
@@ -137,6 +139,7 @@ fn get_branches(document_root: &FileResponse) -> Vec<FigmaDocInfo> {
 pub struct Document {
     api_key: String,
     document_id: String,
+    version_id: String,
     proxy_config: ProxyConfig,
     document_root: FileResponse,
     image_context: ImageContext,
@@ -153,18 +156,23 @@ impl Document {
     pub fn new(
         api_key: &str,
         document_id: String,
+        version_id: String,
         proxy_config: &ProxyConfig,
         image_session: Option<ImageContextSession>,
     ) -> Result<Document, Error> {
         // Fetch the document...
-        let document_url = format!(
+        let mut document_url = format!(
             "{}{}?plugin_data=shared&geometry=paths&branch_data=true",
             BASE_FILE_URL, document_id,
         );
+        if !version_id.is_empty() {
+            document_url.push_str("&version=");
+            document_url.push_str(&version_id);
+        }
         let document_root: FileResponse =
             serde_json::from_str(http_fetch(api_key, document_url, proxy_config)?.as_str())?;
 
-        // ...and the mapping from imageRef to URL
+        // ...and the mapping from imageRef to URL. It returns images from all versions.
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, document_id);
         let image_refs: ImageFillResponse =
             serde_json::from_str(http_fetch(api_key, image_ref_url, proxy_config)?.as_str())?;
@@ -179,6 +187,7 @@ impl Document {
         Ok(Document {
             api_key: api_key.to_string(),
             document_id,
+            version_id,
             proxy_config: proxy_config.clone(),
             document_root,
             image_context,
@@ -193,20 +202,26 @@ impl Document {
     pub fn new_if_changed(
         api_key: &str,
         document_id: String,
+        requested_version_id: String,
         proxy_config: &ProxyConfig,
         last_modified: String,
-        version: String,
+        last_version: String,
         image_session: Option<ImageContextSession>,
     ) -> Result<Option<Document>, Error> {
-        let document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, document_id);
+        let mut document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, document_id);
+        if !requested_version_id.is_empty() {
+            document_head_url.push_str("&version=");
+            document_head_url.push_str(&requested_version_id);
+        }
         let document_head: FileHeadResponse =
             serde_json::from_str(http_fetch(api_key, document_head_url, proxy_config)?.as_str())?;
 
-        if document_head.last_modified == last_modified && document_head.version == version {
+        if document_head.last_modified == last_modified && document_head.version == last_version {
             return Ok(None);
         }
 
-        Document::new(api_key, document_id, proxy_config, image_session).map(Some)
+        Document::new(api_key, document_id, requested_version_id, proxy_config, image_session)
+            .map(Some)
     }
 
     /// Ask Figma if an updated document is available, and then fetch the updated document
@@ -215,7 +230,11 @@ impl Document {
         self.proxy_config = proxy_config.clone();
 
         // Fetch just the top level of the document. (depth=0 causes an internal server error).
-        let document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, self.document_id);
+        let mut document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, self.document_id);
+        if !self.version_id.is_empty() {
+            document_head_url.push_str("&version=");
+            document_head_url.push_str(&self.version_id);
+        }
         let document_head: FileHeadResponse = serde_json::from_str(
             http_fetch(self.api_key.as_str(), document_head_url, &self.proxy_config)?.as_str(),
         )?;
@@ -231,15 +250,19 @@ impl Document {
         }
 
         // Fetch the updated document in its entirety and replace our document root...
-        let document_url = format!(
+        let mut document_url = format!(
             "{}{}?plugin_data=shared&geometry=paths&branch_data=true",
             BASE_FILE_URL, self.document_id,
         );
+        if !self.version_id.is_empty() {
+            document_url.push_str("&version=");
+            document_url.push_str(&self.version_id);
+        }
         let document_root: FileResponse = serde_json::from_str(
             http_fetch(self.api_key.as_str(), document_url, &self.proxy_config)?.as_str(),
         )?;
 
-        // ...and the mapping from imageRef to URL
+        // ...and the mapping from imageRef to URL. It returns images from all versions.
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, self.document_id);
         let image_refs: ImageFillResponse = serde_json::from_str(
             http_fetch(self.api_key.as_str(), image_ref_url, &self.proxy_config)?.as_str(),
@@ -879,7 +902,8 @@ impl Document {
         for file_hash in &project_files.files {
             if let Some(doc_id) = file_hash.get("key") {
                 if let Some(name) = file_hash.get("name") {
-                    figma_docs.push(FigmaDocInfo::new(name.clone(), doc_id.clone()));
+                    // Getting project files return head version of the files.
+                    figma_docs.push(FigmaDocInfo::new(name.clone(), doc_id.clone(), String::new()));
                 }
             }
         }

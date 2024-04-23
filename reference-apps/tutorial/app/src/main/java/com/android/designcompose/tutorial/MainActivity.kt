@@ -78,7 +78,7 @@ enum class ButtonState {
     pressed,
 }
 
-@DesignDoc(id = "3z4xExq0INrL9vxPhj9tl7", version = "0.8")
+@DesignDoc(id = "3z4xExq0INrL9vxPhj9tl7", customizationInterfaceVersion = "0.8")
 interface Tutorial {
     @DesignComponent(node = "#stage", isRoot = true)
     fun Stage(

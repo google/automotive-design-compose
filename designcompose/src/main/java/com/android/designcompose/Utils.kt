@@ -1230,42 +1230,84 @@ internal fun Background.asBrush(document: DocContent, density: Float): Pair<Brus
         }
         is Background.LinearGradient -> {
             val linearGradient = this
-            return Pair(
-                RelativeLinearGradient(
-                    linearGradient.color_stops.map { convertColor(it.field1) }.toList(),
-                    linearGradient.color_stops.map { it.field0 }.toList(),
-                    start = Offset(linearGradient.start_x, linearGradient.start_y),
-                    end = Offset(linearGradient.end_x, linearGradient.end_y)
-                ),
-                1.0f
-            )
+            when (linearGradient.color_stops.size) {
+                0 -> {
+                    Log.e(TAG, "No stops found for the linear gradient")
+                    return null
+                }
+                1 -> {
+                    Log.w(TAG, "Single stop found for the linear gradient and do it as a fill")
+                    return Pair(
+                        SolidColor(convertColor(linearGradient.color_stops[0].field1)),
+                        1.0f
+                    )
+                }
+                else ->
+                    return Pair(
+                        RelativeLinearGradient(
+                            linearGradient.color_stops.map { convertColor(it.field1) }.toList(),
+                            linearGradient.color_stops.map { it.field0 }.toList(),
+                            start = Offset(linearGradient.start_x, linearGradient.start_y),
+                            end = Offset(linearGradient.end_x, linearGradient.end_y)
+                        ),
+                        1.0f
+                    )
+            }
         }
         is Background.RadialGradient -> {
             val radialGradient = this
-            return Pair(
-                RelativeRadialGradient(
-                    colors = radialGradient.color_stops.map { convertColor(it.field1) },
-                    stops = radialGradient.color_stops.map { it.field0 },
-                    center = Offset(radialGradient.center_x, radialGradient.center_y),
-                    radiusX = radialGradient.radius[0],
-                    radiusY = radialGradient.radius[1],
-                    angle = radialGradient.angle
-                ),
-                1.0f
-            )
+            return when (radialGradient.color_stops.size) {
+                0 -> {
+                    Log.e(TAG, "No stops found for the radial gradient")
+                    return null
+                }
+                1 -> {
+                    Log.w(TAG, "Single stop found for the radial gradient and do it as a fill")
+                    return Pair(
+                        SolidColor(convertColor(radialGradient.color_stops[0].field1)),
+                        1.0f
+                    )
+                }
+                else ->
+                    return Pair(
+                        RelativeRadialGradient(
+                            colors = radialGradient.color_stops.map { convertColor(it.field1) },
+                            stops = radialGradient.color_stops.map { it.field0 },
+                            center = Offset(radialGradient.center_x, radialGradient.center_y),
+                            radiusX = radialGradient.radius[0],
+                            radiusY = radialGradient.radius[1],
+                            angle = radialGradient.angle
+                        ),
+                        1.0f
+                    )
+            }
         }
         is Background.AngularGradient -> {
             val angularGradient = this
-            return Pair(
-                RelativeSweepGradient(
-                    center = Offset(angularGradient.center_x, angularGradient.center_y),
-                    angle = angularGradient.angle,
-                    scale = angularGradient.scale,
-                    colors = angularGradient.color_stops.map { convertColor(it.field1) },
-                    stops = angularGradient.color_stops.map { it.field0 }
-                ),
-                1.0f
-            )
+            return when (angularGradient.color_stops.size) {
+                0 -> {
+                    Log.e(TAG, "No stops found for the angular gradient")
+                    return null
+                }
+                1 -> {
+                    Log.w(TAG, "Single stop found for the angular gradient and do it as a fill")
+                    return Pair(
+                        SolidColor(convertColor(angularGradient.color_stops[0].field1)),
+                        1.0f
+                    )
+                }
+                else ->
+                    return Pair(
+                        RelativeSweepGradient(
+                            center = Offset(angularGradient.center_x, angularGradient.center_y),
+                            angle = angularGradient.angle,
+                            scale = angularGradient.scale,
+                            colors = angularGradient.color_stops.map { convertColor(it.field1) },
+                            stops = angularGradient.color_stops.map { it.field0 }
+                        ),
+                        1.0f
+                    )
+            }
         }
     }
     return null

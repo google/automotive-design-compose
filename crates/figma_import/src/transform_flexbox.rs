@@ -43,6 +43,7 @@ use layout::styles::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };
 use layout::types::Dimension;
+use log::error;
 use unicode_segmentation::UnicodeSegmentation;
 //::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};
 
@@ -591,20 +592,25 @@ fn compute_background(
 
         let stops = &gradient.gradient_stops;
 
-        for s in stops {
-            let c = crate::Color::from_f32s(
-                s.color.r,
-                s.color.g,
-                s.color.b,
-                s.color.a * last_paint.opacity,
-            );
+        if stops.is_empty() {
+            error!("No stops found for linear gradient {:?}", gradient);
+            Background::None
+        } else {
+            for s in stops {
+                let c = crate::Color::from_f32s(
+                    s.color.r,
+                    s.color.g,
+                    s.color.b,
+                    s.color.a * last_paint.opacity,
+                );
 
-            let g = (s.position, c);
+                let g = (s.position, c);
 
-            g_stops.push(g);
+                g_stops.push(g);
+            }
+
+            Background::LinearGradient { start_x, start_y, end_x, end_y, color_stops: g_stops }
         }
-
-        Background::LinearGradient { start_x, start_y, end_x, end_y, color_stops: g_stops }
     } else if let PaintData::GradientAngular { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
         let center_y = gradient.gradient_handle_positions[0].y();
@@ -621,20 +627,25 @@ fn compute_background(
 
         let stops = &gradient.gradient_stops;
 
-        for s in stops {
-            let c = crate::Color::from_f32s(
-                s.color.r,
-                s.color.g,
-                s.color.b,
-                s.color.a * last_paint.opacity,
-            );
+        if stops.is_empty() {
+            error!("No stops found for angular gradient {:?}", gradient);
+            Background::None
+        } else {
+            for s in stops {
+                let c = crate::Color::from_f32s(
+                    s.color.r,
+                    s.color.g,
+                    s.color.b,
+                    s.color.a * last_paint.opacity,
+                );
 
-            let g = (s.position, c);
+                let g = (s.position, c);
 
-            g_stops.push(g);
+                g_stops.push(g);
+            }
+
+            Background::AngularGradient { center_x, center_y, angle, scale, color_stops: g_stops }
         }
-
-        Background::AngularGradient { center_x, center_y, angle, scale, color_stops: g_stops }
     } else if let PaintData::GradientRadial { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
         let center_y = gradient.gradient_handle_positions[0].y();
@@ -653,20 +664,25 @@ fn compute_background(
 
         let stops = &gradient.gradient_stops;
 
-        for s in stops {
-            let c = crate::Color::from_f32s(
-                s.color.r,
-                s.color.g,
-                s.color.b,
-                s.color.a * last_paint.opacity,
-            );
+        if stops.is_empty() {
+            error!("No stops found for radial gradient {:?}", gradient);
+            Background::None
+        } else {
+            for s in stops {
+                let c = crate::Color::from_f32s(
+                    s.color.r,
+                    s.color.g,
+                    s.color.b,
+                    s.color.a * last_paint.opacity,
+                );
 
-            let g = (s.position, c);
+                let g = (s.position, c);
 
-            g_stops.push(g);
+                g_stops.push(g);
+            }
+
+            Background::RadialGradient { center_x, center_y, radius, angle, color_stops: g_stops }
         }
-
-        Background::RadialGradient { center_x, center_y, radius, angle, color_stops: g_stops }
     } else if let PaintData::GradientDiamond { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
         let center_y = gradient.gradient_handle_positions[0].y();
@@ -685,20 +701,25 @@ fn compute_background(
 
         let stops = &gradient.gradient_stops;
 
-        for s in stops {
-            let c = crate::Color::from_f32s(
-                s.color.r,
-                s.color.g,
-                s.color.b,
-                s.color.a * last_paint.opacity,
-            );
+        if stops.is_empty() {
+            error!("No stops found for diamond gradient {:?}", gradient);
+            Background::None
+        } else {
+            for s in stops {
+                let c = crate::Color::from_f32s(
+                    s.color.r,
+                    s.color.g,
+                    s.color.b,
+                    s.color.a * last_paint.opacity,
+                );
 
-            let g = (s.position, c);
+                let g = (s.position, c);
 
-            g_stops.push(g);
+                g_stops.push(g);
+            }
+
+            Background::RadialGradient { center_x, center_y, radius, angle, color_stops: g_stops }
         }
-
-        Background::RadialGradient { center_x, center_y, radius, angle, color_stops: g_stops }
     } else {
         Background::None
     }

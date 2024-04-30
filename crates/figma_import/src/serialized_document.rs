@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::path::{Display, Path};
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
@@ -103,11 +103,11 @@ where
     };
 
     // Ensure the version of the document matches this version of automotive design compose.
-    let expected_version = SerializedDesignDocHeader::current().version;
     if header.version != SerializedDesignDocHeader::current().version {
         return Err(Error::FigmaError(format!(
             "Serialized Figma doc incorrect version.:Expected {} Found: {}",
-            expected_version, header.version
+            SerializedDesignDocHeader::current().version,
+            header.version
         )));
     }
 

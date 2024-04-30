@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::Error;
 use std::collections::HashMap;
+use std::fmt;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::{Display, Path};
 
 use serde::{Deserialize, Serialize};
 
@@ -31,6 +36,14 @@ impl SerializedDesignDocHeader {
     }
 }
 
+impl fmt::Display for SerializedDesignDocHeader {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // NOTE: Using `write!` here instead of typical `format!`
+        // to keep newlines.
+        write!(f, "DC Version: {}\nVersion: {}", CURRENT_VERSION, &self.version)
+    }
+}
+
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SerializedDesignDoc {
@@ -43,6 +56,18 @@ pub struct SerializedDesignDoc {
     pub id: String,
 }
 
+impl fmt::Display for SerializedDesignDoc {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // NOTE: Using `write!` here instead of typical `format!`
+        // to keep newlines.
+        write!(
+            f,
+            "Doc ID: {}\nName: {}\nLast Modified: {}",
+            &self.id, &self.name, &self.last_modified
+        )
+    }
+}
+
 // This is the struct we send over to the client. It contains the serialized document
 // along with some extra data: document branches, project files, and errors
 #[derive(Serialize, Deserialize, Debug)]
@@ -51,4 +76,130 @@ pub struct ServerFigmaDoc {
     pub branches: Vec<FigmaDocInfo>,
     pub project_files: Vec<FigmaDocInfo>,
     pub errors: Vec<String>,
+}
+
+/// A helper method to load a serialized design doc from figma.
+pub fn load_design_doc<P>(
+    load_path: P,
+) -> Result<(SerializedDesignDocHeader, SerializedDesignDoc), Error>
+where
+    P: AsRef<Path>,
+{
+    let mut document_file = match File::open(&load_path) {
+        Ok(file) => file,
+        Err(e) => {
+            return Err(e.into());
+        }
+    };
+
+    let mut buf: Vec<u8> = vec![];
+    let _bytes = document_file.read_to_end(&mut buf)?;
+
+    let header: SerializedDesignDocHeader = match bincode::deserialize(buf.as_slice()) {
+        Ok(header) => header,
+        Err(e) => {
+            return Err(e.into());
+        }
+    };
+
+    // Ensure the version of the document matches this version of automotive design compose.
+    let expected_version = SerializedDesignDocHeader::current().version;
+    if header.version != SerializedDesignDocHeader::current().version {
+        return Err(Error::FigmaError(format!(
+            "Serialized Figma doc incorrect version.:Expected {} Found: {}",
+            expected_version, header.version
+        )));
+    }
+
+    let header_size = bincode::serialized_size(&header)? as usize;
+
+    let doc: SerializedDesignDoc = match bincode::deserialize(&buf.as_slice()[header_size..]) {
+        Ok(doc) => doc,
+        Err(e) => {
+            return Err(e.into());
+        }
+    };
+
+    Ok((header, doc))
+}
+
+/// A helper method do save serialized figma design docs.
+pub fn save_design_doc<P>(save_path: P, doc: &SerializedDesignDoc) -> Result<(), Error>
+where
+    P: AsRef<Path>,
+{
+    let mut output = std::fs::File::create(save_path)?;
+    let header = match bincode::serialize(&SerializedDesignDocHeader::current()) {
+        Ok(v) => v,
+        Err(e) => {
+            return Err(e.into());
+        }
+    };
+    let doc = match bincode::serialize(&doc) {
+        Ok(v) => v,
+        Err(e) => {
+            return Err(e.into());
+        }
+    };
+    output.write_all(header.as_slice())?;
+    output.write_all(doc.as_slice())?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod serialized_document_tests {
+
+    use super::*;
+    use std::fs::File;
+    use std::path::PathBuf;
+    use testdir::testdir;
+
+    #[test]
+    fn load_save_load() {
+        //Load a test doc.
+        let mut doc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        doc_path.push("../../reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_pxVlixodJqZL95zo2RzTHl.dcf");
+        let (header, doc) =
+            load_design_doc(doc_path).expect("Failed to load serizlied design doc.");
+
+        // Dump some info
+        println!("Deserialized header: {}", &header);
+        println!("Deserialized doc: {}", &doc);
+
+        // Re-save the test doc into a temporary file in a temporary directory.
+        let tmp_dir = testdir!();
+        let tmp_doc_path = PathBuf::from(&tmp_dir).join("tmp_pxVlixodJqZL95zo2RzTHl.dcf");
+        save_design_doc(&tmp_doc_path, &doc)
+            .expect("Failed to save temporary serialized design doc.");
+
+        // Re-load the temporary file
+        let (tmp_header, tmp_doc) =
+            load_design_doc(&tmp_doc_path).expect("Failed to load tmp serizlied design doc.");
+        println!("Tmp deserialized header: {}", &tmp_header);
+        println!("Tmp deserialized doc: {}", &tmp_doc);
+    }
+
+    #[test]
+    #[should_panic]
+    fn load_missing_doc() {
+        let mut doc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        doc_path.push("this.doc.does.not.exist.dcf");
+        let (_tmp_header, _tmp_doc) =
+            load_design_doc(&doc_path).expect("Failed to load tmp serizlied design doc.");
+    }
+
+    #[test]
+    #[should_panic]
+    fn load_bad_doc() {
+        // Create a garbage binary doc in a temporary directory and load it, hopefully seeing a failure.
+        let tmp_dir = testdir!();
+        let garbage_doc_path = PathBuf::from(&tmp_dir).join("tmp.garbage.file.dcf");
+        let mut file =
+            File::create(&garbage_doc_path).expect("Failed to create new garbage binary doc file.");
+        let data: Vec<u8> = (0..48).map(|v| v).collect();
+        file.write_all(&data).expect("Failed to write garbage data to garbage file.");
+
+        let (_tmp_header, _tmp_doc) = load_design_doc(&garbage_doc_path)
+            .expect("Failed to load garbage serizlied design doc.");
+    }
 }

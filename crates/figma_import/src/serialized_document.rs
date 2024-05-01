@@ -85,27 +85,17 @@ pub fn load_design_doc<P>(
 where
     P: AsRef<Path>,
 {
-    let mut document_file = match File::open(&load_path) {
-        Ok(file) => file,
-        Err(e) => {
-            return Err(e.into());
-        }
-    };
+    let mut document_file = File::open(&load_path)?;
 
     let mut buf: Vec<u8> = vec![];
     let _bytes = document_file.read_to_end(&mut buf)?;
 
-    let header: SerializedDesignDocHeader = match bincode::deserialize(buf.as_slice()) {
-        Ok(header) => header,
-        Err(e) => {
-            return Err(e.into());
-        }
-    };
+    let header: SerializedDesignDocHeader = bincode::deserialize(buf.as_slice())?;
 
     // Ensure the version of the document matches this version of automotive design compose.
     if header.version != SerializedDesignDocHeader::current().version {
         return Err(Error::FigmaError(format!(
-            "Serialized Figma doc incorrect version.:Expected {} Found: {}",
+            "Serialized Figma doc incorrect version. Expected {} Found: {}",
             SerializedDesignDocHeader::current().version,
             header.version
         )));
@@ -113,34 +103,19 @@ where
 
     let header_size = bincode::serialized_size(&header)? as usize;
 
-    let doc: SerializedDesignDoc = match bincode::deserialize(&buf.as_slice()[header_size..]) {
-        Ok(doc) => doc,
-        Err(e) => {
-            return Err(e.into());
-        }
-    };
+    let doc: SerializedDesignDoc = bincode::deserialize(&buf.as_slice()[header_size..])?;
 
     Ok((header, doc))
 }
 
-/// A helper method do save serialized figma design docs.
+/// A helper method to save serialized figma design docs.
 pub fn save_design_doc<P>(save_path: P, doc: &SerializedDesignDoc) -> Result<(), Error>
 where
     P: AsRef<Path>,
 {
     let mut output = std::fs::File::create(save_path)?;
-    let header = match bincode::serialize(&SerializedDesignDocHeader::current()) {
-        Ok(v) => v,
-        Err(e) => {
-            return Err(e.into());
-        }
-    };
-    let doc = match bincode::serialize(&doc) {
-        Ok(v) => v,
-        Err(e) => {
-            return Err(e.into());
-        }
-    };
+    let header = bincode::serialize(&SerializedDesignDocHeader::current())?;
+    let doc = bincode::serialize(&doc)?;
     output.write_all(header.as_slice())?;
     output.write_all(doc.as_slice())?;
     Ok(())
@@ -160,7 +135,7 @@ mod serialized_document_tests {
         let mut doc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         doc_path.push("../../reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_pxVlixodJqZL95zo2RzTHl.dcf");
         let (header, doc) =
-            load_design_doc(doc_path).expect("Failed to load serizlied design doc.");
+            load_design_doc(doc_path).expect("Failed to load serialized design doc.");
 
         // Dump some info
         println!("Deserialized header: {}", &header);
@@ -174,7 +149,7 @@ mod serialized_document_tests {
 
         // Re-load the temporary file
         let (tmp_header, tmp_doc) =
-            load_design_doc(&tmp_doc_path).expect("Failed to load tmp serizlied design doc.");
+            load_design_doc(&tmp_doc_path).expect("Failed to load tmp serialized design doc.");
         println!("Tmp deserialized header: {}", &tmp_header);
         println!("Tmp deserialized doc: {}", &tmp_doc);
     }
@@ -182,10 +157,11 @@ mod serialized_document_tests {
     #[test]
     #[should_panic]
     fn load_missing_doc() {
+        // Try to load a doc which doesn't exist. This should fail with a clean error.
         let mut doc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         doc_path.push("this.doc.does.not.exist.dcf");
         let (_tmp_header, _tmp_doc) =
-            load_design_doc(&doc_path).expect("Failed to load tmp serizlied design doc.");
+            load_design_doc(&doc_path).expect("Failed to load tmp serialized design doc.");
     }
 
     #[test]
@@ -200,6 +176,6 @@ mod serialized_document_tests {
         file.write_all(&data).expect("Failed to write garbage data to garbage file.");
 
         let (_tmp_header, _tmp_doc) = load_design_doc(&garbage_doc_path)
-            .expect("Failed to load garbage serizlied design doc.");
+            .expect("Failed to load garbage serialized design doc.");
     }
 }

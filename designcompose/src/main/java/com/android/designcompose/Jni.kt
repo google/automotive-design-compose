@@ -102,8 +102,12 @@ internal object Jni {
 
             // Find the JNI library and set up an input stream
             val jniStream =
-                javaClass.classLoader?.getResourceAsStream("libdc_jni.so")
-                    ?: throw FileNotFoundException("JNI missing")
+                with(javaClass.classLoader!!) {
+                    getResourceAsStream("libdc_jni.so")
+                        ?: getResourceAsStream("libdc_jni.dylib")
+                        ?: getResourceAsStream("libdc_jni.dll")
+                        ?: throw FileNotFoundException("JNI missing")
+                }
 
             // Copy the library out of the jar file into the filesystem so we can load it.
             val tempFile = File.createTempFile("libdc_jni", ".so")

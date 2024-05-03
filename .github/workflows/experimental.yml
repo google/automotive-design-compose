@@ -42,7 +42,7 @@ jobs:
           egress-policy: audit
 
       - run: rustup toolchain install ${{ matrix.release }} --profile minimal
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v3.5.2
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v3.5.2
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
@@ -63,7 +63,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v3.5.2
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v3.5.2
 
       - name: "Set environment variables"
         run: |
@@ -117,7 +117,7 @@ jobs:
       with:
         egress-policy: audit
 
-    - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+    - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
     - name: Set up Java
       uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1

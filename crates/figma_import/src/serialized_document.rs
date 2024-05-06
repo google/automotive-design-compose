@@ -94,7 +94,7 @@ where
 
     // Ensure the version of the document matches this version of automotive design compose.
     if header.version != SerializedDesignDocHeader::current().version {
-        return Err(Error::FigmaError(format!(
+        return Err(Error::DocumentLoadError(format!(
             "Serialized Figma doc incorrect version. Expected {} Found: {}",
             SerializedDesignDocHeader::current().version,
             header.version

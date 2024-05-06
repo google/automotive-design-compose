@@ -48,6 +48,9 @@ log = "0.4"
 vergen = { version = "8.3.1", default-features = false, features = ["build", "git", "gitcl"] }
 anyhow = "1.0"
 
+[dev-dependencies]
+testdir = "0.9.1"
+
 [[bin]]
 name = "reflection"
 path = "src/bin/reflection.rs"

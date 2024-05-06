@@ -31,4 +31,6 @@ pub enum Error {
     LayoutError(#[from] taffy::error::TaffyError),
     #[error("String translation Error")]
     Utf8Error(#[from] std::string::FromUtf8Error),
+    #[error("Figma Document Load Error")]
+    DocumentLoadError(String),
 }

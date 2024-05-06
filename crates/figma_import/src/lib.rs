@@ -43,6 +43,7 @@ pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
 pub use figma_schema::Node;
 pub use figma_schema::Rectangle;
 pub use image_context::{ImageContextSession, ImageKey};
+pub use serialized_document::{load_design_doc, save_design_doc};
 pub use serialized_document::{SerializedDesignDoc, SerializedDesignDocHeader, ServerFigmaDoc};
 pub use toolkit_schema::{View, ViewData}; // ugly hack
                                           // Internal convenience

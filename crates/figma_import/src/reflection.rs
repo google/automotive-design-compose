@@ -164,9 +164,11 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<layout::layout_manager::LayoutChangedResponse>(&samples)
         .expect("couldn't trace LayoutChangedResponse");
-    tracer.trace_type::<crate::layout::LayoutNode>(&samples).expect("couldn't trace LayoutNode");
     tracer
-        .trace_type::<crate::layout::LayoutNodeList>(&samples)
+        .trace_type::<layout::layout_node::LayoutNode>(&samples)
+        .expect("couldn't trace LayoutNode");
+    tracer
+        .trace_type::<layout::layout_node::LayoutNodeList>(&samples)
         .expect("couldn't trace LayoutNodeList");
 
     tracer

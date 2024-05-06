@@ -12,14 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! `figma_import` fetches a document from Figma and converts nodes from the document
-//! to toolkit_schema Views, which can then be further customized (changing text or style)
-//! and presented in other components that implement logic.
-//!
-//! The goal of this crate is to perform the mapping from Figma to the toolkit; it does
-//! not provide any kind of UI logic mapping.
-
-use crate::toolkit_style::ViewStyle;
+use crate::layout_style::LayoutStyle;
 use serde::{Deserialize, Serialize};
 
 // A representation of a Figma node to register for layout.
@@ -28,7 +21,7 @@ pub struct LayoutNode {
     pub layout_id: i32,
     pub parent_layout_id: i32,
     pub child_index: i32,
-    pub style: ViewStyle,
+    pub style: LayoutStyle,
     pub name: String,
     pub use_measure_func: bool,
     pub fixed_width: Option<i32>,

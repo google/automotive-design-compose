@@ -141,7 +141,7 @@ internal fun updateLayoutTree(
                 layoutId,
                 parentLayoutId,
                 -1, // not childIdx!
-                resolvedNode.style,
+                resolvedNode.style.layout_style,
                 resolvedNode.view.name,
                 useMeasureFunc,
                 Optional.empty(),

@@ -19,11 +19,11 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
-use figma_import::layout::{LayoutNodeList, LayoutParentChildren};
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue, JValueGen};
 use jni::sys::{jboolean, jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
+use layout::layout_node::{LayoutNodeList, LayoutParentChildren};
 use layout::{LayoutChangedResponse, LayoutManager};
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
@@ -217,7 +217,7 @@ fn jni_add_nodes<'local>(
                                 node.layout_id,
                                 node.parent_layout_id,
                                 node.child_index,
-                                node.style.layout_style,
+                                node.style,
                                 node.name,
                                 java_jni_measure_text,
                             );
@@ -226,7 +226,7 @@ fn jni_add_nodes<'local>(
                                 node.layout_id,
                                 node.parent_layout_id,
                                 node.child_index,
-                                node.style.layout_style,
+                                node.style,
                                 node.name,
                                 None,
                                 node.fixed_width,

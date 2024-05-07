@@ -196,7 +196,7 @@ internal object LayoutManager {
                 layoutId,
                 parentLayoutId,
                 childIndex,
-                style,
+                style.layout_style,
                 name,
                 useMeasureFunc,
                 fixedWidth,

@@ -460,7 +460,7 @@ internal fun DesignView(
     val onPressReactions: MutableList<Reaction> = ArrayList()
     val onDragReactions: MutableList<Reaction> = ArrayList()
     val onKeyReactions: MutableList<Reaction> = ArrayList()
-    view.reactions.ifPresent { reactions ->
+    v.reactions.ifPresent { reactions ->
         for (reaction in reactions) {
             when (reaction.trigger) {
                 is Trigger.OnClick -> onClickReactions.add(reaction)
@@ -729,7 +729,7 @@ internal fun DesignView(
                         parentComponents,
                         MaskInfo(parentSize, maskViewType),
                     ) {
-                        val customContent = customizations.getContent(view.name)
+                        val customContent = customizations.getContent(v.name)
                         if (customContent != null) {
                             var rootLayoutId = parentLayout?.rootLayoutId ?: -1
                             if (rootLayoutId == -1) rootLayoutId = layoutId

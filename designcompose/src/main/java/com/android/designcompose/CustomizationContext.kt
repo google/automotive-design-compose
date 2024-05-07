@@ -385,27 +385,21 @@ fun CustomizationContext.getMatchingVariant(maybeComponentInfo: Optional<Compone
 
     val componentInfo = maybeComponentInfo.get()
     val nodeVariants = parseNodeVariants(componentInfo.name)
+    if (nodeVariants.isEmpty()) return null
 
     // Check to see if any of the variant properties set match the variant properties in this node.
     // If any match, update the values of the variant properties and return a new node name that
     // uses the specified variants
-    var variantChanged = false
     nodeVariants.forEach {
         val value = variantProperties[it.key]
         if (value != null && value != it.value) {
             nodeVariants[it.key] = value
-            variantChanged = true
         }
     }
-
-    if (variantChanged) {
-        val newVariantList: ArrayList<String> = ArrayList()
-        val sortedKeys = nodeVariants.keys.sorted()
-        sortedKeys.forEach { newVariantList.add(it + "=" + nodeVariants[it]) }
-        return newVariantList.joinToString(",")
-    }
-
-    return null
+    val newVariantList: ArrayList<String> = ArrayList()
+    val sortedKeys = nodeVariants.keys.sorted()
+    sortedKeys.forEach { newVariantList.add(it + "=" + nodeVariants[it]) }
+    return newVariantList.joinToString(",")
 }
 
 private fun parseNodeVariants(nodeName: String): HashMap<String, String> {

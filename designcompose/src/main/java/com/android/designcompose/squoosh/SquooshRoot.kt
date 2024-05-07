@@ -299,7 +299,12 @@ fun SquooshRoot(
     interactionState.supportAnimations = true
 
     val startFrame =
-        interactionState.rootNode(initialNode = rootNodeQuery, doc = doc, isRoot = isRoot)
+        interactionState.rootNode(
+            initialNode = rootNodeQuery,
+            doc = doc,
+            isRoot = isRoot,
+            customizationContext
+        )
 
     if (startFrame == null) {
         Log.d(TAG, "No start frame $docName / $incomingDocId")

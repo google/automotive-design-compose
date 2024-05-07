@@ -68,7 +68,7 @@ interface VariantPropertiesTest {
         @Design(node = "#Square4") square4: @Composable (ComponentReplacementContext) -> Unit,
         @DesignVariant(property = "#bg1") bg1: Shape,
         @DesignVariant(property = "#bg2") bg2: Shape,
-        @DesignVariant(property = "#SquareBorder") type: SquareBorder,
+        @DesignVariant(property = "BorderType") type: SquareBorder,
         @DesignVariant(property = "#SquareColor") color: SquareColor,
         @DesignVariant(property = "#comp1") comp1: CompType,
         @DesignVariant(property = "#comp2") comp2: CompType,
@@ -79,7 +79,7 @@ interface VariantPropertiesTest {
 
     @DesignComponent(node = "#SquareBorder")
     fun Square(
-        @DesignVariant(property = "#SquareBorder") type: SquareBorder,
+        @DesignVariant(property = "BorderType") type: SquareBorder,
         @DesignVariant(property = "#SquareColor") color: SquareColor,
         @DesignVariant(property = "#SquareShadow") shadow: Shadow,
     )

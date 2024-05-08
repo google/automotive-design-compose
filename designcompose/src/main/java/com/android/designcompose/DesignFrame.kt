@@ -105,7 +105,7 @@ internal fun DesignFrame(
                         setLayoutState,
                         parentLayoutId,
                         childIndex,
-                        style,
+                        style.layout_style,
                         view.name
                     )
                 }

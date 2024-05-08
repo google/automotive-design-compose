@@ -50,6 +50,7 @@ import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
+import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Rect
@@ -141,7 +142,7 @@ internal object LayoutManager {
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
         childIndex: Int,
-        style: ViewStyle,
+        style: LayoutStyle,
         name: String,
     ) {
         // Frames can have children so call beginLayout() to optimize layout computation until all
@@ -156,7 +157,7 @@ internal object LayoutManager {
         parentLayoutId: Int,
         rootLayoutId: Int,
         childIndex: Int,
-        style: ViewStyle,
+        style: LayoutStyle,
         name: String,
         textMeasureData: TextMeasureData,
     ) {
@@ -182,7 +183,7 @@ internal object LayoutManager {
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
         childIndex: Int,
-        style: ViewStyle,
+        style: LayoutStyle,
         name: String,
         useMeasureFunc: Boolean,
         fixedWidth: Optional<Int> = Optional.empty(),
@@ -196,7 +197,7 @@ internal object LayoutManager {
                 layoutId,
                 parentLayoutId,
                 childIndex,
-                style.layout_style,
+                style,
                 name,
                 useMeasureFunc,
                 fixedWidth,

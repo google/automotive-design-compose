@@ -37,6 +37,7 @@ import java.io.OutputStream
 
 internal enum class CustomizationType {
     Text,
+    StringRes,
     TextFunction,
     Image,
     ImageWithContext,
@@ -123,6 +124,7 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setModifier\n"
     file += "import com.android.designcompose.setTapCallback\n"
     file += "import com.android.designcompose.setOpenLinkCallback\n"
+    file += "import com.android.designcompose.setStringRes\n"
     file += "import com.android.designcompose.setText\n"
     file += "import com.android.designcompose.setTextFunction\n"
     file += "import com.android.designcompose.setVariantProperties\n"
@@ -170,6 +172,7 @@ internal fun KSTypeReference.typeString(): String {
 internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
     return when (strType) {
         "String" -> CustomizationType.Text
+        "Int" -> CustomizationType.StringRes
         "@Composable () -> String" -> CustomizationType.TextFunction
         "Brush" -> CustomizationType.Brush
         "() -> Brush" -> CustomizationType.BrushFunction
@@ -269,6 +272,14 @@ internal fun KSAnnotated.getAnnotatedNodeName(): String? {
         val nodeArg = it.arguments.first { arg -> arg.name?.asString() == "node" }
         nodeArg.value as String
     }
+}
+
+internal fun KSAnnotated.hasStringResAnnotation(): Boolean {
+    val stringResAnnotation =
+        annotations.find {
+            it.shortName.asString() == "StringRes"
+        }
+    return stringResAnnotation != null
 }
 
 // If there is a @DesignContentTypes annotation, use it to build a content list for this node. This

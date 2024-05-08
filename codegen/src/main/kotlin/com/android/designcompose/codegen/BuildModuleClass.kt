@@ -265,6 +265,8 @@ private class DesignModuleVisitor(
         when (customizationType) {
             CustomizationType.Text ->
                 out += "    customizations.setText(\"$nodeName\", $propertyName)\n"
+            CustomizationType.StringRes ->
+                out += "    customizations.setStringRes(\"$nodeName\", $propertyName)\n"
             CustomizationType.TextFunction ->
                 out += "    customizations.setTextFunction(\"$nodeName\", $propertyName)\n"
             CustomizationType.Image ->

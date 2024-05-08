@@ -75,6 +75,7 @@ typealias Meter = Float
 data class Customization(
     // Text content customization
     var text: Optional<String> = Optional.empty(),
+    var stringRes: Optional<Int> = Optional.empty(),
     // Text function customization
     var textFunction: Optional<@Composable () -> String> = Optional.empty(),
     // Image fill customization
@@ -154,6 +155,11 @@ private fun CustomizationContext.customize(nodeName: String, evolver: (Customiza
 fun CustomizationContext.setText(nodeName: String, text: String?) {
     customize(nodeName) { c -> c.text = Optional.ofNullable(text) }
 }
+
+fun CustomizationContext.setStringRes(nodeName: String, stringRes: Int?) {
+    customize(nodeName) { c -> c.stringRes = Optional.ofNullable(stringRes) }
+}
+
 
 fun CustomizationContext.setTextFunction(nodeName: String, text: @Composable (() -> String)?) {
     customize(nodeName) { c -> c.textFunction = Optional.ofNullable(text) }
@@ -334,6 +340,12 @@ fun CustomizationContext.getBrushFunction(nodeName: String): (() -> Brush)? {
 fun CustomizationContext.getText(nodeName: String): String? {
     val c = cs[nodeName] ?: return null
     if (c.text.isPresent) return c.text.get()
+    return null
+}
+
+fun CustomizationContext.getStringRes(nodeName: String): Int? {
+    val c = cs[nodeName] ?: return null
+    if (c.stringRes.isPresent) return c.stringRes.get()
     return null
 }
 

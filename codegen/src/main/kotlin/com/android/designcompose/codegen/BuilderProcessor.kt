@@ -133,6 +133,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var docId: String = ""
         private var currentFunc = ""
         private var textCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
+        private var stringResCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var textFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var imageCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
@@ -651,6 +652,12 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setText(\"$node\", $value)\n")
             }
 
+            val stringResCustom =
+                stringResCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in stringResCustom) {
+                out.appendText("        customizations.setStringRes(\"$node\", $value)\n")
+            }
+
             val textFuncCustom =
                 textFunctionCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
             for ((node, value) in textFuncCustom) {
@@ -828,6 +835,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             when (valueParameter.customizationType()) {
                 CustomizationType.Text ->
                     addCustomization(valueParameter, annotation, textCustomizations)
+                CustomizationType.StringRes ->
+                    addCustomization(valueParameter, annotation, stringResCustomizations)
                 CustomizationType.TextFunction ->
                     addCustomization(valueParameter, annotation, textFunctionCustomizations)
                 CustomizationType.Image ->

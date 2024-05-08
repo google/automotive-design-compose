@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.isIdentity
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.Paragraph
@@ -127,6 +128,10 @@ internal fun DesignText(
 
     // Apply custom text
     var useText = customizations.getText(nodeName)
+    if (useText == null) {
+        val stringRes: Int? = customizations.getStringRes(nodeName)
+        useText = if (stringRes != null) stringResource(id = stringRes) else null
+    }
     if (useText == null)
         useText = (customizations.getTextFunction(nodeName) ?: { newlineFixedText })()
 

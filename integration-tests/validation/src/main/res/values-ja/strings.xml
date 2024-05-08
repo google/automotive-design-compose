@@ -15,7 +15,6 @@
 -->
 
 <resources>
-  <string name="app_name">Validation</string>
-  <string name="name_world">World</string>
+  <string name="name_world">せかい</string>
 
 </resources>

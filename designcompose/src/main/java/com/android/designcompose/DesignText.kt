@@ -292,7 +292,7 @@ internal fun DesignText(
                 parentLayoutId,
                 rootLayoutId,
                 childIndex,
-                style,
+                style.layout_style,
                 view.name,
                 textMeasureData
             )

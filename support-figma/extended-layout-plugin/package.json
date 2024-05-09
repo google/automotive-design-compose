@@ -10,9 +10,11 @@
   "author": "",
   "license": "",
   "devDependencies": {
-    "@figma/plugin-typings": "^1.92.0",
+    "@eslint/js": "^9.2.0",
+    "@figma/plugin-typings": "*",
     "@types/node": "^20.12.8",
     "css-loader": "^7.1.1",
+    "eslint": "^8.57.0",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-loader": "^5.0.0",
     "html-webpack-plugin": "^5.6.0",
@@ -20,6 +22,7 @@
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.1",
     "typescript": "^5.4.5",
+    "typescript-eslint": "^7.8.0",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4"
   }

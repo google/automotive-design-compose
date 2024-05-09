@@ -334,7 +334,7 @@ function ListPreview() {
     verifyParentFrame();
   }
 
-  function initLayoutUI(contentNodeNameOverride?: string, previewPageOverride?: string, showingUI?: boolean) {
+  async function initLayoutUI(contentNodeNameOverride?: string, previewPageOverride?: string, showingUI?: boolean) {
     let widgetContentNodeName = contentNodeNameOverride ? contentNodeNameOverride : contentNodeName
     let previewPageName = previewPageOverride ? previewPageOverride : previewPage;
     
@@ -352,7 +352,7 @@ function ListPreview() {
     refreshWidgetSize();
     
     // Get the extended layout data for this widget
-    const node = figma.getNodeById(widgetId) as WidgetNode;
+    const node = await figma.getNodeByIdAsync(widgetId) as WidgetNode;
     let extendedLayoutData = node.getSharedPluginData("designcompose", "vsw-extended-auto-layout");
     let extendedLayout = (extendedLayoutData && extendedLayoutData.length) ? JSON.parse(extendedLayoutData) : {};
     let content = [];
@@ -366,7 +366,7 @@ function ListPreview() {
     let previewContent = nodeContentData ? nodeContentData.get(widgetContentNodeName) : null;
     if (previewContent && previewContent.content && (itemSize[0] == 0 || itemSize[1] == 0)) {
       for (const [nodeName, nodeId] of nodeContentData.get(widgetContentNodeName).content.entries()) {
-        let contentNode = figma.getNodeById(nodeId) as DefaultFrameMixin;
+        let contentNode = await figma.getNodeByIdAsync(nodeId) as DefaultFrameMixin;
         if (contentNode && contentNode.width > 0 && contentNode.height > 0) {
           setItemSize([contentNode.width, contentNode.height]);
           break;
@@ -515,7 +515,7 @@ function ListPreview() {
       return layoutOptions.verticalSpacing;
   }
 
-  function populatePreviewContent(widgetContent: any, layoutOptions: LayoutOptions) {
+  async function populatePreviewContent(widgetContent: any, layoutOptions: LayoutOptions) {
     let nodeContentData = loadNodeContentData();
     if (nodeContentData && nodeContentData.has(widgetContent.contentNodeName)) {
       let nodeContent = nodeContentData.get(widgetContent.contentNodeName);
@@ -531,7 +531,7 @@ function ListPreview() {
           for (const nodeId of previewPage.content) {
 
             // if span is 1 and this is the first one, set item size
-            let node = figma.getNodeById(nodeId) as DefaultFrameMixin;
+            let node = await figma.getNodeByIdAsync(nodeId) as DefaultFrameMixin;
             if (node && !didSetItemSize && spanContent.has(nodeId)) {
               let spanData = spanContent.get(nodeId);
               let span = spanData[0];
@@ -549,8 +549,8 @@ function ListPreview() {
     }
   }
 
-  function addPreviewNode(nodeId, list, layoutOptions: LayoutOptions) {
-    let node = figma.getNodeById(nodeId) as DefaultFrameMixin;
+  async function addPreviewNode(nodeId, list, layoutOptions: LayoutOptions) {
+    let node = await figma.getNodeByIdAsync(nodeId) as DefaultFrameMixin;
     if (node == null) {
       console.log("Error getting node for nodeId " + nodeId);
       return;
@@ -616,11 +616,11 @@ function ListPreview() {
     }
   }
 
-  function updateLimitContentData(extendedLayout) {
+  async function updateLimitContentData(extendedLayout) {
     let limitContentData = extendedLayout.limitContentData;
 
     let nodeId = limitContentData.overflowNodeId;
-    let node = figma.getNodeById(nodeId) as DefaultFrameMixin;
+    let node = await figma.getNodeByIdAsync(nodeId) as DefaultFrameMixin;
 
     // Create an image for the overflow node
     if (node != null) {
@@ -670,7 +670,7 @@ function ListPreview() {
     })()
   }
 
-  function onSelectionChanged() {
+  async function onSelectionChanged() {
     if (selectOverflowState) {
       setSelectOverflowState(false);
 
@@ -685,7 +685,7 @@ function ListPreview() {
       let selection = figma.currentPage.selection;
       if (selection && selection.length == 1 && selection[0] && selection[0].type == 'FRAME') {
         let parentFrame = selection[0];
-        let widgetNode = figma.getNodeById(widgetId) as SceneNode;
+        let widgetNode = await figma.getNodeByIdAsync(widgetId) as SceneNode;
         parentFrame.appendChild(widgetNode);
 
         initLayoutUI();
@@ -695,12 +695,12 @@ function ListPreview() {
     }
   }
 
-  function onDocumentChanged(event: DocumentChangeEvent) {
+  async function onDocumentChanged(event: DocumentChangeEvent) {
     // We only care if something changed with the parent because we want to always resize
     // to our parent frame size. If we don't filter other changes out, this will get
     // called repeatedly since initialization of this widget will create and delete nodes
     // in order to generate preview content images.
-    const node = figma.getNodeById(widgetId) as WidgetNode;
+    const node = await figma.getNodeByIdAsync(widgetId) as WidgetNode;
     let parentNode = node.parent as FrameNode;
     let parentChanged = false;
     for (const c of event.documentChanges) {
@@ -716,8 +716,8 @@ function ListPreview() {
   }
 
   // The widget always fills to fit its parent frame. This function saves the parent frame size
-  function refreshWidgetSize() {
-    const node = figma.getNodeById(widgetId) as WidgetNode;
+  async function refreshWidgetSize() {
+    const node = await figma.getNodeByIdAsync(widgetId) as WidgetNode;
     let parentNode = node.parent as FrameNode;
     if (parentNode != null && parentNode.type == 'FRAME') {
       if (parentNode.width != parentSize[0] || parentNode.height != parentSize[1])
@@ -731,8 +731,8 @@ function ListPreview() {
   }
 
   // Check to see if the parent frame changed. Show an error if a change has been detected.
-  function verifyParentFrame() {
-    let widgetNode = figma.getNodeById(widgetId) as SceneNode;
+  async function verifyParentFrame() {
+    let widgetNode = await figma.getNodeByIdAsync(widgetId) as SceneNode;
     let parent = widgetNode.parent;
     if (parent == null || parent.type != 'FRAME')
       figma.ui.postMessage({
@@ -743,8 +743,8 @@ function ListPreview() {
   }
 
   // Name the widget and its parent based on the content frame used
-  function updateFrameNames(name: string) {
-    let widgetNode = figma.getNodeById(widgetId);
+  async function updateFrameNames(name: string) {
+    let widgetNode = await figma.getNodeByIdAsync(widgetId);
     widgetNode.name = name + "-widget";
     if (widgetNode.parent)
       widgetNode.parent.name = name + "-parent";
@@ -805,10 +805,10 @@ function ListPreview() {
     figma.on('selectionchange', onSelectionChanged);
     figma.on('documentchange', onDocumentChanged);
 
-    figma.ui.onmessage = (msg) => {
+    figma.ui.onmessage = async (msg) => {
       if (msg.msg == 'set-widget-content') {
         let widgetContent = JSON.stringify(msg.widgetContent);
-        let widgetNode = figma.getNodeById(widgetId);
+        let widgetNode = await figma.getNodeByIdAsync(widgetId);
         if (widgetNode) {
           widgetNode.setSharedPluginData("designcompose", "widget-content", widgetContent);
         }
@@ -828,7 +828,7 @@ function ListPreview() {
         extendedLayout.gridLayoutData.autoSpacingItemSize = isColumns ? itemSize[0] : itemSize[1];
 
         let extendedLayoutStr = JSON.stringify(msg.extendedLayout);
-        let widgetNode = figma.getNodeById(widgetId);
+        let widgetNode = await figma.getNodeByIdAsync(widgetId);
         if (widgetNode) {
           widgetNode.setSharedPluginData("designcompose", "vsw-extended-auto-layout", extendedLayoutStr);        
           updateLayoutOptions(extendedLayout);
@@ -864,7 +864,7 @@ function ListPreview() {
       else if (msg.msg == 'show-node') {
         // Listen for node-highlight messages; maybe we can have a "refresh button" to run
         // clippy again in the future, too?
-        var highlightNode = figma.getNodeById(msg.node);
+        let highlightNode = await figma.getNodeByIdAsync(msg.node);
         if (highlightNode) {
           figma.viewport.scrollAndZoomIntoView([highlightNode]);
           figma.currentPage.selection = [highlightNode as any]; // XXX support multiple pages!

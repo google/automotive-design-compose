@@ -424,10 +424,10 @@ function clipyCheckTypeMismatches(
   }
 }
 
-function showNode(nodeId: string) {
+async function showNode(nodeId: string) {
   // Listen for node-highlight messages; maybe we can have a "refresh button" to run
   // clippy again in the future, too?
-  var highlightNode = figma.getNodeById(nodeId);
+  var highlightNode = await figma.getNodeByIdAsync(nodeId);
   if (highlightNode) {
     figma.viewport.scrollAndZoomIntoView([highlightNode]);
     figma.currentPage.selection = [highlightNode as any]; // XXX support multiple pages!
@@ -491,7 +491,9 @@ function clippy(json: DesignDocSpec): ClippyWarning[] {
   return warnings;
 }
 
-function clippyRefresh() {
+async function clippyRefresh() {
+  await figma.loadAllPagesAsync();
+  
   // Get the json plugin data from our root node
   let clippyFile = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json-file');
   let clippyData = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json');
@@ -537,6 +539,7 @@ function loadClippy(): DesignDocSpec | null {
 
 // If we were invoked with the "sync" command then run our sync logic and quit.
 if (figma.command === "sync") {
+  console.log("### Sync");
   // Copy the reactions data to our plugin data, or clear out our plugin data if there
   // are no reactions.
   function syncReactions(node: SceneNode) {
@@ -573,14 +576,18 @@ if (figma.command === "sync") {
 
   // We want to visit every node; the document and page nodes can't have any reaction
   // data.
-  for (let page of figma.root.children) {
-    for (let child of page.children) {
-      syncReactions(child);
+  async function performSync() {
+    await figma.loadAllPagesAsync();
+    for (let page of figma.root.children) {
+      for (let child of page.children) {
+        syncReactions(child);
+      }
     }
-  }
 
-  // Close our plugin with a success message.
-  figma.closePlugin("Synchronized Interaction Data with AAOS UX");
+    // Close our plugin with a success message.
+    figma.closePlugin("Synchronized Interaction Data with AAOS UX");
+  }
+  performSync();
 }
 else if (figma.command === "move-plugin-data") {
   function movePluginDataWithKey(node: BaseNode, key: string) {
@@ -604,20 +611,25 @@ else if (figma.command === "move-plugin-data") {
     }
   }
 
-  // Move the root level data first
-  movePluginDataWithKey(figma.root, 'clippy-json-file');
-  movePluginDataWithKey(figma.root, 'clippy-json');
+  async function performMove() {
+    await figma.loadAllPagesAsync();
+      
+    // Move the root level data first
+    movePluginDataWithKey(figma.root, 'clippy-json-file');
+    movePluginDataWithKey(figma.root, 'clippy-json');
 
-  // We want to visit every node; the document and page nodes can't have any reaction
-  // data.
-  for (let page of figma.root.children) {
-    for (let child of page.children) {
-      movePluginData(child);
+    // We want to visit every node; the document and page nodes can't have any reaction
+    // data.
+    for (let page of figma.root.children) {
+      for (let child of page.children) {
+        movePluginData(child);
+      }
     }
-  }
 
-  // Close our plugin with a success message.
-  figma.closePlugin("Moved plugin data to shared location");
+    // Close our plugin with a success message.
+    figma.closePlugin("Moved plugin data to shared location");
+  }
+  performMove();
 } else if (figma.command == "meters") {
   figma.showUI(__html__, { width: 400, height: 400 });
   figma.ui.postMessage({
@@ -997,21 +1009,24 @@ else if (figma.command === "move-plugin-data") {
     saveMeterData(meterData);
   }
 
-  onSelectionChangeMeters();
-  figma.on('selectionchange', onSelectionChangeMeters);
-  figma.on('documentchange', onDocumentChangedMeters);
-
-  figma.ui.onmessage = msg => {
-    if (msg.msg == 'arc-changed') {
-      arcChanged(msg);
-    } else if (msg.msg == 'rotation-changed') {
-      rotationChanged(msg);
-    } else if (msg.msg == 'bar-changed') {
-      progressChanged(msg, false);
-    } else if (msg.msg == 'marker-changed') {
-      progressChanged(msg, true);
+  async function initMeters() {
+    await figma.loadAllPagesAsync();
+    onSelectionChangeMeters();
+    figma.on('selectionchange', onSelectionChangeMeters);
+    figma.on('documentchange', onDocumentChangedMeters);
+    figma.ui.onmessage = msg => {
+      if (msg.msg == 'arc-changed') {
+        arcChanged(msg);
+      } else if (msg.msg == 'rotation-changed') {
+        rotationChanged(msg);
+      } else if (msg.msg == 'bar-changed') {
+        progressChanged(msg, false);
+      } else if (msg.msg == 'marker-changed') {
+        progressChanged(msg, true);
+      }
     }
   }
+  initMeters();
 } else if (figma.command === "clippy") {
   figma.showUI(__html__, { width: 400, height: 600 });
   clippyRefresh();

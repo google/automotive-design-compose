@@ -19,7 +19,7 @@
 // Example:
 // `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf`
 // or
-// `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill``
+// `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
 use clap::Parser;
 use figma_import::load_design_doc;

@@ -527,15 +527,12 @@ private fun searchNodes(
     q: NodeQuery,
     nodes: Map<NodeQuery, View>,
     parentViewMap: HashMap<String, HashMap<String, View>>,
-    variantPropertyMap: VariantPropertyMap
+    variantPropertyMap: VariantPropertyMap,
+    customizations: CustomizationContext? = null,
 ): View? {
-    nodes[q]?.let {
-        return it
-    }
-
-    if (q is NodeQuery.NodeVariant) {
-        val nodeName = q.field0
-        val componentSetName = q.field1
+    val findVariantView: (NodeQuery.NodeVariant) -> View? = { query ->
+        val nodeName = query.field0
+        val componentSetName = query.field1
         val variantViewMap = parentViewMap[componentSetName]
         if (variantViewMap != null) {
             // Using the properties and variant names in the node name, try to find a view that
@@ -546,7 +543,38 @@ private fun searchNodes(
                     componentSetName,
                     variantViewMap
                 )
-            if (view != null) return view
+            view
+        } else {
+            null
+        }
+    }
+
+    if (q is NodeQuery.NodeName) {
+        // If the node query is by name, but there are variant properties set, check for a variant
+        // view with a node name generated from the variant properties and a component set name
+        // from the node query. This is a common scenario when a @DesignComponent function specifies
+        // a component set with @DesignVariant parameters to set which variant to use.
+        customizations?.variantProperties?.let { properties ->
+            if (properties.isNotEmpty()) {
+                val nodeNames: ArrayList<String> = arrayListOf()
+                properties.forEach { nodeNames.add("${it.key}=${it.value}") }
+                val nodeName = nodeNames.joinToString(",")
+                val view = findVariantView(NodeQuery.NodeVariant(nodeName, q.value))
+                view?.let { v ->
+                    return v
+                }
+            }
+        }
+    }
+
+    nodes[q]?.let {
+        return it
+    }
+
+    if (q is NodeQuery.NodeVariant) {
+        val view = findVariantView(q)
+        view?.let { v ->
+            return v
         }
     }
 
@@ -570,7 +598,8 @@ private fun searchNodes(
 internal fun InteractionState.rootNode(
     initialNode: NodeQuery,
     doc: DocContent,
-    isRoot: Boolean
+    isRoot: Boolean,
+    customizations: CustomizationContext,
 ): View? {
     val findRootNode = {
         if (isRoot) {
@@ -587,7 +616,13 @@ internal fun InteractionState.rootNode(
         navOverlaySubscriptions.add(updateQuery)
         onDispose { navOverlaySubscriptions.remove(updateQuery) }
     }
-    return searchNodes(query, doc.c.document.views, doc.c.variantViewMap, doc.c.variantPropertyMap)
+    return searchNodes(
+        query,
+        doc.c.document.views,
+        doc.c.variantViewMap,
+        doc.c.variantPropertyMap,
+        customizations
+    )
 }
 
 @Composable

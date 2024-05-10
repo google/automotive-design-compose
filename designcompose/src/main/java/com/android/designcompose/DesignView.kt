@@ -399,7 +399,8 @@ internal fun DesignView(
                     }
                 )
             val isRoot = LocalDesignIsRootContext.current.isRoot
-            val variantView = interactionState.rootNode(variantNodeQuery, document, isRoot)
+            val variantView =
+                interactionState.rootNode(variantNodeQuery, document, isRoot, customizations)
             if (variantView != null) {
                 view = variantView
                 variantView.component_info.ifPresent { variantParentName = it.component_set_name }
@@ -1022,7 +1023,7 @@ internal fun DesignDocInternal(
             else -> ""
         }
 
-    val variantParentName =
+    var variantParentName =
         when (rootNodeQuery) {
             is NodeQuery.NodeVariant -> rootNodeQuery.field1
             else -> ""
@@ -1061,7 +1062,7 @@ internal fun DesignDocInternal(
 
     // Reset the isRendered flag, only set it back to true if the DesignView properly displays
     if (doc != null) {
-        val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot)
+        val startFrame = interactionState.rootNode(rootNodeQuery, doc, isRoot, customizations)
         if (startFrame != null) {
             LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
             CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
@@ -1085,6 +1086,14 @@ internal fun DesignDocInternal(
                         LocalParentLayoutInfo.current
                     }
                 DesignParentLayout(designViewParentLayout) {
+                    if (startFrame.component_info.isPresent) {
+                        // If this view is a variant but variantParentName was not set, set it here.
+                        // This could happen if a node is replaced via component replacement with a
+                        // variant of a component set.
+                        val compInfo = startFrame.component_info.get()
+                        if (variantParentName.isEmpty() && compInfo.component_set_name.isNotEmpty())
+                            variantParentName = compInfo.component_set_name
+                    }
                     DesignView(
                         modifier.semantics { sDocRenderStatus = docRenderStatus },
                         startFrame,

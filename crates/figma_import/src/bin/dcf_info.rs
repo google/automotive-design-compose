@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Utility program to parse a .dcf file and print out the header and version info for the file.
+// Utility program to parse a .dcf file and print its contents.
+// By default prints the header and file info.
+// Provide the optional `--dump` switch to dump the entire file contents.
 
-use bincode::Options;
 use clap::Parser;
-use figma_import::{SerializedDesignDoc, SerializedDesignDocHeader};
+use figma_import::load_design_doc;
 
 #[derive(Debug)]
 struct ParseError(String);
@@ -32,54 +33,52 @@ impl From<std::io::Error> for ParseError {
         ParseError(format!("Error opening file: {:?}", e))
     }
 }
+impl From<figma_import::Error> for ParseError {
+    fn from(e: figma_import::Error) -> Self {
+        ParseError(format!("Figma Import Error: {:?}", e))
+    }
+}
 
 #[derive(Parser, Debug)]
 struct Args {
     // Path to the .dcf file to deserialize
     dcf_file: std::path::PathBuf,
+    // Optional string argument to dump file structure from a given node root.
+    #[clap(long, short)]
+    node: Option<String>,
 }
 
 fn dcf_info(args: Args) -> Result<(), ParseError> {
-    let file_contents = std::fs::read(args.dcf_file)?;
-    let bytes = file_contents.as_slice();
+    let file_path = &args.dcf_file;
+    let node = args.node;
 
-    // Deserialize the header
-    let header: SerializedDesignDocHeader = bincode::deserialize(bytes)?;
-    let header_size = bincode::serialized_size(&header)? as usize;
-
-    println!("Deserialized header");
-    println!("  DC Version: {}", header.version);
-
-    let current_version = SerializedDesignDocHeader::current().version;
-    if header.version != current_version {
-        println!(
-            "Header version {} does not match current version {}, aborting",
-            header.version, current_version
-        );
-        return Err(ParseError("Version mismatch".to_string()));
-    }
-
-    // Deserialize the document
-    let doc: SerializedDesignDoc = bincode::Options::deserialize(
-        bincode::Options::with_limit(
-            bincode::config::DefaultOptions::new().with_fixint_encoding().allow_trailing_bytes(),
-            100 * 1024 * 1024, // Max 100MB
-        ),
-        &bytes[header_size..],
-    )?;
+    let (header, doc) = load_design_doc(file_path)?;
 
     println!("Deserialized file");
+    println!("  Header Version: {}", header.version);
     println!("  Doc ID: {}", doc.id);
     println!("  Figma Version: {}", doc.version);
     println!("  Name: {}", doc.name);
     println!("  Last Modified: {}", doc.last_modified);
+
+    if let Some(node) = node {
+        println!("Dumping file from node: {}:", node);
+        if let Some(view) = doc.views.get(&figma_import::NodeQuery::name(&node)) {
+            // NOTE: uses format and Debug implementation to pretty print the node and all children.
+            // See: https://doc.rust-lang.org/std/fmt/#usage
+            println!("{:#?}", view);
+        } else {
+            return Err(ParseError(format!("Node: {} not found in document.", node)));
+        }
+    }
+
     Ok(())
 }
 
 fn main() {
     let args = Args::parse();
     if let Err(e) = dcf_info(args) {
-        eprintln!("dcf_info failed: {:?}", e);
+        eprintln!("dcf_info failed: {:#?}", e);
         std::process::exit(1);
     }
 }

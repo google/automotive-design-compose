@@ -14,7 +14,12 @@
 
 // Utility program to parse a .dcf file and print its contents.
 // By default prints the header and file info.
-// Provide the optional `--dump` switch to dump the entire file contents.
+// Provide the optional `--node` or `-n` switch to dump figma document using
+// that node as root.
+// Example:
+// `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf`
+// or
+// `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill``
 
 use clap::Parser;
 use figma_import::load_design_doc;

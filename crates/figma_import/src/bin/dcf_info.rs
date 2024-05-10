@@ -78,7 +78,7 @@ fn dcf_info(args: Args) -> Result<(), ParseError> {
 fn main() {
     let args = Args::parse();
     if let Err(e) = dcf_info(args) {
-        eprintln!("dcf_info failed: {:#?}", e);
+        eprintln!("dcf_info failed: {:?}", e);
         std::process::exit(1);
     }
 }

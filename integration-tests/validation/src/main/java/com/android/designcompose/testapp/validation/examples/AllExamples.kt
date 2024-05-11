@@ -94,4 +94,17 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Shared Customization", { ModuleExample() }, ModuleExampleDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
+
+        // Rendering parity tests. Largely static views of standard test document nodes.
+        // TODO: should changes be here?
+        // TODO: is it possible to specify the document and node name here? (rather than hard coding them elsewhere)?
+        //Triple("Layout Test Stage Node", { StaticDocument() }, StaticDocumentDoc.javaClass.name),
+        Triple("Layout Test Stage Node", { StaticDocument("Gv63fYTzpeH2ZtxP4go31E", "#stage") }, StaticDocumentDoc.javaClass.name),
+        Triple("Layout Test Stuff Node", { StaticDocument("Gv63fYTzpeH2ZtxP4go31E", "#stage-stuff") }, StaticDocumentDoc.javaClass.name),
+        Triple("Layout Test Child Node", { StaticDocument("Gv63fYTzpeH2ZtxP4go31E", "#stage-children") }, StaticDocumentDoc.javaClass.name),
+        Triple("Layout Test Rotations Node", { StaticDocument("Gv63fYTzpeH2ZtxP4go31E", "#stage-rotations") }, StaticDocumentDoc.javaClass.name),
+        Triple("Layout Test Constraints Node", { StaticDocument("Gv63fYTzpeH2ZtxP4go31E", "#stage-constraintes") }, StaticDocumentDoc.javaClass.name),
+        Triple("Layout Test Line Node", { StaticDocument("Gv63fYTzpeH2ZtxP4go31E", "#stageline") }, StaticDocumentDoc.javaClass.name),
+        Triple("Blendmode Test Stage Node", { StaticDocument("ZqX5i5g6inv9tANIwMMXUV", "#stage") }, StaticDocumentDoc.javaClass.name),
+        //Triple("Layout Test AutoLayout Node", { StaticDocument("JIjE9oKQbq8ipi66ab5UaK", "#AutoLayout") }, StaticDocumentDoc.javaClass.name),
     )

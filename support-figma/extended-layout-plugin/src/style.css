@@ -278,3 +278,15 @@ a:active {
   color: #00A0DF;
   text-decoration: none;
 }
+
+/* Progress bar/marker horizontal/vertical box */
+.directionbox {
+  width: 44;
+  height: 22;
+  display: flex;
+  border: 1px solid #E6E6E600;
+}
+
+.directionbox:hover {
+  border: 1px solid #E6E6E6FF;
+}

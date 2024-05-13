@@ -12,5 +12,6 @@
       "https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css"
     ],
     "reasoning": "The widget uses the stylesheet from https://github.com/thomas-lowry/figma-plugin-ds to make the UI consistent with the rest of the Figma UI (https://www.figma.com/plugin-docs/figma-components/)."
-  }
+  },
+  "documentAccess": "dynamic-page"
 }

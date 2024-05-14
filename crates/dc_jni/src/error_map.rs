@@ -21,11 +21,11 @@ use ureq::ErrorKind;
 
 pub fn map_err_to_exception(
     env: &mut JNIEnv,
-    err: &figma_import::Error,
+    err: &crate::error::Error,
     doc_id: String,
 ) -> Result<(), jni::errors::Error> {
     match err {
-        NetworkError(network_error) => {
+        crate::error::Error::FigmaImportError(NetworkError(network_error)) => {
             error!("Network Error: {}, {}", err, err.source().unwrap().to_string());
 
             match network_error {

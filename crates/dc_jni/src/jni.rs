@@ -17,6 +17,7 @@ use std::ffi::c_void;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use crate::error::{throw_basic_exception, Error};
 use crate::error_map::map_err_to_exception;
 use android_logger::Config;
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
@@ -58,12 +59,6 @@ fn manager(id: i32) -> Option<Arc<Mutex<LayoutManager>>> {
     }
 }
 
-fn throw_basic_exception(env: &mut JNIEnv, msg: String) {
-    // An error occurring while trying to throw an exception shouldn't happen,
-    // but let's at least panic with a decent error message
-    env.throw(msg).expect("Error while trying to throw Exception");
-}
-
 fn get_string(env: &mut JNIEnv, obj: &JObject) -> Option<String> {
     match env.get_string(obj.into()) {
         Ok(it) => Some(it.into()),
@@ -95,16 +90,16 @@ fn jni_fetch_doc<'local>(
 ) -> JByteArray<'local> {
     let doc_id: String = match env.get_string(&jdoc_id) {
         Ok(it) => it.into(),
-        Err(_) => {
-            throw_basic_exception(&mut env, "Internal JNI Error".to_string());
+        Err(err) => {
+            throw_basic_exception(&mut env, &err);
             return JObject::null().into();
         }
     };
 
     let request_json: String = match env.get_string(&jrequest_json) {
         Ok(it) => it.into(),
-        Err(_) => {
-            throw_basic_exception(&mut env, "Internal JNI Error".to_string());
+        Err(err) => {
+            throw_basic_exception(&mut env, &err);
             return JObject::null().into();
         }
     };
@@ -121,10 +116,13 @@ fn jni_fetch_doc<'local>(
         }
     };
 
-    env.byte_array_from_slice(&ser_result).unwrap_or_else(|_| {
-        throw_basic_exception(&mut env, "Internal JNI Error".to_string());
-        JObject::null().into()
-    })
+    match env.byte_array_from_slice(&ser_result) {
+        Ok(it) => it,
+        Err(err) => {
+            throw_basic_exception(&mut env, &err);
+            JObject::null().into()
+        }
+    }
 }
 
 fn jni_fetch_doc_impl(
@@ -132,11 +130,11 @@ fn jni_fetch_doc_impl(
     doc_id: String,
     request_json: String,
     proxy_config: &ProxyConfig,
-) -> Result<Vec<u8>, figma_import::Error> {
+) -> Result<Vec<u8>, Error> {
     let request: ConvertRequest = serde_json::from_str(&request_json)?;
 
     let convert_result: figma_import::ConvertResponse =
-        match fetch_doc(&doc_id, request, proxy_config) {
+        match fetch_doc(&doc_id, request, proxy_config).map_err(Error::from) {
             Ok(it) => it,
             Err(err) => {
                 map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
@@ -151,15 +149,14 @@ fn layout_response_to_bytearray<'local>(
     mut env: JNIEnv<'local>,
     layout_response: &LayoutChangedResponse,
 ) -> JByteArray<'local> {
-    let bytes: Result<Vec<u8>, figma_import::Error> =
-        bincode::serialize(layout_response).map_err(|e| e.into());
+    let bytes: Result<Vec<u8>, Error> = bincode::serialize(layout_response).map_err(|e| e.into());
     match bytes {
         Ok(bytes) => env.byte_array_from_slice(&bytes).unwrap_or_else(|_| {
-            throw_basic_exception(&mut env, "Internal JNI Error".to_string());
+            throw_basic_exception(&mut env, &Error::GenericError("Internal JNI Error".to_string()));
             JObject::null().into()
         }),
-        Err(_err) => {
-            throw_basic_exception(&mut env, "Layout serialization error".to_string());
+        Err(err) => {
+            throw_basic_exception(&mut env, &err);
             JObject::null().into()
         }
     }
@@ -185,7 +182,10 @@ fn jni_set_node_size<'local>(
             mgr.set_node_size(layout_id, root_layout_id, width as u32, height as u32);
         layout_response_to_bytearray(env, &layout_response)
     } else {
-        throw_basic_exception(&mut env, format!("No manager with id {}", manager_id));
+        throw_basic_exception(
+            &mut env,
+            &Error::GenericError(format!("No manager with id {}", manager_id)),
+        );
         JObject::null().into()
     }
 }
@@ -200,58 +200,66 @@ fn jni_add_nodes<'local>(
     let manager = manager(manager_id);
     if let Some(manager_ref) = manager {
         let mut manager = manager_ref.lock().unwrap();
-        let bytes_views = env.convert_byte_array(serialized_views);
-        if let Ok(bytes_views) = bytes_views {
-            let result: Result<LayoutNodeList, Box<bincode::ErrorKind>> =
-                bincode::deserialize(&bytes_views);
-            match result {
-                Ok(node_list) => {
-                    info!(
-                        "jni_add_nodes: {} nodes, layout_id {}",
-                        node_list.layout_nodes.len(),
-                        root_layout_id
-                    );
-                    for node in node_list.layout_nodes.into_iter() {
-                        if node.use_measure_func {
-                            manager.add_style_measure(
-                                node.layout_id,
-                                node.parent_layout_id,
-                                node.child_index,
-                                node.style,
-                                node.name,
-                                java_jni_measure_text,
-                            );
-                        } else {
-                            manager.add_style(
-                                node.layout_id,
-                                node.parent_layout_id,
-                                node.child_index,
-                                node.style,
-                                node.name,
-                                None,
-                                node.fixed_width,
-                                node.fixed_height,
-                            );
+        match env.convert_byte_array(serialized_views) {
+            Ok(bytes_views) => {
+                let result: Result<LayoutNodeList, Box<bincode::ErrorKind>> =
+                    bincode::deserialize(&bytes_views);
+                match result {
+                    Ok(node_list) => {
+                        info!(
+                            "jni_add_nodes: {} nodes, layout_id {}",
+                            node_list.layout_nodes.len(),
+                            root_layout_id
+                        );
+                        for node in node_list.layout_nodes.into_iter() {
+                            if node.use_measure_func {
+                                manager.add_style_measure(
+                                    node.layout_id,
+                                    node.parent_layout_id,
+                                    node.child_index,
+                                    node.style,
+                                    node.name,
+                                    java_jni_measure_text,
+                                );
+                            } else {
+                                manager.add_style(
+                                    node.layout_id,
+                                    node.parent_layout_id,
+                                    node.child_index,
+                                    node.style,
+                                    node.name,
+                                    None,
+                                    node.fixed_width,
+                                    node.fixed_height,
+                                );
+                            }
+                        }
+                        for LayoutParentChildren { parent_layout_id, child_layout_ids } in
+                            &node_list.parent_children
+                        {
+                            manager.update_children(*parent_layout_id, child_layout_ids)
                         }
                     }
-                    for LayoutParentChildren { parent_layout_id, child_layout_ids } in
-                        &node_list.parent_children
-                    {
-                        manager.update_children(*parent_layout_id, child_layout_ids)
+                    Err(e) => {
+                        throw_basic_exception(
+                            &mut env,
+                            &e
+                        );
                     }
                 }
-                Err(e) => {
-                    throw_basic_exception(&mut env, format!("Internal JNI Error: {}", e));
-                }
             }
-        } else {
-            throw_basic_exception(&mut env, format!("Internal JNI Error: {:?}", bytes_views.err()));
+            Err(e) => {
+                throw_basic_exception(&mut env, &e);
+            }
         }
 
         let layout_response = manager.compute_node_layout(root_layout_id);
         layout_response_to_bytearray(env, &layout_response)
     } else {
-        throw_basic_exception(&mut env, format!("No manager with id {}", manager_id));
+        throw_basic_exception(
+            &mut env,
+            &Error::GenericError(format!("No manager with id {}", manager_id)),
+        );
         JObject::null().into()
     }
 }
@@ -270,7 +278,10 @@ fn jni_remove_node<'local>(
         let layout_response = manager.remove_view(layout_id, root_layout_id, compute_layout != 0);
         layout_response_to_bytearray(env, &layout_response)
     } else {
-        throw_basic_exception(&mut env, format!("No manager with id {}", manager_id));
+        throw_basic_exception(
+            &mut env,
+            &Error::GenericError(format!("No manager with id {}", manager_id)),
+        );
         JObject::null().into()
     }
 }

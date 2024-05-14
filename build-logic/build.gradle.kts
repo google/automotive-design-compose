@@ -26,7 +26,8 @@ spotless {
     }
     kotlinGradle { ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle() }
 }
-kotlin { jvmToolchain(libs.versions.jvmToolchain.get().toInt())}
+
+kotlin { jvmToolchain(libs.versions.jvmToolchain.get().toInt()) }
 
 dependencies {
     implementation(libs.android.gradlePlugin)

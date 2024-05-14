@@ -241,10 +241,7 @@ fn jni_add_nodes<'local>(
                         }
                     }
                     Err(e) => {
-                        throw_basic_exception(
-                            &mut env,
-                            &e
-                        );
+                        throw_basic_exception(&mut env, &e);
                     }
                 }
             }

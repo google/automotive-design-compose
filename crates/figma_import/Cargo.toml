@@ -17,39 +17,39 @@ fetch_layout = ["clap"]
 
 
 [dependencies]
-layout = {path="../layout"}
-"ureq" = "2"
-"serde" = { version = "1.0", features = ["derive", "rc"] }
-"serde_json" = "1.0"
-"serde_bytes" = "0.11"
-"bincode" = "1.3"
-"thiserror" = "1.0"
+layout = { path = "../layout" }
+ureq.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_bytes.workspace = true
+bincode.workspace = true
+thiserror.workspace = true
 
-"svgtypes" = "0.15.0"
+svgtypes.workspace = true
 
-unicode-segmentation = "1"
-"image" = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
-"euclid" = { version = "0.20.13", default-features = false, features = ["serde"] }
-"phf" = { version = "0.11", features = ["macros"], optional = true }
+unicode-segmentation.workspace = true
+image.workspace = true
+euclid.workspace = true
+phf = { workspace = true, optional = true }
 
 # layout dependencies
-taffy = "0.3.19"
-lazy_static = "1.4.0"
+taffy.workspace = true
+lazy_static.workspace = true
 
 # reflection dependencies
-"serde-reflection" = { version = "0.3", optional = true }
-"serde-generate" = { version = "0.25.1", optional = true }
-clap = { version = "4.5", features = ["derive"], optional = true }
+serde-reflection = { workspace = true, optional = true }
+serde-generate = { workspace = true, optional = true }
+clap = { workspace = true, optional = true }
 
 # logging
-log = "0.4"
+log.workspace = true
 
 [build-dependencies]
-vergen = { version = "8.3.1", default-features = false, features = ["build", "git", "gitcl"] }
-anyhow = "1.0"
+vergen.workspace = true
+anyhow.workspace = true
 
 [dev-dependencies]
-testdir = "0.9.1"
+testdir.workspace = true
 
 [[bin]]
 name = "reflection"

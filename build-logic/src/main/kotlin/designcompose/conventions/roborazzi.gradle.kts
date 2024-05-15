@@ -33,6 +33,9 @@ project.pluginManager.withPlugin("com.android.base") {
                     maxParallelForks =
                         (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
 
+                    environment("RUST_BACKTRACE", "1")
+                    failFast = true
+
                     testLogging {
                         events("passed", "failed")
                         showExceptions = true

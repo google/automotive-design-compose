@@ -22,6 +22,7 @@ Options:
   -f: Run a basic format of the Kotlin code before testing.
     Won't catch everything but shouldn't cause everything to rebuild either.
   -s: Skip emulator tests
+  -r: Skip Roborazzi tests
   -u: Set Unbundled AAOS path
 Pre-requisites:
     Have \$FIGMA_ACCESS_TOKEN set to your actual Figma token
@@ -31,18 +32,23 @@ END
 }
 
 OPTIND=1 # Reset in case getopts has been used previously in the shell.
-run_emulator_tests=1
+RUN_EMULATOR_TESTS=true
 RUN_FORMAT=false
-while getopts "fsu:" opt; do
+RUN_ROBORAZZI=true
+
+while getopts "fsru:" opt; do
   case "$opt" in
   s)
-    run_emulator_tests=0
+    RUN_EMULATOR_TESTS=false
     ;;
   u)
     ORG_GRADLE_PROJECT_unbundledAAOSDir=$(realpath "${OPTARG}")
     ;;
   f)
     RUN_FORMAT=true
+    ;;
+  r)
+    RUN_ROBORAZZI=false
     ;;
   *)
     usage
@@ -53,6 +59,11 @@ while getopts "fsu:" opt; do
 done
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
+
+if [[ $(uname -s) != "Linux" && $RUN_ROBORAZZI == true ]]; then
+  echo "Roborazzi tests will likely fail on this system. You can disable them with -r. Continue anyway?"
+  read -r
+fi
 
 if [[ -z "$ORG_GRADLE_PROJECT_unbundledAAOSDir" ]]; then
   echo "ORG_GRADLE_PROJECT_unbundledAAOSDir must be set"
@@ -112,7 +123,7 @@ function output_results {
 
 trap output_results EXIT
 
-if [[ $RUN_FORMAT == "true" ]]; then ./gradlew spotlessApply; fi
+if $RUN_FORMAT; then ./gradlew spotlessApply; fi
 
 # The tests:
 # Roughly ordered by importance and speed. Less imporant, but quick, checks can go early.
@@ -134,8 +145,10 @@ run_cmd "Cargo Test" . cargo test --all-targets --all-features
 run_cmd "Main Project: AssembleDebug (quick build smoke check)" . \
   ./gradlew assembleDebug
 
-run_cmd "Main Project: Verify Screenshots" . \
-  ./gradlew verifyRoborazziDebug
+if $RUN_ROBORAZZI; then
+  run_cmd "Main Project: Verify Screenshots" . \
+    ./gradlew verifyRoborazziDebug
+fi
 
 run_cmd "Main Project: Publish" . \
   ./gradlew publishAllPublicationsToLocalDirRepository
@@ -166,7 +179,7 @@ run_cmd "Build widget" support-figma/auto-content-preview-widget \
 run_cmd "Main Project: Test Figma File Fetches" . \
   ./gradlew fetchFigmaFiles
 
-if [[ $run_emulator_tests == 1 ]]; then
+if $RUN_EMULATOR_TESTS; then
   run_cmd "Run AndroidInstrumentedTests on Gradle Managed Devices" . \
     ./gradlew gmdTestStandard -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 fi

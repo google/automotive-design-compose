@@ -38,7 +38,6 @@ import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import androidx.tracing.trace
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
 import com.android.designcompose.serdegen.Dimension
@@ -47,18 +46,12 @@ import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.LayoutChangedResponse
-import com.android.designcompose.serdegen.LayoutNode
-import com.android.designcompose.serdegen.LayoutNodeList
-import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Rect
 import com.android.designcompose.serdegen.Size
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
-import com.novi.bincode.BincodeDeserializer
-import com.novi.bincode.BincodeSerializer
 import java.util.Optional
 import kotlin.math.roundToInt
 
@@ -91,221 +84,6 @@ internal data class TextMeasureData(
         if (autoWidth != other.autoWidth) return false
 
         return true
-    }
-}
-
-internal object LayoutManager {
-    private var managerId: Int = 0
-    private val subscribers: HashMap<Int, (Int) -> Unit> = HashMap()
-    private val layoutsInProgress: HashSet<Int> = HashSet()
-    private var textMeasures: HashMap<Int, TextMeasureData> = HashMap()
-    private var modifiedSizes: HashSet<Int> = HashSet()
-    private var nextLayoutId: Int = 0
-    private var performLayoutComputation: Boolean = false
-    private var density: Float = 1F
-    private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
-    private var layoutCache: HashMap<Int, Layout> = HashMap()
-    private var layoutStateCache: HashMap<Int, Int> = HashMap()
-
-    init {
-        managerId = Jni.jniCreateLayoutManager()
-    }
-
-    internal fun getNextLayoutId(): Int {
-        return ++nextLayoutId
-    }
-
-    internal fun deferComputations() {
-        // Defer layout computations when removing views. This is an optimization to prevent layout
-        // from being calculated after every view unsubscribe. Currently we only defer computations
-        // when performing an navigation interaction that changes the root view.
-        Log.d(TAG, "deferComputations")
-        performLayoutComputation = false
-    }
-
-    private fun resumeComputations() {
-        // Resume layout computations. This happens as soon as we start adding (subscribing) views.
-        performLayoutComputation = true
-    }
-
-    internal fun setDensity(pixelDensity: Float) {
-        Log.i(TAG, "setDensity $pixelDensity")
-        density = pixelDensity
-    }
-
-    internal fun getDensity(): Float {
-        return density
-    }
-
-    internal fun subscribeFrame(
-        layoutId: Int,
-        setLayoutState: (Int) -> Unit,
-        parentLayoutId: Int,
-        childIndex: Int,
-        style: LayoutStyle,
-        name: String,
-    ) {
-        // Frames can have children so call beginLayout() to optimize layout computation until all
-        // children have been added.
-        beginLayout(layoutId)
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, false)
-    }
-
-    internal fun subscribeWithMeasure(
-        layoutId: Int,
-        setLayoutState: (Int) -> Unit,
-        parentLayoutId: Int,
-        rootLayoutId: Int,
-        childIndex: Int,
-        style: LayoutStyle,
-        name: String,
-        textMeasureData: TextMeasureData,
-    ) {
-        textMeasures[layoutId] = textMeasureData
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
-
-        // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
-        // the
-        // text or text style changed when no other nodes changed, we recompute layout
-        computeLayoutIfComplete(layoutId, rootLayoutId)
-    }
-
-    internal fun squooshSetTextMeasureData(layoutId: Int, textMeasureData: TextMeasureData) {
-        textMeasures[layoutId] = textMeasureData
-    }
-
-    internal fun squooshClearTextMeasureData(layoutId: Int) {
-        textMeasures.remove(layoutId)
-    }
-
-    private fun subscribe(
-        layoutId: Int,
-        setLayoutState: (Int) -> Unit,
-        parentLayoutId: Int,
-        childIndex: Int,
-        style: LayoutStyle,
-        name: String,
-        useMeasureFunc: Boolean,
-        fixedWidth: Optional<Int> = Optional.empty(),
-        fixedHeight: Optional<Int> = Optional.empty(),
-    ) {
-        subscribers[layoutId] = setLayoutState
-
-        // Add the node to a list of nodes
-        layoutNodes.add(
-            LayoutNode(
-                layoutId,
-                parentLayoutId,
-                childIndex,
-                style,
-                name,
-                useMeasureFunc,
-                fixedWidth,
-                fixedHeight,
-            )
-        )
-    }
-
-    internal fun unsubscribe(layoutId: Int, rootLayoutId: Int, isWidgetAncestor: Boolean) {
-        subscribers.remove(layoutId)
-        textMeasures.remove(layoutId)
-        layoutCache.remove(layoutId)
-        layoutStateCache.remove(layoutId)
-        modifiedSizes.remove(layoutId)
-
-        // Perform layout computation after removing the node only if performLayoutComputation is
-        // true, or if we are not a widget ancestor. We don't want to compute layout when ancestors
-        // of a widget are removed because this happens constantly in a lazy grid view.
-        val computeLayout = performLayoutComputation && !isWidgetAncestor
-        val responseBytes = Jni.jniRemoveNode(managerId, layoutId, rootLayoutId, computeLayout)
-        handleResponse(responseBytes)
-        if (computeLayout) Log.d(TAG, "Unsubscribe $layoutId, compute layout")
-    }
-
-    private fun beginLayout(layoutId: Int) {
-        // Add a layout ID to a set of IDs that are in progress. As a view recursively calls its
-        // children, this set grows. Each time a view has finished calling its children it calls
-        // finishLayout().
-        layoutsInProgress.add(layoutId)
-        resumeComputations()
-    }
-
-    internal fun finishLayout(layoutId: Int, rootLayoutId: Int) {
-        // Remove a layout ID from the set of IDs that are in progress.
-        layoutsInProgress.remove(layoutId)
-        computeLayoutIfComplete(layoutId, rootLayoutId)
-    }
-
-    // Check if we are ready to compute layout. If layoutId is the same as rootLayoutId, then a root
-    // node has completed adding all of its children and we can compute layout on this root node. If
-    // layoutsInProgress is empty, this could also be true -- or, a node that is the child of a
-    // widget has completed adding all of its children and we can compute layout on the widget
-    // child.
-    private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
-        if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
-            trace(DCTraces.LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE) {
-                val layoutNodeList = LayoutNodeList(layoutNodes, arrayListOf())
-                val nodeListSerializer = BincodeSerializer()
-                layoutNodeList.serialize(nodeListSerializer)
-                val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-                val responseBytes = Jni.jniAddNodes(managerId, rootLayoutId, serializedNodeList)
-                handleResponse(responseBytes)
-                layoutNodes.clear()
-            }
-        }
-    }
-
-    private fun handleResponse(responseBytes: ByteArray?) {
-        if (responseBytes != null) {
-            val deserializer = BincodeDeserializer(responseBytes)
-            val response: LayoutChangedResponse = LayoutChangedResponse.deserialize(deserializer)
-
-            // Add all the layouts to our cache
-            response.changed_layouts.forEach { (layoutId, layout) ->
-                layoutCache[layoutId] = layout
-                layoutStateCache[layoutId] = response.layout_state
-            }
-            notifySubscribers(response.changed_layouts.keys, response.layout_state)
-            if (response.changed_layouts.isNotEmpty())
-                Log.d(
-                    TAG,
-                    "HandleResponse ${response.layout_state}, changed: ${response.changed_layouts.keys}"
-                )
-        } else {
-            Log.d(TAG, "HandleResponse NULL")
-        }
-    }
-
-    internal fun getTextMeasureData(layoutId: Int): TextMeasureData? = textMeasures[layoutId]
-
-    // Ask for the layout for the associated node via JNI
-    internal fun getLayoutWithDensity(layoutId: Int): Layout? =
-        getLayout(layoutId)?.withDensity(density)
-
-    // Ask for the layout for the associated node via JNI
-    internal fun getLayout(layoutId: Int): Layout? = layoutCache[layoutId]
-
-    internal fun getLayoutState(layoutId: Int): Int? = layoutStateCache[layoutId]
-
-    // Tell the Rust layout manager that a node size has changed. In the returned response, get all
-    // the nodes that have changed and notify subscribers of this change.
-    internal fun setNodeSize(layoutId: Int, rootLayoutId: Int, width: Int, height: Int) {
-        modifiedSizes.add(layoutId)
-        val adjustedWidth = (width.toFloat() / density).roundToInt()
-        val adjustedHeight = (height.toFloat() / density).roundToInt()
-        val responseBytes =
-            Jni.jniSetNodeSize(managerId, layoutId, rootLayoutId, adjustedWidth, adjustedHeight)
-        handleResponse(responseBytes)
-    }
-
-    internal fun hasModifiedSize(layoutId: Int): Boolean = modifiedSizes.contains(layoutId)
-
-    // For every node in nodes, inform the subscribers of the new layout ID
-    private fun notifySubscribers(nodes: Set<Int>, layoutState: Int) {
-        for (layoutId in nodes) {
-            val updateLayout = subscribers[layoutId]
-            updateLayout?.let { it.invoke(layoutState) }
-        }
     }
 }
 

@@ -20,10 +20,10 @@ import android.util.Log
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
+import com.android.designcompose.layout.proto.LayoutChangedResponse
 import com.android.designcompose.proto.intoProto
 import com.android.designcompose.proto.intoSerde
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.LayoutParentChildren
@@ -60,8 +60,7 @@ internal object SquooshLayout {
             Jni.jniAddNodes(manager.id, rootLayoutId, serializedNodes) ?: return emptyMap()
         val layoutChangedResponse =
             try {
-                com.android.designcompose.proto.layout.LayoutManager.LayoutChangedResponse
-                    .parseFrom(response)
+                LayoutChangedResponse.parseFrom(response)
             } catch (e: InvalidProtocolBufferException) {
                 // TODO: handle this?
                 throw e

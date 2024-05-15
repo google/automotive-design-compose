@@ -13,69 +13,62 @@
 // limitations under the License.
 
 syntax = "proto3";
-package com.android.designcompose.proto.layout;
+package com.android.designcompose.layout.proto;
+option java_multiple_files = true;
 
-message AlignSelfEnum {
-  enum AlignSelf {
-    UNSPECIFIED = 0;
-    AUTO = 1;
-    FLEX_START = 2;
-    FLEX_END = 3;
-    CENTER = 4;
-    BASELINE = 5;
-    STRETCH = 6;
-  }
-}
-message AlignContentEnum {
-  enum AlignContent {
-    UNSPECIFIED = 0;
-    FLEX_START = 1;
-    FLEX_END = 2;
-    CENTER = 3;
-    STRETCH = 4;
-    SPACE_BETWEEN = 5;
-    SPACE_AROUND = 6;
-  }
-}
-message AlignItemsEnum {
-  enum AlignItems {
-    UNSPECIFIED = 0;
-    FLEX_START = 1;
-    FLEX_END = 2;
-    CENTER = 3;
-    BASELINE = 4;
-    STRETCH = 5;
-  }
+enum AlignSelf {
+  ALIGN_SELF_UNSPECIFIED = 0;
+  ALIGN_SELF_AUTO = 1;
+  ALIGN_SELF_FLEX_START = 2;
+  ALIGN_SELF_FLEX_END = 3;
+  ALIGN_SELF_CENTER = 4;
+  ALIGN_SELF_BASELINE = 5;
+  ALIGN_SELF_STRETCH = 6;
 }
 
-message FlexDirectionEnum {
-  enum FlexDirection {
-    UNSPECIFIED = 0;
-    ROW = 1;
-    COLUMN = 2;
-    ROW_REVERSE = 3;
-    COLUMN_REVERSE = 4;
-    NONE = 5;
-  }
+enum AlignContent {
+  ALIGN_CONTENT_UNSPECIFIED = 0;
+  ALIGN_CONTENT_FLEX_START = 1;
+  ALIGN_CONTENT_FLEX_END = 2;
+  ALIGN_CONTENT_CENTER = 3;
+  ALIGN_CONTENT_STRETCH = 4;
+  ALIGN_CONTENT_SPACE_BETWEEN = 5;
+  ALIGN_CONTENT_SPACE_AROUND = 6;
 }
-message JustifyContentEnum {
-  enum JustifyContent {
-    UNSPECIFIED = 0;
-    FLEX_START = 1;
-    FLEX_END = 2;
-    CENTER = 3;
-    SPACE_BETWEEN = 4;
-    SPACE_AROUND = 5;
-    SPACE_EVENLY = 6;
-  }
+
+enum AlignItems {
+  ALIGN_ITEMS_UNSPECIFIED = 0;
+  ALIGN_ITEMS_FLEX_START = 1;
+  ALIGN_ITEMS_FLEX_END = 2;
+  ALIGN_ITEMS_CENTER = 3;
+  ALIGN_ITEMS_BASELINE = 4;
+  ALIGN_ITEMS_STRETCH = 5;
 }
-message PositionTypeEnum {
-  enum PositionType {
-    UNSPECIFIED = 0;
-    RELATIVE = 1;
-    ABSOLUTE = 2;
-  }
+
+enum FlexDirection {
+  FLEX_DIRECTION_UNSPECIFIED = 0;
+  FLEX_DIRECTION_ROW = 1;
+  FLEX_DIRECTION_COLUMN = 2;
+  FLEX_DIRECTION_ROW_REVERSE = 3;
+  FLEX_DIRECTION_COLUMN_REVERSE = 4;
+  FLEX_DIRECTION_NONE = 5;
 }
+enum JustifyContent {
+  JUSTIFY_CONTENT_UNSPECIFIED = 0;
+  JUSTIFY_CONTENT_FLEX_START = 1;
+  JUSTIFY_CONTENT_FLEX_END = 2;
+  JUSTIFY_CONTENT_CENTER = 3;
+  JUSTIFY_CONTENT_SPACE_BETWEEN = 4;
+  JUSTIFY_CONTENT_SPACE_AROUND = 5;
+  JUSTIFY_CONTENT_SPACE_EVENLY = 6;
+}
+
+enum PositionType {
+  POSITION_TYPE_UNSPECIFIED = 0;
+  POSITION_TYPE_RELATIVE = 1;
+  POSITION_TYPE_ABSOLUTE = 2;
+}
+
 message ItemSpacing {
   message Auto {
     int32 width = 1;

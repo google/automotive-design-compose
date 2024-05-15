@@ -13,9 +13,13 @@
 // limitations under the License.
 
 syntax = "proto3";
-package com.android.designcompose.proto.layout;
+package com.android.designcompose.layout.proto;
+option java_multiple_files = true;
 
-// Basic, common messages
+/** Dimension in Rust is an union-type enum, which are represented in proto by `oneof` structures.
+`oneof` isn't a message type by itself, so in order to re-use the Dimension oneof it needs to go into a
+`DimensionProto` message.
+*/
 
 message DimensionProto {
   oneof Dimension {
@@ -26,10 +30,10 @@ message DimensionProto {
   }
 }
 
-// /* The `Rect` type is generic/templated in Rust, which isn't supported in
-//  * protobuf. Instead we will define individual messages for each type of
-//  * `Rect` that we use.
-//  */
+/* The `Rect` type is generic/templated in Rust, which isn't supported in
+* protobuf. Instead we will define individual messages for each type of
+* `Rect` that we use.
+*/
 
 message DimensionRect {
   DimensionProto start = 1;
@@ -40,7 +44,7 @@ message DimensionRect {
 
 /* The `Size` type is generic/templated in Rust, which isn't supported in
  * protobuf. Instead we will define individual messages for each type of
- * `Rect` that we use.
+ * `Size` that we use.
  */
 
 message FloatSize {

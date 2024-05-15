@@ -19,14 +19,15 @@ package com.android.designcompose
 import android.util.Log
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import androidx.tracing.trace
+import com.android.designcompose.layout.proto.Layout
+import com.android.designcompose.layout.proto.LayoutChangedResponse
+import com.android.designcompose.layout.proto.LayoutNode
+import com.android.designcompose.layout.proto.LayoutStyle
+import com.android.designcompose.layout.proto.layoutNode
+import com.android.designcompose.layout.proto.layoutNodeList
 import com.android.designcompose.proto.intoProto
 import com.android.designcompose.proto.intoSerde
-import com.android.designcompose.proto.layout.LayoutManager
-import com.android.designcompose.proto.layout.LayoutStyleOuterClass
-import com.android.designcompose.proto.layout.LayoutStyleOuterClass.LayoutStyle
-import com.android.designcompose.proto.layout.layoutNode
-import com.android.designcompose.proto.layout.layoutNodeList
-import com.android.designcompose.serdegen.Layout
+import com.android.designcompose.serdegen.Layout as SerdegenLayout
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
@@ -40,8 +41,8 @@ internal object LayoutManager {
     private var nextLayoutId: Int = 0
     private var performLayoutComputation: Boolean = false
     private var density: Float = 1F
-    private var layoutNodes: ArrayList<LayoutManager.LayoutNode> = arrayListOf()
-    private var layoutCache: HashMap<Int, LayoutManager.Layout> = HashMap()
+    private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
+    private var layoutCache: HashMap<Int, Layout> = HashMap()
     private var layoutStateCache: HashMap<Int, Int> = HashMap()
 
     init {
@@ -136,7 +137,7 @@ internal object LayoutManager {
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
         childIndex: Int,
-        style: LayoutStyleOuterClass.LayoutStyle,
+        style: LayoutStyle,
         name: String,
         useMeasureFunc: Boolean,
         fixedWidth: Optional<Int> = Optional.empty(),
@@ -212,7 +213,7 @@ internal object LayoutManager {
         if (responseBytes != null) {
             val response =
                 try {
-                    LayoutManager.LayoutChangedResponse.parseFrom(responseBytes)
+                    LayoutChangedResponse.parseFrom(responseBytes)
                 } catch (e: InvalidProtocolBufferException) {
                     Log.d(TAG, "HandleResponse error")
                     return
@@ -236,11 +237,11 @@ internal object LayoutManager {
     internal fun getTextMeasureData(layoutId: Int): TextMeasureData? = textMeasures[layoutId]
 
     // Ask for the layout for the associated node via JNI
-    internal fun getLayoutWithDensity(layoutId: Int): Layout? =
+    internal fun getLayoutWithDensity(layoutId: Int): SerdegenLayout? =
         getLayout(layoutId)?.withDensity(density)
 
     // Ask for the layout for the associated node via JNI
-    internal fun getLayout(layoutId: Int): Layout? = layoutCache[layoutId]?.intoSerde()
+    internal fun getLayout(layoutId: Int): SerdegenLayout? = layoutCache[layoutId]?.intoSerde()
 
     internal fun getLayoutState(layoutId: Int): Int? = layoutStateCache[layoutId]
 

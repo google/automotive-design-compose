@@ -13,9 +13,10 @@
 // limitations under the License.
 
 syntax = "proto3";
-package com.android.designcompose.proto.layout;
+package com.android.designcompose.layout.proto;
 import "types.proto";
 import "styles.proto";
+option java_multiple_files = true;
 
 message LayoutStyle {
   DimensionRect margin = 1;
@@ -35,10 +36,10 @@ message LayoutStyle {
   float flex_grow = 15;
   float flex_shrink = 16;
   DimensionProto flex_basis = 17;
-  AlignSelfEnum.AlignSelf align_self = 18;
-  AlignContentEnum.AlignContent align_content = 19;
-  AlignItemsEnum.AlignItems align_items = 20;
-  FlexDirectionEnum.FlexDirection flex_direction = 21;
-  JustifyContentEnum.JustifyContent justify_content = 22;
-  PositionTypeEnum.PositionType position_type = 23;
+  AlignSelf align_self = 18;
+  AlignContent align_content = 19;
+  AlignItems align_items = 20;
+  FlexDirection flex_direction = 21;
+  JustifyContent justify_content = 22;
+  PositionType position_type = 23;
 }

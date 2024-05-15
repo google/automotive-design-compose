@@ -16,15 +16,20 @@
 
 package com.android.designcompose.proto
 
-import com.android.designcompose.proto.layout.ItemSpacingKt.auto
-import com.android.designcompose.proto.layout.Styles
-import com.android.designcompose.proto.layout.dimensionProto
-import com.android.designcompose.proto.layout.dimensionRect
-import com.android.designcompose.proto.layout.floatSize
-import com.android.designcompose.proto.layout.itemSpacing
-import com.android.designcompose.proto.layout.layoutNode
-import com.android.designcompose.proto.layout.layoutNodeList
-import com.android.designcompose.proto.layout.layoutParentChildren
+import com.android.designcompose.layout.proto.AlignContent as ProtoAlignContent
+import com.android.designcompose.layout.proto.AlignItems as ProtoAlignItems
+import com.android.designcompose.layout.proto.AlignSelf as ProtoAlignSelf
+import com.android.designcompose.layout.proto.FlexDirection as ProtoFlexDirection
+import com.android.designcompose.layout.proto.ItemSpacingKt.auto
+import com.android.designcompose.layout.proto.JustifyContent as ProtoJustifyContent
+import com.android.designcompose.layout.proto.PositionType as ProtoPositionType
+import com.android.designcompose.layout.proto.dimensionProto
+import com.android.designcompose.layout.proto.dimensionRect
+import com.android.designcompose.layout.proto.floatSize
+import com.android.designcompose.layout.proto.itemSpacing
+import com.android.designcompose.layout.proto.layoutNode
+import com.android.designcompose.layout.proto.layoutNodeList
+import com.android.designcompose.layout.proto.layoutParentChildren
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
@@ -102,72 +107,72 @@ internal fun Size.intoProto() = floatSize {
 
 internal fun AlignSelf.intoProto() =
     when (this) {
-        is AlignSelf.Auto -> Styles.AlignSelfEnum.AlignSelf.AUTO
-        is AlignSelf.FlexStart -> Styles.AlignSelfEnum.AlignSelf.FLEX_START
-        is AlignSelf.FlexEnd -> Styles.AlignSelfEnum.AlignSelf.FLEX_END
-        is AlignSelf.Center -> Styles.AlignSelfEnum.AlignSelf.CENTER
-        is AlignSelf.Baseline -> Styles.AlignSelfEnum.AlignSelf.BASELINE
-        is AlignSelf.Stretch -> Styles.AlignSelfEnum.AlignSelf.STRETCH
+        is AlignSelf.Auto -> ProtoAlignSelf.ALIGN_SELF_AUTO
+        is AlignSelf.FlexStart -> ProtoAlignSelf.ALIGN_SELF_FLEX_START
+        is AlignSelf.FlexEnd -> ProtoAlignSelf.ALIGN_SELF_FLEX_END
+        is AlignSelf.Center -> ProtoAlignSelf.ALIGN_SELF_CENTER
+        is AlignSelf.Baseline -> ProtoAlignSelf.ALIGN_SELF_BASELINE
+        is AlignSelf.Stretch -> ProtoAlignSelf.ALIGN_SELF_STRETCH
         else -> throw IllegalArgumentException("Unknown AlignSelf: $this") // Should never happen.
     }
 
 internal fun AlignContent.intoProto() =
     when (this) {
-        is AlignContent.FlexStart -> Styles.AlignContentEnum.AlignContent.FLEX_START
-        is AlignContent.FlexEnd -> Styles.AlignContentEnum.AlignContent.FLEX_END
-        is AlignContent.Center -> Styles.AlignContentEnum.AlignContent.CENTER
-        is AlignContent.Stretch -> Styles.AlignContentEnum.AlignContent.STRETCH
-        is AlignContent.SpaceBetween -> Styles.AlignContentEnum.AlignContent.SPACE_BETWEEN
-        is AlignContent.SpaceAround -> Styles.AlignContentEnum.AlignContent.SPACE_AROUND
+        is AlignContent.FlexStart -> ProtoAlignContent.ALIGN_CONTENT_FLEX_START
+        is AlignContent.FlexEnd -> ProtoAlignContent.ALIGN_CONTENT_FLEX_END
+        is AlignContent.Center -> ProtoAlignContent.ALIGN_CONTENT_CENTER
+        is AlignContent.Stretch -> ProtoAlignContent.ALIGN_CONTENT_STRETCH
+        is AlignContent.SpaceBetween -> ProtoAlignContent.ALIGN_CONTENT_SPACE_BETWEEN
+        is AlignContent.SpaceAround -> ProtoAlignContent.ALIGN_CONTENT_SPACE_AROUND
         else ->
             throw IllegalArgumentException("Unknown AlignContent: $this") // Should never happen.
     }
 
 internal fun AlignItems.intoProto() =
     when (this) {
-        is AlignItems.FlexStart -> Styles.AlignItemsEnum.AlignItems.FLEX_START
-        is AlignItems.FlexEnd -> Styles.AlignItemsEnum.AlignItems.FLEX_END
-        is AlignItems.Center -> Styles.AlignItemsEnum.AlignItems.CENTER
-        is AlignItems.Baseline -> Styles.AlignItemsEnum.AlignItems.BASELINE
-        is AlignItems.Stretch -> Styles.AlignItemsEnum.AlignItems.STRETCH
+        is AlignItems.FlexStart -> ProtoAlignItems.ALIGN_ITEMS_FLEX_START
+        is AlignItems.FlexEnd -> ProtoAlignItems.ALIGN_ITEMS_FLEX_END
+        is AlignItems.Center -> ProtoAlignItems.ALIGN_ITEMS_CENTER
+        is AlignItems.Baseline -> ProtoAlignItems.ALIGN_ITEMS_BASELINE
+        is AlignItems.Stretch -> ProtoAlignItems.ALIGN_ITEMS_STRETCH
         else ->
             throw IllegalArgumentException("Unknown AlignContent: $this") // Should never happen.
     }
 
 internal fun FlexDirection.intoProto() =
     when (this) {
-        is FlexDirection.Row -> Styles.FlexDirectionEnum.FlexDirection.ROW
-        is FlexDirection.Column -> Styles.FlexDirectionEnum.FlexDirection.COLUMN
-        is FlexDirection.RowReverse -> Styles.FlexDirectionEnum.FlexDirection.ROW_REVERSE
-        is FlexDirection.ColumnReverse -> Styles.FlexDirectionEnum.FlexDirection.COLUMN_REVERSE
-        is FlexDirection.None -> Styles.FlexDirectionEnum.FlexDirection.NONE
+        is FlexDirection.Row -> ProtoFlexDirection.FLEX_DIRECTION_ROW
+        is FlexDirection.RowReverse -> ProtoFlexDirection.FLEX_DIRECTION_ROW_REVERSE
+        is FlexDirection.Column -> ProtoFlexDirection.FLEX_DIRECTION_COLUMN
+        is FlexDirection.ColumnReverse -> ProtoFlexDirection.FLEX_DIRECTION_COLUMN_REVERSE
+        is FlexDirection.None -> ProtoFlexDirection.FLEX_DIRECTION_NONE
         else ->
             throw IllegalArgumentException("Unknown FlexDirection: $this") // Should never happen.
     }
 
 internal fun JustifyContent.intoProto() =
     when (this) {
-        is JustifyContent.FlexStart -> Styles.JustifyContentEnum.JustifyContent.FLEX_START
-        is JustifyContent.FlexEnd -> Styles.JustifyContentEnum.JustifyContent.FLEX_END
-        is JustifyContent.Center -> Styles.JustifyContentEnum.JustifyContent.CENTER
-        is JustifyContent.SpaceBetween -> Styles.JustifyContentEnum.JustifyContent.SPACE_BETWEEN
-        is JustifyContent.SpaceAround -> Styles.JustifyContentEnum.JustifyContent.SPACE_AROUND
-        is JustifyContent.SpaceEvenly -> Styles.JustifyContentEnum.JustifyContent.SPACE_EVENLY
+        is JustifyContent.FlexStart -> ProtoJustifyContent.JUSTIFY_CONTENT_FLEX_START
+        is JustifyContent.FlexEnd -> ProtoJustifyContent.JUSTIFY_CONTENT_FLEX_END
+        is JustifyContent.Center -> ProtoJustifyContent.JUSTIFY_CONTENT_CENTER
+        is JustifyContent.SpaceBetween -> ProtoJustifyContent.JUSTIFY_CONTENT_SPACE_BETWEEN
+        is JustifyContent.SpaceAround -> ProtoJustifyContent.JUSTIFY_CONTENT_SPACE_AROUND
+        is JustifyContent.SpaceEvenly -> ProtoJustifyContent.JUSTIFY_CONTENT_SPACE_EVENLY
         else ->
             throw IllegalArgumentException("Unknown JustifyContent: $this") // Should never happen.
     }
 
 internal fun PositionType.intoProto() =
     when (this) {
-        is PositionType.Relative -> Styles.PositionTypeEnum.PositionType.RELATIVE
-        is PositionType.Absolute -> Styles.PositionTypeEnum.PositionType.ABSOLUTE
+        is PositionType.Relative -> ProtoPositionType.POSITION_TYPE_RELATIVE
+        is PositionType.Absolute -> ProtoPositionType.POSITION_TYPE_ABSOLUTE
         else ->
             throw IllegalArgumentException("Unknown PositionType: $this") // Should never happen.
     }
 
 /** Temporary (I hope) conversion from the Serde layout style to the proto layout style. */
 internal fun LayoutStyle.intoProto() =
-    com.android.designcompose.proto.layout.layoutStyle {
+    com.android.designcompose.layout.proto.layoutStyle {
         val s = this@intoProto
         margin = s.margin.intoProto()
         padding = s.padding.intoProto()

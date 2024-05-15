@@ -14,12 +14,11 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.layout;
+package com.android.designcompose.layout.proto;
 import "layout_style.proto";
+option java_multiple_files = true;
 
-/* Originally from crates/figma_import/src/toolkit_schema.rs
-The final result of a layout algorithm for a single taffy Node
-*/
+// The final result of a layout algorithm for a single taffy Node
 message Layout {
   // Relative ordering of the node. Render nodes with a higher order on top
   // of nodes with lower orde
@@ -30,8 +29,7 @@ message Layout {
   float top = 5;
 }
 
-/* Originally from crates/figma_import/src/layout.rs
-The layout response sent back to client which contains a layout state ID and
+/* The layout response sent back to client which contains a layout state ID and
 a list of layout IDs that have changed.
 */
 message LayoutChangedResponse {

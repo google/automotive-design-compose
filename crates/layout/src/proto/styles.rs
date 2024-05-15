@@ -20,20 +20,6 @@ use super::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };
 
-impl TryFrom<super::AlignItems> for styles::AlignItems {
-    type Error = Error;
-    fn try_from(proto: AlignItems) -> Result<Self, Self::Error> {
-        match proto {
-            AlignItems::FlexStart => Ok(styles::AlignItems::FlexStart),
-            AlignItems::FlexEnd => Ok(styles::AlignItems::FlexEnd),
-            AlignItems::Center => Ok(styles::AlignItems::Center),
-            AlignItems::Baseline => Ok(styles::AlignItems::Baseline),
-            AlignItems::Stretch => Ok(styles::AlignItems::Stretch),
-            _ => Err(UnknownEnumVariant { enum_name: "AlignItems".to_string() }),
-        }
-    }
-}
-
 impl TryFrom<AlignSelf> for styles::AlignSelf {
     type Error = Error;
 
@@ -46,6 +32,20 @@ impl TryFrom<AlignSelf> for styles::AlignSelf {
             AlignSelf::Baseline => Ok(styles::AlignSelf::Baseline),
             AlignSelf::Stretch => Ok(styles::AlignSelf::Stretch),
             _ => Err(UnknownEnumVariant { enum_name: "AlignSelf".to_string() }),
+        }
+    }
+}
+
+impl TryFrom<super::AlignItems> for styles::AlignItems {
+    type Error = Error;
+    fn try_from(proto: AlignItems) -> Result<Self, Self::Error> {
+        match proto {
+            AlignItems::FlexStart => Ok(styles::AlignItems::FlexStart),
+            AlignItems::FlexEnd => Ok(styles::AlignItems::FlexEnd),
+            AlignItems::Center => Ok(styles::AlignItems::Center),
+            AlignItems::Baseline => Ok(styles::AlignItems::Baseline),
+            AlignItems::Stretch => Ok(styles::AlignItems::Stretch),
+            _ => Err(UnknownEnumVariant { enum_name: "AlignItems".to_string() }),
         }
     }
 }

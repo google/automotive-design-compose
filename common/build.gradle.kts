@@ -97,6 +97,7 @@ val serdeGenTask =
 // Connect the outputs to the java source set, so it'll automatically be compiled
 project.sourceSets.main { java { srcDir(serdeGenTask.flatMap { it.generatedCodeDir }) } }
 
+// Protobuf configuration
 project.sourceSets.main {
     proto { srcDir(rootProject.layout.projectDirectory.dir("proto/layout")) }
 }

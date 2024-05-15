@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use std::error::Error;
+use std::path::Path;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut prost_config = prost_build::Config::new();
@@ -21,11 +22,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     prost_config.message_attribute("DimensionProto", "#[derive(Copy)]");
     prost_config.enum_attribute("Dimension", "#[derive(Copy)]");
 
+    let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(Path::parent)
+        .unwrap()
+        .join("proto/layout");
+
     prost_config.compile_protos(
-        &["proto/layout/layout_style.proto", "proto/layout/layout_manager.proto"],
-        &["proto/layout"],
+        &[proto_path.join("layout_style.proto"), proto_path.join("layout_node.proto")],
+        &[&proto_path],
     )?;
 
-    println!("cargo:rerun-if-changed=proto/layout");
+    println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
     Ok(())
 }

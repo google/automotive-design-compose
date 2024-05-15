@@ -12,20 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod layout_manager;
 mod layout_node;
 mod layout_style;
 mod styles;
 mod types;
 
-include!(concat!(env!("OUT_DIR"), "/com.android.designcompose.proto.layout.rs"));
+include!(concat!(env!("OUT_DIR"), "/com.android.designcompose.layout.proto.rs"));
 
-use align_content_enum::AlignContent;
-use align_items_enum::AlignItems;
-use align_self_enum::AlignSelf;
-use flex_direction_enum::FlexDirection;
-use justify_content_enum::JustifyContent;
-use position_type_enum::PositionType;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

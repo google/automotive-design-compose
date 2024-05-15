@@ -16,20 +16,19 @@
 
 package com.android.designcompose.proto
 
-import com.android.designcompose.proto.layout.LayoutManager.Layout
-import com.android.designcompose.proto.layout.LayoutStyleOuterClass
-import com.android.designcompose.proto.layout.Styles
-import com.android.designcompose.proto.layout.Styles.AlignContentEnum.AlignContent
-import com.android.designcompose.proto.layout.Styles.AlignItemsEnum.AlignItems
-import com.android.designcompose.proto.layout.Styles.AlignSelfEnum.AlignSelf
-import com.android.designcompose.proto.layout.Styles.FlexDirectionEnum.FlexDirection
-import com.android.designcompose.proto.layout.Styles.JustifyContentEnum.JustifyContent
-import com.android.designcompose.proto.layout.Styles.PositionTypeEnum.PositionType
-import com.android.designcompose.proto.layout.Types
-import com.android.designcompose.proto.layout.Types.DimensionProto
-import com.android.designcompose.proto.layout.Types.FloatSize
+import com.android.designcompose.layout.proto.AlignContent
+import com.android.designcompose.layout.proto.AlignItems
+import com.android.designcompose.layout.proto.AlignSelf
+import com.android.designcompose.layout.proto.DimensionProto
+import com.android.designcompose.layout.proto.DimensionRect
+import com.android.designcompose.layout.proto.FlexDirection
+import com.android.designcompose.layout.proto.FloatSize
+import com.android.designcompose.layout.proto.ItemSpacing
+import com.android.designcompose.layout.proto.JustifyContent
+import com.android.designcompose.layout.proto.Layout
+import com.android.designcompose.layout.proto.LayoutStyle
+import com.android.designcompose.layout.proto.PositionType
 import com.android.designcompose.serdegen.Dimension
-import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.Rect
 import com.android.designcompose.serdegen.Size
 
@@ -47,14 +46,13 @@ internal fun Layout.intoSerde() =
             throw IllegalArgumentException("Unknown DimensionProto: $this") // Should never happen.
     }
 
-internal fun Types.DimensionRect.intoSerde() =
+internal fun DimensionRect.intoSerde() =
     Rect(start.intoSerde(), end.intoSerde(), top.intoSerde(), bottom.intoSerde())
 
-internal fun Styles.ItemSpacing.intoSerde() =
+internal fun ItemSpacing.intoSerde() =
     when (typeCase) {
-        Styles.ItemSpacing.TypeCase.FIXED ->
-            com.android.designcompose.serdegen.ItemSpacing.Fixed(fixed)
-        Styles.ItemSpacing.TypeCase.AUTO ->
+        ItemSpacing.TypeCase.FIXED -> com.android.designcompose.serdegen.ItemSpacing.Fixed(fixed)
+        ItemSpacing.TypeCase.AUTO ->
             com.android.designcompose.serdegen.ItemSpacing.Auto(auto.width, auto.height)
         else -> throw IllegalArgumentException("Unknown ItemSpacing: $this") // Should never happen.
     }
@@ -63,42 +61,51 @@ internal fun FloatSize.intoSerde() = Size(width, height)
 
 internal fun AlignSelf.intoSerde() =
     when (this) {
-        AlignSelf.AUTO -> com.android.designcompose.serdegen.AlignSelf.Auto()
-        AlignSelf.FLEX_START -> com.android.designcompose.serdegen.AlignSelf.FlexStart()
-        AlignSelf.FLEX_END -> com.android.designcompose.serdegen.AlignSelf.FlexEnd()
-        AlignSelf.CENTER -> com.android.designcompose.serdegen.AlignSelf.Center()
-        AlignSelf.BASELINE -> com.android.designcompose.serdegen.AlignSelf.Baseline()
-        AlignSelf.STRETCH -> com.android.designcompose.serdegen.AlignSelf.Stretch()
+        AlignSelf.ALIGN_SELF_AUTO -> com.android.designcompose.serdegen.AlignSelf.Auto()
+        AlignSelf.ALIGN_SELF_FLEX_START -> com.android.designcompose.serdegen.AlignSelf.FlexStart()
+        AlignSelf.ALIGN_SELF_FLEX_END -> com.android.designcompose.serdegen.AlignSelf.FlexEnd()
+        AlignSelf.ALIGN_SELF_CENTER -> com.android.designcompose.serdegen.AlignSelf.Center()
+        AlignSelf.ALIGN_SELF_BASELINE -> com.android.designcompose.serdegen.AlignSelf.Baseline()
+        AlignSelf.ALIGN_SELF_STRETCH -> com.android.designcompose.serdegen.AlignSelf.Stretch()
         else -> throw IllegalArgumentException("Unknown AlignSelf: $this") // Should never happen
     }
 
 internal fun AlignContent.intoSerde() =
     when (this) {
-        AlignContent.FLEX_START -> com.android.designcompose.serdegen.AlignContent.FlexStart()
-        AlignContent.FLEX_END -> com.android.designcompose.serdegen.AlignContent.FlexEnd()
-        AlignContent.CENTER -> com.android.designcompose.serdegen.AlignContent.Center()
-        AlignContent.STRETCH -> com.android.designcompose.serdegen.AlignContent.Stretch()
-        AlignContent.SPACE_BETWEEN -> com.android.designcompose.serdegen.AlignContent.SpaceBetween()
-        AlignContent.SPACE_AROUND -> com.android.designcompose.serdegen.AlignContent.SpaceAround()
+        AlignContent.ALIGN_CONTENT_FLEX_START ->
+            com.android.designcompose.serdegen.AlignContent.FlexStart()
+        AlignContent.ALIGN_CONTENT_FLEX_END ->
+            com.android.designcompose.serdegen.AlignContent.FlexEnd()
+        AlignContent.ALIGN_CONTENT_CENTER ->
+            com.android.designcompose.serdegen.AlignContent.Center()
+        AlignContent.ALIGN_CONTENT_STRETCH ->
+            com.android.designcompose.serdegen.AlignContent.Stretch()
+        AlignContent.ALIGN_CONTENT_SPACE_BETWEEN ->
+            com.android.designcompose.serdegen.AlignContent.SpaceBetween()
+        AlignContent.ALIGN_CONTENT_SPACE_AROUND ->
+            com.android.designcompose.serdegen.AlignContent.SpaceAround()
         else -> throw IllegalArgumentException("Unknown AlignContent: $this") // Should never happen
     }
 
 internal fun AlignItems.intoSerde() =
     when (this) {
-        AlignItems.FLEX_START -> com.android.designcompose.serdegen.AlignItems.FlexStart()
-        AlignItems.FLEX_END -> com.android.designcompose.serdegen.AlignItems.FlexEnd()
-        AlignItems.CENTER -> com.android.designcompose.serdegen.AlignItems.Center()
-        AlignItems.BASELINE -> com.android.designcompose.serdegen.AlignItems.Baseline()
-        AlignItems.STRETCH -> com.android.designcompose.serdegen.AlignItems.Stretch()
+        AlignItems.ALIGN_ITEMS_FLEX_START ->
+            com.android.designcompose.serdegen.AlignItems.FlexStart()
+        AlignItems.ALIGN_ITEMS_FLEX_END -> com.android.designcompose.serdegen.AlignItems.FlexEnd()
+        AlignItems.ALIGN_ITEMS_CENTER -> com.android.designcompose.serdegen.AlignItems.Center()
+        AlignItems.ALIGN_ITEMS_BASELINE -> com.android.designcompose.serdegen.AlignItems.Baseline()
+        AlignItems.ALIGN_ITEMS_STRETCH -> com.android.designcompose.serdegen.AlignItems.Stretch()
         else -> throw IllegalArgumentException("Unknown AlignItems: $this") // Should never happen
     }
 
 internal fun FlexDirection.intoSerde() =
     when (this) {
-        FlexDirection.ROW -> com.android.designcompose.serdegen.FlexDirection.Row()
-        FlexDirection.COLUMN -> com.android.designcompose.serdegen.FlexDirection.Column()
-        FlexDirection.ROW_REVERSE -> com.android.designcompose.serdegen.FlexDirection.RowReverse()
-        FlexDirection.COLUMN_REVERSE ->
+        FlexDirection.FLEX_DIRECTION_ROW -> com.android.designcompose.serdegen.FlexDirection.Row()
+        FlexDirection.FLEX_DIRECTION_COLUMN ->
+            com.android.designcompose.serdegen.FlexDirection.Column()
+        FlexDirection.FLEX_DIRECTION_ROW_REVERSE ->
+            com.android.designcompose.serdegen.FlexDirection.RowReverse()
+        FlexDirection.FLEX_DIRECTION_COLUMN_REVERSE ->
             com.android.designcompose.serdegen.FlexDirection.ColumnReverse()
         else ->
             throw IllegalArgumentException("Unknown FlexDirection: $this") // Should never happen
@@ -106,14 +113,17 @@ internal fun FlexDirection.intoSerde() =
 
 internal fun JustifyContent.intoSerde() =
     when (this) {
-        JustifyContent.FLEX_START -> com.android.designcompose.serdegen.JustifyContent.FlexStart()
-        JustifyContent.FLEX_END -> com.android.designcompose.serdegen.JustifyContent.FlexEnd()
-        JustifyContent.CENTER -> com.android.designcompose.serdegen.JustifyContent.Center()
-        JustifyContent.SPACE_BETWEEN ->
+        JustifyContent.JUSTIFY_CONTENT_FLEX_START ->
+            com.android.designcompose.serdegen.JustifyContent.FlexStart()
+        JustifyContent.JUSTIFY_CONTENT_FLEX_END ->
+            com.android.designcompose.serdegen.JustifyContent.FlexEnd()
+        JustifyContent.JUSTIFY_CONTENT_CENTER ->
+            com.android.designcompose.serdegen.JustifyContent.Center()
+        JustifyContent.JUSTIFY_CONTENT_SPACE_BETWEEN ->
             com.android.designcompose.serdegen.JustifyContent.SpaceBetween()
-        JustifyContent.SPACE_AROUND ->
+        JustifyContent.JUSTIFY_CONTENT_SPACE_AROUND ->
             com.android.designcompose.serdegen.JustifyContent.SpaceAround()
-        JustifyContent.SPACE_EVENLY ->
+        JustifyContent.JUSTIFY_CONTENT_SPACE_EVENLY ->
             com.android.designcompose.serdegen.JustifyContent.SpaceEvenly()
         else ->
             throw IllegalArgumentException("Unknown JustifyContent: $this") // Should never happen
@@ -121,14 +131,16 @@ internal fun JustifyContent.intoSerde() =
 
 internal fun PositionType.intoSerde() =
     when (this) {
-        PositionType.RELATIVE -> com.android.designcompose.serdegen.PositionType.Relative()
-        PositionType.ABSOLUTE -> com.android.designcompose.serdegen.PositionType.Absolute()
+        PositionType.POSITION_TYPE_RELATIVE ->
+            com.android.designcompose.serdegen.PositionType.Relative()
+        PositionType.POSITION_TYPE_ABSOLUTE ->
+            com.android.designcompose.serdegen.PositionType.Absolute()
         else -> throw IllegalArgumentException("Unknown PositionType: $this") // Should never happen
     }
 
 /** Temporary (I hope) conversion from the Proto layout style to the Serde layout style. */
-internal fun LayoutStyleOuterClass.LayoutStyle.intoSerde() =
-    LayoutStyle(
+internal fun LayoutStyle.intoSerde() =
+    com.android.designcompose.serdegen.LayoutStyle(
         margin.intoSerde(),
         padding.intoSerde(),
         itemSpacing.intoSerde(),

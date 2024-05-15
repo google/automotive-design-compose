@@ -97,6 +97,7 @@ internal fun createNewFile(
 
     file += "import com.android.designcompose.annotation.DesignMetaKey\n"
     file += "import com.android.designcompose.serdegen.NodeQuery\n"
+    file += "import com.android.designcompose.common.DesignDocId\n"
     file += "import com.android.designcompose.common.DocumentServerParams\n"
     file += "import com.android.designcompose.ComponentReplacementContext\n"
     file += "import com.android.designcompose.ImageReplacementContext\n"

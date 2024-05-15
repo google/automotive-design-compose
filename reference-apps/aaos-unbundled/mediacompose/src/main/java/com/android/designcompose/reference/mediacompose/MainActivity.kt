@@ -68,7 +68,7 @@ enum class NavButtonType {
 // Media 4 5n0LhOQ6wOiDxrH0YUVhJS
 // Media 5 dui99iAKZ273s7RN11Z9Ak
 // Media Nova 2DQtQOf6U26mA8dqBie3gT
-@DesignDoc(id = "7rvM6aVWe0jZCm7jhO9ITx", version = "0.1")
+@DesignDoc(id = "7rvM6aVWe0jZCm7jhO9ITx", customizationInterfaceVersion = "0.1")
 interface CenterDisplay {
     @DesignComponent(node = "#stage", isRoot = true)
     fun MainFrame(

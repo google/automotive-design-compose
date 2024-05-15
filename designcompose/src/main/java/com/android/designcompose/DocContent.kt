@@ -19,6 +19,7 @@ package com.android.designcompose
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.tracing.trace
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.GenericDocContent
 import com.android.designcompose.common.decodeDiskBaseDoc
@@ -90,7 +91,7 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
 fun decodeDiskDoc(
     docStream: InputStream,
     previousDoc: DocContent?,
-    docId: String,
+    docId: DesignDocId,
     feedback: FeedbackImpl
 ): DocContent? {
     var docContent: DocContent? = null
@@ -104,7 +105,7 @@ fun decodeDiskDoc(
 fun decodeServerDoc(
     docBytes: ByteArray,
     previousDoc: DocContent?,
-    docId: String,
+    docId: DesignDocId,
     save: File?,
     feedback: FeedbackImpl
 ): DocContent? {

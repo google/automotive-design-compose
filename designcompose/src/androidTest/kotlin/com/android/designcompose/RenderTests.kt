@@ -21,6 +21,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.test.assertDCRenderStatus
 import com.android.designcompose.test.onDCDoc
 import kotlin.test.assertNotNull
@@ -32,7 +33,12 @@ import org.junit.Test
 @Preview
 @Composable
 fun DesignSwitcherDeadbeef() {
-    DesignSwitcher(doc = null, currentDocId = "DEADBEEF", branchHash = null, setDocId = {})
+    DesignSwitcher(
+        doc = null,
+        currentDocId = DesignDocId("DEADBEEF"),
+        branchHash = null,
+        setDocId = {}
+    )
 }
 
 /**
@@ -82,7 +88,7 @@ class RenderTests {
                 .assertExists()
         }
         // It was not loaded from disk and did not render
-        with(DesignSettings.testOnlyFigmaFetchStatus(helloWorldDocId)) {
+        with(DesignSettings.testOnlyFigmaFetchStatus(DesignDocId(helloWorldDocId))) {
             assertNotNull(this)
             assertNull(lastLoadFromDisk)
             assertNull(lastFetch)

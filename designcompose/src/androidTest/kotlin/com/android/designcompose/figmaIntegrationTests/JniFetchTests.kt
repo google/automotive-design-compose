@@ -23,6 +23,7 @@ import com.android.designcompose.FigmaFileNotFoundException
 import com.android.designcompose.Jni
 import com.android.designcompose.LiveUpdate
 import com.android.designcompose.ProxyConfig
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.constructPostJson
 import com.android.designcompose.decodeServerDoc
@@ -63,16 +64,16 @@ class JniFetchTests {
     @Test
     fun invalidDocId() {
         assertFailsWith<FigmaFileNotFoundException> {
-            Jni.jniFetchDoc("InvalidDocID", firstFetchJson, ProxyConfig())
+            Jni.jniFetchDoc("InvalidDocID", "", firstFetchJson, ProxyConfig())
         }
     }
 
     private fun testFetch(docID: String) {
-        with(LiveUpdate.fetchDocBytes(docID, firstFetchJson, ProxyConfig())) {
+        with(LiveUpdate.fetchDocBytes(DesignDocId(docID), firstFetchJson, ProxyConfig())) {
             assertNotNull(this)
-            val decodedDoc = decodeServerDoc(this, null, docID, null, Feedback)
+            val decodedDoc = decodeServerDoc(this, null, DesignDocId(docID), null, Feedback)
             assertNotNull(decodedDoc)
-            assertEquals(decodedDoc.c.docId, docID)
+            assertEquals(decodedDoc.c.docId.id, docID)
         }
     }
 
@@ -94,7 +95,7 @@ class JniFetchTests {
     @Test
     fun invalidToken() {
         assertFailsWith(AccessDeniedException::class) {
-            Jni.jniFetchDoc("DummyDocId", dummyFigmaTokenJson, ProxyConfig())
+            Jni.jniFetchDoc("DummyDocId", "", dummyFigmaTokenJson, ProxyConfig())
         }
     }
 }

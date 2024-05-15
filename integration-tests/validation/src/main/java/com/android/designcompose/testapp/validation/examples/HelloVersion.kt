@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Google LLC
+ * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,33 @@
 
 package com.android.designcompose.testapp.validation.examples
 
+import android.util.Log
 import androidx.compose.runtime.Composable
-import com.android.designcompose.DesignDocOverride
+import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
-import com.android.designcompose.common.DesignDocId
 
-// Hello World with override to change doc ID
-@DesignDoc(id = "pxVlixodJqZL95zo2RzTHl")
-interface HelloBye {
+@DesignDoc(id = "v62Vwlxa4Bb6nopJiAxQAQ", designVersion = "5668177823")
+interface HelloVersion {
     @DesignComponent(node = "#MainFrame") fun Main(@Design(node = "#Name") name: String)
 }
 
 @Composable
-fun HelloBye() {
-    DesignDocOverride(DesignDocId("MCHaMYcIEnRpbvU9Ms7a0o")) { HelloByeDoc.Main(name = "World") }
+fun HelloVersion() {
+    HelloVersionDoc.Main(
+        name = "Version",
+        designComposeCallbacks =
+            DesignComposeCallbacks(
+                docReadyCallback = { id ->
+                    Log.i("DesignCompose", "HelloWorld Ready: doc ID = $id")
+                },
+                newDocDataCallback = { docId, data ->
+                    Log.i(
+                        "DesignCompose",
+                        "HelloWorld Updated doc ID $docId: ${data?.size ?: 0} bytes"
+                    )
+                },
+            )
+    )
 }

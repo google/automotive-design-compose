@@ -16,12 +16,18 @@
 
 package com.android.designcompose
 
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.serdegen.ConvertResponse
 import com.novi.bincode.BincodeDeserializer
 
 internal object LiveUpdate {
-    fun fetchDocBytes(docId: String, requestJson: String, proxyConfig: ProxyConfig): ByteArray? {
-        val serializedResponse: ByteArray = Jni.tracedJnifetchdoc(docId, requestJson, proxyConfig)
+    fun fetchDocBytes(
+        docId: DesignDocId,
+        requestJson: String,
+        proxyConfig: ProxyConfig
+    ): ByteArray? {
+        val serializedResponse: ByteArray =
+            Jni.tracedJnifetchdoc(docId.id, docId.versionId, requestJson, proxyConfig)
         val deserializer = BincodeDeserializer(serializedResponse)
         val convResp = ConvertResponse.deserialize(deserializer)
         if (convResp is ConvertResponse.Document) return convResp.value.toByteArray()

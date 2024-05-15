@@ -90,10 +90,19 @@ fn jni_fetch_doc<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
     jdoc_id: JString,
+    jversion_id: JString,
     jrequest_json: JString,
     jproxy_config: JObject,
 ) -> JByteArray<'local> {
     let doc_id: String = match env.get_string(&jdoc_id) {
+        Ok(it) => it.into(),
+        Err(_) => {
+            throw_basic_exception(&mut env, "Internal JNI Error".to_string());
+            return JObject::null().into();
+        }
+    };
+
+    let version_id: String = match env.get_string(&jversion_id) {
         Ok(it) => it.into(),
         Err(_) => {
             throw_basic_exception(&mut env, "Internal JNI Error".to_string());
@@ -114,12 +123,13 @@ fn jni_fetch_doc<'local>(
         Err(_) => ProxyConfig::None,
     };
 
-    let ser_result = match jni_fetch_doc_impl(&mut env, doc_id, request_json, &proxy_config) {
-        Ok(it) => it,
-        Err(_err) => {
-            return JObject::null().into();
-        }
-    };
+    let ser_result =
+        match jni_fetch_doc_impl(&mut env, doc_id, version_id, request_json, &proxy_config) {
+            Ok(it) => it,
+            Err(_err) => {
+                return JObject::null().into();
+            }
+        };
 
     env.byte_array_from_slice(&ser_result).unwrap_or_else(|_| {
         throw_basic_exception(&mut env, "Internal JNI Error".to_string());
@@ -130,13 +140,14 @@ fn jni_fetch_doc<'local>(
 fn jni_fetch_doc_impl(
     env: &mut JNIEnv,
     doc_id: String,
+    version_id: String,
     request_json: String,
     proxy_config: &ProxyConfig,
 ) -> Result<Vec<u8>, figma_import::Error> {
     let request: ConvertRequest = serde_json::from_str(&request_json)?;
 
     let convert_result: figma_import::ConvertResponse =
-        match fetch_doc(&doc_id, request, proxy_config) {
+        match fetch_doc(&doc_id, &version_id, request, proxy_config) {
             Ok(it) => it,
             Err(err) => {
                 map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
@@ -351,7 +362,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
             &[
                 jni::NativeMethod {
                     name: "jniFetchDoc".into(),
-                    sig: "(Ljava/lang/String;Ljava/lang/String;Lcom/android/designcompose/ProxyConfig;)[B".into(),
+                    sig: "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/android/designcompose/ProxyConfig;)[B".into(),
                     fn_ptr: jni_fetch_doc as *mut c_void,
                 },
                 jni::NativeMethod {

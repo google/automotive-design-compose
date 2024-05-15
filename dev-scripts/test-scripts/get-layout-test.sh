@@ -14,13 +14,13 @@
 # limitations under the License.
 
 # This script should fetch the layout test Figma file with all the nodes that are needed for testing.
-# Pre-requisites: 
+# Pre-requisites:
 #    Have \$FIGMA_ACCESS_TOKEN set to your actual Figma token
 
 cargo run --bin fetch --features=fetch -- \
 --doc-id=OGUIhtwHL3z8wWZqnxYM9P \
 --api-key=$FIGMA_ACCESS_TOKEN \
---output=crates/layout/tests/layout-unit-tests.dcf \
+--output=crates/figma_import/tests/layout-unit-tests.dcf \
 --nodes='VerticalAutoLayout' \
 --nodes='ReplacementAutoLayout' \
 --nodes='ReplacementFixedLayout' \

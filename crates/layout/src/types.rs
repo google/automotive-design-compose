@@ -14,6 +14,25 @@
 
 use serde::{Deserialize, Serialize};
 
+pub trait Dimensionable {
+    fn dimension(self) -> Dimension;
+}
+impl Dimensionable for Dimension {
+    fn dimension(self) -> Dimension {
+        self
+    }
+}
+impl Dimensionable for f32 {
+    fn dimension(self) -> Dimension {
+        Dimension::Points(self)
+    }
+}
+impl Dimensionable for i32 {
+    fn dimension(self) -> Dimension {
+        Dimension::Points(self as f32)
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Dimension {
     Undefined,

@@ -24,7 +24,7 @@ layout = {path="../layout"}
 "serde_bytes" = "0.11"
 "bincode" = "1.3"
 "thiserror" = "1.0"
-
+prost = "0.12.4"
 "svgtypes" = "0.15.0"
 
 unicode-segmentation = "1"

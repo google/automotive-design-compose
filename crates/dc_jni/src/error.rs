@@ -15,11 +15,16 @@
 use jni::JNIEnv;
 use log::error;
 use thiserror::Error;
-
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Error: {0}")]
     GenericError(String),
+    #[error("Protobuf Decode Error: {0:#?}")]
+    ProtobufDecodeError(#[from] prost::DecodeError),
+    #[error("Protobuf Encode Error")]
+    ProtobufEncodeError(#[from] prost::EncodeError),
+    #[error("Protobuf ConversionError: {0}")]
+    MissingFieldError(#[from] layout::proto::Error),
     #[error("Json Serialization Error")]
     JsonError(#[from] serde_json::Error),
     #[error("Serialization Error")]

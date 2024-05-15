@@ -1,0 +1,44 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package com.android.designcompose.proto.layout;
+import "types.proto";
+import "styles.proto";
+
+message LayoutStyle {
+  DimensionRect margin = 1;
+  DimensionRect padding = 2;
+  ItemSpacing item_spacing = 3;
+  DimensionProto top = 4;
+  DimensionProto left = 5;
+  DimensionProto bottom = 6;
+  DimensionProto right = 7;
+  DimensionProto width = 8;
+  DimensionProto height = 9;
+  DimensionProto min_width = 10;
+  DimensionProto max_width = 11;
+  DimensionProto min_height = 12;
+  DimensionProto max_height = 13;
+  FloatSize bounding_box = 14;
+  float flex_grow = 15;
+  float flex_shrink = 16;
+  DimensionProto flex_basis = 17;
+  AlignSelfEnum.AlignSelf align_self = 18;
+  AlignContentEnum.AlignContent align_content = 19;
+  AlignItemsEnum.AlignItems align_items = 20;
+  FlexDirectionEnum.FlexDirection flex_direction = 21;
+  JustifyContentEnum.JustifyContent justify_content = 22;
+  PositionTypeEnum.PositionType position_type = 23;
+}

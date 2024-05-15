@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+import com.google.protobuf.gradle.id
 import org.gradle.process.internal.DefaultExecOperations
 
 plugins {
-    kotlin("jvm")
-    `java-library`
+    id("java-library")
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.protobuf)
+
     id("designcompose.conventions.base")
     id("designcompose.conventions.publish.jvm")
 }
@@ -94,7 +97,18 @@ val serdeGenTask =
 // Connect the outputs to the java source set, so it'll automatically be compiled
 project.sourceSets.main { java { srcDir(serdeGenTask.flatMap { it.generatedCodeDir }) } }
 
+project.sourceSets.main {
+    proto { srcDir(rootProject.layout.projectDirectory.dir("proto/layout")) }
+}
+
+protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}" }
+    generateProtoTasks { all().forEach { it.builtins { id("kotlin") } } }
+}
+
 dependencies {
     api(libs.javax.annotationApi)
     implementation(libs.kotlin.stdlib)
+    implementation(libs.protobuf.kotlin)
+    api(libs.protobuf.java.util)
 }

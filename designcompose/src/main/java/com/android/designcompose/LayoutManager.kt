@@ -17,15 +17,18 @@
 package com.android.designcompose
 
 import android.util.Log
+import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import androidx.tracing.trace
+import com.android.designcompose.proto.intoProto
+import com.android.designcompose.proto.intoSerde
+import com.android.designcompose.proto.layout.LayoutManager
+import com.android.designcompose.proto.layout.LayoutStyleOuterClass
+import com.android.designcompose.proto.layout.LayoutStyleOuterClass.LayoutStyle
+import com.android.designcompose.proto.layout.layoutNode
+import com.android.designcompose.proto.layout.layoutNodeList
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.LayoutChangedResponse
-import com.android.designcompose.serdegen.LayoutNode
-import com.android.designcompose.serdegen.LayoutNodeList
-import com.android.designcompose.serdegen.LayoutStyle
-import com.novi.bincode.BincodeDeserializer
-import com.novi.bincode.BincodeSerializer
 import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
 
 internal object LayoutManager {
@@ -37,8 +40,8 @@ internal object LayoutManager {
     private var nextLayoutId: Int = 0
     private var performLayoutComputation: Boolean = false
     private var density: Float = 1F
-    private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
-    private var layoutCache: HashMap<Int, Layout> = HashMap()
+    private var layoutNodes: ArrayList<LayoutManager.LayoutNode> = arrayListOf()
+    private var layoutCache: HashMap<Int, LayoutManager.Layout> = HashMap()
     private var layoutStateCache: HashMap<Int, Int> = HashMap()
 
     init {
@@ -76,13 +79,21 @@ internal object LayoutManager {
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
         childIndex: Int,
-        style: LayoutStyle,
+        style: com.android.designcompose.serdegen.LayoutStyle,
         name: String,
     ) {
         // Frames can have children so call beginLayout() to optimize layout computation until all
         // children have been added.
         beginLayout(layoutId)
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, false)
+        subscribe(
+            layoutId,
+            setLayoutState,
+            parentLayoutId,
+            childIndex,
+            style.intoProto(),
+            name,
+            false
+        )
     }
 
     internal fun subscribeWithMeasure(
@@ -91,12 +102,20 @@ internal object LayoutManager {
         parentLayoutId: Int,
         rootLayoutId: Int,
         childIndex: Int,
-        style: LayoutStyle,
+        style: com.android.designcompose.serdegen.LayoutStyle,
         name: String,
         textMeasureData: TextMeasureData,
     ) {
         textMeasures[layoutId] = textMeasureData
-        subscribe(layoutId, setLayoutState, parentLayoutId, childIndex, style, name, true)
+        subscribe(
+            layoutId,
+            setLayoutState,
+            parentLayoutId,
+            childIndex,
+            style.intoProto(),
+            name,
+            true
+        )
 
         // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
         // the
@@ -117,26 +136,26 @@ internal object LayoutManager {
         setLayoutState: (Int) -> Unit,
         parentLayoutId: Int,
         childIndex: Int,
-        style: LayoutStyle,
+        style: LayoutStyleOuterClass.LayoutStyle,
         name: String,
         useMeasureFunc: Boolean,
         fixedWidth: Optional<Int> = Optional.empty(),
         fixedHeight: Optional<Int> = Optional.empty(),
     ) {
         subscribers[layoutId] = setLayoutState
-
         // Add the node to a list of nodes
         layoutNodes.add(
-            LayoutNode(
-                layoutId,
-                parentLayoutId,
-                childIndex,
-                style,
-                name,
-                useMeasureFunc,
-                fixedWidth,
-                fixedHeight,
-            )
+            // Convert the serde layout node to the proto layout node
+            layoutNode {
+                this.layoutId = layoutId
+                this.parentLayoutId = parentLayoutId
+                this.childIndex = childIndex
+                this.style = style
+                this.name = name
+                this.useMeasureFunc = useMeasureFunc
+                fixedWidth.getOrNull()?.let { this.fixedWidth = it }
+                fixedHeight.getOrNull()?.let { this.fixedHeight = it }
+            }
         )
     }
 
@@ -178,11 +197,11 @@ internal object LayoutManager {
     private fun computeLayoutIfComplete(layoutId: Int, rootLayoutId: Int) {
         if (layoutsInProgress.isEmpty() || layoutId == rootLayoutId) {
             trace(DCTraces.LAYOUTMANAGER_COMPUTELAYOUTIFCOMPLETE) {
-                val layoutNodeList = LayoutNodeList(layoutNodes, arrayListOf())
-                val nodeListSerializer = BincodeSerializer()
-                layoutNodeList.serialize(nodeListSerializer)
-                val serializedNodeList = nodeListSerializer._bytes.toUByteArray().asByteArray()
-                val responseBytes = Jni.jniAddNodes(managerId, rootLayoutId, serializedNodeList)
+                val layoutNodeList = layoutNodeList {
+                    layoutNodes.addAll(this@LayoutManager.layoutNodes)
+                }
+                val responseBytes =
+                    Jni.jniAddNodes(managerId, rootLayoutId, layoutNodeList.toByteArray())
                 handleResponse(responseBytes)
                 layoutNodes.clear()
             }
@@ -191,19 +210,23 @@ internal object LayoutManager {
 
     private fun handleResponse(responseBytes: ByteArray?) {
         if (responseBytes != null) {
-            val deserializer = BincodeDeserializer(responseBytes)
-            val response: LayoutChangedResponse = LayoutChangedResponse.deserialize(deserializer)
-
+            val response =
+                try {
+                    LayoutManager.LayoutChangedResponse.parseFrom(responseBytes)
+                } catch (e: InvalidProtocolBufferException) {
+                    Log.d(TAG, "HandleResponse error")
+                    return
+                }
             // Add all the layouts to our cache
-            response.changed_layouts.forEach { (layoutId, layout) ->
+            response.changedLayoutsMap.forEach { (layoutId, layout) ->
                 layoutCache[layoutId] = layout
-                layoutStateCache[layoutId] = response.layout_state
+                layoutStateCache[layoutId] = response.layoutState
             }
-            notifySubscribers(response.changed_layouts.keys, response.layout_state)
-            if (response.changed_layouts.isNotEmpty())
+            notifySubscribers(response.changedLayoutsMap.keys, response.layoutState)
+            if (response.changedLayoutsMap.isNotEmpty())
                 Log.d(
                     TAG,
-                    "HandleResponse ${response.layout_state}, changed: ${response.changed_layouts.keys}"
+                    "HandleResponse ${response.layoutState}, changed: ${response.changedLayoutsMap.keys}"
                 )
         } else {
             Log.d(TAG, "HandleResponse NULL")
@@ -217,7 +240,7 @@ internal object LayoutManager {
         getLayout(layoutId)?.withDensity(density)
 
     // Ask for the layout for the associated node via JNI
-    internal fun getLayout(layoutId: Int): Layout? = layoutCache[layoutId]
+    internal fun getLayout(layoutId: Int): Layout? = layoutCache[layoutId]?.intoSerde()
 
     internal fun getLayoutState(layoutId: Int): Int? = layoutStateCache[layoutId]
 

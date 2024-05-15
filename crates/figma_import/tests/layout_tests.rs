@@ -18,7 +18,7 @@
 // https://www.figma.com/file/OGUIhtwHL3z8wWZqnxYM9P. When modifying these
 // tests, any changes to the Figma file require refetching and saving the file
 // using the fetch binary from the designcompose root folder like this:
-// cargo run --bin fetch --features=fetch -- --doc-id=OGUIhtwHL3z8wWZqnxYM9P --api-key=<API_KEY> --output=crates/layout/tests/layout-unit-tests.dcf --nodes='VerticalAutolayout'
+// cargo run --bin fetch --features=fetch -- --doc-id=OGUIhtwHL3z8wWZqnxYM9P --api-key=<API_KEY> --output=crates/figma_import/tests/layout-unit-tests.dcf --nodes='VerticalAutolayout'
 // Note that every node used in these tests needs to be in the --nodes
 // parameter list.
 //

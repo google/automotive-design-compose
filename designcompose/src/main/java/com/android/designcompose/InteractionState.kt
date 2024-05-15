@@ -22,6 +22,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.VariantPropertyMap
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.Navigation
@@ -766,9 +767,9 @@ internal fun InteractionState.squooshRootNode(
 /// InteractionState as a global ensuring that views can access the correct state regardless
 /// of the view tree organization.
 internal object InteractionStateManager {
-    val states: HashMap<String, InteractionState> = HashMap()
+    val states: HashMap<DesignDocId, InteractionState> = HashMap()
 }
 
-internal fun InteractionStateManager.stateForDoc(docId: String): InteractionState {
+internal fun InteractionStateManager.stateForDoc(docId: DesignDocId): InteractionState {
     return states.getOrPut(docId) { InteractionState() }
 }

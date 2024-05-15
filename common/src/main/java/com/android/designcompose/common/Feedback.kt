@@ -35,7 +35,7 @@ class FeedbackMessage(
 // Basic implementation of the Feedback class, used by docloader and Design Compose
 abstract class FeedbackImpl {
     private val messages: ArrayDeque<FeedbackMessage> = ArrayDeque()
-    private val ignoredDocuments: HashSet<String> = HashSet()
+    private val ignoredDocuments: HashSet<DesignDocId> = HashSet()
     private var logLevel: FeedbackLevel = FeedbackLevel.Info
     private var maxMessages = 20
     var messagesListId = 0 // Change this every time the list changes so we can update subscribers
@@ -52,12 +52,12 @@ abstract class FeedbackImpl {
         maxMessages = num
     }
 
-    fun addIgnoredDocument(docId: String): Boolean {
+    fun addIgnoredDocument(docId: DesignDocId): Boolean {
         ignoredDocuments.add(docId)
         return true
     }
 
-    fun isDocumentIgnored(docId: String): Boolean {
+    fun isDocumentIgnored(docId: DesignDocId): Boolean {
         return ignoredDocuments.contains(docId)
     }
 
@@ -70,7 +70,7 @@ abstract class FeedbackImpl {
     //    fun newDocServer(url: String){
     //    }
 
-    fun diskLoadFail(id: String, docId: String) {
+    fun diskLoadFail(id: String, docId: DesignDocId) {
         setStatus(
             "Unable to open $id from disk; will try live and from assets",
             FeedbackLevel.Debug,
@@ -78,12 +78,12 @@ abstract class FeedbackImpl {
         )
     }
 
-    fun documentUnchanged(docId: String) {
+    fun documentUnchanged(docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Live update for $truncatedId unchanged...", FeedbackLevel.Info, docId)
     }
 
-    fun documentUpdated(docId: String, numSubscribers: Int) {
+    fun documentUpdated(docId: DesignDocId, numSubscribers: Int) {
         val truncatedId = shortDocId(docId)
         setStatus(
             "Live update for $truncatedId fetched and informed $numSubscribers subscribers",
@@ -92,7 +92,7 @@ abstract class FeedbackImpl {
         )
     }
 
-    fun documentUpdateCode(docId: String, code: Int) {
+    fun documentUpdateCode(docId: DesignDocId, code: Int) {
         val truncatedId = shortDocId(docId)
         setStatus(
             "Live update for $truncatedId unexpected server response: $code",
@@ -101,17 +101,17 @@ abstract class FeedbackImpl {
         )
     }
 
-    fun documentUpdateWarnings(docId: String, msg: String) {
+    fun documentUpdateWarnings(docId: DesignDocId, msg: String) {
         val truncatedId = shortDocId(docId)
         setStatus("Live update for $truncatedId warning: $msg", FeedbackLevel.Warn, docId)
     }
 
-    fun documentUpdateError(docId: String, msg: String) {
+    fun documentUpdateError(docId: DesignDocId, msg: String) {
         val truncatedId = shortDocId(docId)
         setStatus("Live update for $truncatedId failed: $msg", FeedbackLevel.Error, docId)
     }
 
-    fun documentUpdateErrorRevert(docId: String, msg: String) {
+    fun documentUpdateErrorRevert(docId: DesignDocId, msg: String) {
         val truncatedId = shortDocId(docId)
         setStatus(
             "Live update for $truncatedId failed: $msg, reverting to original doc ID",
@@ -120,22 +120,22 @@ abstract class FeedbackImpl {
         )
     }
 
-    fun documentDecodeStart(docId: String) {
+    fun documentDecodeStart(docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Starting to read doc $truncatedId...", FeedbackLevel.Debug, docId)
     }
 
-    fun documentDecodeReadBytes(size: Int, docId: String) {
+    fun documentDecodeReadBytes(size: Int, docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Read $size bytes of doc $truncatedId", FeedbackLevel.Info, docId)
     }
 
-    fun documentDecodeError(docId: String) {
+    fun documentDecodeError(docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Error decoding doc $truncatedId", FeedbackLevel.Warn, docId)
     }
 
-    fun documentDecodeVersionMismatch(expected: Int, actual: Int, docId: String) {
+    fun documentDecodeVersionMismatch(expected: Int, actual: Int, docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus(
             "Wrong version in doc $truncatedId: Expected $expected but found $actual",
@@ -144,7 +144,12 @@ abstract class FeedbackImpl {
         )
     }
 
-    fun documentDecodeSuccess(version: Int, name: String, lastModified: String, docId: String) {
+    fun documentDecodeSuccess(
+        version: Int,
+        name: String,
+        lastModified: String,
+        docId: DesignDocId
+    ) {
         setStatus(
             "Successfully deserialized V$version doc. Name: $name, last modified: $lastModified",
             FeedbackLevel.Info,
@@ -152,22 +157,22 @@ abstract class FeedbackImpl {
         )
     }
 
-    fun documentSaveTo(path: String, docId: String) {
+    fun documentSaveTo(path: String, docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Saving doc $truncatedId to $path", FeedbackLevel.Info, docId)
     }
 
-    fun documentSaveSuccess(docId: String) {
+    fun documentSaveSuccess(docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Save doc $truncatedId success", FeedbackLevel.Info, docId)
     }
 
-    fun documentSaveError(error: String, docId: String) {
+    fun documentSaveError(error: String, docId: DesignDocId) {
         val truncatedId = shortDocId(docId)
         setStatus("Unable to save doc $truncatedId: $error", FeedbackLevel.Error, docId)
     }
 
-    open fun setStatus(str: String, level: FeedbackLevel, docId: String) {
+    open fun setStatus(str: String, level: FeedbackLevel, docId: DesignDocId) {
         // Ignore log levels we don't care about
         if (level < logLevel) return
 
@@ -189,8 +194,12 @@ abstract class FeedbackImpl {
         ++messagesListId
     }
 
-    protected fun shortDocId(docId: String): String {
-        return if (docId.length > 7) docId.substring(0, 7) else docId
+    protected fun shortDocId(docId: DesignDocId): String {
+        val id = if (docId.id.length > 7) docId.id.substring(0, 7) else docId.id
+        val versionId =
+            if (docId.versionId.length > 4) docId.versionId.substring(docId.versionId.length - 4)
+            else docId.versionId
+        return if (versionId.isEmpty()) id else "${id}/${versionId}"
     }
 }
 

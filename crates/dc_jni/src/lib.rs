@@ -14,6 +14,6 @@
 
 extern crate android_logger;
 extern crate log;
-mod jni;
-
+mod error;
 mod error_map;
+mod jni;

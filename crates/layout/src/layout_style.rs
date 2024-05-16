@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::styles::ItemSpacing;
 use crate::styles::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
+    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };
+
 use crate::types::{Dimension, Rect, Size};
 use serde::{Deserialize, Serialize};
 
@@ -66,12 +66,12 @@ impl Default for LayoutStyle {
             flex_grow: 0.0,
             flex_shrink: 0.0,
             flex_basis: Dimension::default(),
-            align_self: AlignSelf::default(),
-            align_content: AlignContent::default(),
-            align_items: AlignItems::default(),
-            flex_direction: FlexDirection::default(),
-            justify_content: JustifyContent::default(),
-            position_type: PositionType::default(),
+            align_self: AlignSelf::Auto,
+            align_content: AlignContent::Stretch,
+            align_items: AlignItems::Stretch,
+            flex_direction: FlexDirection::Row,
+            justify_content: JustifyContent::FlexStart,
+            position_type: PositionType::Relative,
         }
     }
 }

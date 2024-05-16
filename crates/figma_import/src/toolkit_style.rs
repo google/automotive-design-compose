@@ -16,7 +16,7 @@
 //! uses.
 
 use layout::layout_style::LayoutStyle;
-use layout::types::{Dimension, Size};
+use layout::types::Size;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -25,25 +25,6 @@ use crate::{
     toolkit_font_style::{FontStretch, FontStyle, FontWeight},
     toolkit_layout_style::{Display, FlexWrap, LayoutSizing, Number, Overflow},
 };
-
-pub trait Dimensionable {
-    fn dimension(self) -> Dimension;
-}
-impl Dimensionable for Dimension {
-    fn dimension(self) -> Dimension {
-        self
-    }
-}
-impl Dimensionable for f32 {
-    fn dimension(self) -> Dimension {
-        Dimension::Points(self)
-    }
-}
-impl Dimensionable for i32 {
-    fn dimension(self) -> Dimension {
-        Dimension::Points(self as f32)
-    }
-}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub enum ScaleMode {

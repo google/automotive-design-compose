@@ -10,6 +10,9 @@ rust-version = "1.68"
 [lib]
 crate-type = ["rlib", "cdylib"]
 
+[build-dependencies]
+prost-build.workspace = true
+
 [dependencies]
 log.workspace = true
 android_logger.workspace = true
@@ -19,3 +22,5 @@ serde_bytes.workspace = true
 bincode.workspace = true
 taffy.workspace = true
 lazy_static.workspace = true
+prost.workspace = true
+thiserror.workspace = true

@@ -1,0 +1,125 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+use crate::proto::Error;
+use crate::proto::Error::UnknownEnumVariant;
+use crate::styles;
+
+use super::{
+    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
+};
+
+impl TryFrom<AlignSelf> for styles::AlignSelf {
+    type Error = Error;
+
+    fn try_from(proto: AlignSelf) -> Result<Self, Self::Error> {
+        match proto {
+            AlignSelf::Auto => Ok(styles::AlignSelf::Auto),
+            AlignSelf::FlexStart => Ok(styles::AlignSelf::FlexStart),
+            AlignSelf::FlexEnd => Ok(styles::AlignSelf::FlexEnd),
+            AlignSelf::Center => Ok(styles::AlignSelf::Center),
+            AlignSelf::Baseline => Ok(styles::AlignSelf::Baseline),
+            AlignSelf::Stretch => Ok(styles::AlignSelf::Stretch),
+            _ => Err(UnknownEnumVariant { enum_name: "AlignSelf".to_string() }),
+        }
+    }
+}
+
+impl TryFrom<super::AlignItems> for styles::AlignItems {
+    type Error = Error;
+    fn try_from(proto: AlignItems) -> Result<Self, Self::Error> {
+        match proto {
+            AlignItems::FlexStart => Ok(styles::AlignItems::FlexStart),
+            AlignItems::FlexEnd => Ok(styles::AlignItems::FlexEnd),
+            AlignItems::Center => Ok(styles::AlignItems::Center),
+            AlignItems::Baseline => Ok(styles::AlignItems::Baseline),
+            AlignItems::Stretch => Ok(styles::AlignItems::Stretch),
+            _ => Err(UnknownEnumVariant { enum_name: "AlignItems".to_string() }),
+        }
+    }
+}
+
+impl TryFrom<AlignContent> for styles::AlignContent {
+    type Error = Error;
+
+    fn try_from(proto: AlignContent) -> Result<Self, Self::Error> {
+        match proto {
+            AlignContent::Center => Ok(styles::AlignContent::Center),
+            AlignContent::FlexStart => Ok(styles::AlignContent::FlexStart),
+            AlignContent::FlexEnd => Ok(styles::AlignContent::FlexEnd),
+            AlignContent::Stretch => Ok(styles::AlignContent::Stretch),
+            AlignContent::SpaceBetween => Ok(styles::AlignContent::SpaceBetween),
+            AlignContent::SpaceAround => Ok(styles::AlignContent::SpaceAround),
+            _ => Err(UnknownEnumVariant { enum_name: "AlignContent".to_string() }),
+        }
+    }
+}
+
+impl TryFrom<FlexDirection> for styles::FlexDirection {
+    type Error = Error;
+
+    fn try_from(proto: FlexDirection) -> Result<Self, Self::Error> {
+        match proto {
+            FlexDirection::Row => Ok(styles::FlexDirection::Row),
+            FlexDirection::Column => Ok(styles::FlexDirection::Column),
+            FlexDirection::RowReverse => Ok(styles::FlexDirection::RowReverse),
+            FlexDirection::ColumnReverse => Ok(styles::FlexDirection::ColumnReverse),
+            FlexDirection::None => Ok(styles::FlexDirection::None),
+            _ => Err(UnknownEnumVariant { enum_name: "FlexDirection".to_string() }),
+        }
+    }
+}
+
+impl TryFrom<JustifyContent> for styles::JustifyContent {
+    type Error = Error;
+
+    fn try_from(proto: JustifyContent) -> Result<Self, Self::Error> {
+        match proto {
+            JustifyContent::FlexStart => Ok(styles::JustifyContent::FlexStart),
+            JustifyContent::FlexEnd => Ok(styles::JustifyContent::FlexEnd),
+            JustifyContent::Center => Ok(styles::JustifyContent::Center),
+            JustifyContent::SpaceBetween => Ok(styles::JustifyContent::SpaceBetween),
+            JustifyContent::SpaceAround => Ok(styles::JustifyContent::SpaceAround),
+            JustifyContent::SpaceEvenly => Ok(styles::JustifyContent::SpaceEvenly),
+            _ => Err(UnknownEnumVariant { enum_name: "JustifyContent".to_string() }),
+        }
+    }
+}
+
+impl TryFrom<PositionType> for styles::PositionType {
+    type Error = Error;
+
+    fn try_from(proto: PositionType) -> Result<Self, Self::Error> {
+        match proto {
+            PositionType::Relative => Ok(styles::PositionType::Relative),
+            PositionType::Absolute => Ok(styles::PositionType::Absolute),
+            _ => Err(UnknownEnumVariant { enum_name: "PositionType".to_string() }),
+        }
+    }
+}
+
+impl TryFrom<ItemSpacing> for styles::ItemSpacing {
+    type Error = Error;
+
+    fn try_from(proto: ItemSpacing) -> Result<Self, Self::Error> {
+        match proto
+            .r#type
+            .as_ref()
+            .ok_or(Error::MissingFieldError { field: "ItemSpacing".to_string() })?
+        {
+            super::item_spacing::Type::Fixed(s) => Ok(styles::ItemSpacing::Fixed(*s)),
+            super::item_spacing::Type::Auto(s) => Ok(styles::ItemSpacing::Auto(s.width, s.height)),
+        }
+    }
+}

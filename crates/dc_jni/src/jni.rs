@@ -13,23 +13,25 @@
 // limitations under the License.
 
 use std::ffi::c_void;
+
 use std::sync::{Mutex, MutexGuard};
 
 use crate::error::{throw_basic_exception, Error};
 use crate::error_map::map_err_to_exception;
+use crate::layout_manager::{jni_add_nodes, jni_create_layout_manager, jni_remove_node, jni_set_node_size};
 use android_logger::Config;
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString};
 use jni::sys::{jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
+
 use lazy_static::lazy_static;
 use log::{error, LevelFilter};
 
 lazy_static! {
     static ref JAVA_VM: Mutex<Option<JavaVM>> = Mutex::new(None);
 }
-
-pub(crate) fn javavm() -> MutexGuard<'static, Option<JavaVM>> {
+pub fn javavm() -> MutexGuard<'static, Option<JavaVM>> {
     JAVA_VM.lock().unwrap()
 }
 
@@ -154,22 +156,22 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
                 jni::NativeMethod {
                     name: "jniCreateLayoutManager".into(),
                     sig: "()I".into(),
-                    fn_ptr: crate::layout_manager::jni_create_layout_manager as *mut c_void,
+                    fn_ptr: jni_create_layout_manager as *mut c_void,
                 },
                 jni::NativeMethod {
                     name: "jniSetNodeSize".into(),
                     sig: "(IIIII)[B".into(),
-                    fn_ptr: crate::layout_manager::jni_set_node_size as *mut c_void,
+                    fn_ptr: jni_set_node_size as *mut c_void,
                 },
                 jni::NativeMethod {
                     name: "jniAddNodes".into(),
                     sig: "(II[B)[B".into(),
-                    fn_ptr: crate::layout_manager::jni_add_nodes as *mut c_void,
+                    fn_ptr: jni_add_nodes as *mut c_void,
                 },
                 jni::NativeMethod {
                     name: "jniRemoveNode".into(),
                     sig: "(IIIZ)[B".into(),
-                    fn_ptr: crate::layout_manager::jni_remove_node as *mut c_void,
+                    fn_ptr: jni_remove_node as *mut c_void,
                 },
             ],
         )

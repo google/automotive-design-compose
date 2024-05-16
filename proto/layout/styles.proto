@@ -1,0 +1,81 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package com.android.designcompose.layout.proto;
+option java_multiple_files = true;
+
+enum AlignSelf {
+  ALIGN_SELF_UNSPECIFIED = 0;
+  ALIGN_SELF_AUTO = 1;
+  ALIGN_SELF_FLEX_START = 2;
+  ALIGN_SELF_FLEX_END = 3;
+  ALIGN_SELF_CENTER = 4;
+  ALIGN_SELF_BASELINE = 5;
+  ALIGN_SELF_STRETCH = 6;
+}
+
+enum AlignContent {
+  ALIGN_CONTENT_UNSPECIFIED = 0;
+  ALIGN_CONTENT_FLEX_START = 1;
+  ALIGN_CONTENT_FLEX_END = 2;
+  ALIGN_CONTENT_CENTER = 3;
+  ALIGN_CONTENT_STRETCH = 4;
+  ALIGN_CONTENT_SPACE_BETWEEN = 5;
+  ALIGN_CONTENT_SPACE_AROUND = 6;
+}
+
+enum AlignItems {
+  ALIGN_ITEMS_UNSPECIFIED = 0;
+  ALIGN_ITEMS_FLEX_START = 1;
+  ALIGN_ITEMS_FLEX_END = 2;
+  ALIGN_ITEMS_CENTER = 3;
+  ALIGN_ITEMS_BASELINE = 4;
+  ALIGN_ITEMS_STRETCH = 5;
+}
+
+enum FlexDirection {
+  FLEX_DIRECTION_UNSPECIFIED = 0;
+  FLEX_DIRECTION_ROW = 1;
+  FLEX_DIRECTION_COLUMN = 2;
+  FLEX_DIRECTION_ROW_REVERSE = 3;
+  FLEX_DIRECTION_COLUMN_REVERSE = 4;
+  FLEX_DIRECTION_NONE = 5;
+}
+enum JustifyContent {
+  JUSTIFY_CONTENT_UNSPECIFIED = 0;
+  JUSTIFY_CONTENT_FLEX_START = 1;
+  JUSTIFY_CONTENT_FLEX_END = 2;
+  JUSTIFY_CONTENT_CENTER = 3;
+  JUSTIFY_CONTENT_SPACE_BETWEEN = 4;
+  JUSTIFY_CONTENT_SPACE_AROUND = 5;
+  JUSTIFY_CONTENT_SPACE_EVENLY = 6;
+}
+
+enum PositionType {
+  POSITION_TYPE_UNSPECIFIED = 0;
+  POSITION_TYPE_RELATIVE = 1;
+  POSITION_TYPE_ABSOLUTE = 2;
+}
+
+message ItemSpacing {
+  message Auto {
+    int32 width = 1;
+    int32 height = 2;
+  }
+  oneof type {
+    int32 fixed = 1;
+    Auto auto = 2;
+  }
+}

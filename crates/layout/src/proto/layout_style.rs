@@ -14,27 +14,27 @@
 
 use crate::layout_style;
 
-use super::{Error::MissingFieldError, LayoutStyle};
+use super::LayoutStyle;
 
 impl TryFrom<LayoutStyle> for layout_style::LayoutStyle {
-    type Error = super::Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: LayoutStyle) -> Result<Self, Self::Error> {
         let layout_style = layout_style::LayoutStyle {
             margin: proto
                 .margin
                 .clone()
-                .ok_or(MissingFieldError { field: "margin".to_string() })?
+                .ok_or(dc_proto::Error::MissingFieldError { field: "margin".to_string() })?
                 .try_into()?,
             padding: proto
                 .padding
                 .clone()
-                .ok_or(MissingFieldError { field: "padding".to_string() })?
+                .ok_or(dc_proto::Error::MissingFieldError { field: "padding".to_string() })?
                 .try_into()?,
             item_spacing: proto
                 .item_spacing
                 .clone()
-                .ok_or(MissingFieldError { field: "item_spacing".to_string() })?
+                .ok_or(dc_proto::Error::MissingFieldError { field: "item_spacing".to_string() })?
                 .try_into()?,
             top: proto.top.try_into()?,
             left: proto.left.try_into()?,
@@ -49,11 +49,11 @@ impl TryFrom<LayoutStyle> for layout_style::LayoutStyle {
             bounding_box: proto
                 .bounding_box
                 .clone()
-                .ok_or(MissingFieldError { field: "bounding_box".to_string() })?
+                .ok_or(dc_proto::Error::MissingFieldError { field: "bounding_box".to_string() })?
                 .into(),
             flex_grow: proto.flex_grow,
             flex_shrink: proto.flex_shrink,
-            flex_basis: proto.flex_basis.clone().try_into()?,
+            flex_basis: proto.flex_basis.try_into()?,
             align_self: proto.align_self().try_into()?,
             align_content: proto.align_content().try_into()?,
             align_items: proto.align_items().try_into()?,

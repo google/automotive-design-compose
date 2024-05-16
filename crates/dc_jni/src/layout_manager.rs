@@ -51,11 +51,7 @@ fn create_layout_manager() -> i32 {
 fn manager(id: i32) -> Option<Arc<Mutex<LayoutManager>>> {
     let managers = LAYOUT_MANAGERS.lock().unwrap();
     let manager = managers.get(&id);
-    if let Some(manager) = manager {
-        Some(manager.clone())
-    } else {
-        None
-    }
+    manager.map(|manager| manager.clone())
 }
 
 fn layout_response_to_bytearray(
@@ -65,7 +61,7 @@ fn layout_response_to_bytearray(
     let proto_msg: layout::proto::LayoutChangedResponse = layout_response.into();
 
     let bytes = proto_msg.encode_to_vec();
-    match env.byte_array_from_slice(&bytes.as_slice()) {
+    match env.byte_array_from_slice(bytes.as_slice()) {
         Ok(it) => it,
         Err(err) => {
             throw_basic_exception(&mut env, &err);
@@ -74,7 +70,7 @@ fn layout_response_to_bytearray(
     }
 }
 
-pub fn jni_create_layout_manager<'local>(_env: JNIEnv<'local>, _class: JClass) -> i32 {
+pub fn jni_create_layout_manager(_env: JNIEnv, _class: JClass) -> i32 {
     create_layout_manager()
 }
 

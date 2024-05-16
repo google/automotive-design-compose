@@ -14,10 +14,8 @@
 
 use crate::layout_node::{self};
 
-use super::Error;
-
 impl TryFrom<super::LayoutNode> for layout_node::LayoutNode {
-    type Error = Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: super::LayoutNode) -> Result<Self, Self::Error> {
         Ok(layout_node::LayoutNode {
@@ -26,7 +24,7 @@ impl TryFrom<super::LayoutNode> for layout_node::LayoutNode {
             child_index: proto.child_index,
             style: proto
                 .style
-                .ok_or(Error::MissingFieldError { field: "style".to_string() })?
+                .ok_or(dc_proto::Error::MissingFieldError { field: "style".to_string() })?
                 .try_into()?,
             name: proto.name,
             use_measure_func: proto.use_measure_func,
@@ -46,7 +44,7 @@ impl From<super::LayoutParentChildren> for layout_node::LayoutParentChildren {
 }
 
 impl TryFrom<super::LayoutNodeList> for layout_node::LayoutNodeList {
-    type Error = super::Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: super::LayoutNodeList) -> Result<Self, Self::Error> {
         Ok(layout_node::LayoutNodeList {

@@ -18,7 +18,9 @@ use std::sync::{Mutex, MutexGuard};
 
 use crate::error::{throw_basic_exception, Error};
 use crate::error_map::map_err_to_exception;
-use crate::layout_manager::{jni_add_nodes, jni_create_layout_manager, jni_remove_node, jni_set_node_size};
+use crate::layout_manager::{
+    jni_add_nodes, jni_create_layout_manager, jni_remove_node, jni_set_node_size,
+};
 use android_logger::Config;
 use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
 use jni::objects::{JByteArray, JClass, JObject, JString};

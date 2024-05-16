@@ -304,6 +304,7 @@ dependencies = [
  "android_logger",
  "bincode",
  "bytes",
+ "dc_proto",
  "figma_import",
  "jni",
  "layout",
@@ -315,6 +316,14 @@ dependencies = [
  "serde_json",
  "thiserror",
  "ureq",
+]
+
+[[package]]
+name = "dc_proto"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "thiserror",
 ]
 
 [[package]]
@@ -611,14 +620,11 @@ name = "layout"
 version = "0.1.0"
 dependencies = [
  "android_logger",
- "bincode",
- "lazy_static",
+ "dc_proto",
  "log",
  "prost",
  "prost-build",
  "serde",
- "serde_bytes",
- "serde_json",
  "taffy",
  "thiserror",
 ]

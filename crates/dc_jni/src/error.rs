@@ -24,7 +24,7 @@ pub enum Error {
     #[error("Protobuf Encode Error")]
     ProtobufEncodeError(#[from] prost::EncodeError),
     #[error("Protobuf ConversionError: {0}")]
-    MissingFieldError(#[from] layout::proto::Error),
+    MissingFieldError(#[from] dc_proto::Error),
     #[error("Json Serialization Error")]
     JsonError(#[from] serde_json::Error),
     #[error("Serialization Error")]

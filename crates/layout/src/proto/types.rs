@@ -13,20 +13,20 @@
 // limitations under the License.
 
 use super::dimension_proto::Dimension;
-use super::{DimensionProto, Error, Error::MissingFieldError, FloatSize};
+use super::{DimensionProto, FloatSize};
 use crate::types;
 
 use super::DimensionRect;
 
 impl TryFrom<Option<DimensionProto>> for types::Dimension {
-    type Error = Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: Option<DimensionProto>) -> Result<Self, Self::Error> {
         Ok(
             match proto
-                .ok_or(MissingFieldError { field: "DimensionProto".to_string() })?
+                .ok_or(dc_proto::Error::MissingFieldError { field: "DimensionProto".to_string() })?
                 .dimension
-                .ok_or(MissingFieldError { field: "Dimension".to_string() })?
+                .ok_or(dc_proto::Error::MissingFieldError { field: "Dimension".to_string() })?
             {
                 Dimension::Auto(_) => types::Dimension::Auto,
                 Dimension::Points(p) => types::Dimension::Points(p),
@@ -38,7 +38,7 @@ impl TryFrom<Option<DimensionProto>> for types::Dimension {
 }
 
 impl TryFrom<DimensionRect> for types::Rect<types::Dimension> {
-    type Error = Error;
+    type Error = dc_proto::Error;
     fn try_from(proto: DimensionRect) -> Result<Self, Self::Error> {
         let rect = types::Rect {
             start: proto.start.try_into()?,

@@ -43,6 +43,11 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "26.1"
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
 

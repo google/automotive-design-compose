@@ -12,9 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod layout_node;
-mod layout_style;
-mod styles;
-mod types;
+use thiserror::Error;
 
-include!(concat!(env!("OUT_DIR"), "/com.android.designcompose.layout.proto.rs"));
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Missing field {field}")]
+    MissingFieldError { field: String },
+    #[error("Unknown enum variant for {enum_name}")]
+    UnknownEnumVariant { enum_name: String },
+}
+
+pub type Result<T> = std::result::Result<T, Error>;

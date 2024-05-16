@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::proto::Error;
-use crate::proto::Error::UnknownEnumVariant;
 use crate::styles;
 
 use super::{
@@ -21,7 +19,7 @@ use super::{
 };
 
 impl TryFrom<AlignSelf> for styles::AlignSelf {
-    type Error = Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: AlignSelf) -> Result<Self, Self::Error> {
         match proto {
@@ -31,13 +29,13 @@ impl TryFrom<AlignSelf> for styles::AlignSelf {
             AlignSelf::Center => Ok(styles::AlignSelf::Center),
             AlignSelf::Baseline => Ok(styles::AlignSelf::Baseline),
             AlignSelf::Stretch => Ok(styles::AlignSelf::Stretch),
-            _ => Err(UnknownEnumVariant { enum_name: "AlignSelf".to_string() }),
+            _ => Err(dc_proto::Error::UnknownEnumVariant { enum_name: "AlignSelf".to_string() }),
         }
     }
 }
 
 impl TryFrom<super::AlignItems> for styles::AlignItems {
-    type Error = Error;
+    type Error = dc_proto::Error;
     fn try_from(proto: AlignItems) -> Result<Self, Self::Error> {
         match proto {
             AlignItems::FlexStart => Ok(styles::AlignItems::FlexStart),
@@ -45,13 +43,13 @@ impl TryFrom<super::AlignItems> for styles::AlignItems {
             AlignItems::Center => Ok(styles::AlignItems::Center),
             AlignItems::Baseline => Ok(styles::AlignItems::Baseline),
             AlignItems::Stretch => Ok(styles::AlignItems::Stretch),
-            _ => Err(UnknownEnumVariant { enum_name: "AlignItems".to_string() }),
+            _ => Err(dc_proto::Error::UnknownEnumVariant { enum_name: "AlignItems".to_string() }),
         }
     }
 }
 
 impl TryFrom<AlignContent> for styles::AlignContent {
-    type Error = Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: AlignContent) -> Result<Self, Self::Error> {
         match proto {
@@ -61,13 +59,13 @@ impl TryFrom<AlignContent> for styles::AlignContent {
             AlignContent::Stretch => Ok(styles::AlignContent::Stretch),
             AlignContent::SpaceBetween => Ok(styles::AlignContent::SpaceBetween),
             AlignContent::SpaceAround => Ok(styles::AlignContent::SpaceAround),
-            _ => Err(UnknownEnumVariant { enum_name: "AlignContent".to_string() }),
+            _ => Err(dc_proto::Error::UnknownEnumVariant { enum_name: "AlignContent".to_string() }),
         }
     }
 }
 
 impl TryFrom<FlexDirection> for styles::FlexDirection {
-    type Error = Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: FlexDirection) -> Result<Self, Self::Error> {
         match proto {
@@ -76,13 +74,15 @@ impl TryFrom<FlexDirection> for styles::FlexDirection {
             FlexDirection::RowReverse => Ok(styles::FlexDirection::RowReverse),
             FlexDirection::ColumnReverse => Ok(styles::FlexDirection::ColumnReverse),
             FlexDirection::None => Ok(styles::FlexDirection::None),
-            _ => Err(UnknownEnumVariant { enum_name: "FlexDirection".to_string() }),
+            _ => {
+                Err(dc_proto::Error::UnknownEnumVariant { enum_name: "FlexDirection".to_string() })
+            }
         }
     }
 }
 
 impl TryFrom<JustifyContent> for styles::JustifyContent {
-    type Error = Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: JustifyContent) -> Result<Self, Self::Error> {
         match proto {
@@ -92,31 +92,33 @@ impl TryFrom<JustifyContent> for styles::JustifyContent {
             JustifyContent::SpaceBetween => Ok(styles::JustifyContent::SpaceBetween),
             JustifyContent::SpaceAround => Ok(styles::JustifyContent::SpaceAround),
             JustifyContent::SpaceEvenly => Ok(styles::JustifyContent::SpaceEvenly),
-            _ => Err(UnknownEnumVariant { enum_name: "JustifyContent".to_string() }),
+            _ => {
+                Err(dc_proto::Error::UnknownEnumVariant { enum_name: "JustifyContent".to_string() })
+            }
         }
     }
 }
 
 impl TryFrom<PositionType> for styles::PositionType {
-    type Error = Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: PositionType) -> Result<Self, Self::Error> {
         match proto {
             PositionType::Relative => Ok(styles::PositionType::Relative),
             PositionType::Absolute => Ok(styles::PositionType::Absolute),
-            _ => Err(UnknownEnumVariant { enum_name: "PositionType".to_string() }),
+            _ => Err(dc_proto::Error::UnknownEnumVariant { enum_name: "PositionType".to_string() }),
         }
     }
 }
 
 impl TryFrom<ItemSpacing> for styles::ItemSpacing {
-    type Error = Error;
+    type Error = dc_proto::Error;
 
     fn try_from(proto: ItemSpacing) -> Result<Self, Self::Error> {
         match proto
             .r#type
             .as_ref()
-            .ok_or(Error::MissingFieldError { field: "ItemSpacing".to_string() })?
+            .ok_or(dc_proto::Error::MissingFieldError { field: "ItemSpacing".to_string() })?
         {
             super::item_spacing::Type::Fixed(s) => Ok(styles::ItemSpacing::Fixed(*s)),
             super::item_spacing::Type::Auto(s) => Ok(styles::ItemSpacing::Auto(s.width, s.height)),

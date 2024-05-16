@@ -14,13 +14,10 @@ crate-type = ["rlib", "cdylib"]
 prost-build.workspace = true
 
 [dependencies]
+dc_proto = {path = "../dc_proto"}
 log.workspace = true
 android_logger.workspace = true
 serde.workspace = true
-serde_json.workspace = true
-serde_bytes.workspace = true
-bincode.workspace = true
 taffy.workspace = true
-lazy_static.workspace = true
 prost.workspace = true
 thiserror.workspace = true

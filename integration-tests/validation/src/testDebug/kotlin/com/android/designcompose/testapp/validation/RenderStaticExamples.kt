@@ -30,7 +30,6 @@
  import com.android.designcompose.test.internal.captureRootRoboImage
  import com.android.designcompose.test.internal.designComposeRoborazziRule
  import com.android.designcompose.testapp.common.interFont
- //import com.android.designcompose.testapp.validation.examples.EXAMPLES
  import com.android.designcompose.testapp.validation.examples.STATIC_EXAMPLES
  import com.android.designcompose.testapp.validation.performLiveFetch;
  import java.io.File

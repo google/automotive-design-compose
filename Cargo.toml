@@ -30,7 +30,7 @@ serde_bytes = "0.11"
 serde-generate = { version = "0.25.1" }
 serde_json = "1.0"
 serde-reflection = { version = "0.3" }
-svgtypes = "0.15.0"
+svgtypes = "0.15.1"
 taffy = "0.3.19"
 testdir = "0.9.1"
 thiserror = "1.0"

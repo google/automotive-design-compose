@@ -70,11 +70,11 @@ fn layout_response_to_bytearray(
     }
 }
 
-pub fn jni_create_layout_manager(_env: JNIEnv, _class: JClass) -> i32 {
+pub(crate) fn jni_create_layout_manager(_env: JNIEnv, _class: JClass) -> i32 {
     create_layout_manager()
 }
 
-pub fn jni_set_node_size<'local>(
+pub(crate) fn jni_set_node_size<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
     manager_id: jint,
@@ -98,7 +98,7 @@ pub fn jni_set_node_size<'local>(
     }
 }
 
-pub fn jni_add_nodes<'local>(
+pub(crate) fn jni_add_nodes<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
     manager_id: jint,
@@ -180,7 +180,7 @@ fn handle_layout_node_list(
     }
 }
 
-pub fn jni_remove_node<'local>(
+pub(crate) fn jni_remove_node<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass,
     manager_id: jint,
@@ -208,7 +208,7 @@ fn get_text_size(env: &mut JNIEnv, input: &JObject) -> Result<(f32, f32), jni::e
     Ok((width, height))
 }
 
-pub fn java_jni_measure_text(
+pub(crate) fn java_jni_measure_text(
     layout_id: i32,
     width: f32,
     height: f32,

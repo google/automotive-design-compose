@@ -14,8 +14,8 @@
 
 syntax = "proto3";
 package com.android.designcompose.layout.proto;
-import "types.proto";
 import "styles.proto";
+import "types.proto";
 option java_multiple_files = true;
 
 message LayoutStyle {

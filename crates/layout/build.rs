@@ -20,6 +20,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Derive Copy for Dimension. Must derive it for both the enum and
     // for the proto message that holds the enum.
     prost_config.message_attribute("DimensionProto", "#[derive(Copy)]");
+    prost_config.message_attribute("DimensionProto.Auto", "#[derive(Copy)]");
+    prost_config.message_attribute("DimensionProto.Undefined", "#[derive(Copy)]");
     prost_config.enum_attribute("Dimension", "#[derive(Copy)]");
 
     let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))

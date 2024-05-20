@@ -62,7 +62,7 @@ internal object SquooshLayout {
             try {
                 LayoutChangedResponse.parseFrom(response)
             } catch (e: InvalidProtocolBufferException) {
-                // TODO: handle this?
+                Log.e("SquooshLayout", "Failed to parse layout changed response", e)
                 throw e
             }
         return layoutChangedResponse.changedLayoutsMap

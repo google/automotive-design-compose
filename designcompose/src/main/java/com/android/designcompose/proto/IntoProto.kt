@@ -19,6 +19,7 @@ package com.android.designcompose.proto
 import com.android.designcompose.layout.proto.AlignContent as ProtoAlignContent
 import com.android.designcompose.layout.proto.AlignItems as ProtoAlignItems
 import com.android.designcompose.layout.proto.AlignSelf as ProtoAlignSelf
+import com.android.designcompose.layout.proto.DimensionProtoKt
 import com.android.designcompose.layout.proto.FlexDirection as ProtoFlexDirection
 import com.android.designcompose.layout.proto.ItemSpacingKt.auto
 import com.android.designcompose.layout.proto.JustifyContent as ProtoJustifyContent
@@ -73,8 +74,8 @@ internal fun LayoutNodeList.intoProto() = layoutNodeList {
 
 internal fun Dimension.intoProto() = dimensionProto {
     when (val s = this@intoProto) {
-        is Undefined -> undefined = true
-        is Dimension.Auto -> auto = true
+        is Undefined -> undefined = DimensionProtoKt.undefined {}
+        is Dimension.Auto -> auto = DimensionProtoKt.auto {}
         is Dimension.Points -> points = s.value.toFloat()
         is Dimension.Percent -> percent = s.value.toFloat()
     }
@@ -135,8 +136,7 @@ internal fun AlignItems.intoProto() =
         is AlignItems.Center -> ProtoAlignItems.ALIGN_ITEMS_CENTER
         is AlignItems.Baseline -> ProtoAlignItems.ALIGN_ITEMS_BASELINE
         is AlignItems.Stretch -> ProtoAlignItems.ALIGN_ITEMS_STRETCH
-        else ->
-            throw IllegalArgumentException("Unknown AlignContent: $this") // Should never happen.
+        else -> throw IllegalArgumentException("Unknown AlignItems: $this") // Should never happen.
     }
 
 internal fun FlexDirection.intoProto() =

@@ -18,6 +18,10 @@ import "styles.proto";
 import "types.proto";
 option java_multiple_files = true;
 
+/* This message defines the layout style of a Figma node. It includes various
+ * properties that control the node's position, size, and spacing, as well as
+ * its alignment and flexbox behavior.
+ */
 message LayoutStyle {
   DimensionRect margin = 1;
   DimensionRect padding = 2;

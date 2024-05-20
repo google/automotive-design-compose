@@ -22,7 +22,9 @@ re-use the Dimension oneof it needs to go into a `DimensionProto` message.
 */
 
 message DimensionProto {
+  // Has no data
   message Undefined {};
+  // Has no data
   message Auto {};
   oneof Dimension {
     Undefined undefined = 1;

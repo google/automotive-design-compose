@@ -35,8 +35,7 @@ import com.android.designcompose.serdegen.Size
 internal fun Layout.intoSerde() =
     com.android.designcompose.serdegen.Layout(order, width, height, left, top)
 
-/* height = */ internal
-/* left = */ fun DimensionProto.intoSerde() =
+internal fun DimensionProto.intoSerde() =
     when (dimensionCase) {
         DimensionProto.DimensionCase.UNDEFINED -> Dimension.Undefined()
         DimensionProto.DimensionCase.AUTO -> Dimension.Auto()

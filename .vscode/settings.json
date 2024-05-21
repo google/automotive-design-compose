@@ -1,0 +1,43 @@
+{
+    "[markdown]": {
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true
+    },
+    "[proto3]": {
+        "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "files.watcherExclude": {
+        "**/.gradle/**": true,
+        "**/build/**": true,
+        "**/build/.*/**": true,
+        "**/build/intermediates/**": true,
+        "**/build/kspCaches/**": true,
+        "**/target/**": true
+    },
+    "github.branchProtection": true,
+    "gitlens.advanced.messages": {
+        "suppressCreatePullRequestPrompt": true
+    },
+    "markdownlint.config": {
+        "MD037": false,
+        "MD052": false,
+        "line-length": {
+            "line_length": 100
+        },
+        "no-inline-html": false,
+        "single-h1": false
+    },
+    "protoc": {
+        "options": [
+            "--proto_path=${workspaceRoot}/proto/layout"
+        ]
+    },
+    "rust-analyzer.imports.merge.glob": false,
+    "rust-analyzer.testExplorer": true,
+    "search.exclude": {
+        "**/_site": true
+    }
+}

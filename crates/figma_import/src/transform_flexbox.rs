@@ -396,10 +396,17 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                         }
                     }
                     Some(HorizontalLayoutConstraintValue::Scale) => {
-                        style.layout_style.left =
-                            Dimension::Percent(left / parent_bounds.width().ceil());
-                        style.layout_style.right =
-                            Dimension::Percent(right / parent_bounds.width().ceil());
+                        let is_zero: bool = parent_bounds.width() == 0.0;
+                        style.layout_style.left = Dimension::Percent(if is_zero {
+                            0.0
+                        } else {
+                            left / parent_bounds.width().ceil()
+                        });
+                        style.layout_style.right = Dimension::Percent(if is_zero {
+                            0.0
+                        } else {
+                            right / parent_bounds.width().ceil()
+                        });
                         style.layout_style.width = Dimension::Auto;
                         style.layout_style.min_width = Dimension::Auto;
                     }
@@ -439,10 +446,17 @@ fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
                         }
                     }
                     Some(VerticalLayoutConstraintValue::Scale) => {
-                        style.layout_style.top =
-                            Dimension::Percent(top / parent_bounds.height().ceil());
-                        style.layout_style.bottom =
-                            Dimension::Percent(bottom / parent_bounds.height().ceil());
+                        let is_zero: bool = parent_bounds.height() == 0.0;
+                        style.layout_style.top = Dimension::Percent(if is_zero {
+                            0.0
+                        } else {
+                            top / parent_bounds.height().ceil()
+                        });
+                        style.layout_style.bottom = Dimension::Percent(if is_zero {
+                            0.0
+                        } else {
+                            bottom / parent_bounds.height().ceil()
+                        });
                         style.layout_style.height = Dimension::Auto;
                         style.layout_style.min_height = Dimension::Auto;
                     }

@@ -448,6 +448,32 @@ fn test_constraints_widget() {
     assert!(widget_child_layout.height == 150.0);
 }
 
+#[test]
+fn test_zero_width_height() {
+    let figma_doc_result = load_doc();
+    let manager = load_view("VectorScale", &figma_doc_result.unwrap());
+
+    // A vector with height 0 and constraints set to scale should result in a height of 0
+    let bar_layout_result = manager.get_node_layout(2);
+    assert!(bar_layout_result.is_some());
+    let bar_layout = bar_layout_result.unwrap();
+    assert!(bar_layout.width == 80.0);
+    assert!(bar_layout.height == 0.0);
+
+    let bg_layout_result = manager.get_node_layout(3);
+    assert!(bg_layout_result.is_some());
+    let bg_layout = bg_layout_result.unwrap();
+    assert!(bg_layout.width == 20.0);
+    assert!(bg_layout.height == 0.0);
+
+    // A vector with width 0 and constraints set to scale should result in a width of 0
+    let vert_bar_layout_result = manager.get_node_layout(5);
+    assert!(vert_bar_layout_result.is_some());
+    let vert_bar_layout = vert_bar_layout_result.unwrap();
+    assert!(vert_bar_layout.width == 0.0);
+    assert!(vert_bar_layout.height == 20.0);
+}
+
 // Add tests:
 //
 // 2. Nodes in horizontal layout

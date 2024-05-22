@@ -20,7 +20,7 @@
 cargo run --bin fetch --features=fetch -- \
 --doc-id=OGUIhtwHL3z8wWZqnxYM9P \
 --api-key=$FIGMA_ACCESS_TOKEN \
---output=crates/layout/tests/layout-unit-tests.dcf \
+--output=crates/figma_import/tests/layout-unit-tests.dcf \
 --nodes='VerticalAutoLayout' \
 --nodes='ReplacementAutoLayout' \
 --nodes='ReplacementFixedLayout' \
@@ -30,4 +30,5 @@ cargo run --bin fetch --features=fetch -- \
 --nodes='ConstraintsLayoutTB' \
 --nodes='ConstraintsLayoutLRTB' \
 --nodes='ConstraintsLayoutCenter' \
---nodes='ConstraintsLayoutWidget'
+--nodes='ConstraintsLayoutWidget' \
+--nodes='VectorScale'

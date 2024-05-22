@@ -30,4 +30,5 @@ cargo run --bin fetch --features=fetch -- \
 --nodes='ConstraintsLayoutTB' \
 --nodes='ConstraintsLayoutLRTB' \
 --nodes='ConstraintsLayoutCenter' \
---nodes='ConstraintsLayoutWidget'
+--nodes='ConstraintsLayoutWidget' \
+--nodes='VectorScale'

@@ -21,7 +21,7 @@ option java_multiple_files = true;
 // The final result of a layout algorithm for a single taffy Node
 message Layout {
   // Relative ordering of the node. Render nodes with a higher order on top
-  // of nodes with lower orde
+  // of nodes with lower order
   uint32 order = 1;
   float width = 2;
   float height = 3;

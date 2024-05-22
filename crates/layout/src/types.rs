@@ -132,7 +132,7 @@ impl Default for Size<Dimension> {
 }
 
 /// The final result of a layout algorithm for a single taffy Node
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Layout {
     // Relative ordering of the node. Render nodes with a higher order on top
     // of nodes with lower order

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use log::{error, trace};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
@@ -458,7 +457,7 @@ impl LayoutManager {
 
 // The layout response sent back to client which contains a layout state ID and
 // a list of layout IDs that have changed.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct LayoutChangedResponse {
     pub layout_state: i32,
     pub changed_layouts: HashMap<i32, Layout>,

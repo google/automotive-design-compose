@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # This script should fetch the layout test Figma file with all the nodes that are needed for testing.
-# Pre-requisites: 
+# Pre-requisites:
 #    Have \$FIGMA_ACCESS_TOKEN set to your actual Figma token
 
 cargo run --bin fetch --features=fetch -- \

@@ -317,8 +317,8 @@ internal fun DesignText(
     val content =
         @Composable {
             // Text needs to use a modifier that sets the size so that it wraps properly
-            val height = layout?.height() ?: 0
-            val textModifier = modifier.sizeToModifier(layout?.width() ?: 0, height)
+            val height = layout?.height?.toInt() ?: 0
+            val textModifier = modifier.sizeToModifier(layout?.width?.toInt() ?: 0, height)
             val replacementComponent = customizations.getComponent(nodeName)
             if (replacementComponent != null) {
                 replacementComponent(

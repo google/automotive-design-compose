@@ -1,19 +1,19 @@
 # Automotive Design for Compose
 
 - [Automotive Design for Compose](#automotive-design-for-compose)
-    - [Introduction](#introduction)
-    - [Getting Started](#getting-started)
-    - [Building your own app](#building-your-own-app)
+  - [Introduction](#introduction)
+  - [Getting Started](#getting-started)
+  - [Building your own app](#building-your-own-app)
 - [Working with the Source](#working-with-the-source)
-    - [SDK build dependencies](#sdk-build-dependencies)
-        - [Android Studio](#android-studio)
-        - [Android NDK](#android-ndk)
-        - [Rust](#rust)
-        - [Rust Toolchains](#rust-toolchains)
-    - [Source Layout](#source-layout)
-    - [Building additional resources](#building-additional-resources)
-        - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
-    - [Get in touch](#get-in-touch)
+  - [SDK build dependencies](#sdk-build-dependencies)
+    - [Android Studio](#android-studio)
+    - [Android NDK](#android-ndk)
+    - [Rust](#rust)
+    - [Rust Toolchains](#rust-toolchains)
+  - [Source Layout](#source-layout)
+  - [Building additional resources](#building-additional-resources)
+    - [Building the Automotive Design for Compose Figma Plugin and Widget](#building-the-automotive-design-for-compose-figma-plugin-and-widget)
+  - [Get in touch](#get-in-touch)
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose/badge)](https://api.securityscorecards.dev/projects/github.com/google/automotive-design-compose)
 
@@ -117,6 +117,13 @@ Install them by running the following from the root of the repository
 ./install-rust-toolchains.sh
 ```
 
+### Protobuf compiler
+
+The Rust source depends on the protobuf messages which must be compiled with the protobuffer
+compiler. Compilation will happen automatically for the packages that need it, but the
+compiler must be available. It can be installed using `apt install protobuf-compiler`
+or `brew install protobuf`
+
 ## Build optimizations and Gradle properties
 
 ### Controlling the architectures to build the Rust libraries for
@@ -142,6 +149,7 @@ Note: The abi overrides are ignored when building for release.
 ### Gradle optimizations
 
 The properties file that is committed already includes the following optimizations:
+
 - Parallel builds
 - Build caching
 - Configuration caching
@@ -149,8 +157,10 @@ The properties file that is committed already includes the following optimizatio
 
 You can optionally add these to your personal gradle.properties:
 
-    - `org.gradle.configureondemand`: Incubating feature feature that attempts to configure only the projects that are required for a build.
-    - `android.experimental.androidTest.numManagedDeviceShards`: When running Gradle Managed Device tests, starts up additional VMs to execute the tests on in parallel
+    - `org.gradle.configureondemand`: Incubating feature feature that attempts to configure only
+    the projects that are required for a build.
+    - `android.experimental.androidTest.numManagedDeviceShards`: When running Gradle Managed Device
+    tests, starts up additional VMs to execute the tests on in parallel
 
 ## Source Layout
 
@@ -159,13 +169,13 @@ Automotive Design for Compose consists of several components:
 - The Jetpack Compose renderer of Automotive Design for Compose documents consists of several
   modules:
 
-    - `annotation` contains the Kotlin annotation definitions like `@DesignDoc`
+  - `annotation` contains the Kotlin annotation definitions like `@DesignDoc`
       and `@DesignComponent`.
 
-    - `codegen` contains the Kotlin compiler plugin that processes the annotations and generates
+  - `codegen` contains the Kotlin compiler plugin that processes the annotations and generates
       stub Composables that use the Automotive Design for Compose runtime.
 
-    - `designcompose` contains the code that interprets Automotive Design for Compose documents and
+  - `designcompose` contains the code that interprets Automotive Design for Compose documents and
       renders them using Jetpack Compose. It also contains the code that uses the Figma Import JNI
       library to fetch documents from the Figma webservice.
 
@@ -177,12 +187,12 @@ Automotive Design for Compose consists of several components:
 - Figma plugins that give designers more control and a better experience using Figma with Automotive
   Design for Compose:
 
-    - The Extended Layout Plugin, in `support-figma/extended-layout-plugin` , provides a panel for
+  - The Extended Layout Plugin, in `support-figma/extended-layout-plugin` , provides a panel for
       formatting text, a panel to provide a JSON file with keyword details, a panel to validate
       keyword usages against the provided JSON file, and a command to sync Figma's prototype
       settings to the main document.
 
-    - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma
+  - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma
       widget that uses the JSON file and allows designers to create and preview complex list
       layouts.
 
@@ -265,7 +275,8 @@ your gradle.properties. This will launch multiple instances of the GMDs, allowin
 in parallel.
 
 ```bash
-android.experimental.androidTest.numManagedDeviceShards=3 #Up to 4 are supported, though more than 3 may not provide much benefit
+#Up to 4 are supported, though more than 3 may not provide much benefit
+android.experimental.androidTest.numManagedDeviceShards=3
 ```
 
 This can provide significant speedup for instrumented tests. Having shards set to 4 can reduce the
@@ -350,7 +361,8 @@ following:
     2. Run gmaven_publisher to stage it:
 
         ```bash
-        /google/bin/releases/android-devtools/gmaven/publisher/gmaven-publisher stage --gfile /x20/teams/designcompose/release_staging/<the m2repo.zip>
+        /google/bin/releases/android-devtools/gmaven/publisher/gmaven-publisher stage
+        --gfile /x20/teams/designcompose/release_staging/<the m2repo.zip>
         ```
 
     3. The staged release will be available for additional testing (see go/gmaven for more info).

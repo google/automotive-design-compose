@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate android_logger;
-extern crate log;
-pub mod layout_manager;
-pub mod layout_node;
-pub mod layout_style;
-pub mod proto;
-pub mod styles;
-pub mod types;
+use thiserror::Error;
 
-pub use layout_manager::LayoutChangedResponse;
-pub use layout_manager::LayoutManager;
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Missing field {field}")]
+    MissingFieldError { field: String },
+    #[error("Unknown enum variant for {enum_name}")]
+    UnknownEnumVariant { enum_name: String },
+}
+
+pub type Result<T> = std::result::Result<T, Error>;

@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate android_logger;
-extern crate log;
-pub mod layout_manager;
-pub mod layout_node;
-pub mod layout_style;
-pub mod proto;
-pub mod styles;
-pub mod types;
+mod layout_node;
+mod layout_style;
+mod styles;
+mod types;
 
-pub use layout_manager::LayoutChangedResponse;
-pub use layout_manager::LayoutManager;
+include!(concat!(env!("OUT_DIR"), "/com.android.designcompose.layout.proto.rs"));

@@ -78,6 +78,11 @@ jobs:
       - name: Install Rust toolchains
         run: ./install-rust-toolchains.sh
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "26.1"
+
       - name: Set up Rust Cache
         uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:

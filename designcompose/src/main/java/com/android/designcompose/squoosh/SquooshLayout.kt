@@ -17,15 +17,16 @@
 package com.android.designcompose.squoosh
 
 import android.util.Log
+import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
+import com.android.designcompose.layout.proto.LayoutChangedResponse
+import com.android.designcompose.proto.intoProto
+import com.android.designcompose.proto.intoSerde
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.LayoutChangedResponse
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.LayoutParentChildren
-import com.novi.bincode.BincodeDeserializer
-import com.novi.bincode.BincodeSerializer
 import java.util.Optional
 
 internal class SquooshLayoutManager(val id: Int)
@@ -54,17 +55,19 @@ internal object SquooshLayout {
         rootLayoutId: Int,
         layoutNodeList: LayoutNodeList
     ): Map<Int, Layout> {
-        val serializedNodes = serialize(layoutNodeList)
+        val serializedNodes = layoutNodeList.intoProto().toByteArray()
         val response =
             Jni.jniAddNodes(manager.id, rootLayoutId, serializedNodes) ?: return emptyMap()
-        val layoutChangedResponse = LayoutChangedResponse.deserialize(BincodeDeserializer(response))
-        return layoutChangedResponse.changed_layouts
-    }
-
-    private fun serialize(layoutNodeList: LayoutNodeList): ByteArray {
-        val nodeListSerializer = BincodeSerializer()
-        layoutNodeList.serialize(nodeListSerializer)
-        return nodeListSerializer._bytes
+        val layoutChangedResponse =
+            try {
+                LayoutChangedResponse.parseFrom(response)
+            } catch (e: InvalidProtocolBufferException) {
+                Log.e("SquooshLayout", "Failed to parse layout changed response", e)
+                throw e
+            }
+        return layoutChangedResponse.changedLayoutsMap
+            .map { it.key to it.value.intoSerde() }
+            .toMap()
     }
 }
 

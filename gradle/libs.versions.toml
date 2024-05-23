@@ -56,6 +56,9 @@ truth = "1.4.2"
 spotless = "6.25.0"
 robolectric = "4.12.1"
 roborazzi = "1.15.0"
+# Keep in sync with the "Install Protoc" steps in .github/workflows
+protoc = "4.26.1"
+protobuf-plugin = "0.9.4"
 
 [libraries]
 # Android
@@ -129,6 +132,9 @@ roborazzi-gradlePlugin = {module = "io.github.takahirom.roborazzi:roborazzi-grad
 roborazzi-compose = {module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi"}
 roborazzi-junit = {module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi"}
 spotless-plugin-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protoc"}
+protobuf-kotlin = {module = "com.google.protobuf:protobuf-kotlin", version.ref = "protoc"}
+protobuf-java-util = { module = "com.google.protobuf:protobuf-java-util", version.ref = "protoc"}
 
 
 [plugins]
@@ -143,3 +149,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 strictVersionMatcher = { id = "com.google.android.gms.strict-version-matcher-plugin", version.ref = "android-gms-strictVersionMatcher" }
 roborazzi = {id = "io.github.takahirom.roborazzi", version.ref = "roborazzi"}
+protobuf = {id = "com.google.protobuf", version.ref = "protobuf-plugin"}

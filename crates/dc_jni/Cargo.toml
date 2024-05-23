@@ -12,9 +12,11 @@ rust-version = "1.68"
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
+dc_proto = { path = "../dc_proto"}
 figma_import = { path = "../figma_import" }
 layout = { path = "../layout" }
 log.workspace = true
+jni.workspace = true
 android_logger.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -22,5 +24,6 @@ serde_bytes.workspace = true
 bincode.workspace = true
 ureq.workspace = true
 lazy_static.workspace = true
+prost.workspace = true
 thiserror.workspace = true
-jni.workspace = true
+bytes.workspace = true

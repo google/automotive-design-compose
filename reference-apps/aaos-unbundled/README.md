@@ -15,7 +15,7 @@ The releases can be downloaded by following the instructions on the [Integration
 The 20231102 release is required. You can download a fresh checkout of the Unbundled repository or update an existing one by running:
 
 ```bash
-repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master-20231102
+repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master-20240521
 repo sync -cq -j4
 ```
 

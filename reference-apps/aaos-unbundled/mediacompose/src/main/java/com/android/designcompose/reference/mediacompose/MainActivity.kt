@@ -171,7 +171,8 @@ class MainActivity : ComponentActivity() {
         val mediaAdapter = remember { MediaAdapter(application, applicationContext, this) }
 
         val nowPlaying = mediaAdapter.getNowPlaying(CenterDisplayDoc)
-        val mediaSource = mediaAdapter.getMediaSource()
+        val nowPlayingMediaSource = mediaAdapter.getNowPlayingMediaSource()
+        val browseMediaSource = mediaAdapter.getBrowseMediaSource()
         val browse = mediaAdapter.getBrowse(CenterDisplayDoc)
         val search = mediaAdapter.getSearch(CenterDisplayDoc)
 
@@ -187,8 +188,8 @@ class MainActivity : ComponentActivity() {
                 artist = nowPlaying.artist,
                 album = nowPlaying.album,
                 albumArt = nowPlaying.albumArt,
-                appIcon = mediaSource?.croppedPackageIcon,
-                appName = mediaSource?.getDisplayName(applicationContext) as String,
+                appIcon = nowPlayingMediaSource?.croppedPackageIcon,
+                appName = nowPlayingMediaSource?.getDisplayName(applicationContext) as String,
                 nowPlayingProgressBarModule = nowPlayingProgressBarModule,
             )
         val playbackControlsModule =
@@ -211,6 +212,8 @@ class MainActivity : ComponentActivity() {
             )
         val browseSourceButtonModule =
             BrowseSourceButtonModule(
+                browseAppIcon = browseMediaSource?.croppedPackageIcon,
+                browseAppName = browseMediaSource?.getDisplayName(application) as String,
                 browseSourceList = browse.sourceButtons,
             )
         val browsePageHeaderModule =

@@ -68,7 +68,7 @@ them available to the Media Center app.
     mkdir aaos-unbundled
     cd aaos-unbundled
 
-    repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master-20231102
+    repo init -u https://android.googlesource.com/platform/manifest -b ub-automotive-master-20240521
     repo sync -cq -j16
     ```
 

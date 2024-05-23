@@ -16,6 +16,7 @@
 
 package com.android.designcompose.reference.mediacompose
 
+import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -33,7 +34,7 @@ internal data class MediaBrowseStack(
 ) : ViewModel() {
     inner class Page(val parent: MediaItemMetadata?) {
         fun getItemList(): MediaItemsRepository.MediaItemsLiveData {
-            return mediaRepo.getMediaChildren(parent?.id)
+            return mediaRepo.getMediaChildren(parent?.id, Bundle.EMPTY)
         }
 
         fun getId(): String? {

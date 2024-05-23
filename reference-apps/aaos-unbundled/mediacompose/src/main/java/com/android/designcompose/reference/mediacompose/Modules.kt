@@ -86,6 +86,8 @@ class ErrorFrameModule(
 
 @DesignModuleClass
 class BrowseSourceButtonModule(
+    @DesignProperty(node = "#media/browse/source-icon") val browseAppIcon: Bitmap?,
+    @DesignProperty(node = "#media/browse/source-name") val browseAppName: String,
     @DesignContentTypesProperty(nodes = ["#media/source-button"])
     @DesignPreviewContentProperty(
         name = "Sources",

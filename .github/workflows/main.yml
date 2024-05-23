@@ -402,7 +402,7 @@ jobs:
     - name: Check out the Unbundled AAOS Repo
       run: |
         HOST=https://android.googlesource.com/platform/manifest
-        BRANCH=ub-automotive-master-20231102
+        BRANCH=ub-automotive-master-20240521
         mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
         cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
         repo init -u $HOST -b $BRANCH -g pdk,pdk-fs --depth=1
@@ -419,6 +419,12 @@ jobs:
       with:
         name: unbundled_m2repo
         path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
+
+    - name: Upload aaos prebuilts
+      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      with:
+        name: unbundled_prebuilts
+        path: unbundled-aaos/prebuilts/sdk/34/system/
 
 ######### Unbundled apps
 
@@ -454,6 +460,11 @@ jobs:
       with:
         name: unbundled_m2repo
         path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
+
+    - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      with:
+        name: unbundled_prebuilts
+        path: unbundled-aaos/prebuilts/sdk/34/system/
 
     - run: sudo apt-get install repo
 

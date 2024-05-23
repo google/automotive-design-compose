@@ -84,6 +84,10 @@ android {
     useLibrary("android.car")
 }
 
+val unbundledAAOSDir: String? by project
+
+if (unbundledAAOSDir == null) throw GradleException("unbundledAAOSDir is not set")
+
 dependencies {
     implementation(libs.designcompose)
     ksp(libs.designcompose.codegen)
@@ -101,6 +105,11 @@ dependencies {
 
     implementation("com.android.car:car-apps-common:UNBUNDLED")
     api("com.android.car:car-media-common:UNBUNDLED")
+    compileOnly(
+        files(
+            "$unbundledAAOSDir/prebuilts/sdk/${ libs.versions.compileSdk.get().toInt()}/system/android.car-system-stubs.jar"
+        )
+    )
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

@@ -18,8 +18,8 @@ package com.android.designcompose.reference.mediacompose
 
 import android.app.Application
 import android.app.PendingIntent
-import android.car.media.CarMediaManager
-import android.content.ComponentName
+import android.car.media.CarMediaManager.MEDIA_SOURCE_MODE_BROWSE
+import android.car.media.CarMediaManager.MEDIA_SOURCE_MODE_PLAYBACK
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ResolveInfo
@@ -28,6 +28,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.VectorDrawable
+import android.os.Bundle
 import android.os.Handler
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.PlaybackStateCompat
@@ -58,15 +59,15 @@ import com.android.car.apps.common.imaging.ImageBinder
 import com.android.car.apps.common.util.FutureData
 import com.android.car.media.common.MediaItemMetadata
 import com.android.car.media.common.browse.MediaBrowserViewModelImpl
-import com.android.car.media.common.browse.MediaItemsRepository
 import com.android.car.media.common.playback.PlaybackProgress
 import com.android.car.media.common.playback.PlaybackViewModel
 import com.android.car.media.common.playback.PlaybackViewModel.RawCustomPlaybackAction
+import com.android.car.media.common.source.CarMediaManagerHelper
 import com.android.car.media.common.source.MediaBrowserConnector
 import com.android.car.media.common.source.MediaBrowserConnector.BrowsingState
+import com.android.car.media.common.source.MediaModels
 import com.android.car.media.common.source.MediaSource
 import com.android.car.media.common.source.MediaSourceViewModel
-import com.android.car.media.common.source.MediaSourcesProvider
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignNodeData
 import com.android.designcompose.EmptyListContent
@@ -81,8 +82,6 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 private const val TAG = "DesignCompose_Media"
-private const val MEDIA_SOURCE_MODE_PLAYBACK = 0
-private const val MEDIA_SOURCE_MODE_BROWSE = 1
 
 // Specifies that the corresponding items should be presented as grids.
 const val CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2
@@ -275,18 +274,22 @@ class MediaAdapter(
     private val context: Context,
     activity: ComponentActivity,
 ) {
-    // Data for the currently playing track
-    private val playbackViewModel: PlaybackViewModel =
-        PlaybackViewModel.get(application, MEDIA_SOURCE_MODE_PLAYBACK)
-    // We update the list of sources whenever the selected source for browsing changes.
-    private val browseSource = MediaSourceViewModel.get(application, MEDIA_SOURCE_MODE_BROWSE)
+    private val nowPlayingViewModels = MediaModels(application, MEDIA_SOURCE_MODE_PLAYBACK)
     // Data for the currently playing source
-    private val playbackSource = MediaSourceViewModel.get(application, MEDIA_SOURCE_MODE_PLAYBACK)
-    // List of media sources
-    private val sources = MediaSourcesProvider.getInstance(context)
+    private val nowPlayingMediaSource =
+        MediaSourceViewModel.get(application, MEDIA_SOURCE_MODE_PLAYBACK)
+    // Data for the currently playing track
+    private val nowPlayingPlaybackViewModel: PlaybackViewModel =
+        nowPlayingViewModels.playbackViewModel
+    private val browseMediaModels = MediaModels(application, MEDIA_SOURCE_MODE_BROWSE)
+    // We update the list of sources whenever the selected source for browsing changes.
+    private val browseMediaSource = browseMediaModels.mediaSourceViewModel
+    private val browsePlaybackViewModel: PlaybackViewModel = browseMediaModels.playbackViewModel
+
+    private val mediaManagerHelper = CarMediaManagerHelper.getInstance(context)
+    private val mediaSourcesProvider = MediaSourcesProvider.getInstance(context)
     // A repository that tracks media item children
-    private val mediaRepo =
-        MediaItemsRepository.get(application, CarMediaManager.MEDIA_SOURCE_MODE_BROWSE)
+    private val mediaRepo = browseMediaModels.mediaItemsRepository
     // A stack of browse pages
     private val browseStack: MediaBrowseStack = MediaBrowseStack(mediaRepo, activity)
     // A stack of search browse pages
@@ -326,7 +329,9 @@ class MediaAdapter(
             return
         }
         when (newBrowsingState.mConnectionStatus) {
-            MediaBrowserConnector.ConnectionStatus.CONNECTING -> {}
+            MediaBrowserConnector.ConnectionStatus.CONNECTING -> {
+                canSearch.value = false
+            }
             MediaBrowserConnector.ConnectionStatus.CONNECTED -> {
                 Log.i(
                     TAG,
@@ -334,12 +339,21 @@ class MediaAdapter(
                 )
                 val browser = newBrowsingState.mBrowser
                 canSearch.value = MediaBrowserViewModelImpl.getSupportsSearch(browser)
+
+                val rootId: String? = browser?.root
+                mediaRepo.getMediaChildren(rootId, Bundle()).observeForever { items ->
+                    browseStack.resetTo(
+                        if (items?.data?.isEmpty() == true) null else items?.data?.get(0)
+                    )
+                }
             }
             MediaBrowserConnector.ConnectionStatus.DISCONNECTING,
             MediaBrowserConnector.ConnectionStatus.REJECTED,
             MediaBrowserConnector.ConnectionStatus.SUSPENDED -> {
                 browseStack.clear()
+                canSearch.value = false
             }
+            MediaBrowserConnector.ConnectionStatus.NONEXISTENT -> {}
         }
     }
 
@@ -451,9 +465,15 @@ class MediaAdapter(
     }
 
     @Composable
-    fun getMediaSource(): MediaSource? {
+    fun getNowPlayingMediaSource(): MediaSource? {
         // Observe the currently playing media source
-        val mediaSource: MediaSource? by playbackSource.primaryMediaSource.observeAsState()
+        val mediaSource: MediaSource? by nowPlayingMediaSource.primaryMediaSource.observeAsState()
+        return mediaSource
+    }
+
+    @Composable
+    fun getBrowseMediaSource(): MediaSource? {
+        val mediaSource: MediaSource? by browseMediaSource.primaryMediaSource.observeAsState()
         return mediaSource
     }
 
@@ -462,19 +482,19 @@ class MediaAdapter(
         val nowPlaying = MediaNowPlaying()
 
         // Observe now playing metadata
-        val metadata: MediaItemMetadata? by playbackViewModel.metadata.observeAsState()
+        val metadata: MediaItemMetadata? by nowPlayingPlaybackViewModel.metadata.observeAsState()
         nowPlaying.title = metadata?.title?.toString() ?: ""
         nowPlaying.artist = metadata?.subtitle?.toString() ?: ""
         nowPlaying.album = metadata?.description?.toString() ?: ""
 
         // Observe playback controller to attach actions.
         val playController: PlaybackViewModel.PlaybackController? by
-            playbackViewModel.playbackController.observeAsState()
+            nowPlayingPlaybackViewModel.playbackController.observeAsState()
         nowPlaying.playController = playController
 
         // Observe current playback state and get the button visibility
         val playbackState: PlaybackViewModel.PlaybackStateWrapper? by
-            playbackViewModel.playbackStateWrapper.observeAsState()
+            nowPlayingPlaybackViewModel.playbackStateWrapper.observeAsState()
         when (playbackState?.mainAction) {
             PlaybackViewModel.ACTION_PLAY -> {
                 nowPlaying.showPlay = true
@@ -572,14 +592,14 @@ class MediaAdapter(
         }
 
         // Up next queue
-        val upNextTitle: CharSequence? by playbackViewModel.queueTitle.observeAsState()
+        val upNextTitle: CharSequence? by nowPlayingPlaybackViewModel.queueTitle.observeAsState()
         nowPlaying.upNextTitle =
             if (hasAuthError) {
                 ""
             } else {
                 upNextTitle?.toString() ?: ""
             }
-        val nextList: List<MediaItemMetadata>? by playbackViewModel.queue.observeAsState()
+        val nextList: List<MediaItemMetadata>? by nowPlayingPlaybackViewModel.queue.observeAsState()
         nowPlaying.showUpNext =
             if (hasAuthError) {
                 false
@@ -594,7 +614,8 @@ class MediaAdapter(
                     if (item.queueId != null) playController?.skipToQueueItem(item.queueId!!)
                 },
                 media,
-                false
+                false,
+                nowPlayingPlaybackViewModel
             )
 
         return nowPlaying
@@ -610,7 +631,7 @@ class MediaAdapter(
     fun getNowPlayingProgress(): MediaNowPlayingProgress {
         val nowPlaying = MediaNowPlayingProgress()
         // Observe the current track progress
-        val progress: PlaybackProgress? by playbackViewModel.progress.observeAsState()
+        val progress: PlaybackProgress? by nowPlayingPlaybackViewModel.progress.observeAsState()
         val maxProgress = progress?.maxProgress?.toFloat() ?: 0F
         nowPlaying.progressWidth =
             if (maxProgress == 0F) 0F else (progress?.progress?.toFloat() ?: 0F) / maxProgress
@@ -621,28 +642,29 @@ class MediaAdapter(
 
     @Composable
     private fun getSourceButtons(
-        sources: MediaSourcesProvider,
-        selectedPackageName: ComponentName?,
+        sources: List<MediaSource>,
+        primarySource: MediaSource?,
         media: CenterDisplayGen,
     ): ListContent {
         val getSourceButtonType = { index: Int ->
-            val source = sources.list[index]
-            if (source.browseServiceComponentName == selectedPackageName) SourceButtonType.Selected
+            val source = sources[index]
+            if (source.browseServiceComponentName == primarySource?.browseServiceComponentName)
+                SourceButtonType.Selected
             else SourceButtonType.Unselected
         }
         return { spanFunc ->
             ListContentData(
-                count = sources.list.size,
+                count = sources.size,
                 span = { index ->
                     spanFunc { media.SourceButtonDesignNodeData(getSourceButtonType(index)) }
                 },
-                key = { index -> sources.list[index].toString() }
+                key = { index -> sources[index].toString() }
             ) { index ->
-                val source = sources.list[index]
+                val source = sources[index]
                 media.SourceButton(
                     modifier = Modifier,
                     onTap = {
-                        browseSource.setPrimaryMediaSource(source, MEDIA_SOURCE_MODE_BROWSE)
+                        mediaManagerHelper.setPrimaryMediaSource(source, MEDIA_SOURCE_MODE_BROWSE)
                     },
                     openLinkCallback = null,
                     sourceButtonType = getSourceButtonType(index),
@@ -662,6 +684,7 @@ class MediaAdapter(
         browseFunc: (MediaItemMetadata?) -> Unit,
         playFunc: (PlaybackViewModel.PlaybackController?, MediaItemMetadata) -> Unit,
         media: CenterDisplayGen,
+        playbackViewModel: PlaybackViewModel,
         showSectionTitles: Boolean = true,
     ): ListContent {
         if (list == null) return { ListContentData { _ -> } }
@@ -681,7 +704,14 @@ class MediaAdapter(
             return { ListContentData { _ -> } }
         }
 
-        return getBrowseLazyGridContent(list.data, browseFunc, playFunc, media, showSectionTitles)
+        return getBrowseLazyGridContent(
+            list.data,
+            browseFunc,
+            playFunc,
+            media,
+            showSectionTitles,
+            playbackViewModel
+        )
     }
 
     @Composable
@@ -691,9 +721,10 @@ class MediaAdapter(
         playFunc: (PlaybackViewModel.PlaybackController?, MediaItemMetadata) -> Unit,
         media: CenterDisplayGen,
         showSectionTitles: Boolean = true,
+        playbackViewModel: PlaybackViewModel
     ): ListContent {
         if (list == null) return { ListContentData { _ -> } }
-        val playController: PlaybackViewModel.PlaybackController? by
+        val playbackController: PlaybackViewModel.PlaybackController? by
             playbackViewModel.playbackController.observeAsState()
         val metadata: MediaItemMetadata? by playbackViewModel.metadata.observeAsState()
 
@@ -783,7 +814,7 @@ class MediaAdapter(
                         groupGridType[group]!!,
                         metadata,
                         onTap = {
-                            if (it.isBrowsable) browseFunc(it) else playFunc(playController, it)
+                            if (it.isBrowsable) browseFunc(it) else playFunc(playbackController, it)
                         },
                         key = it.id,
                         media,
@@ -834,11 +865,11 @@ class MediaAdapter(
         val browse = MediaBrowse()
 
         // Observer the currently browsing media source
-        val primarySource: MediaSource? by browseSource.primaryMediaSource.observeAsState()
+        val primarySource: MediaSource? = getBrowseMediaSource()
 
         // Get the browse source buttons
-        val selectedPackageName = primarySource?.browseServiceComponentName
-        browse.sourceButtons = getSourceButtons(sources, selectedPackageName, media)
+        val sources by mediaSourcesProvider.getMediaSources().observeAsState()
+        browse.sourceButtons = getSourceButtons(sources!!, primarySource, media)
 
         // Setup the application settings intent
         val packageName = primarySource?.packageName
@@ -929,8 +960,14 @@ class MediaAdapter(
             getBrowseLazyGridContent(
                 itemList,
                 { item -> browseStack.browse(item) },
-                { playController, item -> playController?.playItem(item) },
-                media
+                { playController, item ->
+                    run {
+                        playController?.prepare()
+                        playController?.playItem(item)
+                    }
+                },
+                media,
+                browsePlaybackViewModel,
             )
 
         return browse
@@ -946,7 +983,7 @@ class MediaAdapter(
 
         val searchFunc = remember {
             { query: String ->
-                mediaRepo.setSearchQuery(query)
+                mediaRepo.setSearchQuery(query, Bundle.EMPTY)
                 searchStack.resetToSearch()
             }
         }
@@ -998,8 +1035,14 @@ class MediaAdapter(
             getBrowseLazyGridContent(
                 items,
                 { item -> searchStack.browse(item) },
-                { playController, item -> playController?.playItem(item) },
-                media
+                { playController, item ->
+                    run {
+                        playController?.prepare()
+                        playController?.playItem(item)
+                    }
+                },
+                media,
+                browsePlaybackViewModel,
             )
         return search
     }

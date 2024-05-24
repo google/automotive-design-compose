@@ -124,6 +124,55 @@ compiler. Compilation will happen automatically for the packages that need it, b
 compiler must be available. It can be installed using `apt install protobuf-compiler`
 or `brew install protobuf`
 
+### Formatters
+
+- Yaml: [`yamlfmt`](https://github.com/google/yamlfmt)
+- Kotlin: [`ktfmt`](https://github.com/facebook/ktfmt)
+- Rust: [`rustfmt`](https://github.com/rust-lang/rustfmt)
+- Markdown: [`markdownlint-cli2`](https://github.com/DavidAnson/markdownlint-cli2)
+- Protobuf: [`protolint`](https://github.com/yoheimuta/protolint)
+- Licenses: [`addlicense`](https://github.com/google/addlicense)
+
+## Install all of the dependencies at once please
+
+First, please follow your organization's policies for installing packages.
+
+If you have the ability to do so, you can use [Homebrew](https://brew.sh/) to install almost
+everything, for both MacOS and Linux. (Install Homebrew with the command listed on their homepage)
+
+To install the essentials:
+
+```bash
+# Make sure you have at least Java 17 available
+JAVA_VER=$( java -version 2>&1 | awk -F '"' '/version/ {print $2}' | cut -d . -f 1)
+[ "$JAVA_VER" -lt 17 ] && brew install openjdk@17
+
+# Install Rust, initialize it and install the toolchains we need
+brew install rustup-init
+rustup-init -y
+. "$HOME/.cargo/env"
+./install-rust-toolchains.sh
+
+# Install the protobuf compiler
+brew install protobuf
+```
+
+Install Android studio and install ndk `25.2.9519653` (Sorry, no easy way to automate that part!)
+
+Finally, if needed, install the below
+
+```bash
+# Formatters
+brew install \
+  yamlfmt \
+  protolint \
+  ktfmt \
+  markdownlint-cli2
+
+# To build the Figma plugins:
+brew install npm
+```
+
 ## Build optimizations and Gradle properties
 
 ### Controlling the architectures to build the Rust libraries for
@@ -336,6 +385,10 @@ before a release candidate can be cut.
 
 The test-all script takes an optional `-s` flag to skip all emulator tests. It's intended for
 situations where emulators can't be started or when running tests before updating serialized files.
+
+## Formatting
+
+The default files should configure Android Studio properly to format everything correctly.
 
 ## Before you submit for review
 

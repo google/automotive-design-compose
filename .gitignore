@@ -22,7 +22,9 @@ node_modules
 # User settings dirs
 **/.idea/*
 !.idea/ktfmt.xml
-.vscode
+**/.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 local.properties
 
 #Other

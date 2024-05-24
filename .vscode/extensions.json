@@ -1,0 +1,19 @@
+{
+    "recommendations": [
+        "figma.figma-vscode-extension", // Figma!
+        "GitHub.vscode-pull-request-github", // Pull requests, comments, etc
+        "arahata.linter-actionlint", // Github Action linting
+        "xaver.clang-format", // Protobuf formatting
+        "vadimcn.vscode-lldb", // Needed for Rust debugging
+        "usernamehw.errorlens", // Not needed, very helpful
+        "tamasfe.even-better-toml", // TOML formatter
+        "fwcd.kotlin", // Basic Kotlin syntax
+        "bierner.markdown-preview-github-styles", // Get the Readme to render the way GitHub will render it
+        "davidanson.vscode-markdownlint", // Markdown linting and formatting
+        "plex.vscode-protolint", // Protobuf linting
+        "timonwong.shellcheck", // Shell script linting
+        "zxh404.vscode-proto3", // Needed for Protobuf linting
+        "redhat.vscode-yaml", // YAML formatting
+        "github.vscode-github-actions", // Github Action formatting and linting
+    ]
+}

@@ -33,6 +33,8 @@ import com.android.designcompose.annotation.DesignModuleProperty
 import com.android.designcompose.annotation.DesignProperty
 import com.android.designcompose.annotation.DesignVariantProperty
 
+// No change
+
 enum class TextStyle {
     big,
     small,

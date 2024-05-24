@@ -14,7 +14,7 @@
     "@figma/widget-typings": "*",
     "@typescript-eslint/eslint-plugin": "^7.9.0",
     "@typescript-eslint/parser": "^7.9.0",
-    "css-loader": "^7.1.1",
+    "css-loader": "^7.1.2",
     "eslint": "^8.57.0",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-loader": "^5.0.0",

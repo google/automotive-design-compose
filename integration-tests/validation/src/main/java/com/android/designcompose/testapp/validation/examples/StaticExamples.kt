@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
- package com.android.designcompose.testapp.validation.examples
+package com.android.designcompose.testapp.validation.examples
 
- import androidx.compose.runtime.Composable
- import com.android.designcompose.annotation.DesignComponent
- import com.android.designcompose.annotation.DesignDoc
+import androidx.compose.runtime.Composable
+import com.android.designcompose.annotation.DesignComponent
+import com.android.designcompose.annotation.DesignDoc
 
 // Layout "stage"
 @DesignDoc(id = "Gv63fYTzpeH2ZtxP4go31E")
@@ -219,52 +219,143 @@ private interface VectorRenderingStageTest {
     @DesignComponent(node = "#stage") fun MainFrame()
 }
 
- // To run these tests in a local development env, run `./gradlew val:fAUFF ; ./gradlew recordRoborazziDebug`.file
- // Test outputs should be a series of images at:
- // `integration-tests/validation/src/testDebug/roborazzi/RenderStaticExamples/*.png`
- val STATIC_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
-     arrayListOf(
+// To run these tests in a local development env, run `./gradlew val:fAUFF ; ./gradlew
+// recordRoborazziDebug`.file
+// Test outputs should be a series of images at:
+// `integration-tests/validation/src/testDebug/roborazzi/RenderStaticExamples/*.png`
+val STATIC_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
+    arrayListOf(
+        Triple(
+            "Layout Test Stage Node",
+            { LayoutStageDoc.MainFrame() },
+            LayoutStageDoc.javaClass.name
+        ),
+        Triple(
+            "Layout Test Stuff Node",
+            { LayoutStageStuffDoc.MainFrame() },
+            LayoutStageStuffDoc.javaClass.name
+        ),
+        Triple(
+            "Layout Test Children Node",
+            { LayoutStageChildrenDoc.MainFrame() },
+            LayoutStageChildrenDoc.javaClass.name
+        ),
+        Triple(
+            "Layout Test Rotations Node",
+            { LayoutStageRotationsDoc.MainFrame() },
+            LayoutStageRotationsDoc.javaClass.name
+        ),
+        Triple(
+            "Layout Test Constraints Node",
+            { LayoutStageConstraintsDoc.MainFrame() },
+            LayoutStageConstraintsDoc.javaClass.name
+        ),
+        Triple(
+            "Layout Test Line Node",
+            { LayoutStageLineDoc.MainFrame() },
+            LayoutStageLineDoc.javaClass.name
+        ),
+        Triple(
+            "Absolute Layout Alignment Test Node",
+            { AbsoluteLayoutAlignmentTestDoc.MainFrame() },
+            AbsoluteLayoutAlignmentTestDoc.javaClass.name
+        ),
+        // Triple("Absolute Layout Alignment AutoLayout Node", {
+        // AbsoluteLayoutAutoLayoutTestDoc.MainFrame() },
+        // AbsoluteLayoutAutoLayoutTestDoc.javaClass.name),
+        // Triple("Absolute Layout Alignment VectorAlignment Node", {
+        // AbsoluteLayoutVectorAlignmentTestDoc.MainFrame() },
+        // AbsoluteLayoutVectorAlignmentTestDoc.javaClass.name),
+        // Triple("Absolute Layout Alignment TextAlignment Node", {
+        // AbsoluteLayoutTextAlignmentTestDoc.MainFrame() },
+        // AbsoluteLayoutTextAlignmentTestDoc.javaClass.name),
 
-         Triple("Layout Test Stage Node", { LayoutStageDoc.MainFrame() }, LayoutStageDoc.javaClass.name),
-         Triple("Layout Test Stuff Node", { LayoutStageStuffDoc.MainFrame() }, LayoutStageStuffDoc.javaClass.name),
-         Triple("Layout Test Children Node", { LayoutStageChildrenDoc.MainFrame() }, LayoutStageChildrenDoc.javaClass.name),
-         Triple("Layout Test Rotations Node", { LayoutStageRotationsDoc.MainFrame() }, LayoutStageRotationsDoc.javaClass.name),
-         Triple("Layout Test Constraints Node", { LayoutStageConstraintsDoc.MainFrame() }, LayoutStageConstraintsDoc.javaClass.name),
-         Triple("Layout Test Line Node", { LayoutStageLineDoc.MainFrame() }, LayoutStageLineDoc.javaClass.name),
+        Triple(
+            "Blendmode Test Stage Node",
+            { BlendModeStageTestDoc.MainFrame() },
+            BlendModeStageTestDoc.javaClass.name
+        ),
+        Triple(
+            "Custom Brush Test",
+            { CustomBrushMainFrameTestDoc.MainFrame() },
+            CustomBrushMainFrameTestDoc.javaClass.name
+        ),
+        Triple(
+            "Compositing Test",
+            { CompositingTestDoc.MainFrame() },
+            CompositingTestDoc.javaClass.name
+        ),
+        Triple(
+            "Horizontal Constraints Test",
+            { ConstraintsHorizontalTestDoc.MainFrame() },
+            ConstraintsHorizontalTestDoc.javaClass.name
+        ),
 
-         Triple("Absolute Layout Alignment Test Node", { AbsoluteLayoutAlignmentTestDoc.MainFrame() }, AbsoluteLayoutAlignmentTestDoc.javaClass.name),
-         //Triple("Absolute Layout Alignment AutoLayout Node", { AbsoluteLayoutAutoLayoutTestDoc.MainFrame() }, AbsoluteLayoutAutoLayoutTestDoc.javaClass.name),
-         //Triple("Absolute Layout Alignment VectorAlignment Node", { AbsoluteLayoutVectorAlignmentTestDoc.MainFrame() }, AbsoluteLayoutVectorAlignmentTestDoc.javaClass.name),
-         //Triple("Absolute Layout Alignment TextAlignment Node", { AbsoluteLayoutTextAlignmentTestDoc.MainFrame() }, AbsoluteLayoutTextAlignmentTestDoc.javaClass.name),
-
-         Triple("Blendmode Test Stage Node", { BlendModeStageTestDoc.MainFrame() }, BlendModeStageTestDoc.javaClass.name),
-        Triple("Custom Brush Test", { CustomBrushMainFrameTestDoc.MainFrame() }, CustomBrushMainFrameTestDoc.javaClass.name),
-        Triple("Compositing Test", { CompositingTestDoc.MainFrame() }, CompositingTestDoc.javaClass.name),
-        Triple("Horizontal Constraints Test", { ConstraintsHorizontalTestDoc.MainFrame() }, ConstraintsHorizontalTestDoc.javaClass.name),
-
-        //Triple("Vertical Constraints Test", { ConstraintsVerticalTestDoc.MainFrame() }, ConstraintsVerticalTestDoc.javaClass.name),
-        Triple("Cross Axis Fill", { CrossAxisFillStageTestDoc.MainFrame() }, CrossAxisFillStageTestDoc.javaClass.name),
-
-        Triple("Dials and Gauges Test", { DialsAndGaugesTestDoc.MainFrame() }, DialsAndGaugesTestDoc.javaClass.name),
-        Triple("Fancy Fills Test", { FancyFillsTestDoc.MainFrame() }, FancyFillsTestDoc.javaClass.name),
-        Triple("Fill Container Test", { FillContainerTestDoc.MainFrame() }, FillContainerTestDoc.javaClass.name),
-        Triple("Grid Layout Test", { BlendModeStageTestDoc.MainFrame() }, BlendModeStageTestDoc.javaClass.name),
-        Triple("Widget Grid Test", { WidgetGridTestDoc.MainFrame() }, WidgetGridTestDoc.javaClass.name),
-
-
-        Triple("Hello World Test", { HelloWorldTestDoc.MainFrame() }, HelloWorldTestDoc.javaClass.name),
-        //Triple("Image Update Test", { ImageUpdateStageTestDoc.MainFrame() }, ImageUpdateStageTestDoc.javaClass.name),
-        //Triple("Image Update 2 Test", { ImageUpdateStage2TestDoc.MainFrame() }, ImageUpdateStage2TestDoc.javaClass.name),
-        //Triple("Item Spacing MainFrame Test", { ItemSpacingMainTestDoc.MainFrame() }, ItemSpacingMainTestDoc.javaClass.name),
-        // Triple("Mask MainFrame Test", { MaskMainFrameTestDoc.MainFrame() }, MaskMainFrameTestDoc.javaClass.name),
-        // Triple("Shadows Root Test", { ShadowsRootTestDoc.MainFrame() }, ShadowsRootTestDoc.javaClass.name),
-        // Triple("Shadows Strokes Test", { ShadowsStrokesTestDoc.MainFrame() }, ShadowsStrokesTestDoc.javaClass.name),
-        // Triple("Shadows Opacity Test", { ShadowsWithOpacityTestDoc.MainFrame() }, ShadowsWithOpacityTestDoc.javaClass.name),
-        // Triple("Telltales MainFrame Test", { TelltalesTestDoc.MainFrame() }, TelltalesTestDoc.javaClass.name),
-        // Triple("Text Elide Stage Test", { TextElideStageTestDoc.MainFrame() }, TextElideStageTestDoc.javaClass.name),
-        // Triple("Text Resizing MainFrame Test", { TextResizingMainFrameTestDoc.MainFrame() }, TextResizingMainFrameTestDoc.javaClass.name),
-        Triple("Variable Border MainFrame Test", { VariableBorderMainFrameTestDoc.MainFrame() }, VariableBorderMainFrameTestDoc.javaClass.name),
-        Triple("Vector Rendering MainFrame Test", { VectorRenderingStageTestDoc.MainFrame() }, VectorRenderingStageTestDoc.javaClass.name),
-
-     )
- 
+        // Triple("Vertical Constraints Test", { ConstraintsVerticalTestDoc.MainFrame() },
+        // ConstraintsVerticalTestDoc.javaClass.name),
+        Triple(
+            "Cross Axis Fill",
+            { CrossAxisFillStageTestDoc.MainFrame() },
+            CrossAxisFillStageTestDoc.javaClass.name
+        ),
+        Triple(
+            "Dials and Gauges Test",
+            { DialsAndGaugesTestDoc.MainFrame() },
+            DialsAndGaugesTestDoc.javaClass.name
+        ),
+        Triple(
+            "Fancy Fills Test",
+            { FancyFillsTestDoc.MainFrame() },
+            FancyFillsTestDoc.javaClass.name
+        ),
+        Triple(
+            "Fill Container Test",
+            { FillContainerTestDoc.MainFrame() },
+            FillContainerTestDoc.javaClass.name
+        ),
+        Triple(
+            "Grid Layout Test",
+            { BlendModeStageTestDoc.MainFrame() },
+            BlendModeStageTestDoc.javaClass.name
+        ),
+        Triple(
+            "Widget Grid Test",
+            { WidgetGridTestDoc.MainFrame() },
+            WidgetGridTestDoc.javaClass.name
+        ),
+        Triple(
+            "Hello World Test",
+            { HelloWorldTestDoc.MainFrame() },
+            HelloWorldTestDoc.javaClass.name
+        ),
+        // Triple("Image Update Test", { ImageUpdateStageTestDoc.MainFrame() },
+        // ImageUpdateStageTestDoc.javaClass.name),
+        // Triple("Image Update 2 Test", { ImageUpdateStage2TestDoc.MainFrame() },
+        // ImageUpdateStage2TestDoc.javaClass.name),
+        // Triple("Item Spacing MainFrame Test", { ItemSpacingMainTestDoc.MainFrame() },
+        // ItemSpacingMainTestDoc.javaClass.name),
+        // Triple("Mask MainFrame Test", { MaskMainFrameTestDoc.MainFrame() },
+        // MaskMainFrameTestDoc.javaClass.name),
+        // Triple("Shadows Root Test", { ShadowsRootTestDoc.MainFrame() },
+        // ShadowsRootTestDoc.javaClass.name),
+        // Triple("Shadows Strokes Test", { ShadowsStrokesTestDoc.MainFrame() },
+        // ShadowsStrokesTestDoc.javaClass.name),
+        // Triple("Shadows Opacity Test", { ShadowsWithOpacityTestDoc.MainFrame() },
+        // ShadowsWithOpacityTestDoc.javaClass.name),
+        // Triple("Telltales MainFrame Test", { TelltalesTestDoc.MainFrame() },
+        // TelltalesTestDoc.javaClass.name),
+        // Triple("Text Elide Stage Test", { TextElideStageTestDoc.MainFrame() },
+        // TextElideStageTestDoc.javaClass.name),
+        // Triple("Text Resizing MainFrame Test", { TextResizingMainFrameTestDoc.MainFrame() },
+        // TextResizingMainFrameTestDoc.javaClass.name),
+        Triple(
+            "Variable Border MainFrame Test",
+            { VariableBorderMainFrameTestDoc.MainFrame() },
+            VariableBorderMainFrameTestDoc.javaClass.name
+        ),
+        Triple(
+            "Vector Rendering MainFrame Test",
+            { VectorRenderingStageTestDoc.MainFrame() },
+            VectorRenderingStageTestDoc.javaClass.name
+        ),
+    )

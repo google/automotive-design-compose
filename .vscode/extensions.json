@@ -13,7 +13,8 @@
         "plex.vscode-protolint", // Protobuf linting
         "timonwong.shellcheck", // Shell script linting
         "zxh404.vscode-proto3", // Needed for Protobuf linting
-        "redhat.vscode-yaml", // YAML formatting
+        "redhat.vscode-yaml", // YAML
         "github.vscode-github-actions", // Github Action formatting and linting
+        "bluebrown.yamlfmt", // YAML formatting
     ]
 }

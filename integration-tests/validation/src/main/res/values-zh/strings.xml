@@ -24,4 +24,12 @@
     <string name="label_charging">充电中</string>
     <string name="label_driving">行驶中</string>
     <string name="label_regen">"再生制动"</string>
+    <string-array name="label_styled_text">
+        <item>混合格式文本示例\n</item>
+        <item>常规字体，20\n</item>
+        <item>下划线样式，20\n</item>
+        <item>删除线样式，20\n</item>
+        <item>粗体，32\n</item>
+        <item>粗斜体，32</item>
+    </string-array>
 </resources>

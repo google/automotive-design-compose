@@ -27,6 +27,6 @@ interface StyledTextRuns {
 }
 
 @Composable
-fun StyledTextRuns() {
+fun StyledTextRunsTest() {
     StyledTextRunsDoc.Main()
 }

@@ -24,4 +24,12 @@
     <string name="label_charging">充電</string>
     <string name="label_driving">運転</string>
     <string name="label_regen">"回生ブレーキ"</string>
+    <string-array name="label_styled_text">
+        <item>混合スタイルのテキストの例\n</item>
+        <item>通常、20\n</item>
+        <item>下線付き、20\n</item>
+        <item>取り消し線、20\n</item>
+        <item>太字、32\n</item>
+        <item>太字の斜体、32</item>
+    </string-array>
 </resources>

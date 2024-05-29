@@ -1278,6 +1278,7 @@ fn visit_node(
                 component_info,
                 reactions,
                 runs,
+                check_text_node_string_res(node),
                 node.absolute_bounding_box,
                 RenderMethod::None,
             );

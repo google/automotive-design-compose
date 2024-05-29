@@ -278,7 +278,11 @@
     <div style="margin-top: 32px; margin-left: 24px; margin-right: 24px; color: black; font-size: 14; word-wrap: break-word">
       Generate the strings xml file:
     </div>
-    <div id="outputStrings" style="display: none; margin-top: 16px; margin-left: 24px; margin-right: 24px;"></div>
+    <div id="outputStrings" style="margin-top: 16px; margin-left: 24px; margin-right: 24px;">
+      <div class="container">
+        <div class="loader" id="ouputLoader"></div>
+      </div>
+    </div>
 
     <div style="margin-top: 16px; margin-left: 24px; margin-right: 24px;">
       <input type="checkbox" id="includeUnusedStrings" name="includeUnusedStrings" checked />
@@ -643,21 +647,38 @@
     reader.addEventListener("loadend", e => {
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(reader.result.toString(), "text/xml");
-
-      const strings = xmlDoc.getElementsByTagName("string");
+      // Clear data.
       inputStringData.length = 0;
 
-      for (let string of strings) {
+      // Process string
+      const strings = xmlDoc.getElementsByTagName("string");
+      for (let strElement of strings) {
         var jsonStr = {}
-        const name = string.getAttribute("name");
+        const name = strElement.getAttribute("name");
         jsonStr["name"] = name;
-        const translatable = string.getAttribute("translatable") == "true";
+        const translatable = strElement.getAttribute("translatable") === "true";
         jsonStr["translatable"] = translatable;
-        const text = string.textContent;
+        const text = strElement.textContent;
         jsonStr["text"] = text;
 
         inputStringData.push(jsonStr);
       }
+
+      const stringArrays = xmlDoc.getElementsByTagName("string-array");
+
+      // Process string-array
+      for (let i = 0; i < stringArrays.length; i++) {
+        var jsonStr = {}
+        const strArrayElement = stringArrays[i];
+        jsonStr["name"] = strArrayElement.getAttribute("name");
+        const translatable = strArrayElement.getAttribute("translatable") === "true";
+        jsonStr["translatable"] = translatable;
+        const values = Array.from(strArrayElement.getElementsByTagName("item")).map(
+          item => item.textContent);
+        jsonStr["text"] = values;
+        inputStringData.push(jsonStr);
+      }
+
       createInputStringTable("inputStrings", inputStringData);
     })
     reader.readAsText(selectedFile);
@@ -684,28 +705,49 @@
     table.setAttribute("cellpadding", "10");
     table.setAttribute("width", "100%");
 
-    return {table, tableContainer}
+    return {table, tableContainer};
   }
 
-  function createInputStringTable(tableContainerId, data) {
-    let {table, tableContainer} = createTable(tableContainerId)
-
+  function createTableHeader(table, headers) {
     const headerRow = document.createElement("tr");
-    const headers = ["String Resource Name", "Translatable", "Text"];
     for (const headerText of headers) {
         const th = document.createElement("th");
         th.textContent = headerText;
         headerRow.appendChild(th);
     }
     table.appendChild(headerRow);
+  }
+
+  function createCell(row, cellData) {
+    const td = document.createElement("td");
+
+    if (typeof cellData == "string" || typeof cellData == "boolean") {
+      td.textContent = cellData;
+    } else {
+      // This is the string array items.
+      for (const nestedCellData of cellData) {
+        const nestedBlock = document.createElement("div");
+        nestedBlock.textContent = nestedCellData;
+        td.appendChild(nestedBlock);
+        if (cellData[cellData.length - 1] != nestedCellData) {
+          td.appendChild(document.createElement("hr"));
+        }
+      }
+    }
+    row.appendChild(td);
+  }
+
+  function createInputStringTable(tableContainerId, data) {
+    let {table, tableContainer} = createTable(tableContainerId);
+
+    const headers = ["String Resource Name", "Translatable", "Text"];
+    createTableHeader(table, headers);
 
     for (const rowData of data) {
       var cells = Object.values(rowData);
       const row = document.createElement("tr");
       for (const cellData of cells) {
-          const td = document.createElement("td");
-          td.textContent = cellData;
-          row.appendChild(td);
+        createCell(row, cellData);
       }
       table.appendChild(row);
     }
@@ -718,14 +760,8 @@
 
     let {table, tableContainer} = createTable(tableContainerId)
 
-    const headerRow = document.createElement("tr");
     const headers = ["String Resource Name", "Translatable", "Text", "Node"];
-    for (const headerText of headers) {
-        const th = document.createElement("th");
-        th.textContent = headerText;
-        headerRow.appendChild(th);
-    }
-    table.appendChild(headerRow);
+    createTableHeader(table, headers);
 
     for (const [key, stringRes] of output) {
       outputStringData.set(key, stringRes);
@@ -733,8 +769,9 @@
       const row = document.createElement("tr");
       var index = 0;
       for (const cellData of cells) {
-        const td = document.createElement("td");
         if (cells.length == 4 && index == 0) {
+          var td = document.createElement("td");
+
           const input = document.createElement("input");
           input.addEventListener('change', function (evt) {
             const newValue = this.value;
@@ -754,10 +791,10 @@
           input.setAttribute("type", "text");
           input.setAttribute("value", cellData);
           td.appendChild(input);
+          row.appendChild(td);
         } else {
-          td.textContent = cellData;
+          createCell(row, cellData);
         }
-        row.appendChild(td);
         index++;
       }
       table.appendChild(row);
@@ -773,7 +810,15 @@
     xmlString += '<resources>\n';
     for (const [key, output] of outputStringData) {
       if (checkbox.checked || output.textNodes) {
-        xmlString += `  <string name="${output.name}" translatable="${output.translatable}">${output.text}</string>\n`;
+        if (typeof output.text === "string") {
+          xmlString += `  <string name="${output.name}" translatable="${output.translatable}">"${output.text}"</string>\n`;
+        } else {
+          xmlString += `  <string-array name="${output.name}" translatable="${output.translatable}">\n`;
+          for (const item of output.text) {
+            xmlString += `    <item>"${item}"</item>\n`;
+          }
+          xmlString += '  </string-array>\n';
+        }
       }
     }
     xmlString += '</resources>\n';

@@ -94,7 +94,7 @@ internal fun squooshComputeTextInfo(
                 }
                 is ViewData.StyledText -> {
                     val builder = AnnotatedString.Builder()
-                    for (run in (v.data as ViewData.StyledText).content) {
+                    for (run in getTextContent(localContext, v.data as ViewData.StyledText)) {
                         val textBrushAndOpacity =
                             run.style.text_color.asBrush(document, density.density, variableState)
                         val fontWeight = run.style.font_weight.value.getValue(variableState)

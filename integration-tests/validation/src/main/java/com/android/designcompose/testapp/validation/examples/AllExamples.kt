@@ -65,7 +65,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             LayoutReplacementTestDoc.javaClass.name
         ),
         Triple("Text Elide", { TextElideTest() }, TextElideTestDoc.javaClass.name),
-        Triple("Styled Text Runs", { StyledTextRuns() }, StyledTextRunsDoc.javaClass.name),
+        Triple("Styled Text Runs", { StyledTextRunsTest() }, StyledTextRunsDoc.javaClass.name),
         Triple("Fancy Fills", { FancyFillTest() }, FancyFillTestDoc.javaClass.name),
         Triple("Fill Container", { FillTest() }, FillTestDoc.javaClass.name),
         Triple("CrossAxis Fill", { CrossAxisFillTest() }, CrossAxisFillTestDoc.javaClass.name),

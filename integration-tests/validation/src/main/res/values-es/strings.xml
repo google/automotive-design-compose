@@ -24,4 +24,12 @@
     <string name="label_charging">Cargando</string>
     <string name="label_driving">Conduciendo</string>
     <string name="label_regen">Regen</string>
+    <string-array name="label_styled_text">
+        <item>Ejemplo de ejecución de texto con estilo\n</item>
+        <item>Regular, 20\n</item>
+        <item>Subrayada, 20\n</item>
+        <item>Tachado, 20\n</item>
+        <item>NEGRITA, 32\n</item>
+        <item>Negrita Cursiva, 32</item>
+    </string-array>
 </resources>

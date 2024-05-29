@@ -702,7 +702,8 @@ internal fun DesignView(
                     DesignText(
                         modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
                         view = view,
-                        runs = (view.data as ViewData.StyledText).content,
+                        runs =
+                            getTextContent(LocalContext.current, view.data as ViewData.StyledText),
                         style = style,
                         document = document,
                         nodeName = view.name,

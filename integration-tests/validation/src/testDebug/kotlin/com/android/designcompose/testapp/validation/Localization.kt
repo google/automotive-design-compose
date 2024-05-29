@@ -24,6 +24,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.validation.examples.HelloWorld
+import com.android.designcompose.testapp.validation.examples.StyledTextRunsTest
 import com.android.designcompose.testapp.validation.examples.VariantAsteriskTest
 import org.junit.Rule
 import org.junit.Test
@@ -32,16 +33,14 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
+@Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav", sdk = [34])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class Localization {
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
 
     @Test
-    @Config(
-        qualifiers = "zh-w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav",
-        sdk = [34]
-    )
+    @Config(qualifiers = "+zh")
     fun HelloWorldLocaleZh() {
         with(composeTestRule) {
             setContent { HelloWorld() }
@@ -52,10 +51,7 @@ class Localization {
     }
 
     @Test
-    @Config(
-        qualifiers = "es-w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav",
-        sdk = [34]
-    )
+    @Config(qualifiers = "+es")
     fun HelloWorldLocaleEs() {
         with(composeTestRule) {
             setContent { HelloWorld() }
@@ -67,10 +63,7 @@ class Localization {
 
     /** Test local components with localization works. */
     @Test
-    @Config(
-        qualifiers = "es-w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav",
-        sdk = [34]
-    )
+    @Config(qualifiers = "+es")
     fun VariantAsteriskLocaleEs() {
         with(composeTestRule) {
             setContent { VariantAsteriskTest() }
@@ -78,6 +71,16 @@ class Localization {
             onNodeWithText("R").performClick()
             onNodeWithText("Inverso").assertExists()
             captureRootRoboImage("VariantAsteriskTest-es")
+        }
+    }
+
+    /** Test styled text runs in a single text node works. */
+    @Test
+    @Config(qualifiers = "+ja")
+    fun StyledTextRunsLocaleJa() {
+        with(composeTestRule) {
+            setContent { StyledTextRunsTest() }
+            captureRootRoboImage("StyledTextRuns-ja")
         }
     }
 }

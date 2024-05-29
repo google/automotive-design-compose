@@ -63,9 +63,10 @@ object MaterialThemeConstants {
 
 // Helper object to convert a variable name into the corresponding Material Theme value
 internal object MaterialThemeValues {
-    fun getColor(name: String, collection: String, state: VariableState): Color? {
+    fun getColor(name: String, collectionId: String, state: VariableState): Color? {
         if (!state.useMaterialTheme) return null
-        if (collection != MATERIAL_THEME_COLLECTION_NAME) return null
+        val collection = VariableManager.getCollection(collectionId)
+        if (collection == null || collection.name != MATERIAL_THEME_COLLECTION_NAME) return null
 
         state.materialColorScheme?.let { c ->
             return when (name) {

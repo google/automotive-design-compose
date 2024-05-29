@@ -306,7 +306,7 @@ pub enum VariableValue {
     Bool(bool),
     Number(f32),
     Text(String),
-    Color(FigmaColor),
+    Color(Color),
     Alias(VariableAlias),
 }
 impl VariableValue {
@@ -315,7 +315,7 @@ impl VariableValue {
             figma_schema::VariableValue::Boolean(b) => VariableValue::Bool(b.clone()),
             figma_schema::VariableValue::Float(f) => VariableValue::Number(f.clone()),
             figma_schema::VariableValue::String(s) => VariableValue::Text(s.clone()),
-            figma_schema::VariableValue::Color(c) => VariableValue::Color(c.clone()),
+            figma_schema::VariableValue::Color(c) => VariableValue::Color(c.into()),
             figma_schema::VariableValue::Alias(a) => VariableValue::Alias(a.clone()),
         }
     }
@@ -359,7 +359,7 @@ pub struct Variable {
     pub values_by_mode: VariableValueMap,
 }
 impl Variable {
-    fn create(
+    fn new(
         var_type: VariableType,
         common: &VariableCommon,
         values_by_mode: &HashMap<String, figma_schema::VariableValue>,
@@ -377,16 +377,16 @@ impl Variable {
     pub fn from_figma_var(v: &figma_schema::Variable) -> Variable {
         match v {
             figma_schema::Variable::Boolean { common, values_by_mode } => {
-                Variable::create(VariableType::Bool, common, values_by_mode)
+                Variable::new(VariableType::Bool, common, values_by_mode)
             }
             figma_schema::Variable::Float { common, values_by_mode } => {
-                Variable::create(VariableType::Number, common, values_by_mode)
+                Variable::new(VariableType::Number, common, values_by_mode)
             }
             figma_schema::Variable::String { common, values_by_mode } => {
-                Variable::create(VariableType::Bool, common, values_by_mode)
+                Variable::new(VariableType::Bool, common, values_by_mode)
             }
             figma_schema::Variable::Color { common, values_by_mode } => {
-                Variable::create(VariableType::Text, common, values_by_mode)
+                Variable::new(VariableType::Text, common, values_by_mode)
             }
         }
     }

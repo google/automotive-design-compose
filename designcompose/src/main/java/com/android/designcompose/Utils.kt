@@ -54,7 +54,6 @@ import com.android.designcompose.serdegen.BlendMode
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Display
 import com.android.designcompose.serdegen.Easing
-import com.android.designcompose.serdegen.FigmaColor
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStyle
@@ -1556,10 +1555,6 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
         }
         else -> snap(0)
     }
-}
-
-internal fun FigmaColor.toColor(): Color {
-    return Color(r, g, b, a)
 }
 
 internal fun com.android.designcompose.serdegen.Color.toColor(): Color {

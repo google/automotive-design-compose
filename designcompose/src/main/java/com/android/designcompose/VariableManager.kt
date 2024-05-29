@@ -161,6 +161,13 @@ internal object VariableManager {
         return newModeValues
     }
 
+    // Return the collection given the collection ID
+    internal fun getCollection(
+        collectionId: String
+    ): com.android.designcompose.serdegen.Collection? {
+        return varMap.collections[collectionId]
+    }
+
     // Given a variable ID, return the color associated with it
     internal fun getColor(varId: String, variableState: VariableState): Color? {
         // Resolve varId into a variable. If a different collection has been set, this will return
@@ -208,35 +215,42 @@ internal object VariableManager {
         return null
     }
 
-    // Return this variable's color given the current variable state.
-    private fun Variable.getColor(
+    // Retrieve the VariableValue from this variable given the current variable state
+    private fun Variable.getValue(
         variableMap: VariableMap,
-        variableState: VariableState,
-    ): Color? {
+        variableState: VariableState
+    ): VariableValue? {
         val collection = variableMap.collections[variable_collection_id]
         collection?.let { c ->
-            // Use the material theme override if one exists
-            val materialColor = MaterialThemeValues.getColor(name, c.name, variableState)
-            materialColor?.let {
-                return it
-            }
-
             val modeName = variableState.varModeValues?.get(c.name)
             val modeId =
                 modeName?.let { mName -> c.mode_name_hash[mName] }
                     ?: c.mode_id_hash[c.default_mode_id]
                         ?.id // Fallback to default mode in collection
             modeId?.let { mId ->
-                val value = values_by_mode.values_by_mode[mId]
-                value?.let { vv ->
-                    when (vv) {
-                        is VariableValue.Color -> return vv.value.toColor()
-                        is VariableValue.Alias ->
-                            return resolveVariable(vv.value.id, variableState)
-                                ?.getColor(variableMap, variableState)
-                        else -> return null
-                    }
-                }
+                return values_by_mode.values_by_mode[mId]
+            }
+        }
+        return null
+    }
+
+    // Return this variable's color given the current variable state.
+    private fun Variable.getColor(
+        variableMap: VariableMap,
+        variableState: VariableState,
+    ): Color? {
+        // Use the material theme override if one exists
+        MaterialThemeValues.getColor(name, variable_collection_id, variableState)?.let {
+            return it
+        }
+        val value = getValue(variableMap, variableState)
+        value?.let { vv ->
+            when (vv) {
+                is VariableValue.Color -> return vv.value.toColor()
+                is VariableValue.Alias ->
+                    return resolveVariable(vv.value.id, variableState)
+                        ?.getColor(variableMap, variableState)
+                else -> return null
             }
         }
         return null
@@ -247,26 +261,14 @@ internal object VariableManager {
         variableMap: VariableMap,
         variableState: VariableState,
     ): Float? {
-        val collection = variableMap.collections[variable_collection_id]
-        collection?.let { c ->
-            variableState.varModeValues?.let { modes ->
-                val modeName = modes[c.name]
-                val modeId =
-                    modeName?.let { mName -> c.mode_name_hash[mName] }
-                        ?: c.mode_id_hash[
-                                c.default_mode_id] // Fallback to default mode in collection
-                modeId?.let { mId ->
-                    val value = values_by_mode.values_by_mode[mId]
-                    value?.let { vv ->
-                        when (vv) {
-                            is VariableValue.Number -> return vv.value
-                            is VariableValue.Alias ->
-                                return resolveVariable(vv.value.id, variableState)
-                                    ?.getNumber(variableMap, variableState)
-                            else -> return null
-                        }
-                    }
-                }
+        val value = getValue(variableMap, variableState)
+        value?.let { vv ->
+            when (vv) {
+                is VariableValue.Number -> return vv.value
+                is VariableValue.Alias ->
+                    return resolveVariable(vv.value.id, variableState)
+                        ?.getNumber(variableMap, variableState)
+                else -> return null
             }
         }
         return null

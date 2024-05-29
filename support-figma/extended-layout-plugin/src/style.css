@@ -290,3 +290,62 @@ a:active {
 .directionbox:hover {
   border: 1px solid #E6E6E6FF;
 }
+
+/* Widgets */
+.container {
+  display: flex; /* Enable flexbox */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+}
+
+.styled-button {
+  width: 100px;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-radius: 8px;
+  border-width: 1px;
+  border-color: #747775;
+  background-color: #CBBEFF;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+}
+
+.styled-button:hover {
+  background-color: #dfd9f7;
+  text-decoration: none;
+  transition-duration: 0.1s;
+}
+
+.styled-button:active {
+  background-color: #a28df7;
+  box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
+  transition: none 0s;
+}
+
+.styled-button:focus {
+  outline: 1px transparent;
+}
+
+/** Pages */
+.body {
+  margin: 0em;
+}
+
+.page {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: -100vw;
+  overflow-y: auto;
+  z-index: 0;
+  background-color: hsl(0,0%,100%);
+}
+
+.page:target {
+  left: 0vw;
+  z-index: 1;
+}

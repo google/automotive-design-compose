@@ -16,6 +16,7 @@
 
 package com.android.designcompose.squoosh
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density
@@ -136,6 +137,7 @@ internal fun resolveVariantsRecursively(
     isRoot: Boolean,
     variableState: VariableState,
     overlays: List<View>? = null,
+    localContext: Context,
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(v.name)) return null
     var componentLayoutId = rootLayoutId
@@ -224,7 +226,8 @@ internal fun resolveVariantsRecursively(
             document,
             customizations,
             fontResourceLoader,
-            variableState
+            variableState,
+            localContext = localContext,
         )
     val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id)
 
@@ -249,6 +252,7 @@ internal fun resolveVariantsRecursively(
                     "",
                     false,
                     variableState,
+                    localContext = localContext,
                 ) ?: continue
 
             childResolvedNode.parent = resolvedView
@@ -329,6 +333,7 @@ internal fun resolveVariantsRecursively(
                     "",
                     false,
                     variableState,
+                    localContext = localContext,
                 ) ?: continue
 
             // Make a synthetic parent for the overlay.

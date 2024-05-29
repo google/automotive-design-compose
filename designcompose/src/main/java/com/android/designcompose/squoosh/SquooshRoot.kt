@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.ParentDataModifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.semantics.semantics
@@ -371,6 +372,7 @@ fun SquooshRoot(
             isRoot,
             VariableState.create(),
             overlays,
+            LocalContext.current,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -423,6 +425,7 @@ fun SquooshRoot(
                 isRoot,
                 VariableState.create(),
                 overlays,
+                LocalContext.current,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }

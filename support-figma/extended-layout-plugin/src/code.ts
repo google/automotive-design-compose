@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import * as Localization from "./localization-module"
+
 // Warning component.
 interface ClippyWarningRun {
   // The text for the warning text run.
@@ -588,6 +590,19 @@ if (figma.command === "sync") {
     figma.closePlugin("Synchronized Interaction Data with AAOS UX");
   }
   performSync();
+}
+if (figma.command === "localization") {
+  figma.showUI(__html__, { width: 800, height: 600 });
+  figma.ui.postMessage({
+    msg: 'localization',
+  });
+  figma.ui.onmessage = msg => {
+    if (msg.msg == 'generate-localization-data') {
+      Localization.generateLocalizationData(msg.contents);
+    } else if (msg.msg == 'rename-localization-data') {
+      Localization.updateStringResName(msg.item);
+    }
+  }
 }
 else if (figma.command === "move-plugin-data") {
   function movePluginDataWithKey(node: BaseNode, key: string) {

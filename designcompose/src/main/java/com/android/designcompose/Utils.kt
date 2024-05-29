@@ -16,6 +16,8 @@
 
 package com.android.designcompose
 
+import android.content.Context
+import android.content.res.Resources
 import android.graphics.BitmapShader
 import android.graphics.Matrix
 import android.graphics.Rect
@@ -1578,4 +1580,15 @@ internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
     val g = color[1].toInt()
     val b = color[2].toInt()
     return Color(r, g, b, a)
+}
+
+internal fun getTextContent(context: Context, textData: ViewData.Text): String {
+    if (textData.res_name.isPresent) {
+        val resName = textData.res_name.get()
+        val resId = context.resources.getIdentifier(resName, "string", context.packageName)
+        if (resId != Resources.ID_NULL) {
+            return context.getString(resId)
+        }
+    }
+    return textData.content
 }

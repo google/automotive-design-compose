@@ -52,6 +52,7 @@
         </activity>
         <activity
             android:name=".LayoutTest"
+            android:label="@string/app_layout_test"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Validation.NoActionBar">

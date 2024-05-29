@@ -127,7 +127,7 @@ fn test_layout(
     println!("test_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
     let my_id: i32 = id.clone();
     *id = *id + 1;
-    if let ViewData::Text { content: _ } = &view.data {
+    if let ViewData::Text { content: _, res_name: _ } = &view.data {
         let mut use_measure_func = false;
         if let Dimension::Auto = view.style.layout_style.width {
             if let Dimension::Auto = view.style.layout_style.height {

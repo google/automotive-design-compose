@@ -64,6 +64,7 @@ import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.semantics.semantics
@@ -689,7 +690,7 @@ internal fun DesignView(
                     DesignText(
                         modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
                         view = view,
-                        text = (view.data as ViewData.Text).content,
+                        text = getTextContent(LocalContext.current, view.data as ViewData.Text),
                         style = style,
                         document = document,
                         nodeName = view.name,

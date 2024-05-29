@@ -15,6 +15,7 @@
 -->
 
 <resources>
-  <string name="app_name">Validation</string>
-
+  <string name="app_name" translatable="false">Validation</string>
+  <string name="app_layout_test" translatable="false">ValidationLayout</string>
+  <string name="label_world" translatable="true">World</string>
 </resources>

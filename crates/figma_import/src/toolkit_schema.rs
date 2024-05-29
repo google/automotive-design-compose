@@ -108,7 +108,7 @@ pub enum ViewShape {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ViewData {
     Container { shape: ViewShape, children: Vec<View> },
-    Text { content: String },
+    Text { content: String, res_name: Option<String> },
     StyledText { content: Vec<StyledTextRun> },
 }
 
@@ -230,6 +230,7 @@ impl View {
         component_info: Option<ComponentInfo>,
         reactions: Option<Vec<Reaction>>,
         text: &str,
+        text_res_name: Option<String>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: Option<HashMap<String, String>>,
@@ -243,7 +244,7 @@ impl View {
             style,
             frame_extras: None,
             scroll_info: ScrollInfo::default(),
-            data: ViewData::Text { content: text.into() },
+            data: ViewData::Text { content: text.into(), res_name: text_res_name },
             design_absolute_bounding_box,
             render_method,
             explicit_variable_modes,

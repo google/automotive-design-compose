@@ -28,6 +28,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.ParentDataModifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.semantics.semantics
@@ -45,6 +48,7 @@ import androidx.compose.ui.unit.Density
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
+import com.android.designcompose.DebugNodeManager
 import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DesignSwitcher
@@ -269,6 +273,7 @@ fun SquooshRoot(
     // the correct variants etc and then build/update the tree. How do we know
     // what's different from last time? Does the Rust side track
     val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
+    val useLocalStringRes: Boolean? by DebugNodeManager.getUseLocalStringRes().observeAsState()
     val root =
         resolveVariantsRecursively(
             startFrame,
@@ -286,6 +291,8 @@ fun SquooshRoot(
             isRoot,
             VariableState.create(),
             overlays,
+            appContext = LocalContext.current,
+            useLocalStringRes = useLocalStringRes,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -338,6 +345,8 @@ fun SquooshRoot(
                 isRoot,
                 VariableState.create(),
                 overlays,
+                appContext = LocalContext.current,
+                useLocalStringRes = useLocalStringRes,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }

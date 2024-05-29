@@ -34,6 +34,7 @@ fi
     -ignore "**/.gradle/**" \
     -ignore "**/build/**" \
     -ignore "**/target/**" \
+    -ignore "**/gen_strings.xml" \
     -c "Google LLC" \
     -l apache \
     "$GIT_ROOT"

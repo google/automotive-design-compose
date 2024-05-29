@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-const SHARED_PLUGIN_NAMESPACE = "designcompose";
+import * as PluginUtils from "./utils"
+
 const STRING_RES_PLUGIN_DATA_KEY = "vsw-string-res";
 
 interface StringResource {
@@ -117,10 +118,13 @@ async function localizeTextNodeAsync(
   }
 
   var preferredName = node.getSharedPluginData(
-    SHARED_PLUGIN_NAMESPACE,
+    PluginUtils.SHARED_PLUGIN_NAMESPACE,
     STRING_RES_PLUGIN_DATA_KEY
   );
-  if (!preferredName || endsWithNumbers(preferredName)) {
+  if (!preferredName) {
+    preferredName = fromNode(node);
+  } else if (map.has(preferredName) && endsWithNumbers(preferredName)) {
+    // We need to find a new name so reset preferred name to default.
     preferredName = fromNode(node);
   }
 
@@ -147,7 +151,7 @@ async function localizeTextNodeAsync(
 
 function fromNode(node: TextNode): string {
   if (countWords(node.characters) > 4) {
-    return "tnode_".concat(toSnakeCase(node.name));
+    return "desc_".concat(toSnakeCase(node.name));
   }
   return "label_".concat(toSnakeCase(node.characters));
 }
@@ -185,15 +189,9 @@ function countWords(characters: string): number {
   return words.filter((word) => word !== "").length;
 }
 
-function debugStringRes(stringRes: StringResource) {
-  console.log(
-    `### ${stringRes.name} ${stringRes.text} ${stringRes.translatable} ${stringRes.textNodes}`
-  );
-}
-
 function saveToPluginData(node: TextNode, stringResName: string) {
   node.setSharedPluginData(
-    SHARED_PLUGIN_NAMESPACE,
+    PluginUtils.SHARED_PLUGIN_NAMESPACE,
     STRING_RES_PLUGIN_DATA_KEY,
     stringResName
   );
@@ -225,7 +223,7 @@ function textMatches(
 }
 
 function normalizeTextNode(node: TextNode): string | string[] {
-  console.log(`### normalize node ${node.id} ${node.characters}`);
+  console.log(`### normalize node ${node.id}`);
   let stringArray: string[] = [];
 
   // All styles.
@@ -262,11 +260,15 @@ function normalizeTextNode(node: TextNode): string | string[] {
 function normalizeString(characters: string): string {
   return characters
     .replace(/(\r\n|\r|\n)/g, "\\n")
+    .replace(/\t/g, "\\t")
     .replace(/\u2028/g, "\\u2028")
-    .replace(/&/g, "&amp;")
-    .replace(/>/g, "&gt;")
-    .replace(/</g, "&lt;")
+    .replace(/&/g, "\\u0026")
     .replace(/'/g, "\\'")
     .replace(/"/g, '\\"')
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    // preserve whitespaces at the beginning and the end
+    .replace(/^\s+/g, match => match.replace(/\s/g, "\\u0020"))
+    .replace(/\s+$/g, match => match.replace(/\s/g, "\\u0020"))
     .normalize();
 }

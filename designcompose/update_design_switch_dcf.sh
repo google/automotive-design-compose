@@ -14,11 +14,14 @@
 # limitations under the License.
 #
 
+DOC_ID=Ljph4e3sC0lHcynfXpoh9f
+
 cargo run --bin fetch --features=fetch -- \
---doc-id=Ljph4e3sC0lHcynfXpoh9f \
+--doc-id="$DOC_ID" \
 --api-key="$FIGMA_ACCESS_TOKEN" \
 --nodes="#SettingsView" \
 --nodes="#FigmaDoc" \
+--nodes="#UseLocalStringResCheckbox" \
 --nodes="#Message" \
 --nodes="#MessageFailed" \
 --nodes="#LoadingSpinner" \
@@ -29,4 +32,4 @@ cargo run --bin fetch --features=fetch -- \
 --nodes="#DesignViewMain" \
 --nodes="#LiveMode" \
 --nodes="#TopStatusBar" \
---output="$(pwd)"/src/main/assets/figma/DesignSwitcherDoc_Ljph4e3sC0lHcynfXpoh9f.dcf
+--output="$(pwd)"/src/main/assets/figma/DesignSwitcherDoc_"$DOC_ID".dcf

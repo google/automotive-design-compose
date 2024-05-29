@@ -718,7 +718,7 @@
     table.appendChild(headerRow);
   }
 
-  function createCell(row, cellData) {
+  function createCell(row, cellData, forNodeId) {
     const td = document.createElement("td");
 
     if (typeof cellData == "string" || typeof cellData == "boolean") {
@@ -727,7 +727,12 @@
       // This is the string array items.
       for (const nestedCellData of cellData) {
         const nestedBlock = document.createElement("div");
-        nestedBlock.textContent = nestedCellData;
+        if (forNodeId) {
+          let nodeIdElement = createNodeIdElement(nestedCellData);
+          nestedBlock.appendChild(nodeIdElement);
+        } else {
+          nestedBlock.textContent = nestedCellData;
+        }
         td.appendChild(nestedBlock);
         if (cellData[cellData.length - 1] != nestedCellData) {
           td.appendChild(document.createElement("hr"));
@@ -735,6 +740,20 @@
       }
     }
     row.appendChild(td);
+  }
+
+  function createNodeIdElement(nodeId) {
+    let r = document.createElement('span');
+    r.textContent = nodeId + " ";
+    r.style.textDecoration = 'underline';
+    r.onclick = () => {
+      parent.postMessage({ pluginMessage: {
+        msg: 'show-node',
+        key: 'vsw-show-node',
+        node: nodeId
+      }}, '*');
+    };
+    return r;
   }
 
   function createInputStringTable(tableContainerId, data) {
@@ -747,7 +766,7 @@
       var cells = Object.values(rowData);
       const row = document.createElement("tr");
       for (const cellData of cells) {
-        createCell(row, cellData);
+        createCell(row, cellData, false);
       }
       table.appendChild(row);
     }
@@ -793,7 +812,7 @@
           td.appendChild(input);
           row.appendChild(td);
         } else {
-          createCell(row, cellData);
+          createCell(row, cellData, index == 3);
         }
         index++;
       }
@@ -811,11 +830,11 @@
     for (const [key, output] of outputStringData) {
       if (checkbox.checked || output.textNodes) {
         if (typeof output.text === "string") {
-          xmlString += `  <string name="${output.name}" translatable="${output.translatable}">"${output.text}"</string>\n`;
+          xmlString += `  <string name="${output.name}" translatable="${output.translatable}">${output.text}</string>\n`;
         } else {
           xmlString += `  <string-array name="${output.name}" translatable="${output.translatable}">\n`;
           for (const item of output.text) {
-            xmlString += `    <item>"${item}"</item>\n`;
+            xmlString += `    <item>${item}</item>\n`;
           }
           xmlString += '  </string-array>\n';
         }
@@ -828,6 +847,10 @@
     link.href = URL.createObjectURL(blob);
     link.download = "gen_strings.xml";
     link.click();
+
+    parent.postMessage({ pluginMessage: {
+        msg: 'close-plugin'
+      }}, '*');
   }
 
   function openPage(pageId) {

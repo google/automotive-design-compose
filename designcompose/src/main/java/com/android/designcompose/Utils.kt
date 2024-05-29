@@ -1583,8 +1583,12 @@ internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
     return Color(r, g, b, a)
 }
 
-internal fun getTextContent(context: Context, textData: ViewData.Text): String {
-    if (textData.res_name.isPresent) {
+internal fun getTextContent(
+    context: Context,
+    textData: ViewData.Text,
+    useLocalStringRes: Boolean = true
+): String {
+    if (useLocalStringRes && textData.res_name.isPresent) {
         val resName = textData.res_name.get()
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)
         if (resId != Resources.ID_NULL) {
@@ -1596,9 +1600,10 @@ internal fun getTextContent(context: Context, textData: ViewData.Text): String {
 
 internal fun getTextContent(
     context: Context,
-    styledTextData: ViewData.StyledText
+    styledTextData: ViewData.StyledText,
+    useLocalStringRes: Boolean = true,
 ): List<StyledTextRun> {
-    if (styledTextData.res_name.isPresent) {
+    if (useLocalStringRes && styledTextData.res_name.isPresent) {
         val resName = styledTextData.res_name.get()
         val resId = context.resources.getIdentifier(resName, "array", context.packageName)
         if (resId != Resources.ID_NULL) {

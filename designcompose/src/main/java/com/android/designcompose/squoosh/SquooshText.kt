@@ -19,7 +19,6 @@ package com.android.designcompose.squoosh
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
@@ -42,6 +41,7 @@ import com.android.designcompose.blurFudgeFactor
 import com.android.designcompose.convertColor
 import com.android.designcompose.getText
 import com.android.designcompose.getTextStyle
+import com.android.designcompose.getValue
 import com.android.designcompose.isAutoWidthText
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.View
@@ -92,13 +92,13 @@ internal fun squooshComputeTextInfo(
                     for (run in (v.data as ViewData.StyledText).content) {
                         val textBrushAndOpacity =
                             run.style.text_color.asBrush(document, density.density, variableState)
+                        val fontWeight = run.style.font_weight.value.getValue(variableState)
                         builder.pushStyle(
-                            @OptIn(ExperimentalTextApi::class)
                             (SpanStyle(
                                 brush = textBrushAndOpacity?.first,
                                 alpha = textBrushAndOpacity?.second ?: 1.0f,
-                                fontSize = run.style.font_size.sp,
-                                fontWeight = FontWeight(run.style.font_weight.value.roundToInt()),
+                                fontSize = run.style.font_size.getValue(variableState).sp,
+                                fontWeight = FontWeight(fontWeight.roundToInt()),
                                 fontStyle =
                                     when (run.style.font_style) {
                                         is com.android.designcompose.serdegen.FontStyle.Italic ->
@@ -130,7 +130,8 @@ internal fun squooshComputeTextInfo(
                 else -> TextUnit.Unspecified
             }
     val fontWeight =
-        customTextStyle?.fontWeight ?: FontWeight(v.style.node_style.font_weight.value.roundToInt())
+        customTextStyle?.fontWeight
+            ?: FontWeight(v.style.node_style.font_weight.value.getValue(variableState).roundToInt())
     val fontStyle =
         customTextStyle?.fontStyle
             ?: when (v.style.node_style.font_style) {
@@ -158,11 +159,12 @@ internal fun squooshComputeTextInfo(
     val textBrushAndOpacity =
         v.style.node_style.text_color.asBrush(document, density.density, variableState)
     val textStyle =
-        @OptIn(ExperimentalTextApi::class)
         (TextStyle(
             brush = textBrushAndOpacity?.first,
             alpha = textBrushAndOpacity?.second ?: 1.0f,
-            fontSize = customTextStyle?.fontSize ?: v.style.node_style.font_size.sp,
+            fontSize =
+                customTextStyle?.fontSize
+                    ?: v.style.node_style.font_size.getValue(variableState).sp,
             fontFamily = fontFamily,
             fontFeatureSettings =
                 v.style.node_style.font_features.joinToString(", ") { feature ->

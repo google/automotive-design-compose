@@ -36,6 +36,7 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocContent
 import com.android.designcompose.TextMeasureData
+import com.android.designcompose.VariableState
 import com.android.designcompose.asBrush
 import com.android.designcompose.blurFudgeFactor
 import com.android.designcompose.convertColor
@@ -67,7 +68,8 @@ internal fun squooshComputeTextInfo(
     density: Density,
     document: DocContent,
     customizations: CustomizationContext,
-    fontResourceLoader: Font.ResourceLoader
+    fontResourceLoader: Font.ResourceLoader,
+    variableState: VariableState,
 ): TextMeasureData? {
     val customizedText = customizations.getText(v.name)
     val customTextStyle = customizations.getTextStyle(v.name)
@@ -89,7 +91,7 @@ internal fun squooshComputeTextInfo(
                     val builder = AnnotatedString.Builder()
                     for (run in (v.data as ViewData.StyledText).content) {
                         val textBrushAndOpacity =
-                            run.style.text_color.asBrush(document, density.density)
+                            run.style.text_color.asBrush(document, density.density, variableState)
                         builder.pushStyle(
                             @OptIn(ExperimentalTextApi::class)
                             (SpanStyle(
@@ -153,7 +155,8 @@ internal fun squooshComputeTextInfo(
                 )
             )
         }
-    val textBrushAndOpacity = v.style.node_style.text_color.asBrush(document, density.density)
+    val textBrushAndOpacity =
+        v.style.node_style.text_color.asBrush(document, density.density, variableState)
     val textStyle =
         @OptIn(ExperimentalTextApi::class)
         (TextStyle(

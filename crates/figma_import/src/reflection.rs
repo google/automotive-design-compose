@@ -153,6 +153,34 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::toolkit_schema::StrokeCap>(&samples)
         .expect("couldn't trace StrokeCap");
+    tracer.trace_type::<crate::toolkit_schema::Mode>(&samples).expect("couldn't trace Mode");
+    tracer
+        .trace_type::<crate::toolkit_schema::Collection>(&samples)
+        .expect("couldn't trace Collection");
+    tracer
+        .trace_type::<crate::figma_schema::VariableType>(&samples)
+        .expect("couldn't trace VariableType");
+    tracer
+        .trace_type::<crate::figma_schema::FigmaColor>(&samples)
+        .expect("couldn't trace FigmaColor");
+    tracer
+        .trace_type::<crate::figma_schema::VariableAlias>(&samples)
+        .expect("couldn't trace VariableAlias");
+    tracer
+        .trace_type::<crate::toolkit_schema::NumOrVar>(&samples)
+        .expect("couldn't trace NumOrVar");
+    tracer
+        .trace_type::<crate::toolkit_schema::ColorOrVar>(&samples)
+        .expect("couldn't trace ColorOrVar");
+    tracer
+        .trace_type::<crate::toolkit_schema::VariableValue>(&samples)
+        .expect("couldn't trace VariableValue");
+    tracer
+        .trace_type::<crate::toolkit_schema::Variable>(&samples)
+        .expect("couldn't trace Variable");
+    tracer
+        .trace_type::<crate::toolkit_schema::VariableMap>(&samples)
+        .expect("couldn't trace VariableMap");
     tracer
         .trace_type::<crate::toolkit_schema::ViewShape>(&samples)
         .expect("couldn't trace ViewShape");

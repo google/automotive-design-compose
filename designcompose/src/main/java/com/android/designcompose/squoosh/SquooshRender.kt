@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Density
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.TextMeasureData
+import com.android.designcompose.VariableState
 import com.android.designcompose.asComposeBlendMode
 import com.android.designcompose.asComposeTransform
 import com.android.designcompose.getBrush
@@ -61,7 +62,8 @@ internal fun Modifier.squooshRender(
     customizations: CustomizationContext,
     childRenderSelector: SquooshChildRenderSelector,
     animations: Map<Int, SquooshAnimationRenderingInfo>,
-    animationValues: State<Map<Int, Float>>
+    animationValues: State<Map<Int, Float>>,
+    variableState: VariableState,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -137,7 +139,8 @@ internal fun Modifier.squooshRender(
                         null, // customImageWithContext
                         document,
                         node.view.name,
-                        customizations
+                        customizations,
+                        variableState,
                     ) {
                         var child = node.firstChild
                         var pendingMask: SquooshResolvedNode? = null

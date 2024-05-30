@@ -55,6 +55,7 @@ import com.android.designcompose.DocumentSwitcher
 import com.android.designcompose.InteractionState
 import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.LiveUpdateMode
+import com.android.designcompose.VariableState
 import com.android.designcompose.asAnimationSpec
 import com.android.designcompose.asBuilder
 import com.android.designcompose.branches
@@ -368,7 +369,8 @@ fun SquooshRoot(
             layoutIdAllocator,
             variantParentName,
             isRoot,
-            overlays
+            VariableState.create(),
+            overlays,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -419,7 +421,8 @@ fun SquooshRoot(
                 layoutIdAllocator,
                 variantParentName,
                 isRoot,
-                overlays
+                VariableState.create(),
+                overlays,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }
@@ -456,6 +459,7 @@ fun SquooshRoot(
                         // Is there a nicer way of passing these two?
                         currentAnimations,
                         animationValues,
+                        VariableState.create(),
                     )
                     .semantics { sDocRenderStatus = DocRenderStatus.Rendered },
             measurePolicy = { measurables, constraints ->

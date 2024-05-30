@@ -88,6 +88,9 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     for error in error_list {
         eprintln!("Warning: {error}");
     }
+
+    let variable_map = doc.build_variable_map();
+
     // Build the serializable doc structure
     let serializable_doc = SerializedDesignDoc {
         views,
@@ -97,6 +100,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
         name: doc.get_name(),
         version: doc.get_version(),
         id: doc.get_document_id(),
+        variable_map: variable_map,
     };
     println!("Fetched document");
     println!("  DC Version: {}", SerializedDesignDocHeader::current().version);

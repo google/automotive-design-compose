@@ -24,6 +24,7 @@ use crate::{
     color::Color,
     toolkit_font_style::{FontStretch, FontStyle, FontWeight},
     toolkit_layout_style::{Display, FlexWrap, LayoutSizing, Number, Overflow},
+    toolkit_schema::ColorOrVar,
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
@@ -39,7 +40,7 @@ pub enum ScaleMode {
 pub enum Background {
     #[default]
     None,
-    Solid(Color),
+    Solid(ColorOrVar),
     LinearGradient {
         start_x: f32,
         start_y: f32,
@@ -122,7 +123,7 @@ pub struct TextStyle {
 impl Default for TextStyle {
     fn default() -> Self {
         TextStyle {
-            text_color: Background::Solid(Color::BLACK),
+            text_color: Background::Solid(ColorOrVar::Color(Color::BLACK)),
             font_size: 18.0,
             font_family: None,
             font_weight: FontWeight::NORMAL,
@@ -528,7 +529,7 @@ pub struct NodeStyle {
 impl Default for NodeStyle {
     fn default() -> NodeStyle {
         NodeStyle {
-            text_color: Background::Solid(Color::from_u8s(0, 0, 0, 255)),
+            text_color: Background::Solid(ColorOrVar::Color(Color::from_u8s(0, 0, 0, 255))),
             font_size: 18.0,
             font_family: None,
             font_weight: FontWeight::NORMAL,

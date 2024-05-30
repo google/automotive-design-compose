@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -303,6 +304,25 @@ internal fun Button(name: String, selected: Boolean, select: () -> Unit) {
             .clickable { select() }
             .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(8.dp))
             .absolutePadding(10.dp, 2.dp, 10.dp, 2.dp)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier,
+    ) {
+        Text(name, fontSize = 30.sp, color = textColor)
+    }
+}
+
+@Composable
+internal fun TestButton(name: String, tag: String, selected: Boolean, select: () -> Unit) {
+    val textColor = if (selected) Color.Black else Color.Gray
+    val borderColor = if (selected) Color.Black else Color.Gray
+    var modifier =
+        Modifier.padding(10.dp)
+            .clickable { select() }
+            .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(8.dp))
+            .absolutePadding(10.dp, 2.dp, 10.dp, 2.dp)
+            .testTag(tag)
 
     Box(
         contentAlignment = Alignment.Center,

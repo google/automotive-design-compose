@@ -194,6 +194,17 @@ internal fun DesignFrame(
             )
     }
 
+    // if the developer has not explicitly set variable override values, check to see if any
+    // variable modes have been set on this node. If so, collect the values in modeValues to be used
+    // to resolve variable values for this node and children
+    var modeValues: VariableModeValues? = null
+    if (!LocalVariableState.hasOverrideModeValues()) {
+        if (view.explicit_variable_modes.isPresent) {
+            val modes = view.explicit_variable_modes.get()
+            modeValues = VariableManager.updateVariableStateFromModeValues(modes)
+        }
+    }
+
     // Since the meter function is a composable, we need to call it here even though we don't need
     // it until frameRender() since that function is not a composable.
     val meterValue = customizations.getMeterFunction(name)?.let { it() }
@@ -203,7 +214,8 @@ internal fun DesignFrame(
 
     // Only render the frame if we don't have a replacement node and layout is absolute
     val shape = (view.data as ViewData.Container).shape
-    if (replacementComponent == null && layoutInfo.shouldRender())
+    if (replacementComponent == null && layoutInfo.shouldRender()) {
+        val varMaterialState = VariableState.create(modeValues)
         m =
             m.frameRender(
                 style,
@@ -213,8 +225,10 @@ internal fun DesignFrame(
                 name,
                 customizations,
                 maskInfo,
-                layoutId
+                layoutId,
+                varMaterialState,
             )
+    }
 
     val lazyContent = customizations.getListContent(name)
 
@@ -682,8 +696,10 @@ internal fun DesignFrame(
             // Use our custom layout to render the frame and to place its children
             m = m.then(Modifier.layoutStyle(name, layoutId))
             m = m.then(layoutInfo.selfModifier)
-            DesignFrameLayout(m, view, layoutId, rootLayoutId, layoutState, designScroll) {
-                content()
+            DesignVariableModeValues(modeValues) {
+                DesignFrameLayout(m, view, layoutId, rootLayoutId, layoutState, designScroll) {
+                    content()
+                }
             }
         }
     }
@@ -701,6 +717,7 @@ internal fun Modifier.frameRender(
     customizations: CustomizationContext,
     maskInfo: MaskInfo?,
     layoutId: Int,
+    variableState: VariableState,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -713,7 +730,8 @@ internal fun Modifier.frameRender(
                     document,
                     name,
                     customizations,
-                    layoutId
+                    layoutId,
+                    variableState,
                 )
 
             when (maskInfo?.type ?: MaskViewType.None) {

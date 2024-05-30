@@ -18,7 +18,6 @@ use std::f32::consts::PI;
 use crate::toolkit_font_style::{FontStyle, FontWeight};
 use crate::toolkit_layout_style::{FlexWrap, Overflow};
 
-use crate::toolkit_schema::ViewShape;
 use crate::toolkit_style::{
     Background, FilterOp, FontFeature, GridLayoutType, GridSpan, LayoutTransform, LineHeight,
     MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
@@ -36,7 +35,10 @@ use crate::{
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
-    toolkit_schema::{ComponentInfo, OverflowDirection, RenderMethod, ScrollInfo, View},
+    toolkit_schema::{
+        ColorOrVar, ComponentInfo, NumOrVar, OverflowDirection, RenderMethod, ScrollInfo, View,
+        ViewShape,
+    },
 };
 
 use layout::styles::{
@@ -511,13 +513,18 @@ fn compute_background(
     images: &mut ImageContext,
     node_name: &String,
 ) -> crate::toolkit_style::Background {
-    if let PaintData::Solid { color } = &last_paint.data {
-        Background::Solid(crate::Color::from_f32s(
-            color.r,
-            color.g,
-            color.b,
-            color.a * last_paint.opacity,
-        ))
+    if let PaintData::Solid { color, bound_variables } = &last_paint.data {
+        let solid_bg = if let Some(vars) = bound_variables {
+            ColorOrVar::from_var(vars, "color", color)
+        } else {
+            ColorOrVar::Color(crate::Color::from_f32s(
+                color.r,
+                color.g,
+                color.b,
+                color.a * last_paint.opacity,
+            ))
+        };
+        Background::Solid(solid_bg)
     } else if let PaintData::Image {
         image_ref: Some(image_ref),
         filters,
@@ -1277,25 +1284,53 @@ fn visit_node(
         Vec::new()
     };
 
-    let (corner_radius, has_corner_radius) = if let Some(border_radii) = node.rectangle_corner_radii
-    {
-        (
-            [border_radii[0], border_radii[1], border_radii[2], border_radii[3]],
-            border_radii[0] > 0.0
-                || border_radii[1] > 0.0
-                || border_radii[2] > 0.0
-                || border_radii[3] > 0.0,
-        )
-    } else if let Some(border_radius) = node.corner_radius {
-        ([border_radius, border_radius, border_radius, border_radius], border_radius > 0.0)
+    // Get the raw number values for the corner radii. If any are non-zero, set the boolean
+    // has_corner_radius to true.
+    let (corner_radius_values, mut has_corner_radius) =
+        if let Some(border_radii) = node.rectangle_corner_radii {
+            // rectangle_corner_radii is set if the corner radii are not all the same
+            (
+                [border_radii[0], border_radii[1], border_radii[2], border_radii[3]],
+                border_radii[0] > 0.0
+                    || border_radii[1] > 0.0
+                    || border_radii[2] > 0.0
+                    || border_radii[3] > 0.0,
+            )
+        } else if let Some(border_radius) = node.corner_radius {
+            // corner_radius is set if all four corners are set to the same value
+            ([border_radius, border_radius, border_radius, border_radius], border_radius > 0.0)
+        } else {
+            ([0.0, 0.0, 0.0, 0.0], false)
+        };
+
+    // Collect the corner radii values to be saved into the view. If the corner radii are set
+    // to variables, they will be set to NumOrVar::Var. Otherwise they will be set to NumOrVar::Num.
+    let corner_radius = if let Some(vars) = &node.bound_variables {
+        let top_left = NumOrVar::from_var(vars, "topLeftRadius", corner_radius_values[0]);
+        let top_right = NumOrVar::from_var(vars, "topRightRadius", corner_radius_values[1]);
+        let bottom_right = NumOrVar::from_var(vars, "bottomRightRadius", corner_radius_values[2]);
+        let bottom_left = NumOrVar::from_var(vars, "bottomLeftRadius", corner_radius_values[3]);
+        if vars.has_var("topLeftRadius")
+            || vars.has_var("topRightRadius")
+            || vars.has_var("bottomRightRadius")
+            || vars.has_var("bottomLeftRadius")
+        {
+            has_corner_radius = true;
+        }
+        [top_left, top_right, bottom_right, bottom_left]
     } else {
-        ([0.0, 0.0, 0.0, 0.0], false)
+        [
+            NumOrVar::Num(corner_radius_values[0]),
+            NumOrVar::Num(corner_radius_values[1]),
+            NumOrVar::Num(corner_radius_values[2]),
+            NumOrVar::Num(corner_radius_values[3]),
+        ]
     };
 
     let make_rect = |is_mask| -> ViewShape {
         if has_corner_radius {
             ViewShape::RoundRect {
-                corner_radius,
+                corner_radius: corner_radius.clone(),
                 corner_smoothing: 0.0, // Not in Figma REST API
                 is_mask: is_mask,
             }
@@ -1320,7 +1355,7 @@ fn visit_node(
         NodeData::Rectangle { vector } => ViewShape::VectorRect {
             path: fill_paths,
             stroke: stroke_paths,
-            corner_radius,
+            corner_radius: corner_radius,
             is_mask: vector.is_mask,
         },
         // Ellipses get turned into an Arc in order to support dials/gauges with an arc type
@@ -1334,7 +1369,8 @@ fn visit_node(
             start_angle_degrees: euclid::Angle::radians(arc_data.starting_angle).to_degrees(),
             sweep_angle_degrees: euclid::Angle::radians(arc_data.ending_angle).to_degrees(),
             inner_radius: arc_data.inner_radius,
-            corner_radius: 0.0, // corner radius is only exposed in the plugin data
+            // corner radius for arcs in dials & gauges does not support variables yet
+            corner_radius: 0.0,
             is_mask: vector.is_mask,
         },
         NodeData::Frame { frame }
@@ -1408,6 +1444,7 @@ fn visit_node(
         frame_extras,
         node.absolute_bounding_box,
         RenderMethod::None,
+        node.explicit_variable_modes.clone(),
     );
 
     // Iterate over our visible children, but not vectors because they always

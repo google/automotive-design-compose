@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
 import com.android.designcompose.common.nodeNameToPropertyValueList
 import com.android.designcompose.serdegen.Background
+import com.android.designcompose.serdegen.ColorOrVar
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.NodeQuery
@@ -104,7 +105,7 @@ data class Customization(
     // Meter (dial, gauge, progress bar) customization as a percentage 0-100
     var meterValue: Optional<Float> = Optional.empty(),
     // Meter (dial, gauge, progress bar) customization as a function that returns a percentage 0-100
-    var meterFunction: Optional<@Composable () -> Float> = Optional.empty()
+    var meterFunction: Optional<@Composable () -> Float> = Optional.empty(),
 )
 
 private fun Customization.clone(): Customization {
@@ -175,11 +176,14 @@ data class ImageContext(
 ) {
     fun getBackgroundColor(): Int? {
         if (background.size == 1 && background[0] is Background.Solid) {
-            val color = (background[0] as Background.Solid).value.color
-            return ((color[3].toInt() shl 24) and 0xFF000000.toInt()) or
-                ((color[0].toInt() shl 16) and 0x00FF0000) or
-                ((color[1].toInt() shl 8) and 0x0000FF00) or
-                (color[2].toInt() and 0x000000FF)
+            val color = (background[0] as Background.Solid).value
+            if (color is ColorOrVar.Color) {
+                val color = color.value.color
+                return ((color[3].toInt() shl 24) and 0xFF000000.toInt()) or
+                    ((color[0].toInt() shl 16) and 0x00FF0000) or
+                    ((color[1].toInt() shl 8) and 0x0000FF00) or
+                    (color[2].toInt() and 0x000000FF)
+            }
         }
         return null
     }

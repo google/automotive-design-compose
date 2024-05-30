@@ -133,12 +133,14 @@ internal fun DesignText(
     val fontFamily = DesignSettings.fontFamily(style.node_style.font_family)
     val customTextStyle = customizations.getTextStyle(nodeName)
     val textBuilder = AnnotatedString.Builder()
+    val variableState = VariableState.create()
 
     if (useText != null) {
         textBuilder.append(useText)
     } else if (runs != null) {
         for (run in runs) {
-            val textBrushAndOpacity = run.style.text_color.asBrush(document, density.density)
+            val textBrushAndOpacity =
+                run.style.text_color.asBrush(document, density.density, variableState)
             textBuilder.pushStyle(
                 @OptIn(ExperimentalTextApi::class)
                 SpanStyle(
@@ -217,7 +219,8 @@ internal fun DesignText(
             customizations.getBrush(nodeName)
         }
 
-    val textBrushAndOpacity = style.node_style.text_color.asBrush(document, density.density)
+    val textBrushAndOpacity =
+        style.node_style.text_color.asBrush(document, density.density, variableState)
     val textStyle =
         @OptIn(ExperimentalTextApi::class)
         TextStyle(

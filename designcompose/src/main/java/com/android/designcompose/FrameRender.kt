@@ -253,6 +253,7 @@ internal fun ContentDrawScope.render(
     name: String,
     customizations: CustomizationContext,
     layoutId: Int,
+    variableState: VariableState,
 ) {
     if (size.width <= 0F && size.height <= 0F) return
 
@@ -343,7 +344,8 @@ internal fun ContentDrawScope.render(
             customArcAngle,
             vectorScaleX,
             vectorScaleY,
-            layoutId
+            layoutId,
+            variableState
         )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
@@ -362,7 +364,7 @@ internal fun ContentDrawScope.render(
         } else {
             style.node_style.background.mapNotNull { background ->
                 val p = Paint()
-                val b = background.asBrush(document, density)
+                val b = background.asBrush(document, density, variableState)
                 if (b != null) {
                     val (brush, fillOpacity) = b
                     val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
@@ -377,7 +379,7 @@ internal fun ContentDrawScope.render(
     val strokeBrush =
         style.node_style.stroke.strokes.mapNotNull { background ->
             val p = Paint()
-            val b = background.asBrush(document, density)
+            val b = background.asBrush(document, density, variableState)
             if (b != null) {
                 val (brush, strokeOpacity) = b
                 val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
@@ -514,6 +516,7 @@ internal fun squooshShapeRender(
     document: DocContent,
     name: String,
     customizations: CustomizationContext,
+    variableState: VariableState,
     drawContent: () -> Unit
 ) {
     if (size.width <= 0F && size.height <= 0F) return
@@ -598,7 +601,8 @@ internal fun squooshShapeRender(
             customArcAngle,
             vectorScaleX,
             vectorScaleY,
-            0 // XXX: layoutId
+            0, // XXX: layoutId
+            variableState
         )
 
     // Blend mode
@@ -661,7 +665,7 @@ internal fun squooshShapeRender(
         } else {
             style.node_style.background.mapNotNull { background ->
                 val p = Paint()
-                val b = background.asBrush(document, density)
+                val b = background.asBrush(document, density, variableState)
                 if (b != null) {
                     val (brush, fillOpacity) = b
                     brush.applyTo(size, p, fillOpacity)
@@ -674,7 +678,7 @@ internal fun squooshShapeRender(
     val strokeBrush =
         style.node_style.stroke.strokes.mapNotNull { background ->
             val p = Paint()
-            val b = background.asBrush(document, density)
+            val b = background.asBrush(document, density, variableState)
             if (b != null) {
                 val (brush, strokeOpacity) = b
                 brush.applyTo(size, p, strokeOpacity)

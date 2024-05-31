@@ -877,9 +877,9 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.12.5"
+version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32445183788a6159990b6e44d9955d0d6c06b7b9384b4c3e9a0d152a1bf30d56"
+checksum = "deb1435c188b76130da55f17a466d252ff7b1418b2ad3e037d127b94e3411f29"
 dependencies = [
  "bytes",
  "prost-derive",

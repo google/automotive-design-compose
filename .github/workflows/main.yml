@@ -12,120 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 name: SDK Main Workflow
-
 # The on: and concurrencency: blocks should be the same for all core workflows
 # Triggers nightly, on merges or pushes to main and stable and on pull requests.
 on:
   push:
     branches:
-    - main
-    - 'stable/**'
-    - 'feature/**'
+      - main
+      - 'stable/**'
+      - 'feature/**'
   pull_request:
   merge_group:
   schedule:
     - cron: "0 0 * * *"
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
-
 # We only need to make sure that one ABI builds
 env:
   GRADLE_OPTS: "-Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOverride=true -Dorg.gradle.project.designcompose.cargoPlugin.abiOverride=x86_64"
-
 jobs:
-  ############## Lints
-  validate-gradle-wrapper:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
-      - uses: gradle/actions/wrapper-validation@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
-
-  lint-kotlin:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v3.5.2
-
-      - name: Set up Java
-        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
-        with:
-          distribution: "temurin"
-          java-version: "17"
-
-      - uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
-        with:
-          cache-read-only: true
-          arguments: spotCheck
-
-  actionlint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
-      - name: Download actionlint
-        id: get_actionlint
-        run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-        shell: bash
-      - name: Check workflow files
-        run: ${{ steps.get_actionlint.outputs.executable }} -color
-        shell: bash
-
-  lint-rust:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-        with:
-          egress-policy: audit
-
-      - run: rustup toolchain install stable --profile minimal
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v3.5.2
-      - name: Rust lint
-        run: cargo-fmt --all --check
-
-  cargo-deny:
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        checks:
-          - advisories
-          - bans licenses sources
-
-    # Prevent sudden announcement of a new advisory from failing ci:
-    continue-on-error: ${{ matrix.checks == 'advisories' }}
-
-    steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-      with:
-        egress-policy: audit
-
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
-    - uses: EmbarkStudios/cargo-deny-action@3f4a782664881cf5725d0ffd23969fcce89fd868 # v1.6.3
-      with:
-          command: check ${{ matrix.checks }}
-
-############## Gradle
+  ############## Gradle
   sdk-support-build:
     runs-on: ubuntu-latest
     steps:
@@ -133,34 +42,28 @@ jobs:
         uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
         with:
           egress-policy: audit
-
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v3.5.2
-
       - name: Set up Java
         uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
         with:
           distribution: "temurin"
           java-version: "17"
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
-
       - name: Test build-logic
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           build-root-directory: build-logic
           arguments: test
-
       - name: Test the plugins
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           build-root-directory: plugins
           arguments: test
-
   # Run a full build, including instrumented tests.
   sdk-build:
     runs-on: "ubuntu-latest"
@@ -169,45 +72,36 @@ jobs:
         uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
         with:
           egress-policy: audit
-
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v3.5.2
-
       - name: Set up Java
         uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
         with:
           distribution: "temurin"
           java-version: "17"
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
-
       - name: Update Rust
         run: rustup toolchain install stable --profile minimal
-
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
         with:
           version: "26.1"
-
       - name: Install Rust toolchains
         run: ./install-rust-toolchains.sh
-
       - name: Set up Rust Cache
         uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
-
       - name: Full Gradle Test and publish
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           arguments: check build publish assembleAndroidTest assembleUnitTest
-
   build-maven-repo:
     runs-on: "ubuntu-latest"
     steps:
@@ -215,55 +109,44 @@ jobs:
         uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
         with:
           egress-policy: audit
-
       - name: "Set environment variables"
         run: |
           echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
-
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v3.5.2
-
       - name: Set up Java
         uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
         with:
           distribution: "temurin"
           java-version: "17"
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
-
       - name: Update Rust
         run: rustup toolchain install stable --profile minimal
-
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
         with:
           version: "26.1"
-
       - name: Install Rust toolchains
         run: ./install-rust-toolchains.sh
-
       - name: Set up Rust Cache
         uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
-
       - name: Full Gradle Test and publish
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           arguments: publishAllPublicationsToLocalDirRepository
-
       - name: Upload maven repo
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo/
-
   # These tests run on the local JVM and don't need the rust code,
   # so it makes sense to put them in a seperate job
   verify-roborazzi:
@@ -273,32 +156,26 @@ jobs:
         uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
         with:
           egress-policy: audit
-
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v3.5.2
-
       - name: Set up Java
         uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
         with:
           distribution: "temurin"
           java-version: "17"
-
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
         with:
           version: "26.1"
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
-
       - name: Generate full comparison
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           arguments: compareRoborazziDebug
-
       - name: Upload diff report
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
@@ -307,13 +184,11 @@ jobs:
             **/build/outputs/roborazzi
             **/build/reports/roborazzi
           retention-days: 30
-
       - name: Verify Roborazzi
         uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
         with:
           arguments: verifyRoborazziDebug
-
-########### Reference apps
+          ########### Reference apps
   reference-apps:
     strategy:
       matrix:
@@ -322,166 +197,136 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     needs: build-maven-repo
-
     steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-      with:
-        egress-policy: audit
-
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
-
-    - name: Set up Java
-      uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
-      with:
-        distribution: "temurin"
-        java-version: "17"
-
-    - name: Set up Gradle
-      uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
-      with:
-        # Dependency graph isn't supported on Windows and we don't need it to run on Mac either
-        # This is GitHub's ternary operator
-        dependency-graph: ${{ matrix.os == 'ubuntu-latest' && 'generate' ||  'disabled' }}
-        gradle-home-cache-cleanup: true
-
-    - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
-      with:
-        name: designcompose_m2repo
-        path: designcompose_m2repo
-
-    - name: "Set environment variables (Linux/Mac)"
-      if: ${{ matrix.os != 'windows-latest'}}
-      run: |
-        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
-
-    - name: "Set environment variables (Windows)"
-      if: ${{ matrix.os == 'windows-latest'}}
-      run: |
-        chcp 65001 #set code page to utf-8
-        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$env:GITHUB_WORKSPACE/designcompose_m2repo" >> "$env:GITHUB_ENV"
-
-    - name: Check HelloWorld App
-      uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
-      with:
-        build-root-directory: reference-apps/helloworld
-        arguments: |
-          --init-script ../local-design-compose-repo.init.gradle.kts
-          build
-
-    - name: Check Tutorial App
-      uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
-      with:
-        build-root-directory: reference-apps/tutorial
-        arguments: |
-          --init-script ../local-design-compose-repo.init.gradle.kts
-          build
-
+      - name: Harden Runner
+        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Set up Java
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
+        with:
+          # Dependency graph isn't supported on Windows and we don't need it to run on Mac either
+          # This is GitHub's ternary operator
+          dependency-graph: ${{ matrix.os == 'ubuntu-latest' && 'generate' ||  'disabled' }}
+          gradle-home-cache-cleanup: true
+      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        with:
+          name: designcompose_m2repo
+          path: designcompose_m2repo
+      - name: "Set environment variables (Linux/Mac)"
+        if: ${{ matrix.os != 'windows-latest'}}
+        run: |
+          echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+      - name: "Set environment variables (Windows)"
+        if: ${{ matrix.os == 'windows-latest'}}
+        run: |
+          chcp 65001 #set code page to utf-8
+          echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$env:GITHUB_WORKSPACE/designcompose_m2repo" >> "$env:GITHUB_ENV"
+      - name: Check HelloWorld App
+        uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
+        with:
+          build-root-directory: reference-apps/helloworld
+          arguments: |
+            --init-script ../local-design-compose-repo.init.gradle.kts
+            build
+      - name: Check Tutorial App
+        uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
+        with:
+          build-root-directory: reference-apps/tutorial
+          arguments: |
+            --init-script ../local-design-compose-repo.init.gradle.kts
+            build
   build-unbundled:
     runs-on: ubuntu-latest
     steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-      with:
-        egress-policy: audit
-
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
-
-    - name: Set up Java
-      uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
-      with:
-        distribution: "temurin"
-        java-version: "17"
-
-    - run: sudo apt-get install repo
-
-    - name: "Set environment variables"
-      run: |
-        echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/unbundled-aaos" >> "$GITHUB_ENV"
-
-    - name: Check out the Unbundled AAOS Repo
-      run: |
-        HOST=https://android.googlesource.com/platform/manifest
-        BRANCH=ub-automotive-master-20240521
-        mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
-        cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
-        repo init -u $HOST -b $BRANCH -g pdk,pdk-fs --depth=1
-        repo sync -cq -j4
-
-    - name: Build the repo
-      uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
-      with:
-        build-root-directory: unbundled-aaos/packages/apps/Car/libs/aaos-apps-gradle-project/
-        arguments: publishAllPublicationsToLocalRepository
-
-    - name: Upload maven repo
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-      with:
-        name: unbundled_m2repo
-        path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
-
-    - name: Upload aaos prebuilts
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-      with:
-        name: unbundled_prebuilts
-        path: unbundled-aaos/prebuilts/sdk/34/system/
-
-######### Unbundled apps
-
+      - name: Harden Runner
+        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Set up Java
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - run: sudo apt-get install repo
+      - name: "Set environment variables"
+        run: |
+          echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/unbundled-aaos" >> "$GITHUB_ENV"
+      - name: Check out the Unbundled AAOS Repo
+        run: |
+          HOST=https://android.googlesource.com/platform/manifest
+          BRANCH=ub-automotive-master-20240521
+          mkdir "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
+          cd "$ORG_GRADLE_PROJECT_unbundledAAOSDir"
+          repo init -u $HOST -b $BRANCH -g pdk,pdk-fs --depth=1
+          repo sync -cq -j4
+      - name: Build the repo
+        uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
+        with:
+          build-root-directory: unbundled-aaos/packages/apps/Car/libs/aaos-apps-gradle-project/
+          arguments: publishAllPublicationsToLocalRepository
+      - name: Upload maven repo
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: unbundled_m2repo
+          path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
+      - name: Upload aaos prebuilts
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: unbundled_prebuilts
+          path: unbundled-aaos/prebuilts/sdk/34/system/
+          ######### Unbundled apps
   MediaCompose:
     runs-on: ubuntu-latest
     needs: [build-maven-repo, build-unbundled]
     steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
-      with:
-        egress-policy: audit
-
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
-
-    - name: Set up Java
-      uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
-      with:
-        distribution: "temurin"
-        java-version: "17"
-
-    - name: Set up Gradle
-      uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
-      with:
-        dependency-graph: generate
-        gradle-home-cache-cleanup: true
-
-    - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
-      with:
-        name: designcompose_m2repo
-        path: designcompose_m2repo
-
-    - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
-      with:
-        name: unbundled_m2repo
-        path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
-
-    - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
-      with:
-        name: unbundled_prebuilts
-        path: unbundled-aaos/prebuilts/sdk/34/system/
-
-    - run: sudo apt-get install repo
-
-    - name: "Set environment variables"
-      run: |
-        echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
-        echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/unbundled-aaos" >> "$GITHUB_ENV"
-
-    - name: Check MediaCompose
-      uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
-      with:
-        build-root-directory: reference-apps/aaos-unbundled
-        arguments: |
-          --init-script ../local-design-compose-repo.init.gradle.kts
-          check
-
-############# Rust
+      - name: Harden Runner
+        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Set up Java
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
+        with:
+          dependency-graph: generate
+          gradle-home-cache-cleanup: true
+      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        with:
+          name: designcompose_m2repo
+          path: designcompose_m2repo
+      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        with:
+          name: unbundled_m2repo
+          path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
+      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        with:
+          name: unbundled_prebuilts
+          path: unbundled-aaos/prebuilts/sdk/34/system/
+      - run: sudo apt-get install repo
+      - name: "Set environment variables"
+        run: |
+          echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
+          echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/unbundled-aaos" >> "$GITHUB_ENV"
+      - name: Check MediaCompose
+        uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
+        with:
+          build-root-directory: reference-apps/aaos-unbundled
+          arguments: |
+            --init-script ../local-design-compose-repo.init.gradle.kts
+            check
+          ############# Rust
   rust-test:
     runs-on: ubuntu-latest
     steps:
@@ -489,27 +334,20 @@ jobs:
         uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
         with:
           egress-policy: audit
-
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v3.5.2
-
       - run: rustup toolchain install stable --profile minimal
-
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
         with:
           version: "26.1"
-
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
-
       - name: Build all
         run: cargo build --all-targets --all-features
-
       - name: Test all
         run: cargo test --all-targets --all-features
-
-############ Figma resources
+        ############ Figma resources
   figma-resources:
     runs-on: ubuntu-latest
     steps:
@@ -517,13 +355,10 @@ jobs:
         uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
         with:
           egress-policy: audit
-
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v3.5.2
-
       - uses: ./.github/actions/build-figma-resource
         with:
-            resource: auto-content-preview-widget
-
+          resource: auto-content-preview-widget
       - uses: ./.github/actions/build-figma-resource
         with:
-            resource: extended-layout-plugin
+          resource: extended-layout-plugin

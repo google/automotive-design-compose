@@ -135,6 +135,12 @@ else
   echo "actionlint not installed, skipping."
 fi
 
+if which protolint >/dev/null; then
+  run_cmd "Protolint" . protolint lint proto/
+else
+  echo "protolint not installed, skipping."
+fi
+
 run_cmd "SpotCheck BuildLogic" build-logic ./gradlew spotCheck
 run_cmd "SpotCheck Plugins" plugins ./gradlew spotCheck
 run_cmd "SpotCheck Main Project" . ./gradlew spotCheck

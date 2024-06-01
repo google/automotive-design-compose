@@ -114,6 +114,18 @@ fun DesignVariableModeValues(modeValues: VariableModeValues?, content: @Composab
         CompositionLocalProvider(LocalVariableModeValuesOverride provides modeValues) { content() }
     else content()
 
+// Declare a CompositionLocal object of the specified mode values explicitly set from a view. If
+// null, no mode is set and whatever mode values are set in the node are used, or the default mode
+// of the collection.
+@Composable
+internal fun DesignVariableExplicitModeValues(
+    modeValues: VariableModeValues?,
+    content: @Composable () -> Unit
+) =
+    if (modeValues != null)
+        CompositionLocalProvider(LocalVariableModeValuesDoc provides modeValues) { content() }
+    else content()
+
 // Declare a CompositionLocal object to specify whether the current MaterialTheme should be looked
 // up and used in place of variable values, if the variables are MaterialTheme variables.
 @Composable
@@ -156,6 +168,8 @@ internal object VariableManager {
             if (explicitVariableModes.isPresent) {
                 val modes = explicitVariableModes.get()
                 modeValues = updateVariableStateFromModeValues(modes)
+            } else {
+                modeValues = LocalVariableModeValuesDoc.current
             }
         }
         return modeValues

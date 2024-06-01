@@ -688,7 +688,7 @@ internal fun DesignFrame(
             // Use our custom layout to render the frame and to place its children
             m = m.then(Modifier.layoutStyle(name, layoutId))
             m = m.then(layoutInfo.selfModifier)
-            DesignVariableModeValues(modeValues) {
+            DesignVariableExplicitModeValues(modeValues) {
                 DesignFrameLayout(m, view, layoutId, rootLayoutId, layoutState, designScroll) {
                     content()
                 }

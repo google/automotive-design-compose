@@ -232,6 +232,7 @@ impl View {
         text: &str,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
+        explicit_variable_modes: Option<HashMap<String, String>>,
     ) -> View {
         View {
             unique_id: View::next_unique_id(),
@@ -245,7 +246,7 @@ impl View {
             data: ViewData::Text { content: text.into() },
             design_absolute_bounding_box,
             render_method,
-            explicit_variable_modes: None,
+            explicit_variable_modes,
         }
     }
     pub(crate) fn new_styled_text(

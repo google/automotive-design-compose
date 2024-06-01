@@ -140,7 +140,7 @@ fun VariantPropertiesTest() {
 
     Column(modifier = Modifier.absoluteOffset(x = 20.dp, y = 600.dp)) {
         Row {
-            Text("Background 1 ", fontSize = 30.sp, color = Color.Black)
+            Text("Background 1", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button("BG1 Square", bg1 == Shape.Square) {
                 setBg1(Shape.Square)
             }
@@ -149,7 +149,7 @@ fun VariantPropertiesTest() {
             }
         }
         Row {
-            Text("Background 2 ", fontSize = 30.sp, color = Color.Black)
+            Text("Background 2", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button("BG2 Square", bg2 == Shape.Square) {
                 setBg2(Shape.Square)
             }
@@ -158,7 +158,7 @@ fun VariantPropertiesTest() {
             }
         }
         Row {
-            Text("Inner Border ", fontSize = 30.sp, color = Color.Black)
+            Text("Inner Border", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Inner Sharp",
                 innerBorder == SquareBorder.Sharp
@@ -173,7 +173,7 @@ fun VariantPropertiesTest() {
             }
         }
         Row {
-            Text("Color ", fontSize = 30.sp, color = Color.Black)
+            Text("Color", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Green",
                 color == SquareColor.Green
@@ -188,7 +188,7 @@ fun VariantPropertiesTest() {
             }
         }
         Row {
-            Text("Comp 1 ", fontSize = 30.sp, color = Color.Black)
+            Text("Comp 1", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Comp1 One",
                 comp1 == CompType.one

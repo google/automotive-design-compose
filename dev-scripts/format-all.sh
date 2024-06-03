@@ -26,13 +26,6 @@ if ! which "$GOPATH"/addlicense; then
     exit 1
 fi
 
-if which protolint >/dev/null; then
-    echo "Running protolint"
-    protolint -fix proto/
-else
-    echo "protolint not found. Skipping protobuf formatting"
-fi
-
 "$GOPATH"/addlicense \
     -ignore "**/.gradle/**" \
     -ignore "**/build/**" \
@@ -53,3 +46,10 @@ fi
     ./gradlew spotlessApply --no-configuration-cache
     cargo fmt
 )
+
+if which protolint >/dev/null; then
+    echo "Running protolint"
+    protolint -fix proto/
+else
+    echo "protolint not found. Skipping protobuf formatting"
+fi

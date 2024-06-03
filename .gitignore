@@ -21,8 +21,6 @@ plugins/*/bin
 .terragrunt-cache
 
 # User settings dirs
-**/.idea/*
-!.idea/ktfmt.xml
 **/.vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
@@ -84,10 +82,6 @@ local.properties
 .idea/artifacts
 .idea/compiler.xml
 .idea/jarRepositories.xml
-.idea/modules.xml
-.idea/*.iml
-.idea/modules
-*.iml
 *.ipr
 
 # CMake

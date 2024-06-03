@@ -186,8 +186,8 @@ significant time to a build (at least a minute). .
 The `designcompose.cargoPlugin.allowAbiOverride` Gradle property enables the ability to override the
 list of ABIs to build. If set to `true` then the `designcompose.cargoPlugin.abiOverride` property
 will be read (if set) and used to filter the configured list of ABIs that is configured in the
-Gradle project. It takes a comma seperated list of
-ABIs.[gradle.properties](..%2F..%2F..%2F.gradle%2Fgradle.properties)
+Gradle project. It takes a comma seperated list of ABIs.
+
 When building in Android Studio, the `allowAbiOverride` property will allow the build to check the
 ABI of the device that you are building for (when installing the app or running an instrumented test
 or similar) and only build the ABI needed for the device. This has priority over the `abiOverride`

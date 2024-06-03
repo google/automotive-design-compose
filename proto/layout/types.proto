@@ -13,7 +13,9 @@
 // limitations under the License.
 
 syntax = "proto3";
+
 package com.android.designcompose.layout.proto;
+
 option java_multiple_files = true;
 
 /** Dimension in Rust is an union-type enum, which are represented in proto by

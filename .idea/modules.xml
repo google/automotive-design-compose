@@ -16,14 +16,10 @@
 -->
 
 <project version="4">
-  <component name="ProtobufLanguageSettings">
-    <option name="indexBasedResolveEnabled" value="true" />
-    <option name="importPathEntries">
-      <list>
-        <ImportPathEntry>
-          <option name="location" value="file://$PROJECT_DIR$/proto" />
-        </ImportPathEntry>
-      </list>
-    </option>
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DesignCompose.iml" filepath="$PROJECT_DIR$/.idea/modules/DesignCompose.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/DesignCompose.common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/common/DesignCompose.common.main.iml" />
+    </modules>
   </component>
 </project>

@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.modifier;
+option java_multiple_files = true;
+
+message Transform {
+  repeated float matrices = 1;
+}
+
+message LayoutTransform {
+  float m11 = 1;
+  float m12 = 2;
+  float m13 = 3;
+  float m14 = 4;
+  float m21 = 5;
+  float m22 = 6;
+  float m23 = 7;
+  float m24 = 8;
+  float m31 = 9;
+  float m32 = 10;
+  float m33 = 11;
+  float m34 = 12;
+  float m41 = 13;
+  float m42 = 14;
+  float m43 = 15;
+  float m44 = 16;
+}
+message AffineTransform {
+  float m11 = 1;
+  float m12 = 2;
+  float m21 = 3;
+  float m22 = 4;
+  float m31 = 5;
+  float m32 = 6;
+}

@@ -16,5 +16,3 @@ mod layout_node;
 mod layout_style;
 mod styles;
 mod types;
-
-include!(concat!(env!("OUT_DIR"), "/com.android.designcompose.layout.proto.rs"));

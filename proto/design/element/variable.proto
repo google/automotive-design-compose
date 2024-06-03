@@ -1,0 +1,69 @@
+syntax = "proto3";
+package com.android.designcompose.proto.design.element;
+
+import "design/element/color.proto";
+
+option java_multiple_files = true;
+
+// Representation of a Figma variable. We convert a figma_schema::Variable into
+// this format to make the fields a bit easier to access.
+message Variable {
+  enum VariableType {
+    VARIABLE_TYPE_UNSPECIFIED = 0;
+    VARIABLE_TYPE_BOOL = 1;
+    VARIABLE_TYPE_NUMBER = 2;
+    VARIABLE_TYPE_TEXT = 3;
+    VARIABLE_TYPE_COLOR = 4;
+  }
+
+  string id = 1;
+  string name = 2;
+  bool remote = 3;
+  string key = 4;
+  string variable_collection_id = 5;
+  VariableType var_type = 6;
+  VariableValueMap values_by_mode = 7;
+}
+
+// We redeclare VariableValue instead of using the one from figma_schema because
+// the "untagged" attribute there prevents serde_reflection from being able to
+// run properly.
+message VariableValue {
+  oneof value {
+    bool bool_value = 1;
+    double number_value = 2;
+    string text_value = 3;
+    Color color_value = 4;
+    VariableAlias alias_value = 5;
+  }
+}
+
+// Each variable contains a map of possible values. This data structure helps
+// keep track of that data and contains functions to retrieve the value of a
+// variable given a mode.
+message VariableValueMap {
+  map<string, VariableValue> values_by_mode = 1;
+}
+
+message VariableAlias {
+  string id = 1;
+  string name = 2;
+}
+
+message BoundVariables {
+  map<string, VariableAlias> variables = 1;
+}
+
+message NumOrVar {
+  oneof NumOrVar {
+    fixed32 num = 1;
+    string var = 2;
+  }
+}
+
+message ColorOrVar {
+  oneof ColorOrVar {
+    Color color = 1;
+    string var = 2;
+  }
+}

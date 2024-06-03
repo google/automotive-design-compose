@@ -1,0 +1,100 @@
+
+// protolint:disable MESSAGE_NAMES_EXCLUDE_PREPOSITIONS
+// protolint:disable FIELD_NAMES_EXCLUDE_PREPOSITIONS
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.interaction;
+
+option java_multiple_files = true;
+
+message Easing {
+  message Bezier {
+    float x1 = 1;
+    float y1 = 2;
+    float x2 = 3;
+    float y2 = 4;
+  }
+
+  message Spring {
+    float mass = 1;
+    float stiffness = 2;
+    float damping = 3;
+  }
+
+  oneof easing {
+    Bezier bezier = 1;
+    Spring spring = 2;
+  }
+}
+
+message Transition {
+  enum TransitionDirection {
+    TRANSITION_DIRECTION_UNSPECIFIED = 0;
+    TRANSITION_DIRECTION_LEFT = 1;
+    TRANSITION_DIRECTION_RIGHT = 2;
+    TRANSITION_DIRECTION_TOP = 3;
+    TRANSITION_DIRECTION_BOTTOM = 4;
+  }
+
+  message Dissolve {
+    Easing easing = 1;
+    float duration = 2;
+  }
+
+  message SmartAnimate {
+    Easing easing = 1;
+    float duration = 2;
+  }
+
+  message ScrollAnimate {
+    Easing easing = 1;
+    float duration = 2;
+  }
+
+  message MoveIn {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  message MoveOut {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  message Push {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  message SlideIn {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  message SlideOut {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  oneof transition {
+    Dissolve dissolve = 1;
+    SmartAnimate smart_animate = 2;
+    ScrollAnimate scroll_animate = 3;
+    MoveIn move_in = 4;
+    MoveOut move_out = 5;
+    Push push = 6;
+    SlideIn slide_in = 7;
+    SlideOut slide_out = 8;
+  }
+}

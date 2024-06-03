@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.element;
+
+import "design/element/color.proto";
+
+option java_multiple_files = true;
+
+message Text {
+  string content = 1;
+}
+
+// Horizontal text alignment. This value aligns the text within its bounds.
+enum TextAlign {
+  TEXT_ALIGN_UNSPECIFIED = 0;
+  TEXT_ALIGN_LEFT = 1;
+  TEXT_ALIGN_CENTER = 2;
+  TEXT_ALIGN_RIGHT = 3;
+}
+
+// Vertical text alignment. This value aligns the text vertically within its
+// bounds.
+enum TextAlignVertical {
+  TEXT_ALIGN_VERTICAL_UNSPECIFIED = 0;
+  TEXT_ALIGN_VERTICAL_TOP = 1;
+  TEXT_ALIGN_VERTICAL_CENTER = 2;
+  TEXT_ALIGN_VERTICAL_BOTTOM = 3;
+}
+
+// How text should be truncated if it overflows its bounds.
+enum TextOverflow {
+  TEXT_OVERFLOW_UNSPECIFIED = 0;
+  TEXT_OVERFLOW_CLIP = 1;
+  TEXT_OVERFLOW_ELLIPSIS = 2;
+}
+// A text shadow.
+message TextShadow {
+  float blur_radius = 1;
+  Color color = 2;
+  float offset_x = 3;
+  float offset_y = 4;
+}

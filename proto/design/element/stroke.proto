@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.element;
+
+import "design/modifier/background.proto";
+
+option java_multiple_files = true;
+
+message LineHeight {
+  oneof line_height {
+    float pixels = 1;
+    float percent = 2;
+  }
+}
+
+enum StrokeAlign {
+  STROKE_ALIGN_UNSPECIFIED = 0;
+  // The stroke is entirely within the containing view. The stroke's outer edge
+  // matches the outer edge of the containing view.
+  STROKE_ALIGN_INSIDE = 1;
+  // The stroke is centered on the edge of the containing view, and extends into
+  // the view on the inside, and out of the view on the outside.
+  STROKE_ALIGN_CENTER = 2;
+  // The stroke is entirely outside of the view. The stroke's inner edge is the
+  // outer edge of the containing view.
+  STROKE_ALIGN_OUTSIDE = 3;
+}
+
+message StrokeWeight {
+  message Individual {
+    float top = 1;
+    float right = 2;
+    float bottom = 3;
+    float left = 4;
+  }
+  // One weight is used for all sides.
+  // Individual weights for each side (typically only applied on boxes).
+  oneof stroke_weight {
+    float uniform = 1;
+    Individual individual = 2;
+  }
+}
+
+message Stroke {
+  StrokeAlign stroke_align = 1;
+  StrokeWeight stroke_weight = 2;
+  repeated modifier.Background strokes = 3;
+
+}

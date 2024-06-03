@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.plugin;
+
+option java_multiple_files = true;
+
+message RotationMeterData {
+  bool enabled = 1;
+  float start = 2;
+  float end = 3;
+  bool discrete = 4;
+  float discrete_value = 5;
+}
+
+message ArcMeterData {
+  bool enabled = 1;
+  float start = 2;
+  float end = 3;
+  bool discrete = 4;
+  float discrete_value = 5;
+  float corner_radius = 6;
+}
+
+message ProgressBarMeterData {
+  bool enabled = 1;
+  bool discrete = 2;
+  float discrete_value = 3;
+  bool vertical = 4;
+  float end_x = 5;
+  float end_y = 6;
+}
+
+message ProgressMarkerMeterData {
+  bool enabled = 1;
+  bool discrete = 2;
+  float discrete_value = 3;
+  bool vertical = 4;
+  float start_x = 5;
+  float end_x = 6;
+  float start_y = 7;
+  float end_y = 8;
+}
+
+message MeterData {
+  oneof meter_data {
+    RotationMeterData rotation_data = 1;
+    ArcMeterData arc_data = 2;
+    ProgressBarMeterData progress_bar_data = 3;
+    ProgressMarkerMeterData progress_marker_data = 4;
+  }
+}

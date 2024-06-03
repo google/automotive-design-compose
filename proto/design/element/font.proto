@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.element;
+
+option java_multiple_files = true;
+
+message FontWeight {
+  fixed32 weight = 1;
+}
+
+// Allows italic or oblique faces to be selected.
+enum FontStyle {
+  FONT_STYLE_UNSPECIFIED = 0;
+  // A face that is neither italic not obliqued.
+  FONT_STYLE_NORMAL = 1;
+  // A form that is generally cursive in nature.
+  FONT_STYLE_ITALIC = 2;
+  // A typically-sloped version of the regular face.
+  FONT_STYLE_OBLIQUE = 3;
+}
+
+// The width of a font as an approximate fraction of the normal width.
+// Widths range from 0.5 to 2.0 inclusive, with 1.0 as the normal width.
+message FontStretch {
+  fixed32 value = 1;
+}
+
+message FontFeature {
+  bytes tag = 1;  // Must be exactly four bytes
+  bool enabled = 2;
+}

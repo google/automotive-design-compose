@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.plugin;
+
+import "design/element/color.proto";
+
+option java_multiple_files = true;
+
+message FrameExtras {
+  // The number of children of this frame that are fixed.
+  uint32 number_of_fixed_children = 1;
+  // How the overlay is positioned.
+  OverlayPositionType overlay_position_type = 2;
+  // The background of the overlay.
+  OverlayBackground overlay_background = 3;
+  // How the overlay interacts with the background.
+  OverlayBackgroundInteraction overlay_background_interaction = 4;
+}
+
+enum OverlayPositionType {
+  OVERLAY_POSITION_TYPE_UNSPECIFIED = 0;
+  OVERLAY_POSITION_TYPE_CENTER = 1;
+  OVERLAY_POSITION_TYPE_TOP_LEFT = 2;
+  OVERLAY_POSITION_TYPE_TOP_CENTER = 3;
+  OVERLAY_POSITION_TYPE_TOP_RIGHT = 4;
+  OVERLAY_POSITION_TYPE_BOTTOM_LEFT = 5;
+  OVERLAY_POSITION_TYPE_BOTTOM_CENTER = 6;
+  OVERLAY_POSITION_TYPE_BOTTOM_RIGHT = 7;
+  OVERLAY_POSITION_TYPE_MANUAL = 8;
+}
+
+message OverlayBackground {
+  // The color of the overlay background.
+  design.element.Color color = 1;
+}
+
+enum OverlayBackgroundInteraction {
+  OVERLAY_BACKGROUND_INTERACTION_UNSPECIFIED = 0;
+  OVERLAY_BACKGROUND_INTERACTION_NONE = 1;
+  OVERLAY_BACKGROUND_INTERACTION_CLOSE_ON_CLICK_OUTSIDE = 2;
+}

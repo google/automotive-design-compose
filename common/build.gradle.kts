@@ -99,9 +99,7 @@ val serdeGenTask =
 project.sourceSets.main { java { srcDir(serdeGenTask.flatMap { it.generatedCodeDir }) } }
 
 // Protobuf configuration
-project.sourceSets.main {
-    proto { srcDir(rootProject.layout.projectDirectory.dir("proto/layout")) }
-}
+project.sourceSets.main { proto { srcDir(rootProject.layout.projectDirectory.dir("proto")) } }
 
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}" }

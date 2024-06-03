@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.toolkit;
+
+import "design/variable_collection.proto";
+import "design/view.proto";
+
+option java_multiple_files = true;
+
+message SerializedDesignDoc {
+  string last_modified = 1;
+  map<string, design.View> views = 2;
+  EncodedImageMap images = 3;
+  string name = 4;
+  map<string, string> component_sets = 5;
+  string version = 6;
+  string id = 7;
+  design.VariableMap variable_map = 8;
+}
+
+message NodeQuery {
+  message NodeVariant {
+    string name = 1;
+    string parent = 2;
+  }
+  oneof NodeQuery {
+    string node_id = 1;
+    string node_name = 2;
+    NodeVariant node_variant = 3;
+    string node_component_set = 4;
+  }
+}
+
+message EncodedImageMap { map<string, EncodedImage> images = 1; }
+
+message EncodedImage {
+  bytes data = 1;
+  string mime_type = 2;
+}

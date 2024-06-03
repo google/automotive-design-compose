@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.modifier;
+
+import "design/element/color.proto";
+import "design/modifier/filter.proto";
+import "design/modifier/matrix_transform.proto";
+
+option java_multiple_files = true;
+
+message Background {
+  message ColorStop {
+    float position = 1;
+    element.Color color = 2;
+  }
+
+  message LinearGradient {
+    fixed32 start_x = 1;
+    fixed32 start_y = 2;
+    fixed32 end_x = 3;
+    fixed32 end_y = 4;
+    repeated ColorStop color_stops = 5;
+  }
+  message AngularGradient {
+    fixed32 center_x = 1;
+    fixed32 center_y = 2;
+    fixed32 angle = 3;
+    fixed32 scale = 4;
+    repeated ColorStop color_stops = 5;
+  }
+
+  message RadialGradient {
+    fixed32 center_x = 1;
+    fixed32 center_y = 2;
+    fixed32 angle = 3;
+    fixed32 scale = 4;
+    repeated ColorStop color_stops = 5;
+  }
+  enum ScaleMode {
+    SCALE_MODE_UNSPECIFIED = 0;
+    SCALE_MODE_FILL = 1;
+    SCALE_MODE_FIT = 2;
+    SCALE_MODE_TILE = 3;
+    SCALE_MODE_STRETCH = 4;
+  }
+
+  message Image {
+    string key = 1;
+    repeated FilterOp filters = 2;
+    AffineTransform transform = 3;
+    ScaleMode scale_mode = 4;
+    fixed32 opacity = 5;
+  }
+
+  oneof background {
+    bool none = 1;
+    element.Color solid = 2;
+    LinearGradient linear_gradient = 3;
+    AngularGradient angular_gradient = 4;
+    RadialGradient radial_gradient = 5;
+    Image image = 6;
+    // Clear all the pixels underneath, used for hole-punch compositing.
+    bool clear = 7;
+    // DiamondGradient support possibly in the future.
+  }
+}

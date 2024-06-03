@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.element;
+
+message Color {
+  float r = 1;
+  float g = 2;
+  float b = 3;
+  float a = 4;
+}

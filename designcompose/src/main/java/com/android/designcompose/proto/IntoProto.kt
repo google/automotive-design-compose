@@ -16,21 +16,22 @@
 
 package com.android.designcompose.proto
 
-import com.android.designcompose.layout.proto.AlignContent as ProtoAlignContent
-import com.android.designcompose.layout.proto.AlignItems as ProtoAlignItems
-import com.android.designcompose.layout.proto.AlignSelf as ProtoAlignSelf
-import com.android.designcompose.layout.proto.DimensionProtoKt
-import com.android.designcompose.layout.proto.FlexDirection as ProtoFlexDirection
-import com.android.designcompose.layout.proto.ItemSpacingKt.auto
-import com.android.designcompose.layout.proto.JustifyContent as ProtoJustifyContent
-import com.android.designcompose.layout.proto.PositionType as ProtoPositionType
-import com.android.designcompose.layout.proto.dimensionProto
-import com.android.designcompose.layout.proto.dimensionRect
-import com.android.designcompose.layout.proto.floatSize
-import com.android.designcompose.layout.proto.itemSpacing
-import com.android.designcompose.layout.proto.layoutNode
-import com.android.designcompose.layout.proto.layoutNodeList
-import com.android.designcompose.layout.proto.layoutParentChildren
+import com.android.designcompose.proto.android_interface.layoutNodeList
+import com.android.designcompose.proto.design.element.DimensionProtoKt
+import com.android.designcompose.proto.design.element.dimensionProto
+import com.android.designcompose.proto.design.element.dimensionRect
+import com.android.designcompose.proto.design.element.size
+import com.android.designcompose.proto.design.layout.AlignContent as ProtoAlignContent
+import com.android.designcompose.proto.design.layout.AlignItems as ProtoAlignItems
+import com.android.designcompose.proto.design.layout.AlignSelf as ProtoAlignSelf
+import com.android.designcompose.proto.design.layout.FlexDirection as ProtoFlexDirection
+import com.android.designcompose.proto.design.layout.ItemSpacingKt.auto
+import com.android.designcompose.proto.design.layout.JustifyContent as ProtoJustifyContent
+import com.android.designcompose.proto.design.layout.PositionType as ProtoPositionType
+import com.android.designcompose.proto.design.layout.itemSpacing
+import com.android.designcompose.proto.design.style.layoutStyle
+import com.android.designcompose.proto.toolkit.compositing.layoutNode
+import com.android.designcompose.proto.toolkit.compositing.layoutParentChildren
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
@@ -100,7 +101,7 @@ internal fun ItemSpacing.intoProto() = itemSpacing {
     }
 }
 
-internal fun Size.intoProto() = floatSize {
+internal fun Size.intoProto() = size {
     val s = this@intoProto
     width = s.width
     height = s.height
@@ -171,30 +172,29 @@ internal fun PositionType.intoProto() =
     }
 
 /** Temporary (I hope) conversion from the Serde layout style to the proto layout style. */
-internal fun LayoutStyle.intoProto() =
-    com.android.designcompose.layout.proto.layoutStyle {
-        val s = this@intoProto
-        margin = s.margin.intoProto()
-        padding = s.padding.intoProto()
-        itemSpacing = s.item_spacing.intoProto()
-        top = s.top.intoProto()
-        left = s.left.intoProto()
-        bottom = s.bottom.intoProto()
-        right = s.right.intoProto()
-        width = s.width.intoProto()
-        height = s.height.intoProto()
-        minWidth = s.min_width.intoProto()
-        maxWidth = s.max_width.intoProto()
-        minHeight = s.min_height.intoProto()
-        maxHeight = s.max_height.intoProto()
-        boundingBox = s.bounding_box.intoProto()
-        flexGrow = s.flex_grow
-        flexShrink = s.flex_shrink
-        flexBasis = s.flex_basis.intoProto()
-        alignSelf = s.align_self.intoProto()
-        alignContent = s.align_content.intoProto()
-        alignItems = s.align_items.intoProto()
-        flexDirection = s.flex_direction.intoProto()
-        justifyContent = s.justify_content.intoProto()
-        positionType = s.position_type.intoProto()
-    }
+internal fun LayoutStyle.intoProto() = layoutStyle {
+    val s = this@intoProto
+    margin = s.margin.intoProto()
+    padding = s.padding.intoProto()
+    itemSpacing = s.item_spacing.intoProto()
+    top = s.top.intoProto()
+    left = s.left.intoProto()
+    bottom = s.bottom.intoProto()
+    right = s.right.intoProto()
+    width = s.width.intoProto()
+    height = s.height.intoProto()
+    minWidth = s.min_width.intoProto()
+    maxWidth = s.max_width.intoProto()
+    minHeight = s.min_height.intoProto()
+    maxHeight = s.max_height.intoProto()
+    boundingBox = s.bounding_box.intoProto()
+    flexGrow = s.flex_grow
+    flexShrink = s.flex_shrink
+    flexBasis = s.flex_basis.intoProto()
+    alignSelf = s.align_self.intoProto()
+    alignContent = s.align_content.intoProto()
+    alignItems = s.align_items.intoProto()
+    flexDirection = s.flex_direction.intoProto()
+    justifyContent = s.justify_content.intoProto()
+    positionType = s.position_type.intoProto()
+}

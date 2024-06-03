@@ -28,12 +28,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         .parent()
         .and_then(Path::parent)
         .unwrap()
-        .join("proto/layout");
+        .join("proto");
 
-    prost_config.compile_protos(
-        &[proto_path.join("layout_style.proto"), proto_path.join("layout_node.proto")],
-        &[&proto_path],
-    )?;
+    prost_config.include_file("protos.rs");
+    prost_config
+        .compile_protos(&[proto_path.join("android_interface/jni_layout.proto")], &[&proto_path])?;
 
     println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
     Ok(())

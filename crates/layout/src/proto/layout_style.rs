@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::layout_style;
+use dc_proto::design::LayoutStyle;
 
-use super::LayoutStyle;
+use crate::layout_style;
 
 impl TryFrom<LayoutStyle> for layout_style::LayoutStyle {
     type Error = dc_proto::Error;

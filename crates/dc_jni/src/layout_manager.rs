@@ -58,7 +58,7 @@ fn layout_response_to_bytearray(
     mut env: JNIEnv,
     layout_response: LayoutChangedResponse,
 ) -> JByteArray {
-    let proto_msg: layout::proto::LayoutChangedResponse = layout_response.into();
+    let proto_msg: dc_proto::android_interface::LayoutChangedResponse = layout_response.into();
 
     let bytes = proto_msg.encode_to_vec();
     match env.byte_array_from_slice(bytes.as_slice()) {
@@ -123,7 +123,8 @@ pub(crate) fn jni_add_nodes<'local>(
         serialized_views: JByteArray,
     ) -> Result<layout::layout_node::LayoutNodeList, Error> {
         let bytes_views: Bytes = env.convert_byte_array(serialized_views)?.into();
-        let proto_msg = layout::proto::LayoutNodeList::decode(bytes_views).map_err(Error::from)?;
+        let proto_msg = dc_proto::android_interface::LayoutNodeList::decode(bytes_views)
+            .map_err(Error::from)?;
         LayoutNodeList::try_from(proto_msg).map_err(Error::from)
     }
 

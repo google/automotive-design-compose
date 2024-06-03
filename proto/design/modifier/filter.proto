@@ -1,0 +1,13 @@
+syntax = "proto3";
+package com.android.designcompose.proto.design.modifier;
+option java_multiple_files = true;
+
+message FilterOp {
+  oneof FilterOp {
+    float blur = 1;
+    float saturation = 2;  // not currently implemented
+    float contrast = 3;
+    float grayscale = 4;
+    float brightness = 5;
+  }
+}

@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.modifier;
+
+import "design/element/color.proto";
+
+option java_multiple_files = true;
+
+// Shadows can be applied to the border box, or the stroke box.
+//
+// The border box is the box outside of the border for Outset shadows, and the
+// box inside of the border for inset shadows.
+//
+// The stroke box is always the the outer edge of any stroke defined, or the
+// edge of the view (ignoring the border) if no strokes are present on the view.
+enum ShadowBox {
+  SHADOW_BOX_UNSPECIFIED = 0;
+  // The shadow applies to the border box, either the inside of the border for
+  // inset shadows, or the outside of the border for outset shadows.
+  SHADOW_BOX_BORDER_BOX = 1;
+  // The shadow applies to the stroke box. This is the outer edge of the stroke
+  // for both inset and ouset shadows.
+  SHADOW_BOX_STROKE_BOX = 2;
+}
+
+message BoxShadow {
+  message Outset {
+    float blur_radius = 1;
+    float spread_radius = 2;
+    element.Color color = 3;
+    float offset_x = 4;
+    float offset_y = 5;
+    ShadowBox shadow_box = 6;
+  }
+  message Inset {
+    float blur_radius = 1;
+    float spread_radius = 2;
+    element.Color color = 3;
+    float offset_x = 4;
+    float offset_y = 5;
+    ShadowBox shadow_box = 6;
+  }
+  oneof shadow_box {
+    Outset outset = 1;
+    Inset inset = 2;
+  }
+}

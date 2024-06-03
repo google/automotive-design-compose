@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design;
+
+import "design/text_style.proto";
+import "design/view_style.proto";
+
+option java_multiple_files = true;
+
+message ComponentOverrides {
+  ViewStyle style = 1;
+  oneof component_content_override {
+    bool none = 2;
+    string text = 3;
+    StyledText styled_text = 4;
+  }
+}
+
+message ComponentInfo {
+  string id = 1;
+  string name = 2;
+  string component_set_name = 3;
+  ComponentOverrides overrides = 4;
+}

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.interaction;
+
+option java_multiple_files = true;
+
+enum PointerEvents {
+  POINTER_EVENTS_UNSPECIFIED = 0;
+  POINTER_EVENTS_AUTO = 1;
+  POINTER_EVENTS_NONE = 2;
+  POINTER_EVENTS_INHERIT = 3;
+}

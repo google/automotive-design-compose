@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.interaction;
+
+import "design/element/geometry.proto";
+import "design/interaction/transition.proto";
+
+message Reaction {
+  message Action {
+    message Back {}
+
+    message Close {}
+
+    message Url {
+      string url = 1;
+    }
+
+    message Node {
+      enum Navigation {
+        NAVIGATION_UNSPECIFIED = 0;
+        NAVIGATION_NAVIGATE = 1;
+        NAVIGATION_SWAP = 2;
+        NAVIGATION_OVERLAY = 3;
+        NAVIGATION_SCROLL_TO = 4;
+        NAVIGATION_CHANGE_TO = 5;
+      }
+      string destination_id = 1;
+      Navigation navigation = 2;
+      Transition transition = 3;
+      bool preserve_scroll_position = 4;
+      element.Vector overlay_relative_position = 5;
+    }
+
+    oneof action {
+      Back back = 1;
+      Close close = 2;
+      Url url = 3;
+      Node node = 4;
+    }
+  }
+
+  enum Trigger {
+    TRIGGER_UNSPECIFIED = 0;
+    TRIGGER_ON_CLICK = 1;
+    TRIGGER_ON_HOVER = 2;
+    TRIGGER_ON_PRESS = 3;
+    TRIGGER_ON_DRAG = 4;
+    TRIGGER_ON_KEY_DOWN = 5;
+    TRIGGER_AFTER_TIMEOUT = 6;
+    TRIGGER_MOUSE_ENTER = 7;
+    TRIGGER_MOUSE_LEAVE = 8;
+    TRIGGER_MOUSE_UP = 9;
+    TRIGGER_MOUSE_DOWN = 10;
+  }
+
+  Action action = 1;
+  Trigger trigger = 2;
+}
+
+// message OnKeyDown { repeated uint32 key_codes = 1; }
+
+// message AfterTimeout { float timeout = 1; }
+
+// message MouseEnter { float delay = 1; }
+
+// message MouseLeave { float delay = 1; }
+
+// message MouseUp { float delay = 1; }
+
+// message MouseDown { float delay = 1; }

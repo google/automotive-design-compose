@@ -7,6 +7,7 @@
     "[proto3]": {
         "editor.defaultFormatter": "xaver.clang-format"
     },
+    "clang-format.style": "google",
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
     "files.watcherExclude": {
@@ -32,7 +33,8 @@
     },
     "protoc": {
         "options": [
-            "--proto_path=${workspaceRoot}/proto/layout"
+            "--proto_path=${workspaceRoot}",
+            "--proto_path=${workspaceRoot}/proto",
         ]
     },
     "rust-analyzer.imports.merge.glob": false,

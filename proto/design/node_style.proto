@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package com.android.designcompose.proto.design;
+
+import "design/element/font.proto";
+import "design/element/geometry.proto";
+import "design/element/stroke.proto";
+import "design/element/text.proto";
+import "design/interaction/pointer.proto";
+import "design/layout/display.proto";
+import "design/layout/grid.proto";
+import "design/modifier/background.proto";
+import "design/modifier/blend.proto";
+import "design/modifier/filter.proto";
+import "design/modifier/matrix_transform.proto";
+import "design/modifier/shadow.proto";
+import "design/plugin/meter_data.proto";
+
+option java_multiple_files = true;
+
+message NodeStyle {
+  message Number {
+    message Undefined {}
+    oneof Number {
+      float defined = 1;
+      Undefined undefined = 2;
+    }
+  }
+
+  // Text properties
+  design.modifier.Background text_color = 1;
+  float font_size = 2;
+  optional string font_family = 3;
+  design.element.FontWeight font_weight = 4;
+  design.element.FontStyle font_style = 5;
+  design.element.FontStretch font_stretch = 6;
+  repeated design.modifier.Background backgrounds = 7;
+  repeated design.modifier.BoxShadow box_shadows = 8;
+  design.element.Stroke stroke = 9;
+  float opacity = 10;
+
+  // Transforms
+  design.modifier.LayoutTransform transform = 11;
+  design.modifier.LayoutTransform relative_transform = 12;
+
+  // Text layout
+  design.element.TextAlign text_align = 13;
+  design.element.TextAlignVertical text_align_vertical = 14;
+  design.element.TextOverflow text_overflow = 15;
+  design.element.TextShadow text_shadow = 16;
+
+  // Size and layout
+  design.element.Size node_size = 17;
+  design.element.LineHeight line_height = 18;
+  int32 line_count = 19;
+  repeated design.element.FontFeature font_features = 20;
+  repeated design.modifier.FilterOp filters = 21;
+  repeated design.modifier.FilterOp backdrop_filters = 22;
+  design.modifier.BlendMode blend_mode = 23;
+
+  // Layout properties
+  design.layout.Display display_type = 24;
+  design.layout.FlexWrap flex_wrap = 25;
+  design.layout.GridLayoutType grid_layout = 26;
+  uint32 grid_columns_rows = 27;
+  uint32 grid_adaptive_min_size = 28;
+  repeated design.layout.GridSpan grid_span_contents = 29;
+  design.layout.Overflow overflow = 30;
+  optional uint32 max_children = 31;
+  optional string overflow_node_id = 32;
+  optional string overflow_node_name = 33;
+  float cross_axis_item_spacing = 34;
+  design.layout.LayoutSizing horizontal_sizing = 35;
+  design.layout.LayoutSizing vertical_sizing = 36;
+  Number aspect_ratio = 37;  // Should this just be an optional float?
+  interaction.PointerEvents pointer_events = 38;
+  plugin.MeterData meter_data = 39;
+}

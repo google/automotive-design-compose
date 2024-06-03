@@ -1,0 +1,65 @@
+syntax = "proto3";
+package com.android.designcompose.proto.design.element;
+option java_multiple_files = true;
+
+import "design/element/variable.proto";
+
+message ViewShape {
+  message Rect {
+    bool is_mask = 1;
+  }
+
+  message RoundRect {
+    // Should have exactly four corners
+    repeated NumOrVar corner_radii = 1;
+    float corner_smoothing = 2;
+    bool is_mask = 3;
+  }
+
+  message Path {
+    repeated VectorPath paths = 1;
+    repeated VectorPath strokes = 2;
+    bool is_mask = 3;
+  }
+
+  message VectorPath {
+    string path = 1;
+    float winding_rule = 2;
+  }
+  message VectorRect {
+    repeated VectorPath paths = 1;
+    repeated VectorPath strokes = 2;
+    repeated NumOrVar corner_radii = 3;
+    bool is_mask = 4;
+  }
+
+  message Arc {
+    enum StrokeCap {
+      STROKE_CAP_UNSPECIFIED = 0;
+      STROKE_CAP_NONE = 1;
+      STROKE_CAP_ROUND = 2;
+      STROKE_CAP_SQUARE = 3;
+      STROKE_CAP_LINE_ARROW = 4;
+      STROKE_CAP_TRIANGLE_ARROW = 5;
+      STROKE_CAP_CIRCLE_FILLED = 6;
+      STROKE_CAP_DIAMOND_FILLED = 7; // Not supported
+    }
+
+    repeated VectorPath paths = 1;
+    repeated VectorPath strokes = 2;
+    StrokeCap stroke_cap = 3;
+    float start_angle_degrees = 4;
+    float sweep_angle_degrees = 5;
+    float inner_radius = 6;
+    float corner_radius = 7;
+    bool is_mask = 8;
+  }
+
+  oneof shape {
+    Rect rect = 1;
+    RoundRect round_rect = 2;
+    Path path = 3;
+    Arc arc = 4;
+    VectorRect vector_rect = 5;
+  }
+}

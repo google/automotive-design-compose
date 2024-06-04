@@ -30,11 +30,11 @@ message Variable {
 // run properly.
 message VariableValue {
   oneof value {
-    bool bool_value = 1;
-    double number_value = 2;
-    string text_value = 3;
-    Color color_value = 4;
-    VariableAlias alias_value = 5;
+    bool boolean = 1;
+    float float = 2;
+    string string = 3;
+    Color color = 4;
+    VariableAlias alias = 5;
   }
 }
 
@@ -56,7 +56,7 @@ message BoundVariables {
 
 message NumOrVar {
   oneof NumOrVar {
-    fixed32 num = 1;
+    float num = 1;
     string var = 2;
   }
 }

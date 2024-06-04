@@ -15,10 +15,10 @@ message Vector {
 }
 
 message Rectangle {
-  optional fixed32 x = 1;
-  optional fixed32 y = 2;
-  optional fixed32 width = 3;
-  optional fixed32 height = 4;
+  optional float x = 1;
+  optional float y = 2;
+  optional float width = 3;
+  optional float height = 4;
 }
 
 /** Dimension in Rust is an union-type enum, which are represented in proto by

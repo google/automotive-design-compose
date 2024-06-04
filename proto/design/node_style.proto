@@ -4,7 +4,7 @@ package com.android.designcompose.proto.design;
 
 import "design/element/font.proto";
 import "design/element/geometry.proto";
-import "design/element/stroke.proto";
+import "design/element/path.proto";
 import "design/element/text.proto";
 import "design/interaction/pointer.proto";
 import "design/layout/display.proto";

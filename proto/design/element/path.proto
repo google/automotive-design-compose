@@ -6,6 +6,42 @@ import "design/modifier/background.proto";
 
 option java_multiple_files = true;
 
+message Path {
+  enum WindingRule {
+    WINDING_RULE_UNSPECIFIED = 0;
+    WINDING_RULE_NON_ZERO = 1;
+    WINDING_RULE_EVEN_ODD = 2;
+    WINDING_RULE_NONE = 3;
+  }
+
+  bytes commands = 1;
+  repeated float data = 2;
+  WindingRule winding_rule = 3;
+}
+
+
+message Arc {
+  enum StrokeCap {
+    STROKE_CAP_UNSPECIFIED = 0;
+    STROKE_CAP_NONE = 1;
+    STROKE_CAP_ROUND = 2;
+    STROKE_CAP_SQUARE = 3;
+    STROKE_CAP_LINE_ARROW = 4;
+    STROKE_CAP_TRIANGLE_ARROW = 5;
+    STROKE_CAP_CIRCLE_FILLED = 6;
+    STROKE_CAP_DIAMOND_FILLED = 7; // Not supported
+  }
+
+  repeated Path paths = 1;
+  repeated Path strokes = 2;
+  StrokeCap stroke_cap = 3;
+  float start_angle_degrees = 4;
+  float sweep_angle_degrees = 5;
+  float inner_radius = 6;
+  float corner_radius = 7;
+  bool is_mask = 8;
+}
+
 message LineHeight {
   oneof line_height {
     float pixels = 1;

@@ -5,7 +5,7 @@ package com.android.designcompose.proto.design.element;
 option java_multiple_files = true;
 
 message FontWeight {
-  fixed32 weight = 1;
+  float weight = 1;
 }
 
 // Allows italic or oblique faces to be selected.
@@ -22,7 +22,7 @@ enum FontStyle {
 // The width of a font as an approximate fraction of the normal width.
 // Widths range from 0.5 to 2.0 inclusive, with 1.0 as the normal width.
 message FontStretch {
-  fixed32 value = 1;
+  float value = 1;
 }
 
 message FontFeature {

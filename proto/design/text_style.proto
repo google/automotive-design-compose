@@ -3,7 +3,7 @@ syntax = "proto3";
 package com.android.designcompose.proto.design;
 
 import "design/element/font.proto";
-import "design/element/stroke.proto";
+import "design/element/path.proto";
 import "design/modifier/background.proto";
 
 message TextStyle {

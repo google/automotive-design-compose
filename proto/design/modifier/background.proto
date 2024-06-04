@@ -15,25 +15,25 @@ message Background {
   }
 
   message LinearGradient {
-    fixed32 start_x = 1;
-    fixed32 start_y = 2;
-    fixed32 end_x = 3;
-    fixed32 end_y = 4;
+    float start_x = 1;
+    float start_y = 2;
+    float end_x = 3;
+    float end_y = 4;
     repeated ColorStop color_stops = 5;
   }
   message AngularGradient {
-    fixed32 center_x = 1;
-    fixed32 center_y = 2;
-    fixed32 angle = 3;
-    fixed32 scale = 4;
+    float center_x = 1;
+    float center_y = 2;
+    float angle = 3;
+    float scale = 4;
     repeated ColorStop color_stops = 5;
   }
 
   message RadialGradient {
-    fixed32 center_x = 1;
-    fixed32 center_y = 2;
-    fixed32 angle = 3;
-    fixed32 scale = 4;
+    float center_x = 1;
+    float center_y = 2;
+    float angle = 3;
+    float scale = 4;
     repeated ColorStop color_stops = 5;
   }
   enum ScaleMode {
@@ -49,7 +49,7 @@ message Background {
     repeated FilterOp filters = 2;
     AffineTransform transform = 3;
     ScaleMode scale_mode = 4;
-    fixed32 opacity = 5;
+    float opacity = 5;
   }
 
   oneof background {

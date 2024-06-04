@@ -25,8 +25,8 @@ import com.android.designcompose.proto.design.layout.AlignSelf
 import com.android.designcompose.proto.design.layout.FlexDirection
 import com.android.designcompose.proto.design.layout.ItemSpacing
 import com.android.designcompose.proto.design.layout.JustifyContent
+import com.android.designcompose.proto.design.layout.LayoutStyle
 import com.android.designcompose.proto.design.layout.PositionType
-import com.android.designcompose.proto.design.style.LayoutStyle
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Rect
 import com.android.designcompose.serdegen.Size

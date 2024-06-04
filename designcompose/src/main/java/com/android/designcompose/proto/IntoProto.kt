@@ -29,9 +29,9 @@ import com.android.designcompose.proto.design.layout.ItemSpacingKt.auto
 import com.android.designcompose.proto.design.layout.JustifyContent as ProtoJustifyContent
 import com.android.designcompose.proto.design.layout.PositionType as ProtoPositionType
 import com.android.designcompose.proto.design.layout.itemSpacing
-import com.android.designcompose.proto.design.style.layoutStyle
-import com.android.designcompose.proto.toolkit.compositing.layoutNode
-import com.android.designcompose.proto.toolkit.compositing.layoutParentChildren
+import com.android.designcompose.proto.design.layout.layoutNode
+import com.android.designcompose.proto.design.layout.layoutParentChildren
+import com.android.designcompose.proto.design.layout.layoutStyle
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf

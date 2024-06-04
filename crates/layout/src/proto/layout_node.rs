@@ -14,7 +14,7 @@
 
 use dc_proto::{
     android_interface::{layout_changed_response::Layout, LayoutChangedResponse, LayoutNodeList},
-    design::{LayoutNode, LayoutParentChildren},
+    design::layout::{LayoutNode, LayoutParentChildren},
 };
 
 use crate::layout_node;

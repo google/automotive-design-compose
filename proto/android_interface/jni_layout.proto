@@ -16,14 +16,14 @@ syntax = "proto3";
 
 package com.android.designcompose.proto.android_interface;
 
-import "design/layout_node.proto";
+import "design/layout/layout_node.proto";
 
 option java_multiple_files = true;
 
 // A list of Figma nodes to register for layout
 message LayoutNodeList {
-  repeated design.LayoutNode layout_nodes = 1;
-  repeated design.LayoutParentChildren parent_children = 2;
+  repeated design.layout.LayoutNode layout_nodes = 1;
+  repeated design.layout.LayoutParentChildren parent_children = 2;
 }
 
 /* The layout response sent back to client which contains a layout state ID and

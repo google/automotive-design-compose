@@ -13,7 +13,8 @@
 // limitations under the License.
 
 syntax = "proto3";
-package com.android.designcompose.proto.design;
+
+package com.android.designcompose.proto.design.layout;
 
 import "design/element/geometry.proto";
 import "design/layout/grid.proto";

@@ -14,26 +14,27 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.design;
+package com.android.designcompose.proto.design.element;
 
-import "design/layout_style.proto";
+import "design/element/path.proto";
+import "design/element/variable.proto";
 
 option java_multiple_files = true;
 
-// A representation of a Figma node to register for layout.
-message LayoutNode {
-  int32 layout_id = 1;
-  int32 parent_layout_id = 2;
-  int32 child_index = 3;
-  LayoutStyle style = 4;
-  string name = 5;
-  bool use_measure_func = 6;
-  optional int32 fixed_width = 7;
-  optional int32 fixed_height = 8;
+message Rect {
+  bool is_mask = 1;
 }
 
-// A parent node id and a list of child ids
-message LayoutParentChildren {
-  int32 parent_layout_id = 1;
-  repeated int32 child_layout_ids = 2;
+message RoundRect {
+  // Should have exactly four corners
+  repeated NumOrVar corner_radii = 1;
+  float corner_smoothing = 2;
+  bool is_mask = 3;
+}
+
+message VectorRect {
+  repeated Path paths = 1;
+  repeated Path strokes = 2;
+  repeated NumOrVar corner_radii = 3; // Exactly 4
+  bool is_mask = 4;
 }

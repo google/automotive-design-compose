@@ -133,7 +133,10 @@ internal fun DesignText(
     val fontFamily = DesignSettings.fontFamily(style.node_style.font_family)
     val customTextStyle = customizations.getTextStyle(nodeName)
     val textBuilder = AnnotatedString.Builder()
-    val variableState = VariableState.create()
+
+    // Get the modeValues used to resolve variable values
+    val modeValues = VariableManager.currentModeValues(view.explicit_variable_modes)
+    val variableState = VariableState.create(modeValues)
 
     if (useText != null) {
         textBuilder.append(useText)
@@ -142,14 +145,13 @@ internal fun DesignText(
             val textBrushAndOpacity =
                 run.style.text_color.asBrush(document, density.density, variableState)
             textBuilder.pushStyle(
-                @OptIn(ExperimentalTextApi::class)
                 SpanStyle(
                     brush = textBrushAndOpacity?.first,
                     alpha = textBrushAndOpacity?.second ?: 1.0f,
-                    fontSize = run.style.font_size.sp,
+                    fontSize = run.style.font_size.getValue(variableState).sp,
                     fontWeight =
                         androidx.compose.ui.text.font.FontWeight(
-                            run.style.font_weight.value.roundToInt()
+                            run.style.font_weight.value.getValue(variableState).roundToInt()
                         ),
                     fontStyle =
                         when (run.style.font_style) {
@@ -175,7 +177,7 @@ internal fun DesignText(
                 is LineHeight.Pixels ->
                     if (runs != null) {
                         ((style.node_style.line_height as LineHeight.Pixels).value /
-                                style.node_style.font_size)
+                                style.node_style.font_size.getValue(variableState))
                             .em
                     } else {
                         (style.node_style.line_height as LineHeight.Pixels).value.sp
@@ -185,7 +187,7 @@ internal fun DesignText(
     val fontWeight =
         customTextStyle?.fontWeight
             ?: androidx.compose.ui.text.font.FontWeight(
-                style.node_style.font_weight.value.roundToInt()
+                style.node_style.font_weight.value.getValue(variableState).roundToInt()
             )
     val fontStyle =
         customTextStyle?.fontStyle
@@ -226,7 +228,8 @@ internal fun DesignText(
         TextStyle(
             brush = customBrush ?: textBrushAndOpacity?.first,
             alpha = textBrushAndOpacity?.second ?: 1.0f,
-            fontSize = customTextStyle?.fontSize ?: style.node_style.font_size.sp,
+            fontSize =
+                customTextStyle?.fontSize ?: style.node_style.font_size.getValue(variableState).sp,
             fontFamily = fontFamily,
             fontFeatureSettings =
                 style.node_style.font_features.joinToString(", ") { feature ->

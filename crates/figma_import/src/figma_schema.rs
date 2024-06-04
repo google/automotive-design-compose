@@ -277,6 +277,8 @@ pub struct FrameOffset {
 pub struct ColorStop {
     pub position: f32,
     pub color: FigmaColor,
+    #[serde(rename = "boundVariables")]
+    pub bound_variables: Option<BoundVariables>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy)]

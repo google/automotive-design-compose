@@ -30,6 +30,7 @@ import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.Variable
 import com.android.designcompose.serdegen.VariableMap
 import com.android.designcompose.serdegen.VariableValue
+import java.util.Optional
 
 // A variable mode, e.g. "light" or "dark"
 typealias VariableMode = String
@@ -142,6 +143,22 @@ internal object VariableManager {
         varMap.collection_name_map.putAll(map.collection_name_map)
         varMap.variables.putAll(map.variables)
         varMap.variable_name_map.putAll(map.variable_name_map)
+    }
+
+    // If the developer has not explicitly set variable override values, check to see if any
+    // variable modes have been set on this node. If so, return the modeValues set.
+    @Composable
+    internal fun currentModeValues(
+        explicitVariableModes: Optional<MutableMap<String, String>>
+    ): VariableModeValues? {
+        var modeValues: VariableModeValues? = null
+        if (!LocalVariableState.hasOverrideModeValues()) {
+            if (explicitVariableModes.isPresent) {
+                val modes = explicitVariableModes.get()
+                modeValues = updateVariableStateFromModeValues(modes)
+            }
+        }
+        return modeValues
     }
 
     // Given a set of explicitly set mode values on a node, create a VariableModeValues hash

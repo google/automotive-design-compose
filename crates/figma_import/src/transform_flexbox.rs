@@ -609,7 +609,7 @@ fn compute_background(
         let end_x = gradient.gradient_handle_positions[1].x();
         let end_y = gradient.gradient_handle_positions[1].y();
 
-        let mut g_stops: Vec<(f32, crate::Color)> = Vec::new();
+        let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
 
         let stops = &gradient.gradient_stops;
 
@@ -618,12 +618,17 @@ fn compute_background(
             Background::None
         } else {
             for s in stops {
-                let c = crate::Color::from_f32s(
-                    s.color.r,
-                    s.color.g,
-                    s.color.b,
-                    s.color.a * last_paint.opacity,
-                );
+                let c = if let Some(vars) = &s.bound_variables {
+                    ColorOrVar::from_var(vars, "color", &s.color)
+                } else {
+                    let raw_color = crate::Color::from_f32s(
+                        s.color.r,
+                        s.color.g,
+                        s.color.b,
+                        s.color.a * last_paint.opacity,
+                    );
+                    ColorOrVar::Color(raw_color)
+                };
 
                 let g = (s.position, c);
 
@@ -644,7 +649,7 @@ fn compute_background(
         let scale = f32::sqrt(f32::powf(end_x - center_x, 2.0) + f32::powf(end_y - center_y, 2.0))
             / f32::sqrt(f32::powf(cross_x - center_x, 2.0) + f32::powf(cross_y - center_y, 2.0));
 
-        let mut g_stops: Vec<(f32, crate::Color)> = Vec::new();
+        let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
 
         let stops = &gradient.gradient_stops;
 
@@ -653,12 +658,16 @@ fn compute_background(
             Background::None
         } else {
             for s in stops {
-                let c = crate::Color::from_f32s(
-                    s.color.r,
-                    s.color.g,
-                    s.color.b,
-                    s.color.a * last_paint.opacity,
-                );
+                let c = if let Some(vars) = &s.bound_variables {
+                    ColorOrVar::from_var(vars, "color", &s.color)
+                } else {
+                    ColorOrVar::Color(crate::Color::from_f32s(
+                        s.color.r,
+                        s.color.g,
+                        s.color.b,
+                        s.color.a * last_paint.opacity,
+                    ))
+                };
 
                 let g = (s.position, c);
 
@@ -681,7 +690,7 @@ fn compute_background(
             f32::sqrt(f32::powf(width_x - center_x, 2.0) + f32::powf(width_y - center_y, 2.0)),
         );
 
-        let mut g_stops: Vec<(f32, crate::Color)> = Vec::new();
+        let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
 
         let stops = &gradient.gradient_stops;
 
@@ -690,12 +699,16 @@ fn compute_background(
             Background::None
         } else {
             for s in stops {
-                let c = crate::Color::from_f32s(
-                    s.color.r,
-                    s.color.g,
-                    s.color.b,
-                    s.color.a * last_paint.opacity,
-                );
+                let c = if let Some(vars) = &s.bound_variables {
+                    ColorOrVar::from_var(vars, "color", &s.color)
+                } else {
+                    ColorOrVar::Color(crate::Color::from_f32s(
+                        s.color.r,
+                        s.color.g,
+                        s.color.b,
+                        s.color.a * last_paint.opacity,
+                    ))
+                };
 
                 let g = (s.position, c);
 
@@ -718,7 +731,7 @@ fn compute_background(
             f32::sqrt(f32::powf(width_x - center_x, 2.0) + f32::powf(width_y - center_y, 2.0)),
         );
 
-        let mut g_stops: Vec<(f32, crate::Color)> = Vec::new();
+        let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
 
         let stops = &gradient.gradient_stops;
 
@@ -727,12 +740,16 @@ fn compute_background(
             Background::None
         } else {
             for s in stops {
-                let c = crate::Color::from_f32s(
-                    s.color.r,
-                    s.color.g,
-                    s.color.b,
-                    s.color.a * last_paint.opacity,
-                );
+                let c = if let Some(vars) = &s.bound_variables {
+                    ColorOrVar::from_var(vars, "color", &s.color)
+                } else {
+                    ColorOrVar::Color(crate::Color::from_f32s(
+                        s.color.r,
+                        s.color.g,
+                        s.color.b,
+                        s.color.a * last_paint.opacity,
+                    ))
+                };
 
                 let g = (s.position, c);
 
@@ -1060,8 +1077,17 @@ fn visit_node(
         if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
             style.node_style.text_color = compute_background(text_fill, images, &node.name);
         }
-        style.node_style.font_size = text_style.font_size;
-        style.node_style.font_weight = FontWeight(text_style.font_weight);
+        style.node_style.font_size = if let Some(vars) = &node.bound_variables {
+            NumOrVar::from_var(vars, "fontSize", text_style.font_size)
+        } else {
+            NumOrVar::Num(text_style.font_size)
+        };
+
+        style.node_style.font_weight = if let Some(vars) = &node.bound_variables {
+            FontWeight(NumOrVar::from_var(vars, "fontWeight", text_style.font_weight))
+        } else {
+            FontWeight(NumOrVar::Num(text_style.font_weight))
+        };
         if text_style.italic {
             style.node_style.font_style = FontStyle::Italic;
         }
@@ -1184,15 +1210,23 @@ fn visit_node(
                 } else {
                     style.node_style.text_color.clone()
                 };
+                let font_size = if let Some(fs) = sub_style.font_size {
+                    NumOrVar::Num(fs)
+                } else {
+                    style.node_style.font_size.clone()
+                };
+                let font_weight = if let Some(fw) = sub_style.font_weight {
+                    crate::toolkit_font_style::FontWeight(NumOrVar::Num(fw))
+                } else {
+                    style.node_style.font_weight.clone()
+                };
                 runs.push(StyledTextRun {
                     text: current_run.clone(),
                     style: TextStyle {
                         text_color,
-                        font_size: sub_style.font_size.unwrap_or(style.node_style.font_size),
+                        font_size,
                         font_family: sub_style.font_family.clone(),
-                        font_weight: crate::toolkit_font_style::FontWeight(
-                            sub_style.font_weight.unwrap_or(style.node_style.font_weight.0),
-                        ),
+                        font_weight,
                         font_style: crate::toolkit_font_style::FontStyle::Normal, //sub_style.font_style.unwrap_or(style.font_style),
                         font_stretch: style.node_style.font_stretch, // Not in SubTypeStyle.
                         letter_spacing: sub_style.letter_spacing.unwrap_or(1.0), // no letter_spacing on ViewStyle.

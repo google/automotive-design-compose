@@ -24,7 +24,7 @@ use crate::{
     color::Color,
     toolkit_font_style::{FontStretch, FontStyle, FontWeight},
     toolkit_layout_style::{Display, FlexWrap, LayoutSizing, Number, Overflow},
-    toolkit_schema::ColorOrVar,
+    toolkit_schema::{ColorOrVar, NumOrVar},
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
@@ -46,21 +46,21 @@ pub enum Background {
         start_y: f32,
         end_x: f32,
         end_y: f32,
-        color_stops: Vec<(f32, Color)>,
+        color_stops: Vec<(f32, ColorOrVar)>,
     },
     AngularGradient {
         center_x: f32,
         center_y: f32,
         angle: f32,
         scale: f32,
-        color_stops: Vec<(f32, Color)>,
+        color_stops: Vec<(f32, ColorOrVar)>,
     },
     RadialGradient {
         center_x: f32,
         center_y: f32,
         angle: f32,
         radius: (f32, f32),
-        color_stops: Vec<(f32, Color)>,
+        color_stops: Vec<(f32, ColorOrVar)>,
     },
     // DiamondGradient support possibly in the future.
     Image {
@@ -111,7 +111,7 @@ impl FontFeature {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TextStyle {
     pub text_color: Background, // also text shadow?
-    pub font_size: f32,
+    pub font_size: NumOrVar,
     pub font_family: Option<String>,
     pub font_weight: FontWeight,
     pub font_style: FontStyle,
@@ -124,7 +124,7 @@ impl Default for TextStyle {
     fn default() -> Self {
         TextStyle {
             text_color: Background::Solid(ColorOrVar::Color(Color::BLACK)),
-            font_size: 18.0,
+            font_size: NumOrVar::Num(18.0),
             font_family: None,
             font_weight: FontWeight::NORMAL,
             font_style: FontStyle::Normal,
@@ -159,7 +159,10 @@ impl StyledTextRun {
         }
     }
     pub fn size(self, size: f32) -> Self {
-        StyledTextRun { style: TextStyle { font_size: size, ..self.style }, text: self.text }
+        StyledTextRun {
+            style: TextStyle { font_size: NumOrVar::Num(size), ..self.style },
+            text: self.text,
+        }
     }
     pub fn fill(self, text_color: Background) -> Self {
         StyledTextRun { style: TextStyle { text_color, ..self.style }, text: self.text }
@@ -486,7 +489,7 @@ pub enum MeterData {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct NodeStyle {
     pub text_color: Background,
-    pub font_size: f32,
+    pub font_size: NumOrVar,
     pub font_family: Option<String>,
     pub font_weight: FontWeight,
     pub font_style: FontStyle,
@@ -530,7 +533,7 @@ impl Default for NodeStyle {
     fn default() -> NodeStyle {
         NodeStyle {
             text_color: Background::Solid(ColorOrVar::Color(Color::from_u8s(0, 0, 0, 255))),
-            font_size: 18.0,
+            font_size: NumOrVar::Num(18.0),
             font_family: None,
             font_weight: FontWeight::NORMAL,
             font_style: FontStyle::Normal,
@@ -586,13 +589,13 @@ impl ViewStyle {
             delta.node_style.text_color = other.node_style.text_color.clone();
         }
         if self.node_style.font_size != other.node_style.font_size {
-            delta.node_style.font_size = other.node_style.font_size;
+            delta.node_style.font_size = other.node_style.font_size.clone();
         }
         if self.node_style.font_family != other.node_style.font_family {
             delta.node_style.font_family = other.node_style.font_family.clone();
         }
         if self.node_style.font_weight != other.node_style.font_weight {
-            delta.node_style.font_weight = other.node_style.font_weight;
+            delta.node_style.font_weight = other.node_style.font_weight.clone();
         }
         if self.node_style.font_style != other.node_style.font_style {
             delta.node_style.font_style = other.node_style.font_style;

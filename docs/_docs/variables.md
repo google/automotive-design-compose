@@ -9,7 +9,10 @@ nav_order: 11
 [Figma Variables][1] allow a designer to bind certain properties to a variable instead of a fixed value. Variables have a fixed value for each mode available in the Figma file, and can also be changed by prototype interactions, though DesignCompose does not support variables with interactions. Variables support a number of [different node properties][2]. DesignCompose supports a subset of these properties, which currently includes:
 - Fill color
 - Stroke color
+- Gradient stop color
 - Text color
+- Text size
+- Text weight
 - Corner radius
 
 Using variables instead of fixed values in your Figma design file requires no change on the developer side. In order to change a variable value in your application, DesignCompose has several functions to help with this.

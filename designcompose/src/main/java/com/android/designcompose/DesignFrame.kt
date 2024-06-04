@@ -194,16 +194,8 @@ internal fun DesignFrame(
             )
     }
 
-    // if the developer has not explicitly set variable override values, check to see if any
-    // variable modes have been set on this node. If so, collect the values in modeValues to be used
-    // to resolve variable values for this node and children
-    var modeValues: VariableModeValues? = null
-    if (!LocalVariableState.hasOverrideModeValues()) {
-        if (view.explicit_variable_modes.isPresent) {
-            val modes = view.explicit_variable_modes.get()
-            modeValues = VariableManager.updateVariableStateFromModeValues(modes)
-        }
-    }
+    // Get the modeValues used to resolve variable values
+    val modeValues = VariableManager.currentModeValues(view.explicit_variable_modes)
 
     // Since the meter function is a composable, we need to call it here even though we don't need
     // it until frameRender() since that function is not a composable.

@@ -64,6 +64,7 @@ import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.NodeStyle
+import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
@@ -230,13 +231,13 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.text_color
         }
     nodeStyle.font_size =
-        if (override.node_style.font_size != 18.0f) {
+        if (override.node_style.font_size != NumOrVar.Num(18.0f)) {
             override.node_style.font_size
         } else {
             base.node_style.font_size
         }
     nodeStyle.font_weight =
-        if (override.node_style.font_weight.value != 400.0f) {
+        if (override.node_style.font_weight.value != NumOrVar.Num(400.0f)) {
             override.node_style.font_weight
         } else {
             base.node_style.font_weight
@@ -1242,15 +1243,17 @@ internal fun Background.asBrush(
                 }
                 1 -> {
                     Log.w(TAG, "Single stop found for the linear gradient and do it as a fill")
-                    return Pair(
-                        SolidColor(convertColor(linearGradient.color_stops[0].field1)),
-                        1.0f
-                    )
+                    val color =
+                        linearGradient.color_stops[0].field1.getValue(variableState)
+                            ?: Color.Transparent
+                    return Pair(SolidColor(color), 1.0f)
                 }
                 else ->
                     return Pair(
                         RelativeLinearGradient(
-                            linearGradient.color_stops.map { convertColor(it.field1) }.toList(),
+                            linearGradient.color_stops
+                                .map { it.field1.getValue(variableState) ?: Color.Transparent }
+                                .toList(),
                             linearGradient.color_stops.map { it.field0 }.toList(),
                             start = Offset(linearGradient.start_x, linearGradient.start_y),
                             end = Offset(linearGradient.end_x, linearGradient.end_y)
@@ -1269,14 +1272,20 @@ internal fun Background.asBrush(
                 1 -> {
                     Log.w(TAG, "Single stop found for the radial gradient and do it as a fill")
                     return Pair(
-                        SolidColor(convertColor(radialGradient.color_stops[0].field1)),
+                        SolidColor(
+                            radialGradient.color_stops[0].field1.getValue(variableState)
+                                ?: Color.Transparent
+                        ),
                         1.0f
                     )
                 }
                 else ->
                     return Pair(
                         RelativeRadialGradient(
-                            colors = radialGradient.color_stops.map { convertColor(it.field1) },
+                            colors =
+                                radialGradient.color_stops.map {
+                                    it.field1.getValue(variableState) ?: Color.Transparent
+                                },
                             stops = radialGradient.color_stops.map { it.field0 },
                             center = Offset(radialGradient.center_x, radialGradient.center_y),
                             radiusX = radialGradient.radius[0],
@@ -1297,7 +1306,10 @@ internal fun Background.asBrush(
                 1 -> {
                     Log.w(TAG, "Single stop found for the angular gradient and do it as a fill")
                     return Pair(
-                        SolidColor(convertColor(angularGradient.color_stops[0].field1)),
+                        SolidColor(
+                            angularGradient.color_stops[0].field1.getValue(variableState)
+                                ?: Color.Transparent
+                        ),
                         1.0f
                     )
                 }
@@ -1307,7 +1319,10 @@ internal fun Background.asBrush(
                             center = Offset(angularGradient.center_x, angularGradient.center_y),
                             angle = angularGradient.angle,
                             scale = angularGradient.scale,
-                            colors = angularGradient.color_stops.map { convertColor(it.field1) },
+                            colors =
+                                angularGradient.color_stops.map {
+                                    it.field1.getValue(variableState) ?: Color.Transparent
+                                },
                             stops = angularGradient.color_stops.map { it.field0 }
                         ),
                         1.0f

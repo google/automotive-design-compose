@@ -16,9 +16,13 @@ syntax = "proto3";
 
 package com.android.designcompose.proto.design.element;
 
+// Color represents a color value within a design, encoded as RGBA (Red, Green,
+// Blue, Alpha) where each component is an 8-bit integer. Alpha determines
+// opacity, with 255 being fully opaque and 0 fully transparent.
+// Encoding each component to uint32, which uses variable-length encoding.
 message Color {
-  float r = 1;
-  float g = 2;
-  float b = 3;
-  float a = 4;
+  uint32 r = 1;
+  uint32 g = 2;
+  uint32 b = 3;
+  uint32 a = 4;
 }

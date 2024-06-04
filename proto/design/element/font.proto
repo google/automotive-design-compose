@@ -18,6 +18,9 @@ package com.android.designcompose.proto.design.element;
 
 option java_multiple_files = true;
 
+// FontWeight specifies the visual thickness of a typeface. It's represented
+// numerically, usually ranging from 100 (thin) to 900 (black). Common values
+// include 400 (regular), 500 (medium), and 700 (bold).
 message FontWeight {
   float weight = 1;
 }
@@ -39,6 +42,10 @@ message FontStretch {
   float value = 1;
 }
 
+// FontFeature refers to specific typographic settings within a typeface, such
+// as ligatures (e.g., "fi" becoming a single glyph) or small capitals. These
+// features can enhance the visual appearance and readability of text, providing
+// additional stylistic options for designers.
 message FontFeature {
   bytes tag = 1;  // Must be exactly four bytes
   bool enabled = 2;

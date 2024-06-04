@@ -18,16 +18,24 @@ package com.android.designcompose.proto.design.element;
 
 option java_multiple_files = true;
 
+// Size encapsulates the dimensions of an element, expressed as width and height
+// values. These values typically represent pixels or density-independent pixels
+// (dp), allowing for consistent sizing across different screen densities.
 message Size {
   float width = 1;
   float height = 2;
 }
 
+// Vector defines a two-dimensional geometric vector, consisting of x and y
+// components. Vectors are fundamental for representing spatial relationships
+// and performing geometric transformations within a design.
 message Vector {
   float x = 1;
   float y = 2;
 }
 
+// Rectangle: Rectangle represents a rectangular region within a design, defined
+// by its position (x, y coordinates) and dimensions (width, height).
 message Rectangle {
   optional float x = 1;
   optional float y = 2;

@@ -22,10 +22,16 @@ import "design/element/rect.proto";
 option java_multiple_files = true;
 
 message ViewShape {
+  message Path {
+    repeated design.element.Path paths = 1;
+    repeated design.element.Path strokes = 2;
+    bool is_mask = 3;
+  }
+
   oneof shape {
     Rect rect = 1;
     RoundRect round_rect = 2;
-    Path path = 3;
+    ViewShape.Path path = 3;
     Arc arc = 4;
     VectorRect vector_rect = 5;
   }

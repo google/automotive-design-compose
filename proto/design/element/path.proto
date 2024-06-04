@@ -20,10 +20,19 @@ import "design/modifier/background.proto";
 
 option java_multiple_files = true;
 
+// Path represents a complex shape in a design, defined by a series of commands
+// (e.g., move, line, curve) and associated numerical data. It determines the
+// outline of graphical elements or UI components.
 message Path {
+  // WindingRule determines how the interior of a self-intersecting
+  // or overlapping path is filled.
   enum WindingRule {
     WINDING_RULE_UNSPECIFIED = 0;
+    // NonZero fills regions based on the direction of the path segments as
+    // they cross the ray.
     WINDING_RULE_NON_ZERO = 1;
+    // EvenOdd fills regions based on whether a ray drawn from a point crosses
+    // the path an even or odd number of times.
     WINDING_RULE_EVEN_ODD = 2;
     WINDING_RULE_NONE = 3;
   }
@@ -33,8 +42,9 @@ message Path {
   WindingRule winding_rule = 3;
 }
 
-
+// Represents a complex arc shape within a design.
 message Arc {
+  // Defines the appearance of the stroke's end points (e.g., round, square).
   enum StrokeCap {
     STROKE_CAP_UNSPECIFIED = 0;
     STROKE_CAP_NONE = 1;
@@ -46,7 +56,9 @@ message Arc {
     STROKE_CAP_DIAMOND_FILLED = 7; // Not supported
   }
 
+  // The outer path defining the overall shape of the arc.
   repeated Path paths = 1;
+  // An optional inner path used for creating an outline or stroke effect.
   repeated Path strokes = 2;
   StrokeCap stroke_cap = 3;
   float start_angle_degrees = 4;

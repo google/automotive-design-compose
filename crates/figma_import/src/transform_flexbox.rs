@@ -1175,6 +1175,7 @@ fn visit_node(
                 characters,
                 node.absolute_bounding_box,
                 RenderMethod::None,
+                node.explicit_variable_modes.clone(),
             );
         } else {
             // Build some runs of custom styled text out of the style overrides. We need to be able to iterate

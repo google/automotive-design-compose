@@ -21,8 +21,6 @@ plugins/*/bin
 .terragrunt-cache
 
 # User settings dirs
-**/.idea/*
-!.idea/ktfmt.xml
 **/.vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
@@ -48,6 +46,9 @@ local.properties
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
+# Typically we'd want to check these in, but we don't have any defined for the team.
+.idea/**/inspectionProfiles
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
@@ -55,6 +56,7 @@ local.properties
 .idea/**/dictionaries
 .idea/**/shelf
 .idea/**/deploymentTargetSelector.xml
+.idea/**/deploymentTargetDropDown.xml
 .idea/studiobot.xml
 .idea/other.xml
 
@@ -81,6 +83,9 @@ local.properties
 .idea/**/libraries
 
 # Gradle and Maven with auto-import
+# When using Gradle or Maven with auto-import, you should exclude module files,
+# since they will be recreated, and may cause churn.  Uncomment if using
+# auto-import.
 .idea/artifacts
 .idea/compiler.xml
 .idea/jarRepositories.xml

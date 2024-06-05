@@ -24,6 +24,7 @@ plugins {
 
     id("designcompose.conventions.base")
     id("designcompose.conventions.publish.jvm")
+    idea // required so that Android Studio will detect the protobuf files correctly
 }
 
 publishing {

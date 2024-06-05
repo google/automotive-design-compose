@@ -16,6 +16,8 @@ syntax = "proto3";
 
 package com.android.designcompose.proto.design.element;
 
+import "google/protobuf/empty.proto";
+
 option java_multiple_files = true;
 
 // Size encapsulates the dimensions of an element, expressed as width and height
@@ -49,13 +51,9 @@ re-use the Dimension oneof it needs to go into a `DimensionProto` message.
 */
 
 message DimensionProto {
-  // Has no data
-  message Undefined {};
-  // Has no data
-  message Auto {};
   oneof Dimension {
-    Undefined undefined = 1;
-    Auto auto = 2;
+    google.protobuf.Empty undefined = 1;
+    google.protobuf.Empty auto = 2;
     float points = 3;
     float percent = 4;
   }

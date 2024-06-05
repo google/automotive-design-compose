@@ -21,7 +21,9 @@ package com.android.designcompose.proto.design.interaction;
 
 option java_multiple_files = true;
 
+// The type of easing to perform in a transition.
 message Easing {
+  // Bezier curve for custom easing functions.
   message Bezier {
     float x1 = 1;
     float y1 = 2;
@@ -29,6 +31,7 @@ message Easing {
     float y2 = 4;
   }
 
+  // Spring coefficients
   message Spring {
     float mass = 1;
     float stiffness = 2;
@@ -41,7 +44,10 @@ message Easing {
   }
 }
 
+// This represents the Figma "Transition" type.
+// https://www.figma.com/plugin-docs/api/Transition/
 message Transition {
+  // Some transitions define a direction.
   enum TransitionDirection {
     TRANSITION_DIRECTION_UNSPECIFIED = 0;
     TRANSITION_DIRECTION_LEFT = 1;
@@ -49,7 +55,8 @@ message Transition {
     TRANSITION_DIRECTION_TOP = 3;
     TRANSITION_DIRECTION_BOTTOM = 4;
   }
-
+  // protolint:disable MESSAGES_HAVE_COMMENT
+  // They're self-explanatory
   message Dissolve {
     Easing easing = 1;
     float duration = 2;

@@ -21,6 +21,9 @@ import "design/view.proto";
 
 option java_multiple_files = true;
 
+// A serialized Figma design document, containing views, images, component sets,
+// version, ID, and variable map. It's used for storing and loading Figma
+// designs in a DesignCompose project.
 message SerializedDesignDoc {
   string last_modified = 1;
   map<string, design.View> views = 2;
@@ -32,7 +35,12 @@ message SerializedDesignDoc {
   design.VariableMap variable_map = 8;
 }
 
+// A message used to identify a specific Figma node within a design document. It
+// supports different ways to specify the node, including by its ID, name,
+// variant (name and parent), or component set.
 message NodeQuery {
+  // A Node that is a variant, so the name may have multiple properties
+  // The first string is the node name and the second is its parent's name
   message NodeVariant {
     string name = 1;
     string parent = 2;
@@ -45,8 +53,13 @@ message NodeQuery {
   }
 }
 
+// EncodedImageMap contains a mapping from ImageKey to network bytes. It can
+// create an ImageMap and is intended to be used when we want to use
+// Figma-defined components but do not want to communicate with the Figma
+// service.
 message EncodedImageMap {map<string, EncodedImage> images = 1;}
 
+// A raw image
 message EncodedImage {
   bytes data = 1;
   string mime_type = 2;

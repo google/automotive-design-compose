@@ -18,13 +18,14 @@ package com.android.designcompose.proto.design.layout;
 
 option java_multiple_files = true;
 
+// Represents a span for a node within a grid layout.
 message GridSpan {
   string node_name = 1;
   map<string, string> node_variant = 2;
   uint32 span = 3;
   bool max_span = 4;
 }
-
+// Defines the type of grid layout used for a view.
 enum GridLayoutType {
   GRID_LAYOUT_TYPE_UNSPECIFIED = 0;
   GRID_LAYOUT_TYPE_FIXED_COLUMNS = 1;
@@ -34,13 +35,14 @@ enum GridLayoutType {
   GRID_LAYOUT_TYPE_HORIZONTAL = 5;
   GRID_LAYOUT_TYPE_VERTICAL = 6;
 }
+// Defines how content overflows the bounds of a view.
 enum Overflow {
   OVERFLOW_UNSPECIFIED = 0;
   OVERFLOW_VISIBLE = 1;
   OVERFLOW_HIDDEN = 2;
   OVERFLOW_SCROLL = 3;
 }
-
+// Defines the direction of overflow scrolling
 enum OverflowDirection {
   OVERFLOW_DIRECTION_UNSPECIFIED = 0;
   OVERFLOW_DIRECTION_NONE = 1;
@@ -49,12 +51,14 @@ enum OverflowDirection {
   OVERFLOW_DIRECTION_HORIZONTAL_AND_VERTICAL_SCROLLING = 4;
 }
 
+// Defines how flex items wrap when they exceed the available space.
 enum FlexWrap {
   FLEX_WRAP_UNSPECIFIED = 0;
   FLEX_WRAP_NOWRAP = 1;
   FLEX_WRAP_WRAP = 2;
   FLEX_WRAP_WRAP_REVERSE = 3;
 }
+// Defines how a view's size is determined.
 enum LayoutSizing {
   LAYOUT_SIZING_UNSPECIFIED = 0;
   LAYOUT_SIZING_FIXED = 1;
@@ -62,6 +66,8 @@ enum LayoutSizing {
   LAYOUT_SIZING_FILL = 3;
 }
 
+// Represents information about the scroll state of a view, including the
+// overflow direction and whether paged scrolling is enabled.
 message ScrollInfo {
   OverflowDirection overflow = 1;
   bool paged_scrolling = 2;

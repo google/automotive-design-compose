@@ -21,6 +21,7 @@ import "design/node_style.proto";
 
 option java_multiple_files = true;
 
+// Collects the Layout and Node styles for a View
 message ViewStyle {
   layout.LayoutStyle layout_style = 1;
   NodeStyle node_style = 2;

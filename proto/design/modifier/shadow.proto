@@ -37,16 +37,10 @@ enum ShadowBox {
   SHADOW_BOX_STROKE_BOX = 2;
 }
 
+// BoxShadow defines a CSS-style box shadow, either outset or inset.
 message BoxShadow {
-  message Outset {
-    float blur_radius = 1;
-    float spread_radius = 2;
-    element.Color color = 3;
-    float offset_x = 4;
-    float offset_y = 5;
-    ShadowBox shadow_box = 6;
-  }
-  message Inset {
+  // The shadow itself
+  message Shadow {
     float blur_radius = 1;
     float spread_radius = 2;
     element.Color color = 3;
@@ -55,7 +49,7 @@ message BoxShadow {
     ShadowBox shadow_box = 6;
   }
   oneof shadow_box {
-    Outset outset = 1;
-    Inset inset = 2;
+    Shadow outset = 1;
+    Shadow inset = 2;
   }
 }

@@ -37,7 +37,7 @@ message Collection {
   map<string, Mode> mode_id_hash = 5;      // id -> Mode
 }
 
-/// Stores variable mappings
+// Stores variable mappings
 message VariableMap {
   // Maps Collection names to IDs
   message NameIDMap {

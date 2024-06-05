@@ -18,10 +18,11 @@ package com.android.designcompose.proto.design.modifier;
 
 option java_multiple_files = true;
 
-message Transform {
-  repeated float matrices = 1;
-}
-
+// Represents a 3D affine transformation, which is a combination of
+// translation, rotation, scaling, and shearing in 3D space. It's used to
+// define the transform applied to a view or its children within a
+// DesignCompose layout.
+// Maps to euclid's Transform3D
 message LayoutTransform {
   float m11 = 1;
   float m12 = 2;
@@ -40,6 +41,10 @@ message LayoutTransform {
   float m43 = 15;
   float m44 = 16;
 }
+// Represents a 2D affine transformation, which is a combination of translation,
+// rotation, scaling, and shearing. It's used to define the transform applied to
+// an image background or other visual elements.
+// Maps to euclid's Transform2D
 message AffineTransform {
   float m11 = 1;
   float m12 = 2;

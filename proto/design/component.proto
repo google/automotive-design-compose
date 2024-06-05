@@ -21,6 +21,12 @@ import "design/view_style.proto";
 
 option java_multiple_files = true;
 
+// Figma component properties can be "overridden" in the UI. These overrides
+// are applied in the node tree we get back from Figma, so we don't have to
+// worry about them, unless we present a variant of a component as a result of
+// an interaction. In that case, we need to figure out what has been overridden
+// and apply it to the variant. This struct keeps track of those overrides that
+// need to be applied to variant instances.
 message ComponentOverrides {
   ViewStyle style = 1;
   oneof component_content_override {
@@ -30,9 +36,12 @@ message ComponentOverrides {
   }
 }
 
+// Details on the Figma component that this view is an instance of.
 message ComponentInfo {
   string id = 1;
   string name = 2;
   string component_set_name = 3;
+  // Currently we only figure out overrides for the root of a component, but
+  // soon we will want to compute them for the whole tree.
   ComponentOverrides overrides = 4;
 }

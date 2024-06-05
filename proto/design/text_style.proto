@@ -20,6 +20,11 @@ import "design/element/font.proto";
 import "design/element/path.proto";
 import "design/modifier/background.proto";
 
+// These are the style properties that apply to text, so we can use them on
+// subsections of a longer string. We then assume that every style transition is
+// a potential line break (and also run the linebreaking algorithm on the
+// content of every style for the normal case where we need to break text that's
+// all in one style).
 message TextStyle {
   modifier.Background text_color = 1;
   float font_size = 2;
@@ -32,11 +37,13 @@ message TextStyle {
   repeated element.FontFeature font_features = 9;
 }
 
+// A section of text with a specific style
 message StyledTextRun {
   string text = 1;
   TextStyle style = 2;
 }
 
+// A collection of styled text sections
 message StyledText {
   repeated StyledTextRun styled_texts = 1;
 }

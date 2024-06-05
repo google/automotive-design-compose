@@ -17,7 +17,6 @@
 package com.android.designcompose.proto
 
 import com.android.designcompose.proto.android_interface.layoutNodeList
-import com.android.designcompose.proto.design.element.DimensionProtoKt
 import com.android.designcompose.proto.design.element.dimensionProto
 import com.android.designcompose.proto.design.element.dimensionRect
 import com.android.designcompose.proto.design.element.size
@@ -49,6 +48,7 @@ import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Rect
 import com.android.designcompose.serdegen.Size
+import com.google.protobuf.Empty
 
 internal fun LayoutNode.intoProto() = layoutNode {
     val s = this@intoProto
@@ -75,8 +75,9 @@ internal fun LayoutNodeList.intoProto() = layoutNodeList {
 
 internal fun Dimension.intoProto() = dimensionProto {
     when (val s = this@intoProto) {
-        is Undefined -> undefined = DimensionProtoKt.undefined {}
-        is Dimension.Auto -> auto = DimensionProtoKt.auto {}
+        // These are empty types so we need to set them to default instances
+        is Undefined -> undefined = Empty.getDefaultInstance()
+        is Dimension.Auto -> auto = Empty.getDefaultInstance()
         is Dimension.Points -> points = s.value.toFloat()
         is Dimension.Percent -> percent = s.value.toFloat()
     }

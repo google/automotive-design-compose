@@ -28,7 +28,11 @@ import "design/view_style.proto";
 
 option java_multiple_files = true;
 
+// Represents a toolkit View (like a Composable).
 message View {
+  // This enum may be used as a hint by the DesignCompose renderer
+  // implementation to determine if it is important for the content to be
+  // rendered identically on different platforms.
   enum RenderMethod {
     RENDER_METHOD_UNSPECIFIED = 0;
     RENDER_METHOD_NONE = 1;
@@ -66,7 +70,12 @@ message View {
   map<string, string> explicit_variable_modes = 12;
 }
 
+// Details that are unique to each view type.
 message ViewData {
+  // Container is used to represent views that act as containers for other
+  // views, like a Column or a Row in Jetpack Compose. The shape field defines
+  // the visual appearance of the container, while the children field defines
+  // the views that are contained within it.
   message Container {
     design.element.ViewShape shape = 1;
     repeated View children = 2;

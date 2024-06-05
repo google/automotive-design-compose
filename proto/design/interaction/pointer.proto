@@ -18,6 +18,10 @@ package com.android.designcompose.proto.design.interaction;
 
 option java_multiple_files = true;
 
+// Determines how a UI element responds to user interactions like taps, clicks,
+// and hovers. It can be set to "Auto" for default behavior, "None" to disable
+// interactions, or "Box-None" to only detect events within the element's
+// bounding box.
 enum PointerEvents {
   POINTER_EVENTS_UNSPECIFIED = 0;
   POINTER_EVENTS_AUTO = 1;

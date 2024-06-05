@@ -32,15 +32,9 @@ import "design/plugin/meter_data.proto";
 
 option java_multiple_files = true;
 
+// Contains all of the styleable parameters accepted by the Rect and Text
+// components.
 message NodeStyle {
-  message Number {
-    message Undefined {}
-    oneof Number {
-      float defined = 1;
-      Undefined undefined = 2;
-    }
-  }
-
   // Text properties
   design.modifier.Background text_color = 1;
   float font_size = 2;
@@ -86,7 +80,7 @@ message NodeStyle {
   float cross_axis_item_spacing = 34;
   design.layout.LayoutSizing horizontal_sizing = 35;
   design.layout.LayoutSizing vertical_sizing = 36;
-  Number aspect_ratio = 37;  // Should this just be an optional float?
+  optional float aspect_ratio = 37;
   interaction.PointerEvents pointer_events = 38;
   plugin.MeterData meter_data = 39;
 }

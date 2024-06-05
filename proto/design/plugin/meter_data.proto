@@ -18,6 +18,8 @@ package com.android.designcompose.proto.design.plugin;
 
 option java_multiple_files = true;
 
+// Represents data for a rotation meter, including whether it's enabled, its
+// start and end angles, whether it's discrete, and the discrete value.
 message RotationMeterData {
   bool enabled = 1;
   float start = 2;
@@ -26,6 +28,9 @@ message RotationMeterData {
   float discrete_value = 5;
 }
 
+// Represents data for an arc meter, including whether it's enabled, its start
+// and end angles, whether it's discrete, the discrete value, and the corner
+// radius.
 message ArcMeterData {
   bool enabled = 1;
   float start = 2;
@@ -35,6 +40,9 @@ message ArcMeterData {
   float corner_radius = 6;
 }
 
+// Represents data for a progress bar meter, including whether it's enabled,
+// whether it's discrete, the discrete value, whether it's vertical, and the end
+// coordinates.
 message ProgressBarMeterData {
   bool enabled = 1;
   bool discrete = 2;
@@ -44,6 +52,9 @@ message ProgressBarMeterData {
   float end_y = 6;
 }
 
+// Represents data for a progress marker meter, including whether it's enabled,
+// whether it's discrete, the discrete value, whether it's vertical, and the
+// start and end coordinates.
 message ProgressMarkerMeterData {
   bool enabled = 1;
   bool discrete = 2;
@@ -55,6 +66,8 @@ message ProgressMarkerMeterData {
   float end_y = 8;
 }
 
+// A container message that holds one of the meter data types (rotation, arc,
+// progress bar, or progress marker).
 message MeterData {
   oneof meter_data {
     RotationMeterData rotation_data = 1;

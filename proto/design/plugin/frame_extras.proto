@@ -20,9 +20,12 @@ import "design/element/color.proto";
 
 option java_multiple_files = true;
 
+// Some frame properties are only available through the plugin API and are
+// needed to implement Reactions properly. They're included in this FrameExtras
+// struct.
 message FrameExtras {
   // The number of children of this frame that are fixed.
-  uint32 number_of_fixed_children = 1;
+  uint32 fixed_children = 1;
   // How the overlay is positioned.
   OverlayPositionType overlay_position_type = 2;
   // The background of the overlay.
@@ -31,6 +34,7 @@ message FrameExtras {
   OverlayBackgroundInteraction overlay_background_interaction = 4;
 }
 
+// Defines the position of an overlay within a frame.
 enum OverlayPositionType {
   OVERLAY_POSITION_TYPE_UNSPECIFIED = 0;
   OVERLAY_POSITION_TYPE_CENTER = 1;
@@ -43,11 +47,14 @@ enum OverlayPositionType {
   OVERLAY_POSITION_TYPE_MANUAL = 8;
 }
 
+// The color of the overlay background.
 message OverlayBackground {
-  // The color of the overlay background.
   design.element.Color color = 1;
 }
 
+// Defines how an overlay interacts with its background. It specifies whether
+// the overlay can be closed by clicking outside of it or if there's no
+// interaction.
 enum OverlayBackgroundInteraction {
   OVERLAY_BACKGROUND_INTERACTION_UNSPECIFIED = 0;
   OVERLAY_BACKGROUND_INTERACTION_NONE = 1;

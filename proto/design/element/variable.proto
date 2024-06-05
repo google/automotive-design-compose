@@ -23,6 +23,7 @@ option java_multiple_files = true;
 // Representation of a Figma variable. We convert a figma_schema::Variable into
 // this format to make the fields a bit easier to access.
 message Variable {
+  // Variable Types
   enum VariableType {
     VARIABLE_TYPE_UNSPECIFIED = 0;
     VARIABLE_TYPE_BOOL = 1;
@@ -60,15 +61,22 @@ message VariableValueMap {
   map<string, VariableValue> values_by_mode = 1;
 }
 
+// a reference to a design variable (e.g., color, spacing). Think of it as a
+// symbolic name for a value that can change throughout your design.
 message VariableAlias {
   string id = 1;
   string name = 2;
 }
 
+// A collection of variables associated with a particular node or element. This
+// helps track which variables are used where in your design.
 message BoundVariables {
   map<string, VariableAlias> variables = 1;
 }
 
+// Holds either a numerical value (e.g., 100 for a font size) or a reference to
+// a design variable. This allows for dynamic values that can adapt based on the
+// current variable values.
 message NumOrVar {
   oneof NumOrVar {
     float num = 1;
@@ -76,6 +84,8 @@ message NumOrVar {
   }
 }
 
+// Holds either a direct color representation (e.g., RGBA values) or a reference
+// to a color variable, providing flexibility in how you define colors.
 message ColorOrVar {
   oneof ColorOrVar {
     Color color = 1;

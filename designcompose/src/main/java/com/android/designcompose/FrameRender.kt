@@ -519,6 +519,10 @@ internal fun squooshShapeRender(
     variableState: VariableState,
     drawContent: () -> Unit
 ) {
+    // Don't render and return early if this node has a component replacement
+    val customComponent = customizations.getComponent(name)
+    if (customComponent != null)
+        return
     if (size.width <= 0F && size.height <= 0F) return
 
     drawContext.canvas.save()

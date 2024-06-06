@@ -17,15 +17,19 @@
 package com.android.designcompose.squoosh
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
+import com.android.designcompose.ExternalLayoutData
 import com.android.designcompose.InteractionState
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
+import com.android.designcompose.externalLayoutData
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
@@ -61,12 +65,26 @@ import com.android.designcompose.squooshRootNode
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
+internal class ReplacementData(
+    val externalLayoutData: ExternalLayoutData?,
+    val replacementLayoutId: Int,
+)
+
+internal val LocalReplacementData = compositionLocalOf<ReplacementData?> { null }
+
+@Composable
+internal fun DesignReplacementData(data: ReplacementData?, content: @Composable () -> Unit) =
+    CompositionLocalProvider(LocalReplacementData provides data) {
+        content()
+    }
+
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
 internal class SquooshChildComposable(
     // One of these should be populated...
     val component: @Composable ((ComponentReplacementContext) -> Unit)?,
     val content: ReplacementContent?,
+    val replacementData: ReplacementData?,
 
     // Used for node resolution for interactions
     val parentComponents: ParentComponentData?,
@@ -281,6 +299,7 @@ internal fun resolveVariantsRecursively(
             SquooshChildComposable(
                 component = replacementComponent,
                 content = replacementContent,
+                replacementData = ReplacementData(view.style.externalLayoutData(), resolvedView.layoutId),
                 node = resolvedView,
                 parentComponents = parentComps
             )
@@ -294,6 +313,7 @@ internal fun resolveVariantsRecursively(
             SquooshChildComposable(
                 component = null,
                 content = null,
+                replacementData = null,
                 node = resolvedView,
                 parentComponents = parentComps
             )
@@ -348,6 +368,7 @@ internal fun resolveVariantsRecursively(
                 SquooshChildComposable(
                     component = null,
                     content = null,
+                    replacementData = null,
                     node = overlayContainer,
                     parentComponents = parentComps
                 )

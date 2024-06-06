@@ -20,9 +20,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.android.designcompose.ComponentReplacementContext
+import com.android.designcompose.DesignDocSettings
+import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -33,7 +36,7 @@ import com.android.designcompose.annotation.DesignDoc
 // same place as the original node.
 @DesignDoc(id = "bQVVy2GSZJ8veYaJUrG6Ni")
 interface ComponentReplace {
-    @DesignComponent(node = "#stage")
+    @DesignComponent(node = "#stage2")
     fun Main(
         @Design(node = "#replace-node-horizontal")
         replaceHorizontal: @Composable (ComponentReplacementContext) -> Unit,
@@ -52,11 +55,13 @@ interface ComponentReplace {
 
 @Composable
 fun ComponentReplaceTest() {
-    ComponentReplaceDoc.Main(
-        modifier = Modifier.fillMaxWidth(),
-        replaceHorizontal = { ComponentReplaceDoc.BlueNode() },
-        replaceVertical = { ComponentReplaceDoc.RedNode() },
-        replaceAbsolute = { ComponentReplaceDoc.BlueNode() },
-        replaceBox = { Box(Modifier.background(Color.Green).then(it.layoutModifier)) }
-    )
+    CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
+        ComponentReplaceDoc.Main(
+            modifier = Modifier.fillMaxWidth(),
+            replaceHorizontal = { ComponentReplaceDoc.BlueNode() },
+            replaceVertical = { ComponentReplaceDoc.RedNode() },
+            replaceAbsolute = { ComponentReplaceDoc.BlueNode() },
+            replaceBox = { Box(Modifier.background(Color.Green).then(it.layoutModifier)) }
+        )
+    }
 }

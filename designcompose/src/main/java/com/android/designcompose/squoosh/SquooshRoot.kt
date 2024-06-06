@@ -46,6 +46,7 @@ import com.android.designcompose.AnimatedAction
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DesignComposeCallbacks
+import com.android.designcompose.DesignParentLayout
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DesignSwitcher
 import com.android.designcompose.DesignSwitcherPolicy
@@ -63,6 +64,8 @@ import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
+import com.android.designcompose.externalLayoutData
+import com.android.designcompose.layoutStyle
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
@@ -75,6 +78,8 @@ import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
+import com.android.designcompose.withExternalLayoutData
+import com.android.designcompose.withReplacementLayoutData
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -187,9 +192,11 @@ private fun createOrUpdateAnimation(
 
 /// Apply layout constraints to a node; this is only used for the root node and gives the DC
 /// layout system the context of what it is being embedded in.
-private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, density: Density) {
-    val rootStyleBuilder = style.asBuilder()
-    val layoutStyleBuilder = style.layout_style.asBuilder()
+private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, replacementData: ReplacementData?, density: Density) {
+    println("### ApplyLayout ${view.name} minw ${constraints.minWidth} maxw ${constraints.maxWidth} minh ${constraints.minHeight} maxh ${constraints.maxHeight}")
+    val viewStyle = replacementData?.externalLayoutData?.let { style.withExternalLayoutData(it) } ?: style
+    val rootStyleBuilder = viewStyle.asBuilder()
+    val layoutStyleBuilder = viewStyle.layout_style.asBuilder()
     if (constraints.minWidth != 0)
         layoutStyleBuilder.min_width =
             Dimension.Points(constraints.minWidth.toFloat() / density.density)
@@ -446,6 +453,8 @@ fun SquooshRoot(
     // Select which child to draw using this holder.
     val childRenderSelector = SquooshChildRenderSelector()
 
+    val replacementData = LocalReplacementData.current
+
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
         androidx.compose.ui.layout.Layout(
             modifier =
@@ -465,16 +474,19 @@ fun SquooshRoot(
             measurePolicy = { measurables, constraints ->
                 // Update the root node style to have the incoming width/height from our parent
                 // Composable.
-                root.applyLayoutConstraints(constraints, density)
+                root.applyLayoutConstraints(constraints, replacementData, density)
 
                 // Perform layout on our resolved tree.
+                if (root.view.name != "#SettingsView")
+                    println("### Layout ${root.view.name}, layoutid ${root.layoutId}, replacement ${replacementData?.replacementLayoutId}")
                 layoutTree(
                     root,
                     layoutManager,
                     rootLayoutId,
                     rootRemovalNodes,
                     layoutCache,
-                    layoutValueCache
+                    layoutValueCache,
+                    replacementData
                 )
 
                 // If we have a transition root, then lay it out and compute any animations that
@@ -485,7 +497,7 @@ fun SquooshRoot(
                 val tRoot = transitionRoot
                 if (tRoot != null && transitionRootRemovalNodes != null) {
                     // Ensure that the transition target also has the incoming width/height applied.
-                    tRoot.applyLayoutConstraints(constraints, density)
+                    tRoot.applyLayoutConstraints(constraints, null, density)
 
                     // Layout the transition root tree.
                     layoutTree(
@@ -494,7 +506,8 @@ fun SquooshRoot(
                         rootLayoutId,
                         transitionRootRemovalNodes,
                         layoutCache,
-                        layoutValueCache
+                        layoutValueCache,
+                        null,
                     )
 
                     // Record all of the animations in progress or to be started in
@@ -697,12 +710,17 @@ fun SquooshRoot(
 
                     Box(modifier = composableChildModifier) {
                         if (child.component != null) {
-                            child.component.invoke(
-                                object : ComponentReplacementContext {
-                                    override val layoutModifier: Modifier = Modifier
-                                    override val textStyle: TextStyle? = null
-                                }
-                            )
+                            DesignReplacementData(child.replacementData) {
+                                child.component.invoke(
+                                    object : ComponentReplacementContext {
+                                        override val layoutModifier = Modifier.layoutStyle(
+                                            child.node.view.name,
+                                            child.node.layoutId
+                                        )
+                                        override val textStyle: TextStyle? = null
+                                    }
+                                )
+                            }
                         } else if (child.content != null) {
                             Log.d(TAG, "Unimplemented: child.content")
                         }

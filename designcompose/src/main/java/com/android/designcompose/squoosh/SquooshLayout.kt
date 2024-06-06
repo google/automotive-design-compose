@@ -27,6 +27,7 @@ import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.LayoutParentChildren
+import com.android.designcompose.withExternalLayoutData
 import java.util.Optional
 
 internal class SquooshLayoutManager(val id: Int)
@@ -177,8 +178,13 @@ internal fun updateLayoutTree(
 /// so that the nodes can be used for presentation or interaction (hit testing).
 internal fun populateComputedLayout(
     resolvedNode: SquooshResolvedNode,
-    layoutValueCache: HashMap<Int, Layout>
+    layoutValueCache: HashMap<Int, Layout>,
+    replacementData: ReplacementData?,
 ) {
+    if (replacementData?.externalLayoutData != null) {
+        resolvedNode.style = resolvedNode.style.withExternalLayoutData(replacementData.externalLayoutData)
+    }
+    //val layoutId = replacementData?.replacementLayoutId ?: resolvedNode.layoutId
     val layoutId = resolvedNode.layoutId
     val layoutValue = layoutValueCache[layoutId]
     if (layoutValue == null) {
@@ -188,7 +194,7 @@ internal fun populateComputedLayout(
 
     var child = resolvedNode.firstChild
     while (child != null) {
-        populateComputedLayout(child, layoutValueCache)
+        populateComputedLayout(child, layoutValueCache, null)
         child = child.nextSibling
     }
 }
@@ -200,7 +206,8 @@ internal fun layoutTree(
     rootLayoutId: Int,
     removalNodes: Set<Int>,
     layoutCache: HashMap<Int, Int>,
-    layoutValueCache: HashMap<Int, Layout>
+    layoutValueCache: HashMap<Int, Layout>,
+    replacementData: ReplacementData?,
 ) {
     // Remove any nodes that are no longer needed in this iteration
     for (layoutId in removalNodes) {
@@ -215,9 +222,16 @@ internal fun layoutTree(
     updateLayoutTree(root, layoutCache, layoutNodes, layoutParentChildren)
     val layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
 
+    if (root.view.name != "#SettingsView" && layoutNodeList.layout_nodes.isNotEmpty()) {
+        println("### layoutTree ${root.view.name}")
+        layoutNodeList.layout_nodes.forEach {
+            println("  ### ${it.name}, ${it.layout_id}")
+        }
+    }
+
     // Now we can give the new layoutNodeList to the Rust JNI layout implementation
     val updatedLayouts = SquooshLayout.doLayout(manager, root.layoutId, layoutNodeList)
     // Save the updated layouts and quickly iterate the tree and populate the layout values.
     layoutValueCache.putAll(updatedLayouts)
-    populateComputedLayout(root, layoutValueCache)
+    populateComputedLayout(root, layoutValueCache, replacementData)
 }

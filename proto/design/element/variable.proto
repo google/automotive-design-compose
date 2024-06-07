@@ -20,6 +20,17 @@ import "design/element/color.proto";
 
 option java_multiple_files = true;
 
+// Holds the value of a variable, whichever type it is.
+message VariableValue {
+  oneof value {
+    bool boolean = 1;
+    float number = 2;
+    string string = 3;
+    Color color = 4;
+    string alias = 5;
+  }
+}
+
 // Representation of a Figma variable. We convert a figma_schema::Variable into
 // this format to make the fields a bit easier to access.
 message Variable {
@@ -32,6 +43,13 @@ message Variable {
     VARIABLE_TYPE_COLOR = 4;
   }
 
+  // Each variable contains a map of possible values. This data structure helps
+  // keep track of that data and contains functions to retrieve the value of a
+  // variable given a mode.
+  message VariableValueMap {
+    map<string, VariableValue> values_by_mode = 1;
+  }
+
   string id = 1;
   string name = 2;
   bool remote = 3;
@@ -39,39 +57,6 @@ message Variable {
   string variable_collection_id = 5;
   VariableType var_type = 6;
   VariableValueMap values_by_mode = 7;
-}
-
-// We redeclare VariableValue instead of using the one from figma_schema because
-// the "untagged" attribute there prevents serde_reflection from being able to
-// run properly.
-message VariableValue {
-  oneof value {
-    bool boolean = 1;
-    float float = 2;
-    string string = 3;
-    Color color = 4;
-    VariableAlias alias = 5;
-  }
-}
-
-// Each variable contains a map of possible values. This data structure helps
-// keep track of that data and contains functions to retrieve the value of a
-// variable given a mode.
-message VariableValueMap {
-  map<string, VariableValue> values_by_mode = 1;
-}
-
-// a reference to a design variable (e.g., color, spacing). Think of it as a
-// symbolic name for a value that can change throughout your design.
-message VariableAlias {
-  string id = 1;
-  string name = 2;
-}
-
-// A collection of variables associated with a particular node or element. This
-// helps track which variables are used where in your design.
-message BoundVariables {
-  map<string, VariableAlias> variables = 1;
 }
 
 // Holds either a numerical value (e.g., 100 for a font size) or a reference to

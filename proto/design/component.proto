@@ -18,6 +18,7 @@ package com.android.designcompose.proto.design;
 
 import "design/text_style.proto";
 import "design/view_style.proto";
+import "google/protobuf/empty.proto";
 
 option java_multiple_files = true;
 
@@ -30,7 +31,7 @@ option java_multiple_files = true;
 message ComponentOverrides {
   ViewStyle style = 1;
   oneof component_content_override {
-    bool none = 2;
+    google.protobuf.Empty none = 2;
     string text = 3;
     StyledText styled_text = 4;
   }

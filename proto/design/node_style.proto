@@ -39,9 +39,9 @@ message NodeStyle {
   design.modifier.Background text_color = 1;
   float font_size = 2;
   optional string font_family = 3;
-  design.element.FontWeight font_weight = 4;
+  float font_weight = 4;
   design.element.FontStyle font_style = 5;
-  design.element.FontStretch font_stretch = 6;
+  float font_stretch = 6;
   repeated design.modifier.Background backgrounds = 7;
   repeated design.modifier.BoxShadow box_shadows = 8;
   design.element.Stroke stroke = 9;

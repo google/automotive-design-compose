@@ -16,13 +16,15 @@ syntax = "proto3";
 
 package com.android.designcompose.proto.design.element;
 
+import "design/element/variable.proto";
+
 option java_multiple_files = true;
 
 // FontWeight specifies the visual thickness of a typeface. It's represented
 // numerically, usually ranging from 100 (thin) to 900 (black). Common values
 // include 400 (regular), 500 (medium), and 700 (bold).
 message FontWeight {
-  float weight = 1;
+  NumOrVar weight = 1;
 }
 
 // Allows italic or oblique faces to be selected.

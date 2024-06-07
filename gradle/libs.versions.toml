@@ -44,7 +44,7 @@ androidx-tracing = "1.2.0"
 androidx-tracing-perfetto = "1.0.0"
 dokka = "1.9.20"
 gson = "2.11.0"
-guavaAndroid = "33.2.0-android"
+guavaAndroid = "33.2.1-android"
 javax-annotation = "1.3.2"
 junit = "4.13.2"
 # Keep in sync with build-logic/src/main/kotlin/designcompose/conventions/base.gradle.kts
@@ -58,7 +58,7 @@ robolectric = "4.12.2"
 roborazzi = "1.20.0"
 androidx-material3 = "1.2.1"
 # Keep in sync with the "Install Protoc" steps in .github/workflows
-protoc = "4.27.0"
+protoc = "4.27.1"
 protobuf-plugin = "0.9.4"
 
 [libraries]

@@ -34,6 +34,22 @@ message SerializedDesignDoc {
   string id = 7;
   design.VariableMap variable_map = 8;
 }
+/// We can fetch figma documents in a project or from branches of another
+/// document. We store each as a name and ID
+message FigmaDocInfo {
+  string name = 1;
+  string id = 2;
+  string version_id = 3;
+}
+// This is the struct we send over to the client. It contains the serialized
+// document along with some extra data: document branches, project files, and
+// errors
+message ServerFigmaDoc {
+  SerializedDesignDoc figma_doc = 1;
+  repeated FigmaDocInfo branches = 2;
+  repeated FigmaDocInfo project_files = 3;
+  repeated string errors = 4;
+}
 
 // A message used to identify a specific Figma node within a design document. It
 // supports different ways to specify the node, including by its ID, name,

@@ -31,8 +31,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .join("proto");
 
     prost_config.include_file("protos.rs");
-    prost_config
-        .compile_protos(&[proto_path.join("android_interface/jni_layout.proto")], &[&proto_path])?;
+    prost_config.compile_protos(
+        &[
+            proto_path.join("android_interface/jni_layout.proto"),
+            proto_path.join("toolkit/serialized_design_doc.proto"),
+        ],
+        &[&proto_path],
+    )?;
 
     println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
     Ok(())

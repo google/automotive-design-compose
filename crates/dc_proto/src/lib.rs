@@ -14,11 +14,15 @@
 
 use thiserror::Error;
 
-include!(concat!(env!("OUT_DIR"), "/protos.rs"));
+pub mod design;
+pub mod toolkit;
+pub mod android_interface;
+
+// include!(concat!(env!("OUT_DIR"), "/protos.rs"));
 
 // Allow dependendant crates to import types using a more rusty signature like:
 // use dc_proto::design::element::Color;
-pub use com::android::designcompose::proto::*;
+// pub use com::android::designcompose::proto::*;
 
 #[derive(Error, Debug)]
 pub enum Error {

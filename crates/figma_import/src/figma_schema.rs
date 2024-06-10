@@ -15,6 +15,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use dc_proto::design::element::{VariableAlias, VariableAliasOrList};
 
 use crate::color::Color;
 use crate::vector_schema::WindingRule;
@@ -1110,36 +1111,19 @@ pub enum VariableType {
     Color,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct VariableAlias {
-    pub r#type: String,
-    pub id: String,
-}
+// #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+// #[serde(rename_all = "camelCase")]
+// pub struct VariableAlias {
+//     pub r#type: String,
+//     pub id: String,
+// }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
-#[serde(untagged)]
-pub enum VariableAliasOrList {
-    Alias(VariableAlias),
-    List(Vec<VariableAlias>),
-}
-impl VariableAliasOrList {
-    fn get_name(&self) -> Option<String> {
-        match self {
-            VariableAliasOrList::Alias(alias) => {
-                return Some(alias.id.clone());
-            }
-            VariableAliasOrList::List(list) => {
-                let alias = list.first();
-                if let Some(alias) = alias {
-                    return Some(alias.id.clone());
-                }
-            }
-        }
-        None
-    }
-}
-
+// #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+// #[serde(untagged)]
+// pub enum VariableAliasOrList {
+//     Alias(VariableAlias),
+//     List(Vec<VariableAlias>),
+// }
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct BoundVariables {

@@ -47,7 +47,7 @@ between `file/` and the name of the document. For example:
 
 <pre><code>figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
 
-The app's Gradle project is located in `reference-apps/tutorial`. Build and launch it on your
+The app's Gradle project is located in `re[lib.rs](crates%2Fdc_proto%2Fsrc%2Flib.rs)ference-apps/tutorial`. Build and launch it on your
 device, then set your Figma Access Token on the app by running:
 
 ```shell

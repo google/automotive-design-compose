@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-use crate::design::element::variable_alias_or_list::VariableAliasOrList::{Alias, List};
 include!(concat!(env!("OUT_DIR"), "/com.android.designcompose.proto.design.element.rs"));
+// Re-export the one-of types
+pub use crate::design::element::variable_alias_or_list_msg::VariableAliasOrList;
 
-impl variable_alias_or_list::VariableAliasOrList {
+
+use crate::design::element::variable_alias_or_list_msg::VariableAliasOrList::{Alias, List};
+
+impl VariableAliasOrList {
     pub fn get_name(&self) -> Option<String> {
         match self {
             Alias(alias) => {
@@ -34,3 +38,17 @@ impl variable_alias_or_list::VariableAliasOrList {
     }
 }
 
+impl NumOrVar {
+    pub(crate) fn from_var(
+        bound_variables: &figma_schema::BoundVariables,
+        var_name: &str,
+        num: f32,
+    ) -> NumOrVar {
+        let var = bound_variables.get_variable(var_name);
+        if let Some(var) = var {
+            NumOrVar::Var(var)
+        } else {
+            NumOrVar::Num(num)
+        }
+    }
+}

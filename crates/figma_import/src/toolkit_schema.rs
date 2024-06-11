@@ -26,30 +26,18 @@ use crate::reaction_schema::FrameExtras;
 use crate::reaction_schema::Reaction;
 use crate::toolkit_style::{StyledTextRun, ViewStyle};
 use std::collections::HashMap;
+use dc_proto::design::element::num_or_var::NumOrVar;
 use dc_proto::design::element::VariableAlias;
 
 pub use crate::figma_schema::{FigmaColor, OverflowDirection, Rectangle, StrokeCap};
 
-// Enum for fields that represent either a fixed number or a number variable
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum NumOrVar {
-    Num(f32),
-    Var(String),
-}
-impl NumOrVar {
-    pub(crate) fn from_var(
-        bound_variables: &figma_schema::BoundVariables,
-        var_name: &str,
-        num: f32,
-    ) -> NumOrVar {
-        let var = bound_variables.get_variable(var_name);
-        if let Some(var) = var {
-            NumOrVar::Var(var)
-        } else {
-            NumOrVar::Num(num)
-        }
-    }
-}
+// // Enum for fields that represent either a fixed number or a number variable
+// #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+// pub enum NumOrVar {
+//     Num(f32),
+//     Var(String),
+// }
+
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ColorOrVar {

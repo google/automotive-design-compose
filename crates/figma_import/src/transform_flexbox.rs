@@ -15,15 +15,15 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use crate::toolkit_font_style::{FontStyle, FontWeight};
-use crate::toolkit_layout_style::Overflow;
+use log::error;
+use unicode_segmentation::UnicodeSegmentation;
 
-use crate::toolkit_style::{
-    Background, FilterOp, FontFeature, GridLayoutType, GridSpan, LayoutTransform, LineHeight,
-    MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
+use dc_proto::design::layout::FlexWrap;
+use layout::styles::{
+    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };
+use layout::types::Dimension;
 
-use crate::vector_schema;
 use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy}, //ExtendedTextLayout
@@ -40,14 +40,14 @@ use crate::{
         ViewShape,
     },
 };
-
-use dc_proto::design::layout::FlexWrap;
-use layout::styles::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
+use crate::toolkit_font_style::{FontStyle, FontWeight};
+use crate::toolkit_layout_style::Overflow;
+use crate::toolkit_style::{
+    Background, FilterOp, FontFeature, GridLayoutType, GridSpan, LayoutTransform, LineHeight,
+    MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
 };
-use layout::types::Dimension;
-use log::error;
-use unicode_segmentation::UnicodeSegmentation;
+use crate::vector_schema;
+
 //::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -1078,17 +1078,9 @@ fn visit_node(
         if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
             style.node_style.text_color = compute_background(text_fill, images, &node.name);
         }
-        style.node_style.font_size = if let Some(vars) = &node.bound_variables {
-            NumOrVar::from_var(vars, "fontSize", text_style.font_size)
-        } else {
-            NumOrVar::Num(text_style.font_size)
-        };
+        style.node_style.font_size = node.var_or_default("fontSize", text_style.font_size);
+        style.node_style.font_weight = FontWeight(node.var_or_default("fontWeight", text_style.font_weight));
 
-        style.node_style.font_weight = if let Some(vars) = &node.bound_variables {
-            FontWeight(NumOrVar::from_var(vars, "fontWeight", text_style.font_weight))
-        } else {
-            FontWeight(NumOrVar::Num(text_style.font_weight))
-        };
         if text_style.italic {
             style.node_style.font_style = FontStyle::Italic;
         }
@@ -1338,6 +1330,13 @@ fn visit_node(
         } else {
             ([0.0, 0.0, 0.0, 0.0], false)
         };
+
+    let corner_radius = [
+        node.var_or_default("topLeftRadius", corner_radius_values[0]),
+        node.var_or_default("topRightRadius", corner_radius_values[1]),
+        node.var_or_default("bottomRightRadius", corner_radius_values[2]),
+        node.var_or_default("bottomLeftRadius", corner_radius_values[3]),
+    ];
 
     // Collect the corner radii values to be saved into the view. If the corner radii are set
     // to variables, they will be set to NumOrVar::Var. Otherwise they will be set to NumOrVar::Num.

@@ -45,7 +45,7 @@ Create your own by clicking **Open in Figma**, which creates a copy of the file 
 Once open, identify the Figma Document ID from your new file's URL. It's the alphanumeric string
 between `file/` and the name of the document. For example:
 
-<pre><code>figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
+<pre><code>figma[Cargo.toml](crates%2Ffigma_import%2FCargo.toml).com/file/<b>ABCDEFG123</b>/File-name</code></pre>
 
 The app's Gradle project is located in `re[lib.rs](crates%2Fdc_proto%2Fsrc%2Flib.rs)ference-apps/tutorial`. Build and launch it on your
 device, then set your Figma Access Token on the app by running:

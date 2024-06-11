@@ -15,9 +15,11 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+
 use dc_proto::design::element::{VariableAlias, VariableAliasOrList};
 
 use crate::color::Color;
+use crate::toolkit_schema::NumOrVar;
 use crate::vector_schema::WindingRule;
 
 // We use serde to decode Figma's JSON documents into Rust structures.
@@ -35,6 +37,7 @@ pub struct FigmaColor {
     pub b: f32,
     pub a: f32,
 }
+
 impl Into<Color> for &FigmaColor {
     fn into(self) -> Color {
         Color::from_f32s(self.r, self.g, self.b, self.a)
@@ -78,6 +81,7 @@ pub struct Rectangle {
     pub width: Option<f32>,
     pub height: Option<f32>,
 }
+
 impl Rectangle {
     pub fn x(&self) -> f32 {
         self.x.unwrap_or(0.0)
@@ -137,6 +141,7 @@ pub enum VerticalLayoutConstraintValue {
     TopBottom,
     Scale,
 }
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Copy)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum HorizontalLayoutConstraintValue {
@@ -160,6 +165,7 @@ pub enum LayoutGridPattern {
     Rows,
     Grid,
 }
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LayoutGridAlignment {
@@ -167,6 +173,7 @@ pub enum LayoutGridAlignment {
     Stretch,
     Center,
 }
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LayoutGrid {
@@ -212,6 +219,7 @@ pub enum HyperlinkType {
     Url,
     Node,
 }
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Hyperlink {
@@ -222,12 +230,14 @@ pub struct Hyperlink {
     #[serde(default)]
     pub node_id: String, // XXX: This is "nodeID" in Figma; we might not be deserializing ok...
 }
+
 // XXX ColorStop, Transform
 #[derive(Deserialize, Serialize, Debug, Clone, Default, PartialEq)]
 pub struct Vector {
     pub x: Option<f32>,
     pub y: Option<f32>,
 }
+
 impl Vector {
     pub fn is_valid(&self) -> bool {
         self.x.is_some() && self.y.is_some()
@@ -239,11 +249,13 @@ impl Vector {
         self.y.unwrap_or(0.0)
     }
 }
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Size {
     pub width: f32,
     pub height: f32,
 }
+
 // XXX: Transform is an array of two arrays of 3 numbers
 //  [[a, b, c], [d, e, f]]
 //#[derive (Deserialize, Serialize, Debug, Clone)]
@@ -258,12 +270,18 @@ pub struct Path {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct ImageFilters {
-    pub exposure: Option<f32>,    //Status: Needs scaling work.
-    pub contrast: Option<f32>,    //Status: Supported
-    pub saturation: Option<f32>,  //Status: Supported
-    pub temperature: Option<f32>, //horiontal axis, blue to amber
-    pub tint: Option<f32>,        //vertical axis, green to magenta
-    pub highlights: Option<f32>,  //adjust only lighter areas of image
+    pub exposure: Option<f32>,
+    //Status: Needs scaling work.
+    pub contrast: Option<f32>,
+    //Status: Supported
+    pub saturation: Option<f32>,
+    //Status: Supported
+    pub temperature: Option<f32>,
+    //horiontal axis, blue to amber
+    pub tint: Option<f32>,
+    //vertical axis, green to magenta
+    pub highlights: Option<f32>,
+    //adjust only lighter areas of image
     pub shadows: Option<f32>,     //adjust only darker areas of image
 }
 
@@ -349,12 +367,15 @@ pub enum TextAlignVertical {
 fn default_line_height_percent() -> f32 {
     100.0
 }
+
 fn default_paragraph_spacing() -> f32 {
     0.0
 }
+
 fn default_paragraph_indent() -> f32 {
     0.0
 }
+
 fn default_max_lines() -> i32 {
     -1
 }
@@ -504,13 +525,16 @@ pub enum PaintData {
         #[serde(rename = "scaleMode")]
         scale_mode: ScaleMode,
         #[serde(rename = "imageTransform", default)]
-        image_transform: Option<Transform>, // only if scale_mode is STRETCH
+        image_transform: Option<Transform>,
+        // only if scale_mode is STRETCH
         #[serde(rename = "scalingFactor", default)]
-        scaling_factor: Option<f32>, // only if scale_mode is TILE
+        scaling_factor: Option<f32>,
+        // only if scale_mode is TILE
         #[serde(default)] // not present?
         rotation: f32,
         #[serde(rename = "imageRef")]
-        image_ref: Option<String>, // sometimes this appears in the character type mapping table and is null
+        image_ref: Option<String>,
+        // sometimes this appears in the character type mapping table and is null
         #[serde(rename = "gifRef", default)]
         gif_ref: Option<String>,
         filters: Option<ImageFilters>,
@@ -521,6 +545,7 @@ pub enum PaintData {
 fn default_opacity() -> f32 {
     1.0
 }
+
 fn default_visible() -> bool {
     true
 }
@@ -561,6 +586,7 @@ pub enum StyleType {
     Effect,
     Grid,
 }
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Style {
     pub key: String,
@@ -676,9 +702,11 @@ pub enum BooleanOperation {
 fn default_locked() -> bool {
     false
 }
+
 fn default_effects() -> Vec<Effect> {
     Vec::new()
 }
+
 fn default_clips_content() -> bool {
     false
 }
@@ -729,17 +757,21 @@ pub struct FrameCommon {
     #[serde(default)]
     pub layout_mode: LayoutMode,
     #[serde(default)]
-    pub primary_axis_sizing_mode: LayoutSizingMode, // FIXED, AUTO
+    pub primary_axis_sizing_mode: LayoutSizingMode,
+    // FIXED, AUTO
     #[serde(default)]
-    pub counter_axis_sizing_mode: LayoutSizingMode, // FIXED, AUTO
+    pub counter_axis_sizing_mode: LayoutSizingMode,
+    // FIXED, AUTO
     #[serde(default)]
     pub layout_sizing_horizontal: LayoutSizing,
     #[serde(default)]
     pub layout_sizing_vertical: LayoutSizing,
     #[serde(default)]
-    pub primary_axis_align_items: LayoutAlignItems, // MIN, CENTER, MAX, SPACE_BETWEEN
+    pub primary_axis_align_items: LayoutAlignItems,
+    // MIN, CENTER, MAX, SPACE_BETWEEN
     #[serde(default)]
-    pub counter_axis_align_items: LayoutAlignItems, // MIN, CENTER, MAX,
+    pub counter_axis_align_items: LayoutAlignItems,
+    // MIN, CENTER, MAX,
     #[serde(default)]
     pub padding_left: f32,
     #[serde(default)]
@@ -969,6 +1001,13 @@ impl Node {
             None
         }
     }
+
+    pub(crate) fn var_or_default(&self, var_name: &str, num: f32) -> NumOrVar {
+        if let Some(var) = self.bound_variables.as_ref().
+            and_then(|bv| bv.get_variable(var_name)) {
+            NumOrVar::Var(var)
+        } else { NumOrVar::Num(num) }
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -1008,6 +1047,7 @@ pub struct ComponentKeyResponse {
     pub status: i32,
     pub meta: ComponentKeyMeta,
 }
+
 impl ComponentKeyResponse {
     pub fn parent_id(&self) -> Option<String> {
         self.meta
@@ -1130,6 +1170,7 @@ pub struct BoundVariables {
     #[serde(flatten)]
     variables: HashMap<String, VariableAliasOrList>,
 }
+
 impl BoundVariables {
     pub(crate) fn has_var(&self, var_name: &str) -> bool {
         self.variables.contains_key(var_name)

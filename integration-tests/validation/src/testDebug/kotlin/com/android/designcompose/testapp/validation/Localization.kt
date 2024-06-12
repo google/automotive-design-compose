@@ -21,11 +21,14 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.DesignSettings
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.testapp.common.interFont
 import com.android.designcompose.testapp.validation.examples.HelloWorld
 import com.android.designcompose.testapp.validation.examples.StyledTextRunsTest
 import com.android.designcompose.testapp.validation.examples.VariantAsteriskTest
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,6 +41,11 @@ import org.robolectric.annotation.GraphicsMode
 class Localization {
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
+
+    @Before
+    fun setup() {
+        DesignSettings.addFontFamily("Inter", interFont)
+    }
 
     @Test
     @Config(qualifiers = "+zh")

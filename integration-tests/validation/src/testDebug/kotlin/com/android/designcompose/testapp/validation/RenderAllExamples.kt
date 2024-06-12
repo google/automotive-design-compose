@@ -60,6 +60,7 @@ fun performLiveFetch(dcfOutPath: String?) {
 @Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav", sdk = [34])
 @RunWith(ParameterizedRobolectricTestRunner::class)
 class RenderAllExamples(private val config: TestConfig) {
+    @get:Rule val clearStateTestRule = TestUtils.ClearStateTestRule()
     @get:Rule val composeTestRule = createComposeRule()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
 

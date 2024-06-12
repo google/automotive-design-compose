@@ -21,8 +21,11 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.DesignSettings
+import com.android.designcompose.TestUtils
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.testapp.common.interFont
 import com.android.designcompose.testapp.validation.examples.VariableModesTest
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Before
@@ -36,11 +39,13 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
 class VariableThemesModes {
+    @get:Rule val clearStateTestRule = TestUtils.ClearStateTestRule()
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
 
     @Before
     fun setup() {
+        DesignSettings.addFontFamily("Inter", interFont)
         with(composeTestRule) { setContent { VariableModesTest() } }
     }
 

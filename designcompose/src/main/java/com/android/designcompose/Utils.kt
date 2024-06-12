@@ -16,6 +16,8 @@
 
 package com.android.designcompose
 
+import android.content.Context
+import android.content.res.Resources
 import android.graphics.BitmapShader
 import android.graphics.Matrix
 import android.graphics.Rect
@@ -70,6 +72,7 @@ import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
 import com.android.designcompose.serdegen.StrokeWeight
+import com.android.designcompose.serdegen.StyledTextRun
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
@@ -1578,4 +1581,41 @@ internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
     val g = color[1].toInt()
     val b = color[2].toInt()
     return Color(r, g, b, a)
+}
+
+internal fun getTextContent(
+    context: Context,
+    textData: ViewData.Text,
+    useLocalStringRes: Boolean = true
+): String {
+    if (useLocalStringRes && textData.res_name.isPresent) {
+        val resName = textData.res_name.get()
+        val resId = context.resources.getIdentifier(resName, "string", context.packageName)
+        if (resId != Resources.ID_NULL) {
+            return context.getString(resId)
+        }
+    }
+    return textData.content
+}
+
+internal fun getTextContent(
+    context: Context,
+    styledTextData: ViewData.StyledText,
+    useLocalStringRes: Boolean = true,
+): List<StyledTextRun> {
+    if (useLocalStringRes && styledTextData.res_name.isPresent) {
+        val resName = styledTextData.res_name.get()
+        val resId = context.resources.getIdentifier(resName, "array", context.packageName)
+        if (resId != Resources.ID_NULL) {
+            val textArray = context.resources.getStringArray(resId)
+            if (textArray.size == styledTextData.content.size) {
+                val output = mutableListOf<StyledTextRun>()
+                for (i in textArray.indices) {
+                    output.add(StyledTextRun(textArray[i], styledTextData.content[i].style))
+                }
+                return output
+            }
+        }
+    }
+    return styledTextData.content
 }

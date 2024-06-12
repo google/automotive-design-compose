@@ -24,6 +24,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.TestUtils.ClearStateTestRule
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
@@ -52,14 +53,14 @@ fun DesignSwitcherTest(testName: TestName) {
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = RobolectricDeviceQualifiers.SmallPhone, sdk = [34])
 class DesignSwitcherBasicTests {
+    // Must reset the interaction state so that the DesignSwitcher starts off closed.
+    @get:Rule val clearStateTestRule = ClearStateTestRule()
     @get:Rule val composeTestRule = createComposeRule()
     @get:Rule val testName = TestName()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
 
     @Before
-    fun resetState() {
-        // Must reset the interaction state so that the DesignSwitcher starts off closed.
-        InteractionStateManager.states.clear()
+    fun setup() {
         composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
     }
 

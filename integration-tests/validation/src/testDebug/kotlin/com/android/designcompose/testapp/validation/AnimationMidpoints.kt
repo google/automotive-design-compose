@@ -26,6 +26,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.LocalDesignDocSettings
+import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
@@ -43,6 +44,7 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
 class AnimationMidpoints {
+    @get:Rule val clearStateTestRule = TestUtils.ClearStateTestRule()
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
 

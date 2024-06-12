@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+import * as PluginUtils from "./utils";
+import * as Localization from "./localization-module";
+
 // Warning component.
 interface ClippyWarningRun {
   // The text for the warning text run.
-  text: string,
+  text: string;
   // Does this text run relate to a particular node?
-  node: string
+  node: string;
 }
 
 // Warning type
@@ -57,9 +60,9 @@ enum ClippyWarningSeverity {
   HIGH = 2,
 }
 
-const SHARED_PLUGIN_NAMESPACE = "designcompose"
-
-function clippyWarningSeverityFromKind(kind: ClippyWarningKind): ClippyWarningSeverity {
+function clippyWarningSeverityFromKind(
+  kind: ClippyWarningKind
+): ClippyWarningSeverity {
   switch (kind) {
     case ClippyWarningKind.DUPLICATE_TOP_LEVEL:
       return ClippyWarningSeverity.HIGH;
@@ -84,14 +87,17 @@ function clippyWarningSeverityFromKind(kind: ClippyWarningKind): ClippyWarningSe
 
 // Warning to be presented in the UI.
 interface ClippyWarning {
-  kind: ClippyWarningKind,
-  severity: ClippyWarningSeverity,
-  runs: (string|ClippyWarningRun)[]
+  kind: ClippyWarningKind;
+  severity: ClippyWarningSeverity;
+  runs: (string | ClippyWarningRun)[];
 }
 
-function createWarning(kind: ClippyWarningKind, runs: (string|ClippyWarningRun)[]): ClippyWarning {
+function createWarning(
+  kind: ClippyWarningKind,
+  runs: (string | ClippyWarningRun)[]
+): ClippyWarning {
   let severity = clippyWarningSeverityFromKind(kind);
-  return { kind, severity, runs }
+  return { kind, severity, runs };
 }
 
 enum DesignCustomizationKind {
@@ -108,46 +114,51 @@ enum DesignCustomizationKind {
 }
 
 interface DesignCustomization {
-  kind: DesignCustomizationKind,
-  name: string,
-  node: string,
+  kind: DesignCustomizationKind;
+  name: string;
+  node: string;
 }
 
 interface DesignCustomizationVariantProperty extends DesignCustomization {
-  kind: DesignCustomizationKind.VariantProperty,
-  values: string[]
+  kind: DesignCustomizationKind.VariantProperty;
+  values: string[];
 }
 
 interface DesignCustomizationContentReplacement extends DesignCustomization {
-  kind: DesignCustomizationKind.ContentReplacement,
-  content: string[] // XXX: this won't work for children that have variants.
+  kind: DesignCustomizationKind.ContentReplacement;
+  content: string[]; // XXX: this won't work for children that have variants.
 }
 
 interface DesignComponentSpec {
-  name: string,
-  node: string,
-  isRoot?: boolean, // is this the root component? We must know this since we pass customizations down to children.
-  customizations: DesignCustomization[]
+  name: string;
+  node: string;
+  isRoot?: boolean; // is this the root component? We must know this since we pass customizations down to children.
+  customizations: DesignCustomization[];
 }
 
 interface DesignDocSpec {
-  name: string,
-  version: string,
-  components: DesignComponentSpec[]
+  name: string;
+  version: string;
+  components: DesignComponentSpec[];
 }
 
 // 1. Warn for unused keywords in a top level frame
 function clippyCheckUnusedKeywords(
   topLevelComponents: Map<string, BaseNode[]>,
   topLevelComponentDefns: Map<string, DesignComponentSpec>,
-  warnings: ClippyWarning[]) {
+  warnings: ClippyWarning[]
+) {
   // Given a node and a list of keywords (node name customizations), check that the keywords
   // are somewhere in the node's tree hierarchy. Keep a count of nodes that match a keyword
   // so that we can verify missing or extra nodes.
-  function findKeywordsRecurse(node: BaseNode, keywords: Set<String>, found: Map<String, number>) {
+  function findKeywordsRecurse(
+    node: BaseNode,
+    keywords: Set<String>,
+    found: Map<String, number>
+  ) {
     if (!node) return;
     if (keywords.has(node.name)) {
-      const num = found.get(node.name)
+      const num = found.get(node.name);
       if (num) {
         found.set(node.name, num + 1);
       } else {
@@ -161,45 +172,44 @@ function clippyCheckUnusedKeywords(
       }
     }
   }
-  
+
   // 1. Warn for unused keywords in a top level frame
   for (const nodeName of topLevelComponentDefns.keys()) {
     let component = topLevelComponentDefns.get(nodeName);
     // Skip root frames because customizations within a root frame are often passed down to
     // customized children, so they don't show up in the root node of Figma.
-    if (!component || component.isRoot)
-      continue;
+    if (!component || component.isRoot) continue;
     let keywords: Set<string> = new Set();
-    component.customizations.forEach( c => {
+    component.customizations.forEach((c) => {
       if (c.kind != DesignCustomizationKind.VariantProperty)
         keywords.add(c.node);
     });
     if (topLevelComponents.has(nodeName)) {
       let components = topLevelComponents.get(nodeName);
-      if (!components)
-        continue;
-      let componentSet = components.find(node => node.type == "COMPONENT_SET");
-      components.forEach(node => {
+      if (!components) continue;
+      let componentSet = components.find(
+        (node) => node.type == "COMPONENT_SET"
+      );
+      components.forEach((node) => {
         // If there are multiple components with the same name and at least one is a COMPONENT_SET,
         // then only check the COMPONENT_SET nodes
         if (componentSet == null || node.type == "COMPONENT_SET") {
           let foundKeywords: Map<String, number> = new Map();
           findKeywordsRecurse(node, keywords, foundKeywords);
-          let runs: (string|ClippyWarningRun)[] = [];
-          keywords.forEach(keyword => {
+          let runs: (string | ClippyWarningRun)[] = [];
+          keywords.forEach((keyword) => {
             if (!foundKeywords.has(keyword)) {
               runs.push(keyword);
             }
           });
           if (runs.length > 0) {
-            warnings.push(createWarning(
-              ClippyWarningKind.UNUSED_KEYWORD,
-              [
+            warnings.push(
+              createWarning(ClippyWarningKind.UNUSED_KEYWORD, [
                 "Missing keywords from ",
                 { text: `${node.name}:`, node: node.id } as ClippyWarningRun,
-                ...runs
-              ]
-            ));
+                ...runs,
+              ])
+            );
           }
         }
       });
@@ -212,8 +222,8 @@ function clippyCheckUnusedKeywords(
 function clippyCheckKeywords(
   topLevelComponents: Map<string, BaseNode[]>,
   topLevelComponentDefns: Map<string, DesignComponentSpec>,
-  warnings: ClippyWarning[]) {
-
+  warnings: ClippyWarning[]
+) {
   // See if there are any missing or duplicate top-level component names.
   for (const topLevelComponentName of topLevelComponentDefns.keys()) {
     if (topLevelComponents.has(topLevelComponentName)) {
@@ -223,31 +233,37 @@ function clippyCheckKeywords(
         // If there's one node that's a COMPONENT or COMPONENT_SET, and everything else is
         // a FRAME or INSTANCE then that's fine because the service scores the components higher.
         let componentCount = 0;
-        components.forEach(node => {
+        components.forEach((node) => {
           if (node.type == "COMPONENT_SET" || node.type == "COMPONENT")
-           componentCount++
+            componentCount++;
         });
         if (componentCount == 0 || componentCount > 1) {
-          warnings.push(createWarning(
-            ClippyWarningKind.DUPLICATE_TOP_LEVEL,
-            [
+          warnings.push(
+            createWarning(ClippyWarningKind.DUPLICATE_TOP_LEVEL, [
               `Multiple nodes named ${topLevelComponentName}, expected just one:`,
-              ...components.filter(figmaNode => figmaNode.type == "COMPONENT_SET" || figmaNode.type == "COMPONENT")
-              .map(figmaNode => { 
-                return { text: topLevelComponentName + " (" + figmaNode.type + ")", node: figmaNode.id } as ClippyWarningRun;
-              })
-            ]
-          ));
+              ...components
+                .filter(
+                  (figmaNode) =>
+                    figmaNode.type == "COMPONENT_SET" ||
+                    figmaNode.type == "COMPONENT"
+                )
+                .map((figmaNode) => {
+                  return {
+                    text: topLevelComponentName + " (" + figmaNode.type + ")",
+                    node: figmaNode.id,
+                  } as ClippyWarningRun;
+                }),
+            ])
+          );
         }
       }
     } else {
       // 2. Warn for missing top level keywords
-      warnings.push(createWarning(
-        ClippyWarningKind.MISSING_TOP_LEVEL,
-        [
-          `No nodes found for ${topLevelComponentName}, but one was expected.`
-        ]
-      ));
+      warnings.push(
+        createWarning(ClippyWarningKind.MISSING_TOP_LEVEL, [
+          `No nodes found for ${topLevelComponentName}, but one was expected.`,
+        ])
+      );
     }
   }
 }
@@ -255,9 +271,13 @@ function clippyCheckKeywords(
 // 4. Warn if a customization with variants does not have a matching node of type COMPONENT_SET
 function clippyCheckVariants(
   topLevelComponentDefns: Map<string, DesignComponentSpec>,
-  warnings: ClippyWarning[]) {
+  warnings: ClippyWarning[]
+) {
   // Recurse through the document and store all COMPONENT_SET nodes into a map.
-  function findComponentSets(node: BaseNode, componentSets: Map<string, ComponentSetNode>) {
+  function findComponentSets(
+    node: BaseNode,
+    componentSets: Map<string, ComponentSetNode>
+  ) {
     if (!node) return;
     if (node.type == "COMPONENT_SET") {
       componentSets.set(node.name, node as ComponentSetNode);
@@ -278,14 +298,13 @@ function clippyCheckVariants(
     let component = topLevelComponentDefns.get(nodeName);
     // Skip root frames because customizations within a root frame are often passed down to
     // customized children, so they don't show up in the root node of Figma.
-    if (!component || component.isRoot)
-      continue;
+    if (!component || component.isRoot) continue;
 
     // `variants` maps a property name to variant names within a node
     let variants: Map<string, Set<string>> = new Map();
-    component.customizations.forEach( c => {
+    component.customizations.forEach((c) => {
       if (c.kind == DesignCustomizationKind.VariantProperty) {
-        let customizationVariant = c as DesignCustomizationVariantProperty
+        let customizationVariant = c as DesignCustomizationVariantProperty;
         if (!variants.has(c.node)) {
           variants.set(c.node, new Set());
         }
@@ -302,41 +321,39 @@ function clippyCheckVariants(
     if (variants.size > 0) {
       variants.forEach((values: Set<string>, property: string) => {
         let propertyValidated = false;
-        componentSets.forEach((componentSet: ComponentSetNode, name: string) => {
-          try {
-            let groupProperties = componentSet.variantGroupProperties
-            let propertyNames = new Set(Object.keys(groupProperties));
+        componentSets.forEach(
+          (componentSet: ComponentSetNode, name: string) => {
+            try {
+              let groupProperties = componentSet.variantGroupProperties;
+              let propertyNames = new Set(Object.keys(groupProperties));
 
-            if (propertyNames.has(property)) {
-              let propertyValues = new Set(groupProperties[property].values);
-              let valuesFound = true;
-              values.forEach( value => {
-                if (!propertyValues.has(value))
-                  valuesFound = false
-              });
-              if (valuesFound)
-                propertyValidated = true;
+              if (propertyNames.has(property)) {
+                let propertyValues = new Set(groupProperties[property].values);
+                let valuesFound = true;
+                values.forEach((value) => {
+                  if (!propertyValues.has(value)) valuesFound = false;
+                });
+                if (valuesFound) propertyValidated = true;
+              }
+            } catch (e) {
+              warnings.push(
+                createWarning(ClippyWarningKind.MISSING_COMPONENT_SET, [
+                  { text: name, node: componentSet.id },
+                  " has an exception. ",
+                  `${e}`,
+                ])
+              );
             }
-          } catch(e) {
-            warnings.push(createWarning(
-              ClippyWarningKind.MISSING_COMPONENT_SET,
-              [
-                { text: name, node: componentSet.id },
-                " has an exception. ",
-                `${e}`
-              ]
-            ));            
+            return !propertyValidated;
           }
-          return !propertyValidated;
-        });
+        );
         // Add a warning if this property was not validated
         if (!propertyValidated)
-          warnings.push(createWarning(
-            ClippyWarningKind.MISSING_COMPONENT_SET,
-            [
-              `${property} is a variant property with possible values [${Array.from(values.values()).join(",")}], but could not be found`
-            ]
-          ));
+          warnings.push(
+            createWarning(ClippyWarningKind.MISSING_COMPONENT_SET, [
+              `${property} is a variant property with possible values [${Array.from(values.values()).join(",")}], but could not be found`,
+            ])
+          );
       });
     }
   }
@@ -347,7 +364,8 @@ function clipyCheckTypeMismatches(
   topLevelComponentDefns: Map<string, DesignComponentSpec>,
   node: BaseNode,
   warnings: ClippyWarning[],
-  insideComponentDefn?: DesignComponentSpec) {
+  insideComponentDefn?: DesignComponentSpec
+) {
   if (!node) return;
   if (topLevelComponentDefns.has(node.name)) {
     insideComponentDefn = topLevelComponentDefns.get(node.name);
@@ -368,40 +386,37 @@ function clipyCheckTypeMismatches(
         case DesignCustomizationKind.Text:
         case DesignCustomizationKind.TextStyle:
           if (node.type != "TEXT") {
-            warnings.push(createWarning(
-              ClippyWarningKind.TYPE_MISMATCH,
-              [
+            warnings.push(
+              createWarning(ClippyWarningKind.TYPE_MISMATCH, [
                 `${customization.node} is a text customization, but`,
                 { text: node.name, node: node.id },
-                `is a ${node.type} instead of a TEXT node.`
-              ]
-            ));
+                `is a ${node.type} instead of a TEXT node.`,
+              ])
+            );
           }
           break;
         case DesignCustomizationKind.ContentReplacement:
           if (node.type != "FRAME") {
-            warnings.push(createWarning(
-              ClippyWarningKind.TYPE_MISMATCH,
-              [
+            warnings.push(
+              createWarning(ClippyWarningKind.TYPE_MISMATCH, [
                 `${customization.node} is a customization that adds children to a FRAME, but`,
                 { text: node.name, node: node.id },
-                `is a ${node.type}.`
-              ]
-            ));
+                `is a ${node.type}.`,
+              ])
+            );
           }
           break;
         case DesignCustomizationKind.Image:
         case DesignCustomizationKind.ImageWithContext:
           // Not sure what the rules are for image. Frames and rectangles seem to work
           if (node.type != "FRAME" && node.type != "RECTANGLE") {
-            warnings.push(createWarning(
-              ClippyWarningKind.TYPE_MISMATCH,
-              [
+            warnings.push(
+              createWarning(ClippyWarningKind.TYPE_MISMATCH, [
                 `${customization.node} is a customization that changes the background fill to a FRAME, but`,
                 { text: node.name, node: node.id },
-                `is a ${node.type}.`
-              ]
-            ));
+                `is a ${node.type}.`,
+              ])
+            );
           }
           break;
         case DesignCustomizationKind.Visibility:
@@ -419,23 +434,16 @@ function clipyCheckTypeMismatches(
   if ((node as any).children) {
     let parent: ChildrenMixin = node as ChildrenMixin;
     for (const child of parent.children) {
-      clipyCheckTypeMismatches(topLevelComponentDefns, child, warnings, insideComponentDefn);
+      clipyCheckTypeMismatches(
+        topLevelComponentDefns,
+        child,
+        warnings,
+        insideComponentDefn
+      );
     }
   }
 }
 
-async function showNode(nodeId: string) {
-  // Listen for node-highlight messages; maybe we can have a "refresh button" to run
-  // clippy again in the future, too?
-  var highlightNode = await figma.getNodeByIdAsync(nodeId);
-  if (highlightNode) {
-    figma.viewport.scrollAndZoomIntoView([highlightNode]);
-    figma.currentPage.selection = [highlightNode as any]; // XXX support multiple pages!
-  } else {
-    console.log(`Error: Can't find node ${nodeId}`);
-  }
-}
-  
 // Parse the document look for various types of warnings
 function clippy(json: DesignDocSpec): ClippyWarning[] {
   // Generated warnings
@@ -455,7 +463,7 @@ function clippy(json: DesignDocSpec): ClippyWarning[] {
     if (!node) return;
     if (topLevelComponentDefns.has(node.name)) {
       // Store this ref in our list of topLevelComponents.
-      let list = topLevelComponents.get(node.name)
+      let list = topLevelComponents.get(node.name);
       if (list) {
         list.push(node);
       } else {
@@ -473,7 +481,11 @@ function clippy(json: DesignDocSpec): ClippyWarning[] {
   populateComponentMaps(figma.root);
 
   // 1. Warn for unused keywords in a top level frame (ClippyWarningKind.UNUSED_KEYWORD)
-  clippyCheckUnusedKeywords(topLevelComponents, topLevelComponentDefns, warnings);
+  clippyCheckUnusedKeywords(
+    topLevelComponents,
+    topLevelComponentDefns,
+    warnings
+  );
 
   // 2. Warn for missing top level keywords (ClippyWarningKind.MISSING_TOP_LEVEL)
   // 3. Warn for duplicated top level keywords (ClippyWarningKind.DUPLICATE_TOP_LEVEL)
@@ -493,10 +505,16 @@ function clippy(json: DesignDocSpec): ClippyWarning[] {
 
 async function clippyRefresh() {
   await figma.loadAllPagesAsync();
-  
+
   // Get the json plugin data from our root node
-  let clippyFile = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json-file');
-  let clippyData = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json');
+  let clippyFile = figma.root.getSharedPluginData(
+    PluginUtils.SHARED_PLUGIN_NAMESPACE,
+    "clippy-json-file"
+  );
+  let clippyData = figma.root.getSharedPluginData(
+    PluginUtils.SHARED_PLUGIN_NAMESPACE,
+    "clippy-json"
+  );
   /*
   var reviver = function(key, value) {
     return value;
@@ -510,20 +528,22 @@ async function clippyRefresh() {
 
     // Check for errors
     errors = clippy(json);
-  } catch(e) {
+  } catch (e) {
     console.log("Could not run clippy: " + e);
   }
 
-  figma.ui.postMessage({ msg: 'clippy', errors, clippyFile });
+  figma.ui.postMessage({ msg: "clippy", errors, clippyFile });
 }
 
 function loadClippy(): DesignDocSpec | null {
   // Get the json plugin data from our root node
-  let clippyData = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json');
-  if (!clippyData)
-    return null;
+  let clippyData = figma.root.getSharedPluginData(
+    PluginUtils.SHARED_PLUGIN_NAMESPACE,
+    "clippy-json"
+  );
+  if (!clippyData) return null;
 
-    /*
+  /*
   var reviver = function(key, value) {
     return value;
   };
@@ -531,7 +551,7 @@ function loadClippy(): DesignDocSpec | null {
 
   try {
     return JSON.parse(clippyData);
-  } catch(e) {
+  } catch (e) {
     console.log("Error parsing clippy JSON: " + e);
   }
   return null;
@@ -551,18 +571,30 @@ if (figma.command === "sync") {
     }
 
     // Set the data into the plugin data, or clear it.
-    node.setSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-reactions', reactionData == null ? "" : JSON.stringify(reactionData));
+    node.setSharedPluginData(
+      PluginUtils.SHARED_PLUGIN_NAMESPACE,
+      "vsw-reactions",
+      reactionData == null ? "" : JSON.stringify(reactionData)
+    );
 
     // Pull out other prototyping properties that aren't available in the REST API.
-    if (node.type == "FRAME" || node.type == "COMPONENT" || node.type == "INSTANCE") {
-      node.setSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-frame-extras', JSON.stringify({
-        numberOfFixedChildren: node.numberOfFixedChildren,
-        overlayPositionType: node.overlayPositionType,
-        overlayBackground: node.overlayBackground,
-        overlayBackgroundInteraction: node.overlayBackgroundInteraction,
-        overflowDirection: node.overflowDirection,
-        layoutMode: node.layoutMode,
-      }));
+    if (
+      node.type == "FRAME" ||
+      node.type == "COMPONENT" ||
+      node.type == "INSTANCE"
+    ) {
+      node.setSharedPluginData(
+        PluginUtils.SHARED_PLUGIN_NAMESPACE,
+        "vsw-frame-extras",
+        JSON.stringify({
+          numberOfFixedChildren: node.numberOfFixedChildren,
+          overlayPositionType: node.overlayPositionType,
+          overlayBackground: node.overlayBackground,
+          overlayBackgroundInteraction: node.overlayBackgroundInteraction,
+          overflowDirection: node.overflowDirection,
+          layoutMode: node.layoutMode,
+        })
+      );
     }
 
     // Recurse into any children.
@@ -589,18 +621,34 @@ if (figma.command === "sync") {
   }
   performSync();
 }
-else if (figma.command === "move-plugin-data") {
+if (figma.command === "localization") {
+  figma.showUI(__html__, { width: 800, height: 600 });
+  figma.ui.postMessage({
+    msg: "localization",
+  });
+  figma.ui.onmessage = (msg) => {
+    if (msg.msg == "generate-localization-data") {
+      Localization.generateLocalizationData(msg.contents);
+    } else if (msg.msg == "rename-localization-data") {
+      Localization.updateStringResName(msg.item);
+    } else if (msg.msg === "show-node") {
+      PluginUtils.showNode(msg.node);
+    } else if (msg.msg === "close-plugin") {
+      figma.closePlugin();
+    }
+  };
+} else if (figma.command === "move-plugin-data") {
   function movePluginDataWithKey(node: BaseNode, key: string) {
     // Read the private plugin data, write to shared
     let data = node.getPluginData(key);
-    node.setSharedPluginData(SHARED_PLUGIN_NAMESPACE, key, data);
+    node.setSharedPluginData(PluginUtils.SHARED_PLUGIN_NAMESPACE, key, data);
   }
   // If we were invoked with the "move plugin data" command then move all the plugin data
   // from the private location to the shared location, then quit.
   function movePluginData(node: SceneNode) {
-    movePluginDataWithKey(node, 'vsw-reactions');
-    movePluginDataWithKey(node, 'vsw-extended-text-layout');
-    movePluginDataWithKey(node, 'vsw-frame-extras');
+    movePluginDataWithKey(node, "vsw-reactions");
+    movePluginDataWithKey(node, "vsw-extended-text-layout");
+    movePluginDataWithKey(node, "vsw-frame-extras");
 
     // Recurse into any children.
     let maybeParent = node as ChildrenMixin;
@@ -613,10 +661,10 @@ else if (figma.command === "move-plugin-data") {
 
   async function performMove() {
     await figma.loadAllPagesAsync();
-      
+
     // Move the root level data first
-    movePluginDataWithKey(figma.root, 'clippy-json-file');
-    movePluginDataWithKey(figma.root, 'clippy-json');
+    movePluginDataWithKey(figma.root, "clippy-json-file");
+    movePluginDataWithKey(figma.root, "clippy-json");
 
     // We want to visit every node; the document and page nodes can't have any reaction
     // data.
@@ -633,7 +681,7 @@ else if (figma.command === "move-plugin-data") {
 } else if (figma.command == "meters") {
   figma.showUI(__html__, { width: 400, height: 400 });
   figma.ui.postMessage({
-    msg: 'meters',
+    msg: "meters",
   });
 
   function clamp(num: number, min: number, max: number): number {
@@ -646,11 +694,11 @@ else if (figma.command === "move-plugin-data") {
   }
 
   function radiansToDegrees(radians: number) {
-    return radians * 180 / Math.PI;
+    return (radians * 180) / Math.PI;
   }
 
   function degreesToRadians(degrees: number) {
-    return degrees * Math.PI / 180;
+    return (degrees * Math.PI) / 180;
   }
 
   function transformMultiply(m: Transform, n: Transform): Transform {
@@ -658,12 +706,12 @@ else if (figma.command === "move-plugin-data") {
       [
         m[0][0] * n[0][0] + m[0][1] * n[1][0],
         m[0][0] * n[0][1] + m[0][1] * n[1][1],
-        m[0][0] * n[0][2] + m[0][1] * n[1][2] + m[0][2]
+        m[0][0] * n[0][2] + m[0][1] * n[1][2] + m[0][2],
       ],
       [
         m[1][0] * n[0][0] + m[1][1] * n[1][0],
         m[1][0] * n[0][1] + m[1][1] * n[1][1],
-        m[1][0] * n[0][2] + m[1][1] * n[1][2] + m[1][2]
+        m[1][0] * n[0][2] + m[1][1] * n[1][2] + m[1][2],
       ],
     ];
   }
@@ -671,18 +719,18 @@ else if (figma.command === "move-plugin-data") {
   function moveTransform(x: number, y: number): Transform {
     return [
       [1, 0, x],
-      [0, 1, y]
-    ]
+      [0, 1, y],
+    ];
   }
 
   function rotateTransform(angleRadians: number): Transform {
     return [
       [Math.cos(angleRadians), Math.sin(angleRadians), 0],
-      [-Math.sin(angleRadians), Math.cos(angleRadians), 0]
-    ]
+      [-Math.sin(angleRadians), Math.cos(angleRadians), 0],
+    ];
   }
 
-  function deltaTransformPoint(transform: Transform, point: Vector)  {
+  function deltaTransformPoint(transform: Transform, point: Vector) {
     var x = point.x * transform[0][0] + point.y * transform[0][1];
     var y = point.x * transform[1][0] + point.y * transform[1][1];
     return { x, y };
@@ -690,7 +738,7 @@ else if (figma.command === "move-plugin-data") {
 
   // Hypotenuse of right triangle with sides x and y
   function hypot(x: number, y: number): number {
-    return Math.sqrt(x * x + y * y)
+    return Math.sqrt(x * x + y * y);
   }
 
   function decomposeTransform(t: Transform) {
@@ -703,51 +751,51 @@ else if (figma.command === "move-plugin-data") {
     result.translateY = t[1][2];
 
     // Compute scaling factors.
-    result.scaleX = hypot(row0x, row0y)
-    result.scaleY = hypot(row1x, row1y)
+    result.scaleX = hypot(row0x, row0y);
+    result.scaleY = hypot(row1x, row1y);
 
     // If determinant is negative, one axis was flipped.
-    const determinant = row0x * row1y - row0y * row1x
+    const determinant = row0x * row1y - row0y * row1x;
     if (determinant < 0) {
-        // Flip axis with minimum unit vector dot product.
-        if (row0x < row1y) result.scaleX = -result.scaleX 
-        else result.scaleY = -result.scaleY
+      // Flip axis with minimum unit vector dot product.
+      if (row0x < row1y) result.scaleX = -result.scaleX;
+      else result.scaleY = -result.scaleY;
     }
 
     // Renormalize matrix to remove scale.
     if (result.scaleX != 1) {
-        row0x *= 1 / result.scaleX
-        row0y *= 1 / result.scaleX
+      row0x *= 1 / result.scaleX;
+      row0y *= 1 / result.scaleX;
     }
     if (result.scaleY != 1) {
-        row1x *= 1 / result.scaleY
-        row1y *= 1 / result.scaleY
+      row1x *= 1 / result.scaleY;
+      row1y *= 1 / result.scaleY;
     }
 
     // Compute rotation and renormalize matrix.
-    result.angle = Math.atan2(row0y, row0x)
+    result.angle = Math.atan2(row0y, row0x);
 
     if (result.angle != 0) {
-        // Rotate(-angle) = [cos(angle), sin(angle), -sin(angle), cos(angle)]
-        //                = [row0x, -row0y, row0y, row0x]
-        // Thanks to the normalization above.
-        const sn = -row0y
-        const cs = row0x
-        const m11 = row0x
-        const m12 = row0y
-        const m21 = row1x
-        const m22 = row1y
+      // Rotate(-angle) = [cos(angle), sin(angle), -sin(angle), cos(angle)]
+      //                = [row0x, -row0y, row0y, row0x]
+      // Thanks to the normalization above.
+      const sn = -row0y;
+      const cs = row0x;
+      const m11 = row0x;
+      const m12 = row0y;
+      const m21 = row1x;
+      const m22 = row1y;
 
-        row0x = cs * m11 + sn * m21
-        row0y = cs * m12 + sn * m22
-        row1x = -sn * m11 + cs * m21
-        row1y = -sn * m12 + cs * m22
+      row0x = cs * m11 + sn * m21;
+      row0y = cs * m12 + sn * m22;
+      row1x = -sn * m11 + cs * m21;
+      row1y = -sn * m12 + cs * m22;
     }
 
-    result.m11 = row0x
-    result.m12 = row0y
-    result.m21 = row1x
-    result.m22 = row1y
+    result.m11 = row0x;
+    result.m12 = row0y;
+    result.m21 = row1x;
+    result.m22 = row1y;
 
     // Convert into degrees because our rotation functions expect it.
     result.angle = radiansToDegrees(result.angle);
@@ -757,20 +805,27 @@ else if (figma.command === "move-plugin-data") {
     const py = deltaTransformPoint(t, { x: 1, y: 0 });
 
     // calculate skew
-    result.skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
-    result.skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
+    result.skewX = (180 / Math.PI) * Math.atan2(px.y, px.x) - 90;
+    result.skewY = (180 / Math.PI) * Math.atan2(py.y, py.x);
 
-    return result
+    return result;
   }
 
   function getMeterData(node: SceneNode) {
-    let meterDataStr = node.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-meter-data');
-    return (meterDataStr && meterDataStr.length) ? JSON.parse(meterDataStr) : {};
+    let meterDataStr = node.getSharedPluginData(
+      PluginUtils.SHARED_PLUGIN_NAMESPACE,
+      "vsw-meter-data"
+    );
+    return meterDataStr && meterDataStr.length ? JSON.parse(meterDataStr) : {};
   }
 
   function saveMeterData(meterData: any) {
     let node = figma.currentPage.selection[0];
-    node.setSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'vsw-meter-data', JSON.stringify(meterData));
+    node.setSharedPluginData(
+      PluginUtils.SHARED_PLUGIN_NAMESPACE,
+      "vsw-meter-data",
+      JSON.stringify(meterData)
+    );
   }
 
   function onSelectionChangeMeters() {
@@ -778,7 +833,7 @@ else if (figma.command === "move-plugin-data") {
 
     // We don't support multiple selections.
     if (!selection || selection.length != 1 || !selection[0]) {
-      figma.ui.postMessage({ msg: 'meters-selection-cleared' });
+      figma.ui.postMessage({ msg: "meters-selection-cleared" });
       return;
     }
 
@@ -790,7 +845,9 @@ else if (figma.command === "move-plugin-data") {
 
     // Get angle/arc data if this is an ellipse
     if (node.type == "ELLIPSE")
-      ellipseAngle = radiansToDegrees((node as EllipseNode).arcData.endingAngle);
+      ellipseAngle = radiansToDegrees(
+        (node as EllipseNode).arcData.endingAngle
+      );
 
     // Get rotation data if this is any type of node. Case to FrameNode in order to
     // access the `rotation` field, which works even for other types of nodes
@@ -800,10 +857,10 @@ else if (figma.command === "move-plugin-data") {
       // Calculate current progress bar position based on node position and size
       if (meterData.progressMarkerData) {
         const { startX = 0, endX = 0 } = meterData.progressMarkerData;
-        progress = (node.x - startX) / (endX - startX) * 100;
+        progress = ((node.x - startX) / (endX - startX)) * 100;
       } else if (meterData.progressBarData) {
         const { endX = 0 } = meterData.progressBarData;
-        progress = node.width / endX * 100;
+        progress = (node.width / endX) * 100;
       }
     }
 
@@ -813,14 +870,14 @@ else if (figma.command === "move-plugin-data") {
     let parent = node.parent as FrameNode;
 
     figma.ui.postMessage({
-      msg: 'meters-selection',
+      msg: "meters-selection",
       nodeType: node.type,
       parentType: parent.type,
       parentSize: { width: parent.width, height: parent.height },
       meterData,
       ellipseAngle,
       rotation,
-      progress
+      progress,
     });
   }
 
@@ -850,8 +907,7 @@ else if (figma.command === "move-plugin-data") {
     let startAngle = msg.start;
     let endAngle = msg.end;
     let value = percentToValue(msg.value, startAngle, endAngle);
-    if (msg.discrete)
-      value = value - (value % msg.discreteValue);
+    if (msg.discrete) value = value - (value % msg.discreteValue);
     value = degreesToRadians(value);
 
     let eNode = figma.currentPage.selection[0] as EllipseNode;
@@ -859,7 +915,7 @@ else if (figma.command === "move-plugin-data") {
       startingAngle: degreesToRadians(startAngle),
       endingAngle: value,
       innerRadius: eNode.arcData.innerRadius,
-    }
+    };
 
     let arcData = {
       enabled: msg.enabled,
@@ -868,7 +924,7 @@ else if (figma.command === "move-plugin-data") {
       discrete: msg.discrete,
       discreteValue: msg.discreteValue,
       cornerRadius: eNode.cornerRadius,
-    }
+    };
 
     let meterData: any = {};
     meterData.arcData = arcData;
@@ -883,8 +939,7 @@ else if (figma.command === "move-plugin-data") {
     let startAngle = msg.start;
     let endAngle = msg.end;
     let rotation = percentToValue(msg.value, startAngle, endAngle);
-    if (msg.discrete)
-      rotation = rotation - (rotation % msg.discreteValue);
+    if (msg.discrete) rotation = rotation - (rotation % msg.discreteValue);
     let a = degreesToRadians(rotation);
 
     // Calculate the x and y offset of the top left corner from its parent when the
@@ -893,21 +948,26 @@ else if (figma.command === "move-plugin-data") {
     let node = figma.currentPage.selection[0] as FrameNode;
     let r = Math.sqrt(node.width * node.width + node.height * node.height) / 2;
     let topLeftAngle = radiansToDegrees(Math.atan(node.height / -node.width));
-    let angleFromTopLeft = degreesToRadians(node.rotation) + degreesToRadians(topLeftAngle);
+    let angleFromTopLeft =
+      degreesToRadians(node.rotation) + degreesToRadians(topLeftAngle);
     let cos = Math.abs(Math.cos(angleFromTopLeft));
     let sin = Math.abs(Math.sin(angleFromTopLeft));
 
     let xOffset = node.x - node.width / 2;
-    if (node.rotation >= -90 - topLeftAngle && node.rotation < 90 - topLeftAngle)
+    if (
+      node.rotation >= -90 - topLeftAngle &&
+      node.rotation < 90 - topLeftAngle
+    )
       xOffset += r * cos;
-    else
-      xOffset -= r * cos;
+    else xOffset -= r * cos;
 
     let yOffset = node.y - node.height / 2;
-    if (node.rotation <= -topLeftAngle && node.rotation >= -topLeftAngle - 180) {
+    if (
+      node.rotation <= -topLeftAngle &&
+      node.rotation >= -topLeftAngle - 180
+    ) {
       yOffset += r * sin;
-    }
-    else {
+    } else {
       yOffset -= r * sin;
     }
 
@@ -929,7 +989,7 @@ else if (figma.command === "move-plugin-data") {
       end: msg.end,
       discrete: msg.discrete,
       discreteValue: msg.discreteValue,
-    }
+    };
 
     let meterData: any = {};
     meterData.rotationData = rotationData;
@@ -941,8 +1001,8 @@ else if (figma.command === "move-plugin-data") {
       x: r.x,
       y: r.y,
       width: r.height,
-      height: r.width
-    }
+      height: r.width,
+    };
   }
 
   function progressChanged(msg: any, progressMarker: boolean) {
@@ -962,8 +1022,8 @@ else if (figma.command === "move-plugin-data") {
       discrete: msg.discrete,
       discreteValue: msg.discreteValue,
       vertical: msg.vertical,
-    }
-    
+    };
+
     let meterData: any = {};
     if (progressMarker) {
       // The progress marker means we don't resize the node; we just move it along the x axis
@@ -973,7 +1033,7 @@ else if (figma.command === "move-plugin-data") {
         const endY = -node.height / 2;
         const moveY = percentToValue(value, startY, endY);
         node.y = moveY;
-  
+
         barData.startY = startY;
         barData.endY = endY;
       } else {
@@ -981,14 +1041,13 @@ else if (figma.command === "move-plugin-data") {
         const endX = parent.width - node.width / 2;
         const moveX = percentToValue(value, startX, endX);
         node.x = moveX;
-  
+
         barData.startX = startX;
         barData.endX = endX;
       }
 
       meterData.progressMarkerData = barData;
-    }
-    else {
+    } else {
       // Normal progress bar mode means we resize the progress bar between a width of 0.01
       // and a max size based on the parent width if horizontal or height if vertical
       if (msg.vertical) {
@@ -1012,51 +1071,67 @@ else if (figma.command === "move-plugin-data") {
   async function initMeters() {
     await figma.loadAllPagesAsync();
     onSelectionChangeMeters();
-    figma.on('selectionchange', onSelectionChangeMeters);
-    figma.on('documentchange', onDocumentChangedMeters);
-    figma.ui.onmessage = msg => {
-      if (msg.msg == 'arc-changed') {
+    figma.on("selectionchange", onSelectionChangeMeters);
+    figma.on("documentchange", onDocumentChangedMeters);
+    figma.ui.onmessage = (msg) => {
+      if (msg.msg == "arc-changed") {
         arcChanged(msg);
-      } else if (msg.msg == 'rotation-changed') {
+      } else if (msg.msg == "rotation-changed") {
         rotationChanged(msg);
-      } else if (msg.msg == 'bar-changed') {
+      } else if (msg.msg == "bar-changed") {
         progressChanged(msg, false);
-      } else if (msg.msg == 'marker-changed') {
+      } else if (msg.msg == "marker-changed") {
         progressChanged(msg, true);
       }
-    }
+    };
   }
   initMeters();
 } else if (figma.command === "clippy") {
   figma.showUI(__html__, { width: 400, height: 600 });
   clippyRefresh();
 
-  figma.ui.onmessage = msg => {
+  figma.ui.onmessage = (msg) => {
     // Listen for node-highlight messages; maybe we can have a "refresh button" to run
     // clippy again in the future, too?
-    if (msg.msg === 'show-node')
-      showNode(msg.node);
+    if (msg.msg === "show-node") PluginUtils.showNode(msg.node);
   };
 } else if (figma.command == "check-keywords") {
   function refresh() {
     // Get the json plugin data from our root node
-    let file = figma.root.getSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json-file');
+    let file = figma.root.getSharedPluginData(
+      PluginUtils.SHARED_PLUGIN_NAMESPACE,
+      "clippy-json-file"
+    );
     let clippyData = loadClippy();
     let name = clippyData ? clippyData.name : null;
     console.log("Refresh " + file);
     let version = clippyData ? clippyData.version : null;
-    figma.ui.postMessage({ msg: 'check-keywords', file, name, version });
+    figma.ui.postMessage({ msg: "check-keywords", file, name, version });
   }
 
-    // Once a file has been selected, upload its contents to our plugin data
-  figma.ui.onmessage = msg => {
-    if (msg.msg == 'clippy-file-selected') {
-      figma.root.setSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json-file', msg.fileName);
-      figma.root.setSharedPluginData(SHARED_PLUGIN_NAMESPACE, 'clippy-json', msg.contents);
-      figma.notify("Plugin data from " + msg.fileName + " uploaded: " + msg.contents.length + " bytes");
+  // Once a file has been selected, upload its contents to our plugin data
+  figma.ui.onmessage = (msg) => {
+    if (msg.msg == "clippy-file-selected") {
+      figma.root.setSharedPluginData(
+        PluginUtils.SHARED_PLUGIN_NAMESPACE,
+        "clippy-json-file",
+        msg.fileName
+      );
+      figma.root.setSharedPluginData(
+        PluginUtils.SHARED_PLUGIN_NAMESPACE,
+        "clippy-json",
+        msg.contents
+      );
+      figma.notify(
+        "Plugin data from " +
+          msg.fileName +
+          " uploaded: " +
+          msg.contents.length +
+          " bytes"
+      );
       refresh();
     }
-  }
+  };
 
   figma.showUI(__html__, { width: 400, height: 300 });
   refresh();

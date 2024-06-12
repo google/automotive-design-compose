@@ -20,6 +20,10 @@ import static com.android.designcompose.TestUtilsKt.testOnlyTriggerLiveUpdate;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+
 public class TestUtils {
 
     /**
@@ -38,5 +42,18 @@ public class TestUtils {
             throw new RuntimeException("This test requires a Figma Access Token");
 
         testOnlyTriggerLiveUpdate(actualFigmaToken);
+    }
+
+    private static void clearInteractionStates() {
+        InteractionStateManager.INSTANCE.getStates().clear();
+    }
+
+    public static class ClearStateTestRule implements TestRule {
+
+        @Override
+        public Statement apply(Statement base, Description description) {
+            clearInteractionStates();
+            return base;
+        }
     }
 }

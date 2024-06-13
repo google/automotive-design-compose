@@ -22,10 +22,8 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.designcompose.DesignSettings
-import com.android.designcompose.testapp.common.interFont
+import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.InteractionTest
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,11 +31,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class InteractionTests {
     @get:Rule val composeTestRule = createComposeRule()
-
-    @Before
-    fun setUp() {
-        DesignSettings.addFontFamily("Inter", interFont)
-    }
+    @get:Rule val interFontRule = InterFontTestRule()
 
     @Test
     // Exercises the Timeout Triggers of the Interaction Doc

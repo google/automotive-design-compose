@@ -49,7 +49,7 @@ jobs:
           version: "26.1"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
+        uses: gradle/actions/setup-gradle@d9336dac04dea2507a617466bc058a3def92b18b # v3.4.0
 
       - name: Download screenshots from base branch
         uses: dawidd6/action-download-artifact@deb3bb83256a78589fef6a7b942e5f2573ad7c13 # v5

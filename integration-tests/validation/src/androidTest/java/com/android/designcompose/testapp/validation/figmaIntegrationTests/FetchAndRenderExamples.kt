@@ -21,12 +21,11 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.test.assertRenderStatus
-import com.android.designcompose.testapp.common.interFont
+import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import org.junit.Before
 import org.junit.Rule
@@ -53,12 +52,12 @@ class FetchAndRenderExamples(
     private val fileClass: String
 ) {
     @get:Rule val composeTestRule = createComposeRule()
+    @get:Rule val interFontRule = InterFontTestRule()
 
     @Before
     fun setUp() {
         // Clear any previously cached files
         InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
-        DesignSettings.addFontFamily("Inter", interFont)
     }
 
     companion object {

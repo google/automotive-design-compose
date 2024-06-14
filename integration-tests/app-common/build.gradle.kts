@@ -23,6 +23,7 @@ plugins {
 android {
     namespace = "com.android.designcompose.testapp.common"
     compileSdk = libs.versions.compileSdk.get().toInt()
+    testFixtures { enable = true }
 
     defaultConfig {
         minSdk = libs.versions.appMinSdk.get().toInt()
@@ -43,4 +44,7 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui.text)
+
+    testFixturesImplementation(libs.designcompose)
+    testFixturesImplementation(libs.androidx.test.ext.junit)
 }

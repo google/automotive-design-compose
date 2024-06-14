@@ -10,8 +10,7 @@ rust-version = "1.68"
 [lib]
 crate-type = ["rlib", "cdylib"]
 
-[build-dependencies]
-prost-build.workspace = true
+
 
 [dependencies]
 dc_proto = {path = "../dc_proto"}

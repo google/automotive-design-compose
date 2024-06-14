@@ -19,12 +19,11 @@ package com.android.designcompose
 import android.util.Log
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import androidx.tracing.trace
-import com.android.designcompose.layout.proto.Layout
-import com.android.designcompose.layout.proto.LayoutChangedResponse
-import com.android.designcompose.layout.proto.LayoutNode
-import com.android.designcompose.layout.proto.LayoutStyle
-import com.android.designcompose.layout.proto.layoutNode
-import com.android.designcompose.layout.proto.layoutNodeList
+import com.android.designcompose.proto.android_interface.LayoutChangedResponse
+import com.android.designcompose.proto.android_interface.layoutNodeList
+import com.android.designcompose.proto.design.layout.LayoutNode
+import com.android.designcompose.proto.design.layout.LayoutStyle
+import com.android.designcompose.proto.design.layout.layoutNode
 import com.android.designcompose.proto.intoProto
 import com.android.designcompose.proto.intoSerde
 import com.android.designcompose.serdegen.Layout as SerdegenLayout
@@ -42,7 +41,7 @@ internal object LayoutManager {
     private var performLayoutComputation: Boolean = false
     private var density: Float = 1F
     private var layoutNodes: ArrayList<LayoutNode> = arrayListOf()
-    private var layoutCache: HashMap<Int, Layout> = HashMap()
+    private var layoutCache: HashMap<Int, LayoutChangedResponse.Layout> = HashMap()
     private var layoutStateCache: HashMap<Int, Int> = HashMap()
 
     init {

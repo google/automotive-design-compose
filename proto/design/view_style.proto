@@ -12,7 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod layout_node;
-mod layout_style;
-mod styles;
-mod types;
+syntax = "proto3";
+
+package com.android.designcompose.proto.design;
+
+import "design/layout/layout_style.proto";
+import "design/node_style.proto";
+
+option java_multiple_files = true;
+
+// Collects the Layout and Node styles for a View
+message ViewStyle {
+  layout.LayoutStyle layout_style = 1;
+  NodeStyle node_style = 2;
+}

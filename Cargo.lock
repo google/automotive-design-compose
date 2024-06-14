@@ -323,6 +323,7 @@ name = "dc_proto"
 version = "0.1.0"
 dependencies = [
  "prost",
+ "prost-build",
  "thiserror",
 ]
 
@@ -399,6 +400,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "clap",
+ "dc_proto",
  "euclid",
  "image",
  "layout",
@@ -623,7 +625,6 @@ dependencies = [
  "dc_proto",
  "log",
  "prost",
- "prost-build",
  "serde",
  "taffy",
  "thiserror",
@@ -887,9 +888,9 @@ dependencies = [
 
 [[package]]
 name = "prost-build"
-version = "0.12.5"
+version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d61c3774fea1a0ebade545fd7d929573e3166c7844c1e4958ec910f30cd3d11e"
+checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
 dependencies = [
  "bytes",
  "heck 0.5.0",
@@ -921,9 +922,9 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.12.5"
+version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed8a9cfaf5493f754077f20e83ae7dfecf340edadb548ef9b9b6a189dbf44365"
+checksum = "9091c90b0a32608e984ff2fa4091273cbdd755d54935c51d520887f4a1dbd5b0"
 dependencies = [
  "prost",
 ]

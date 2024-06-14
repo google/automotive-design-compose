@@ -12,7 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod layout_node;
-mod layout_style;
-mod styles;
-mod types;
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.interaction;
+
+option java_multiple_files = true;
+
+// Determines how a UI element responds to user interactions like taps, clicks,
+// and hovers. It can be set to "Auto" for default behavior, "None" to disable
+// interactions, or "Box-None" to only detect events within the element's
+// bounding box.
+enum PointerEvents {
+  POINTER_EVENTS_UNSPECIFIED = 0;
+  POINTER_EVENTS_AUTO = 1;
+  POINTER_EVENTS_NONE = 2;
+  POINTER_EVENTS_INHERIT = 3;
+}

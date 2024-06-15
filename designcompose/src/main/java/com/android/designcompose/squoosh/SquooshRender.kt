@@ -39,6 +39,8 @@ import com.android.designcompose.asComposeTransform
 import com.android.designcompose.getBrush
 import com.android.designcompose.getBrushFunction
 import com.android.designcompose.isMask
+import com.android.designcompose.pointsAsDp
+import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
@@ -123,13 +125,25 @@ internal fun Modifier.squooshRender(
                         childRenderSelector.selectedRenderChild = null
                     }
 
+                    val style = node.style
+                    val nodeWidth =
+                        if (style.layout_style.width is Dimension.Points)
+                            style.layout_style.width.pointsAsDp(density).value
+                        else style.node_style.node_size.width
+                    val nodeHeight =
+                        if (style.layout_style.height is Dimension.Points)
+                            style.layout_style.height.pointsAsDp(density).value
+                        else style.node_style.node_size.height
+
                     // If we have masked children, then we need to do create a layer for the parent
                     // and have the child draw into a layer that's blended with DstIn.
                     //
                     // XXX: We could take the smallest of the mask size and common parent size, and
                     //      then transform children appropriately.
                     val nodeSize =
-                        Size(computedLayout.width * density, computedLayout.height * density)
+                        //Size(computedLayout.width * density, computedLayout.height * density)
+                        Size(nodeWidth, nodeHeight)
+
 
                     squooshShapeRender(
                         drawContext,

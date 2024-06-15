@@ -19,6 +19,7 @@ package com.android.designcompose.squoosh
 import android.util.Log
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.asBuilder
+import com.android.designcompose.identityMatrixAsList
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.Transition
@@ -82,6 +83,37 @@ internal class SquooshAnimatedLayout(
                 toLayout.left * value + fromLayout.left * iv,
                 toLayout.top * value + fromLayout.top * iv
             )
+    }
+}
+
+internal class SquooshAnimatedRotation(
+    private val target: SquooshResolvedNode,
+    from: SquooshResolvedNode,
+    to: SquooshResolvedNode,
+) : SquooshAnimatedItem {
+    private var fromTransform: List<Float> = if (from.style.node_style.transform.isPresent) {
+        from.style.node_style.transform.get()
+    } else {
+        identityMatrixAsList()
+    }
+    private var toTransform: List<Float> = if (to.style.node_style.transform.isPresent) {
+        to.style.node_style.transform.get()
+    } else {
+        identityMatrixAsList()
+    }
+
+    init {
+        println("### From $fromTransform")
+        println("### To $toTransform")
+    }
+    override fun apply(value: Float) {
+        val iv = 1.0f - value
+
+        val transform: MutableList<Float> = MutableList(16) { 0F }
+        for (i in 0..15) {
+            transform[i] = toTransform[i] * value + fromTransform[i] * iv
+        }
+        target.style = target.style.withNodeStyle { s -> s.transform = Optional.of(transform) }
     }
 }
 
@@ -252,7 +284,7 @@ private fun mergeRecursive(
     from: SquooshResolvedNode,
     to: SquooshResolvedNode,
     parent: SquooshResolvedNode?,
-    anims: ArrayList<SquooshAnimatedItem>
+    anims: ArrayList<SquooshAnimatedItem>,
 ): SquooshResolvedNode {
     // We have an exact match on `from` and `to`, so we can construct various animation controls to
     // go between them in a third node. Then we need to inspect the children and match them on name.
@@ -328,6 +360,8 @@ private fun mergeRecursive(
 
         // Now see what kind of animations we can make; starting with a layout animation.
         anims.add(SquooshAnimatedLayout(n, from, to))
+
+        anims.add(SquooshAnimatedRotation(n, from, to))
 
         // If they're both arcs, then they might need an arc animation.
         // XXX: Refactor this so we don't inspect every type right here.

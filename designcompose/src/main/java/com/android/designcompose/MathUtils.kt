@@ -43,6 +43,12 @@ internal fun Optional<List<Float>>.decompose(density: Float): DecomposedMatrix2D
     return matrix?.decompose() ?: DecomposedMatrix2D()
 }
 
+internal fun identityMatrixAsList(): List<Float> {
+    return listOf(
+        1F, 0F, 0F, 0F, 0F, 1F, 0F, 0F, 0F, 0F, 1F, 0F, 0F, 0F, 0F, 1F
+    )
+}
+
 // Decompose a matrix into its translation, angle, and scale parts
 internal fun Matrix.decompose(): DecomposedMatrix2D {
     val result = DecomposedMatrix2D()

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use dc_bundle::definition::layout::FlexWrap;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
 pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
@@ -47,9 +48,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
-    tracer
-        .trace_type::<crate::toolkit_layout_style::FlexWrap>(&samples)
-        .expect("couldn't trace FlexWrap");
+    tracer.trace_type::<FlexWrap>(&samples).expect("couldn't trace FlexWrap");
     tracer
         .trace_type::<crate::toolkit_font_style::FontStyle>(&samples)
         .expect("couldn't trace FontStyle");

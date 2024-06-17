@@ -15,6 +15,7 @@
 //! `toolkit_style` contains all of the style-related types that `toolkit_schema::View`
 //! uses.
 
+use dc_bundle::definition::layout::FlexWrap;
 use layout::layout_style::LayoutStyle;
 use layout::types::Size;
 use serde::{Deserialize, Serialize};
@@ -23,7 +24,7 @@ use std::collections::HashMap;
 use crate::{
     color::Color,
     toolkit_font_style::{FontStretch, FontStyle, FontWeight},
-    toolkit_layout_style::{Display, FlexWrap, LayoutSizing, Number, Overflow},
+    toolkit_layout_style::{Display, LayoutSizing, Number, Overflow},
     toolkit_schema::{ColorOrVar, NumOrVar},
 };
 
@@ -556,7 +557,7 @@ impl Default for NodeStyle {
             backdrop_filter: Vec::new(),
             blend_mode: BlendMode::default(),
             display_type: Display::default(),
-            flex_wrap: FlexWrap::default(),
+            flex_wrap: FlexWrap::NoWrap,
             grid_layout: None,
             grid_columns_rows: 0,
             grid_adaptive_min_size: 1,

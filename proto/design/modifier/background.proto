@@ -1,0 +1,95 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.modifier;
+
+import "design/element/color.proto";
+import "design/modifier/filter.proto";
+import "design/modifier/matrix_transform.proto";
+
+option java_multiple_files = true;
+
+// The background of a node
+message Background {
+  // A single color stop within a gradient.
+  message ColorStop {
+    float position = 1;
+    element.Color color = 2;
+  }
+
+  // A type of gradient where the colors transition smoothly along a straight
+  // line.
+  message LinearGradient {
+    float start_x = 1;
+    float start_y = 2;
+    float end_x = 3;
+    float end_y = 4;
+    repeated ColorStop color_stops = 5;
+  }
+
+  // A type of gradient where the colors transition along a
+  // circular path defined by a center point, an angle, and a scale.
+  message AngularGradient {
+    float center_x = 1;
+    float center_y = 2;
+    float angle = 3;
+    float scale = 4;
+    repeated ColorStop color_stops = 5;
+  }
+
+  // A type of gradient where the colors transition smoothly from a central
+  // point outwards in a circular pattern.
+  message RadialGradient {
+    float center_x = 1;
+    float center_y = 2;
+    float angle = 3;
+    float scale = 4;
+    repeated ColorStop color_stops = 5;
+  }
+  // Defines how an image background is scaled to fit the background area.
+  enum ScaleMode {
+    SCALE_MODE_UNSPECIFIED = 0;
+    SCALE_MODE_FILL = 1;
+    SCALE_MODE_FIT = 2;
+    SCALE_MODE_TILE = 3;
+    SCALE_MODE_STRETCH = 4;
+  }
+
+  // References an image via the key and the modifiers that will be used with it
+  message Image {
+    // Instead of keeping decoded images in ViewStyle objects, we keep keys to
+    // the images in the ImageContext and then fetch decoded images when
+    // rendering. This means we can serialize the whole ImageContext, and always
+    // get the right image when we render.
+    string key = 1;
+    repeated FilterOp filters = 2;
+    AffineTransform transform = 3;
+    ScaleMode scale_mode = 4;
+    float opacity = 5;
+  }
+
+  oneof background {
+    bool none = 1;
+    element.Color solid = 2;
+    LinearGradient linear_gradient = 3;
+    AngularGradient angular_gradient = 4;
+    RadialGradient radial_gradient = 5;
+    Image image = 6;
+    // Clear all the pixels underneath, used for hole-punch compositing.
+    bool clear = 7;
+    // DiamondGradient support possibly in the future.
+  }
+}

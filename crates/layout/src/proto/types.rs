@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::dimension_proto::Dimension;
-use super::{DimensionProto, FloatSize};
-use crate::types;
+use dc_proto::design::element::{dimension_proto::Dimension, DimensionProto, DimensionRect, Size};
 
-use super::DimensionRect;
+use crate::types;
 
 impl TryFrom<Option<DimensionProto>> for types::Dimension {
     type Error = dc_proto::Error;
@@ -50,8 +48,8 @@ impl TryFrom<DimensionRect> for types::Rect<types::Dimension> {
     }
 }
 
-impl From<FloatSize> for types::Size<f32> {
-    fn from(proto: FloatSize) -> Self {
+impl From<Size> for types::Size<f32> {
+    fn from(proto: Size) -> Self {
         Self { width: proto.width, height: proto.height }
     }
 }

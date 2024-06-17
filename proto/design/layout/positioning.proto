@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.layout.proto;
+package com.android.designcompose.proto.design.layout;
 
 option java_multiple_files = true;
 
@@ -85,18 +85,3 @@ enum PositionType {
   POSITION_TYPE_ABSOLUTE = 2;
 }
 
-// Defines the spacing between items in a layout. It can be either
-// a fixed value or an "auto" value, which will be calculated based on the
-// available space.
-message ItemSpacing {
-  // Specifies an "auto" spacing value. It contains the desired width and
-  // height of the spacing.
-  message Auto {
-    int32 width = 1;
-    int32 height = 2;
-  }
-  oneof type {
-    int32 fixed = 1;
-    Auto auto = 2;
-  }
-}

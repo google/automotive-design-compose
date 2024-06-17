@@ -12,12 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::layout_node::{self};
+use dc_proto::{
+    android_interface::{layout_changed_response::Layout, LayoutChangedResponse, LayoutNodeList},
+    design::layout::{LayoutNode, LayoutParentChildren},
+};
 
-impl TryFrom<super::LayoutNode> for layout_node::LayoutNode {
+use crate::layout_node;
+
+impl TryFrom<LayoutNode> for layout_node::LayoutNode {
     type Error = dc_proto::Error;
 
-    fn try_from(proto: super::LayoutNode) -> Result<Self, Self::Error> {
+    fn try_from(proto: LayoutNode) -> Result<Self, Self::Error> {
         Ok(layout_node::LayoutNode {
             layout_id: proto.layout_id,
             parent_layout_id: proto.parent_layout_id,
@@ -34,8 +39,8 @@ impl TryFrom<super::LayoutNode> for layout_node::LayoutNode {
     }
 }
 
-impl From<super::LayoutParentChildren> for layout_node::LayoutParentChildren {
-    fn from(proto: super::LayoutParentChildren) -> Self {
+impl From<LayoutParentChildren> for layout_node::LayoutParentChildren {
+    fn from(proto: LayoutParentChildren) -> Self {
         layout_node::LayoutParentChildren {
             parent_layout_id: proto.parent_layout_id,
             child_layout_ids: proto.child_layout_ids,
@@ -43,10 +48,10 @@ impl From<super::LayoutParentChildren> for layout_node::LayoutParentChildren {
     }
 }
 
-impl TryFrom<super::LayoutNodeList> for layout_node::LayoutNodeList {
+impl TryFrom<LayoutNodeList> for layout_node::LayoutNodeList {
     type Error = dc_proto::Error;
 
-    fn try_from(proto: super::LayoutNodeList) -> Result<Self, Self::Error> {
+    fn try_from(proto: LayoutNodeList) -> Result<Self, Self::Error> {
         Ok(layout_node::LayoutNodeList {
             layout_nodes: {
                 let mut layout_nodes = Vec::new();
@@ -64,8 +69,8 @@ impl TryFrom<super::LayoutNodeList> for layout_node::LayoutNodeList {
     }
 }
 
-impl From<super::LayoutChangedResponse> for crate::LayoutChangedResponse {
-    fn from(proto: super::LayoutChangedResponse) -> Self {
+impl From<LayoutChangedResponse> for crate::LayoutChangedResponse {
+    fn from(proto: LayoutChangedResponse) -> Self {
         Self {
             layout_state: proto.layout_state,
             changed_layouts: proto
@@ -77,7 +82,7 @@ impl From<super::LayoutChangedResponse> for crate::LayoutChangedResponse {
     }
 }
 
-impl From<crate::LayoutChangedResponse> for super::LayoutChangedResponse {
+impl From<crate::LayoutChangedResponse> for LayoutChangedResponse {
     fn from(proto: crate::LayoutChangedResponse) -> Self {
         Self {
             layout_state: proto.layout_state,
@@ -90,8 +95,8 @@ impl From<crate::LayoutChangedResponse> for super::LayoutChangedResponse {
     }
 }
 
-impl From<super::Layout> for crate::types::Layout {
-    fn from(proto: super::Layout) -> Self {
+impl From<Layout> for crate::types::Layout {
+    fn from(proto: Layout) -> Self {
         Self {
             order: proto.order,
             width: proto.width,
@@ -102,9 +107,9 @@ impl From<super::Layout> for crate::types::Layout {
     }
 }
 
-impl From<crate::types::Layout> for super::Layout {
+impl From<crate::types::Layout> for Layout {
     fn from(layout: crate::types::Layout) -> Self {
-        super::Layout {
+        Layout {
             order: layout.order,
             width: layout.width,
             height: layout.height,

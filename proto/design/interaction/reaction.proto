@@ -1,0 +1,109 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.design.interaction;
+
+import "design/element/geometry.proto";
+import "design/interaction/transition.proto";
+import "google/protobuf/empty.proto";
+
+// Various actions that can be triggered
+message Action {
+  // Open a URL.
+  message Url {
+    string url = 1;
+  }
+  // Do something with a destination node.
+  message Node {
+    // The kind of navigation that an Action can perform
+    enum Navigation {
+      NAVIGATION_UNSPECIFIED = 0;
+      NAVIGATION_NAVIGATE = 1;
+      NAVIGATION_SWAP = 2;
+      NAVIGATION_OVERLAY = 3;
+      NAVIGATION_SCROLL_TO = 4;
+      NAVIGATION_CHANGE_TO = 5;
+    }
+    // Node that we should navigate to, change to, open or swap as an
+    // overlay, or scroll to reveal.
+    string destination_id = 1;
+
+    // The kind of navigation (really the kind of action) to perform with the
+    // destination node (if it's not null).
+    Navigation navigation = 2;
+    // The kind of navigation (really the kind of action) to perform with the
+    // destination node (if it's not null).
+
+    Transition transition = 3;
+    // For "Navigate", should we open the new node with the current frame's
+    // scroll position?
+    bool preserve_scroll_position = 4;
+    // For overlays that have been manually positioned.
+    element.Vector overlay_relative_position = 5;
+  }
+
+  oneof action {
+    google.protobuf.Empty back = 1;
+    google.protobuf.Empty close = 2;
+    Url url = 3;
+    Node node = 4;
+  }
+}
+
+// Various Triggers
+message Trigger {
+  // protolint:disable MESSAGES_HAVE_COMMENT
+  // They're self-explanatory
+  message KeyDown {
+    repeated uint32 key_codes = 1;
+  }
+
+  message Timeout {
+    float timeout = 1;
+  }
+
+  message MouseEnter {
+    float delay = 1;
+  }
+  message MouseLeave {
+    float delay = 1;
+  }
+  message MouseUp {
+    float delay = 1;
+  }
+  message MouseDown {
+    float delay = 1;
+  }
+  oneof trigger_type {
+    google.protobuf.Empty click = 1;
+    google.protobuf.Empty hover = 2;
+    google.protobuf.Empty press = 3;
+    google.protobuf.Empty drag = 4;
+    KeyDown key_down = 5;
+    Timeout timeout = 6;
+    MouseEnter mouse_enter = 7;
+    MouseLeave mouse_leave = 8;
+    MouseUp mouse_up = 9;
+    MouseDown mouse_down = 10;
+  }
+}
+
+// Reaction describes interactivity for a node. It's a pair of Action ("what
+// happens?") and Trigger ("how do you make it happen?")
+message Reaction {
+  Action action = 1;
+  Trigger trigger = 2;
+}

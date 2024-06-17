@@ -26,3 +26,7 @@ lint:
       max_chars: 100
     indent:
       not_insert_newline: true
+    field_names_exclude_prepositions:
+      excludes:
+        - by
+

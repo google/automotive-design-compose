@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import android.util.Log
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
-import com.android.designcompose.layout.proto.LayoutChangedResponse
+import com.android.designcompose.proto.android_interface.LayoutChangedResponse
 import com.android.designcompose.proto.intoProto
 import com.android.designcompose.proto.intoSerde
 import com.android.designcompose.serdegen.Layout

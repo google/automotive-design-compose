@@ -31,6 +31,7 @@ import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.State
 import com.android.designcompose.testapp.validation.examples.VariantAnimationTestDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -42,11 +43,12 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
+@Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet)
 class AnimationMidpoints {
     @get:Rule val clearStateTestRule = TestUtils.ClearStateTestRule()
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
+    @get:Rule val interFontRule = InterFontTestRule()
 
     @Test
     fun variantAnimation() {

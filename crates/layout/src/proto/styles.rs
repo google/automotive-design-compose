@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::styles;
-
-use super::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
+use dc_proto::design::layout::{
+    item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent,
+    PositionType,
 };
+
+use crate::styles;
 
 impl TryFrom<AlignSelf> for styles::AlignSelf {
     type Error = dc_proto::Error;
@@ -34,7 +35,7 @@ impl TryFrom<AlignSelf> for styles::AlignSelf {
     }
 }
 
-impl TryFrom<super::AlignItems> for styles::AlignItems {
+impl TryFrom<AlignItems> for styles::AlignItems {
     type Error = dc_proto::Error;
     fn try_from(proto: AlignItems) -> Result<Self, Self::Error> {
         match proto {
@@ -120,8 +121,8 @@ impl TryFrom<ItemSpacing> for styles::ItemSpacing {
             .as_ref()
             .ok_or(dc_proto::Error::MissingFieldError { field: "ItemSpacing".to_string() })?
         {
-            super::item_spacing::Type::Fixed(s) => Ok(styles::ItemSpacing::Fixed(*s)),
-            super::item_spacing::Type::Auto(s) => Ok(styles::ItemSpacing::Auto(s.width, s.height)),
+            item_spacing::Type::Fixed(s) => Ok(styles::ItemSpacing::Fixed(*s)),
+            item_spacing::Type::Auto(s) => Ok(styles::ItemSpacing::Auto(s.width, s.height)),
         }
     }
 }

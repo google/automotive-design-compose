@@ -97,6 +97,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(testFixtures(project(":designcompose")))
+    testImplementation(testFixtures(project(":integration-tests:app-common")))
     testImplementation(project(":test"))
     testImplementation(project(":test:internal"))
     testImplementation(kotlin("test"))
@@ -108,6 +109,7 @@ dependencies {
     testImplementation(libs.androidx.test.espresso.core)
     testImplementation(libs.androidx.compose.ui.test.junit4)
 
+    androidTestImplementation(testFixtures(project(":integration-tests:app-common")))
     androidTestImplementation(testFixtures(project(":designcompose")))
     androidTestImplementation(project(":test"))
     androidTestImplementation(kotlin("test"))

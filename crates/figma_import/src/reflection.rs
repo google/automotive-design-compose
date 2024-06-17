@@ -44,7 +44,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<layout::styles::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
     tracer
-        .trace_type::<crate::toolkit_layout_style::FlexWrap>(&samples)
+        .trace_type::<dc_proto::design::layout::FlexWrap>(&samples)
         .expect("couldn't trace FlexWrap");
     tracer
         .trace_type::<crate::toolkit_font_style::FontStyle>(&samples)

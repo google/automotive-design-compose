@@ -16,7 +16,7 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 
 use crate::toolkit_font_style::{FontStyle, FontWeight};
-use crate::toolkit_layout_style::{FlexWrap, Overflow};
+use crate::toolkit_layout_style::Overflow;
 
 use crate::toolkit_style::{
     Background, FilterOp, FontFeature, GridLayoutType, GridSpan, LayoutTransform, LineHeight,
@@ -41,6 +41,7 @@ use crate::{
     },
 };
 
+use dc_proto::design::layout::FlexWrap;
 use layout::styles::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };

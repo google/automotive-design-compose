@@ -12,7 +12,7 @@ rust-version = "1.68"
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-dc_proto = { path = "../dc_proto"}
+dc_bundle = { path = "../dc_bundle" }
 figma_import = { path = "../figma_import" }
 layout = { path = "../layout" }
 log.workspace = true

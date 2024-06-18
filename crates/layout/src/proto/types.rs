@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_proto::design::element::{dimension_proto::Dimension, DimensionProto, DimensionRect, Size};
+use dc_bundle::design::element::{dimension_proto::Dimension, DimensionProto, DimensionRect, Size};
 
 use crate::types;
 
 impl TryFrom<Option<DimensionProto>> for types::Dimension {
-    type Error = dc_proto::Error;
+    type Error = dc_bundle::Error;
 
     fn try_from(proto: Option<DimensionProto>) -> Result<Self, Self::Error> {
         Ok(
             match proto
-                .ok_or(dc_proto::Error::MissingFieldError { field: "DimensionProto".to_string() })?
+                .ok_or(dc_bundle::Error::MissingFieldError { field: "DimensionProto".to_string() })?
                 .dimension
-                .ok_or(dc_proto::Error::MissingFieldError { field: "Dimension".to_string() })?
+                .ok_or(dc_bundle::Error::MissingFieldError { field: "Dimension".to_string() })?
             {
                 Dimension::Auto(_) => types::Dimension::Auto,
                 Dimension::Points(p) => types::Dimension::Points(p),
@@ -36,7 +36,7 @@ impl TryFrom<Option<DimensionProto>> for types::Dimension {
 }
 
 impl TryFrom<DimensionRect> for types::Rect<types::Dimension> {
-    type Error = dc_proto::Error;
+    type Error = dc_bundle::Error;
     fn try_from(proto: DimensionRect) -> Result<Self, Self::Error> {
         let rect = types::Rect {
             start: proto.start.try_into()?,

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_proto::{
+use dc_bundle::{
     android_interface::{layout_changed_response::Layout, LayoutChangedResponse, LayoutNodeList},
     design::layout::{LayoutNode, LayoutParentChildren},
 };
@@ -20,7 +20,7 @@ use dc_proto::{
 use crate::layout_node;
 
 impl TryFrom<LayoutNode> for layout_node::LayoutNode {
-    type Error = dc_proto::Error;
+    type Error = dc_bundle::Error;
 
     fn try_from(proto: LayoutNode) -> Result<Self, Self::Error> {
         Ok(layout_node::LayoutNode {
@@ -29,7 +29,7 @@ impl TryFrom<LayoutNode> for layout_node::LayoutNode {
             child_index: proto.child_index,
             style: proto
                 .style
-                .ok_or(dc_proto::Error::MissingFieldError { field: "style".to_string() })?
+                .ok_or(dc_bundle::Error::MissingFieldError { field: "style".to_string() })?
                 .try_into()?,
             name: proto.name,
             use_measure_func: proto.use_measure_func,
@@ -49,7 +49,7 @@ impl From<LayoutParentChildren> for layout_node::LayoutParentChildren {
 }
 
 impl TryFrom<LayoutNodeList> for layout_node::LayoutNodeList {
-    type Error = dc_proto::Error;
+    type Error = dc_bundle::Error;
 
     fn try_from(proto: LayoutNodeList) -> Result<Self, Self::Error> {
         Ok(layout_node::LayoutNodeList {

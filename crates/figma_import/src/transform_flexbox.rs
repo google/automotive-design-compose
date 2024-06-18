@@ -41,8 +41,9 @@ use crate::{
     },
 };
 
-use layout::styles::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
+use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
+use dc_bundle::legacy_definition::layout::positioning::{
+    AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
 };
 use layout::types::Dimension;
 use log::error;

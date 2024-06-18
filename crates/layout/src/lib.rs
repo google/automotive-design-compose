@@ -21,5 +21,9 @@ pub mod proto;
 pub mod styles;
 pub mod types;
 
+trait IntoTaffy<T> {
+    fn into_taffy(self) -> T;
+}
+
 pub use layout_manager::LayoutChangedResponse;
 pub use layout_manager::LayoutManager;

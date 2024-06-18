@@ -12,26 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde::{Deserialize, Serialize};
+use crate::IntoTaffy;
+use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
+use dc_bundle::legacy_definition::layout::positioning::{
+    AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
+};
 use taffy::prelude as taffy;
 
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum AlignItems {
-    FlexStart,
-    FlexEnd,
-    Center,
-    Baseline,
-    Stretch,
-}
-
-impl Default for AlignItems {
-    fn default() -> Self {
-        Self::Stretch
-    }
-}
-
-impl Into<taffy::AlignItems> for &AlignItems {
-    fn into(self) -> taffy::AlignItems {
+impl IntoTaffy<taffy::AlignItems> for &AlignItems {
+    fn into_taffy(self) -> taffy::AlignItems {
         match self {
             AlignItems::Center => taffy::AlignItems::Center,
             AlignItems::FlexStart => taffy::AlignItems::FlexStart,
@@ -42,24 +31,8 @@ impl Into<taffy::AlignItems> for &AlignItems {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum AlignSelf {
-    Auto,
-    FlexStart,
-    FlexEnd,
-    Center,
-    Baseline,
-    Stretch,
-}
-
-impl Default for AlignSelf {
-    fn default() -> Self {
-        Self::Auto
-    }
-}
-
-impl Into<Option<taffy::AlignItems>> for &AlignSelf {
-    fn into(self) -> Option<taffy::AlignItems> {
+impl IntoTaffy<Option<taffy::AlignItems>> for &AlignSelf {
+    fn into_taffy(self) -> Option<taffy::AlignItems> {
         match self {
             AlignSelf::Auto => None,
             AlignSelf::FlexStart => Some(taffy::AlignItems::FlexStart),
@@ -71,24 +44,8 @@ impl Into<Option<taffy::AlignItems>> for &AlignSelf {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum AlignContent {
-    FlexStart,
-    FlexEnd,
-    Center,
-    Stretch,
-    SpaceBetween,
-    SpaceAround,
-}
-
-impl Default for AlignContent {
-    fn default() -> Self {
-        Self::Stretch
-    }
-}
-
-impl Into<taffy::AlignContent> for &AlignContent {
-    fn into(self) -> taffy::AlignContent {
+impl IntoTaffy<taffy::AlignContent> for &AlignContent {
+    fn into_taffy(self) -> taffy::AlignContent {
         match self {
             AlignContent::Center => taffy::AlignContent::Center,
             AlignContent::FlexStart => taffy::AlignContent::FlexStart,
@@ -100,23 +57,8 @@ impl Into<taffy::AlignContent> for &AlignContent {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum FlexDirection {
-    Row,
-    Column,
-    RowReverse,
-    ColumnReverse,
-    None,
-}
-
-impl Default for FlexDirection {
-    fn default() -> Self {
-        Self::Row
-    }
-}
-
-impl Into<taffy::FlexDirection> for &FlexDirection {
-    fn into(self) -> taffy::FlexDirection {
+impl IntoTaffy<taffy::FlexDirection> for &FlexDirection {
+    fn into_taffy(self) -> taffy::FlexDirection {
         match self {
             FlexDirection::Row => taffy::FlexDirection::Row,
             FlexDirection::Column => taffy::FlexDirection::Column,
@@ -127,24 +69,8 @@ impl Into<taffy::FlexDirection> for &FlexDirection {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum JustifyContent {
-    FlexStart,
-    FlexEnd,
-    Center,
-    SpaceBetween,
-    SpaceAround,
-    SpaceEvenly,
-}
-
-impl Default for JustifyContent {
-    fn default() -> Self {
-        Self::FlexStart
-    }
-}
-
-impl Into<taffy::JustifyContent> for &JustifyContent {
-    fn into(self) -> taffy::JustifyContent {
+impl IntoTaffy<taffy::JustifyContent> for &JustifyContent {
+    fn into_taffy(self) -> taffy::JustifyContent {
         match self {
             JustifyContent::Center => taffy::JustifyContent::Center,
             JustifyContent::FlexStart => taffy::JustifyContent::FlexStart,
@@ -156,20 +82,8 @@ impl Into<taffy::JustifyContent> for &JustifyContent {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum PositionType {
-    Relative,
-    Absolute,
-}
-
-impl Default for PositionType {
-    fn default() -> Self {
-        Self::Relative
-    }
-}
-
-impl Into<taffy::Position> for &PositionType {
-    fn into(self) -> taffy::Position {
+impl IntoTaffy<taffy::Position> for &PositionType {
+    fn into_taffy(self) -> taffy::Position {
         match self {
             PositionType::Absolute => taffy::Position::Absolute,
             PositionType::Relative => taffy::Position::Relative,
@@ -177,20 +91,8 @@ impl Into<taffy::Position> for &PositionType {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum ItemSpacing {
-    Fixed(i32),     // Fixed space between columns/rows
-    Auto(i32, i32), // Min space between columns/rows, item width/height
-}
-
-impl Default for ItemSpacing {
-    fn default() -> Self {
-        ItemSpacing::Fixed(0)
-    }
-}
-
-impl Into<taffy::LengthPercentage> for &ItemSpacing {
-    fn into(self) -> taffy::LengthPercentage {
+impl IntoTaffy<taffy::LengthPercentage> for &ItemSpacing {
+    fn into_taffy(self) -> taffy::LengthPercentage {
         match self {
             ItemSpacing::Fixed(s) => taffy::LengthPercentage::Points(*s as f32),
             ItemSpacing::Auto(..) => taffy::LengthPercentage::Points(0.0),

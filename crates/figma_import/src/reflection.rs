@@ -19,10 +19,14 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     let samples = Samples::new();
 
     tracer
-        .trace_type::<layout::styles::AlignContent>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::AlignContent>(&samples)
         .expect("couldn't trace AlignContent");
-    tracer.trace_type::<layout::styles::AlignItems>(&samples).expect("couldn't trace AlignItems");
-    tracer.trace_type::<layout::styles::AlignSelf>(&samples).expect("couldn't trace AlignSelf");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::AlignItems>(&samples)
+        .expect("couldn't trace AlignItems");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::AlignSelf>(&samples)
+        .expect("couldn't trace AlignSelf");
     tracer
         .trace_type::<crate::toolkit_style::ScaleMode>(&samples)
         .expect("couldn't trace ScaleMode");
@@ -41,7 +45,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace Display");
     tracer.trace_type::<crate::toolkit_style::FilterOp>(&samples).expect("couldn't trace FilterOp");
     tracer
-        .trace_type::<layout::styles::FlexDirection>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
     tracer
         .trace_type::<crate::toolkit_layout_style::FlexWrap>(&samples)
@@ -50,7 +54,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_font_style::FontStyle>(&samples)
         .expect("couldn't trace FontStyle");
     tracer
-        .trace_type::<layout::styles::JustifyContent>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::JustifyContent>(&samples)
         .expect("couldn't trace JustifyContent");
     tracer
         .trace_type::<crate::toolkit_style::LineHeight>(&samples)
@@ -64,7 +68,9 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::toolkit_style::PointerEvents>(&samples)
         .expect("couldn't trace PointerEvents");
-    tracer.trace_type::<layout::styles::ItemSpacing>(&samples).expect("couldn't trace ItemSpacing");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::layout::grid::ItemSpacing>(&samples)
+        .expect("couldn't trace ItemSpacing");
     tracer
         .trace_type::<crate::toolkit_style::GridLayoutType>(&samples)
         .expect("couldn't trace GridLayoutType");
@@ -81,7 +87,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::MeterData>(&samples)
         .expect("couldn't trace MeterData");
     tracer
-        .trace_type::<layout::styles::PositionType>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::PositionType>(&samples)
         .expect("couldn't trace PositionType");
     tracer
         .trace_type::<crate::toolkit_style::ShadowBox>(&samples)

@@ -76,6 +76,7 @@ internal fun Modifier.squooshRender(
                     transition.control.apply(transition.animation.initialValue)
                     continue
                 }
+
                 transition.control.apply(animationOffset)
             }
 

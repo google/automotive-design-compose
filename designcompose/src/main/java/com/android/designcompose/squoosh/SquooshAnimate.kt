@@ -16,10 +16,12 @@
 
 package com.android.designcompose.squoosh
 
+import android.util.Log
+import com.android.designcompose.AnimatedAction
 import com.android.designcompose.asBuilder
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.NodeStyle
+import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
@@ -56,18 +58,29 @@ internal class SquooshAnimatedFadeOut(private val target: SquooshResolvedNode) :
 
 internal class SquooshAnimatedLayout(
     private val target: SquooshResolvedNode,
-    private val from: Layout,
-    private val to: Layout
+    private val from: SquooshResolvedNode,
+    private val to: SquooshResolvedNode
 ) : SquooshAnimatedItem {
     override fun apply(value: Float) {
         val iv = 1.0f - value
+        val fromLayout = from.computedLayout
+        val toLayout = to.computedLayout
+
+        if (fromLayout == null || toLayout == null) {
+            Log.e(
+                TAG,
+                "Unable to compute animated layout for ${target.view.name} because from $fromLayout /to $toLayout  layout is uncomputed."
+            )
+            return
+        }
+
         target.computedLayout =
             Layout(
                 0,
-                to.width * value + from.width * iv,
-                to.height * value + from.height * iv,
-                to.left * value + from.left * iv,
-                to.top * value + from.top * iv
+                toLayout.width * value + fromLayout.width * iv,
+                toLayout.height * value + fromLayout.height * iv,
+                toLayout.left * value + fromLayout.left * iv,
+                toLayout.top * value + fromLayout.top * iv
             )
     }
 }
@@ -133,20 +146,235 @@ internal class SquooshAnimationControl(
     }
 }
 
-internal fun mergeTreesAndCreateSquooshAnimationControl(
+internal class SquooshAnimationRequest(
+    val toNodeId: String,
+    val animationId: Int,
+    val interruptedId: Int?,
+    val transition: Transition,
+    val action: AnimatedAction?,
+    val variant: VariantAnimationInfo?,
+    var animationControl: SquooshAnimationControl? = null
+)
+
+/// Create a new tree, based on "from", which additional nodes from "to" where an animation has
+/// been requested. If `requestedAnimationControls` is empty or has no matching ids then the output
+/// tree is the same as `from`.
+///
+/// The tree that's returned from this function should only be used for rendering and event
+/// dispatching. Other algorithms like layout won't work on this tree, because it's combining
+/// elements of two other trees.
+internal fun createMergedAnimationTree(
     from: SquooshResolvedNode,
-    fromNodeId: String,
     to: SquooshResolvedNode,
-    toNodeId: String
-): SquooshAnimationControl? {
-    val items = ArrayList<SquooshAnimatedItem>()
-    val start = findNode(from, fromNodeId)
-    val end = findNode(to, toNodeId)
-    if (start != null && end != null) {
-        mergeTreesWithAnimation(start, end, items)
-        return SquooshAnimationControl(root = to, items = items)
+    requestedAnimations: HashMap<String, SquooshAnimationRequest>,
+    parent: SquooshResolvedNode? = null,
+    alreadyMatchedSet: HashSet<Int> = HashSet()
+): SquooshResolvedNode {
+    if (requestedAnimations.isEmpty()) return from.cloneSelfAndChildren(parent)
+
+    // Does this match a thing that we need to animate?
+    var requestedAnim = requestedAnimations[from.view.id]
+    if (requestedAnim == null) requestedAnim = requestedAnimations[from.unresolvedNodeId]
+    val (cloned: SquooshResolvedNode, alreadyBuiltChildren) =
+        if (requestedAnim != null && requestedAnim.animationControl == null) {
+            // Can we find it in the "to" tree?
+            val toNode = findNode(to, requestedAnim.toNodeId)
+            if (toNode != null) {
+                val animations: ArrayList<SquooshAnimatedItem> = ArrayList()
+                val mergedClonedNode =
+                    mergeRecursive(from, toNode, parent, animations, alreadyMatchedSet)
+                if (animations.isNotEmpty())
+                    requestedAnim.animationControl =
+                        SquooshAnimationControl(mergedClonedNode, animations)
+
+                Pair(mergedClonedNode, true)
+            } else {
+                // An animation was requested, but no destination node could be found. We'll end up
+                // leaving the animationControl field blank, which will result in an error log later
+                // on.
+                Pair(from.cloneSelf(parent), false)
+            }
+        } else {
+            // Clone the target node, then look at its siblings, then at its child.
+            Pair(from.cloneSelf(parent), false)
+        }
+
+    // First recurse along siblings
+    val nextFrom = from.nextSibling
+    if (nextFrom != null) {
+        val nextCloned =
+            createMergedAnimationTree(nextFrom, to, requestedAnimations, parent, alreadyMatchedSet)
+        // Insert at the end; does this reorder? Hope not
+        var c: SquooshResolvedNode? = cloned
+        while (c?.nextSibling != null) c = c.nextSibling
+        c!!.nextSibling = nextCloned
     }
-    return null
+
+    // Then recurse along children, if we didn't already consider them by finding a match.
+    if (!alreadyBuiltChildren) {
+        val childFrom = from.firstChild
+        if (childFrom != null) {
+            val child =
+                createMergedAnimationTree(
+                    childFrom,
+                    to,
+                    requestedAnimations,
+                    cloned,
+                    alreadyMatchedSet
+                )
+            cloned.firstChild = child
+        }
+    }
+
+    return cloned
+}
+
+private fun SquooshResolvedNode.cloneSelf(parent: SquooshResolvedNode?): SquooshResolvedNode =
+    SquooshResolvedNode(
+        view = this.view,
+        style = this.style,
+        layoutId = this.layoutId,
+        textInfo = this.textInfo,
+        unresolvedNodeId = this.unresolvedNodeId,
+        layoutNode = this,
+        parent = parent,
+        computedLayout = this.computedLayout,
+        needsChildRender = this.needsChildRender
+    )
+
+private fun SquooshResolvedNode.cloneSelfAndChildren(
+    parent: SquooshResolvedNode?
+): SquooshResolvedNode {
+    val n = this.cloneSelf(parent)
+    var child = this.firstChild
+    var prevChild: SquooshResolvedNode? = null
+    while (child != null) {
+        val c = child.cloneSelfAndChildren(n)
+        if (n.firstChild == null) n.firstChild = c
+        if (prevChild != null) prevChild.nextSibling = c
+        prevChild = c
+        child = child.nextSibling
+    }
+    return n
+}
+
+private fun mergeRecursive(
+    from: SquooshResolvedNode,
+    to: SquooshResolvedNode,
+    parent: SquooshResolvedNode?,
+    anims: ArrayList<SquooshAnimatedItem>,
+    alreadyMatchedSet: HashSet<Int>
+): SquooshResolvedNode {
+    // We have an exact match on `from` and `to`, so we can construct various animation controls to
+    // go between them in a third node. Then we need to inspect the children and match them on name.
+    //
+    // We either got called based on a name match (i.e.: this function recursing over children and
+    // looking up children in the "to" tree using the names of children in the "from" tree) or an id
+    // match (i.e.: the ids of two nodes corresponding to the same component instance).
+    //
+    // We have a few cases to consider here:
+    //  1. The nodes match and don't need to be morphed into each other. In this case we can do just
+    //     a layout / transform animation on one of them (since that's all that has changed) and
+    //     then inspect the children to find matches.
+    //  2. The nodes don't match. In this case, we do a crossfade and layout animation on both trees
+    //     where the "from" is outgoing (it will fade away) and the "to" is incoming (it will fade
+    //     in).
+    //  3. When looking at children in (1), we have three cases!
+    //      - we find a matching child and it goes to case (1) or (2) above.
+    //      - we don't find a matching child in "from" for a child in "to", so this gets an outgoing
+    //        animation (it fades out)
+    //      - we don't find a matching child in "to" for a child in "from", so this gets an incoming
+    //        animation (it fades in)
+
+    if (isTweenable(from.view, to.view) && !needsStyleTween(from.style, to.style)) {
+        // Clone the "to" node.
+        val n = to.cloneSelf(parent)
+        var previousChild: SquooshResolvedNode? = null
+        // In this case, we need to recurse over all of the children and see if we can merge those,
+        // too.
+        val matchedSet = HashSet<String>()
+        var child = to.firstChild
+        while (child != null) {
+            val matchingFromChild = findChildNamed(from, child.view.name, alreadyMatchedSet)
+            if (matchingFromChild != null) {
+                // We have a match. Remember it so that we can more quickly test all of the "from"
+                // children later.
+                matchedSet.add(child.view.name)
+                // Also remember that we visited this node in the whole tree, so we won't match
+                // against it again, in the case that there are many children with the same name
+                alreadyMatchedSet.add(matchingFromChild.layoutId)
+
+                // Create the animation for this one.
+                val c = mergeRecursive(matchingFromChild, child, n, anims, alreadyMatchedSet)
+                if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
+                previousChild = c
+            } else {
+                // No match; this is an incoming child, so clone it including children and give it
+                // a fade in animation.
+                val c = child.cloneSelfAndChildren(n)
+                if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
+                previousChild = c
+
+                anims.add(SquooshAnimatedFadeIn(c))
+            }
+
+            // Sometimes when we do a merge, we actually end up with multiple nodes (because we
+            // chose to do a crossfade). In this case, `previousChild` actually isn't the last
+            // child and we need to catch it up.
+            while (previousChild?.nextSibling != null) previousChild = previousChild.nextSibling
+
+            child = child.nextSibling
+        }
+
+        // Now look at all of the "from" children which didn't match anything in "to" and create
+        // a fade out animation for them.
+        child = from.firstChild
+        while (child != null) {
+            if (!matchedSet.contains(child.view.name)) {
+                val c = child.cloneSelfAndChildren(n)
+                if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
+                previousChild = c
+
+                anims.add(SquooshAnimatedFadeOut(c))
+            }
+            child = child.nextSibling
+        }
+
+        // Now see what kind of animations we can make; starting with a layout animation.
+        anims.add(SquooshAnimatedLayout(n, from, to))
+
+        // If they're both arcs, then they might need an arc animation.
+        // XXX: Refactor this so we don't inspect every type right here.
+        if (
+            from.view.data is ViewData.Container &&
+                (from.view.data as ViewData.Container).shape is ViewShape.Arc &&
+                to.view.data is ViewData.Container &&
+                (to.view.data as ViewData.Container).shape is ViewShape.Arc
+        ) {
+            val fromArc: ViewShape.Arc =
+                (from.view.data as ViewData.Container).shape as ViewShape.Arc
+            val toArc: ViewShape.Arc = (to.view.data as ViewData.Container).shape as ViewShape.Arc
+
+            if (fromArc != toArc) {
+                anims.add(SquooshAnimatedArc(n, fromArc, toArc))
+            }
+        }
+
+        return n
+    } else {
+        // Ok, we need to clone both the "from" and "to" and make a crossfade animation between
+        // them.
+        val fromClone = from.cloneSelfAndChildren(parent)
+        val toClone = to.cloneSelfAndChildren(parent)
+        fromClone.nextSibling = toClone
+
+        anims.add(SquooshAnimatedFadeOut(fromClone))
+        anims.add(SquooshAnimatedFadeIn(toClone))
+        anims.add(SquooshAnimatedLayout(fromClone, from, to))
+        anims.add(SquooshAnimatedLayout(toClone, from, to))
+
+        return fromClone
+    }
 }
 
 // Find nodes where we want to have animation; this is typically from a component CHANGE_TO
@@ -162,144 +390,14 @@ private fun findNode(n: SquooshResolvedNode, id: String): SquooshResolvedNode? {
     return null
 }
 
-// The algorithm for generating the transition tree from the source and dest trees is as follows:
-//  1. Look at the children of a destination tree node
-//  2. For each child:
-//     - Look at the children of the corresponding source tree node
-//     - Find the first matching node, if any. A matching node has the same name.
-//     - If there's a matching node, create the appropriate transitions. Mark the source node as
-// consumed, or remove it from the source tree. Maybe recurse?!?
-//     - If there is no matching node, create a fade in transition.
-//  3. Create fade out transitions for all of the other nodes in the source tree.
-//
-// Do we need to look backwards? Or is it OK to look forwards?
-//
-// We end up moving all of the nodes from the "from" tree to the "to" tree, and the "to" tree is the
-// transition tree.
-//
-// Another model for this is that the rendering part of each node is done in isolation. So none of
-// the nodes that render are parents after this.
-private fun mergeTreesWithAnimation(
-    from: SquooshResolvedNode,
-    to: SquooshResolvedNode,
-    anims: ArrayList<SquooshAnimatedItem>
-) {
-    var toChild = to.firstChild
-    var prevChild: SquooshResolvedNode? = null
-
-    while (toChild != null) {
-        val matchInFromTree = extractChildNamed(from, toChild.view.name)
-        // If we have a match, then actually ditch the `matchInFromTree` node, but use its layout
-        // data, and try to match its kids into the `toChild` node.
-        //
-        // If both objects are the same kind of shape, then we can recurse into the children.
-        // If not then we just do a crossfade and layout animation on the parents.
-        if (matchInFromTree != null) {
-            if (
-                isTweenable(toChild.view, matchInFromTree.view) &&
-                    !needsStyleTween(toChild.view.style, matchInFromTree.view.style)
-            ) {
-                // We want to add all of `matchInFromTree`'s children to `toChild`, or match them.
-                mergeTreesWithAnimation(matchInFromTree, toChild, anims)
-                // Animate the node we're keeping from the old place to its current place.
-                if (matchInFromTree.computedLayout!! != toChild.computedLayout) {
-                    anims.add(
-                        SquooshAnimatedLayout(
-                            toChild,
-                            matchInFromTree.computedLayout!!,
-                            toChild.computedLayout!!
-                        )
-                    )
-                }
-                // If they're both arcs, then they might need an arc animation.
-                // XXX: Refactor this so we don't inspect every type right here.
-                if (
-                    matchInFromTree.view.data is ViewData.Container &&
-                        (matchInFromTree.view.data as ViewData.Container).shape is ViewShape.Arc &&
-                        toChild.view.data is ViewData.Container &&
-                        (toChild.view.data as ViewData.Container).shape is ViewShape.Arc
-                ) {
-                    val fromArc: ViewShape.Arc =
-                        (matchInFromTree.view.data as ViewData.Container).shape as ViewShape.Arc
-                    val toArc: ViewShape.Arc =
-                        (toChild.view.data as ViewData.Container).shape as ViewShape.Arc
-
-                    if (fromArc != toArc) {
-                        anims.add(SquooshAnimatedArc(toChild, fromArc, toArc))
-                    }
-                }
-            } else {
-                // We're doing a layout crossfade.
-                anims.add(SquooshAnimatedFadeIn(toChild))
-                anims.add(SquooshAnimatedFadeOut(matchInFromTree))
-                anims.add(
-                    SquooshAnimatedLayout(
-                        toChild,
-                        matchInFromTree.computedLayout!!,
-                        toChild.computedLayout!!
-                    )
-                )
-                anims.add(
-                    SquooshAnimatedLayout(
-                        matchInFromTree,
-                        matchInFromTree.computedLayout!!,
-                        toChild.computedLayout!!
-                    )
-                )
-
-                // Add the "from" node to our transition tree. Put it before the matching toChild
-                // so that it draws behind.
-                if (prevChild == null) {
-                    to.firstChild = matchInFromTree
-                } else {
-                    prevChild.nextSibling = matchInFromTree
-                }
-                matchInFromTree.nextSibling = toChild
-            }
-        } else {
-            // We didn't find a match. In this case we need to fade this node in.
-            anims.add(SquooshAnimatedFadeIn(toChild))
-        }
-        prevChild = toChild
-        toChild = toChild.nextSibling
-    }
-
-    // If there are any children remaining in `from` then we need to add them to the start of `to`
-    // and create fade out animations for them.
-    val fromFirstChild = from.firstChild
-    var fromLastChild = from.firstChild
-    while (fromLastChild?.nextSibling != null) {
-        fromLastChild = fromLastChild.nextSibling
-    }
-    // Add fade-outs for all of them.
-    var child = from.firstChild
-    while (child != null) {
-        anims.add(SquooshAnimatedFadeOut(child))
-        child = child.nextSibling
-    }
-    // Move the from remainders into the start of the to list.
-    if (fromLastChild != null) {
-        fromLastChild.nextSibling = to.firstChild
-        to.firstChild = fromFirstChild
-    }
-    from.firstChild = null
-}
-
-private fun extractChildNamed(parent: SquooshResolvedNode, name: String): SquooshResolvedNode? {
+private fun findChildNamed(
+    parent: SquooshResolvedNode,
+    name: String,
+    alreadyMatchedSet: HashSet<Int>
+): SquooshResolvedNode? {
     var child = parent.firstChild
-    var previousChild: SquooshResolvedNode? = null
     while (child != null) {
-        if (child.view.name == name) {
-            // Remove child from the list.
-            if (previousChild != null) {
-                previousChild.nextSibling = child.nextSibling
-            } else {
-                parent.firstChild = child.nextSibling
-            }
-            child.nextSibling = null
-            return child
-        }
-        previousChild = child
+        if (child.view.name == name && !alreadyMatchedSet.contains(child.layoutId)) return child
         child = child.nextSibling
     }
     return null
@@ -333,20 +431,6 @@ private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     if (a.node_style.background != b.node_style.background) return true
     if (a.node_style.stroke != b.node_style.stroke) return true
     return false
-}
-
-private fun ViewStyle.with(delta: (ViewStyle.Builder) -> Unit): ViewStyle {
-    val builder = asBuilder()
-    delta(builder)
-    return builder.build()
-}
-
-private fun ViewStyle.withLayoutStyle(delta: (LayoutStyle.Builder) -> Unit): ViewStyle {
-    val builder = asBuilder()
-    val layoutStyleBuilder = layout_style.asBuilder()
-    delta(layoutStyleBuilder)
-    builder.layout_style = layoutStyleBuilder.build()
-    return builder.build()
 }
 
 private fun ViewStyle.withNodeStyle(delta: (NodeStyle.Builder) -> Unit): ViewStyle {

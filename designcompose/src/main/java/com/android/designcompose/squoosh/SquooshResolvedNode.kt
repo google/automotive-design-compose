@@ -33,7 +33,12 @@ internal class SquooshResolvedNode(
     var style: ViewStyle,
     val layoutId: Int,
     val textInfo: TextMeasureData?,
-    val unresolvedNodeId: String, // The node id before we resolved variants; used for interactions
+    // The node id before we resolved variants; used for interactions
+    val unresolvedNodeId: String,
+    // The node we look at for layout info, if we're in a tree that was derived
+    // from other trees (i.e.: the tree that combines the base and transition
+    // trees).
+    val layoutNode: SquooshResolvedNode? = null,
     var firstChild: SquooshResolvedNode? = null,
     var nextSibling: SquooshResolvedNode? = null,
     var parent: SquooshResolvedNode? = null,

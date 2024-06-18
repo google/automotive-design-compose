@@ -51,6 +51,7 @@
             </intent-filter>
         </activity>
         <activity
+            android:label="@string/layout_app_name"
             android:name=".LayoutTest"
             android:exported="true"
             android:launchMode="singleTop"

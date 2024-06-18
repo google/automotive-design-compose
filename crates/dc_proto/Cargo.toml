@@ -10,6 +10,7 @@ rust-version = "1.68"
 [dependencies]
 prost.workspace = true
 thiserror.workspace = true
+serde.workspace = true
 
 [build-dependencies]
 prost-build.workspace = true

@@ -565,6 +565,7 @@ fun SquooshRoot(
                                 // Compose only re-runs the render block.
                                 withFrameNanos { frameTimeNanos ->
                                     val animState = HashMap(animationValues.value)
+                                    val animsToRemove = HashSet<Int>()
                                     for ((id, anim) in currentAnimations) {
                                         // If we haven't started this animation yet, then start it
                                         // now.
@@ -585,16 +586,21 @@ fun SquooshRoot(
                                         // list, and apply it to the base interaction state.
                                         if (anim.animation.isFinishedFromNanos(playTimeNanos)) {
                                             animState.remove(id)
-                                            if (anim.action != null)
+                                            if (anim.action != null) {
+                                                animsToRemove.add(id)
                                                 interactionState.squooshCompleteAnimatedAction(
                                                     anim.action
                                                 )
-                                            if (anim.variant != null)
+                                            }
+                                            if (anim.variant != null) {
+                                                animsToRemove.add(id)
                                                 variantTransitions.completedAnimatedVariant(
                                                     anim.variant
                                                 )
+                                            }
                                         }
                                     }
+                                    for (id in animsToRemove) currentAnimations.remove(id)
                                     animationValues.value = animState
                                 }
                             }

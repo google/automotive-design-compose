@@ -27,7 +27,6 @@ mod fetch;
 mod figma_schema;
 mod image_context;
 pub mod reaction_schema;
-mod serialized_document;
 pub mod toolkit_font_style;
 pub mod toolkit_layout_style;
 pub mod toolkit_schema;
@@ -36,20 +35,21 @@ mod transform_flexbox;
 mod utils;
 pub mod vector_schema;
 // Exports for library users
-pub use document::{Document, NodeQuery};
+pub use document::Document;
 pub use error::Error;
-pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
+pub use fetch::{ConvertRequest, ConvertResponse, fetch_doc, ProxyConfig};
 pub use figma_schema::Node;
 pub use figma_schema::Rectangle;
-pub use image_context::{ImageContextSession, ImageKey};
-pub use serialized_document::{load_design_doc, save_design_doc};
-pub use serialized_document::{SerializedDesignDoc, SerializedDesignDocHeader, ServerFigmaDoc};
-pub use toolkit_schema::{View, ViewData}; // ugly hack
+pub use image_context::ImageContextSession;
+// ugly hack
                                           // Internal convenience
 pub use color::Color;
+// Exports for library users
+pub use dc_design_package::document::NodeQuery;
+pub use dc_design_package::image_context::ImageKey;
+pub use dc_design_package::toolkit_schema::View;
+pub use dc_design_package::toolkit_schema::ViewData;
+
 #[cfg(feature = "http_mock")]
 mod figma_v1_document_mocks;
-/// Functionality related to reflection for deserializing our bincode archives in other
-/// languages
-#[cfg(feature = "reflection")]
-pub mod reflection;
+mod reflection;

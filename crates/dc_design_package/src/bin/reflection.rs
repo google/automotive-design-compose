@@ -31,7 +31,7 @@ struct Cli {
 fn main() {
     let args = Cli::parse();
 
-    let registry = figma_import::reflection::registry().expect("no tracer registry");
+    let registry = dc_definition::reflection::registry().expect("no tracer registry");
 
     let config =
         serde_generate::CodeGeneratorConfig::new("com.android.designcompose.serdegen".into())

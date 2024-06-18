@@ -23,15 +23,15 @@
 // parameter list.
 //
 
-use figma_import::{
-    toolkit_layout_style::LayoutSizing, toolkit_schema::View, NodeQuery, SerializedDesignDoc,
-    SerializedDesignDocHeader, ViewData,
-};
+use dc_design_package::document::NodeQuery;
 use layout::types::Dimension;
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
+use dc_definition::serialized_document::{SerializedDesignDoc, SerializedDesignDocHeader};
+use dc_design_package::toolkit_layout_style::LayoutSizing;
+use dc_design_package::toolkit_schema::{View, ViewData};
 
 fn measure_func(
     layout_id: i32,

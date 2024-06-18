@@ -298,6 +298,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "dc_design_package"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "clap",
+ "serde",
+ "serde-generate",
+ "serde-reflection",
+ "serde_bytes",
+ "testdir",
+ "thiserror",
+]
+
+[[package]]
 name = "dc_jni"
 version = "0.1.0"
 dependencies = [
@@ -401,6 +415,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "clap",
+ "dc_design_package",
  "dc_proto",
  "euclid",
  "image",
@@ -623,6 +638,7 @@ name = "layout"
 version = "0.1.0"
 dependencies = [
  "android_logger",
+ "dc_design_package",
  "dc_proto",
  "log",
  "prost",

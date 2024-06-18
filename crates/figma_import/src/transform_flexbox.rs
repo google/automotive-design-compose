@@ -16,11 +16,11 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 
 use crate::toolkit_font_style::{FontStyle, FontWeight};
-use crate::toolkit_layout_style::{FlexWrap, Overflow};
+use dc_design_package::toolkit_layout_style::Overflow;
 
 use crate::toolkit_style::{
-    Background, FilterOp, FontFeature, GridLayoutType, GridSpan, LayoutTransform, LineHeight,
-    MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
+    FontFeature, GridSpan, LayoutTransform,
+    StyledTextRun, TextStyle,
 };
 
 use crate::vector_schema;
@@ -34,10 +34,9 @@ use crate::{
         TextAutoResize, TextTruncation, VerticalLayoutConstraintValue,
     },
     image_context::ImageContext,
-    reaction_schema::{FrameExtras, Reaction, ReactionJson},
+    reaction_schema::{Reaction, ReactionJson},
     toolkit_schema::{
-        ColorOrVar, ComponentInfo, NumOrVar, OverflowDirection, RenderMethod, ScrollInfo, View,
-        ViewShape,
+        OverflowDirection, ScrollInfo,
     },
 };
 
@@ -47,6 +46,10 @@ use layout::styles::{
 use layout::types::Dimension;
 use log::error;
 use unicode_segmentation::UnicodeSegmentation;
+use dc_design_package::reaction_schema::FrameExtras;
+use dc_design_package::toolkit_layout_style::FlexWrap;
+use dc_design_package::toolkit_schema::{ColorOrVar, ComponentInfo, NumOrVar, RenderMethod, View, ViewShape};
+use dc_design_package::toolkit_style::{Background, FilterOp, GridLayoutType, LineHeight, MeterData, ShadowBox, TextAlign, TextOverflow, ViewStyle};
 //::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -576,10 +579,10 @@ fn compute_background(
         }
 
         let bg_scale_mode = match scale_mode {
-            crate::figma_schema::ScaleMode::Tile => crate::toolkit_style::ScaleMode::Tile,
-            crate::figma_schema::ScaleMode::Fill => crate::toolkit_style::ScaleMode::Fill,
-            crate::figma_schema::ScaleMode::Fit => crate::toolkit_style::ScaleMode::Fit,
-            crate::figma_schema::ScaleMode::Stretch => crate::toolkit_style::ScaleMode::Stretch,
+            crate::figma_schema::ScaleMode::Tile => dc_design_package::toolkit_style::ScaleMode::Tile,
+            crate::figma_schema::ScaleMode::Fill => dc_design_package::toolkit_style::ScaleMode::Fill,
+            crate::figma_schema::ScaleMode::Fit => dc_design_package::toolkit_style::ScaleMode::Fit,
+            crate::figma_schema::ScaleMode::Stretch => dc_design_package::toolkit_style::ScaleMode::Stretch,
         };
 
         if let Some(fill) = images.image_fill(image_ref, node_name) {

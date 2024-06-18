@@ -25,6 +25,7 @@ use crate::figma_schema::{Paint, Transform};
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
+use dc_design_package::image_context::{EncodedImageMap, ImageKey};
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct VectorImageId {
@@ -93,32 +94,6 @@ fn lookup_or_fetch(
         }
     }
     false
-}
-
-/// Instead of keeping decoded images in ViewStyle objects, we keep keys to the images in the
-/// ImageContext and then fetch decoded images when rendering. This means we can serialize the
-/// whole ImageContext, and always get the right image when we render.
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
-pub struct ImageKey(String);
-impl ImageKey {
-    pub fn key(&self) -> String {
-        self.0.clone()
-    }
-
-    pub fn new(str: String) -> ImageKey {
-        ImageKey(str)
-    }
-}
-
-/// EncodedImageMap contains a mapping from ImageKey to network bytes. It can create an
-/// ImageMap and is intended to be used when we want to use Figma-defined components but do
-/// not want to communicate with the Figma service.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EncodedImageMap(HashMap<ImageKey, Arc<serde_bytes::ByteBuf>>);
-impl EncodedImageMap {
-    pub fn map(&self) -> HashMap<ImageKey, Arc<serde_bytes::ByteBuf>> {
-        self.0.clone()
-    }
 }
 
 /// ImageContext fetches images from Figma when requested, caches them (currently infinitely)

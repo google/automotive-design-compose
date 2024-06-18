@@ -14,7 +14,7 @@
 
 // This implementation is derived from font-kit 0.6.0, which is dual licensed under
 // MIT and Apache 2.0. We are using it under the Apache 2.0 terms.
-use crate::toolkit_schema::NumOrVar;
+use dc_design_package::toolkit_schema::NumOrVar;
 use crate::utils::f32_eq;
 use serde::{Deserialize, Serialize};
 use std::{

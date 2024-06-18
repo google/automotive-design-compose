@@ -18,7 +18,7 @@ use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
 
-use crate::layout_style::LayoutStyle;
+use dc_design_package::layout_style::LayoutStyle;
 use crate::types;
 use crate::types::Layout;
 

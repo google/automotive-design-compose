@@ -19,6 +19,7 @@ fetch_layout = ["clap"]
 [dependencies]
 layout = { path = "../layout" }
 dc_proto = { path = "../dc_proto"}
+dc_design_package = { path = "../dc_design_package"}
 ureq.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -52,10 +53,7 @@ anyhow.workspace = true
 [dev-dependencies]
 testdir.workspace = true
 
-[[bin]]
-name = "reflection"
-path = "src/bin/reflection.rs"
-required-features = ["reflection"]
+
 
 [[bin]]
 name = "fetch"

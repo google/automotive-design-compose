@@ -13,10 +13,11 @@
 // limitations under the License.
 
 use serde::{Deserialize, Serialize};
+use dc_definition::serialized_document::{SerializedDesignDoc, SerializedDesignDocHeader, ServerFigmaDoc};
+use dc_design_package::document::NodeQuery;
 
 use crate::{
-    Document, ImageContextSession, NodeQuery, SerializedDesignDoc, SerializedDesignDocHeader,
-    ServerFigmaDoc,
+    Document, ImageContextSession,
 };
 
 #[derive(Serialize, Deserialize)]

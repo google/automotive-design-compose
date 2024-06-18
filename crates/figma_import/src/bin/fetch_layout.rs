@@ -15,8 +15,7 @@
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use figma_import::{
-    toolkit_layout_style::LayoutSizing, toolkit_schema::View, Document, NodeQuery, ProxyConfig,
-    SerializedDesignDoc, ViewData,
+    Document, ProxyConfig,
 };
 use layout::types::Dimension;
 use layout::LayoutManager;
@@ -24,6 +23,10 @@ use std::collections::HashMap;
 use std::io;
 use std::io::prelude::*;
 use taffy::error::TaffyError;
+use dc_definition::serialized_document::SerializedDesignDoc;
+use dc_design_package::document::NodeQuery;
+use dc_design_package::toolkit_layout_style::LayoutSizing;
+use dc_design_package::toolkit_schema::{View, ViewData};
 
 fn _pause() {
     let mut stdin = io::stdin();

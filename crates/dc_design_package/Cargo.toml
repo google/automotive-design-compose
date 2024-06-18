@@ -1,0 +1,29 @@
+[package]
+name = "dc_design_package"
+version = "0.1.0"
+edition = "2021"
+authors = ["DesignCompose Team <aae-design-compose@google.com>"]
+description = "Contains the specification for the DC Design Package"
+license = "Apache-2.0"
+rust-version = "1.68"
+
+[features]
+default = []
+reflection = ["serde-reflection", "serde-generate", "clap"]
+
+[dependencies]
+thiserror.workspace = true
+serde.workspace = true
+serde_bytes.workspace = true
+serde-reflection = { workspace = true, optional = true }
+serde-generate = { workspace = true, optional = true }
+bincode.workspace = true
+clap = { workspace = true, optional = true }
+
+[dev-dependencies]
+testdir.workspace = true
+
+[[bin]]
+name = "reflection"
+path = "src/bin/reflection.rs"
+required-features = ["reflection"]

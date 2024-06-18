@@ -1,27 +1,29 @@
-// Copyright 2023 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-use crate::error::Error;
-use std::collections::HashMap;
-use std::fmt;
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::Path;
+/*
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 use serde::{Deserialize, Serialize};
-
-use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema, NodeQuery};
+use std::collections::HashMap;
+use std::fmt;
+use std::path::Path;
+use std::fs::File;
+use std::io::{Read, Write};
+use crate::document::{FigmaDocInfo, NodeQuery};
+use crate::error::Error;
+use crate::image_context::EncodedImageMap;
+use crate::toolkit_schema;
 
 static CURRENT_VERSION: u32 = 19;
 
@@ -30,6 +32,7 @@ static CURRENT_VERSION: u32 = 19;
 pub struct SerializedDesignDocHeader {
     pub version: u32,
 }
+
 impl SerializedDesignDocHeader {
     pub fn current() -> SerializedDesignDocHeader {
         SerializedDesignDocHeader { version: CURRENT_VERSION }
@@ -125,8 +128,9 @@ where
 #[cfg(test)]
 mod serialized_document_tests {
 
-    use super::*;
+    use crate::serialized_document::*;
     use std::fs::File;
+    use std::io::Write;
     use std::path::PathBuf;
     use testdir::testdir;
 

@@ -17,7 +17,7 @@ use dc_proto::{
     design::layout::{LayoutNode, LayoutParentChildren},
 };
 
-use crate::layout_node;
+use dc_design_package::layout_node;
 
 impl TryFrom<LayoutNode> for layout_node::LayoutNode {
     type Error = dc_proto::Error;

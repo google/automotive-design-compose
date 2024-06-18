@@ -22,7 +22,7 @@
 // `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
 use clap::Parser;
-use figma_import::load_design_doc;
+use dc_definition::serialized_document::load_design_doc;
 
 #[derive(Debug)]
 struct ParseError(String);

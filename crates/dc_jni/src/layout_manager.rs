@@ -23,7 +23,7 @@ use bytes::Bytes;
 use jni::objects::{JByteArray, JClass, JObject, JValue, JValueGen};
 use jni::sys::{jboolean, jint};
 use jni::JNIEnv;
-use layout::layout_node::{LayoutNodeList, LayoutParentChildren};
+use dc_design_package::layout_node::{LayoutNodeList, LayoutParentChildren};
 use layout::{LayoutChangedResponse, LayoutManager};
 use lazy_static::lazy_static;
 use log::{error, info};
@@ -121,7 +121,7 @@ pub(crate) fn jni_add_nodes<'local>(
     fn deprotolize_layout_node_list(
         env: &mut JNIEnv,
         serialized_views: JByteArray,
-    ) -> Result<layout::layout_node::LayoutNodeList, Error> {
+    ) -> Result<dc_design_package::layout_node::LayoutNodeList, Error> {
         let bytes_views: Bytes = env.convert_byte_array(serialized_views)?.into();
         let proto_msg = dc_proto::android_interface::LayoutNodeList::decode(bytes_views)
             .map_err(Error::from)?;

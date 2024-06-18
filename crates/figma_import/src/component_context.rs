@@ -13,11 +13,12 @@
 // limitations under the License.
 
 use std::collections::{HashMap, HashSet};
+use dc_design_package::document::NodeQuery;
+use dc_design_package::reaction_schema::Action;
 
 use crate::{
-    document::NodeQuery,
     figma_schema::Node,
-    reaction_schema::{Action, Reaction},
+    reaction_schema::Reaction,
 };
 
 /// ComponentContext is created by Document, and is used to ensure that all dependent nodes and

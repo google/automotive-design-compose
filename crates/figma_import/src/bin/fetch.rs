@@ -16,8 +16,10 @@ use std::io::Write;
 
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
+use dc_definition::serialized_document::{SerializedDesignDoc, SerializedDesignDocHeader};
+use dc_design_package::document::NodeQuery;
 use figma_import::{
-    Document, NodeQuery, ProxyConfig, SerializedDesignDoc, SerializedDesignDocHeader,
+    Document, ProxyConfig,
 };
 #[derive(Debug)]
 struct ConvertError(String);

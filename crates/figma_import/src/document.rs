@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
     iter::FromIterator,
-    time::Duration,
 };
+use dc_design_package::document::{FigmaDocInfo, NodeQuery};
+use dc_design_package::image_context::{EncodedImageMap, ImageKey};
+use dc_design_package::toolkit_schema::{ComponentContentOverride, ComponentOverrides, Variable, VariableMap, View, ViewData};
 
 use crate::{
     component_context::ComponentContext,
@@ -28,10 +29,9 @@ use crate::{
         Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse, Node,
         NodeData, NodesResponse, ProjectFilesResponse, VariablesResponse,
     },
-    image_context::{EncodedImageMap, ImageContext, ImageContextSession, ImageKey},
+    image_context::{ImageContext, ImageContextSession},
     toolkit_schema::{
-        Collection, ComponentContentOverride, ComponentOverrides, Mode, Variable, VariableMap,
-        View, ViewData,
+        Collection, Mode,
     },
     transform_flexbox::create_component_flexbox,
 };
@@ -73,54 +73,6 @@ use crate::figma_v1_document_mocks::http_fetch;
 pub enum UpdateStatus {
     Updated,
     NotUpdated,
-}
-
-/// We can fetch nodes either by ID or by their name.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Serialize, Deserialize)]
-pub enum NodeQuery {
-    /// Find the node by ID
-    NodeId(String),
-    /// Find the node by name
-    NodeName(String),
-    /// Node by name that is a variant, so the name may have multiple properties
-    /// The first string is the node name and the second is its parent's name
-    NodeVariant(String, String),
-    NodeComponentSet(String),
-}
-// Helper methods for NodeQuery construction.
-impl NodeQuery {
-    /// Construct a NodeQuery::NodeId from the given ID string.
-    pub fn id(id: impl ToString) -> NodeQuery {
-        NodeQuery::NodeId(id.to_string())
-    }
-
-    /// Construct a NodeQuery::NodeName from the given ID string.
-    pub fn name(name: impl ToString) -> NodeQuery {
-        NodeQuery::NodeName(name.to_string())
-    }
-
-    /// Construct a NodeQuery::NodeVariant from the given node name
-    pub fn variant(name: impl ToString, parent: impl ToString) -> NodeQuery {
-        NodeQuery::NodeVariant(name.to_string(), parent.to_string())
-    }
-
-    pub fn component_set(name: impl ToString) -> NodeQuery {
-        NodeQuery::NodeComponentSet(name.to_string())
-    }
-}
-
-/// We can fetch figma documents in a project or from branches of another document.
-/// We store each as a name and ID
-#[derive(Clone, PartialEq, Eq, Debug, Hash, Serialize, Deserialize)]
-pub struct FigmaDocInfo {
-    pub name: String,
-    pub id: String,
-    pub version_id: String,
-}
-impl FigmaDocInfo {
-    pub(crate) fn new(name: String, id: String, version_id: String) -> FigmaDocInfo {
-        FigmaDocInfo { name, id, version_id }
-    }
 }
 
 /// Branches alwasy return head of file, i.e. no version returned

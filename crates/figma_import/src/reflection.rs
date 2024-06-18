@@ -24,27 +24,27 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer.trace_type::<layout::styles::AlignItems>(&samples).expect("couldn't trace AlignItems");
     tracer.trace_type::<layout::styles::AlignSelf>(&samples).expect("couldn't trace AlignSelf");
     tracer
-        .trace_type::<crate::toolkit_style::ScaleMode>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::ScaleMode>(&samples)
         .expect("couldn't trace ScaleMode");
     tracer
-        .trace_type::<crate::toolkit_style::Background>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::Background>(&samples)
         .expect("couldn't trace Background");
     tracer
-        .trace_type::<crate::toolkit_style::BlendMode>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::BlendMode>(&samples)
         .expect("couldn't trace BlendMode");
     tracer
-        .trace_type::<crate::toolkit_style::BoxShadow>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::BoxShadow>(&samples)
         .expect("couldn't trace BoxShadow");
     tracer.trace_type::<layout::types::Dimension>(&samples).expect("couldn't trace Dimension");
     tracer
-        .trace_type::<crate::toolkit_layout_style::Display>(&samples)
+        .trace_type::<dc_design_package::toolkit_layout_style::Display>(&samples)
         .expect("couldn't trace Display");
-    tracer.trace_type::<crate::toolkit_style::FilterOp>(&samples).expect("couldn't trace FilterOp");
+    tracer.trace_type::<dc_design_package::toolkit_style::FilterOp>(&samples).expect("couldn't trace FilterOp");
     tracer
         .trace_type::<layout::styles::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
     tracer
-        .trace_type::<crate::toolkit_layout_style::FlexWrap>(&samples)
+        .trace_type::<dc_design_package::toolkit_layout_style::FlexWrap>(&samples)
         .expect("couldn't trace FlexWrap");
     tracer
         .trace_type::<crate::toolkit_font_style::FontStyle>(&samples)
@@ -53,65 +53,65 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<layout::styles::JustifyContent>(&samples)
         .expect("couldn't trace JustifyContent");
     tracer
-        .trace_type::<crate::toolkit_style::LineHeight>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::LineHeight>(&samples)
         .expect("couldn't trace LineHeight");
     tracer
-        .trace_type::<crate::toolkit_layout_style::Number>(&samples)
+        .trace_type::<dc_design_package::toolkit_layout_style::Number>(&samples)
         .expect("couldn't trace Number");
     tracer
-        .trace_type::<crate::toolkit_layout_style::Overflow>(&samples)
+        .trace_type::<dc_design_package::toolkit_layout_style::Overflow>(&samples)
         .expect("couldn't trace Overflow");
     tracer
-        .trace_type::<crate::toolkit_style::PointerEvents>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::PointerEvents>(&samples)
         .expect("couldn't trace PointerEvents");
     tracer.trace_type::<layout::styles::ItemSpacing>(&samples).expect("couldn't trace ItemSpacing");
     tracer
-        .trace_type::<crate::toolkit_style::GridLayoutType>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::GridLayoutType>(&samples)
         .expect("couldn't trace GridLayoutType");
     tracer
-        .trace_type::<crate::toolkit_style::RotationMeterData>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::RotationMeterData>(&samples)
         .expect("couldn't trace RotationMeterData");
     tracer
-        .trace_type::<crate::toolkit_style::ArcMeterData>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::ArcMeterData>(&samples)
         .expect("couldn't trace ArcMeterData");
     tracer
-        .trace_type::<crate::toolkit_style::ProgressBarMeterData>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::ProgressBarMeterData>(&samples)
         .expect("couldn't trace ProgressBarMeterData");
     tracer
-        .trace_type::<crate::toolkit_style::MeterData>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::MeterData>(&samples)
         .expect("couldn't trace MeterData");
     tracer
         .trace_type::<layout::styles::PositionType>(&samples)
         .expect("couldn't trace PositionType");
     tracer
-        .trace_type::<crate::toolkit_style::ShadowBox>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::ShadowBox>(&samples)
         .expect("couldn't trace ShadowBox");
     tracer
-        .trace_type::<crate::toolkit_style::StrokeAlign>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::StrokeAlign>(&samples)
         .expect("couldn't trace StrokeAlign");
     tracer
-        .trace_type::<crate::toolkit_style::StrokeWeight>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::StrokeWeight>(&samples)
         .expect("couldn't trace StrokeWeight");
     tracer
-        .trace_type::<crate::toolkit_style::TextAlign>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::TextAlign>(&samples)
         .expect("couldn't trace TextAlign");
     tracer
-        .trace_type::<crate::toolkit_style::TextAlignVertical>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::TextAlignVertical>(&samples)
         .expect("couldn't trace TextAlignVertical");
     tracer
-        .trace_type::<crate::toolkit_style::TextOverflow>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::TextOverflow>(&samples)
         .expect("couldn't trace TextOverflow");
     tracer
-        .trace_type::<crate::toolkit_layout_style::LayoutSizing>(&samples)
+        .trace_type::<dc_design_package::toolkit_layout_style::LayoutSizing>(&samples)
         .expect("couldn't trace LayoutSizing");
     tracer
-        .trace_type::<crate::toolkit_style::ViewStyle>(&samples)
+        .trace_type::<dc_design_package::toolkit_style::ViewStyle>(&samples)
         .expect("couldn't trace ViewStyle");
 
     tracer.trace_type::<crate::reaction_schema::Action>(&samples).expect("couldn't trace Action");
     tracer.trace_type::<crate::reaction_schema::Trigger>(&samples).expect("couldn't trace Trigger");
     tracer
-        .trace_type::<crate::reaction_schema::Transition>(&samples)
+        .trace_type::<dc_design_package::reaction_schema::Transition>(&samples)
         .expect("couldn't trace transition");
     tracer
         .trace_type::<crate::reaction_schema::Navigation>(&samples)
@@ -125,7 +125,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::reaction_schema::TransitionDirection>(&samples)
         .expect("couldn't trace TransitionDirection");
-    tracer.trace_type::<crate::reaction_schema::Easing>(&samples).expect("couldn't trace Easing");
+    tracer.trace_type::<dc_design_package::reaction_schema::Easing>(&samples).expect("couldn't trace Easing");
 
     tracer
         .trace_type::<crate::vector_schema::WindingRule>(&samples)
@@ -139,16 +139,16 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace RenderCommand");
 
     tracer
-        .trace_type::<crate::toolkit_schema::ComponentContentOverride>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::ComponentContentOverride>(&samples)
         .expect("couldn't trace ComponentContentOverride");
     tracer
-        .trace_type::<crate::toolkit_schema::ComponentInfo>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::ComponentInfo>(&samples)
         .expect("couldn't trace ComponentInfo");
     tracer
         .trace_type::<crate::toolkit_schema::OverflowDirection>(&samples)
         .expect("couldn't trace OverflowDirection");
     tracer
-        .trace_type::<crate::toolkit_schema::RenderMethod>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::RenderMethod>(&samples)
         .expect("couldn't trace RenderMethod");
     tracer
         .trace_type::<crate::toolkit_schema::StrokeCap>(&samples)
@@ -167,36 +167,36 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::figma_schema::VariableAlias>(&samples)
         .expect("couldn't trace VariableAlias");
     tracer
-        .trace_type::<crate::toolkit_schema::NumOrVar>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::NumOrVar>(&samples)
         .expect("couldn't trace NumOrVar");
     tracer
-        .trace_type::<crate::toolkit_schema::ColorOrVar>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::ColorOrVar>(&samples)
         .expect("couldn't trace ColorOrVar");
     tracer
-        .trace_type::<crate::toolkit_schema::VariableValue>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::VariableValue>(&samples)
         .expect("couldn't trace VariableValue");
     tracer
-        .trace_type::<crate::toolkit_schema::Variable>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::Variable>(&samples)
         .expect("couldn't trace Variable");
     tracer
-        .trace_type::<crate::toolkit_schema::VariableMap>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::VariableMap>(&samples)
         .expect("couldn't trace VariableMap");
     tracer
-        .trace_type::<crate::toolkit_schema::ViewShape>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::ViewShape>(&samples)
         .expect("couldn't trace ViewShape");
     tracer
-        .trace_type::<crate::toolkit_schema::ViewData>(&samples)
+        .trace_type::<dc_design_package::toolkit_schema::ViewData>(&samples)
         .expect("couldn't trace ViewData");
-    tracer.trace_type::<crate::toolkit_schema::View>(&samples).expect("couldn't trace View");
+    tracer.trace_type::<dc_design_package::toolkit_schema::View>(&samples).expect("couldn't trace View");
     tracer.trace_type::<layout::types::Layout>(&samples).expect("couldn't trace Layout");
     tracer
         .trace_type::<layout::layout_manager::LayoutChangedResponse>(&samples)
         .expect("couldn't trace LayoutChangedResponse");
     tracer
-        .trace_type::<layout::layout_node::LayoutNode>(&samples)
+        .trace_type::<dc_design_package::layout_node::LayoutNode>(&samples)
         .expect("couldn't trace LayoutNode");
     tracer
-        .trace_type::<layout::layout_node::LayoutNodeList>(&samples)
+        .trace_type::<dc_design_package::layout_node::LayoutNodeList>(&samples)
         .expect("couldn't trace LayoutNodeList");
 
     tracer

@@ -214,6 +214,8 @@ fun SquooshRoot(
     // We're starting to support animated transitions
     interactionState.supportAnimations = true
 
+    val layoutManager = remember(docId) { SquooshLayout.newLayoutManager() }
+
     val startFrame =
         interactionState.rootNode(
             initialNode = rootNodeQuery,
@@ -250,7 +252,6 @@ fun SquooshRoot(
         }
 
     val layoutIdAllocator = remember { SquooshLayoutIdAllocator() }
-    val layoutManager = remember(docId) { SquooshLayout.newLayoutManager() }
     val rootLayoutId = remember(docId) { SquooshLayout.getNextLayoutId() * 100000000 }
     val layoutCache = remember(docId) { HashMap<Int, Int>() }
     val layoutValueCache = remember(docId) { HashMap<Int, Layout>() }

@@ -85,6 +85,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
         Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
         Triple("Component Replace", { ComponentReplaceTest() }, ComponentReplaceDoc.javaClass.name),
+        Triple(
+            "Squoosh Component Replace",
+            { SquooshComponentReplaceTest() },
+            ComponentReplaceDoc.javaClass.name
+        ),
         Triple("SA", { SmartAnimateTest() }, SmartAnimateTestDoc.javaClass.name),
         Triple("SA Variant", { VariantAnimationTest() }, VariantAnimationTestDoc.javaClass.name),
         // Don't run in CI, need an annotation.

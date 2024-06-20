@@ -16,8 +16,8 @@ use thiserror::Error;
 
 include!(concat!(env!("OUT_DIR"), "/protos.rs"));
 
-// Allow dependendant crates to import types using a more rusty signature like:
-// use dc_proto::design::element::Color;
+// Allow dependent crates to import types using a more rusty signature like:
+// use dc_bundle::design::element::Color;
 pub use com::android::designcompose::proto::*;
 
 #[derive(Error, Debug)]

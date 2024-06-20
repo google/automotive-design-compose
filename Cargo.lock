@@ -298,13 +298,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "dc_bundle"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "prost-build",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "dc_jni"
 version = "0.1.0"
 dependencies = [
  "android_logger",
  "bincode",
  "bytes",
- "dc_proto",
+ "dc_bundle",
  "figma_import",
  "jni",
  "layout",
@@ -316,16 +326,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "ureq",
-]
-
-[[package]]
-name = "dc_proto"
-version = "0.1.0"
-dependencies = [
- "prost",
- "prost-build",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -401,7 +401,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "clap",
- "dc_proto",
+ "dc_bundle",
  "euclid",
  "image",
  "layout",
@@ -623,7 +623,7 @@ name = "layout"
 version = "0.1.0"
 dependencies = [
  "android_logger",
- "dc_proto",
+ "dc_bundle",
  "log",
  "prost",
  "serde",

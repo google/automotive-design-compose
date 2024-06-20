@@ -18,7 +18,7 @@ fetch_layout = ["clap"]
 
 [dependencies]
 layout = { path = "../layout" }
-dc_proto = { path = "../dc_proto"}
+dc_bundle = { path = "../dc_bundle"}
 ureq.workspace = true
 serde.workspace = true
 serde_json.workspace = true

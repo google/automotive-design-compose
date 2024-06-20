@@ -12,29 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_proto::design::layout::LayoutStyle;
+use dc_bundle::design::layout::LayoutStyle;
 
 use crate::layout_style;
 
 impl TryFrom<LayoutStyle> for layout_style::LayoutStyle {
-    type Error = dc_proto::Error;
+    type Error = dc_bundle::Error;
 
     fn try_from(proto: LayoutStyle) -> Result<Self, Self::Error> {
         let layout_style = layout_style::LayoutStyle {
             margin: proto
                 .margin
                 .clone()
-                .ok_or(dc_proto::Error::MissingFieldError { field: "margin".to_string() })?
+                .ok_or(dc_bundle::Error::MissingFieldError { field: "margin".to_string() })?
                 .try_into()?,
             padding: proto
                 .padding
                 .clone()
-                .ok_or(dc_proto::Error::MissingFieldError { field: "padding".to_string() })?
+                .ok_or(dc_bundle::Error::MissingFieldError { field: "padding".to_string() })?
                 .try_into()?,
             item_spacing: proto
                 .item_spacing
                 .clone()
-                .ok_or(dc_proto::Error::MissingFieldError { field: "item_spacing".to_string() })?
+                .ok_or(dc_bundle::Error::MissingFieldError { field: "item_spacing".to_string() })?
                 .try_into()?,
             top: proto.top.try_into()?,
             left: proto.left.try_into()?,
@@ -49,7 +49,7 @@ impl TryFrom<LayoutStyle> for layout_style::LayoutStyle {
             bounding_box: proto
                 .bounding_box
                 .clone()
-                .ok_or(dc_proto::Error::MissingFieldError { field: "bounding_box".to_string() })?
+                .ok_or(dc_bundle::Error::MissingFieldError { field: "bounding_box".to_string() })?
                 .into(),
             flex_grow: proto.flex_grow,
             flex_shrink: proto.flex_shrink,

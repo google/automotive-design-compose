@@ -13,7 +13,7 @@ crate-type = ["rlib", "cdylib"]
 
 
 [dependencies]
-dc_proto = {path = "../dc_proto"}
+dc_bundle = { path = "../dc_bundle"}
 log.workspace = true
 android_logger.workspace = true
 serde.workspace = true

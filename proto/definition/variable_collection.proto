@@ -1,0 +1,52 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.definition;
+
+import "definition/element/variable.proto";
+
+option java_multiple_files = true;
+
+// Representation of a variable mode. Variables can have fixed values for each
+// available mode
+message Mode {
+  string id = 1;
+  string name = 2;
+}
+
+// Representation of a variable collection. Every variable belongs to a
+// collection, and a collection contains one or more modes.
+message Collection {
+  string id = 1;
+  string name = 2;
+  string default_mode_id = 3;
+  map<string, string> mode_name_hash = 4;  // name -> id
+  map<string, Mode> mode_id_hash = 5;      // id -> Mode
+}
+
+// Stores variable mappings
+message VariableMap {
+  // Maps Collection names to IDs
+  message NameIDMap {
+    map<string, string> m = 1;
+  }
+
+  map<string, Collection> collections = 1;      // ID -> Collection
+  map<string, string> collection_name_map = 2;  // Name -> ID
+  map<string, element.Variable> variables = 3;  // ID -> Variable
+  // Collection ID -> [Name -> ID]
+  map<string, NameIDMap> variable_name_map = 4;
+}

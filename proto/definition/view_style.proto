@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use thiserror::Error;
+syntax = "proto3";
 
-include!(concat!(env!("OUT_DIR"), "/protos.rs"));
+package com.android.designcompose.proto.definition;
 
-// Allow dependent crates to import types using a more rusty signature like:
-// use dc_bundle::definition::element::Color;
-pub use com::android::designcompose::proto::*;
+import "definition/layout/layout_style.proto";
+import "definition/node_style.proto";
 
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("Missing field {field}")]
-    MissingFieldError { field: String },
-    #[error("Unknown enum variant for {enum_name}")]
-    UnknownEnumVariant { enum_name: String },
+option java_multiple_files = true;
+
+// Collects the Layout and Node styles for a View
+message ViewStyle {
+  layout.LayoutStyle layout_style = 1;
+  NodeStyle node_style = 2;
 }
-
-pub type Result<T> = std::result::Result<T, Error>;

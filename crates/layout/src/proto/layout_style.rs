@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::design::layout::LayoutStyle;
+use dc_bundle::definition::layout::LayoutStyle;
 
 use crate::layout_style;
 

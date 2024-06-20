@@ -17,16 +17,16 @@
 package com.android.designcompose.proto
 
 import com.android.designcompose.proto.android_interface.LayoutChangedResponse
-import com.android.designcompose.proto.design.element.DimensionProto
-import com.android.designcompose.proto.design.element.DimensionRect
-import com.android.designcompose.proto.design.layout.AlignContent
-import com.android.designcompose.proto.design.layout.AlignItems
-import com.android.designcompose.proto.design.layout.AlignSelf
-import com.android.designcompose.proto.design.layout.FlexDirection
-import com.android.designcompose.proto.design.layout.ItemSpacing
-import com.android.designcompose.proto.design.layout.JustifyContent
-import com.android.designcompose.proto.design.layout.LayoutStyle
-import com.android.designcompose.proto.design.layout.PositionType
+import com.android.designcompose.proto.definition.element.DimensionProto
+import com.android.designcompose.proto.definition.element.DimensionRect
+import com.android.designcompose.proto.definition.layout.AlignContent
+import com.android.designcompose.proto.definition.layout.AlignItems
+import com.android.designcompose.proto.definition.layout.AlignSelf
+import com.android.designcompose.proto.definition.layout.FlexDirection
+import com.android.designcompose.proto.definition.layout.ItemSpacing
+import com.android.designcompose.proto.definition.layout.JustifyContent
+import com.android.designcompose.proto.definition.layout.LayoutStyle
+import com.android.designcompose.proto.definition.layout.PositionType
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Rect
 import com.android.designcompose.serdegen.Size
@@ -55,7 +55,8 @@ internal fun ItemSpacing.intoSerde() =
         else -> throw IllegalArgumentException("Unknown ItemSpacing: $this") // Should never happen.
     }
 
-internal fun com.android.designcompose.proto.design.element.Size.intoSerde() = Size(width, height)
+internal fun com.android.designcompose.proto.definition.element.Size.intoSerde() =
+    Size(width, height)
 
 internal fun AlignSelf.intoSerde() =
     when (this) {

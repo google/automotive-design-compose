@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use thiserror::Error;
+syntax = "proto3";
 
-include!(concat!(env!("OUT_DIR"), "/protos.rs"));
+package com.android.designcompose.proto.definition.modifier;
 
-// Allow dependent crates to import types using a more rusty signature like:
-// use dc_bundle::definition::element::Color;
-pub use com::android::designcompose::proto::*;
+option java_multiple_files = true;
 
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("Missing field {field}")]
-    MissingFieldError { field: String },
-    #[error("Unknown enum variant for {enum_name}")]
-    UnknownEnumVariant { enum_name: String },
+// Various filters that can be applied and their intensity
+message FilterOp {
+  oneof FilterOp {
+    float blur = 1;
+    float saturation = 2;  // not currently implemented
+    float contrast = 3;
+    float grayscale = 4;
+    float brightness = 5;
+  }
 }
-
-pub type Result<T> = std::result::Result<T, Error>;

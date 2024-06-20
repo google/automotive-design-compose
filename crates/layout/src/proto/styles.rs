@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::design::layout::{
+use dc_bundle::definition::layout::{
     item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent,
     PositionType,
 };

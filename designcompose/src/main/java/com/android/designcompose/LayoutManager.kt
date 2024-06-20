@@ -21,9 +21,9 @@ import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import androidx.tracing.trace
 import com.android.designcompose.proto.android_interface.LayoutChangedResponse
 import com.android.designcompose.proto.android_interface.layoutNodeList
-import com.android.designcompose.proto.design.layout.LayoutNode
-import com.android.designcompose.proto.design.layout.LayoutStyle
-import com.android.designcompose.proto.design.layout.layoutNode
+import com.android.designcompose.proto.definition.layout.LayoutNode
+import com.android.designcompose.proto.definition.layout.LayoutStyle
+import com.android.designcompose.proto.definition.layout.layoutNode
 import com.android.designcompose.proto.intoProto
 import com.android.designcompose.proto.intoSerde
 import com.android.designcompose.serdegen.Layout as SerdegenLayout

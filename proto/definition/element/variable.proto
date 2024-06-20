@@ -1,0 +1,79 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.definition.element;
+
+import "definition/element/color.proto";
+
+option java_multiple_files = true;
+
+// Holds the value of a variable, whichever type it is.
+message VariableValue {
+  oneof value {
+    bool boolean = 1;
+    float number = 2;
+    string string = 3;
+    Color color = 4;
+    string alias = 5;
+  }
+}
+
+// Representation of a Figma variable. We convert a figma_schema::Variable into
+// this format to make the fields a bit easier to access.
+message Variable {
+  // Variable Types
+  enum VariableType {
+    VARIABLE_TYPE_UNSPECIFIED = 0;
+    VARIABLE_TYPE_BOOL = 1;
+    VARIABLE_TYPE_NUMBER = 2;
+    VARIABLE_TYPE_TEXT = 3;
+    VARIABLE_TYPE_COLOR = 4;
+  }
+
+  // Each variable contains a map of possible values. This data structure helps
+  // keep track of that data and contains functions to retrieve the value of a
+  // variable given a mode.
+  message VariableValueMap {
+    map<string, VariableValue> values_by_mode = 1;
+  }
+
+  string id = 1;
+  string name = 2;
+  bool remote = 3;
+  string key = 4;
+  string variable_collection_id = 5;
+  VariableType var_type = 6;
+  VariableValueMap values_by_mode = 7;
+}
+
+// Holds either a numerical value (e.g., 100 for a font size) or a reference to
+// a design variable. This allows for dynamic values that can adapt based on the
+// current variable values.
+message NumOrVar {
+  oneof NumOrVar {
+    float num = 1;
+    string var = 2;
+  }
+}
+
+// Holds either a direct color representation (e.g., RGBA values) or a reference
+// to a color variable, providing flexibility in how you define colors.
+message ColorOrVar {
+  oneof ColorOrVar {
+    Color color = 1;
+    string var = 2;
+  }
+}

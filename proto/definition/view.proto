@@ -1,0 +1,89 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.definition;
+
+import "definition/component.proto";
+import "definition/element/geometry.proto";
+import "definition/element/text.proto";
+import "definition/element/view_shape.proto";
+import "definition/interaction/reaction.proto";
+import "definition/layout/grid.proto";
+import "definition/plugin/frame_extras.proto";
+import "definition/text_style.proto";
+import "definition/view_style.proto";
+
+option java_multiple_files = true;
+
+// Represents a toolkit View (like a Composable).
+message View {
+  // This enum may be used as a hint by the DesignCompose renderer
+  // implementation to determine if it is important for the content to be
+  // rendered identically on different platforms.
+  enum RenderMethod {
+    RENDER_METHOD_UNSPECIFIED = 0;
+    RENDER_METHOD_NONE = 1;
+    RENDER_METHOD_PIXEL_PERFECT = 2;
+  }
+
+  // unique numeric id (not replicated within one DesignCompose file), which is
+  // used by the renderer when building a layout tree, or when mapping from an
+  // integer to a View.
+  uint32 unique_id = 1;
+  // id doesn't exist in vsw toolkit, but is useful for tracing from Figma node
+  // to output
+  string id = 2;
+  // name doesn't exist in vsw toolkit, but is also useful for tracing.
+  string name = 3;
+  // information on the component that this view is an instance of (if any).
+  ComponentInfo component_info = 4;
+
+  // interactivity
+  repeated interaction.Reaction reactions = 5;
+  // interactivity related frame properties
+  plugin.FrameExtras frame_extras = 6;
+  // overflow (scrolling) data
+  definition.layout.ScrollInfo scroll_info = 7;
+  // common style
+  ViewStyle style = 8;
+  // details that are unique to each view type.
+  ViewData data = 9;
+  // absolute bounding box of the view in the design document
+  element.Rectangle design_absolute_bounding_box = 10;
+  // hint for the renderer on how to render the view
+  RenderMethod render_method = 11;
+  // a hash of variable collection id -> mode id if variable modes are set on
+  // this view
+  map<string, string> explicit_variable_modes = 12;
+}
+
+// Details that are unique to each view type.
+message ViewData {
+  // Container is used to represent views that act as containers for other
+  // views, like a Column or a Row in Jetpack Compose. The shape field defines
+  // the visual appearance of the container, while the children field defines
+  // the views that are contained within it.
+  message Container {
+    definition.element.ViewShape shape = 1;
+    repeated View children = 2;
+  }
+
+  oneof view_data {
+    Container container = 1;
+    definition.element.Text text = 2;
+    StyledText styled_text = 3;
+  }
+}

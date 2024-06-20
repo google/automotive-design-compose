@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::design::element::{dimension_proto::Dimension, DimensionProto, DimensionRect, Size};
+use dc_bundle::definition::element::{
+    dimension_proto::Dimension, DimensionProto, DimensionRect, Size,
+};
 
 use crate::types;
 

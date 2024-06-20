@@ -1,0 +1,120 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// protolint:disable MESSAGE_NAMES_EXCLUDE_PREPOSITIONS
+// protolint:disable FIELD_NAMES_EXCLUDE_PREPOSITIONS
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.definition.interaction;
+
+option java_multiple_files = true;
+
+// The type of easing to perform in a transition.
+message Easing {
+  // Bezier curve for custom easing functions.
+  message Bezier {
+    float x1 = 1;
+    float y1 = 2;
+    float x2 = 3;
+    float y2 = 4;
+  }
+
+  // Spring coefficients
+  message Spring {
+    float mass = 1;
+    float stiffness = 2;
+    float damping = 3;
+  }
+
+  oneof easing {
+    Bezier bezier = 1;
+    Spring spring = 2;
+  }
+}
+
+// This represents the Figma "Transition" type.
+// https://www.figma.com/plugin-docs/api/Transition/
+message Transition {
+  // Some transitions define a direction.
+  enum TransitionDirection {
+    TRANSITION_DIRECTION_UNSPECIFIED = 0;
+    TRANSITION_DIRECTION_LEFT = 1;
+    TRANSITION_DIRECTION_RIGHT = 2;
+    TRANSITION_DIRECTION_TOP = 3;
+    TRANSITION_DIRECTION_BOTTOM = 4;
+  }
+  // protolint:disable MESSAGES_HAVE_COMMENT
+  // They're self-explanatory
+  message Dissolve {
+    Easing easing = 1;
+    float duration = 2;
+  }
+
+  message SmartAnimate {
+    Easing easing = 1;
+    float duration = 2;
+  }
+
+  message ScrollAnimate {
+    Easing easing = 1;
+    float duration = 2;
+  }
+
+  message MoveIn {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  message MoveOut {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  message Push {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  message SlideIn {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  message SlideOut {
+    Easing easing = 1;
+    float duration = 2;
+    TransitionDirection direction = 3;
+    bool match_layers = 4;
+  }
+
+  oneof transition {
+    Dissolve dissolve = 1;
+    SmartAnimate smart_animate = 2;
+    ScrollAnimate scroll_animate = 3;
+    MoveIn move_in = 4;
+    MoveOut move_out = 5;
+    Push push = 6;
+    SlideIn slide_in = 7;
+    SlideOut slide_out = 8;
+  }
+}

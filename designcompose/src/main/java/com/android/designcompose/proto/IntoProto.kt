@@ -17,20 +17,20 @@
 package com.android.designcompose.proto
 
 import com.android.designcompose.proto.android_interface.layoutNodeList
-import com.android.designcompose.proto.design.element.dimensionProto
-import com.android.designcompose.proto.design.element.dimensionRect
-import com.android.designcompose.proto.design.element.size
-import com.android.designcompose.proto.design.layout.AlignContent as ProtoAlignContent
-import com.android.designcompose.proto.design.layout.AlignItems as ProtoAlignItems
-import com.android.designcompose.proto.design.layout.AlignSelf as ProtoAlignSelf
-import com.android.designcompose.proto.design.layout.FlexDirection as ProtoFlexDirection
-import com.android.designcompose.proto.design.layout.ItemSpacingKt.auto
-import com.android.designcompose.proto.design.layout.JustifyContent as ProtoJustifyContent
-import com.android.designcompose.proto.design.layout.PositionType as ProtoPositionType
-import com.android.designcompose.proto.design.layout.itemSpacing
-import com.android.designcompose.proto.design.layout.layoutNode
-import com.android.designcompose.proto.design.layout.layoutParentChildren
-import com.android.designcompose.proto.design.layout.layoutStyle
+import com.android.designcompose.proto.definition.element.dimensionProto
+import com.android.designcompose.proto.definition.element.dimensionRect
+import com.android.designcompose.proto.definition.element.size
+import com.android.designcompose.proto.definition.layout.AlignContent as ProtoAlignContent
+import com.android.designcompose.proto.definition.layout.AlignItems as ProtoAlignItems
+import com.android.designcompose.proto.definition.layout.AlignSelf as ProtoAlignSelf
+import com.android.designcompose.proto.definition.layout.FlexDirection as ProtoFlexDirection
+import com.android.designcompose.proto.definition.layout.ItemSpacingKt.auto
+import com.android.designcompose.proto.definition.layout.JustifyContent as ProtoJustifyContent
+import com.android.designcompose.proto.definition.layout.PositionType as ProtoPositionType
+import com.android.designcompose.proto.definition.layout.itemSpacing
+import com.android.designcompose.proto.definition.layout.layoutNode
+import com.android.designcompose.proto.definition.layout.layoutParentChildren
+import com.android.designcompose.proto.definition.layout.layoutStyle
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf

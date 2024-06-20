@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use thiserror::Error;
+syntax = "proto3";
 
-include!(concat!(env!("OUT_DIR"), "/protos.rs"));
+package com.android.designcompose.proto.definition.element;
 
-// Allow dependent crates to import types using a more rusty signature like:
-// use dc_bundle::definition::element::Color;
-pub use com::android::designcompose::proto::*;
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("Missing field {field}")]
-    MissingFieldError { field: String },
-    #[error("Unknown enum variant for {enum_name}")]
-    UnknownEnumVariant { enum_name: String },
+// Color represents a color value within a design, encoded as RGBA (Red, Green,
+// Blue, Alpha) where each component is an 8-bit integer. Alpha determines
+// opacity, with 255 being fully opaque and 0 fully transparent.
+// Encoding each component to uint32, which uses variable-length encoding.
+message Color {
+  uint32 r = 1;
+  uint32 g = 2;
+  uint32 b = 3;
+  uint32 a = 4;
 }
-
-pub type Result<T> = std::result::Result<T, Error>;

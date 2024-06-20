@@ -19,7 +19,6 @@ package com.android.designcompose.proto.definition.view;
 import "definition/element/font.proto";
 import "definition/element/geometry.proto";
 import "definition/element/path.proto";
-import "definition/element/text.proto";
 import "definition/interaction/pointer.proto";
 import "definition/layout/display.proto";
 import "definition/layout/grid.proto";
@@ -28,6 +27,7 @@ import "definition/modifier/blend.proto";
 import "definition/modifier/filter.proto";
 import "definition/modifier/matrix_transform.proto";
 import "definition/modifier/shadow.proto";
+import "definition/modifier/text.proto";
 import "definition/plugin/meter_data.proto";
 
 option java_multiple_files = true;
@@ -52,10 +52,11 @@ message NodeStyle {
   definition.modifier.LayoutTransform relative_transform = 12;
 
   // Text layout
-  definition.element.TextAlign text_align = 13;
-  definition.element.TextAlignVertical text_align_vertical = 14;
-  definition.element.TextOverflow text_overflow = 15;
-  definition.element.TextShadow text_shadow = 16;
+  definition.modifier.TextAlign text_align = 13;
+  definition.modifier.TextAlignVertical text_align_vertical = 14;
+  definition.modifier.TextOverflow text_overflow = 15;
+  definition.modifier.TextShadow text_shadow = 16;
+
 
   // Size and layout
   definition.element.Size node_size = 17;

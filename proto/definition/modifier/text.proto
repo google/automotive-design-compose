@@ -14,16 +14,11 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition.element;
+package com.android.designcompose.proto.definition.modifier;
 
 import "definition/element/color.proto";
 
 option java_multiple_files = true;
-
-// Text
-message Text {
-  string content = 1;
-}
 
 // Horizontal text alignment. This value aligns the text within its bounds.
 enum TextAlign {
@@ -51,7 +46,7 @@ enum TextOverflow {
 // A text shadow.
 message TextShadow {
   float blur_radius = 1;
-  Color color = 2;
+  element.Color color = 2;
   float offset_x = 3;
   float offset_y = 4;
 }

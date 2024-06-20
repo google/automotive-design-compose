@@ -509,7 +509,7 @@ internal fun DocServer.doc(
         return preloadedDoc
     }
 
-    // Use the LocalContext to locate this doc in the precompiled serializedDesignDocuments
+    // Use the LocalContext to locate this doc in the precompiled DesignComposeDefinitionuments
     val assetManager = context.assets
     try {
         val assetDoc = assetManager.open("figma/$id.dcf")

@@ -22,7 +22,7 @@
 // `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
 use clap::Parser;
-use figma_import::load_design_doc;
+use figma_import::load_design_def;
 
 #[derive(Debug)]
 struct ParseError(String);
@@ -57,7 +57,7 @@ fn dcf_info(args: Args) -> Result<(), ParseError> {
     let file_path = &args.dcf_file;
     let node = args.node;
 
-    let (header, doc) = load_design_doc(file_path)?;
+    let (header, doc) = load_design_def(file_path)?;
 
     println!("Deserialized file");
     println!("  Header Version: {}", header.version);

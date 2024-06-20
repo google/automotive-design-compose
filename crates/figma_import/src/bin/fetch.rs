@@ -17,7 +17,7 @@ use std::io::Write;
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use figma_import::{
-    Document, NodeQuery, ProxyConfig, SerializedDesignDoc, SerializedDesignDocHeader,
+    DesignComposeDefinition, DesignComposeDefinitionHeader, Document, NodeQuery, ProxyConfig,
 };
 #[derive(Debug)]
 struct ConvertError(String);
@@ -92,7 +92,7 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
     let variable_map = doc.build_variable_map();
 
     // Build the serializable doc structure
-    let serializable_doc = SerializedDesignDoc {
+    let serializable_doc = DesignComposeDefinition {
         views,
         component_sets: doc.component_sets().clone(),
         images: doc.encoded_image_map(),
@@ -103,14 +103,14 @@ fn fetch_impl(args: Args) -> Result<(), ConvertError> {
         variable_map: variable_map,
     };
     println!("Fetched document");
-    println!("  DC Version: {}", SerializedDesignDocHeader::current().version);
+    println!("  DC Version: {}", DesignComposeDefinitionHeader::current().version);
     println!("  Doc ID: {}", doc.get_document_id());
     println!("  Version: {}", doc.get_version());
     println!("  Name: {}", doc.get_name());
     println!("  Last Modified: {}", doc.last_modified().clone());
     // We don't bother with serialization of image sessions with this tool.
     let mut output = std::fs::File::create(args.output)?;
-    let header = bincode::serialize(&SerializedDesignDocHeader::current())?;
+    let header = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
     let doc = bincode::serialize(&serializable_doc)?;
     output.write_all(header.as_slice())?;
     output.write_all(doc.as_slice())?;

@@ -15,8 +15,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Document, ImageContextSession, NodeQuery, SerializedDesignDoc, SerializedDesignDocHeader,
-    ServerFigmaDoc,
+    DesignComposeDefinition, DesignComposeDefinitionHeader, Document, ImageContextSession,
+    NodeQuery, ServerFigmaDoc,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -101,7 +101,7 @@ pub fn fetch_doc(
 
         let variable_map = doc.build_variable_map();
 
-        let figma_doc = SerializedDesignDoc {
+        let figma_doc = DesignComposeDefinition {
             views,
             component_sets: doc.component_sets().clone(),
             images: doc.encoded_image_map(),
@@ -111,7 +111,7 @@ pub fn fetch_doc(
             id: doc.get_document_id(),
             variable_map: variable_map,
         };
-        let mut response = bincode::serialize(&SerializedDesignDocHeader::current())?;
+        let mut response = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
         response.append(&mut bincode::serialize(&ServerFigmaDoc {
             figma_doc,
             errors: error_list,

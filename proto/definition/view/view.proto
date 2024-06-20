@@ -14,17 +14,17 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition;
+package com.android.designcompose.proto.definition.view;
 
-import "definition/component.proto";
 import "definition/element/geometry.proto";
 import "definition/element/text.proto";
 import "definition/element/view_shape.proto";
 import "definition/interaction/reaction.proto";
 import "definition/layout/grid.proto";
 import "definition/plugin/frame_extras.proto";
-import "definition/text_style.proto";
-import "definition/view_style.proto";
+import "definition/view/component.proto";
+import "definition/view/text_style.proto";
+import "definition/view/view_style.proto";
 
 option java_multiple_files = true;
 

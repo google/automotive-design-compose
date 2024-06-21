@@ -1,6 +1,6 @@
 [versions]
 # DesignCompose
-designcompose = "0.28.0-SNAPSHOT"
+designcompose = "0.29.0-SNAPSHOT"
 
 jvmToolchain = "17"
 

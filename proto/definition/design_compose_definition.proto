@@ -28,6 +28,8 @@ option java_multiple_files = true;
 // designs in a DesignCompose project.
 message DesignComposeDefinition {
   string last_modified = 1;
+  // TODO: GH-1282 views should be a map of NodeQuery to View, but you can't use messages as keys
+  // in a proto map. This will need to figured out.
   map<string, definition.view.View> views = 2;
   EncodedImageMap images = 3;
   string name = 4;

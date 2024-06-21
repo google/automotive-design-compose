@@ -1,0 +1,55 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.definition.modifier;
+
+import "definition/element/color.proto";
+
+option java_multiple_files = true;
+
+// Shadows can be applied to the border box, or the stroke box.
+//
+// The border box is the box outside of the border for Outset shadows, and the
+// box inside of the border for inset shadows.
+//
+// The stroke box is always the the outer edge of any stroke defined, or the
+// edge of the view (ignoring the border) if no strokes are present on the view.
+enum ShadowBox {
+  SHADOW_BOX_UNSPECIFIED = 0;
+  // The shadow applies to the border box, either the inside of the border for
+  // inset shadows, or the outside of the border for outset shadows.
+  SHADOW_BOX_BORDER_BOX = 1;
+  // The shadow applies to the stroke box. This is the outer edge of the stroke
+  // for both inset and ouset shadows.
+  SHADOW_BOX_STROKE_BOX = 2;
+}
+
+// BoxShadow defines a CSS-style box shadow, either outset or inset.
+message BoxShadow {
+  // The shadow itself
+  message Shadow {
+    float blur_radius = 1;
+    float spread_radius = 2;
+    element.Color color = 3;
+    float offset_x = 4;
+    float offset_y = 5;
+    ShadowBox shadow_box = 6;
+  }
+  oneof shadow_box {
+    Shadow outset = 1;
+    Shadow inset = 2;
+  }
+}

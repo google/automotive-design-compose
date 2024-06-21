@@ -1,0 +1,86 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.definition;
+
+import "definition/element/font.proto";
+import "definition/element/geometry.proto";
+import "definition/element/path.proto";
+import "definition/element/text.proto";
+import "definition/interaction/pointer.proto";
+import "definition/layout/display.proto";
+import "definition/layout/grid.proto";
+import "definition/modifier/background.proto";
+import "definition/modifier/blend.proto";
+import "definition/modifier/filter.proto";
+import "definition/modifier/matrix_transform.proto";
+import "definition/modifier/shadow.proto";
+import "definition/plugin/meter_data.proto";
+
+option java_multiple_files = true;
+
+// Contains all of the styleable parameters accepted by the Rect and Text
+// components.
+message NodeStyle {
+  // Text properties
+  definition.modifier.Background text_color = 1;
+  float font_size = 2;
+  optional string font_family = 3;
+  float font_weight = 4;
+  definition.element.FontStyle font_style = 5;
+  float font_stretch = 6;
+  repeated definition.modifier.Background backgrounds = 7;
+  repeated definition.modifier.BoxShadow box_shadows = 8;
+  definition.element.Stroke stroke = 9;
+  float opacity = 10;
+
+  // Transforms
+  definition.modifier.LayoutTransform transform = 11;
+  definition.modifier.LayoutTransform relative_transform = 12;
+
+  // Text layout
+  definition.element.TextAlign text_align = 13;
+  definition.element.TextAlignVertical text_align_vertical = 14;
+  definition.element.TextOverflow text_overflow = 15;
+  definition.element.TextShadow text_shadow = 16;
+
+  // Size and layout
+  definition.element.Size node_size = 17;
+  definition.element.LineHeight line_height = 18;
+  int32 line_count = 19;
+  repeated definition.element.FontFeature font_features = 20;
+  repeated definition.modifier.FilterOp filters = 21;
+  repeated definition.modifier.FilterOp backdrop_filters = 22;
+  definition.modifier.BlendMode blend_mode = 23;
+
+  // Layout properties
+  definition.layout.Display display_type = 24;
+  definition.layout.FlexWrap flex_wrap = 25;
+  definition.layout.GridLayoutType grid_layout = 26;
+  uint32 grid_columns_rows = 27;
+  uint32 grid_adaptive_min_size = 28;
+  repeated definition.layout.GridSpan grid_span_contents = 29;
+  definition.layout.Overflow overflow = 30;
+  optional uint32 max_children = 31;
+  optional string overflow_node_id = 32;
+  optional string overflow_node_name = 33;
+  float cross_axis_item_spacing = 34;
+  definition.layout.LayoutSizing horizontal_sizing = 35;
+  definition.layout.LayoutSizing vertical_sizing = 36;
+  optional float aspect_ratio = 37;
+  interaction.PointerEvents pointer_events = 38;
+  plugin.MeterData meter_data = 39;
+}

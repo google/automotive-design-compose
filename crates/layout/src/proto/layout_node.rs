@@ -14,7 +14,7 @@
 
 use dc_bundle::{
     android_interface::{layout_changed_response::Layout, LayoutChangedResponse, LayoutNodeList},
-    design::layout::{LayoutNode, LayoutParentChildren},
+    definition::layout::{LayoutNode, LayoutParentChildren},
 };
 
 use crate::layout_node;

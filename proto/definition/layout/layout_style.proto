@@ -1,0 +1,53 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.android.designcompose.proto.definition.layout;
+
+import "definition/element/geometry.proto";
+import "definition/layout/grid.proto";
+import "definition/layout/positioning.proto";
+
+option java_multiple_files = true;
+
+/* This message defines the layout style of a Figma node. It includes various
+ * properties that control the node's position, size, and spacing, as well as
+ * its alignment and flexbox behavior.
+ */
+message LayoutStyle {
+  element.DimensionRect margin = 1;
+  element.DimensionRect padding = 2;
+  layout.ItemSpacing item_spacing = 3;
+  element.DimensionProto top = 4;
+  element.DimensionProto left = 5;
+  element.DimensionProto bottom = 6;
+  element.DimensionProto right = 7;
+  element.DimensionProto width = 8;
+  element.DimensionProto height = 9;
+  element.DimensionProto min_width = 10;
+  element.DimensionProto max_width = 11;
+  element.DimensionProto min_height = 12;
+  element.DimensionProto max_height = 13;
+  element.Size bounding_box = 14;
+  float flex_grow = 15;
+  float flex_shrink = 16;
+  element.DimensionProto flex_basis = 17;
+  layout.AlignSelf align_self = 18;
+  layout.AlignContent align_content = 19;
+  layout.AlignItems align_items = 20;
+  layout.FlexDirection flex_direction = 21;
+  layout.JustifyContent justify_content = 22;
+  layout.PositionType position_type = 23;
+}

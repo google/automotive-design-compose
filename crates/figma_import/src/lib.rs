@@ -20,6 +20,7 @@
 //! not provide any kind of UI logic mapping.
 mod color;
 mod component_context;
+mod design_definition;
 mod document;
 mod error;
 mod extended_layout_schema;
@@ -27,7 +28,6 @@ mod fetch;
 mod figma_schema;
 mod image_context;
 pub mod reaction_schema;
-mod serialized_document;
 pub mod toolkit_font_style;
 pub mod toolkit_layout_style;
 pub mod toolkit_schema;
@@ -36,14 +36,16 @@ mod transform_flexbox;
 mod utils;
 pub mod vector_schema;
 // Exports for library users
+pub use design_definition::{load_design_def, save_design_def};
+pub use design_definition::{
+    DesignComposeDefinition, DesignComposeDefinitionHeader, ServerFigmaDoc,
+};
 pub use document::{Document, NodeQuery};
 pub use error::Error;
 pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
 pub use figma_schema::Node;
 pub use figma_schema::Rectangle;
 pub use image_context::{ImageContextSession, ImageKey};
-pub use serialized_document::{load_design_doc, save_design_doc};
-pub use serialized_document::{SerializedDesignDoc, SerializedDesignDocHeader, ServerFigmaDoc};
 pub use toolkit_schema::{View, ViewData}; // ugly hack
                                           // Internal convenience
 pub use color::Color;

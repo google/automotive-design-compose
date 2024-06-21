@@ -24,8 +24,8 @@
 //
 
 use figma_import::{
-    toolkit_layout_style::LayoutSizing, toolkit_schema::View, NodeQuery, SerializedDesignDoc,
-    SerializedDesignDocHeader, ViewData,
+    toolkit_layout_style::LayoutSizing, toolkit_schema::View, DesignComposeDefinition,
+    DesignComposeDefinitionHeader, NodeQuery, ViewData,
 };
 use layout::types::Dimension;
 use layout::LayoutManager;
@@ -128,21 +128,21 @@ fn add_view_to_layout(
     }
 }
 
-fn load_doc() -> std::io::Result<SerializedDesignDoc> {
+fn load_doc() -> std::io::Result<DesignComposeDefinition> {
     let mut file = File::open("tests/layout-unit-tests.dcf")?;
     let mut buf: Vec<u8> = vec![];
     let bytes_read = file.read_to_end(&mut buf)?;
     let bytes = buf.as_slice();
     println!("Read {} bytes", bytes_read);
 
-    let header: SerializedDesignDocHeader = bincode::deserialize(bytes).unwrap();
+    let header: DesignComposeDefinitionHeader = bincode::deserialize(bytes).unwrap();
     let header_size = bincode::serialized_size(&header).unwrap() as usize;
 
-    let figma_doc: SerializedDesignDoc = bincode::deserialize(&bytes[header_size..]).unwrap();
+    let figma_doc: DesignComposeDefinition = bincode::deserialize(&bytes[header_size..]).unwrap();
     Ok(figma_doc)
 }
 
-fn load_view(node_name: &str, doc: &SerializedDesignDoc) -> LayoutManager {
+fn load_view(node_name: &str, doc: &DesignComposeDefinition) -> LayoutManager {
     let view_result = doc.views.get(&NodeQuery::NodeName(node_name.into()));
     assert!(view_result.is_some());
     let view = view_result.unwrap();

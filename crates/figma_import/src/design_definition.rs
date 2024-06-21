@@ -27,16 +27,16 @@ static CURRENT_VERSION: u32 = 19;
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SerializedDesignDocHeader {
+pub struct DesignComposeDefinitionHeader {
     pub version: u32,
 }
-impl SerializedDesignDocHeader {
-    pub fn current() -> SerializedDesignDocHeader {
-        SerializedDesignDocHeader { version: CURRENT_VERSION }
+impl DesignComposeDefinitionHeader {
+    pub fn current() -> DesignComposeDefinitionHeader {
+        DesignComposeDefinitionHeader { version: CURRENT_VERSION }
     }
 }
 
-impl fmt::Display for SerializedDesignDocHeader {
+impl fmt::Display for DesignComposeDefinitionHeader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // NOTE: Using `write!` here instead of typical `format!`
         // to keep newlines.
@@ -46,7 +46,7 @@ impl fmt::Display for SerializedDesignDocHeader {
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SerializedDesignDoc {
+pub struct DesignComposeDefinition {
     pub last_modified: String,
     pub views: HashMap<NodeQuery, toolkit_schema::View>,
     pub images: EncodedImageMap,
@@ -57,7 +57,7 @@ pub struct SerializedDesignDoc {
     pub variable_map: toolkit_schema::VariableMap,
 }
 
-impl fmt::Display for SerializedDesignDoc {
+impl fmt::Display for DesignComposeDefinition {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // NOTE: Using `write!` here instead of typical `format!`
         // to keep newlines.
@@ -73,16 +73,16 @@ impl fmt::Display for SerializedDesignDoc {
 // along with some extra data: document branches, project files, and errors
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ServerFigmaDoc {
-    pub figma_doc: SerializedDesignDoc,
+    pub figma_doc: DesignComposeDefinition,
     pub branches: Vec<FigmaDocInfo>,
     pub project_files: Vec<FigmaDocInfo>,
     pub errors: Vec<String>,
 }
 
-/// A helper method to load a serialized design doc from figma.
-pub fn load_design_doc<P>(
+/// A helper method to load a DesignCompose Definition from figma.
+pub fn load_design_def<P>(
     load_path: P,
-) -> Result<(SerializedDesignDocHeader, SerializedDesignDoc), Error>
+) -> Result<(DesignComposeDefinitionHeader, DesignComposeDefinition), Error>
 where
     P: AsRef<Path>,
 {
@@ -91,31 +91,31 @@ where
     let mut buf: Vec<u8> = vec![];
     let _bytes = document_file.read_to_end(&mut buf)?;
 
-    let header: SerializedDesignDocHeader = bincode::deserialize(buf.as_slice())?;
+    let header: DesignComposeDefinitionHeader = bincode::deserialize(buf.as_slice())?;
 
     // Ensure the version of the document matches this version of automotive design compose.
-    if header.version != SerializedDesignDocHeader::current().version {
+    if header.version != DesignComposeDefinitionHeader::current().version {
         return Err(Error::DocumentLoadError(format!(
             "Serialized Figma doc incorrect version. Expected {} Found: {}",
-            SerializedDesignDocHeader::current().version,
+            DesignComposeDefinitionHeader::current().version,
             header.version
         )));
     }
 
     let header_size = bincode::serialized_size(&header)? as usize;
 
-    let doc: SerializedDesignDoc = bincode::deserialize(&buf.as_slice()[header_size..])?;
+    let doc: DesignComposeDefinition = bincode::deserialize(&buf.as_slice()[header_size..])?;
 
     Ok((header, doc))
 }
 
 /// A helper method to save serialized figma design docs.
-pub fn save_design_doc<P>(save_path: P, doc: &SerializedDesignDoc) -> Result<(), Error>
+pub fn save_design_def<P>(save_path: P, doc: &DesignComposeDefinition) -> Result<(), Error>
 where
     P: AsRef<Path>,
 {
     let mut output = std::fs::File::create(save_path)?;
-    let header = bincode::serialize(&SerializedDesignDocHeader::current())?;
+    let header = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
     let doc = bincode::serialize(&doc)?;
     output.write_all(header.as_slice())?;
     output.write_all(doc.as_slice())?;
@@ -135,8 +135,7 @@ mod serialized_document_tests {
         //Load a test doc.
         let mut doc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         doc_path.push("../../reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_pxVlixodJqZL95zo2RzTHl.dcf");
-        let (header, doc) =
-            load_design_doc(doc_path).expect("Failed to load serialized design doc.");
+        let (header, doc) = load_design_def(doc_path).expect("Failed to load design bundle.");
 
         // Dump some info
         println!("Deserialized header: {}", &header);
@@ -145,12 +144,12 @@ mod serialized_document_tests {
         // Re-save the test doc into a temporary file in a temporary directory.
         let tmp_dir = testdir!();
         let tmp_doc_path = PathBuf::from(&tmp_dir).join("tmp_pxVlixodJqZL95zo2RzTHl.dcf");
-        save_design_doc(&tmp_doc_path, &doc)
-            .expect("Failed to save temporary serialized design doc.");
+        save_design_def(&tmp_doc_path, &doc)
+            .expect("Failed to save temporary DesignCompose Definition.");
 
         // Re-load the temporary file
         let (tmp_header, tmp_doc) =
-            load_design_doc(&tmp_doc_path).expect("Failed to load tmp serialized design doc.");
+            load_design_def(&tmp_doc_path).expect("Failed to load tmp DesignCompose Definition.");
         println!("Tmp deserialized header: {}", &tmp_header);
         println!("Tmp deserialized doc: {}", &tmp_doc);
     }
@@ -162,7 +161,7 @@ mod serialized_document_tests {
         let mut doc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         doc_path.push("this.doc.does.not.exist.dcf");
         let (_tmp_header, _tmp_doc) =
-            load_design_doc(&doc_path).expect("Failed to load tmp serialized design doc.");
+            load_design_def(&doc_path).expect("Failed to load tmp DesignCompose Definition.");
     }
 
     #[test]
@@ -176,7 +175,7 @@ mod serialized_document_tests {
         let data: Vec<u8> = (0..48).map(|v| v).collect();
         file.write_all(&data).expect("Failed to write garbage data to garbage file.");
 
-        let (_tmp_header, _tmp_doc) = load_design_doc(&garbage_doc_path)
-            .expect("Failed to load garbage serialized design doc.");
+        let (_tmp_header, _tmp_doc) = load_design_def(&garbage_doc_path)
+            .expect("Failed to load garbage DesignCompose Definition.");
     }
 }

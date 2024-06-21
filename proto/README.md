@@ -11,5 +11,4 @@ The messages in this directory are organized according to the following principl
 ## plugin - Capabilities added by the DesignCompose plugin
 ## view - Collected styles and settings that are applied to nodes in the design definition
 # android_interface - Types specifically used for the interface from the rust library to the android library
-# toolkit - Types specific for the toolkit
 ```

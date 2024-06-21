@@ -16,10 +16,10 @@
 
 package com.android.designcompose.common
 
+import com.android.designcompose.serdegen.DesignComposeDefinition
+import com.android.designcompose.serdegen.DesignComposeDefinitionHeader
 import com.android.designcompose.serdegen.FigmaDocInfo
 import com.android.designcompose.serdegen.NodeQuery
-import com.android.designcompose.serdegen.SerializedDesignDoc
-import com.android.designcompose.serdegen.SerializedDesignDocHeader
 import com.android.designcompose.serdegen.ServerFigmaDoc
 import com.android.designcompose.serdegen.View
 import com.novi.bincode.BincodeDeserializer
@@ -31,8 +31,8 @@ import java.io.InputStream
 
 class GenericDocContent(
     var docId: DesignDocId,
-    private val header: SerializedDesignDocHeader,
-    val document: SerializedDesignDoc,
+    private val header: DesignComposeDefinitionHeader,
+    val document: DesignComposeDefinition,
     val variantViewMap: HashMap<String, HashMap<String, View>>,
     val variantPropertyMap: VariantPropertyMap,
     private val imageSessionData: ByteArray,
@@ -109,8 +109,8 @@ fun decodeDiskBaseDoc(
 
     val header = decodeHeader(deserializer, docId, feedback) ?: return null
 
-    // Disk loads are in the format of SerializedDesignDoc
-    val content = SerializedDesignDoc.deserialize(deserializer)
+    // Disk loads are in the format of DesignComposeDefinition
+    val content = DesignComposeDefinition.deserialize(deserializer)
     val imageSessionData = decodeImageSession(docBytes, deserializer)
     val variantMap = createVariantViewMap(content.views)
     val variantPropertyMap = createVariantPropertyMap(content.views)
@@ -207,9 +207,9 @@ private fun decodeHeader(
     deserializer: BincodeDeserializer,
     docId: DesignDocId,
     feedback: FeedbackImpl
-): SerializedDesignDocHeader? {
+): DesignComposeDefinitionHeader? {
     // Now attempt to deserialize the doc)
-    val header = SerializedDesignDocHeader.deserialize(deserializer)
+    val header = DesignComposeDefinitionHeader.deserialize(deserializer)
     if (header.version != FSAAS_DOC_VERSION) {
         feedback.documentDecodeVersionMismatch(FSAAS_DOC_VERSION, header.version, docId)
         return null

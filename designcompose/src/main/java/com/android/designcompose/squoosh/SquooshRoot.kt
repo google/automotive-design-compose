@@ -692,18 +692,39 @@ fun SquooshRoot(
                             )
                     }
 
-                    Box(modifier = composableChildModifier) {
-                        if (child.component != null) {
-                            child.component.invoke(
-                                object : ComponentReplacementContext {
-                                    override val layoutModifier: Modifier = Modifier
-                                    override val textStyle: TextStyle? = null
-                                }
-                            )
-                        } else if (child.content != null) {
-                            Log.d(TAG, "Unimplemented: child.content")
+                    // We use a custom layout for children that just passes through the layout
+                    // constraints that we calculate in our layout glue code above. This gives
+                    // children a way to report their sizes to the Rust layout implementation.
+                    androidx.compose.ui.layout.Layout(
+                        modifier = composableChildModifier,
+                        content = {
+                            if (child.component != null) {
+                                child.component.invoke(
+                                    object : ComponentReplacementContext {
+                                        override val layoutModifier: Modifier = Modifier
+                                        override val textStyle: TextStyle? = null
+                                    }
+                                )
+                            } else if (child.content != null) {
+                                Log.d(TAG, "Unimplemented: child.content")
+                            }
+                        },
+                        measurePolicy = { measurables, constraints ->
+                            // Just overlay everything, like a box, but with exactly the incoming
+                            // constraints applied.
+                            val placeables = measurables.map { child -> child.measure(constraints) }
+                            val layoutWidth =
+                                (placeables.maxByOrNull { it.width }?.width ?: constraints.minWidth)
+                            val layoutHeight =
+                                (placeables.maxByOrNull { it.height }?.height
+                                    ?: constraints.minHeight)
+                            // Place all children at the origin (with the same size constraints that
+                            // we were given).
+                            layout(layoutWidth, layoutHeight) {
+                                placeables.forEach { child -> child.placeRelative(0, 0) }
+                            }
                         }
-                    }
+                    )
                 }
                 Log.d(
                     TAG,

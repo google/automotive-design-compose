@@ -121,93 +121,101 @@ internal fun Modifier.squooshRender(
                             offsetFromRoot.y * density
                         )
                         childRenderSelector.selectedRenderChild = null
-                    }
+                    } else {
+                        // If we need to do a child render, then don't render the content defined
+                        // in the view tree, and just let the content render everything.
 
-                    // If we have masked children, then we need to do create a layer for the parent
-                    // and have the child draw into a layer that's blended with DstIn.
-                    //
-                    // XXX: We could take the smallest of the mask size and common parent size, and
-                    //      then transform children appropriately.
-                    val nodeSize =
-                        Size(computedLayout.width * density, computedLayout.height * density)
+                        // If we have masked children, then we need to do create a layer for the
+                        // parent
+                        // and have the child draw into a layer that's blended with DstIn.
+                        //
+                        // XXX: We could take the smallest of the mask size and common parent size,
+                        // and
+                        //      then transform children appropriately.
+                        val nodeSize =
+                            Size(computedLayout.width * density, computedLayout.height * density)
 
-                    squooshShapeRender(
-                        drawContext,
-                        density,
-                        nodeSize,
-                        node.style,
-                        shape,
-                        null, // customImageWithContext
-                        document,
-                        node.view.name,
-                        customizations,
-                        variableState,
-                    ) {
-                        var child = node.firstChild
-                        var pendingMask: SquooshResolvedNode? = null
+                        squooshShapeRender(
+                            drawContext,
+                            density,
+                            nodeSize,
+                            node.style,
+                            shape,
+                            null, // customImageWithContext
+                            document,
+                            node.view.name,
+                            customizations,
+                            variableState,
+                        ) {
+                            var child = node.firstChild
+                            var pendingMask: SquooshResolvedNode? = null
 
-                        while (child != null) {
-                            if (child.view.isMask()) {
-                                // We were already drawing a mask! Wrap it up...
-                                if (pendingMask != null) {
-                                    val dstInPaint = Paint()
-                                    dstInPaint.blendMode = BlendMode.DstIn
+                            while (child != null) {
+                                if (child.view.isMask()) {
+                                    // We were already drawing a mask! Wrap it up...
+                                    if (pendingMask != null) {
+                                        val dstInPaint = Paint()
+                                        dstInPaint.blendMode = BlendMode.DstIn
 
-                                    // Draw the mask as DstIn
-                                    drawContext.canvas.saveLayer(nodeSize.toRect(), dstInPaint)
-                                    translate(
-                                        pendingMask.computedLayout!!.left * density,
-                                        pendingMask.computedLayout!!.top * density
-                                    ) {
-                                        renderNode(pendingMask!!)
+                                        // Draw the mask as DstIn
+                                        drawContext.canvas.saveLayer(nodeSize.toRect(), dstInPaint)
+                                        translate(
+                                            pendingMask.computedLayout!!.left * density,
+                                            pendingMask.computedLayout!!.top * density
+                                        ) {
+                                            renderNode(pendingMask!!)
+                                        }
+
+                                        drawContext.canvas.restore()
+
+                                        // Restore the layer that got saved for the mask and
+                                        // content.
+                                        drawContext.canvas.restore()
                                     }
 
-                                    drawContext.canvas.restore()
+                                    // We're starting a mask operation, so save a layer, and go on
+                                    // to
+                                    // render children. If we encounter another mask, or if we get
+                                    // to
+                                    // the end of the children, then we need to pop the mask.
+                                    pendingMask = child
+                                    child = child.nextSibling
 
-                                    // Restore the layer that got saved for the mask and content.
-                                    drawContext.canvas.restore()
-                                }
-
-                                // We're starting a mask operation, so save a layer, and go on to
-                                // render children. If we encounter another mask, or if we get to
-                                // the end of the children, then we need to pop the mask.
-                                pendingMask = child
-                                child = child.nextSibling
-
-                                drawContext.canvas.saveLayer(nodeSize.toRect(), Paint())
-                            } else {
-                                val childLayout = child.computedLayout
-                                if (childLayout != null) {
-                                    translate(
-                                        childLayout.left * density,
-                                        childLayout.top * density
-                                    ) {
-                                        renderNode(child!!)
+                                    drawContext.canvas.saveLayer(nodeSize.toRect(), Paint())
+                                } else {
+                                    val childLayout = child.computedLayout
+                                    if (childLayout != null) {
+                                        translate(
+                                            childLayout.left * density,
+                                            childLayout.top * density
+                                        ) {
+                                            renderNode(child!!)
+                                        }
                                     }
+                                    child = child.nextSibling
                                 }
-                                child = child.nextSibling
-                            }
-                        }
-
-                        // XXX: This logic is duplicated above; it needs to be factored out
-                        //      somehow.
-                        if (pendingMask != null) {
-                            val dstInPaint = Paint()
-                            dstInPaint.blendMode = BlendMode.DstIn
-
-                            // Draw the mask as DstIn
-                            drawContext.canvas.saveLayer(nodeSize.toRect(), dstInPaint)
-                            translate(
-                                pendingMask.computedLayout!!.left * density,
-                                pendingMask.computedLayout!!.top * density
-                            ) {
-                                renderNode(pendingMask)
                             }
 
-                            drawContext.canvas.restore()
+                            // XXX: This logic is duplicated above; it needs to be factored out
+                            //      somehow.
+                            if (pendingMask != null) {
+                                val dstInPaint = Paint()
+                                dstInPaint.blendMode = BlendMode.DstIn
 
-                            // Restore the layer that got saved for the mask and content.
-                            drawContext.canvas.restore()
+                                // Draw the mask as DstIn
+                                drawContext.canvas.saveLayer(nodeSize.toRect(), dstInPaint)
+                                translate(
+                                    pendingMask.computedLayout!!.left * density,
+                                    pendingMask.computedLayout!!.top * density
+                                ) {
+                                    renderNode(pendingMask)
+                                }
+
+                                drawContext.canvas.restore()
+
+                                // Restore the layer that got saved for the mask and content.
+                                drawContext.canvas.restore()
+                            }
                         }
                     }
                     nodeRenderCount++

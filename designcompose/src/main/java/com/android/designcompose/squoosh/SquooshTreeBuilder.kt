@@ -64,7 +64,8 @@ import kotlin.jvm.optionals.getOrNull
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
 internal class SquooshChildComposable(
-    // One of these should be populated...
+    // One of these will be populated if this is for a child composable. If they're both
+    // null, then this child composable exists just for event handling.
     val component: @Composable ((ComponentReplacementContext) -> Unit)?,
     val content: ReplacementContent?,
 

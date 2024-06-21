@@ -14,9 +14,11 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition.element;
+package designcompose.definition.element;
 
 import "definition/element/color.proto";
+
+option java_package = "com.android.designcompose.definition.element";
 
 option java_multiple_files = true;
 

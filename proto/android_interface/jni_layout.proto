@@ -14,9 +14,11 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.android_interface;
+package designcompose.android_interface;
 
 import "definition/layout/layout_node.proto";
+
+option java_package = "com.android.designcompose.android_interface";
 
 option java_multiple_files = true;
 

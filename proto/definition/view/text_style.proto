@@ -14,12 +14,14 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition.view;
+package designcompose.definition.view;
 
 import "definition/element/font.proto";
 import "definition/element/path.proto";
 import "definition/element/variable.proto";
 import "definition/modifier/background.proto";
+
+option java_package = "com.android.designcompose.definition.view";
 
 // These are the style properties that apply to text, so we can use them on
 // subsections of a longer string. We then assume that every style transition is

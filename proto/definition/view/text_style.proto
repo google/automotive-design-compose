@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition;
+package com.android.designcompose.proto.definition.view;
 
 import "definition/element/font.proto";
 import "definition/element/path.proto";

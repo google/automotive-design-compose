@@ -16,8 +16,8 @@ syntax = "proto3";
 
 package com.android.designcompose.proto.toolkit;
 
-import "definition/variable_collection.proto";
-import "definition/view.proto";
+import "definition/element/variable.proto";
+import "definition/view/view.proto";
 
 option java_multiple_files = true;
 
@@ -26,13 +26,13 @@ option java_multiple_files = true;
 // designs in a DesignCompose project.
 message SerializedDesignDoc {
   string last_modified = 1;
-  map<string, definition.View> views = 2;
+  map<string, definition.view.View> views = 2;
   EncodedImageMap images = 3;
   string name = 4;
   map<string, string> component_sets = 5;
   string version = 6;
   string id = 7;
-  definition.VariableMap variable_map = 8;
+  definition.element.VariableMap variable_map = 8;
 }
 /// We can fetch figma documents in a project or from branches of another
 /// document. We store each as a name and ID

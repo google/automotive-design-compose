@@ -14,4 +14,7 @@
  * limitations under the License.
  */
 
+pub mod color;
+pub mod font;
 pub mod geometry;
+pub mod node;

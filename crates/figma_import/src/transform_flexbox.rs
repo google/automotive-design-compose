@@ -15,7 +15,7 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use crate::toolkit_font_style::{FontStyle, FontWeight};
+use crate::toolkit_font_style::FontWeight;
 use crate::toolkit_layout_style::Overflow;
 
 use crate::toolkit_style::{
@@ -42,6 +42,7 @@ use crate::{
 };
 
 use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::legacy_definition::element::font::FontStyle;
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
 use dc_bundle::legacy_definition::layout::positioning::{
@@ -1239,7 +1240,7 @@ fn visit_node(
                         font_size,
                         font_family: sub_style.font_family.clone(),
                         font_weight,
-                        font_style: crate::toolkit_font_style::FontStyle::Normal, //sub_style.font_style.unwrap_or(style.font_style),
+                        font_style: FontStyle::Normal, //sub_style.font_style.unwrap_or(style.font_style),
                         font_stretch: style.node_style.font_stretch, // Not in SubTypeStyle.
                         letter_spacing: sub_style.letter_spacing.unwrap_or(1.0), // no letter_spacing on ViewStyle.
                         line_height: style.node_style.line_height,

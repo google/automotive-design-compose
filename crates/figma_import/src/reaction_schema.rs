@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use dc_bundle::legacy_definition::element::geometry::Vector;
 use serde::{Deserialize, Serialize};
 
 use crate::figma_schema;
@@ -192,7 +193,7 @@ pub enum ActionJson {
 
         /// For overlays that have been manually positioned.
         #[serde(rename = "overlayRelativePosition", default)]
-        overlay_relative_position: Option<figma_schema::Vector>,
+        overlay_relative_position: Option<Vector>,
     },
 }
 
@@ -400,7 +401,7 @@ pub enum Action {
         preserve_scroll_position: bool,
 
         /// For overlays that have been manually positioned.
-        overlay_relative_position: Option<figma_schema::Vector>,
+        overlay_relative_position: Option<Vector>,
     },
 }
 impl From<ActionJson> for Action {

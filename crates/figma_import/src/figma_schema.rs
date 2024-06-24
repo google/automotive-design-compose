@@ -14,9 +14,10 @@
 
 use std::collections::HashMap;
 
+use dc_bundle::legacy_definition::element::color::Color;
+use dc_bundle::legacy_definition::element::geometry::{Rectangle, Vector};
 use serde::{Deserialize, Serialize};
 
-use crate::color::Color;
 use crate::vector_schema::WindingRule;
 
 // We use serde to decode Figma's JSON documents into Rust structures.
@@ -68,28 +69,6 @@ pub struct ExportSetting {
     pub suffix: String,
     pub format: ExportFormat,
     pub constraint: Constraint,
-}
-
-#[derive(Deserialize, Serialize, PartialEq, Debug, Clone, Copy)]
-pub struct Rectangle {
-    pub x: Option<f32>,
-    pub y: Option<f32>,
-    pub width: Option<f32>,
-    pub height: Option<f32>,
-}
-impl Rectangle {
-    pub fn x(&self) -> f32 {
-        self.x.unwrap_or(0.0)
-    }
-    pub fn y(&self) -> f32 {
-        self.y.unwrap_or(0.0)
-    }
-    pub fn width(&self) -> f32 {
-        self.width.unwrap_or(0.0)
-    }
-    pub fn height(&self) -> f32 {
-        self.height.unwrap_or(0.0)
-    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq)]
@@ -221,23 +200,7 @@ pub struct Hyperlink {
     #[serde(default)]
     pub node_id: String, // XXX: This is "nodeID" in Figma; we might not be deserializing ok...
 }
-// XXX ColorStop, Transform
-#[derive(Deserialize, Serialize, Debug, Clone, Default, PartialEq)]
-pub struct Vector {
-    pub x: Option<f32>,
-    pub y: Option<f32>,
-}
-impl Vector {
-    pub fn is_valid(&self) -> bool {
-        self.x.is_some() && self.y.is_some()
-    }
-    pub fn x(&self) -> f32 {
-        self.x.unwrap_or(0.0)
-    }
-    pub fn y(&self) -> f32 {
-        self.y.unwrap_or(0.0)
-    }
-}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Size {
     pub width: f32,

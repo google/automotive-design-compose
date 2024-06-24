@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::styles::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
-};
-
 use crate::types::{Dimension, Rect, Size};
+use crate::IntoTaffy;
+use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
+use dc_bundle::legacy_definition::layout::positioning::{
+    AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -88,14 +89,14 @@ impl Into<taffy::prelude::Style> for &LayoutStyle {
         tstyle.flex_grow = self.flex_grow;
         tstyle.flex_shrink = self.flex_shrink;
         tstyle.flex_basis = (&self.flex_basis).into();
-        tstyle.gap.width = (&self.item_spacing).into();
-        tstyle.gap.height = (&self.item_spacing).into();
+        tstyle.gap.width = (&self.item_spacing).into_taffy();
+        tstyle.gap.height = (&self.item_spacing).into_taffy();
 
-        tstyle.align_content = Some((&self.align_content).into());
-        tstyle.justify_content = Some((&self.justify_content).into());
-        tstyle.align_items = Some((&self.align_items).into());
-        tstyle.flex_direction = (&self.flex_direction).into();
-        tstyle.align_self = (&self.align_self).into();
+        tstyle.align_content = Some((&self.align_content).into_taffy());
+        tstyle.justify_content = Some((&self.justify_content).into_taffy());
+        tstyle.align_items = Some((&self.align_items).into_taffy());
+        tstyle.flex_direction = (&self.flex_direction).into_taffy();
+        tstyle.align_self = (&self.align_self).into_taffy();
 
         tstyle.size.width = (&self.width).into();
         tstyle.size.height = (&self.height).into();
@@ -118,7 +119,7 @@ impl Into<taffy::prelude::Style> for &LayoutStyle {
             tstyle.max_size.height = taffy::prelude::Dimension::Auto;
         }
 
-        tstyle.position = (&self.position_type).into();
+        tstyle.position = (&self.position_type).into_taffy();
         tstyle.inset.left = (&self.left).into();
         tstyle.inset.right = (&self.right).into();
         tstyle.inset.top = (&self.top).into();

@@ -17,6 +17,7 @@
 package com.android.designcompose
 
 import android.util.Log
+import android.util.SizeF
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import androidx.tracing.trace
 import com.android.designcompose.android_interface.LayoutChangedResponse
@@ -36,6 +37,7 @@ internal object LayoutManager {
     private val subscribers: HashMap<Int, (Int) -> Unit> = HashMap()
     private val layoutsInProgress: HashSet<Int> = HashSet()
     private var textMeasures: HashMap<Int, TextMeasureData> = HashMap()
+    private var customMeasure: HashMap<Int, ((Float, Float, Float, Float) -> SizeF?)> = HashMap()
     private var modifiedSizes: HashSet<Int> = HashSet()
     private var nextLayoutId: Int = 0
     private var performLayoutComputation: Boolean = false
@@ -130,6 +132,20 @@ internal object LayoutManager {
     internal fun squooshClearTextMeasureData(layoutId: Int) {
         textMeasures.remove(layoutId)
     }
+
+    internal fun squooshSetCustomMeasure(
+        layoutId: Int,
+        m: ((Float, Float, Float, Float) -> SizeF?)
+    ) {
+        customMeasure[layoutId] = m
+    }
+
+    internal fun squooshClearCustomMeasure(layoutId: Int) {
+        customMeasure.remove(layoutId)
+    }
+
+    internal fun getCustomMeasure(layoutId: Int): ((Float, Float, Float, Float) -> SizeF?)? =
+        customMeasure[layoutId]
 
     private fun subscribe(
         layoutId: Int,

@@ -1,0 +1,39 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package designcompose.live_update.figma;
+
+import "definition/design_compose_definition.proto";
+
+option java_package  = "com.android.designcompose.live_update.figma";
+option java_multiple_files = true;
+
+/// We can fetch figma documents in a project or from branches of another
+/// document. We store each as a name and ID
+message FigmaDocInfo {
+  string name = 1;
+  string id = 2;
+  string version_id = 3;
+}
+// This is the struct we send over to the client. It contains the serialized
+// document along with some extra data: document branches, project files, and
+// errors
+message ServerFigmaDoc {
+  definition.DesignComposeDefinition figma_doc = 1;
+  repeated FigmaDocInfo branches = 2;
+  repeated FigmaDocInfo project_files = 3;
+  repeated string errors = 4;
+}

@@ -87,9 +87,10 @@ jobs:
       - name: Update Rust
         run: rustup toolchain install stable --profile minimal
       - name: Install Protoc
-        uses: arduino/setup-protoc@v3
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
         with:
-          version: "26.1"
+          version: "27.1"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Rust toolchains
         run: ./install-rust-toolchains.sh
       - name: Set up Rust Cache
@@ -127,9 +128,10 @@ jobs:
       - name: Update Rust
         run: rustup toolchain install stable --profile minimal
       - name: Install Protoc
-        uses: arduino/setup-protoc@v3
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
         with:
-          version: "26.1"
+          version: "27.1"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Rust toolchains
         run: ./install-rust-toolchains.sh
       - name: Set up Rust Cache
@@ -163,9 +165,10 @@ jobs:
           distribution: "temurin"
           java-version: "17"
       - name: Install Protoc
-        uses: arduino/setup-protoc@v3
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
         with:
-          version: "26.1"
+          version: "27.1"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@dbbdc275be76ac10734476cc723d82dfe7ec6eda # v3.4.2
         with:
@@ -337,9 +340,10 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
       - run: rustup toolchain install stable --profile minimal
       - name: Install Protoc
-        uses: arduino/setup-protoc@v3
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
         with:
-          version: "26.1"
+          version: "27.1"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}

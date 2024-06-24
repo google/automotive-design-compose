@@ -73,19 +73,6 @@ impl Default for Overflow {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum FlexWrap {
-    NoWrap,
-    Wrap,
-    WrapReverse,
-}
-
-impl Default for FlexWrap {
-    fn default() -> Self {
-        Self::NoWrap
-    }
-}
-
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Default, Copy)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LayoutSizing {

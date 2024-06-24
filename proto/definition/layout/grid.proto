@@ -56,7 +56,7 @@ enum OverflowDirection {
 // Defines how flex items wrap when they exceed the available space.
 enum FlexWrap {
   FLEX_WRAP_UNSPECIFIED = 0;
-  FLEX_WRAP_NOWRAP = 1;
+  FLEX_WRAP_NO_WRAP = 1;
   FLEX_WRAP_WRAP = 2;
   FLEX_WRAP_WRAP_REVERSE = 3;
 }

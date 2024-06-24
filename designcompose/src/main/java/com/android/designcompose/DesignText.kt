@@ -398,6 +398,13 @@ fun measureTextBoundsFunc(
     // Look up the measure data -- this map is created/updated when building the layout tree.
     val textMeasureData = LayoutManager.getTextMeasureData(layoutId)
     if (textMeasureData == null) {
+        // Maybe there's a custom measure function. We could do something with id namespaces to
+        // avoid a double-hashmap lookup if this shows up on a profiler.
+        val customMeasureFunc = LayoutManager.getCustomMeasure(layoutId)
+        if (customMeasureFunc != null) {
+            val size = customMeasureFunc(width, height, availableWidth, availableHeight)
+            if (size != null) return Pair(size.width, size.height)
+        }
         Log.d(TAG, "measureTextBoundsFunc() error: no textMeasureData for layoutId $layoutId")
         return Pair(0F, 0F)
     }

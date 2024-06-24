@@ -139,6 +139,14 @@ private fun updateLayoutTree(
             LayoutManager.squooshSetTextMeasureData(layoutId, resolvedNode.textInfo)
         }
 
+        // We need to measure some children during the Compose layout phase, because they're
+        // actual Composables and not part of the DesignCompose layout tree. For those, we
+        // use the measure func mechanism, and ask the child Composable for its intrinsic
+        // size.
+        if (resolvedNode.needsChildLayout) {
+            useMeasureFunc = true
+        }
+
         layoutNodes.add(
             LayoutNode(
                 layoutId,

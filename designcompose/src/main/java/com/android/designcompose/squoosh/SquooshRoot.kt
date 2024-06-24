@@ -18,6 +18,7 @@ package com.android.designcompose.squoosh
 
 import android.os.SystemClock
 import android.util.Log
+import android.util.SizeF
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
@@ -37,6 +38,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -57,6 +59,7 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.DocServer
 import com.android.designcompose.DocumentSwitcher
 import com.android.designcompose.InteractionStateManager
+import com.android.designcompose.LayoutManager
 import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.VariableState
 import com.android.designcompose.asAnimationSpec
@@ -509,6 +512,70 @@ fun SquooshRoot(
                     )
                     .semantics { sDocRenderStatus = DocRenderStatus.Rendered },
             measurePolicy = { measurables, constraints ->
+                // Go through the measurables and find the ones that need layout measurement so
+                // we can make a function for layout measure.
+                val customMeasurables = HashMap<Int, Measurable>()
+                val customMeasure: (Measurable, Float, Float, Float, Float) -> SizeF? =
+                    { measurable, width, height, availableWidth, availableHeight ->
+                        val maxConstraint = 3e5f
+                        val isBoundDefined = { dimension: Float ->
+                            dimension > 0f && dimension < maxConstraint
+                        }
+                        // Figure out what we're being asked; we can't just do a measure with all
+                        // of the constraints we've been given, because we're not allowed to measure
+                        // twice in one layout pass.
+                        val size =
+                            if (isBoundDefined(width) && !isBoundDefined(height)) {
+                                // We have a width, but no height, so ask for the height.
+                                SizeF(width, measurable.minIntrinsicHeight(width.toInt()).toFloat())
+                            } else if (isBoundDefined(height) && !isBoundDefined(width)) {
+                                SizeF(
+                                    measurable.minIntrinsicWidth(height.toInt()).toFloat(),
+                                    height
+                                )
+                            } else if (isBoundDefined(width) && isBoundDefined(height)) {
+                                SizeF(width, height)
+                            } else {
+                                // Nothing is defined, can we lay out within the available space?
+                                val w =
+                                    measurable.minIntrinsicWidth(
+                                        if (isBoundDefined(availableHeight)) {
+                                            availableHeight.toInt()
+                                        } else {
+                                            Constraints.Infinity
+                                        }
+                                    )
+                                val h =
+                                    measurable.minIntrinsicHeight(
+                                        if (isBoundDefined(availableWidth)) {
+                                            availableWidth.toInt()
+                                        } else {
+                                            Constraints.Infinity
+                                        }
+                                    )
+                                SizeF(w.toFloat(), h.toFloat())
+                            }
+                        size
+                    }
+                measurables.forEach { measurable ->
+                    val squooshData = measurable.parentData as? SquooshParentData
+                    if (squooshData != null && squooshData.node.needsChildLayout) {
+                        customMeasurables[squooshData.node.layoutId] = measurable
+                        LayoutManager.squooshSetCustomMeasure(squooshData.node.layoutId) {
+                            width,
+                            height,
+                            availableWidth,
+                            availableHeight ->
+                            customMeasure(
+                                measurable,
+                                width,
+                                height,
+                                availableWidth,
+                                availableHeight
+                            )
+                        }
+                    }
+                }
                 // Update the root node style to have the incoming width/height from our parent
                 // Composable.
                 root.applyLayoutConstraints(constraints, density)
@@ -543,6 +610,15 @@ fun SquooshRoot(
                         layoutValueCache
                     )
                     updateDerivedLayout(presentationRoot)
+                }
+
+                // Clear our custom layout, and release references to measurables.
+                customMeasurables.clear()
+                measurables.forEach { measurable ->
+                    val squooshData = measurable.parentData as? SquooshParentData
+                    if (squooshData != null && squooshData.node.needsChildLayout) {
+                        LayoutManager.squooshClearCustomMeasure(squooshData.node.layoutId)
+                    }
                 }
 
                 // Move this stuff out of layout?
@@ -690,7 +766,7 @@ fun SquooshRoot(
                             }
                             .then(SquooshParentData(node = child.node))
 
-                    if (child.component == null && child.content == null) {
+                    if (child.component == null) {
                         composableChildModifier =
                             composableChildModifier.squooshInteraction(
                                 doc,
@@ -714,8 +790,6 @@ fun SquooshRoot(
                                         override val textStyle: TextStyle? = null
                                     }
                                 )
-                            } else if (child.content != null) {
-                                Log.d(TAG, "Unimplemented: child.content")
                             }
                         },
                         measurePolicy = { measurables, constraints ->

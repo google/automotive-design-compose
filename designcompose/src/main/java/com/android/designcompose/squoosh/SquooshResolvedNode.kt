@@ -44,6 +44,8 @@ internal class SquooshResolvedNode(
     var parent: SquooshResolvedNode? = null,
     var computedLayout: Layout? = null,
     var needsChildRender: Boolean = false,
+    // Should we ask for the intrinsic layout size of the external Composable
+    var needsChildLayout: Boolean = false,
 ) {
     fun offsetFromAncestor(ancestor: SquooshResolvedNode? = null): PointF {
         var n: SquooshResolvedNode? = this

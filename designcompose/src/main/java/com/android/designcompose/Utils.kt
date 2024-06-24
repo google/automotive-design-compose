@@ -58,7 +58,9 @@ import com.android.designcompose.serdegen.Display
 import com.android.designcompose.serdegen.Easing
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FlexWrap
+import com.android.designcompose.serdegen.FontStretch
 import com.android.designcompose.serdegen.FontStyle
+import com.android.designcompose.serdegen.FontWeight
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
@@ -71,6 +73,8 @@ import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
+import com.android.designcompose.serdegen.Stroke
+import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.StyledTextRun
@@ -673,6 +677,42 @@ internal fun LayoutStyle.asBuilder(): LayoutStyle.Builder {
     return builder
 }
 
+private fun zeroRect(): com.android.designcompose.serdegen.Rect =
+    com.android.designcompose.serdegen.Rect(
+        Dimension.Percent(0f),
+        Dimension.Percent(0f),
+        Dimension.Percent(0f),
+        Dimension.Percent(0f)
+    )
+
+internal fun defaultLayoutStyle(): LayoutStyle.Builder {
+    val builder = LayoutStyle.Builder()
+    builder.position_type = PositionType.Relative()
+    builder.flex_direction = FlexDirection.Row()
+    builder.align_items = AlignItems.FlexStart()
+    builder.align_self = AlignSelf.Auto()
+    builder.align_content = AlignContent.FlexStart()
+    builder.justify_content = JustifyContent.FlexStart()
+    builder.top = Dimension.Undefined()
+    builder.left = Dimension.Undefined()
+    builder.bottom = Dimension.Undefined()
+    builder.right = Dimension.Undefined()
+    builder.margin = zeroRect()
+    builder.padding = zeroRect()
+    builder.item_spacing = ItemSpacing.Auto(0, 0)
+    builder.flex_grow = 1.0f
+    builder.flex_shrink = 0.0f
+    builder.flex_basis = Dimension.Undefined()
+    builder.bounding_box = com.android.designcompose.serdegen.Size(0f, 0f)
+    builder.width = Dimension.Undefined()
+    builder.height = Dimension.Undefined()
+    builder.min_width = Dimension.Undefined()
+    builder.min_height = Dimension.Undefined()
+    builder.max_width = Dimension.Undefined()
+    builder.max_height = Dimension.Undefined()
+    return builder
+}
+
 internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
     val builder = NodeStyle.Builder()
     builder.text_color = text_color
@@ -717,6 +757,53 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
     builder.aspect_ratio = aspect_ratio
     builder.pointer_events = pointer_events
     builder.meter_data = meter_data
+    return builder
+}
+
+internal fun defaultNodeStyle(): NodeStyle.Builder {
+    val builder = NodeStyle.Builder()
+    builder.text_color = Background.None()
+    builder.font_size = NumOrVar.Num(0f)
+    builder.font_family = Optional.empty()
+    builder.font_weight = FontWeight(NumOrVar.Num(0f))
+    builder.font_style = FontStyle.Normal()
+    builder.font_stretch = FontStretch(0f)
+    builder.background = emptyList()
+    builder.box_shadow = emptyList()
+    builder.stroke = Stroke(StrokeAlign.Center(), StrokeWeight.Uniform(0f), emptyList())
+    builder.opacity = Optional.empty()
+    builder.transform = Optional.empty()
+    builder.relative_transform = Optional.empty()
+    builder.text_decoration = TextDecoration.None()
+    builder.text_align = TextAlign.Left()
+    builder.text_align_vertical = TextAlignVertical.Top()
+    builder.text_overflow = TextOverflow.Clip()
+    builder.text_shadow = Optional.empty()
+    builder.node_size = com.android.designcompose.serdegen.Size(0f, 0f)
+    builder.line_height = LineHeight.Percent(1.0f)
+    builder.line_count = Optional.empty()
+    builder.letter_spacing = Optional.empty()
+    builder.font_features = emptyList()
+    builder.filter = emptyList()
+    builder.backdrop_filter = emptyList()
+    builder.blend_mode = BlendMode.PassThrough()
+    builder.display_type = Display.flex()
+    builder.flex_wrap = FlexWrap.NoWrap()
+    builder.grid_layout = Optional.empty()
+    builder.grid_columns_rows = 0
+    builder.grid_adaptive_min_size = 0
+    builder.grid_span_content = emptyList()
+    builder.overflow = Overflow.Visible()
+    builder.max_children = Optional.empty()
+    builder.overflow_node_id = Optional.empty()
+    builder.overflow_node_name = Optional.empty()
+    builder.cross_axis_item_spacing = 0f
+    builder.horizontal_sizing = LayoutSizing.HUG()
+    builder.vertical_sizing = LayoutSizing.HUG()
+    builder.aspect_ratio = com.android.designcompose.serdegen.Number.Undefined()
+    builder.pointer_events = PointerEvents.Auto()
+    builder.meter_data = Optional.empty()
+    builder.hyperlink = Optional.empty()
     return builder
 }
 // XXX: Horrible code to deal with our terrible generated types. Maybe if style moves to proto then

@@ -141,6 +141,7 @@ pub(crate) fn jni_add_nodes<'local>(
             layout_response_to_bytearray(env, layout_response)
         }
         Err(e) => {
+            info!("jni_add_nodes: failed with error {:?}", e);
             throw_basic_exception(&mut env, &e);
             JObject::null().into()
         }
@@ -203,6 +204,23 @@ pub(crate) fn jni_remove_node<'local>(
     }
 }
 
+pub(crate) fn jni_mark_dirty<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass,
+    manager_id: jint,
+    layout_id: jint,
+) {
+    if let Some(manager_ref) = manager(manager_id) {
+        let mut manager = manager_ref.lock().unwrap();
+        manager.mark_dirty(layout_id);
+    } else {
+        throw_basic_exception(
+            &mut env,
+            &GenericError(format!("No manager with id {}", manager_id)),
+        );
+    }
+}
+
 fn get_text_size(env: &mut JNIEnv, input: &JObject) -> Result<(f32, f32), jni::errors::Error> {
     let width = env.get_field(input, "width", "F")?.f()?;
     let height = env.get_field(input, "height", "F")?.f()?;
@@ -216,8 +234,7 @@ pub(crate) fn java_jni_measure_text(
     available_width: f32,
     available_height: f32,
 ) -> (f32, f32) {
-    let vm = javavm();
-    if let Some(vm) = vm.as_ref() {
+    if let Some(vm) = javavm() {
         let mut env: JNIEnv<'_> = vm.get_env().expect("Cannot get reference to the JNIEnv");
         let class_result = env.find_class("com/android/designcompose/DesignTextMeasure");
         match class_result {
@@ -256,7 +273,7 @@ pub(crate) fn java_jni_measure_text(
             }
         }
     } else {
-        error!("Java JNI failed to get JavaVM: {:?}", vm);
+        error!("Java JNI failed to get JavaVM");
     }
     (0.0, 0.0)
 }

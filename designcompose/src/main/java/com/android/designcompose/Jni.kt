@@ -103,6 +103,9 @@ internal object Jni {
         computeLayout: Boolean
     ): ByteArray?
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    external fun jniMarkDirty(managerId: Int, layoutId: Int)
+
     init {
         // XXX This is a not great workaround for loading the library when running robolectric
         // tests.

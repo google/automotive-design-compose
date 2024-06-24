@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use dc_bundle::legacy_definition::element::node::NodeQuery;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     DesignComposeDefinition, DesignComposeDefinitionHeader, Document, ImageContextSession,
-    NodeQuery, ServerFigmaDoc,
+    ServerFigmaDoc,
 };
 
 #[derive(Serialize, Deserialize)]

@@ -19,15 +19,16 @@ use std::sync::atomic::AtomicU16;
 // retain image references.
 use serde::{Deserialize, Serialize};
 
-use crate::color::Color;
 use crate::figma_schema;
 use crate::figma_schema::VariableCommon;
 use crate::reaction_schema::FrameExtras;
 use crate::reaction_schema::Reaction;
 use crate::toolkit_style::{StyledTextRun, ViewStyle};
+use dc_bundle::legacy_definition::element::color::Color;
+pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
 use std::collections::HashMap;
 
-pub use crate::figma_schema::{FigmaColor, OverflowDirection, Rectangle, StrokeCap, VariableAlias};
+pub use crate::figma_schema::{FigmaColor, OverflowDirection, StrokeCap, VariableAlias};
 
 // Enum for fields that represent either a fixed number or a number variable
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

@@ -20,6 +20,7 @@ include!(concat!(env!("OUT_DIR"), "/protos.rs"));
 // use dc_bundle::definition::element::Color;
 pub use designcompose::*;
 pub mod legacy_definition;
+mod utils;
 
 #[derive(Error, Debug)]
 pub enum Error {

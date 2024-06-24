@@ -19,9 +19,10 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 
+use dc_bundle::legacy_definition::element::node::NodeQuery;
 use serde::{Deserialize, Serialize};
 
-use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema, NodeQuery};
+use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema};
 
 static CURRENT_VERSION: u32 = 20;
 

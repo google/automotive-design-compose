@@ -16,14 +16,15 @@
 //! uses.
 
 use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::legacy_definition::element::color::Color;
+use dc_bundle::legacy_definition::element::font::{FontStretch, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Size;
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::{
-    color::Color,
-    toolkit_font_style::{FontStretch, FontStyle, FontWeight, TextDecoration},
+    toolkit_font_style::{FontWeight, TextDecoration},
     toolkit_layout_style::{Display, LayoutSizing, Number, Overflow},
     toolkit_schema::{ColorOrVar, NumOrVar},
 };

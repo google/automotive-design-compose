@@ -24,9 +24,10 @@
 //
 
 use dc_bundle::legacy_definition::element::geometry::Dimension;
+use dc_bundle::legacy_definition::element::node::NodeQuery;
 use figma_import::{
     toolkit_layout_style::LayoutSizing, toolkit_schema::View, DesignComposeDefinition,
-    DesignComposeDefinitionHeader, NodeQuery, ViewData,
+    DesignComposeDefinitionHeader, ViewData,
 };
 use layout::LayoutManager;
 use std::collections::HashMap;

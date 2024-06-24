@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use dc_bundle::legacy_definition::element::node::NodeQuery;
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    document::NodeQuery,
     figma_schema::Node,
     reaction_schema::{Action, Reaction},
 };

@@ -108,8 +108,8 @@ pub enum ViewShape {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ViewData {
     Container { shape: ViewShape, children: Vec<View> },
-    Text { content: String },
-    StyledText { content: Vec<StyledTextRun> },
+    Text { content: String, res_name: Option<String> },
+    StyledText { content: Vec<StyledTextRun>, res_name: Option<String> },
 }
 
 /// Figma component properties can be "overridden" in the UI. These overrides
@@ -127,8 +127,8 @@ pub struct ComponentOverrides {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ComponentContentOverride {
     None,
-    Text(String),
-    StyledText(Vec<StyledTextRun>),
+    Text { content: String, res_name: Option<String> },
+    StyledText { content: Vec<StyledTextRun>, res_name: Option<String> },
 }
 
 /// Details on the Figma component that this view is an instance of.
@@ -230,6 +230,7 @@ impl View {
         component_info: Option<ComponentInfo>,
         reactions: Option<Vec<Reaction>>,
         text: &str,
+        text_res_name: Option<String>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: Option<HashMap<String, String>>,
@@ -243,7 +244,7 @@ impl View {
             style,
             frame_extras: None,
             scroll_info: ScrollInfo::default(),
-            data: ViewData::Text { content: text.into() },
+            data: ViewData::Text { content: text.into(), res_name: text_res_name },
             design_absolute_bounding_box,
             render_method,
             explicit_variable_modes,
@@ -256,6 +257,7 @@ impl View {
         component_info: Option<ComponentInfo>,
         reactions: Option<Vec<Reaction>>,
         text: Vec<StyledTextRun>,
+        text_res_name: Option<String>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
     ) -> View {
@@ -268,7 +270,7 @@ impl View {
             reactions,
             frame_extras: None,
             scroll_info: ScrollInfo::default(),
-            data: ViewData::StyledText { content: text },
+            data: ViewData::StyledText { content: text, res_name: text_res_name },
             design_absolute_bounding_box,
             render_method,
             explicit_variable_modes: None,

@@ -74,6 +74,14 @@ fn check_child_size_override(node: &Node) -> Option<LayoutType> {
     None
 }
 
+fn check_text_node_string_res(node: &Node) -> Option<String> {
+    let plugin_data = node.shared_plugin_data.get("designcompose");
+    if let Some(vsw_data) = plugin_data {
+        return vsw_data.get("vsw-string-res").cloned();
+    }
+    None
+}
+
 // Map Figma's new flexbox-based Auto Layout properties to our own flexbox-based layout
 // properties.
 fn compute_layout(node: &Node, parent: Option<&Node>) -> ViewStyle {
@@ -1175,6 +1183,7 @@ fn visit_node(
                 component_info,
                 reactions,
                 characters,
+                check_text_node_string_res(node),
                 node.absolute_bounding_box,
                 RenderMethod::None,
                 node.explicit_variable_modes.clone(),
@@ -1271,6 +1280,7 @@ fn visit_node(
                 component_info,
                 reactions,
                 runs,
+                check_text_node_string_res(node),
                 node.absolute_bounding_box,
                 RenderMethod::None,
             );

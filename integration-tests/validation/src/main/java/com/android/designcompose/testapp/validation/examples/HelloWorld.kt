@@ -18,10 +18,12 @@ package com.android.designcompose.testapp.validation.examples
 
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.android.designcompose.DesignComposeCallbacks
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.testapp.validation.R
 
 // TEST Basic Hello World example
 @DesignDoc(id = "pxVlixodJqZL95zo2RzTHl")
@@ -32,7 +34,7 @@ interface HelloWorld {
 @Composable
 fun HelloWorld() {
     HelloWorldDoc.Main(
-        name = "World",
+        name = stringResource(id = R.string.label_world),
         designComposeCallbacks =
             DesignComposeCallbacks(
                 docReadyCallback = { id ->

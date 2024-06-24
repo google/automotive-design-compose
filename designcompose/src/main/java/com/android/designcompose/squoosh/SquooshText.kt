@@ -16,6 +16,7 @@
 
 package com.android.designcompose.squoosh
 
+import android.content.Context
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.AnnotatedString
@@ -40,6 +41,7 @@ import com.android.designcompose.asBrush
 import com.android.designcompose.blurFudgeFactor
 import com.android.designcompose.convertColor
 import com.android.designcompose.getText
+import com.android.designcompose.getTextContent
 import com.android.designcompose.getTextStyle
 import com.android.designcompose.getValue
 import com.android.designcompose.isAutoWidthText
@@ -70,6 +72,8 @@ internal fun squooshComputeTextInfo(
     customizations: CustomizationContext,
     fontResourceLoader: Font.ResourceLoader,
     variableState: VariableState,
+    appContext: Context,
+    useLocalStringRes: Boolean?,
 ): TextMeasureData? {
     val customizedText = customizations.getText(v.name)
     val customTextStyle = customizations.getTextStyle(v.name)
@@ -84,12 +88,21 @@ internal fun squooshComputeTextInfo(
             when (v.data) {
                 is ViewData.Text -> {
                     val builder = AnnotatedString.Builder()
-                    builder.append(normalizeNewlines((v.data as ViewData.Text).content))
+                    builder.append(
+                        normalizeNewlines(
+                            getTextContent(appContext, v.data as ViewData.Text, useLocalStringRes)
+                        )
+                    )
                     builder.toAnnotatedString()
                 }
                 is ViewData.StyledText -> {
                     val builder = AnnotatedString.Builder()
-                    for (run in (v.data as ViewData.StyledText).content) {
+                    for (run in
+                        getTextContent(
+                            appContext,
+                            v.data as ViewData.StyledText,
+                            useLocalStringRes
+                        )) {
                         val textBrushAndOpacity =
                             run.style.text_color.asBrush(document, density.density, variableState)
                         val fontWeight = run.style.font_weight.value.getValue(variableState)

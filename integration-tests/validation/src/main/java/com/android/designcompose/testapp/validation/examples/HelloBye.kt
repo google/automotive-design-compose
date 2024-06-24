@@ -17,11 +17,13 @@
 package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.android.designcompose.DesignDocOverride
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.common.DesignDocId
+import com.android.designcompose.testapp.validation.R
 
 // Hello World with override to change doc ID
 @DesignDoc(id = "pxVlixodJqZL95zo2RzTHl")
@@ -31,5 +33,7 @@ interface HelloBye {
 
 @Composable
 fun HelloBye() {
-    DesignDocOverride(DesignDocId("MCHaMYcIEnRpbvU9Ms7a0o")) { HelloByeDoc.Main(name = "World") }
+    DesignDocOverride(DesignDocId("MCHaMYcIEnRpbvU9Ms7a0o")) {
+        HelloByeDoc.Main(name = stringResource(id = R.string.label_world))
+    }
 }

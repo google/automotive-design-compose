@@ -64,6 +64,7 @@ import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.semantics.semantics
@@ -189,6 +190,7 @@ internal object DebugNodeManager {
 
     private val showNodes: MutableLiveData<Boolean> = MutableLiveData(false)
     private val showRecomposition: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val useLocalStringRes: MutableLiveData<Boolean> = MutableLiveData(true)
     private val nodes: SnapshotStateMap<Int, NodePosition> = mutableStateMapOf()
     private var nodeId: Int = 0
 
@@ -207,6 +209,14 @@ internal object DebugNodeManager {
 
     internal fun setShowRecomposition(show: Boolean) {
         showRecomposition.postValue(show)
+    }
+
+    internal fun getUseLocalStringRes(): LiveData<Boolean> {
+        return useLocalStringRes
+    }
+
+    internal fun setUseLocalStringRes(useLocal: Boolean) {
+        useLocalStringRes.postValue(useLocal)
     }
 
     internal fun addNode(docId: DesignDocId, existingId: Int, node: NodePosition): Int {
@@ -682,6 +692,7 @@ internal fun DesignView(
 
     parentLayout = parentLayout?.withRootIdIfNone(layoutId)
     var visible = false
+    val useLocalStringRes: Boolean? by DebugNodeManager.getUseLocalStringRes().observeAsState()
     DesignParentLayout(parentLayout) {
         when (view.data) {
             is ViewData.Text ->
@@ -689,7 +700,12 @@ internal fun DesignView(
                     DesignText(
                         modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
                         view = view,
-                        text = (view.data as ViewData.Text).content,
+                        text =
+                            getTextContent(
+                                LocalContext.current,
+                                view.data as ViewData.Text,
+                                useLocalStringRes
+                            ),
                         style = style,
                         document = document,
                         nodeName = view.name,
@@ -701,7 +717,12 @@ internal fun DesignView(
                     DesignText(
                         modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
                         view = view,
-                        runs = (view.data as ViewData.StyledText).content,
+                        runs =
+                            getTextContent(
+                                LocalContext.current,
+                                view.data as ViewData.StyledText,
+                                useLocalStringRes
+                            ),
                         style = style,
                         document = document,
                         nodeName = view.name,

@@ -15,7 +15,7 @@
  */
 use serde::{Deserialize, Serialize};
 
-use crate::definition::layout as proto;
+use crate::legacy_definition::proto;
 use crate::Error;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -31,17 +31,17 @@ impl Default for ItemSpacing {
     }
 }
 
-impl TryFrom<proto::ItemSpacing> for ItemSpacing {
+impl TryFrom<proto::layout::ItemSpacing> for ItemSpacing {
     type Error = Error;
 
-    fn try_from(proto: proto::ItemSpacing) -> Result<Self, Self::Error> {
+    fn try_from(proto: proto::layout::ItemSpacing) -> Result<Self, Self::Error> {
         match proto
             .r#type
             .as_ref()
             .ok_or(Error::MissingFieldError { field: "ItemSpacing".to_string() })?
         {
-            proto::item_spacing::Type::Fixed(s) => Ok(ItemSpacing::Fixed(*s)),
-            proto::item_spacing::Type::Auto(s) => Ok(ItemSpacing::Auto(s.width, s.height)),
+            proto::layout::item_spacing::Type::Fixed(s) => Ok(ItemSpacing::Fixed(*s)),
+            proto::layout::item_spacing::Type::Auto(s) => Ok(ItemSpacing::Auto(s.width, s.height)),
         }
     }
 }

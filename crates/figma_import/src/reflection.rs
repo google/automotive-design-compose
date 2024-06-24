@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::legacy_definition::element::geometry::Dimension;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
 pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
@@ -40,7 +41,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::toolkit_style::BoxShadow>(&samples)
         .expect("couldn't trace BoxShadow");
-    tracer.trace_type::<layout::types::Dimension>(&samples).expect("couldn't trace Dimension");
+    tracer.trace_type::<Dimension>(&samples).expect("couldn't trace Dimension");
     tracer
         .trace_type::<crate::toolkit_layout_style::Display>(&samples)
         .expect("couldn't trace Display");

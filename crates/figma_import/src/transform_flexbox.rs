@@ -42,11 +42,11 @@ use crate::{
 };
 
 use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
 };
-use layout::types::Dimension;
 use log::error;
 use unicode_segmentation::UnicodeSegmentation;
 //::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};

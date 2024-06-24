@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::layout_style::LayoutStyle;
+use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 use serde::{Deserialize, Serialize};
 
 // A representation of a Figma node to register for layout.

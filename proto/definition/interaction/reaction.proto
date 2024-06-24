@@ -14,11 +14,13 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition.interaction;
+package designcompose.definition.interaction;
 
 import "definition/element/geometry.proto";
 import "definition/interaction/transition.proto";
 import "google/protobuf/empty.proto";
+
+option java_package = "com.android.designcompose.definition.interaction";
 
 // Various actions that can be triggered
 message Action {

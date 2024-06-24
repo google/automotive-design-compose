@@ -14,10 +14,12 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.design;
+package designcompose.definition;
 
 import "definition/element/variable.proto";
 import "definition/view/view.proto";
+
+option java_package = "com.android.designcompose.definition";
 
 option java_multiple_files = true;
 

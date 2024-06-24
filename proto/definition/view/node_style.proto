@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition.view;
+package designcompose.definition.view;
 
 import "definition/element/font.proto";
 import "definition/element/geometry.proto";
@@ -29,6 +29,8 @@ import "definition/modifier/matrix_transform.proto";
 import "definition/modifier/shadow.proto";
 import "definition/modifier/text.proto";
 import "definition/plugin/meter_data.proto";
+
+option java_package = "com.android.designcompose.definition.view";
 
 option java_multiple_files = true;
 

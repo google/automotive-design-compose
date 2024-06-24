@@ -14,7 +14,9 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition.plugin;
+package designcompose.definition.plugin;
+
+option java_package = "com.android.designcompose.definition.plugin";
 
 option java_multiple_files = true;
 

@@ -14,11 +14,13 @@
 
 syntax = "proto3";
 
-package com.android.designcompose.proto.definition.layout;
+package designcompose.definition.layout;
 
 import "definition/element/geometry.proto";
 import "definition/layout/grid.proto";
 import "definition/layout/positioning.proto";
+
+option java_package = "com.android.designcompose.definition.layout";
 
 option java_multiple_files = true;
 

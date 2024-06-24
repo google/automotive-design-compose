@@ -18,7 +18,7 @@ include!(concat!(env!("OUT_DIR"), "/protos.rs"));
 
 // Allow dependent crates to import types using a more rusty signature like:
 // use dc_bundle::definition::element::Color;
-pub use com::android::designcompose::proto::*;
+pub use designcompose::*;
 
 #[derive(Error, Debug)]
 pub enum Error {

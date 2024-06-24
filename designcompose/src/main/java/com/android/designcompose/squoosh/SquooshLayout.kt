@@ -20,7 +20,7 @@ import android.util.Log
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
-import com.android.designcompose.proto.android_interface.LayoutChangedResponse
+import com.android.designcompose.android_interface.LayoutChangedResponse
 import com.android.designcompose.proto.intoProto
 import com.android.designcompose.proto.intoSerde
 import com.android.designcompose.serdegen.Layout

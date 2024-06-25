@@ -26,7 +26,6 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -43,12 +42,10 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -69,11 +66,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.android.designcompose.annotation.DesignMetaKey
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
@@ -176,93 +170,6 @@ private val recomposeModifier =
     }
 
 data class ParentComponentInfo(val instanceId: String, val componentInfo: ComponentInfo)
-
-// DebugNodeManager keeps track of the size and positions of all Figma nodes that we are rendering
-// so that we can do a post render pass and draw the node names on top.
-internal object DebugNodeManager {
-    internal data class NodePosition(
-        val id: String,
-        val nodeName: String,
-        val position: Offset,
-        val size: IntSize,
-        val color: Color,
-    )
-
-    private val showNodes: MutableLiveData<Boolean> = MutableLiveData(false)
-    private val showRecomposition: MutableLiveData<Boolean> = MutableLiveData(false)
-    private val useLocalStringRes: MutableLiveData<Boolean> = MutableLiveData(true)
-    private val nodes: SnapshotStateMap<Int, NodePosition> = mutableStateMapOf()
-    private var nodeId: Int = 0
-
-    internal fun getShowNodes(): LiveData<Boolean> {
-        return showNodes
-    }
-
-    internal fun setShowNodes(show: Boolean) {
-        if (!show) nodes.clear()
-        showNodes.postValue(show)
-    }
-
-    internal fun getShowRecomposition(): LiveData<Boolean> {
-        return showRecomposition
-    }
-
-    internal fun setShowRecomposition(show: Boolean) {
-        showRecomposition.postValue(show)
-    }
-
-    internal fun getUseLocalStringRes(): LiveData<Boolean> {
-        return useLocalStringRes
-    }
-
-    internal fun setUseLocalStringRes(useLocal: Boolean) {
-        useLocalStringRes.postValue(useLocal)
-    }
-
-    internal fun addNode(docId: DesignDocId, existingId: Int, node: NodePosition): Int {
-        if (
-            !showNodes.value!! ||
-                !node.nodeName.startsWith("#") ||
-                Feedback.isDocumentIgnored(docId)
-        )
-            return 0
-        val oldNode = nodes[existingId]
-        return if (oldNode != null) {
-            nodes[existingId] = node
-            existingId
-        } else {
-            ++nodeId
-            nodes[nodeId] = node
-            nodeId
-        }
-    }
-
-    internal fun removeNode(id: Int) {
-        nodes.remove(id)
-    }
-
-    @Composable
-    internal fun DrawNodeNames() {
-        val show: Boolean? by showNodes.observeAsState()
-        if (show == null || !show!!) return
-
-        // For each debug node, draw a box on top of the node, then text on a partially transparent
-        // colored box at the top left of the node's box
-        nodes.values.forEach {
-            Box(
-                modifier =
-                    Modifier.absoluteOffset(it.position.x.dp, it.position.y.dp)
-                        .size(it.size.width.dp, it.size.height.dp)
-            ) {
-                BasicText(
-                    it.nodeName,
-                    modifier = Modifier.then(Modifier.background(it.color)),
-                    style = TextStyle(color = Color(1f, 1f, 1f, 1.0f)),
-                )
-            }
-        }
-    }
-}
 
 // Represents a key press event with optional meta keys. A DesignKeyEvent can be created with a
 // single character representing the key and a list of meta keys. It can also be created from a

@@ -17,6 +17,7 @@
 import * as Utils from "./utils";
 
 const STRING_RES_PLUGIN_DATA_KEY = "vsw-string-res";
+const STRING_RES_EXTRAS_PLUGIN_DATA_KEY = "vsw-string-res-extras";
 const CONSOLE_TAG = `${Utils.CONSOLE_TAG}-LOCALIZATION`;
 
 interface StringResource {
@@ -25,6 +26,13 @@ interface StringResource {
   // It can be a simple string or a string array.
   text: string | string[];
   textNodes: string[];
+  extras?: StringResourceExtras;
+  textLength: number;
+}
+
+interface StringResourceExtras {
+  description: string;
+  charlimit: number | "NONE";
 }
 
 export async function generateLocalizationData(uploadedStrings: string[]) {
@@ -49,25 +57,27 @@ export async function generateLocalizationData(uploadedStrings: string[]) {
 
   // Convert to an array of key-value pairs
   const stringReourceArray = Array.from(stringResourceMap);
-  figma.ui.postMessage({ msg: "localization-output", output: stringReourceArray });
+  figma.ui.postMessage({
+    msg: "localization-output",
+    output: stringReourceArray,
+  });
 }
 
-export async function updateStringResName(strRes: StringResource) {
-  Utils.log(CONSOLE_TAG, "User renamed, update string res name");
+export async function updateStringRes(strRes: StringResource) {
   await figma.loadAllPagesAsync();
 
   for (let nodeId of strRes.textNodes) {
     const node = await figma.getNodeByIdAsync(nodeId);
     if (node?.type == "TEXT") {
-      saveToPluginData(node, strRes.name);
+      saveResName(node, strRes.name);
+      saveExtras(node, strRes.extras);
     } else {
-      Utils.error(
-        CONSOLE_TAG,
-        "%s not a text node to update string res name",
-        nodeId
+      figma.notify(
+        `Ignore update string res request because node ${nodeId} is not a text node.`
       );
     }
   }
+  figma.notify("Updated string res...");
 }
 
 async function localizeNodeAsync(
@@ -95,21 +105,21 @@ async function localizeNodeAsync(
 async function localizeTextNodeAsync(
   node: TextNode,
   stringResourceMap: Map<string, StringResource>
-): Promise<string> {
+) {
   let normalizedText = normalizeTextNode(node);
   // First find and tag. It will override the existing string resource name from the string resource entry read from file.
   const containedValue = [...stringResourceMap.values()].filter(
     (value) => textMatches(value, normalizedText) && value.translatable
   );
   if (containedValue.length > 0) {
-    let resName = containedValue[0].name;
     if (!containedValue[0].textNodes) {
       containedValue[0].textNodes = [];
     }
     containedValue[0].textNodes.push(node.id);
     Utils.log(CONSOLE_TAG, "Found and tag:", containedValue[0].name);
-    saveToPluginData(node, containedValue[0].name);
-    return resName;
+    saveResName(node, containedValue[0].name);
+    saveExtras(node, containedValue[0].extras);
+    return;
   }
 
   var preferredName = node.getSharedPluginData(
@@ -118,7 +128,10 @@ async function localizeTextNodeAsync(
   );
   if (!preferredName) {
     preferredName = fromNode(node);
-  } else if (stringResourceMap.has(preferredName) && endsWithNumbers(preferredName)) {
+  } else if (
+    stringResourceMap.has(preferredName) &&
+    endsWithNumbers(preferredName)
+  ) {
     // We need to find a new name so reset preferred name to default.
     preferredName = fromNode(node);
   }
@@ -132,16 +145,17 @@ async function localizeTextNodeAsync(
     stringResName = preferredName + "_" + index;
   }
 
-  saveToPluginData(node, stringResName);
+  saveResName(node, stringResName);
 
   var stringRes = {
     name: stringResName,
     translatable: true,
     text: normalizedText,
     textNodes: [node.id],
+    extras: getSavedExtras(node),
+    textLength: node.characters.length,
   };
   stringResourceMap.set(stringResName, stringRes);
-  return stringResName;
 }
 
 function fromNode(node: TextNode): string {
@@ -184,7 +198,7 @@ function countWords(characters: string): number {
   return words.filter((word) => word !== "").length;
 }
 
-function saveToPluginData(node: TextNode, stringResName: string) {
+function saveResName(node: TextNode, stringResName: string) {
   node.setSharedPluginData(
     Utils.SHARED_PLUGIN_NAMESPACE,
     STRING_RES_PLUGIN_DATA_KEY,
@@ -197,6 +211,19 @@ function saveToPluginData(node: TextNode, stringResName: string) {
     node.id,
     stringResName
   );
+}
+
+function saveExtras(node: TextNode, extras?: StringResourceExtras) {
+  if (extras) {
+    Utils.log(CONSOLE_TAG, "Save extras", node.id);
+    node.setPluginData(
+      STRING_RES_EXTRAS_PLUGIN_DATA_KEY,
+      JSON.stringify(extras)
+    );
+  } else {
+    Utils.log(CONSOLE_TAG, "Clear extras from", node.id);
+    node.setPluginData(STRING_RES_EXTRAS_PLUGIN_DATA_KEY, "");
+  }
 }
 
 function endsWithNumbers(stringResName: string): boolean {
@@ -222,7 +249,6 @@ function textMatches(
 }
 
 function normalizeTextNode(node: TextNode): string | string[] {
-  Utils.log(CONSOLE_TAG, "Normalize node:", node.id);
   let stringArray: string[] = [];
 
   // All styles.
@@ -303,7 +329,8 @@ export async function clearLocalizationData() {
 
 async function clearNodeAsync(node: SceneNode) {
   if (node.type == "TEXT") {
-    saveToPluginData(node, "");
+    saveResName(node, "");
+    saveExtras(node, undefined);
   } else {
     // Recurse into any children.
     let maybeParent = node as ChildrenMixin;
@@ -313,4 +340,19 @@ async function clearNodeAsync(node: SceneNode) {
       }
     }
   }
+}
+
+////////////////// Extras //////////////////
+function estimateCharlimit(text: string): number | "NONE" {
+  if (text.length > 40) return "NONE";
+  return Math.ceil(text.length * 0.3) * 5;
+}
+
+function getSavedExtras(node: TextNode): StringResourceExtras {
+  const savedExtras = node.getPluginData(STRING_RES_EXTRAS_PLUGIN_DATA_KEY);
+  let extras = savedExtras ? JSON.parse(savedExtras) : {};
+  if (!extras.charlimit) {
+    extras["charlimit"] = estimateCharlimit(node.characters);
+  }
+  return extras;
 }

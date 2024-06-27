@@ -17,9 +17,14 @@
 package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
+import kotlinx.coroutines.delay
 
 // TEST Telltale Test. Tests that rendering telltales as frames and as components is correct.
 // When visibility is set to true, the telltales rendered in the app should match the #Main frame
@@ -34,17 +39,29 @@ interface TelltaleTest {
         @Design(node = "#seat_i") seatInstance: Boolean,
         @Design(node = "#low_i") lowInstance: Boolean,
         @Design(node = "#brights_i") brightsInstance: Boolean,
+        @Design(node = "#LeftBlinker") leftBlinker: State<Boolean>,
     )
 }
 
 @Composable
 fun TelltaleTest() {
+    val visible = remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            println("Swap")
+            delay(1000)
+            visible.value = !visible.value
+        }
+    }
+
+    println("Main Recompose")
     TelltaleTestDoc.Main(
         leftFrame = true,
         seatFrame = true,
         leftInstance = true,
         seatInstance = true,
         lowInstance = true,
-        brightsInstance = true
+        brightsInstance = true,
+        leftBlinker = visible
     )
 }

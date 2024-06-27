@@ -287,6 +287,8 @@ private class DesignModuleVisitor(
                 out += "    customizations.setImageWithContext(\"$nodeName\", $propertyName)\n"
             CustomizationType.Visibility ->
                 out += "    customizations.setVisible(\"$nodeName\", $propertyName)\n"
+            CustomizationType.VisibilityState ->
+                out += "    customizations.setVisibilityState(\"$nodeName\", $propertyName)\n"
             CustomizationType.TextStyle ->
                 out += "    customizations.setTextStyle(\"$nodeName\", $propertyName)\n"
             CustomizationType.Meter ->

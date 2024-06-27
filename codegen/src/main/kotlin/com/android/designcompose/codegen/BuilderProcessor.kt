@@ -151,6 +151,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var imageContextCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var visibleCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
+        private var visibleStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+            HashMap()
         private var textStyleCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var meterCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
@@ -725,6 +727,12 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setVisible(\"$node\", $value)\n")
             }
 
+            val visibleStateCustom =
+                visibleStateCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in visibleStateCustom) {
+                out.appendText("        customizations.setVisibleState(\"$node\", $value)\n")
+            }
+
             val textStyleCustom =
                 textStyleCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
             for ((node, value) in textStyleCustom) {
@@ -858,6 +866,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, imageContextCustomizations)
                 CustomizationType.Visibility ->
                     addCustomization(valueParameter, annotation, visibleCustomizations)
+                CustomizationType.VisibilityState ->
+                    addCustomization(valueParameter, annotation, visibleStateCustomizations)
                 CustomizationType.TextStyle ->
                     addCustomization(valueParameter, annotation, textStyleCustomizations)
                 CustomizationType.Meter ->

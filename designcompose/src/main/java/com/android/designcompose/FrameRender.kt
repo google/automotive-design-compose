@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
-import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.MeterData
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
@@ -111,14 +110,8 @@ private fun calculateRotationData(
         (rotationData.start + meterValue / 100f * (rotationData.end - rotationData.start))
             .coerceDiscrete(rotationData.discrete, rotationData.discreteValue)
 
-    val nodeWidth =
-        if (style.layout_style.width is Dimension.Points)
-            style.layout_style.width.pointsAsDp(density).value
-        else style.node_style.node_size.width
-    val nodeHeight =
-        if (style.layout_style.height is Dimension.Points)
-            style.layout_style.height.pointsAsDp(density).value
-        else style.node_style.node_size.height
+    val nodeWidth = style.fixedWidth(density)
+    val nodeHeight = style.fixedHeight(density)
 
     // Calculate offsets from parent when the rotation is 0
     val offsets =
@@ -510,6 +503,7 @@ internal fun squooshShapeRender(
     drawContext: DrawContext,
     density: Float,
     size: Size,
+    overrideLayoutSize: Boolean,
     style: ViewStyle,
     frameShape: ViewShape,
     customImageWithContext: Bitmap?,
@@ -524,7 +518,7 @@ internal fun squooshShapeRender(
     drawContext.canvas.save()
 
     var overrideTransform: androidx.compose.ui.graphics.Matrix? = null
-    var rectSize: Size? = null
+    var rectSize: Size? = if (overrideLayoutSize) size else null
     var shape = frameShape
     var customArcAngle = false
 
@@ -597,7 +591,7 @@ internal fun squooshShapeRender(
             // correctly. This likely breaks size calculation for rotated nodes, because
             // DesignCompose weirdly considers the size to be "post rotation bounding box" but
             // layout doesn't actually consider rotation yet.
-            rectSize ?: size,
+            rectSize,
             customArcAngle,
             vectorScaleX,
             vectorScaleY,

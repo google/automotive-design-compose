@@ -139,6 +139,7 @@ internal fun Modifier.squooshRender(
                             drawContext,
                             density,
                             nodeSize,
+                            node.overrideLayoutSize,
                             node.style,
                             shape,
                             null, // customImageWithContext

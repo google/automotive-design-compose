@@ -756,6 +756,21 @@ internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewSty
     return overrideStyle.build()
 }
 
+// Get the raw width in a view style from the width property if it is a fixed size, or from the
+// node_size property if not.
+internal fun ViewStyle.fixedWidth(density: Float): Float {
+    return if (layout_style.width is Dimension.Points) layout_style.width.pointsAsDp(density).value
+    else node_style.node_size.width * density
+}
+
+// Get the raw height in a view style from the height property if it is a fixed size, or from the
+// node_size property if not.
+internal fun ViewStyle.fixedHeight(density: Float): Float {
+    return if (layout_style.height is Dimension.Points)
+        layout_style.height.pointsAsDp(density).value
+    else node_style.node_size.height * density
+}
+
 internal fun validateFigmaDocId(id: String): Boolean {
     val alphanumericRegex = "[a-zA-Z0-9]+".toRegex()
     return alphanumericRegex.matches(id)

@@ -18,6 +18,7 @@ package com.android.designcompose
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
@@ -98,6 +99,8 @@ data class Customization(
     var component: Optional<@Composable (ComponentReplacementContext) -> Unit> = Optional.empty(),
     // Visibility customization
     var visible: Boolean = true,
+    // Visibility state customization
+    var visibleState: Optional<State<Boolean>> = Optional.empty(),
     // Font customizations
     var textStyle: Optional<TextStyle> = Optional.empty(),
     // Open link callback function
@@ -122,6 +125,7 @@ private fun Customization.clone(): Customization {
     c.listContent = listContent
     c.component = component
     c.visible = visible
+    c.visibleState = visibleState
     c.textStyle = textStyle
     c.openLinkCallback = openLinkCallback
     c.meterValue = meterValue
@@ -281,6 +285,10 @@ fun CustomizationContext.setVisible(nodeName: String, visible: Boolean) {
     customize(nodeName) { c -> c.visible = visible }
 }
 
+fun CustomizationContext.setVisibleState(nodeName: String, visible: State<Boolean>) {
+    customize(nodeName) { c -> c.visibleState = Optional.ofNullable(visible) }
+}
+
 fun CustomizationContext.setTextStyle(nodeName: String, textStyle: TextStyle) {
     customize(nodeName) { c -> c.textStyle = Optional.ofNullable(textStyle) }
 }
@@ -424,6 +432,12 @@ private fun parseNodeVariants(nodeName: String): HashMap<String, String> {
 fun CustomizationContext.getVisible(nodeName: String): Boolean {
     val c = cs[nodeName] ?: return true
     return c.visible
+}
+
+fun CustomizationContext.getVisibleState(nodeName: String): State<Boolean>? {
+    val c = cs[nodeName] ?: return null
+    if (c.visibleState.isPresent) return c.visibleState.get()
+    return null
 }
 
 fun CustomizationContext.getTextStyle(nodeName: String): TextStyle? {

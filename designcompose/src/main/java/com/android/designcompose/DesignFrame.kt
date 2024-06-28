@@ -73,6 +73,7 @@ internal fun DesignFrame(
 ): Boolean {
     val name = view.name
     if (!customizations.getVisible(name)) return false
+    customizations.getVisibleState(name)?.let { if (!it.value) return false }
     val parentLayout = LocalParentLayoutInfo.current
 
     var m = Modifier as Modifier

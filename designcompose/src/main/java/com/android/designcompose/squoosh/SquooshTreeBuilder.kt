@@ -32,6 +32,7 @@ import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getVisible
+import com.android.designcompose.getVisibleState
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.AlignItems
@@ -142,6 +143,7 @@ internal fun resolveVariantsRecursively(
     useLocalStringRes: Boolean?,
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(v.name)) return null
+    customizations.getVisibleState(v.name)?.let { if (!it.value) return null }
     var componentLayoutId = rootLayoutId
     var parentComps = parentComponents
     var overrideStyle: ViewStyle? = null

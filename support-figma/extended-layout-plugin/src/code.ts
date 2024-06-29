@@ -16,6 +16,7 @@
 
 import * as Utils from "./utils";
 import * as Localization from "./localization-module";
+import * as DesignSpecs from "./design-spec-module";
 
 // Warning component.
 interface ClippyWarningRun {
@@ -100,52 +101,10 @@ function createWarning(
   return { kind, severity, runs };
 }
 
-enum DesignCustomizationKind {
-  Text = "text",
-  TextStyle = "text_style",
-  Image = "image",
-  ImageWithContext = "image_with_context",
-  Visibility = "visibility",
-  VariantProperty = "variant_property",
-  ComponentReplacement = "component_replacement",
-  ContentReplacement = "content_replacement",
-  Modifier = "modifier",
-  // Not covering "placeholder"; we should remove it.
-}
-
-interface DesignCustomization {
-  kind: DesignCustomizationKind;
-  name: string;
-  node: string;
-}
-
-interface DesignCustomizationVariantProperty extends DesignCustomization {
-  kind: DesignCustomizationKind.VariantProperty;
-  values: string[];
-}
-
-interface DesignCustomizationContentReplacement extends DesignCustomization {
-  kind: DesignCustomizationKind.ContentReplacement;
-  content: string[]; // XXX: this won't work for children that have variants.
-}
-
-interface DesignComponentSpec {
-  name: string;
-  node: string;
-  isRoot?: boolean; // is this the root component? We must know this since we pass customizations down to children.
-  customizations: DesignCustomization[];
-}
-
-interface DesignDocSpec {
-  name: string;
-  version: string;
-  components: DesignComponentSpec[];
-}
-
 // 1. Warn for unused keywords in a top level frame
 function clippyCheckUnusedKeywords(
   topLevelComponents: Map<string, BaseNode[]>,
-  topLevelComponentDefns: Map<string, DesignComponentSpec>,
+  topLevelComponentDefns: Map<string, DesignSpecs.DesignComponentSpec>,
   warnings: ClippyWarning[]
 ) {
   // Given a node and a list of keywords (node name customizations), check that the keywords
@@ -181,7 +140,7 @@ function clippyCheckUnusedKeywords(
     if (!component || component.isRoot) continue;
     let keywords: Set<string> = new Set();
     component.customizations.forEach((c) => {
-      if (c.kind != DesignCustomizationKind.VariantProperty)
+      if (c.kind != DesignSpecs.DesignCustomizationKind.VariantProperty)
         keywords.add(c.node);
     });
     if (topLevelComponents.has(nodeName)) {
@@ -221,7 +180,7 @@ function clippyCheckUnusedKeywords(
 // 3. Warn for duplicated top level keywords
 function clippyCheckKeywords(
   topLevelComponents: Map<string, BaseNode[]>,
-  topLevelComponentDefns: Map<string, DesignComponentSpec>,
+  topLevelComponentDefns: Map<string, DesignSpecs.DesignComponentSpec>,
   warnings: ClippyWarning[]
 ) {
   // See if there are any missing or duplicate top-level component names.
@@ -270,7 +229,7 @@ function clippyCheckKeywords(
 
 // 4. Warn if a customization with variants does not have a matching node of type COMPONENT_SET
 function clippyCheckVariants(
-  topLevelComponentDefns: Map<string, DesignComponentSpec>,
+  topLevelComponentDefns: Map<string, DesignSpecs.DesignComponentSpec>,
   warnings: ClippyWarning[]
 ) {
   // Recurse through the document and store all COMPONENT_SET nodes into a map.
@@ -303,8 +262,9 @@ function clippyCheckVariants(
     // `variants` maps a property name to variant names within a node
     let variants: Map<string, Set<string>> = new Map();
     component.customizations.forEach((c) => {
-      if (c.kind == DesignCustomizationKind.VariantProperty) {
-        let customizationVariant = c as DesignCustomizationVariantProperty;
+      if (c.kind == DesignSpecs.DesignCustomizationKind.VariantProperty) {
+        let customizationVariant =
+          c as DesignSpecs.DesignCustomizationVariantProperty;
         if (!variants.has(c.node)) {
           variants.set(c.node, new Set());
         }
@@ -361,10 +321,10 @@ function clippyCheckVariants(
 
 // 5. Warn for node type mismatches (ClippyWarningKind.TYPE_MISMATCH):
 function clipyCheckTypeMismatches(
-  topLevelComponentDefns: Map<string, DesignComponentSpec>,
+  topLevelComponentDefns: Map<string, DesignSpecs.DesignComponentSpec>,
   node: BaseNode,
   warnings: ClippyWarning[],
-  insideComponentDefn?: DesignComponentSpec
+  insideComponentDefn?: DesignSpecs.DesignComponentSpec
 ) {
   if (!node) return;
   if (topLevelComponentDefns.has(node.name)) {
@@ -383,8 +343,9 @@ function clipyCheckTypeMismatches(
       //   - If image customization is not on a frame node
       var kind = customization.kind;
       switch (kind) {
-        case DesignCustomizationKind.Text:
-        case DesignCustomizationKind.TextStyle:
+        case DesignSpecs.DesignCustomizationKind.Text:
+        case DesignSpecs.DesignCustomizationKind.TextStyle:
+        case DesignSpecs.DesignCustomizationKind.TextFunction:
           if (node.type != "TEXT") {
             warnings.push(
               createWarning(ClippyWarningKind.TYPE_MISMATCH, [
@@ -395,7 +356,7 @@ function clipyCheckTypeMismatches(
             );
           }
           break;
-        case DesignCustomizationKind.ContentReplacement:
+        case DesignSpecs.DesignCustomizationKind.ContentReplacement:
           if (node.type != "FRAME") {
             warnings.push(
               createWarning(ClippyWarningKind.TYPE_MISMATCH, [
@@ -406,8 +367,8 @@ function clipyCheckTypeMismatches(
             );
           }
           break;
-        case DesignCustomizationKind.Image:
-        case DesignCustomizationKind.ImageWithContext:
+        case DesignSpecs.DesignCustomizationKind.Image:
+        case DesignSpecs.DesignCustomizationKind.ImageWithContext:
           // Not sure what the rules are for image. Frames and rectangles seem to work
           if (node.type != "FRAME" && node.type != "RECTANGLE") {
             warnings.push(
@@ -419,10 +380,10 @@ function clipyCheckTypeMismatches(
             );
           }
           break;
-        case DesignCustomizationKind.Visibility:
-        case DesignCustomizationKind.VariantProperty:
-        case DesignCustomizationKind.ComponentReplacement:
-        case DesignCustomizationKind.Modifier:
+        case DesignSpecs.DesignCustomizationKind.Visibility:
+        case DesignSpecs.DesignCustomizationKind.VariantProperty:
+        case DesignSpecs.DesignCustomizationKind.ComponentReplacement:
+        case DesignSpecs.DesignCustomizationKind.Modifier:
           break;
         default:
           console.log("Unknown customization type " + customization.kind);
@@ -445,40 +406,22 @@ function clipyCheckTypeMismatches(
 }
 
 // Parse the document look for various types of warnings
-function clippy(json: DesignDocSpec): ClippyWarning[] {
+async function clippy(
+  json: DesignSpecs.DesignDocSpec
+): Promise<ClippyWarning[]> {
   // Generated warnings
   let warnings: ClippyWarning[] = [];
 
-  // Recurse over all nodes in the doc, from the root down. We populate this
-  // `topLevelComponents` map to identify duplicates and identify missing
-  // top level components (a top-level component can appear anywhere in a doc;
-  // it is "top-level" because of how it is used in the code).
-  let topLevelComponents: Map<string, BaseNode[]> = new Map();
-  let topLevelComponentDefns: Map<string, DesignComponentSpec> = new Map();
-  for (const component of json.components) {
-    topLevelComponentDefns.set(component.node, component);
-  }
-
-  function populateComponentMaps(node: BaseNode) {
-    if (!node) return;
-    if (topLevelComponentDefns.has(node.name)) {
-      // Store this ref in our list of topLevelComponents.
-      let list = topLevelComponents.get(node.name);
-      if (list) {
-        list.push(node);
-      } else {
-        topLevelComponents.set(node.name, [node]);
-      }
-    }
-
-    if ((node as any).children) {
-      let parent: ChildrenMixin = node as ChildrenMixin;
-      for (const child of parent.children) {
-        populateComponentMaps(child);
-      }
-    }
-  }
-  populateComponentMaps(figma.root);
+  let {
+    topLevelComponents,
+    topLevelComponentDefns,
+    topLevelReactionComponents,
+  } = DesignSpecs.initTopLevelComponentMaps(json);
+  await DesignSpecs.populateComponentMapsAsync(
+    figma.root,
+    topLevelComponents,
+    topLevelComponentDefns
+  );
 
   // 1. Warn for unused keywords in a top level frame (ClippyWarningKind.UNUSED_KEYWORD)
   clippyCheckUnusedKeywords(
@@ -509,52 +452,14 @@ async function clippyRefresh() {
   // Get the json plugin data from our root node
   let clippyFile = figma.root.getSharedPluginData(
     Utils.SHARED_PLUGIN_NAMESPACE,
-    "clippy-json-file"
+    Utils.CLIPPY_JSON_FILE_KEY
   );
-  let clippyData = figma.root.getSharedPluginData(
-    Utils.SHARED_PLUGIN_NAMESPACE,
-    "clippy-json"
-  );
-  /*
-  var reviver = function(key, value) {
-    return value;
-  };
-  */
-
+  let json = DesignSpecs.loadClippy();
   var errors = null;
-  try {
-    // Parse the string into a JSON tree
-    let json = JSON.parse(clippyData);
-
-    // Check for errors
-    errors = clippy(json);
-  } catch (e) {
-    console.log("Could not run clippy: " + e);
+  if (json != null) {
+    errors = await clippy(json);
   }
-
   figma.ui.postMessage({ msg: "clippy", errors, clippyFile });
-}
-
-function loadClippy(): DesignDocSpec | null {
-  // Get the json plugin data from our root node
-  let clippyData = figma.root.getSharedPluginData(
-    Utils.SHARED_PLUGIN_NAMESPACE,
-    "clippy-json"
-  );
-  if (!clippyData) return null;
-
-  /*
-  var reviver = function(key, value) {
-    return value;
-  };
-  */
-
-  try {
-    return JSON.parse(clippyData);
-  } catch (e) {
-    console.log("Error parsing clippy JSON: " + e);
-  }
-  return null;
 }
 
 // If we were invoked with the "sync" command then run our sync logic and quit.
@@ -573,7 +478,7 @@ if (figma.command === "sync") {
     // Set the data into the plugin data, or clear it.
     node.setSharedPluginData(
       Utils.SHARED_PLUGIN_NAMESPACE,
-      "vsw-reactions",
+      Utils.REACTIONS_KEY,
       reactionData == null ? "" : JSON.stringify(reactionData)
     );
 
@@ -627,7 +532,7 @@ if (figma.command === "sync") {
   });
   figma.ui.onmessage = (msg) => {
     if (msg.msg === "generate-localization-data") {
-      Localization.generateLocalizationData(msg.contents);
+      Localization.generateLocalizationData(msg.contents, msg.options);
     } else if (msg.msg === "update-localization-data") {
       Localization.updateStringRes(msg.item);
     } else if (msg.msg === "show-node") {
@@ -647,7 +552,7 @@ if (figma.command === "sync") {
   // If we were invoked with the "move plugin data" command then move all the plugin data
   // from the private location to the shared location, then quit.
   function movePluginData(node: SceneNode) {
-    movePluginDataWithKey(node, "vsw-reactions");
+    movePluginDataWithKey(node, Utils.REACTIONS_KEY);
     movePluginDataWithKey(node, "vsw-extended-text-layout");
     movePluginDataWithKey(node, "vsw-frame-extras");
 
@@ -1103,7 +1008,7 @@ if (figma.command === "sync") {
       Utils.SHARED_PLUGIN_NAMESPACE,
       "clippy-json-file"
     );
-    let clippyData = loadClippy();
+    let clippyData = DesignSpecs.loadClippy();
     let name = clippyData ? clippyData.name : null;
     console.log("Refresh " + file);
     let version = clippyData ? clippyData.version : null;

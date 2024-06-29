@@ -15,6 +15,9 @@
  */
 
 export const SHARED_PLUGIN_NAMESPACE = "designcompose";
+export const REACTIONS_KEY = "vsw-reactions";
+export const CLIPPY_JSON_FILE_KEY = "clippy-json-file";
+export const CLIPPY_JSON_KEY = "clippy-json";
 export const CONSOLE_TAG = "#DC";
 
 export async function showNode(nodeId: string) {

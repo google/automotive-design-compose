@@ -15,10 +15,13 @@
  */
 
 import * as Utils from "./utils";
+import * as DesignSpecs from "./design-spec-module";
 
 const STRING_RES_PLUGIN_DATA_KEY = "vsw-string-res";
 const STRING_RES_EXTRAS_PLUGIN_DATA_KEY = "vsw-string-res-extras";
 const CONSOLE_TAG = `${Utils.CONSOLE_TAG}-LOCALIZATION`;
+const EXCLUDE_HASHTAG_NAME_OPTION = "excludeHashTagName";
+const EXCLUDE_CUSTOMIZATION_OPTION = "excludeCustomization";
 
 interface StringResource {
   name: string;
@@ -35,10 +38,16 @@ interface StringResourceExtras {
   charlimit: number | "NONE";
 }
 
-export async function generateLocalizationData(uploadedStrings: string[]) {
+export async function generateLocalizationData(
+  uploadedStrings: string[],
+  options: string[]
+) {
   Utils.log(CONSOLE_TAG, "Generate string res name");
 
   await figma.loadAllPagesAsync();
+  let clippyTextNodes = options.includes(EXCLUDE_CUSTOMIZATION_OPTION)
+    ? await loadClippyTextNodesAsync()
+    : [];
 
   // String resource name to StringResource map.
   let stringResourceMap = new Map<string, StringResource>();
@@ -51,7 +60,12 @@ export async function generateLocalizationData(uploadedStrings: string[]) {
 
   for (let page of figma.root.children) {
     for (let child of page.children) {
-      await localizeNodeAsync(child, stringResourceMap);
+      await localizeNodeAsync(
+        child,
+        stringResourceMap,
+        options,
+        clippyTextNodes
+      );
     }
   }
 
@@ -82,12 +96,19 @@ export async function updateStringRes(strRes: StringResource) {
 
 async function localizeNodeAsync(
   node: SceneNode,
-  stringResourceMap: Map<string, StringResource>
+  stringResourceMap: Map<string, StringResource>,
+  options: string[],
+  clippyTextNodes: BaseNode[]
 ) {
   if (node.type == "TEXT") {
     // Nodes with name starting with # is for local customization.
-    if (node.name.startsWith("#")) {
+    if (
+      options.includes(EXCLUDE_HASHTAG_NAME_OPTION) &&
+      node.name.startsWith("#")
+    ) {
       Utils.log(CONSOLE_TAG, "Ignore node:", node.name);
+    } else if (clippyTextNodes.includes(node)) {
+      Utils.log(CONSOLE_TAG, "Ignore client side customization:", node.name);
     } else {
       await localizeTextNodeAsync(node, stringResourceMap);
     }
@@ -96,7 +117,12 @@ async function localizeNodeAsync(
     let maybeParent = node as ChildrenMixin;
     if (maybeParent.children) {
       for (let child of maybeParent.children) {
-        await localizeNodeAsync(child, stringResourceMap);
+        await localizeNodeAsync(
+          child,
+          stringResourceMap,
+          options,
+          clippyTextNodes
+        );
       }
     }
   }
@@ -119,6 +145,8 @@ async function localizeTextNodeAsync(
     Utils.log(CONSOLE_TAG, "Found and tag:", containedValue[0].name);
     saveResName(node, containedValue[0].name);
     saveExtras(node, containedValue[0].extras);
+    // Set the text length to set a proper char limit range.
+    containedValue[0].textLength = node.characters.length;
     return;
   }
 
@@ -215,7 +243,6 @@ function saveResName(node: TextNode, stringResName: string) {
 
 function saveExtras(node: TextNode, extras?: StringResourceExtras) {
   if (extras) {
-    Utils.log(CONSOLE_TAG, "Save extras", node.id);
     node.setPluginData(
       STRING_RES_EXTRAS_PLUGIN_DATA_KEY,
       JSON.stringify(extras)
@@ -355,4 +382,43 @@ function getSavedExtras(node: TextNode): StringResourceExtras {
     extras["charlimit"] = estimateCharlimit(node.characters);
   }
   return extras;
+}
+
+////////////// Customization /////////////////
+// Parse the document look for text customizations
+async function loadClippyTextNodesAsync(): Promise<BaseNode[]> {
+  let designDocSpec = DesignSpecs.loadClippy();
+  if (designDocSpec != null) {
+    // Check for text customizations
+    let {
+      topLevelComponents,
+      topLevelComponentDefns,
+      topLevelReactionComponents,
+    } = DesignSpecs.initTopLevelComponentMaps(designDocSpec);
+    await DesignSpecs.populateComponentMapsAsync(
+      figma.root,
+      topLevelComponents,
+      topLevelComponentDefns
+    );
+
+    let idToDesignComponentSpecMap = await DesignSpecs.mergeReactionsAsync(
+      topLevelComponents,
+      topLevelComponentDefns,
+      topLevelReactionComponents
+    );
+
+    let customizedNodeArray: BaseNode[] = [];
+    await DesignSpecs.findTextCustomizationNodesAsync(
+      idToDesignComponentSpecMap,
+      figma.root,
+      customizedNodeArray
+    );
+    return customizedNodeArray;
+  } else {
+    figma.notify(
+      'Keywords document not found or corrupted. Run the "Check/update keywords" plugin to upload a new keyword document.',
+      { timeout: 8000 }
+    );
+  }
+  return [];
 }

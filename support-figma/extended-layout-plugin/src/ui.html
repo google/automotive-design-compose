@@ -15,13 +15,14 @@
 -->
 
 <head>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css"/>
-<link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 
-<div id="errors" class="page" style="margin: 8px; overflow-y: hidden; overflow-x: hidden">
+<div id="errors" class="page page-padding-small" style="overflow-y: hidden; overflow-x: hidden">
   <div id="errorsMissingKeywords" style="display: none;">
-    <span style="font-size: 14">Keywords document not found. Run the "Check keyword definitions" plugin to upload a keyword document.</span>
+    <span style="font-size: 14">Keywords document not found. Run the "Check/update keyword" plugin to upload a keyword
+      document.</span>
   </div>
   <div id="errorList" style="display: block; overflow-y: hidden; overflow-x: hidden"></div>
 </div>
@@ -39,15 +40,17 @@
     <span class="label" style="width: 100px">Version:</span>
     <span class="label" id="keywordsVersion" style="font-size: 14; color: black">1.0</span>
   </div>
-  <div style="margin-left: 10px; margin-top:10px">
-    <label for="jsonInputFile" style="padding: 3px; border:black; border-width: 2px; border-style: solid;">Upload new keywords file</label>
+  <div style="margin-left: 8px; margin-top:10px">
+    <label for="jsonInputFile" style="padding: 3px; border:black; border-width: 2px; border-style: solid;">Upload new
+      keywords file</label>
     <input type="file" id="jsonInputFile" name="json_file" accept="*.txt, *.json" class="hidden">
   </div>
 </div>
 
 <div id="meters" class="page">
   <div style="margin-left:12; margin-top: 14">
-    <span class="descriptionlabel">Use Figma’s tools to create a gauge or dial. Use one of the options below to define live functionality.</span>
+    <span class="descriptionlabel">Use Figma’s tools to create a gauge or dial. Use one of the options below to define
+      live functionality.</span>
   </div>
   <hr class="separator-large" color="#D7D7D7" size="1">
   <div id="arcSection" onchange="arcChanged()" style="margin-top: 24; margin-left: 12; margin-bottom: 40">
@@ -59,18 +62,22 @@
       <img src="images/dials/icon-arc-path.svg" style="margin-left: 20">
       <div style="margin-left: 20; display: block">
         <span class="boldlabel">Arc path</span><br>
-        <span class="sublabel">Select an ellipse or <a href="https://help.figma.com/hc/en-us/articles/360040450173-Arc-tool-create-arcs-semi-circles-and-rings" target="_blank">arc</a>.</span>
+        <span class="sublabel">Select an ellipse or <a
+            href="https://help.figma.com/hc/en-us/articles/360040450173-Arc-tool-create-arcs-semi-circles-and-rings"
+            target="_blank">arc</a>.</span>
       </div>
     </div>
     <div id="arcControls" style="margin-left:58; display:none">
       <div style="display: flex; margin-top: 8">
         <div style="display: flex; align-items: center">
           <label for="arcStart" class="normallabel">Start</label>
-          <input id="arcStart" type="input" style="width: 40;" class="input__field" value="0" onkeydown="inputKeyDown(this, NaN, NaN, arcChanged)">
+          <input id="arcStart" type="input" style="width: 40;" class="input__field" value="0"
+            onkeydown="inputKeyDown(this, NaN, NaN, arcChanged)">
         </div>
         <div style="display: flex; align-items: center; margin-left: 30">
           <label for="arcEnd" class="normallabel">End</label>
-          <input id="arcEnd" type="input" style="width: 40;" class="input__field" value="360" onkeydown="inputKeyDown(this, NaN, NaN, arcChanged)">
+          <input id="arcEnd" type="input" style="width: 40;" class="input__field" value="360"
+            onkeydown="inputKeyDown(this, NaN, NaN, arcChanged)">
         </div>
       </div>
       <div style="display: flex; margin-top: 2">
@@ -78,12 +85,14 @@
           <input id="arcDiscreteSwitch" type="checkbox" class="checkbox">
           <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
         </div>
-        <input id="arcDiscreteValue" type="input" style="width: 40;" class="input__field" value="20" onkeydown="inputKeyDown(this, 1, NaN, arcChanged)">
+        <input id="arcDiscreteValue" type="input" style="width: 40;" class="input__field" value="20"
+          onkeydown="inputKeyDown(this, 1, NaN, arcChanged)">
       </div>
       <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10;">
         <span class="sublabel">Preview</span>
         <div>
-          <input id="arcValue" type="range" min="0" max="100" value="50" class="slider" list="arcStepList" style="margin-left: 8; margin-top: -3" oninput="arcChanged();">
+          <input id="arcValue" type="range" min="0" max="100" value="50" class="slider" list="arcStepList"
+            style="margin-left: 8; margin-top: -3" oninput="arcChanged();">
           <datalist id="arcStepList"></datalist>
           <div id="arcTicks" class="sliderticks"></div>
         </div>
@@ -106,7 +115,8 @@
           <div style="margin-top: 3">
             <a href="#" onclick="toggleOverlay(rotationOverlay, 'rotation')">
               <img src="images/dials/info-grey.svg" id="rotationInfoGrey" style="margin-left:2; margin-bottom: -3">
-              <img src="images/dials/info-blue.svg" id="rotationInfoBlue" style="margin-left:2; margin-bottom: -3; display: none">
+              <img src="images/dials/info-blue.svg" id="rotationInfoBlue"
+                style="margin-left:2; margin-bottom: -3; display: none">
             </a>
             <div id="rotationOverlay" class="modal" onclick="toggleOverlay(rotationOverlay, 'rotation');">
               <img src="images/dials/overlay-tooltip-rotation.png">
@@ -120,11 +130,13 @@
       <div style="display: flex; margin-top: 8">
         <div style="display: flex; align-items: center">
           <label for="rotationStart" class="normallabel">Start</label>
-          <input id="rotationStart" type="input" style="width: 40;" class="input__field" value="0" onkeydown="inputKeyDown(this, NaN, NaN, rotationChanged)">
+          <input id="rotationStart" type="input" style="width: 40;" class="input__field" value="0"
+            onkeydown="inputKeyDown(this, NaN, NaN, rotationChanged)">
         </div>
         <div style="display: flex; align-items: center; margin-left: 30">
           <label for="rotationEnd" class="normallabel">End</label>
-          <input id="rotationEnd" type="input" style="width: 40;" class="input__field" value="360" onkeydown="inputKeyDown(this, NaN, NaN, rotationChanged)">
+          <input id="rotationEnd" type="input" style="width: 40;" class="input__field" value="360"
+            onkeydown="inputKeyDown(this, NaN, NaN, rotationChanged)">
         </div>
       </div>
       <div style="display: flex; margin-top: 2">
@@ -132,12 +144,14 @@
           <input id="rotationDiscreteSwitch" type="checkbox" class="checkbox">
           <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
         </div>
-        <input id="rotationDiscreteValue" type="input" style="width: 40;" class="input__field" value="20" onkeydown="inputKeyDown(this, 1, NaN, rotationChanged)">
+        <input id="rotationDiscreteValue" type="input" style="width: 40;" class="input__field" value="20"
+          onkeydown="inputKeyDown(this, 1, NaN, rotationChanged)">
       </div>
       <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10">
         <span class="sublabel">Preview</span>
         <div>
-          <input id="rotationValue" type="range" min="0" max="100" value="50" class="slider" list="rotationStepList" style="margin-left: 8; margin-top: -3" oninput="rotationChanged();">
+          <input id="rotationValue" type="range" min="0" max="100" value="50" class="slider" list="rotationStepList"
+            style="margin-left: 8; margin-top: -3" oninput="rotationChanged();">
           <datalist id="rotationStepList"></datalist>
           <div id="rotationTicks" class="sliderticks"></div>
         </div>
@@ -160,7 +174,8 @@
           <div style="margin-top: 3">
             <a href="#" onclick="toggleOverlay(progressBarOverlay, 'progressBar')">
               <img src="images/dials/info-grey.svg" id="progressBarInfoGrey" style="margin-left:4; margin-bottom: -3">
-              <img src="images/dials/info-blue.svg" id="progressBarInfoBlue" style="margin-left:4; margin-bottom: -3; display: none">
+              <img src="images/dials/info-blue.svg" id="progressBarInfoBlue"
+                style="margin-left:4; margin-bottom: -3; display: none">
             </a>
             <div class="modal" id="progressBarOverlay" onclick="toggleOverlay(progressBarOverlay, 'progressBar')">
               <img src="images/dials/overlay-tooltip-progress-bar.png">
@@ -174,10 +189,12 @@
       <div style="margin-top: 10">
         <div style="display: flex; align-items: center;">
           <div class="directionbox">
-            <img id="barHorizontalIcon" src="images/dials/icon-progress-horizontal.svg" style="display: none" onclick="barLayoutChanged(false);">
+            <img id="barHorizontalIcon" src="images/dials/icon-progress-horizontal.svg" style="display: none"
+              onclick="barLayoutChanged(false);">
             <img id="barHorizontalSelectedIcon" src="images/dials/icon-progress-horizontal-selected.svg">
             <img id="barVerticalIcon" src="images/dials/icon-progress-vertical.svg" onclick="barLayoutChanged(true);">
-            <img id="barVerticalSelectedIcon" src="images/dials/icon-progress-vertical-selected.svg" style="display: none">
+            <img id="barVerticalSelectedIcon" src="images/dials/icon-progress-vertical-selected.svg"
+              style="display: none">
           </div>
           <label class="normallabel" style="margin-left: 6">Progress bar direction</label>
         </div>
@@ -185,12 +202,14 @@
           <input id="barDiscreteSwitch" type="checkbox" class="checkbox">
           <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
         </div>
-        <input id="barDiscreteValue" type="input" style="width: 40;" class="input__field" value="20" onkeydown="inputKeyDown(this, 1, NaN, barChanged)">
+        <input id="barDiscreteValue" type="input" style="width: 40;" class="input__field" value="20"
+          onkeydown="inputKeyDown(this, 1, NaN, barChanged)">
       </div>
       <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10">
         <span class="sublabel">Preview</span>
         <div>
-          <input id="barValue" type="range" min="0" max="100" value="50" class="slider" list="barStepList" style="margin-left: 8; margin-top: -3" oninput="barChanged();">
+          <input id="barValue" type="range" min="0" max="100" value="50" class="slider" list="barStepList"
+            style="margin-left: 8; margin-top: -3" oninput="barChanged();">
           <datalist id="barStepList"></datalist>
           <div id="barTicks" class="sliderticks"></div>
         </div>
@@ -212,10 +231,13 @@
           <span class="boldlabel">Progress bar marker</span>
           <div style="margin-top: 3">
             <a href="#" onclick="toggleOverlay(progressMarkerOverlay, 'progressMarker')">
-              <img src="images/dials/info-grey.svg" id="progressMarkerInfoGrey" style="margin-left:4; margin-bottom: -3">
-              <img src="images/dials/info-blue.svg" id="progressMarkerInfoBlue" style="margin-left:4; margin-bottom: -3; display: none">
+              <img src="images/dials/info-grey.svg" id="progressMarkerInfoGrey"
+                style="margin-left:4; margin-bottom: -3">
+              <img src="images/dials/info-blue.svg" id="progressMarkerInfoBlue"
+                style="margin-left:4; margin-bottom: -3; display: none">
             </a>
-            <div class="modal" id="progressMarkerOverlay" onclick="toggleOverlay(progressMarkerOverlay, 'progressMarker')">
+            <div class="modal" id="progressMarkerOverlay"
+              onclick="toggleOverlay(progressMarkerOverlay, 'progressMarker')">
               <img src="images/dials/overlay-tooltip-progress-marker.png">
             </div>
           </div>
@@ -227,10 +249,13 @@
       <div style="margin-top: 10">
         <div style="display: flex; align-items: center;">
           <div class="directionbox">
-            <img id="markerHorizontalIcon" src="images/dials/icon-progress-horizontal.svg" style="display: none" onclick="markerLayoutChanged(false);">
+            <img id="markerHorizontalIcon" src="images/dials/icon-progress-horizontal.svg" style="display: none"
+              onclick="markerLayoutChanged(false);">
             <img id="markerHorizontalSelectedIcon" src="images/dials/icon-progress-horizontal-selected.svg">
-            <img id="markerVerticalIcon" src="images/dials/icon-progress-vertical.svg" onclick="markerLayoutChanged(true);">
-            <img id="markerVerticalSelectedIcon" src="images/dials/icon-progress-vertical-selected.svg" style="display: none">
+            <img id="markerVerticalIcon" src="images/dials/icon-progress-vertical.svg"
+              onclick="markerLayoutChanged(true);">
+            <img id="markerVerticalSelectedIcon" src="images/dials/icon-progress-vertical-selected.svg"
+              style="display: none">
           </div>
           <label class="normallabel" style="margin-left: 6">Progress bar direction</label>
         </div>
@@ -238,12 +263,14 @@
           <input id="markerDiscreteSwitch" type="checkbox" class="checkbox">
           <label class="normallabel" style="margin-left: 6">Use incremental stops</label>
         </div>
-        <input id="markerDiscreteValue" type="input" style="width: 40;" class="input__field" value="20" onkeydown="inputKeyDown(this, 1, NaN, markerChanged)">
+        <input id="markerDiscreteValue" type="input" style="width: 40;" class="input__field" value="20"
+          onkeydown="inputKeyDown(this, 1, NaN, markerChanged)">
       </div>
       <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10">
         <span class="sublabel">Preview</span>
         <div>
-          <input id="markerValue" type="range" min="0" max="100" value="50" class="slider" list="markerStepList" style="margin-left: 8; margin-top: -3" oninput="markerChanged();">
+          <input id="markerValue" type="range" min="0" max="100" value="50" class="slider" list="markerStepList"
+            style="margin-left: 8; margin-top: -3" oninput="markerChanged();">
           <datalist id="markerStepList"></datalist>
           <div id="markerTicks" class="sliderticks"></div>
         </div>
@@ -254,65 +281,73 @@
   <hr class="separator-large" color="#D7D7D7" size="1">
 </div>
 
-<div id="localization" class="page"
-  style="padding-top: 32px; padding-bottom: 32px; padding-left: 24px; padding-right: 24px;">
-  <div id="upload">
-    <div
-      style="color: black; font-size: 18; word-wrap: break-word">
-      Upload an existing gen_strings.xml that is generated by this plugin?
-    </div>
-
-    <div class="container">
-      <button class="styled-button" style="margin-top: 16px;">
-        <label for="stringsXmlInputFile">Browse</label>
-        <input type="file" id="stringsXmlInputFile" name="strings_xml_input_file" accept=".xml" class="hidden" />
-      </button>
-    </div>
-
-    <div id="inputStrings" style="display: none; margin-top: 16px;"></div>
-
-    <div class="container">
-      <button id="showOutputs" class="styled-button" style="margin-top: 16px;"
-        onclick="showOutputStrings()">Skip</button>
-    </div>
+<!-- BEGINNING OF LOCALIZATION PLUGIN UI -->
+<div id="localizationOptions" class="page page-padding-large">
+  <div style="border-bottom: solid #000000; font-weight: bold;">Localization exclude options:</div>
+  <div style="margin-top: 8px;">
+    <input type="checkbox" id="excludeHashTagName" name="excludeOptions" value="excludeHashTagName" checked>
+    <label for="excludeHashTagName">Exclude text nodes whose name starts with '#'</label>
   </div>
-
-  <div id="outputStringsPanel" style="display: none;">
-    <div
-      style="color: black; font-size: 18; word-wrap: break-word">
-      Generate the strings xml file:
-      <br/>
-      <span style="font-size: 14; margin-top: 16px;">* Clear the char limit field to set to "NONE"</span>
-    </div>
-    <div id="outputStrings" style="margin-top: 16px;">
-      <div class="container">
-        <div class="loader" id="ouputLoader"></div>
-      </div>
-    </div>
-
-    <div style="margin-top: 16px;">
-      <input type="checkbox" id="includeUnusedStrings" name="includeUnusedStrings" checked />
-      <label for="includeUnusedStrings">include unused strings from uploaded file</label>
-    </div>
-
-    <div class="container">
-      <button id="generateStringsXmlButton" class="styled-button" style="margin-top: 16px; width: 200px;"
-        onclick="generateStringsXML()">
-        Generate
-      </button>
-    </div>
+  <div style="margin-top: 8px;">
+    <input type="checkbox" id="excludeCustomization" name="excludeOptions" value="excludeCustomization" checked>
+    <label for="excludeCustomization">Exclude text nodes customized by client</label>
+  </div>
+  <div style="display: flex; justify-content: flex-end; align-items: flex-end;"><a href="#uploadStringPanel"
+      style="text-decoration: underline;">&nbsp;Next >>&nbsp;</a></div>
+</div>
+<div id="uploadStringPanel" class="page page-padding-large"
+  style="color: black; word-wrap: break-word; margin-top: 16px;">
+  <div style="border-bottom: solid #000000; font-weight: bold;">Localization upload options:</div>
+  <div style="margin-top: 8px;">Upload an existing gen_strings.xml that is generated by this plugin?</div>
+  <div class="container" style="margin-top: 16px;">
+    <button class="styled-button">
+      <label for="stringsXmlInputFile" style="width: inherit; height: inherit; line-height: 36px;">Browse</label>
+      <input type="file" id="stringsXmlInputFile" name="strings_xml_input_file" accept=".xml" class="hidden" />
+    </button>
+  </div>
+  <div id="inputStringsTableContainer" style="display: none; margin-top: 16px; margin-bottom: 16px;">
+  </div>
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
+    <a href="#localizationOptions" style="text-decoration: underline;">&nbsp;<< Previous&nbsp;</a>
+    <a id="showOutputStringsButton" href="#outputStringsPanel" style="text-decoration: underline;"
+      onclick="showOutputStrings()">&nbsp;Skip >>&nbsp;</a>
   </div>
 </div>
+
+<div id="outputStringsPanel" class="page page-padding-large">
+  <div style="border-bottom: solid #000000; font-weight: bold;">Generate the strings xml file:</div>
+  <div style="font-size: 14; margin-top: 8px;">* Clear the char limit field to set to "NONE"</div>
+  <div id="outputStrings" style="margin-top: 16px;">
+    <div class="container">
+      <div class="loader" id="ouputLoader"></div>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px;">
+    <input type="checkbox" id="includeUnusedStrings" name="includeUnusedStrings" checked />
+    <label for="includeUnusedStrings">include unused strings from uploaded file</label>
+  </div>
+
+  <div class="container" style="margin-top: 16px;">
+    <button id="generateStringsXmlButton" class="styled-button" style="width: 200px;" onclick="generateStringsXML()">
+      Generate
+    </button>
+  </div>
+  <div style="display: flex; align-items: flex-end; margin-bottom: 16px;"><a href="#uploadStringPanel"
+      style="text-decoration: underline;">
+      &nbsp;<< Previous&nbsp;</a>
+  </div>
+</div>
+<!-- END OF LOCALIZATION PLUGIN UI -->
+
 <div id="toast"></div>
 
 <script>
   let jsonInputFile = document.getElementById('jsonInputFile');
   let errorList = document.getElementById('errorList');
 
-  let localizationUpload = document.getElementById('upload');
-  let outputStringsPanel = document.getElementById('outputStringsPanel');
+  let showOutputStringsButton = document.getElementById('showOutputStringsButton');
   let stringsXmlInputFile = document.getElementById('stringsXmlInputFile');
-  let showOutputsButton = document.getElementById('showOutputs');
   let inputStringArray = [];
   let outputStringData = new Map();
 
@@ -330,7 +365,7 @@
     // Then hide after 2s.
     setTimeout(() => {
       toast.classList.remove("show");
-    }, 2000); 
+    }, 2000);
   }
 
   function toNumber(str, def) {
@@ -345,11 +380,13 @@
     let selectedFile = jsonInputFile.files[0];
     const reader = new FileReader();
     reader.addEventListener("loadend", e => {
-      parent.postMessage({ pluginMessage: {
-        msg: 'clippy-file-selected',
-        fileName: selectedFile.name,
-        contents: reader.result.toString()
-      }}, '*');
+      parent.postMessage({
+        pluginMessage: {
+          msg: 'clippy-file-selected',
+          fileName: selectedFile.name,
+          contents: reader.result.toString()
+        }
+      }, '*');
     })
     reader.readAsText(selectedFile);
   }
@@ -468,7 +505,8 @@
     arcDiscreteValue.style.display = arcDiscreteSwitch.checked ? 'block' : 'none';
     arcInputFormat();
 
-    parent.postMessage({ pluginMessage: {
+    parent.postMessage({
+      pluginMessage: {
         msg: 'arc-changed',
         enabled: arcSwitch.checked,
         start: toNumber(arcStart.value, 0),
@@ -476,7 +514,8 @@
         value: toNumber(arcValue.value, 0),
         discrete: arcDiscreteSwitch.checked,
         discreteValue: toNumber(arcDiscreteValue.value, 20),
-      }}, '*');
+      }
+    }, '*');
   }
 
   function toggleOverlay(overlay, infoButtonPrefix) {
@@ -486,6 +525,10 @@
     var blueButton = document.getElementById(infoButtonPrefix + "InfoBlue");
     greyButton.style.display = greyButton.style.display == "none" ? "block" : "none";
     blueButton.style.display = blueButton.style.display == "none" ? "block" : "none";
+
+    if (overlay.style.display == "none") {
+      openPage('meters');
+    }
   }
 
   function rotationInputFormat() {
@@ -502,7 +545,8 @@
     rotationDiscreteValue.style.display = rotationDiscreteSwitch.checked ? 'block' : 'none';
     rotationInputFormat();
 
-    parent.postMessage({ pluginMessage: {
+    parent.postMessage({
+      pluginMessage: {
         msg: 'rotation-changed',
         enabled: rotationSwitch.checked,
         start: toNumber(rotationStart.value, 0),
@@ -510,7 +554,8 @@
         value: toNumber(rotationValue.value, 0),
         discrete: rotationDiscreteSwitch.checked,
         discreteValue: toNumber(rotationDiscreteValue.value, 20),
-      }}, '*');
+      }
+    }, '*');
   }
 
   function setBarLayout(vertical) {
@@ -538,14 +583,16 @@
     barInputFormat();
 
     const vertical = barVerticalSelectedIcon.style.display != 'none';
-    parent.postMessage({ pluginMessage: {
+    parent.postMessage({
+      pluginMessage: {
         msg: 'bar-changed',
         enabled: barSwitch.checked,
         value: toNumber(barValue.value, 0),
         discrete: barDiscreteSwitch.checked,
         discreteValue: toNumber(barDiscreteValue.value, 20),
         vertical: vertical,
-      }}, '*');
+      }
+    }, '*');
   }
 
 
@@ -574,14 +621,16 @@
     markerInputFormat();
 
     const vertical = markerVerticalSelectedIcon.style.display != 'none';
-    parent.postMessage({ pluginMessage: {
+    parent.postMessage({
+      pluginMessage: {
         msg: 'marker-changed',
         enabled: markerSwitch.checked,
         value: toNumber(markerValue.value, 0),
         discrete: markerDiscreteSwitch.checked,
         discreteValue: toNumber(markerDiscreteValue.value, 20),
         vertical: vertical,
-      }}, '*');
+      }
+    }, '*');
   }
 
   function valueToPercent(degrees, min, max) {
@@ -665,48 +714,56 @@
     let selectedFile = stringsXmlInputFile.files[0];
     const reader = new FileReader();
     reader.addEventListener("loadend", e => {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(reader.result.toString(), "text/xml");
-      // Clear data.
-      inputStringArray.length = 0;
+      try {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(reader.result.toString(), "text/xml");
+        // Clear data.
+        inputStringArray.length = 0;
 
-      // Process string
-      const strings = xmlDoc.getElementsByTagName("string");
-      for (let strElement of strings) {
-        var jsonStr = {}
-        const name = strElement.getAttribute("name");
-        jsonStr["name"] = name;
-        const translatable = strElement.getAttribute("translatable") != "false";
-        jsonStr["translatable"] = translatable;
-        const text = strElement.textContent;
-        jsonStr["text"] = text;
-        const extras = getDescriptionExtras(strElement);
-        jsonStr["extras"] = extras;
+        // Process string
+        const strings = xmlDoc.getElementsByTagName("string");
+        for (const strElement of strings) {
+          var jsonStr = {}
+          const name = strElement.getAttribute("name");
+          jsonStr["name"] = name;
+          const translatable = strElement.getAttribute("translatable") != "false";
+          jsonStr["translatable"] = translatable;
+          const text = strElement.textContent;
+          jsonStr["text"] = text;
+          const extras = getDescriptionExtras(strElement);
+          jsonStr["extras"] = extras;
 
-        inputStringArray.push(jsonStr);
+          inputStringArray.push(jsonStr);
+        }
+
+        const stringArrays = xmlDoc.getElementsByTagName("string-array");
+
+        // Process string-array
+        for (let i = 0; i < stringArrays.length; i++) {
+          var jsonStr = {}
+          const strArrayElement = stringArrays[i];
+          jsonStr["name"] = strArrayElement.getAttribute("name");
+          const translatable = strArrayElement.getAttribute("translatable") != "false";
+          jsonStr["translatable"] = translatable;
+          const values = Array.from(strArrayElement.getElementsByTagName("item")).map(
+            item => item.textContent);
+          jsonStr["text"] = values;
+          const extras = getDescriptionExtras(strArrayElement);
+          jsonStr["extras"] = extras;
+          inputStringArray.push(jsonStr);
+        }
+
+        createInputStringTable("inputStringsTableContainer", inputStringArray);
+        if (inputStringArray.length == 0) {
+          showToast("No strings found in the uploaded xml file.");
+        }
+        showOutputStringsButton.innerHTML = "&nbsp;Next >>&nbsp;";
+      } catch (error) {
+        showToast("An error occured uploading the strings xml file");
+        console.error("An error occured uploading the strings xml file", error);
       }
-
-      const stringArrays = xmlDoc.getElementsByTagName("string-array");
-
-      // Process string-array
-      for (let i = 0; i < stringArrays.length; i++) {
-        var jsonStr = {}
-        const strArrayElement = stringArrays[i];
-        jsonStr["name"] = strArrayElement.getAttribute("name");
-        const translatable = strArrayElement.getAttribute("translatable") != "false";
-        jsonStr["translatable"] = translatable;
-        const values = Array.from(strArrayElement.getElementsByTagName("item")).map(
-          item => item.textContent);
-        jsonStr["text"] = values;
-        const extras = getDescriptionExtras(strArrayElement);
-        jsonStr["extras"] = extras;
-        inputStringArray.push(jsonStr);
-      }
-
-      createInputStringTable("inputStrings", inputStringArray);
-    })
+    });
     reader.readAsText(selectedFile);
-    showOutputsButton.textContent = "Next";
   }
 
   function getDescriptionExtras(strElement) {
@@ -721,20 +778,29 @@
           extras["charlimit"] = toNumber(match[2], "NONE");
         }
       } else {
-        extras["description"] = description;
+        const charlimitRegex = /\[CHAR_LIMIT=(.+)\]/;
+        const charlimitMatch = description.match(charlimitRegex);
+        if (charlimitMatch) {
+          extras["charlimit"] = toNumber(charlimitMatch[1], "NONE");
+        } else {
+          extras["description"] = description;
+        }
       }
     }
-    console.log(extras["description"], extras["charlimit"]);
     return extras;
   }
 
   function showOutputStrings() {
-    localizationUpload.style.display = "none";
-    outputStringsPanel.style.display = "block";
-    parent.postMessage({ pluginMessage: {
+    const excludeOptionElements = document.querySelectorAll('input[name="excludeOptions"]:checked');
+    const excludeOptions = Array.from(excludeOptionElements).map(checkbox => checkbox.value);
+
+    parent.postMessage({
+      pluginMessage: {
         msg: 'generate-localization-data',
-        contents: inputStringArray
-      }}, '*');
+        contents: inputStringArray,
+        options: excludeOptions,
+      }
+    }, '*');
   }
 
   function createTable(tableContainerId) {
@@ -748,21 +814,22 @@
     table.setAttribute("cellpadding", "10");
     table.setAttribute("width", "100%");
 
-    return {table, tableContainer};
+    return { table, tableContainer };
   }
 
   function createTableHeader(table, headers) {
     const headerRow = document.createElement("tr");
     for (const headerText of headers) {
-        const th = document.createElement("th");
-        th.textContent = headerText;
-        headerRow.appendChild(th);
+      const th = document.createElement("th");
+      th.textContent = headerText;
+      headerRow.appendChild(th);
     }
     table.appendChild(headerRow);
   }
 
   function createCell(cellData, forNodeId) {
     const td = document.createElement("td");
+    td.style.maxWidth = "200px";
 
     if (cellData != null) {
       if (Array.isArray(cellData)) {
@@ -773,6 +840,7 @@
             let nodeIdElement = createNodeIdElement(nestedCellData);
             nestedBlock.appendChild(nodeIdElement);
           } else {
+            nestedBlock.style.overflowWrap = "anywhere";
             nestedBlock.textContent = nestedCellData;
           }
           td.appendChild(nestedBlock);
@@ -794,28 +862,30 @@
     r.textContent = nodeId + " ";
     r.style.textDecoration = 'underline';
     r.onclick = () => {
-      parent.postMessage({ pluginMessage: {
-        msg: 'show-node',
-        key: 'vsw-show-node',
-        node: nodeId
-      }}, '*');
+      parent.postMessage({
+        pluginMessage: {
+          msg: 'show-node',
+          key: 'vsw-show-node',
+          node: nodeId
+        }
+      }, '*');
     };
     return r;
   }
 
   function createInputStringTable(tableContainerId, inputStringArray) {
-    let {table, tableContainer} = createTable(tableContainerId);
+    let { table, tableContainer } = createTable(tableContainerId);
 
-    const headers = ["String Resource Name", "Translatable", "Text", "Description"];
+    const headers = ["String Resource Name", "Text", "Description", "Translatable"];
     createTableHeader(table, headers);
 
     for (const stringRes of inputStringArray) {
       var cells = Object.values(stringRes);
       const row = document.createElement("tr");
       row.appendChild(createCell(stringRes["name"], false));
-      row.appendChild(createCell(stringRes["translatable"], false));
       row.appendChild(createCell(stringRes["text"], false));
       row.appendChild(createDescriptionCell(stringRes));
+      row.appendChild(createCell(stringRes["translatable"], false));
       table.appendChild(row);
     }
 
@@ -824,6 +894,8 @@
 
   function createDescriptionCell(stringRes) {
     const td = document.createElement("td");
+    td.style.maxWidth = "180px";
+
     const extras = stringRes["extras"];
     const textLength = stringRes["textLength"];
     if (stringRes["textNodes"] != null) {
@@ -831,7 +903,7 @@
 
       const charlimitInput = document.createElement("input");
       charlimitInput.type = "number";
-      let {min, max} = getCharLimitRange(textLength);
+      let { min, max } = getCharLimitRange(textLength);
       charlimitInput.min = min;
       charlimitInput.max = max;
       charlimitInput.step = "5";
@@ -877,10 +949,12 @@
         const description = descriptionInput.value;
         extras["charlimit"] = charlimit == 0 ? "NONE" : charlimit;
         extras["description"] = description;
-        parent.postMessage({ pluginMessage: {
+        parent.postMessage({
+          pluginMessage: {
             msg: 'update-localization-data',
             item: stringRes
-          }}, '*');
+          }
+        }, '*');
       });
     } else {
       const textBlock = document.createElement("div");
@@ -893,7 +967,7 @@
   function getCharLimitRange(textLength) {
     const min = textLength % 5 === 0 ? textLength : textLength + 5 - textLength % 5;
     const max = Math.max(20, 5 * textLength + 10 - 5 * textLength % 10);
-    return {min, max};
+    return { min, max };
   }
 
   function formatDescription(extras) {
@@ -901,11 +975,11 @@
       const description = extras["description"];
       const charlimit = extras["charlimit"];
       if (description && charlimit) {
-        return `${extras["description"]} [CHAR_LIMIT=${extras["charlimit"]}]`;
+        return `${description} [CHAR_LIMIT=${charlimit}]`;
       } else if (description) {
-        return description;
+        return `${description} [CHAR_LIMIT=NONE]`;
       } else if (charlimit) {
-        return `[CHAR_LIMIT=${extras["charlimit"]}]`;
+        return `[CHAR_LIMIT=${charlimit}]`;
       }
     }
     return "";
@@ -914,9 +988,9 @@
   function createOutputStringTable(tableContainerId, output) {
     outputStringData.clear();
 
-    let {table, tableContainer} = createTable(tableContainerId)
+    let { table, tableContainer } = createTable(tableContainerId);
 
-    const headers = ["String Resource Name", "Translatable", "Text", "Node", "Description"];
+    const headers = ["String Resource Name", "Text", "Node", "Description", "Translatable"];
     createTableHeader(table, headers);
 
     for (const [key, stringRes] of output) {
@@ -927,6 +1001,7 @@
 
       if (stringRes["textNodes"] != null) {
         const td = document.createElement("td");
+        td.style.maxWidth = "200px";
 
         const input = document.createElement("input");
         input.addEventListener('change', function (evt) {
@@ -934,14 +1009,16 @@
           if (outputStringData.has(newValue)) {
             input.value = stringRes["name"];
             showToast(`${newValue} already exists. Revert since duplicates are not allowed.`);
-          } else if(stringRes["name"] != this.value) {
+          } else if (stringRes["name"] != this.value) {
             outputStringData.delete(stringRes["name"]);
             stringRes["name"] = this.value;
             outputStringData.set(stringRes["name"], stringRes);
-            parent.postMessage({ pluginMessage: {
-              msg: 'update-localization-data',
-              item: stringRes
-            }}, '*');
+            parent.postMessage({
+              pluginMessage: {
+                msg: 'update-localization-data',
+                item: stringRes
+              }
+            }, '*');
           }
         });
         input.setAttribute("type", "text");
@@ -951,10 +1028,10 @@
       } else {
         row.appendChild(createCell(stringRes["name"], false));
       }
-      row.appendChild(createCell(stringRes["translatable"], false));
       row.appendChild(createCell(stringRes["text"], false));
       row.appendChild(createCell(stringRes["textNodes"], true));
       row.appendChild(createDescriptionCell(stringRes));
+      row.appendChild(createCell(stringRes["translatable"], false));
 
       table.appendChild(row);
     }
@@ -1002,9 +1079,11 @@
     link.download = "gen_strings.xml";
     link.click();
 
-    parent.postMessage({ pluginMessage: {
+    parent.postMessage({
+      pluginMessage: {
         msg: 'close-plugin'
-      }}, '*');
+      }
+    }, '*');
   }
 
   function openPage(pageId) {
@@ -1017,7 +1096,7 @@
   stringsXmlInputFile.addEventListener('change', stringsXmlInputFileChanged, false);
 
   // Update the form from a selection change.
-  window.onmessage = function(event) {
+  window.onmessage = function (event) {
     let msg = event.data.pluginMessage;
 
     if (msg.msg == 'selection-cleared') {
@@ -1084,11 +1163,13 @@
               r.style.color = '#00f';
               r.style.textDecoration = 'underline';
               r.onclick = () => {
-                parent.postMessage({ pluginMessage: {
-                  msg: 'show-node',
-                  key: 'vsw-show-node',
-                  node: run.node
-                }}, '*');
+                parent.postMessage({
+                  pluginMessage: {
+                    msg: 'show-node',
+                    key: 'vsw-show-node',
+                    node: run.node
+                  }
+                }, '*');
               };
             }
             box.appendChild(r);
@@ -1144,9 +1225,7 @@
     }
 
     if (msg.msg == 'localization') {
-      openPage('localization');
-      localizationUpload.style.display = 'block';
-      outputStringsPanel.style.display = 'none';
+      openPage('localizationOptions')
     } else if (msg.msg == 'localization-output') {
       createOutputStringTable('outputStrings', msg.output)
     }

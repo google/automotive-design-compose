@@ -16,8 +16,8 @@
 //! uses.
 
 use dc_bundle::definition::layout::FlexWrap;
-use layout::layout_style::LayoutStyle;
-use layout::types::Size;
+use dc_bundle::legacy_definition::element::geometry::Size;
+use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

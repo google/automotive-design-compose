@@ -16,7 +16,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::definition::layout as proto;
+use crate::legacy_definition::proto;
 use crate::Error;
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -34,15 +34,15 @@ impl Default for AlignItems {
     }
 }
 
-impl TryFrom<proto::AlignItems> for AlignItems {
+impl TryFrom<proto::layout::AlignItems> for AlignItems {
     type Error = Error;
-    fn try_from(proto: proto::AlignItems) -> Result<Self, Self::Error> {
+    fn try_from(proto: proto::layout::AlignItems) -> Result<Self, Self::Error> {
         match proto {
-            proto::AlignItems::FlexStart => Ok(AlignItems::FlexStart),
-            proto::AlignItems::FlexEnd => Ok(AlignItems::FlexEnd),
-            proto::AlignItems::Center => Ok(AlignItems::Center),
-            proto::AlignItems::Baseline => Ok(AlignItems::Baseline),
-            proto::AlignItems::Stretch => Ok(AlignItems::Stretch),
+            proto::layout::AlignItems::FlexStart => Ok(AlignItems::FlexStart),
+            proto::layout::AlignItems::FlexEnd => Ok(AlignItems::FlexEnd),
+            proto::layout::AlignItems::Center => Ok(AlignItems::Center),
+            proto::layout::AlignItems::Baseline => Ok(AlignItems::Baseline),
+            proto::layout::AlignItems::Stretch => Ok(AlignItems::Stretch),
             _ => Err(Error::UnknownEnumVariant { enum_name: "AlignItems".to_string() }),
         }
     }
@@ -64,17 +64,17 @@ impl Default for AlignSelf {
     }
 }
 
-impl TryFrom<proto::AlignSelf> for AlignSelf {
+impl TryFrom<proto::layout::AlignSelf> for AlignSelf {
     type Error = Error;
 
-    fn try_from(proto: proto::AlignSelf) -> Result<Self, Self::Error> {
+    fn try_from(proto: proto::layout::AlignSelf) -> Result<Self, Self::Error> {
         match proto {
-            proto::AlignSelf::Auto => Ok(AlignSelf::Auto),
-            proto::AlignSelf::FlexStart => Ok(AlignSelf::FlexStart),
-            proto::AlignSelf::FlexEnd => Ok(AlignSelf::FlexEnd),
-            proto::AlignSelf::Center => Ok(AlignSelf::Center),
-            proto::AlignSelf::Baseline => Ok(AlignSelf::Baseline),
-            proto::AlignSelf::Stretch => Ok(AlignSelf::Stretch),
+            proto::layout::AlignSelf::Auto => Ok(AlignSelf::Auto),
+            proto::layout::AlignSelf::FlexStart => Ok(AlignSelf::FlexStart),
+            proto::layout::AlignSelf::FlexEnd => Ok(AlignSelf::FlexEnd),
+            proto::layout::AlignSelf::Center => Ok(AlignSelf::Center),
+            proto::layout::AlignSelf::Baseline => Ok(AlignSelf::Baseline),
+            proto::layout::AlignSelf::Stretch => Ok(AlignSelf::Stretch),
             _ => Err(Error::UnknownEnumVariant { enum_name: "AlignSelf".to_string() }),
         }
     }
@@ -96,17 +96,17 @@ impl Default for AlignContent {
     }
 }
 
-impl TryFrom<proto::AlignContent> for AlignContent {
+impl TryFrom<proto::layout::AlignContent> for AlignContent {
     type Error = Error;
 
-    fn try_from(proto: proto::AlignContent) -> Result<Self, Self::Error> {
+    fn try_from(proto: proto::layout::AlignContent) -> Result<Self, Self::Error> {
         match proto {
-            proto::AlignContent::Center => Ok(AlignContent::Center),
-            proto::AlignContent::FlexStart => Ok(AlignContent::FlexStart),
-            proto::AlignContent::FlexEnd => Ok(AlignContent::FlexEnd),
-            proto::AlignContent::Stretch => Ok(AlignContent::Stretch),
-            proto::AlignContent::SpaceBetween => Ok(AlignContent::SpaceBetween),
-            proto::AlignContent::SpaceAround => Ok(AlignContent::SpaceAround),
+            proto::layout::AlignContent::Center => Ok(AlignContent::Center),
+            proto::layout::AlignContent::FlexStart => Ok(AlignContent::FlexStart),
+            proto::layout::AlignContent::FlexEnd => Ok(AlignContent::FlexEnd),
+            proto::layout::AlignContent::Stretch => Ok(AlignContent::Stretch),
+            proto::layout::AlignContent::SpaceBetween => Ok(AlignContent::SpaceBetween),
+            proto::layout::AlignContent::SpaceAround => Ok(AlignContent::SpaceAround),
             _ => Err(Error::UnknownEnumVariant { enum_name: "AlignContent".to_string() }),
         }
     }
@@ -127,16 +127,16 @@ impl Default for FlexDirection {
     }
 }
 
-impl TryFrom<proto::FlexDirection> for FlexDirection {
+impl TryFrom<proto::layout::FlexDirection> for FlexDirection {
     type Error = Error;
 
-    fn try_from(proto: proto::FlexDirection) -> Result<Self, Self::Error> {
+    fn try_from(proto: proto::layout::FlexDirection) -> Result<Self, Self::Error> {
         match proto {
-            proto::FlexDirection::Row => Ok(FlexDirection::Row),
-            proto::FlexDirection::Column => Ok(FlexDirection::Column),
-            proto::FlexDirection::RowReverse => Ok(FlexDirection::RowReverse),
-            proto::FlexDirection::ColumnReverse => Ok(FlexDirection::ColumnReverse),
-            proto::FlexDirection::None => Ok(FlexDirection::None),
+            proto::layout::FlexDirection::Row => Ok(FlexDirection::Row),
+            proto::layout::FlexDirection::Column => Ok(FlexDirection::Column),
+            proto::layout::FlexDirection::RowReverse => Ok(FlexDirection::RowReverse),
+            proto::layout::FlexDirection::ColumnReverse => Ok(FlexDirection::ColumnReverse),
+            proto::layout::FlexDirection::None => Ok(FlexDirection::None),
             _ => Err(Error::UnknownEnumVariant { enum_name: "FlexDirection".to_string() }),
         }
     }
@@ -158,17 +158,17 @@ impl Default for JustifyContent {
     }
 }
 
-impl TryFrom<proto::JustifyContent> for JustifyContent {
+impl TryFrom<proto::layout::JustifyContent> for JustifyContent {
     type Error = Error;
 
-    fn try_from(proto: proto::JustifyContent) -> Result<Self, Self::Error> {
+    fn try_from(proto: proto::layout::JustifyContent) -> Result<Self, Self::Error> {
         match proto {
-            proto::JustifyContent::FlexStart => Ok(JustifyContent::FlexStart),
-            proto::JustifyContent::FlexEnd => Ok(JustifyContent::FlexEnd),
-            proto::JustifyContent::Center => Ok(JustifyContent::Center),
-            proto::JustifyContent::SpaceBetween => Ok(JustifyContent::SpaceBetween),
-            proto::JustifyContent::SpaceAround => Ok(JustifyContent::SpaceAround),
-            proto::JustifyContent::SpaceEvenly => Ok(JustifyContent::SpaceEvenly),
+            proto::layout::JustifyContent::FlexStart => Ok(JustifyContent::FlexStart),
+            proto::layout::JustifyContent::FlexEnd => Ok(JustifyContent::FlexEnd),
+            proto::layout::JustifyContent::Center => Ok(JustifyContent::Center),
+            proto::layout::JustifyContent::SpaceBetween => Ok(JustifyContent::SpaceBetween),
+            proto::layout::JustifyContent::SpaceAround => Ok(JustifyContent::SpaceAround),
+            proto::layout::JustifyContent::SpaceEvenly => Ok(JustifyContent::SpaceEvenly),
             _ => Err(Error::UnknownEnumVariant { enum_name: "JustifyContent".to_string() }),
         }
     }
@@ -186,13 +186,13 @@ impl Default for PositionType {
     }
 }
 
-impl TryFrom<proto::PositionType> for PositionType {
+impl TryFrom<proto::layout::PositionType> for PositionType {
     type Error = Error;
 
-    fn try_from(proto: proto::PositionType) -> Result<Self, Self::Error> {
+    fn try_from(proto: proto::layout::PositionType) -> Result<Self, Self::Error> {
         match proto {
-            proto::PositionType::Relative => Ok(PositionType::Relative),
-            proto::PositionType::Absolute => Ok(PositionType::Absolute),
+            proto::layout::PositionType::Relative => Ok(PositionType::Relative),
+            proto::layout::PositionType::Absolute => Ok(PositionType::Absolute),
             _ => Err(Error::UnknownEnumVariant { enum_name: "PositionType".to_string() }),
         }
     }

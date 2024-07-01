@@ -18,9 +18,9 @@ use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
 
-use crate::layout_style::LayoutStyle;
-use crate::types;
 use crate::types::Layout;
+use crate::{types, IntoTaffy};
+use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 
 // Customizations that can applied to a node
 struct Customizations {
@@ -222,7 +222,7 @@ impl LayoutManager {
         fixed_width: Option<i32>,
         fixed_height: Option<i32>,
     ) {
-        let mut node_style: taffy::style::Style = (&style).into();
+        let mut node_style: taffy::style::Style = (&style).into_taffy();
 
         self.apply_customizations(layout_id, &mut node_style);
         self.apply_fixed_size(&mut node_style, fixed_width, fixed_height);

@@ -23,11 +23,11 @@
 // parameter list.
 //
 
+use dc_bundle::legacy_definition::element::geometry::Dimension;
 use figma_import::{
     toolkit_layout_style::LayoutSizing, toolkit_schema::View, DesignComposeDefinition,
     DesignComposeDefinitionHeader, NodeQuery, ViewData,
 };
-use layout::types::Dimension;
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::fs::File;

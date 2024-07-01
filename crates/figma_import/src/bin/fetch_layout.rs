@@ -14,11 +14,11 @@
 
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
+use dc_bundle::legacy_definition::element::geometry::Dimension;
 use figma_import::{
     toolkit_layout_style::LayoutSizing, toolkit_schema::View, DesignComposeDefinition, Document,
     NodeQuery, ProxyConfig, ViewData,
 };
-use layout::types::Dimension;
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;

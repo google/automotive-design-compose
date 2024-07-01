@@ -12,83 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::types::{Dimension, Rect, Size};
 use crate::IntoTaffy;
-use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
-use dc_bundle::legacy_definition::layout::positioning::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
-};
-use serde::{Deserialize, Serialize};
+use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct LayoutStyle {
-    pub margin: Rect<Dimension>,
-    pub padding: Rect<Dimension>,
-    pub item_spacing: ItemSpacing,
-    pub top: Dimension,
-    pub left: Dimension,
-    pub bottom: Dimension,
-    pub right: Dimension,
-    pub width: Dimension,
-    pub height: Dimension,
-    pub min_width: Dimension,
-    pub max_width: Dimension,
-    pub min_height: Dimension,
-    pub max_height: Dimension,
-    pub bounding_box: Size<f32>,
-    pub flex_grow: f32,
-    pub flex_shrink: f32,
-    pub flex_basis: Dimension,
-    pub align_self: AlignSelf,
-    pub align_content: AlignContent,
-    pub align_items: AlignItems,
-    pub flex_direction: FlexDirection,
-    pub justify_content: JustifyContent,
-    pub position_type: PositionType,
-}
-
-impl Default for LayoutStyle {
-    fn default() -> LayoutStyle {
-        LayoutStyle {
-            margin: Rect::<Dimension>::default(),
-            padding: Rect::<Dimension>::default(),
-            item_spacing: ItemSpacing::default(),
-            top: Dimension::default(),
-            left: Dimension::default(),
-            bottom: Dimension::default(),
-            right: Dimension::default(),
-            width: Dimension::default(),
-            height: Dimension::default(),
-            min_width: Dimension::default(),
-            max_width: Dimension::default(),
-            min_height: Dimension::default(),
-            max_height: Dimension::default(),
-            bounding_box: Size::default(),
-            flex_grow: 0.0,
-            flex_shrink: 0.0,
-            flex_basis: Dimension::default(),
-            align_self: AlignSelf::Auto,
-            align_content: AlignContent::Stretch,
-            align_items: AlignItems::Stretch,
-            flex_direction: FlexDirection::Row,
-            justify_content: JustifyContent::FlexStart,
-            position_type: PositionType::Relative,
-        }
-    }
-}
-
-impl Into<taffy::prelude::Style> for &LayoutStyle {
-    fn into(self) -> taffy::prelude::Style {
+impl IntoTaffy<taffy::prelude::Style> for &LayoutStyle {
+    fn into_taffy(self) -> taffy::prelude::Style {
         let mut tstyle = taffy::prelude::Style::default();
 
-        tstyle.padding.left = (&self.padding.start).into();
-        tstyle.padding.right = (&self.padding.end).into();
-        tstyle.padding.top = (&self.padding.top).into();
-        tstyle.padding.bottom = (&self.padding.bottom).into();
+        tstyle.padding.left = (&self.padding.start).into_taffy();
+        tstyle.padding.right = (&self.padding.end).into_taffy();
+        tstyle.padding.top = (&self.padding.top).into_taffy();
+        tstyle.padding.bottom = (&self.padding.bottom).into_taffy();
 
         tstyle.flex_grow = self.flex_grow;
         tstyle.flex_shrink = self.flex_shrink;
-        tstyle.flex_basis = (&self.flex_basis).into();
+        tstyle.flex_basis = (&self.flex_basis).into_taffy();
         tstyle.gap.width = (&self.item_spacing).into_taffy();
         tstyle.gap.height = (&self.item_spacing).into_taffy();
 
@@ -98,12 +36,12 @@ impl Into<taffy::prelude::Style> for &LayoutStyle {
         tstyle.flex_direction = (&self.flex_direction).into_taffy();
         tstyle.align_self = (&self.align_self).into_taffy();
 
-        tstyle.size.width = (&self.width).into();
-        tstyle.size.height = (&self.height).into();
-        tstyle.min_size.width = (&self.min_width).into();
-        tstyle.min_size.height = (&self.min_height).into();
-        tstyle.max_size.width = (&self.max_width).into();
-        tstyle.max_size.height = (&self.max_height).into();
+        tstyle.size.width = (&self.width).into_taffy();
+        tstyle.size.height = (&self.height).into_taffy();
+        tstyle.min_size.width = (&self.min_width).into_taffy();
+        tstyle.min_size.height = (&self.min_height).into_taffy();
+        tstyle.max_size.width = (&self.max_width).into_taffy();
+        tstyle.max_size.height = (&self.max_height).into_taffy();
 
         // If we have a fixed size, use the bounding box since that takes into
         // account scale and rotation, and disregard min/max sizes.
@@ -120,15 +58,15 @@ impl Into<taffy::prelude::Style> for &LayoutStyle {
         }
 
         tstyle.position = (&self.position_type).into_taffy();
-        tstyle.inset.left = (&self.left).into();
-        tstyle.inset.right = (&self.right).into();
-        tstyle.inset.top = (&self.top).into();
-        tstyle.inset.bottom = (&self.bottom).into();
+        tstyle.inset.left = (&self.left).into_taffy();
+        tstyle.inset.right = (&self.right).into_taffy();
+        tstyle.inset.top = (&self.top).into_taffy();
+        tstyle.inset.bottom = (&self.bottom).into_taffy();
 
-        tstyle.margin.left = (&self.margin.start).into();
-        tstyle.margin.right = (&self.margin.end).into();
-        tstyle.margin.top = (&self.margin.top).into();
-        tstyle.margin.bottom = (&self.margin.bottom).into();
+        tstyle.margin.left = (&self.margin.start).into_taffy();
+        tstyle.margin.right = (&self.margin.end).into_taffy();
+        tstyle.margin.top = (&self.margin.top).into_taffy();
+        tstyle.margin.bottom = (&self.margin.bottom).into_taffy();
 
         tstyle.display = taffy::prelude::Display::Flex; // TODO set to None to hide
         tstyle

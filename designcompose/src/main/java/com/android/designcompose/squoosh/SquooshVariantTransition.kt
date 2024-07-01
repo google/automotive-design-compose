@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import com.android.designcompose.serdegen.Easing
 import com.android.designcompose.serdegen.Spring
 import com.android.designcompose.serdegen.Transition
+import com.android.designcompose.serdegen.View
 
 // We want to perform an animated transition when a variant customization causes a presented
 // variant to change (but only when the component has an animation configured).
@@ -80,6 +81,35 @@ internal class VariantAnimationInfo(
     /// The details on the transition that we are running.
     val transition: Transition
 )
+
+class VariantTransitionContext(val from: View, val to: View) {
+    fun fromComponentSet(componentSetName: String): Boolean {
+        if (
+            from.component_info.isPresent &&
+                from.component_info.get().component_set_name == componentSetName
+        )
+            return true
+        if (
+            to.component_info.isPresent &&
+                to.component_info.get().component_set_name == componentSetName
+        )
+            return true
+        return false
+    }
+
+    fun hasVariantProperty(propertyName: String): Boolean {
+        if (
+            from.component_info.isPresent &&
+                from.component_info.get().name.contains("$propertyName=")
+        )
+            return true
+        if (to.component_info.isPresent && to.component_info.get().name.contains("$propertyName="))
+            return true
+        return false
+    }
+}
+
+typealias CustomVariantTransition = (context: VariantTransitionContext) -> Transition
 
 // We make a note that we saw a node in the first phase, before we populate it with details
 // in the second phase.
@@ -190,7 +220,13 @@ internal class SquooshVariantTransition {
     }
 
     /// Once a variant has been selected, resolveVariantsRecursively tells us about it.
-    internal fun selectedVariant(viewId: String, variantViewId: String) {
+    internal fun selectedVariant(
+        view: View,
+        variantView: View,
+        customVariantTransition: CustomVariantTransition?
+    ) {
+        val viewId = view.id
+        val variantViewId = variantView.id
         if (treeBuildPhase == TreeBuildPhase.BasePhase) {
             if (newTransitions.contains(viewId)) {
                 newTransitions[viewId] =
@@ -212,6 +248,9 @@ internal class SquooshVariantTransition {
             // This will wipe out any existing transition; we probably want to make a smooth
             // function here, like we do for the interaction-based transitions.
             if (toId != fromId) {
+                val transition =
+                    customVariantTransition?.let { it(VariantTransitionContext(view, variantView)) }
+                        ?: Transition.SmartAnimate(Easing.Spring(Spring(1.0f, 200.0f, 30.0f)), 1f)
                 // Record the id of the animation that we interrupted, if any.
                 transitions[viewId] =
                     VariantAnimationInfo(
@@ -222,8 +261,7 @@ internal class SquooshVariantTransition {
                         toNodeId = toId,
                         fromName = fromName,
                         toName = toName,
-                        transition =
-                            Transition.SmartAnimate(Easing.Spring(Spring(1.0f, 200.0f, 30.0f)), 1f)
+                        transition = transition,
                     )
                 didUpdateTransitions = true
             } else {

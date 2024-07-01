@@ -28,6 +28,9 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
+import com.android.designcompose.serdegen.Bezier
+import com.android.designcompose.serdegen.Easing
+import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
@@ -74,6 +77,36 @@ class AnimationMidpoints {
         text.value = "Y"
 
         recordAnimation("Variant")
+    }
+
+    @Test
+    fun customVariantAnimation() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(State.X)
+        val text = mutableStateOf("X")
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDesignDocSettings provides
+                    DesignDocSettings(
+                        useSquoosh = true,
+                        customVariantTransition = {
+                            Transition.SmartAnimate(Easing.Bezier(Bezier(0.37f, 0f, 0.63f, 1f)), 1f)
+                        }
+                    )
+            ) {
+                VariantAnimationTestDoc.MainFrame(state = state.value, text = text.value)
+            }
+        }
+
+        waitForContent(VariantAnimationTestDoc.javaClass.name)
+
+        state.value = State.Y
+        text.value = "Y"
+
+        recordAnimation("CustomVariantTransition")
     }
 
     @Test

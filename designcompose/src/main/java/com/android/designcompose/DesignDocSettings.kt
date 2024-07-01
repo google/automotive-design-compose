@@ -17,6 +17,7 @@
 package com.android.designcompose
 
 import androidx.compose.runtime.compositionLocalOf
+import com.android.designcompose.squoosh.CustomVariantTransition
 
 /**
  * When applied as a compositionLocal, these settings will alter features or add functionality to
@@ -30,6 +31,7 @@ import androidx.compose.runtime.compositionLocalOf
  */
 class DesignDocSettings(
     val useSquoosh: Boolean = false,
+    val customVariantTransition: CustomVariantTransition? = null,
 )
 
 val LocalDesignDocSettings = compositionLocalOf { DesignDocSettings() }

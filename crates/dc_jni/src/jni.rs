@@ -14,7 +14,7 @@
 
 use std::ffi::c_void;
 
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 
 use crate::error::{throw_basic_exception, Error};
 use crate::error_map::map_err_to_exception;
@@ -31,10 +31,13 @@ use lazy_static::lazy_static;
 use log::{error, LevelFilter};
 
 lazy_static! {
-    static ref JAVA_VM: Mutex<Option<JavaVM>> = Mutex::new(None);
+    static ref JAVA_VM: Mutex<Option<Arc<JavaVM>>> = Mutex::new(None);
 }
-pub fn javavm() -> MutexGuard<'static, Option<JavaVM>> {
-    JAVA_VM.lock().unwrap()
+pub fn javavm() -> Option<Arc<JavaVM>> {
+    JAVA_VM.lock().unwrap().clone()
+}
+fn set_javavm(vm: JavaVM) {
+    *JAVA_VM.lock().unwrap() = Some(Arc::new(vm))
 }
 
 fn get_string(env: &mut JNIEnv, obj: &JObject) -> Option<String> {
@@ -183,10 +186,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
     }
 
     // Save the Java VM so we can call back into Android
-    {
-        let mut javavm = javavm();
-        *javavm = Some(vm);
-    }
+    set_javavm(vm);
 
     JNI_VERSION_1_6
 }

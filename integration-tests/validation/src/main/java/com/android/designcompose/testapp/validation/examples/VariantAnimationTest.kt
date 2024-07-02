@@ -35,6 +35,10 @@ import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignVariant
+import com.android.designcompose.serdegen.Bezier
+import com.android.designcompose.serdegen.Easing
+import com.android.designcompose.serdegen.Spring
+import com.android.designcompose.serdegen.Transition
 import kotlinx.coroutines.delay
 
 enum class State {
@@ -68,7 +72,19 @@ fun VariantAnimationTest() {
         }
     }
 
-    CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
+    CompositionLocalProvider(
+        LocalDesignDocSettings provides
+            DesignDocSettings(
+                useSquoosh = true,
+                customVariantTransition = { context ->
+                    if (context.fromComponentSet("RightPanelAndroid"))
+                        Transition.SmartAnimate(Easing.Bezier(Bezier(0.37f, 0f, 0.63f, 1f)), 2f)
+                    else if (context.hasVariantProperty("#state"))
+                        Transition.SmartAnimate(Easing.Spring(Spring(1.0f, 200.0f, 30.0f)), 1f)
+                    else Transition.SmartAnimate(Easing.Spring(Spring(1.0f, 20.0f, 30.0f)), 2f)
+                }
+            )
+    ) {
         VariantAnimationTestDoc.MainFrame(state = state, text = text)
     }
 

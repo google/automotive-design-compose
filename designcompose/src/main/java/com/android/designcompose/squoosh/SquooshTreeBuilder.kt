@@ -141,6 +141,7 @@ internal fun resolveVariantsRecursively(
     overlays: List<View>? = null,
     appContext: Context,
     useLocalStringRes: Boolean?,
+    customVariantTransition: CustomVariantTransition?,
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(v.name)) return null
     customizations.getVisibleState(v.name)?.let { if (!it.value) return null }
@@ -201,7 +202,7 @@ internal fun resolveVariantsRecursively(
                     view = variantView
                 }
             }
-            variantTransition.selectedVariant(v.id, view.id)
+            variantTransition.selectedVariant(v, view, customVariantTransition)
         }
     }
 
@@ -259,6 +260,7 @@ internal fun resolveVariantsRecursively(
                     variableState,
                     appContext = appContext,
                     useLocalStringRes = useLocalStringRes,
+                    customVariantTransition = customVariantTransition,
                 ) ?: continue
 
             childResolvedNode.parent = resolvedView
@@ -341,6 +343,7 @@ internal fun resolveVariantsRecursively(
                     variableState,
                     appContext = appContext,
                     useLocalStringRes = useLocalStringRes,
+                    customVariantTransition = customVariantTransition,
                 ) ?: continue
 
             // Make a synthetic parent for the overlay.

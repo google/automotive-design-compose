@@ -58,6 +58,7 @@ import com.android.designcompose.DocServer
 import com.android.designcompose.DocumentSwitcher
 import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.LiveUpdateMode
+import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.VariableState
 import com.android.designcompose.asAnimationSpec
 import com.android.designcompose.asBuilder
@@ -293,6 +294,7 @@ fun SquooshRoot(
             overlays,
             appContext = LocalContext.current,
             useLocalStringRes = useLocalStringRes,
+            LocalDesignDocSettings.current.customVariantTransition,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -347,6 +349,7 @@ fun SquooshRoot(
                 overlays,
                 appContext = LocalContext.current,
                 useLocalStringRes = useLocalStringRes,
+                LocalDesignDocSettings.current.customVariantTransition,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }

@@ -5,7 +5,7 @@ designcompose = "0.29.0-SNAPSHOT"
 jvmToolchain = "17"
 
 #Android Gradle Plugin
-agp = "8.4.1"
+agp = "8.5.0"
 # The minimum supported AGP version for DesignCompose Apps
 agp-minSupported = "7.3.1"
 
@@ -33,10 +33,10 @@ androidx-constraintlayout = "2.1.4"
 androidx-legacy-support-v4 = "1.0.0"
 androidx-lifecycle = "2.7.0"
 androidx-media = "1.7.0"
-androidx-test-espresso = "3.5.1"
-androidx-test-ext-junit = "1.1.5"
+androidx-test-espresso = "3.6.1"
+androidx-test-ext-junit = "1.2.1"
 androidx-datastore = "1.1.1"
-androidx-rules = "1.5.0"
+androidx-rules = "1.6.1"
 androidx-profileinstaller = "1.3.1"
 androidx-uiautomator = "2.3.0"
 androidx-benchmarkMacroJunit4 = "1.2.4"

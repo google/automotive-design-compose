@@ -52,7 +52,7 @@ internal enum class CustomizationType {
     TextStyle,
     VariantProperty,
     Meter,
-    MeterFunction,
+    MeterState,
     Module,
     Unknown
 }
@@ -122,7 +122,7 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setBrush\n"
     file += "import com.android.designcompose.setBrushFunction\n"
     file += "import com.android.designcompose.setMeterValue\n"
-    file += "import com.android.designcompose.setMeterFunction\n"
+    file += "import com.android.designcompose.setMeterState\n"
     file += "import com.android.designcompose.setModifier\n"
     file += "import com.android.designcompose.setTapCallback\n"
     file += "import com.android.designcompose.setOpenLinkCallback\n"
@@ -189,7 +189,7 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "State<Boolean>" -> CustomizationType.VisibilityState
         "TextStyle" -> CustomizationType.TextStyle
         "com.android.designcompose.Meter" -> CustomizationType.Meter
-        "com.android.designcompose.MeterFunction" -> CustomizationType.MeterFunction
+        "com.android.designcompose.MeterState" -> CustomizationType.MeterState
         else -> CustomizationType.Unknown
     }
 }

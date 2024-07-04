@@ -16,6 +16,7 @@
 
 package com.android.designcompose.testapp.validation.examples
 
+import android.annotation.TargetApi
 import androidx.compose.runtime.Composable
 import com.android.designcompose.benchmarks.battleship.lib.BattleshipDoc
 import com.android.designcompose.benchmarks.battleship.lib.BattleshipTest
@@ -102,7 +103,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Variable Modes", { VariableModesTest() }, VariablesTestDoc.javaClass.name),
         Triple(
             "State Customizations",
-            { StateCustomizationsTest(Clock.systemDefaultZone()) },
+            @TargetApi(28) { StateCustomizationsTest(Clock.systemDefaultZone()) },
             StateCustomizationsDoc.javaClass.name
         ),
         // GH-636: Test takes too long to execute.

@@ -42,10 +42,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -625,7 +627,7 @@ class MediaAdapter(
     class MediaNowPlayingProgress {
         var currentTimeText: MutableState<String> = mutableStateOf("")
         var maxTimeText: MutableState<String> = mutableStateOf("")
-        var progressWidth: Float = 0F
+        var progressWidth: MutableFloatState = mutableFloatStateOf(0F)
     }
 
     @Composable
@@ -634,8 +636,9 @@ class MediaAdapter(
         // Observe the current track progress
         val progress: PlaybackProgress? by nowPlayingPlaybackViewModel.progress.observeAsState()
         val maxProgress = progress?.maxProgress?.toFloat() ?: 0F
-        nowPlaying.progressWidth =
-            if (maxProgress == 0F) 0F else (progress?.progress?.toFloat() ?: 0F) / maxProgress
+        nowPlaying.progressWidth.floatValue =
+            if (maxProgress == 0F) 0F
+            else (progress?.progress?.toFloat() ?: 0F) * 100F / maxProgress
         nowPlaying.currentTimeText.value = progress?.currentTimeText as String? ?: ""
         nowPlaying.maxTimeText.value = progress?.maxTimeText as String? ?: ""
         return nowPlaying

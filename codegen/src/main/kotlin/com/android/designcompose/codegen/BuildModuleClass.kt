@@ -293,8 +293,8 @@ private class DesignModuleVisitor(
                 out += "    customizations.setTextStyle(\"$nodeName\", $propertyName)\n"
             CustomizationType.Meter ->
                 out += "    customizations.setMeterValue(\"$nodeName\", $propertyName)\n"
-            CustomizationType.MeterFunction ->
-                out += "    customizations.setMeterFunction(\"$nodeName\", $propertyName)\n"
+            CustomizationType.MeterState ->
+                out += "    customizations.setMeterState(\"$nodeName\", $propertyName)\n"
             else ->
                 logger.error(
                     "Invalid parameter type ${property.type.typeString()} property \"$propertyName\""

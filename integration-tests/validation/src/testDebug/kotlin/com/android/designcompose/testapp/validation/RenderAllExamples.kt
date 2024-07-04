@@ -30,6 +30,7 @@ import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
+import com.android.designcompose.testapp.validation.examples.StateCustomizationsDoc
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
@@ -88,13 +89,13 @@ class RenderAllExamples(private val config: TestConfig) {
     companion object {
         private val disabledTests =
             listOf(
-                "State Customizations", // Separate test due to different set up
+                StateCustomizationsDoc.javaClass.name, // Separate test due to different set up
             )
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun createTestSet(): List<TestConfig> {
-            return EXAMPLES.filter { it.third != null && !disabledTests.contains(it.first) }
+            return EXAMPLES.filter { it.third != null && !disabledTests.contains(it.third!!) }
                 .map {
                     TestConfig(it.first.replace("[\\s*]".toRegex(), "-"), it.second, it.third!!)
                 }

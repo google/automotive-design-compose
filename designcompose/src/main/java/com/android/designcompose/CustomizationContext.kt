@@ -18,6 +18,7 @@ package com.android.designcompose
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -69,7 +70,7 @@ data class ReplacementContent(
 
 typealias TapCallback = () -> Unit
 
-typealias MeterFunction = @Composable () -> Meter
+typealias MeterState = FloatState
 
 typealias Meter = Float
 
@@ -108,7 +109,7 @@ data class Customization(
     // Meter (dial, gauge, progress bar) customization as a percentage 0-100
     var meterValue: Optional<Float> = Optional.empty(),
     // Meter (dial, gauge, progress bar) customization as a function that returns a percentage 0-100
-    var meterFunction: Optional<@Composable () -> Float> = Optional.empty(),
+    var meterState: Optional<MeterState> = Optional.empty(),
 )
 
 private fun Customization.clone(): Customization {
@@ -129,7 +130,7 @@ private fun Customization.clone(): Customization {
     c.textStyle = textStyle
     c.openLinkCallback = openLinkCallback
     c.meterValue = meterValue
-    c.meterFunction = meterFunction
+    c.meterState = meterState
 
     return c
 }
@@ -297,8 +298,8 @@ fun CustomizationContext.setMeterValue(nodeName: String, value: Float) {
     customize(nodeName) { c -> c.meterValue = Optional.ofNullable(value) }
 }
 
-fun CustomizationContext.setMeterFunction(nodeName: String, value: @Composable () -> Float) {
-    customize(nodeName) { c -> c.meterFunction = Optional.ofNullable(value) }
+fun CustomizationContext.setMeterState(nodeName: String, value: MeterState) {
+    customize(nodeName) { c -> c.meterState = Optional.ofNullable(value) }
 }
 
 fun CustomizationContext.setVariantProperties(vp: HashMap<String, String>) {
@@ -459,9 +460,9 @@ fun CustomizationContext.getMeterValue(nodeName: String): Float? {
     return value
 }
 
-fun CustomizationContext.getMeterFunction(nodeName: String): (@Composable () -> Float)? {
+fun CustomizationContext.getMeterState(nodeName: String): MeterState? {
     val c = cs[nodeName] ?: return null
-    if (c.meterFunction.isPresent) return c.meterFunction.get()
+    if (c.meterState.isPresent) return c.meterState.get()
     return null
 }
 

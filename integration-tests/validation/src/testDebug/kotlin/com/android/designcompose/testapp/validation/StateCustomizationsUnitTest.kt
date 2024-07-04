@@ -16,6 +16,7 @@
 
 package com.android.designcompose.testapp.validation
 
+import android.annotation.TargetApi
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -46,6 +47,7 @@ class StateCustomizationsUnitTest {
     @get:Rule val interFontTestRule = InterFontTestRule()
 
     @Test
+    @TargetApi(26)
     fun testTextCustomization() {
         with(composeTestRule) {
             val fixedClock: Clock =

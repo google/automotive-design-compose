@@ -42,6 +42,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
@@ -622,8 +623,8 @@ class MediaAdapter(
     }
 
     class MediaNowPlayingProgress {
-        var currentTimeText: String = ""
-        var maxTimeText: String = ""
+        var currentTimeText: MutableState<String> = mutableStateOf("")
+        var maxTimeText: MutableState<String> = mutableStateOf("")
         var progressWidth: Float = 0F
     }
 
@@ -635,8 +636,8 @@ class MediaAdapter(
         val maxProgress = progress?.maxProgress?.toFloat() ?: 0F
         nowPlaying.progressWidth =
             if (maxProgress == 0F) 0F else (progress?.progress?.toFloat() ?: 0F) / maxProgress
-        nowPlaying.currentTimeText = progress?.currentTimeText as String? ?: ""
-        nowPlaying.maxTimeText = progress?.maxTimeText as String? ?: ""
+        nowPlaying.currentTimeText.value = progress?.currentTimeText as String? ?: ""
+        nowPlaying.maxTimeText.value = progress?.maxTimeText as String? ?: ""
         return nowPlaying
     }
 

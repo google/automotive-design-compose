@@ -19,6 +19,7 @@ package com.android.designcompose.testapp.validation.examples
 import androidx.compose.runtime.Composable
 import com.android.designcompose.benchmarks.battleship.lib.BattleshipDoc
 import com.android.designcompose.benchmarks.battleship.lib.BattleshipTest
+import java.time.Clock
 
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
@@ -99,6 +100,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Text Inval", { TextResizingTest() }, TextResizingTestDoc.javaClass.name),
         Triple("Shared Customization", { ModuleExample() }, ModuleExampleDoc.javaClass.name),
         Triple("Variable Modes", { VariableModesTest() }, VariablesTestDoc.javaClass.name),
+        Triple(
+            "State Customizations",
+            { StateCustomizationsTest(Clock.systemDefaultZone()) },
+            StateCustomizationsDoc.javaClass.name
+        ),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

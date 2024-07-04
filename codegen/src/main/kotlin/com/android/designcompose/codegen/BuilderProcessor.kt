@@ -134,7 +134,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var designVersion: String = ""
         private var currentFunc = ""
         private var textCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
-        private var textFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+        private var textStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var imageCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var brushCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
@@ -661,10 +661,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setText(\"$node\", $value)\n")
             }
 
-            val textFuncCustom =
-                textFunctionCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
-            for ((node, value) in textFuncCustom) {
-                out.appendText("        customizations.setTextFunction(\"$node\", $value)\n")
+            val textStateCustom =
+                textStateCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in textStateCustom) {
+                out.appendText("        customizations.setTextState(\"$node\", $value)\n")
             }
 
             val imageCustom =
@@ -844,8 +844,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             when (valueParameter.customizationType()) {
                 CustomizationType.Text ->
                     addCustomization(valueParameter, annotation, textCustomizations)
-                CustomizationType.TextFunction ->
-                    addCustomization(valueParameter, annotation, textFunctionCustomizations)
+                CustomizationType.TextState ->
+                    addCustomization(valueParameter, annotation, textStateCustomizations)
                 CustomizationType.Image ->
                     addCustomization(valueParameter, annotation, imageCustomizations)
                 CustomizationType.Brush ->

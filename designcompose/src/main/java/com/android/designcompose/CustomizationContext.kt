@@ -78,7 +78,7 @@ data class Customization(
     // Text content customization
     var text: Optional<String> = Optional.empty(),
     // Text function customization
-    var textFunction: Optional<@Composable () -> String> = Optional.empty(),
+    var textState: Optional<State<String>> = Optional.empty(),
     // Image fill customization
     var image: Optional<Bitmap> = Optional.empty(),
     // Image fill with context customization
@@ -114,7 +114,7 @@ data class Customization(
 private fun Customization.clone(): Customization {
     val c = Customization()
     c.text = text
-    c.textFunction = textFunction
+    c.textState = textState
     c.image = image
     c.imageWithContext = imageWithContext
     c.brush = brush
@@ -160,8 +160,8 @@ fun CustomizationContext.setText(nodeName: String, text: String?) {
     customize(nodeName) { c -> c.text = Optional.ofNullable(text) }
 }
 
-fun CustomizationContext.setTextFunction(nodeName: String, text: @Composable (() -> String)?) {
-    customize(nodeName) { c -> c.textFunction = Optional.ofNullable(text) }
+fun CustomizationContext.setTextState(nodeName: String, text: State<String>?) {
+    customize(nodeName) { c -> c.textState = Optional.ofNullable(text) }
 }
 
 fun CustomizationContext.setImage(nodeName: String, image: Bitmap?) {
@@ -349,9 +349,9 @@ fun CustomizationContext.getText(nodeName: String): String? {
     return null
 }
 
-fun CustomizationContext.getTextFunction(nodeName: String): @Composable (() -> String)? {
+fun CustomizationContext.getTextState(nodeName: String): State<String>? {
     val c = cs[nodeName] ?: return null
-    if (c.textFunction.isPresent) return c.textFunction.get()
+    if (c.textState.isPresent) return c.textState.get()
     return null
 }
 

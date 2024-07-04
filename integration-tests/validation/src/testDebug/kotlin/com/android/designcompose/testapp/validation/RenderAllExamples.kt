@@ -86,10 +86,15 @@ class RenderAllExamples(private val config: TestConfig) {
     }
 
     companion object {
+        private val disabledTests =
+            listOf(
+                "State Customizations", // Separate test due to different set up
+            )
+
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun createTestSet(): List<TestConfig> {
-            return EXAMPLES.filter { it.third != null }
+            return EXAMPLES.filter { it.third != null && !disabledTests.contains(it.first) }
                 .map {
                     TestConfig(it.first.replace("[\\s*]".toRegex(), "-"), it.second, it.third!!)
                 }

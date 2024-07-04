@@ -79,22 +79,23 @@ interface HelloWorld {
 }
 ```
 
-### Text content with a lambda function {#text-content-with-lamda}
+### Text content with State {#text-content-with-state}
+Text content can also be customized using a `State<String>`. Using a `State` can
+have performance benefits because reading the `value` out of a `State` will only
+cause the closest `@Composable` function in the call stack to be recomposed,
+whereas the simpler `String` customization will always recompose the function
+that uses the customization. By using a string State instead of a string value, 
+you can extend the time needed to read a state, which allows Compose to run less 
+code when recomposing because it reads the state only when necessary.
 
-By using a lambda function instead of a string value, you can extend the time
-needed to read a state, which allows Compose to run less code when recomposing
-because it reads the state only when necessary. Lambda functions are typically
-used when a function is needed temporarily for a short period of time
-
-In this example, the `@Composable` lambda function replaces `text` in a design
-element.
+In this example, the `State<String>` replaces `text` in a design element.
 
 ```kotlin
 @DesignDoc(id = "<your figma doc id>")
 interface HelloWorld {
     @DesignComponent(node = "#MainFrame")
     fun MainFrame(
-        @Design(node = "#name") name: @Composable () -> String
+        @Design(node = "#name") name: State<String>
     )
 }
 ```

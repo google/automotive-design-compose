@@ -178,8 +178,8 @@ class MainActivity : ComponentActivity() {
 
         val nowPlayingProgressBarModule =
             NowPlayingProgressBarModule(
-                timeElapsed = { mediaAdapter.getNowPlayingProgress().currentTimeText },
-                timeDuration = { mediaAdapter.getNowPlayingProgress().maxTimeText },
+                timeElapsed = mediaAdapter.getNowPlayingProgress().currentTimeText,
+                timeDuration = mediaAdapter.getNowPlayingProgress().maxTimeText,
                 progress = { mediaAdapter.getNowPlayingProgress().progressWidth * 100F }
             )
         val nowPlayingModule =

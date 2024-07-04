@@ -45,7 +45,7 @@ class Localization {
 
     @Test
     @Config(qualifiers = "+zh")
-    fun helloWorldocaleZh() {
+    fun helloWorldLocaleZh() {
         with(composeTestRule) {
             setContent { HelloWorld() }
             onNodeWithText("你好，").assertExists()
@@ -68,7 +68,7 @@ class Localization {
     /** Test local components with localization works. */
     @Test
     @Config(qualifiers = "+es")
-    fun ariantAsteriskLocaleEs() {
+    fun variantAsteriskLocaleEs() {
         with(composeTestRule) {
             setContent { VariantAsteriskTest() }
             onNodeWithText("Aparcado").assertExists()

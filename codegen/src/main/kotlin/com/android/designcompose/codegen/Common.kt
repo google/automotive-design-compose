@@ -37,7 +37,7 @@ import java.io.OutputStream
 
 internal enum class CustomizationType {
     Text,
-    TextFunction,
+    TextState,
     Image,
     ImageWithContext,
     Brush,
@@ -127,7 +127,7 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setTapCallback\n"
     file += "import com.android.designcompose.setOpenLinkCallback\n"
     file += "import com.android.designcompose.setText\n"
-    file += "import com.android.designcompose.setTextFunction\n"
+    file += "import com.android.designcompose.setTextState\n"
     file += "import com.android.designcompose.setVariantProperties\n"
     file += "import com.android.designcompose.setVisible\n"
     file += "import com.android.designcompose.setVisibleState\n"
@@ -174,7 +174,7 @@ internal fun KSTypeReference.typeString(): String {
 internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
     return when (strType) {
         "String" -> CustomizationType.Text
-        "@Composable () -> String" -> CustomizationType.TextFunction
+        "State<String>" -> CustomizationType.TextState
         "Brush" -> CustomizationType.Brush
         "() -> Brush" -> CustomizationType.BrushFunction
         "Bitmap?" -> CustomizationType.Image

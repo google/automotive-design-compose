@@ -128,8 +128,7 @@ internal fun DesignText(
 
     // Apply custom text
     var useText = customizations.getText(nodeName)
-    if (useText == null)
-        useText = (customizations.getTextFunction(nodeName) ?: { newlineFixedText })()
+    if (useText == null) useText = customizations.getTextState(nodeName)?.value ?: newlineFixedText
 
     val fontFamily = DesignSettings.fontFamily(style.node_style.font_family)
     val customTextStyle = customizations.getTextStyle(nodeName)

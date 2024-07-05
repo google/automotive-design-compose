@@ -10,7 +10,7 @@
   "author": "",
   "license": "",
   "devDependencies": {
-    "@eslint/js": "^9.5.0",
+    "@eslint/js": "^9.6.0",
     "@figma/plugin-typings": "*",
     "@types/node": "^20.14.7",
     "css-loader": "^7.1.2",
@@ -23,7 +23,7 @@
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.1",
     "typescript": "^5.5.2",
-    "typescript-eslint": "^7.13.1",
+    "typescript-eslint": "^7.15.0",
     "webpack": "^5.92.1",
     "webpack-cli": "^5.1.4"
   }

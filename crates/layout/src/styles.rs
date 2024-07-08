@@ -13,9 +13,9 @@
 // limitations under the License.
 
 use crate::into_taffy::IntoTaffy;
-use dc_bundle::legacy_definition::layout::positioning::ItemSpacing;
+use ::taffy::style_helpers::TaffyZero;
 use dc_bundle::legacy_definition::layout::positioning::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
+    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };
 use taffy::prelude as taffy;
 
@@ -94,8 +94,8 @@ impl IntoTaffy<taffy::Position> for &PositionType {
 impl IntoTaffy<taffy::LengthPercentage> for &ItemSpacing {
     fn into_taffy(self) -> taffy::LengthPercentage {
         match self {
-            ItemSpacing::Fixed(s) => taffy::LengthPercentage::Points(*s as f32),
-            ItemSpacing::Auto(..) => taffy::LengthPercentage::Points(0.0),
+            ItemSpacing::Fixed(s) => taffy::LengthPercentage::Length(*s as f32),
+            ItemSpacing::Auto(..) => taffy::LengthPercentage::ZERO,
         }
     }
 }

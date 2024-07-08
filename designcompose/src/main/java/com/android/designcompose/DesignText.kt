@@ -56,12 +56,15 @@ import androidx.compose.ui.text.UrlAnnotation
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.tracing.trace
 import com.android.designcompose.proto.toUniform
+import com.android.designcompose.DesignTextMeasure.AVAILABLE_SIZE_CONTENT_MAXIMUM
+import com.android.designcompose.DesignTextMeasure.AVAILABLE_SIZE_CONTENT_MINIMUM
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LineHeight
@@ -505,7 +508,7 @@ fun measureTextBoundsFunc(
     width: Float,
     @Suppress("unused") height: Float,
     availableWidth: Float,
-    @Suppress("unused") availableHeight: Float,
+    availableHeight: Float
 ): Pair<Float, Float> {
     // We currently don't support vertical text, only horizontal, so this function just performs
     // height-for-width queries on text, and ignores the `height` and `availableHeight` args.
@@ -525,27 +528,41 @@ fun measureTextBoundsFunc(
     }
     val density = textMeasureData.density.density
 
-    // Some distinct values are being collapsed, so we can't tell the difference between no
-    // available space, and a request to report the minimum space.
-    val layoutWidth =
-        if (textMeasureData.autoWidth) {
-            textMeasureData.paragraph.maxIntrinsicWidth
-        } else if (width > 0.0f) {
-            width * density
-        } else if (availableWidth <= 0.0f) {
-            textMeasureData.paragraph.minIntrinsicWidth
-        } else if (availableWidth >= Float.MAX_VALUE) {
-            textMeasureData.paragraph.maxIntrinsicWidth
-        } else {
-            availableWidth * density
-        }
+    val layoutConstraints =
+        Constraints(
+            minWidth = 0,
+            maxWidth =
+                if (textMeasureData.autoWidth) {
+                    Constraints.Infinity
+                } else if (width > 0.0f) {
+                    (width * density).toInt()
+                } else if (
+                    availableWidth <= AVAILABLE_SIZE_CONTENT_MINIMUM ||
+                        availableWidth >= AVAILABLE_SIZE_CONTENT_MAXIMUM
+                ) {
+                    // Just tell it there's infinite width available.
+                    Constraints.Infinity
+                } else {
+                    (availableWidth * density).toInt()
+                },
+            minHeight = 0,
+            maxHeight =
+                if (
+                    availableHeight <= AVAILABLE_SIZE_CONTENT_MINIMUM ||
+                        availableHeight >= AVAILABLE_SIZE_CONTENT_MAXIMUM
+                ) {
+                    Constraints.Infinity
+                } else {
+                    (availableHeight * density).toInt()
+                }
+        )
 
     // Perform a layout using the given width.
     val textLayout =
         Paragraph(
             paragraphIntrinsics = textMeasureData.paragraph,
-            width = layoutWidth,
-            maxLines = textMeasureData.maxLines,
+            constraints = layoutConstraints,
+            maxLines = textMeasureData.maxLines
         )
 
     // The `textLayout.width` field doesn't give the tightest bounds.

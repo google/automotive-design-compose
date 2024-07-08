@@ -58,13 +58,13 @@ impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
         // account scale and rotation, and disregard min/max sizes.
         // TODO support this with non-fixed sizes also!
         if self.width.is_points()? {
-            tstyle.size.width = taffy::prelude::Dimension::Points(self.bounding_box.width);
+            tstyle.size.width = taffy::prelude::Dimension::Length(self.bounding_box.width);
             tstyle.min_size.width = taffy::prelude::Dimension::Auto;
             tstyle.max_size.width = taffy::prelude::Dimension::Auto;
             error!("Into taffy override max/min width to auto");
         }
         if self.height.is_points()? {
-            tstyle.size.height = taffy::prelude::Dimension::Points(self.bounding_box.height);
+            tstyle.size.height = taffy::prelude::Dimension::Length(self.bounding_box.height);
             tstyle.min_size.height = taffy::prelude::Dimension::Auto;
             tstyle.max_size.height = taffy::prelude::Dimension::Auto;
             error!("Into taffy override max/min height to auto");
@@ -78,7 +78,11 @@ impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
 
         tstyle.margin = (&self.margin).try_into_taffy()?;
 
-        tstyle.display = taffy::prelude::Display::Flex; // TODO set to None to hide
+        tstyle.display = taffy::prelude::Display::Flex;
+
+        tstyle.overflow.x = taffy::Overflow::Hidden;
+        tstyle.overflow.y = taffy::Overflow::Hidden;
+
         Ok(tstyle)
     }
 }

@@ -126,6 +126,12 @@ fn compute_layout(
     if let Some(max_height) = node.max_height {
         style.layout_style.max_height = DimensionProto::new_points(max_height);
     }
+    if let Some(min_width) = node.min_width {
+        style.layout_style.min_width = DimensionProto::new_points(min_width);
+    }
+    if let Some(min_height) = node.min_height {
+        style.layout_style.min_height = DimensionProto::new_points(min_height);
+    }
 
     // Frames can implement Auto Layout on their children.
     if let Some(frame) = node.frame() {
@@ -136,15 +142,15 @@ fn compute_layout(
         style.layout_style.width = DimensionProto::new_auto();
         style.layout_style.height = DimensionProto::new_auto();
         style.layout_style.flex_grow = frame.layout_grow;
+        style.layout_style.flex_shrink = frame.layout_grow;
         style.layout_style.flex_basis = if frame.layout_grow == 1.0 {
             // When layout_grow is 1, it means the node's width/height is set to FILL.
             // Figma doesn't explicitly provide this info, but we need flex_basis = 0
             // for it to grow from zero to fill the container.
-            DimensionProto::new_points(0.0)
+            DimensionProto::new_percent(0.0)
         } else {
             DimensionProto::new_undefined()
         };
-        style.layout_style.flex_shrink = 0.0;
         style.node_style.horizontal_sizing = frame.layout_sizing_horizontal.into();
         style.node_style.vertical_sizing = frame.layout_sizing_vertical.into();
 
@@ -227,7 +233,7 @@ fn compute_layout(
                         }
                         figma_schema::LayoutSizingMode::Auto => DimensionProto::new_auto(),
                     };
-                    if hug_width {
+                    if hug_width && node.min_width.is_none() {
                         style.layout_style.min_width = DimensionProto::new_auto();
                     }
                 }
@@ -248,7 +254,7 @@ fn compute_layout(
                         }
                         figma_schema::LayoutSizingMode::Auto => DimensionProto::new_auto(),
                     };
-                    if hug_height {
+                    if hug_height && node.min_height.is_none() {
                         style.layout_style.min_height = DimensionProto::new_auto();
                     }
                 }
@@ -361,22 +367,25 @@ fn compute_layout(
             if node.vector().is_some() {
                 style.layout_style.width = DimensionProto::new_points(size.x());
                 style.layout_style.height = DimensionProto::new_points(size.y());
+                error!("3. layout set size {:?}", size);
             }
 
             style.node_style.node_size.width = size.x();
             style.node_style.node_size.height = size.y();
+            error!("3.1. layout set size {:?}", size);
         }
     }
 
     // For text we want to force the width.
     if let figma_schema::NodeData::Text { vector, style: text_style, .. } = &node.data {
         style.layout_style.flex_grow = vector.layout_grow;
+        style.layout_style.flex_shrink = vector.layout_grow;
         if vector.layout_grow == 1.0 {
             // When the value of layout_grow is 1, it is because the node has
             // its width or height set to FILL. Figma's node properties don't
             // specify this, but flex_basis needs to be set to 0 so that it
             // starts out small and grows to fill the container
-            style.layout_style.flex_basis = DimensionProto::new_points(0.0);
+            style.layout_style.flex_basis = DimensionProto::new_percent(0.0);
         }
         style.node_style.horizontal_sizing = vector.layout_sizing_horizontal.into();
         style.node_style.vertical_sizing = vector.layout_sizing_vertical.into();
@@ -459,7 +468,9 @@ fn compute_layout(
                         style.layout_style.margin.set_start(Dimension::Points(
                             left - parent_bounds.width().ceil() / 2.0,
                         ))?;
+                        error!("layout margin start set to {:?}", style.layout_style);
                         if !hug_width && !node.is_text() {
+                            error!("layout width set to {:?}", width);
                             style.layout_style.width = DimensionProto::new_points(width);
                         }
                     }
@@ -510,7 +521,9 @@ fn compute_layout(
                         style.layout_style.margin.set_top(Dimension::Points(
                             top - parent_bounds.height().ceil() / 2.0,
                         ))?;
+                        error!("layout margin top set to {:?}", style.layout_style);
                         if !hug_height && !node.is_text() {
+                            error!("layout height set to {:?}", height);
                             style.layout_style.height = DimensionProto::new_points(height);
                         }
                     }

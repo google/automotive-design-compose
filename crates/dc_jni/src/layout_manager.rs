@@ -40,7 +40,7 @@ lazy_static! {
 static LAYOUT_MANAGER_ID: AtomicI32 = AtomicI32::new(0);
 
 fn create_layout_manager() -> i32 {
-    let manager = Arc::new(Mutex::new(LayoutManager::new()));
+    let manager = Arc::new(Mutex::new(LayoutManager::new(java_jni_measure_text)));
     let mut hash = LAYOUT_MANAGERS.lock().unwrap();
 
     let manager_id = LAYOUT_MANAGER_ID.fetch_add(1, Ordering::SeqCst);
@@ -88,6 +88,10 @@ pub(crate) fn jni_set_node_size<'local>(
         let mut mgr = manager_ref.lock().unwrap();
         let layout_response =
             mgr.set_node_size(layout_id, root_layout_id, width as u32, height as u32);
+        error!(
+            "jni_set_node_size, layout_id = {:?}, width={:?}, height={:?}",
+            layout_id, width, height
+        );
         layout_response_to_bytearray(env, layout_response)
     } else {
         throw_basic_exception(
@@ -152,27 +156,17 @@ fn handle_layout_node_list(
     manager: &mut MutexGuard<LayoutManager>,
 ) -> Result<(), Error> {
     for node in node_list.layout_nodes.into_iter() {
-        if node.use_measure_func {
-            manager.add_style_measure(
-                node.layout_id,
-                node.parent_layout_id,
-                node.child_index,
-                node.style,
-                node.name,
-                java_jni_measure_text,
-            )?;
-        } else {
-            manager.add_style(
-                node.layout_id,
-                node.parent_layout_id,
-                node.child_index,
-                node.style,
-                node.name,
-                None,
-                node.fixed_width,
-                node.fixed_height,
-            )?;
-        }
+        error!("add_style for node: {:?}", node);
+        manager.add_style(
+            node.layout_id,
+            node.parent_layout_id,
+            node.child_index,
+            node.style,
+            node.name,
+            node.use_measure_func,
+            if node.use_measure_func { None } else { node.fixed_width },
+            if node.use_measure_func { None } else { node.fixed_height },
+        );
     }
     for LayoutParentChildren { parent_layout_id, child_layout_ids } in &node_list.parent_children {
         manager.update_children(*parent_layout_id, child_layout_ids)

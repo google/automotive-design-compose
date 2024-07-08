@@ -18,10 +18,11 @@ package com.android.designcompose.reference.mediacompose
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.ImageReplacementContext
 import com.android.designcompose.ListContent
-import com.android.designcompose.MeterFunction
+import com.android.designcompose.MeterState
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.DesignContentTypesProperty
 import com.android.designcompose.annotation.DesignModuleClass
@@ -47,11 +48,9 @@ class NowPlayingModule(
 class NowPlayingProgressBarModule(
     // These track progress customizations change frequently, so make sure their customizations
     // are functions so that we don't need to recompose the whole main frame
-    @DesignProperty(node = "#media/now-playing/time-elapsed")
-    val timeElapsed: @Composable () -> String,
-    @DesignProperty(node = "#media/now-playing/time-duration")
-    val timeDuration: @Composable () -> String,
-    @DesignProperty(node = "#media/now-playing/progress-bar") val progress: MeterFunction,
+    @DesignProperty(node = "#media/now-playing/time-elapsed") val timeElapsed: State<String>,
+    @DesignProperty(node = "#media/now-playing/time-duration") val timeDuration: State<String>,
+    @DesignProperty(node = "#media/now-playing/progress-bar") val progress: MeterState,
 )
 
 @DesignModuleClass

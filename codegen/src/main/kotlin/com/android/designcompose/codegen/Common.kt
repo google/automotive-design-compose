@@ -37,7 +37,7 @@ import java.io.OutputStream
 
 internal enum class CustomizationType {
     Text,
-    TextFunction,
+    TextState,
     Image,
     ImageWithContext,
     Brush,
@@ -52,7 +52,7 @@ internal enum class CustomizationType {
     TextStyle,
     VariantProperty,
     Meter,
-    MeterFunction,
+    MeterState,
     Module,
     Unknown
 }
@@ -122,12 +122,12 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setBrush\n"
     file += "import com.android.designcompose.setBrushFunction\n"
     file += "import com.android.designcompose.setMeterValue\n"
-    file += "import com.android.designcompose.setMeterFunction\n"
+    file += "import com.android.designcompose.setMeterState\n"
     file += "import com.android.designcompose.setModifier\n"
     file += "import com.android.designcompose.setTapCallback\n"
     file += "import com.android.designcompose.setOpenLinkCallback\n"
     file += "import com.android.designcompose.setText\n"
-    file += "import com.android.designcompose.setTextFunction\n"
+    file += "import com.android.designcompose.setTextState\n"
     file += "import com.android.designcompose.setVariantProperties\n"
     file += "import com.android.designcompose.setVisible\n"
     file += "import com.android.designcompose.setVisibleState\n"
@@ -174,7 +174,7 @@ internal fun KSTypeReference.typeString(): String {
 internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
     return when (strType) {
         "String" -> CustomizationType.Text
-        "@Composable () -> String" -> CustomizationType.TextFunction
+        "State<String>" -> CustomizationType.TextState
         "Brush" -> CustomizationType.Brush
         "() -> Brush" -> CustomizationType.BrushFunction
         "Bitmap?" -> CustomizationType.Image
@@ -189,7 +189,7 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "State<Boolean>" -> CustomizationType.VisibilityState
         "TextStyle" -> CustomizationType.TextStyle
         "com.android.designcompose.Meter" -> CustomizationType.Meter
-        "com.android.designcompose.MeterFunction" -> CustomizationType.MeterFunction
+        "com.android.designcompose.MeterState" -> CustomizationType.MeterState
         else -> CustomizationType.Unknown
     }
 }

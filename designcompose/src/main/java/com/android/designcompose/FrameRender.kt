@@ -257,7 +257,8 @@ internal fun ContentDrawScope.render(
     var shape = frameShape
     var customArcAngle = false
 
-    val meterValue = customizations.getMeterValue(name)
+    val meterValue =
+        customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
     if (meterValue != null) {
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.node_style.meter_data.isPresent) {
@@ -522,7 +523,8 @@ internal fun squooshShapeRender(
     var shape = frameShape
     var customArcAngle = false
 
-    val meterValue = customizations.getMeterValue(name)
+    val meterValue =
+        customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
     if (meterValue != null) {
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.node_style.meter_data.isPresent) {

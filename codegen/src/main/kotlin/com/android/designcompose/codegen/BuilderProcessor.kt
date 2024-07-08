@@ -134,7 +134,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var designVersion: String = ""
         private var currentFunc = ""
         private var textCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
-        private var textFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+        private var textStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var imageCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var brushCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
@@ -156,7 +156,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var textStyleCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var meterCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
-        private var meterFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+        private var meterStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var moduleCustomizations: HashMap<String, Vector<String>> = HashMap()
         private var nodeNameBuilder: ArrayList<String> = ArrayList()
@@ -661,10 +661,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setText(\"$node\", $value)\n")
             }
 
-            val textFuncCustom =
-                textFunctionCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
-            for ((node, value) in textFuncCustom) {
-                out.appendText("        customizations.setTextFunction(\"$node\", $value)\n")
+            val textStateCustom =
+                textStateCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in textStateCustom) {
+                out.appendText("        customizations.setTextState(\"$node\", $value)\n")
             }
 
             val imageCustom =
@@ -745,10 +745,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setMeterValue(\"$node\", $value)\n")
             }
 
-            val meterFunctionCustom =
-                meterFunctionCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
-            for ((node, value) in meterFunctionCustom) {
-                out.appendText("        customizations.setMeterFunction(\"$node\", $value)\n")
+            val meterStateCustom =
+                meterStateCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in meterStateCustom) {
+                out.appendText("        customizations.setMeterState(\"$node\", $value)\n")
             }
 
             val moduleCustom = moduleCustomizations[function.toString()] ?: Vector()
@@ -844,8 +844,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             when (valueParameter.customizationType()) {
                 CustomizationType.Text ->
                     addCustomization(valueParameter, annotation, textCustomizations)
-                CustomizationType.TextFunction ->
-                    addCustomization(valueParameter, annotation, textFunctionCustomizations)
+                CustomizationType.TextState ->
+                    addCustomization(valueParameter, annotation, textStateCustomizations)
                 CustomizationType.Image ->
                     addCustomization(valueParameter, annotation, imageCustomizations)
                 CustomizationType.Brush ->
@@ -872,8 +872,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, textStyleCustomizations)
                 CustomizationType.Meter ->
                     addCustomization(valueParameter, annotation, meterCustomizations)
-                CustomizationType.MeterFunction ->
-                    addCustomization(valueParameter, annotation, meterFunctionCustomizations)
+                CustomizationType.MeterState ->
+                    addCustomization(valueParameter, annotation, meterStateCustomizations)
                 CustomizationType.Module -> {
                     valueParameter.name?.let {
                         val name = it.asString()

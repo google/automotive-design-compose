@@ -42,6 +42,7 @@ import com.android.designcompose.blurFudgeFactor
 import com.android.designcompose.convertColor
 import com.android.designcompose.getText
 import com.android.designcompose.getTextContent
+import com.android.designcompose.getTextState
 import com.android.designcompose.getTextStyle
 import com.android.designcompose.getValue
 import com.android.designcompose.isAutoWidthText
@@ -75,7 +76,8 @@ internal fun squooshComputeTextInfo(
     appContext: Context,
     useLocalStringRes: Boolean?,
 ): TextMeasureData? {
-    val customizedText = customizations.getText(v.name)
+    val customizedText =
+        customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
     val customTextStyle = customizations.getTextStyle(v.name)
     val fontFamily = DesignSettings.fontFamily(v.style.node_style.font_family)
 

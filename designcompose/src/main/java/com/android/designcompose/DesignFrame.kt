@@ -198,11 +198,6 @@ internal fun DesignFrame(
     // Get the modeValues used to resolve variable values
     val modeValues = VariableManager.currentModeValues(view.explicit_variable_modes)
 
-    // Since the meter function is a composable, we need to call it here even though we don't need
-    // it until frameRender() since that function is not a composable.
-    val meterValue = customizations.getMeterFunction(name)?.let { it() }
-    meterValue?.let { customizations.setMeterValue(name, it) }
-
     subscribeLayout(style)
 
     // Only render the frame if we don't have a replacement node and layout is absolute

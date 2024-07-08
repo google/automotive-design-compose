@@ -265,8 +265,8 @@ private class DesignModuleVisitor(
         when (customizationType) {
             CustomizationType.Text ->
                 out += "    customizations.setText(\"$nodeName\", $propertyName)\n"
-            CustomizationType.TextFunction ->
-                out += "    customizations.setTextFunction(\"$nodeName\", $propertyName)\n"
+            CustomizationType.TextState ->
+                out += "    customizations.setTextState(\"$nodeName\", $propertyName)\n"
             CustomizationType.Image ->
                 out += "    customizations.setImage(\"$nodeName\", $propertyName)\n"
             CustomizationType.Brush ->
@@ -293,8 +293,8 @@ private class DesignModuleVisitor(
                 out += "    customizations.setTextStyle(\"$nodeName\", $propertyName)\n"
             CustomizationType.Meter ->
                 out += "    customizations.setMeterValue(\"$nodeName\", $propertyName)\n"
-            CustomizationType.MeterFunction ->
-                out += "    customizations.setMeterFunction(\"$nodeName\", $propertyName)\n"
+            CustomizationType.MeterState ->
+                out += "    customizations.setMeterState(\"$nodeName\", $propertyName)\n"
             else ->
                 logger.error(
                     "Invalid parameter type ${property.type.typeString()} property \"$propertyName\""

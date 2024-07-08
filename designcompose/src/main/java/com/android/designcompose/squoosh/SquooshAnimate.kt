@@ -19,6 +19,10 @@ package com.android.designcompose.squoosh
 import android.util.Log
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.asBuilder
+import com.android.designcompose.decompose
+import com.android.designcompose.fixedHeight
+import com.android.designcompose.fixedWidth
+import com.android.designcompose.hasTransformChange
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.Transition
@@ -26,6 +30,7 @@ import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.toFloatList
 import java.util.Optional
 
 // Squoosh animation design
@@ -59,8 +64,12 @@ internal class SquooshAnimatedFadeOut(private val target: SquooshResolvedNode) :
 internal class SquooshAnimatedLayout(
     private val target: SquooshResolvedNode,
     private val from: SquooshResolvedNode,
-    private val to: SquooshResolvedNode
+    private val to: SquooshResolvedNode,
 ) : SquooshAnimatedItem {
+    private val transformedChanged = hasTransformChange(from.view.style, to.view.style)
+    private val fromDecomposed = from.style.node_style.transform.decompose(1F)
+    private val toDecomposed = to.style.node_style.transform.decompose(1F)
+
     override fun apply(value: Float) {
         val iv = 1.0f - value
         val fromLayout = from.computedLayout
@@ -74,11 +83,32 @@ internal class SquooshAnimatedLayout(
             return
         }
 
+        // Pass in 1 for the density because at this stage, we just want the raw size from the
+        // design. The render code will take into account density.
+        val fromWidth = if (transformedChanged) from.view.style.fixedWidth(1F) else fromLayout.width
+        val fromHeight =
+            if (transformedChanged) from.view.style.fixedHeight(1F) else fromLayout.height
+        val toWidth = if (transformedChanged) to.view.style.fixedWidth(1F) else toLayout.width
+        val toHeight = if (transformedChanged) to.view.style.fixedHeight(1F) else toLayout.height
+
+        if (transformedChanged) {
+            // Interpolate the decomposed matrix values, then construct a new matrix
+            val target = fromDecomposed.interpolateTo(toDecomposed, value)
+            this.target.style =
+                this.target.style.withNodeStyle { s ->
+                    s.transform = Optional.of(target.toMatrix().toFloatList())
+                }
+        }
+
+        // When doing a layout animation, set overrideLayoutSize to true so that the rendering code
+        // uses this computed size as opposed to the size of the node in ViewStyle. This ensures
+        // that size change animations and rotation animations render at the correct size.
+        target.overrideLayoutSize = true
         target.computedLayout =
             Layout(
                 0,
-                toLayout.width * value + fromLayout.width * iv,
-                toLayout.height * value + fromLayout.height * iv,
+                toWidth * value + fromWidth * iv,
+                toHeight * value + fromHeight * iv,
                 toLayout.left * value + fromLayout.left * iv,
                 toLayout.top * value + fromLayout.top * iv
             )
@@ -263,7 +293,7 @@ private fun mergeRecursive(
     to: SquooshResolvedNode,
     parent: SquooshResolvedNode?,
     anims: ArrayList<SquooshAnimatedItem>,
-    alreadyMatchedSet: HashSet<Int>
+    alreadyMatchedSet: HashSet<Int>,
 ): SquooshResolvedNode {
     // We have an exact match on `from` and `to`, so we can construct various animation controls to
     // go between them in a third node. Then we need to inspect the children and match them on name.

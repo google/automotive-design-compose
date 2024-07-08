@@ -32,7 +32,9 @@ import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.SmartAnimateTestDoc
 import com.android.designcompose.testapp.validation.examples.State
+import com.android.designcompose.testapp.validation.examples.TestState
 import com.android.designcompose.testapp.validation.examples.VariantAnimationTestDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Rule
@@ -66,7 +68,7 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent()
+        waitForContent(VariantAnimationTestDoc.javaClass.name)
 
         state.value = State.Y
         text.value = "Y"
@@ -89,20 +91,42 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent()
+        waitForContent(VariantAnimationTestDoc.javaClass.name)
 
         state.value = State.Y
 
         recordAnimation("AllSameName")
     }
 
-    private fun waitForContent() {
+    @Test
+    fun rotationAnimation() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(TestState.A)
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+            ) {
+                SmartAnimateTestDoc.RotationTest(state = state.value)
+            }
+        }
+
+        waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+        state.value = TestState.B
+
+        recordAnimation("Rotation")
+    }
+
+    private fun waitForContent(name: String) {
         composeTestRule.waitForIdle()
         composeTestRule
             .onAllNodes(
                 SemanticsMatcher.expectValue(
                     docClassSemanticsKey,
-                    VariantAnimationTestDoc.javaClass.name
+                    name,
                 )
             )
             .onFirst()

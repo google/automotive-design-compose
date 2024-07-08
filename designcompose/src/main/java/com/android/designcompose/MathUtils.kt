@@ -19,6 +19,7 @@ package com.android.designcompose
 import android.graphics.PointF
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Matrix
+import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -35,12 +36,66 @@ internal data class DecomposedMatrix2D(
     var m12: Float = 0F,
     var m21: Float = 0F,
     var m22: Float = 1F,
-)
+) {
+    internal fun toMatrix(): Matrix {
+        val matrix = Matrix()
+        matrix[0, 0] = m11
+        matrix[0, 1] = m12
+        matrix[1, 0] = m21
+        matrix[1, 1] = m22
+        matrix.translate(translateX, translateY, 0F)
+        matrix.rotateZ(-angle)
+        matrix.scale(scaleX, scaleY, 1F)
+        return matrix
+    }
+
+    // Interpolate values between this decomposed matrix and the target, and return a new dcomposed
+    // matrix.
+    internal fun interpolateTo(target: DecomposedMatrix2D, value: Float): DecomposedMatrix2D {
+        val iv = 1.0f - value
+        val result = DecomposedMatrix2D()
+        result.translateX = target.translateX * value + translateX * iv
+        result.translateY = target.translateY * value + translateY * iv
+        result.angle = target.angle * value + angle * iv
+        result.scaleX = target.scaleX * value + scaleX * iv
+        result.scaleY = target.scaleY * value + scaleY * iv
+        result.m11 = target.m11 * value + m11 * iv
+        result.m12 = target.m12 * value + m12 * iv
+        result.m21 = target.m21 * value + m21 * iv
+        result.m22 = target.m22 * value + m22 * iv
+        return result
+    }
+}
+
+internal fun Matrix.toFloatList(): List<Float> {
+    return listOf(
+        values[0],
+        values[1],
+        values[2],
+        values[3],
+        values[4],
+        values[5],
+        values[6],
+        values[7],
+        values[8],
+        values[9],
+        values[10],
+        values[11],
+        values[12],
+        values[13],
+        values[14],
+        values[15]
+    )
+}
 
 // Decompose a matrix in list form into its translation, angle, and scale parts
 internal fun Optional<List<Float>>.decompose(density: Float): DecomposedMatrix2D {
     val matrix = this.asComposeTransform(density)
     return matrix?.decompose() ?: DecomposedMatrix2D()
+}
+
+internal fun hasTransformChange(from: ViewStyle, to: ViewStyle): Boolean {
+    return from.node_style.transform != to.node_style.transform
 }
 
 // Decompose a matrix into its translation, angle, and scale parts

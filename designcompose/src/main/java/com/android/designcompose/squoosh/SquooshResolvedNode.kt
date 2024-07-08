@@ -43,6 +43,9 @@ internal class SquooshResolvedNode(
     var nextSibling: SquooshResolvedNode? = null,
     var parent: SquooshResolvedNode? = null,
     var computedLayout: Layout? = null,
+    // overrideLayoutSize is set to true when we want the renderer to use the computed
+    // layout size instead of any other size it might calculate.
+    var overrideLayoutSize: Boolean = false,
     var needsChildRender: Boolean = false,
 ) {
     fun offsetFromAncestor(ancestor: SquooshResolvedNode? = null): PointF {

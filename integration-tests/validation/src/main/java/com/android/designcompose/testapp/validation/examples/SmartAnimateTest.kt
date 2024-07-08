@@ -22,10 +22,21 @@ import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.annotation.DesignVariant
+
+enum class TestState {
+    A,
+    B
+}
 
 @DesignDoc(id = "RW3lFurXCoVDeqY2Y7bf4v")
 interface SmartAnimateTest {
     @DesignComponent(node = "#MainFrame") fun MainFrame()
+
+    @DesignComponent(node = "#RotationAnimationStage")
+    fun RotationTest(
+        @DesignVariant(property = "#RotationTestState") state: TestState,
+    )
 
     @DesignComponent(node = "#OneInstance") fun OneInstance()
 }

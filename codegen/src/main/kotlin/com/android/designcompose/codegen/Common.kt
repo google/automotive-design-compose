@@ -48,6 +48,7 @@ internal enum class CustomizationType {
     ComponentReplacement,
     ListContent,
     Visibility,
+    VisibilityState,
     TextStyle,
     VariantProperty,
     Meter,
@@ -89,6 +90,7 @@ internal fun createNewFile(
     file += "import androidx.compose.ui.platform.ComposeView\n"
     file += "import androidx.compose.runtime.CompositionLocalProvider\n"
     file += "import androidx.compose.runtime.compositionLocalOf\n"
+    file += "import androidx.compose.runtime.State\n"
     file += "import android.widget.FrameLayout\n"
     file += "import android.util.DisplayMetrics\n"
     file += "import android.app.Activity\n"
@@ -128,6 +130,7 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setTextFunction\n"
     file += "import com.android.designcompose.setVariantProperties\n"
     file += "import com.android.designcompose.setVisible\n"
+    file += "import com.android.designcompose.setVisibleState\n"
     file += "import com.android.designcompose.TapCallback\n"
     file += "import com.android.designcompose.ParentComponentInfo\n"
     file += "import com.android.designcompose.sDocClass\n"
@@ -183,6 +186,7 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "com.android.designcompose.ListContent" -> CustomizationType.ListContent
         "@Composable (ImageReplacementContext) -> Bitmap?" -> CustomizationType.ImageWithContext
         "Boolean" -> CustomizationType.Visibility
+        "State<Boolean>" -> CustomizationType.VisibilityState
         "TextStyle" -> CustomizationType.TextStyle
         "com.android.designcompose.Meter" -> CustomizationType.Meter
         "com.android.designcompose.MeterFunction" -> CustomizationType.MeterFunction

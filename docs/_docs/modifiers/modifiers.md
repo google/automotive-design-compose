@@ -186,11 +186,40 @@ interface HelloWorld {
         @Design(node = "#name") showText: Boolean,
     )
 }
+
+HelloWorldDoc.MainFrame(showText = false)
 ```
 
 The generated `MainFrame` `Composable` function contains a single `Boolean`
 argument called `showText`, which controls the visibility of the Figma node
 called `#name`.
+
+Visibility can also be customized using a `State<Boolean>`. Using a `State` can
+have performance benefits because reading the `value` out of a `State` will only
+cause the closest `@Composable` function in the call stack to be recomposed,
+wherease the simpler `Boolean` customization will always recompose the function
+that uses the customization. The following example illustrates how to use a
+`State<Boolean>` as the visibility customization type:
+
+```kotlin
+@DesignDoc(id = "<your figma doc id>")
+interface HelloWorld {
+    @DesignComponent(node = "#MainFrame")
+    fun MainFrame(
+        @Design(node = "#name") showText: State<Boolean>,
+    )
+}
+
+val showText = remember { mutableStateOf(true) }
+LaunchedEffect(Unit) {
+    while (true) {
+        delay(1000)
+        showText.value = !showText.value
+    }
+}
+
+HelloWorldDoc.MainFrame(showText = showText)
+```
 
 ### Component variants {#component-variants}
 

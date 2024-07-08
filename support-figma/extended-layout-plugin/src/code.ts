@@ -628,8 +628,8 @@ if (figma.command === "sync") {
   figma.ui.onmessage = (msg) => {
     if (msg.msg === "generate-localization-data") {
       Localization.generateLocalizationData(msg.contents);
-    } else if (msg.msg === "rename-localization-data") {
-      Localization.updateStringResName(msg.item);
+    } else if (msg.msg === "update-localization-data") {
+      Localization.updateStringRes(msg.item);
     } else if (msg.msg === "show-node") {
       Utils.showNode(msg.node);
     } else if (msg.msg === "close-plugin") {

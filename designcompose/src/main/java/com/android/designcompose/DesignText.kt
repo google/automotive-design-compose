@@ -103,6 +103,7 @@ internal fun DesignText(
     layoutId: Int,
 ): Boolean {
     if (!customizations.getVisible(nodeName)) return false
+    customizations.getVisibleState(nodeName)?.let { if (!it.value) return false }
 
     // Replace newline characters with the line separator that the system uses. This prevents
     // newline

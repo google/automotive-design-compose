@@ -173,7 +173,7 @@ private fun updateLayoutTree(
     layoutCache: HashMap<Int, Int>,
     layoutNodes: ArrayList<LayoutNode>,
     layoutParentChildren: ArrayList<LayoutParentChildren>,
-    parentLayoutId: Int = 0,
+    parentLayoutId: Int = -1,
 ): Boolean {
     // Make a unique layout id for this node by taking the root's unique id and adding the
     // file specific unique id (which is a u16).

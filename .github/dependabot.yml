@@ -25,28 +25,14 @@ registries:
 
 updates:
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - "/.github/actions/build-figma-resource"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
       non-breaking-github-workflow:
-        update-types:
-        - "minor"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: weekly
-      day: friday
-
-  # A directory of "/" only actually includes .github/workflows.
-  # A separate section is needed for our custom actions
-  - package-ecosystem: github-actions
-    directory: "/.github/actions/build-figma-resource"
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    target-branch: "main"
-    groups:
-      non-breaking-github-action:
         update-types:
         - "minor"
     open-pull-requests-limit: 5
@@ -85,26 +71,14 @@ updates:
       day: friday
 
   - package-ecosystem: npm
-    directory: /support-figma/auto-content-preview-widget
+    directories:
+      - "/support-figma/auto-content-preview-widget"
+      - "/support-figma/extended-layout-plugin"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
       non-breaking-figma-widget:
-        update-types:
-        - "minor"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: weekly
-      day: friday
-
-  - package-ecosystem: npm
-    directory: /support-figma/extended-layout-plugin
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    target-branch: "main"
-    groups:
-      non-breaking-figma-plugin:
         update-types:
         - "minor"
     open-pull-requests-limit: 5

@@ -30,6 +30,11 @@
         <item>下線付き、20\n</item>
         <item>取り消し線、20\n</item>
         <item>太字、32\n</item>
-        <item>太字の斜体、32</item>
+        <item>太字の斜体、32\n</item>
+        <item>文字間隔 8\u002d32</item>
     </string-array>
+    <string name="label_underline">下線付き 24</string>
+    <string name="label_strikethrough">取り消し線 36</string>
+    <string name="label_bold_italic">太字の斜体 32</string>
+    <string name="label_letter_spacing">文字間隔 8\u002d32</string>
 </resources>

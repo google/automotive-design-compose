@@ -75,6 +75,7 @@ import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.StyledTextRun
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
+import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.View
@@ -82,6 +83,7 @@ import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.serdegen.WindingRule
+import java.util.Optional
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
@@ -250,6 +252,18 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             override.node_style.font_style
         } else {
             base.node_style.font_style
+        }
+    nodeStyle.text_decoration =
+        if (override.node_style.text_decoration !is TextDecoration.None) {
+            override.node_style.text_decoration
+        } else {
+            base.node_style.text_decoration
+        }
+    nodeStyle.letter_spacing =
+        if (override.node_style.letter_spacing.isPresent) {
+            override.node_style.letter_spacing
+        } else {
+            base.node_style.letter_spacing
         }
     nodeStyle.font_family =
         if (override.node_style.font_family.isPresent) {
@@ -655,6 +669,8 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
     builder.font_family = font_family
     builder.font_weight = font_weight
     builder.font_style = font_style
+    builder.text_decoration = text_decoration
+    builder.letter_spacing = letter_spacing
     builder.font_stretch = font_stretch
     builder.background = background
     builder.box_shadow = box_shadow

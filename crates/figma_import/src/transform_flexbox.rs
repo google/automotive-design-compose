@@ -1101,6 +1101,18 @@ fn visit_node(
         if text_style.italic {
             style.node_style.font_style = FontStyle::Italic;
         }
+        style.node_style.text_decoration = match text_style.text_decoration {
+            crate::figma_schema::TextDecoration::None => {
+                crate::toolkit_font_style::TextDecoration::None
+            }
+            crate::figma_schema::TextDecoration::Underline => {
+                crate::toolkit_font_style::TextDecoration::Underline
+            }
+            crate::figma_schema::TextDecoration::Strikethrough => {
+                crate::toolkit_font_style::TextDecoration::Strikethrough
+            }
+        };
+        style.node_style.letter_spacing = Some(text_style.letter_spacing.clone());
         style.node_style.font_family = text_style.font_family.clone();
         match text_style.text_align_horizontal {
             TextAlignHorizontal::Center => style.node_style.text_align = TextAlign::Center,
@@ -1232,6 +1244,23 @@ fn visit_node(
                 } else {
                     style.node_style.font_weight.clone()
                 };
+                let font_style = if let Some(true) = sub_style.italic {
+                    crate::toolkit_font_style::FontStyle::Italic
+                } else {
+                    style.node_style.font_style.clone()
+                };
+                let text_decoration = match sub_style.text_decoration {
+                    Some(crate::figma_schema::TextDecoration::Strikethrough) => {
+                        crate::toolkit_font_style::TextDecoration::Strikethrough
+                    }
+                    Some(crate::figma_schema::TextDecoration::Underline) => {
+                        crate::toolkit_font_style::TextDecoration::Underline
+                    }
+                    Some(crate::figma_schema::TextDecoration::None) => {
+                        style.node_style.text_decoration.clone()
+                    }
+                    None => style.node_style.text_decoration.clone(),
+                };
                 runs.push(StyledTextRun {
                     text: current_run.clone(),
                     style: TextStyle {
@@ -1239,9 +1268,12 @@ fn visit_node(
                         font_size,
                         font_family: sub_style.font_family.clone(),
                         font_weight,
-                        font_style: crate::toolkit_font_style::FontStyle::Normal, //sub_style.font_style.unwrap_or(style.font_style),
+                        font_style: font_style, // Italic or Normal
                         font_stretch: style.node_style.font_stretch, // Not in SubTypeStyle.
-                        letter_spacing: sub_style.letter_spacing.unwrap_or(1.0), // no letter_spacing on ViewStyle.
+                        letter_spacing: sub_style
+                            .letter_spacing
+                            .unwrap_or(style.node_style.letter_spacing.unwrap_or(0.0)),
+                        text_decoration: text_decoration,
                         line_height: style.node_style.line_height,
                         font_features: convert_opentype_flags(
                             &sub_style

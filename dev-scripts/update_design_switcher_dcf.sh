@@ -37,6 +37,7 @@ cargo run --bin fetch --features=fetch -- \
 --nodes="#NodeNamesCheckbox" \
 --nodes="#MiniMessagesCheckbox" \
 --nodes="#ShowRecompositionCheckbox" \
+--nodes="#UseLocalStringResCheckbox" \
 --nodes="#DesignViewMain" \
 --nodes="#LiveMode" \
 --nodes="#TopStatusBar" \

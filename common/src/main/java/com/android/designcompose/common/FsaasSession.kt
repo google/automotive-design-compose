@@ -17,4 +17,4 @@
 package com.android.designcompose.common
 
 // Current serialized doc version
-const val FSAAS_DOC_VERSION = 19
+const val FSAAS_DOC_VERSION = 20

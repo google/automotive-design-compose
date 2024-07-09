@@ -30,6 +30,11 @@
         <item>Subrayada, 20\n</item>
         <item>Tachado, 20\n</item>
         <item>NEGRITA, 32\n</item>
-        <item>Negrita Cursiva, 32</item>
+        <item>Negrita Cursiva, 32\n</item>
+        <item>Espaciado entre letras 8\u002d32</item>
     </string-array>
+    <string name="label_underline">Subrayada 24</string>
+    <string name="label_strikethrough">Tachado 36</string>
+    <string name="label_bold_italic">Negrita Cursiva 32</string>
+    <string name="label_letter_spacing">Espaciado entre letras 8\u002d32</string>
 </resources>

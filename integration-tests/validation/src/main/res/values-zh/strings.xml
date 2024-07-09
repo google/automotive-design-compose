@@ -30,6 +30,11 @@
         <item>下划线样式，20\n</item>
         <item>删除线样式，20\n</item>
         <item>粗体，32\n</item>
-        <item>粗斜体，32</item>
+        <item>粗斜体，32\n</item>
+        <item>字母间距 8\u002d32</item>
     </string-array>
+    <string name="label_underline">下划线样式 24</string>
+    <string name="label_strikethrough">删除线样式 36</string>
+    <string name="label_bold_italic">粗斜体 32</string>
+    <string name="label_letter_spacing">字母间距 8\u002d32</string>
 </resources>

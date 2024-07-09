@@ -40,6 +40,14 @@ enum FontStyle {
   FONT_STYLE_OBLIQUE = 3;
 }
 
+// Allows underline or strikethrough to be selected.
+enum TextDecoration {
+  TEXT_DECORATION_UNSPECIFIED = 0;
+  TEXT_DECORATION_NONE = 1;
+  TEXT_DECORATION_UNDERLINE = 2;
+  TEXT_DECORATION_STRIKETHROUGH = 3;
+}
+
 // The width of a font as an approximate fraction of the normal width.
 // Widths range from 0.5 to 2.0 inclusive, with 1.0 as the normal width.
 message FontStretch {

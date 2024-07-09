@@ -21,7 +21,7 @@ updates:
       - "/.github/actions/build-figma-resource"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "main"
+    target-branch: "dependapool"
     groups:
       non-breaking-github-workflow:
         update-types:
@@ -35,7 +35,7 @@ updates:
     directory: /
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "main"
+    target-branch: "dependapool"
     allow:
       - dependency-type: "all"
     groups:
@@ -51,7 +51,7 @@ updates:
     directory: /docs
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "main"
+    target-branch: "dependapool"
     groups:
       non-breaking-bundler:
         update-types:
@@ -67,7 +67,7 @@ updates:
       - "/support-figma/extended-layout-plugin"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "main"
+    target-branch: "dependapool"
     groups:
       non-breaking-figma-widget:
         update-types:
@@ -81,7 +81,7 @@ updates:
     directory: "/"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "main"
+    target-branch: "dependapool"
     groups:
       non-breaking-gradle:
         update-types:

@@ -14,8 +14,40 @@
  * limitations under the License.
  */
 
-pub mod color;
-pub mod font;
-pub mod geometry;
-pub mod node;
-pub mod path;
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
+pub enum BlendMode {
+    ///Normal blends:
+    #[default]
+    PassThrough,
+    ///(only applicable to objects with children)
+    Normal,
+
+    ///Darken:
+    Darken,
+    Multiply,
+    LinearBurn,
+    ColorBurn,
+
+    ///Lighten:
+    Lighten,
+    Screen,
+    LinearDodge,
+    ColorDodge,
+
+    ///Contrast:
+    Overlay,
+    SoftLight,
+    HardLight,
+
+    ///Inversion:
+    Difference,
+    Exclusion,
+
+    ///Component:
+    Hue,
+    Saturation,
+    Color,
+    Luminosity,
+}

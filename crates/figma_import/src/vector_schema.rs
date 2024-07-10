@@ -14,9 +14,10 @@
 
 use std::convert::TryFrom;
 
+use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use serde::{Deserialize, Serialize};
 
-use crate::toolkit_style::{AffineTransform, Background, BlendMode, BoxShadow, Stroke};
+use crate::toolkit_style::{AffineTransform, Background, BoxShadow, Stroke};
 
 // This is a simple vector representation that should reproduce Figma or
 // another design tool's rendering. It simplifies the renderer's task by

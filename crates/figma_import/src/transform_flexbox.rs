@@ -19,8 +19,8 @@ use crate::toolkit_font_style::FontWeight;
 use crate::toolkit_layout_style::Overflow;
 
 use crate::toolkit_style::{
-    Background, FilterOp, FontFeature, GridLayoutType, GridSpan, LayoutTransform, LineHeight,
-    MeterData, ShadowBox, StyledTextRun, TextAlign, TextOverflow, TextStyle, ViewStyle,
+    Background, GridLayoutType, GridSpan, LayoutTransform, MeterData, ShadowBox, StyledTextRun,
+    TextStyle, ViewStyle,
 };
 
 use crate::vector_schema;
@@ -28,10 +28,10 @@ use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy}, //ExtendedTextLayout
     figma_schema::{
-        BlendMode, Component, ComponentSet, EffectType, HorizontalLayoutConstraintValue,
-        LayoutAlign, LayoutAlignItems, LayoutMode, LayoutSizing, LayoutSizingMode, LineHeightUnit,
-        Node, NodeData, PaintData, StrokeAlign, TextAlignHorizontal, TextAlignVertical,
-        TextAutoResize, TextTruncation, VerticalLayoutConstraintValue,
+        self, Component, ComponentSet, EffectType, HorizontalLayoutConstraintValue, LayoutAlign,
+        LayoutAlignItems, LayoutMode, LayoutSizing, LayoutSizingMode, LineHeightUnit, Node,
+        NodeData, PaintData, TextAlignHorizontal, TextAutoResize, TextTruncation,
+        VerticalLayoutConstraintValue,
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
@@ -42,12 +42,16 @@ use crate::{
 };
 
 use dc_bundle::definition::layout::FlexWrap;
-use dc_bundle::legacy_definition::element::font::FontStyle;
+use dc_bundle::legacy_definition::element::font::{FontFeature, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Dimension;
+use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
 };
+use dc_bundle::legacy_definition::modifier::blend::BlendMode;
+use dc_bundle::legacy_definition::modifier::filter::FilterOp;
+use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use log::error;
 use unicode_segmentation::UnicodeSegmentation;
 //::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};
@@ -493,29 +497,27 @@ fn convert_transform(transform: &crate::figma_schema::Transform) -> LayoutTransf
     )
 }
 
-fn convert_blend_mode(
-    blend_mode: Option<crate::figma_schema::BlendMode>,
-) -> crate::toolkit_style::BlendMode {
+fn convert_blend_mode(blend_mode: Option<crate::figma_schema::BlendMode>) -> BlendMode {
     match blend_mode {
-        Some(BlendMode::PassThrough) | None => crate::toolkit_style::BlendMode::PassThrough,
-        Some(BlendMode::Normal) => crate::toolkit_style::BlendMode::Normal,
-        Some(BlendMode::Darken) => crate::toolkit_style::BlendMode::Darken,
-        Some(BlendMode::Multiply) => crate::toolkit_style::BlendMode::Multiply,
-        Some(BlendMode::LinearBurn) => crate::toolkit_style::BlendMode::LinearBurn,
-        Some(BlendMode::ColorBurn) => crate::toolkit_style::BlendMode::ColorBurn,
-        Some(BlendMode::Lighten) => crate::toolkit_style::BlendMode::Lighten,
-        Some(BlendMode::Screen) => crate::toolkit_style::BlendMode::Screen,
-        Some(BlendMode::LinearDodge) => crate::toolkit_style::BlendMode::LinearDodge,
-        Some(BlendMode::ColorDodge) => crate::toolkit_style::BlendMode::ColorDodge,
-        Some(BlendMode::Overlay) => crate::toolkit_style::BlendMode::Overlay,
-        Some(BlendMode::SoftLight) => crate::toolkit_style::BlendMode::SoftLight,
-        Some(BlendMode::HardLight) => crate::toolkit_style::BlendMode::HardLight,
-        Some(BlendMode::Difference) => crate::toolkit_style::BlendMode::Difference,
-        Some(BlendMode::Exclusion) => crate::toolkit_style::BlendMode::Exclusion,
-        Some(BlendMode::Hue) => crate::toolkit_style::BlendMode::Hue,
-        Some(BlendMode::Saturation) => crate::toolkit_style::BlendMode::Saturation,
-        Some(BlendMode::Color) => crate::toolkit_style::BlendMode::Color,
-        Some(BlendMode::Luminosity) => crate::toolkit_style::BlendMode::Luminosity,
+        Some(crate::figma_schema::BlendMode::PassThrough) | None => BlendMode::PassThrough,
+        Some(crate::figma_schema::BlendMode::Normal) => BlendMode::Normal,
+        Some(crate::figma_schema::BlendMode::Darken) => BlendMode::Darken,
+        Some(crate::figma_schema::BlendMode::Multiply) => BlendMode::Multiply,
+        Some(crate::figma_schema::BlendMode::LinearBurn) => BlendMode::LinearBurn,
+        Some(crate::figma_schema::BlendMode::ColorBurn) => BlendMode::ColorBurn,
+        Some(crate::figma_schema::BlendMode::Lighten) => BlendMode::Lighten,
+        Some(crate::figma_schema::BlendMode::Screen) => BlendMode::Screen,
+        Some(crate::figma_schema::BlendMode::LinearDodge) => BlendMode::LinearDodge,
+        Some(crate::figma_schema::BlendMode::ColorDodge) => BlendMode::ColorDodge,
+        Some(crate::figma_schema::BlendMode::Overlay) => BlendMode::Overlay,
+        Some(crate::figma_schema::BlendMode::SoftLight) => BlendMode::SoftLight,
+        Some(crate::figma_schema::BlendMode::HardLight) => BlendMode::HardLight,
+        Some(crate::figma_schema::BlendMode::Difference) => BlendMode::Difference,
+        Some(crate::figma_schema::BlendMode::Exclusion) => BlendMode::Exclusion,
+        Some(crate::figma_schema::BlendMode::Hue) => BlendMode::Hue,
+        Some(crate::figma_schema::BlendMode::Saturation) => BlendMode::Saturation,
+        Some(crate::figma_schema::BlendMode::Color) => BlendMode::Color,
+        Some(crate::figma_schema::BlendMode::Luminosity) => BlendMode::Luminosity,
     }
 }
 
@@ -1122,9 +1124,9 @@ fn visit_node(
             TextAlignHorizontal::Justified => style.node_style.text_align = TextAlign::Center, // XXX
         }
         style.node_style.text_align_vertical = match text_style.text_align_vertical {
-            TextAlignVertical::Center => crate::toolkit_style::TextAlignVertical::Center,
-            TextAlignVertical::Top => crate::toolkit_style::TextAlignVertical::Top,
-            TextAlignVertical::Bottom => crate::toolkit_style::TextAlignVertical::Bottom,
+            figma_schema::TextAlignVertical::Center => TextAlignVertical::Center,
+            figma_schema::TextAlignVertical::Top => TextAlignVertical::Top,
+            figma_schema::TextAlignVertical::Bottom => TextAlignVertical::Bottom,
         };
         style.node_style.line_height = match text_style.line_height_unit {
             // It's a percentage of the font size.
@@ -1331,20 +1333,19 @@ fn visit_node(
     // Copy out the common styles from frames and supported content.
     style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
     if let Some(individual_stroke_weights) = node.individual_stroke_weights {
-        style.node_style.stroke.stroke_weight = crate::toolkit_style::StrokeWeight::Individual {
+        style.node_style.stroke.stroke_weight = StrokeWeight::Individual {
             top: individual_stroke_weights.top,
             right: individual_stroke_weights.right,
             bottom: individual_stroke_weights.bottom,
             left: individual_stroke_weights.left,
         };
     } else if let Some(stroke_weight) = node.stroke_weight {
-        style.node_style.stroke.stroke_weight =
-            crate::toolkit_style::StrokeWeight::Uniform(stroke_weight);
+        style.node_style.stroke.stroke_weight = StrokeWeight::Uniform(stroke_weight);
     }
     style.node_style.stroke.stroke_align = match node.stroke_align {
-        Some(StrokeAlign::Inside) => crate::toolkit_style::StrokeAlign::Inside,
-        Some(StrokeAlign::Center) => crate::toolkit_style::StrokeAlign::Center,
-        Some(StrokeAlign::Outside) | None => crate::toolkit_style::StrokeAlign::Outside,
+        Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::Inside,
+        Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center,
+        Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside,
     };
 
     // Convert any path data we have; we'll use it for non-frame types.

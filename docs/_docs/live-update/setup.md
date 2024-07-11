@@ -25,18 +25,21 @@ To configure access to your documents, you need to generate an access token.
 
 2. Scroll down to **Personal access tokens** and click **Generate new token**
 
-3. Automotive Design for Compose requires a token with read-only File content access. All other scopes can be left set to "No access". Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
+3. Automotive Design for Compose requires a token with read-only File content access and read-only Variables access if available. All other scopes can be left set to "No access". Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
+    * Note: variable access is only available under the Figma Enterprise plan. If variable access
+    is not available, developers can still get most of the DesignCompose functionality other than
+    features related to variables. See [Variables][2] page for more details.
 
     ![Figma Token Generation Screen](figma-token.png)
 
 4. Save the token in the following well-known location on your file system. The location depends on your operating system:
 
-    - Linux, MacOS: `$HOME/.config/figma_access_token`
+    * Linux, MacOS: `$HOME/.config/figma_access_token`
 
-    - Windows: `%APPDATA%\figma_access_token`
+    * Windows: `%APPDATA%\figma_access_token`
 
 To learn more about personal access tokens, see [Manage personal access
-tokens][2]{:.external} in the Figma help center.
+tokens][3]{:.external} in the Figma help center.
 
 ## Set your Figma access token in an app {#SetUpFigmaToken}
 
@@ -70,7 +73,7 @@ their addresses.
 
 ### With Android Debug Bridge {#FigmaTokenWithAdb}
 
-Set the Figma token using adb to send an [explicit intent][3] directed to the
+Set the Figma token using adb to send an [explicit intent][4] directed to the
 app. The intent action is `setApiKey`, and it requires extra string data with
 key `ApiKey` and value `<your Figma Token>`. Both the app's main activity and a
 service that is included in DesignCompose can receive the intent. To start the
@@ -87,5 +90,6 @@ adb shell am startservice -n "com.android.designcompose.tutorial/com.android.des
 ```
 
 [1]: https://www.figma.com
-[2]: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens
-[3]: https://developer.android.com/guide/components/intents-filters#Types
+[2]: {%link _docs/variables.md %}
+[3]: <https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens>
+[4]: <https://developer.android.com/guide/components/intents-filters#Types>

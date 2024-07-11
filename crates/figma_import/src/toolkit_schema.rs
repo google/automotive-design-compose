@@ -33,7 +33,7 @@ pub use crate::figma_schema::{FigmaColor, OverflowDirection, Rectangle, StrokeCa
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum NumOrVar {
     Num(f32),
-    Var(String),
+    Var { id: String, fallback: f32 },
 }
 impl NumOrVar {
     pub(crate) fn from_var(
@@ -43,7 +43,7 @@ impl NumOrVar {
     ) -> NumOrVar {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
-            NumOrVar::Var(var)
+            NumOrVar::Var { id: var, fallback: num }
         } else {
             NumOrVar::Num(num)
         }
@@ -53,7 +53,7 @@ impl NumOrVar {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ColorOrVar {
     Color(Color),
-    Var(String),
+    Var { id: String, fallback: Color },
 }
 impl ColorOrVar {
     pub(crate) fn from_var(
@@ -63,7 +63,7 @@ impl ColorOrVar {
     ) -> ColorOrVar {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
-            ColorOrVar::Var(var)
+            ColorOrVar::Var { id: var, fallback: color.into() }
         } else {
             ColorOrVar::Color(color.into())
         }

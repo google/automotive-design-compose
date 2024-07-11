@@ -333,7 +333,7 @@ internal fun DocServer.fetchDocuments(
                     DesignSettings.fileFetchStatus[id]?.lastUpdateFromFetch = now
                 }
 
-                VariableManager.init(doc.c.docId.id, doc.c.document.variable_map)
+                VariableManager.init(doc.c.docId, doc.c.document.variable_map)
 
                 // Get the list of subscribers to this document id
                 val subs: Array<LiveDocSubscription> =
@@ -487,7 +487,7 @@ internal fun DocServer.doc(
                 }
                 targetDoc
             }
-        targetDoc?.let { VariableManager.init(it.c.docId.id, it.c.document.variable_map) }
+        targetDoc?.let { VariableManager.init(it.c.docId, it.c.document.variable_map) }
         docUpdateCallback?.invoke(docId, targetDoc?.c?.toSerializedBytes(Feedback))
         setLiveDoc(targetDoc)
 
@@ -503,7 +503,7 @@ internal fun DocServer.doc(
     // Don't return a doc with the wrong ID.
     if (liveDoc != null && liveDoc.c.docId == docId) return liveDoc
     if (preloadedDoc != null && preloadedDoc.c.docId == docId) {
-        VariableManager.init(preloadedDoc.c.docId.id, preloadedDoc.c.document.variable_map)
+        VariableManager.init(preloadedDoc.c.docId, preloadedDoc.c.document.variable_map)
         docUpdateCallback?.invoke(docId, preloadedDoc.c.toSerializedBytes(Feedback))
         endSection()
         return preloadedDoc
@@ -519,7 +519,7 @@ internal fun DocServer.doc(
             synchronized(DesignSettings.fileFetchStatus) {
                 DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
             }
-            VariableManager.init(decodedDoc.c.docId.id, decodedDoc.c.document.variable_map)
+            VariableManager.init(decodedDoc.c.docId, decodedDoc.c.document.variable_map)
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             endSection()
             return decodedDoc

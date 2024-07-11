@@ -65,18 +65,32 @@ message Variable {
 // a design variable. This allows for dynamic values that can adapt based on the
 // current variable values.
 message NumOrVar {
+
+  // Holds a reference to a design variable. Fallback is the node float value from figma.
+  message NumVar {
+    string id = 1;
+    float fallback = 2;
+  }
+
   oneof NumOrVar {
     float num = 1;
-    string var = 2;
+    NumVar var = 2;
   }
 }
 
 // Holds either a direct color representation (e.g., RGBA values) or a reference
 // to a color variable, providing flexibility in how you define colors.
 message ColorOrVar {
+
+  // Holds a reference to a design variable. Fallback is the node color value from figma.
+  message ColorVar {
+    string id = 1;
+    Color fallback = 2;
+  }
+
   oneof ColorOrVar {
     Color color = 1;
-    string var = 2;
+    ColorVar var = 2;
   }
 }
 

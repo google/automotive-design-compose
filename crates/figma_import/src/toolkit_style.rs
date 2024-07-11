@@ -23,7 +23,7 @@ use std::collections::HashMap;
 
 use crate::{
     color::Color,
-    toolkit_font_style::{FontStretch, FontStyle, FontWeight},
+    toolkit_font_style::{FontStretch, FontStyle, FontWeight, TextDecoration},
     toolkit_layout_style::{Display, LayoutSizing, Number, Overflow},
     toolkit_schema::{ColorOrVar, NumOrVar},
 };
@@ -118,6 +118,7 @@ pub struct TextStyle {
     pub font_style: FontStyle,
     pub font_stretch: FontStretch,
     pub letter_spacing: f32,
+    pub text_decoration: TextDecoration,
     pub line_height: LineHeight,
     pub font_features: Vec<FontFeature>,
 }
@@ -130,7 +131,8 @@ impl Default for TextStyle {
             font_weight: FontWeight::NORMAL,
             font_style: FontStyle::Normal,
             font_stretch: FontStretch::NORMAL,
-            letter_spacing: 1.0,
+            letter_spacing: 0.0,
+            text_decoration: TextDecoration::None,
             line_height: LineHeight::Percent(1.0),
             font_features: Vec::new(),
         }
@@ -156,6 +158,18 @@ impl StyledTextRun {
     pub fn italic(self) -> Self {
         StyledTextRun {
             style: TextStyle { font_style: FontStyle::Italic, ..self.style },
+            text: self.text,
+        }
+    }
+    pub fn underline(self) -> Self {
+        StyledTextRun {
+            style: TextStyle { text_decoration: TextDecoration::Underline, ..self.style },
+            text: self.text,
+        }
+    }
+    pub fn strikethrough(self) -> Self {
+        StyledTextRun {
+            style: TextStyle { text_decoration: TextDecoration::Strikethrough, ..self.style },
             text: self.text,
         }
     }
@@ -494,6 +508,8 @@ pub struct NodeStyle {
     pub font_family: Option<String>,
     pub font_weight: FontWeight,
     pub font_style: FontStyle,
+    pub text_decoration: TextDecoration,
+    pub letter_spacing: Option<f32>,
     pub font_stretch: FontStretch,
     pub background: Vec<Background>,
     pub box_shadow: Vec<BoxShadow>,
@@ -538,6 +554,8 @@ impl Default for NodeStyle {
             font_family: None,
             font_weight: FontWeight::NORMAL,
             font_style: FontStyle::Normal,
+            text_decoration: TextDecoration::None,
+            letter_spacing: None,
             font_stretch: FontStretch::NORMAL,
             background: Vec::new(),
             box_shadow: Vec::new(),
@@ -600,6 +618,12 @@ impl ViewStyle {
         }
         if self.node_style.font_style != other.node_style.font_style {
             delta.node_style.font_style = other.node_style.font_style;
+        }
+        if self.node_style.text_decoration != other.node_style.text_decoration {
+            delta.node_style.text_decoration = other.node_style.text_decoration;
+        }
+        if self.node_style.letter_spacing != other.node_style.letter_spacing {
+            delta.node_style.letter_spacing = other.node_style.letter_spacing;
         }
         if self.node_style.font_stretch != other.node_style.font_stretch {
             delta.node_style.font_stretch = other.node_style.font_stretch;

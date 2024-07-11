@@ -33,6 +33,19 @@
     <item>Underlined, 20\n</item>
     <item>Strikethrough, 20\n</item>
     <item>BOLD, 32\n</item>
-    <item>Bold Italic, 32</item>
+    <item>Bold Italic, 32\n</item>
+    <item>Letter Spacing 8\u002d32</item>
   </string-array>
+  <string name="label_underline"
+      description="Style underline with font size 24 [CHAR_LIMIT=20]"
+      translatable="true">Underline 24</string>
+  <string name="label_strikethrough"
+      description="Style strikethrough with font size 36 [CHAR_LIMIT=25]"
+      translatable="true">Strikethrough 36</string>
+  <string name="label_bold_italic"
+      description="Style bold italic with font size 32 [CHAR_LIMIT=25]"
+      translatable="true">Bold Italic 32</string>
+  <string name="label_letter_spacing"
+      description="Style letter spacing 8 with font size 32 [CHAR_LIMIT=30]"
+      translatable="true">Letter Spacing 8\u002d32</string>
 </resources>

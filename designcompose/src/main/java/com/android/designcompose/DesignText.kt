@@ -54,6 +54,7 @@ import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.StyledTextRun
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
+import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
@@ -162,6 +163,15 @@ internal fun DesignText(
                     fontFeatureSettings =
                         run.style.font_features.joinToString(", ") { feature ->
                             String(feature.tag.toByteArray())
+                        },
+                    letterSpacing = run.style.letter_spacing.sp,
+                    textDecoration =
+                        when (run.style.text_decoration) {
+                            is TextDecoration.Underline ->
+                                androidx.compose.ui.text.style.TextDecoration.Underline
+                            is TextDecoration.Strikethrough ->
+                                androidx.compose.ui.text.style.TextDecoration.LineThrough
+                            else -> androidx.compose.ui.text.style.TextDecoration.None
                         }
                 )
             )
@@ -195,6 +205,17 @@ internal fun DesignText(
                 is FontStyle.Italic -> androidx.compose.ui.text.font.FontStyle.Italic
                 else -> androidx.compose.ui.text.font.FontStyle.Normal
             }
+    val textDecoration =
+        customTextStyle?.textDecoration
+            ?: when (style.node_style.text_decoration) {
+                is TextDecoration.Underline ->
+                    androidx.compose.ui.text.style.TextDecoration.Underline
+                is TextDecoration.Strikethrough ->
+                    androidx.compose.ui.text.style.TextDecoration.LineThrough
+                else -> androidx.compose.ui.text.style.TextDecoration.None
+            }
+    val letterSpacing =
+        customTextStyle?.letterSpacing ?: style.node_style.letter_spacing.orElse(0f).sp
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.
     val shadow =
@@ -238,6 +259,8 @@ internal fun DesignText(
             lineHeight = lineHeight,
             fontWeight = fontWeight,
             fontStyle = fontStyle,
+            textDecoration = textDecoration,
+            letterSpacing = letterSpacing,
             textAlign =
                 customTextStyle?.textAlign
                     ?: when (style.node_style.text_align) {

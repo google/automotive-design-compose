@@ -68,6 +68,21 @@ impl Display for FontStyle {
         Debug::fmt(self, f)
     }
 }
+
+/// Allows strikethrough or underline text decoration to be selected.
+#[derive(Clone, Copy, PartialEq, Debug, Hash, Deserialize, Serialize, Default)]
+pub enum TextDecoration {
+    #[default]
+    None,
+    Strikethrough,
+    Underline,
+}
+
+impl Display for TextDecoration {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        Debug::fmt(self, f)
+    }
+}
 /// The degree of blackness or stroke thickness of a font. This value ranges from 100.0 to 900.0,
 /// with 400.0 as normal.
 #[derive(Clone, Debug, Deserialize, Serialize)]

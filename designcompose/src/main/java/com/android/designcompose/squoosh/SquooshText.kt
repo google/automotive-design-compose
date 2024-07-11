@@ -47,6 +47,7 @@ import com.android.designcompose.getTextStyle
 import com.android.designcompose.getValue
 import com.android.designcompose.isAutoWidthText
 import com.android.designcompose.serdegen.LineHeight
+import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import java.util.Optional
@@ -126,6 +127,16 @@ internal fun squooshComputeTextInfo(
                                     run.style.font_features.joinToString(", ") { feature ->
                                         String(feature.tag.toByteArray())
                                     },
+                                letterSpacing = run.style.letter_spacing.sp,
+                                textDecoration =
+                                    when (run.style.text_decoration) {
+                                        is TextDecoration.Underline ->
+                                            androidx.compose.ui.text.style.TextDecoration.Underline
+                                        is TextDecoration.Strikethrough ->
+                                            androidx.compose.ui.text.style.TextDecoration
+                                                .LineThrough
+                                        else -> androidx.compose.ui.text.style.TextDecoration.None
+                                    },
                                 // platformStyle = PlatformSpanStyle(includeFontPadding = false),
                             ))
                         )
@@ -153,6 +164,17 @@ internal fun squooshComputeTextInfo(
                 is com.android.designcompose.serdegen.FontStyle.Italic -> FontStyle.Italic
                 else -> FontStyle.Normal
             }
+    val textDecoration =
+        customTextStyle?.textDecoration
+            ?: when (v.style.node_style.text_decoration) {
+                is TextDecoration.Underline ->
+                    androidx.compose.ui.text.style.TextDecoration.Underline
+                is TextDecoration.Strikethrough ->
+                    androidx.compose.ui.text.style.TextDecoration.LineThrough
+                else -> androidx.compose.ui.text.style.TextDecoration.None
+            }
+    val letterSpacing =
+        customTextStyle?.letterSpacing ?: v.style.node_style.letter_spacing.orElse(0f).sp
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.
     val shadow =
@@ -187,6 +209,8 @@ internal fun squooshComputeTextInfo(
                 },
             lineHeight = lineHeight,
             fontWeight = fontWeight,
+            textDecoration = textDecoration,
+            letterSpacing = letterSpacing,
             fontStyle = fontStyle,
             textAlign =
                 customTextStyle?.textAlign

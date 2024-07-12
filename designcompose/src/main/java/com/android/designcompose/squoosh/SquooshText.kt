@@ -193,12 +193,9 @@ internal fun squooshComputeTextInfo(
                 )
             )
         }
-    val textBrushAndOpacity =
-        v.style.node_style.text_color.asBrush(document, density.density, variableState)
+    // The brush and opacity is computed later at rendering time.
     val textStyle =
         (TextStyle(
-            brush = textBrushAndOpacity?.first,
-            alpha = textBrushAndOpacity?.second ?: 1.0f,
             fontSize =
                 customTextStyle?.fontSize
                     ?: v.style.node_style.font_size.getValue(variableState).sp,

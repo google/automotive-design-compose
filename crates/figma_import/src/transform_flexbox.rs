@@ -1070,6 +1070,28 @@ fn visit_node(
     // Blend mode is common to all elements.
     style.node_style.blend_mode = convert_blend_mode(node.blend_mode);
 
+    for stroke in node.strokes.iter().filter(|paint| paint.visible) {
+        style.node_style.stroke.strokes.push(compute_background(stroke, images, &node.name));
+    }
+
+    // Copy out the common styles from frames and supported content.
+    style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
+    if let Some(individual_stroke_weights) = node.individual_stroke_weights {
+        style.node_style.stroke.stroke_weight = StrokeWeight::Individual {
+            top: individual_stroke_weights.top,
+            right: individual_stroke_weights.right,
+            bottom: individual_stroke_weights.bottom,
+            left: individual_stroke_weights.left,
+        };
+    } else if let Some(stroke_weight) = node.stroke_weight {
+        style.node_style.stroke.stroke_weight = StrokeWeight::Uniform(stroke_weight);
+    }
+    style.node_style.stroke.stroke_align = match node.stroke_align {
+        Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::Inside,
+        Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center,
+        Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside,
+    };
+
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {
         style.node_style.overflow =
@@ -1324,28 +1346,6 @@ fn visit_node(
     for fill in node.fills.iter().filter(|paint| paint.visible) {
         style.node_style.background.push(compute_background(fill, images, &node.name));
     }
-
-    for stroke in node.strokes.iter().filter(|paint| paint.visible) {
-        style.node_style.stroke.strokes.push(compute_background(stroke, images, &node.name));
-    }
-
-    // Copy out the common styles from frames and supported content.
-    style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
-    if let Some(individual_stroke_weights) = node.individual_stroke_weights {
-        style.node_style.stroke.stroke_weight = StrokeWeight::Individual {
-            top: individual_stroke_weights.top,
-            right: individual_stroke_weights.right,
-            bottom: individual_stroke_weights.bottom,
-            left: individual_stroke_weights.left,
-        };
-    } else if let Some(stroke_weight) = node.stroke_weight {
-        style.node_style.stroke.stroke_weight = StrokeWeight::Uniform(stroke_weight);
-    }
-    style.node_style.stroke.stroke_align = match node.stroke_align {
-        Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::Inside,
-        Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center,
-        Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside,
-    };
 
     // Convert any path data we have; we'll use it for non-frame types.
     let fill_paths = if let Some(fills) = &node.fill_geometry {

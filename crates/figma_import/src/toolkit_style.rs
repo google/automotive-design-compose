@@ -433,7 +433,7 @@ pub struct NodeStyle {
 impl Default for NodeStyle {
     fn default() -> NodeStyle {
         NodeStyle {
-            text_color: Background::Solid(ColorOrVar::Color(Color::from_u8s(0, 0, 0, 255))),
+            text_color: Background::None,
             font_size: NumOrVar::Num(18.0),
             font_family: None,
             font_weight: FontWeight::NORMAL,

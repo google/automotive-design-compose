@@ -29,8 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.isIdentity
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
@@ -40,7 +43,9 @@ import androidx.compose.ui.text.Paragraph
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
@@ -244,10 +249,11 @@ internal fun DesignText(
 
     val textBrushAndOpacity =
         style.node_style.text_color.asBrush(document, density.density, variableState)
+
     val textStyle =
         @OptIn(ExperimentalTextApi::class)
         TextStyle(
-            brush = customBrush ?: textBrushAndOpacity?.first,
+            brush = customBrush ?: textBrushAndOpacity?.first ?: SolidColor(Color.Transparent),
             alpha = textBrushAndOpacity?.second ?: 1.0f,
             fontSize =
                 customTextStyle?.fontSize ?: style.node_style.font_size.getValue(variableState).sp,
@@ -357,9 +363,33 @@ internal fun DesignText(
                     }
                 )
             } else {
+                var textLayoutResult: TextLayoutResult? = null
                 BasicText(
                     annotatedText,
-                    modifier = textModifier,
+                    onTextLayout = { result ->
+                        textLayoutResult = result
+                    }, // Capture TextLayoutResult
+                    modifier =
+                        textModifier.drawWithContent {
+                            textLayoutResult?.let {
+                                drawContent()
+                                val strokeWidth =
+                                    style.node_style.stroke.stroke_weight.toUniform() *
+                                        density.density
+
+                                style.node_style.stroke.strokes.forEach { stroke ->
+                                    stroke.asBrush(document, density.density, variableState)?.let {
+                                        brushAndOpacity ->
+                                        drawText(
+                                            textLayoutResult = textLayoutResult!!,
+                                            brush = brushAndOpacity.first,
+                                            alpha = brushAndOpacity.second,
+                                            drawStyle = Stroke(width = strokeWidth)
+                                        )
+                                    }
+                                }
+                            }
+                        },
                     style = textStyle,
                     overflow = overflow,
                 )

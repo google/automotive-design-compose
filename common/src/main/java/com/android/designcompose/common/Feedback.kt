@@ -172,6 +172,15 @@ abstract class FeedbackImpl {
         setStatus("Unable to save doc $truncatedId: $error", FeedbackLevel.Error, docId)
     }
 
+    fun documentVariableMissingWarning(docId: DesignDocId, varId: String) {
+        val truncatedId = shortDocId(docId)
+        setStatus(
+            "Failed to get variable value for $varId in doc $truncatedId",
+            FeedbackLevel.Warn,
+            docId
+        )
+    }
+
     open fun setStatus(str: String, level: FeedbackLevel, docId: DesignDocId) {
         // Ignore log levels we don't care about
         if (level < logLevel) return

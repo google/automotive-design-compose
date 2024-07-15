@@ -25,6 +25,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.serdegen.ColorOrVar
 import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.Variable
@@ -140,21 +141,25 @@ internal object VariableManager {
     // A global variable map containing entries from all documents. We currently don't support
     // duplicate variable names across multiple documents.
     private var varMap: VariableMap = VariableMap(HashMap(), HashMap(), HashMap(), HashMap())
+    private lateinit var currentDocId: DesignDocId
 
-    internal fun init(docId: String, map: VariableMap) {
+    internal fun init(docId: DesignDocId, map: VariableMap) {
+
         // Remove old entries for docId
-        val oldVarMap = docVarMap[docId]
+        val oldVarMap = docVarMap[docId.id]
         oldVarMap?.collections?.forEach { varMap.collections.remove(it.key) }
         oldVarMap?.collection_name_map?.forEach { varMap.collection_name_map.remove(it.key) }
         oldVarMap?.variables?.forEach { varMap.variables.remove(it.key) }
         oldVarMap?.variable_name_map?.forEach { varMap.variable_name_map.remove(it.key) }
 
         // Add new entries for docId
-        docVarMap[docId] = map
+        docVarMap[docId.id] = map
         varMap.collections.putAll(map.collections)
         varMap.collection_name_map.putAll(map.collection_name_map)
         varMap.variables.putAll(map.variables)
         varMap.variable_name_map.putAll(map.variable_name_map)
+
+        currentDocId = docId
     }
 
     // If the developer has not explicitly set variable override values, check to see if any
@@ -200,23 +205,25 @@ internal object VariableManager {
     }
 
     // Given a variable ID, return the color associated with it
-    internal fun getColor(varId: String, variableState: VariableState): Color? {
+    internal fun getColor(varId: String, fallback: Color?, variableState: VariableState): Color? {
         // Resolve varId into a variable. If a different collection has been set, this will return
         // a variable of the same name from the override collection.
         val variable = resolveVariable(varId, variableState)
         variable?.let { v ->
             return v.getColor(varMap, variableState)
         }
-        return null
+        Feedback.documentVariableMissingWarning(currentDocId, varId)
+        return fallback
     }
 
     // Given a variable ID, return the number associated with it
-    internal fun getNumber(varId: String, variableState: VariableState): Float? {
+    internal fun getNumber(varId: String, fallback: Float?, variableState: VariableState): Float? {
         val variable = resolveVariable(varId, variableState)
         variable?.let { v ->
             return v.getNumber(varMap, variableState)
         }
-        return null
+        Feedback.documentVariableMissingWarning(currentDocId, varId)
+        return fallback
     }
 
     // Given a variable ID, return a Variable if it can be found. If an override collection has been
@@ -310,7 +317,7 @@ internal object VariableManager {
 internal fun NumOrVar.getValue(variableState: VariableState): Float {
     return when (this) {
         is NumOrVar.Num -> value
-        is NumOrVar.Var -> VariableManager.getNumber(value, variableState) ?: 0F
+        is NumOrVar.Var -> VariableManager.getNumber(id, fallback, variableState) ?: 0F
         else -> 0F
     }
 }
@@ -319,7 +326,7 @@ internal fun NumOrVar.getValue(variableState: VariableState): Float {
 internal fun ColorOrVar.getValue(variableState: VariableState): Color? {
     return when (this) {
         is ColorOrVar.Color -> value.toColor()
-        is ColorOrVar.Var -> VariableManager.getColor(value, variableState)
+        is ColorOrVar.Var -> VariableManager.getColor(id, fallback.toColor(), variableState)
         else -> null
     }
 }

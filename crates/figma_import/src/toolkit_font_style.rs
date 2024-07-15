@@ -95,15 +95,13 @@ impl Default for FontWeight {
 }
 impl PartialEq for FontWeight {
     fn eq(&self, other: &Self) -> bool {
-        match &self.0 {
-            NumOrVar::Num(n) => match &other.0 {
-                NumOrVar::Num(o) => f32_eq(n, o),
-                _ => false,
-            },
-            NumOrVar::Var(v) => match &other.0 {
-                NumOrVar::Var(o) => v == o,
-                _ => false,
-            },
+        match (&self.0, &other.0) {
+            (NumOrVar::Num(a), NumOrVar::Num(b)) => a == b,
+            (
+                NumOrVar::Var { id: id1, fallback: fb1 },
+                NumOrVar::Var { id: id2, fallback: fb2 },
+            ) => id1 == id2 && fb1 == fb2,
+            _ => false,
         }
     }
 }

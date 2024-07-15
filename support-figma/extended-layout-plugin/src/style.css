@@ -301,6 +301,7 @@ a:active {
 .styled-button {
   width: 100px;
   height: 36px;
+  padding: 0px;
   border-radius: 18px;
   border-width: 1px;
   border-color: #747775;
@@ -324,14 +325,6 @@ a:active {
 
 .styled-button:focus {
   outline: 1px transparent;
-}
-
-/* Make the label match parent and center the text. */
-.styled-button > label {
-  width: inherit;
-  height: inherit;
-  line-height: 36px;
-  box-sizing: border-box;
 }
 
 .loader {
@@ -389,4 +382,15 @@ a:active {
 .page:target {
   left: 0vw;
   z-index: 1;
+}
+
+.page-padding-large {
+  padding-top: 16px;
+  padding-bottom: 16px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.page-padding-small {
+  padding: 8px;
 }

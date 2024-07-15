@@ -9,6 +9,7 @@ This plugin adds some additional capabilities to Figma specifically for Automoti
 - Check document for errors: Using a JSON file created from the application's DesignCompose annotations, check for possible errors in the document such as missing or incorrectly named nodes
 - Check/update keywords: Upload a new JSON file created from the application's DesignCompose annotations
 - Sync Prototype changes: Copies the interactive fields from the JS API to a data area that the REST API can fetch (since our webservice can't talk to the JS API). This needs to be run anytime an interaction changes.
+- Localization: Assigns each text node a string resource name and generates a strings xml file to integrate with translations for the Android app.
 
 ## Building the plugin
 

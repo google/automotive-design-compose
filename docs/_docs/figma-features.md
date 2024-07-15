@@ -14,7 +14,7 @@ layout: page
     - Layout Features: line height, letter spacing, horizontal alignment, vertical alignment, OpenType Flags
     - Styled Sub-Runs
     - ~~Text Case~~
-    - Font Properties: weight, italic, ~~underline, strikethrough~~
+    - Font Properties: weight, italic, underline, strikethrough
   - Vectors: Rectangles, Paths, Arcs, Boolean Ops
 - Layout
   - Constraints
@@ -23,7 +23,7 @@ layout: page
   - Solid Color
   - Gradients: Linear, Radial, Angular, ~~Diamond~~
   - Images
-- Strokes 
+- Strokes
   - Alignment: Inside, Outside, Center
   - Stroke Caps
   - ~~Individual stroke thicknesses~~
@@ -52,9 +52,12 @@ layout: page
     The Design Switcher shows up in the upper right corner of a DesignCompose app. It shows live update details and lets you change the current Figma document.
 
 ### Plugins
+
 - Text Eliding & Max Line Count \
     Fine grained text control; hoping to retire this since Figma recently extended their native text capabilities.
 - Lists & Grids \
-    Flexible layout for complex (and very long) list data
+    Flexible layout for complex (and very long) list data.
 - Dials & Gauges \
     Create dials & gauges of different kinds by applying values to arcs, rects, and performing translations.
+- Localization Tool \
+    Pull the string out of the figma design and generates a strings xml file.

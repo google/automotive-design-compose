@@ -10,7 +10,7 @@
   "author": "",
   "license": "",
   "devDependencies": {
-    "@eslint/js": "^9.6.0",
+    "@eslint/js": "^9.7.0",
     "@figma/plugin-typings": "*",
     "@types/node": "^20.14.10",
     "css-loader": "^7.1.2",

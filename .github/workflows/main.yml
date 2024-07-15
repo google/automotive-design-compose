@@ -99,10 +99,10 @@ jobs:
           workspaces: ". -> designcompose/build/intermediates/cargoTarget"
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - name: Full Gradle Test and publish
+      - name: Full Gradle Test
         uses: gradle/actions/setup-gradle@dbbdc275be76ac10734476cc723d82dfe7ec6eda # v3.4.2
         with:
-          arguments: check build publish assembleAndroidTest assembleUnitTest
+          arguments: assembleDebug assembleAndroidTest assembleUnitTest test
   build-maven-repo:
     runs-on: "ubuntu-latest"
     steps:

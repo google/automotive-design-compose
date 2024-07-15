@@ -36,7 +36,7 @@ testdir = "0.9.1"
 thiserror = "1.0"
 unicode-segmentation = "1"
 ureq = "2"
-vergen = { version = "8.3.1", default-features = false, features = [
+vergen = { version = "8.3.2", default-features = false, features = [
     "build",
     "git",
     "gitcl",

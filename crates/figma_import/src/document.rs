@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use dc_bundle::legacy_definition::element::node::NodeQuery;
+use dc_bundle::legacy_definition::element::variable::{Collection, Mode, Variable, VariableMap};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -30,11 +31,9 @@ use crate::{
         NodeData, NodesResponse, ProjectFilesResponse, VariablesResponse,
     },
     image_context::{EncodedImageMap, ImageContext, ImageContextSession, ImageKey},
-    toolkit_schema::{
-        Collection, ComponentContentOverride, ComponentOverrides, Mode, Variable, VariableMap,
-        View, ViewData,
-    },
+    toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
     transform_flexbox::create_component_flexbox,
+    variable_utils::create_variable,
 };
 use log::error;
 
@@ -895,7 +894,7 @@ impl Document {
         let mut variable_name_map: HashMap<String, HashMap<String, String>> = HashMap::new();
         if let Some(variables_response) = self.variables_response.clone() {
             for (id, v) in variables_response.meta.variables.iter() {
-                let var = Variable::from_figma_var(v);
+                let var = create_variable(v);
                 let maybe_name_map = variable_name_map.get_mut(&var.variable_collection_id);
                 if let Some(name_map) = maybe_name_map {
                     name_map.insert(var.name.clone(), id.clone());

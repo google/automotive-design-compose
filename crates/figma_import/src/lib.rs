@@ -33,6 +33,7 @@ pub mod toolkit_schema;
 pub mod toolkit_style;
 mod transform_flexbox;
 mod utils;
+mod variable_utils;
 pub mod vector_schema;
 // Exports for library users
 pub use dc_bundle::legacy_definition::element::geometry::Rectangle;

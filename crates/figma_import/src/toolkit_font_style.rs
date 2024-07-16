@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::toolkit_schema::NumOrVar;
+// This implementation is derived from font-kit 0.6.0, which is dual licensed under
+// MIT and Apache 2.0. We are using it under the Apache 2.0 terms.
 use crate::utils::f32_eq;
+use dc_bundle::legacy_definition::element::variable::NumOrVar;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{self, Debug, Display, Formatter},

@@ -35,16 +35,15 @@ use crate::{
     },
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
-    toolkit_schema::{
-        ColorOrVar, ComponentInfo, NumOrVar, OverflowDirection, RenderMethod, ScrollInfo, View,
-        ViewShape,
-    },
+    toolkit_schema::{ComponentInfo, OverflowDirection, RenderMethod, ScrollInfo, View, ViewShape},
+    variable_utils::FromFigmaVar,
 };
 
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::font::{FontFeature, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
+use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,

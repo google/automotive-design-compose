@@ -145,7 +145,7 @@ jobs:
         with:
           arguments: publishAllPublicationsToLocalDirRepository
       - name: Upload maven repo
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo/
@@ -180,7 +180,7 @@ jobs:
         with:
           arguments: compareRoborazziDebug
       - name: Upload diff report
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: screenshot-diff-report
           path: |
@@ -218,7 +218,7 @@ jobs:
           # This is GitHub's ternary operator
           dependency-graph: ${{ matrix.os == 'ubuntu-latest' && 'generate' ||  'disabled' }}
           gradle-home-cache-cleanup: true
-      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo
@@ -276,12 +276,12 @@ jobs:
           build-root-directory: unbundled-aaos/packages/apps/Car/libs/aaos-apps-gradle-project/
           arguments: publishAllPublicationsToLocalRepository
       - name: Upload maven repo
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: unbundled_m2repo
           path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
       - name: Upload aaos prebuilts
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: unbundled_prebuilts
           path: unbundled-aaos/prebuilts/sdk/34/system/
@@ -305,15 +305,15 @@ jobs:
         with:
           dependency-graph: generate
           gradle-home-cache-cleanup: true
-      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo
-      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: unbundled_m2repo
           path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
-      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: unbundled_prebuilts
           path: unbundled-aaos/prebuilts/sdk/34/system/

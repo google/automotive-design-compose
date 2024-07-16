@@ -17,10 +17,13 @@
 package com.android.designcompose.squoosh
 
 import android.util.Log
+import androidx.annotation.Discouraged
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.android.designcompose.asAnimationSpec
 import com.android.designcompose.serdegen.Easing
 import com.android.designcompose.serdegen.Spring
 import com.android.designcompose.serdegen.Transition
@@ -54,6 +57,21 @@ import com.android.designcompose.serdegen.View
 //    destination nodes, and then run the regular animation code.
 //
 
+interface AnimationTransition {
+    fun animationSpec(): AnimationSpec<Float>
+}
+
+class SmartAnimateTransition(val transition: AnimationSpec<Float>) : AnimationTransition {
+    override fun animationSpec(): AnimationSpec<Float> {
+        return transition
+    }
+}
+
+val DEFAULT_TRANSITION =
+    SmartAnimateTransition(
+        Transition.SmartAnimate(Easing.Spring(Spring(1.0f, 200.0f, 30.0f)), 1f).asAnimationSpec()
+    )
+
 internal class VariantAnimationInfo(
     /// A unique id to use for this animation request
     val id: Int,
@@ -79,10 +97,16 @@ internal class VariantAnimationInfo(
     val toName: String?,
 
     /// The details on the transition that we are running.
-    val transition: Transition
+    val transition: AnimationTransition,
 )
 
 class VariantTransitionContext(val from: View, val to: View) {
+    @Discouraged(
+        message =
+            "This helper function will return true if the transition is within a variant from the " +
+                "specified component set. This function is intended to temporarily help with" +
+                "creating custom variant transitions, but may be deprecated or removed in the future."
+    )
     fun fromComponentSet(componentSetName: String): Boolean {
         if (
             from.component_info.isPresent &&
@@ -97,6 +121,12 @@ class VariantTransitionContext(val from: View, val to: View) {
         return false
     }
 
+    @Discouraged(
+        message =
+            "This helper function will return true if the transition is within a variant with the " +
+                "given variant property name. This function is intended to temporarily help with " +
+                "creating custom variant transitions, but may be deprecated or removed in the future."
+    )
     fun hasVariantProperty(propertyName: String): Boolean {
         if (
             from.component_info.isPresent &&
@@ -109,7 +139,7 @@ class VariantTransitionContext(val from: View, val to: View) {
     }
 }
 
-typealias CustomVariantTransition = (context: VariantTransitionContext) -> Transition
+typealias CustomVariantTransition = (context: VariantTransitionContext) -> AnimationTransition
 
 // We make a note that we saw a node in the first phase, before we populate it with details
 // in the second phase.
@@ -250,7 +280,7 @@ internal class SquooshVariantTransition {
             if (toId != fromId) {
                 val transition =
                     customVariantTransition?.let { it(VariantTransitionContext(view, variantView)) }
-                        ?: Transition.SmartAnimate(Easing.Spring(Spring(1.0f, 200.0f, 30.0f)), 1f)
+                        ?: DEFAULT_TRANSITION
                 // Record the id of the animation that we interrupted, if any.
                 transitions[viewId] =
                     VariantAnimationInfo(

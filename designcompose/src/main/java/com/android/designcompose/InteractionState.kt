@@ -29,6 +29,8 @@ import com.android.designcompose.serdegen.Navigation
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.View
+import com.android.designcompose.squoosh.AnimationTransition
+import com.android.designcompose.squoosh.SmartAnimateTransition
 
 // In order to differentiate multiple instances of a component, we use a combination of the node ID
 // and an optional key to uniquely identify a component instance. This allows us to apply changes
@@ -158,7 +160,7 @@ internal class AnimatedAction(
     val key: String?,
     val newVariantId: String,
     val undoInstanceId: String?,
-    val transition: Transition,
+    val transition: AnimationTransition,
     val interruptedId: Int?,
     val id: Int // just a counted value
 )
@@ -435,7 +437,9 @@ internal fun InteractionState.dispatch(
                                     key,
                                     action.destination_id.get(),
                                     undoInstanceId,
-                                    action.transition.get(),
+                                    SmartAnimateTransition(
+                                        action.transition.get().asAnimationSpec()
+                                    ),
                                     interruptedId,
                                     lastAnimationId++,
                                 )

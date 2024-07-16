@@ -25,7 +25,6 @@ import com.android.designcompose.fixedWidth
 import com.android.designcompose.hasTransformChange
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeStyle
-import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
@@ -180,7 +179,7 @@ internal class SquooshAnimationRequest(
     val toNodeId: String,
     val animationId: Int,
     val interruptedId: Int?,
-    val transition: Transition,
+    val transition: AnimationTransition,
     val action: AnimatedAction?,
     val variant: VariantAnimationInfo?,
     var animationControl: SquooshAnimationControl? = null

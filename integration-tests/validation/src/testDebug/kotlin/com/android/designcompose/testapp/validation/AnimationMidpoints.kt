@@ -17,6 +17,7 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.SemanticsMatcher
@@ -28,9 +29,7 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
-import com.android.designcompose.serdegen.Bezier
-import com.android.designcompose.serdegen.Easing
-import com.android.designcompose.serdegen.Transition
+import com.android.designcompose.squoosh.SmartAnimateTransition
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
@@ -40,6 +39,7 @@ import com.android.designcompose.testapp.validation.examples.State
 import com.android.designcompose.testapp.validation.examples.TestState
 import com.android.designcompose.testapp.validation.examples.VariantAnimationTestDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import kotlin.math.sqrt
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -93,7 +93,13 @@ class AnimationMidpoints {
                     DesignDocSettings(
                         useSquoosh = true,
                         customVariantTransition = {
-                            Transition.SmartAnimate(Easing.Bezier(Bezier(0.37f, 0f, 0.63f, 1f)), 1f)
+                            val mass = 1.0f
+                            val stiffness = 120.0f
+                            val critical = sqrt(4.0f * stiffness * mass)
+                            val damping = 30.0f
+                            SmartAnimateTransition(
+                                spring(dampingRatio = damping / critical, stiffness = stiffness)
+                            )
                         }
                     )
             ) {

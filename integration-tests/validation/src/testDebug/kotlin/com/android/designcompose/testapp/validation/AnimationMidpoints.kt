@@ -17,6 +17,7 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.SemanticsMatcher
@@ -28,6 +29,7 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
+import com.android.designcompose.squoosh.SmartAnimateTransition
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
@@ -37,6 +39,7 @@ import com.android.designcompose.testapp.validation.examples.State
 import com.android.designcompose.testapp.validation.examples.TestState
 import com.android.designcompose.testapp.validation.examples.VariantAnimationTestDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import kotlin.math.sqrt
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -74,6 +77,42 @@ class AnimationMidpoints {
         text.value = "Y"
 
         recordAnimation("Variant")
+    }
+
+    @Test
+    fun customVariantAnimation() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(State.X)
+        val text = mutableStateOf("X")
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDesignDocSettings provides
+                    DesignDocSettings(
+                        useSquoosh = true,
+                        customVariantTransition = {
+                            val mass = 1.0f
+                            val stiffness = 120.0f
+                            val critical = sqrt(4.0f * stiffness * mass)
+                            val damping = 30.0f
+                            SmartAnimateTransition(
+                                spring(dampingRatio = damping / critical, stiffness = stiffness)
+                            )
+                        }
+                    )
+            ) {
+                VariantAnimationTestDoc.MainFrame(state = state.value, text = text.value)
+            }
+        }
+
+        waitForContent(VariantAnimationTestDoc.javaClass.name)
+
+        state.value = State.Y
+        text.value = "Y"
+
+        recordAnimation("CustomVariantTransition")
     }
 
     @Test

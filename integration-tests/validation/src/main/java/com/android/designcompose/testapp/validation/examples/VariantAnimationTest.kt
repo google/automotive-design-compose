@@ -16,6 +16,9 @@
 
 package com.android.designcompose.testapp.validation.examples
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absoluteOffset
@@ -35,6 +38,9 @@ import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignVariant
+import com.android.designcompose.squoosh.SmartAnimateTransition
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 import kotlinx.coroutines.delay
 
 enum class State {
@@ -68,7 +74,38 @@ fun VariantAnimationTest() {
         }
     }
 
-    CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
+    CompositionLocalProvider(
+        LocalDesignDocSettings provides
+            DesignDocSettings(
+                useSquoosh = true,
+                customVariantTransition = { context ->
+                    if (context.fromComponentSet("RightPanelAndroid")) {
+                        SmartAnimateTransition(
+                            tween(
+                                durationMillis = (2f * 1000.0).roundToInt(),
+                                easing = CubicBezierEasing(0.37f, 0f, 0.63f, 1f)
+                            )
+                        )
+                    } else if (context.hasVariantProperty("#state")) {
+                        val mass = 1.0f
+                        val stiffness = 200.0f
+                        val critical = sqrt(4.0f * stiffness * mass)
+                        val damping = 30.0f
+                        SmartAnimateTransition(
+                            spring(dampingRatio = damping / critical, stiffness = stiffness)
+                        )
+                    } else {
+                        val mass = 1.0f
+                        val stiffness = 20.0f
+                        val critical = sqrt(4.0f * stiffness * mass)
+                        val damping = 30.0f
+                        SmartAnimateTransition(
+                            spring(dampingRatio = damping / critical, stiffness = stiffness)
+                        )
+                    }
+                }
+            )
+    ) {
         VariantAnimationTestDoc.MainFrame(state = state, text = text)
     }
 

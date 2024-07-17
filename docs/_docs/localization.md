@@ -41,7 +41,7 @@ can download it from the [Figma downloads page][2].
     automotive-design-compose/support-figma/extended-layout-plugin/manifest.json
     ```
 
-    <img src="ImportPluginFromManifest.png">
+    <img src="./localization/ImportPluginFromManifest.png">
 
 ## 2. Run the localization plugin
 
@@ -53,7 +53,7 @@ Now you can run the localization plugin through:
 
 Currently the plugin provides two options to exclude text nodes from translations.
 
-<img src="LocalizationOptions.png">
+<img src="./localization/LocalizationOptions.png">
 
 The first option excludes text nodes whose name starts with `#` which is a naming convention for text
 nodes designed for app customization.
@@ -62,7 +62,7 @@ To use the second option, you will need to run the **Check/update keywords** plu
 the generated json file under your android app's build folder. The generated json file contains app
 customizations for nodes so the localization plugin can exclude those text nodes from translation.
 
-<img src="CheckOrUpdateKeywords.png">
+<img src="./localization/CheckOrUpdateKeywords.png">
 
 ### 2.2 Upload a strings xml file
 
@@ -71,13 +71,13 @@ by this plugin before. By doing so, it allows you to merge string resources from
 
 For apps using a single design file, you can always skip this step.
 
-<img src="LocalizationUpload.png">
+<img src="./localization/LocalizationUpload.png">
 
 ### 2.3 Review, update and generate the strings xml file
 
 In the third step, the plugin generates a string resource table for you to review and update.
 
-<img src="LocalizationGenerate.png">
+<img src="./localization/LocalizationGenerate.png">
 
 In the above example for [figma design Hello World][3], the output excludes the node `#Name` and only
 contains the node `Hello,` with id `2:4`. The plugin auto assigns the string resource name `label_hello`
@@ -87,7 +87,7 @@ The plugin also allows you to set a proper description and char limit for transl
 
 Finally, click on the **Generate** button and save the gen_strings.xml to the app's `res/values/` folder.
 
-<img src="LocalizationSave.png">
+<img src="./localization/LocalizationSave.png">
 
 ## 3. Integrate with the app
 
@@ -95,7 +95,7 @@ Finally, click on the **Generate** button and save the gen_strings.xml to the ap
 
 Now open Android Studio and let's start integrating the generated string xml file.
 
-<img src="GenStringsExample.png">
+<img src="./localization/GenStringsExample.png">
 
 The gen_strings.xml contains a string resource entry `label_hello`. If there are any conflicts with
 string resources from other strings xml files, we recommend two options to resolve the conflicts:
@@ -118,7 +118,7 @@ If you use live update, because DesignCompose uses the local string from the res
 not be able to see the changes you are making to the text nodes in live update. We have provided an option
 to re-enable the live update for text nodes by unchecking the `Use local string resource if exists` option.
 
-<img src="LiveUpdateLocalizationOption.png">
+<img src="./localization/LiveUpdateLocalizationOption.png">
 
 ### 3.4 Localize app side customizations
 
@@ -154,10 +154,10 @@ with string resource
 ### 3.5 Test the localization
 
 Assuming you have the translations for the strings ready and integrated as following:
-<img src="TranslationExample.png">
+<img src="./localization/TranslationExample.png">
 
 now the app should use the translations when you change your device's locale.
-<img src="LocalizationResults.png">
+<img src="./localization/LocalizationResults.png">
 
 ## 4. How the localization works behind the plugin
 

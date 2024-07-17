@@ -31,7 +31,7 @@ The [Material Theme Builder plugin][5] allows a designer to choose a source colo
 then generates a palette of colors that fit into the [Material Design 3][6] design system. The
 plugin creates these colors as both Figma styles and variables. Variables are grouped into collections, and by default the plugin creates these color variables under the "material-theme" collection. Additional custom themes can be created with the plugin, with each custom theme resulting in another variable collection. To get the most out of DesignCompose support for variables, set your nodes to use colors from these generated variables. Here is snippet of what the variables look like:
 
-<img src="MaterialThemeVariables.png">
+<img src="./variables/MaterialThemeVariables.png">
 
 ## Changing the variable collection
 

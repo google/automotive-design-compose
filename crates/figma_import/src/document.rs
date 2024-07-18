@@ -26,10 +26,7 @@ use crate::{
     error::Error,
     extended_layout_schema::ExtendedAutoLayout,
     fetch::ProxyConfig,
-    figma_schema::{
-        Component, ComponentKeyResponse, FileHeadResponse, FileResponse, ImageFillResponse, Node,
-        NodeData, NodesResponse, ProjectFilesResponse, VariablesResponse,
-    },
+    figma_schema,
     image_context::{EncodedImageMap, ImageContext, ImageContextSession, ImageKey},
     toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
     transform_flexbox::create_component_flexbox,
@@ -91,7 +88,7 @@ impl FigmaDocInfo {
 }
 
 /// Branches alwasy return head of file, i.e. no version returned
-fn get_branches(document_root: &FileResponse) -> Vec<FigmaDocInfo> {
+fn get_branches(document_root: &figma_schema::FileResponse) -> Vec<FigmaDocInfo> {
     let mut branches = vec![];
     if let Some(doc_branches) = &document_root.branches {
         for hash in doc_branches {
@@ -111,15 +108,15 @@ pub struct Document {
     document_id: String,
     version_id: String,
     proxy_config: ProxyConfig,
-    document_root: FileResponse,
-    variables_response: Option<VariablesResponse>,
+    document_root: figma_schema::FileResponse,
+    variables_response: Option<figma_schema::VariablesResponse>,
     image_context: ImageContext,
-    variant_nodes: Vec<Node>,
+    variant_nodes: Vec<figma_schema::Node>,
     component_sets: HashMap<String, String>,
     pub branches: Vec<FigmaDocInfo>,
 }
 impl Document {
-    pub fn root_node(&self) -> &Node {
+    pub fn root_node(&self) -> &figma_schema::Node {
         &self.document_root.document
     }
     /// Fetch a document from Figma and return a Document instance that can be used
@@ -140,12 +137,12 @@ impl Document {
             document_url.push_str("&version=");
             document_url.push_str(&version_id);
         }
-        let document_root: FileResponse =
+        let document_root: figma_schema::FileResponse =
             serde_json::from_str(http_fetch(api_key, document_url, proxy_config)?.as_str())?;
 
         // ...and the mapping from imageRef to URL. It returns images from all versions.
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, document_id);
-        let image_refs: ImageFillResponse =
+        let image_refs: figma_schema::ImageFillResponse =
             serde_json::from_str(http_fetch(api_key, image_ref_url, proxy_config)?.as_str())?;
 
         let mut image_context = ImageContext::new(image_refs.meta.images, proxy_config);
@@ -182,10 +179,11 @@ impl Document {
         api_key: &str,
         document_id: &String,
         proxy_config: &ProxyConfig,
-    ) -> Result<VariablesResponse, Error> {
+    ) -> Result<figma_schema::VariablesResponse, Error> {
         let variables_url = format!("{}{}/variables/local", BASE_FILE_URL, document_id);
         let var_fetch = http_fetch(api_key, variables_url, proxy_config)?;
-        let var_response: VariablesResponse = serde_json::from_str(var_fetch.as_str())?;
+        let var_response: figma_schema::VariablesResponse =
+            serde_json::from_str(var_fetch.as_str())?;
         Ok(var_response)
     }
 
@@ -205,7 +203,7 @@ impl Document {
             document_head_url.push_str("&version=");
             document_head_url.push_str(&requested_version_id);
         }
-        let document_head: FileHeadResponse =
+        let document_head: figma_schema::FileHeadResponse =
             serde_json::from_str(http_fetch(api_key, document_head_url, proxy_config)?.as_str())?;
 
         if document_head.last_modified == last_modified && document_head.version == last_version {
@@ -227,7 +225,7 @@ impl Document {
             document_head_url.push_str("&version=");
             document_head_url.push_str(&self.version_id);
         }
-        let document_head: FileHeadResponse = serde_json::from_str(
+        let document_head: figma_schema::FileHeadResponse = serde_json::from_str(
             http_fetch(self.api_key.as_str(), document_head_url, &self.proxy_config)?.as_str(),
         )?;
 
@@ -250,13 +248,13 @@ impl Document {
             document_url.push_str("&version=");
             document_url.push_str(&self.version_id);
         }
-        let document_root: FileResponse = serde_json::from_str(
+        let document_root: figma_schema::FileResponse = serde_json::from_str(
             http_fetch(self.api_key.as_str(), document_url, &self.proxy_config)?.as_str(),
         )?;
 
         // ...and the mapping from imageRef to URL. It returns images from all versions.
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, self.document_id);
-        let image_refs: ImageFillResponse = serde_json::from_str(
+        let image_refs: figma_schema::ImageFillResponse = serde_json::from_str(
             http_fetch(self.api_key.as_str(), image_ref_url, &self.proxy_config)?.as_str(),
         )?;
 
@@ -279,11 +277,11 @@ impl Document {
     /// which hashes node ids to the document id they come from.
     fn fetch_component_variants(
         &self,
-        node: &Node,
+        node: &figma_schema::Node,
         node_doc_hash: &mut HashMap<String, String>,
-        variant_nodes: &mut Vec<Node>,
-        id_index: &HashMap<String, &Node>,
-        component_hash: &HashMap<String, Component>,
+        variant_nodes: &mut Vec<figma_schema::Node>,
+        id_index: &HashMap<String, &figma_schema::Node>,
+        component_hash: &HashMap<String, figma_schema::Component>,
         parent_tree: &mut Vec<String>,
         error_list: &mut Vec<String>,
         error_hash: &mut HashSet<String>,
@@ -293,7 +291,7 @@ impl Document {
             return Ok(());
         }
         fn add_node_doc_hash(
-            node: &Node,
+            node: &figma_schema::Node,
             node_doc_hash: &mut HashMap<String, String>,
             doc_id: &String,
         ) {
@@ -304,7 +302,7 @@ impl Document {
             }
         }
 
-        if let NodeData::Instance { frame: _, component_id } = &node.data {
+        if let figma_schema::NodeData::Instance { frame: _, component_id } = &node.data {
             // If the component_id is in id_index, we know it's in this document so we don't
             // need to do anything. If it isn't, it's in a different doc, so proceed to
             // download data for it
@@ -348,7 +346,7 @@ impl Document {
                     };
 
                     // Deserialize into a ComponentKeyResponse
-                    let component_key_response: ComponentKeyResponse =
+                    let component_key_response: figma_schema::ComponentKeyResponse =
                         serde_json::from_str(component_http_response.as_str())?;
                     // If this variant points to a file_key different than this document, fetch it
                     let maybe_parent_node_id = component_key_response.parent_id();
@@ -361,7 +359,7 @@ impl Document {
                             );
                             let http_str =
                                 http_fetch(self.api_key.as_str(), nodes_url, &self.proxy_config)?;
-                            let nodes_response: NodesResponse =
+                            let nodes_response: figma_schema::NodesResponse =
                                 serde_json::from_str(http_str.as_str())?;
                             // The response is a list of nodes, but we only requested one so this loop
                             // should only go through one time
@@ -371,7 +369,7 @@ impl Document {
                                 }
                                 // If the parent is a COMPONENT_SET, then we want to get the parent's children
                                 // and add them to our list of nodes
-                                if let NodeData::ComponentSet { frame: _ } =
+                                if let figma_schema::NodeData::ComponentSet { frame: _ } =
                                     node_response_data.document.data
                                 {
                                     for node in node_response_data.document.children {
@@ -514,12 +512,12 @@ impl Document {
         // child nodes that can't be rendered. Then we ask Figma to do a batch render on
         // them. Finally we convert and return the set of toolkit nodes.
         fn index_node<'a>(
-            node: &'a Node,
-            parent_node: Option<&'a Node>,
-            name_index: &mut HashMap<String, &'a Node>,
-            id_index: &mut HashMap<String, &'a Node>,
-            variant_index: &mut HashMap<(String, String), &'a Node>,
-            component_set_index: &mut HashMap<String, &'a Node>,
+            node: &'a figma_schema::Node,
+            parent_node: Option<&'a figma_schema::Node>,
+            name_index: &mut HashMap<String, &'a figma_schema::Node>,
+            id_index: &mut HashMap<String, &'a figma_schema::Node>,
+            variant_index: &mut HashMap<(String, String), &'a figma_schema::Node>,
+            component_set_index: &mut HashMap<String, &'a figma_schema::Node>,
         ) {
             // Ignore hidden nodes
             if !node.visible {
@@ -529,7 +527,7 @@ impl Document {
             // If we have a parent that is a component set, add to the variant index
             let mut is_variant = false;
             if let Some(parent) = parent_node {
-                if let NodeData::ComponentSet { .. } = parent.data {
+                if let figma_schema::NodeData::ComponentSet { .. } = parent.data {
                     is_variant = true;
                     variant_index.insert((node.name.clone(), parent.name.clone()), node);
                 }
@@ -539,7 +537,7 @@ impl Document {
                 // If there's already a node with the same name, then only replace it if
                 // we're a component.
                 if name_index.get(&node.name).is_some() {
-                    if let NodeData::Component { .. } = node.data {
+                    if let figma_schema::NodeData::Component { .. } = node.data {
                         name_index.insert(node.name.clone(), node);
                     }
                 } else {
@@ -557,7 +555,7 @@ impl Document {
                     component_set_index,
                 );
             }
-            if let NodeData::ComponentSet { .. } = node.data {
+            if let figma_schema::NodeData::ComponentSet { .. } = node.data {
                 for child in &node.children {
                     component_set_index.insert(child.id.clone(), node);
                 }
@@ -567,24 +565,24 @@ impl Document {
         // For each node in nodes or an ancestor of a node in nodes, if it is a component
         // instance, add the component set associated with the instance into node_name_hash.
         fn find_component_sets(
-            nodes: &Vec<&Node>,
-            component_set_index: &HashMap<String, &Node>,
+            nodes: &Vec<&figma_schema::Node>,
+            component_set_index: &HashMap<String, &figma_schema::Node>,
             node_name_hash: &mut HashSet<NodeQuery>,
         ) {
             for node in nodes {
-                if let NodeData::Instance { frame: _, component_id } = &node.data {
+                if let figma_schema::NodeData::Instance { frame: _, component_id } = &node.data {
                     let component_set = component_set_index.get(component_id);
                     if let Some(cs) = component_set {
                         node_name_hash.insert(NodeQuery::NodeComponentSet(cs.name.clone()));
 
                         // Recurse on the children of the component set since variants can change
                         // to any of them at runtime
-                        let cs_children: Vec<&Node> = cs.children.iter().collect();
+                        let cs_children: Vec<&figma_schema::Node> = cs.children.iter().collect();
                         find_component_sets(&cs_children, component_set_index, node_name_hash);
                     }
                 }
 
-                let children: Vec<&Node> = node.children.iter().collect();
+                let children: Vec<&figma_schema::Node> = node.children.iter().collect();
                 find_component_sets(&children, component_set_index, node_name_hash);
             }
         }
@@ -593,11 +591,11 @@ impl Document {
         // into the node name hash so that we retrieve those nodes. Also add them to the
         // component_set_hash, which hashes a component set node name to all of its children.
         fn add_variant_node_names(
-            node: &Node,
+            node: &figma_schema::Node,
             node_name_hash: &mut HashSet<NodeQuery>,
             component_set_hash: &mut HashMap<String, Vec<String>>,
         ) {
-            if let NodeData::ComponentSet { .. } = &node.data {
+            if let figma_schema::NodeData::ComponentSet { .. } = &node.data {
                 // Add the component set's children to node_name_has if either the component set itself
                 // is in the node_name_hash, or one of the child variants is in node_name_hash
                 let mut add_children = node_name_hash
@@ -644,7 +642,7 @@ impl Document {
 
         // Search the node hierarchy for nodes that have plugin data that specifies an overflow
         // node. Add these nodes to node_name_hash so that we fetch them.
-        fn add_overflow_nodes(node: &Node, node_name_hash: &mut HashSet<NodeQuery>) {
+        fn add_overflow_nodes(node: &figma_schema::Node, node_name_hash: &mut HashSet<NodeQuery>) {
             if node.shared_plugin_data.contains_key("designcompose") {
                 let plugin_data = node.shared_plugin_data.get("designcompose");
                 if let Some(vsw_data) = plugin_data {
@@ -698,7 +696,7 @@ impl Document {
         // doc_nodes is a hash that that hashes document_id -> list of node IDs from that
         // document that we need, so that we can retrieve images from the correct document
         let mut node_doc_hash: HashMap<String, String> = HashMap::new();
-        let mut variant_nodes: Vec<Node> = vec![];
+        let mut variant_nodes: Vec<figma_schema::Node> = vec![];
         let mut parent_tree: Vec<String> = vec![];
         let mut error_hash: HashSet<String> = HashSet::new();
         self.fetch_component_variants(
@@ -733,7 +731,7 @@ impl Document {
         // Convert node_names into a list of nodes. We'll use this list in find_component_sets to
         // add any component sets whose instances are in the tree of any nodes in query_nodes. This
         // ensures that we have access to other component variants.
-        let query_nodes: Vec<&Node> = node_names
+        let query_nodes: Vec<&figma_schema::Node> = node_names
             .iter()
             .map(|name| {
                 // Look up the node if it's defined.
@@ -763,7 +761,7 @@ impl Document {
         add_overflow_nodes(&self.document_root.document, &mut node_name_hash);
 
         // Find the initial list of nodes we want to convert. This list excludes nodes that are hidden
-        let mut nodes: Vec<(NodeQuery, &Node)> = node_name_hash
+        let mut nodes: Vec<(NodeQuery, &figma_schema::Node)> = node_name_hash
             .into_iter()
             .map(|name| {
                 // Look up the node if it's defined.
@@ -939,7 +937,7 @@ impl Document {
     /// Get all the Figma documents in the given project ID
     pub fn get_projects(&self, project_id: &str) -> Result<Vec<FigmaDocInfo>, Error> {
         let url = format!("{}{}/files", BASE_PROJECT_URL, project_id);
-        let project_files: ProjectFilesResponse = serde_json::from_str(
+        let project_files: figma_schema::ProjectFilesResponse = serde_json::from_str(
             http_fetch(self.api_key.as_str(), url, &self.proxy_config)?.as_str(),
         )?;
 

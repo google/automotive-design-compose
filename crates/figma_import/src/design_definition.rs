@@ -20,6 +20,7 @@ use std::io::{Read, Write};
 use std::path::Path;
 
 use dc_bundle::legacy_definition::element::node::NodeQuery;
+use dc_bundle::legacy_definition::element::variable::VariableMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema};
@@ -55,7 +56,7 @@ pub struct DesignComposeDefinition {
     pub component_sets: HashMap<String, String>,
     pub version: String,
     pub id: String,
-    pub variable_map: toolkit_schema::VariableMap,
+    pub variable_map: VariableMap,
 }
 
 impl fmt::Display for DesignComposeDefinition {

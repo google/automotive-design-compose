@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::legacy_definition::element::font::FontStyle;
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
@@ -50,9 +51,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
     tracer.trace_type::<FlexWrap>(&samples).expect("couldn't trace FlexWrap");
-    tracer
-        .trace_type::<crate::toolkit_font_style::FontStyle>(&samples)
-        .expect("couldn't trace FontStyle");
+    tracer.trace_type::<FontStyle>(&samples).expect("couldn't trace FontStyle");
     tracer
         .trace_type::<crate::toolkit_font_style::TextDecoration>(&samples)
         .expect("couldn't trace TextDecoration");

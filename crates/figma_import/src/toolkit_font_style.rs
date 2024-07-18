@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This implementation is derived from font-kit 0.6.0, which is dual licensed under
-// MIT and Apache 2.0. We are using it under the Apache 2.0 terms.
 use crate::toolkit_schema::NumOrVar;
 use crate::utils::f32_eq;
 use serde::{Deserialize, Serialize};
@@ -21,68 +19,6 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     hash::{Hash, Hasher},
 };
-
-#[derive(Debug, Copy, Clone)]
-pub struct FontMetrics {
-    pub units_per_em: u32,
-    pub ascent: f32,
-    pub descent: f32,
-    pub height: f32,
-    pub underline_position: f32,
-    pub underline_thickness: f32,
-}
-impl PartialEq for FontMetrics {
-    fn eq(&self, other: &Self) -> bool {
-        self.units_per_em == other.units_per_em
-            && f32_eq(&self.ascent, &other.ascent)
-            && f32_eq(&self.descent, &other.descent)
-            && f32_eq(&self.height, &other.height)
-            && f32_eq(&self.underline_position, &other.underline_position)
-            && f32_eq(&self.underline_thickness, &other.underline_thickness)
-    }
-}
-impl Hash for FontMetrics {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.units_per_em.hash(state);
-        ((self.ascent * 64.0) as i32).hash(state);
-        ((self.descent * 64.0) as i32).hash(state);
-        ((self.height * 64.0) as i32).hash(state);
-        ((self.underline_position * 64.0) as i32).hash(state);
-        ((self.underline_thickness * 64.0) as i32).hash(state);
-    }
-}
-/// Allows italic or oblique faces to be selected.
-#[derive(Clone, Copy, PartialEq, Debug, Hash, Deserialize, Serialize, Default)]
-pub enum FontStyle {
-    /// A face that is neither italic not obliqued.
-    #[default]
-    Normal,
-    /// A form that is generally cursive in nature.
-    Italic,
-    /// A typically-sloped version of the regular face.
-    Oblique,
-}
-
-impl Display for FontStyle {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Debug::fmt(self, f)
-    }
-}
-
-/// Allows strikethrough or underline text decoration to be selected.
-#[derive(Clone, Copy, PartialEq, Debug, Hash, Deserialize, Serialize, Default)]
-pub enum TextDecoration {
-    #[default]
-    None,
-    Strikethrough,
-    Underline,
-}
-
-impl Display for TextDecoration {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Debug::fmt(self, f)
-    }
-}
 /// The degree of blackness or stroke thickness of a font. This value ranges from 100.0 to 900.0,
 /// with 400.0 as normal.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -128,42 +64,48 @@ impl FontWeight {
 /// The width of a font as an approximate fraction of the normal width.
 ///
 /// Widths range from 0.5 to 2.0 inclusive, with 1.0 as the normal width.
-#[derive(Clone, Copy, Debug, PartialOrd, Deserialize, Serialize)]
-pub struct FontStretch(pub f32);
-impl PartialEq for FontStretch {
+
+#[derive(Debug, Copy, Clone)]
+pub struct FontMetrics {
+    pub units_per_em: u32,
+    pub ascent: f32,
+    pub descent: f32,
+    pub height: f32,
+    pub underline_position: f32,
+    pub underline_thickness: f32,
+}
+impl PartialEq for FontMetrics {
     fn eq(&self, other: &Self) -> bool {
-        f32_eq(&self.0, &other.0)
+        self.units_per_em == other.units_per_em
+            && f32_eq(&self.ascent, &other.ascent)
+            && f32_eq(&self.descent, &other.descent)
+            && f32_eq(&self.height, &other.height)
+            && f32_eq(&self.underline_position, &other.underline_position)
+            && f32_eq(&self.underline_thickness, &other.underline_thickness)
     }
 }
-impl Default for FontStretch {
-    #[inline]
-    fn default() -> FontStretch {
-        FontStretch::NORMAL
-    }
-}
-impl FontStretch {
-    /// Ultra-condensed width (50%), the narrowest possible.
-    pub const ULTRA_CONDENSED: FontStretch = FontStretch(0.5);
-    /// Extra-condensed width (62.5%).
-    pub const EXTRA_CONDENSED: FontStretch = FontStretch(0.625);
-    /// Condensed width (75%).
-    pub const CONDENSED: FontStretch = FontStretch(0.75);
-    /// Semi-condensed width (87.5%).
-    pub const SEMI_CONDENSED: FontStretch = FontStretch(0.875);
-    /// Normal width (100%).
-    pub const NORMAL: FontStretch = FontStretch(1.0);
-    /// Semi-expanded width (112.5%).
-    pub const SEMI_EXPANDED: FontStretch = FontStretch(1.125);
-    /// Expanded width (125%).
-    pub const EXPANDED: FontStretch = FontStretch(1.25);
-    /// Extra-expanded width (150%).
-    pub const EXTRA_EXPANDED: FontStretch = FontStretch(1.5);
-    /// Ultra-expanded width (200%), the widest possible.
-    pub const ULTRA_EXPANDED: FontStretch = FontStretch(2.0);
-}
-impl Hash for FontStretch {
+impl Hash for FontMetrics {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        let x = (self.0 * 100.0) as i32;
-        x.hash(state);
+        self.units_per_em.hash(state);
+        ((self.ascent * 64.0) as i32).hash(state);
+        ((self.descent * 64.0) as i32).hash(state);
+        ((self.height * 64.0) as i32).hash(state);
+        ((self.underline_position * 64.0) as i32).hash(state);
+        ((self.underline_thickness * 64.0) as i32).hash(state);
+    }
+}
+
+/// Allows strikethrough or underline text decoration to be selected.
+#[derive(Clone, Copy, PartialEq, Debug, Hash, Deserialize, Serialize, Default)]
+pub enum TextDecoration {
+    #[default]
+    None,
+    Strikethrough,
+    Underline,
+}
+
+impl Display for TextDecoration {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        Debug::fmt(self, f)
     }
 }

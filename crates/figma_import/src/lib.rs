@@ -18,7 +18,6 @@
 //!
 //! The goal of this crate is to perform the mapping from Figma to the toolkit; it does
 //! not provide any kind of UI logic mapping.
-mod color;
 mod component_context;
 mod design_definition;
 mod document;
@@ -36,19 +35,21 @@ mod transform_flexbox;
 mod utils;
 pub mod vector_schema;
 // Exports for library users
+pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
 pub use design_definition::{load_design_def, save_design_def};
 pub use design_definition::{
     DesignComposeDefinition, DesignComposeDefinitionHeader, ServerFigmaDoc,
 };
-pub use document::{Document, NodeQuery};
+pub use document::Document;
 pub use error::Error;
 pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
 pub use figma_schema::Node;
-pub use figma_schema::Rectangle;
 pub use image_context::{ImageContextSession, ImageKey};
 pub use toolkit_schema::{View, ViewData}; // ugly hack
                                           // Internal convenience
-pub use color::Color;
+pub use dc_bundle::legacy_definition::element::color::Color;
+pub use dc_bundle::legacy_definition::element::node::NodeQuery;
+
 #[cfg(feature = "http_mock")]
 mod figma_v1_document_mocks;
 /// Functionality related to reflection for deserializing our bincode archives in other

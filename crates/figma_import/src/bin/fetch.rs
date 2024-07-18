@@ -16,9 +16,8 @@ use std::io::Write;
 
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use figma_import::{
-    DesignComposeDefinition, DesignComposeDefinitionHeader, Document, NodeQuery, ProxyConfig,
-};
+use dc_bundle::legacy_definition::element::node::NodeQuery;
+use figma_import::{DesignComposeDefinition, DesignComposeDefinitionHeader, Document, ProxyConfig};
 #[derive(Debug)]
 struct ConvertError(String);
 impl From<figma_import::Error> for ConvertError {

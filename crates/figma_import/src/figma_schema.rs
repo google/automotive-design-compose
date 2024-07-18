@@ -14,9 +14,9 @@
 
 use std::collections::HashMap;
 
+use dc_bundle::legacy_definition::element::color::Color;
 use serde::{Deserialize, Serialize};
 
-use crate::color::Color;
 use crate::vector_schema::WindingRule;
 
 // We use serde to decode Figma's JSON documents into Rust structures.
@@ -89,6 +89,18 @@ impl Rectangle {
     }
     pub fn height(&self) -> f32 {
         self.height.unwrap_or(0.0)
+    }
+}
+
+// Generate an implementation of Into that converts this Rectangle to the one in dc_bundle
+impl Into<dc_bundle::legacy_definition::element::geometry::Rectangle> for &Rectangle {
+    fn into(self) -> dc_bundle::legacy_definition::element::geometry::Rectangle {
+        dc_bundle::legacy_definition::element::geometry::Rectangle {
+            x: Some(self.x()),
+            y: Some(self.y()),
+            width: Some(self.width()),
+            height: Some(self.height()),
+        }
     }
 }
 

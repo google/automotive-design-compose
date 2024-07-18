@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::definition::layout::FlexWrap;
-use dc_bundle::legacy_definition::element::font::FontStyle;
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
@@ -37,7 +35,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::Background>(&samples)
         .expect("couldn't trace Background");
     tracer
-        .trace_type::<crate::toolkit_style::BlendMode>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::modifier::blend::BlendMode>(&samples)
         .expect("couldn't trace BlendMode");
     tracer
         .trace_type::<crate::toolkit_style::BoxShadow>(&samples)
@@ -46,12 +44,18 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<crate::toolkit_layout_style::Display>(&samples)
         .expect("couldn't trace Display");
-    tracer.trace_type::<crate::toolkit_style::FilterOp>(&samples).expect("couldn't trace FilterOp");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::modifier::filter::FilterOp>(&samples)
+        .expect("couldn't trace FilterOp");
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
-    tracer.trace_type::<FlexWrap>(&samples).expect("couldn't trace FlexWrap");
-    tracer.trace_type::<FontStyle>(&samples).expect("couldn't trace FontStyle");
+    tracer
+        .trace_type::<dc_bundle::definition::layout::FlexWrap>(&samples)
+        .expect("couldn't trace FlexWrap");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::element::font::FontStyle>(&samples)
+        .expect("couldn't trace FontStyle");
     tracer
         .trace_type::<crate::toolkit_font_style::TextDecoration>(&samples)
         .expect("couldn't trace TextDecoration");
@@ -59,7 +63,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::JustifyContent>(&samples)
         .expect("couldn't trace JustifyContent");
     tracer
-        .trace_type::<crate::toolkit_style::LineHeight>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::path::LineHeight>(&samples)
         .expect("couldn't trace LineHeight");
     tracer
         .trace_type::<crate::toolkit_layout_style::Number>(&samples)
@@ -95,19 +99,19 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::ShadowBox>(&samples)
         .expect("couldn't trace ShadowBox");
     tracer
-        .trace_type::<crate::toolkit_style::StrokeAlign>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::path::StrokeAlign>(&samples)
         .expect("couldn't trace StrokeAlign");
     tracer
-        .trace_type::<crate::toolkit_style::StrokeWeight>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::path::StrokeWeight>(&samples)
         .expect("couldn't trace StrokeWeight");
     tracer
-        .trace_type::<crate::toolkit_style::TextAlign>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::modifier::text::TextAlign>(&samples)
         .expect("couldn't trace TextAlign");
     tracer
-        .trace_type::<crate::toolkit_style::TextAlignVertical>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::modifier::text::TextAlignVertical>(&samples)
         .expect("couldn't trace TextAlignVertical");
     tracer
-        .trace_type::<crate::toolkit_style::TextOverflow>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::modifier::text::TextOverflow>(&samples)
         .expect("couldn't trace TextOverflow");
     tracer
         .trace_type::<crate::toolkit_layout_style::LayoutSizing>(&samples)

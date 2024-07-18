@@ -14,8 +14,16 @@
  * limitations under the License.
  */
 
-pub mod color;
-pub mod font;
-pub mod geometry;
-pub mod node;
-pub mod path;
+use serde::{Deserialize, Serialize};
+
+/// Filters -- these can be applied to a view and its children (via the "filter" style),
+/// or to the elements behind a view (via the "backdrop_filter" style).
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+pub enum FilterOp {
+    /// Gaussian blur, radius in px.
+    Blur(f32),
+    //Saturation(f32),
+    Contrast(f32),
+    Grayscale(f32),
+    Brightness(f32),
+}

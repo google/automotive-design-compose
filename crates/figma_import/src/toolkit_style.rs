@@ -17,9 +17,13 @@
 
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::color::Color;
-use dc_bundle::legacy_definition::element::font::{FontStretch, FontStyle};
+use dc_bundle::legacy_definition::element::font::{FontFeature, FontStretch, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Size;
+use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
+use dc_bundle::legacy_definition::modifier::blend::BlendMode;
+use dc_bundle::legacy_definition::modifier::filter::FilterOp;
+use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -90,19 +94,6 @@ impl Background {
             scale_mode: ScaleMode::Tile,
             opacity: 1.0,
         }
-    }
-}
-
-/// This structure represents an OpenType feature, for example "tnum" controls tabular numbers
-/// in fonts that support the feature.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct FontFeature {
-    pub tag: [u8; 4],
-    pub enabled: bool,
-}
-impl FontFeature {
-    pub fn new(tag: &[u8; 4]) -> Self {
-        FontFeature { tag: *tag, enabled: true }
     }
 }
 
@@ -268,83 +259,11 @@ impl BoxShadow {
     }
 }
 
-/// Filters -- these can be applied to a view and its children (via the "filter" style),
-/// or to the elements behind a view (via the "backdrop_filter" style).
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub enum FilterOp {
-    /// Gaussian blur, radius in px.
-    Blur(f32),
-    //Saturation(f32),
-    Contrast(f32),
-    Grayscale(f32),
-    Brightness(f32),
-}
-
-/// Horizontal text alignment. This value aligns the text within its bounds.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
-pub enum TextAlign {
-    #[default]
-    Left,
-    Center,
-    Right,
-}
-
-/// Vertical text alignment. This value aligns the text vertically within its bounds.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
-pub enum TextAlignVertical {
-    #[default]
-    Top,
-    Center,
-    Bottom,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
-pub enum TextOverflow {
-    #[default]
-    Clip,
-    Ellipsis,
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TextShadow {
     pub blur_radius: f32,
     pub color: Color,
     pub offset: (f32, f32),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub enum LineHeight {
-    Pixels(f32),
-    Percent(f32),
-}
-impl Default for LineHeight {
-    fn default() -> Self {
-        LineHeight::Percent(1.0)
-    }
-}
-
-/// How is a stroke aligned to its containing box?
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub enum StrokeAlign {
-    /// The stroke is entirely within the containing view. The stroke's outer edge matches the
-    /// outer edge of the containing view.
-    Inside,
-    /// The stroke is centered on the edge of the containing view, and extends into the view
-    /// on the inside, and out of the view on the outside.
-    Center,
-    /// The stroke is entirely outside of the view. The stroke's inner edge is the outer edge
-    /// of the containing view.
-    Outside,
-}
-
-/// Stroke weight is either a uniform value for all sides, or individual
-/// weights for each side.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub enum StrokeWeight {
-    /// One weight is used for all sides.
-    Uniform(f32),
-    /// Individual weights for each side (typically only applied on boxes).
-    Individual { top: f32, right: f32, bottom: f32, left: f32 },
 }
 
 /// A stroke is similar to a border, except that it does not change layout (a border insets
@@ -367,42 +286,6 @@ impl Default for Stroke {
             strokes: Vec::new(),
         }
     }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
-pub enum BlendMode {
-    ///Normal blends:
-    #[default]
-    PassThrough,
-    ///(only applicable to objects with children)
-    Normal,
-
-    ///Darken:
-    Darken,
-    Multiply,
-    LinearBurn,
-    ColorBurn,
-
-    ///Lighten:
-    Lighten,
-    Screen,
-    LinearDodge,
-    ColorDodge,
-
-    ///Contrast:
-    Overlay,
-    SoftLight,
-    HardLight,
-
-    ///Inversion:
-    Difference,
-    Exclusion,
-
-    ///Component:
-    Hue,
-    Saturation,
-    Color,
-    Luminosity,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]

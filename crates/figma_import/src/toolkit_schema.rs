@@ -19,14 +19,13 @@ use std::sync::atomic::AtomicU16;
 // retain image references.
 use serde::{Deserialize, Serialize};
 
+use crate::figma_schema;
 use crate::reaction_schema::FrameExtras;
 use crate::reaction_schema::Reaction;
 use crate::toolkit_style::{StyledTextRun, ViewStyle};
 pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
 use dc_bundle::legacy_definition::element::variable::NumOrVar;
 use std::collections::HashMap;
-
-pub use crate::figma_schema::{FigmaColor, OverflowDirection, StrokeCap, VariableAlias};
 
 /// Shape of a view, either a rect or a path of some kind.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -47,7 +46,7 @@ pub enum ViewShape {
     Arc {
         path: Vec<crate::vector_schema::Path>,
         stroke: Vec<crate::vector_schema::Path>,
-        stroke_cap: StrokeCap,
+        stroke_cap: figma_schema::StrokeCap,
         start_angle_degrees: f32,
         sweep_angle_degrees: f32,
         inner_radius: f32,
@@ -105,12 +104,12 @@ pub struct ComponentInfo {
 /// paged_scrolling, which comes from the vsw-extended-layout plugin.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ScrollInfo {
-    pub overflow: OverflowDirection,
+    pub overflow: figma_schema::OverflowDirection,
     pub paged_scrolling: bool,
 }
 impl Default for ScrollInfo {
     fn default() -> Self {
-        ScrollInfo { overflow: OverflowDirection::None, paged_scrolling: false }
+        ScrollInfo { overflow: figma_schema::OverflowDirection::None, paged_scrolling: false }
     }
 }
 

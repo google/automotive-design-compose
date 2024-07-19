@@ -16,7 +16,7 @@ use dc_bundle::legacy_definition::element::node::NodeQuery;
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    figma_schema::Node,
+    figma_schema,
     reaction_schema::{Action, Reaction},
 };
 
@@ -37,7 +37,7 @@ pub struct ComponentContext {
 
 impl ComponentContext {
     /// Create a new ComponentContext which knows that the given nodes will be converted.
-    pub fn new(nodes: &Vec<(NodeQuery, &Node)>) -> ComponentContext {
+    pub fn new(nodes: &Vec<(NodeQuery, &figma_schema::Node)>) -> ComponentContext {
         let mut converted_nodes = HashSet::new();
         for (_, node) in nodes {
             converted_nodes.insert(node.id.clone());
@@ -82,8 +82,8 @@ impl ComponentContext {
     /// Get the list of nodes to convert next, and reset the list of referenced nodes.
     pub fn referenced_list<'a>(
         &mut self,
-        id_index: &HashMap<String, &'a Node>,
-    ) -> Vec<(NodeQuery, &'a Node)> {
+        id_index: &HashMap<String, &'a figma_schema::Node>,
+    ) -> Vec<(NodeQuery, &'a figma_schema::Node)> {
         let mut list = Vec::new();
 
         // Create a NodeId query and try to find the node for each referenced node we know about.

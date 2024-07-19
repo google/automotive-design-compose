@@ -17,9 +17,6 @@
 package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import com.android.designcompose.DesignDocSettings
-import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 
@@ -32,11 +29,4 @@ interface StyledTextRuns {
 @Composable
 fun StyledTextRunsTest() {
     StyledTextRunsDoc.Main()
-}
-
-@Composable
-fun SquooshStyledTextRunsTest() {
-    CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
-        StyledTextRunsDoc.Main()
-    }
 }

@@ -18,18 +18,23 @@ package com.android.designcompose.testapp.validation
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.test.core.app.ApplicationProvider
+import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.DocRenderStatus
+import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.DEFAULT_RENDERER_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
+import com.android.designcompose.testapp.validation.examples.SQUOOSH_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.StateCustomizationsDoc
 import java.io.File
 import org.junit.Rule
@@ -67,7 +72,9 @@ class RenderAllExamples(private val config: TestConfig) {
     data class TestConfig(
         internal val fileName: String,
         internal val fileComposable: @Composable () -> Unit,
-        internal val fileClass: String
+        internal val fileClass: String,
+        // This value doesn't do anything if there is already one set in the test example.
+        internal val useSquoosh: Boolean = false
     )
 
     val dcfOutPath = System.getProperty("designcompose.test.dcfOutPath")
@@ -75,7 +82,17 @@ class RenderAllExamples(private val config: TestConfig) {
 
     @Test
     fun testRender() {
-        composeTestRule.setContent(config.fileComposable)
+        if (config.useSquoosh) {
+            composeTestRule.setContent {
+                CompositionLocalProvider(
+                    LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+                ) {
+                    config.fileComposable()
+                }
+            }
+        } else {
+            composeTestRule.setContent(config.fileComposable)
+        }
 
         if (runFigmaFetch == "true") performLiveFetch(dcfOutPath)
 
@@ -95,10 +112,37 @@ class RenderAllExamples(private val config: TestConfig) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun createTestSet(): List<TestConfig> {
-            return EXAMPLES.filter { it.third != null && !disabledTests.contains(it.third!!) }
-                .map {
-                    TestConfig(it.first.replace("[\\s*]".toRegex(), "-"), it.second, it.third!!)
-                }
+            val testConfigs = mutableListOf<TestConfig>()
+            val defaultRendererExamples =
+                mutableListOf<Triple<String, @Composable () -> Unit, String?>>()
+            defaultRendererExamples.addAll(EXAMPLES)
+            defaultRendererExamples.addAll(DEFAULT_RENDERER_ONLY_EXAMPLES)
+            testConfigs.addAll(
+                defaultRendererExamples
+                    .filter { it.third != null && !disabledTests.contains(it.third!!) }
+                    .map {
+                        TestConfig(it.first.replace("[\\s*]".toRegex(), "-"), it.second, it.third!!)
+                    }
+            )
+
+            val squooshRendererExamples =
+                mutableListOf<Triple<String, @Composable () -> Unit, String?>>()
+            squooshRendererExamples.addAll(SQUOOSH_ONLY_EXAMPLES)
+            squooshRendererExamples.addAll(EXAMPLES)
+
+            testConfigs.addAll(
+                squooshRendererExamples
+                    .filter { it.third != null && !disabledTests.contains(it.third!!) }
+                    .map {
+                        TestConfig(
+                            it.first.replace("[\\s*]".toRegex(), "-").plus("_SQUOOSH"),
+                            it.second,
+                            it.third!!,
+                            useSquoosh = true
+                        )
+                    }
+            )
+            return testConfigs
         }
     }
 }

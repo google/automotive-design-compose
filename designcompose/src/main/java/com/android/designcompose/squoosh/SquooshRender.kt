@@ -24,8 +24,12 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawContext
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.Paragraph
@@ -34,6 +38,7 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.VariableState
+import com.android.designcompose.asBrush
 import com.android.designcompose.asComposeBlendMode
 import com.android.designcompose.asComposeTransform
 import com.android.designcompose.getBrush
@@ -45,6 +50,7 @@ import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squooshShapeRender
+import com.android.designcompose.toUniform
 import com.android.designcompose.useLayer
 import kotlin.system.measureTimeMillis
 
@@ -90,6 +96,7 @@ internal fun Modifier.squooshRender(
                             else -> {
                                 if (node.textInfo != null) {
                                     squooshTextRender(
+                                        document,
                                         drawContext,
                                         this,
                                         node.textInfo,
@@ -97,6 +104,7 @@ internal fun Modifier.squooshRender(
                                         computedLayout,
                                         customizations,
                                         node.view.name,
+                                        variableState
                                     )
                                     nodeRenderCount++
                                 }
@@ -230,6 +238,7 @@ internal fun Modifier.squooshRender(
 
 @OptIn(ExperimentalTextApi::class)
 private fun squooshTextRender(
+    document: DocContent,
     drawContext: DrawContext,
     density: Density,
     textInfo: TextMeasureData,
@@ -237,6 +246,7 @@ private fun squooshTextRender(
     computedLayout: Layout,
     customizations: CustomizationContext,
     nodeName: String,
+    variableState: VariableState,
 ) {
     val paragraph =
         Paragraph(
@@ -291,9 +301,45 @@ private fun squooshTextRender(
         }
 
     drawContext.canvas.translate(0.0f, verticalCenterOffset)
-    if (customFillBrush != null) paragraph.paint(drawContext.canvas, brush = customFillBrush)
-    else paragraph.paint(drawContext.canvas)
-    drawContext.canvas.translate(0.0f, -verticalCenterOffset)
 
+    // Every time calling paragraph.paint will save the new brush, alpha and drawStyle to the
+    // paragraph. We need to pass the text brush, opacity and draw style explicitly to make sure
+    // it uses the right brush to draw the fill color.
+    if (customFillBrush != null) {
+        paragraph.paint(drawContext.canvas, brush = customFillBrush, alpha = 1.0f, drawStyle = Fill)
+    } else {
+        val textBrushAndOpacity =
+            style.node_style.text_color.asBrush(
+                document = document,
+                density = density.density,
+                variableState = variableState
+            )
+        paragraph.paint(
+            drawContext.canvas,
+            brush = textBrushAndOpacity?.first ?: SolidColor(Color.Transparent),
+            alpha = textBrushAndOpacity?.second ?: 1.0f,
+            drawStyle = Fill
+        )
+    }
+
+    val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density.density
+    style.node_style.stroke.strokes.forEach {
+        val strokeBrushAndOpacity =
+            it.asBrush(
+                document = document,
+                variableState = variableState,
+                density = density.density
+            )
+        strokeBrushAndOpacity?.first?.let { brush ->
+            paragraph.paint(
+                drawContext.canvas,
+                brush = brush,
+                alpha = strokeBrushAndOpacity.second,
+                drawStyle = Stroke(width = strokeWidth)
+            )
+        }
+    }
+
+    drawContext.canvas.translate(0.0f, -verticalCenterOffset)
     if (useBlendModeLayer || opacity < 1.0f || transform != null) drawContext.canvas.restore()
 }

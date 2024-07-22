@@ -29,11 +29,11 @@ use crate::{
     toolkit_schema::{ComponentInfo, ScrollInfo, View, ViewShape},
     variable_utils::FromFigmaVar,
 };
+use dc_bundle::definition::element::{FontFeature, FontStyle};
 
 use crate::reaction_schema::ReactionJson;
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::background::Background;
-use dc_bundle::legacy_definition::element::font::{FontFeature, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, Path, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
@@ -1191,10 +1191,9 @@ fn visit_node(
             let mut font_features = Vec::new();
             for (flag, value) in flags {
                 let flag_ascii = flag.to_ascii_lowercase();
-                let flag_bytes = flag_ascii.as_bytes();
-                if flag_bytes.len() == 4 {
-                    let tag = [flag_bytes[0], flag_bytes[1], flag_bytes[2], flag_bytes[3]];
-                    font_features.push(FontFeature { tag, enabled: *value == 1 });
+                if flag_ascii.len() == 4 {
+                    // Smoke check to see if the flag is valid
+                    font_features.push(FontFeature { tag: flag_ascii, enabled: *value == 1 });
                 } else {
                     println!("Unsupported OpenType flag: {}", flag)
                 }

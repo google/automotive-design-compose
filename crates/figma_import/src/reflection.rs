@@ -54,7 +54,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::layout::FlexWrap>(&samples)
         .expect("couldn't trace FlexWrap");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::font::FontStyle>(&samples)
+        .trace_type::<dc_bundle::definition::element::FontStyle>(&samples)
         .expect("couldn't trace FontStyle");
     tracer
         .trace_type::<dc_bundle::legacy_definition::element::font::TextDecoration>(&samples)

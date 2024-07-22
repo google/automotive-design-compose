@@ -5,7 +5,7 @@ designcompose = "0.30.0-SNAPSHOT"
 jvmToolchain = "17"
 
 #Android Gradle Plugin
-agp = "8.4.1"
+agp = "8.4.2"
 # The minimum supported AGP version for DesignCompose Apps
 agp-minSupported = "7.3.1"
 
@@ -50,12 +50,12 @@ junit = "4.13.2"
 # Keep in sync with build-logic/src/main/kotlin/designcompose/conventions/base.gradle.kts
 ktfmt = "0.47"
 material = "1.12.0"
-mockk = "1.13.11"
+mockk = "1.13.12"
 junit5 = "5.10.3"
-truth = "1.4.3"
+truth = "1.4.4"
 spotless = "6.25.0"
 robolectric = "4.13"
-roborazzi = "1.21.0"
+roborazzi = "1.23.0"
 androidx-material3 = "1.2.1"
 # Keep in sync with the "Install Protoc" steps in .github/workflows
 protoc = "4.27.2"

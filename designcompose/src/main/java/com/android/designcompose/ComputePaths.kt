@@ -51,7 +51,7 @@ class ComputedPaths(
 
     /// The paths that need to be filled with the Stroke brush for this
     /// shape.
-    val strokes: List<Path>,
+    var strokes: List<Path>,
 
     /// The paths that need to be clipped out (for outset shadows that
     /// don't paint under the background) or clipped in for inset shadows.

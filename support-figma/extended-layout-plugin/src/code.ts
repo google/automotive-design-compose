@@ -974,6 +974,36 @@ if (figma.command === "sync") {
     saveMeterData(meterData);
   }
 
+  function vectorChanged(msg: any) {
+    const node = figma.currentPage.selection[0] as VectorNode;
+
+    // Collect vector paths into an array. The vector data here for a vector stroked path
+    // (no fill) is different than the one provided by the REST API. This one returns the
+    // path of the stroke itself, whereas the REST API returns the path of the outline of
+    // the stroke. The stroke path is the one needed in order to render a partial curve
+    // as a progress bar that follows a vector path.
+    let paths = [];
+    for (const path of node.vectorPaths) {
+      paths.push({
+        path: path.data,
+        windingRule: path.windingRule,
+      });
+    }
+
+    let vectorData: any = {
+      enabled: msg.enabled,
+      discrete: msg.discrete,
+      discreteValue: msg.discreteValue,
+      paths: paths
+    };
+
+    let meterData: any = {
+      progressVectorData: vectorData
+    };
+
+    saveMeterData(meterData);
+  }
+
   async function initMeters() {
     await figma.loadAllPagesAsync();
     onSelectionChangeMeters();
@@ -986,6 +1016,8 @@ if (figma.command === "sync") {
         rotationChanged(msg);
       } else if (msg.msg == "bar-changed") {
         progressChanged(msg, false);
+      } else if (msg.msg == "vector-changed") {
+        vectorChanged(msg);
       } else if (msg.msg == "marker-changed") {
         progressChanged(msg, true);
       }

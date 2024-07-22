@@ -25,7 +25,10 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
@@ -39,6 +42,7 @@ import com.android.designcompose.serdegen.MeterData
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
 import com.android.designcompose.serdegen.ProgressMarkerMeterData
+import com.android.designcompose.serdegen.ProgressVectorMeterData
 import com.android.designcompose.serdegen.RotationMeterData
 import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.ViewShape
@@ -229,6 +233,35 @@ private fun calculateArcData(
     return returnShape
 }
 
+// Set up the paint object to render a vector path as a stroke with a single dash that matches the
+// length of the current progress within the vector.
+private fun calculateProgressVectorData(
+    data: ProgressVectorMeterData,
+    paths: List<Path>,
+    p: Paint,
+    style: ViewStyle,
+    meterValue: Float,
+    density: Float
+) {
+    val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density
+    val discretizedMeterValue = meterValue.coerceDiscrete(data.discrete, data.discreteValue)
+
+    // Get full length of path
+    var pathLen = 0f
+    paths.forEach {
+        val measure = PathMeasure()
+        measure.setPath(it, false)
+        pathLen += measure.length
+    }
+    // Create intervals for dashed effect so that the first interval (the solid dash portion) is
+    // equal to the length of the vector multiplied by the meter value. The second interval
+    // (the empty portion of the dash) is large enough to cover the rest of the path.
+    val intervals = floatArrayOf(discretizedMeterValue / 100f * pathLen, pathLen)
+    p.pathEffect = PathEffect.dashPathEffect(intervals, 0f)
+    p.strokeWidth = strokeWidth
+    p.style = PaintingStyle.Stroke
+}
+
 private fun renderPaths(drawContext: DrawContext, paths: List<Path>, brushes: List<Paint>) {
     for (path in paths) {
         for (paint in brushes) {
@@ -256,6 +289,7 @@ internal fun ContentDrawScope.render(
     var rectSize: Size? = null
     var shape = frameShape
     var customArcAngle = false
+    var progressVectorMeterData: ProgressVectorMeterData? = null
 
     val meterValue =
         customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
@@ -298,6 +332,11 @@ internal fun ContentDrawScope.render(
                         customArcAngle = true
                     }
                 }
+                is MeterData.progressVectorData -> {
+                    // If this is a vector path progress bar, save it here so we can convert it to a
+                    // set of path instructions and render it instead of the normal stroke.
+                    progressVectorMeterData = meterData.value
+                }
             }
         }
     }
@@ -339,7 +378,7 @@ internal fun ContentDrawScope.render(
             vectorScaleX,
             vectorScaleY,
             layoutId,
-            variableState
+            variableState,
         )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
@@ -373,6 +412,9 @@ internal fun ContentDrawScope.render(
     val strokeBrush =
         style.node_style.stroke.strokes.mapNotNull { background ->
             val p = Paint()
+            progressVectorMeterData?.let {
+                calculateProgressVectorData(it, shapePaths.strokes, p, style, meterValue!!, density)
+            }
             val b = background.asBrush(document, density, variableState)
             if (b != null) {
                 val (brush, strokeOpacity) = b
@@ -522,6 +564,7 @@ internal fun squooshShapeRender(
     var rectSize: Size? = if (overrideLayoutSize) size else null
     var shape = frameShape
     var customArcAngle = false
+    var progressVectorMeterData: ProgressVectorMeterData? = null
 
     val meterValue =
         customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
@@ -564,6 +607,11 @@ internal fun squooshShapeRender(
                         customArcAngle = true
                     }
                 }
+                is MeterData.progressVectorData -> {
+                    // If this is a vector path progress bar, save it here so we can convert it to a
+                    // set of path instructions and render it instead of the normal stroke.
+                    progressVectorMeterData = meterData.value
+                }
             }
         }
     }
@@ -598,7 +646,7 @@ internal fun squooshShapeRender(
             vectorScaleX,
             vectorScaleY,
             0, // XXX: layoutId
-            variableState
+            variableState,
         )
 
     // Blend mode
@@ -674,6 +722,9 @@ internal fun squooshShapeRender(
     val strokeBrush =
         style.node_style.stroke.strokes.mapNotNull { background ->
             val p = Paint()
+            progressVectorMeterData?.let {
+                calculateProgressVectorData(it, shapePaths.strokes, p, style, meterValue!!, density)
+            }
             val b = background.asBrush(document, density, variableState)
             if (b != null) {
                 val (brush, strokeOpacity) = b

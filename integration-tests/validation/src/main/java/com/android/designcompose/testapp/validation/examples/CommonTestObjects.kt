@@ -48,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -79,10 +80,11 @@ fun AdaptiveButton(setAdaptive: (Boolean) -> Unit) {
 }
 
 @Composable
-internal fun Slider(value: MutableState<Float>, min: Float, max: Float) {
+internal fun Slider(value: MutableState<Float>, min: Float, max: Float, testTag: String? = null) {
     val density = LocalDensity.current.density
     val sliderMax = 400f * density
     val v = remember { mutableStateOf(sliderMax * (value.value - min) / (max - min)) }
+    val testTagModifier = testTag?.let { Modifier.testTag(it) } ?: Modifier
     Box(
         modifier =
             Modifier.width(440.dp)
@@ -111,6 +113,7 @@ internal fun Slider(value: MutableState<Float>, min: Float, max: Float) {
                     )
                     .size(30.dp)
                     .border(width = 25.dp, color = Color.Black, shape = RoundedCornerShape(5.dp))
+                    .then(testTagModifier)
         )
     }
 }

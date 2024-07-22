@@ -18,7 +18,9 @@ use std::f32::consts::PI;
 use crate::toolkit_layout_style::Overflow;
 use dc_bundle::legacy_definition::element::font::FontWeight;
 
-use crate::toolkit_style::{MeterData, StyledTextRun, TextStyle, ViewStyle};
+use crate::toolkit_style::{
+    MeterData, MeterDataSchema, ProgressVectorMeterData, StyledTextRun, TextStyle, ViewStyle,
+};
 
 use crate::figma_schema;
 use crate::vector_schema;
@@ -1384,7 +1386,7 @@ fn visit_node(
     // stroke geometry for shapes with an area (e.g.: not lines) with Outside or Inside
     // stroke treatment. However, when a shape has no area (e.g.: it is a line), then the
     // fill geometry will be empty so we *have* to use the stroke geometry.
-    let stroke_paths = if let Some(strokes) = &node.stroke_geometry {
+    let mut stroke_paths = if let Some(strokes) = &node.stroke_geometry {
         strokes.iter().filter_map(parse_path).collect()
     } else {
         Vec::new()
@@ -1444,6 +1446,24 @@ fn visit_node(
             ViewShape::Rect { is_mask }
         }
     };
+
+    // Check to see if there is additional plugin data to set this node up as
+    // a type of meter (dials/gauges/progress bars)
+    if let Some(vsw_data) = plugin_data {
+        if let Some(data) = vsw_data.get("vsw-meter-data") {
+            let meter_data: Option<MeterDataSchema> = serde_json::from_str(data.as_str()).ok();
+            if let Some(meter_data) = meter_data {
+                if let MeterDataSchema::ProgressVectorData(vector_data) = &meter_data {
+                    // If this is a progress vector node, we read in data as a ProgressVectorMeterDataSchema,
+                    // which contains vector drawing instructions as a string. We convert this into vector
+                    // drawing instructions in a ProgressVectorMeterData struct and replace the normal stroke
+                    // vector data with it.
+                    stroke_paths = vector_data.paths.iter().filter_map(parse_path).collect();
+                }
+                style.node_style.meter_data = Some(meter_data.into());
+            }
+        }
+    }
 
     // Figure out the ViewShape from the node type.
     let view_shape = match &node.data {
@@ -1526,15 +1546,6 @@ fn visit_node(
             figma_schema::EffectType::BackgroundBlur => {
                 style.node_style.backdrop_filter.push(FilterOp::Blur(effect.radius / 2.0));
             }
-        }
-    }
-
-    // Check to see if there is additional plugin data to set this node up as
-    // a type of meter (dials/gauges/progress bars)
-    if let Some(vsw_data) = plugin_data {
-        if let Some(data) = vsw_data.get("vsw-meter-data") {
-            let meter_data: Option<MeterData> = serde_json::from_str(data.as_str()).ok();
-            style.node_style.meter_data = meter_data;
         }
     }
 

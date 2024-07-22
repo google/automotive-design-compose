@@ -266,7 +266,7 @@ pub struct Size {
 //#[derive (Deserialize, Serialize, Debug, Clone)]
 pub type Transform = [[Option<f32>; 3]; 2];
 
-#[derive(Deserialize, Serialize, Debug, Clone, Hash)]
+#[derive(Deserialize, Serialize, Debug, Clone, Hash, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Path {
     pub path: String,

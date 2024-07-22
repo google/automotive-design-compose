@@ -71,10 +71,10 @@ fn default_winding_rule() -> WindingRule {
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Path {
-    commands: Vec<u8>,
-    data: Vec<f32>,
+    pub commands: Vec<u8>,
+    pub data: Vec<f32>,
     #[serde(default = "default_winding_rule")]
-    winding_rule: WindingRule,
+    pub winding_rule: WindingRule,
 }
 impl Path {
     pub fn new() -> Path {

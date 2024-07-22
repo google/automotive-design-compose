@@ -20,38 +20,6 @@ use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
-/// Allows italic or oblique faces to be selected.
-#[derive(Clone, Copy, PartialEq, Debug, Hash, Deserialize, Serialize, Default)]
-pub enum FontStyle {
-    /// A face that is neither italic not obliqued.
-    #[default]
-    Normal,
-    /// A form that is generally cursive in nature.
-    Italic,
-    /// A typically-sloped version of the regular face.
-    Oblique,
-}
-
-impl Display for FontStyle {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Debug::fmt(self, f)
-    }
-}
-
-/// This structure represents an OpenType feature, for example "tnum" controls tabular numbers
-/// in fonts that support the feature.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct FontFeature {
-    pub tag: [u8; 4],
-    pub enabled: bool,
-}
-
-impl FontFeature {
-    pub fn new(tag: &[u8; 4]) -> Self {
-        FontFeature { tag: *tag, enabled: true }
-    }
-}
-
 /// The width of a font as an approximate fraction of the normal width.
 ///
 /// Widths range from 0.5 to 2.0 inclusive, with 1.0 as the normal width.

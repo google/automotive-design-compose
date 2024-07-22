@@ -166,9 +166,7 @@ internal fun DesignText(
                         },
                     fontFamily = DesignSettings.fontFamily(run.style.font_family, fontFamily),
                     fontFeatureSettings =
-                        run.style.font_features.joinToString(", ") { feature ->
-                            String(feature.tag.toByteArray())
-                        },
+                        run.style.font_features.joinToString(", ") { feature -> feature.tag },
                     letterSpacing = run.style.letter_spacing.sp,
                     textDecoration =
                         when (run.style.text_decoration) {

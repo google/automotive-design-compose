@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use serde::{Deserialize, Serialize};
 
-pub mod color;
-pub mod font;
-pub mod geometry;
-pub mod node;
-pub mod path;
-pub mod variable;
-pub mod view_shape;
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum StrokeCap {
+    None,
+    Round,
+    Square,
+    LineArrow,
+    TriangleArrow,
+    CircleFilled,
+    DiamondFilled, // Not supported
+}

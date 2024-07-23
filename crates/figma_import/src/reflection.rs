@@ -157,13 +157,13 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_schema::ComponentInfo>(&samples)
         .expect("couldn't trace ComponentInfo");
     tracer
-        .trace_type::<crate::figma_schema::OverflowDirection>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::grid::OverflowDirection>(&samples)
         .expect("couldn't trace OverflowDirection");
     tracer
         .trace_type::<crate::toolkit_schema::RenderMethod>(&samples)
         .expect("couldn't trace RenderMethod");
     tracer
-        .trace_type::<crate::figma_schema::StrokeCap>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::view_shape::StrokeCap>(&samples)
         .expect("couldn't trace StrokeCap");
     tracer
         .trace_type::<dc_bundle::legacy_definition::element::variable::Mode>(&samples)

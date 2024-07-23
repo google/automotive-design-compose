@@ -15,8 +15,8 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use crate::toolkit_font_style::FontWeight;
 use crate::toolkit_layout_style::Overflow;
+use dc_bundle::legacy_definition::element::font::FontWeight;
 
 use crate::toolkit_style::{
     Background, GridLayoutType, GridSpan, LayoutTransform, MeterData, ShadowBox, StyledTextRun,
@@ -1134,13 +1134,13 @@ fn visit_node(
         }
         style.node_style.text_decoration = match text_style.text_decoration {
             crate::figma_schema::TextDecoration::None => {
-                crate::toolkit_font_style::TextDecoration::None
+                dc_bundle::legacy_definition::element::font::TextDecoration::None
             }
             crate::figma_schema::TextDecoration::Underline => {
-                crate::toolkit_font_style::TextDecoration::Underline
+                dc_bundle::legacy_definition::element::font::TextDecoration::Underline
             }
             crate::figma_schema::TextDecoration::Strikethrough => {
-                crate::toolkit_font_style::TextDecoration::Strikethrough
+                dc_bundle::legacy_definition::element::font::TextDecoration::Strikethrough
             }
         };
         style.node_style.letter_spacing = Some(text_style.letter_spacing.clone());
@@ -1279,7 +1279,7 @@ fn visit_node(
                     style.node_style.font_size.clone()
                 };
                 let font_weight = if let Some(fw) = sub_style.font_weight {
-                    crate::toolkit_font_style::FontWeight(NumOrVar::Num(fw))
+                    dc_bundle::legacy_definition::element::font::FontWeight(NumOrVar::Num(fw))
                 } else {
                     style.node_style.font_weight.clone()
                 };
@@ -1290,10 +1290,10 @@ fn visit_node(
                 };
                 let text_decoration = match sub_style.text_decoration {
                     Some(crate::figma_schema::TextDecoration::Strikethrough) => {
-                        crate::toolkit_font_style::TextDecoration::Strikethrough
+                        dc_bundle::legacy_definition::element::font::TextDecoration::Strikethrough
                     }
                     Some(crate::figma_schema::TextDecoration::Underline) => {
-                        crate::toolkit_font_style::TextDecoration::Underline
+                        dc_bundle::legacy_definition::element::font::TextDecoration::Underline
                     }
                     Some(crate::figma_schema::TextDecoration::None) => {
                         style.node_style.text_decoration.clone()

@@ -17,7 +17,9 @@
 
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::color::Color;
-use dc_bundle::legacy_definition::element::font::{FontFeature, FontStretch, FontStyle};
+use dc_bundle::legacy_definition::element::font::{
+    FontFeature, FontStretch, FontStyle, FontWeight, TextDecoration,
+};
 use dc_bundle::legacy_definition::element::geometry::Size;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
@@ -28,10 +30,7 @@ use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical,
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::{
-    toolkit_font_style::{FontWeight, TextDecoration},
-    toolkit_layout_style::{Display, LayoutSizing, Number, Overflow},
-};
+use crate::toolkit_layout_style::{Display, LayoutSizing, Number, Overflow};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub enum ScaleMode {

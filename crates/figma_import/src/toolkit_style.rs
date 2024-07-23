@@ -16,12 +16,12 @@
 //! uses.
 
 use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::color::Color;
 use dc_bundle::legacy_definition::element::font::{
     FontFeature, FontStretch, FontStyle, FontWeight, TextDecoration,
 };
 use dc_bundle::legacy_definition::element::geometry::Size;
-use dc_bundle::legacy_definition::element::image::ImageKey;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
@@ -29,76 +29,11 @@ use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
-use dc_bundle::legacy_definition::modifier::transform::AffineTransform;
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::toolkit_layout_style::{Display, LayoutSizing, Number, Overflow};
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
-pub enum ScaleMode {
-    Fill,
-    Fit,
-    #[default]
-    Tile,
-    Stretch,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
-pub enum Background {
-    #[default]
-    None,
-    Solid(ColorOrVar),
-    LinearGradient {
-        start_x: f32,
-        start_y: f32,
-        end_x: f32,
-        end_y: f32,
-        color_stops: Vec<(f32, ColorOrVar)>,
-    },
-    AngularGradient {
-        center_x: f32,
-        center_y: f32,
-        angle: f32,
-        scale: f32,
-        color_stops: Vec<(f32, ColorOrVar)>,
-    },
-    RadialGradient {
-        center_x: f32,
-        center_y: f32,
-        angle: f32,
-        radius: (f32, f32),
-        color_stops: Vec<(f32, ColorOrVar)>,
-    },
-    // DiamondGradient support possibly in the future.
-    Image {
-        key: Option<ImageKey>,
-        filters: Vec<FilterOp>,
-        transform: Option<AffineTransform>,
-        scale_mode: ScaleMode,
-        opacity: f32,
-    },
-    Clear, // Clear all the pixels underneath, used for hole-punch compositing.
-}
-
-impl Background {
-    pub fn is_some(&self) -> bool {
-        match self {
-            Background::None => false,
-            _ => true,
-        }
-    }
-    pub fn from_image_key(key: ImageKey) -> Background {
-        Background::Image {
-            key: Some(key),
-            filters: Vec::new(),
-            transform: None,
-            scale_mode: ScaleMode::Tile,
-            opacity: 1.0,
-        }
-    }
-}
 
 // These are the style properties that apply to text, so we can use them on subsections of
 // a longer string. We then assume that every style transition is a potential line break (and

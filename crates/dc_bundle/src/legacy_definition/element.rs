@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+pub mod background;
 pub mod color;
 pub mod font;
 pub mod geometry;
-pub mod image;
 pub mod node;
 pub mod path;
 pub mod variable;

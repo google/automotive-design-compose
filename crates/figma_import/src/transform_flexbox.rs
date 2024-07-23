@@ -19,7 +19,7 @@ use crate::toolkit_font_style::FontWeight;
 use crate::toolkit_layout_style::Overflow;
 
 use crate::toolkit_style::{
-    Background, GridLayoutType, GridSpan, MeterData, ShadowBox, StyledTextRun, TextStyle, ViewStyle,
+    Background, GridLayoutType, GridSpan, MeterData, StyledTextRun, TextStyle, ViewStyle,
 };
 
 use crate::figma_schema;
@@ -44,6 +44,7 @@ use dc_bundle::legacy_definition::layout::positioning::{
 };
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
+use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
 use log::error;
@@ -1202,7 +1203,7 @@ fn visit_node(
             }
             match effect.effect_type {
                 figma_schema::EffectType::DropShadow => {
-                    style.node_style.text_shadow = Some(crate::toolkit_style::TextShadow {
+                    style.node_style.text_shadow = Some(TextShadow {
                         blur_radius: effect.radius,
                         color: crate::Color::from_f32s(
                             effect.color.r,
@@ -1482,7 +1483,7 @@ fn visit_node(
         }
         match effect.effect_type {
             figma_schema::EffectType::DropShadow => {
-                style.node_style.box_shadow.push(crate::toolkit_style::BoxShadow::Outset {
+                style.node_style.box_shadow.push(BoxShadow::Outset {
                     blur_radius: effect.radius,
                     spread_radius: effect.spread,
                     color: crate::Color::from_f32s(
@@ -1496,7 +1497,7 @@ fn visit_node(
                 });
             }
             figma_schema::EffectType::InnerShadow => {
-                style.node_style.box_shadow.push(crate::toolkit_style::BoxShadow::Inset {
+                style.node_style.box_shadow.push(BoxShadow::Inset {
                     blur_radius: effect.radius,
                     spread_radius: effect.spread,
                     color: crate::Color::from_f32s(

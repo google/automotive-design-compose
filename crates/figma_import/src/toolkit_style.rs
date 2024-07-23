@@ -25,6 +25,7 @@ use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
+use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::modifier::transform::AffineTransform;
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
@@ -188,85 +189,6 @@ impl StyledTextRun {
         font_features.push(feature);
         StyledTextRun { style: TextStyle { font_features, ..self.style }, text: self.text }
     }
-}
-
-/// Shadows can be applied to the border box, or the stroke box.
-///
-/// The border box is the box outside of the border for Outset shadows, and the box inside of the border for
-/// inset shadows.
-///
-/// The stroke box is always the the outer edge of any stroke defined, or the edge of the view (ignoring the
-/// border) if no strokes are present on the view.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub enum ShadowBox {
-    /// The shadow applies to the border box, either the inside of the border for inset shadows, or the outside
-    /// of the border for outset shadows.
-    BorderBox,
-    /// The shadow applies to the stroke box. This is the outer edge of the stroke for both inset and ouset shadows.
-    StrokeBox,
-}
-impl Default for ShadowBox {
-    fn default() -> Self {
-        Self::BorderBox
-    }
-}
-
-/// BoxShadow defines a CSS-style box shadow, either outset or inset.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub enum BoxShadow {
-    Outset {
-        blur_radius: f32,
-        spread_radius: f32,
-        color: Color,
-        offset: (f32, f32),
-        shadow_box: ShadowBox,
-    },
-    Inset {
-        blur_radius: f32,
-        spread_radius: f32,
-        color: Color,
-        offset: (f32, f32),
-        shadow_box: ShadowBox,
-    },
-}
-impl BoxShadow {
-    /// Create an outset box shadow.
-    pub fn outset(
-        blur_radius: f32,
-        spread_radius: f32,
-        color: Color,
-        offset: (f32, f32),
-    ) -> BoxShadow {
-        BoxShadow::Outset {
-            blur_radius,
-            spread_radius,
-            color,
-            offset,
-            shadow_box: ShadowBox::BorderBox,
-        }
-    }
-    /// Create an inset shadow.
-    pub fn inset(
-        blur_radius: f32,
-        spread_radius: f32,
-        color: Color,
-        offset: (f32, f32),
-    ) -> BoxShadow {
-        BoxShadow::Inset {
-            blur_radius,
-            spread_radius,
-            color,
-            offset,
-            shadow_box: ShadowBox::BorderBox,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub struct TextShadow {
-    pub blur_radius: f32,
-    pub color: Color,
-    pub offset: (f32, f32),
 }
 
 /// A stroke is similar to a border, except that it does not change layout (a border insets

@@ -55,3 +55,11 @@ message BoxShadow {
     Shadow inset = 2;
   }
 }
+
+// A text shadow.
+message TextShadow {
+  float blur_radius = 1;
+  element.Color color = 2;
+  float offset_x = 3;
+  float offset_y = 4;
+}

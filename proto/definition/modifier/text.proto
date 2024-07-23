@@ -16,8 +16,6 @@ syntax = "proto3";
 
 package designcompose.definition.modifier;
 
-import "definition/element/color.proto";
-
 option java_package = "com.android.designcompose.definition.modifier";
 
 option java_multiple_files = true;
@@ -44,11 +42,4 @@ enum TextOverflow {
   TEXT_OVERFLOW_UNSPECIFIED = 0;
   TEXT_OVERFLOW_CLIP = 1;
   TEXT_OVERFLOW_ELLIPSIS = 2;
-}
-// A text shadow.
-message TextShadow {
-  float blur_radius = 1;
-  element.Color color = 2;
-  float offset_x = 3;
-  float offset_y = 4;
 }

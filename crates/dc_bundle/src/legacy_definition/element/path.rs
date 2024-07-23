@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+use crate::legacy_definition::element::background::Background;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
@@ -50,4 +51,27 @@ pub enum StrokeWeight {
     Uniform(f32),
     /// Individual weights for each side (typically only applied on boxes).
     Individual { top: f32, right: f32, bottom: f32, left: f32 },
+}
+
+/// A stroke is similar to a border, except that it does not change layout (a border insets
+/// the children by the border size), it may be inset, centered or outset from the view bounds
+/// and there can be multiple strokes on a view.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct Stroke {
+    /// The alignment of strokes on this view.
+    pub stroke_align: StrokeAlign,
+    /// The thickness of strokes on this view (in pixels).
+    pub stroke_weight: StrokeWeight,
+    /// The stroke colors/fills
+    pub strokes: Vec<Background>,
+}
+
+impl Default for Stroke {
+    fn default() -> Self {
+        Stroke {
+            stroke_align: StrokeAlign::Center,
+            stroke_weight: StrokeWeight::Uniform(0.0),
+            strokes: Vec::new(),
+        }
+    }
 }

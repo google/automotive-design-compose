@@ -14,13 +14,4 @@
  * limitations under the License.
  */
 
-// This module holds the original structures that made up the serialized design doc, and which will be replaced with the protobuf implementations of the Design Definition
-
-// To help keep the legacy definition files clear we alias `crate::definition`, which is the base
-// module for the generated protobuf files to `proto`, so that all of the protobuf-generated types
-// inside `legacy_definition` must be prepended with `proto::`
-pub(crate) use crate::definition as proto;
-pub mod element;
-pub mod interaction;
-pub mod layout;
-pub mod modifier;
+pub mod pointer;

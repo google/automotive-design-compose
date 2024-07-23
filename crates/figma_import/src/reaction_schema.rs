@@ -15,6 +15,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::figma_schema;
+use dc_bundle::legacy_definition::element::color::FloatColor;
 
 // This module can deserialize Figma's "reactions" struct, which is used to define the
 // interactivity of interactive components. It's in a separate module from `figma_schema`
@@ -501,7 +502,7 @@ pub enum OverlayPositionType {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Copy)]
 pub struct OverlayBackground {
-    pub color: Option<figma_schema::FigmaColor>,
+    pub color: Option<FloatColor>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Copy)]
@@ -530,9 +531,7 @@ fn parse_frame_extras() {
     assert_eq!(click_to_close.overlay_position_type, OverlayPositionType::BottomCenter);
     assert_eq!(
         click_to_close.overlay_background,
-        OverlayBackground {
-            color: Some(figma_schema::FigmaColor { r: 0.0, g: 0.0, b: 0.0, a: 0.25 })
-        }
+        OverlayBackground { color: Some(FloatColor { r: 0.0, g: 0.0, b: 0.0, a: 0.25 }) }
     );
     assert_eq!(
         click_to_close.overlay_background_interaction,

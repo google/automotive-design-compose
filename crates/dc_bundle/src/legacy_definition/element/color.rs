@@ -196,3 +196,16 @@ fn test_rgb_to_hsv() {
     assert!(hsv_eq(case(0, 0, 128), (deg_2_rad(240.0), 1.0, 0.5))); //  Navy
     assert!(hsv_eq(case(255, 105, 180), (deg_2_rad(330.0), 0.588, 1.0))); //  Hot pink h: -30.0
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Default)]
+pub struct FloatColor {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+}
+impl Into<Color> for &FloatColor {
+    fn into(self) -> Color {
+        Color::from_f32s(self.r, self.g, self.b, self.a)
+    }
+}

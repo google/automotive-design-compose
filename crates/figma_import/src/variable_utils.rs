@@ -15,6 +15,7 @@
  */
 
 use crate::figma_schema;
+use dc_bundle::legacy_definition::element::color::FloatColor;
 use dc_bundle::legacy_definition::element::variable::{
     ColorOrVar, NumOrVar, Variable, VariableAlias, VariableType, VariableValue, VariableValueMap,
 };
@@ -44,11 +45,11 @@ impl FromFigmaVar<f32> for NumOrVar {
     }
 }
 // Create a ColorOrVar from Figma variable name and color value
-impl FromFigmaVar<&figma_schema::FigmaColor> for ColorOrVar {
+impl FromFigmaVar<&FloatColor> for ColorOrVar {
     fn from_var(
         bound_variables: &figma_schema::BoundVariables,
         var_name: &str,
-        color: &figma_schema::FigmaColor,
+        color: &FloatColor,
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {

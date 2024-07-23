@@ -675,6 +675,17 @@ impl OverflowDirection {
     }
 }
 
+impl Into<dc_bundle::legacy_definition::layout::grid::OverflowDirection> for OverflowDirection {
+    fn into(self) -> dc_bundle::legacy_definition::layout::grid::OverflowDirection {
+        match self {
+            OverflowDirection::None => dc_bundle::legacy_definition::layout::grid::OverflowDirection::None,
+            OverflowDirection::HorizontalScrolling => dc_bundle::legacy_definition::layout::grid::OverflowDirection::HorizontalScrolling,
+            OverflowDirection::VerticalScrolling => dc_bundle::legacy_definition::layout::grid::OverflowDirection::VerticalScrolling,
+            OverflowDirection::HorizontalAndVerticalScrolling => dc_bundle::legacy_definition::layout::grid::OverflowDirection::HorizontalAndVerticalScrolling,
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum BooleanOperation {
@@ -797,6 +808,30 @@ pub enum StrokeCap {
 
 fn default_stroke_cap() -> StrokeCap {
     StrokeCap::None
+}
+
+impl Into<dc_bundle::legacy_definition::element::view_shape::StrokeCap> for StrokeCap {
+    fn into(self) -> dc_bundle::legacy_definition::element::view_shape::StrokeCap {
+        match self {
+            StrokeCap::None => dc_bundle::legacy_definition::element::view_shape::StrokeCap::None,
+            StrokeCap::Round => dc_bundle::legacy_definition::element::view_shape::StrokeCap::Round,
+            StrokeCap::Square => {
+                dc_bundle::legacy_definition::element::view_shape::StrokeCap::Square
+            }
+            StrokeCap::LineArrow => {
+                dc_bundle::legacy_definition::element::view_shape::StrokeCap::LineArrow
+            }
+            StrokeCap::TriangleArrow => {
+                dc_bundle::legacy_definition::element::view_shape::StrokeCap::TriangleArrow
+            }
+            StrokeCap::CircleFilled => {
+                dc_bundle::legacy_definition::element::view_shape::StrokeCap::CircleFilled
+            }
+            StrokeCap::DiamondFilled => {
+                dc_bundle::legacy_definition::element::view_shape::StrokeCap::DiamondFilled
+            }
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone, Copy)]

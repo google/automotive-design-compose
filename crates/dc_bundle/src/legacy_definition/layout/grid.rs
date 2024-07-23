@@ -45,3 +45,14 @@ impl TryFrom<proto::layout::ItemSpacing> for ItemSpacing {
         }
     }
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
+pub enum OverflowDirection {
+    #[default]
+    None,
+    HorizontalScrolling,
+    VerticalScrolling,
+    HorizontalAndVerticalScrolling,
+}

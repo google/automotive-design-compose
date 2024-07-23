@@ -25,6 +25,8 @@ use crate::reaction_schema::Reaction;
 use crate::toolkit_style::{StyledTextRun, ViewStyle};
 pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
 use dc_bundle::legacy_definition::element::variable::NumOrVar;
+use dc_bundle::legacy_definition::element::view_shape::StrokeCap;
+use dc_bundle::legacy_definition::layout::grid::OverflowDirection;
 use std::collections::HashMap;
 
 /// Shape of a view, either a rect or a path of some kind.
@@ -46,7 +48,7 @@ pub enum ViewShape {
     Arc {
         path: Vec<crate::vector_schema::Path>,
         stroke: Vec<crate::vector_schema::Path>,
-        stroke_cap: figma_schema::StrokeCap,
+        stroke_cap: StrokeCap,
         start_angle_degrees: f32,
         sweep_angle_degrees: f32,
         inner_radius: f32,
@@ -104,12 +106,12 @@ pub struct ComponentInfo {
 /// paged_scrolling, which comes from the vsw-extended-layout plugin.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ScrollInfo {
-    pub overflow: figma_schema::OverflowDirection,
+    pub overflow: OverflowDirection,
     pub paged_scrolling: bool,
 }
 impl Default for ScrollInfo {
     fn default() -> Self {
-        ScrollInfo { overflow: figma_schema::OverflowDirection::None, paged_scrolling: false }
+        ScrollInfo { overflow: OverflowDirection::None, paged_scrolling: false }
     }
 }
 

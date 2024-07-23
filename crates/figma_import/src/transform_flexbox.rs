@@ -38,7 +38,7 @@ use dc_bundle::legacy_definition::element::font::{FontFeature, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
-use dc_bundle::legacy_definition::layout::grid::ItemSpacing;
+use dc_bundle::legacy_definition::layout::grid::{ItemSpacing, OverflowDirection};
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
 };
@@ -990,9 +990,9 @@ fn visit_node(
 
             if cld.scrolling {
                 scroll_info.overflow = if horizontal {
-                    figma_schema::OverflowDirection::VerticalScrolling
+                    OverflowDirection::VerticalScrolling
                 } else {
-                    figma_schema::OverflowDirection::HorizontalScrolling
+                    OverflowDirection::HorizontalScrolling
                 };
             }
 
@@ -1025,9 +1025,9 @@ fn visit_node(
             // space between boolean.
             if extended_auto_layout.common_data.scrolling {
                 scroll_info.overflow = if layout == LayoutType::Vertical {
-                    figma_schema::OverflowDirection::VerticalScrolling
+                    OverflowDirection::VerticalScrolling
                 } else {
-                    figma_schema::OverflowDirection::HorizontalScrolling
+                    OverflowDirection::HorizontalScrolling
                 };
             }
             if extended_auto_layout.auto_layout_data.space_between {
@@ -1104,8 +1104,8 @@ fn visit_node(
         style.node_style.overflow =
             if frame.clips_content { Overflow::Hidden } else { Overflow::Visible };
         // Don't overwrite scroll behavior if it was already set from grid layout
-        if scroll_info.overflow == figma_schema::OverflowDirection::None {
-            scroll_info.overflow = frame.overflow_direction;
+        if scroll_info.overflow == OverflowDirection::None {
+            scroll_info.overflow = frame.overflow_direction.into();
         }
     } else if let figma_schema::NodeData::Text {
         characters,
@@ -1460,7 +1460,7 @@ fn visit_node(
         figma_schema::NodeData::Ellipse { vector, arc_data, .. } => ViewShape::Arc {
             path: fill_paths,
             stroke: stroke_paths,
-            stroke_cap: node.stroke_cap.clone(),
+            stroke_cap: node.stroke_cap.clone().into(),
             start_angle_degrees: euclid::Angle::radians(arc_data.starting_angle).to_degrees(),
             sweep_angle_degrees: euclid::Angle::radians(arc_data.ending_angle).to_degrees(),
             inner_radius: arc_data.inner_radius,

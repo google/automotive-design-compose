@@ -28,16 +28,17 @@ use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy}, //ExtendedTextLayout
     image_context::ImageContext,
-    reaction_schema::{FrameExtras, Reaction, ReactionJson},
     toolkit_schema::{ComponentInfo, ScrollInfo, View, ViewShape},
     variable_utils::FromFigmaVar,
 };
 
+use crate::reaction_schema::ReactionJson;
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::font::{FontFeature, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
+use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::layout::grid::{
     GridLayoutType, GridSpan, ItemSpacing, OverflowDirection,

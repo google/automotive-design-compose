@@ -123,24 +123,34 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::ViewStyle>(&samples)
         .expect("couldn't trace ViewStyle");
 
-    tracer.trace_type::<crate::reaction_schema::Action>(&samples).expect("couldn't trace Action");
-    tracer.trace_type::<crate::reaction_schema::Trigger>(&samples).expect("couldn't trace Trigger");
     tracer
-        .trace_type::<crate::reaction_schema::Transition>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::reactions::Action>(&samples)
+        .expect("couldn't trace Action");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::element::reactions::Trigger>(&samples)
+        .expect("couldn't trace Trigger");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::element::reactions::Transition>(&samples)
         .expect("couldn't trace transition");
     tracer
-        .trace_type::<crate::reaction_schema::Navigation>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::reactions::Navigation>(&samples)
         .expect("couldn't trace Navigation");
     tracer
-        .trace_type::<crate::reaction_schema::OverlayBackgroundInteraction>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::reactions::OverlayBackgroundInteraction>(&samples)
         .expect("couldn't trace OverlayBackgroundInteraction");
     tracer
-        .trace_type::<crate::reaction_schema::OverlayPositionType>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::reactions::OverlayPositionType>(
+            &samples,
+        )
         .expect("couldn't trace OverlayPositionType");
     tracer
-        .trace_type::<crate::reaction_schema::TransitionDirection>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::reactions::TransitionDirection>(
+            &samples,
+        )
         .expect("couldn't trace TransitionDirection");
-    tracer.trace_type::<crate::reaction_schema::Easing>(&samples).expect("couldn't trace Easing");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::element::reactions::Easing>(&samples)
+        .expect("couldn't trace Easing");
 
     tracer
         .trace_type::<crate::vector_schema::WindingRule>(&samples)

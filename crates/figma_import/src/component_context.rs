@@ -13,12 +13,10 @@
 // limitations under the License.
 
 use dc_bundle::legacy_definition::element::node::NodeQuery;
+use dc_bundle::legacy_definition::element::reactions::{Action, Reaction};
 use std::collections::{HashMap, HashSet};
 
-use crate::{
-    figma_schema,
-    reaction_schema::{Action, Reaction},
-};
+use crate::figma_schema;
 
 /// ComponentContext is created by Document, and is used to ensure that all dependent nodes and
 /// components are converted from the Figma source JSON. Reactions (interactive links) in a node

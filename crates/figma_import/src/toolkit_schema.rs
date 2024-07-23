@@ -19,10 +19,10 @@ use std::sync::atomic::AtomicU16;
 // retain image references.
 use serde::{Deserialize, Serialize};
 
-use crate::reaction_schema::FrameExtras;
-use crate::reaction_schema::Reaction;
 use crate::toolkit_style::{StyledTextRun, ViewStyle};
 pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
+use dc_bundle::legacy_definition::element::reactions::FrameExtras;
+use dc_bundle::legacy_definition::element::reactions::Reaction;
 use dc_bundle::legacy_definition::element::variable::NumOrVar;
 use dc_bundle::legacy_definition::element::view_shape::StrokeCap;
 use dc_bundle::legacy_definition::layout::grid::OverflowDirection;

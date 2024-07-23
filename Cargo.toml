@@ -2,6 +2,13 @@
 resolver = "2"
 members = ["crates/figma_import", "crates/dc_jni", "crates/layout", "crates/dc_bundle"]
 
+[workspace.package]
+version = "0.30.0"
+edition = "2021"
+authors = ["DesignCompose Team <aae-design-compose@google.com>"]
+license = "Apache-2.0"
+rust-version = "1.68"
+
 [profile.release] # https://github.com/johnthagen/min-sized-rust
 opt-level = 'z'
 lto = true

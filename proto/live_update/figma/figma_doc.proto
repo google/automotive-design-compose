@@ -18,7 +18,7 @@ package designcompose.live_update.figma;
 
 import "definition/design_compose_definition.proto";
 
-option java_package  = "com.android.designcompose.live_update.figma";
+option java_package = "com.android.designcompose.live_update.figma";
 option java_multiple_files = true;
 
 /// We can fetch figma documents in a project or from branches of another

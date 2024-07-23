@@ -16,13 +16,13 @@ syntax = "proto3";
 
 package designcompose.definition.view;
 
+import "definition/element/background.proto";
 import "definition/element/font.proto";
 import "definition/element/geometry.proto";
 import "definition/element/path.proto";
 import "definition/interaction/pointer.proto";
 import "definition/layout/display.proto";
 import "definition/layout/grid.proto";
-import "definition/modifier/background.proto";
 import "definition/modifier/blend.proto";
 import "definition/modifier/filter.proto";
 import "definition/modifier/matrix_transform.proto";
@@ -39,7 +39,7 @@ option java_multiple_files = true;
 // Next id = 42
 message NodeStyle {
   // Text properties
-  definition.modifier.Background text_color = 1;
+  element.Background text_color = 1;
   float font_size = 2;
   optional string font_family = 3;
   float font_weight = 4;
@@ -47,7 +47,7 @@ message NodeStyle {
   definition.element.TextDecoration text_decoration = 40;
   optional float letter_spacing = 41;
   float font_stretch = 6;
-  repeated definition.modifier.Background backgrounds = 7;
+  repeated element.Background backgrounds = 7;
   repeated definition.modifier.BoxShadow box_shadows = 8;
   definition.element.Stroke stroke = 9;
   float opacity = 10;

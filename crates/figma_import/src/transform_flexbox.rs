@@ -19,7 +19,7 @@ use crate::toolkit_layout_style::Overflow;
 use dc_bundle::legacy_definition::element::font::FontWeight;
 
 use crate::toolkit_style::{
-    Background, GridLayoutType, GridSpan, MeterData, StyledTextRun, TextStyle, ViewStyle,
+    GridLayoutType, GridSpan, MeterData, StyledTextRun, TextStyle, ViewStyle,
 };
 
 use crate::figma_schema;
@@ -34,6 +34,7 @@ use crate::{
 };
 
 use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::font::{FontFeature, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
@@ -532,7 +533,7 @@ fn compute_background(
     last_paint: &crate::figma_schema::Paint,
     images: &mut ImageContext,
     node_name: &String,
-) -> crate::toolkit_style::Background {
+) -> Background {
     if let figma_schema::PaintData::Solid { color, bound_variables } = &last_paint.data {
         let solid_bg = if let Some(vars) = bound_variables {
             ColorOrVar::from_var(vars, "color", color)
@@ -596,10 +597,18 @@ fn compute_background(
         }
 
         let bg_scale_mode = match scale_mode {
-            crate::figma_schema::ScaleMode::Tile => crate::toolkit_style::ScaleMode::Tile,
-            crate::figma_schema::ScaleMode::Fill => crate::toolkit_style::ScaleMode::Fill,
-            crate::figma_schema::ScaleMode::Fit => crate::toolkit_style::ScaleMode::Fit,
-            crate::figma_schema::ScaleMode::Stretch => crate::toolkit_style::ScaleMode::Stretch,
+            crate::figma_schema::ScaleMode::Tile => {
+                dc_bundle::legacy_definition::element::background::ScaleMode::Tile
+            }
+            crate::figma_schema::ScaleMode::Fill => {
+                dc_bundle::legacy_definition::element::background::ScaleMode::Fill
+            }
+            crate::figma_schema::ScaleMode::Fit => {
+                dc_bundle::legacy_definition::element::background::ScaleMode::Fit
+            }
+            crate::figma_schema::ScaleMode::Stretch => {
+                dc_bundle::legacy_definition::element::background::ScaleMode::Stretch
+            }
         };
 
         if let Some(fill) = images.image_fill(image_ref, node_name) {

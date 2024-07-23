@@ -14,15 +14,20 @@
 
 syntax = "proto3";
 
-package designcompose.definition.modifier;
+package designcompose.definition.element;
 
 import "definition/element/color.proto";
 import "definition/modifier/filter.proto";
 import "definition/modifier/matrix_transform.proto";
 
-option java_package = "com.android.designcompose.definition.modifier";
+option java_package = "com.android.designcompose.definition.element";
 
 option java_multiple_files = true;
+
+// ImageKey is used to represent a unique identifier for an image.
+message ImageKey {
+  string key = 1;
+}
 
 // The background of a node
 message Background {
@@ -76,9 +81,9 @@ message Background {
     // the images in the ImageContext and then fetch decoded images when
     // rendering. This means we can serialize the whole ImageContext, and always
     // get the right image when we render.
-    string key = 1;
-    repeated FilterOp filters = 2;
-    AffineTransform transform = 3;
+    ImageKey key = 1;
+    repeated modifier.FilterOp filters = 2;
+    modifier.AffineTransform transform = 3;
     ScaleMode scale_mode = 4;
     float opacity = 5;
   }

@@ -32,7 +32,7 @@ use crate::{
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };
-use dc_bundle::legacy_definition::element::image::ImageKey;
+use dc_bundle::legacy_definition::element::background::ImageKey;
 use log::error;
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";

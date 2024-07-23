@@ -16,10 +16,10 @@ syntax = "proto3";
 
 package designcompose.definition.view;
 
+import "definition/element/background.proto";
 import "definition/element/font.proto";
 import "definition/element/path.proto";
 import "definition/element/variable.proto";
-import "definition/modifier/background.proto";
 
 option java_package = "com.android.designcompose.definition.view";
 
@@ -29,7 +29,7 @@ option java_package = "com.android.designcompose.definition.view";
 // content of every style for the normal case where we need to break text that's
 // all in one style).
 message TextStyle {
-  modifier.Background text_color = 1;
+  element.Background text_color = 1;
   element.NumOrVar font_size = 2;
   optional string font_family = 3;
   element.FontWeight font_weight = 4;

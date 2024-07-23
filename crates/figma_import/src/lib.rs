@@ -44,10 +44,11 @@ pub use design_definition::{
 pub use document::Document;
 pub use error::Error;
 pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
-pub use image_context::{ImageContextSession, ImageKey};
+pub use image_context::ImageContextSession;
 pub use toolkit_schema::{View, ViewData}; // ugly hack
                                           // Internal convenience
 pub use dc_bundle::legacy_definition::element::color::Color;
+pub use dc_bundle::legacy_definition::element::image::ImageKey;
 pub use dc_bundle::legacy_definition::element::node::NodeQuery;
 
 #[cfg(feature = "http_mock")]

@@ -19,12 +19,15 @@ use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::color::Color;
 use dc_bundle::legacy_definition::element::font::{FontFeature, FontStretch, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Size;
+use dc_bundle::legacy_definition::element::image::ImageKey;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
+use dc_bundle::legacy_definition::modifier::transform::AffineTransform;
+use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -70,7 +73,7 @@ pub enum Background {
     },
     // DiamondGradient support possibly in the future.
     Image {
-        key: Option<crate::image_context::ImageKey>,
+        key: Option<ImageKey>,
         filters: Vec<FilterOp>,
         transform: Option<AffineTransform>,
         scale_mode: ScaleMode,
@@ -86,7 +89,7 @@ impl Background {
             _ => true,
         }
     }
-    pub fn from_image_key(key: crate::image_context::ImageKey) -> Background {
+    pub fn from_image_key(key: ImageKey) -> Background {
         Background::Image {
             key: Some(key),
             filters: Vec::new(),
@@ -295,12 +298,6 @@ pub enum PointerEvents {
     #[default]
     Inherit,
 }
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct LayoutPixel;
-
-pub type LayoutTransform = euclid::Transform3D<f32, LayoutPixel, LayoutPixel>;
-pub type AffineTransform = euclid::Transform2D<f32, LayoutPixel, LayoutPixel>;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct GridSpan {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use crate::legacy_definition::proto;
 use crate::Error;
@@ -44,6 +45,25 @@ impl TryFrom<proto::layout::ItemSpacing> for ItemSpacing {
             proto::layout::item_spacing::Type::Auto(s) => Ok(ItemSpacing::Auto(s.width, s.height)),
         }
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct GridSpan {
+    pub node_name: String,
+    pub node_variant: HashMap<String, String>,
+    pub span: u32,
+    pub max_span: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
+pub enum GridLayoutType {
+    #[default]
+    FixedColumns,
+    FixedRows,
+    AutoColumns,
+    AutoRows,
+    Horizontal,
+    Vertical,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Eq)]

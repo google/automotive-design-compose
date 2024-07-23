@@ -78,7 +78,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::grid::ItemSpacing>(&samples)
         .expect("couldn't trace ItemSpacing");
     tracer
-        .trace_type::<crate::toolkit_style::GridLayoutType>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::grid::GridLayoutType>(&samples)
         .expect("couldn't trace GridLayoutType");
     tracer
         .trace_type::<crate::toolkit_style::RotationMeterData>(&samples)

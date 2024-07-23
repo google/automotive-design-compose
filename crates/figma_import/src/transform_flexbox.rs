@@ -18,9 +18,7 @@ use std::f32::consts::PI;
 use crate::toolkit_layout_style::Overflow;
 use dc_bundle::legacy_definition::element::font::FontWeight;
 
-use crate::toolkit_style::{
-    GridLayoutType, GridSpan, MeterData, StyledTextRun, TextStyle, ViewStyle,
-};
+use crate::toolkit_style::{MeterData, StyledTextRun, TextStyle, ViewStyle};
 
 use crate::figma_schema;
 use crate::vector_schema;
@@ -39,7 +37,9 @@ use dc_bundle::legacy_definition::element::font::{FontFeature, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
-use dc_bundle::legacy_definition::layout::grid::{ItemSpacing, OverflowDirection};
+use dc_bundle::legacy_definition::layout::grid::{
+    GridLayoutType, GridSpan, ItemSpacing, OverflowDirection,
+};
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
 };

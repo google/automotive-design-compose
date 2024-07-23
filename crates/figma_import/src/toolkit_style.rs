@@ -25,6 +25,7 @@ use dc_bundle::legacy_definition::element::geometry::Size;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::interaction::pointer::PointerEvents;
+use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
@@ -32,7 +33,6 @@ use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::toolkit_layout_style::{Display, LayoutSizing, Number, Overflow};
 
@@ -146,25 +146,6 @@ impl Default for Stroke {
             strokes: Vec::new(),
         }
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct GridSpan {
-    pub node_name: String,
-    pub node_variant: HashMap<String, String>,
-    pub span: u32,
-    pub max_span: bool,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
-pub enum GridLayoutType {
-    #[default]
-    FixedColumns,
-    FixedRows,
-    AutoColumns,
-    AutoRows,
-    Horizontal,
-    Vertical,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]

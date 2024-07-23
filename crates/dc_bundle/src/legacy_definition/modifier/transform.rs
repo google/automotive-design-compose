@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-pub mod blend;
-pub mod filter;
-pub mod text;
-pub mod transform;
+use serde::Deserialize;
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct LayoutPixel;
+
+pub type LayoutTransform = euclid::Transform3D<f32, LayoutPixel, LayoutPixel>;
+pub type AffineTransform = euclid::Transform2D<f32, LayoutPixel, LayoutPixel>;

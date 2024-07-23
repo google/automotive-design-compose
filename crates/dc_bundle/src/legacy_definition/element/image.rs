@@ -14,7 +14,20 @@
  * limitations under the License.
  */
 
-pub mod blend;
-pub mod filter;
-pub mod text;
-pub mod transform;
+use serde::{Deserialize, Serialize};
+
+/// Instead of keeping decoded images in ViewStyle objects, we keep keys to the images in the
+/// ImageContext and then fetch decoded images when rendering. This means we can serialize the
+/// whole ImageContext, and always get the right image when we render.
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
+pub struct ImageKey(String);
+
+impl ImageKey {
+    pub fn key(&self) -> String {
+        self.0.clone()
+    }
+
+    pub fn new(str: String) -> ImageKey {
+        ImageKey(str)
+    }
+}

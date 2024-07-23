@@ -22,6 +22,7 @@ use std::{
 use crate::error::Error;
 use crate::fetch::ProxyConfig;
 use crate::figma_schema::{Paint, Transform};
+use dc_bundle::legacy_definition::element::image::ImageKey;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
@@ -93,21 +94,6 @@ fn lookup_or_fetch(
         }
     }
     false
-}
-
-/// Instead of keeping decoded images in ViewStyle objects, we keep keys to the images in the
-/// ImageContext and then fetch decoded images when rendering. This means we can serialize the
-/// whole ImageContext, and always get the right image when we render.
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
-pub struct ImageKey(String);
-impl ImageKey {
-    pub fn key(&self) -> String {
-        self.0.clone()
-    }
-
-    pub fn new(str: String) -> ImageKey {
-        ImageKey(str)
-    }
 }
 
 /// EncodedImageMap contains a mapping from ImageKey to network bytes. It can create an
@@ -198,7 +184,7 @@ impl ImageContext {
                 url,
                 &self.proxy_config,
             ) {
-                url.unwrap_or(&None).as_ref().map(|url_string| ImageKey(url_string.clone()))
+                url.unwrap_or(&None).as_ref().map(|url_string| ImageKey::new(url_string.clone()))
             } else {
                 None
             }
@@ -214,7 +200,7 @@ impl ImageContext {
 
         for (node, addr) in url_map {
             if let Some(url) = addr {
-                map.insert(node, Some(ImageKey(url.clone())));
+                map.insert(node, Some(ImageKey::new(url.clone())));
             }
         }
 
@@ -229,11 +215,11 @@ impl ImageContext {
     pub fn encoded_image_map(&self) -> EncodedImageMap {
         let mut image_bytes = HashMap::new();
         for (k, v) in &self.network_bytes {
-            image_bytes.insert(ImageKey(k.clone()), v.clone());
+            image_bytes.insert(ImageKey::new(k.clone()), v.clone());
         }
         // Add empty entries for any referenced images which we don't have network bytes for.
         for k in &self.referenced_images {
-            let key = ImageKey(k.clone());
+            let key = ImageKey::new(k.clone());
             image_bytes.entry(key).or_insert_with(|| Arc::new(serde_bytes::ByteBuf::new()));
         }
         EncodedImageMap(image_bytes)

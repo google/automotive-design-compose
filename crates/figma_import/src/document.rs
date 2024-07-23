@@ -27,11 +27,12 @@ use crate::{
     extended_layout_schema::ExtendedAutoLayout,
     fetch::ProxyConfig,
     figma_schema,
-    image_context::{EncodedImageMap, ImageContext, ImageContextSession, ImageKey},
+    image_context::{EncodedImageMap, ImageContext, ImageContextSession},
     toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };
+use dc_bundle::legacy_definition::element::image::ImageKey;
 use log::error;
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";

@@ -22,7 +22,7 @@ use dc_bundle::legacy_definition::element::font::{
     FontFeature, FontStretch, FontStyle, FontWeight, TextDecoration,
 };
 use dc_bundle::legacy_definition::element::geometry::Size;
-use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
+use dc_bundle::legacy_definition::element::path::{LineHeight, Stroke};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::interaction::pointer::PointerEvents;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
@@ -123,28 +123,6 @@ impl StyledTextRun {
         let mut font_features = self.style.font_features;
         font_features.push(feature);
         StyledTextRun { style: TextStyle { font_features, ..self.style }, text: self.text }
-    }
-}
-
-/// A stroke is similar to a border, except that it does not change layout (a border insets
-/// the children by the border size), it may be inset, centered or outset from the view bounds
-/// and there can be multiple strokes on a view.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct Stroke {
-    /// The alignment of strokes on this view.
-    pub stroke_align: StrokeAlign,
-    /// The thickness of strokes on this view (in pixels).
-    pub stroke_weight: StrokeWeight,
-    /// The stroke colors/fills
-    pub strokes: Vec<Background>,
-}
-impl Default for Stroke {
-    fn default() -> Self {
-        Stroke {
-            stroke_align: StrokeAlign::Center,
-            stroke_weight: StrokeWeight::Uniform(0.0),
-            strokes: Vec::new(),
-        }
     }
 }
 

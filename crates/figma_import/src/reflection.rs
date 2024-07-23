@@ -72,7 +72,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_layout_style::Overflow>(&samples)
         .expect("couldn't trace Overflow");
     tracer
-        .trace_type::<crate::toolkit_style::PointerEvents>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::interaction::pointer::PointerEvents>(&samples)
         .expect("couldn't trace PointerEvents");
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::grid::ItemSpacing>(&samples)

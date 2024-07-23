@@ -24,6 +24,7 @@ use dc_bundle::legacy_definition::element::geometry::Size;
 use dc_bundle::legacy_definition::element::image::ImageKey;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
+use dc_bundle::legacy_definition::interaction::pointer::PointerEvents;
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
@@ -288,14 +289,6 @@ impl Default for Stroke {
             strokes: Vec::new(),
         }
     }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize, Default)]
-pub enum PointerEvents {
-    Auto,
-    None,
-    #[default]
-    Inherit,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

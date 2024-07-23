@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-// This module holds the original structures that made up the serialized design doc, and which will be replaced with the protobuf implementations of the Design Definition
+use serde::{Deserialize, Serialize};
 
-// To help keep the legacy definition files clear we alias `crate::definition`, which is the base
-// module for the generated protobuf files to `proto`, so that all of the protobuf-generated types
-// inside `legacy_definition` must be prepended with `proto::`
-pub(crate) use crate::definition as proto;
-pub mod element;
-pub mod interaction;
-pub mod layout;
-pub mod modifier;
-pub mod view;
+/// This enum may be used as a hint by the DesignCompose renderer implementation
+/// to determine if it is important for the content to be rendered identically on different platforms.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum RenderMethod {
+    None,
+    PixelPerfect,
+}

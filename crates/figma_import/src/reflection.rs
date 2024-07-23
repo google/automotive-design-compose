@@ -57,7 +57,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::element::font::FontStyle>(&samples)
         .expect("couldn't trace FontStyle");
     tracer
-        .trace_type::<crate::toolkit_font_style::TextDecoration>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::font::TextDecoration>(&samples)
         .expect("couldn't trace TextDecoration");
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::JustifyContent>(&samples)

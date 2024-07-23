@@ -38,7 +38,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::modifier::blend::BlendMode>(&samples)
         .expect("couldn't trace BlendMode");
     tracer
-        .trace_type::<crate::toolkit_style::BoxShadow>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::modifier::shadow::BoxShadow>(&samples)
         .expect("couldn't trace BoxShadow");
     tracer.trace_type::<Dimension>(&samples).expect("couldn't trace Dimension");
     tracer
@@ -96,7 +96,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::PositionType>(&samples)
         .expect("couldn't trace PositionType");
     tracer
-        .trace_type::<crate::toolkit_style::ShadowBox>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::modifier::shadow::ShadowBox>(&samples)
         .expect("couldn't trace ShadowBox");
     tracer
         .trace_type::<dc_bundle::legacy_definition::element::path::StrokeAlign>(&samples)

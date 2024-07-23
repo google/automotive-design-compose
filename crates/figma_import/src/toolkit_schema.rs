@@ -19,7 +19,6 @@ use std::sync::atomic::AtomicU16;
 // retain image references.
 use serde::{Deserialize, Serialize};
 
-use crate::figma_schema;
 use crate::reaction_schema::FrameExtras;
 use crate::reaction_schema::Reaction;
 use crate::toolkit_style::{StyledTextRun, ViewStyle};

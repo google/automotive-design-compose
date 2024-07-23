@@ -25,7 +25,6 @@ use crate::figma_schema::{Paint, Transform};
 use dc_bundle::legacy_definition::element::background::ImageKey;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
-use std::hash::Hash;
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct VectorImageId {

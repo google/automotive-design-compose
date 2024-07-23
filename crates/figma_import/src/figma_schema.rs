@@ -14,7 +14,7 @@
 
 use std::collections::HashMap;
 
-use dc_bundle::legacy_definition::element::color::Color;
+use dc_bundle::legacy_definition::element::color::{Color, FloatColor};
 use serde::{Deserialize, Serialize};
 
 use crate::vector_schema::WindingRule;
@@ -26,7 +26,6 @@ use crate::vector_schema::WindingRule;
 // We reorganize Figma's responses a bit to pull mostly common fields (like absolute_bounding_box)
 // into common structures, otherwise we ought to be able to round-trip a response from Figma without
 // changing it (although currently there are a few fields that we don't map).
-
 #[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Default)]
 pub struct FigmaColor {
     pub r: f32,
@@ -34,9 +33,16 @@ pub struct FigmaColor {
     pub b: f32,
     pub a: f32,
 }
+
 impl Into<Color> for &FigmaColor {
     fn into(self) -> Color {
         Color::from_f32s(self.r, self.g, self.b, self.a)
+    }
+}
+
+impl Into<FloatColor> for &FigmaColor {
+    fn into(self) -> FloatColor {
+        FloatColor { r: self.r, g: self.g, b: self.b, a: self.a }
     }
 }
 

@@ -536,7 +536,7 @@ fn compute_background(
 ) -> Background {
     if let figma_schema::PaintData::Solid { color, bound_variables } = &last_paint.data {
         let solid_bg = if let Some(vars) = bound_variables {
-            ColorOrVar::from_var(vars, "color", color)
+            ColorOrVar::from_var(vars, "color", &color.into())
         } else {
             ColorOrVar::Color(crate::Color::from_f32s(
                 color.r,
@@ -648,7 +648,7 @@ fn compute_background(
         } else {
             for s in stops {
                 let c = if let Some(vars) = &s.bound_variables {
-                    ColorOrVar::from_var(vars, "color", &s.color)
+                    ColorOrVar::from_var(vars, "color", &(&s.color).into())
                 } else {
                     let raw_color = crate::Color::from_f32s(
                         s.color.r,
@@ -688,7 +688,7 @@ fn compute_background(
         } else {
             for s in stops {
                 let c = if let Some(vars) = &s.bound_variables {
-                    ColorOrVar::from_var(vars, "color", &s.color)
+                    ColorOrVar::from_var(vars, "color", &(&s.color).into())
                 } else {
                     ColorOrVar::Color(crate::Color::from_f32s(
                         s.color.r,
@@ -729,7 +729,7 @@ fn compute_background(
         } else {
             for s in stops {
                 let c = if let Some(vars) = &s.bound_variables {
-                    ColorOrVar::from_var(vars, "color", &s.color)
+                    ColorOrVar::from_var(vars, "color", &(&s.color).into())
                 } else {
                     ColorOrVar::Color(crate::Color::from_f32s(
                         s.color.r,
@@ -770,7 +770,7 @@ fn compute_background(
         } else {
             for s in stops {
                 let c = if let Some(vars) = &s.bound_variables {
-                    ColorOrVar::from_var(vars, "color", &s.color)
+                    ColorOrVar::from_var(vars, "color", &(&s.color).into())
                 } else {
                     ColorOrVar::Color(crate::Color::from_f32s(
                         s.color.r,

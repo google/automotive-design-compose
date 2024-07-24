@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Utility program to fetch a doc and serialize it to file
-use clap::Parser;
+#[cfg(feature = "dcf_info")]
+pub mod dcf_info;
 
-use figma_import::tools::fetch_layout::fetch_layout;
-use figma_import::tools::fetch_layout::Args;
+#[cfg(feature = "fetch_layout")]
+pub mod fetch_layout;
 
-fn main() {
-    let args = Args::parse();
-    if let Err(e) = fetch_layout(args) {
-        eprintln!("Fetch failed: {:?}", e);
-        std::process::exit(1);
-    }
-}
+#[cfg(feature = "fetch")]
+pub mod fetch;
+
+#[cfg(feature = "reflection")]
+pub mod reflection;

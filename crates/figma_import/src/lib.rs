@@ -30,8 +30,9 @@ pub mod reaction_schema;
 pub mod toolkit_layout_style;
 pub mod toolkit_schema;
 pub mod toolkit_style;
+pub mod tools;
 mod transform_flexbox;
-mod utils;
+pub mod utils;
 mod variable_utils;
 pub mod vector_schema;
 // Exports for library users

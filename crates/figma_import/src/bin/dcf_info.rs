@@ -22,63 +22,9 @@
 // `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
 use clap::Parser;
-use figma_import::load_design_def;
 
-#[derive(Debug)]
-struct ParseError(String);
-impl From<bincode::Error> for ParseError {
-    fn from(e: bincode::Error) -> Self {
-        eprintln!("Error during deserialization: {:?}", e);
-        ParseError(format!("Error during deserialization: {:?}", e))
-    }
-}
-impl From<std::io::Error> for ParseError {
-    fn from(e: std::io::Error) -> Self {
-        eprintln!("Error opening file: {:?}", e);
-        ParseError(format!("Error opening file: {:?}", e))
-    }
-}
-impl From<figma_import::Error> for ParseError {
-    fn from(e: figma_import::Error) -> Self {
-        ParseError(format!("Figma Import Error: {:?}", e))
-    }
-}
-
-#[derive(Parser, Debug)]
-struct Args {
-    // Path to the .dcf file to deserialize
-    dcf_file: std::path::PathBuf,
-    // Optional string argument to dump file structure from a given node root.
-    #[clap(long, short)]
-    node: Option<String>,
-}
-
-fn dcf_info(args: Args) -> Result<(), ParseError> {
-    let file_path = &args.dcf_file;
-    let node = args.node;
-
-    let (header, doc) = load_design_def(file_path)?;
-
-    println!("Deserialized file");
-    println!("  Header Version: {}", header.version);
-    println!("  Doc ID: {}", doc.id);
-    println!("  Figma Version: {}", doc.version);
-    println!("  Name: {}", doc.name);
-    println!("  Last Modified: {}", doc.last_modified);
-
-    if let Some(node) = node {
-        println!("Dumping file from node: {}:", node);
-        if let Some(view) = doc.views.get(&figma_import::NodeQuery::name(&node)) {
-            // NOTE: uses format and Debug implementation to pretty print the node and all children.
-            // See: https://doc.rust-lang.org/std/fmt/#usage
-            println!("{:#?}", view);
-        } else {
-            return Err(ParseError(format!("Node: {} not found in document.", node)));
-        }
-    }
-
-    Ok(())
-}
+use figma_import::tools::dcf_info::dcf_info;
+use figma_import::tools::dcf_info::Args;
 
 fn main() {
     let args = Args::parse();

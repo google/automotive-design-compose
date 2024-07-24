@@ -90,3 +90,18 @@ updates:
     schedule:
       interval: weekly
       day: friday
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+
+  - package-ecosystem: npm
+    directory: /support-figma/auto-content-preview-widget
+    schedule:
+      interval: daily
+
+  - package-ecosystem: npm
+    directory: /support-figma/extended-layout-plugin
+    schedule:
+      interval: daily

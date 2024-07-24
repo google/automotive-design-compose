@@ -19,6 +19,9 @@ name: CompareScreenshot
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   compare-with-base-branch:
     runs-on: ubuntu-latest

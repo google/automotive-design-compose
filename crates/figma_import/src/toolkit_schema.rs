@@ -26,6 +26,7 @@ pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
 use dc_bundle::legacy_definition::element::variable::NumOrVar;
 use dc_bundle::legacy_definition::element::view_shape::StrokeCap;
 use dc_bundle::legacy_definition::layout::grid::OverflowDirection;
+use dc_bundle::legacy_definition::view::view::RenderMethod;
 use std::collections::HashMap;
 
 /// Shape of a view, either a rect or a path of some kind.
@@ -112,14 +113,6 @@ impl Default for ScrollInfo {
     fn default() -> Self {
         ScrollInfo { overflow: OverflowDirection::None, paged_scrolling: false }
     }
-}
-
-/// This enum may be used as a hint by the DesignCompose renderer implementation
-/// to determine if it is important for the content to be rendered identically on different platforms.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum RenderMethod {
-    None,
-    PixelPerfect,
 }
 
 /// Represents a toolkit View (like a Composable).

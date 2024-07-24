@@ -160,7 +160,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::grid::OverflowDirection>(&samples)
         .expect("couldn't trace OverflowDirection");
     tracer
-        .trace_type::<crate::toolkit_schema::RenderMethod>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::view::view::RenderMethod>(&samples)
         .expect("couldn't trace RenderMethod");
     tracer
         .trace_type::<dc_bundle::legacy_definition::element::view_shape::StrokeCap>(&samples)

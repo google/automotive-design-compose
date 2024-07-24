@@ -27,7 +27,7 @@ use crate::{
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy}, //ExtendedTextLayout
     image_context::ImageContext,
     reaction_schema::{FrameExtras, Reaction, ReactionJson},
-    toolkit_schema::{ComponentInfo, RenderMethod, ScrollInfo, View, ViewShape},
+    toolkit_schema::{ComponentInfo, ScrollInfo, View, ViewShape},
     variable_utils::FromFigmaVar,
 };
 
@@ -48,6 +48,7 @@ use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
+use dc_bundle::legacy_definition::view::view::RenderMethod;
 use log::error;
 use unicode_segmentation::UnicodeSegmentation;
 //::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};

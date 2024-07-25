@@ -1,12 +1,11 @@
 [package]
 name = "dc_jni"
-version = "0.1.0"
-authors = ["DesignCompose Team <aae-design-compose@google.com>"]
 description = "Figma jni library for Android"
-license = "Apache-2.0"
-edition = "2018"
-# https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
-rust-version = "1.68"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [lib]
 crate-type = ["rlib", "cdylib"]

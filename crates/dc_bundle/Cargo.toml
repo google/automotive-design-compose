@@ -1,11 +1,11 @@
 [package]
 name = "dc_bundle"
-version = "0.1.0"
-edition = "2021"
-authors = ["DesignCompose Team <aae-design-compose@google.com>"]
 description = "Provides the DesignCompose Bundle and Definition"
-license = "Apache-2.0"
-rust-version = "1.68"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 prost.workspace = true

@@ -16,7 +16,9 @@ syntax = "proto3";
 
 package designcompose.definition.element;
 
+option java_multiple_files = true;
 option java_package = "com.android.designcompose.definition.element";
+option optimize_for = LITE_RUNTIME;
 
 // Color represents a color value within a design, encoded as RGBA (Red, Green,
 // Blue, Alpha) where each component is an 8-bit integer. Alpha determines

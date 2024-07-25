@@ -25,9 +25,9 @@ import "definition/view/component.proto";
 import "definition/view/text_style.proto";
 import "definition/view/view_style.proto";
 
-option java_package = "com.android.designcompose.definition.view";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.view";
+option optimize_for = LITE_RUNTIME;
 
 // Represents a toolkit View (like a Composable).
 message View {

@@ -16,9 +16,9 @@ syntax = "proto3";
 
 package designcompose.definition.interaction;
 
-option java_package = "com.android.designcompose.definition.interaction";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.interaction";
+option optimize_for = LITE_RUNTIME;
 
 // Determines how a UI element responds to user interactions like taps, clicks,
 // and hovers. It can be set to "Auto" for default behavior, "None" to disable

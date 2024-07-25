@@ -16,9 +16,9 @@ syntax = "proto3";
 
 package designcompose.definition.modifier;
 
-option java_package = "com.android.designcompose.definition.modifier";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.modifier";
+option optimize_for = LITE_RUNTIME;
 
 // Various supported Blend types
 enum BlendMode {

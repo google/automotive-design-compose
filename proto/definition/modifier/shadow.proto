@@ -18,9 +18,9 @@ package designcompose.definition.modifier;
 
 import "definition/element/color.proto";
 
-option java_package = "com.android.designcompose.definition.modifier";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.modifier";
+option optimize_for = LITE_RUNTIME;
 
 // Shadows can be applied to the border box, or the stroke box.
 //

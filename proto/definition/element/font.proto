@@ -18,9 +18,9 @@ package designcompose.definition.element;
 
 import "definition/element/variable.proto";
 
-option java_package = "com.android.designcompose.definition.element";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.element";
+option optimize_for = LITE_RUNTIME;
 
 // FontWeight specifies the visual thickness of a typeface. It's represented
 // numerically, usually ranging from 100 (thin) to 900 (black). Common values

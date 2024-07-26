@@ -256,6 +256,15 @@ impl Vector {
         self.y.unwrap_or(0.0)
     }
 }
+
+impl Into<dc_bundle::legacy_definition::element::vector::Vector> for Vector {
+    fn into(self) -> dc_bundle::legacy_definition::element::vector::Vector {
+        dc_bundle::legacy_definition::element::vector::Vector {
+            x: self.x.clone(),
+            y: self.y.clone(),
+        }
+    }
+}
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Size {
     pub width: f32,

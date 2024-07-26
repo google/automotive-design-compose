@@ -17,8 +17,6 @@ use std::collections::HashMap;
 use dc_bundle::legacy_definition::element::color::{Color, FloatColor};
 use serde::{Deserialize, Serialize};
 
-use crate::vector_schema::WindingRule;
-
 // We use serde to decode Figma's JSON documents into Rust structures.
 // These structures were derived from Figma's public API documentation, which has more information
 // on what each field means: https://www.figma.com/developers/api#files
@@ -274,6 +272,29 @@ pub struct Size {
 //  [[a, b, c], [d, e, f]]
 //#[derive (Deserialize, Serialize, Debug, Clone)]
 pub type Transform = [[Option<f32>; 3]; 2];
+
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize, Hash)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum WindingRule {
+    NonZero,
+    EvenOdd,
+    #[serde(other)]
+    None,
+}
+
+impl Into<dc_bundle::legacy_definition::element::path::WindingRule> for WindingRule {
+    fn into(self) -> dc_bundle::legacy_definition::element::path::WindingRule {
+        match self {
+            WindingRule::NonZero => {
+                dc_bundle::legacy_definition::element::path::WindingRule::NonZero
+            }
+            WindingRule::EvenOdd => {
+                dc_bundle::legacy_definition::element::path::WindingRule::EvenOdd
+            }
+            WindingRule::None => dc_bundle::legacy_definition::element::path::WindingRule::None,
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone, Hash, PartialEq)]
 #[serde(rename_all = "camelCase")]

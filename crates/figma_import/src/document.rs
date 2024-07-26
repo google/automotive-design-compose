@@ -15,10 +15,11 @@
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::element::variable::{Collection, Mode, Variable, VariableMap};
 use serde::{Deserialize, Serialize};
+#[cfg(not(feature = "http_mock"))]
+use std::time::Duration;
 use std::{
     collections::{HashMap, HashSet},
     iter::FromIterator,
-    time::Duration,
 };
 
 use crate::{
@@ -35,6 +36,7 @@ use crate::{
 use dc_bundle::legacy_definition::element::background::ImageKey;
 use log::error;
 
+#[cfg(not(feature = "http_mock"))]
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
 const BASE_FILE_URL: &str = "https://api.figma.com/v1/files/";
 const BASE_COMPONENT_URL: &str = "https://api.figma.com/v1/components/";

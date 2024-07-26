@@ -18,12 +18,9 @@ use std::f32::consts::PI;
 use crate::toolkit_layout_style::Overflow;
 use dc_bundle::legacy_definition::element::font::FontWeight;
 
-use crate::toolkit_style::{
-    MeterData, MeterDataSchema, ProgressVectorMeterData, StyledTextRun, TextStyle, ViewStyle,
-};
+use crate::toolkit_style::{MeterDataSchema, StyledTextRun, TextStyle, ViewStyle};
 
 use crate::figma_schema;
-use crate::vector_schema;
 use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy}, //ExtendedTextLayout
@@ -37,7 +34,7 @@ use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::font::{FontFeature, FontStyle};
 use dc_bundle::legacy_definition::element::geometry::Dimension;
-use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
+use dc_bundle::legacy_definition::element::path::{LineHeight, Path, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::layout::grid::{
@@ -1612,8 +1609,8 @@ pub fn create_component_flexbox(
     )
 }
 
-fn parse_path(path: &crate::figma_schema::Path) -> Option<vector_schema::Path> {
-    let mut output = vector_schema::Path::new();
+fn parse_path(path: &crate::figma_schema::Path) -> Option<Path> {
+    let mut output = Path::new();
     for segment in svgtypes::SimplifyingPathParser::from(path.path.as_str()) {
         match segment {
             Ok(svgtypes::SimplePathSegment::MoveTo { x, y }) => {
@@ -1634,6 +1631,6 @@ fn parse_path(path: &crate::figma_schema::Path) -> Option<vector_schema::Path> {
             Err(_) => return None,
         }
     }
-    output.winding_rule(path.winding_rule);
+    output.winding_rule(path.winding_rule.into());
     Some(output)
 }

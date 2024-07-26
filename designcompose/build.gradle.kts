@@ -118,7 +118,7 @@ dependencies {
     implementation(libs.guavaAndroid)
     implementation(libs.androidx.tracing.ktx)
     implementation(libs.androidx.compose.runtime.tracing)
-    implementation(libs.protobuf.kotlin)
+    implementation(libs.protobuf.kotlin.lite)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

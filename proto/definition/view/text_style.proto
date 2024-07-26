@@ -22,6 +22,8 @@ import "definition/element/variable.proto";
 import "definition/modifier/background.proto";
 
 option java_package = "com.android.designcompose.definition.view";
+option optimize_for = LITE_RUNTIME;
+option java_multiple_files = true;
 
 // These are the style properties that apply to text, so we can use them on
 // subsections of a longer string. We then assume that every style transition is

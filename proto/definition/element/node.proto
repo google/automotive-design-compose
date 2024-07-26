@@ -16,8 +16,9 @@ syntax = "proto3";
 
 package designcompose.definition.element;
 
-option java_package = "com.android.designcompose.definition.element";
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.element";
+option optimize_for = LITE_RUNTIME;
 
 // A message used to identify a specific node within a design document. It
 // supports different ways to specify the node, including by its ID, name,

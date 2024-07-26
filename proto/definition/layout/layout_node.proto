@@ -18,9 +18,9 @@ package designcompose.definition.layout;
 
 import "definition/layout/layout_style.proto";
 
-option java_package = "com.android.designcompose.definition.layout";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.layout";
+option optimize_for = LITE_RUNTIME;
 
 // A representation of a Figma node to register for layout.
 message LayoutNode {

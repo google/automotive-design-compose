@@ -18,9 +18,9 @@ package designcompose.definition.plugin;
 
 import "definition/element/color.proto";
 
-option java_package = "com.android.designcompose.definition.plugin";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.plugin";
+option optimize_for = LITE_RUNTIME;
 
 // Some frame properties are only available through the plugin API and are
 // needed to implement Reactions properly. They're included in this FrameExtras

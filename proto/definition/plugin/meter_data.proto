@@ -16,9 +16,9 @@ syntax = "proto3";
 
 package designcompose.definition.plugin;
 
-option java_package = "com.android.designcompose.definition.plugin";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.plugin";
+option optimize_for = LITE_RUNTIME;
 
 // Represents data for a rotation meter, including whether it's enabled, its
 // start and end angles, whether it's discrete, and the discrete value.

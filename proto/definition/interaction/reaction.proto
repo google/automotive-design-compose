@@ -20,7 +20,9 @@ import "definition/element/geometry.proto";
 import "definition/interaction/transition.proto";
 import "google/protobuf/empty.proto";
 
+option java_multiple_files = true;
 option java_package = "com.android.designcompose.definition.interaction";
+option optimize_for = LITE_RUNTIME;
 
 // Various actions that can be triggered
 message Action {

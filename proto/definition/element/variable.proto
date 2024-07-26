@@ -18,9 +18,9 @@ package designcompose.definition.element;
 
 import "definition/element/color.proto";
 
-option java_package = "com.android.designcompose.definition.element";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.element";
+option optimize_for = LITE_RUNTIME;
 
 // Holds the value of a variable, whichever type it is.
 message VariableValue {

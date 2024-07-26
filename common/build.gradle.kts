@@ -35,6 +35,7 @@ publishing {
         }
     }
 }
+
 /**
  * Serde gen task
  *
@@ -103,12 +104,18 @@ project.sourceSets.main { proto { srcDir(rootProject.layout.projectDirectory.dir
 
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}" }
-    generateProtoTasks { all().forEach { it.builtins { id("kotlin") } } }
+    generateProtoTasks {
+        all().forEach {
+            it.builtins {
+                get("java").option("lite")
+                id("kotlin") { option("lite") }
+            }
+        }
+    }
 }
 
 dependencies {
     api(libs.javax.annotationApi)
     implementation(libs.kotlin.stdlib)
-    implementation(libs.protobuf.kotlin)
-    api(libs.protobuf.java.util)
+    implementation(libs.protobuf.kotlin.lite)
 }

@@ -19,9 +19,9 @@ package designcompose.definition;
 import "definition/element/variable.proto";
 import "definition/view/view.proto";
 
-option java_package = "com.android.designcompose.definition";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition";
+option optimize_for = LITE_RUNTIME;
 
 // A serialized Figma design document, containing views, images, component sets,
 // version, ID, and variable map. It's used for storing and loading Figma

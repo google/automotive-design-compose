@@ -16,9 +16,9 @@ syntax = "proto3";
 
 package designcompose.definition.layout;
 
-option java_package = "com.android.designcompose.definition.layout";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.layout";
+option optimize_for = LITE_RUNTIME;
 
 // Controls how items are aligned on the cross axis within a single line (row or
 // column) of the container. The cross axis is the axis perpendicular to the

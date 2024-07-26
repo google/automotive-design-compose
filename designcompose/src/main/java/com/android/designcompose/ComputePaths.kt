@@ -64,6 +64,9 @@ class ComputedPaths(
     /// referenced, which includes details like the inset/outset of the
     /// shadow, its offset, and its color.
     val shadowFills: List<ComputedShadow>,
+
+    // Optional stroke end cap
+    var strokeCap: androidx.compose.ui.graphics.StrokeCap?,
 )
 
 class ComputedShadow(val fills: List<Path>, val shadowStyle: BoxShadow)
@@ -94,6 +97,7 @@ internal fun ViewShape.computePaths(
     fun getRectSize(overrideSize: Size?, style: ViewStyle, density: Float): Size {
         return getNodeRenderSize(overrideSize, frameSize, style, layoutId, density)
     }
+    var strokeCap: androidx.compose.ui.graphics.StrokeCap? = null
     // Fill then stroke.
     val (fills: List<Path>, precomputedStrokes: List<Path>) =
         when (this) {
@@ -130,6 +134,7 @@ internal fun ViewShape.computePaths(
                 )
             }
             is ViewShape.Path -> {
+                strokeCap = stroke_cap.toComposeStrokeCap()
                 getPaths(this.path, this.stroke)
             }
             is ViewShape.Arc -> {
@@ -282,7 +287,7 @@ internal fun ViewShape.computePaths(
             }
         }
 
-    return ComputedPaths(fills, strokes, shadowPaths, computedShadows)
+    return ComputedPaths(fills, strokes, shadowPaths, computedShadows, strokeCap)
 }
 
 // GEOMETRY UTILITIES
@@ -631,5 +636,11 @@ private fun computeRoundRectPathsFast(
             }
         }
 
-    return ComputedPaths(fills, strokes, shadowClips, shadows)
+    return ComputedPaths(
+        fills,
+        strokes,
+        shadowClips,
+        shadows,
+        null,
+    )
 }

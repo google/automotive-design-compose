@@ -26,7 +26,7 @@ import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.DialsGaugesTest
-import org.junit.Before
+import com.android.designcompose.testapp.validation.examples.ProgressVectorTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,14 +42,10 @@ class DialsGauges {
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
     @get:Rule val interFontRule = InterFontTestRule()
 
-    @Before
-    fun setup() {
-        with(composeTestRule) { setContent { DialsGaugesTest() } }
-    }
-
     @Test
     fun progressTests() {
         with(composeTestRule) {
+            setContent { DialsGaugesTest() }
             onNodeWithTag("angle").performTouchInput { down(Offset.Zero) }
             onNodeWithTag("angle").performTouchInput { moveTo(Offset(-200f, 0f)) }
             onNodeWithTag("angle").performTouchInput { cancel() }
@@ -89,6 +85,23 @@ class DialsGauges {
             onNodeWithTag("progress-indicator").performTouchInput { moveTo(Offset(400f, 0f)) }
             onNodeWithTag("progress-indicator").performTouchInput { cancel() }
             captureRootRoboImage("progress-indicator-high")
+        }
+    }
+
+    @Test
+    fun progressVectorTests() {
+        with(composeTestRule) {
+            setContent { ProgressVectorTest() }
+
+            onNodeWithTag("progress-bar").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("progress-bar").performTouchInput { moveTo(Offset(-200f, 0f)) }
+            onNodeWithTag("progress-bar").performTouchInput { cancel() }
+            captureRootRoboImage("progress-vector-low")
+
+            onNodeWithTag("progress-bar").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("progress-bar").performTouchInput { moveTo(Offset(400f, 0f)) }
+            onNodeWithTag("progress-bar").performTouchInput { cancel() }
+            captureRootRoboImage("progress-vector-high")
         }
     }
 }

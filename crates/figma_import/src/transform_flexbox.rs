@@ -1456,7 +1456,9 @@ fn visit_node(
                     // which contains vector drawing instructions as a string. We convert this into vector
                     // drawing instructions in a ProgressVectorMeterData struct and replace the normal stroke
                     // vector data with it.
-                    stroke_paths = vector_data.paths.iter().filter_map(parse_path).collect();
+                    if vector_data.enabled {
+                        stroke_paths = vector_data.paths.iter().filter_map(parse_path).collect();
+                    }
                 }
                 style.node_style.meter_data = Some(meter_data.into());
             }
@@ -1469,9 +1471,12 @@ fn visit_node(
         | figma_schema::NodeData::Line { vector }
         | figma_schema::NodeData::RegularPolygon { vector }
         | figma_schema::NodeData::Star { vector }
-        | figma_schema::NodeData::Vector { vector } => {
-            ViewShape::Path { path: fill_paths, stroke: stroke_paths, is_mask: vector.is_mask }
-        }
+        | figma_schema::NodeData::Vector { vector } => ViewShape::Path {
+            path: fill_paths,
+            stroke: stroke_paths,
+            stroke_cap: node.stroke_cap.clone().into(),
+            is_mask: vector.is_mask,
+        },
         // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
         // to support progress bars. If this node is set up as a progress bar, the renderer will
         // construct the rectangle, modified by progress bar parameters. Otherwise it will be

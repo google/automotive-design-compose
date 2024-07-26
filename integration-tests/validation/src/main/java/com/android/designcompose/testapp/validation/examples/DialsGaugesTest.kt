@@ -43,6 +43,11 @@ interface DialsGaugesTest {
         @Design(node = "#progress-bar") progressBar: Meter,
         @Design(node = "#progress-indicator") progressIndicator: Meter,
     )
+
+    @DesignComponent(node = "#stage-vector-progress")
+    fun VectorProgressMain(
+        @Design(node = "#progress-bar") progressBar: Meter,
+    )
 }
 
 @Composable
@@ -89,5 +94,19 @@ fun DialsGaugesTest() {
         Text("Progress Indicator: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(progressIndicator, 0f, 100f, "progress-indicator")
         Text(progressIndicator.value.toString(), fontSize = 20.sp)
+    }
+}
+
+@Composable
+fun ProgressVectorTest() {
+    val progress = remember { mutableStateOf(50f) }
+    DialsGaugesTestDoc.VectorProgressMain(progressBar = progress.value)
+    Row(
+        Modifier.absoluteOffset(0.dp, 1410.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(progress, 0f, 100f, "progress-bar")
+        Text(progress.value.toString(), fontSize = 20.sp)
     }
 }

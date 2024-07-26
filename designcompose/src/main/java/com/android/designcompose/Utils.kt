@@ -71,6 +71,7 @@ import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
+import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.StyledTextRun
 import com.android.designcompose.serdegen.TextAlign
@@ -1417,6 +1418,14 @@ internal fun com.android.designcompose.serdegen.Path.asPath(
         }
     }
     return p
+}
+
+internal fun StrokeCap.toComposeStrokeCap(): androidx.compose.ui.graphics.StrokeCap {
+    return when (this) {
+        is StrokeCap.ROUND -> androidx.compose.ui.graphics.StrokeCap.Round
+        is StrokeCap.SQUARE -> androidx.compose.ui.graphics.StrokeCap.Square
+        else -> androidx.compose.ui.graphics.StrokeCap.Butt
+    }
 }
 
 internal fun com.android.designcompose.serdegen.Path.log() {

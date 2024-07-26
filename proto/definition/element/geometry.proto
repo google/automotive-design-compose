@@ -18,9 +18,9 @@ package designcompose.definition.element;
 
 import "google/protobuf/empty.proto";
 
-option java_package = "com.android.designcompose.definition.element";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.element";
+option optimize_for = LITE_RUNTIME;
 
 // Size encapsulates the dimensions of an element, expressed as width and height
 // values. These values typically represent pixels or density-independent pixels

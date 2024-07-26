@@ -135,8 +135,7 @@ roborazzi-compose = {module = "io.github.takahirom.roborazzi:roborazzi-compose",
 roborazzi-junit = {module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi"}
 spotless-plugin-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protoc"}
-protobuf-kotlin = {module = "com.google.protobuf:protobuf-kotlin", version.ref = "protoc"}
-protobuf-java-util = { module = "com.google.protobuf:protobuf-java-util", version.ref = "protoc"}
+protobuf-kotlin-lite = {module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protoc"}
 
 
 [plugins]

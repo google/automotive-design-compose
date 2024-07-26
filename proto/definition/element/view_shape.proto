@@ -18,9 +18,9 @@ package designcompose.definition.element;
 
 import "definition/element/variable.proto";
 
-option java_package = "com.android.designcompose.definition.element";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.element";
+option optimize_for = LITE_RUNTIME;
 
 // Represents the geometric shape of a visual element, such as a rectangle,
 //  ellipse, or a custom path. It determines the boundaries of the element and

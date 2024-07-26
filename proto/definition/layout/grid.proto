@@ -16,9 +16,9 @@ syntax = "proto3";
 
 package designcompose.definition.layout;
 
-option java_package = "com.android.designcompose.definition.layout";
-
 option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.layout";
+option optimize_for = LITE_RUNTIME;
 
 // Represents a span for a node within a grid layout.
 message GridSpan {

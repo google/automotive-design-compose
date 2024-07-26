@@ -63,7 +63,7 @@ fun DialsGaugesTest() {
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text("Dial angle: ", Modifier.width(120.dp), fontSize = 20.sp)
-        Slider(angle, 0f, 100f)
+        Slider(angle, 0f, 100f, "angle")
         Text(angle.value.toString(), fontSize = 20.sp)
     }
     Row(
@@ -71,7 +71,7 @@ fun DialsGaugesTest() {
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text("Dial rotation: ", Modifier.width(120.dp), fontSize = 20.sp)
-        Slider(rotation, 0f, 100f)
+        Slider(rotation, 0f, 100f, "rotation")
         Text(rotation.value.toString(), fontSize = 20.sp)
     }
     Row(
@@ -79,7 +79,7 @@ fun DialsGaugesTest() {
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
-        Slider(progress, 0f, 100f)
+        Slider(progress, 0f, 100f, "progress-bar")
         Text(progress.value.toString(), fontSize = 20.sp)
     }
     Row(
@@ -87,7 +87,7 @@ fun DialsGaugesTest() {
         horizontalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text("Progress Indicator: ", Modifier.width(120.dp), fontSize = 20.sp)
-        Slider(progressIndicator, 0f, 100f)
+        Slider(progressIndicator, 0f, 100f, "progress-indicator")
         Text(progressIndicator.value.toString(), fontSize = 20.sp)
     }
 }

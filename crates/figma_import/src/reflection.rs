@@ -90,6 +90,9 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_style::ProgressBarMeterData>(&samples)
         .expect("couldn't trace ProgressBarMeterData");
     tracer
+        .trace_type::<crate::toolkit_style::ProgressVectorMeterData>(&samples)
+        .expect("couldn't trace ProgressVectorMeterData");
+    tracer
         .trace_type::<crate::toolkit_style::MeterData>(&samples)
         .expect("couldn't trace MeterData");
     tracer

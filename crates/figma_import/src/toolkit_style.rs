@@ -35,6 +35,7 @@ use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
 use serde::{Deserialize, Serialize};
 
 use crate::toolkit_layout_style::{Display, LayoutSizing, Number, Overflow};
+use crate::{figma_schema, vector_schema};
 
 // These are the style properties that apply to text, so we can use them on subsections of
 // a longer string. We then assume that every style transition is a potential line break (and
@@ -179,6 +180,37 @@ pub struct ProgressMarkerMeterData {
     pub end_y: f32,
 }
 
+// Schema for progress vector data that we read from Figma plugin data
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressVectorMeterDataSchema {
+    pub enabled: bool,
+    pub discrete: bool,
+    pub discrete_value: f32,
+    pub paths: Vec<figma_schema::Path>,
+}
+
+// Schema for progress vector data that we write to serialized data
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressVectorMeterData {
+    pub enabled: bool,
+    pub discrete: bool,
+    pub discrete_value: f32,
+}
+
+// Schema for dials & gauges Figma plugin data
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum MeterDataSchema {
+    ArcData(ArcMeterData),
+    RotationData(RotationMeterData),
+    ProgressBarData(ProgressBarMeterData),
+    ProgressMarkerData(ProgressMarkerMeterData),
+    ProgressVectorData(ProgressVectorMeterDataSchema),
+}
+
+// Schema for dials & gauges data that we write to serialized data
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum MeterData {
@@ -186,6 +218,24 @@ pub enum MeterData {
     RotationData(RotationMeterData),
     ProgressBarData(ProgressBarMeterData),
     ProgressMarkerData(ProgressMarkerMeterData),
+    ProgressVectorData(ProgressVectorMeterData),
+}
+impl From<MeterDataSchema> for MeterData {
+    fn from(md: MeterDataSchema) -> MeterData {
+        match md {
+            MeterDataSchema::ArcData(data) => MeterData::ArcData(data),
+            MeterDataSchema::RotationData(data) => MeterData::RotationData(data),
+            MeterDataSchema::ProgressBarData(data) => MeterData::ProgressBarData(data),
+            MeterDataSchema::ProgressMarkerData(data) => MeterData::ProgressMarkerData(data),
+            MeterDataSchema::ProgressVectorData(data) => {
+                MeterData::ProgressVectorData(ProgressVectorMeterData {
+                    enabled: data.enabled,
+                    discrete: data.discrete,
+                    discrete_value: data.discrete_value,
+                })
+            }
+        }
+    }
 }
 
 /// ToolkitStyle contains all of the styleable parameters accepted by the Rect and Text components.

@@ -10,10 +10,17 @@ We are developing tools for developers to localize the figma design into differe
 The first introduced tool is a figma plugin that generates a strings xml file containing the strings
 used by the figma design.
 
-## 1. Build the localization plugin
+## 1. Run the localization plugin
 
-The localization plugin is still under development and is only available from building the source code.
-Follow [Get Started][1] page to download the source code.
+We have published our first version of the localization plugin. You can run it through:
+**Figma Main Menu -> Plugins -> From Google**
+   **-> Automotive Design For Compose -> Localization Tool -> Generate String Resource**
+
+### 1.1 [Optional] Build the localization plugin from source code
+
+Instead of running the published version of the plugin, you can also build the plugin from source
+code if you would like to try unreleased features or make experimental changes on your own. Follow the
+[Get Started][1] page to download the source code.
 
 Below are the steps to build the plugin. You can also find instructions at: <https://www.figma.com/plugin-docs/>
 
@@ -43,13 +50,11 @@ can download it from the [Figma downloads page][2].
 
     <img src="./localization/ImportPluginFromManifest.png">
 
-## 2. Run the localization plugin
-
-Now you can run the localization plugin through:
+5. Run the plugin under development through:
 **Figma Main Menu -> Plugins -> Development**
    **-> Automotive Design For Compose -> Localization Tool -> Generate String Resource**
 
-### 2.1 Options
+### 1.2 Strings generation options
 
 Currently the plugin provides two options to exclude text nodes from translations.
 
@@ -64,7 +69,7 @@ customizations for nodes so the localization plugin can exclude those text nodes
 
 <img src="./localization/CheckOrUpdateKeywords.png">
 
-### 2.2 Upload a strings xml file
+### 1.3 Upload a strings xml file
 
 Click "Next" and in the second step, you can upload an existing gen_strings.xml that was generated
 by this plugin before. By doing so, it allows you to merge string resources from multiple design files.
@@ -73,7 +78,7 @@ For apps using a single design file, you can always skip this step.
 
 <img src="./localization/LocalizationUpload.png">
 
-### 2.3 Review, update and generate the strings xml file
+### 1.4 Review, update and generate the strings xml file
 
 In the third step, the plugin generates a string resource table for you to review and update.
 
@@ -89,9 +94,9 @@ Finally, click on the **Generate** button and save the gen_strings.xml to the ap
 
 <img src="./localization/LocalizationSave.png">
 
-## 3. Integrate with the app
+## 2. Integrate with the app
 
-### 3.1 Review generated strings xml file
+### 2.1 Review generated strings xml file
 
 Now open Android Studio and let's start integrating the generated string xml file.
 
@@ -108,11 +113,11 @@ with the figma design file to avoid conflicts.
 
 Next the strings can be sent for translations.
 
-### 3.2 Update dcf file
+### 2.2 Update dcf file
 
 Update the dcf file used by your app so it can look up the string resource when rendering.
 
-### 3.3 Live update option
+### 2.3 Live update option
 
 If you use live update, because DesignCompose uses the local string from the resource file, you will
 not be able to see the changes you are making to the text nodes in live update. We have provided an option
@@ -120,7 +125,7 @@ to re-enable the live update for text nodes by unchecking the `Use local string 
 
 <img src="./localization/LiveUpdateLocalizationOption.png">
 
-### 3.4 Localize app side customizations
+### 2.4 Localize app side customizations
 
 Update text customizations from hardcoded string to `stringResource`.
 
@@ -151,7 +156,7 @@ with string resource
     <string name="label_world" translatable="true">world</string>
 ```
 
-### 3.5 Test the localization
+### 2.5 Test the localization
 
 Assuming you have the translations for the strings ready and integrated as following:
 <img src="./localization/TranslationExample.png">
@@ -159,9 +164,9 @@ Assuming you have the translations for the strings ready and integrated as follo
 now the app should use the translations when you change your device's locale.
 <img src="./localization/LocalizationResults.png">
 
-## 4. How the localization works behind the plugin
+## 3. How the localization works behind the plugin
 
-### 4.1 It uses plugin data
+### 3.1 It uses plugin data
 
 The localization plugin goes through all the text nodes of the figma design file and auto generates
 a string resource name for each text node. The string resource name is saved to the shared plugin data.
@@ -174,13 +179,13 @@ strings xml file and will not be fetched by DesignCompose.
 The plugin also provides a **Clear String Resource** tool to clear the string resource names, char
 limits and descriptions from the plugin data.
 
-### 4.2 It supports mixed styles
+### 3.2 It supports mixed styles
 
 For a text node with a single style, the plugin generates a string resource. And for a text node with
 mixed styles, the plugin generates a string array resource with each item mapping to the text segments
 with different styles.
 
-## 5. What is next
+## 4. What is next
 
 We are working on a few improvements for the plugin:
 
@@ -191,7 +196,7 @@ the product design.
 with the same text to use the same string resource name. However, the same text can have different
 translations under different contexts.
 
-## 6. Summary
+## 5. Summary
 
 This plugin does not perfectly solve all localization issues, but we will continue to improve it to
 make localization easier for DesignCompose developers. Any suggestions or feedback are welcome!

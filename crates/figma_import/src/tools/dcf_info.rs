@@ -25,6 +25,7 @@ use crate::load_design_def;
 use clap::Parser;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ParseError(String);
 impl From<bincode::Error> for ParseError {
     fn from(e: bincode::Error) -> Self {

@@ -39,6 +39,7 @@ fn _pause() {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ConvertError(String);
 impl From<crate::Error> for ConvertError {
     fn from(e: crate::Error) -> Self {

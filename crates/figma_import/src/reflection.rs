@@ -153,16 +153,11 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace Easing");
 
     tracer
-        .trace_type::<crate::vector_schema::WindingRule>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::path::WindingRule>(&samples)
         .expect("couldn't trace WindingRule");
-    tracer.trace_type::<crate::vector_schema::Path>(&samples).expect("couldn't trace Path");
     tracer
-        .trace_type::<crate::vector_schema::RenderStyle>(&samples)
-        .expect("couldn't trace RenderStyle");
-    tracer
-        .trace_type::<crate::vector_schema::RenderCommand>(&samples)
-        .expect("couldn't trace RenderCommand");
-
+        .trace_type::<dc_bundle::legacy_definition::element::path::Path>(&samples)
+        .expect("couldn't trace Path");
     tracer
         .trace_type::<crate::toolkit_schema::ComponentContentOverride>(&samples)
         .expect("couldn't trace ComponentContentOverride");

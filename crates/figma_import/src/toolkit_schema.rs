@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::toolkit_style::{StyledTextRun, ViewStyle};
 pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
+use dc_bundle::legacy_definition::element::path::Path;
 use dc_bundle::legacy_definition::element::reactions::FrameExtras;
 use dc_bundle::legacy_definition::element::reactions::Reaction;
 use dc_bundle::legacy_definition::element::variable::NumOrVar;
@@ -41,13 +42,13 @@ pub enum ViewShape {
         is_mask: bool,
     },
     Path {
-        path: Vec<crate::vector_schema::Path>,
-        stroke: Vec<crate::vector_schema::Path>,
+        path: Vec<Path>,
+        stroke: Vec<Path>,
         is_mask: bool,
     },
     Arc {
-        path: Vec<crate::vector_schema::Path>,
-        stroke: Vec<crate::vector_schema::Path>,
+        path: Vec<Path>,
+        stroke: Vec<Path>,
         stroke_cap: StrokeCap,
         start_angle_degrees: f32,
         sweep_angle_degrees: f32,
@@ -56,8 +57,8 @@ pub enum ViewShape {
         is_mask: bool,
     },
     VectorRect {
-        path: Vec<crate::vector_schema::Path>,
-        stroke: Vec<crate::vector_schema::Path>,
+        path: Vec<Path>,
+        stroke: Vec<Path>,
         corner_radius: [NumOrVar; 4],
         is_mask: bool,
     },

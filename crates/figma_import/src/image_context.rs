@@ -50,7 +50,7 @@ fn http_fetch_image(
     let mut response_bytes: Vec<u8> = Vec::new();
     body.into_reader().read_to_end(&mut response_bytes)?;
 
-    let img = image::io::Reader::new(Cursor::new(response_bytes.as_slice()))
+    let img = image::ImageReader::new(Cursor::new(response_bytes.as_slice()))
         .with_guessed_format()?
         .decode()?;
 

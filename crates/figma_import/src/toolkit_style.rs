@@ -34,8 +34,8 @@ use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical,
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
 use serde::{Deserialize, Serialize};
 
+use crate::figma_schema;
 use crate::toolkit_layout_style::{Display, LayoutSizing, Number, Overflow};
-use crate::{figma_schema, vector_schema};
 
 // These are the style properties that apply to text, so we can use them on subsections of
 // a longer string. We then assume that every style transition is a potential line break (and

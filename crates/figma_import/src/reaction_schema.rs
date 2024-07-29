@@ -14,11 +14,14 @@
 
 use serde::{Deserialize, Serialize};
 
-use dc_bundle::legacy_definition::element::color::FloatColor;
 use dc_bundle::legacy_definition::element::reactions::{
     Action, Bezier, Easing, Navigation, Reaction, Spring, Transition, TransitionDirection, Trigger,
 };
 use dc_bundle::legacy_definition::element::vector::Vector;
+
+#[cfg(test)]
+use dc_bundle::legacy_definition::element::color::FloatColor;
+
 // This module can deserialize Figma's "reactions" struct, which is used to define the
 // interactivity of interactive components. It's in a separate module from `figma_schema`
 // because it's not yet part of Figma's REST API. We get access to it via a custom plugin

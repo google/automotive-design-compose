@@ -381,13 +381,7 @@ internal fun ContentDrawScope.render(
             variableState,
         )
 
-    val customFillBrushFunction = customizations.getBrushFunction(name)
-    val customFillBrush =
-        if (customFillBrushFunction != null) {
-            customFillBrushFunction()
-        } else {
-            customizations.getBrush(name)
-        }
+    val customFillBrush = customizations.getBrushState(name)?.value ?: customizations.getBrush(name)
 
     val fillBrush: List<Paint> =
         if (customFillBrush != null) {
@@ -693,13 +687,7 @@ internal fun squooshShapeRender(
         drawContext.canvas.saveLayer(Rect(Offset.Zero, size).inflate(outset * density), paint)
     }
 
-    val customFillBrushFunction = customizations.getBrushFunction(name)
-    val customFillBrush =
-        if (customFillBrushFunction != null) {
-            customFillBrushFunction()
-        } else {
-            customizations.getBrush(name)
-        }
+    val customFillBrush = customizations.getBrushState(name)?.value ?: customizations.getBrush(name)
 
     val fillBrush: List<Paint> =
         if (customFillBrush != null) {

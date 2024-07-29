@@ -239,13 +239,8 @@ internal fun DesignText(
                 )
             )
         }
-    val customBrushFunction = customizations.getBrushFunction(nodeName)
     val customBrush =
-        if (customBrushFunction != null) {
-            customBrushFunction()
-        } else {
-            customizations.getBrush(nodeName)
-        }
+        customizations.getBrushState(nodeName)?.value ?: customizations.getBrush(nodeName)
 
     val textBrushAndOpacity =
         style.node_style.text_color.asBrush(document, density.density, variableState)

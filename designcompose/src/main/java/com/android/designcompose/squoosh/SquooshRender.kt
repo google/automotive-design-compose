@@ -42,7 +42,7 @@ import com.android.designcompose.asBrush
 import com.android.designcompose.asComposeBlendMode
 import com.android.designcompose.asComposeTransform
 import com.android.designcompose.getBrush
-import com.android.designcompose.getBrushFunction
+import com.android.designcompose.getBrushState
 import com.android.designcompose.isMask
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.TextAlignVertical
@@ -292,13 +292,8 @@ private fun squooshTextRender(
             else -> 0.0f
         }
 
-    val customFillBrushFunction = customizations.getBrushFunction(nodeName)
     val customFillBrush =
-        if (customFillBrushFunction != null) {
-            customFillBrushFunction()
-        } else {
-            customizations.getBrush(nodeName)
-        }
+        customizations.getBrushState(nodeName)?.value ?: customizations.getBrush(nodeName)
 
     drawContext.canvas.translate(0.0f, verticalCenterOffset)
 

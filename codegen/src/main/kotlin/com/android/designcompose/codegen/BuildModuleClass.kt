@@ -271,8 +271,8 @@ private class DesignModuleVisitor(
                 out += "    customizations.setImage(\"$nodeName\", $propertyName)\n"
             CustomizationType.Brush ->
                 out += "    customizations.setBrush(\"$nodeName\", $propertyName)\n"
-            CustomizationType.BrushFunction ->
-                out += "    customizations.setBrushFunction(\"$nodeName\", $propertyName)\n"
+            CustomizationType.BrushState ->
+                out += "    customizations.setBrushState(\"$nodeName\", $propertyName)\n"
             CustomizationType.Modifier ->
                 out += "    customizations.setModifier(\"$nodeName\", $propertyName)\n"
             CustomizationType.TapCallback ->

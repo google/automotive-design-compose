@@ -19,6 +19,7 @@ import * as DesignSpecs from "./design-spec-module";
 
 const STRING_RES_PLUGIN_DATA_KEY = "vsw-string-res";
 const STRING_RES_EXTRAS_PLUGIN_DATA_KEY = "vsw-string-res-extras";
+const EXPLICIT_EXCLUSION_PLUGIN_DATA_KEY = "vsw-string-explicit-exclusion";
 const CONSOLE_TAG = `${Utils.CONSOLE_TAG}-LOCALIZATION`;
 const EXCLUDE_HASHTAG_NAME_OPTION = "excludeHashTagName";
 const EXCLUDE_CUSTOMIZATION_OPTION = "excludeCustomization";
@@ -28,7 +29,7 @@ interface StringResource {
   translatable: boolean;
   // It can be a simple string or a string array.
   text: string | string[];
-  textNodes: string[];
+  textNodes: NodeIdWithExtra[];
   extras?: StringResourceExtras;
   textLength: number;
 }
@@ -36,6 +37,11 @@ interface StringResource {
 interface StringResourceExtras {
   description: string;
   charlimit: number | "NONE";
+}
+
+interface NodeIdWithExtra {
+  nodeId: string;
+  isExcluded: boolean;
 }
 
 export async function generateLocalizationData(
@@ -80,18 +86,44 @@ export async function generateLocalizationData(
 export async function updateStringRes(strRes: StringResource) {
   await figma.loadAllPagesAsync();
 
-  for (let nodeId of strRes.textNodes) {
+  for (let textNode of strRes.textNodes) {
+    const nodeId = textNode["nodeId"];
     const node = await figma.getNodeByIdAsync(nodeId);
     if (node?.type == "TEXT") {
-      saveResName(node, strRes.name);
+      const isNodeExcluded = textNode["isExcluded"];
+      saveResName(node, strRes.name, isNodeExcluded);
       saveExtras(node, strRes.extras);
+      setExplicitExcluded(node, isNodeExcluded);
+      figma.notify(`Updated localization data of text node ${nodeId}...`);
     } else {
       figma.notify(
         `Ignore update string res request because node ${nodeId} is not a text node.`
       );
     }
   }
-  figma.notify("Updated string res...");
+}
+
+export async function excludeTextNode(nodeId: string, excluded: boolean) {
+  await figma.loadAllPagesAsync();
+  const node = await figma.getNodeByIdAsync(nodeId);
+  if (node?.type == "TEXT") {
+    let stringResName = getResName(node);
+    setExplicitExcluded(node, excluded);
+    saveResName(node, stringResName, excluded);
+
+    if (excluded) {
+      figma.notify(`Remove text node ${nodeId} from localization...`);
+    } else {
+      figma.notify(`Add text node ${nodeId} to localization...`);
+    }
+    figma.ui.postMessage({
+      msg: "localization-exclude-node-callback",
+    });
+  } else {
+    figma.notify(
+      `Ignore exclude node from localization request because node ${nodeId} is not a text node.`
+    );
+  }
 }
 
 async function localizeNodeAsync(
@@ -133,6 +165,7 @@ async function localizeTextNodeAsync(
   stringResourceMap: Map<string, StringResource>
 ) {
   let normalizedText = normalizeTextNode(node);
+  const isNodeExcluded = isExplicitlyExcluded(node);
   // First find and tag. It will override the existing string resource name from the string resource entry read from file.
   const containedValue = [...stringResourceMap.values()].filter(
     (value) => textMatches(value, normalizedText) && value.translatable
@@ -141,19 +174,19 @@ async function localizeTextNodeAsync(
     if (!containedValue[0].textNodes) {
       containedValue[0].textNodes = [];
     }
-    containedValue[0].textNodes.push(node.id);
+    containedValue[0].textNodes.push({
+      nodeId: node.id,
+      isExcluded: isNodeExcluded,
+    });
     Utils.log(CONSOLE_TAG, "Found and tag:", containedValue[0].name);
-    saveResName(node, containedValue[0].name);
+    saveResName(node, containedValue[0].name, isNodeExcluded);
     saveExtras(node, containedValue[0].extras);
     // Set the text length to set a proper char limit range.
     containedValue[0].textLength = node.characters.length;
     return;
   }
 
-  var preferredName = node.getSharedPluginData(
-    Utils.SHARED_PLUGIN_NAMESPACE,
-    STRING_RES_PLUGIN_DATA_KEY
-  );
+  var preferredName = getResName(node);
   if (!preferredName) {
     preferredName = fromNode(node);
   } else if (
@@ -173,13 +206,13 @@ async function localizeTextNodeAsync(
     stringResName = preferredName + "_" + index;
   }
 
-  saveResName(node, stringResName);
+  saveResName(node, stringResName, isNodeExcluded);
 
   var stringRes = {
     name: stringResName,
     translatable: true,
     text: normalizedText,
-    textNodes: [node.id],
+    textNodes: [{ nodeId: node.id, isExcluded: isNodeExcluded }],
     extras: getSavedExtras(node),
     textLength: node.characters.length,
   };
@@ -226,12 +259,28 @@ function countWords(characters: string): number {
   return words.filter((word) => word !== "").length;
 }
 
-function saveResName(node: TextNode, stringResName: string) {
-  node.setSharedPluginData(
-    Utils.SHARED_PLUGIN_NAMESPACE,
-    STRING_RES_PLUGIN_DATA_KEY,
-    stringResName
-  );
+function saveResName(
+  node: TextNode,
+  stringResName: string,
+  isExcluded: boolean
+) {
+  // If node is excluded, save the res name to private plugin data, otherwise, save it to shared plugin data.
+  // DesignCompose reads the res name from the shared plugin data to look up string resource at runtime.
+  if (isExcluded) {
+    node.setPluginData(STRING_RES_PLUGIN_DATA_KEY, stringResName);
+    node.setSharedPluginData(
+      Utils.SHARED_PLUGIN_NAMESPACE,
+      STRING_RES_PLUGIN_DATA_KEY,
+      ""
+    );
+  } else {
+    node.setSharedPluginData(
+      Utils.SHARED_PLUGIN_NAMESPACE,
+      STRING_RES_PLUGIN_DATA_KEY,
+      stringResName
+    );
+    node.setPluginData(STRING_RES_PLUGIN_DATA_KEY, "");
+  }
   Utils.log(
     CONSOLE_TAG,
     "Save string res name %s-%s with %s",
@@ -239,6 +288,18 @@ function saveResName(node: TextNode, stringResName: string) {
     node.id,
     stringResName
   );
+}
+
+function getResName(node: TextNode) {
+  const isNodeExcluded = isExplicitlyExcluded(node);
+  if (isNodeExcluded) {
+    return node.getPluginData(STRING_RES_PLUGIN_DATA_KEY);
+  } else {
+    return node.getSharedPluginData(
+      Utils.SHARED_PLUGIN_NAMESPACE,
+      STRING_RES_PLUGIN_DATA_KEY
+    );
+  }
 }
 
 function saveExtras(node: TextNode, extras?: StringResourceExtras) {
@@ -251,6 +312,19 @@ function saveExtras(node: TextNode, extras?: StringResourceExtras) {
     Utils.log(CONSOLE_TAG, "Clear extras from", node.id);
     node.setPluginData(STRING_RES_EXTRAS_PLUGIN_DATA_KEY, "");
   }
+}
+
+function setExplicitExcluded(node: TextNode, excluded: boolean) {
+  if (excluded) {
+    node.setPluginData(EXPLICIT_EXCLUSION_PLUGIN_DATA_KEY, "true");
+  } else {
+    // Clear the data
+    node.setPluginData(EXPLICIT_EXCLUSION_PLUGIN_DATA_KEY, "");
+  }
+}
+
+function isExplicitlyExcluded(node: TextNode): boolean {
+  return node.getPluginData(EXPLICIT_EXCLUSION_PLUGIN_DATA_KEY) === "true";
 }
 
 function endsWithNumbers(stringResName: string): boolean {
@@ -351,13 +425,14 @@ export async function clearLocalizationData() {
       await clearNodeAsync(child);
     }
   }
-  figma.closePlugin("String resource name has been cleared from text nodes.");
+  figma.closePlugin("Localization data has been cleared from text nodes.");
 }
 
 async function clearNodeAsync(node: SceneNode) {
   if (node.type == "TEXT") {
-    saveResName(node, "");
+    saveResName(node, "", false);
     saveExtras(node, undefined);
+    setExplicitExcluded(node, false);
   } else {
     // Recurse into any children.
     let maybeParent = node as ChildrenMixin;

@@ -535,6 +535,8 @@ if (figma.command === "sync") {
       Localization.generateLocalizationData(msg.contents, msg.options);
     } else if (msg.msg === "update-localization-data") {
       Localization.updateStringRes(msg.item);
+    } else if (msg.msg === "localization-exclude-node") {
+      Localization.excludeTextNode(msg.node, msg.excluded);
     } else if (msg.msg === "show-node") {
       Utils.showNode(msg.node);
     } else if (msg.msg === "close-plugin") {
@@ -994,11 +996,11 @@ if (figma.command === "sync") {
       enabled: msg.enabled,
       discrete: msg.discrete,
       discreteValue: msg.discreteValue,
-      paths: paths
+      paths: paths,
     };
 
     let meterData: any = {
-      progressVectorData: vectorData
+      progressVectorData: vectorData,
     };
 
     saveMeterData(meterData);

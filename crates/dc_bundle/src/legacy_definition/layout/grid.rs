@@ -76,3 +76,39 @@ pub enum OverflowDirection {
     VerticalScrolling,
     HorizontalAndVerticalScrolling,
 }
+
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum Overflow {
+    Visible,
+    Hidden,
+    Scroll,
+}
+
+impl Default for Overflow {
+    fn default() -> Self {
+        Self::Visible
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Default, Copy)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum LayoutSizing {
+    #[default]
+    Fixed,
+    Hug,
+    Fill,
+}
+
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum Display {
+    #[serde(rename = "flex")]
+    Flex,
+    #[serde(rename = "none")]
+    None,
+}
+
+impl Default for Display {
+    fn default() -> Self {
+        Self::Flex
+    }
+}

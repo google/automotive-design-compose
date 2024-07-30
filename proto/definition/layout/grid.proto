@@ -75,6 +75,13 @@ message ScrollInfo {
   bool paged_scrolling = 2;
 }
 
+// Configures whether a view is displayed using a Flexbox layout or not at all.
+enum Display {
+  DISPLAY_UNSPECIFIED = 0;
+  DISPLAY_FLEX = 1;
+  DISPLAY_NONE = 2;
+}
+
 // Defines the spacing between items in a layout. It can be either
 // a fixed value or an "auto" value, which will be calculated based on the
 // available space.

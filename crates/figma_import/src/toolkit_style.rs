@@ -15,6 +15,7 @@
 //! `toolkit_style` contains all of the style-related types that `toolkit_schema::View`
 //! uses.
 
+use crate::figma_schema;
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::color::Color;
@@ -32,9 +33,12 @@ use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
+use dc_bundle::legacy_definition::plugin::meter_data::{
+    ArcMeterData, MeterData, ProgressBarMeterData, ProgressMarkerMeterData,
+    ProgressVectorMeterData, RotationMeterData,
+};
 use serde::{Deserialize, Serialize};
 
-use crate::figma_schema;
 use crate::toolkit_layout_style::{Display, LayoutSizing, Number, Overflow};
 
 // These are the style properties that apply to text, so we can use them on subsections of
@@ -127,59 +131,6 @@ impl StyledTextRun {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct RotationMeterData {
-    pub enabled: bool,
-    pub start: f32,
-    pub end: f32,
-    pub discrete: bool,
-    pub discrete_value: f32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct ArcMeterData {
-    pub enabled: bool,
-    pub start: f32,
-    pub end: f32,
-    pub discrete: bool,
-    pub discrete_value: f32,
-    pub corner_radius: f32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct ProgressBarMeterData {
-    pub enabled: bool,
-    pub discrete: bool,
-    pub discrete_value: f32,
-    #[serde(default)]
-    pub vertical: bool,
-    #[serde(default)]
-    pub end_x: f32,
-    #[serde(default)]
-    pub end_y: f32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct ProgressMarkerMeterData {
-    pub enabled: bool,
-    pub discrete: bool,
-    pub discrete_value: f32,
-    #[serde(default)]
-    pub vertical: bool,
-    #[serde(default)]
-    pub start_x: f32,
-    #[serde(default)]
-    pub end_x: f32,
-    #[serde(default)]
-    pub start_y: f32,
-    #[serde(default)]
-    pub end_y: f32,
-}
-
 // Schema for progress vector data that we read from Figma plugin data
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -188,15 +139,6 @@ pub struct ProgressVectorMeterDataSchema {
     pub discrete: bool,
     pub discrete_value: f32,
     pub paths: Vec<figma_schema::Path>,
-}
-
-// Schema for progress vector data that we write to serialized data
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct ProgressVectorMeterData {
-    pub enabled: bool,
-    pub discrete: bool,
-    pub discrete_value: f32,
 }
 
 // Schema for dials & gauges Figma plugin data
@@ -210,19 +152,9 @@ pub enum MeterDataSchema {
     ProgressVectorData(ProgressVectorMeterDataSchema),
 }
 
-// Schema for dials & gauges data that we write to serialized data
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub enum MeterData {
-    ArcData(ArcMeterData),
-    RotationData(RotationMeterData),
-    ProgressBarData(ProgressBarMeterData),
-    ProgressMarkerData(ProgressMarkerMeterData),
-    ProgressVectorData(ProgressVectorMeterData),
-}
-impl From<MeterDataSchema> for MeterData {
-    fn from(md: MeterDataSchema) -> MeterData {
-        match md {
+impl Into<MeterData> for MeterDataSchema {
+    fn into(self) -> MeterData {
+        match self {
             MeterDataSchema::ArcData(data) => MeterData::ArcData(data),
             MeterDataSchema::RotationData(data) => MeterData::RotationData(data),
             MeterDataSchema::ProgressBarData(data) => MeterData::ProgressBarData(data),

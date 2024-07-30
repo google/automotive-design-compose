@@ -81,19 +81,23 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::grid::GridLayoutType>(&samples)
         .expect("couldn't trace GridLayoutType");
     tracer
-        .trace_type::<crate::toolkit_style::RotationMeterData>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::plugin::meter_data::RotationMeterData>(&samples)
         .expect("couldn't trace RotationMeterData");
     tracer
-        .trace_type::<crate::toolkit_style::ArcMeterData>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::plugin::meter_data::ArcMeterData>(&samples)
         .expect("couldn't trace ArcMeterData");
     tracer
-        .trace_type::<crate::toolkit_style::ProgressBarMeterData>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::plugin::meter_data::ProgressBarMeterData>(
+            &samples,
+        )
         .expect("couldn't trace ProgressBarMeterData");
     tracer
-        .trace_type::<crate::toolkit_style::ProgressVectorMeterData>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::plugin::meter_data::ProgressVectorMeterData>(
+            &samples,
+        )
         .expect("couldn't trace ProgressVectorMeterData");
     tracer
-        .trace_type::<crate::toolkit_style::MeterData>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::plugin::meter_data::MeterData>(&samples)
         .expect("couldn't trace MeterData");
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::PositionType>(&samples)

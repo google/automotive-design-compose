@@ -28,6 +28,7 @@ use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::interaction::pointer::PointerEvents;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
+use dc_bundle::legacy_definition::layout::positioning::{LayoutSizing, Overflow};
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, TextShadow};
@@ -39,7 +40,7 @@ use dc_bundle::legacy_definition::plugin::meter_data::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::toolkit_layout_style::{Display, LayoutSizing, Number, Overflow};
+use dc_bundle::legacy_definition::view::node_style::{Display, Number};
 
 // These are the style properties that apply to text, so we can use them on subsections of
 // a longer string. We then assume that every style transition is a potential line break (and

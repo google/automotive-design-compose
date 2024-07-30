@@ -87,3 +87,57 @@ enum PositionType {
   POSITION_TYPE_ABSOLUTE = 2;
 }
 
+// Defines how content overflows the bounds of a view.
+enum Overflow {
+  OVERFLOW_UNSPECIFIED = 0;
+  OVERFLOW_VISIBLE = 1;
+  OVERFLOW_HIDDEN = 2;
+  OVERFLOW_SCROLL = 3;
+}
+// Defines the direction of overflow scrolling
+enum OverflowDirection {
+  OVERFLOW_DIRECTION_UNSPECIFIED = 0;
+  OVERFLOW_DIRECTION_NONE = 1;
+  OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING = 2;
+  OVERFLOW_DIRECTION_VERTICAL_SCROLLING = 3;
+  OVERFLOW_DIRECTION_HORIZONTAL_AND_VERTICAL_SCROLLING = 4;
+}
+
+// Defines how a view's size is determined.
+enum LayoutSizing {
+  LAYOUT_SIZING_UNSPECIFIED = 0;
+  LAYOUT_SIZING_FIXED = 1;
+  LAYOUT_SIZING_HUG = 2;
+  LAYOUT_SIZING_FILL = 3;
+}
+
+// Defines the spacing between items in a layout. It can be either
+// a fixed value or an "auto" value, which will be calculated based on the
+// available space.
+message ItemSpacing {
+  // Specifies an "auto" spacing value. It contains the desired width and
+  // height of the spacing.
+  message Auto {
+    int32 width = 1;
+    int32 height = 2;
+  }
+  oneof type {
+    int32 fixed = 1;
+    Auto auto = 2;
+  }
+}
+
+// Represents information about the scroll state of a view, including the
+// overflow direction and whether paged scrolling is enabled.
+message ScrollInfo {
+  OverflowDirection overflow = 1;
+  bool paged_scrolling = 2;
+}
+
+// Defines how flex items wrap when they exceed the available space.
+enum FlexWrap {
+  FLEX_WRAP_UNSPECIFIED = 0;
+  FLEX_WRAP_NO_WRAP = 1;
+  FLEX_WRAP_WRAP = 2;
+  FLEX_WRAP_WRAP_REVERSE = 3;
+}

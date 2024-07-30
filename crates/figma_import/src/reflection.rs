@@ -42,7 +42,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace BoxShadow");
     tracer.trace_type::<Dimension>(&samples).expect("couldn't trace Dimension");
     tracer
-        .trace_type::<crate::toolkit_layout_style::Display>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::view::node_style::Display>(&samples)
         .expect("couldn't trace Display");
     tracer
         .trace_type::<dc_bundle::legacy_definition::modifier::filter::FilterOp>(&samples)
@@ -66,16 +66,16 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::element::path::LineHeight>(&samples)
         .expect("couldn't trace LineHeight");
     tracer
-        .trace_type::<crate::toolkit_layout_style::Number>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::view::node_style::Number>(&samples)
         .expect("couldn't trace Number");
     tracer
-        .trace_type::<crate::toolkit_layout_style::Overflow>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::Overflow>(&samples)
         .expect("couldn't trace Overflow");
     tracer
         .trace_type::<dc_bundle::legacy_definition::interaction::pointer::PointerEvents>(&samples)
         .expect("couldn't trace PointerEvents");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::grid::ItemSpacing>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::ItemSpacing>(&samples)
         .expect("couldn't trace ItemSpacing");
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::grid::GridLayoutType>(&samples)
@@ -121,7 +121,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::modifier::text::TextOverflow>(&samples)
         .expect("couldn't trace TextOverflow");
     tracer
-        .trace_type::<crate::toolkit_layout_style::LayoutSizing>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::LayoutSizing>(&samples)
         .expect("couldn't trace LayoutSizing");
     tracer
         .trace_type::<crate::toolkit_style::ViewStyle>(&samples)
@@ -169,7 +169,9 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<crate::toolkit_schema::ComponentInfo>(&samples)
         .expect("couldn't trace ComponentInfo");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::grid::OverflowDirection>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::layout::positioning::OverflowDirection>(
+            &samples,
+        )
         .expect("couldn't trace OverflowDirection");
     tracer
         .trace_type::<dc_bundle::legacy_definition::view::view::RenderMethod>(&samples)

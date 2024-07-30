@@ -21,8 +21,8 @@ import "definition/element/font.proto";
 import "definition/element/geometry.proto";
 import "definition/element/path.proto";
 import "definition/interaction/pointer.proto";
-import "definition/layout/display.proto";
 import "definition/layout/grid.proto";
+import "definition/layout/positioning.proto";
 import "definition/modifier/blend.proto";
 import "definition/modifier/filter.proto";
 import "definition/modifier/matrix_transform.proto";
@@ -34,6 +34,12 @@ option java_multiple_files = true;
 option java_package = "com.android.designcompose.definition.view";
 option optimize_for = LITE_RUNTIME;
 
+// Configures whether a view is displayed using a Flexbox layout or not at all.
+enum Display {
+  DISPLAY_UNSPECIFIED = 0;
+  DISPLAY_FLEX = 1;
+  DISPLAY_NONE = 2;
+}
 
 // Contains all of the styleable parameters accepted by the Rect and Text
 // components.
@@ -74,7 +80,7 @@ message NodeStyle {
   definition.modifier.BlendMode blend_mode = 23;
 
   // Layout properties
-  definition.layout.Display display_type = 24;
+  Display display_type = 24;
   definition.layout.FlexWrap flex_wrap = 25;
   definition.layout.GridLayoutType grid_layout = 26;
   uint32 grid_columns_rows = 27;

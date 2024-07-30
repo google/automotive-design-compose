@@ -14,5 +14,30 @@
  * limitations under the License.
  */
 
-pub mod node_style;
-pub mod view;
+use serde::{Deserialize, Serialize};
+
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum Number {
+    Defined(f32),
+    Undefined,
+}
+
+impl Default for Number {
+    fn default() -> Self {
+        Self::Undefined
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum Display {
+    #[serde(rename = "flex")]
+    Flex,
+    #[serde(rename = "none")]
+    None,
+}
+
+impl Default for Display {
+    fn default() -> Self {
+        Self::Flex
+    }
+}

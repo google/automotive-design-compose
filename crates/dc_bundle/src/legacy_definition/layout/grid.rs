@@ -16,37 +16,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::legacy_definition::proto;
-use crate::Error;
-
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum ItemSpacing {
-    Fixed(i32),
-    // Fixed space between columns/rows
-    Auto(i32, i32), // Min space between columns/rows, item width/height
-}
-
-impl Default for ItemSpacing {
-    fn default() -> Self {
-        ItemSpacing::Fixed(0)
-    }
-}
-
-impl TryFrom<proto::layout::ItemSpacing> for ItemSpacing {
-    type Error = Error;
-
-    fn try_from(proto: proto::layout::ItemSpacing) -> Result<Self, Self::Error> {
-        match proto
-            .r#type
-            .as_ref()
-            .ok_or(Error::MissingFieldError { field: "ItemSpacing".to_string() })?
-        {
-            proto::layout::item_spacing::Type::Fixed(s) => Ok(ItemSpacing::Fixed(*s)),
-            proto::layout::item_spacing::Type::Auto(s) => Ok(ItemSpacing::Auto(s.width, s.height)),
-        }
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct GridSpan {
     pub node_name: String,
@@ -64,15 +33,4 @@ pub enum GridLayoutType {
     AutoRows,
     Horizontal,
     Vertical,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Eq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default)]
-pub enum OverflowDirection {
-    #[default]
-    None,
-    HorizontalScrolling,
-    VerticalScrolling,
-    HorizontalAndVerticalScrolling,
 }

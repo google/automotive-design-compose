@@ -1149,7 +1149,7 @@
             }
             if (!hasChanged) {
               input.value = stringRes["name"];
-              showToast(`${newValue} already exists. Revert since duplicates are not allowed.`);
+              showToast(`${newValue} already exists. Reverting resource name since duplicates are not allowed.`);
             }
           } else if (stringRes["name"] != this.value) {
             outputStringData.delete(stringRes["name"]);

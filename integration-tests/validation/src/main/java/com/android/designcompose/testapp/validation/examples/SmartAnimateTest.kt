@@ -38,6 +38,11 @@ interface SmartAnimateTest {
         @DesignVariant(property = "#RotationTestState") state: TestState,
     )
 
+    @DesignComponent(node = "#RotationOpacityStage")
+    fun OpacityTest(
+        @DesignVariant(property = "#OpacityTestState") state: TestState,
+    )
+
     @DesignComponent(node = "#OneInstance") fun OneInstance()
 }
 

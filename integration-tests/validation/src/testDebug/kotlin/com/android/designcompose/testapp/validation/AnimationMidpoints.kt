@@ -159,6 +159,28 @@ class AnimationMidpoints {
         recordAnimation("Rotation")
     }
 
+    @Test
+    fun opacityAnimation() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(TestState.A)
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+            ) {
+                SmartAnimateTestDoc.OpacityTest(state = state.value)
+            }
+        }
+
+        waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+        state.value = TestState.B
+
+        recordAnimation("Opacity")
+    }
+
     private fun waitForContent(name: String) {
         composeTestRule.waitForIdle()
         composeTestRule

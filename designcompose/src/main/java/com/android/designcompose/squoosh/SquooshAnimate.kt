@@ -31,6 +31,7 @@ import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.toFloatList
 import java.util.Optional
+import kotlin.jvm.optionals.getOrElse
 
 // Squoosh animation design
 //
@@ -68,6 +69,7 @@ internal class SquooshAnimatedLayout(
     private val transformedChanged = hasTransformChange(from.view.style, to.view.style)
     private val fromDecomposed = from.style.node_style.transform.decompose(1F)
     private val toDecomposed = to.style.node_style.transform.decompose(1F)
+    private val needsOpacityTween = needsOpacityTween(from.view.style, to.view.style)
 
     override fun apply(value: Float) {
         val iv = 1.0f - value
@@ -96,6 +98,15 @@ internal class SquooshAnimatedLayout(
             this.target.style =
                 this.target.style.withNodeStyle { s ->
                     s.transform = Optional.of(target.toMatrix().toFloatList())
+                }
+        }
+
+        if (needsOpacityTween) {
+            this.target.style =
+                this.target.style.withNodeStyle { s ->
+                    val fromOpacity = from.style.node_style.opacity.getOrElse { 1F }
+                    val toOpacity = to.style.node_style.opacity.getOrElse { 1F }
+                    s.opacity = Optional.of(toOpacity * value + fromOpacity * iv)
                 }
         }
 
@@ -460,6 +471,10 @@ private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     if (a.node_style.background != b.node_style.background) return true
     if (a.node_style.stroke != b.node_style.stroke) return true
     return false
+}
+
+private fun needsOpacityTween(a: ViewStyle, b: ViewStyle): Boolean {
+    return a.node_style.opacity.getOrElse { 1F } != b.node_style.opacity.getOrElse { 1F }
 }
 
 private fun ViewStyle.withNodeStyle(delta: (NodeStyle.Builder) -> Unit): ViewStyle {

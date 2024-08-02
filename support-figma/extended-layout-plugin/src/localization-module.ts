@@ -23,6 +23,7 @@ const EXPLICIT_EXCLUSION_PLUGIN_DATA_KEY = "vsw-string-explicit-exclusion";
 const CONSOLE_TAG = `${Utils.CONSOLE_TAG}-LOCALIZATION`;
 const EXCLUDE_HASHTAG_NAME_OPTION = "excludeHashTagName";
 const EXCLUDE_CUSTOMIZATION_OPTION = "excludeCustomization";
+const GROUP_SAME_TEXT_OPTION = "groupSameText";
 
 interface StringResource {
   name: string;
@@ -142,7 +143,7 @@ async function localizeNodeAsync(
     } else if (clippyTextNodes.includes(node)) {
       Utils.log(CONSOLE_TAG, "Ignore client side customization:", node.name);
     } else {
-      await localizeTextNodeAsync(node, stringResourceMap);
+      await localizeTextNodeAsync(node, stringResourceMap, options);
     }
   } else {
     // Recurse into any children.
@@ -162,28 +163,31 @@ async function localizeNodeAsync(
 
 async function localizeTextNodeAsync(
   node: TextNode,
-  stringResourceMap: Map<string, StringResource>
+  stringResourceMap: Map<string, StringResource>,
+  options: string[]
 ) {
   let normalizedText = normalizeTextNode(node);
   const isNodeExcluded = isExplicitlyExcluded(node);
-  // First find and tag. It will override the existing string resource name from the string resource entry read from file.
-  const containedValue = [...stringResourceMap.values()].filter(
-    (value) => textMatches(value, normalizedText) && value.translatable
-  );
-  if (containedValue.length > 0) {
-    if (!containedValue[0].textNodes) {
-      containedValue[0].textNodes = [];
+  if (options.includes(GROUP_SAME_TEXT_OPTION)) {
+    // First find and tag. It will override the existing string resource name from the string resource entry read from file.
+    const containedValue = [...stringResourceMap.values()].filter(
+      (value) => textMatches(value, normalizedText) && value.translatable
+    );
+    if (containedValue.length > 0) {
+      if (!containedValue[0].textNodes) {
+        containedValue[0].textNodes = [];
+      }
+      containedValue[0].textNodes.push({
+        nodeId: node.id,
+        isExcluded: isNodeExcluded,
+      });
+      Utils.log(CONSOLE_TAG, "Found and tag:", containedValue[0].name);
+      saveResName(node, containedValue[0].name, isNodeExcluded);
+      saveExtras(node, containedValue[0].extras);
+      // Set the text length to set a proper char limit range.
+      containedValue[0].textLength = node.characters.length;
+      return;
     }
-    containedValue[0].textNodes.push({
-      nodeId: node.id,
-      isExcluded: isNodeExcluded,
-    });
-    Utils.log(CONSOLE_TAG, "Found and tag:", containedValue[0].name);
-    saveResName(node, containedValue[0].name, isNodeExcluded);
-    saveExtras(node, containedValue[0].extras);
-    // Set the text length to set a proper char limit range.
-    containedValue[0].textLength = node.characters.length;
-    return;
   }
 
   var preferredName = getResName(node);
@@ -394,6 +398,21 @@ function normalizeString(characters: string): string {
       // Preserver tabs at the beginning and the end
       // Use '\t' for precise translations
       .replace(/\t/g, "\\t")
+      // Replace the following dash characters with unicode for precise translations
+      // - hyphen-minus
+      .replace(/\u002d/g, "\\u002d")
+      // - hyphen
+      .replace(/\u2010/g, "\\u2010")
+      // - non-breaking hyphen
+      .replace(/\u2011/g, "\\u2011")
+      // - figure dash
+      .replace(/\u2012/g, "\\u2012")
+      // - n dash
+      .replace(/\u2013/g, "\\u2013")
+      // - m dash
+      .replace(/\u2014/g, "\\u2014")
+      // - minus sign
+      .replace(/\u2212/g, "\\u2212")
       // Replace LSEP with unicode for precise translations
       .replace(/\u2028/g, "\\u2028")
       // Special character & needs to be escaped.

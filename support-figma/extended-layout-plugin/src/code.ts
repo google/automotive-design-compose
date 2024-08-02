@@ -345,7 +345,7 @@ function clipyCheckTypeMismatches(
       switch (kind) {
         case DesignSpecs.DesignCustomizationKind.Text:
         case DesignSpecs.DesignCustomizationKind.TextStyle:
-        case DesignSpecs.DesignCustomizationKind.TextFunction:
+        case DesignSpecs.DesignCustomizationKind.TextState:
           if (node.type != "TEXT") {
             warnings.push(
               createWarning(ClippyWarningKind.TYPE_MISMATCH, [

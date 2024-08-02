@@ -751,7 +751,8 @@ internal fun InteractionState.squooshNodeVariant(
 internal fun InteractionState.squooshRootNode(
     initialNode: NodeQuery,
     doc: DocContent,
-    isRoot: Boolean
+    isRoot: Boolean,
+    customizations: CustomizationContext?,
 ): View? {
     val findRootNode = {
         if (isRoot) {
@@ -761,7 +762,13 @@ internal fun InteractionState.squooshRootNode(
         }
     }
     val query = findRootNode()
-    return searchNodes(query, doc.c.document.views, doc.c.variantViewMap, doc.c.variantPropertyMap)
+    return searchNodes(
+        query,
+        doc.c.document.views,
+        doc.c.variantViewMap,
+        doc.c.variantPropertyMap,
+        customizations
+    )
 }
 
 /// InteractionState is managed in a global, per document. We don't pass it down via a

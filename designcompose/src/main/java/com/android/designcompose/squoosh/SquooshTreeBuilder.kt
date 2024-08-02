@@ -195,9 +195,17 @@ internal fun resolveVariantsRecursively(
             if (variantNodeName != null && variantNodeName != componentInfo.name) {
                 // Find the view associated with the variant name
                 val variantNodeQuery =
-                    NodeQuery.NodeVariant(variantNodeName, variantParentName.ifEmpty { view.name })
+                    NodeQuery.NodeVariant(
+                        variantNodeName,
+                        variantParentName.ifEmpty { view.component_info.get().component_set_name }
+                    )
                 val variantView =
-                    interactionState.squooshRootNode(variantNodeQuery, document, isRoot)
+                    interactionState.squooshRootNode(
+                        variantNodeQuery,
+                        document,
+                        isRoot,
+                        customizations
+                    )
                 if (variantView != null) {
                     view = variantView
                 }

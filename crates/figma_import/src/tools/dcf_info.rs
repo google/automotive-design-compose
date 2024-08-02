@@ -48,10 +48,10 @@ impl From<crate::Error> for ParseError {
 #[derive(Parser, Debug)]
 pub struct Args {
     // Path to the .dcf file to deserialize
-    dcf_file: std::path::PathBuf,
+    pub dcf_file: std::path::PathBuf,
     // Optional string argument to dump file structure from a given node root.
     #[clap(long, short)]
-    node: Option<String>,
+    pub node: Option<String>,
 }
 
 pub fn dcf_info(args: Args) -> Result<(), ParseError> {

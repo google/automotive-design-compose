@@ -24,7 +24,7 @@ use serde_generate::SourceInstaller;
 #[derive(Parser)]
 pub struct Cli {
     #[arg(short, long, default_value = "out")]
-    out_dir: std::path::PathBuf,
+    pub out_dir: std::path::PathBuf,
 }
 
 pub fn reflection(args: Cli) -> Result<(), crate::Error> {

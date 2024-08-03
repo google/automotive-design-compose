@@ -50,22 +50,22 @@ impl From<std::io::Error> for ConvertError {
 pub struct Args {
     /// Figma Document ID to fetch and convert
     #[arg(short, long)]
-    doc_id: String,
+    pub doc_id: String,
     /// Figma Document Version ID to fetch and convert
     #[arg(short, long)]
-    version_id: Option<String>,
+    pub version_id: Option<String>,
     /// Figma API key to use for Figma requests
     #[arg(short, long)]
-    api_key: String,
+    pub api_key: String,
     /// HTTP proxy server - <host>:<port>
     #[arg(long)]
-    http_proxy: Option<String>,
+    pub http_proxy: Option<String>,
     /// Root nodes to find in the doc and convert
     #[arg(short, long)]
-    nodes: Vec<String>,
+    pub nodes: Vec<String>,
     /// Output file to write serialized doc into
     #[arg(short, long)]
-    output: std::path::PathBuf,
+    pub output: std::path::PathBuf,
 }
 
 pub fn fetch(args: Args) -> Result<(), ConvertError> {

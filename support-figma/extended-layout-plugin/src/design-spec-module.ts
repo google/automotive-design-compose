@@ -19,7 +19,7 @@ import * as Utils from "./utils";
 /** See: com.android.designcompose.codegen.CustomizationType */
 export enum DesignCustomizationKind {
   Text = "Text",
-  TextFunction = "TextFunction",
+  TextState = "TextState",
   TextStyle = "TextStyle",
   Image = "Image",
   ImageWithContext = "ImageWithContext",
@@ -164,7 +164,7 @@ export async function mergeReactionsAsync(
 
 /**
  * Get the destination nodes on the reaction chain for the given node.
- * 
+ *
  * For a top level component, if any descendant has an action that does to another node,
  * we will use the same customization definitions from the top level component to check
  * text customizations.
@@ -177,7 +177,7 @@ async function populateReactionChainAsync(
   topLevelReactionComponents: Map<string, BaseNode[]>
 ) {
   // If this action goes to another node, put the destination node into the map.
-  // Then recursively call #populateReactionChainAsync for find the next level 
+  // Then recursively call #populateReactionChainAsync for find the next level
   // destination nodes originated from descendents of this destination node.
   async function handleReactionNodeAsync(action?: Action) {
     if (action?.type == "NODE") {
@@ -277,7 +277,7 @@ export async function findTextCustomizationNodesAsync(
       if (node.name != customization.node) continue;
       if (
         customization.kind == DesignCustomizationKind.Text ||
-        customization.kind == DesignCustomizationKind.TextFunction ||
+        customization.kind == DesignCustomizationKind.TextState ||
         customization.kind == DesignCustomizationKind.ComponentReplacement
       ) {
         if (node.type == "TEXT") {

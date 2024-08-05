@@ -21,8 +21,9 @@ const STRING_RES_PLUGIN_DATA_KEY = "vsw-string-res";
 const STRING_RES_EXTRAS_PLUGIN_DATA_KEY = "vsw-string-res-extras";
 const EXPLICIT_EXCLUSION_PLUGIN_DATA_KEY = "vsw-string-explicit-exclusion";
 const CONSOLE_TAG = `${Utils.CONSOLE_TAG}-LOCALIZATION`;
-const EXCLUDE_HASHTAG_NAME_OPTION = "excludeHashTagName";
-const EXCLUDE_CUSTOMIZATION_OPTION = "excludeCustomization";
+const OPTION_EXCLUDE_HASHTAG_NAME = "excludeHashTagName";
+const OPTION_READ_CUSTOMIZATION = "readJsonCustomization";
+const OPTION_GROUP_SAME_TEXT = "groupSameText";
 
 interface StringResource {
   name: string;
@@ -51,9 +52,9 @@ export async function generateLocalizationData(
   Utils.log(CONSOLE_TAG, "Generate string res name");
 
   await figma.loadAllPagesAsync();
-  let clippyTextNodes = options.includes(EXCLUDE_CUSTOMIZATION_OPTION)
-    ? await loadClippyTextNodesAsync()
-    : [];
+  let clippyTextNodes = await loadClippyTextNodesAsync(
+    options.includes(OPTION_READ_CUSTOMIZATION)
+  );
 
   // String resource name to StringResource map.
   let stringResourceMap = new Map<string, StringResource>();
@@ -64,14 +65,44 @@ export async function generateLocalizationData(
     stringResourceMap.set(strRes.name, strRes);
   }
 
-  for (let page of figma.root.children) {
-    for (let child of page.children) {
-      await localizeNodeAsync(
-        child,
-        stringResourceMap,
-        options,
-        clippyTextNodes
-      );
+  if (clippyTextNodes.topLevelComponentIds.length === 0) {
+    // No clippy top level components found in customization file. Localize all the nodes recursively from root.
+    for (let page of figma.root.children) {
+      for (let child of page.children) {
+        await localizeNodeAsync(
+          child,
+          stringResourceMap,
+          options,
+          clippyTextNodes["customizedTextNodeArray"]
+        );
+      }
+    }
+  } else {
+    // Localize the top level components found in customization file.
+    for (let nodeId of clippyTextNodes.topLevelComponentIds) {
+      let node = await figma.getNodeByIdAsync(nodeId);
+      if (node) {
+        await localizeNodeAsync(
+          node,
+          stringResourceMap,
+          options,
+          clippyTextNodes["customizedTextNodeArray"]
+        );
+      }
+    }
+    // Localize all the local components in the design file.
+    const localComponents = figma.root.findAll(
+      (node) => node.type === "COMPONENT"
+    );
+    for (let localComponent of localComponents) {
+      if (!clippyTextNodes.topLevelComponentIds.includes(localComponent.id)) {
+        await localizeNodeAsync(
+          localComponent,
+          stringResourceMap,
+          options,
+          clippyTextNodes["customizedTextNodeArray"]
+        );
+      }
     }
   }
 
@@ -127,7 +158,7 @@ export async function excludeTextNode(nodeId: string, excluded: boolean) {
 }
 
 async function localizeNodeAsync(
-  node: SceneNode,
+  node: BaseNode,
   stringResourceMap: Map<string, StringResource>,
   options: string[],
   clippyTextNodes: BaseNode[]
@@ -135,14 +166,14 @@ async function localizeNodeAsync(
   if (node.type == "TEXT") {
     // Nodes with name starting with # is for local customization.
     if (
-      options.includes(EXCLUDE_HASHTAG_NAME_OPTION) &&
+      options.includes(OPTION_EXCLUDE_HASHTAG_NAME) &&
       node.name.startsWith("#")
     ) {
       Utils.log(CONSOLE_TAG, "Ignore node:", node.name);
     } else if (clippyTextNodes.includes(node)) {
       Utils.log(CONSOLE_TAG, "Ignore client side customization:", node.name);
     } else {
-      await localizeTextNodeAsync(node, stringResourceMap);
+      await localizeTextNodeAsync(node, stringResourceMap, options);
     }
   } else {
     // Recurse into any children.
@@ -162,28 +193,31 @@ async function localizeNodeAsync(
 
 async function localizeTextNodeAsync(
   node: TextNode,
-  stringResourceMap: Map<string, StringResource>
+  stringResourceMap: Map<string, StringResource>,
+  options: string[]
 ) {
   let normalizedText = normalizeTextNode(node);
   const isNodeExcluded = isExplicitlyExcluded(node);
-  // First find and tag. It will override the existing string resource name from the string resource entry read from file.
-  const containedValue = [...stringResourceMap.values()].filter(
-    (value) => textMatches(value, normalizedText) && value.translatable
-  );
-  if (containedValue.length > 0) {
-    if (!containedValue[0].textNodes) {
-      containedValue[0].textNodes = [];
+  if (options.includes(OPTION_GROUP_SAME_TEXT)) {
+    // First find and tag. It will override the existing string resource name from the string resource entry read from file.
+    const containedValue = [...stringResourceMap.values()].filter(
+      (value) => textMatches(value, normalizedText) && value.translatable
+    );
+    if (containedValue.length > 0) {
+      if (!containedValue[0].textNodes) {
+        containedValue[0].textNodes = [];
+      }
+      containedValue[0].textNodes.push({
+        nodeId: node.id,
+        isExcluded: isNodeExcluded,
+      });
+      Utils.log(CONSOLE_TAG, "Found and tag:", containedValue[0].name);
+      saveResName(node, containedValue[0].name, isNodeExcluded);
+      saveExtras(node, containedValue[0].extras);
+      // Set the text length to set a proper char limit range.
+      containedValue[0].textLength = node.characters.length;
+      return;
     }
-    containedValue[0].textNodes.push({
-      nodeId: node.id,
-      isExcluded: isNodeExcluded,
-    });
-    Utils.log(CONSOLE_TAG, "Found and tag:", containedValue[0].name);
-    saveResName(node, containedValue[0].name, isNodeExcluded);
-    saveExtras(node, containedValue[0].extras);
-    // Set the text length to set a proper char limit range.
-    containedValue[0].textLength = node.characters.length;
-    return;
   }
 
   var preferredName = getResName(node);
@@ -394,6 +428,21 @@ function normalizeString(characters: string): string {
       // Preserver tabs at the beginning and the end
       // Use '\t' for precise translations
       .replace(/\t/g, "\\t")
+      // Replace the following dash characters with unicode for precise translations
+      // - hyphen-minus
+      .replace(/\u002d/g, "\\u002d")
+      // - hyphen
+      .replace(/\u2010/g, "\\u2010")
+      // - non-breaking hyphen
+      .replace(/\u2011/g, "\\u2011")
+      // - figure dash
+      .replace(/\u2012/g, "\\u2012")
+      // - n dash
+      .replace(/\u2013/g, "\\u2013")
+      // - m dash
+      .replace(/\u2014/g, "\\u2014")
+      // - minus sign
+      .replace(/\u2212/g, "\\u2212")
       // Replace LSEP with unicode for precise translations
       .replace(/\u2028/g, "\\u2028")
       // Special character & needs to be escaped.
@@ -460,40 +509,53 @@ function getSavedExtras(node: TextNode): StringResourceExtras {
 }
 
 ////////////// Customization /////////////////
+
+type ClippyCustomizationData = {
+  topLevelComponentIds: string[];
+  customizedTextNodeArray: BaseNode[];
+};
+
 // Parse the document look for text customizations
-async function loadClippyTextNodesAsync(): Promise<BaseNode[]> {
-  let designDocSpec = DesignSpecs.loadClippy();
-  if (designDocSpec != null) {
-    // Check for text customizations
-    let {
-      topLevelComponents,
-      topLevelComponentDefns,
-      topLevelReactionComponents,
-    } = DesignSpecs.initTopLevelComponentMaps(designDocSpec);
-    await DesignSpecs.populateComponentMapsAsync(
-      figma.root,
-      topLevelComponents,
-      topLevelComponentDefns
-    );
+async function loadClippyTextNodesAsync(
+  shouldUseClippy: boolean
+): Promise<ClippyCustomizationData> {
+  if (shouldUseClippy) {
+    let designDocSpec = DesignSpecs.loadClippy();
+    if (designDocSpec != null) {
+      // Check for text customizations
+      let {
+        topLevelComponents,
+        topLevelComponentDefns,
+        topLevelReactionComponents,
+      } = DesignSpecs.initTopLevelComponentMaps(designDocSpec);
+      await DesignSpecs.populateComponentMapsAsync(
+        figma.root,
+        topLevelComponents,
+        topLevelComponentDefns
+      );
 
-    let idToDesignComponentSpecMap = await DesignSpecs.mergeReactionsAsync(
-      topLevelComponents,
-      topLevelComponentDefns,
-      topLevelReactionComponents
-    );
+      let idToDesignComponentSpecMap = await DesignSpecs.mergeReactionsAsync(
+        topLevelComponents,
+        topLevelComponentDefns,
+        topLevelReactionComponents
+      );
 
-    let customizedNodeArray: BaseNode[] = [];
-    await DesignSpecs.findTextCustomizationNodesAsync(
-      idToDesignComponentSpecMap,
-      figma.root,
-      customizedNodeArray
-    );
-    return customizedNodeArray;
-  } else {
-    figma.notify(
-      'Keywords document not found or corrupted. Run the "Check/update keywords" plugin to upload a new keyword document.',
-      { timeout: 8000 }
-    );
+      let customizedNodeArray: BaseNode[] = [];
+      await DesignSpecs.findTextCustomizationNodesAsync(
+        idToDesignComponentSpecMap,
+        figma.root,
+        customizedNodeArray
+      );
+      return {
+        topLevelComponentIds: [...idToDesignComponentSpecMap.keys()],
+        customizedTextNodeArray: customizedNodeArray,
+      };
+    } else {
+      figma.notify(
+        'Keywords document not found or corrupted. Run the "Check/update keywords" plugin to upload a new keyword document.',
+        { timeout: 8000 }
+      );
+    }
   }
-  return [];
+  return { topLevelComponentIds: [], customizedTextNodeArray: [] };
 }

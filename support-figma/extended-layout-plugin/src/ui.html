@@ -320,14 +320,20 @@
 
 <!-- BEGINNING OF LOCALIZATION PLUGIN UI -->
 <div id="localizationOptions" class="page page-padding-large">
-  <div style="border-bottom: solid #000000; font-weight: bold;">Localization exclude options:</div>
+  <div style="border-bottom: solid #000000; font-weight: bold;">Localization options:</div>
   <div style="margin-top: 8px;">
-    <input type="checkbox" id="excludeHashTagName" name="excludeOptions" value="excludeHashTagName" checked>
+    <input type="checkbox" id="excludeHashTagName" name="localizationOptions" value="excludeHashTagName" checked>
     <label for="excludeHashTagName">Exclude text nodes whose name starts with '#'</label>
   </div>
   <div style="margin-top: 8px;">
-    <input type="checkbox" id="excludeCustomization" name="excludeOptions" value="excludeCustomization" checked>
-    <label for="excludeCustomization">Exclude text nodes customized by client</label>
+    <input type="checkbox" id="readJsonCustomization" name="localizationOptions" value="readJsonCustomization" checked>
+    <label for="readJsonCustomization">If a keywords file was uploaded using "Check/update keywords" menu, use the keywords
+      file to localize frames shown on client only and exclude text nodes customized by client.
+    </label>
+  </div>
+  <div style="margin-top: 8px;">
+    <input type="checkbox" id="groupSameText" name="localizationOptions" value="groupSameText" checked>
+    <label for="groupSameText">Group nodes with same text and use the same string resource name</label>
   </div>
   <div style="display: flex; justify-content: flex-end; align-items: flex-end;"><a href="#uploadStringPanel"
       style="text-decoration: underline;">&nbsp;Next >>&nbsp;</a></div>
@@ -864,14 +870,14 @@
   }
 
   function showOutputStrings() {
-    const excludeOptionElements = document.querySelectorAll('input[name="excludeOptions"]:checked');
-    const excludeOptions = Array.from(excludeOptionElements).map(checkbox => checkbox.value);
+    const localizationOptionElements = document.querySelectorAll('input[name="localizationOptions"]:checked');
+    const localizationOptions = Array.from(localizationOptionElements).map(checkbox => checkbox.value);
 
     parent.postMessage({
       pluginMessage: {
         msg: 'generate-localization-data',
         contents: inputStringArray,
-        options: excludeOptions,
+        options: localizationOptions,
       }
     }, '*');
   }
@@ -1114,8 +1120,39 @@
         input.addEventListener('change', function (evt) {
           const newValue = this.value;
           if (outputStringData.has(newValue)) {
-            input.value = stringRes["name"];
-            showToast(`${newValue} already exists. Revert since duplicates are not allowed.`);
+            let newStringRes = outputStringData.get(newValue);
+            let hasChanged = false;
+            // Use toString() to compare string and string array.
+            if (stringRes["text"].toString() === newStringRes["text"].toString()) {
+              let result = confirm(`Would you like to merge the translations with ${newStringRes["name"]}?`);
+              if (result) {
+                // Merge the text nodes and upate the UI.
+                for (const node of stringRes["textNodes"]) {
+                  if (newStringRes["textNodes"]) {
+                    newStringRes["textNodes"].push(node);
+                  } else {
+                    newStringRes["textNodes"] = [node];
+                  }
+                }
+                // Remove the string resource from the map.
+                outputStringData.delete(stringRes["name"]);
+                // Notify figma to update the plugin data.
+                stringRes["name"] = newValue;
+                parent.postMessage({
+                  pluginMessage: {
+                    msg: 'update-localization-data',
+                    item: stringRes
+                  }
+                }, '*');
+                // Refresh the table, which recreate the whole table...
+                createOutputStringTable('outputStrings');
+                hasChanged = true;
+              }
+            }
+            if (!hasChanged) {
+              input.value = stringRes["name"];
+              showToast(`${newValue} already exists. Reverting resource name since duplicates are not allowed.`);
+            }
           } else if (stringRes["name"] != this.value) {
             outputStringData.delete(stringRes["name"]);
             stringRes["name"] = this.value;

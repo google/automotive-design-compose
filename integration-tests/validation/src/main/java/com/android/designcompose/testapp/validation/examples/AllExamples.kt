@@ -71,6 +71,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             @TargetApi(28) { StateCustomizationsTest(Clock.systemDefaultZone()) },
             StateCustomizationsDoc.javaClass.name
         ),
+        Triple(
+            "Component Replace Relayout",
+            { ComponentReplaceRelayoutTest() },
+            ComponentReplaceRelayoutDoc.javaClass.name
+        ),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

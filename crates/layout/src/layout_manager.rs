@@ -333,6 +333,14 @@ impl LayoutManager {
         }
     }
 
+    pub fn mark_dirty(&mut self, layout_id: i32) {
+        if let Some(&taffy_node) = self.layout_id_to_taffy_node.get(&layout_id) {
+            if let Err(e) = self.taffy.mark_dirty(taffy_node) {
+                error!("taffy: mark dirty error: {}", e);
+            }
+        }
+    }
+
     // Set the given node's size to a fixed value, recompute layout, and return
     // the changed nodes
     pub fn set_node_size(

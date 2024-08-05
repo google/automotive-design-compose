@@ -114,6 +114,10 @@ impl Display for TextDecoration {
     }
 }
 
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+// Initially only support url. No nodeId hyperlink support.
+pub struct Hyperlink(pub String);
+
 /// The degree of blackness or stroke thickness of a font. This value ranges from 100.0 to 900.0,
 /// with 400.0 as normal.
 #[derive(Clone, Debug, Deserialize, Serialize)]

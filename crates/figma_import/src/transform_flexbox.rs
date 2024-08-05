@@ -1235,6 +1235,13 @@ fn visit_node(
         if text_style.max_lines > 0 {
             style.node_style.line_count = Some(text_style.max_lines as _);
         }
+        if let Some(hl) = text_style.hyperlink.clone() {
+            if hl.url.is_empty() {
+                style.node_style.hyperlink = None
+            } else {
+                style.node_style.hyperlink = Some(hl.into());
+            }
+        }
 
         if character_style_overrides.is_empty() {
             // No character customization, so this is just a plain styled text object
@@ -1311,6 +1318,15 @@ fn visit_node(
                     }
                     None => style.node_style.text_decoration.clone(),
                 };
+                let hyperlink = if let Some(hl) = sub_style.hyperlink.clone() {
+                    if hl.url.is_empty() {
+                        None
+                    } else {
+                        Some(hl.into())
+                    }
+                } else {
+                    None
+                };
                 runs.push(StyledTextRun {
                     text: current_run.clone(),
                     style: TextStyle {
@@ -1331,6 +1347,7 @@ fn visit_node(
                                 .clone()
                                 .unwrap_or(text_style.opentype_flags.clone()),
                         ),
+                        hyperlink,
                     },
                 });
                 *current_run = String::new();

@@ -237,6 +237,13 @@ pub struct Hyperlink {
     #[serde(default)]
     pub node_id: String, // XXX: This is "nodeID" in Figma; we might not be deserializing ok...
 }
+
+impl Into<dc_bundle::legacy_definition::element::font::Hyperlink> for Hyperlink {
+    fn into(self) -> dc_bundle::legacy_definition::element::font::Hyperlink {
+        dc_bundle::legacy_definition::element::font::Hyperlink(self.url)
+    }
+}
+
 // XXX ColorStop, Transform
 #[derive(Deserialize, Serialize, Debug, Clone, Default, PartialEq)]
 pub struct Vector {
@@ -468,6 +475,7 @@ impl TypeStyle {
             text_decoration: Some(self.text_decoration),
             letter_spacing: Some(self.letter_spacing),
             fills: self.fills.clone(),
+            hyperlink: self.hyperlink.clone(),
             opentype_flags: Some(self.opentype_flags.clone()),
         }
     }
@@ -488,6 +496,7 @@ pub struct SubTypeStyle {
     pub letter_spacing: Option<f32>,
     #[serde(default)]
     pub fills: Vec<Paint>,
+    pub hyperlink: Option<Hyperlink>,
     #[serde(default)]
     pub opentype_flags: Option<HashMap<String, u32>>,
 }

@@ -44,7 +44,7 @@ jobs:
           # list of files that changed across commits
           fetch-depth: 0
       - name: Super-linter
-        uses: super-linter/super-linter@3fe03abab2eafb293ace16d4a3b07aeabcb3f1a0
+        uses: super-linter/super-linter@b4515bd4ad9d0aa4681960e053916ab991bdbe96
         env:
           # To report GitHub Actions status checks
           LINTER_RULES_PATH: /

@@ -49,18 +49,18 @@ jobs:
           distribution: "temurin"
           java-version: "17"
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
       - name: Test build-logic
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           build-root-directory: build-logic
           arguments: test
       - name: Test the plugins
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           build-root-directory: plugins
           arguments: test
@@ -79,7 +79,7 @@ jobs:
           distribution: "temurin"
           java-version: "17"
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
@@ -100,7 +100,7 @@ jobs:
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Full Gradle Test
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           arguments: assembleDebug assembleAndroidTest assembleUnitTest test
   build-maven-repo:
@@ -120,7 +120,7 @@ jobs:
           distribution: "temurin"
           java-version: "17"
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
@@ -141,7 +141,7 @@ jobs:
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Full Gradle Test and publish
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           arguments: publishAllPublicationsToLocalDirRepository
       - name: Upload maven repo
@@ -170,13 +170,13 @@ jobs:
           version: "27.1"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           # Upload in the dependency-review workflow
           dependency-graph: generate
           gradle-home-cache-cleanup: true
       - name: Generate full comparison
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           arguments: compareRoborazziDebug
       - name: Upload diff report
@@ -188,7 +188,7 @@ jobs:
             **/build/reports/roborazzi
           retention-days: 30
       - name: Verify Roborazzi
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           arguments: verifyRoborazziDebug
           ########### Reference apps
@@ -212,7 +212,7 @@ jobs:
           distribution: "temurin"
           java-version: "17"
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           # Dependency graph isn't supported on Windows and we don't need it to run on Mac either
           # This is GitHub's ternary operator
@@ -232,14 +232,14 @@ jobs:
           chcp 65001 #set code page to utf-8
           echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$env:GITHUB_WORKSPACE/designcompose_m2repo" >> "$env:GITHUB_ENV"
       - name: Check HelloWorld App
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           build-root-directory: reference-apps/helloworld
           arguments: |
             --init-script ../local-design-compose-repo.init.gradle.kts
             build
       - name: Check Tutorial App
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           build-root-directory: reference-apps/tutorial
           arguments: |
@@ -271,7 +271,7 @@ jobs:
           repo init -u $HOST -b $BRANCH -g pdk,pdk-fs --depth=1
           repo sync -cq -j4
       - name: Build the repo
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           build-root-directory: unbundled-aaos/packages/apps/Car/libs/aaos-apps-gradle-project/
           arguments: publishAllPublicationsToLocalRepository
@@ -301,7 +301,7 @@ jobs:
           distribution: "temurin"
           java-version: "17"
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           dependency-graph: generate
           gradle-home-cache-cleanup: true
@@ -323,7 +323,7 @@ jobs:
           echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
           echo "ORG_GRADLE_PROJECT_unbundledAAOSDir=$GITHUB_WORKSPACE/unbundled-aaos" >> "$GITHUB_ENV"
       - name: Check MediaCompose
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
         with:
           build-root-directory: reference-apps/aaos-unbundled
           arguments: |

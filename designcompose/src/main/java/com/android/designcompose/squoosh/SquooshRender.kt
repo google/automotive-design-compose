@@ -248,13 +248,30 @@ private fun squooshTextRender(
     nodeName: String,
     variableState: VariableState,
 ) {
-    val paragraph =
+    var paragraph =
         Paragraph(
             paragraphIntrinsics = textInfo.paragraph,
             width = computedLayout.width * density.density,
             maxLines = textInfo.maxLines,
             ellipsis = style.node_style.text_overflow is TextOverflow.Ellipsis
         )
+    // Clip canvas will clip the shadow too. Not sure if there is other better ways to compute the
+    // max lines manually.
+    val bottom = computedLayout.height * density.density
+    val cutLine = paragraph.getLineForVerticalPosition(bottom)
+    val cutLineBottom = paragraph.getLineBottom(cutLine)
+    if (cutLineBottom > bottom) {
+        val maxLines = cutLine.coerceAtLeast(1)
+        if (maxLines != textInfo.maxLines) {
+            paragraph =
+                Paragraph(
+                    paragraphIntrinsics = textInfo.paragraph,
+                    width = computedLayout.width * density.density,
+                    maxLines = maxLines,
+                    ellipsis = style.node_style.text_overflow is TextOverflow.Ellipsis
+                )
+        }
+    }
 
     // Apply any styled transform or blend mode.
     // XXX: transform customization?
@@ -300,6 +317,7 @@ private fun squooshTextRender(
             customizations.getBrush(nodeName)
         }
 
+    drawContext.canvas.save()
     drawContext.canvas.translate(0.0f, verticalCenterOffset)
 
     // Every time calling paragraph.paint will save the new brush, alpha and drawStyle to the
@@ -340,6 +358,6 @@ private fun squooshTextRender(
         }
     }
 
-    drawContext.canvas.translate(0.0f, -verticalCenterOffset)
+    drawContext.canvas.restore()
     if (useBlendModeLayer || opacity < 1.0f || transform != null) drawContext.canvas.restore()
 }

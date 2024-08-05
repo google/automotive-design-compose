@@ -237,7 +237,7 @@ private fun calculateArcData(
 // length of the current progress within the vector.
 private fun calculateProgressVectorData(
     data: ProgressVectorMeterData,
-    paths: List<Path>,
+    paths: ComputedPaths,
     p: Paint,
     style: ViewStyle,
     meterValue: Float,
@@ -248,7 +248,7 @@ private fun calculateProgressVectorData(
 
     // Get full length of path
     var pathLen = 0f
-    paths.forEach {
+    paths.strokes.forEach {
         val measure = PathMeasure()
         measure.setPath(it, false)
         pathLen += measure.length
@@ -260,6 +260,7 @@ private fun calculateProgressVectorData(
     p.pathEffect = PathEffect.dashPathEffect(intervals, 0f)
     p.strokeWidth = strokeWidth
     p.style = PaintingStyle.Stroke
+    paths.strokeCap?.let { p.strokeCap = it }
 }
 
 private fun renderPaths(drawContext: DrawContext, paths: List<Path>, brushes: List<Paint>) {
@@ -335,7 +336,7 @@ internal fun ContentDrawScope.render(
                 is MeterData.progressVectorData -> {
                     // If this is a vector path progress bar, save it here so we can convert it to a
                     // set of path instructions and render it instead of the normal stroke.
-                    progressVectorMeterData = meterData.value
+                    if (meterData.value.enabled) progressVectorMeterData = meterData.value
                 }
             }
         }
@@ -413,7 +414,7 @@ internal fun ContentDrawScope.render(
         style.node_style.stroke.strokes.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
-                calculateProgressVectorData(it, shapePaths.strokes, p, style, meterValue!!, density)
+                calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
             }
             val b = background.asBrush(document, density, variableState)
             if (b != null) {
@@ -610,7 +611,7 @@ internal fun squooshShapeRender(
                 is MeterData.progressVectorData -> {
                     // If this is a vector path progress bar, save it here so we can convert it to a
                     // set of path instructions and render it instead of the normal stroke.
-                    progressVectorMeterData = meterData.value
+                    if (meterData.value.enabled) progressVectorMeterData = meterData.value
                 }
             }
         }
@@ -723,7 +724,7 @@ internal fun squooshShapeRender(
         style.node_style.stroke.strokes.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
-                calculateProgressVectorData(it, shapePaths.strokes, p, style, meterValue!!, density)
+                calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
             }
             val b = background.asBrush(document, density, variableState)
             if (b != null) {

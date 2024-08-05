@@ -44,6 +44,7 @@ pub enum ViewShape {
     Path {
         path: Vec<Path>,
         stroke: Vec<Path>,
+        stroke_cap: StrokeCap,
         is_mask: bool,
     },
     Arc {

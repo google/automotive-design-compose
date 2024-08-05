@@ -57,6 +57,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             VectorRenderingTestDoc.javaClass.name
         ),
         Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
+        Triple("Progress Vectors", { ProgressVectorTest() }, DialsGaugesTestDoc.javaClass.name),
         Triple("Masks", { MaskTest() }, MaskTestDoc.javaClass.name),
         Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
         Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),

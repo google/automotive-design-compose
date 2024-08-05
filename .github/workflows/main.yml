@@ -55,15 +55,11 @@ jobs:
           dependency-graph: generate
           gradle-home-cache-cleanup: true
       - name: Test build-logic
-        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
-        with:
-          build-root-directory: build-logic
-          arguments: test
+        working-directory: build-logic
+        run: ./gradlew test
       - name: Test the plugins
-        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
-        with:
-          build-root-directory: plugins
-          arguments: test
+        working-directory: plugins
+        run: ./gradlew test
   # Run a full build, including instrumented tests.
   sdk-build:
     runs-on: "ubuntu-latest"
@@ -100,9 +96,7 @@ jobs:
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Full Gradle Test
-        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
-        with:
-          arguments: assembleDebug assembleAndroidTest assembleUnitTest test
+        run: ./gradlew assembleDebug assembleAndroidTest assembleUnitTest test
   build-maven-repo:
     runs-on: "ubuntu-latest"
     steps:
@@ -141,9 +135,7 @@ jobs:
           shared-key: "gradle-rust"
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Full Gradle Test and publish
-        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4
-        with:
-          arguments: publishAllPublicationsToLocalDirRepository
+        run: ./gradlew publishAllPublicationsToLocalDirRepository
       - name: Upload maven repo
         uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4.3.5
         with:

@@ -31,22 +31,6 @@ updates:
       interval: weekly
       day: friday
 
-  - package-ecosystem: cargo
-    directory: /
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
-    target-branch: "dependapool"
-    allow:
-      - dependency-type: "all"
-    groups:
-      non-breaking-rust:
-        update-types:
-        - "minor"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: weekly
-      day: friday
-
   - package-ecosystem: bundler
     directory: /docs
     assignees: [timothyfroehlich]

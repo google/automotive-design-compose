@@ -16,16 +16,20 @@
 
 package com.android.designcompose.testapp.validation
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.DesignDocSettings
+import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.DialsGaugesTest
+import com.android.designcompose.testapp.validation.examples.ProgressConstraintsTest
 import com.android.designcompose.testapp.validation.examples.ProgressVectorTest
 import org.junit.Rule
 import org.junit.Test
@@ -102,6 +106,51 @@ class DialsGauges {
             onNodeWithTag("progress-bar").performTouchInput { moveTo(Offset(400f, 0f)) }
             onNodeWithTag("progress-bar").performTouchInput { cancel() }
             captureRootRoboImage("progress-vector-high")
+        }
+    }
+
+    @Test
+    fun progressConstraintsTests() {
+        with(composeTestRule) {
+            setContent {
+                CompositionLocalProvider(
+                    LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+                ) {
+                    ProgressConstraintsTest()
+                }
+            }
+
+            onNodeWithTag("progress-bar").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("progress-bar").performTouchInput { moveTo(Offset(-200f, 0f)) }
+            onNodeWithTag("progress-bar").performTouchInput { cancel() }
+            onNodeWithTag("progress-indicator").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("progress-indicator").performTouchInput { moveTo(Offset(-200f, 0f)) }
+            onNodeWithTag("progress-indicator").performTouchInput { cancel() }
+            captureRootRoboImage("progress-constraints-low-small")
+
+            onNodeWithTag("progress-bar").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("progress-bar").performTouchInput { moveTo(Offset(400f, 0f)) }
+            onNodeWithTag("progress-bar").performTouchInput { cancel() }
+            onNodeWithTag("progress-indicator").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("progress-indicator").performTouchInput { moveTo(Offset(400f, 0f)) }
+            onNodeWithTag("progress-indicator").performTouchInput { cancel() }
+            captureRootRoboImage("progress-constraints-high-small")
+
+            onNodeWithTag("main-width").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("main-width").performTouchInput { moveTo(Offset(200f, 0f)) }
+            onNodeWithTag("main-width").performTouchInput { cancel() }
+            onNodeWithTag("main-height").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("main-height").performTouchInput { moveTo(Offset(200f, 0f)) }
+            onNodeWithTag("main-height").performTouchInput { cancel() }
+            captureRootRoboImage("progress-constraints-high-big")
+
+            onNodeWithTag("progress-bar").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("progress-bar").performTouchInput { moveTo(Offset(-400f, 0f)) }
+            onNodeWithTag("progress-bar").performTouchInput { cancel() }
+            onNodeWithTag("progress-indicator").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("progress-indicator").performTouchInput { moveTo(Offset(-400f, 0f)) }
+            onNodeWithTag("progress-indicator").performTouchInput { cancel() }
+            captureRootRoboImage("progress-constraints-low-big")
         }
     }
 }

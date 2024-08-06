@@ -48,6 +48,12 @@ interface DialsGaugesTest {
     fun VectorProgressMain(
         @Design(node = "#progress-bar") progressBar: Meter,
     )
+
+    @DesignComponent(node = "#stage-constraints")
+    fun ProgressConstraintsMain(
+        @Design(node = "#progress-bar") progressBar: Meter,
+        @Design(node = "#progress-indicator") progressIndicator: Meter,
+    )
 }
 
 @Composable
@@ -108,5 +114,50 @@ fun ProgressVectorTest() {
         Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(progress, 0f, 100f, "progress-bar")
         Text(progress.value.toString(), fontSize = 20.sp)
+    }
+}
+
+@Composable
+fun ProgressConstraintsTest() {
+    val progress = remember { mutableStateOf(50f) }
+    val progressIndicator = remember { mutableStateOf(50f) }
+    val stageWidth = remember { mutableStateOf(600f) }
+    val stageHeight = remember { mutableStateOf(600f) }
+    DialsGaugesTestDoc.ProgressConstraintsMain(
+        modifier = Modifier.width(stageWidth.value.dp).height(stageHeight.value.dp),
+        progressBar = progress.value,
+        progressIndicator = progressIndicator.value,
+    )
+    Row(
+        Modifier.absoluteOffset(0.dp, 1410.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(progress, 0f, 100f, "progress-bar")
+        Text(progress.value.toString(), fontSize = 20.sp)
+    }
+    Row(
+        Modifier.absoluteOffset(0.dp, 1460.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Progress Indicator: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(progressIndicator, 0f, 100f, "progress-indicator")
+        Text(progressIndicator.value.toString(), fontSize = 20.sp)
+    }
+    Row(
+        Modifier.absoluteOffset(0.dp, 1510.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Width: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(stageWidth, 100f, 1000f, "main-width")
+        Text(stageWidth.value.toString(), fontSize = 20.sp)
+    }
+    Row(
+        Modifier.absoluteOffset(0.dp, 1560.dp).height(50.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text("Height: ", Modifier.width(120.dp), fontSize = 20.sp)
+        Slider(stageHeight, 100f, 1000f, "main-height")
+        Text(stageHeight.value.toString(), fontSize = 20.sp)
     }
 }

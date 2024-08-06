@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
+import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.MeterData
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
@@ -47,6 +48,7 @@ import com.android.designcompose.serdegen.RotationMeterData
 import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.squoosh.SquooshResolvedNode
 import java.lang.Float.max
 import kotlin.math.abs
 import kotlin.math.atan
@@ -154,6 +156,7 @@ private fun calculateProgressBarData(
     progressBarData: ProgressBarMeterData,
     meterValue: Float,
     style: ViewStyle,
+    parent: SquooshResolvedNode?,
     density: Float
 ): Pair<Size, androidx.compose.ui.graphics.Matrix?> {
     // Progress bar discrete values are done by percentage
@@ -164,15 +167,23 @@ private fun calculateProgressBarData(
     // is a horizontal or vertical progress bar
     if (progressBarData.vertical) {
         val width = style.layout_style.width.pointsAsDp(density).value
-        val barHeight = lerp(0F, progressBarData.endY, discretizedMeterValue, density)
-        val moveY = (progressBarData.endY * density - barHeight)
+        // Calculate bar extents from dcf file height if fixed, and from parent layout if not
+        val endY =
+            if (parent?.style?.layout_style?.height?.isFixed() == true) progressBarData.endY
+            else parent?.computedLayout?.height ?: progressBarData.endY
+        val barHeight = lerp(0F, endY, discretizedMeterValue, density)
+        val moveY = (endY * density - barHeight)
         val topOffset = style.layout_style.margin.top.pointsAsDp(density).value
         val overrideTransform = style.getTransform(density)
         overrideTransform.setYTranslation(moveY - topOffset)
         return Pair(Size(width, barHeight), overrideTransform)
     } else {
         val height = style.layout_style.height.pointsAsDp(density).value
-        val barWidth = lerp(0F, progressBarData.endX, discretizedMeterValue, density)
+        // Calculate bar extents from dcf file height if fixed, and from parent layout if not
+        val endX =
+            if (parent?.style?.layout_style?.width?.isFixed() == true) progressBarData.endX
+            else parent?.computedLayout?.width ?: progressBarData.endX
+        val barWidth = lerp(0F, endX, discretizedMeterValue, density)
         return Pair(Size(barWidth, height), null)
     }
 }
@@ -181,6 +192,8 @@ private fun calculateProgressMarkerData(
     markerData: ProgressMarkerMeterData,
     meterValue: Float,
     style: ViewStyle,
+    layout: Layout?,
+    parent: SquooshResolvedNode?,
     density: Float
 ): androidx.compose.ui.graphics.Matrix {
     // Progress marker discrete values are done by percentage
@@ -191,11 +204,25 @@ private fun calculateProgressMarkerData(
     // along the x or y axis depending on whether it is horizontal or vertical
     val overrideTransform = style.getTransform(density)
     if (markerData.vertical) {
-        val moveY = lerp(markerData.startY, markerData.endY, discretizedMeterValue, density)
+        // Calculate marker extents from dcf file height if fixed, and from parent layout if not
+        val startY =
+            if (parent?.style?.layout_style?.height?.isFixed() == true) markerData.startY
+            else
+                parent?.computedLayout?.let { it.height - ((layout?.height ?: 0f) / 2f) }
+                    ?: markerData.startY
+        val endY = layout?.let { -it.height / 2f } ?: markerData.endY
+        val moveY = lerp(startY, endY, discretizedMeterValue, density)
         val topOffset = style.layout_style.margin.top.pointsAsDp(density).value
         overrideTransform.setYTranslation(moveY - topOffset)
     } else {
-        val moveX = lerp(markerData.startX, markerData.endX, discretizedMeterValue, density)
+        // Calculate marker extents from dcf file height if fixed, and from parent layout if not
+        val startX = layout?.let { -it.width / 2f } ?: markerData.startX
+        val endX =
+            if (parent?.style?.layout_style?.width?.isFixed() == true) markerData.endX
+            else
+                parent?.computedLayout?.let { it.width - (layout?.width ?: 0f) / 2f }
+                    ?: markerData.endX
+        val moveX = lerp(startX, endX, discretizedMeterValue, density)
         val leftOffset = style.layout_style.margin.start.pointsAsDp(density).value
         overrideTransform.setXTranslation(moveX - leftOffset)
     }
@@ -309,7 +336,13 @@ internal fun ContentDrawScope.render(
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
                         val progressBarSizeTransform =
-                            calculateProgressBarData(progressBarData, meterValue, style, density)
+                            calculateProgressBarData(
+                                progressBarData,
+                                meterValue,
+                                style,
+                                null,
+                                density
+                            )
                         rectSize = progressBarSizeTransform.first
                         overrideTransform = progressBarSizeTransform.second
                     }
@@ -322,6 +355,8 @@ internal fun ContentDrawScope.render(
                                 progressMarkerData,
                                 meterValue,
                                 style,
+                                null,
+                                null,
                                 density
                             )
                     }
@@ -547,17 +582,18 @@ internal fun squooshShapeRender(
     drawContext: DrawContext,
     density: Float,
     size: Size,
-    overrideLayoutSize: Boolean,
-    style: ViewStyle,
+    node: SquooshResolvedNode,
     frameShape: ViewShape,
     customImageWithContext: Bitmap?,
     document: DocContent,
-    name: String,
     customizations: CustomizationContext,
     variableState: VariableState,
     drawContent: () -> Unit
 ) {
     if (size.width <= 0F && size.height <= 0F) return
+    val overrideLayoutSize = node.overrideLayoutSize
+    val style = node.style
+    val name = node.view.name
 
     drawContext.canvas.save()
 
@@ -584,7 +620,13 @@ internal fun squooshShapeRender(
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
                         val progressBarSizeTransform =
-                            calculateProgressBarData(progressBarData, meterValue, style, density)
+                            calculateProgressBarData(
+                                progressBarData,
+                                meterValue,
+                                style,
+                                node.parent,
+                                density
+                            )
                         rectSize = progressBarSizeTransform.first
                         overrideTransform = progressBarSizeTransform.second
                     }
@@ -597,6 +639,8 @@ internal fun squooshShapeRender(
                                 progressMarkerData,
                                 meterValue,
                                 style,
+                                node.computedLayout,
+                                node.parent,
                                 density
                             )
                     }

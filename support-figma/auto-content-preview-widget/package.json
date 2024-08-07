@@ -13,7 +13,7 @@
     "@figma/plugin-typings": "*",
     "@figma/widget-typings": "*",
     "@typescript-eslint/eslint-plugin": "^7.17.0",
-    "@typescript-eslint/parser": "^7.17.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "css-loader": "^7.1.2",
     "eslint": "^8.57.0",
     "html-inline-css-webpack-plugin": "^1.11.2",

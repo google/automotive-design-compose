@@ -44,7 +44,7 @@ jobs:
           # list of files that changed across commits
           fetch-depth: 0
       - name: Super-linter
-        uses: super-linter/super-linter@3fe03abab2eafb293ace16d4a3b07aeabcb3f1a0
+        uses: super-linter/super-linter@b4515bd4ad9d0aa4681960e053916ab991bdbe96
         env:
           # To report GitHub Actions status checks
           LINTER_RULES_PATH: /
@@ -63,7 +63,7 @@ jobs:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Java
-        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
         with:
           distribution: "temurin"
           java-version: "17"
@@ -95,6 +95,6 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - uses: EmbarkStudios/cargo-deny-action@3f4a782664881cf5725d0ffd23969fcce89fd868 # v1.6.3
+      - uses: EmbarkStudios/cargo-deny-action@8371184bd11e21dcf8ac82ebf8c9c9f74ebf7268 # v2.0.1
         with:
           command: check ${{ matrix.checks }}

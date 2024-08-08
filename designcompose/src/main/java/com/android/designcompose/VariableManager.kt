@@ -16,6 +16,9 @@
 
 package com.android.designcompose
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -30,6 +33,7 @@ import com.android.designcompose.serdegen.ColorOrVar
 import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.Variable
 import com.android.designcompose.serdegen.VariableMap
+import com.android.designcompose.serdegen.VariableType
 import com.android.designcompose.serdegen.VariableValue
 import java.util.Optional
 
@@ -50,6 +54,14 @@ private val LocalVariableModeValuesOverride = compositionLocalOf<VariableModeVal
 
 // Current set of variable modes to use, as retrieved from the design source
 private val LocalVariableModeValuesDoc = compositionLocalOf<VariableModeValues> { hashMapOf() }
+
+// A table of variable values that gets updated when themes or modes change
+data class VariableValueTable(
+    // Map of var ID -> color
+    val colors: HashMap<String, Color>,
+    // Map of var ID -> number
+    val numbers: HashMap<String, Float>,
+)
 
 // Current boolean value to represent whether we should attempt to override the design specified
 // theme with the MaterialTheme
@@ -79,6 +91,7 @@ object LocalVariableState {
 internal class VariableState(
     val varCollection: VarCollectionName? = null,
     val varModeValues: VariableModeValues? = null,
+    var varColorValues: VariableValueTable? = null,
     val useMaterialTheme: Boolean = false,
     val materialColorScheme: ColorScheme? = null,
     val materialTypography: Typography? = null,
@@ -87,14 +100,22 @@ internal class VariableState(
     companion object {
         @Composable
         fun create(updatedModeValues: VariableModeValues? = null): VariableState {
-            return VariableState(
-                varCollection = LocalVariableState.collection,
-                varModeValues = updatedModeValues ?: LocalVariableState.modeValues,
-                useMaterialTheme = LocalVariableState.useMaterialTheme,
-                materialColorScheme = MaterialTheme.colorScheme,
-                materialTypography = MaterialTheme.typography,
-                materialShapes = MaterialTheme.shapes,
-            )
+            // Create a VariableState without the cached varColorValues. Use it to calculate the
+            // variable values by calling updateVariableValues, then set the variable values back
+            // into the VariableState object.
+            val varState =
+                VariableState(
+                    varCollection = LocalVariableState.collection,
+                    varModeValues = updatedModeValues ?: LocalVariableState.modeValues,
+                    varColorValues = null,
+                    useMaterialTheme = LocalVariableState.useMaterialTheme,
+                    materialColorScheme = MaterialTheme.colorScheme,
+                    materialTypography = MaterialTheme.typography,
+                    materialShapes = MaterialTheme.shapes,
+                )
+            val varColors = VariableManager.updateVariableValues(varState)
+            varState.varColorValues = varColors
+            return varState
         }
     }
 }
@@ -162,6 +183,28 @@ internal object VariableManager {
         currentDocId = docId
     }
 
+    // Update all variable values with smooth transitions if they are changing and save their
+    // values into hash tables
+    @Composable
+    internal fun updateVariableValues(tempState: VariableState): VariableValueTable {
+        val newColors = HashMap<String, Color>()
+        val newNumbers = HashMap<String, Float>()
+        varMap.variables.forEach { (varId, v) ->
+            when (v.var_type) {
+                is VariableType.Color -> {
+                    val color = getColor(varId, null, tempState)
+                    color?.let { newColors[varId] = animateColor(targetValue = it) }
+                }
+                is VariableType.Number -> {
+                    val num = getNumber(varId, null, tempState)
+                    num?.let { newNumbers[varId] = animateFloat(targetValue = it) }
+                }
+            }
+        }
+
+        return VariableValueTable(newColors, newNumbers)
+    }
+
     // If the developer has not explicitly set variable override values, check to see if any
     // variable modes have been set on this node. If so, return the modeValues set.
     @Composable
@@ -206,6 +249,12 @@ internal object VariableManager {
 
     // Given a variable ID, return the color associated with it
     internal fun getColor(varId: String, fallback: Color?, variableState: VariableState): Color? {
+        // If cached in varColorValues for animation updates, return it
+        val color = variableState.varColorValues?.colors?.get(varId)
+        color?.let {
+            return it
+        }
+
         // Resolve varId into a variable. If a different collection has been set, this will return
         // a variable of the same name from the override collection.
         val variable = resolveVariable(varId, variableState)
@@ -218,6 +267,12 @@ internal object VariableManager {
 
     // Given a variable ID, return the number associated with it
     internal fun getNumber(varId: String, fallback: Float?, variableState: VariableState): Float? {
+        // If cached in varColorValues for animation updates, return it
+        val num = variableState.varColorValues?.numbers?.get(varId)
+        num?.let {
+            return it
+        }
+
         val variable = resolveVariable(varId, variableState)
         variable?.let { v ->
             return v.getNumber(varMap, variableState)
@@ -330,3 +385,13 @@ internal fun ColorOrVar.getValue(variableState: VariableState): Color? {
         else -> null
     }
 }
+
+@Composable
+private fun animateColor(targetValue: Color) =
+    animateColorAsState(targetValue = targetValue, animationSpec = tween(durationMillis = 1000))
+        .value
+
+@Composable
+private fun animateFloat(targetValue: Float) =
+    animateFloatAsState(targetValue = targetValue, animationSpec = tween(durationMillis = 1000))
+        .value

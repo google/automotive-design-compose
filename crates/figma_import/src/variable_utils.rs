@@ -114,10 +114,10 @@ pub(crate) fn create_variable(v: &figma_schema::Variable) -> Variable {
             create_variable_helper(VariableType::Number, common, values_by_mode)
         }
         figma_schema::Variable::String { common, values_by_mode } => {
-            create_variable_helper(VariableType::Bool, common, values_by_mode)
+            create_variable_helper(VariableType::Text, common, values_by_mode)
         }
         figma_schema::Variable::Color { common, values_by_mode } => {
-            create_variable_helper(VariableType::Text, common, values_by_mode)
+            create_variable_helper(VariableType::Color, common, values_by_mode)
         }
     }
 }

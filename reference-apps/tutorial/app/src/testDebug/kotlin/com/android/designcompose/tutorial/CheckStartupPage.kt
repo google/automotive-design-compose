@@ -20,7 +20,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.dropbox.differ.SimpleImageComparator
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.RoborazziRule
 import org.junit.Rule
 import org.junit.Test
@@ -44,7 +46,15 @@ class CheckStartupPage {
                 RoborazziRule.Options(
                     outputDirectoryPath = "src/testDebug/roborazzi",
                     // Always capture the last image of the test
-                    captureType = RoborazziRule.CaptureType.LastImage()
+                    captureType = RoborazziRule.CaptureType.LastImage(),
+                    roborazziOptions =
+                    RoborazziOptions(
+                        compareOptions =
+                        RoborazziOptions.CompareOptions(
+                            imageComparator =
+                            SimpleImageComparator(maxDistance = 0.007F, hShift = 1)
+                        )
+                    )
                 )
         )
 

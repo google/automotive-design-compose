@@ -41,6 +41,8 @@ cargo run --bin fetch --features=fetch -- \
 --nodes="#MainFrame" \
 --nodes="#RotationAnimationStage" \
 --nodes="#RotationTestState" \
+--nodes="#RotationOpacityStage" \
+--nodes="#OpacityTestState" \
 --nodes="#OneInstance" \
 --output="$script_dir"/../integration-tests/validation/src/main/assets/figma/SmartAnimateTestDoc_"$DOC_ID".dcf
 
@@ -85,6 +87,7 @@ cargo run --bin fetch --features=fetch -- \
 --doc-id="$DOC_ID" \
 --api-key="$FIGMA_ACCESS_TOKEN" \
 --nodes="#stage" \
+--nodes="#stage-vector-progress" \
 --output="$script_dir"/../integration-tests/validation/src/main/assets/figma/DialsGaugesTestDoc_"$DOC_ID".dcf
 
 DOC_ID=pxVlixodJqZL95zo2RzTHl
@@ -113,3 +116,11 @@ cargo run --bin fetch --features=fetch -- \
 --api-key="$FIGMA_ACCESS_TOKEN" \
 --nodes="#MainFrame" \
 --output="$script_dir"/../integration-tests/validation/src/main/assets/figma/StyledTextRunsDoc_"$DOC_ID".dcf
+
+DOC_ID=uBExbEg4lcRa0xN2yaLTX8
+
+cargo run --bin fetch --features=fetch -- \
+--doc-id="$DOC_ID" \
+--api-key="$FIGMA_ACCESS_TOKEN" \
+--nodes="#root" \
+--output="$script_dir"/../integration-tests/validation/src/main/assets/figma/HyperlinkValidationDoc_"$DOC_ID".dcf

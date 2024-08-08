@@ -26,7 +26,7 @@ use dc_bundle::legacy_definition::element::reactions::FrameExtras;
 use dc_bundle::legacy_definition::element::reactions::Reaction;
 use dc_bundle::legacy_definition::element::variable::NumOrVar;
 use dc_bundle::legacy_definition::element::view_shape::StrokeCap;
-use dc_bundle::legacy_definition::layout::grid::OverflowDirection;
+use dc_bundle::legacy_definition::layout::positioning::OverflowDirection;
 use dc_bundle::legacy_definition::view::view::RenderMethod;
 use std::collections::HashMap;
 

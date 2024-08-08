@@ -197,3 +197,64 @@ impl TryFrom<proto::layout::PositionType> for PositionType {
         }
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub enum ItemSpacing {
+    Fixed(i32),
+    // Fixed space between columns/rows
+    Auto(i32, i32), // Min space between columns/rows, item width/height
+}
+
+impl Default for ItemSpacing {
+    fn default() -> Self {
+        ItemSpacing::Fixed(0)
+    }
+}
+
+impl TryFrom<proto::layout::ItemSpacing> for ItemSpacing {
+    type Error = Error;
+
+    fn try_from(proto: proto::layout::ItemSpacing) -> Result<Self, Self::Error> {
+        match proto
+            .r#type
+            .as_ref()
+            .ok_or(Error::MissingFieldError { field: "ItemSpacing".to_string() })?
+        {
+            proto::layout::item_spacing::Type::Fixed(s) => Ok(ItemSpacing::Fixed(*s)),
+            proto::layout::item_spacing::Type::Auto(s) => Ok(ItemSpacing::Auto(s.width, s.height)),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
+pub enum OverflowDirection {
+    #[default]
+    None,
+    HorizontalScrolling,
+    VerticalScrolling,
+    HorizontalAndVerticalScrolling,
+}
+
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum Overflow {
+    Visible,
+    Hidden,
+    Scroll,
+}
+
+impl Default for Overflow {
+    fn default() -> Self {
+        Self::Visible
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Default, Copy)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum LayoutSizing {
+    #[default]
+    Fixed,
+    Hug,
+    Fill,
+}

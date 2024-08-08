@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Flexbox definitions derived from `stretch` 0.3.2 licensed MIT.
+//! https://github.com/vislyhq/stretch
+
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use crate::toolkit_layout_style::Overflow;
-use dc_bundle::legacy_definition::element::font::FontWeight;
-
 use crate::toolkit_style::{MeterDataSchema, StyledTextRun, TextStyle, ViewStyle};
+use dc_bundle::legacy_definition::element::font::FontWeight;
 
 use crate::figma_schema;
 use crate::{
     component_context::ComponentContext,
-    extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy}, //ExtendedTextLayout
+    extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy},
     image_context::ImageContext,
     toolkit_schema::{ComponentInfo, ScrollInfo, View, ViewShape},
     variable_utils::FromFigmaVar,
@@ -37,11 +38,10 @@ use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, Path, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
-use dc_bundle::legacy_definition::layout::grid::{
-    GridLayoutType, GridSpan, ItemSpacing, OverflowDirection,
-};
+use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::positioning::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
+    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, LayoutSizing,
+    Overflow, OverflowDirection, PositionType,
 };
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
@@ -51,7 +51,6 @@ use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
 use dc_bundle::legacy_definition::view::view::RenderMethod;
 use log::error;
 use unicode_segmentation::UnicodeSegmentation;
-//::{Taffy, Dimension, JustifyContent, Size, AvailableSpace, FlexDirection};
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
 // overrides a fixed size sizing policy on its parent to allow it to grow to fit
@@ -1655,4 +1654,14 @@ fn parse_path(path: &crate::figma_schema::Path) -> Option<Path> {
     }
     output.winding_rule(path.winding_rule.into());
     Some(output)
+}
+
+impl Into<LayoutSizing> for figma_schema::LayoutSizing {
+    fn into(self) -> LayoutSizing {
+        match self {
+            figma_schema::LayoutSizing::Fill => LayoutSizing::Fill,
+            figma_schema::LayoutSizing::Fixed => LayoutSizing::Fixed,
+            figma_schema::LayoutSizing::Hug => LayoutSizing::Hug,
+        }
+    }
 }

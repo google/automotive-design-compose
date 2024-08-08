@@ -18,9 +18,8 @@ use crate::Error;
 use serde::{Deserialize, Serialize};
 
 use crate::legacy_definition::element::geometry::{Dimension, Rect, Size};
-use crate::legacy_definition::layout::grid::ItemSpacing;
 use crate::legacy_definition::layout::positioning::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,
+    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };
 use crate::legacy_definition::proto;
 

@@ -21,6 +21,9 @@ import kotlin.Pair;
 // JNI function called from Rust as a measure function for text
 @Keep
 public class DesignTextMeasure {
+    public static final float AVAILABLE_SIZE_CONTENT_MINIMUM = 0.0f;
+    public static final float AVAILABLE_SIZE_CONTENT_MAXIMUM = Float.MAX_VALUE;
+
     public static TextSize measureTextSize(int layoutId, float width, float height, float availableWidth, float availableHeight) {
         Pair<Float, Float> size = com.android.designcompose.DesignTextKt.measureTextBoundsFunc(layoutId, width, height, availableWidth, availableHeight);
         float outWidth = size.component1().floatValue();

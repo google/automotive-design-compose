@@ -15,13 +15,14 @@
 use crate::IntoTaffy;
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use serde::{Deserialize, Serialize};
+use taffy::style_helpers::TaffyZero;
 
 impl IntoTaffy<taffy::prelude::LengthPercentage> for &Dimension {
     fn into_taffy(self) -> taffy::prelude::LengthPercentage {
         match self {
             Dimension::Percent(p) => taffy::prelude::LengthPercentage::Percent(*p),
-            Dimension::Points(p) => taffy::prelude::LengthPercentage::Points(*p),
-            _ => taffy::prelude::LengthPercentage::Points(0.0),
+            Dimension::Points(p) => taffy::prelude::LengthPercentage::Length(*p),
+            _ => taffy::prelude::LengthPercentage::ZERO,
         }
     }
 }
@@ -30,9 +31,9 @@ impl IntoTaffy<taffy::prelude::LengthPercentageAuto> for &Dimension {
     fn into_taffy(self) -> taffy::prelude::LengthPercentageAuto {
         match self {
             Dimension::Percent(p) => taffy::prelude::LengthPercentageAuto::Percent(*p),
-            Dimension::Points(p) => taffy::prelude::LengthPercentageAuto::Points(*p),
+            Dimension::Points(p) => taffy::prelude::LengthPercentageAuto::Length(*p),
             Dimension::Auto => taffy::prelude::LengthPercentageAuto::Auto,
-            _ => taffy::prelude::LengthPercentageAuto::Points(0.0),
+            _ => taffy::prelude::LengthPercentageAuto::ZERO,
         }
     }
 }
@@ -41,7 +42,7 @@ impl IntoTaffy<taffy::prelude::Dimension> for &Dimension {
     fn into_taffy(self) -> taffy::prelude::Dimension {
         match self {
             Dimension::Percent(p) => taffy::prelude::Dimension::Percent(*p),
-            Dimension::Points(p) => taffy::prelude::Dimension::Points(*p),
+            Dimension::Points(p) => taffy::prelude::Dimension::Length(*p),
             Dimension::Auto => taffy::prelude::Dimension::Auto,
             _ => taffy::prelude::Dimension::Auto,
         }

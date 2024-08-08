@@ -81,13 +81,15 @@ fn add_view_to_layout(
             }
         }
         if use_measure_func {
-            manager.add_style_measure(
+            manager.add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
                 view.style.layout_style.clone(),
                 view.name.clone(),
-                measure_func,
+                use_measure_func,
+                None,
+                None,
             );
         } else {
             let mut fixed_view = view.clone();
@@ -101,7 +103,7 @@ fn add_view_to_layout(
                 child_index,
                 fixed_view.style.layout_style.clone(),
                 fixed_view.name.clone(),
-                None,
+                false,
                 None,
                 None,
             );
@@ -113,7 +115,7 @@ fn add_view_to_layout(
             child_index,
             view.style.layout_style.clone(),
             view.name.clone(),
-            None,
+            false,
             None,
             None,
         );
@@ -148,7 +150,7 @@ fn load_view(node_name: &str, doc: &DesignComposeDefinition) -> LayoutManager {
     assert!(view_result.is_some());
     let view = view_result.unwrap();
     let mut id = 0;
-    let mut manager = LayoutManager::new();
+    let mut manager = LayoutManager::new(measure_func);
     add_view_to_layout(&view, &mut manager, &mut id, -1, -1, &HashMap::new(), &doc.views);
     manager
 }

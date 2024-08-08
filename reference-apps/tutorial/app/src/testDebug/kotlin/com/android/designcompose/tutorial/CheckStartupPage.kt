@@ -52,7 +52,7 @@ class CheckStartupPage {
                         compareOptions =
                         RoborazziOptions.CompareOptions(
                             imageComparator =
-                            SimpleImageComparator(maxDistance = 0.007F, hShift = 1)
+                            SimpleImageComparator(maxDistance = 0.007F)
                         )
                     )
                 )

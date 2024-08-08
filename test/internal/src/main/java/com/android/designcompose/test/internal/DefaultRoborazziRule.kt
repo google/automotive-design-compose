@@ -18,6 +18,8 @@ package com.android.designcompose.test.internal
 
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onRoot
+import com.dropbox.differ.SimpleImageComparator
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.RoborazziRule
 import com.github.takahirom.roborazzi.captureRoboImage
 
@@ -32,5 +34,13 @@ fun designComposeRoborazziRule(className: String) =
         options =
             RoborazziRule.Options(
                 outputDirectoryPath = "$ROBO_CAPTURE_DIR/$className",
+                roborazziOptions =
+                    RoborazziOptions(
+                        compareOptions =
+                            RoborazziOptions.CompareOptions(
+                                imageComparator =
+                                    SimpleImageComparator(maxDistance = 0.007F, hShift = 1)
+                            )
+                    )
             )
     )

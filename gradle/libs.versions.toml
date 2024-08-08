@@ -86,6 +86,7 @@ androidx-media = { module = "androidx.media:media", version.ref = "androidx-medi
 androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidx-profileinstaller"}
 androidx-rules = { module = "androidx.test:rules", version.ref = "androidx-rules" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
+androidx-test-espresso-intents = { module = "androidx.test.espresso:espresso-intents", version.ref = "androidx-test-espresso" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
 androidx-tracing-ktx = {module = "androidx.tracing:tracing-ktx", version.ref = "androidx-tracing"}
 androidx-tracing-perfetto = { module = "androidx.tracing:tracing-perfetto", version.ref = "androidx-tracing-perfetto"}

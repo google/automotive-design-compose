@@ -16,7 +16,9 @@
 
 package com.android.designcompose
 
+import android.content.ActivityNotFoundException
 import android.util.Log
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -35,8 +37,10 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.isIdentity
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.Paragraph
@@ -45,6 +49,7 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.UrlAnnotation
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -96,6 +101,7 @@ internal data class TextData(
     val density: Density,
 )
 
+@OptIn(ExperimentalTextApi::class)
 @Composable
 internal fun DesignText(
     modifier: Modifier = Modifier,
@@ -146,7 +152,12 @@ internal fun DesignText(
 
     if (useText != null) {
         textBuilder.append(useText)
+        if (style.node_style.hyperlink.isPresent) {
+            val link = style.node_style.hyperlink.get().value
+            textBuilder.addUrlAnnotation(UrlAnnotation(link), 0, useText.length)
+        }
     } else if (runs != null) {
+        var startIndex = 0
         for (run in runs) {
             val textBrushAndOpacity =
                 run.style.text_color.asBrush(document, density.density, variableState)
@@ -180,8 +191,17 @@ internal fun DesignText(
                         }
                 )
             )
+            if (run.style.hyperlink.isPresent) {
+                val link = run.style.hyperlink.get().value
+                textBuilder.addUrlAnnotation(
+                    UrlAnnotation(link),
+                    startIndex,
+                    startIndex + run.text.length
+                )
+            }
             textBuilder.append(run.text)
             textBuilder.pop()
+            startIndex += run.text.length
         }
     }
     val annotatedText = textBuilder.toAnnotatedString()
@@ -353,7 +373,7 @@ internal fun DesignText(
         @Composable {
             // Text needs to use a modifier that sets the size so that it wraps properly
             val height = layout?.height?.toInt() ?: 0
-            val textModifier = modifier.sizeToModifier(layout?.width?.toInt() ?: 0, height)
+            var textModifier = modifier.sizeToModifier(layout?.width?.toInt() ?: 0, height)
             val replacementComponent = customizations.getComponent(nodeName)
             if (replacementComponent != null) {
                 replacementComponent(
@@ -364,6 +384,29 @@ internal fun DesignText(
                 )
             } else {
                 var textLayoutResult: TextLayoutResult? = null
+                val uriHandler = LocalUriHandler.current
+                if (annotatedText.getUrlAnnotations(0, annotatedText.text.length).isNotEmpty()) {
+                    val onClick: (Int) -> Unit = { offset ->
+                        annotatedText
+                            .getUrlAnnotations(start = offset, end = offset)
+                            .firstOrNull()
+                            ?.let { annotation ->
+                                try {
+                                    uriHandler.openUri(annotation.item.url)
+                                } catch (e: ActivityNotFoundException) {
+                                    Log.e(TAG, "No activity to open the url ${annotation.item.url}")
+                                }
+                            }
+                    }
+                    // The text area consumes the tap, the parent may not be able to detect any
+                    // tap gestures in the text area if the text contains any url.
+                    textModifier =
+                        textModifier.pointerInput(onClick) {
+                            detectTapGestures { pos ->
+                                textLayoutResult?.let { onClick(it.getOffsetForPosition(pos)) }
+                            }
+                        }
+                }
                 BasicText(
                     annotatedText,
                     onTextLayout = { result ->

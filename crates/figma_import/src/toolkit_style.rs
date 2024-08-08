@@ -20,7 +20,7 @@ use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::color::Color;
 use dc_bundle::legacy_definition::element::font::{
-    FontFeature, FontStretch, FontStyle, FontWeight, TextDecoration,
+    FontFeature, FontStretch, FontStyle, FontWeight, Hyperlink, TextDecoration,
 };
 use dc_bundle::legacy_definition::element::geometry::Size;
 use dc_bundle::legacy_definition::element::path::{LineHeight, Stroke};
@@ -57,6 +57,7 @@ pub struct TextStyle {
     pub text_decoration: TextDecoration,
     pub line_height: LineHeight,
     pub font_features: Vec<FontFeature>,
+    pub hyperlink: Option<Hyperlink>,
 }
 impl Default for TextStyle {
     fn default() -> Self {
@@ -71,6 +72,7 @@ impl Default for TextStyle {
             text_decoration: TextDecoration::None,
             line_height: LineHeight::Percent(1.0),
             font_features: Vec::new(),
+            hyperlink: None,
         }
     }
 }
@@ -128,6 +130,12 @@ impl StyledTextRun {
         let mut font_features = self.style.font_features;
         font_features.push(feature);
         StyledTextRun { style: TextStyle { font_features, ..self.style }, text: self.text }
+    }
+    pub fn hyperlink(self, hyperlink: Hyperlink) -> Self {
+        StyledTextRun {
+            style: TextStyle { hyperlink: Some(hyperlink), ..self.style },
+            text: self.text,
+        }
     }
 }
 
@@ -199,6 +207,7 @@ pub struct NodeStyle {
     pub filter: Vec<FilterOp>,
     pub backdrop_filter: Vec<FilterOp>,
     pub blend_mode: BlendMode,
+    pub hyperlink: Option<Hyperlink>,
 
     pub display_type: Display,
     pub flex_wrap: FlexWrap,
@@ -245,6 +254,7 @@ impl Default for NodeStyle {
             filter: Vec::new(),
             backdrop_filter: Vec::new(),
             blend_mode: BlendMode::default(),
+            hyperlink: None,
             display_type: Display::default(),
             flex_wrap: FlexWrap::NoWrap,
             grid_layout: None,
@@ -349,6 +359,9 @@ impl ViewStyle {
         }
         if self.node_style.blend_mode != other.node_style.blend_mode {
             delta.node_style.blend_mode = other.node_style.blend_mode;
+        }
+        if self.node_style.hyperlink != other.node_style.hyperlink {
+            delta.node_style.hyperlink = other.node_style.hyperlink.clone();
         }
         if self.node_style.display_type != other.node_style.display_type {
             delta.node_style.display_type = other.node_style.display_type;

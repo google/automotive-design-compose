@@ -24,25 +24,18 @@ import java.time.Clock
 
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
+        // First comes the "HelloWorld" examples.
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
         Triple("HelloVersion", { HelloVersion() }, HelloVersionDoc.javaClass.name),
-        Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
-        Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
-        Triple("Variant *", { VariantAsteriskTest() }, VariantAsteriskTestDoc.javaClass.name),
+        // Alphabetically ordered and trying to put similar tests together...
         Triple("Alignment", { AlignmentTest() }, AlignmentTestDoc.javaClass.name),
         Triple("Battleship", { BattleshipTest() }, BattleshipDoc.javaClass.name),
-        Triple("H Constraints", { HConstraintsTest() }, ConstraintsDoc.javaClass.name),
-        Triple("V Constraints", { VConstraintsTest() }, ConstraintsDoc.javaClass.name),
-        Triple("Interaction", { InteractionTest() }, InteractionTestDoc.javaClass.name),
-        Triple("Shadows", { ShadowsTest() }, ShadowsTestDoc.javaClass.name),
-        Triple(
-            "Variant Properties",
-            { VariantPropertiesTest() },
-            VariantPropertiesTestDoc.javaClass.name
-        ),
-        Triple("1px Separator", { OnePxSeparatorTest() }, OnePxSeparatorDoc.javaClass.name),
-        Triple("Text Elide", { TextElideTest() }, TextElideTestDoc.javaClass.name),
-        Triple("Styled Text Runs", { StyledTextRunsTest() }, StyledTextRunsDoc.javaClass.name),
+        Triple("Blend Modes", { BlendModeTest() }, BlendModeTestDoc.javaClass.name),
+        Triple("Component Replace", { ComponentReplaceTest() }, ComponentReplaceDoc.javaClass.name),
+        Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
+        // Dials gauges and progress vectors
+        Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
+        Triple("Progress Vectors", { ProgressVectorTest() }, DialsGaugesTestDoc.javaClass.name),
         Triple("Fancy Fills", { FancyFillTest() }, FancyFillTestDoc.javaClass.name),
         Triple("Fill Container", { FillTest() }, FillTestDoc.javaClass.name),
         Triple(
@@ -50,28 +43,41 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             { GridLayoutDocumentation() },
             GridLayoutDoc.javaClass.name
         ),
-        Triple("Blend Modes", { BlendModeTest() }, BlendModeTestDoc.javaClass.name),
-        Triple(
-            "Vector Rendering",
-            { VectorRenderingTest() },
-            VectorRenderingTestDoc.javaClass.name
-        ),
-        Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
-        Triple("Progress Vectors", { ProgressVectorTest() }, DialsGaugesTestDoc.javaClass.name),
+        // H and V constraints
+        Triple("H Constraints", { HConstraintsTest() }, ConstraintsDoc.javaClass.name),
+        Triple("V Constraints", { VConstraintsTest() }, ConstraintsDoc.javaClass.name),
+        Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
+        Triple("Interaction", { InteractionTest() }, InteractionTestDoc.javaClass.name),
         Triple("Masks", { MaskTest() }, MaskTestDoc.javaClass.name),
-        Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
-        Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
-        Triple("Component Replace", { ComponentReplaceTest() }, ComponentReplaceDoc.javaClass.name),
-        // Don't run in CI, need an annotation.
-        // Triple("Compositing", { CompositingViewsTest() },
-        // CompositingViewsTestDoc.javaClass.name),
+        Triple("Shadows", { ShadowsTest() }, ShadowsTestDoc.javaClass.name),
+        // Text validations
+        Triple("Text Elide", { TextElideTest() }, TextElideTestDoc.javaClass.name),
         Triple("Text Inval", { TextResizingTest() }, TextResizingTestDoc.javaClass.name),
-        Triple("Variable Modes", { VariableModesTest() }, VariablesTestDoc.javaClass.name),
+        Triple("Styled Text Runs", { StyledTextRunsTest() }, StyledTextRunsDoc.javaClass.name),
         Triple(
             "State Customizations",
             @TargetApi(28) { StateCustomizationsTest(Clock.systemDefaultZone()) },
             StateCustomizationsDoc.javaClass.name
         ),
+        Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
+        Triple("Variant *", { VariantAsteriskTest() }, VariantAsteriskTestDoc.javaClass.name),
+        Triple(
+            "Variant Properties",
+            { VariantPropertiesTest() },
+            VariantPropertiesTestDoc.javaClass.name
+        ),
+        Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
+        Triple("Variable Modes", { VariableModesTest() }, VariablesTestDoc.javaClass.name),
+        Triple(
+            "Vector Rendering",
+            { VectorRenderingTest() },
+            VectorRenderingTestDoc.javaClass.name
+        ),
+        Triple("1px Separator", { OnePxSeparatorTest() }, OnePxSeparatorDoc.javaClass.name),
+        // Don't run in CI, need an annotation.
+        // Triple("Compositing", { CompositingViewsTest() },
+        // CompositingViewsTestDoc.javaClass.name),
+
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )
@@ -89,6 +95,8 @@ val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> U
         Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
         // Squoosh doesn't work with ImageReplacementContext
         Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
+        // No support for hyperlinks.
+        Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name),
 
         // Lazy Grid doesn't actually use a doc
         // This example is not using any of the renderers.

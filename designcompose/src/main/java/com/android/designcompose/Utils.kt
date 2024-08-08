@@ -386,6 +386,12 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.node_style.blend_mode
         }
+    nodeStyle.hyperlink =
+        if (override.node_style.hyperlink.isPresent) {
+            override.node_style.hyperlink
+        } else {
+            base.node_style.hyperlink
+        }
     nodeStyle.display_type =
         if (override.node_style.display_type !is Display.flex) {
             override.node_style.display_type
@@ -690,6 +696,7 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
     builder.filter = filter
     builder.backdrop_filter = backdrop_filter
     builder.blend_mode = blend_mode
+    builder.hyperlink = hyperlink
     builder.display_type = display_type
     builder.flex_wrap = flex_wrap
     builder.grid_layout = grid_layout
@@ -1189,7 +1196,7 @@ internal constructor(
  *
  * XXX: Doesn't consider transform origin.
  */
-internal fun java.util.Optional<List<Float>>.asComposeTransform(
+internal fun Optional<List<Float>>.asComposeTransform(
     density: Float
 ): androidx.compose.ui.graphics.Matrix? {
     return map {
@@ -1213,7 +1220,7 @@ internal fun java.util.Optional<List<Float>>.asComposeTransform(
         .orElse(null)
 }
 
-internal fun java.util.Optional<List<Float>>.asSkiaMatrix(): Matrix? {
+internal fun Optional<List<Float>>.asSkiaMatrix(): Matrix? {
     return map {
             if (it.size != 6) {
                 null

@@ -41,7 +41,7 @@ internal enum class CustomizationType {
     Image,
     ImageWithContext,
     Brush,
-    BrushFunction,
+    BrushState,
     Modifier,
     TapCallback,
     ContentReplacement,
@@ -120,7 +120,7 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setImage\n"
     file += "import com.android.designcompose.setImageWithContext\n"
     file += "import com.android.designcompose.setBrush\n"
-    file += "import com.android.designcompose.setBrushFunction\n"
+    file += "import com.android.designcompose.setBrushState\n"
     file += "import com.android.designcompose.setMeterValue\n"
     file += "import com.android.designcompose.setMeterState\n"
     file += "import com.android.designcompose.setModifier\n"
@@ -176,7 +176,7 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "String" -> CustomizationType.Text
         "State<String>" -> CustomizationType.TextState
         "Brush" -> CustomizationType.Brush
-        "() -> Brush" -> CustomizationType.BrushFunction
+        "State<Brush>" -> CustomizationType.BrushState
         "Bitmap?" -> CustomizationType.Image
         "Modifier" -> CustomizationType.Modifier
         "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
@@ -238,7 +238,7 @@ internal fun CustomizationType.shouldIgnoreImage(): Boolean {
     return when (this) {
         CustomizationType.Image -> true
         CustomizationType.Brush -> true
-        CustomizationType.BrushFunction -> true
+        CustomizationType.BrushState -> true
         CustomizationType.ContentReplacement -> true
         CustomizationType.ComponentReplacement -> true
         CustomizationType.ListContent -> true

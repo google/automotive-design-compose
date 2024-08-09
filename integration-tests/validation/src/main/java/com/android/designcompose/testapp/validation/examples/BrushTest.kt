@@ -25,13 +25,28 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -39,7 +54,8 @@ import org.intellij.lang.annotations.Language
 
 @DesignDoc(id = "oetCBVw8gCAxmCNllXx7zO")
 interface CustomBrushTest {
-    @DesignComponent(node = "#MainFrame") fun Main(@Design(node = "#CustomBrush") fill: () -> Brush)
+    @DesignComponent(node = "#MainFrame")
+    fun Main(@Design(node = "#CustomBrush") fill: State<Brush>)
 }
 
 // From: https://shaders.skia.org/
@@ -77,40 +93,84 @@ class SizingShaderBrush(private val shader: RuntimeShader) : ShaderBrush() {
 
 @Composable
 fun CustomBrushTest() {
-    val infiniteTransition = rememberInfiniteTransition(label = "animate shader")
-    val movingValue =
-        infiniteTransition.animateFloat(
-            label = "moving value for shader",
-            initialValue = 0.0f,
-            targetValue = 10.0f,
-            animationSpec =
-                infiniteRepeatable(
-                    animation = tween(10 * 1000, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                )
+    val shaderEnabled = remember { mutableStateOf(false) }
+    val solidColor = SolidColor(Color.Blue)
+    val linearGradient = Brush.linearGradient(listOf(Color.Red, Color.Yellow, Color.Green))
+    val radialGradient = Brush.radialGradient(listOf(Color.Red, Color.Yellow, Color.Green))
+    val brushState: MutableState<Brush> = remember { mutableStateOf(solidColor) }
+    CustomBrushTestDoc.Main(fill = brushState)
+
+    Row(modifier = Modifier.offset(y = 300.dp)) {
+        ElevatedTextButton(
+            onClick = {
+                shaderEnabled.value = false
+                brushState.value = solidColor
+            },
+            text = "Solid Blue"
+        )
+        ElevatedTextButton(
+            onClick = {
+                shaderEnabled.value = false
+                brushState.value = linearGradient
+            },
+            text = "Linear"
+        )
+        ElevatedTextButton(
+            onClick = {
+                shaderEnabled.value = false
+                brushState.value = radialGradient
+            },
+            text = "Radial"
         )
 
-    // Android T introduces AGSL and RuntimeShader. Robolectric (part of our test infrastructure)
-    // only supports software rendering.
-    val brush: () -> Brush =
+        // Android T introduces AGSL and RuntimeShader. Robolectric (part of our test
+        // infrastructure) only supports software rendering.
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 "robolectric" != Build.FINGERPRINT
         ) {
+            val infiniteTransition = rememberInfiniteTransition(label = "animate shader")
+            val movingValue =
+                infiniteTransition.animateFloat(
+                    label = "moving value for shader",
+                    initialValue = 0.0f,
+                    targetValue = 10.0f,
+                    animationSpec =
+                        infiniteRepeatable(
+                            animation = tween(10 * 1000, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        )
+                )
             val shader = RuntimeShader(CUSTOM_SHADER)
-            val shaderBrush = SizingShaderBrush(shader)
-            // The kotlin compiler seems to get confused without semicolons on these statements.
-            shader.setFloatUniform("iTime", 0.0f);
-
-            {
-                // Only sample the state in the generator function; this means that we avoid
-                // recomposition and only do the redraw phase.
-                shader.setFloatUniform("iTime", movingValue.value)
-                shaderBrush
+            shader.setFloatUniform("iTime", 0.0f)
+            // Listen to shader enabled state change and if enabled, start a snapshotFlow to listen
+            // to the moving value change to update the shader brush and use it to redraw.
+            LaunchedEffect(shaderEnabled.value) {
+                if (shaderEnabled.value) {
+                    snapshotFlow { movingValue.value }
+                        .collect {
+                            shader.setFloatUniform("iTime", it)
+                            // Check if shader has been disabled. Race condition when click on
+                            // other buttons.
+                            if (shaderEnabled.value) {
+                                // Need to create new object to trigger redraw.
+                                brushState.value = SizingShaderBrush(shader)
+                            }
+                        }
+                }
             }
-        } else {
-            { SolidColor(Color.Blue) }
+            ElevatedTextButton(onClick = { shaderEnabled.value = true }, text = "Shader")
         }
+    }
+}
 
-    CustomBrushTestDoc.Main(fill = brush)
+@Composable
+fun ElevatedTextButton(onClick: () -> Unit, text: String) {
+    ElevatedButton(
+        modifier = Modifier.padding(8.dp),
+        elevation = ButtonDefaults.elevatedButtonElevation(),
+        onClick = onClick
+    ) {
+        Text(text = text, fontSize = 30.sp)
+    }
 }

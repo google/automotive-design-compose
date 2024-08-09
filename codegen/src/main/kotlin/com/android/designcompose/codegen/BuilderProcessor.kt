@@ -138,7 +138,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             HashMap()
         private var imageCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var brushCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
-        private var brushFunctionCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+        private var brushStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var modifierCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
@@ -679,10 +679,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setBrush(\"$node\", $value)\n")
             }
 
-            val brushFunctionCustom =
-                brushFunctionCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
-            for ((node, value) in brushFunctionCustom) {
-                out.appendText("        customizations.setBrushFunction(\"$node\", $value)\n")
+            val brushStateCustom =
+                brushStateCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
+            for ((node, value) in brushStateCustom) {
+                out.appendText("        customizations.setBrushState(\"$node\", $value)\n")
             }
 
             val modifierCustom =
@@ -850,8 +850,8 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, imageCustomizations)
                 CustomizationType.Brush ->
                     addCustomization(valueParameter, annotation, brushCustomizations)
-                CustomizationType.BrushFunction ->
-                    addCustomization(valueParameter, annotation, brushFunctionCustomizations)
+                CustomizationType.BrushState ->
+                    addCustomization(valueParameter, annotation, brushStateCustomizations)
                 CustomizationType.Modifier ->
                     addCustomization(valueParameter, annotation, modifierCustomizations)
                 CustomizationType.TapCallback ->

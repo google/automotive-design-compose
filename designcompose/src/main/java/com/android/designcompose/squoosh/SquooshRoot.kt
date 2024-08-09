@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
@@ -57,6 +58,8 @@ import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.DocServer
 import com.android.designcompose.DocumentSwitcher
 import com.android.designcompose.InteractionStateManager
+import com.android.designcompose.KeyEventTracker
+import com.android.designcompose.KeyInjectManager
 import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.VariableState
@@ -259,6 +262,11 @@ fun SquooshRoot(
     val rootLayoutId = remember(docId) { SquooshLayout.getNextLayoutId() * 100000000 }
     val layoutCache = remember(docId) { HashMap<Int, Int>() }
     val layoutValueCache = remember(docId) { HashMap<Int, Layout>() }
+    val keyEventTracker = remember(docId, rootNodeQuery) { KeyEventTracker() }
+    DisposableEffect(docId, rootNodeQuery) {
+        KeyInjectManager.addTracker(keyEventTracker)
+        onDispose { KeyInjectManager.removeTracker(keyEventTracker) }
+    }
 
     // We need to remember the previous set of variant properties that we rendered
     // with so we can see if there are any transitions caused by changing variant props.
@@ -274,6 +282,7 @@ fun SquooshRoot(
     // what's different from last time? Does the Rust side track
     val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
     val useLocalStringRes: Boolean? by DebugNodeManager.getUseLocalStringRes().observeAsState()
+    keyEventTracker.clearListeners()
     val root =
         resolveVariantsRecursively(
             startFrame,
@@ -282,6 +291,7 @@ fun SquooshRoot(
             customizationContext,
             variantTransitions,
             interactionState,
+            keyEventTracker,
             null,
             density,
             fontLoader,
@@ -337,6 +347,7 @@ fun SquooshRoot(
                 customizationContext,
                 variantTransitions,
                 transitionedInteractionState ?: interactionState,
+                keyEventTracker,
                 null,
                 density,
                 fontLoader,

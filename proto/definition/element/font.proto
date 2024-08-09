@@ -59,6 +59,6 @@ message FontStretch {
 // features can enhance the visual appearance and readability of text, providing
 // additional stylistic options for designers.
 message FontFeature {
-  bytes tag = 1;  // Must be exactly four bytes
+  string tag = 1;
   bool enabled = 2;
 }

@@ -31,7 +31,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         .unwrap()
         .join("proto");
 
-    prost_config.include_file("protos.rs");
     prost_config.compile_protos(
         &[
             proto_path.join("android_interface/jni_layout.proto"),

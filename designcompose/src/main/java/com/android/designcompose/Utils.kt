@@ -113,6 +113,10 @@ internal fun Dimension.pointsAsDp(density: Float): Dp {
     }
 }
 
+internal fun Dimension.isFixed(): Boolean {
+    return this is Dimension.Points
+}
+
 /** Evaluate an absolute layout within the given constraints */
 internal fun absoluteLayout(style: ViewStyle, constraints: Constraints, density: Float): Rect {
     val pw =

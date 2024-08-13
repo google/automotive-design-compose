@@ -28,3 +28,9 @@ impl FontFeature {
         FontFeature { tag, enabled: true }
     }
 }
+
+impl Display for TextDecoration {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        Debug::fmt(self, f)
+    }
+}

@@ -16,8 +16,7 @@
 use crate::legacy_definition::element::variable::NumOrVar;
 use crate::utils::f32_eq;
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
 /// The width of a font as an approximate fraction of the normal width.
@@ -66,22 +65,6 @@ impl Hash for FontStretch {
         x.hash(state);
     }
 }
-
-/// Allows strikethrough or underline text decoration to be selected.
-#[derive(Clone, Copy, PartialEq, Debug, Hash, Deserialize, Serialize, Default)]
-pub enum TextDecoration {
-    #[default]
-    None,
-    Strikethrough,
-    Underline,
-}
-
-impl Display for TextDecoration {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Debug::fmt(self, f)
-    }
-}
-
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 // Initially only support url. No nodeId hyperlink support.
 pub struct Hyperlink(pub String);

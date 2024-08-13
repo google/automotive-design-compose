@@ -1144,13 +1144,13 @@ fn visit_node(
         }
         style.node_style.text_decoration = match text_style.text_decoration {
             crate::figma_schema::TextDecoration::None => {
-                dc_bundle::legacy_definition::element::font::TextDecoration::None
+                dc_bundle::definition::element::TextDecoration::None
             }
             crate::figma_schema::TextDecoration::Underline => {
-                dc_bundle::legacy_definition::element::font::TextDecoration::Underline
+                dc_bundle::definition::element::TextDecoration::Underline
             }
             crate::figma_schema::TextDecoration::Strikethrough => {
-                dc_bundle::legacy_definition::element::font::TextDecoration::Strikethrough
+                dc_bundle::definition::element::TextDecoration::Strikethrough
             }
         };
         style.node_style.letter_spacing = Some(text_style.letter_spacing.clone());
@@ -1306,10 +1306,10 @@ fn visit_node(
                 };
                 let text_decoration = match sub_style.text_decoration {
                     Some(crate::figma_schema::TextDecoration::Strikethrough) => {
-                        dc_bundle::legacy_definition::element::font::TextDecoration::Strikethrough
+                        dc_bundle::definition::element::TextDecoration::Strikethrough
                     }
                     Some(crate::figma_schema::TextDecoration::Underline) => {
-                        dc_bundle::legacy_definition::element::font::TextDecoration::Underline
+                        dc_bundle::definition::element::TextDecoration::Underline
                     }
                     Some(crate::figma_schema::TextDecoration::None) => {
                         style.node_style.text_decoration.clone()

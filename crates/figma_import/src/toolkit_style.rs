@@ -16,13 +16,11 @@
 //! uses.
 
 use crate::figma_schema;
-use dc_bundle::definition::element::{FontFeature, FontStyle};
+use dc_bundle::definition::element::{FontFeature, FontStyle, TextDecoration};
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::color::Color;
-use dc_bundle::legacy_definition::element::font::{
-    FontStretch, FontWeight, Hyperlink, TextDecoration,
-};
+use dc_bundle::legacy_definition::element::font::{FontStretch, FontWeight, Hyperlink};
 use dc_bundle::legacy_definition::element::geometry::Size;
 use dc_bundle::legacy_definition::element::path::{LineHeight, Stroke};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};

@@ -909,10 +909,13 @@ internal fun DesignDocInternal(
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
 ) {
+    val overrideDocId = LocalDocOverrideContext.current
+    // Use the override document ID if it is not empty
+    val currentDocId = if (overrideDocId.isValid()) overrideDocId else incomingDocId
     if (LocalDesignDocSettings.current.useSquoosh) {
         SquooshRoot(
             docName = docName,
-            incomingDocId = incomingDocId,
+            incomingDocId = currentDocId,
             rootNodeQuery = rootNodeQuery,
             modifier = modifier,
             customizationContext = customizations,
@@ -925,9 +928,6 @@ internal fun DesignDocInternal(
         return
     }
     var docRenderStatus by remember { mutableStateOf(DocRenderStatus.NotAvailable) }
-    val overrideDocId = LocalDocOverrideContext.current
-    // Use the override document ID if it is not empty
-    val currentDocId = if (overrideDocId.isValid()) overrideDocId else incomingDocId
     val docId = DocumentSwitcher.getSwitchedDocId(currentDocId)
     val doc =
         DocServer.doc(

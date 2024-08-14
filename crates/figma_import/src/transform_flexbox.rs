@@ -1294,6 +1294,11 @@ fn visit_node(
                 } else {
                     style.node_style.font_size.clone()
                 };
+                let font_family = if sub_style.font_family.is_some() {
+                    sub_style.font_family.clone()
+                } else {
+                    style.node_style.font_family.clone()
+                };
                 let font_weight = if let Some(fw) = sub_style.font_weight {
                     dc_bundle::legacy_definition::element::font::FontWeight(NumOrVar::Num(fw))
                 } else {
@@ -1325,29 +1330,51 @@ fn visit_node(
                 } else {
                     None
                 };
-                runs.push(StyledTextRun {
-                    text: current_run.clone(),
-                    style: TextStyle {
-                        text_color,
-                        font_size,
-                        font_family: sub_style.font_family.clone(),
-                        font_weight,
-                        font_style: font_style, // Italic or Normal
-                        font_stretch: style.node_style.font_stretch, // Not in SubTypeStyle.
-                        letter_spacing: sub_style
-                            .letter_spacing
-                            .unwrap_or(style.node_style.letter_spacing.unwrap_or(0.0)),
-                        text_decoration: text_decoration,
-                        line_height: style.node_style.line_height,
-                        font_features: convert_opentype_flags(
-                            &sub_style
-                                .opentype_flags
-                                .clone()
-                                .unwrap_or(text_style.opentype_flags.clone()),
-                        ),
-                        hyperlink,
-                    },
-                });
+                let style = TextStyle {
+                    text_color,
+                    font_size,
+                    font_family,
+                    font_weight,
+                    font_style,                                  // Italic or Normal
+                    font_stretch: style.node_style.font_stretch, // Not in SubTypeStyle.
+                    letter_spacing: sub_style
+                        .letter_spacing
+                        .unwrap_or(style.node_style.letter_spacing.unwrap_or(0.0)),
+                    text_decoration,
+                    line_height: style.node_style.line_height,
+                    font_features: convert_opentype_flags(
+                        &sub_style
+                            .opentype_flags
+                            .clone()
+                            .unwrap_or(text_style.opentype_flags.clone()),
+                    ),
+                    hyperlink,
+                };
+                let mut has_handled = false;
+                if runs.len() > 0 {
+                    let last_run = runs.get(runs.len() - 1);
+                    if let Some(lr) = last_run {
+                        let last_run_style = lr.style.clone();
+                        if last_run_style == style {
+                            error!(
+                                "The two styles are the same. This might fail to match the
+                                localization plugin generated string resource. We will merge
+                                them together."
+                            );
+                            let to_be_merged = runs.pop();
+                            let mut new_run = String::new();
+                            if let Some(tbm) = to_be_merged {
+                                new_run.push_str(&tbm.text);
+                                new_run.push_str(current_run);
+                                runs.push(StyledTextRun { text: new_run, style: style.clone() });
+                                has_handled = true;
+                            }
+                        }
+                    }
+                }
+                if !has_handled {
+                    runs.push(StyledTextRun { text: current_run.clone(), style: style.clone() });
+                }
                 *current_run = String::new();
                 *last_style = None;
             };

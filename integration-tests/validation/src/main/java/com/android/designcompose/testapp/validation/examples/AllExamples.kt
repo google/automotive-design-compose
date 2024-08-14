@@ -26,6 +26,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
         // First comes the "HelloWorld" examples.
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
+        Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
         Triple("HelloVersion", { HelloVersion() }, HelloVersionDoc.javaClass.name),
         // Alphabetically ordered and trying to put similar tests together...
         Triple("Alignment", { AlignmentTest() }, AlignmentTestDoc.javaClass.name),
@@ -91,8 +92,6 @@ val SQUOOSH_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, Stri
 
 val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
-        // Squoosh doesn't work with the doc id override.
-        Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
         // Squoosh doesn't work with ImageReplacementContext
         Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
         // No support for hyperlinks.

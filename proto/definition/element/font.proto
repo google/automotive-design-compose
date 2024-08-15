@@ -62,3 +62,8 @@ message FontFeature {
   string tag = 1;
   bool enabled = 2;
 }
+
+// Initially only support url. No nodeId hyperlink support.
+message Hyperlink {
+  string value = 1;
+}

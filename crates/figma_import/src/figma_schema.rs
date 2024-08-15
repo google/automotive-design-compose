@@ -238,9 +238,9 @@ pub struct Hyperlink {
     pub node_id: String, // XXX: This is "nodeID" in Figma; we might not be deserializing ok...
 }
 
-impl Into<dc_bundle::legacy_definition::element::font::Hyperlink> for Hyperlink {
-    fn into(self) -> dc_bundle::legacy_definition::element::font::Hyperlink {
-        dc_bundle::legacy_definition::element::font::Hyperlink(self.url)
+impl Into<dc_bundle::definition::element::Hyperlink> for Hyperlink {
+    fn into(self) -> dc_bundle::definition::element::Hyperlink {
+        dc_bundle::definition::element::Hyperlink { value: self.url }
     }
 }
 

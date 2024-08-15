@@ -772,7 +772,8 @@ internal fun squooshShapeRender(
                 val b = background.asBrush(document, density, variableState)
                 if (b != null) {
                     val (brush, fillOpacity) = b
-                    brush.applyTo(size, p, fillOpacity)
+                    val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
+                    brush.applyTo(brushSize, p, fillOpacity)
                     p
                 } else {
                     null

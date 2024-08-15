@@ -24,6 +24,7 @@ import com.android.designcompose.DocContent
 import com.android.designcompose.InteractionState
 import com.android.designcompose.dispatch
 import com.android.designcompose.getKey
+import com.android.designcompose.getTapCallback
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.undoDispatch
@@ -31,7 +32,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 
-private fun findTargetInstanceId(
+internal fun findTargetInstanceId(
     document: DocContent,
     parentComponents: ParentComponentData?,
     action: Action
@@ -108,8 +109,7 @@ internal fun Modifier.squooshInteraction(
                         }
 
                         // If the tap wasn't cancelled (turned into a drag, a window opened on top
-                        // of
-                        // us, etc) then we can run the action.
+                        // of us, etc) then we can run the action.
                         if (dispatchClickEvent) {
                             for (r in reactions.filter { r -> r.trigger is Trigger.OnClick }) {
                                 interactionState.dispatch(
@@ -124,6 +124,8 @@ internal fun Modifier.squooshInteraction(
                                 )
                             }
                         }
+                        // Invoke the tap callback customization if one exists on this node
+                        customizations.getTapCallback(node.view.name)?.invoke()
                     }
                 )
             }

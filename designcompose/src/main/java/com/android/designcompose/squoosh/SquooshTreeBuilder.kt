@@ -22,8 +22,11 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
+import com.android.designcompose.DesignKeyEvent
 import com.android.designcompose.DocContent
 import com.android.designcompose.InteractionState
+import com.android.designcompose.KeyAction
+import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
@@ -31,6 +34,7 @@ import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getMatchingVariant
+import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
 import com.android.designcompose.mergeStyles
@@ -127,6 +131,7 @@ internal fun resolveVariantsRecursively(
     customizations: CustomizationContext,
     variantTransition: SquooshVariantTransition,
     interactionState: InteractionState,
+    keyTracker: KeyEventTracker,
     parentComponents: ParentComponentData?,
     density: Density,
     fontResourceLoader: Font.ResourceLoader,
@@ -258,6 +263,7 @@ internal fun resolveVariantsRecursively(
                     customizations,
                     variantTransition,
                     interactionState,
+                    keyTracker,
                     parentComps,
                     density,
                     fontResourceLoader,
@@ -289,8 +295,23 @@ internal fun resolveVariantsRecursively(
                 hasSupportedInteraction ||
                     r.trigger is Trigger.OnClick ||
                     r.trigger is Trigger.OnPress
+            if (r.trigger is Trigger.OnKeyDown) {
+                // Register to be a listener for key reactions on this node
+                val keyTrigger = r.trigger as Trigger.OnKeyDown
+                val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.key_codes)
+                val keyAction =
+                    KeyAction(
+                        interactionState,
+                        r.action,
+                        findTargetInstanceId(document, parentComps, r.action),
+                        customizations.getKey(),
+                        null
+                    )
+                keyTracker.addListener(keyEvent, keyAction)
+            }
         }
     }
+    if (customizations.getTapCallback(view.name) != null) hasSupportedInteraction = true
 
     // If this node has a content customization, then we make a special record of it so that we can
     // zip through all of them after layout and render them in the right location.
@@ -341,6 +362,7 @@ internal fun resolveVariantsRecursively(
                     customizations,
                     variantTransition,
                     interactionState,
+                    keyTracker,
                     null,
                     density,
                     fontResourceLoader,

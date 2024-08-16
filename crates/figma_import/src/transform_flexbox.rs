@@ -18,7 +18,7 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use crate::toolkit_style::{MeterDataSchema, StyledTextRun, TextStyle, ViewStyle};
+use crate::toolkit_style::MeterDataSchema;
 use dc_bundle::legacy_definition::element::font::FontWeight;
 
 use crate::figma_schema;
@@ -48,7 +48,9 @@ use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
+use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::legacy_definition::view::view::RenderMethod;
+use dc_bundle::legacy_definition::view::view_style::ViewStyle;
 use log::error;
 use unicode_segmentation::UnicodeSegmentation;
 

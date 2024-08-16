@@ -212,12 +212,14 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::element::variable::VariableMap>(&samples)
         .expect("couldn't trace VariableMap");
     tracer
-        .trace_type::<crate::toolkit_schema::ViewShape>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::element::view_shape::ViewShape>(&samples)
         .expect("couldn't trace ViewShape");
     tracer
-        .trace_type::<crate::toolkit_schema::ViewData>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::view::view::ViewData>(&samples)
         .expect("couldn't trace ViewData");
-    tracer.trace_type::<crate::toolkit_schema::View>(&samples).expect("couldn't trace View");
+    tracer
+        .trace_type::<dc_bundle::legacy_definition::view::view::View>(&samples)
+        .expect("couldn't trace View");
     tracer.trace_type::<layout::types::Layout>(&samples).expect("couldn't trace Layout");
     tracer
         .trace_type::<layout::layout_manager::LayoutChangedResponse>(&samples)

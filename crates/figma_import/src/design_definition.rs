@@ -21,9 +21,10 @@ use std::path::Path;
 
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::element::variable::VariableMap;
+use dc_bundle::legacy_definition::view::view;
 use serde::{Deserialize, Serialize};
 
-use crate::{document::FigmaDocInfo, image_context::EncodedImageMap, toolkit_schema};
+use crate::{document::FigmaDocInfo, image_context::EncodedImageMap};
 
 static CURRENT_VERSION: u32 = 21;
 
@@ -50,7 +51,7 @@ impl fmt::Display for DesignComposeDefinitionHeader {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DesignComposeDefinition {
     pub last_modified: String,
-    pub views: HashMap<NodeQuery, toolkit_schema::View>,
+    pub views: HashMap<NodeQuery, view::View>,
     pub images: EncodedImageMap,
     pub name: String,
     pub component_sets: HashMap<String, String>,

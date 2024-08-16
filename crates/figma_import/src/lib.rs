@@ -27,7 +27,6 @@ mod fetch;
 mod figma_schema;
 mod image_context;
 pub mod reaction_schema;
-pub mod toolkit_schema;
 pub mod toolkit_style;
 pub mod tools;
 mod transform_flexbox;
@@ -42,11 +41,13 @@ pub use document::Document;
 pub use error::Error;
 pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
 pub use image_context::ImageContextSession;
-pub use toolkit_schema::{View, ViewData}; // ugly hack
-                                          // Internal convenience
+
+// Internal convenience
 pub use dc_bundle::legacy_definition::element::background::ImageKey;
 pub use dc_bundle::legacy_definition::element::color::Color;
 pub use dc_bundle::legacy_definition::element::node::NodeQuery;
+pub use dc_bundle::legacy_definition::view::view::View;
+pub use dc_bundle::legacy_definition::view::view::ViewData;
 
 #[cfg(feature = "http_mock")]
 mod figma_v1_document_mocks;

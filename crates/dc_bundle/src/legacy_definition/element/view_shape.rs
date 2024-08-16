@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use crate::legacy_definition::element::path::Path;
+use crate::legacy_definition::element::variable::NumOrVar;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
@@ -25,4 +27,39 @@ pub enum StrokeCap {
     TriangleArrow,
     CircleFilled,
     DiamondFilled, // Not supported
+}
+
+/// Shape of a view, either a rect or a path of some kind.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum ViewShape {
+    Rect {
+        is_mask: bool,
+    },
+    RoundRect {
+        corner_radius: [NumOrVar; 4],
+        corner_smoothing: f32,
+        is_mask: bool,
+    },
+    Path {
+        path: Vec<Path>,
+        stroke: Vec<Path>,
+        stroke_cap: StrokeCap,
+        is_mask: bool,
+    },
+    Arc {
+        path: Vec<Path>,
+        stroke: Vec<Path>,
+        stroke_cap: StrokeCap,
+        start_angle_degrees: f32,
+        sweep_angle_degrees: f32,
+        inner_radius: f32,
+        corner_radius: f32,
+        is_mask: bool,
+    },
+    VectorRect {
+        path: Vec<Path>,
+        stroke: Vec<Path>,
+        corner_radius: [NumOrVar; 4],
+        is_mask: bool,
+    },
 }

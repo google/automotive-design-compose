@@ -26,6 +26,7 @@ use dc_bundle::legacy_definition::element::reactions::Reaction;
 use dc_bundle::legacy_definition::element::variable::NumOrVar;
 use dc_bundle::legacy_definition::element::view_shape::StrokeCap;
 use dc_bundle::legacy_definition::layout::positioning::OverflowDirection;
+use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::text_style::StyledTextRun;
 use dc_bundle::legacy_definition::view::view::RenderMethod;
 use dc_bundle::legacy_definition::view::view_style::ViewStyle;
@@ -72,36 +73,6 @@ pub enum ViewData {
     Container { shape: ViewShape, children: Vec<View> },
     Text { content: String, res_name: Option<String> },
     StyledText { content: Vec<StyledTextRun>, res_name: Option<String> },
-}
-
-/// Figma component properties can be "overridden" in the UI. These overrides
-/// are applied in the node tree we get back from Figma, so we don't have to
-/// worry about them, unless we present a variant of a component as a result of
-/// an interaction. In that case, we need to figure out what has been overridden
-/// and apply it to the variant. This struct keeps track of those overrides that
-/// need to be applied to variant instances.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct ComponentOverrides {
-    pub style: Option<ViewStyle>,
-    pub data: ComponentContentOverride,
-}
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum ComponentContentOverride {
-    None,
-    Text { content: String, res_name: Option<String> },
-    StyledText { content: Vec<StyledTextRun>, res_name: Option<String> },
-}
-
-/// Details on the Figma component that this view is an instance of.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct ComponentInfo {
-    pub id: String,
-    pub name: String,
-    pub component_set_name: String,
-    // Currently we only figure out overrides for the root of a component, but soon
-    // we will want to compute them for the whole tree.
-    pub overrides: Option<ComponentOverrides>,
 }
 
 /// This struct contains information for scrolling on a frame. It combines the

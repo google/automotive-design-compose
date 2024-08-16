@@ -26,7 +26,7 @@ use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy},
     image_context::ImageContext,
-    toolkit_schema::{ComponentInfo, ScrollInfo, View, ViewShape},
+    toolkit_schema::{ScrollInfo, View, ViewShape},
     variable_utils::FromFigmaVar,
 };
 use dc_bundle::definition::element::{FontFeature, FontStyle};
@@ -48,6 +48,7 @@ use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
+use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::legacy_definition::view::view::RenderMethod;
 use dc_bundle::legacy_definition::view::view_style::ViewStyle;

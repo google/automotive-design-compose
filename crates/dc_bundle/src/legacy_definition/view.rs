@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+pub mod component;
 pub mod node_style;
 pub mod text_style;
 pub mod view;

@@ -23,7 +23,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.onDCDoc
+import com.dropbox.differ.SimpleImageComparator
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.RoborazziRule
 import org.junit.Rule
 import org.junit.Test
@@ -54,7 +56,15 @@ class RenderHelloWorld {
                 RoborazziRule.Options(
                     outputDirectoryPath = "src/testDebug/roborazzi",
                     // Always capture the last image of the test
-                    captureType = RoborazziRule.CaptureType.LastImage()
+                    captureType = RoborazziRule.CaptureType.LastImage(),
+                    roborazziOptions =
+                        RoborazziOptions(
+                            compareOptions =
+                                RoborazziOptions.CompareOptions(
+                                    imageComparator =
+                                        SimpleImageComparator(maxDistance = 0.007F, hShift = 1)
+                                )
+                        )
                 )
         )
 

@@ -89,12 +89,12 @@ Currently testing with Android Studio Flamingo | 2022.2.1
 
 ### Android NDK
 
-Version `25.2.9519653` is required. It can be installed
+Version `27.0.12077973` is required. It can be installed
 via [Android Studio's SDK Manager](https://developer.android.com/studio/projects/install-ndk#specific-version)
 or on the command line using the `sdkmanager` binary.
 
 ```shell
-"${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "ndk;25.2.9519653"
+"${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.0.12077973"
 ```
 
 ### Rust
@@ -157,7 +157,7 @@ rustup-init -y
 brew install protobuf
 ```
 
-Install Android studio and install ndk `25.2.9519653` (Sorry, no easy way to automate that part!)
+Install Android studio and install ndk `27.0.12077973` (Sorry, no easy way to automate that part!)
 
 Finally, if needed, install the below
 

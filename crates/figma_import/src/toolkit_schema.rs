@@ -19,7 +19,6 @@ use std::sync::atomic::AtomicU16;
 // retain image references.
 use serde::{Deserialize, Serialize};
 
-use crate::toolkit_style::{StyledTextRun, ViewStyle};
 pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
 use dc_bundle::legacy_definition::element::path::Path;
 use dc_bundle::legacy_definition::element::reactions::FrameExtras;
@@ -27,7 +26,9 @@ use dc_bundle::legacy_definition::element::reactions::Reaction;
 use dc_bundle::legacy_definition::element::variable::NumOrVar;
 use dc_bundle::legacy_definition::element::view_shape::StrokeCap;
 use dc_bundle::legacy_definition::layout::positioning::OverflowDirection;
+use dc_bundle::legacy_definition::view::text_style::StyledTextRun;
 use dc_bundle::legacy_definition::view::view::RenderMethod;
+use dc_bundle::legacy_definition::view::view_style::ViewStyle;
 use std::collections::HashMap;
 
 /// Shape of a view, either a rect or a path of some kind.

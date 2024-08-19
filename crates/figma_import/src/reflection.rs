@@ -124,7 +124,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::LayoutSizing>(&samples)
         .expect("couldn't trace LayoutSizing");
     tracer
-        .trace_type::<crate::toolkit_style::ViewStyle>(&samples)
+        .trace_type::<dc_bundle::legacy_definition::view::view_style::ViewStyle>(&samples)
         .expect("couldn't trace ViewStyle");
 
     tracer

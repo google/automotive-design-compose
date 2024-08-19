@@ -15,4 +15,6 @@
  */
 
 pub mod node_style;
+pub mod text_style;
 pub mod view;
+pub mod view_style;

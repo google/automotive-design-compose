@@ -32,7 +32,7 @@ plugins {
 android {
     namespace = "com.android.designcompose"
     compileSdk = libs.versions.compileSdk.get().toInt()
-    ndkVersion = "25.2.9519653"
+    ndkVersion = libs.versions.ndk.get()
 
     testFixtures { enable = true }
 

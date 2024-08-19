@@ -21,12 +21,12 @@ The source requires Android Studio Flamingo or later.
 
 ### Android NDK {#AndroidNDK}
 
-Version `25.2.9519653` is required. You can install the NDK with Android
+Version `27.0.12077973` is required. You can install the NDK with Android
 Studio's SDK Manager or on the command line using the sdkmanager binary:
 
 ```shell
 "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" \
-    --install "ndk;25.2.9519653"
+    --install "ndk;27.0.12077973"
 ```
 
 ### Rust {#InstallRust}

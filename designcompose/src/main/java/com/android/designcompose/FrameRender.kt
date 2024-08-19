@@ -426,10 +426,9 @@ internal fun ContentDrawScope.render(
             size,
             rectSize,
             customArcAngle,
-            vectorScaleX,
-            vectorScaleY,
             layoutId,
             variableState,
+            ComputedPathCache()
         )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
@@ -602,6 +601,7 @@ internal fun squooshShapeRender(
     document: DocContent,
     customizations: CustomizationContext,
     variableState: VariableState,
+    computedPathCache: ComputedPathCache,
     drawContent: () -> Unit
 ) {
     if (size.width <= 0F && size.height <= 0F) return
@@ -702,10 +702,9 @@ internal fun squooshShapeRender(
             // layout doesn't actually consider rotation yet.
             rectSize,
             customArcAngle,
-            vectorScaleX,
-            vectorScaleY,
-            0, // XXX: layoutId
+            node.layoutId,
             variableState,
+            computedPathCache,
         )
 
     // Blend mode

@@ -130,12 +130,7 @@ pub(crate) fn jni_add_nodes<'local>(
 
     match deprotolize_layout_node_list(&mut env, serialized_views) {
         Ok(node_list) => {
-            info!(
-                "jni_add_nodes: {} nodes, layout_id {}",
-                node_list.layout_nodes.len(),
-                root_layout_id
-            );
-            handle_layout_node_list(node_list, root_layout_id, &mut manager);
+            handle_layout_node_list(node_list, &mut manager);
 
             let layout_response = manager.compute_node_layout(root_layout_id);
             layout_response_to_bytearray(env, layout_response)
@@ -148,12 +143,7 @@ pub(crate) fn jni_add_nodes<'local>(
     }
 }
 
-fn handle_layout_node_list(
-    node_list: LayoutNodeList,
-    root_layout_id: i32,
-    manager: &mut MutexGuard<LayoutManager>,
-) {
-    info!("jni_add_nodes: {} nodes, layout_id {}", node_list.layout_nodes.len(), root_layout_id);
+fn handle_layout_node_list(node_list: LayoutNodeList, manager: &mut MutexGuard<LayoutManager>) {
     for node in node_list.layout_nodes.into_iter() {
         if node.use_measure_func {
             manager.add_style_measure(

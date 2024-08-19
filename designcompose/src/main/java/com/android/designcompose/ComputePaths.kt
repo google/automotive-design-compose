@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.asComposePath
 import androidx.core.graphics.minus
 import androidx.core.graphics.plus
 import com.android.designcompose.serdegen.BoxShadow
-import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.ViewShape
@@ -44,7 +43,7 @@ import com.android.designcompose.serdegen.ViewStyle
 /// In some special cases, like frames and rectangles, a simpler algorithm is used
 /// because the geometry is trivial to calculate. This results in simpler paths to
 /// render, and may be less compute intensive.
-class ComputedPaths(
+internal class ComputedPaths(
     /// The paths that need to be filled with the Background brush for
     /// this shape.
     val fills: List<Path>,
@@ -69,7 +68,62 @@ class ComputedPaths(
     var strokeCap: androidx.compose.ui.graphics.StrokeCap?,
 )
 
-class ComputedShadow(val fills: List<Path>, val shadowStyle: BoxShadow)
+internal class ComputedShadow(val fills: List<Path>, val shadowStyle: BoxShadow)
+
+/// Maintain a cache of computed paths, as some paths and strokes are quite expensive to
+/// compute (if we need to provide a stroke for a path), causing `computePaths` to show
+/// up prominently in profiles for Squoosh without a cache.
+internal class ComputedPathCache {
+    internal class Entry(
+        val computedPaths: ComputedPaths,
+        // We could be more selective than using the entire style, and styles are
+        // immutable so we could also simply do object identity comparison rather
+        // than a deep equality comparison.
+        val viewShape: ViewShape,
+        val style: ViewStyle,
+        val density: Float,
+        val frameSize: Size,
+        val overrideSize: Size?,
+        val customArcAngle: Boolean,
+        val cornerRadius: FloatArray,
+    )
+
+    private var cache: HashMap<Int, Entry> = HashMap()
+    private var nextGeneration: HashMap<Int, Entry> = HashMap()
+
+    fun get(layoutId: Int): Entry? {
+        return cache[layoutId]
+    }
+
+    fun put(layoutId: Int, data: Entry) {
+        // We accumulate new entries in the `nextGeneration` field, with the caller responsible
+        // for moving existing cache entries from `cache` to `nextGeneration` (by calling get and
+        // put).
+        //
+        // The owner of the `ComputedPathCache` (e.g.: `SquooshRoot`) ensures that `collect` is
+        // called between renders, which moves `nextGeneration` to `cache`, garbage collecting all
+        // of the entries that weren't used in the most recent render.
+        nextGeneration[layoutId] = data
+    }
+
+    /// Perform a garbage collection by throwing out all of the cache entries that were not used
+    /// since the last time `collect` was called. This avoids the cache getting large.
+    fun collect() {
+        cache.clear()
+        cache.putAll(nextGeneration)
+        nextGeneration.clear()
+    }
+}
+
+private fun ViewShape.extractCornerRadii(variableState: VariableState): FloatArray {
+    val cornerRadius =
+        when (this) {
+            is ViewShape.RoundRect -> this.corner_radius
+            is ViewShape.VectorRect -> this.corner_radius
+            else -> return floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
+        }
+    return cornerRadius.map { radius -> radius.getValue(variableState) }.toFloatArray()
+}
 
 internal fun ViewShape.computePaths(
     style: ViewStyle,
@@ -77,18 +131,35 @@ internal fun ViewShape.computePaths(
     frameSize: Size,
     overrideSize: Size?,
     customArcAngle: Boolean,
-    vectorScaleX: Float,
-    vectorScaleY: Float,
     layoutId: Int,
     variableState: VariableState,
+    pathCache: ComputedPathCache
 ): ComputedPaths {
+    // Before we compute anything, see if this path didn't change since the last
+    // time.
+    val cornerRadius = this.extractCornerRadii(variableState)
+    val cacheEntry = pathCache.get(layoutId)
+    if (
+        cacheEntry != null &&
+            cacheEntry.viewShape == this &&
+            cacheEntry.style == style &&
+            cacheEntry.density == density &&
+            cacheEntry.frameSize == frameSize &&
+            cacheEntry.overrideSize == overrideSize &&
+            cacheEntry.customArcAngle == customArcAngle &&
+            cacheEntry.cornerRadius.contentEquals(cornerRadius)
+    ) {
+        pathCache.put(layoutId, cacheEntry)
+        return cacheEntry.computedPaths
+    }
+
     fun getPaths(
         path: List<com.android.designcompose.serdegen.Path>,
         stroke: List<com.android.designcompose.serdegen.Path>,
     ): Pair<List<Path>, List<Path>> {
         // TODO GH-673 support vector paths with scale constraints. Use vectorScaleX, vectorScaleY
-        var scaleX = 1F
-        var scaleY = 1F
+        val scaleX = 1F
+        val scaleY = 1F
         return Pair(
             path.map { p -> p.asPath(density, scaleX, scaleY) },
             stroke.map { p -> p.asPath(density, scaleX, scaleY) }
@@ -104,33 +175,25 @@ internal fun ViewShape.computePaths(
             is ViewShape.Rect -> {
                 return computeRoundRectPathsFast(
                     style,
-                    listOf(
-                        NumOrVar.Num(0.0f),
-                        NumOrVar.Num(0.0f),
-                        NumOrVar.Num(0.0f),
-                        NumOrVar.Num(0.0f)
-                    ),
+                    cornerRadius,
                     density,
                     getRectSize(overrideSize, style, density),
-                    variableState
                 )
             }
             is ViewShape.RoundRect -> {
                 return computeRoundRectPathsFast(
                     style,
-                    this.corner_radius,
+                    cornerRadius,
                     density,
                     getRectSize(overrideSize, style, density),
-                    variableState
                 )
             }
             is ViewShape.VectorRect -> {
                 return computeRoundRectPathsFast(
                     style,
-                    this.corner_radius,
+                    cornerRadius,
                     density,
                     getRectSize(overrideSize, style, density),
-                    variableState
                 )
             }
             is ViewShape.Path -> {
@@ -287,7 +350,22 @@ internal fun ViewShape.computePaths(
             }
         }
 
-    return ComputedPaths(fills, strokes, shadowPaths, computedShadows, strokeCap)
+    val computedPaths = ComputedPaths(fills, strokes, shadowPaths, computedShadows, strokeCap)
+    pathCache.put(
+        layoutId,
+        ComputedPathCache.Entry(
+            computedPaths,
+            this,
+            style,
+            density,
+            frameSize,
+            overrideSize,
+            customArcAngle,
+            cornerRadius,
+        )
+    )
+
+    return computedPaths
 }
 
 // GEOMETRY UTILITIES
@@ -553,25 +631,20 @@ private fun Path.addRoundRect(roundRect: RoundRect, dir: android.graphics.Path.D
 /// faster.
 private fun computeRoundRectPathsFast(
     style: ViewStyle,
-    cornerRadius: List<NumOrVar>,
+    cornerRadius: FloatArray,
     density: Float,
     frameSize: Size,
-    variableState: VariableState,
 ): ComputedPaths {
-    val cornerRadius0 = cornerRadius[0].getValue(variableState)
-    val cornerRadius1 = cornerRadius[1].getValue(variableState)
-    val cornerRadius2 = cornerRadius[2].getValue(variableState)
-    val cornerRadius3 = cornerRadius[3].getValue(variableState)
     val r =
         RoundRect(
             0.0f,
             0.0f,
             frameSize.width,
             frameSize.height,
-            CornerRadius(cornerRadius0 * density, cornerRadius0 * density),
-            CornerRadius(cornerRadius1 * density, cornerRadius1 * density),
-            CornerRadius(cornerRadius2 * density, cornerRadius2 * density),
-            CornerRadius(cornerRadius3 * density, cornerRadius3 * density)
+            CornerRadius(cornerRadius[0] * density, cornerRadius[0] * density),
+            CornerRadius(cornerRadius[1] * density, cornerRadius[1] * density),
+            CornerRadius(cornerRadius[2] * density, cornerRadius[2] * density),
+            CornerRadius(cornerRadius[3] * density, cornerRadius[3] * density)
         )
 
     val strokeInsets =

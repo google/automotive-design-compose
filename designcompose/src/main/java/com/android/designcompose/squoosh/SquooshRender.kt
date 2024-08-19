@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.Paragraph
 import androidx.compose.ui.unit.Density
+import com.android.designcompose.ComputedPathCache
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.TextMeasureData
@@ -71,9 +72,11 @@ internal fun Modifier.squooshRender(
     animations: Map<Int, SquooshAnimationRenderingInfo>,
     animationValues: State<Map<Int, Float>>,
     variableState: VariableState,
+    computedPathCache: ComputedPathCache,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
+            computedPathCache.collect()
             val animValues = animationValues.value
             for ((id, transition) in animations) {
                 val animationOffset = animValues[id]
@@ -154,6 +157,7 @@ internal fun Modifier.squooshRender(
                             document,
                             customizations,
                             variableState,
+                            computedPathCache
                         ) {
                             var child = node.firstChild
                             var pendingMask: SquooshResolvedNode? = null

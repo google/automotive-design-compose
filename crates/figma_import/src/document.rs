@@ -29,11 +29,12 @@ use crate::{
     fetch::ProxyConfig,
     figma_schema,
     image_context::{EncodedImageMap, ImageContext, ImageContextSession},
-    toolkit_schema::{ComponentContentOverride, ComponentOverrides, View, ViewData},
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };
 use dc_bundle::legacy_definition::element::background::ImageKey;
+use dc_bundle::legacy_definition::view::component::{ComponentContentOverride, ComponentOverrides};
+use dc_bundle::legacy_definition::view::view::{View, ViewData};
 use log::error;
 
 #[cfg(not(feature = "http_mock"))]

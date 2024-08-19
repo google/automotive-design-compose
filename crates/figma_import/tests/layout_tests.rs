@@ -26,9 +26,8 @@
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::layout::positioning::LayoutSizing;
-use figma_import::{
-    toolkit_schema::View, DesignComposeDefinition, DesignComposeDefinitionHeader, ViewData,
-};
+use dc_bundle::legacy_definition::view::view::{View, ViewData};
+use figma_import::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::fs::File;

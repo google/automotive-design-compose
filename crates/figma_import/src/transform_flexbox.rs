@@ -26,7 +26,6 @@ use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy},
     image_context::ImageContext,
-    toolkit_schema::{ComponentInfo, ScrollInfo, View, ViewShape},
     variable_utils::FromFigmaVar,
 };
 use dc_bundle::definition::element::{FontFeature, FontStyle};
@@ -38,6 +37,7 @@ use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, Path, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
 use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
+use dc_bundle::legacy_definition::element::view_shape::ViewShape;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, LayoutSizing,
@@ -48,8 +48,9 @@ use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
+use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
-use dc_bundle::legacy_definition::view::view::RenderMethod;
+use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
 use dc_bundle::legacy_definition::view::view_style::ViewStyle;
 use log::error;
 use unicode_segmentation::UnicodeSegmentation;

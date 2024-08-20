@@ -698,7 +698,10 @@ fun SquooshRoot(
                 for (child in childComposables) {
                     var composableChildModifier =
                         Modifier.drawWithContent {
-                                if (child.node == childRenderSelector.selectedRenderChild)
+                                if (
+                                    child.node.layoutId ==
+                                        childRenderSelector.selectedRenderChild?.layoutId
+                                )
                                     drawContent()
                             }
                             .then(SquooshParentData(node = child.node))

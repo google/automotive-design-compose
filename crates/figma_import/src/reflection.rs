@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use dc_bundle::legacy_definition::element::geometry::Dimension;
+use dc_bundle::legacy_definition::EncodedImageMap;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
 pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
@@ -230,10 +231,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     tracer
         .trace_type::<layout::layout_node::LayoutNodeList>(&samples)
         .expect("couldn't trace LayoutNodeList");
-
-    tracer
-        .trace_type::<crate::image_context::EncodedImageMap>(&samples)
-        .expect("couldn't trace EncodedImageMap");
+    tracer.trace_type::<EncodedImageMap>(&samples).expect("couldn't trace EncodedImageMap");
     tracer.trace_type::<crate::NodeQuery>(&samples).expect("couldn't trace NodeQuery");
     tracer
         .trace_type::<crate::DesignComposeDefinitionHeader>(&samples)

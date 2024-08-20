@@ -22,9 +22,10 @@ use std::path::Path;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::element::variable::VariableMap;
 use dc_bundle::legacy_definition::view::view;
+use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use serde::{Deserialize, Serialize};
 
-use crate::{document::FigmaDocInfo, image_context::EncodedImageMap};
+use dc_bundle::legacy_definition::EncodedImageMap;
 
 static CURRENT_VERSION: u32 = 21;
 

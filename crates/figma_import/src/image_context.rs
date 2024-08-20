@@ -23,6 +23,7 @@ use crate::error::Error;
 use crate::fetch::ProxyConfig;
 use crate::figma_schema::{Paint, Transform};
 use dc_bundle::legacy_definition::element::background::ImageKey;
+use dc_bundle::legacy_definition::EncodedImageMap;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 
@@ -93,17 +94,6 @@ fn lookup_or_fetch(
         }
     }
     false
-}
-
-/// EncodedImageMap contains a mapping from ImageKey to network bytes. It can create an
-/// ImageMap and is intended to be used when we want to use Figma-defined components but do
-/// not want to communicate with the Figma service.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EncodedImageMap(HashMap<ImageKey, Arc<serde_bytes::ByteBuf>>);
-impl EncodedImageMap {
-    pub fn map(&self) -> HashMap<ImageKey, Arc<serde_bytes::ByteBuf>> {
-        self.0.clone()
-    }
 }
 
 /// ImageContext fetches images from Figma when requested, caches them (currently infinitely)

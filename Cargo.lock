@@ -311,6 +311,7 @@ dependencies = [
  "prost",
  "prost-build",
  "serde",
+ "serde_bytes",
  "thiserror",
 ]
 

@@ -18,8 +18,10 @@ package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.LocalDesignDocSettings
+import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignVariant
@@ -31,7 +33,12 @@ enum class TestState {
 
 @DesignDoc(id = "RW3lFurXCoVDeqY2Y7bf4v")
 interface SmartAnimateTest {
-    @DesignComponent(node = "#MainFrame") fun MainFrame()
+    @DesignComponent(node = "#MainFrame")
+    fun MainFrame(
+        @Design(node = "#ReplaceMe") replacement: @Composable (ComponentReplacementContext) -> Unit,
+    )
+
+    @DesignComponent(node = "#BlueBox") fun BlueBox()
 
     @DesignComponent(node = "#RotationAnimationStage")
     fun RotationTest(
@@ -49,7 +56,7 @@ interface SmartAnimateTest {
 @Composable
 fun SmartAnimateTest() {
     CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
-        SmartAnimateTestDoc.MainFrame()
+        SmartAnimateTestDoc.MainFrame(replacement = { SmartAnimateTestDoc.BlueBox() })
     }
 }
 

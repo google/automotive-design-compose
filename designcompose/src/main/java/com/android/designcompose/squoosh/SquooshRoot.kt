@@ -327,7 +327,7 @@ fun SquooshRoot(
     var transitionRootRemovalNodes: Set<Int>? = null
     // Now see if we need to compute a transition root and generate animated transitions.
     if (
-        (transitionedInteractionState != null && animatedActions.isNotEmpty()) ||
+        isRoot && (transitionedInteractionState != null && animatedActions.isNotEmpty()) ||
             variantTransitions.needsTransitionPhase()
     ) {
         variantTransitions.treeBuildPhase = TreeBuildPhase.TransitionTargetPhase

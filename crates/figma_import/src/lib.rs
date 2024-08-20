@@ -31,12 +31,13 @@ pub mod toolkit_style;
 pub mod tools;
 mod transform_flexbox;
 mod variable_utils;
+
+pub use dc_bundle::legacy_definition::DesignComposeDefinition;
+pub use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
 // Exports for library users
 pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
+pub use design_definition::ServerFigmaDoc;
 pub use design_definition::{load_design_def, save_design_def};
-pub use design_definition::{
-    DesignComposeDefinition, DesignComposeDefinitionHeader, ServerFigmaDoc,
-};
 pub use document::Document;
 pub use error::Error;
 pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};

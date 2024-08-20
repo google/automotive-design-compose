@@ -13,12 +13,10 @@
 // limitations under the License.
 
 use dc_bundle::legacy_definition::element::node::NodeQuery;
+use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    DesignComposeDefinition, DesignComposeDefinitionHeader, Document, ImageContextSession,
-    ServerFigmaDoc,
-};
+use crate::{Document, ImageContextSession, ServerFigmaDoc};
 
 #[derive(Serialize, Deserialize)]
 struct IgnoredImage<'r> {

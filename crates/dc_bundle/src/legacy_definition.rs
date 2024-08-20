@@ -18,12 +18,15 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
 // To help keep the legacy definition files clear we alias `crate::definition`, which is the base
 // module for the generated protobuf files to `proto`, so that all of the protobuf-generated types
 // inside `legacy_definition` must be prepended with `proto::`
 pub(crate) use crate::definition as proto;
 use crate::legacy_definition::element::background::ImageKey;
+use crate::legacy_definition::element::node::NodeQuery;
+use crate::legacy_definition::element::variable::VariableMap;
 
 pub mod element;
 pub mod interaction;
@@ -41,5 +44,52 @@ pub struct EncodedImageMap(pub HashMap<ImageKey, Arc<serde_bytes::ByteBuf>>);
 impl EncodedImageMap {
     pub fn map(&self) -> HashMap<ImageKey, Arc<serde_bytes::ByteBuf>> {
         self.0.clone()
+    }
+}
+
+static CURRENT_VERSION: u32 = 21;
+
+// This is our serialized document type.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DesignComposeDefinitionHeader {
+    pub version: u32,
+}
+
+impl DesignComposeDefinitionHeader {
+    pub fn current() -> DesignComposeDefinitionHeader {
+        DesignComposeDefinitionHeader { version: CURRENT_VERSION }
+    }
+}
+
+impl fmt::Display for DesignComposeDefinitionHeader {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // NOTE: Using `write!` here instead of typical `format!`
+        // to keep newlines.
+        write!(f, "DC Version: {}\nVersion: {}", CURRENT_VERSION, &self.version)
+    }
+}
+
+// This is our serialized document type.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DesignComposeDefinition {
+    pub last_modified: String,
+    pub views: HashMap<NodeQuery, view::view::View>,
+    pub images: EncodedImageMap,
+    pub name: String,
+    pub component_sets: HashMap<String, String>,
+    pub version: String,
+    pub id: String,
+    pub variable_map: VariableMap,
+}
+
+impl fmt::Display for DesignComposeDefinition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // NOTE: Using `write!` here instead of typical `format!`
+        // to keep newlines.
+        write!(
+            f,
+            "Doc ID: {}\nName: {}\nLast Modified: {}",
+            &self.id, &self.name, &self.last_modified
+        )
     }
 }

@@ -27,9 +27,10 @@ import com.android.designcompose.DocContent
 import com.android.designcompose.InteractionState
 import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
-import com.android.designcompose.ReplacementContent
 import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
+import com.android.designcompose.defaultLayoutStyle
+import com.android.designcompose.defaultNodeStyle
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
@@ -70,10 +71,9 @@ import kotlin.jvm.optionals.getOrNull
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
 internal class SquooshChildComposable(
-    // One of these will be populated if this is for a child composable. If they're both
-    // null, then this child composable exists just for event handling.
+    // If this child composable is to host an external composable (e.g.: for component replacement)
+    // then this value will be non-null.
     val component: @Composable ((ComponentReplacementContext) -> Unit)?,
-    val content: ReplacementContent?,
 
     // Used for node resolution for interactions
     val parentComponents: ParentComponentData?,
@@ -126,7 +126,6 @@ internal class ParentComponentData(
 /// the computed layout values, and finally render the view tree.
 internal fun resolveVariantsRecursively(
     v: View,
-    rootLayoutId: Int,
     document: DocContent,
     customizations: CustomizationContext,
     variantTransition: SquooshVariantTransition,
@@ -143,14 +142,15 @@ internal fun resolveVariantsRecursively(
     variantParentName: String = "",
     isRoot: Boolean,
     variableState: VariableState,
-    overlays: List<View>? = null,
     appContext: Context,
     useLocalStringRes: Boolean?,
     customVariantTransition: CustomVariantTransition?,
+    componentLayoutId: Int = 0,
+    overlays: List<View>? = null,
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(v.name)) return null
     customizations.getVisibleState(v.name)?.let { if (!it.value) return null }
-    var componentLayoutId = rootLayoutId
+    var componentLayoutId = componentLayoutId
     var parentComps = parentComponents
     var overrideStyle: ViewStyle? = null
     var view = v
@@ -163,7 +163,11 @@ internal fun resolveVariantsRecursively(
 
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
-        componentLayoutId = rootLayoutId + layoutIdAllocator.componentLayoutId(parentComps) * 100000
+        componentLayoutId =
+            computeComponentLayoutId(
+                componentLayoutId,
+                layoutIdAllocator.componentLayoutId(parentComps)
+            )
 
         // Do we have an override style? This is style data which we should apply to the final style
         // even if we're swapping out our view definition for a variant.
@@ -233,7 +237,7 @@ internal fun resolveVariantsRecursively(
     // Now we know the view we want to render, the style we want to use, etc. We can create
     // a record of it. After this, another pass can be done to build a layout tree. Finally,
     // layout can be performed and rendering done.
-    val layoutId = componentLayoutId + v.unique_id
+    val layoutId = computeLayoutId(componentLayoutId, v.unique_id)
     layoutIdAllocator.visitLayoutId(layoutId)
 
     // XXX-PERF: computeTextInfo is *super* slow. It needs to use a cache between frames.
@@ -258,7 +262,6 @@ internal fun resolveVariantsRecursively(
             val childResolvedNode =
                 resolveVariantsRecursively(
                     child,
-                    componentLayoutId,
                     document,
                     customizations,
                     variantTransition,
@@ -275,6 +278,7 @@ internal fun resolveVariantsRecursively(
                     appContext = appContext,
                     useLocalStringRes = useLocalStringRes,
                     customVariantTransition = customVariantTransition,
+                    componentLayoutId = componentLayoutId,
                 ) ?: continue
 
             childResolvedNode.parent = resolvedView
@@ -317,11 +321,10 @@ internal fun resolveVariantsRecursively(
     // zip through all of them after layout and render them in the right location.
     val replacementContent = customizations.getContent(view.name)
     val replacementComponent = customizations.getComponent(view.name)
-    if (replacementContent != null || replacementComponent != null) {
+    if (replacementComponent != null) {
         composableList.add(
             SquooshChildComposable(
                 component = replacementComponent,
-                content = replacementContent,
                 node = resolvedView,
                 parentComponents = parentComps
             )
@@ -329,12 +332,38 @@ internal fun resolveVariantsRecursively(
         // Make sure that the renderer knows that it needs to do an external render for this
         // node.
         resolvedView.needsChildRender = true
+    } else if (replacementContent != null) {
+        // Replacement Content represents a (short, non-virtualized) list of child composables.
+        // We want these child composables to be laid out inside of this container using the
+        // layout properties set up in the DesignCompose document (so if a designer set the list
+        // to wrap and center align its children, then the Composables coming in here should be
+        // presented in that way.
+        //
+        // To do this, we must synthesize a ResolvedSquooshNode for each child, and also consult
+        // its intrinsic size before we perform layout.
+        var previousReplacementChild: SquooshResolvedNode? = null
+        for (idx in 0 ..< replacementContent.count) {
+            val childComponent = replacementContent.content(idx)
+            val replacementChild =
+                generateReplacementListChildNode(resolvedView, idx, layoutIdAllocator)
+            if (previousReplacementChild != null)
+                previousReplacementChild.nextSibling = replacementChild
+            else resolvedView.firstChild = replacementChild
+            previousReplacementChild = replacementChild
+
+            composableList.add(
+                SquooshChildComposable(
+                    component = @Composable { childComponent() },
+                    node = replacementChild,
+                    parentComponents = parentComps
+                )
+            )
+        }
     } else if (hasSupportedInteraction) {
         // Add a SquooshChildComposable to handle the interaction.
         composableList.add(
             SquooshChildComposable(
                 component = null,
-                content = null,
                 node = resolvedView,
                 parentComponents = parentComps
             )
@@ -357,7 +386,6 @@ internal fun resolveVariantsRecursively(
             val overlayContent =
                 resolveVariantsRecursively(
                     overlay,
-                    rootLayoutId,
                     document,
                     customizations,
                     variantTransition,
@@ -374,11 +402,12 @@ internal fun resolveVariantsRecursively(
                     appContext = appContext,
                     useLocalStringRes = useLocalStringRes,
                     customVariantTransition = customVariantTransition,
+                    componentLayoutId = componentLayoutId,
                 ) ?: continue
 
             // Make a synthetic parent for the overlay.
             val overlayContainer =
-                generateOverlayNode(overlayExtras, overlayContent, rootLayoutId, layoutIdAllocator)
+                generateOverlayNode(overlayExtras, overlayContent, layoutIdAllocator)
             // Append to the root
             var lastSibling = resolvedView.firstChild
             while (lastSibling?.nextSibling != null) lastSibling = lastSibling.nextSibling
@@ -392,7 +421,6 @@ internal fun resolveVariantsRecursively(
                 interactionInsertionPoint,
                 SquooshChildComposable(
                     component = null,
-                    content = null,
                     node = overlayContainer,
                     parentComponents = parentComps
                 )
@@ -403,11 +431,69 @@ internal fun resolveVariantsRecursively(
     return resolvedView
 }
 
+/// Create a SquooshResolvedNode for a content replacement list child. The minimum width and
+/// height will come later (at layout time) by asking the Composable child for its intrinsic
+/// size.
+private fun generateReplacementListChildNode(
+    node: SquooshResolvedNode,
+    childIdx: Int,
+    layoutIdAllocator: SquooshLayoutIdAllocator
+): SquooshResolvedNode {
+    val itemStyle = ViewStyle.Builder()
+    val layoutStyle = defaultLayoutStyle()
+    val nodeStyle = defaultNodeStyle()
+
+    itemStyle.layout_style = layoutStyle.build()
+    itemStyle.node_style = nodeStyle.build()
+
+    val listChildViewData = ViewData.Container.Builder()
+    listChildViewData.shape = ViewShape.Rect(false)
+    listChildViewData.children = emptyList()
+
+    val listChildScrollInfo = ScrollInfo.Builder()
+    listChildScrollInfo.paged_scrolling = false
+    listChildScrollInfo.overflow = OverflowDirection.NONE()
+
+    val listChildView = View.Builder()
+    listChildView.unique_id = 0 // This is unused.
+    listChildView.id = "replacement-${node.view.id}-${childIdx}"
+    listChildView.name = "Replacement List ${node.view.name} / $childIdx"
+    listChildView.component_info = Optional.empty()
+    listChildView.reactions = Optional.empty()
+    listChildView.frame_extras = Optional.empty()
+    listChildView.scroll_info = listChildScrollInfo.build()
+    listChildView.style = itemStyle.build()
+    listChildView.data = listChildViewData.build()
+    listChildView.design_absolute_bounding_box = Optional.empty()
+    listChildView.render_method = RenderMethod.None()
+    listChildView.explicit_variable_modes = Optional.empty()
+
+    val listLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)
+    val layoutId = computeSyntheticListItemLayoutId(listLayoutId, childIdx)
+    layoutIdAllocator.visitLayoutId(layoutId)
+
+    val listChildNode =
+        SquooshResolvedNode(
+            view = listChildView.build(),
+            style = listChildView.style,
+            layoutId = layoutId,
+            textInfo = null,
+            unresolvedNodeId = "list-child-${node.unresolvedNodeId}-${childIdx}",
+            firstChild = null,
+            nextSibling = null,
+            parent = node,
+            computedLayout = null,
+            needsChildRender = true,
+            needsChildLayout = true // Important
+        )
+
+    return listChildNode
+}
+
 /// Create a SquooshResolvedNode for an overlay, with the appropriate layout style set up.
 private fun generateOverlayNode(
     overlay: FrameExtras,
     node: SquooshResolvedNode,
-    rootLayoutId: Int,
     layoutIdAllocator: SquooshLayoutIdAllocator
 ): SquooshResolvedNode {
     // Make a view based on the child node which uses a synthesized style.
@@ -508,7 +594,12 @@ private fun generateOverlayNode(
     overlayView.render_method = RenderMethod.None()
     overlayView.explicit_variable_modes = Optional.empty()
 
-    val layoutId = rootLayoutId + node.layoutId + 0x20000000
+    val overlayLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)
+    val layoutId =
+        computeSyntheticOverlayLayoutId(
+            overlayLayoutId,
+            0
+        ) // XXX: What about multiple overlays of the same content?
     layoutIdAllocator.visitLayoutId(layoutId)
 
     val overlayNode =

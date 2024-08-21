@@ -18,6 +18,7 @@ package com.android.designcompose.squoosh
 
 import android.os.SystemClock
 import android.util.Log
+import android.util.SizeF
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
@@ -30,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,7 +40,14 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.ParentDataModifier
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
@@ -57,9 +66,11 @@ import com.android.designcompose.DesignSwitcherPolicy
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.DocServer
 import com.android.designcompose.DocumentSwitcher
+import com.android.designcompose.InteractionState
 import com.android.designcompose.InteractionStateManager
 import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.KeyInjectManager
+import com.android.designcompose.LayoutManager
 import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.VariableState
@@ -82,6 +93,7 @@ import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -108,41 +120,41 @@ internal class SquooshAnimationRenderingInfo(
 
 /// Apply layout constraints to a node; this is only used for the root node and gives the DC
 /// layout system the context of what it is being embedded in.
-private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, density: Density) {
+private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, density: Float) {
     val rootStyleBuilder = style.asBuilder()
-    val layoutStyleBuilder = style.layout_style.asBuilder()
+
+    // This function mutates `this.style` in different ways depending on the constraints. Therefore,
+    // we should always start with `view.style` (immutable, from the DCF) and apply constraints to
+    // that. Otherwise, we end up progressively adding different style rules to the root style as we
+    // get different layout queries (especially during the intrinsic width/height query process).
+    val layoutStyleBuilder = view.style.layout_style.asBuilder()
+
     if (constraints.minWidth != 0)
-        layoutStyleBuilder.min_width =
-            Dimension.Points(constraints.minWidth.toFloat() / density.density)
+        layoutStyleBuilder.min_width = Dimension.Points(constraints.minWidth.toFloat() / density)
+
     if (constraints.maxWidth != Constraints.Infinity)
-        layoutStyleBuilder.max_width =
-            Dimension.Points(constraints.maxWidth.toFloat() / density.density)
+        layoutStyleBuilder.max_width = Dimension.Points(constraints.maxWidth.toFloat() / density)
+
     if (constraints.hasFixedWidth) {
-        layoutStyleBuilder.width =
-            Dimension.Points(constraints.minWidth.toFloat() / density.density)
+        layoutStyleBuilder.width = Dimension.Points(constraints.minWidth.toFloat() / density)
         // Layout implementation looks for width/height being set and then uses bounding box.
         layoutStyleBuilder.bounding_box =
-            Size(
-                constraints.minWidth.toFloat() / density.density,
-                layoutStyleBuilder.bounding_box.height
-            )
+            Size(constraints.minWidth.toFloat() / density, layoutStyleBuilder.bounding_box.height)
     }
+
     if (constraints.minHeight != 0)
-        layoutStyleBuilder.min_height =
-            Dimension.Points(constraints.minHeight.toFloat() / density.density)
+        layoutStyleBuilder.min_height = Dimension.Points(constraints.minHeight.toFloat() / density)
+
     if (constraints.maxHeight != Constraints.Infinity)
-        layoutStyleBuilder.max_height =
-            Dimension.Points(constraints.maxHeight.toFloat() / density.density)
+        layoutStyleBuilder.max_height = Dimension.Points(constraints.maxHeight.toFloat() / density)
+
     if (constraints.hasFixedHeight) {
-        layoutStyleBuilder.height =
-            Dimension.Points(constraints.minHeight.toFloat() / density.density)
+        layoutStyleBuilder.height = Dimension.Points(constraints.minHeight.toFloat() / density)
         // Layout implementation looks for width/height being set and then uses bounding box.
         layoutStyleBuilder.bounding_box =
-            Size(
-                layoutStyleBuilder.bounding_box.width,
-                constraints.minHeight.toFloat() / density.density
-            )
+            Size(layoutStyleBuilder.bounding_box.width, constraints.minHeight.toFloat() / density)
     }
+
     rootStyleBuilder.layout_style = layoutStyleBuilder.build()
     style = rootStyleBuilder.build()
 }
@@ -221,8 +233,6 @@ fun SquooshRoot(
     // We're starting to support animated transitions
     interactionState.supportAnimations = true
 
-    val layoutManager = remember(docId) { SquooshLayout.newLayoutManager() }
-
     val startFrame =
         interactionState.rootNode(
             initialNode = rootNodeQuery,
@@ -233,9 +243,6 @@ fun SquooshRoot(
 
     if (startFrame == null) {
         Log.d(TAG, "No start frame $docName / $incomingDocId")
-        SquooshLayout
-            .keepJniBits() // XXX: Must call this from somewhere otherwise it gets stripped and the
-        // jni lib won't link.
         return
     }
     LaunchedEffect(docId) { designComposeCallbacks?.docReadyCallback?.invoke(docId) }
@@ -258,8 +265,8 @@ fun SquooshRoot(
             else -> ""
         }
 
-    val layoutIdAllocator = remember { SquooshLayoutIdAllocator() }
-    val rootLayoutId = remember(docId) { SquooshLayout.getNextLayoutId() * 100000000 }
+    val layoutManager = remember(docId) { SquooshLayout.newLayoutManager() }
+    val layoutIdAllocator = remember(docId) { SquooshLayoutIdAllocator() }
     val layoutCache = remember(docId) { HashMap<Int, Int>() }
     val layoutValueCache = remember(docId) { HashMap<Int, Layout>() }
     val keyEventTracker = remember(docId, rootNodeQuery) { KeyEventTracker() }
@@ -286,7 +293,6 @@ fun SquooshRoot(
     val root =
         resolveVariantsRecursively(
             startFrame,
-            rootLayoutId,
             doc,
             customizationContext,
             variantTransitions,
@@ -300,10 +306,10 @@ fun SquooshRoot(
             variantParentName,
             isRoot,
             VariableState.create(),
-            overlays,
             appContext = LocalContext.current,
             useLocalStringRes = useLocalStringRes,
-            LocalDesignDocSettings.current.customVariantTransition,
+            customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
+            overlays = overlays,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -342,7 +348,6 @@ fun SquooshRoot(
         transitionRoot =
             resolveVariantsRecursively(
                 startFrame,
-                rootLayoutId,
                 doc,
                 customizationContext,
                 variantTransitions,
@@ -356,10 +361,10 @@ fun SquooshRoot(
                 variantParentName,
                 isRoot,
                 VariableState.create(),
-                overlays,
                 appContext = LocalContext.current,
                 useLocalStringRes = useLocalStringRes,
-                LocalDesignDocSettings.current.customVariantTransition,
+                customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
+                overlays = overlays,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }
@@ -521,177 +526,23 @@ fun SquooshRoot(
                         VariableState.create(),
                     )
                     .semantics { sDocRenderStatus = DocRenderStatus.Rendered },
-            measurePolicy = { measurables, constraints ->
-                // Update the root node style to have the incoming width/height from our parent
-                // Composable.
-                root.applyLayoutConstraints(constraints, density)
-
-                // Perform layout on our resolved tree.
-                layoutTree(
+            measurePolicy =
+                squooshLayoutMeasurePolicy(
+                    presentationRoot,
                     root,
-                    layoutManager,
-                    rootLayoutId,
                     rootRemovalNodes,
+                    transitionRoot,
+                    transitionRootRemovalNodes,
                     layoutCache,
-                    layoutValueCache
-                )
-
-                // If we have a transition root, then lay it out and compute any animations that
-                // are needed.
-                //
-                // Yuck - we should really not be destructive of the tree when creating animations,
-                //        then we could still perform layout on both trees during a transition.
-                val tRoot = transitionRoot
-                if (tRoot != null && transitionRootRemovalNodes != null) {
-                    // Ensure that the transition target also has the incoming width/height applied.
-                    tRoot.applyLayoutConstraints(constraints, density)
-
-                    // Layout the transition root tree.
-                    layoutTree(
-                        tRoot,
-                        layoutManager,
-                        rootLayoutId,
-                        transitionRootRemovalNodes,
-                        layoutCache,
-                        layoutValueCache
-                    )
-                    updateDerivedLayout(presentationRoot)
-                }
-
-                // Move this stuff out of layout?
-                val currentAnimationJob = animationJob.animationJob
-                val needsAnimationJob =
-                    interactionState.animations.isNotEmpty() ||
-                        variantTransitions.transitions.isNotEmpty()
-                val hasAnimationJob = currentAnimationJob != null && currentAnimationJob.isActive
-                if (needsAnimationJob && !hasAnimationJob) {
-                    animationJob.animationJob =
-                        interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                            // While there are transitions to be run, we should run them; we just
-                            // update the floats
-                            // in the mutable state. Those are then used by the render function, and
-                            // we thus avoid
-                            // needing to recompose in order to propagate the animation state.
-                            //
-                            // We also complete transitions in this block, and that action does
-                            // cause a recomposition
-                            // via the subscription that SquooshRoot makes to the InteractionState's
-                            // list of transitions.
-                            while (
-                                interactionState.animations.isNotEmpty() ||
-                                    variantTransitions.transitions.isNotEmpty()
-                            ) {
-                                // withFrameNanos runs its closure outside of this recomposition
-                                // phase -- because the
-                                // body of the code only changes mutable state which is only used at
-                                // render time,
-                                // Compose only re-runs the render block.
-                                withFrameNanos { frameTimeNanos ->
-                                    val animState = HashMap(animationValues.value)
-                                    val animsToRemove = HashSet<Int>()
-                                    for ((id, anim) in currentAnimations) {
-                                        // If we haven't started this animation yet, then start it
-                                        // now.
-                                        if (anim.startTimeNanos == 0L) {
-                                            anim.startTimeNanos = frameTimeNanos
-                                        }
-
-                                        val playTimeNanos = frameTimeNanos - anim.startTimeNanos
-
-                                        // Compute where it's meant to be, and update the value in
-                                        // animState.
-                                        val position =
-                                            anim.animation.getValueFromNanos(playTimeNanos)
-                                        animState[id] = position
-
-                                        // If the animation is complete, then we need to remove it
-                                        // from the transitions
-                                        // list, and apply it to the base interaction state.
-                                        if (anim.animation.isFinishedFromNanos(playTimeNanos)) {
-                                            animState.remove(id)
-                                            if (anim.action != null) {
-                                                animsToRemove.add(id)
-                                                interactionState.squooshCompleteAnimatedAction(
-                                                    anim.action
-                                                )
-                                            }
-                                            if (anim.variant != null) {
-                                                animsToRemove.add(id)
-                                                variantTransitions.completedAnimatedVariant(
-                                                    anim.variant
-                                                )
-                                            }
-                                        }
-                                    }
-                                    for (id in animsToRemove) currentAnimations.remove(id)
-                                    animationValues.value = animState
-                                }
-                            }
-                        }
-                }
-
-                val placeables =
-                    measurables.map { measurable ->
-                        val squooshData = measurable.parentData as? SquooshParentData
-                        if (squooshData == null || squooshData.node.computedLayout == null) {
-                            // Oops! No data, just lay it out however it wants.
-                            Pair(measurable.measure(constraints), null)
-                        } else {
-                            // Ok, we can get some layout data. This lets us determine a width
-                            // and height from layout. We also need to extract a transform, then
-                            // we can position this view appropriately, and create a layer for it
-                            // if it has a rotation applied (unfortunately Compose doesn't seem to
-                            // accept a full matrix transform, so we can't support shears).
-                            val w =
-                                (squooshData.node.computedLayout!!.width * density.density)
-                                    .roundToInt()
-                            val h =
-                                (squooshData.node.computedLayout!!.height * density.density)
-                                    .roundToInt()
-
-                            Pair(
-                                measurable.measure(
-                                    Constraints(
-                                        minWidth = w,
-                                        maxWidth = w,
-                                        minHeight = h,
-                                        maxHeight = h
-                                    )
-                                ),
-                                squooshData.node
-                            )
-                        }
-                    }
-
-                layout(
-                    (root.computedLayout!!.width * density.density).roundToInt(),
-                    (root.computedLayout!!.height * density.density).roundToInt()
-                ) {
-                    // Place children in the parent layout
-                    placeables.forEach { (placeable, node) ->
-                        // If we don't have a node, then just place this and finish.
-                        if (node == null) {
-                            placeable.placeRelative(x = 0, y = 0)
-                        } else {
-                            // Ok, we can look up the position and transform by iterating over the
-                            // parents. We don't support transforms here yet. Child composables will
-                            // be rendered with transforms, but won't use them for input.
-                            //
-                            // We always take the offset from the root, but if there are layers of
-                            // custom composables (containing each other) then this will give the
-                            // wrong offset.
-                            //
-                            // XXX XXX: Create ticket to implement transformed input.
-                            val offsetFromRoot = node.offsetFromAncestor()
-
-                            placeable.placeRelative(
-                                x = (offsetFromRoot.x * density.density).roundToInt(),
-                                y = (offsetFromRoot.y * density.density).roundToInt()
-                            )
-                        }
-                    }
-                }
-            },
+                    layoutValueCache,
+                    layoutManager,
+                    animationJob,
+                    animationValues,
+                    currentAnimations,
+                    interactionState,
+                    interactionScope,
+                    variantTransitions
+                ),
             content = {
                 // Now render all of the children
                 val debugRenderChildComposablesStartTime = SystemClock.elapsedRealtime()
@@ -706,7 +557,7 @@ fun SquooshRoot(
                             }
                             .then(SquooshParentData(node = child.node))
 
-                    if (child.component == null && child.content == null) {
+                    if (child.component == null) {
                         composableChildModifier =
                             composableChildModifier.squooshInteraction(
                                 doc,
@@ -720,36 +571,9 @@ fun SquooshRoot(
                     // We use a custom layout for children that just passes through the layout
                     // constraints that we calculate in our layout glue code above. This gives
                     // children a way to report their sizes to the Rust layout implementation.
-                    androidx.compose.ui.layout.Layout(
-                        modifier = composableChildModifier,
-                        content = {
-                            if (child.component != null) {
-                                child.component.invoke(
-                                    object : ComponentReplacementContext {
-                                        override val layoutModifier: Modifier = Modifier
-                                        override val textStyle: TextStyle? = null
-                                    }
-                                )
-                            } else if (child.content != null) {
-                                Log.d(TAG, "Unimplemented: child.content")
-                            }
-                        },
-                        measurePolicy = { measurables, constraints ->
-                            // Just overlay everything, like a box, but with exactly the incoming
-                            // constraints applied.
-                            val placeables = measurables.map { child -> child.measure(constraints) }
-                            val layoutWidth =
-                                (placeables.maxByOrNull { it.width }?.width ?: constraints.minWidth)
-                            val layoutHeight =
-                                (placeables.maxByOrNull { it.height }?.height
-                                    ?: constraints.minHeight)
-                            // Place all children at the origin (with the same size constraints that
-                            // we were given).
-                            layout(layoutWidth, layoutHeight) {
-                                placeables.forEach { child -> child.placeRelative(0, 0) }
-                            }
-                        }
-                    )
+                    key(child.node.layoutId) {
+                        SquooshChildLayout(modifier = composableChildModifier, child = child)
+                    }
                 }
                 Log.d(
                     TAG,
@@ -759,4 +583,358 @@ fun SquooshRoot(
         )
         designSwitcher()
     }
+}
+
+private fun measureExternal(
+    measurable: IntrinsicMeasurable,
+    width: Float,
+    height: Float,
+    availableWidth: Float,
+    availableHeight: Float
+): SizeF {
+    val isBoundDefined = { dimension: Float -> dimension > 0f && dimension < Float.MAX_VALUE }
+    // Figure out what we're being asked; we can't just do a measure with all
+    // of the constraints we've been given, because we're not allowed to measure
+    // twice in one layout pass.
+    return if (isBoundDefined(width) && !isBoundDefined(height)) {
+        // We have a width, but no height, so ask for the height.
+        SizeF(width, measurable.minIntrinsicHeight(width.toInt()).toFloat())
+    } else if (isBoundDefined(height) && !isBoundDefined(width)) {
+        SizeF(measurable.minIntrinsicWidth(height.toInt()).toFloat(), height)
+    } else if (isBoundDefined(width) && isBoundDefined(height)) {
+        SizeF(width, height)
+    } else {
+        // Nothing is defined, can we lay out within the available space?
+        val w =
+            measurable.minIntrinsicWidth(
+                if (isBoundDefined(availableHeight)) {
+                    availableHeight.toInt()
+                } else {
+                    Constraints.Infinity
+                }
+            )
+        val h =
+            measurable.minIntrinsicHeight(
+                if (isBoundDefined(availableWidth)) {
+                    availableWidth.toInt()
+                } else {
+                    Constraints.Infinity
+                }
+            )
+        SizeF(w.toFloat(), h.toFloat())
+    }
+}
+
+private fun squooshLayoutMeasurePolicy(
+    presentationRoot: SquooshResolvedNode,
+    root: SquooshResolvedNode,
+    rootRemovalNodes: Set<Int>,
+    transitionRoot: SquooshResolvedNode?,
+    transitionRootRemovalNodes: Set<Int>?,
+    layoutCache: HashMap<Int, Int>,
+    layoutValueCache: HashMap<Int, Layout>,
+    layoutManager: SquooshLayoutManager,
+    animationJob: AnimationValueHolder,
+    animationValues: MutableState<Map<Int, Float>>,
+    currentAnimations: HashMap<Int, SquooshAnimationRenderingInfo>,
+    interactionState: InteractionState,
+    interactionScope: CoroutineScope,
+    variantTransitions: SquooshVariantTransition,
+): MeasurePolicy =
+    object : MeasurePolicy {
+        private fun subscribeIntrinsicMeasurables(measurables: List<IntrinsicMeasurable>) {
+            // Go through the measurables and find the ones that need layout measurement so
+            // we can make a function for layout measure.
+            measurables.forEach { measurable ->
+                val squooshData = measurable.parentData as? SquooshParentData
+                if (squooshData != null && squooshData.node.needsChildLayout) {
+                    LayoutManager.squooshSetCustomMeasure(squooshData.node.layoutId) {
+                        width,
+                        height,
+                        availableWidth,
+                        availableHeight ->
+                        measureExternal(measurable, width, height, availableWidth, availableHeight)
+                    }
+                }
+            }
+        }
+
+        private fun unsubscribeIntrinsicMeasurables(measurables: List<IntrinsicMeasurable>) {
+            // Clear our custom layout, and release references to measurables.
+            measurables.forEach { measurable ->
+                val squooshData = measurable.parentData as? SquooshParentData
+                if (squooshData != null && squooshData.node.needsChildLayout) {
+                    LayoutManager.squooshClearCustomMeasure(squooshData.node.layoutId)
+                }
+            }
+        }
+
+        private fun doNativeLayout(constraints: Constraints, density: Float) {
+            // Update the root node style to have the incoming width/height from our parent
+            // Composable.
+            root.applyLayoutConstraints(constraints, density)
+
+            // Ensure that the transition target also has the incoming width/height applied.
+            transitionRoot?.applyLayoutConstraints(constraints, density)
+
+            // Perform layout on our resolved tree.
+            layoutTree(root, layoutManager, rootRemovalNodes, layoutCache, layoutValueCache)
+
+            // If we have a transition root, then lay it out and compute any animations that
+            // are needed.
+            val tRoot = transitionRoot
+            if (tRoot != null && transitionRootRemovalNodes != null) {
+                // Layout the transition root tree.
+                layoutTree(
+                    tRoot,
+                    layoutManager,
+                    transitionRootRemovalNodes,
+                    layoutCache,
+                    layoutValueCache
+                )
+                updateDerivedLayout(presentationRoot)
+            }
+        }
+
+        override fun MeasureScope.measure(
+            measurables: List<Measurable>,
+            constraints: Constraints
+        ): MeasureResult {
+            // Perform the "real" layout, now that we're done with
+            // intrinsic queries and our parent has called the measure
+            // method on us.
+            subscribeIntrinsicMeasurables(measurables)
+            doNativeLayout(constraints, density)
+            unsubscribeIntrinsicMeasurables(measurables)
+
+            // Launch or update the animation coroutine. We do this in
+            // layout because we need to run animations based on updated
+            // layout positions of items.
+            updateAnimations()
+
+            // Now we can copy the values computed by the native layout
+            // using intrinsic queries into our Compose children. This is
+            // how Composable child nodes (used for input and hosting
+            // external Composables) get placed.
+            val placeables = squooshMeasure(measurables, constraints)
+            return squooshLayout(root, density, placeables)
+        }
+
+        // These intrinsic calculations could be optimized to only copy out
+        // the root's width/height.
+        override fun IntrinsicMeasureScope.minIntrinsicWidth(
+            measurables: List<IntrinsicMeasurable>,
+            height: Int
+        ): Int {
+            val constraints =
+                if (height < Constraints.Infinity) {
+                    Constraints(maxHeight = height)
+                } else {
+                    Constraints()
+                }
+            // Perform layout on our resolved tree.
+            subscribeIntrinsicMeasurables(measurables)
+            doNativeLayout(constraints, density)
+
+            return root.computedLayout!!.width.roundToInt()
+        }
+
+        override fun IntrinsicMeasureScope.minIntrinsicHeight(
+            measurables: List<IntrinsicMeasurable>,
+            width: Int
+        ): Int {
+            val constraints =
+                if (width < Constraints.Infinity) {
+                    Constraints(maxWidth = width)
+                } else {
+                    Constraints()
+                }
+            // Perform layout on our resolved tree.
+            subscribeIntrinsicMeasurables(measurables)
+            doNativeLayout(constraints, density)
+
+            return root.computedLayout!!.height.roundToInt()
+        }
+
+        private fun updateAnimations() {
+            // Only update animations if we need an animation job and don't
+            // have one. The job itself, once running, will keep itself
+            // up-to-date, and will eventually remove itself once complete.
+            val needsAnimationJob =
+                interactionState.animations.isNotEmpty() ||
+                    variantTransitions.transitions.isNotEmpty()
+            if (!needsAnimationJob) return
+
+            val currentAnimationJob = animationJob.animationJob
+            val hasAnimationJob = currentAnimationJob != null && currentAnimationJob.isActive
+            if (hasAnimationJob) return
+
+            // We need an animation job and don't have one, so let's launch one!
+            animationJob.animationJob =
+                interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    // While there are transitions to be run, we should run them; we just
+                    // update the floats in the mutable state. Those are then used by the
+                    // render function, and we thus avoid needing to recompose in order
+                    // to propagate the animation state.
+                    //
+                    // We also complete transitions in this block, and that action does
+                    // cause a recomposition via the subscription that SquooshRoot makes
+                    // to the InteractionState's list of transitions.
+                    while (
+                        interactionState.animations.isNotEmpty() ||
+                            variantTransitions.transitions.isNotEmpty()
+                    ) {
+                        // withFrameNanos runs its closure outside of this recomposition
+                        // phase -- because the body of the code only changes mutable
+                        // state which is only used at render time, Compose only re-runs
+                        // the render block.
+                        withFrameNanos { frameTimeNanos ->
+                            val animState = HashMap(animationValues.value)
+                            val animsToRemove = HashSet<Int>()
+                            for ((id, anim) in currentAnimations) {
+                                // If we haven't started this animation yet, then start it
+                                // now.
+                                if (anim.startTimeNanos == 0L) {
+                                    anim.startTimeNanos = frameTimeNanos
+                                }
+
+                                val playTimeNanos = frameTimeNanos - anim.startTimeNanos
+
+                                // Compute where it's meant to be, and update the value in
+                                // animState.
+                                val position = anim.animation.getValueFromNanos(playTimeNanos)
+                                animState[id] = position
+
+                                // If the animation is complete, then we need to remove it
+                                // from the transitions list, and apply it to the base
+                                // interaction state.
+                                if (anim.animation.isFinishedFromNanos(playTimeNanos)) {
+                                    animState.remove(id)
+                                    if (anim.action != null) {
+                                        animsToRemove.add(id)
+                                        interactionState.squooshCompleteAnimatedAction(anim.action)
+                                    }
+                                    if (anim.variant != null) {
+                                        animsToRemove.add(id)
+                                        variantTransitions.completedAnimatedVariant(anim.variant)
+                                    }
+                                }
+                            }
+                            for (id in animsToRemove) currentAnimations.remove(id)
+                            animationValues.value = animState
+                        }
+                    }
+                }
+        }
+    }
+
+// These are common functions used by every Squoosh MeasurePolicy
+private fun MeasureScope.squooshMeasure(
+    measurables: List<Measurable>,
+    constraints: Constraints
+): List<Placeable> {
+    return measurables.map { measurable ->
+        val squooshData = measurable.parentData as? SquooshParentData
+        if (squooshData == null || squooshData.node.computedLayout == null) {
+            // Oops! No data, just lay it out however it wants, using whatever
+            // constraints we were given.
+            measurable.measure(constraints)
+        } else {
+            // Ok, we can get some layout data. This lets us determine a width
+            // and height from layout. We also need to extract a transform, then
+            // we can position this view appropriately, and create a layer for it
+            // if it has a rotation applied (unfortunately Compose doesn't seem to
+            // accept a full matrix transform, so we can't support shears).
+            val w = (squooshData.node.computedLayout!!.width * density).roundToInt()
+            val h = (squooshData.node.computedLayout!!.height * density).roundToInt()
+
+            // Child composables that want child layout have well defined bounds that
+            // we measured during layout (and some don't like being given a minimum size),
+            // so we pass 0 to those. Others are just present for event handling, and they
+            // must have the required width/height assigned here, because they have no
+            // intrinsic minimum size.
+            val minWidth =
+                if (squooshData.node.needsChildLayout) {
+                    0
+                } else {
+                    w
+                }
+            val minHeight =
+                if (squooshData.node.needsChildLayout) {
+                    0
+                } else {
+                    h
+                }
+            measurable.measure(
+                Constraints(minWidth = minWidth, minHeight = minHeight, maxWidth = w, maxHeight = h)
+            )
+        }
+    }
+}
+
+private fun MeasureScope.squooshLayout(
+    root: SquooshResolvedNode,
+    density: Float,
+    placeables: List<Placeable>
+): MeasureResult {
+    return layout(
+        (root.computedLayout!!.width * density).roundToInt(),
+        (root.computedLayout!!.height * density).roundToInt()
+    ) {
+        // Place children in the parent layout
+        placeables.forEach { placeable ->
+            val squooshData = placeable.parentData as? SquooshParentData
+            val node = squooshData?.node
+            // If we don't have a node, then just place this and finish.
+            if (node == null) {
+                placeable.placeRelative(x = 0, y = 0)
+            } else {
+                // Ok, we can look up the position and transform by iterating over the
+                // parents. We don't support transforms here yet. Child composables will
+                // be rendered with transforms, but won't use them for input.
+                //
+                // We always take the offset from the root, but if there are layers of
+                // custom composables (containing each other) then this will give the
+                // wrong offset.
+                //
+                // XXX XXX: Create ticket to implement transformed input.
+                val offsetFromRoot = node.offsetFromAncestor()
+
+                placeable.placeRelative(
+                    x = (offsetFromRoot.x * density).roundToInt(),
+                    y = (offsetFromRoot.y * density).roundToInt()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SquooshChildLayout(modifier: Modifier, child: SquooshChildComposable) {
+    androidx.compose.ui.layout.Layout(
+        modifier = modifier,
+        content = {
+            if (child.component != null) {
+                child.component.invoke(
+                    object : ComponentReplacementContext {
+                        override val layoutModifier: Modifier = Modifier
+                        override val textStyle: TextStyle? = null
+                    }
+                )
+            }
+        },
+        measurePolicy = { measurables, constraints ->
+            // Just overlay everything, like a box, but with exactly the incoming
+            // constraints applied.
+            val placeables = measurables.map { child -> child.measure(constraints) }
+            val layoutWidth = (placeables.maxByOrNull { it.width }?.width ?: constraints.minWidth)
+            val layoutHeight =
+                (placeables.maxByOrNull { it.height }?.height ?: constraints.minHeight)
+            // Place all children at the origin (with the same size constraints that
+            // we were given).
+            layout(layoutWidth, layoutHeight) {
+                placeables.forEach { child -> child.placeRelative(0, 0) }
+            }
+        }
+    )
 }

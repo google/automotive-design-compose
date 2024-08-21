@@ -32,11 +32,6 @@ import java.util.Optional
 internal class SquooshLayoutManager(val id: Int)
 
 internal object SquooshLayout {
-    private var nextLayoutId: Int = 0
-
-    internal fun getNextLayoutId(): Int {
-        return ++nextLayoutId
-    }
 
     internal fun newLayoutManager(): SquooshLayoutManager {
         return SquooshLayoutManager(Jni.jniCreateLayoutManager())
@@ -46,8 +41,8 @@ internal object SquooshLayout {
         Jni.jniRemoveNode(manager.id, layoutId, rootLayoutId, false)
     }
 
-    internal fun keepJniBits() {
-        Jni.jniSetNodeSize(0, 0, 0, 0, 0)
+    internal fun markDirty(manager: SquooshLayoutManager, layoutId: Int) {
+        Jni.jniMarkDirty(manager.id, layoutId)
     }
 
     internal fun doLayout(
@@ -74,6 +69,7 @@ internal object SquooshLayout {
 internal class SquooshLayoutIdAllocator(
     private var lastAllocatedId: Int = 1,
     private val idMap: HashMap<ParentComponentData, Int> = HashMap(),
+    private val listIdMap: HashMap<Int, Int> = HashMap(),
     // We can also track referenced layout IDs from one generation to the next, which lets us
     // build the set of nodes to remove from the native layout tree.
     private var visitedSet: HashSet<Int> = HashSet(),
@@ -90,9 +86,24 @@ internal class SquooshLayoutIdAllocator(
         return id
     }
 
+    /// Return a new root layout id for a list parent. This is pretty clumsy, since if we add
+    /// or remove lists from a doc, we'll end up invalidating all of the lists that come after
+    /// the one that was added/removed.
+    fun listLayoutId(parentLayoutId: Int): Int {
+        val maybeId = listIdMap[parentLayoutId]
+        if (maybeId != null) return maybeId
+        val id = lastAllocatedId++
+        listIdMap[parentLayoutId] = id
+        return id
+    }
+
     /// Note that we've visited a layout node; this protects it from removal and adds it to the
     /// set of nodes that might get removed next iteration.
     fun visitLayoutId(id: Int) {
+        if (visitedSet.contains(id)) {
+            Log.e(TAG, "Duplicate layout ID: $id; cannot proceed...")
+            throw RuntimeException("Duplicate layout ID: $id")
+        }
         visitedSet.add(id)
         remainingSet.remove(id)
     }
@@ -106,9 +117,58 @@ internal class SquooshLayoutIdAllocator(
     }
 }
 
+// These functions manage all of the Layout ID arithmetic to ensure that we have unique layout
+// IDs and that we're able to compute them fast.
+//
+// When the DCF file is generated, each node is assigned a unique 16bit ID which can be used
+// for layout. Squoosh generates an entirely new tree every time it's invalidated, but uses the
+// same layout tree in Rust layout. Therefore, it's important that the same nodes get the same
+// IDs each time the Squoosh tree is built, and we achieve this using the unique 16bit ID plus
+// another 16 bits for component instances and other situations where we have the same nodes from
+// the DCF in the same tree.
+//
+// These functions are all about the upper 16bits of a Layout ID (which are generated at runtime,
+// rather than the lower 16bits, which are generated with the DCF file and are just sequential).
+//
+//  2 bits:
+//   00 - not used
+//   01 - component instance
+//   10 - overlay
+//   11 - list item
+// 14 bits:
+//   sequence
+// 16 bits:
+//   DCF unique ID
+private const val ID_USAGE_MASK = 0x3FFF0000
+private const val ID_USAGE_COMPONENT = 0x40000000
+private const val ID_USAGE_OVERLAY = 0x80000000.toInt()
+private const val ID_USAGE_LIST_ITEM = 0xc0000000.toInt()
+
+/// Compute a "componentLayoutId" from an incoming root layout ID, and a component instance ID.
+internal fun computeComponentLayoutId(rootLayoutId: Int, componentLayoutId: Int): Int {
+    return (rootLayoutId + componentLayoutId.shl(16)).and(ID_USAGE_MASK) + ID_USAGE_COMPONENT
+}
+
+/// Compute a final layout ID from a component layout ID (16bits) and a unique node ID from the DCF
+internal fun computeLayoutId(componentLayoutId: Int, uniqueViewId: Short): Int {
+    return componentLayoutId + uniqueViewId
+}
+
+/// Compute a synthetic layout ID. We use these when we're synthesizing layout nodes at runtime
+/// for things like list items and overlays.
+internal fun computeSyntheticListItemLayoutId(listLayoutId: Int, childIndex: Int): Int {
+    return listLayoutId.shl(16).and(ID_USAGE_MASK) + ID_USAGE_LIST_ITEM + childIndex
+}
+
+/// Compute a synthetic layout ID for an overlay.
+internal fun computeSyntheticOverlayLayoutId(contentNodeLayoutId: Int, overlayIndex: Int): Int {
+    return contentNodeLayoutId.shl(16).and(ID_USAGE_MASK) + ID_USAGE_OVERLAY + overlayIndex
+}
+
 /// Takes a `SquooshResolvedNode` and recursively builds or updates a native layout tree via
 /// the `SquooshLayout` wrapper of `JniLayout`.
 private fun updateLayoutTree(
+    manager: SquooshLayoutManager,
     resolvedNode: SquooshResolvedNode,
     layoutCache: HashMap<Int, Int>,
     layoutNodes: ArrayList<LayoutNode>,
@@ -139,6 +199,14 @@ private fun updateLayoutTree(
             LayoutManager.squooshSetTextMeasureData(layoutId, resolvedNode.textInfo)
         }
 
+        // We need to measure some children during the Compose layout phase, because they're
+        // actual Composables and not part of the DesignCompose layout tree. For those, we
+        // use the measure func mechanism, and ask the child Composable for its intrinsic
+        // size.
+        if (resolvedNode.needsChildLayout) {
+            useMeasureFunc = true
+        }
+
         layoutNodes.add(
             LayoutNode(
                 layoutId,
@@ -153,6 +221,9 @@ private fun updateLayoutTree(
         )
         layoutCache[layoutId] = layoutCacheKey
     }
+    // If this node is laid out externally then we need to re-measure it each layout.
+    // Mark it as dirty.
+    if (resolvedNode.needsChildLayout) SquooshLayout.markDirty(manager, layoutId)
     // XXX: We might want separate (cheaper) calls to assert the tree structure.
     // XXX XXX: This code doesn't ever update the tree structure.
 
@@ -161,8 +232,14 @@ private fun updateLayoutTree(
     while (child != null) {
         layoutChildren.add(child.layoutId)
         updateLayoutChildren =
-            updateLayoutTree(child, layoutCache, layoutNodes, layoutParentChildren, layoutId) ||
-                updateLayoutChildren
+            updateLayoutTree(
+                manager,
+                child,
+                layoutCache,
+                layoutNodes,
+                layoutParentChildren,
+                layoutId
+            ) || updateLayoutChildren
         child = child.nextSibling
     }
 
@@ -197,14 +274,13 @@ private fun populateComputedLayout(
 internal fun layoutTree(
     root: SquooshResolvedNode,
     manager: SquooshLayoutManager,
-    rootLayoutId: Int,
     removalNodes: Set<Int>,
     layoutCache: HashMap<Int, Int>,
     layoutValueCache: HashMap<Int, Layout>
 ) {
     // Remove any nodes that are no longer needed in this iteration
     for (layoutId in removalNodes) {
-        SquooshLayout.removeNode(manager, rootLayoutId, layoutId)
+        SquooshLayout.removeNode(manager, 0, layoutId)
         layoutValueCache.remove(layoutId)
         layoutCache.remove(layoutId)
     }
@@ -212,7 +288,7 @@ internal fun layoutTree(
     // Update the layout tree which the Rust JNI code is maintaining
     val layoutNodes = arrayListOf<LayoutNode>()
     val layoutParentChildren = arrayListOf<LayoutParentChildren>()
-    updateLayoutTree(root, layoutCache, layoutNodes, layoutParentChildren)
+    updateLayoutTree(manager, root, layoutCache, layoutNodes, layoutParentChildren)
     val layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
 
     // Now we can give the new layoutNodeList to the Rust JNI layout implementation

@@ -1731,6 +1731,8 @@ internal fun getTextContent(
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)
         if (resId != Resources.ID_NULL) {
             return context.getString(resId)
+        } else {
+            Log.w(TAG, "No string resource $resName found")
         }
     }
     return textData.content
@@ -1743,15 +1745,29 @@ internal fun getTextContent(
 ): List<StyledTextRun> {
     if (useLocalStringRes != false && styledTextData.res_name.isPresent) {
         val resName = styledTextData.res_name.get()
-        val resId = context.resources.getIdentifier(resName, "array", context.packageName)
-        if (resId != Resources.ID_NULL) {
-            val textArray = context.resources.getStringArray(resId)
+        val strArrayResId = context.resources.getIdentifier(resName, "array", context.packageName)
+        if (strArrayResId != Resources.ID_NULL) {
+            val textArray = context.resources.getStringArray(strArrayResId)
             if (textArray.size == styledTextData.content.size) {
                 val output = mutableListOf<StyledTextRun>()
                 for (i in textArray.indices) {
                     output.add(StyledTextRun(textArray[i], styledTextData.content[i].style))
                 }
                 return output
+            } else {
+                Log.w(TAG, "String array size mismatched the styled runs")
+            }
+        }
+        Log.w(TAG, "No string array resource $resName found for styled runs")
+        if (styledTextData.content.size == 1) {
+            val strResId = context.resources.getIdentifier(resName, "string", context.packageName)
+            if (strResId != Resources.ID_NULL) {
+                Log.w(TAG, "Single style found, fallback to string resource")
+                return mutableListOf(
+                    StyledTextRun(context.getString(strResId), styledTextData.content[0].style)
+                )
+            } else {
+                Log.w(TAG, "No string resource $resName found for styled runs")
             }
         }
     }

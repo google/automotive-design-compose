@@ -307,6 +307,13 @@ function saveResName(
       STRING_RES_PLUGIN_DATA_KEY,
       ""
     );
+    Utils.log(
+      CONSOLE_TAG,
+      "Save string res name %s-%s with %s to plugin data",
+      node.name,
+      node.id,
+      stringResName
+    );
   } else {
     node.setSharedPluginData(
       Utils.SHARED_PLUGIN_NAMESPACE,
@@ -314,14 +321,14 @@ function saveResName(
       stringResName
     );
     node.setPluginData(STRING_RES_PLUGIN_DATA_KEY, "");
+    Utils.log(
+      CONSOLE_TAG,
+      "Save string res name %s-%s with %s to shared plugin data",
+      node.name,
+      node.id,
+      stringResName
+    );
   }
-  Utils.log(
-    CONSOLE_TAG,
-    "Save string res name %s-%s with %s",
-    node.name,
-    node.id,
-    stringResName
-  );
 }
 
 function getResName(node: TextNode) {
@@ -389,22 +396,21 @@ function normalizeTextNode(node: TextNode): string | string[] {
   // All styles.
   try {
     let segments = node.getStyledTextSegments([
+      "boundVariables",
       "fontSize",
       "fontWeight",
+      "fontName",
+      "fills",
+      "fillStyleId",
+      "hyperlink",
+      "indentation",
       "letterSpacing",
       "lineHeight",
-      "fontName",
-      "textDecoration",
-      "textCase",
-      "fills",
-      "textStyleId",
-      "fillStyleId",
-      // Comment out the following due to "Error: in getStyledTextSegments: Unknown list option"
-      // "listOptions",
-      "indentation",
-      "hyperlink",
+      "listOptions",
       "openTypeFeatures",
-      "boundVariables",
+      "textDecoration",
+      "textStyleId",
+      "textCase",
     ]);
     segments.forEach((it) => stringArray.push(normalizeString(it.characters)));
   } catch (error) {

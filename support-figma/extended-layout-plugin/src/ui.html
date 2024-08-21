@@ -966,6 +966,7 @@
     r.textContent = node["nodeId"];
     r.style.textDecoration = 'underline';
     r.style.marginInlineStart = '8px';
+    r.style.overflowWrap = "anywhere";
     r.onclick = () => {
       parent.postMessage({
         pluginMessage: {

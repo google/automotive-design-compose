@@ -36,6 +36,7 @@ import com.android.designcompose.testapp.validation.examples.DEFAULT_RENDERER_ON
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import com.android.designcompose.testapp.validation.examples.SQUOOSH_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.StateCustomizationsDoc
+import com.github.takahirom.roborazzi.captureRoboImage
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
@@ -101,6 +102,11 @@ class RenderAllExamples(private val config: TestConfig) {
             .onFirst()
             .assertRenderStatus(DocRenderStatus.Rendered)
         composeTestRule.captureRootRoboImage(config.fileName)
+        composeTestRule
+            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
+            .onFirst()
+            .captureRoboImage("${config.fileName}.png")
+        //        composeTestRule.onDCDoc(config.fileComposable).captureRoboImage(config.fileName)
     }
 
     companion object {

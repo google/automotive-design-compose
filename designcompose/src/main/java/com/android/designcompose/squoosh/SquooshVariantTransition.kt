@@ -57,13 +57,31 @@ import com.android.designcompose.serdegen.View
 //    destination nodes, and then run the regular animation code.
 //
 
+// This interface describes an animation in terms of its easing function, duration, and time to
+// delay before starting the animation
 interface AnimationTransition {
+    // Return the AnimationSpec, which includes the easing function and duration
     fun animationSpec(): AnimationSpec<Float>
+
+    // Return the time to delay before starting the animation, in milliseconds.
+    fun delayMillis(): Int
 }
 
-class SmartAnimateTransition(val transition: AnimationSpec<Float>) : AnimationTransition {
+// This class is an AnimationTransition that performs a smart animate. A smart animate transition
+// compares the source and destination node trees and transitions similar nodes when possible, and
+// transitions other nodes with a cross fade.
+class SmartAnimateTransition(
+    // The AnimationSpec, which includes the easing function and duration
+    private val transition: AnimationSpec<Float>,
+    // The time to delay before starting the animation, in milliseconds.
+    private val delayMillis: Int = 0
+) : AnimationTransition {
     override fun animationSpec(): AnimationSpec<Float> {
         return transition
+    }
+
+    override fun delayMillis(): Int {
+        return delayMillis
     }
 }
 

@@ -116,6 +116,7 @@ internal class SquooshAnimationRenderingInfo(
     val action: AnimatedAction?,
     val variant: VariantAnimationInfo?,
     var startTimeNanos: Long = 0L,
+    var delayTimeMs: Int = 0,
 )
 
 /// Apply layout constraints to a node; this is only used for the root node and gives the DC
@@ -472,7 +473,8 @@ fun SquooshRoot(
                         control = animationControl,
                         animation = animatable,
                         action = animationRequest.action,
-                        variant = animationRequest.variant
+                        variant = animationRequest.variant,
+                        delayTimeMs = animationRequest.transition.delayMillis(),
                     )
             } else {
                 // Update the control with one that knows about new nodes.
@@ -795,10 +797,12 @@ private fun squooshLayoutMeasurePolicy(
                                 // If we haven't started this animation yet, then start it
                                 // now.
                                 if (anim.startTimeNanos == 0L) {
-                                    anim.startTimeNanos = frameTimeNanos
+                                    anim.startTimeNanos =
+                                        frameTimeNanos + anim.delayTimeMs * 1000000
                                 }
 
                                 val playTimeNanos = frameTimeNanos - anim.startTimeNanos
+                                if (playTimeNanos < 0L) continue
 
                                 // Compute where it's meant to be, and update the value in
                                 // animState.

@@ -29,13 +29,13 @@ import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.test.assertRenderStatus
-import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.DEFAULT_RENDERER_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import com.android.designcompose.testapp.validation.examples.SQUOOSH_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.StateCustomizationsDoc
+import com.github.takahirom.roborazzi.captureRoboImage
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
@@ -100,7 +100,7 @@ class RenderAllExamples(private val config: TestConfig) {
             .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
             .onFirst()
             .assertRenderStatus(DocRenderStatus.Rendered)
-        composeTestRule.captureRootRoboImage(config.fileName)
+            .captureRoboImage("${config.fileName}.png")
     }
 
     companion object {

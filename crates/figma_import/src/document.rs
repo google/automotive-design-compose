@@ -14,7 +14,6 @@
 
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::element::variable::{Collection, Mode, Variable, VariableMap};
-use serde::{Deserialize, Serialize};
 #[cfg(not(feature = "http_mock"))]
 use std::time::Duration;
 use std::{
@@ -28,13 +27,15 @@ use crate::{
     extended_layout_schema::ExtendedAutoLayout,
     fetch::ProxyConfig,
     figma_schema,
-    image_context::{EncodedImageMap, ImageContext, ImageContextSession},
+    image_context::{ImageContext, ImageContextSession},
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };
 use dc_bundle::legacy_definition::element::background::ImageKey;
 use dc_bundle::legacy_definition::view::component::{ComponentContentOverride, ComponentOverrides};
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
+use dc_bundle::legacy_definition::EncodedImageMap;
+use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use log::error;
 
 #[cfg(not(feature = "http_mock"))]
@@ -75,20 +76,6 @@ use crate::figma_v1_document_mocks::http_fetch;
 pub enum UpdateStatus {
     Updated,
     NotUpdated,
-}
-
-/// We can fetch figma documents in a project or from branches of another document.
-/// We store each as a name and ID
-#[derive(Clone, PartialEq, Eq, Debug, Hash, Serialize, Deserialize)]
-pub struct FigmaDocInfo {
-    pub name: String,
-    pub id: String,
-    pub version_id: String,
-}
-impl FigmaDocInfo {
-    pub(crate) fn new(name: String, id: String, version_id: String) -> FigmaDocInfo {
-        FigmaDocInfo { name, id, version_id }
-    }
 }
 
 /// Branches alwasy return head of file, i.e. no version returned

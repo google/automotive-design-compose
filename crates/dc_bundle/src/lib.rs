@@ -19,6 +19,7 @@ mod utils;
 pub mod android_interface;
 pub mod definition;
 pub mod legacy_definition;
+pub mod legacy_figma_live_update;
 
 #[derive(Error, Debug)]
 pub enum Error {

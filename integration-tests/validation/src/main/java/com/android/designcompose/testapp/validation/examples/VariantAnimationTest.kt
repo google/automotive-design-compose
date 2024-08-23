@@ -92,7 +92,8 @@ fun VariantAnimationTest() {
                         val critical = sqrt(4.0f * stiffness * mass)
                         val damping = 30.0f
                         SmartAnimateTransition(
-                            spring(dampingRatio = damping / critical, stiffness = stiffness)
+                            spring(dampingRatio = damping / critical, stiffness = stiffness),
+                            1000,
                         )
                     } else {
                         val mass = 1.0f

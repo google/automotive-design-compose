@@ -19,7 +19,7 @@ Animations set in Figma as a prototype interaction are supported. These animatio
 <img src="./animations/SyncPrototype.png">
 
 ## Variant change animations
-When variants change programmatically using the `@DesignVariant` customization, they will use a default spring animation for the transition. This can be customized using the custom animation API by specifying an easing type and duration in the `DesignDocSetting()` function that enables the squoosh animation code path. Populate the new `customVariantTransition` parameter with a function that takes a `VariantTransitionContext` and returns an `AnimationTransition` interface. The context provides some data on variant that is changing, and the `AnimationTransition` needs a function `animationSpec()` that returns `AnimationSpec<Float>`. The `SmartAnimationTransition` is the only supported transition at this time. The easiest way to use this is to use a compose function such as `androidx.compose.animation.core.tween`.
+When variants change programmatically using the `@DesignVariant` customization, they will use a default spring animation for the transition. This can be customized using the custom animation API by specifying an easing type, duration, and delay in the `DesignDocSetting()` function that enables the squoosh animation code path. Populate the new `customVariantTransition` parameter with a function that takes a `VariantTransitionContext` and returns an `AnimationTransition` interface. The context provides some data on variant that is changing, and the `AnimationTransition` needs two functions: `animationSpec()` that returns `AnimationSpec<Float>`, and `delayMillis()` that returns an `Int` representing the number of milliseconds to wait before beginning the animation. The `SmartAnimateTransition` is the only supported transition at this time. The easiest way to use this is to use a compose function such as `androidx.compose.animation.core.tween`, and optionally, the delay time in milliseconds.
 
 Here is an example:
 
@@ -40,7 +40,8 @@ DesignDocSettings(
             val critical = sqrt(4.0f * stiffness * mass)
             val damping = 30.0f
             SmartAnimateTransition(
-                spring(dampingRatio = damping / critical, stiffness = stiffness)
+                spring(dampingRatio = damping / critical, stiffness = stiffness),
+                1000 // Delay by 1 second
             )
         }   
 

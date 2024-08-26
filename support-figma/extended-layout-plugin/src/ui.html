@@ -359,8 +359,9 @@
 
 <div id="outputStringsPanel" class="page page-padding-large">
   <div style="border-bottom: solid #000000; font-weight: bold;">Generate the strings xml file:</div>
-  <div style="font-size: 14; margin-top: 8px;">* Clear the char limit field to set to "NONE"</div>
+  <div style="font-size: 14; margin-top: 8px;">* Clear the char limit field to set to "NONE".</div>
   <div style="font-size: 14; margin-top: 8px;">* Uncheck the checkbox in front of the node id to explicitly remove it from localization.</div>
+  <div style="font-size: 14; margin-top: 8px;">* Use the break icon button for a different translation(action not saved, lost on the next run).</div>
   <div id="outputStrings" style="margin-top: 16px;">
     <div class="container">
       <div class="loader" id="ouputLoader"></div>
@@ -400,16 +401,23 @@
   let parentNodeType = null;
   let parentSize = { width: 0, height: 0 };
 
-  function showToast(msg) {
+  function showToast(msg, timeout) {
     const toast = document.getElementById("toast");
     toast.textContent = msg;
     // Show the toast.
     toast.classList.add("show");
 
-    // Then hide after 2s.
-    setTimeout(() => {
-      toast.classList.remove("show");
-    }, 2000);
+    if (timeout) {
+      // Then hide after 2s.
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2000);
+    }
+  }
+
+  function hideToast() {
+    clearTimeout();
+    toast.classList.remove("show");
   }
 
   function toNumber(str, def) {
@@ -834,11 +842,11 @@
 
         createInputStringTable("inputStringsTableContainer", inputStringArray);
         if (inputStringArray.length == 0) {
-          showToast("No strings found in the uploaded xml file.");
+          showToast("No strings found in the uploaded xml file.", true);
         }
         showOutputStringsButton.innerHTML = "&nbsp;Next >>&nbsp;";
       } catch (error) {
-        showToast("An error occured uploading the strings xml file");
+        showToast("An error occured uploading the strings xml file", true);
         console.error("An error occured uploading the strings xml file", error);
       }
     });
@@ -916,7 +924,7 @@
         for (const nestedCellData of cellData) {
           const nestedBlock = document.createElement("div");
           if (forNodeId) {
-            let nodeIdElement = createNodeIdElement(nestedCellData);
+            let nodeIdElement = createNodeIdElement(nestedCellData, cellData.length == 1);
             nestedBlock.appendChild(nodeIdElement);
           } else {
             nestedBlock.style.overflowWrap = "anywhere";
@@ -937,8 +945,40 @@
     return td;
   }
 
-  function createNodeIdElement(node) {
+  function createNodeIdElement(node, isSingleNode) {
     const block = document.createElement('div');
+
+    if (!isSingleNode) {
+      const editBtn = document.createElement('span');
+      editBtn.style.width = '20px';
+      editBtn.style.height = '20px';
+      editBtn.style.padding = '0px';
+      editBtn.classList.add('icon-button');
+      editBtn.addEventListener('mouseover', (event) => {
+        showToast('Use the break button for a different translation.', false);
+      });
+      editBtn.addEventListener('mouseout', (event) => {
+        hideToast();
+      });
+      // Revise the cursor to default to be consistent with the icon below.
+      editBtn.style.cursor = 'default';
+      const editIcon = document.createElement('span');
+      editIcon.classList.add('icon', 'icon--break');
+      editIcon.style.width = '16px';
+      editIcon.style.height = '16px';
+      editBtn.appendChild(editIcon);
+      editBtn.onclick = () => {
+        parent.postMessage({
+          pluginMessage: {
+            msg: 'localization-ungroup-node',
+            node: node["nodeId"],
+            stringResMap: Array.from(outputStringData)
+          }
+        }, '*');
+      };
+      block.append(editBtn);
+    }
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = !node["isExcluded"];
@@ -958,10 +998,13 @@
             }
           }, '*');
         } else {
-          showToast("Action canceled...");
+          // Action canceled, revert the check state.
+          checkbox.checked = !checkbox.checked;
+          showToast("Action canceled...", true);
         }
     });
     block.appendChild(checkbox);
+
     let r = document.createElement('span');
     r.textContent = node["nodeId"];
     r.style.textDecoration = 'underline';
@@ -1152,7 +1195,7 @@
             }
             if (!hasChanged) {
               input.value = stringRes["name"];
-              showToast(`${newValue} already exists. Reverting resource name since duplicates are not allowed.`);
+              showToast(`${newValue} already exists. Reverting resource name since duplicates are not allowed.`, true);
             }
           } else if (stringRes["name"] != this.value) {
             outputStringData.delete(stringRes["name"]);
@@ -1376,6 +1419,9 @@
       createOutputStringTable('outputStrings');
     } else  if (msg.msg == 'localization-exclude-node-callback') {
       // Refresh the table, which recreate the whole table...
+      createOutputStringTable('outputStrings');
+    } else if (msg.msg == 'localization-ungroup-node-callback') {
+      loadOutputStringData(msg.output);
       createOutputStringTable('outputStrings');
     }
   }

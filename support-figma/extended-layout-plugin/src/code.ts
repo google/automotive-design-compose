@@ -537,6 +537,8 @@ if (figma.command === "sync") {
       Localization.updateStringRes(msg.item);
     } else if (msg.msg === "localization-exclude-node") {
       Localization.excludeTextNode(msg.node, msg.excluded);
+    } else if (msg.msg === "localization-ungroup-node") {
+      Localization.ungroupTextNode(msg.node, msg.stringResMap);
     } else if (msg.msg === "show-node") {
       Utils.showNode(msg.node);
     } else if (msg.msg === "close-plugin") {

@@ -16,7 +16,6 @@
 
 package com.android.designcompose.squoosh
 
-import android.os.SystemClock
 import android.util.Log
 import android.util.SizeF
 import androidx.compose.animation.core.AnimationVector1D
@@ -57,6 +56,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.ComponentReplacementContext
+import com.android.designcompose.ComputedPathCache
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DebugNodeManager
 import com.android.designcompose.DesignComposeCallbacks
@@ -276,6 +276,10 @@ fun SquooshRoot(
         onDispose { KeyInjectManager.removeTracker(keyEventTracker) }
     }
 
+    val textMeasureCache =
+        remember(docId, LocalContext.current.resources.configuration) { TextMeasureCache() }
+    val computedPathCache = remember(docId) { ComputedPathCache() }
+
     // We need to remember the previous set of variant properties that we rendered
     // with so we can see if there are any transitions caused by changing variant props.
     val variantTransitions = remember(docId) { SquooshVariantTransition() }
@@ -309,6 +313,7 @@ fun SquooshRoot(
             VariableState.create(),
             appContext = LocalContext.current,
             useLocalStringRes = useLocalStringRes,
+            textMeasureCache = textMeasureCache,
             customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
             overlays = overlays,
         ) ?: return
@@ -338,10 +343,6 @@ fun SquooshRoot(
             variantTransitions.needsTransitionPhase()
     ) {
         variantTransitions.treeBuildPhase = TreeBuildPhase.TransitionTargetPhase
-        Log.d(
-            TAG,
-            "$docName: creating a new root with transitions applied... ${variantTransitions.transitions.size} variant transitions; variant needs second phase: ${variantTransitions.needsTransitionPhase()} (${variantTransitions.transitions.size} transitions); ${animatedActions.size} animated actions;"
-        )
 
         // We need to make a new root with this interaction state applied, and then compute the
         // animation control between the trees.
@@ -364,6 +365,7 @@ fun SquooshRoot(
                 VariableState.create(),
                 appContext = LocalContext.current,
                 useLocalStringRes = useLocalStringRes,
+                textMeasureCache = textMeasureCache,
                 customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
                 overlays = overlays,
             )
@@ -371,6 +373,8 @@ fun SquooshRoot(
     }
 
     variantTransitions.afterRenderPhases()
+
+    textMeasureCache.collect()
 
     var presentationRoot = root
 
@@ -488,8 +492,6 @@ fun SquooshRoot(
         // have a key in transitions...
         currentAnimations.clear()
         currentAnimations.putAll(nextAnimations)
-
-        Log.d(TAG, "Updating animations resulted in ${nextAnimations.size} animations")
     }
 
     // The presentationRoot tree doesn't have any layout values. It has to copy them all
@@ -526,6 +528,7 @@ fun SquooshRoot(
                         currentAnimations,
                         animationValues,
                         VariableState.create(),
+                        computedPathCache,
                     )
                     .semantics { sDocRenderStatus = DocRenderStatus.Rendered },
             measurePolicy =
@@ -547,7 +550,6 @@ fun SquooshRoot(
                 ),
             content = {
                 // Now render all of the children
-                val debugRenderChildComposablesStartTime = SystemClock.elapsedRealtime()
                 for (child in childComposables) {
                     var composableChildModifier =
                         Modifier.drawWithContent {
@@ -577,10 +579,6 @@ fun SquooshRoot(
                         SquooshChildLayout(modifier = composableChildModifier, child = child)
                     }
                 }
-                Log.d(
-                    TAG,
-                    "$docName generate child composables took ${SystemClock.elapsedRealtime() - debugRenderChildComposablesStartTime}ms"
-                )
             }
         )
         designSwitcher()

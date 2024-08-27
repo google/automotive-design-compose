@@ -61,6 +61,39 @@ private fun normalizeNewlines(text: String): String {
     return text
 }
 
+/// A simple generational cache for TextMeasureData, because it is expensive to compute.
+internal class TextMeasureCache {
+    internal class Entry(
+        val data: TextMeasureData,
+        val text: String?,
+        val style: TextStyle?,
+        // XXX: Do we need to use the annotated string? This impl might break localization.
+    )
+
+    private var cache: HashMap<Int, Entry> = HashMap()
+    private var nextGeneration: HashMap<Int, Entry> = HashMap()
+
+    fun get(layoutId: Int): Entry? {
+        return cache[layoutId]
+    }
+
+    fun put(layoutId: Int, data: Entry) {
+        // Store in the cache as well as nextGeneration because the same TextMeasureCache
+        // gets used for the base tree and transition tree without a call to collect between.
+        cache[layoutId] = data
+        nextGeneration[layoutId] = data
+    }
+
+    /// Perform a garbage collection by releasing all of the cache entries that were not
+    /// used since the last time `collect` was called. `SquooshRoot` will generate the
+    /// base tree and the transition tree between calls to `collect()`.
+    fun collect() {
+        cache.clear()
+        cache.putAll(nextGeneration)
+        nextGeneration.clear()
+    }
+}
+
 /// Take DesignCompose text information, and generate the information required to measure
 /// and render text using Compose APIs.
 ///
@@ -69,6 +102,7 @@ private fun normalizeNewlines(text: String): String {
 /// is heavyweight, so we should avoid doing it frequently.
 internal fun squooshComputeTextInfo(
     v: View,
+    layoutId: Int,
     density: Density,
     document: DocContent,
     customizations: CustomizationContext,
@@ -76,11 +110,22 @@ internal fun squooshComputeTextInfo(
     variableState: VariableState,
     appContext: Context,
     useLocalStringRes: Boolean?,
+    textMeasureCache: TextMeasureCache
 ): TextMeasureData? {
     val customizedText =
         customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
     val customTextStyle = customizations.getTextStyle(v.name)
     val fontFamily = DesignSettings.fontFamily(v.style.node_style.font_family)
+
+    val cachedText = textMeasureCache.get(layoutId)
+    if (
+        cachedText != null &&
+            cachedText.text == customizedText &&
+            cachedText.style == customTextStyle
+    ) {
+        textMeasureCache.put(layoutId, cachedText)
+        return cachedText.data
+    }
 
     val annotatedText =
         if (customizedText != null) {
@@ -145,7 +190,9 @@ internal fun squooshComputeTextInfo(
                     }
                     builder.toAnnotatedString()
                 }
-                else -> return null
+                else -> {
+                    return null
+                }
             }
 
     val lineHeight =
@@ -238,11 +285,19 @@ internal fun squooshComputeTextInfo(
         if (v.style.node_style.line_count.isPresent) v.style.node_style.line_count.get().toInt()
         else Int.MAX_VALUE
 
-    return TextMeasureData(
-        annotatedText.text.hashCode(),
-        paragraph,
-        density,
-        maxLines,
-        v.style.isAutoWidthText()
+    val textMeasureData =
+        TextMeasureData(
+            annotatedText.text.hashCode(),
+            paragraph,
+            density,
+            maxLines,
+            v.style.isAutoWidthText()
+        )
+
+    textMeasureCache.put(
+        layoutId,
+        TextMeasureCache.Entry(textMeasureData, customizedText, customTextStyle)
     )
+
+    return textMeasureData
 }

@@ -14,10 +14,11 @@
 
 use std::io::Write;
 
-use crate::{DesignComposeDefinition, DesignComposeDefinitionHeader, Document, ProxyConfig};
+use crate::{Document, ProxyConfig};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
+use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 
 #[derive(Debug)]
 #[allow(dead_code)]

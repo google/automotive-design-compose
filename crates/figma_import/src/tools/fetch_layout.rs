@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{DesignComposeDefinition, Document, ProxyConfig};
+use crate::{Document, ProxyConfig};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::layout::positioning::LayoutSizing;
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
+use dc_bundle::legacy_definition::DesignComposeDefinition;
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;

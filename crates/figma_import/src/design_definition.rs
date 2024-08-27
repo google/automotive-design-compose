@@ -13,65 +13,14 @@
 // limitations under the License.
 
 use crate::error::Error;
-use std::collections::HashMap;
-use std::fmt;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 
-use dc_bundle::legacy_definition::element::node::NodeQuery;
-use dc_bundle::legacy_definition::element::variable::VariableMap;
-use dc_bundle::legacy_definition::view::view;
 use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use serde::{Deserialize, Serialize};
 
-use dc_bundle::legacy_definition::EncodedImageMap;
-
-static CURRENT_VERSION: u32 = 21;
-
-// This is our serialized document type.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DesignComposeDefinitionHeader {
-    pub version: u32,
-}
-impl DesignComposeDefinitionHeader {
-    pub fn current() -> DesignComposeDefinitionHeader {
-        DesignComposeDefinitionHeader { version: CURRENT_VERSION }
-    }
-}
-
-impl fmt::Display for DesignComposeDefinitionHeader {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // NOTE: Using `write!` here instead of typical `format!`
-        // to keep newlines.
-        write!(f, "DC Version: {}\nVersion: {}", CURRENT_VERSION, &self.version)
-    }
-}
-
-// This is our serialized document type.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DesignComposeDefinition {
-    pub last_modified: String,
-    pub views: HashMap<NodeQuery, view::View>,
-    pub images: EncodedImageMap,
-    pub name: String,
-    pub component_sets: HashMap<String, String>,
-    pub version: String,
-    pub id: String,
-    pub variable_map: VariableMap,
-}
-
-impl fmt::Display for DesignComposeDefinition {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // NOTE: Using `write!` here instead of typical `format!`
-        // to keep newlines.
-        write!(
-            f,
-            "Doc ID: {}\nName: {}\nLast Modified: {}",
-            &self.id, &self.name, &self.last_modified
-        )
-    }
-}
+use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 
 // This is the struct we send over to the client. It contains the serialized document
 // along with some extra data: document branches, project files, and errors

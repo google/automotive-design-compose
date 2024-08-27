@@ -16,16 +16,19 @@
       "name": "Localization Tool",
       "menu": [
         { "name": "Generate String Resource", "command": "localization" },
-        { "name": "Clear String Resource", "command": "clear-localization" }
+        { "name": "Clear String Resource", "command": "clear-localization" },
+        { "name": "Export Images", "command": "export-images" },
+        { "name": "Clear Image Resource", "command": "clear-image-res" }
       ]
     }
   ],
   "networkAccess": {
     "allowedDomains": [
       "https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css",
-      "https://rsms.me"
+      "https://rsms.me",
+      "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
     ],
-    "reasoning": "The plugin uses the stylesheet from https://github.com/thomas-lowry/figma-plugin-ds to make the UI consistent with the rest of the Figma UI (https://www.figma.com/plugin-docs/figma-components/)."
+    "reasoning": "The plugin uses the stylesheet from https://github.com/thomas-lowry/figma-plugin-ds to make the UI consistent with the rest of the Figma UI (https://www.figma.com/plugin-docs/figma-components/). It uses https://rsms.me for the Inter fonts. jszip is the tool to download images in zip."
   },
   "documentAccess": "dynamic-page"
 }

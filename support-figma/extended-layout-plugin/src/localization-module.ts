@@ -326,34 +326,9 @@ async function localizeTextNodeAsync(
 
 function fromNode(node: TextNode): string {
   if (countWords(node.characters) > 4) {
-    return "desc_".concat(toSnakeCase(node.name));
+    return "desc_".concat(Utils.toSnakeCase(node.name));
   }
-  return "label_".concat(toSnakeCase(node.characters));
-}
-
-function toSnakeCase(characters: string): string {
-  if (isAllCaps(characters)) {
-    var snakeCase = characters.replace(/\W/g, "_").toLowerCase();
-  } else {
-    var snakeCase = characters
-      .replace(/([A-Z]|\s+)/g, (match, group1) =>
-        group1 === " " ? "_" : "_" + group1.toLowerCase()
-      )
-      .replace(/\W/g, "_")
-      .toLowerCase();
-  }
-  snakeCase = snakeCase.replace(/_{2,}/g, "_");
-  if (snakeCase.startsWith("_")) {
-    snakeCase = snakeCase.substring(1);
-  }
-  if (snakeCase.endsWith("_")) {
-    return snakeCase.substring(0, snakeCase.length - 1);
-  }
-  return snakeCase;
-}
-
-function isAllCaps(characters: string): boolean {
-  return characters.toUpperCase() === characters;
+  return "label_".concat(Utils.toSnakeCase(node.characters));
 }
 
 function countWords(characters: string): number {

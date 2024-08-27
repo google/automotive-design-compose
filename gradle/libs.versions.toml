@@ -33,6 +33,7 @@ androidx-constraintlayout = "2.1.4"
 androidx-legacy-support-v4 = "1.0.0"
 androidx-lifecycle = "2.7.0"
 androidx-media = "1.7.0"
+androidx-media3 = "1.4.1"
 androidx-test-espresso = "3.6.1"
 androidx-test-ext-junit = "1.2.1"
 androidx-datastore = "1.1.1"
@@ -83,6 +84,9 @@ androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-kt
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-media = { module = "androidx.media:media", version.ref = "androidx-media" } # Used in MediaCompose
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "androidx-media3" }
+androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "androidx-media3" }
+androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "androidx-media3" }
 androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidx-profileinstaller"}
 androidx-rules = { module = "androidx.test:rules", version.ref = "androidx-rules" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }

@@ -135,3 +135,4 @@ fabric.properties
 
 # Other
 .idea/kotlinc.xml
+.idea/emulatorDisplays.xml

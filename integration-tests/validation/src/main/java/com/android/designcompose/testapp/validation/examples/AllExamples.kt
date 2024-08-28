@@ -92,6 +92,11 @@ val SQUOOSH_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, Stri
     arrayListOf(
         Triple("SA", { SmartAnimateTest() }, SmartAnimateTestDoc.javaClass.name),
         Triple("SA Variant", { VariantAnimationTest() }, VariantAnimationTestDoc.javaClass.name),
+        Triple(
+            "SA Variant Timelines",
+            { VariantAnimationTimelineTest() },
+            VariantAnimationTimelineTestDoc.javaClass.name
+        ),
     )
 
 val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =

@@ -17,6 +17,9 @@
 package com.android.designcompose.squoosh
 
 import android.util.Log
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.TargetBasedAnimation
+import androidx.compose.animation.core.VectorConverter
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.asBuilder
 import com.android.designcompose.decompose
@@ -43,19 +46,53 @@ import kotlin.jvm.optionals.getOrElse
 // Initially I'm just going to support Smart Animate, because it's the hardest, but I'll do the
 // others once Smart Animate is in shape.
 
-internal interface SquooshAnimatedItem {
-    fun apply(value: Float) {}
+internal abstract class SquooshAnimatedItem(transition: AnimationTransition) {
+    // The animation object that describes the easing and transition of this transition
+    var animation: TargetBasedAnimation<Float, AnimationVector1D> =
+        TargetBasedAnimation(
+            animationSpec = transition.animationSpec(),
+            typeConverter = Float.VectorConverter,
+            initialValue = 0f,
+            targetValue = 1f
+        )
+    // Number of milliseconds to delay before starting this animation
+    private val delayMillis: Int = transition.delayMillis()
+    // The next animation frame value to pass to apply()
+    var nextFrameValue: Float? = null
+
+    // Given the current play time, calculate the next animation frame value to pass to apply()
+    fun updateValuesFromNanos(playTimeNanos: Long) {
+        val myPlayTimeNanos = myPlayTimeNanos(playTimeNanos)
+        if (myPlayTimeNanos > 0) nextFrameValue = animation.getValueFromNanos(myPlayTimeNanos)
+    }
+
+    // Return true if this animated item has finished
+    fun isFinishedFromNanos(playTimeNanos: Long): Boolean {
+        val myPlayTimeNanos = myPlayTimeNanos(playTimeNanos)
+        return animation.isFinishedFromNanos(myPlayTimeNanos)
+    }
+
+    // Return the current play time of this animation, taking into account the initial delay
+    private fun myPlayTimeNanos(playTimeNanos: Long): Long {
+        return playTimeNanos - (delayMillis.toLong() * 1000000L)
+    }
+
+    abstract fun apply(value: Float)
 }
 
-internal class SquooshAnimatedFadeIn(private val target: SquooshResolvedNode) :
-    SquooshAnimatedItem {
+internal class SquooshAnimatedFadeIn(
+    private val target: SquooshResolvedNode,
+    transition: AnimationTransition,
+) : SquooshAnimatedItem(transition) {
     override fun apply(value: Float) {
         target.style = target.style.withNodeStyle { s -> s.opacity = Optional.of(value) }
     }
 }
 
-internal class SquooshAnimatedFadeOut(private val target: SquooshResolvedNode) :
-    SquooshAnimatedItem {
+internal class SquooshAnimatedFadeOut(
+    private val target: SquooshResolvedNode,
+    transition: AnimationTransition,
+) : SquooshAnimatedItem(transition) {
     override fun apply(value: Float) {
         target.style = target.style.withNodeStyle { s -> s.opacity = Optional.of(1.0f - value) }
     }
@@ -65,7 +102,8 @@ internal class SquooshAnimatedLayout(
     private val target: SquooshResolvedNode,
     private val from: SquooshResolvedNode,
     private val to: SquooshResolvedNode,
-) : SquooshAnimatedItem {
+    transition: AnimationTransition,
+) : SquooshAnimatedItem(transition) {
     private val transformedChanged = hasTransformChange(from.view.style, to.view.style)
     private val fromDecomposed = from.style.node_style.transform.decompose(1F)
     private val toDecomposed = to.style.node_style.transform.decompose(1F)
@@ -128,8 +166,9 @@ internal class SquooshAnimatedLayout(
 internal class SquooshAnimatedArc(
     private val target: SquooshResolvedNode,
     private val from: ViewShape.Arc,
-    private val to: ViewShape.Arc
-) : SquooshAnimatedItem {
+    private val to: ViewShape.Arc,
+    transition: AnimationTransition,
+) : SquooshAnimatedItem(transition) {
     override fun apply(value: Float) {
         val iv = 1.0f - value
         val arcBuilder = ViewShape.Arc.Builder()
@@ -176,12 +215,31 @@ internal class SquooshAnimatedArc(
 //      No colors or strokes or corners.
 
 internal class SquooshAnimationControl(
-    val root: SquooshResolvedNode,
-    private val items: List<SquooshAnimatedItem>
+    private val items: List<SquooshAnimatedItem>,
+    var animation: TargetBasedAnimation<Float, AnimationVector1D>? = null,
+    private var nextFrameValue: Float = 0F
 ) {
-    fun apply(value: Float) {
+    // Given the current play time, calculate the next animation frame value to pass to apply()
+    // for all animation items
+    fun updateValuesFromNanos(playTimeNanos: Long) {
+        nextFrameValue = animation?.getValueFromNanos(playTimeNanos) ?: 0F
         for (item in items) {
-            item.apply(value)
+            item.updateValuesFromNanos(playTimeNanos)
+        }
+    }
+
+    // Return true if all animated items have finished
+    fun isFinishedFromNanos(playTimeNanos: Long): Boolean {
+        for (item in items) {
+            if (!item.isFinishedFromNanos(playTimeNanos)) return false
+        }
+        return true
+    }
+
+    fun apply(value: Float = nextFrameValue) {
+        for (item in items) {
+            val nextValue = item.nextFrameValue ?: value
+            item.apply(nextValue)
         }
     }
 }
@@ -207,6 +265,7 @@ internal fun createMergedAnimationTree(
     from: SquooshResolvedNode,
     to: SquooshResolvedNode,
     requestedAnimations: HashMap<String, SquooshAnimationRequest>,
+    customVariantTransition: CustomVariantTransition?,
     parent: SquooshResolvedNode? = null,
     alreadyMatchedSet: HashSet<Int> = HashSet()
 ): SquooshResolvedNode {
@@ -222,10 +281,17 @@ internal fun createMergedAnimationTree(
             if (toNode != null) {
                 val animations: ArrayList<SquooshAnimatedItem> = ArrayList()
                 val mergedClonedNode =
-                    mergeRecursive(from, toNode, parent, animations, alreadyMatchedSet)
-                if (animations.isNotEmpty())
-                    requestedAnim.animationControl =
-                        SquooshAnimationControl(mergedClonedNode, animations)
+                    mergeRecursive(
+                        from,
+                        toNode,
+                        parent,
+                        animations,
+                        alreadyMatchedSet,
+                        customVariantTransition
+                    )
+                if (animations.isNotEmpty()) {
+                    requestedAnim.animationControl = SquooshAnimationControl(animations)
+                }
 
                 Pair(mergedClonedNode, true)
             } else {
@@ -243,7 +309,14 @@ internal fun createMergedAnimationTree(
     val nextFrom = from.nextSibling
     if (nextFrom != null) {
         val nextCloned =
-            createMergedAnimationTree(nextFrom, to, requestedAnimations, parent, alreadyMatchedSet)
+            createMergedAnimationTree(
+                nextFrom,
+                to,
+                requestedAnimations,
+                customVariantTransition,
+                parent,
+                alreadyMatchedSet
+            )
         // Insert at the end; does this reorder? Hope not
         var c: SquooshResolvedNode? = cloned
         while (c?.nextSibling != null) c = c.nextSibling
@@ -259,6 +332,7 @@ internal fun createMergedAnimationTree(
                     childFrom,
                     to,
                     requestedAnimations,
+                    customVariantTransition,
                     cloned,
                     alreadyMatchedSet
                 )
@@ -304,6 +378,8 @@ private fun mergeRecursive(
     parent: SquooshResolvedNode?,
     anims: ArrayList<SquooshAnimatedItem>,
     alreadyMatchedSet: HashSet<Int>,
+    customVariantTransition: CustomVariantTransition?,
+    parentTransition: AnimationTransition = DEFAULT_TRANSITION,
 ): SquooshResolvedNode {
     // We have an exact match on `from` and `to`, so we can construct various animation controls to
     // go between them in a third node. Then we need to inspect the children and match them on name.
@@ -326,6 +402,12 @@ private fun mergeRecursive(
     //      - we don't find a matching child in "to" for a child in "from", so this gets an incoming
     //        animation (it fades in)
 
+    // If there is a custom variant transition between the FROM and TO nodes, use it. Otherwise
+    // use the parent transition if not null. Lastly use the default transition.
+    val transition =
+        customVariantTransition?.invoke(VariantTransitionContext(from.view, to.view))
+            ?: parentTransition
+
     if (isTweenable(from.view, to.view) && !needsStyleTween(from.style, to.style)) {
         // Clone the "to" node.
         val n = to.cloneSelf(parent)
@@ -345,7 +427,16 @@ private fun mergeRecursive(
                 alreadyMatchedSet.add(matchingFromChild.layoutId)
 
                 // Create the animation for this one.
-                val c = mergeRecursive(matchingFromChild, child, n, anims, alreadyMatchedSet)
+                val c =
+                    mergeRecursive(
+                        matchingFromChild,
+                        child,
+                        n,
+                        anims,
+                        alreadyMatchedSet,
+                        customVariantTransition,
+                        transition
+                    )
                 if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
                 previousChild = c
             } else {
@@ -355,7 +446,7 @@ private fun mergeRecursive(
                 if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
                 previousChild = c
 
-                anims.add(SquooshAnimatedFadeIn(c))
+                anims.add(SquooshAnimatedFadeIn(c, transition))
             }
 
             // Sometimes when we do a merge, we actually end up with multiple nodes (because we
@@ -375,13 +466,13 @@ private fun mergeRecursive(
                 if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
                 previousChild = c
 
-                anims.add(SquooshAnimatedFadeOut(c))
+                anims.add(SquooshAnimatedFadeOut(c, transition))
             }
             child = child.nextSibling
         }
 
         // Now see what kind of animations we can make; starting with a layout animation.
-        anims.add(SquooshAnimatedLayout(n, from, to))
+        anims.add(SquooshAnimatedLayout(n, from, to, transition))
 
         // If they're both arcs, then they might need an arc animation.
         // XXX: Refactor this so we don't inspect every type right here.
@@ -396,7 +487,7 @@ private fun mergeRecursive(
             val toArc: ViewShape.Arc = (to.view.data as ViewData.Container).shape as ViewShape.Arc
 
             if (fromArc != toArc) {
-                anims.add(SquooshAnimatedArc(n, fromArc, toArc))
+                anims.add(SquooshAnimatedArc(n, fromArc, toArc, transition))
             }
         }
 
@@ -408,10 +499,10 @@ private fun mergeRecursive(
         val toClone = to.cloneSelfAndChildren(parent)
         fromClone.nextSibling = toClone
 
-        anims.add(SquooshAnimatedFadeOut(fromClone))
-        anims.add(SquooshAnimatedFadeIn(toClone))
-        anims.add(SquooshAnimatedLayout(fromClone, from, to))
-        anims.add(SquooshAnimatedLayout(toClone, from, to))
+        anims.add(SquooshAnimatedFadeOut(fromClone, transition))
+        anims.add(SquooshAnimatedFadeIn(toClone, transition))
+        anims.add(SquooshAnimatedLayout(fromClone, from, to, transition))
+        anims.add(SquooshAnimatedLayout(toClone, from, to, transition))
 
         return fromClone
     }

@@ -70,24 +70,25 @@ internal fun Modifier.squooshRender(
     customizations: CustomizationContext,
     childRenderSelector: SquooshChildRenderSelector,
     animations: Map<Int, SquooshAnimationRenderingInfo>,
-    animationValues: State<Map<Int, Float>>,
+    animPlayTimeNanosState: State<Map<Int, Long>>,
     variableState: VariableState,
     computedPathCache: ComputedPathCache,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
             computedPathCache.collect()
-            val animValues = animationValues.value
+            val animPlayTimesMap = animPlayTimeNanosState.value
             for ((id, transition) in animations) {
-                val animationOffset = animValues[id]
-                if (animationOffset == null) {
+                val animPlayTimeNanos = animPlayTimesMap[id]
+                if (animPlayTimeNanos == null) {
                     // This happens if we render before the coroutine that updates the animation
                     // values has run; we simply supply an additional frame with the start value.
-                    transition.control.apply(transition.animation.initialValue)
+                    transition.control.apply(transition.control.animation?.initialValue ?: 0F)
                     continue
                 }
 
-                transition.control.apply(animationOffset)
+                transition.control.updateValuesFromNanos(animPlayTimeNanos)
+                transition.control.apply()
             }
 
             var nodeRenderCount = 0

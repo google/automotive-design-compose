@@ -107,10 +107,10 @@ export async function generateLocalizationData(
   }
 
   // Convert to an array of key-value pairs
-  const stringReourceArray = Array.from(stringResourceMap);
+  const stringResourceArray = Array.from(stringResourceMap);
   figma.ui.postMessage({
     msg: "localization-output",
-    output: stringReourceArray,
+    output: stringResourceArray,
   });
 }
 
@@ -131,6 +131,77 @@ export async function updateStringRes(strRes: StringResource) {
         `Ignore update string res request because node ${nodeId} is not a text node.`
       );
     }
+  }
+}
+
+export async function ungroupTextNode(
+  nodeId: string,
+  stringResourceArray: Array<[string, StringResource]>
+) {
+  await figma.loadAllPagesAsync();
+
+  const node = await figma.getNodeByIdAsync(nodeId);
+  if (node?.type == "TEXT") {
+    const stringResourceMap = new Map<string, StringResource>();
+    for (const [key, stringRes] of stringResourceArray) {
+      stringResourceMap.set(key, stringRes);
+    }
+
+    const isNodeExcluded = isExplicitlyExcluded(node);
+    const currentResName = getResName(node);
+
+    if (stringResourceMap.has(currentResName)) {
+      const strRes = stringResourceMap.get(currentResName)!!;
+      strRes.textNodes = strRes.textNodes.filter((it) => it.nodeId !== nodeId);
+
+      var preferredName = currentResName;
+      if (!preferredName) {
+        preferredName = fromNode(node);
+      } else if (
+        stringResourceMap.has(preferredName) &&
+        endsWithNumbers(preferredName)
+      ) {
+        // We need to find a new name so reset preferred name to default.
+        preferredName = fromNode(node);
+      }
+
+      var index = 0;
+      var stringResName = preferredName;
+
+      // Otherwise find a string resource name that doesn't duplicate.
+      while (stringResourceMap.has(stringResName)) {
+        index += 1;
+        stringResName = preferredName + "_" + index;
+      }
+
+      saveResName(node, stringResName, isNodeExcluded);
+      const newStrRes = {
+        name: stringResName,
+        translatable: true,
+        text: strRes.text,
+        textNodes: [{ nodeId: node.id, isExcluded: isNodeExcluded }],
+        extras: strRes.extras,
+        textLength: strRes.textLength,
+      };
+      stringResourceMap.set(stringResName, newStrRes);
+
+      // Convert to an array of key-value pairs
+      const stringResourceArray = Array.from(stringResourceMap);
+      figma.ui.postMessage({
+        msg: "localization-ungroup-node-callback",
+        output: stringResourceArray,
+      });
+    } else {
+      Utils.error(
+        CONSOLE_TAG,
+        "This is not expected to ungroup a node that is not in the group",
+        nodeId
+      );
+    }
+  } else {
+    figma.notify(
+      `Ignore ungroup node from localization request because node ${nodeId} is not a text node.`
+    );
   }
 }
 

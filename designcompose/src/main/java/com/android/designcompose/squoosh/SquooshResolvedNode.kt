@@ -55,7 +55,7 @@ internal class SquooshResolvedNode(
         var x = 0f
         var y = 0f
         while (n != ancestor && n != null) {
-            val layout = n.computedLayout
+            val layout = n.layoutNode?.computedLayout ?: n.computedLayout
             if (layout != null) {
                 x += layout.left
                 y += layout.top

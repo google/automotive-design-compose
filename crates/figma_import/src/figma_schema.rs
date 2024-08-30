@@ -97,9 +97,9 @@ impl Rectangle {
 }
 
 // Generate an implementation of Into that converts this Rectangle to the one in dc_bundle
-impl Into<dc_bundle::legacy_definition::element::geometry::Rectangle> for &Rectangle {
-    fn into(self) -> dc_bundle::legacy_definition::element::geometry::Rectangle {
-        dc_bundle::legacy_definition::element::geometry::Rectangle {
+impl Into<dc_bundle::definition::element::Rectangle> for &Rectangle {
+    fn into(self) -> dc_bundle::definition::element::Rectangle {
+        dc_bundle::definition::element::Rectangle {
             x: Some(self.x()),
             y: Some(self.y()),
             width: Some(self.width()),

@@ -35,7 +35,7 @@ mod variable_utils;
 pub use dc_bundle::legacy_definition::DesignComposeDefinition;
 pub use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
 // Exports for library users
-pub use dc_bundle::legacy_definition::element::geometry::Rectangle;
+pub use dc_bundle::definition::element::Rectangle;
 pub use design_definition::ServerFigmaDoc;
 pub use design_definition::{load_design_def, save_design_def};
 pub use document::Document;

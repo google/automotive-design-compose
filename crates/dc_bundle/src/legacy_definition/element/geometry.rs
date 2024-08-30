@@ -122,31 +122,6 @@ impl TryFrom<proto::element::DimensionRect> for Rect<Dimension> {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
-pub struct Size<T> {
-    pub width: T,
-    pub height: T,
-}
-
-impl Default for Size<f32> {
-    fn default() -> Self {
-        Size { width: 0.0, height: 0.0 }
-    }
-}
-
-impl Default for Size<Dimension> {
-    fn default() -> Self {
-        Self { width: Dimension::Auto, height: Dimension::Auto }
-    }
-}
-
-impl From<proto::element::Size> for Size<f32> {
-    fn from(proto: proto::element::Size) -> Self {
-        Self { width: proto.width, height: proto.height }
-    }
-}
-
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone, Copy)]
 pub struct Rectangle {
     pub x: Option<f32>,

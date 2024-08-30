@@ -17,7 +17,8 @@
 use crate::Error;
 use serde::{Deserialize, Serialize};
 
-use crate::legacy_definition::element::geometry::{Dimension, Rect, Size};
+use crate::definition::element::Size;
+use crate::legacy_definition::element::geometry::{Dimension, Rect};
 use crate::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };
@@ -38,7 +39,7 @@ pub struct LayoutStyle {
     pub max_width: Dimension,
     pub min_height: Dimension,
     pub max_height: Dimension,
-    pub bounding_box: Size<f32>,
+    pub bounding_box: Size,
     pub flex_grow: f32,
     pub flex_shrink: f32,
     pub flex_basis: Dimension,
@@ -113,8 +114,7 @@ impl TryFrom<proto::layout::LayoutStyle> for LayoutStyle {
             bounding_box: proto
                 .bounding_box
                 .clone()
-                .ok_or(Error::MissingFieldError { field: "bounding_box".to_string() })?
-                .into(),
+                .ok_or(Error::MissingFieldError { field: "bounding_box".to_string() })?,
             flex_grow: proto.flex_grow,
             flex_shrink: proto.flex_shrink,
             flex_basis: proto.flex_basis.try_into()?,

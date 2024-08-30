@@ -402,8 +402,10 @@ private fun computeArcStrokePath(
     }
     path.addArc(
         Rect(left, top, width, height),
-        shape.start_angle_degrees,
-        shape.sweep_angle_degrees
+        // Arc angles rotate in the opposite direction than node rotations. To keep them consistent,
+        // negate the angles
+        -shape.start_angle_degrees,
+        -shape.sweep_angle_degrees
     )
 
     val arcPaint = android.graphics.Paint()
@@ -432,13 +434,16 @@ private fun computeArcStrokePath(
 // Draw cubic bezier from segment to outer arc (starting point)
 // Close path
 private fun computeArcPath(frameSize: Size, shape: ViewShape.Arc): Pair<List<Path>, List<Path>> {
+    // Arc angles rotate in the opposite direction than node rotations. To keep them consistent,
+    // negate the angles
+    val startAngleDegrees = -shape.start_angle_degrees
+    val sweepAngleDegrees = -shape.sweep_angle_degrees
     val fWidth = frameSize.width
     val fHeight = frameSize.height
-    val positiveSweep = shape.sweep_angle_degrees >= 0
-    val sweepAngle = if (positiveSweep) shape.sweep_angle_degrees else -shape.sweep_angle_degrees
-    val startAngle =
-        if (positiveSweep) shape.start_angle_degrees else shape.start_angle_degrees - sweepAngle
-    val endAngle = if (positiveSweep) startAngle + sweepAngle else shape.start_angle_degrees
+    val positiveSweep = sweepAngleDegrees >= 0
+    val sweepAngle = if (positiveSweep) sweepAngleDegrees else -sweepAngleDegrees
+    val startAngle = if (positiveSweep) startAngleDegrees else startAngleDegrees - sweepAngle
+    val endAngle = if (positiveSweep) startAngle + sweepAngle else startAngleDegrees
     val cornerRadius = shape.corner_radius
     val angleDirection = if (endAngle > startAngle) 1.0F else -1.0F
 

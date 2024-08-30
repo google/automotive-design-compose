@@ -464,7 +464,6 @@ async function clippyRefresh() {
 
 // If we were invoked with the "sync" command then run our sync logic and quit.
 if (figma.command === "sync") {
-  console.log("### Sync");
   // Copy the reactions data to our plugin data, or clear out our plugin data if there
   // are no reactions.
   function syncReactions(node: SceneNode) {
@@ -755,7 +754,7 @@ if (figma.command === "sync") {
 
     // Get angle/arc data if this is an ellipse
     if (node.type == "ELLIPSE")
-      ellipseAngle = radiansToDegrees(
+      ellipseAngle = -radiansToDegrees(
         (node as EllipseNode).arcData.endingAngle
       );
 
@@ -814,8 +813,11 @@ if (figma.command === "sync") {
   }
 
   function arcChanged(msg: any) {
-    let startAngle = msg.start;
-    let endAngle = msg.end;
+    // Arc angles in Figma are opposite when compared to a node's rotation, and go in
+    // clockwise order instead of counter-clockwise. In order to keep them consistent,
+    // negate the angles
+    let startAngle = -msg.start;
+    let endAngle = -msg.end;
     let value = percentToValue(msg.value, startAngle, endAngle);
     if (msg.discrete) value = value - (value % msg.discreteValue);
     value = degreesToRadians(value);

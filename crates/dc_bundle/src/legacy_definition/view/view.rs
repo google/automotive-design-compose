@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::legacy_definition::element::geometry::Rectangle;
+use crate::definition::element::Rectangle;
 use crate::legacy_definition::element::reactions::{FrameExtras, Reaction};
 use crate::legacy_definition::element::view_shape::ViewShape;
 use crate::legacy_definition::layout::positioning::OverflowDirection;

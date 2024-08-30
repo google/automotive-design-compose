@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-use crate::definition::element::{FontFeature, FontStyle, Hyperlink, TextDecoration};
+use crate::definition::element::{FontFeature, FontStyle, Hyperlink, Size, TextDecoration};
 use crate::definition::layout::FlexWrap;
 use crate::legacy_definition::element::background::Background;
 use crate::legacy_definition::element::font::{FontStretch, FontWeight};
-use crate::legacy_definition::element::geometry::Size;
 use crate::legacy_definition::element::path::{LineHeight, Stroke};
 use crate::legacy_definition::element::variable::NumOrVar;
 use crate::legacy_definition::interaction::pointer::PointerEvents;
@@ -80,7 +79,7 @@ pub struct NodeStyle {
     pub text_align_vertical: TextAlignVertical,
     pub text_overflow: TextOverflow,
     pub text_shadow: Option<TextShadow>,
-    pub node_size: Size<f32>,
+    pub node_size: Size,
     pub line_height: LineHeight,
     pub line_count: Option<usize>, // None means no limit on # lines.
     pub font_features: Vec<FontFeature>,

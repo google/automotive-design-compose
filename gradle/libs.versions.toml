@@ -40,7 +40,7 @@ androidx-datastore = "1.1.1"
 androidx-rules = "1.6.1"
 androidx-profileinstaller = "1.3.1"
 androidx-uiautomator = "2.3.0"
-androidx-benchmarkMacroJunit4 = "1.2.4"
+androidx-benchmarkMacroJunit4 = "1.3.0"
 androidx-tracing = "1.2.0"
 androidx-tracing-perfetto = "1.0.0"
 dokka = "1.9.20"
@@ -59,7 +59,7 @@ robolectric = "4.13"
 roborazzi = "1.26.0"
 androidx-material3 = "1.2.1"
 # Keep in sync with the "Install Protoc" steps in .github/workflows
-protoc = "4.27.3"
+protoc = "4.28.0"
 protobuf-plugin = "0.9.4"
 
 [libraries]

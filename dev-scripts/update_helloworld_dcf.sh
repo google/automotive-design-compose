@@ -19,7 +19,7 @@ DOC_ID=pxVlixodJqZL95zo2RzTHl
 echo "Update the dcf file for the reference app: helloworld..."
 
 function warn() {
-    echo -e "\033[1;33mWARNING: $*\033[0m" >&2 
+    echo -e "\033[1;33mWARNING: $*\033[0m" >&2
 }
 warn "Remember to update the nodes in the script to keep them in sync with the queries in HelloWorld_gen.kt!"
 
@@ -27,7 +27,6 @@ script_path=$(readlink -f "$0")
 script_dir=$(dirname "$script_path")
 
 cargo run --bin fetch --features=fetch -- \
---doc-id="$DOC_ID" \
---api-key="$FIGMA_ACCESS_TOKEN" \
---nodes="#MainFrame" \
---output="$script_dir"/../reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_"$DOC_ID".dcf
+    --doc-id="$DOC_ID" \
+    --nodes="#MainFrame" \
+    --output="$script_dir"/../reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_"$DOC_ID".dcf

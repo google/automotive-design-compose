@@ -56,8 +56,8 @@ pub struct Args {
     #[arg(short, long)]
     pub version_id: Option<String>,
     /// Figma API key to use for Figma requests
-    #[arg(short, long)]
-    pub api_key: String,
+    #[arg(short, long, env("FIGMA_API_KEY"))]
+    pub api_key: Option<String>,
     /// HTTP proxy server - <host>:<port>
     #[arg(long)]
     pub http_proxy: Option<String>,
@@ -74,8 +74,19 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
         Some(x) => ProxyConfig::HttpProxyConfig(x),
         None => ProxyConfig::None,
     };
-    let mut doc = Document::new(
-        args.api_key.as_str(),
+
+    // If the API Key wasn't provided on the path or via env var, load it from ~/.config/figma_access_token
+    let api_key = args.api_key.unwrap_or_else(|| {
+        let config_path = std::path::Path::new(&std::env::var("HOME").unwrap())
+            .join(".config")
+            .join("figma_access_token");
+
+        std::fs::read_to_string(config_path)
+            .expect("Could not read API key from ~/.config/figma_access_token")
+    });
+
+    let mut doc: Document = Document::new(
+        api_key.as_str(),
         args.doc_id,
         args.version_id.unwrap_or(String::new()),
         &proxy_config,

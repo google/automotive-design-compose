@@ -17,7 +17,7 @@
 DOC_ID=Ljph4e3sC0lHcynfXpoh9f
 
 function warn() {
-    echo -e "\033[1;33mWARNING: $*\033[0m" >&2 
+    echo -e "\033[1;33mWARNING: $*\033[0m" >&2
 }
 
 warn "If you made changes to the queries of the DesignSwitcher, update the nodes in the script too!"
@@ -26,19 +26,18 @@ script_path=$(readlink -f "$0")
 script_dir=$(dirname "$script_path")
 
 cargo run --bin fetch --features=fetch -- \
---doc-id="$DOC_ID" \
---api-key="$FIGMA_ACCESS_TOKEN" \
---nodes="#SettingsView" \
---nodes="#FigmaDoc" \
---nodes="#Message" \
---nodes="#MessageFailed" \
---nodes="#LoadingSpinner" \
---nodes="#Checkbox" \
---nodes="#NodeNamesCheckbox" \
---nodes="#MiniMessagesCheckbox" \
---nodes="#ShowRecompositionCheckbox" \
---nodes="#UseLocalStringResCheckbox" \
---nodes="#DesignViewMain" \
---nodes="#LiveMode" \
---nodes="#TopStatusBar" \
---output="$script_dir"/../designcompose/src/main/assets/figma/DesignSwitcherDoc_"$DOC_ID".dcf
+    --doc-id="$DOC_ID" \
+    --nodes="#SettingsView" \
+    --nodes="#FigmaDoc" \
+    --nodes="#Message" \
+    --nodes="#MessageFailed" \
+    --nodes="#LoadingSpinner" \
+    --nodes="#Checkbox" \
+    --nodes="#NodeNamesCheckbox" \
+    --nodes="#MiniMessagesCheckbox" \
+    --nodes="#ShowRecompositionCheckbox" \
+    --nodes="#UseLocalStringResCheckbox" \
+    --nodes="#DesignViewMain" \
+    --nodes="#LiveMode" \
+    --nodes="#TopStatusBar" \
+    --output="$script_dir"/../designcompose/src/main/assets/figma/DesignSwitcherDoc_"$DOC_ID".dcf

@@ -31,12 +31,13 @@ use crate::{
 use dc_bundle::definition::element::{FontFeature, FontStyle};
 
 use crate::reaction_schema::ReactionJson;
+use dc_bundle::definition::element::color_or_var::ColorOrVar;
+use dc_bundle::definition::element::num_or_var::NumOrVar;
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::geometry::Dimension;
 use dc_bundle::legacy_definition::element::path::{LineHeight, Path, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
-use dc_bundle::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use dc_bundle::legacy_definition::element::view_shape::ViewShape;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::positioning::{

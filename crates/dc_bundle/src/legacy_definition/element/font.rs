@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use crate::legacy_definition::element::variable::NumOrVar;
+use crate::definition::element::num_or_var::NumOrVar;
 use crate::utils::f32_eq;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -82,10 +82,9 @@ impl PartialEq for FontWeight {
     fn eq(&self, other: &Self) -> bool {
         match (&self.0, &other.0) {
             (NumOrVar::Num(a), NumOrVar::Num(b)) => a == b,
-            (
-                NumOrVar::Var { id: id1, fallback: fb1 },
-                NumOrVar::Var { id: id2, fallback: fb2 },
-            ) => id1 == id2 && fb1 == fb2,
+            (NumOrVar::Var(nv1), NumOrVar::Var(nv2)) => {
+                nv1.id == nv2.id && nv1.fallback == nv2.fallback
+            }
             _ => false,
         }
     }

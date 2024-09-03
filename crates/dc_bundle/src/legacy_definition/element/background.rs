@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::legacy_definition::element::variable::ColorOrVar;
+use crate::definition::element::color_or_var::ColorOrVar;
 use crate::legacy_definition::modifier::filter::FilterOp;
 use crate::legacy_definition::modifier::transform::AffineTransform;
 use serde::{Deserialize, Serialize};

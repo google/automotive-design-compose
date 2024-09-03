@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+use crate::definition::element::num_or_var::NumOrVar;
 use crate::definition::element::{FontFeature, FontStyle, Hyperlink, Size, TextDecoration};
 use crate::definition::layout::FlexWrap;
 use crate::legacy_definition::element::background::Background;
 use crate::legacy_definition::element::font::{FontStretch, FontWeight};
 use crate::legacy_definition::element::path::{LineHeight, Stroke};
-use crate::legacy_definition::element::variable::NumOrVar;
 use crate::legacy_definition::interaction::pointer::PointerEvents;
 use crate::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use crate::legacy_definition::layout::positioning::{LayoutSizing, Overflow};

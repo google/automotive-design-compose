@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+use crate::definition::element::color_or_var::ColorOrVar;
+use crate::definition::element::num_or_var::NumOrVar;
 use crate::definition::element::Color;
 use crate::definition::element::{FontFeature, FontStyle, Hyperlink, TextDecoration};
 use crate::legacy_definition::element::background::Background;
 use crate::legacy_definition::element::font::{FontStretch, FontWeight};
 use crate::legacy_definition::element::path::LineHeight;
-use crate::legacy_definition::element::variable::{ColorOrVar, NumOrVar};
 use serde::{Deserialize, Serialize};
 
 // These are the style properties that apply to text, so we can use them on subsections of

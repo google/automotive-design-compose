@@ -18,20 +18,6 @@ use crate::definition::element::Color;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-// Enum for fields that represent either a fixed number or a number variable
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum NumOrVar {
-    Num(f32),
-    Var { id: String, fallback: f32 },
-}
-
-// Enum for fields that represent either a fixed color or a color variable
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub enum ColorOrVar {
-    Color(Color),
-    Var { id: String, fallback: Color },
-}
-
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct VariableAlias {
     pub r#type: String,

@@ -253,7 +253,7 @@ internal fun DesignText(
                             textShadow.offset[0] * density.density,
                             textShadow.offset[1] * density.density
                         ),
-                    color = convertColor(textShadow.color)
+                    color = textShadow.color.toColor()
                 )
             )
         }

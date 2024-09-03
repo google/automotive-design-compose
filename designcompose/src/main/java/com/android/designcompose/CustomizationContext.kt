@@ -183,11 +183,11 @@ data class ImageContext(
         if (background.size == 1 && background[0] is Background.Solid) {
             val color = (background[0] as Background.Solid).value
             if (color is ColorOrVar.Color) {
-                val color = color.value.color
-                return ((color[3].toInt() shl 24) and 0xFF000000.toInt()) or
-                    ((color[0].toInt() shl 16) and 0x00FF0000) or
-                    ((color[1].toInt() shl 8) and 0x0000FF00) or
-                    (color[2].toInt() and 0x000000FF)
+                val color = color.value
+                return ((color.a shl 24) and 0xFF000000.toInt()) or
+                    ((color.r shl 16) and 0x00FF0000) or
+                    ((color.g shl 8) and 0x0000FF00) or
+                    (color.b and 0x000000FF)
             }
         }
         return null

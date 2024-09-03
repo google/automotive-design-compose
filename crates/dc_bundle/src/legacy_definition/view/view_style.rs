@@ -81,7 +81,7 @@ impl ViewStyle {
             delta.node_style.text_overflow = other.node_style.text_overflow;
         }
         if self.node_style.text_shadow != other.node_style.text_shadow {
-            delta.node_style.text_shadow = other.node_style.text_shadow;
+            delta.node_style.text_shadow = other.node_style.text_shadow.clone();
         }
         if self.node_style.node_size != other.node_style.node_size {
             delta.node_style.node_size = other.node_style.node_size.clone();

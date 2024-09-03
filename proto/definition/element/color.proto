@@ -30,3 +30,11 @@ message Color {
   uint32 b = 3;
   uint32 a = 4;
 }
+
+// Color represented using floats in the range of 0 to 1.
+message FloatColor {
+  float r = 1;
+  float g = 2;
+  float b = 3;
+  float a = 4;
+}

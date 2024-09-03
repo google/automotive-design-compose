@@ -92,15 +92,6 @@ import java.util.Optional
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-/** Convert a serialized color to a Compose color */
-internal fun convertColor(color: com.android.designcompose.serdegen.Color): Color {
-    val a = color.color[3].toInt()
-    val r = color.color[0].toInt()
-    val g = color.color[1].toInt()
-    val b = color.color[2].toInt()
-    return Color(r, g, b, a)
-}
-
 /** Multiply out a dimension against available space */
 internal fun Dimension.resolve(available: Int, density: Float): Int? {
     return when (this) {
@@ -1713,11 +1704,12 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
     }
 }
 
+/** Convert a serialized color to a Compose color */
 internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
-    val a = color[3].toInt()
-    val r = color[0].toInt()
-    val g = color[1].toInt()
-    val b = color[2].toInt()
+    val a = a.toInt()
+    val r = r.toInt()
+    val g = g.toInt()
+    val b = b.toInt()
     return Color(r, g, b, a)
 }
 

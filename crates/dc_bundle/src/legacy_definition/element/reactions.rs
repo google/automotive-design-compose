@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::legacy_definition::element::color::FloatColor;
+use crate::definition::element::FloatColor;
 use crate::legacy_definition::element::vector::Vector;
 use serde::{Deserialize, Serialize};
 
@@ -195,7 +195,7 @@ pub enum OverlayPositionType {
     Manual, // then we look at the Action
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Copy)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct OverlayBackground {
     pub color: Option<FloatColor>,
 }

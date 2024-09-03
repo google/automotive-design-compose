@@ -488,7 +488,7 @@ internal fun ContentDrawScope.render(
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color = convertColor(shadow.shadowStyle.color).toArgb()
+        shadowPaint.color = shadow.shadowStyle.color.toColor().toArgb()
         if (shadow.shadowStyle.blur_radius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
@@ -545,7 +545,7 @@ internal fun ContentDrawScope.render(
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color = convertColor(shadow.shadowStyle.color).toArgb()
+        shadowPaint.color = shadow.shadowStyle.color.toColor().toArgb()
         if (shadow.shadowStyle.blur_radius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
@@ -807,7 +807,7 @@ internal fun squooshShapeRender(
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color = convertColor(shadow.shadowStyle.color).toArgb()
+        shadowPaint.color = shadow.shadowStyle.color.toColor().toArgb()
         if (shadow.shadowStyle.blur_radius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
@@ -866,7 +866,7 @@ internal fun squooshShapeRender(
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color = convertColor(shadow.shadowStyle.color).toArgb()
+        shadowPaint.color = shadow.shadowStyle.color.toColor().toArgb()
         if (shadow.shadowStyle.blur_radius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(

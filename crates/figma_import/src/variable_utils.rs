@@ -15,7 +15,7 @@
  */
 
 use crate::figma_schema;
-use dc_bundle::legacy_definition::element::color::FloatColor;
+use dc_bundle::definition::element::FloatColor;
 use dc_bundle::legacy_definition::element::variable::{
     ColorOrVar, NumOrVar, Variable, VariableAlias, VariableType, VariableValue, VariableValueMap,
 };

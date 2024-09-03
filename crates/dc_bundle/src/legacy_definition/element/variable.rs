@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::legacy_definition::element::color::Color;
+use crate::definition::element::Color;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

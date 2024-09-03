@@ -14,7 +14,8 @@
 
 use std::collections::HashMap;
 
-use dc_bundle::legacy_definition::element::color::{Color, FloatColor};
+use dc_bundle::definition::element::Color;
+use dc_bundle::definition::element::FloatColor;
 use serde::{Deserialize, Serialize};
 
 // We use serde to decode Figma's JSON documents into Rust structures.

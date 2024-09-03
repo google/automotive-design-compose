@@ -39,7 +39,6 @@ import com.android.designcompose.TextMeasureData
 import com.android.designcompose.VariableState
 import com.android.designcompose.asBrush
 import com.android.designcompose.blurFudgeFactor
-import com.android.designcompose.convertColor
 import com.android.designcompose.getText
 import com.android.designcompose.getTextContent
 import com.android.designcompose.getTextState
@@ -50,6 +49,7 @@ import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.toColor
 import java.util.Optional
 import kotlin.math.roundToInt
 
@@ -236,7 +236,7 @@ internal fun squooshComputeTextInfo(
                             textShadow.offset[0] * density.density,
                             textShadow.offset[1] * density.density
                         ),
-                    color = convertColor(textShadow.color)
+                    color = textShadow.color.toColor()
                 )
             )
         }

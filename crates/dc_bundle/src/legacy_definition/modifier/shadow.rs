@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::legacy_definition::element::color::Color;
+use crate::definition::element::Color;
 use serde::{Deserialize, Serialize};
 
 /// Shadows can be applied to the border box, or the stroke box.
@@ -40,7 +40,7 @@ impl Default for ShadowBox {
 }
 
 /// BoxShadow defines a CSS-style box shadow, either outset or inset.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum BoxShadow {
     Outset {
         blur_radius: f32,
@@ -91,7 +91,7 @@ impl BoxShadow {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TextShadow {
     pub blur_radius: f32,
     pub color: Color,

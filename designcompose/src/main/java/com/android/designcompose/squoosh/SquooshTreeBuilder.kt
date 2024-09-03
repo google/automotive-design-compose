@@ -549,15 +549,11 @@ private fun generateOverlayNode(
     nodeStyle.background = listOf()
 
     overlay.overlayBackground.color.ifPresent { color ->
-        val c =
-            listOf(
-                (color.r * 255.0).toInt().toByte(),
-                (color.g * 255.0).toInt().toByte(),
-                (color.b * 255.0).toInt().toByte(),
-                (color.a * 255.0).toInt().toByte(),
-            )
         val colorBuilder = Color.Builder()
-        colorBuilder.color = c
+        colorBuilder.r = (color.r * 255.0).toInt()
+        colorBuilder.g = (color.g * 255.0).toInt()
+        colorBuilder.b = (color.b * 255.0).toInt()
+        colorBuilder.a = (color.a * 255.0).toInt()
         nodeStyle.background = listOf(Background.Solid(ColorOrVar.Color(colorBuilder.build())))
     }
     overlayStyle.layout_style = layoutStyle.build()

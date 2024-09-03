@@ -192,7 +192,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::element::variable::VariableType>(&samples)
         .expect("couldn't trace VariableType");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::color::FloatColor>(&samples)
+        .trace_type::<dc_bundle::definition::element::FloatColor>(&samples)
         .expect("couldn't trace FloatColor");
     tracer
         .trace_type::<dc_bundle::legacy_definition::element::variable::VariableAlias>(&samples)

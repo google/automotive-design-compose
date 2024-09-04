@@ -212,6 +212,10 @@ impl ViewStyle {
         if self.node_style.meter_data != other.node_style.meter_data {
             delta.node_style.meter_data = other.node_style.meter_data.clone();
         }
+        if self.node_style.img_replacement_res_name != other.node_style.img_replacement_res_name {
+            delta.node_style.img_replacement_res_name =
+                other.node_style.img_replacement_res_name.clone();
+        }
         delta
     }
 }

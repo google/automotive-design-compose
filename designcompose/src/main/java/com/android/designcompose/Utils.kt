@@ -636,6 +636,11 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.node_style.meter_data
         }
+    nodeStyle.img_replacement_res_name = if (override.node_style.img_replacement_res_name.isPresent) {
+        override.node_style.img_replacement_res_name
+    } else {
+        base.node_style.img_replacement_res_name
+    }
     style.layout_style = layoutStyle.build()
     style.node_style = nodeStyle.build()
     return style.build()
@@ -749,6 +754,7 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
     builder.aspect_ratio = aspect_ratio
     builder.pointer_events = pointer_events
     builder.meter_data = meter_data
+    builder.img_replacement_res_name = img_replacement_res_name
     return builder
 }
 
@@ -795,6 +801,7 @@ internal fun defaultNodeStyle(): NodeStyle.Builder {
     builder.aspect_ratio = com.android.designcompose.serdegen.Number.Undefined()
     builder.pointer_events = PointerEvents.Auto()
     builder.meter_data = Optional.empty()
+    builder.img_replacement_res_name = Optional.empty()
     builder.hyperlink = Optional.empty()
     return builder
 }
@@ -1343,27 +1350,17 @@ internal fun Background.asBrush(
         is Background.Image -> {
             val backgroundImage = this
             val imageTransform = backgroundImage.transform.asSkiaMatrix()
-            if (DebugNodeManager.getUseLocalRes().value) {
-                backgroundImage.res_name.orElse(null)?.let {
-                    val resId =
-                        appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
-                    if (resId != Resources.ID_NULL) {
-                        val bitmap =
-                            BitmapFactoryWithCache.loadResource(appContext.resources, resId)
-                        return Pair(
-                            RelativeImageFill(
-                                image = bitmap,
-                                imageDensity = density,
-                                displayDensity = density,
-                                imageTransform = imageTransform,
-                                scaleMode = backgroundImage.scale_mode
-                            ),
-                            backgroundImage.opacity
-                        )
-                    } else {
-                        Log.w(TAG, "No drawable resource $it found")
-                    }
-                }
+            loadDrawable(backgroundImage.res_name, appContext)?.let {
+                return Pair(
+                    RelativeImageFill(
+                        image = it,
+                        imageDensity = density,
+                        displayDensity = density,
+                        imageTransform = imageTransform,
+                        scaleMode = backgroundImage.scale_mode
+                    ),
+                    backgroundImage.opacity
+                )
             }
             val imageFillAndDensity =
                 backgroundImage.key.orElse(null)?.let { document.image(it.value, density) }
@@ -1475,6 +1472,20 @@ internal fun Background.asBrush(
                         ),
                         1.0f
                     )
+            }
+        }
+    }
+    return null
+}
+
+internal fun loadDrawable(resName: Optional<String>, appContext: Context): Bitmap? {
+    if (DebugNodeManager.getUseLocalRes().value) {
+        resName.orElse(null)?.let {
+            val resId = appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
+            if (resId != Resources.ID_NULL) {
+                return BitmapFactoryWithCache.loadResource(appContext.resources, resId)
+            } else {
+                Log.w(TAG, "No drawable resource $it found")
             }
         }
     }

@@ -1468,6 +1468,13 @@ fn visit_node(
         }
     }
 
+    // Check to see if there is additional plugin data to render the node use a resource drawable.
+    if let Some(res_data) = plugin_data {
+        if let Some(res_name) = res_data.get("image_replacement_res_name") {
+            style.node_style.img_replacement_res_name = Some(res_name.into());
+        }
+    }
+
     // Figure out the ViewShape from the node type.
     let view_shape = match &node.data {
         figma_schema::NodeData::BooleanOperation { vector, .. }

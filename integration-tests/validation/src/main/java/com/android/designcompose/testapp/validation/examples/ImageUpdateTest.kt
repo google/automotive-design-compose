@@ -23,7 +23,7 @@ import com.android.designcompose.annotation.DesignDoc
 // TEST Image Update Test. After this loads, rename #Stage in the Figma doc. After the app
 // updates,
 // rename it back to #Stage. The image should reload correctly.
-@DesignDoc(id = "oQw7kiy94fvdVouCYBC9T0")
+@DesignDoc(id = "6jg63z15XG1GdIt3F62Ojy")
 interface ImageUpdateTest {
     @DesignComponent(node = "#Stage") fun Main() {}
 }

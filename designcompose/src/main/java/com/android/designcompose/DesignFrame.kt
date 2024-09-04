@@ -197,6 +197,10 @@ internal fun DesignFrame(
                 }
             )
     }
+    val imageReplacement = loadDrawable(style.node_style.img_replacement_res_name, LocalContext.current)
+    if (customImage == null) {
+        customImage = imageReplacement
+    }
 
     // Get the modeValues used to resolve variable values
     val modeValues = VariableManager.currentModeValues(view.explicit_variable_modes)
@@ -294,7 +298,9 @@ internal fun DesignFrame(
                         horizontalArrangement = layoutInfo.arrangement,
                         verticalAlignment = layoutInfo.alignment
                     ) {
-                        content()
+                        if (imageReplacement == null) {
+                            content()
+                        }
                     }
                 }
             }
@@ -365,7 +371,9 @@ internal fun DesignFrame(
                         verticalArrangement = layoutInfo.arrangement,
                         horizontalAlignment = layoutInfo.alignment
                     ) {
-                        content()
+                        if (imageReplacement == null) {
+                            content()
+                        }
                     }
                 }
             }
@@ -690,7 +698,9 @@ internal fun DesignFrame(
             m = m.then(layoutInfo.selfModifier)
             DesignVariableExplicitModeValues(modeValues) {
                 DesignFrameLayout(m, view, layoutId, rootLayoutId, layoutState, designScroll) {
-                    content()
+                    if (imageReplacement == null) {
+                        content()
+                    }
                 }
             }
         }

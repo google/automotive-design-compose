@@ -18,6 +18,7 @@ import * as Utils from "./utils";
 import * as Localization from "./localization-module";
 import * as DesignSpecs from "./design-spec-module";
 import * as ImageRes from "./image-res-module";
+import * as VectorRes from "./vector-res-module";
 
 // Warning component.
 interface ClippyWarningRun {
@@ -564,6 +565,16 @@ if (figma.command === "sync") {
   };
 } else if (figma.command === "clear-image-res") {
   ImageRes.clear();
+} else if (figma.command === "export-vectors") {
+  VectorRes.exportAllVectorsAsync();
+  figma.ui.onmessage = (msg) => {
+    if (msg.msg === "show-node") {
+      Utils.showNode(msg.node);
+    } else if (msg.msg === "update-vector-res-name") {
+    }
+  }
+} else if (figma.command === "clear-vector-res") {
+
 } else if (figma.command === "move-plugin-data") {
   function movePluginDataWithKey(node: BaseNode, key: string) {
     // Read the private plugin data, write to shared

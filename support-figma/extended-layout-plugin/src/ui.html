@@ -398,6 +398,18 @@
 </div>
 <!-- END OF IMAGE RES PLUGIN UI -->
 
+<!-- BEGIN OF VECTOR RES PLUGIN UI -->
+<div id="vectorExport" class="page page-padding-large">
+  <div style="border-bottom: solid #000000; font-weight: bold;">Vector Frames:</div>
+  <div style="font-size: 14; margin-top: 8px;"><li>Vector frames will be exported as png files, supporting ldpi, mdpi, hdpi, xhdpi and xxhdpi densities.</li></div>
+  <hr/>
+  <div id="vectorInfo"></div>
+  <button id="downloadVectorButton" class="styled-button" style="width: 200px; margin-top: 16px;">
+    Download
+  </button>
+</div>
+<!-- END OF VECTOR RES PLUGIN UI -->
+
 <div id="toast"></div>
 
 <script>
@@ -1341,10 +1353,9 @@
 
   // jpeg and png will be downloaded as png. Gif will be downloaded as gif. Other
   // image types are not supported.
-  async function processImage(imageHash, imageBytes) {
+  async function processImage(imageBytes) {
     const imageType = getImageType(imageBytes);
     switch(imageType) {
-      case 'png':
       case 'jpeg':
         const fileFormat = 'png';
         const canvas = document.createElement('canvas');
@@ -1352,6 +1363,7 @@
         const ctx = canvas.getContext('2d');
         const newBytes = await convert(canvas, ctx, imageBytes);
         return {element: canvas, outputImgBytes: newBytes, imageFormat: fileFormat};
+      case 'png':
       case 'gif':
       default:
         const blob = new Blob([imageBytes], { type: `image/${imageType}` });
@@ -1407,7 +1419,7 @@
       resNameElement.appendChild(input);
       imageInfo.appendChild(resNameElement);
 
-      let {element, outputImgBytes, imageFormat} = await processImage(imageHash, imageBytes);
+      let {element, outputImgBytes, imageFormat} = await processImage(imageBytes);
       imageInfo.appendChild(element);
 
       if (exportedImageHashArray.includes(imageHash)) {
@@ -1460,8 +1472,7 @@
           link.className = 'button button--primary';
           link.href = blobURL;
           link.download = "drawable.zip"
-          link.click()
-          link.setAttribute('download', name + '.zip');
+          link.click();
 
           parent.postMessage({
             pluginMessage: {
@@ -1472,12 +1483,85 @@
     });
   }
 
+  // Display the vector frames
+  async function createVectorImageOutput(vectorResArray) {
+    const vectorInfo = document.getElementById('vectorInfo');
+    vectorInfo.innerHTML = "";
+
+    const vectorResNameMap = new Map(vectorResArray);
+    const jszip = new JSZip();
+    for (const [vectorResName, vectorRes] of vectorResNameMap) {
+      const resNameElement = document.createElement('div');
+      resNameElement.style.marginTop = '8px';
+      resNameElement.textContent = 'Image res name: ';
+      const resName = vectorResName;
+      const input = document.createElement("input");
+      input.addEventListener('change', function (evt) {
+        const newValue = this.value;
+        parent.postMessage({
+            pluginMessage: {
+              msg: 'update-vector-res-name',
+              resName: newValue,
+              node: vectorRes["nodeId"],
+            }
+          }, '*');
+        });
+      input.setAttribute("type", "text");
+      input.setAttribute("value", resName);
+      resNameElement.appendChild(input);
+      vectorInfo.appendChild(resNameElement);
+
+      let {element, outputImgBytes, imageFormat} = await processImage(vectorRes["mdpiBytes"]);
+      vectorInfo.appendChild(element);
+
+      const nodeIdElement = document.createElement('div');
+      nodeIdElement.style.marginTop = '8px';
+      nodeIdElement.textContent = "Node id: ";
+      nodeIdElement.appendChild(createNodeIdSpan(vectorRes["nodeId"]));
+      vectorInfo.appendChild(nodeIdElement);
+
+      const divider = document.createElement('hr');
+      vectorInfo.appendChild(divider);
+
+      jszip.file(`drawable/${resName}.${imageFormat}`, vectorRes["ldpiBytes"], {base64: true});
+      jszip.file(`drawable-mdpi/${resName}.${imageFormat}`, outputImgBytes, {base64: true});
+      jszip.file(`drawable-hdpi/${resName}.${imageFormat}`, vectorRes["hdpiBytes"], {base64: true});
+      jszip.file(`drawable-xhdpi/${resName}.${imageFormat}`, vectorRes["xhdpiBytes"], {base64: true});
+      jszip.file(`drawable-xxhdpi/${resName}.${imageFormat}`, vectorRes["xxhdpiBytes"], {base64: true});
+      jszip.file(`drawable-xxxhdpi/${resName}.${imageFormat}`, vectorRes["xxxhdpiBytes"], {base64: true});
+    }
+
+    const downloadButton = document.getElementById('downloadVectorButton');
+
+    downloadButton.addEventListener('click', ()=>{
+
+      jszip.generateAsync({ type: 'blob' })
+        .then((content) => {
+          const blobURL = window.URL.createObjectURL(content);
+          const link = document.createElement('a');
+          link.className = 'button button--primary';
+          link.href = blobURL;
+          link.download = "res.zip";
+          link.click();
+
+          parent.postMessage({
+            pluginMessage: {
+              msg: 'close-plugin'
+            }
+          }, '*');
+        });
+    });
+
+  }
+
   jsonInputFile.addEventListener('change', jsonInputFileChanged, false);
   stringsXmlInputFile.addEventListener('change', stringsXmlInputFileChanged, false);
 
   // Update the form from a selection change.
   window.onmessage = async function (event) {
     let msg = event.data.pluginMessage;
+    // JSZip also posts messages but not plugin messages. Add a check to avoid errors in logging.
+    if (!msg) return;
 
     if (msg.msg == 'selection-cleared') {
       currentSelection = null;
@@ -1602,10 +1686,8 @@
     }
     else if (msg.msg == 'meters-selection') {
       setMeterData(msg);
-    }
-
-    if (msg.msg == 'localization') {
-      openPage('localizationOptions')
+    } else if (msg.msg == 'localization') {
+      openPage('localizationOptions');
     } else if (msg.msg == 'localization-output') {
       loadOutputStringData(msg.output);
       createOutputStringTable('outputStrings');
@@ -1618,7 +1700,9 @@
     } else if (msg.msg == 'image-export') {
       openPage('imageExport');
       createImageOutput(msg.imageNodesArray, msg.imageResNameArray, msg.imageBytesArray, msg.exportedImageHashArray);
+    } else if (msg.msg == 'vector-export') {
+      openPage('vectorExport');
+      createVectorImageOutput(msg.vectorResArray, msg.existingImageDrawableResNames);
     }
-
   }
 </script>

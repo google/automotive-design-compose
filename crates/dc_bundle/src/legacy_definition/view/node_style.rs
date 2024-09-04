@@ -104,6 +104,8 @@ pub struct NodeStyle {
     pub aspect_ratio: Number,
     pub pointer_events: PointerEvents,
     pub meter_data: Option<MeterData>,
+
+    pub img_replacement_res_name: Option<String>,
 }
 
 impl Default for NodeStyle {
@@ -151,6 +153,7 @@ impl Default for NodeStyle {
             aspect_ratio: Number::default(),
             pointer_events: PointerEvents::default(),
             meter_data: None,
+            img_replacement_res_name: None,
         }
     }
 }

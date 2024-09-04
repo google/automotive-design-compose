@@ -15,9 +15,11 @@
  */
 
 use crate::figma_schema;
+use dc_bundle::definition::element::color_or_var::{ColorOrVar, ColorVar};
+use dc_bundle::definition::element::num_or_var::{NumOrVar, NumVar};
 use dc_bundle::definition::element::FloatColor;
 use dc_bundle::legacy_definition::element::variable::{
-    ColorOrVar, NumOrVar, Variable, VariableAlias, VariableType, VariableValue, VariableValueMap,
+    Variable, VariableAlias, VariableType, VariableValue, VariableValueMap,
 };
 use std::collections::HashMap;
 
@@ -38,7 +40,7 @@ impl FromFigmaVar<f32> for NumOrVar {
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
-            NumOrVar::Var { id: var, fallback: var_value }
+            NumOrVar::Var(NumVar { id: var, fallback: var_value })
         } else {
             NumOrVar::Num(var_value)
         }
@@ -53,7 +55,7 @@ impl FromFigmaVar<&FloatColor> for ColorOrVar {
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
-            ColorOrVar::Var { id: var, fallback: color.into() }
+            ColorOrVar::Var(ColorVar { id: var, fallback: Some(color.into()) })
         } else {
             ColorOrVar::Color(color.into())
         }

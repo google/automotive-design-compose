@@ -198,10 +198,10 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::element::variable::VariableAlias>(&samples)
         .expect("couldn't trace VariableAlias");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::NumOrVar>(&samples)
+        .trace_type::<dc_bundle::definition::element::num_or_var::NumOrVar>(&samples)
         .expect("couldn't trace NumOrVar");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::ColorOrVar>(&samples)
+        .trace_type::<dc_bundle::definition::element::color_or_var::ColorOrVar>(&samples)
         .expect("couldn't trace ColorOrVar");
     tracer
         .trace_type::<dc_bundle::legacy_definition::element::variable::VariableValue>(&samples)

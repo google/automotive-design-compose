@@ -32,6 +32,7 @@ import com.android.designcompose.serdegen.Variable
 import com.android.designcompose.serdegen.VariableMap
 import com.android.designcompose.serdegen.VariableValue
 import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 // A variable mode, e.g. "light" or "dark"
 typealias VariableMode = String
@@ -317,7 +318,7 @@ internal object VariableManager {
 internal fun NumOrVar.getValue(variableState: VariableState): Float {
     return when (this) {
         is NumOrVar.Num -> value
-        is NumOrVar.Var -> VariableManager.getNumber(id, fallback, variableState) ?: 0F
+        is NumOrVar.Var -> VariableManager.getNumber(value.id, value.fallback, variableState) ?: 0F
         else -> 0F
     }
 }
@@ -326,7 +327,10 @@ internal fun NumOrVar.getValue(variableState: VariableState): Float {
 internal fun ColorOrVar.getValue(variableState: VariableState): Color? {
     return when (this) {
         is ColorOrVar.Color -> value.toColor()
-        is ColorOrVar.Var -> VariableManager.getColor(id, fallback.toColor(), variableState)
+        is ColorOrVar.Var -> {
+            val fallback = value.fallback.getOrNull()?.toColor()
+            VariableManager.getColor(value.id, fallback, variableState)
+        }
         else -> null
     }
 }

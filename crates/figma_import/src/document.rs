@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use dc_bundle::definition::element::{
+    variable_map::NameIdMap, Collection, Mode, Variable, VariableMap,
+};
 use dc_bundle::legacy_definition::element::node::NodeQuery;
-use dc_bundle::legacy_definition::element::variable::{Collection, Mode, Variable, VariableMap};
 #[cfg(not(feature = "http_mock"))]
 use std::time::Duration;
 use std::{
@@ -880,17 +882,18 @@ impl Document {
         }
 
         let mut variables: HashMap<String, Variable> = HashMap::new();
-        let mut variable_name_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+        let mut variable_name_map: HashMap<String, NameIdMap> = HashMap::new();
         if let Some(variables_response) = self.variables_response.clone() {
             for (id, v) in variables_response.meta.variables.iter() {
                 let var = create_variable(v);
                 let maybe_name_map = variable_name_map.get_mut(&var.variable_collection_id);
                 if let Some(name_map) = maybe_name_map {
-                    name_map.insert(var.name.clone(), id.clone());
+                    name_map.m.insert(var.name.clone(), id.clone());
                 } else {
                     let mut name_to_id = HashMap::new();
                     name_to_id.insert(var.name.clone(), id.clone());
-                    variable_name_map.insert(var.variable_collection_id.clone(), name_to_id);
+                    variable_name_map
+                        .insert(var.variable_collection_id.clone(), NameIdMap { m: name_to_id });
                 }
 
                 variables.insert(id.clone(), var);

@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.serdegen.ColorOrVar
 import com.android.designcompose.serdegen.NumOrVar
+import com.android.designcompose.serdegen.Value
 import com.android.designcompose.serdegen.Variable
 import com.android.designcompose.serdegen.VariableMap
 import com.android.designcompose.serdegen.VariableValue
@@ -242,7 +243,7 @@ internal object VariableManager {
                 collectionId?.let { cId ->
                     val nameMap = varMap.variable_name_map[cId]
                     nameMap?.let { nMap ->
-                        val resolvedVarId = nMap[v.name]
+                        val resolvedVarId = nMap.m[v.name]
                         resolvedVarId?.let { newVarId ->
                             return varMap.variables[newVarId]
                         }
@@ -267,7 +268,7 @@ internal object VariableManager {
                     ?: c.mode_id_hash[c.default_mode_id]
                         ?.id // Fallback to default mode in collection
             modeId?.let { mId ->
-                return values_by_mode.values_by_mode[mId]
+                return values_by_mode.getOrNull()?.values_by_mode?.get(mId)
             }
         }
         return null
@@ -284,12 +285,17 @@ internal object VariableManager {
         }
         val value = getValue(variableMap, variableState)
         value?.let { vv ->
-            when (vv) {
-                is VariableValue.Color -> return vv.value.toColor()
-                is VariableValue.Alias ->
-                    return resolveVariable(vv.value.id, variableState)
-                        ?.getColor(variableMap, variableState)
-                else -> return null
+            return if (vv.value.isPresent) {
+                val v = vv.value.get()
+                when (v) {
+                    is Value.Color -> v.value.toColor()
+                    is Value.Alias ->
+                        resolveVariable(v.value, variableState)
+                            ?.getColor(variableMap, variableState)
+                    else -> null
+                }
+            } else {
+                null
             }
         }
         return null
@@ -302,12 +308,14 @@ internal object VariableManager {
     ): Float? {
         val value = getValue(variableMap, variableState)
         value?.let { vv ->
-            when (vv) {
-                is VariableValue.Number -> return vv.value
-                is VariableValue.Alias ->
-                    return resolveVariable(vv.value.id, variableState)
-                        ?.getNumber(variableMap, variableState)
-                else -> return null
+            if (vv.value.isPresent) {
+                return when (val v = vv.value.get()) {
+                    is Value.Number -> v.value
+                    is Value.Alias ->
+                        resolveVariable(v.value, variableState)
+                            ?.getNumber(variableMap, variableState)
+                    else -> null
+                }
             }
         }
         return null

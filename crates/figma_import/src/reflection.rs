@@ -183,20 +183,17 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::element::view_shape::StrokeCap>(&samples)
         .expect("couldn't trace StrokeCap");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::Mode>(&samples)
+        .trace_type::<dc_bundle::definition::element::Mode>(&samples)
         .expect("couldn't trace Mode");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::Collection>(&samples)
+        .trace_type::<dc_bundle::definition::element::Collection>(&samples)
         .expect("couldn't trace Collection");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::VariableType>(&samples)
+        .trace_type::<dc_bundle::definition::element::variable::VariableType>(&samples)
         .expect("couldn't trace VariableType");
     tracer
         .trace_type::<dc_bundle::definition::element::FloatColor>(&samples)
         .expect("couldn't trace FloatColor");
-    tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::VariableAlias>(&samples)
-        .expect("couldn't trace VariableAlias");
     tracer
         .trace_type::<dc_bundle::definition::element::num_or_var::NumOrVar>(&samples)
         .expect("couldn't trace NumOrVar");
@@ -204,13 +201,16 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::color_or_var::ColorOrVar>(&samples)
         .expect("couldn't trace ColorOrVar");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::VariableValue>(&samples)
+        .trace_type::<dc_bundle::definition::element::VariableValue>(&samples)
         .expect("couldn't trace VariableValue");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::Variable>(&samples)
+        .trace_type::<dc_bundle::definition::element::variable_value::Value>(&samples)
+        .expect("couldn't trace variable_value::Value");
+    tracer
+        .trace_type::<dc_bundle::definition::element::Variable>(&samples)
         .expect("couldn't trace Variable");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::variable::VariableMap>(&samples)
+        .trace_type::<dc_bundle::definition::element::VariableMap>(&samples)
         .expect("couldn't trace VariableMap");
     tracer
         .trace_type::<dc_bundle::legacy_definition::element::view_shape::ViewShape>(&samples)

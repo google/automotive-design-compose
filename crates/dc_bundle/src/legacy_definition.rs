@@ -24,9 +24,9 @@ use std::sync::Arc;
 // module for the generated protobuf files to `proto`, so that all of the protobuf-generated types
 // inside `legacy_definition` must be prepended with `proto::`
 pub(crate) use crate::definition as proto;
+use crate::definition::element::VariableMap;
 use crate::legacy_definition::element::background::ImageKey;
 use crate::legacy_definition::element::node::NodeQuery;
-use crate::legacy_definition::element::variable::VariableMap;
 
 pub mod element;
 pub mod interaction;

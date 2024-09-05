@@ -17,10 +17,10 @@
 use crate::figma_schema;
 use dc_bundle::definition::element::color_or_var::{ColorOrVar, ColorVar};
 use dc_bundle::definition::element::num_or_var::{NumOrVar, NumVar};
+use dc_bundle::definition::element::variable::{VariableType, VariableValueMap};
+use dc_bundle::definition::element::variable_value;
 use dc_bundle::definition::element::FloatColor;
-use dc_bundle::legacy_definition::element::variable::{
-    Variable, VariableAlias, VariableType, VariableValue, VariableValueMap,
-};
+use dc_bundle::definition::element::{Variable, VariableValue};
 use std::collections::HashMap;
 
 // Trait to create a XOrVar from Figma data
@@ -62,31 +62,36 @@ impl FromFigmaVar<&FloatColor> for ColorOrVar {
     }
 }
 
-// Create a VariableAlias from figma_schema::VariableAlias
-fn create_variable_alias(figma_var_alias: &figma_schema::VariableAlias) -> VariableAlias {
-    VariableAlias { r#type: figma_var_alias.r#type.clone(), id: figma_var_alias.id.clone() }
-}
-
 // Create a VariableValue from figma_schema::VariableValue
 fn create_variable_value(v: &figma_schema::VariableValue) -> VariableValue {
     match v {
-        figma_schema::VariableValue::Boolean(b) => VariableValue::Bool(b.clone()),
-        figma_schema::VariableValue::Float(f) => VariableValue::Number(f.clone()),
-        figma_schema::VariableValue::String(s) => VariableValue::Text(s.clone()),
-        figma_schema::VariableValue::Color(c) => VariableValue::Color(c.into()),
-        figma_schema::VariableValue::Alias(a) => VariableValue::Alias(create_variable_alias(a)),
+        figma_schema::VariableValue::Boolean(b) => {
+            VariableValue { value: Some(variable_value::Value::Bool(b.clone())) }
+        }
+        figma_schema::VariableValue::Float(f) => {
+            VariableValue { value: Some(variable_value::Value::Number(f.clone())) }
+        }
+        figma_schema::VariableValue::String(s) => {
+            VariableValue { value: Some(variable_value::Value::Text(s.clone())) }
+        }
+        figma_schema::VariableValue::Color(c) => {
+            VariableValue { value: Some(variable_value::Value::Color(c.into())) }
+        }
+        figma_schema::VariableValue::Alias(a) => {
+            VariableValue { value: Some(variable_value::Value::Alias(a.id.clone())) }
+        }
     }
 }
 
 // Create a VariableValueMap from a hash of mode IDs to Figma VariableValues
 fn create_variable_value_map(
     map: &HashMap<String, figma_schema::VariableValue>,
-) -> VariableValueMap {
+) -> Option<VariableValueMap> {
     let mut values_by_mode: HashMap<String, VariableValue> = HashMap::new();
     for (mode_id, value) in map.iter() {
         values_by_mode.insert(mode_id.clone(), create_variable_value(value));
     }
-    VariableValueMap { values_by_mode }
+    Some(VariableValueMap { values_by_mode })
 }
 
 // Helper function to create a Variable
@@ -101,7 +106,7 @@ fn create_variable_helper(
         remote: common.remote,
         key: common.key.clone(),
         variable_collection_id: common.variable_collection_id.clone(),
-        var_type,
+        var_type: var_type as i32,
         values_by_mode: create_variable_value_map(values_by_mode),
     }
 }
@@ -116,10 +121,10 @@ pub(crate) fn create_variable(v: &figma_schema::Variable) -> Variable {
             create_variable_helper(VariableType::Number, common, values_by_mode)
         }
         figma_schema::Variable::String { common, values_by_mode } => {
-            create_variable_helper(VariableType::Bool, common, values_by_mode)
+            create_variable_helper(VariableType::Text, common, values_by_mode)
         }
         figma_schema::Variable::Color { common, values_by_mode } => {
-            create_variable_helper(VariableType::Text, common, values_by_mode)
+            create_variable_helper(VariableType::Color, common, values_by_mode)
         }
     }
 }

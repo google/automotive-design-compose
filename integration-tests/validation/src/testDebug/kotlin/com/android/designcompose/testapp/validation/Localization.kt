@@ -26,6 +26,7 @@ import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.HelloWorld
+import com.android.designcompose.testapp.validation.examples.ImageUpdateTest
 import com.android.designcompose.testapp.validation.examples.StyledTextRunsTest
 import com.android.designcompose.testapp.validation.examples.VariantAsteriskTest
 import org.junit.Rule
@@ -85,6 +86,15 @@ class Localization {
         with(composeTestRule) {
             setContent { StyledTextRunsTest() }
             captureRootRoboImage("StyledTextRuns-ja")
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "+fr")
+    fun imageUpdateTestLocaleFr() {
+        with(composeTestRule) {
+            setContent { ImageUpdateTest() }
+            captureRootRoboImage("ImageUpdateTest-fr")
         }
     }
 }

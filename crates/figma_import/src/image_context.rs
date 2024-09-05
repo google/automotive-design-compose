@@ -104,6 +104,8 @@ fn lookup_or_fetch(
 pub struct ImageContext {
     // imageRef -> URL?
     images: HashMap<String, Option<String>>,
+    // imageRef -> res name
+    image_res_map: HashMap<String, String>,
     // node ID
     vectors: HashSet<String>,
     // node ID -> URL
@@ -136,10 +138,12 @@ impl ImageContext {
     /// * `images`: the mapping from Figma's `imageRef` to image URL.
     pub fn new(
         images: HashMap<String, Option<String>>,
+        image_res_map: HashMap<String, String>,
         proxy_config: &ProxyConfig,
     ) -> ImageContext {
         ImageContext {
             images,
+            image_res_map,
             vectors: HashSet::new(),
             node_urls: HashMap::new(),
             network_bytes: HashMap::new(),
@@ -177,6 +181,14 @@ impl ImageContext {
             } else {
                 None
             }
+        }
+    }
+
+    pub fn image_res(&mut self, image_ref: impl ToString) -> Option<String> {
+        if self.image_res_map.contains_key(&image_ref.to_string()) {
+            self.image_res_map.get(&image_ref.to_string()).map(|s| s.to_string())
+        } else {
+            None
         }
     }
 

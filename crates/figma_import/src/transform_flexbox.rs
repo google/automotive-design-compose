@@ -622,6 +622,7 @@ fn compute_background(
                 transform: Some(transform.to_2d()),
                 opacity: last_paint.opacity,
                 scale_mode: bg_scale_mode,
+                res_name: images.image_res(image_ref),
             }
         } else if !image_filter_list.is_empty() {
             // There's no image but we have filters, so store those with no image in case there's
@@ -632,6 +633,7 @@ fn compute_background(
                 transform: Some(transform.to_2d()),
                 opacity: last_paint.opacity,
                 scale_mode: bg_scale_mode,
+                res_name: None,
             }
         } else {
             Background::None

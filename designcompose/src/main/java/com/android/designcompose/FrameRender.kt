@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
 import androidx.compose.ui.Modifier
@@ -323,6 +324,7 @@ internal fun ContentDrawScope.render(
     customizations: CustomizationContext,
     layoutId: Int,
     variableState: VariableState,
+    appContext: Context,
 ) {
     if (size.width <= 0F && size.height <= 0F) return
 
@@ -448,7 +450,7 @@ internal fun ContentDrawScope.render(
         } else {
             style.node_style.background.mapNotNull { background ->
                 val p = Paint()
-                val b = background.asBrush(document, density, variableState)
+                val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
                     val (brush, fillOpacity) = b
                     brush.applyTo(brushSize, p, fillOpacity)
@@ -465,7 +467,7 @@ internal fun ContentDrawScope.render(
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
             }
-            val b = background.asBrush(document, density, variableState)
+            val b = background.asBrush(appContext, document, density, variableState)
             if (b != null) {
                 val (brush, strokeOpacity) = b
                 brush.applyTo(brushSize, p, strokeOpacity)
@@ -602,7 +604,8 @@ internal fun squooshShapeRender(
     customizations: CustomizationContext,
     variableState: VariableState,
     computedPathCache: ComputedPathCache,
-    drawContent: () -> Unit
+    appContext: Context,
+    drawContent: () -> Unit,
 ) {
     if (size.width <= 0F && size.height <= 0F) return
     val overrideLayoutSize = node.overrideLayoutSize
@@ -768,7 +771,7 @@ internal fun squooshShapeRender(
         } else {
             style.node_style.background.mapNotNull { background ->
                 val p = Paint()
-                val b = background.asBrush(document, density, variableState)
+                val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
                     val (brush, fillOpacity) = b
                     brush.applyTo(brushSize, p, fillOpacity)
@@ -784,7 +787,7 @@ internal fun squooshShapeRender(
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
             }
-            val b = background.asBrush(document, density, variableState)
+            val b = background.asBrush(appContext, document, density, variableState)
             if (b != null) {
                 val (brush, strokeOpacity) = b
                 brush.applyTo(brushSize, p, strokeOpacity)

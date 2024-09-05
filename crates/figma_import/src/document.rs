@@ -93,6 +93,26 @@ fn get_branches(document_root: &figma_schema::FileResponse) -> Vec<FigmaDocInfo>
     branches
 }
 
+fn load_image_hash_to_res_map(
+    document_root: &figma_schema::FileResponse,
+) -> HashMap<String, String> {
+    let root_node = &document_root.document;
+    let shared_plugin_data = &root_node.shared_plugin_data;
+    if shared_plugin_data.contains_key("designcompose") {
+        let plugin_data = shared_plugin_data.get("designcompose");
+        if let Some(vsw_data) = plugin_data {
+            if let Some(image_hash_to_res_data) = vsw_data.get("image_hash_to_res") {
+                let image_hash_to_res_map: Option<HashMap<String, String>> =
+                    serde_json::from_str(image_hash_to_res_data.as_str()).ok();
+                if let Some(map) = image_hash_to_res_map {
+                    return map;
+                }
+            }
+        }
+    }
+    return HashMap::new();
+}
+
 /// Document is used to access and maintain an entire Figma document, including
 /// components and image resources. It can be updated if the source document
 /// has changed since this structure was created.
@@ -138,7 +158,9 @@ impl Document {
         let image_refs: figma_schema::ImageFillResponse =
             serde_json::from_str(http_fetch(api_key, image_ref_url, proxy_config)?.as_str())?;
 
-        let mut image_context = ImageContext::new(image_refs.meta.images, proxy_config);
+        let image_hash_to_res_map = load_image_hash_to_res_map(&document_root);
+        let mut image_context =
+            ImageContext::new(image_refs.meta.images, image_hash_to_res_map, proxy_config);
         if let Some(session) = image_session {
             image_context.add_session_info(session);
         }

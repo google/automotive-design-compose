@@ -77,6 +77,7 @@ pub enum Background {
         transform: Option<AffineTransform>,
         scale_mode: ScaleMode,
         opacity: f32,
+        res_name: Option<String>,
     },
     Clear, // Clear all the pixels underneath, used for hole-punch compositing.
 }
@@ -95,6 +96,7 @@ impl Background {
             transform: None,
             scale_mode: ScaleMode::Tile,
             opacity: 1.0,
+            res_name: None,
         }
     }
 }

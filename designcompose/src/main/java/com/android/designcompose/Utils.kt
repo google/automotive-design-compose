@@ -1333,7 +1333,7 @@ internal fun Background.asBrush(
     appContext: Context,
     document: DocContent,
     density: Float,
-    variableState: VariableState
+    variableState: VariableState,
 ): Pair<Brush, Float>? {
     when (this) {
         is Background.Solid -> {
@@ -1343,23 +1343,26 @@ internal fun Background.asBrush(
         is Background.Image -> {
             val backgroundImage = this
             val imageTransform = backgroundImage.transform.asSkiaMatrix()
-            backgroundImage.res_name.orElse(null)?.let {
-                val resId =
-                    appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
-                if (resId != Resources.ID_NULL) {
-                    val bitmap = BitmapFactoryWithCache.loadResource(appContext.resources, resId)
-                    return Pair(
-                        RelativeImageFill(
-                            image = bitmap,
-                            imageDensity = density,
-                            displayDensity = density,
-                            imageTransform = imageTransform,
-                            scaleMode = backgroundImage.scale_mode
-                        ),
-                        backgroundImage.opacity
-                    )
-                } else {
-                    Log.w(TAG, "No drawable resource $it found")
+            if (DebugNodeManager.getUseLocalRes().value) {
+                backgroundImage.res_name.orElse(null)?.let {
+                    val resId =
+                        appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
+                    if (resId != Resources.ID_NULL) {
+                        val bitmap =
+                            BitmapFactoryWithCache.loadResource(appContext.resources, resId)
+                        return Pair(
+                            RelativeImageFill(
+                                image = bitmap,
+                                imageDensity = density,
+                                displayDensity = density,
+                                imageTransform = imageTransform,
+                                scaleMode = backgroundImage.scale_mode
+                            ),
+                            backgroundImage.opacity
+                        )
+                    } else {
+                        Log.w(TAG, "No drawable resource $it found")
+                    }
                 }
             }
             val imageFillAndDensity =
@@ -1737,9 +1740,8 @@ internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
 internal fun getTextContent(
     context: Context,
     textData: ViewData.Text,
-    useLocalStringRes: Boolean?,
 ): String {
-    if (useLocalStringRes != false && textData.res_name.isPresent) {
+    if (DebugNodeManager.getUseLocalRes().value && textData.res_name.isPresent) {
         val resName = textData.res_name.get()
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)
         if (resId != Resources.ID_NULL) {
@@ -1754,9 +1756,8 @@ internal fun getTextContent(
 internal fun getTextContent(
     context: Context,
     styledTextData: ViewData.StyledText,
-    useLocalStringRes: Boolean?,
 ): List<StyledTextRun> {
-    if (useLocalStringRes != false && styledTextData.res_name.isPresent) {
+    if (DebugNodeManager.getUseLocalRes().value && styledTextData.res_name.isPresent) {
         val resName = styledTextData.res_name.get()
         val strArrayResId = context.resources.getIdentifier(resName, "array", context.packageName)
         if (strArrayResId != Resources.ID_NULL) {

@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
@@ -530,7 +529,6 @@ internal fun DesignView(
 
     parentLayout = parentLayout?.withRootIdIfNone(layoutId)
     var visible = false
-    val useLocalStringRes: Boolean? by DebugNodeManager.getUseLocalStringRes().observeAsState()
     DesignParentLayout(parentLayout) {
         when (view.data) {
             is ViewData.Text ->
@@ -542,7 +540,6 @@ internal fun DesignView(
                             getTextContent(
                                 LocalContext.current,
                                 view.data as ViewData.Text,
-                                useLocalStringRes
                             ),
                         style = style,
                         document = document,
@@ -559,7 +556,6 @@ internal fun DesignView(
                             getTextContent(
                                 LocalContext.current,
                                 view.data as ViewData.StyledText,
-                                useLocalStringRes
                             ),
                         style = style,
                         document = document,

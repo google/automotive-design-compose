@@ -32,6 +32,7 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -709,7 +710,7 @@ internal fun Modifier.frameRender(
     maskInfo: MaskInfo?,
     layoutId: Int,
     variableState: VariableState,
-    appContext: Context
+    appContext: Context,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {

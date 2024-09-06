@@ -22,9 +22,11 @@ import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -49,7 +51,7 @@ internal object DebugNodeManager {
 
     private val showNodes: MutableLiveData<Boolean> = MutableLiveData(false)
     private val showRecomposition: MutableLiveData<Boolean> = MutableLiveData(false)
-    private val useLocalStringRes: MutableLiveData<Boolean> = MutableLiveData(true)
+    private val useLocalRes: MutableState<Boolean> = mutableStateOf(true)
     private val nodes: SnapshotStateMap<Int, NodePosition> = mutableStateMapOf()
     private var nodeId: Int = 0
 
@@ -70,12 +72,12 @@ internal object DebugNodeManager {
         showRecomposition.postValue(show)
     }
 
-    internal fun getUseLocalStringRes(): LiveData<Boolean> {
-        return useLocalStringRes
+    internal fun getUseLocalRes(): MutableState<Boolean> {
+        return useLocalRes
     }
 
-    internal fun setUseLocalStringRes(useLocal: Boolean) {
-        useLocalStringRes.postValue(useLocal)
+    internal fun setUseLocalRes(useLocal: Boolean) {
+        useLocalRes.value = useLocal
     }
 
     internal fun addNode(docId: DesignDocId, existingId: Int, node: NodePosition): Int {

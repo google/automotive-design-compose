@@ -80,6 +80,7 @@ import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
+import com.android.designcompose.getContent
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
@@ -596,9 +597,20 @@ fun SquooshRoot(
                     // We use a custom layout for children that just passes through the layout
                     // constraints that we calculate in our layout glue code above. This gives
                     // children a way to report their sizes to the Rust layout implementation.
-                    key(child.node.layoutId) {
-                        SquooshChildLayout(modifier = composableChildModifier, child = child)
-                    }
+                    val isListItem =
+                        child.node.parent?.view?.name?.let {
+                            customizationContext.getContent(it) != null
+                        } ?: false
+                    // Use the key() function to avoid recomposition when list items are reordered.
+                    // However, don't call key() for component replacements to avoid recomposition.
+                    // This is due to a bug where recomposition a component replacement that uses
+                    // AndroidView can cause a crash. See bug
+                    // https://github.com/google/automotive-design-compose/issues/1605
+                    if (isListItem)
+                        key(child.node.layoutId) {
+                            SquooshChildLayout(modifier = composableChildModifier, child = child)
+                        }
+                    else SquooshChildLayout(modifier = composableChildModifier, child = child)
                 }
             }
         )

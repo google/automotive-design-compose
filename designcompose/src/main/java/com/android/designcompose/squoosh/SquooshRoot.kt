@@ -326,10 +326,10 @@ fun SquooshRoot(
     // that we can just update the key info when recomposing mid-animation.
     val currentAnimations = remember { HashMap<Int, SquooshAnimationRenderingInfo>() }
 
-    // Animation timecodes go into a `MutableState`. This way we can modify them in a coroutine
+    // Animation play times go into a `MutableState`. This way we can modify them in a coroutine
     // and only invalidate rendering. So animation progression doesn't cause or require
     // recomposition, resulting in a good performance uplift.
-    val animationValues: MutableState<Map<Int, Float>> = remember { mutableStateOf(mapOf()) }
+    val animPlayTimeNanosState: MutableState<Map<Int, Long>> = remember { mutableStateOf(mapOf()) }
 
     // Get the interaction state with all of the animated actions applied. We use this to generate
     // the tree with all actions applied (which is then used as the "dest" in the animation).
@@ -424,7 +424,13 @@ fun SquooshRoot(
         }
 
         // Update the root that we're rendering.
-        presentationRoot = createMergedAnimationTree(root, transitionRoot, requestedAnimations)
+        presentationRoot =
+            createMergedAnimationTree(
+                root,
+                transitionRoot,
+                requestedAnimations,
+                LocalDesignDocSettings.current.customVariantTransition
+            )
 
         // Now create Compose animations for all of the requestedAnimations that
         // have animation controls populated.
@@ -459,23 +465,38 @@ fun SquooshRoot(
                         //      means we will do a recompose on the next animation frame. We might
                         //      need a shadow cache of last animation values that Compose isn't
                         //      tracking to avoid this.
-                        val interruptedAnimation =
-                            animationValues.value[animationRequest.interruptedId]
-                        interruptedAnimation ?: 1f
+                        val interruptedAnimationPlayTime =
+                            animPlayTimeNanosState.value[animationRequest.interruptedId]
+                        val interruptedAnimation = currentAnimations[animationRequest.interruptedId]
+                        if (
+                            interruptedAnimation?.animation != null &&
+                                interruptedAnimationPlayTime != null
+                        ) {
+                            val playTimeNanos =
+                                interruptedAnimationPlayTime -
+                                    interruptedAnimation.delayTimeMs * 1000000L
+                            interruptedAnimation.animation.getValueFromNanos(
+                                interruptedAnimationPlayTime
+                            )
+                        } else {
+                            1f
+                        }
                     } else {
                         1f
                     }
-                val animatable =
+
+                val animation =
                     TargetBasedAnimation(
                         animationSpec = animationRequest.transition.animationSpec(),
                         typeConverter = Float.VectorConverter,
                         initialValue = 1f - initialValue,
                         targetValue = 1f
                     )
+                animationControl.animation = animation
                 nextAnimations[animationRequest.animationId] =
                     SquooshAnimationRenderingInfo(
                         control = animationControl,
-                        animation = animatable,
+                        animation = animation,
                         action = animationRequest.action,
                         variant = animationRequest.variant,
                         delayTimeMs = animationRequest.transition.delayMillis(),
@@ -526,7 +547,7 @@ fun SquooshRoot(
                         childRenderSelector,
                         // Is there a nicer way of passing these two?
                         currentAnimations,
-                        animationValues,
+                        animPlayTimeNanosState,
                         VariableState.create(),
                         computedPathCache,
                     )
@@ -542,7 +563,7 @@ fun SquooshRoot(
                     layoutValueCache,
                     layoutManager,
                     animationJob,
-                    animationValues,
+                    animPlayTimeNanosState,
                     currentAnimations,
                     interactionState,
                     interactionScope,
@@ -635,7 +656,7 @@ private fun squooshLayoutMeasurePolicy(
     layoutValueCache: HashMap<Int, Layout>,
     layoutManager: SquooshLayoutManager,
     animationJob: AnimationValueHolder,
-    animationValues: MutableState<Map<Int, Float>>,
+    animPlayTimeNanosState: MutableState<Map<Int, Long>>,
     currentAnimations: HashMap<Int, SquooshAnimationRenderingInfo>,
     interactionState: InteractionState,
     interactionScope: CoroutineScope,
@@ -789,7 +810,7 @@ private fun squooshLayoutMeasurePolicy(
                         // state which is only used at render time, Compose only re-runs
                         // the render block.
                         withFrameNanos { frameTimeNanos ->
-                            val animState = HashMap(animationValues.value)
+                            val nanos = HashMap(animPlayTimeNanosState.value)
                             val animsToRemove = HashSet<Int>()
                             for ((id, anim) in currentAnimations) {
                                 // If we haven't started this animation yet, then start it
@@ -802,16 +823,15 @@ private fun squooshLayoutMeasurePolicy(
                                 val playTimeNanos = frameTimeNanos - anim.startTimeNanos
                                 if (playTimeNanos < 0L) continue
 
-                                // Compute where it's meant to be, and update the value in
-                                // animState.
-                                val position = anim.animation.getValueFromNanos(playTimeNanos)
-                                animState[id] = position
+                                // Update the value in animPlayTimeNanosState with the current play
+                                // time
+                                nanos[id] = playTimeNanos
 
                                 // If the animation is complete, then we need to remove it
                                 // from the transitions list, and apply it to the base
                                 // interaction state.
-                                if (anim.animation.isFinishedFromNanos(playTimeNanos)) {
-                                    animState.remove(id)
+                                if (anim.control.isFinishedFromNanos(playTimeNanos)) {
+                                    nanos.remove(id)
                                     if (anim.action != null) {
                                         animsToRemove.add(id)
                                         interactionState.squooshCompleteAnimatedAction(anim.action)
@@ -823,7 +843,7 @@ private fun squooshLayoutMeasurePolicy(
                                 }
                             }
                             for (id in animsToRemove) currentAnimations.remove(id)
-                            animationValues.value = animState
+                            animPlayTimeNanosState.value = nanos
                         }
                     }
                 }

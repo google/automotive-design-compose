@@ -118,7 +118,7 @@ internal class VariantAnimationInfo(
     val transition: AnimationTransition,
 )
 
-class VariantTransitionContext(val from: View, val to: View) {
+class VariantTransitionContext(val from: View?, val to: View?) {
     @Discouraged(
         message =
             "This helper function will return true if the transition is within a variant from the " +
@@ -127,12 +127,12 @@ class VariantTransitionContext(val from: View, val to: View) {
     )
     fun fromComponentSet(componentSetName: String): Boolean {
         if (
-            from.component_info.isPresent &&
+            from?.component_info?.isPresent == true &&
                 from.component_info.get().component_set_name == componentSetName
         )
             return true
         if (
-            to.component_info.isPresent &&
+            to?.component_info?.isPresent == true &&
                 to.component_info.get().component_set_name == componentSetName
         )
             return true
@@ -147,17 +147,20 @@ class VariantTransitionContext(val from: View, val to: View) {
     )
     fun hasVariantProperty(propertyName: String): Boolean {
         if (
-            from.component_info.isPresent &&
+            from?.component_info?.isPresent == true &&
                 from.component_info.get().name.contains("$propertyName=")
         )
             return true
-        if (to.component_info.isPresent && to.component_info.get().name.contains("$propertyName="))
+        if (
+            to?.component_info?.isPresent == true &&
+                to.component_info.get().name.contains("$propertyName=")
+        )
             return true
         return false
     }
 }
 
-typealias CustomVariantTransition = (context: VariantTransitionContext) -> AnimationTransition
+typealias CustomVariantTransition = (context: VariantTransitionContext) -> AnimationTransition?
 
 // We make a note that we saw a node in the first phase, before we populate it with details
 // in the second phase.

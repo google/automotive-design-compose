@@ -136,3 +136,5 @@ fabric.properties
 # Other
 .idea/kotlinc.xml
 .idea/emulatorDisplays.xml
+.idea/androidTestResultsUserPreferences.xml
+.idea/rust.xml

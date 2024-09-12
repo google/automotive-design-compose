@@ -47,7 +47,9 @@ impl EncodedImageMap {
     }
 }
 
-static CURRENT_VERSION: u32 = 21;
+// LINT.IfChange
+static CURRENT_VERSION: u32 = 22;
+// Lint.ThenChange(common/src/main/java/com/android/designcompose/common/FsaasSession.kt)
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]

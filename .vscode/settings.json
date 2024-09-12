@@ -41,5 +41,7 @@
     "rust-analyzer.testExplorer": true,
     "search.exclude": {
         "**/_site": true
-    }
+    },
+    "shellcheck.useWorkspaceRootAsCwd": true,
+    "bashIde.includeAllWorkspaceSymbols": true
 }

@@ -60,15 +60,28 @@ done
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
+cd $GIT_ROOT || exit
+
 if [[ $(uname -s) != "Linux" && $RUN_ROBORAZZI == true ]]; then
   echo "Roborazzi tests will likely fail on this system. You can disable them with -r. Continue anyway?"
   read -r
 fi
 
-if [[ -z "$ORG_GRADLE_PROJECT_unbundledAAOSDir" ]]; then
-  echo "ORG_GRADLE_PROJECT_unbundledAAOSDir must be set"
-  usage
-  exit 1
+if [[ -z "${ORG_GRADLE_PROJECT_unbundledAAOSDir+x}" ]]; then
+
+  # Try to load the dir from your Gradle settings
+  echo "ORG_GRADLE_PROJECT_unbundledAAOSDir unset, attempting to load from your Gradle project"
+
+  ORG_GRADLE_PROJECT_unbundledAAOSDir="$(./gradlew -q properties -PshowProperty=unbundledAAOSDir | grep unbundledAAOSDir: | cut -f 1)"
+
+  echo "Read $ORG_GRADLE_PROJECT_unbundledAAOSDir from your Gradle project"
+
+  if [[ -z "${ORG_GRADLE_PROJECT_unbundledAAOSDir+x}" ]]; then
+
+    echo "ORG_GRADLE_PROJECT_unbundledAAOSDir must be set"
+    usage
+    exit 1
+  fi
 fi
 
 # Clumsy way to check if the variable is unset and load it if it is.
@@ -86,8 +99,6 @@ export GRADLE_OPTS=" -Dorg.gradle.project.designcompose.cargoPlugin.allowAbiOver
 # Both are needed for the GMD Tests
 export GRADLE_OPTS+=" -Dorg.gradle.project.designcompose.cargoPlugin.abiOverride=x86,x86_64"
 export ORG_GRADLE_PROJECT_DesignComposeMavenRepo="$GIT_ROOT/build/test-all/designcompose_m2repo"
-
-cd "$GIT_ROOT" || exit
 
 TEST_RESULTS=""
 export TEST_RESULTS

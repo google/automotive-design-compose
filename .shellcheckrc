@@ -1,0 +1,3 @@
+external-sources=true
+disable=SC2250
+source-path=dev-scripts/doc-fetches

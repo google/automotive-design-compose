@@ -95,6 +95,9 @@ class InternalGradlePlugin : Plugin<Project> {
                     )
                 )
                 test.outputs.doNotCacheIf("Always fetch DCF files") { isFetch.get() }
+                test.useJUnit {
+                    it.includeCategories("com.android.designcompose.testapp.common.Fetchable")
+                }
 
                 test.doFirst {
                     if (isFetch.get()) {
@@ -109,6 +112,7 @@ class InternalGradlePlugin : Plugin<Project> {
                         // Clear the results of the previous test run
                         val outDir = dcfOutDir.get().asFile
                         outDir.deleteRecursively()
+                        dcfOutDir.get().asFile.mkdirs()
 
                         test.systemProperty("designcompose.test.fetchFigma", true)
                         test.systemProperty("designcompose.test.figmaToken", figmaToken)

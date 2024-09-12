@@ -182,6 +182,7 @@ pub enum LayoutGridAlignment {
     Min,
     Stretch,
     Center,
+    Max,
 }
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -1217,6 +1218,7 @@ pub struct VariableAlias {
 pub enum VariableAliasOrList {
     Alias(VariableAlias),
     List(Vec<VariableAlias>),
+    Hash(HashMap<String, VariableAlias>),
 }
 impl VariableAliasOrList {
     fn get_name(&self) -> Option<String> {
@@ -1229,6 +1231,9 @@ impl VariableAliasOrList {
                 if let Some(alias) = alias {
                     return Some(alias.id.clone());
                 }
+            }
+            VariableAliasOrList::Hash(hash) => {
+                return None;
             }
         }
         None

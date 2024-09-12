@@ -38,6 +38,9 @@ use dc_bundle::legacy_definition::EncodedImageMap;
 use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use log::error;
 
+use std::fs::File;
+use std::io::Write;
+
 #[cfg(not(feature = "http_mock"))]
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
 const BASE_FILE_URL: &str = "https://api.figma.com/v1/files/";
@@ -128,8 +131,15 @@ impl Document {
             document_url.push_str("&version=");
             document_url.push_str(&version_id);
         }
+
+        let fetch_result = http_fetch(api_key, document_url, proxy_config)?;
+
+
+        //let mut f = File::create("./hvac.txt").unwrap();
+        //f.write_all(fetch_result.as_bytes());
+
         let document_root: figma_schema::FileResponse =
-            serde_json::from_str(http_fetch(api_key, document_url, proxy_config)?.as_str())?;
+            serde_json::from_str(fetch_result.as_str())?;
 
         // ...and the mapping from imageRef to URL. It returns images from all versions.
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, document_id);

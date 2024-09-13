@@ -24,10 +24,10 @@ option optimize_for = LITE_RUNTIME;
 
 // Holds the value of a variable, whichever type it is.
 message VariableValue {
-  oneof value {
-    bool boolean = 1;
+  oneof Value {
+    bool bool = 1;
     float number = 2;
-    string string = 3;
+    string text = 3;
     Color color = 4;
     string alias = 5;
   }

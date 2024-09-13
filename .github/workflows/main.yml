@@ -43,17 +43,11 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
-      - name: Set up Java
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          distribution: "temurin"
-          java-version: "17"
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
-        with:
-          # Upload in the dependency-review workflow
-          dependency-graph: generate
-          gradle-home-cache-cleanup: true
+          setup-gradle: true
+
       - name: Test build-logic
         uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
         with:
@@ -73,32 +67,12 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
-      - name: Set up Java
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          distribution: "temurin"
-          java-version: "17"
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
-        with:
-          # Upload in the dependency-review workflow
-          dependency-graph: generate
-          gradle-home-cache-cleanup: true
-      - name: Update Rust
-        run: rustup toolchain install stable --profile minimal
-      - name: Install Protoc
-        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
-        with:
-          version: "27.1"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install Rust toolchains
-        run: ./install-rust-toolchains.sh
-      - name: Set up Rust Cache
-        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
-        with:
-          workspaces: ". -> designcompose/build/intermediates/cargoTarget"
-          shared-key: "gradle-rust"
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          setup-gradle: true
+          setup-protoc: true
+          setup-rust: true
       - name: Full Gradle Test
         uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
         with:
@@ -110,36 +84,17 @@ jobs:
         uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
         with:
           egress-policy: audit
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
       - name: "Set environment variables"
         run: |
           echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
-      - name: Set up Java
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          distribution: "temurin"
-          java-version: "17"
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
-        with:
-          # Upload in the dependency-review workflow
-          dependency-graph: generate
-          gradle-home-cache-cleanup: true
-      - name: Update Rust
-        run: rustup toolchain install stable --profile minimal
-      - name: Install Protoc
-        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
-        with:
-          version: "27.1"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install Rust toolchains
-        run: ./install-rust-toolchains.sh
-      - name: Set up Rust Cache
-        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
-        with:
-          workspaces: ". -> designcompose/build/intermediates/cargoTarget"
-          shared-key: "gradle-rust"
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          setup-gradle: true
+          setup-protoc: true
+          setup-rust: true
       - name: Full Gradle Test and publish
         uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
         with:
@@ -159,22 +114,11 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
-      - name: Set up Java
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          distribution: "temurin"
-          java-version: "17"
-      - name: Install Protoc
-        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
-        with:
-          version: "27.1"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
-        with:
-          # Upload in the dependency-review workflow
-          dependency-graph: generate
-          gradle-home-cache-cleanup: true
+          setup-gradle: true
+
       - name: Generate full comparison
         uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
         with:
@@ -206,18 +150,11 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Set up Java
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          distribution: "temurin"
-          java-version: "17"
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
-        with:
-          # Dependency graph isn't supported on Windows and we don't need it to run on Mac either
-          # This is GitHub's ternary operator
-          dependency-graph: ${{ matrix.os == 'ubuntu-latest' && 'generate' ||  'disabled' }}
-          gradle-home-cache-cleanup: true
+          setup-gradle: true
+
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: designcompose_m2repo
@@ -253,11 +190,11 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Set up Java
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          distribution: "temurin"
-          java-version: "17"
+          setup-gradle: true
+
       - run: sudo apt-get install repo
       - name: "Set environment variables"
         run: |
@@ -295,16 +232,10 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Set up Java
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          distribution: "temurin"
-          java-version: "17"
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
-        with:
-          dependency-graph: generate
-          gradle-home-cache-cleanup: true
+          setup-gradle: true
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: designcompose_m2repo
@@ -339,14 +270,11 @@ jobs:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
       - run: rustup toolchain install stable --profile minimal
-      - name: Install Protoc
-        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          version: "27.1"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
-        with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          setup-protoc: true
+          setup-rust: true
       - name: Build all
         run: cargo build --all-targets --all-features
       - name: Test all

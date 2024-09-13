@@ -17,6 +17,7 @@
 <head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css" />
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script> 
 </head>
 
 <div id="errors" class="page page-padding-small" style="overflow-y: hidden; overflow-x: hidden">
@@ -359,9 +360,9 @@
 
 <div id="outputStringsPanel" class="page page-padding-large">
   <div style="border-bottom: solid #000000; font-weight: bold;">Generate the strings xml file:</div>
-  <div style="font-size: 14; margin-top: 8px;">* Clear the char limit field to set to "NONE".</div>
-  <div style="font-size: 14; margin-top: 8px;">* Uncheck the checkbox in front of the node id to explicitly remove it from localization.</div>
-  <div style="font-size: 14; margin-top: 8px;">* Use the break icon button for a different translation(action not saved, lost on the next run).</div>
+  <div style="font-size: 14; margin-top: 8px;"><li>Clear the char limit field to set to "NONE".</li></div>
+  <div style="font-size: 14; margin-top: 8px;"><li>Uncheck the checkbox in front of the node id to explicitly remove it from localization.</li></div>
+  <div style="font-size: 14; margin-top: 8px;"><li>Use the break icon button for a different translation(action not saved, lost on the next run).</li></div>
   <div id="outputStrings" style="margin-top: 16px;">
     <div class="container">
       <div class="loader" id="ouputLoader"></div>
@@ -384,6 +385,18 @@
   </div>
 </div>
 <!-- END OF LOCALIZATION PLUGIN UI -->
+
+<!-- BEGIN OF IMAGE RES PLUGIN UI -->
+<div id="imageExport" class="page page-padding-large">
+  <div style="border-bottom: solid #000000; font-weight: bold;">Images:</div>
+  <div style="font-size: 14; margin-top: 8px;"><li>Jpg or png images are downloaded in png format, gif images are downloaded in gif format but DesignCompose doesn't support gif.</li></div>
+  <hr/>
+  <div id="imageInfo"></div>
+  <button id="downloadImageButton" class="styled-button" style="width: 200px; margin-top: 16px;">
+    Download
+  </button>
+</div>
+<!-- END OF IMAGE RES PLUGIN UI -->
 
 <div id="toast"></div>
 
@@ -1005,8 +1018,14 @@
     });
     block.appendChild(checkbox);
 
+    let r = createNodeIdSpan(node["nodeId"]);
+    block.appendChild(r);
+    return block;
+  }
+
+  function createNodeIdSpan(nodeId) {
     let r = document.createElement('span');
-    r.textContent = node["nodeId"];
+    r.textContent = nodeId;
     r.style.textDecoration = 'underline';
     r.style.marginInlineStart = '8px';
     r.style.overflowWrap = "anywhere";
@@ -1015,12 +1034,11 @@
         pluginMessage: {
           msg: 'show-node',
           key: 'vsw-show-node',
-          node: node["nodeId"]
+          node: nodeId
         }
       }, '*');
     };
-    block.appendChild(r);
-    return block;
+    return r;
   }
 
   function createInputStringTable(tableContainerId, inputStringArray) {
@@ -1280,11 +1298,153 @@
     link.click();
   }
 
+  function bytesToHex(bytes) {
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Read first 4 bytes from the image bytes to determine the image type.
+  function getImageType(imageBytes){
+    const firstFewBytes = new Uint8Array(imageBytes.buffer, 0, 4);
+    const imageSignatures = {
+      'ffd8ffe0': 'jpeg',
+      'ffd8ffe1': 'jpeg',
+      '89504e47': 'png',
+      '47494638': 'gif', 
+    };
+    const hexSignature = bytesToHex(firstFewBytes);
+    const imageFormat = imageSignatures[hexSignature.toLowerCase()]; 
+    return imageFormat;
+  }
+
+  // By sticking it in an HTML canvas and converting into bytes using the canvas, it
+  // will be converted to png format.
+  async function convert(canvas, ctx, bytes) {
+    const url = URL.createObjectURL(new Blob([bytes]));
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject();
+      img.src = url;
+    })
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0);
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob(blob => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(new Uint8Array(reader.result));
+        reader.onerror = () => reject(new Error('Could not read from blob'));
+        reader.readAsArrayBuffer(blob);
+      });
+    });
+  }
+
+  // jpeg and png will be downloaded as png. Gif will be downloaded as gif. Other
+  // image types are not supported.
+  async function processImage(imageHash, imageBytes) {
+    const imageType = getImageType(imageBytes);
+    switch(imageType) {
+      case 'png':
+      case 'jpeg':
+        const fileFormat = 'png';
+        const canvas = document.createElement('canvas');
+        canvas.style.marginTop = '8px';
+        const ctx = canvas.getContext('2d');
+        const newBytes = await convert(canvas, ctx, imageBytes);
+        return {element: canvas, outputImgBytes: newBytes, imageFormat: fileFormat};
+      case 'gif':
+      default:
+        const blob = new Blob([imageBytes], { type: `image/${imageType}` });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const image = document.createElement('img');
+        image.style.marginTop = '8px';
+        image.src = url;
+        return {element: image, outputImgBytes: imageBytes, imageFormat: imageType};
+    }
+  }
+
+  // Display the images
+  async function createImageOutput(imageNodesArray, imageResNameArray, imageBytesArray) {
+    const imageInfo = document.getElementById('imageInfo');
+    imageInfo.innerHTML = "";
+
+    let imageNodesMap = new Map(imageNodesArray);
+    let imageResMap = new Map(imageResNameArray);
+
+    const jszip = new JSZip();
+    for (const [imageHash, imageBytes] of imageBytesArray) {
+      const imageHashElement = document.createElement('div');
+      imageHashElement.style.marginTop = '8px';
+      imageHashElement.textContent = `Image hash: ${imageHash}`;
+      imageInfo.appendChild(imageHashElement);
+
+      const resNameElement = document.createElement('div');
+      resNameElement.style.marginTop = '8px';
+      resNameElement.textContent = 'Image res name: ';
+      const resName = imageResMap.get(imageHash);
+      const input = document.createElement("input");
+      input.addEventListener('change', function (evt) {
+        const newValue = this.value;
+        parent.postMessage({
+            pluginMessage: {
+              msg: 'update-image-res-name',
+              imageHash: imageHash,
+              resName: newValue
+            }
+          }, '*');
+        });
+      input.setAttribute("type", "text");
+      input.setAttribute("value", resName);
+      resNameElement.appendChild(input);
+      imageInfo.appendChild(resNameElement);
+
+      let {element, outputImgBytes, imageFormat} = await processImage(imageHash, imageBytes);
+      imageInfo.appendChild(element);
+
+      for (const nodeId of imageNodesMap.get(imageHash)) {
+        const nodeIdElement = document.createElement('div');
+        nodeIdElement.style.marginTop = '8px';
+        nodeIdElement.textContent = "Node id: ";
+        nodeIdElement.appendChild(createNodeIdSpan(nodeId));
+        imageInfo.appendChild(nodeIdElement);
+      }
+
+      const divider = document.createElement('hr');
+      imageInfo.appendChild(divider);
+      
+      jszip.file(`${resName}.${imageFormat}`, outputImgBytes, {base64: true});
+    }
+
+    const downloadButton = document.getElementById('downloadImageButton');
+    
+    downloadButton.addEventListener('click', ()=>{
+      jszip.generateAsync({ type: 'blob' })
+        .then((content) => {
+          const blobURL = window.URL.createObjectURL(content);
+          const link = document.createElement('a');
+          link.className = 'button button--primary';
+          link.href = blobURL;
+          link.download = "drawable.zip"
+          link.click()
+          link.setAttribute('download', name + '.zip');
+
+          parent.postMessage({
+            pluginMessage: {
+              msg: 'close-plugin'
+            }
+          }, '*');
+          resolve();
+        });
+    });
+  }
+
   jsonInputFile.addEventListener('change', jsonInputFileChanged, false);
   stringsXmlInputFile.addEventListener('change', stringsXmlInputFileChanged, false);
 
   // Update the form from a selection change.
-  window.onmessage = function (event) {
+  window.onmessage = async function (event) {
     let msg = event.data.pluginMessage;
 
     if (msg.msg == 'selection-cleared') {
@@ -1417,12 +1577,16 @@
     } else if (msg.msg == 'localization-output') {
       loadOutputStringData(msg.output);
       createOutputStringTable('outputStrings');
-    } else  if (msg.msg == 'localization-exclude-node-callback') {
+    } else if (msg.msg == 'localization-exclude-node-callback') {
       // Refresh the table, which recreate the whole table...
       createOutputStringTable('outputStrings');
     } else if (msg.msg == 'localization-ungroup-node-callback') {
       loadOutputStringData(msg.output);
       createOutputStringTable('outputStrings');
+    } else if (msg.msg == 'image-export') {
+      openPage('imageExport');
+      createImageOutput(msg.imageNodesArray, msg.imageResNameArray, msg.imageBytesArray);
     }
+
   }
 </script>

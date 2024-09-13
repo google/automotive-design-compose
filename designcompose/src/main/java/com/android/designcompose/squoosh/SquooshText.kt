@@ -152,7 +152,12 @@ internal fun squooshComputeTextInfo(
                             useLocalStringRes
                         )) {
                         val textBrushAndOpacity =
-                            run.style.text_color.asBrush(document, density.density, variableState)
+                            run.style.text_color.asBrush(
+                                appContext,
+                                document,
+                                density.density,
+                                variableState
+                            )
                         val fontWeight = run.style.font_weight.value.getValue(variableState)
                         builder.pushStyle(
                             (SpanStyle(

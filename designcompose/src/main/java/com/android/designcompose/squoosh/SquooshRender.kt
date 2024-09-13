@@ -16,6 +16,7 @@
 
 package com.android.designcompose.squoosh
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
@@ -73,6 +74,7 @@ internal fun Modifier.squooshRender(
     animPlayTimeNanosState: State<Map<Int, Long>>,
     variableState: VariableState,
     computedPathCache: ComputedPathCache,
+    appContext: Context,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -109,7 +111,8 @@ internal fun Modifier.squooshRender(
                                         computedLayout,
                                         customizations,
                                         node.view.name,
-                                        variableState
+                                        variableState,
+                                        appContext = appContext,
                                     )
                                     nodeRenderCount++
                                 }
@@ -158,7 +161,8 @@ internal fun Modifier.squooshRender(
                             document,
                             customizations,
                             variableState,
-                            computedPathCache
+                            computedPathCache,
+                            appContext,
                         ) {
                             var child = node.firstChild
                             var pendingMask: SquooshResolvedNode? = null
@@ -251,6 +255,7 @@ private fun squooshTextRender(
     customizations: CustomizationContext,
     nodeName: String,
     variableState: VariableState,
+    appContext: Context,
 ) {
     val layoutWidth = computedLayout.width * density.density
     val paragraph =
@@ -333,6 +338,7 @@ private fun squooshTextRender(
     } else {
         val textBrushAndOpacity =
             style.node_style.text_color.asBrush(
+                appContext = appContext,
                 document = document,
                 density = density.density,
                 variableState = variableState
@@ -348,6 +354,7 @@ private fun squooshTextRender(
     style.node_style.stroke.strokes.forEach {
         val strokeBrushAndOpacity =
             it.asBrush(
+                appContext = appContext,
                 document = document,
                 variableState = variableState,
                 density = density.density

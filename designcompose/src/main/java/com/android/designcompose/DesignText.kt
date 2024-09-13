@@ -17,6 +17,7 @@
 package com.android.designcompose
 
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.wrapContentSize
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.isIdentity
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
 import androidx.compose.ui.platform.LocalUriHandler
@@ -160,7 +162,12 @@ internal fun DesignText(
         var startIndex = 0
         for (run in runs) {
             val textBrushAndOpacity =
-                run.style.text_color.asBrush(document, density.density, variableState)
+                run.style.text_color.asBrush(
+                    LocalContext.current,
+                    document,
+                    density.density,
+                    variableState
+                )
             textBuilder.pushStyle(
                 SpanStyle(
                     brush = textBrushAndOpacity?.first,
@@ -266,7 +273,12 @@ internal fun DesignText(
         }
 
     val textBrushAndOpacity =
-        style.node_style.text_color.asBrush(document, density.density, variableState)
+        style.node_style.text_color.asBrush(
+            LocalContext.current,
+            document,
+            density.density,
+            variableState
+        )
 
     val textStyle =
         @OptIn(ExperimentalTextApi::class)
@@ -405,6 +417,7 @@ internal fun DesignText(
                             }
                         }
                 }
+                val appContext: Context = LocalContext.current
                 BasicText(
                     annotatedText,
                     onTextLayout = { result ->
@@ -419,15 +432,21 @@ internal fun DesignText(
                                         density.density
 
                                 style.node_style.stroke.strokes.forEach { stroke ->
-                                    stroke.asBrush(document, density.density, variableState)?.let {
-                                        brushAndOpacity ->
-                                        drawText(
-                                            textLayoutResult = textLayoutResult!!,
-                                            brush = brushAndOpacity.first,
-                                            alpha = brushAndOpacity.second,
-                                            drawStyle = Stroke(width = strokeWidth)
+                                    stroke
+                                        .asBrush(
+                                            appContext,
+                                            document,
+                                            density.density,
+                                            variableState
                                         )
-                                    }
+                                        ?.let { brushAndOpacity ->
+                                            drawText(
+                                                textLayoutResult = textLayoutResult!!,
+                                                brush = brushAndOpacity.first,
+                                                alpha = brushAndOpacity.second,
+                                                drawStyle = Stroke(width = strokeWidth)
+                                            )
+                                        }
                                 }
                             }
                         },

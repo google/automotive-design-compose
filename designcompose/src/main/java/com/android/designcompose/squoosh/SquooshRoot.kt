@@ -551,6 +551,7 @@ fun SquooshRoot(
                         animPlayTimeNanosState,
                         VariableState.create(),
                         computedPathCache,
+                        appContext = LocalContext.current,
                     )
                     .semantics { sDocRenderStatus = DocRenderStatus.Rendered },
             measurePolicy =

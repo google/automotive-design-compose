@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -43,6 +44,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.withSaveLayer
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
@@ -215,6 +217,7 @@ internal fun DesignFrame(
                 maskInfo,
                 layoutId,
                 varMaterialState,
+                LocalContext.current,
             )
     }
 
@@ -706,6 +709,7 @@ internal fun Modifier.frameRender(
     maskInfo: MaskInfo?,
     layoutId: Int,
     variableState: VariableState,
+    appContext: Context
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
@@ -720,6 +724,7 @@ internal fun Modifier.frameRender(
                     customizations,
                     layoutId,
                     variableState,
+                    appContext = appContext,
                 )
 
             when (maskInfo?.type ?: MaskViewType.None) {

@@ -18,6 +18,8 @@ package com.android.designcompose
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
 import android.graphics.Matrix
 import android.graphics.Rect
@@ -1329,6 +1331,7 @@ internal fun Optional<List<Float>>.asSkiaMatrix(): Matrix? {
 
 /** Convert a Background to a Brush, returning a Pair of Brush and Opacity */
 internal fun Background.asBrush(
+    appContext: Context,
     document: DocContent,
     density: Float,
     variableState: VariableState
@@ -1340,10 +1343,28 @@ internal fun Background.asBrush(
         }
         is Background.Image -> {
             val backgroundImage = this
+            val imageTransform = backgroundImage.transform.asSkiaMatrix()
+            backgroundImage.res_name.orElse(null)?.let {
+                val resId =
+                    appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
+                if (resId != Resources.ID_NULL) {
+                    return Pair(
+                        RelativeImageFill(
+                            image = BitmapFactory.decodeResource(appContext.resources, resId),
+                            imageDensity = density,
+                            displayDensity = density,
+                            imageTransform = imageTransform,
+                            scaleMode = backgroundImage.scale_mode
+                        ),
+                        backgroundImage.opacity
+                    )
+                } else {
+                    Log.w(TAG, "No drawable resource $it found")
+                }
+            }
             val imageFillAndDensity =
                 backgroundImage.key.orElse(null)?.let { document.image(it.value, density) }
             // val imageFilters = backgroundImage.filters;
-            val imageTransform = backgroundImage.transform.asSkiaMatrix()
             if (imageFillAndDensity != null) {
                 val (imageFill, imageDensity) = imageFillAndDensity
                 return Pair(

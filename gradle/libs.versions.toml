@@ -59,7 +59,7 @@ robolectric = "4.13"
 roborazzi = "1.26.0"
 androidx-material3 = "1.2.1"
 # Keep in sync with the "Install Protoc" steps in .github/workflows
-protoc = "4.28.0"
+protoc = "4.28.1"
 protobuf-plugin = "0.9.4"
 
 [libraries]

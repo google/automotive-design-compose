@@ -904,7 +904,20 @@ fn visit_node(
                 serde_json::from_str(reactions.as_str())
                     .map(|mut x: Vec<ReactionJson>| {
                         // Convert from ReactionJson to Reaction
-                        let reaction: Vec<Reaction> = x.drain(..).map(|r| r.into()).collect();
+                        let reaction: Vec<Reaction> = x
+                            .drain(..)
+                            .map(|r| Into::<Option<Reaction>>::into(r))
+                            .filter(|maybe_reaction| {
+                                if maybe_reaction.is_none() {
+                                    println!(
+                                        "Warning: reaction has empty action. Json: {}",
+                                        reactions
+                                    );
+                                }
+                                maybe_reaction.is_some()
+                            })
+                            .map(|some_reaction| some_reaction.unwrap())
+                            .collect();
 
                         // Tell the component context about these reactions, too.
                         component_context.add_destination_nodes(&reaction);

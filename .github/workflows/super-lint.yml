@@ -62,11 +62,10 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Set up Java
-        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
         with:
-          distribution: "temurin"
-          java-version: "17"
+          setup-gradle: true
       - uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
         with:
           cache-read-only: true

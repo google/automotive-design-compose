@@ -1,0 +1,69 @@
+
+name: Setup Build
+description: Configure Rust for the rest of the bui
+
+inputs:
+
+  setup-gradle:
+    description: Whether to set up Gradle
+    required: false
+    default: "false"
+  setup-protoc:
+    description: Whether to set up Protoc
+    required: false
+    default: "false"
+  setup-rust:
+    description: Whether to set up Rust
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+
+      - name: Set up Java
+        if: ${{ inputs.setup-gradle }}
+        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Gradle
+        if: ${{ inputs.setup-gradle }}
+        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+        with:
+          # Upload in the dependency-review workflow
+          # Dependency graph isn't supported on Windows and we don't need it to run on Mac either
+          # This is GitHub's ternary operator
+          dependency-graph: ${{ contains(matrix.os, 'ubuntu') && 'generate' ||  'disabled' }}
+          gradle-home-cache-cleanup: true
+
+      - name: Install Protoc
+        if: ${{ inputs.setup-protoc }}
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
+        with:
+          version: "27.1"
+          repo-token: ${{ github.token }}
+
+      - name: Setup Android SDK
+        if: ${{ inputs.setup-rust }}
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "ndk;27.0.12077973"
+
+      - name: Update Rust
+        if: ${{ inputs.setup-rust }}
+        shell: bash
+        run: rustup toolchain install stable --profile minimal
+      - name: Install Rust toolchains
+        if: ${{ inputs.setup-rust  }}
+        shell: bash
+        run: ./install-rust-toolchains.sh
+      - name: Set up Rust Cache
+        if: ${{ inputs.setup-rust }}
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84
+        with:
+          workspaces: ". -> designcompose/build/intermediates/cargoTarget"
+          shared-key: "gradle-rust"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+

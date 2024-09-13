@@ -19,7 +19,6 @@ package com.android.designcompose
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
 import android.graphics.Matrix
 import android.graphics.Rect
@@ -1348,9 +1347,10 @@ internal fun Background.asBrush(
                 val resId =
                     appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
                 if (resId != Resources.ID_NULL) {
+                    val bitmap = BitmapFactoryWithCache.loadResource(appContext.resources, resId)
                     return Pair(
                         RelativeImageFill(
-                            image = BitmapFactory.decodeResource(appContext.resources, resId),
+                            image = bitmap,
                             imageDensity = density,
                             displayDensity = density,
                             imageTransform = imageTransform,

@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
@@ -63,7 +63,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
@@ -81,7 +81,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
@@ -110,7 +110,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
@@ -146,7 +146,7 @@ jobs:
     needs: build-maven-repo
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -228,7 +228,7 @@ jobs:
     needs: [build-maven-repo, build-unbundled]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -265,7 +265,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2
@@ -284,7 +284,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v3.5.2

@@ -28,7 +28,7 @@ android-car-ui = "2.6.0"
 android-gms-strictVersionMatcher = "1.2.4" # Used in build-logic
 androidx-appcompat = "1.7.0"
 androidx-core = "1.13.1"
-androidx-activity = "1.9.1"
+androidx-activity = "1.9.2"
 androidx-constraintlayout = "2.1.4"
 androidx-legacy-support-v4 = "1.0.0"
 androidx-lifecycle = "2.7.0"
@@ -59,7 +59,7 @@ robolectric = "4.13"
 roborazzi = "1.26.0"
 androidx-material3 = "1.2.1"
 # Keep in sync with the "Install Protoc" steps in .github/workflows
-protoc = "4.28.0"
+protoc = "4.28.1"
 protobuf-plugin = "0.9.4"
 
 [libraries]

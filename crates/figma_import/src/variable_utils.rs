@@ -128,3 +128,22 @@ pub(crate) fn create_variable(v: &figma_schema::Variable) -> Variable {
         }
     }
 }
+
+// Extract the color out of bound_variables if it exists, or use the default color if not.
+// Convert the color into a ColorOrVar.
+pub(crate) fn bound_variables_color(
+    bound_variables: &Option<figma_schema::BoundVariables>,
+    default_color: &figma_schema::FigmaColor,
+    last_opacity: f32,
+) -> ColorOrVar {
+    if let Some(vars) = bound_variables {
+        ColorOrVar::from_var(vars, "color", &default_color.into())
+    } else {
+        ColorOrVar::Color(crate::Color::from_f32s(
+            default_color.r,
+            default_color.g,
+            default_color.b,
+            default_color.a * last_opacity,
+        ))
+    }
+}

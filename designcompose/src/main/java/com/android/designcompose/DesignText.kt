@@ -261,7 +261,7 @@ internal fun DesignText(
                             textShadow.offset[0] * density.density,
                             textShadow.offset[1] * density.density
                         ),
-                    color = textShadow.color.toColor()
+                    color = textShadow.color.getValue(variableState) ?: Color.Transparent
                 )
             )
         }

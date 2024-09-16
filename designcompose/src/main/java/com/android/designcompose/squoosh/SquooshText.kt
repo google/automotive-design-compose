@@ -18,6 +18,7 @@ package com.android.designcompose.squoosh
 
 import android.content.Context
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphIntrinsics
@@ -49,7 +50,6 @@ import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
-import com.android.designcompose.toColor
 import java.util.Optional
 import kotlin.math.roundToInt
 
@@ -233,7 +233,7 @@ internal fun squooshComputeTextInfo(
                             textShadow.offset[0] * density.density,
                             textShadow.offset[1] * density.density
                         ),
-                    color = textShadow.color.toColor()
+                    color = textShadow.color.getValue(variableState) ?: Color.Transparent
                 )
             )
         }

@@ -26,7 +26,7 @@ use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy},
     image_context::ImageContext,
-    variable_utils::FromFigmaVar,
+    variable_utils::{bound_variables_color, FromFigmaVar},
 };
 use dc_bundle::definition::element::{FontFeature, FontStyle};
 
@@ -539,16 +539,7 @@ fn compute_background(
     node_name: &String,
 ) -> Background {
     if let figma_schema::PaintData::Solid { color, bound_variables } = &last_paint.data {
-        let solid_bg = if let Some(vars) = bound_variables {
-            ColorOrVar::from_var(vars, "color", &color.into())
-        } else {
-            ColorOrVar::Color(crate::Color::from_f32s(
-                color.r,
-                color.g,
-                color.b,
-                color.a * last_paint.opacity,
-            ))
-        };
+        let solid_bg = bound_variables_color(bound_variables, color, last_paint.opacity);
         Background::Solid(solid_bg)
     } else if let figma_schema::PaintData::Image {
         image_ref: Some(image_ref),
@@ -653,20 +644,8 @@ fn compute_background(
             Background::None
         } else {
             for s in stops {
-                let c = if let Some(vars) = &s.bound_variables {
-                    ColorOrVar::from_var(vars, "color", &(&s.color).into())
-                } else {
-                    let raw_color = crate::Color::from_f32s(
-                        s.color.r,
-                        s.color.g,
-                        s.color.b,
-                        s.color.a * last_paint.opacity,
-                    );
-                    ColorOrVar::Color(raw_color)
-                };
-
+                let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
                 let g = (s.position, c);
-
                 g_stops.push(g);
             }
 
@@ -693,19 +672,8 @@ fn compute_background(
             Background::None
         } else {
             for s in stops {
-                let c = if let Some(vars) = &s.bound_variables {
-                    ColorOrVar::from_var(vars, "color", &(&s.color).into())
-                } else {
-                    ColorOrVar::Color(crate::Color::from_f32s(
-                        s.color.r,
-                        s.color.g,
-                        s.color.b,
-                        s.color.a * last_paint.opacity,
-                    ))
-                };
-
+                let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
                 let g = (s.position, c);
-
                 g_stops.push(g);
             }
 
@@ -734,19 +702,8 @@ fn compute_background(
             Background::None
         } else {
             for s in stops {
-                let c = if let Some(vars) = &s.bound_variables {
-                    ColorOrVar::from_var(vars, "color", &(&s.color).into())
-                } else {
-                    ColorOrVar::Color(crate::Color::from_f32s(
-                        s.color.r,
-                        s.color.g,
-                        s.color.b,
-                        s.color.a * last_paint.opacity,
-                    ))
-                };
-
+                let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
                 let g = (s.position, c);
-
                 g_stops.push(g);
             }
 
@@ -769,25 +726,13 @@ fn compute_background(
         let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
 
         let stops = &gradient.gradient_stops;
-
         if stops.is_empty() {
             error!("No stops found for diamond gradient {:?}", gradient);
             Background::None
         } else {
             for s in stops {
-                let c = if let Some(vars) = &s.bound_variables {
-                    ColorOrVar::from_var(vars, "color", &(&s.color).into())
-                } else {
-                    ColorOrVar::Color(crate::Color::from_f32s(
-                        s.color.r,
-                        s.color.g,
-                        s.color.b,
-                        s.color.a * last_paint.opacity,
-                    ))
-                };
-
+                let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
                 let g = (s.position, c);
-
                 g_stops.push(g);
             }
 
@@ -1230,14 +1175,11 @@ fn visit_node(
             }
             match effect.effect_type {
                 figma_schema::EffectType::DropShadow => {
+                    let shadow_color =
+                        bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
                     style.node_style.text_shadow = Some(TextShadow {
                         blur_radius: effect.radius,
-                        color: crate::Color::from_f32s(
-                            effect.color.r,
-                            effect.color.g,
-                            effect.color.b,
-                            effect.color.a,
-                        ),
+                        color: shadow_color,
                         offset: (effect.offset.x(), effect.offset.y()),
                     });
                 }
@@ -1577,29 +1519,23 @@ fn visit_node(
         }
         match effect.effect_type {
             figma_schema::EffectType::DropShadow => {
+                let shadow_color =
+                    bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
                 style.node_style.box_shadow.push(BoxShadow::Outset {
                     blur_radius: effect.radius,
                     spread_radius: effect.spread,
-                    color: crate::Color::from_f32s(
-                        effect.color.r,
-                        effect.color.g,
-                        effect.color.b,
-                        effect.color.a,
-                    ),
+                    color: shadow_color,
                     offset: (effect.offset.x(), effect.offset.y()),
                     shadow_box: ShadowBox::StrokeBox,
                 });
             }
             figma_schema::EffectType::InnerShadow => {
+                let shadow_color =
+                    bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
                 style.node_style.box_shadow.push(BoxShadow::Inset {
                     blur_radius: effect.radius,
                     spread_radius: effect.spread,
-                    color: crate::Color::from_f32s(
-                        effect.color.r,
-                        effect.color.g,
-                        effect.color.b,
-                        effect.color.a,
-                    ),
+                    color: shadow_color,
                     offset: (effect.offset.x(), effect.offset.y()),
                     shadow_box: ShadowBox::StrokeBox,
                 });

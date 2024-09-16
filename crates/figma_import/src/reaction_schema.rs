@@ -300,13 +300,18 @@ impl Into<Trigger> for TriggerJson {
 /// Trigger ("how do you make it happen?")
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct ReactionJson {
-    pub action: ActionJson,
+    pub action: Option<ActionJson>,
     pub trigger: TriggerJson,
 }
 
-impl Into<Reaction> for ReactionJson {
-    fn into(self) -> Reaction {
-        Reaction { action: self.action.into(), trigger: self.trigger.into() }
+impl Into<Option<Reaction>> for ReactionJson {
+    fn into(self) -> Option<Reaction> {
+        if self.action.is_some() {
+            let action: Action = self.action.unwrap().into();
+            Some(Reaction { action: action, trigger: self.trigger.into() })
+        } else {
+            None
+        }
     }
 }
 
@@ -329,9 +334,12 @@ fn parse_reactions() {
 
     // We should check that `into` did what we expected it to do here.
 
-    let multiple: Vec<Reaction> = multiple_json.drain(..).map(|json| json.into()).collect();
-    let scroll: Vec<Reaction> = scroll_json.drain(..).map(|json| json.into()).collect();
-    let overlay: Vec<Reaction> = overlay_json.drain(..).map(|json| json.into()).collect();
+    let multiple: Vec<Reaction> =
+        multiple_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
+    let scroll: Vec<Reaction> =
+        scroll_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
+    let overlay: Vec<Reaction> =
+        overlay_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
 
     let bincoded_multiple: Vec<Reaction> =
         bincode::deserialize(bincode::serialize(&multiple).unwrap().as_slice()).unwrap();

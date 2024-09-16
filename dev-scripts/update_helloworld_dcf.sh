@@ -1,4 +1,4 @@
-#
+#!/bin/bash
 # Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +14,13 @@
 # limitations under the License.
 #
 
-DOC_ID=pxVlixodJqZL95zo2RzTHl
+set -euo pipefail
+GIT_ROOT=$(git rev-parse --show-toplevel)
+
+source "$GIT_ROOT/dev-scripts/common-functions.sh"
 
 echo "Update the dcf file for the reference app: helloworld..."
 
-function warn() {
-    echo -e "\033[1;33mWARNING: $*\033[0m" >&2
-}
 warn "Remember to update the nodes in the script to keep them in sync with the queries in HelloWorld_gen.kt!"
 
-script_path=$(readlink -f "$0")
-script_dir=$(dirname "$script_path")
-
-cargo run --bin fetch --features=fetch -- \
-    --doc-id="$DOC_ID" \
-    --nodes="#MainFrame" \
-    --output="$script_dir"/../reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_"$DOC_ID".dcf
+fetch_helloworld

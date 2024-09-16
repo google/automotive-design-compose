@@ -1,4 +1,4 @@
-#
+#!/bin/bash
 # Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,30 +14,11 @@
 # limitations under the License.
 #
 
-DOC_ID=Ljph4e3sC0lHcynfXpoh9f
+set -euo pipefail
+GIT_ROOT=$(git rev-parse --show-toplevel)
 
-function warn() {
-    echo -e "\033[1;33mWARNING: $*\033[0m" >&2
-}
+source "$GIT_ROOT/dev-scripts/common-functions.sh"
 
 warn "If you made changes to the queries of the DesignSwitcher, update the nodes in the script too!"
 
-script_path=$(readlink -f "$0")
-script_dir=$(dirname "$script_path")
-
-cargo run --bin fetch --features=fetch -- \
-    --doc-id="$DOC_ID" \
-    --nodes="#SettingsView" \
-    --nodes="#FigmaDoc" \
-    --nodes="#Message" \
-    --nodes="#MessageFailed" \
-    --nodes="#LoadingSpinner" \
-    --nodes="#Checkbox" \
-    --nodes="#NodeNamesCheckbox" \
-    --nodes="#MiniMessagesCheckbox" \
-    --nodes="#ShowRecompositionCheckbox" \
-    --nodes="#UseLocalStringResCheckbox" \
-    --nodes="#DesignViewMain" \
-    --nodes="#LiveMode" \
-    --nodes="#TopStatusBar" \
-    --output="$script_dir"/../designcompose/src/main/assets/figma/DesignSwitcherDoc_"$DOC_ID".dcf
+fetch_design_switcher

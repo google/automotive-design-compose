@@ -30,6 +30,7 @@ import com.android.designcompose.TestUtils
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.testapp.common.Fetchable
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.DEFAULT_RENDERER_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
@@ -39,6 +40,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -59,6 +61,7 @@ fun performLiveFetch(dcfOutPath: String?) {
         }
 }
 
+@Category(Fetchable::class)
 // Enable Robolectric Native Graphics (RNG)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(ParameterizedRobolectricTestRunner::class)

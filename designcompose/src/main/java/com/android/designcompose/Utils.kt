@@ -1343,23 +1343,26 @@ internal fun Background.asBrush(
         is Background.Image -> {
             val backgroundImage = this
             val imageTransform = backgroundImage.transform.asSkiaMatrix()
-            backgroundImage.res_name.orElse(null)?.let {
-                val resId =
-                    appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
-                if (resId != Resources.ID_NULL) {
-                    val bitmap = BitmapFactoryWithCache.loadResource(appContext.resources, resId)
-                    return Pair(
-                        RelativeImageFill(
-                            image = bitmap,
-                            imageDensity = density,
-                            displayDensity = density,
-                            imageTransform = imageTransform,
-                            scaleMode = backgroundImage.scale_mode
-                        ),
-                        backgroundImage.opacity
-                    )
-                } else {
-                    Log.w(TAG, "No drawable resource $it found")
+            if (DebugNodeManager.getUseLocalStringRes().value != false) {
+                backgroundImage.res_name.orElse(null)?.let {
+                    val resId =
+                        appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
+                    if (resId != Resources.ID_NULL) {
+                        val bitmap =
+                            BitmapFactoryWithCache.loadResource(appContext.resources, resId)
+                        return Pair(
+                            RelativeImageFill(
+                                image = bitmap,
+                                imageDensity = density,
+                                displayDensity = density,
+                                imageTransform = imageTransform,
+                                scaleMode = backgroundImage.scale_mode
+                            ),
+                            backgroundImage.opacity
+                        )
+                    } else {
+                        Log.w(TAG, "No drawable resource $it found")
+                    }
                 }
             }
             val imageFillAndDensity =

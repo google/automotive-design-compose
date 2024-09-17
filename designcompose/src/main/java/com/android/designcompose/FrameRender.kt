@@ -37,6 +37,9 @@ import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
+import com.android.designcompose.proto.getDim
+import com.android.designcompose.proto.start
+import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
 import com.android.designcompose.serdegen.MeterData
@@ -166,7 +169,7 @@ private fun calculateProgressBarData(
     // Resize the progress bar by interpolating between 0 and endX or endY depending on whether it
     // is a horizontal or vertical progress bar
     if (progressBarData.vertical) {
-        val width = style.layout_style.width.pointsAsDp(density).value
+        val width = style.layout_style.width.getDim().pointsAsDp(density).value
         // Calculate bar extents from the parent layout if it exists, or from the progress bar data
         // if not.
         var endY = progressBarData.endY
@@ -184,7 +187,7 @@ private fun calculateProgressBarData(
         overrideTransform.setYTranslation(moveY - topOffset)
         return Pair(Size(width, barHeight), overrideTransform)
     } else {
-        val height = style.layout_style.height.pointsAsDp(density).value
+        val height = style.layout_style.height.getDim().pointsAsDp(density).value
         // Calculate bar extents from the parent layout if it exists, or from the progress bar data
         // if not.
         var endX = progressBarData.endX

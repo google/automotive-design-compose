@@ -26,7 +26,7 @@ use std::collections::HashMap;
 // Trait to create a XOrVar from Figma data
 pub(crate) trait FromFigmaVar<VarType> {
     fn from_var(
-        bound_variables: &crate::figma_schema::BoundVariables,
+        bound_variables: &figma_schema::BoundVariables,
         var_name: &str,
         var_value: VarType,
     ) -> Self;
@@ -34,7 +34,7 @@ pub(crate) trait FromFigmaVar<VarType> {
 // Create a NumOrVar from Figma variable name and number value
 impl FromFigmaVar<f32> for NumOrVar {
     fn from_var(
-        bound_variables: &crate::figma_schema::BoundVariables,
+        bound_variables: &figma_schema::BoundVariables,
         var_name: &str,
         var_value: f32,
     ) -> Self {

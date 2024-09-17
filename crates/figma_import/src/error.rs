@@ -33,4 +33,6 @@ pub enum Error {
     Utf8Error(#[from] std::string::FromUtf8Error),
     #[error("Figma Document Load Error")]
     DocumentLoadError(String),
+    #[error("Error with DC Bundle")]
+    DCBundleError(#[from] dc_bundle::Error),
 }

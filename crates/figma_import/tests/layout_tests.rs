@@ -23,7 +23,8 @@
 // parameter list.
 //
 
-use dc_bundle::legacy_definition::element::geometry::Dimension;
+use dc_bundle::definition::element::dimension_proto::Dimension;
+use dc_bundle::definition::element::DimensionProto;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::layout::positioning::LayoutSizing;
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
@@ -72,50 +73,57 @@ fn add_view_to_layout(
     *id = *id + 1;
     if let ViewData::Text { content: _, res_name: _ } = &view.data {
         let mut use_measure_func = false;
-        if let Dimension::Auto = view.style.layout_style.width {
-            if let Dimension::Auto = view.style.layout_style.height {
+        if let Dimension::Auto(()) = view.style.layout_style.width.unwrap().dimension.unwrap() {
+            if let Dimension::Auto(()) = view.style.layout_style.height.unwrap().dimension.unwrap()
+            {
                 if view.style.node_style.horizontal_sizing == LayoutSizing::Fill {
                     use_measure_func = true;
                 }
             }
         }
         if use_measure_func {
-            manager.add_style_measure(
+            manager
+                .add_style_measure(
+                    my_id,
+                    parent_layout_id,
+                    child_index,
+                    view.style.layout_style.clone(),
+                    view.name.clone(),
+                    measure_func,
+                )
+                .unwrap();
+        } else {
+            let mut fixed_view = view.clone();
+            fixed_view.style.layout_style.width =
+                DimensionProto::new_points(view.style.layout_style.bounding_box.width);
+            fixed_view.style.layout_style.height =
+                DimensionProto::new_points(view.style.layout_style.bounding_box.height);
+            manager
+                .add_style(
+                    my_id,
+                    parent_layout_id,
+                    child_index,
+                    fixed_view.style.layout_style.clone(),
+                    fixed_view.name.clone(),
+                    None,
+                    None,
+                    None,
+                )
+                .unwrap();
+        }
+    } else if let ViewData::Container { shape: _, children } = &view.data {
+        manager
+            .add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
                 view.style.layout_style.clone(),
                 view.name.clone(),
-                measure_func,
-            );
-        } else {
-            let mut fixed_view = view.clone();
-            fixed_view.style.layout_style.width =
-                Dimension::Points(view.style.layout_style.bounding_box.width);
-            fixed_view.style.layout_style.height =
-                Dimension::Points(view.style.layout_style.bounding_box.height);
-            manager.add_style(
-                my_id,
-                parent_layout_id,
-                child_index,
-                fixed_view.style.layout_style.clone(),
-                fixed_view.name.clone(),
                 None,
                 None,
                 None,
-            );
-        }
-    } else if let ViewData::Container { shape: _, children } = &view.data {
-        manager.add_style(
-            my_id,
-            parent_layout_id,
-            child_index,
-            view.style.layout_style.clone(),
-            view.name.clone(),
-            None,
-            None,
-            None,
-        );
+            )
+            .unwrap();
         let mut index = 0;
         for child in children {
             add_view_to_layout(child, manager, id, my_id, index, replacements, views);
@@ -161,20 +169,20 @@ fn test_vertical_layout() {
     let root_layout_result = manager.get_node_layout(0);
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
-    assert!(root_layout.width == 100.0);
-    assert!(root_layout.height == 110.0);
+    assert_eq!(root_layout.width, 100.0);
+    assert_eq!(root_layout.height, 110.0);
 
     let child1_layout_result = manager.get_node_layout(1);
     assert!(child1_layout_result.is_some());
     let child1_layout = child1_layout_result.unwrap();
-    assert!(child1_layout.width == 50.0);
-    assert!(child1_layout.height == 50.0);
+    assert_eq!(child1_layout.width, 50.0);
+    assert_eq!(child1_layout.height, 50.0);
 
     let child2_layout_result = manager.get_node_layout(2);
     assert!(child2_layout_result.is_some());
     let child2_layout = child2_layout_result.unwrap();
-    assert!(child2_layout.width == 80.0);
-    assert!(child2_layout.height == 30.0);
+    assert_eq!(child2_layout.width, 80.0);
+    assert_eq!(child2_layout.height, 30.0);
 }
 
 // Test replacement nodes in auto layout
@@ -187,24 +195,24 @@ fn test_replacement_autolayout() {
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
 
-    assert!(root_layout.width == 140.0);
-    assert!(root_layout.height == 70.0);
+    assert_eq!(root_layout.width, 140.0);
+    assert_eq!(root_layout.height, 70.0);
 
     let child1_layout_result = manager.get_node_layout(1);
     assert!(child1_layout_result.is_some());
     let child1_layout = child1_layout_result.unwrap();
-    assert!(child1_layout.width == 50.0);
-    assert!(child1_layout.height == 50.0);
-    assert!(child1_layout.left == 10.0);
-    assert!(child1_layout.top == 10.0);
+    assert_eq!(child1_layout.width, 50.0);
+    assert_eq!(child1_layout.height, 50.0);
+    assert_eq!(child1_layout.left, 10.0);
+    assert_eq!(child1_layout.top, 10.0);
 
     let child2_layout_result = manager.get_node_layout(2);
     assert!(child2_layout_result.is_some());
     let child2_layout = child2_layout_result.unwrap();
-    assert!(child2_layout.width == 50.0);
-    assert!(child2_layout.height == 50.0);
-    assert!(child2_layout.left == 80.0);
-    assert!(child2_layout.top == 10.0);
+    assert_eq!(child2_layout.width, 50.0);
+    assert_eq!(child2_layout.height, 50.0);
+    assert_eq!(child2_layout.left, 80.0);
+    assert_eq!(child2_layout.top, 10.0);
 }
 
 // Test replacement nodes in fixed layout
@@ -217,24 +225,24 @@ fn test_replacement_fixedlayout() {
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
 
-    assert!(root_layout.width == 140.0);
-    assert!(root_layout.height == 70.0);
+    assert_eq!(root_layout.width, 140.0);
+    assert_eq!(root_layout.height, 70.0);
 
     let child1_layout_result = manager.get_node_layout(1);
     assert!(child1_layout_result.is_some());
     let child1_layout = child1_layout_result.unwrap();
-    assert!(child1_layout.width == 50.0);
-    assert!(child1_layout.height == 50.0);
-    assert!(child1_layout.left == 10.0);
-    assert!(child1_layout.top == 10.0);
+    assert_eq!(child1_layout.width, 50.0);
+    assert_eq!(child1_layout.height, 50.0);
+    assert_eq!(child1_layout.left, 10.0);
+    assert_eq!(child1_layout.top, 10.0);
 
     let child2_layout_result = manager.get_node_layout(2);
     assert!(child2_layout_result.is_some());
     let child2_layout = child2_layout_result.unwrap();
-    assert!(child2_layout.width == 50.0);
-    assert!(child2_layout.height == 50.0);
-    assert!(child2_layout.left == 80.0);
-    assert!(child2_layout.top == 10.0);
+    assert_eq!(child2_layout.width, 50.0);
+    assert_eq!(child2_layout.height, 50.0);
+    assert_eq!(child2_layout.left, 80.0);
+    assert_eq!(child2_layout.top, 10.0);
 }
 
 #[test]
@@ -246,24 +254,24 @@ fn test_vertical_fill() {
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
 
-    assert!(root_layout.width == 150.0);
-    assert!(root_layout.height == 130.0);
+    assert_eq!(root_layout.width, 150.0);
+    assert_eq!(root_layout.height, 130.0);
 
     // Right node should fill to fit root
     let right_layout_result = manager.get_node_layout(2);
     assert!(right_layout_result.is_some());
     let right_layout = right_layout_result.unwrap();
-    assert!(right_layout.width == 70.0);
-    assert!(right_layout.height == 110.0);
-    assert!(right_layout.left == 70.0);
-    assert!(right_layout.top == 10.0);
+    assert_eq!(right_layout.width, 70.0);
+    assert_eq!(right_layout.height, 110.0);
+    assert_eq!(right_layout.left, 70.0);
+    assert_eq!(right_layout.top, 10.0);
 
     // Auto fill height node should fill to fit Right
     let auto_fill_height_result = manager.get_node_layout(3);
     assert!(auto_fill_height_result.is_some());
     let auto_fill_height = auto_fill_height_result.unwrap();
-    assert!(auto_fill_height.width == 70.0);
-    assert!(auto_fill_height.height == 30.0);
+    assert_eq!(auto_fill_height.width, 70.0);
+    assert_eq!(auto_fill_height.height, 30.0);
 }
 
 #[test]
@@ -280,17 +288,17 @@ fn test_vertical_fill_resize() {
     let right_layout_result = manager.get_node_layout(2);
     assert!(right_layout_result.is_some());
     let right_layout = right_layout_result.unwrap();
-    assert!(right_layout.width == 70.0);
-    assert!(right_layout.height == 140.0);
-    assert!(right_layout.left == 70.0);
-    assert!(right_layout.top == 10.0);
+    assert_eq!(right_layout.width, 70.0);
+    assert_eq!(right_layout.height, 140.0);
+    assert_eq!(right_layout.left, 70.0);
+    assert_eq!(right_layout.top, 10.0);
 
     // Auto fill height node should be taller by 30 pixels
     let auto_fill_height_result = manager.get_node_layout(3);
     assert!(auto_fill_height_result.is_some());
     let auto_fill_height = auto_fill_height_result.unwrap();
-    assert!(auto_fill_height.width == 70.0);
-    assert!(auto_fill_height.height == 60.0);
+    assert_eq!(auto_fill_height.width, 70.0);
+    assert_eq!(auto_fill_height.height, 60.0);
 }
 
 #[test]
@@ -302,24 +310,24 @@ fn test_horizontal_fill() {
     assert!(root_layout_result.is_some());
     let root_layout = root_layout_result.unwrap();
 
-    assert!(root_layout.width == 130.0);
-    assert!(root_layout.height == 150.0);
+    assert_eq!(root_layout.width, 130.0);
+    assert_eq!(root_layout.height, 150.0);
 
     // Bottom node should fill to fit root
     let bottom_layout_result = manager.get_node_layout(2);
     assert!(bottom_layout_result.is_some());
     let bottom_layout = bottom_layout_result.unwrap();
-    assert!(bottom_layout.width == 110.0);
-    assert!(bottom_layout.height == 70.0);
-    assert!(bottom_layout.left == 10.0);
-    assert!(bottom_layout.top == 70.0);
+    assert_eq!(bottom_layout.width, 110.0);
+    assert_eq!(bottom_layout.height, 70.0);
+    assert_eq!(bottom_layout.left, 10.0);
+    assert_eq!(bottom_layout.top, 70.0);
 
     // Auto fill width node should fill to fit Bottom
     let auto_fill_width_result = manager.get_node_layout(3);
     assert!(auto_fill_width_result.is_some());
     let auto_fill_width = auto_fill_width_result.unwrap();
-    assert!(auto_fill_width.width == 30.0);
-    assert!(auto_fill_width.height == 70.0);
+    assert_eq!(auto_fill_width.width, 30.0);
+    assert_eq!(auto_fill_width.height, 70.0);
 }
 
 #[test]
@@ -336,17 +344,17 @@ fn test_horizontal_fill_resize() {
     let bottom_layout_result = manager.get_node_layout(2);
     assert!(bottom_layout_result.is_some());
     let bottom_layout = bottom_layout_result.unwrap();
-    assert!(bottom_layout.width == 140.0);
-    assert!(bottom_layout.height == 70.0);
-    assert!(bottom_layout.left == 10.0);
-    assert!(bottom_layout.top == 70.0);
+    assert_eq!(bottom_layout.width, 140.0);
+    assert_eq!(bottom_layout.height, 70.0);
+    assert_eq!(bottom_layout.left, 10.0);
+    assert_eq!(bottom_layout.top, 70.0);
 
     // Auto fill width node should be wider by 30 pixels
     let auto_fill_width_result = manager.get_node_layout(3);
     assert!(auto_fill_width_result.is_some());
     let auto_fill_width = auto_fill_width_result.unwrap();
-    assert!(auto_fill_width.width == 60.0);
-    assert!(auto_fill_width.height == 70.0);
+    assert_eq!(auto_fill_width.width, 60.0);
+    assert_eq!(auto_fill_width.height, 70.0);
 }
 
 #[test]
@@ -361,8 +369,8 @@ fn test_constraints_left_right() {
     let child_layout_result = manager.get_node_layout(1);
     assert!(child_layout_result.is_some());
     let child_layout = child_layout_result.unwrap();
-    assert!(child_layout.width == 150.0);
-    assert!(child_layout.height == 50.0);
+    assert_eq!(child_layout.width, 150.0);
+    assert_eq!(child_layout.height, 50.0);
 }
 
 #[test]
@@ -377,8 +385,8 @@ fn test_constraints_top_bottom() {
     let child_layout_result = manager.get_node_layout(1);
     assert!(child_layout_result.is_some());
     let child_layout = child_layout_result.unwrap();
-    assert!(child_layout.width == 50.0);
-    assert!(child_layout.height == 150.0);
+    assert_eq!(child_layout.width, 50.0);
+    assert_eq!(child_layout.height, 150.0);
 }
 
 #[test]
@@ -393,8 +401,8 @@ fn test_constraints_left_right_top_bottom() {
     let child_layout_result = manager.get_node_layout(1);
     assert!(child_layout_result.is_some());
     let child_layout = child_layout_result.unwrap();
-    assert!(child_layout.width == 150.0);
-    assert!(child_layout.height == 150.0);
+    assert_eq!(child_layout.width, 150.0);
+    assert_eq!(child_layout.height, 150.0);
 }
 
 #[test]
@@ -409,10 +417,10 @@ fn test_constraints_center() {
     let child_layout_result = manager.get_node_layout(1);
     assert!(child_layout_result.is_some());
     let child_layout = child_layout_result.unwrap();
-    assert!(child_layout.width == 50.0);
-    assert!(child_layout.height == 50.0);
-    assert!(child_layout.left == 75.0);
-    assert!(child_layout.top == 75.0);
+    assert_eq!(child_layout.width, 50.0);
+    assert_eq!(child_layout.height, 50.0);
+    assert_eq!(child_layout.left, 75.0);
+    assert_eq!(child_layout.top, 75.0);
 }
 
 #[test]
@@ -430,22 +438,22 @@ fn test_constraints_widget() {
     let widget_parent_layout_result = manager.get_node_layout(1);
     assert!(widget_parent_layout_result.is_some());
     let widget_parent_layout = widget_parent_layout_result.unwrap();
-    assert!(widget_parent_layout.width == 150.0);
-    assert!(widget_parent_layout.height == 150.0);
+    assert_eq!(widget_parent_layout.width, 150.0);
+    assert_eq!(widget_parent_layout.height, 150.0);
 
     // Widget itself should fit to size of parent
     let widget_layout_result = manager.get_node_layout(2);
     assert!(widget_layout_result.is_some());
     let widget_layout = widget_layout_result.unwrap();
-    assert!(widget_layout.width == 150.0);
-    assert!(widget_layout.height == 150.0);
+    assert_eq!(widget_layout.width, 150.0);
+    assert_eq!(widget_layout.height, 150.0);
 
     // Widget child contains the actual data and should also be the same size
     let widget_child_layout_result = manager.get_node_layout(3);
     assert!(widget_child_layout_result.is_some());
     let widget_child_layout = widget_child_layout_result.unwrap();
-    assert!(widget_child_layout.width == 150.0);
-    assert!(widget_child_layout.height == 150.0);
+    assert_eq!(widget_child_layout.width, 150.0);
+    assert_eq!(widget_child_layout.height, 150.0);
 }
 
 #[test]
@@ -457,21 +465,21 @@ fn test_zero_width_height() {
     let bar_layout_result = manager.get_node_layout(2);
     assert!(bar_layout_result.is_some());
     let bar_layout = bar_layout_result.unwrap();
-    assert!(bar_layout.width == 80.0);
-    assert!(bar_layout.height == 0.0);
+    assert_eq!(bar_layout.width, 80.0);
+    assert_eq!(bar_layout.height, 0.0);
 
     let bg_layout_result = manager.get_node_layout(3);
     assert!(bg_layout_result.is_some());
     let bg_layout = bg_layout_result.unwrap();
-    assert!(bg_layout.width == 20.0);
-    assert!(bg_layout.height == 0.0);
+    assert_eq!(bg_layout.width, 20.0);
+    assert_eq!(bg_layout.height, 0.0);
 
     // A vector with width 0 and constraints set to scale should result in a width of 0
     let vert_bar_layout_result = manager.get_node_layout(5);
     assert!(vert_bar_layout_result.is_some());
     let vert_bar_layout = vert_bar_layout_result.unwrap();
-    assert!(vert_bar_layout.width == 0.0);
-    assert!(vert_bar_layout.height == 20.0);
+    assert_eq!(vert_bar_layout.width, 0.0);
+    assert_eq!(vert_bar_layout.height, 20.0);
 }
 
 // Add tests:

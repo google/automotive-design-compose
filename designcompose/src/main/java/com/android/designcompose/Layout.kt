@@ -38,9 +38,14 @@ import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.android.designcompose.proto.bottom
+import com.android.designcompose.proto.end
+import com.android.designcompose.proto.start
+import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
 import com.android.designcompose.serdegen.Dimension
+import com.android.designcompose.serdegen.DimensionRect
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
@@ -48,7 +53,6 @@ import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PositionType
-import com.android.designcompose.serdegen.Rect
 import com.android.designcompose.serdegen.Size
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewStyle
@@ -91,7 +95,7 @@ internal data class TextMeasureData(
 // parent. When doing component replacement, these properties are saved from the node being
 // replaced so that the new node can use its values.
 data class ExternalLayoutData(
-    val margin: Rect,
+    val margin: DimensionRect,
     val top: Dimension,
     val left: Dimension,
     val bottom: Dimension,
@@ -191,7 +195,7 @@ internal class LayoutInfoRow(
     val alignment: Alignment.Vertical,
     selfModifier: Modifier,
     val marginModifier: Modifier,
-    val padding: com.android.designcompose.serdegen.Rect,
+    val padding: com.android.designcompose.serdegen.DimensionRect,
 ) : SimplifiedLayoutInfo(selfModifier)
 
 internal class LayoutInfoColumn(
@@ -199,7 +203,7 @@ internal class LayoutInfoColumn(
     val alignment: Alignment.Horizontal,
     selfModifier: Modifier,
     val marginModifier: Modifier,
-    val padding: com.android.designcompose.serdegen.Rect,
+    val padding: com.android.designcompose.serdegen.DimensionRect,
 ) : SimplifiedLayoutInfo(selfModifier)
 
 internal class LayoutInfoGrid(
@@ -211,7 +215,7 @@ internal class LayoutInfoGrid(
     val gridSpanContent: List<GridSpan>,
     selfModifier: Modifier,
     val scrollingEnabled: Boolean,
-    val padding: com.android.designcompose.serdegen.Rect,
+    val padding: com.android.designcompose.serdegen.DimensionRect,
 ) : SimplifiedLayoutInfo(selfModifier)
 
 internal fun itemSpacingAbs(itemSpacing: ItemSpacing): Int {
@@ -283,7 +287,7 @@ internal fun calcLayoutInfo(
                     },
                 selfModifier = modifier,
                 marginModifier = marginModifier,
-                padding = style.layout_style.padding,
+                padding = style.layout_style.padding.get(),
             )
         } else if (isVerticalLayout) {
             return LayoutInfoColumn(
@@ -314,7 +318,7 @@ internal fun calcLayoutInfo(
                     },
                 selfModifier = modifier,
                 marginModifier = marginModifier,
-                padding = style.layout_style.padding,
+                padding = style.layout_style.padding.get()
             )
         } else {
             val isColumnLayout =
@@ -356,7 +360,7 @@ internal fun calcLayoutInfo(
                 gridSpanContent = style.node_style.grid_span_content,
                 selfModifier = modifier,
                 scrollingEnabled = scrollingEnabled,
-                padding = style.layout_style.padding,
+                padding = style.layout_style.padding.get()
             )
         }
     } else {
@@ -537,7 +541,7 @@ internal fun designMeasurePolicy(
                     }
                     placeable.placeWithLayer(
                         x = childLayout.left() + hScrollOffset,
-                        y = childLayout.top() + vScrollOffset
+                        y = childLayout.top() + vScrollOffset,
                     )
                 }
             }

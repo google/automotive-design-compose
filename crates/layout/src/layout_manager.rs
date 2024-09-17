@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::into_taffy::TryIntoTaffy;
+use crate::types::Layout;
+use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
+use dc_bundle::Error;
 use log::{error, trace};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size, Taffy};
 use taffy::tree::LayoutTree;
-
-use crate::types::Layout;
-use crate::{types, IntoTaffy};
-use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
 
 // Customizations that can applied to a node
 struct Customizations {
@@ -48,7 +48,7 @@ pub struct LayoutManager {
     // taffy object that does all the layout computations
     taffy: Taffy,
     // node id -> Taffy layout
-    layouts: HashMap<taffy::node::Node, types::Layout>,
+    layouts: HashMap<taffy::node::Node, Layout>,
     // A struct that keeps track of all customizations
     customizations: Customizations,
     // Incrementing ID used to keep track of layout changes. Incremented
@@ -84,13 +84,13 @@ impl LayoutManager {
         &mut self,
         layout_id: i32,
         parent_layout_id: i32,
-        changed: &mut HashMap<i32, types::Layout>,
+        changed: &mut HashMap<i32, Layout>,
     ) {
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
             let layout = self.taffy.layout(*node);
             if let Ok(layout) = layout {
-                let layout = types::Layout::from_taffy_layout(layout);
+                let layout = Layout::from_taffy_layout(layout);
                 let old_layout = self.layouts.get(node);
                 let mut layout_changed = false;
                 if let Some(old_layout) = old_layout {
@@ -140,19 +140,19 @@ impl LayoutManager {
 
     // Update the layout for the specified layout_id and its children, and
     // return a hash of layouts that changed.
-    fn update_layout(&mut self, layout_id: i32) -> HashMap<i32, types::Layout> {
-        let mut changed: HashMap<i32, types::Layout> = HashMap::new();
+    fn update_layout(&mut self, layout_id: i32) -> HashMap<i32, Layout> {
+        let mut changed: HashMap<i32, Layout> = HashMap::new();
         self.update_layout_internal(layout_id, -1, &mut changed);
         changed
     }
 
     // Get the computed layout for the given node
-    pub fn get_node_layout(&self, layout_id: i32) -> Option<types::Layout> {
+    pub fn get_node_layout(&self, layout_id: i32) -> Option<Layout> {
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
             let layout = self.taffy.layout(*node);
             if let Ok(layout) = layout {
-                return Some(types::Layout::from_taffy_layout(layout));
+                return Some(Layout::from_taffy_layout(layout));
             }
         }
         None
@@ -178,7 +178,7 @@ impl LayoutManager {
         style: LayoutStyle,
         name: String,
         measure_func: impl Send + Sync + 'static + Fn(i32, f32, f32, f32, f32) -> (f32, f32),
-    ) {
+    ) -> Result<(), Error> {
         trace!("add_view_measure layoutId {}", layout_id);
         let layout_measure_func = move |size: Size<Option<f32>>,
                                         available_size: Size<AvailableSpace>|
@@ -199,7 +199,7 @@ impl LayoutManager {
             Size { width: result.0, height: result.1 }
         };
 
-        self.add_style(
+        Ok(self.add_style(
             layout_id,
             parent_layout_id,
             child_index,
@@ -208,7 +208,7 @@ impl LayoutManager {
             Some(taffy::node::MeasureFunc::Boxed(Box::new(layout_measure_func))),
             None,
             None,
-        )
+        )?)
     }
 
     pub fn add_style(
@@ -221,8 +221,8 @@ impl LayoutManager {
         measure_func: Option<taffy::node::MeasureFunc>,
         fixed_width: Option<i32>,
         fixed_height: Option<i32>,
-    ) {
-        let mut node_style: taffy::style::Style = (&style).into_taffy();
+    ) -> Result<(), Error> {
+        let mut node_style: taffy::style::Style = (&style).try_into_taffy()?;
 
         self.apply_customizations(layout_id, &mut node_style);
         self.apply_fixed_size(&mut node_style, fixed_width, fixed_height);
@@ -288,6 +288,7 @@ impl LayoutManager {
                 }
             }
         }
+        Ok(())
     }
 
     pub fn remove_view(
@@ -428,7 +429,7 @@ impl LayoutManager {
         let changed_layouts = self.update_layout(layout_id);
         self.layout_state = self.layout_state + 1;
 
-        LayoutChangedResponse { layout_state: self.layout_state, changed_layouts: changed_layouts }
+        LayoutChangedResponse { layout_state: self.layout_state, changed_layouts }
     }
 
     pub fn print_layout(self, layout_id: i32, print_func: fn(String) -> ()) {

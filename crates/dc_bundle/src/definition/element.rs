@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
+use crate::definition::element::dimension_proto::Dimension;
+use crate::definition::element::dimension_proto::Dimension::Points;
+use crate::Error;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
+
 include!(concat!(env!("OUT_DIR"), "/designcompose.definition.element.rs"));
 
 impl Display for FontStyle {
@@ -180,5 +184,108 @@ impl Color {
 impl Into<Color> for &FloatColor {
     fn into(self) -> Color {
         Color::from_f32s(self.r, self.g, self.b, self.a)
+    }
+}
+
+impl DimensionProto {
+    pub fn new_auto() -> Option<Self> {
+        Some(DimensionProto { dimension: Some(Dimension::Auto(())) })
+    }
+    pub fn new_points(value: f32) -> Option<Self> {
+        Some(DimensionProto { dimension: Some(Points(value)) })
+    }
+    pub fn new_percent(value: f32) -> Option<Self> {
+        Some(DimensionProto { dimension: Some(Dimension::Percent(value)) })
+    }
+    pub fn new_undefined() -> Option<Self> {
+        Some(DimensionProto { dimension: Some(Dimension::Undefined(())) })
+    }
+}
+
+pub trait DimensionExt {
+    fn is_points(&self) -> Result<bool, Error>;
+}
+impl DimensionExt for Option<DimensionProto> {
+    fn is_points(&self) -> Result<bool, Error> {
+        match self {
+            Some(DimensionProto { dimension: Some(Points(_)) }) => Ok(true),
+            Some(_) => Ok(false), // Other Dimension variants are not Points
+            None => Err(Error::MissingFieldError { field: "DimensionProto".to_string() }),
+        }
+    }
+}
+
+impl DimensionRect {
+    pub fn new() -> Option<Self> {
+        Some(DimensionRect {
+            start: DimensionProto::new_undefined(),
+            end: DimensionProto::new_undefined(),
+            top: DimensionProto::new_undefined(),
+            bottom: DimensionProto::new_undefined(),
+        })
+    }
+
+    // Sets the value of start to the given DimensionView value
+    pub fn set_start(&mut self, start: Dimension) {
+        self.start = Some(DimensionProto { dimension: Some(start) });
+    }
+    // Sets the value of end to the given DimensionView value
+    pub fn set_end(&mut self, end: Dimension) {
+        self.end = Some(DimensionProto { dimension: Some(end) });
+    }
+    // Sets the value of top to the given DimensionView value
+    pub fn set_top(&mut self, top: Dimension) {
+        self.top = Some(DimensionProto { dimension: Some(top) });
+    }
+    // Sets the value of bottom to the given DimensionView value
+    pub fn set_bottom(&mut self, bottom: Dimension) {
+        self.bottom = Some(DimensionProto { dimension: Some(bottom) });
+    }
+}
+
+// Define an extension trait
+pub trait DimensionRectExt {
+    fn set_start(&mut self, start: Dimension) -> Result<(), Error>;
+    fn set_end(&mut self, end: Dimension) -> Result<(), Error>;
+    fn set_top(&mut self, top: Dimension) -> Result<(), Error>;
+    fn set_bottom(&mut self, bottom: Dimension) -> Result<(), Error>;
+}
+
+// Implement the extension trait for Option<DimensionRect>
+impl DimensionRectExt for Option<DimensionRect> {
+    fn set_start(&mut self, start: Dimension) -> Result<(), Error> {
+        if let Some(rect) = self.as_mut() {
+            rect.set_start(start);
+            Ok(())
+        } else {
+            Err(Error::MissingFieldError { field: "DimensionRect->start".to_string() })
+        }
+    }
+
+    fn set_end(&mut self, end: Dimension) -> Result<(), Error> {
+        if let Some(rect) = self.as_mut() {
+            rect.set_end(end);
+            Ok(())
+        } else {
+            Err(Error::MissingFieldError { field: "DimensionRect->end".to_string() })
+        }
+    }
+
+    fn set_top(&mut self, top: Dimension) -> Result<(), Error> {
+        if let Some(rect) = self.as_mut() {
+            rect.set_top(top);
+            Ok(())
+        } else {
+            Err(Error::MissingFieldError { field: "DimensionRect->top".to_string() })
+        }
+    }
+
+    fn set_bottom(&mut self, bottom: Dimension) -> Result<(), Error> {
+        if let Some(rect) = self.as_mut() {
+            rect.set_bottom(bottom);
+            Ok(())
+        } else {
+            Err(Error::MissingFieldError { field: "DimensionRect->bottom".to_string() })
+        }
     }
 }

@@ -17,8 +17,6 @@
 package com.android.designcompose.proto
 
 import com.android.designcompose.android_interface.LayoutChangedResponse
-import com.android.designcompose.definition.element.DimensionProto
-import com.android.designcompose.definition.element.DimensionRect
 import com.android.designcompose.definition.layout.AlignContent
 import com.android.designcompose.definition.layout.AlignItems
 import com.android.designcompose.definition.layout.AlignSelf
@@ -27,25 +25,11 @@ import com.android.designcompose.definition.layout.ItemSpacing
 import com.android.designcompose.definition.layout.JustifyContent
 import com.android.designcompose.definition.layout.LayoutStyle
 import com.android.designcompose.definition.layout.PositionType
-import com.android.designcompose.serdegen.Dimension
-import com.android.designcompose.serdegen.Rect
 import com.android.designcompose.serdegen.Size
+import java.util.*
 
 internal fun LayoutChangedResponse.Layout.intoSerde() =
     com.android.designcompose.serdegen.Layout(order, width, height, left, top)
-
-internal fun DimensionProto.intoSerde() =
-    when (dimensionCase) {
-        DimensionProto.DimensionCase.UNDEFINED -> Dimension.Undefined()
-        DimensionProto.DimensionCase.AUTO -> Dimension.Auto()
-        DimensionProto.DimensionCase.POINTS -> Dimension.Points(points)
-        DimensionProto.DimensionCase.PERCENT -> Dimension.Percent(percent)
-        else ->
-            throw IllegalArgumentException("Unknown DimensionProto: $this") // Should never happen.
-    }
-
-internal fun DimensionRect.intoSerde() =
-    Rect(start.intoSerde(), end.intoSerde(), top.intoSerde(), bottom.intoSerde())
 
 internal fun ItemSpacing.intoSerde() =
     when (typeCase) {
@@ -139,27 +123,27 @@ internal fun PositionType.intoSerde() =
 /** Temporary (I hope) conversion from the Proto layout style to the Serde layout style. */
 internal fun LayoutStyle.intoSerde() =
     com.android.designcompose.serdegen.LayoutStyle(
-        margin.intoSerde(),
-        padding.intoSerde(),
+        Optional.of(margin.intoSerde()),
+        Optional.of(padding.intoSerde()),
         itemSpacing.intoSerde(),
-        top.intoSerde(),
-        left.intoSerde(),
-        bottom.intoSerde(),
-        right.intoSerde(),
-        width.intoSerde(),
-        height.intoSerde(),
-        minWidth.intoSerde(),
-        maxWidth.intoSerde(),
-        minHeight.intoSerde(),
-        maxHeight.intoSerde(),
+        Optional.of(top.into()),
+        Optional.of(left.into()),
+        Optional.of(bottom.into()),
+        Optional.of(right.into()),
+        Optional.of(width.into()),
+        Optional.of(height.into()),
+        Optional.of(minWidth.into()),
+        Optional.of(maxWidth.into()),
+        Optional.of(minHeight.into()),
+        Optional.of(maxHeight.into()),
         boundingBox.intoSerde(),
         flexGrow,
         flexShrink,
-        flexBasis.intoSerde(),
+        Optional.of(flexBasis.into()),
         alignSelf.intoSerde(),
         alignContent.intoSerde(),
         alignItems.intoSerde(),
         flexDirection.intoSerde(),
         justifyContent.intoSerde(),
-        positionType.intoSerde()
+        positionType.intoSerde(),
     )

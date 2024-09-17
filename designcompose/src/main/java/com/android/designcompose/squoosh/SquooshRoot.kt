@@ -81,10 +81,10 @@ import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
+import com.android.designcompose.proto.newDimensionProtoPoints
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
-import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Size
@@ -93,6 +93,9 @@ import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -132,26 +135,31 @@ private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints,
     val layoutStyleBuilder = view.style.layout_style.asBuilder()
 
     if (constraints.minWidth != 0)
-        layoutStyleBuilder.min_width = Dimension.Points(constraints.minWidth.toFloat() / density)
+        layoutStyleBuilder.min_width =
+            newDimensionProtoPoints(constraints.minWidth.toFloat() / density)
 
     if (constraints.maxWidth != Constraints.Infinity)
-        layoutStyleBuilder.max_width = Dimension.Points(constraints.maxWidth.toFloat() / density)
+        layoutStyleBuilder.max_width =
+            newDimensionProtoPoints(constraints.maxWidth.toFloat() / density)
 
     if (constraints.hasFixedWidth) {
-        layoutStyleBuilder.width = Dimension.Points(constraints.minWidth.toFloat() / density)
+        layoutStyleBuilder.width = newDimensionProtoPoints(constraints.minWidth.toFloat() / density)
         // Layout implementation looks for width/height being set and then uses bounding box.
         layoutStyleBuilder.bounding_box =
             Size(constraints.minWidth.toFloat() / density, layoutStyleBuilder.bounding_box.height)
     }
 
     if (constraints.minHeight != 0)
-        layoutStyleBuilder.min_height = Dimension.Points(constraints.minHeight.toFloat() / density)
+        layoutStyleBuilder.min_height =
+            newDimensionProtoPoints(constraints.minHeight.toFloat() / density)
 
     if (constraints.maxHeight != Constraints.Infinity)
-        layoutStyleBuilder.max_height = Dimension.Points(constraints.maxHeight.toFloat() / density)
+        layoutStyleBuilder.max_height =
+            newDimensionProtoPoints(constraints.maxHeight.toFloat() / density)
 
     if (constraints.hasFixedHeight) {
-        layoutStyleBuilder.height = Dimension.Points(constraints.minHeight.toFloat() / density)
+        layoutStyleBuilder.height =
+            newDimensionProtoPoints(constraints.minHeight.toFloat() / density)
         // Layout implementation looks for width/height being set and then uses bounding box.
         layoutStyleBuilder.bounding_box =
             Size(layoutStyleBuilder.bounding_box.width, constraints.minHeight.toFloat() / density)
@@ -163,9 +171,7 @@ private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints,
 
 // Mutable field to remember animation information that is computed during the layout phase which
 // shouldn't invalidate anything as it mutates.
-internal class AnimationValueHolder(
-    var animationJob: Job?,
-)
+internal class AnimationValueHolder(var animationJob: Job?)
 
 // Track if we're the root component, or (in the near future) if we are a list item so that we can
 // share information across similar list items.
@@ -196,7 +202,7 @@ fun SquooshRoot(
             docId,
             serverParams,
             designComposeCallbacks?.newDocDataCallback,
-            liveUpdateMode == LiveUpdateMode.OFFLINE
+            liveUpdateMode == LiveUpdateMode.OFFLINE,
         )
 
     LaunchedEffect(docName) { Log.i(TAG, "Squooshing $docName") }
@@ -240,7 +246,7 @@ fun SquooshRoot(
             initialNode = rootNodeQuery,
             doc = doc,
             isRoot = isRoot,
-            customizationContext
+            customizationContext,
         )
 
     if (startFrame == null) {
@@ -414,7 +420,7 @@ fun SquooshRoot(
                     interruptedId = animatedAction.interruptedId,
                     transition = animatedAction.transition,
                     action = animatedAction,
-                    variant = null
+                    variant = null,
                 )
         }
         for (variantTransition in variantTransitions.transitions.values) {
@@ -425,7 +431,7 @@ fun SquooshRoot(
                     interruptedId = variantTransition.interruptedId,
                     transition = variantTransition.transition,
                     action = null,
-                    variant = variantTransition
+                    variant = variantTransition,
                 )
         }
 
@@ -496,7 +502,7 @@ fun SquooshRoot(
                         animationSpec = animationRequest.transition.animationSpec(),
                         typeConverter = Float.VectorConverter,
                         initialValue = 1f - initialValue,
-                        targetValue = 1f
+                        targetValue = 1f,
                     )
                 animationControl.animation = animation
                 nextAnimations[animationRequest.animationId] =
@@ -575,7 +581,7 @@ fun SquooshRoot(
                     currentAnimations,
                     interactionState,
                     interactionScope,
-                    variantTransitions
+                    variantTransitions,
                 ),
             content = {
                 // Now render all of the children
@@ -597,7 +603,7 @@ fun SquooshRoot(
                                 interactionState,
                                 interactionScope,
                                 customizationContext,
-                                child
+                                child,
                             )
                     }
 
@@ -619,7 +625,7 @@ fun SquooshRoot(
                         }
                     else SquooshChildLayout(modifier = composableChildModifier, child = child)
                 }
-            }
+            },
         )
         designSwitcher()
     }
@@ -630,7 +636,7 @@ private fun measureExternal(
     width: Float,
     height: Float,
     availableWidth: Float,
-    availableHeight: Float
+    availableHeight: Float,
 ): SizeF {
     val isBoundDefined = { dimension: Float -> dimension > 0f && dimension < Float.MAX_VALUE }
     // Figure out what we're being asked; we can't just do a measure with all
@@ -730,7 +736,7 @@ private fun squooshLayoutMeasurePolicy(
                     layoutManager,
                     transitionRootRemovalNodes,
                     layoutCache,
-                    layoutValueCache
+                    layoutValueCache,
                 )
                 updateDerivedLayout(presentationRoot)
             }
@@ -738,7 +744,7 @@ private fun squooshLayoutMeasurePolicy(
 
         override fun MeasureScope.measure(
             measurables: List<Measurable>,
-            constraints: Constraints
+            constraints: Constraints,
         ): MeasureResult {
             // Perform the "real" layout, now that we're done with
             // intrinsic queries and our parent has called the measure
@@ -764,7 +770,7 @@ private fun squooshLayoutMeasurePolicy(
         // the root's width/height.
         override fun IntrinsicMeasureScope.minIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             val constraints =
                 if (height < Constraints.Infinity) {
@@ -781,7 +787,7 @@ private fun squooshLayoutMeasurePolicy(
 
         override fun IntrinsicMeasureScope.minIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             val constraints =
                 if (width < Constraints.Infinity) {
@@ -872,7 +878,7 @@ private fun squooshLayoutMeasurePolicy(
 // These are common functions used by every Squoosh MeasurePolicy
 private fun MeasureScope.squooshMeasure(
     measurables: List<Measurable>,
-    constraints: Constraints
+    constraints: Constraints,
 ): List<Placeable> {
     return measurables.map { measurable ->
         val squooshData = measurable.parentData as? SquooshParentData
@@ -916,11 +922,11 @@ private fun MeasureScope.squooshMeasure(
 private fun MeasureScope.squooshLayout(
     root: SquooshResolvedNode,
     density: Float,
-    placeables: List<Placeable>
+    placeables: List<Placeable>,
 ): MeasureResult {
     return layout(
         (root.computedLayout!!.width * density).roundToInt(),
-        (root.computedLayout!!.height * density).roundToInt()
+        (root.computedLayout!!.height * density).roundToInt(),
     ) {
         // Place children in the parent layout
         placeables.forEach { placeable ->
@@ -943,7 +949,7 @@ private fun MeasureScope.squooshLayout(
 
                 placeable.placeRelative(
                     x = (offsetFromRoot.x * density).roundToInt(),
-                    y = (offsetFromRoot.y * density).roundToInt()
+                    y = (offsetFromRoot.y * density).roundToInt(),
                 )
             }
         }
@@ -976,6 +982,6 @@ private fun SquooshChildLayout(modifier: Modifier, child: SquooshChildComposable
             layout(layoutWidth, layoutHeight) {
                 placeables.forEach { child -> child.placeRelative(0, 0) }
             }
-        }
+        },
     )
 }

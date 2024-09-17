@@ -842,7 +842,7 @@ impl Document {
                         &self.document_root.component_sets,
                         &mut component_context,
                         &mut self.image_context,
-                    ),
+                    )?,
                 );
             }
 
@@ -895,8 +895,8 @@ impl Document {
                     id: c.id.clone(),
                     name: c.name.clone(),
                     default_mode_id: c.default_mode_id.clone(),
-                    mode_name_hash: mode_name_hash,
-                    mode_id_hash: mode_id_hash,
+                    mode_name_hash,
+                    mode_id_hash,
                 };
                 collections.insert(collection.id.clone(), collection);
                 collection_name_map.insert(c.name.clone(), c.id.clone());

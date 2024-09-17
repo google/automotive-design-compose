@@ -121,7 +121,7 @@ pub(crate) fn jni_add_nodes<'local>(
     fn deprotolize_layout_node_list(
         env: &mut JNIEnv,
         serialized_views: JByteArray,
-    ) -> Result<layout::layout_node::LayoutNodeList, Error> {
+    ) -> Result<LayoutNodeList, Error> {
         let bytes_views: Bytes = env.convert_byte_array(serialized_views)?.into();
         let proto_msg = dc_bundle::android_interface::LayoutNodeList::decode(bytes_views)
             .map_err(Error::from)?;
@@ -130,7 +130,11 @@ pub(crate) fn jni_add_nodes<'local>(
 
     match deprotolize_layout_node_list(&mut env, serialized_views) {
         Ok(node_list) => {
-            handle_layout_node_list(node_list, &mut manager);
+            if let Err(e) = handle_layout_node_list(node_list, &mut manager) {
+                info!("jni_add_nodes: Error handling layout node list: {:?}", e);
+                throw_basic_exception(&mut env, &e);
+                return JObject::null().into();
+            }
 
             let layout_response = manager.compute_node_layout(root_layout_id);
             layout_response_to_bytearray(env, layout_response)
@@ -143,7 +147,10 @@ pub(crate) fn jni_add_nodes<'local>(
     }
 }
 
-fn handle_layout_node_list(node_list: LayoutNodeList, manager: &mut MutexGuard<LayoutManager>) {
+fn handle_layout_node_list(
+    node_list: LayoutNodeList,
+    manager: &mut MutexGuard<LayoutManager>,
+) -> Result<(), Error> {
     for node in node_list.layout_nodes.into_iter() {
         if node.use_measure_func {
             manager.add_style_measure(
@@ -153,7 +160,7 @@ fn handle_layout_node_list(node_list: LayoutNodeList, manager: &mut MutexGuard<L
                 node.style,
                 node.name,
                 java_jni_measure_text,
-            );
+            )?;
         } else {
             manager.add_style(
                 node.layout_id,
@@ -164,12 +171,13 @@ fn handle_layout_node_list(node_list: LayoutNodeList, manager: &mut MutexGuard<L
                 None,
                 node.fixed_width,
                 node.fixed_height,
-            );
+            )?;
         }
     }
     for LayoutParentChildren { parent_layout_id, child_layout_ids } in &node_list.parent_children {
         manager.update_children(*parent_layout_id, child_layout_ids)
     }
+    Ok(())
 }
 
 pub(crate) fn jni_remove_node<'local>(

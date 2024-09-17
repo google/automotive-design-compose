@@ -51,6 +51,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.tracing.trace
+import com.android.designcompose.proto.getDim
+import com.android.designcompose.proto.start
+import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
@@ -187,12 +190,12 @@ internal fun DesignFrame(
                     override val imageContext =
                         ImageContext(
                             background = style.node_style.background,
-                            minWidth = style.layout_style.min_width,
-                            maxWidth = style.layout_style.max_width,
-                            width = style.layout_style.width,
-                            minHeight = style.layout_style.min_height,
-                            maxHeight = style.layout_style.max_height,
-                            height = style.layout_style.height,
+                            minWidth = style.layout_style.min_width.getDim(),
+                            maxWidth = style.layout_style.max_width.getDim(),
+                            width = style.layout_style.width.getDim(),
+                            minHeight = style.layout_style.min_height.getDim(),
+                            maxHeight = style.layout_style.max_height.getDim(),
+                            height = style.layout_style.height.getDim(),
                         )
                 }
             )
@@ -248,7 +251,7 @@ internal fun DesignFrame(
                     // itself. Then when the size is determined, inform the layout manager.
                     // Otherwise,
                     // get the fixed size from the layout manager and use it in a Modifier.
-                    val hugContents = view.style.layout_style.width is Dimension.Auto
+                    val hugContents = view.style.layout_style.width.getDim() is Dimension.Auto
                     val rowModifier =
                         if (hugContents)
                             Modifier.onSizeChanged {
@@ -319,7 +322,7 @@ internal fun DesignFrame(
                     // itself. Then when the size is determined, inform the layout manager.
                     // Otherwise,
                     // get the fixed size from the layout manager and use it in a Modifier.
-                    val hugContents = view.style.layout_style.height is Dimension.Auto
+                    val hugContents = view.style.layout_style.height.getDim() is Dimension.Auto
                     val columnModifier =
                         if (hugContents)
                             Modifier.onSizeChanged {
@@ -600,10 +603,10 @@ internal fun DesignFrame(
                         userScrollEnabled = layoutInfo.scrollingEnabled,
                         contentPadding =
                             PaddingValues(
-                                layoutInfo.padding.start.pointsAsDp(density),
-                                layoutInfo.padding.top.pointsAsDp(density),
-                                layoutInfo.padding.end.pointsAsDp(density),
-                                layoutInfo.padding.bottom.pointsAsDp(density),
+                                layoutInfo.padding.start.getDim().pointsAsDp(density),
+                                layoutInfo.padding.top.getDim().pointsAsDp(density),
+                                layoutInfo.padding.end.getDim().pointsAsDp(density),
+                                layoutInfo.padding.bottom.getDim().pointsAsDp(density),
                             ),
                     ) {
                         lazyItemContent()

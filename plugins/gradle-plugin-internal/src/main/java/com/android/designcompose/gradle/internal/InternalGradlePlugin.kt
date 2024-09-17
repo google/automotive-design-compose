@@ -93,7 +93,9 @@ class InternalGradlePlugin : Plugin<Project> {
                 test.doFirst {
                     if (isFetch.get()) {
                         test.useJUnit {
-                            it.includeCategories("com.android.designcompose.testapp.common.Fetchable")
+                            it.includeCategories(
+                                "com.android.designcompose.testapp.common.Fetchable"
+                            )
                         }
 
                         // Make sure we have a figmaToken set

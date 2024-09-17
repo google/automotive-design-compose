@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { json } from "stream/consumers";
 import * as Utils from "./utils";
 
 const IMAGE_HASH_TO_RES_KEY = "image_hash_to_res";
@@ -26,6 +25,8 @@ const imageHashToNodesMap = new Map<string, Array<string>>();
 const imageHashToResMap = new Map<string, string>();
 // Res name to image hash map, this will be used to look up a unique res name.
 const resToImageHashMap = new Map<string, string>();
+// Hash to excluded state map
+const exportedImageHashArray = new Array<string>();
 
 export async function exportAllImagesAsync() {
   await figma.loadAllPagesAsync();
@@ -34,15 +35,22 @@ export async function exportAllImagesAsync() {
   imageHashToNodesMap.clear();
   imageHashToResMap.clear();
   resToImageHashMap.clear();
+  exportedImageHashArray.length = 0;
 
-  let cachedHashToResMap = load();
+  let cachedHashToResMap = loadExportedImages();
+  for (const [key, _] of cachedHashToResMap) {
+    exportedImageHashArray.push(key);
+  }
+  let cachedHashToResMapExcluded = loadNonExportedImages();
+  cachedHashToResMapExcluded.forEach((resName, imageHash) =>
+    cachedHashToResMap.set(imageHash, resName)
+  );
 
   for (let page of figma.root.children) {
     for (let child of page.children) {
       await exportNodeImagesAsync(child, cachedHashToResMap);
     }
   }
-
   save();
 
   figma.showUI(__html__, { width: 600, height: 600 });
@@ -51,6 +59,7 @@ export async function exportAllImagesAsync() {
     imageBytesArray: Array.from(imageHashToBytesMap),
     imageNodesArray: Array.from(imageHashToNodesMap),
     imageResNameArray: Array.from(imageHashToResMap),
+    exportedImageHashArray: exportedImageHashArray,
   });
 }
 
@@ -63,16 +72,17 @@ export function updateResName(imageHash: string, resName: string) {
     imageHashToResMap.set(imageHash, resName);
     resToImageHashMap.set(resName, imageHash);
     save();
+    figma.notify("Res name successfully updated....");
   } else {
     figma.notify("Res name already exists. Reverting....");
+    figma.ui.postMessage({
+      msg: "image-export",
+      imageBytesArray: Array.from(imageHashToBytesMap),
+      imageNodesArray: Array.from(imageHashToNodesMap),
+      imageResNameArray: Array.from(imageHashToResMap),
+      exportedImageHashArray: exportedImageHashArray,
+    });
   }
-
-  figma.ui.postMessage({
-    msg: "image-export",
-    imageBytesArray: Array.from(imageHashToBytesMap),
-    imageNodesArray: Array.from(imageHashToNodesMap),
-    imageResNameArray: Array.from(imageHashToResMap),
-  });
 }
 
 async function exportNodeImagesAsync(
@@ -156,28 +166,79 @@ export function clear() {
     IMAGE_HASH_TO_RES_KEY,
     ""
   );
+  figma.root.setPluginData(IMAGE_HASH_TO_RES_KEY, "");
+  figma.closePlugin("Image res data has been cleared.");
+}
+
+export function excludeAnImage(imageHash: string) {
+  const index = exportedImageHashArray.indexOf(imageHash);
+  if (index != -1) {
+    exportedImageHashArray.splice(index, 1);
+    save();
+    figma.notify(`Image ${imageHash} now will not be exported...`);
+  } else {
+    figma.notify(
+      `Image ${imageHash} is already ignored from exporting, no action...`
+    );
+  }
+}
+
+export function includeAnImage(imageHash: string) {
+  if (!exportedImageHashArray.includes(imageHash)) {
+    exportedImageHashArray.push(imageHash);
+    save();
+    figma.notify(`Image ${imageHash} now will be exported...`);
+  } else {
+    figma.notify(`Image ${imageHash} is already being exported, no action...`);
+  }
 }
 
 function save() {
-  const jsonObject: { [key: string]: string } = {};
-  imageHashToResMap.forEach((value, key) => {
-    jsonObject[key] = value;
+  const exportedImagesJson: { [key: string]: string } = {};
+  const nonExportedImagesJson: { [key: string]: string } = {};
+  imageHashToResMap.forEach((resName, hash) => {
+    if (exportedImageHashArray.includes(hash)) {
+      exportedImagesJson[hash] = resName;
+    } else {
+      nonExportedImagesJson[hash] = resName;
+    }
   });
+
   figma.root.setSharedPluginData(
     Utils.SHARED_PLUGIN_NAMESPACE,
     IMAGE_HASH_TO_RES_KEY,
-    JSON.stringify(jsonObject)
+    JSON.stringify(exportedImagesJson)
+  );
+  figma.root.setPluginData(
+    IMAGE_HASH_TO_RES_KEY,
+    JSON.stringify(nonExportedImagesJson)
   );
 }
 
-function load(): Map<string, string> {
-  const imageResNameData = figma.root.getSharedPluginData(
+function loadExportedImages(): Map<string, string> {
+  const imageHashToResNameData = figma.root.getSharedPluginData(
     Utils.SHARED_PLUGIN_NAMESPACE,
     IMAGE_HASH_TO_RES_KEY
   );
-  let imageHashToResPairs = imageResNameData
-    ? JSON.parse(imageResNameData)
-    : [];
-  let imageHashToResMap = new Map<string, string>(Object.entries(imageHashToResPairs));
-  return imageHashToResMap;
+
+  return parseCachedImageHashToResMap(imageHashToResNameData);
+}
+
+// Private plugin data saves those images excluded from importing
+function loadNonExportedImages(): Map<string, string> {
+  const imageHashToResNameData = figma.root.getPluginData(
+    IMAGE_HASH_TO_RES_KEY
+  );
+  return parseCachedImageHashToResMap(imageHashToResNameData);
+}
+
+function parseCachedImageHashToResMap(imageHashToResNameData?: string) {
+  let imageHashToResPairs: { [key: string]: string } = imageHashToResNameData
+    ? JSON.parse(imageHashToResNameData)
+    : {};
+
+  let cachedImageHashToResMap = new Map<string, string>(
+    Object.entries(imageHashToResPairs)
+  );
+  return cachedImageHashToResMap;
 }

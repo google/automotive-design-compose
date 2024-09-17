@@ -16,7 +16,6 @@
 
 package com.android.designcompose.testapp.validation.examples
 
-import android.annotation.TargetApi
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.Composable
@@ -42,7 +41,6 @@ interface StateCustomizations {
 }
 
 @Composable
-@TargetApi(26)
 fun StateCustomizationsTest(clock: Clock) {
     val time = remember { mutableStateOf("00:00:00") }
     val firstHand = remember { mutableFloatStateOf(0F) }

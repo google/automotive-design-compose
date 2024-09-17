@@ -74,6 +74,7 @@ fetch_design_switcher
 fetch_helloworld &
 fetch_tutorial &
 fetch_layout_tests &
+fetch_state_customizations &
 
 "$GIT_ROOT/gradlew" fetchAndUpdateFigmaFiles
 

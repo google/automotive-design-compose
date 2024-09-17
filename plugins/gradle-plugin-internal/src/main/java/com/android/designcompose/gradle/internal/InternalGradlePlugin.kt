@@ -46,10 +46,7 @@ class InternalGradlePlugin : Plugin<Project> {
          * @param variantName
          * @param testTaskName
          */
-        fun Project.configureFetchTasks(
-            variantName: String,
-            testTaskName: String,
-        ) {
+        fun Project.configureFetchTasks(variantName: String, testTaskName: String) {
             val isFetch = objects.property(Boolean::class.java)
             val isFetchAndSave = objects.property(Boolean::class.java)
 
@@ -89,18 +86,16 @@ class InternalGradlePlugin : Plugin<Project> {
             testTaskProvider.configureEach { test ->
                 // Help with caching. We don't want to cache the unit test results if we fetch
                 // so add an input property to mark whether we're fetching
-                test.inputs.properties(
-                    mapOf(
-                        "isFetch" to isFetch,
-                    )
-                )
+                test.inputs.properties(mapOf("isFetch" to isFetch))
                 test.outputs.doNotCacheIf("Always fetch DCF files") { isFetch.get() }
-                test.useJUnit {
-                    it.includeCategories("com.android.designcompose.testapp.common.Fetchable")
-                }
+
 
                 test.doFirst {
                     if (isFetch.get()) {
+                        test.useJUnit {
+                            it.includeCategories("com.android.designcompose.testapp.common.Fetchable")
+                        }
+
                         // Make sure we have a figmaToken set
                         val figmaToken =
                             figmaTokenProvider.orNull

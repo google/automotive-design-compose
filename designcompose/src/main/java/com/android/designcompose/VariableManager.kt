@@ -99,6 +99,30 @@ internal class VariableState(
             )
         }
     }
+
+    // Create a copy of this VariableState, replacing any explicitly set mode values with those
+    // passed in. Return the new copy.
+    fun copyWithModeValues(explicitModeValues: MutableMap<String, String>): VariableState {
+        val newModeValues =
+            this.varModeValues?.let { VariableModeValues(it) } ?: VariableModeValues()
+        // The mode values passed in are in the format of collection ID -> mode ID. Convert this to
+        // collection name -> mode name.
+        explicitModeValues.forEach { (collectionId, modeId) ->
+            val collection = VariableManager.getCollection(collectionId)
+            collection?.let { c ->
+                val mode = c.mode_id_hash[modeId]
+                mode?.let { m -> newModeValues[c.name] = m.name }
+            }
+        }
+        return VariableState(
+            this.varCollection,
+            newModeValues,
+            this.useMaterialTheme,
+            this.materialColorScheme,
+            this.materialTypography,
+            this.materialShapes,
+        )
+    }
 }
 
 // Declare a CompositionLocal object of the specified variable collection. If null, no collection is

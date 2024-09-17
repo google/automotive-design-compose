@@ -73,6 +73,7 @@ internal fun Modifier.squooshRender(
     animations: Map<Int, SquooshAnimationRenderingInfo>,
     animPlayTimeNanosState: State<Map<Int, Long>>,
     variableState: VariableState,
+    hasModeOverride: Boolean,
     computedPathCache: ComputedPathCache,
     appContext: Context,
 ): Modifier =
@@ -95,7 +96,17 @@ internal fun Modifier.squooshRender(
 
             var nodeRenderCount = 0
             val renderTime = measureTimeMillis {
-                fun renderNode(node: SquooshResolvedNode) {
+                fun renderNode(node: SquooshResolvedNode, parentVariableState: VariableState) {
+                    // If there is no programmatic mode override and this node has explicitly set
+                    // mode values,
+                    // update variablestate with these values
+                    val variableState =
+                        if (!hasModeOverride && node.view.explicit_variable_modes.isPresent) {
+                            val explicitModeValues = node.view.explicit_variable_modes.get()
+                            parentVariableState.copyWithModeValues(explicitModeValues)
+                        } else {
+                            parentVariableState
+                        }
                     val computedLayout = node.computedLayout ?: return
                     val shape =
                         when (node.view.data) {
@@ -180,7 +191,7 @@ internal fun Modifier.squooshRender(
                                             pendingMask.computedLayout!!.left * density,
                                             pendingMask.computedLayout!!.top * density
                                         ) {
-                                            renderNode(pendingMask!!)
+                                            renderNode(pendingMask!!, variableState)
                                         }
 
                                         drawContext.canvas.restore()
@@ -206,7 +217,7 @@ internal fun Modifier.squooshRender(
                                             childLayout.left * density,
                                             childLayout.top * density
                                         ) {
-                                            renderNode(child!!)
+                                            renderNode(child!!, variableState)
                                         }
                                     }
                                     child = child.nextSibling
@@ -225,7 +236,7 @@ internal fun Modifier.squooshRender(
                                     pendingMask.computedLayout!!.left * density,
                                     pendingMask.computedLayout!!.top * density
                                 ) {
-                                    renderNode(pendingMask)
+                                    renderNode(pendingMask, variableState)
                                 }
 
                                 drawContext.canvas.restore()
@@ -237,7 +248,7 @@ internal fun Modifier.squooshRender(
                     }
                     nodeRenderCount++
                 }
-                renderNode(node)
+                renderNode(node, variableState)
             }
             if (renderTime > 16)
                 Log.d(TAG, "$docName rendered $nodeRenderCount nodes in ${renderTime}ms")

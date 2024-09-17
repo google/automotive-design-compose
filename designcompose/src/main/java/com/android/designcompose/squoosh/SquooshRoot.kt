@@ -72,6 +72,7 @@ import com.android.designcompose.KeyInjectManager
 import com.android.designcompose.LayoutManager
 import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.LocalDesignDocSettings
+import com.android.designcompose.LocalVariableState
 import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
 import com.android.designcompose.branches
@@ -554,6 +555,7 @@ fun SquooshRoot(
                         currentAnimations,
                         animPlayTimeNanosState,
                         VariableState.create(),
+                        LocalVariableState.hasOverrideModeValues(),
                         computedPathCache,
                         appContext = LocalContext.current,
                     )

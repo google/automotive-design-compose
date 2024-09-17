@@ -109,7 +109,6 @@ internal fun squooshComputeTextInfo(
     fontResourceLoader: Font.ResourceLoader,
     variableState: VariableState,
     appContext: Context,
-    useLocalStringRes: Boolean?,
     textMeasureCache: TextMeasureCache
 ): TextMeasureData? {
     val customizedText =
@@ -137,26 +136,19 @@ internal fun squooshComputeTextInfo(
                 is ViewData.Text -> {
                     val builder = AnnotatedString.Builder()
                     builder.append(
-                        normalizeNewlines(
-                            getTextContent(appContext, v.data as ViewData.Text, useLocalStringRes)
-                        )
+                        normalizeNewlines(getTextContent(appContext, v.data as ViewData.Text))
                     )
                     builder.toAnnotatedString()
                 }
                 is ViewData.StyledText -> {
                     val builder = AnnotatedString.Builder()
-                    for (run in
-                        getTextContent(
-                            appContext,
-                            v.data as ViewData.StyledText,
-                            useLocalStringRes
-                        )) {
+                    for (run in getTextContent(appContext, v.data as ViewData.StyledText)) {
                         val textBrushAndOpacity =
                             run.style.text_color.asBrush(
                                 appContext,
                                 document,
                                 density.density,
-                                variableState
+                                variableState,
                             )
                         val fontWeight = run.style.font_weight.value.getValue(variableState)
                         builder.pushStyle(

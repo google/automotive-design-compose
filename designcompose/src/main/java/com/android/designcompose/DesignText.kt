@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -166,7 +167,7 @@ internal fun DesignText(
                     LocalContext.current,
                     document,
                     density.density,
-                    variableState
+                    variableState,
                 )
             textBuilder.pushStyle(
                 SpanStyle(
@@ -277,7 +278,7 @@ internal fun DesignText(
             LocalContext.current,
             document,
             density.density,
-            variableState
+            variableState,
         )
 
     val textStyle =
@@ -437,7 +438,7 @@ internal fun DesignText(
                                             appContext,
                                             document,
                                             density.density,
-                                            variableState
+                                            variableState,
                                         )
                                         ?.let { brushAndOpacity ->
                                             drawText(

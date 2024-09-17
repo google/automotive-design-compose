@@ -31,7 +31,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -277,8 +276,16 @@ fun SquooshRoot(
         onDispose { KeyInjectManager.removeTracker(keyEventTracker) }
     }
 
+    // When device configuration changes or debug setting of using local string resource changes,
+    // invalidate the text measure cache.
     val textMeasureCache =
-        remember(docId, LocalContext.current.resources.configuration) { TextMeasureCache() }
+        remember(
+            docId,
+            LocalContext.current.resources.configuration,
+            DebugNodeManager.getUseLocalRes().value
+        ) {
+            TextMeasureCache()
+        }
     val computedPathCache = remember(docId) { ComputedPathCache() }
 
     // We need to remember the previous set of variant properties that we rendered
@@ -294,7 +301,6 @@ fun SquooshRoot(
     // the correct variants etc and then build/update the tree. How do we know
     // what's different from last time? Does the Rust side track
     val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
-    val useLocalStringRes: Boolean? by DebugNodeManager.getUseLocalStringRes().observeAsState()
     keyEventTracker.clearListeners()
     val root =
         resolveVariantsRecursively(
@@ -313,7 +319,6 @@ fun SquooshRoot(
             isRoot,
             VariableState.create(),
             appContext = LocalContext.current,
-            useLocalStringRes = useLocalStringRes,
             textMeasureCache = textMeasureCache,
             customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
             overlays = overlays,
@@ -365,7 +370,6 @@ fun SquooshRoot(
                 isRoot,
                 VariableState.create(),
                 appContext = LocalContext.current,
-                useLocalStringRes = useLocalStringRes,
                 textMeasureCache = textMeasureCache,
                 customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
                 overlays = overlays,

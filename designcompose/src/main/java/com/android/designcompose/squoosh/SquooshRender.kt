@@ -341,7 +341,7 @@ private fun squooshTextRender(
                 appContext = appContext,
                 document = document,
                 density = density.density,
-                variableState = variableState
+                variableState = variableState,
             )
         paragraph.paint(
             drawContext.canvas,
@@ -357,7 +357,7 @@ private fun squooshTextRender(
                 appContext = appContext,
                 document = document,
                 variableState = variableState,
-                density = density.density
+                density = density.density,
             )
         strokeBrushAndOpacity?.first?.let { brush ->
             paragraph.paint(

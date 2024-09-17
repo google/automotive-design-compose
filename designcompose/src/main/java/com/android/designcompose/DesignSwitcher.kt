@@ -51,7 +51,7 @@ private interface DesignSwitcher {
             "#NodeNamesCheckbox",
             "#MiniMessagesCheckbox",
             "#ShowRecompositionCheckbox",
-            "#UseLocalStringResCheckbox",
+            "#UseLocalResCheckbox",
             "#DesignViewMain",
             "#LiveMode",
             "#TopStatusBar",
@@ -77,7 +77,7 @@ private interface DesignSwitcher {
             "#NodeNamesCheckbox",
             "#MiniMessagesCheckbox",
             "#ShowRecompositionCheckbox",
-            "#UseLocalStringResCheckbox",
+            "#UseLocalResCheckbox",
             "#Name",
             "#Id",
             "#Text",
@@ -100,7 +100,7 @@ private interface DesignSwitcher {
                     "#NodeNamesCheckbox",
                     "#MiniMessagesCheckbox",
                     "#ShowRecompositionCheckbox",
-                    "#UseLocalStringResCheckbox",
+                    "#UseLocalResCheckbox",
                 ),
         )
     }
@@ -164,7 +164,7 @@ private interface DesignSwitcher {
         node_names_checkbox: ReplacementContent,
         mini_messages_checkbox: ReplacementContent,
         show_recomposition_checkbox: ReplacementContent,
-        useLocalStringResCheckbox: ReplacementContent,
+        useLocalResCheckbox: ReplacementContent,
         on_tap_logout: Modifier,
         live_mode: LiveMode,
         top_status_bar: TopStatusBar,
@@ -185,7 +185,7 @@ private interface DesignSwitcher {
         customizations.setContent("#NodeNamesCheckbox", node_names_checkbox)
         customizations.setContent("#MiniMessagesCheckbox", mini_messages_checkbox)
         customizations.setContent("#ShowRecompositionCheckbox", show_recomposition_checkbox)
-        customizations.setContent("#UseLocalStringResCheckbox", useLocalStringResCheckbox)
+        customizations.setContent("#UseLocalResCheckbox", useLocalResCheckbox)
         customizations.setModifier("#LogoutButton", on_tap_logout)
 
         val variantProperties = HashMap<String, String>()
@@ -532,14 +532,14 @@ private fun GetShowRecompositionCheckbox(
 }
 
 @Composable
-private fun GetUseLocalStringResCheckbox(
+private fun GetUseLocalResCheckbox(
     state: Boolean,
     setState: (Boolean) -> Unit
 ): ReplacementContent {
     val clickModifier =
         Modifier.clickable {
             setState(!state)
-            DebugNodeManager.setUseLocalStringRes(!state)
+            DebugNodeManager.setUseLocalRes(!state)
         }
     return ReplacementContent(
         count = 1,
@@ -600,8 +600,7 @@ internal fun DesignSwitcher(
     val (miniMessagesChecked, setMiniMessagesChecked) = remember { mutableStateOf(true) }
     val (showRecompositionChecked, setShowRecompositionChecked) =
         remember { mutableStateOf(DebugNodeManager.getShowRecomposition().value ?: false) }
-    val (useLocalStringResChecked, setUseLocalStringResChecked) =
-        remember { mutableStateOf(DebugNodeManager.getUseLocalStringRes().value ?: true) }
+    val (useLocalResChecked, setUseLocalResChecked) = remember { DebugNodeManager.getUseLocalRes() }
     val miniMessage = if (miniMessagesChecked) getMiniMessage() else ""
 
     CompositionLocalProvider(LocalDocOverrideContext provides designSwitcherDocId()) {
@@ -646,8 +645,7 @@ internal fun DesignSwitcher(
                 GetMiniMessagesCheckbox(miniMessagesChecked, setMiniMessagesChecked),
             show_recomposition_checkbox =
                 GetShowRecompositionCheckbox(showRecompositionChecked, setShowRecompositionChecked),
-            useLocalStringResCheckbox =
-                GetUseLocalStringResCheckbox(useLocalStringResChecked, setUseLocalStringResChecked),
+            useLocalResCheckbox = GetUseLocalResCheckbox(useLocalResChecked, setUseLocalResChecked),
             on_tap_logout = Modifier.clickable { Log.i(TAG, "TODO: Re-implement Logging out") },
             live_mode =
                 if (DesignSettings.isDocumentLive.value) DesignSwitcher.LiveMode.Live

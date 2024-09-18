@@ -287,7 +287,8 @@ internal fun createMergedAnimationTree(
                         parent,
                         animations,
                         alreadyMatchedSet,
-                        customVariantTransition
+                        customVariantTransition,
+                        requestedAnim.transition,
                     )
                 if (animations.isNotEmpty()) {
                     requestedAnim.animationControl = SquooshAnimationControl(animations)

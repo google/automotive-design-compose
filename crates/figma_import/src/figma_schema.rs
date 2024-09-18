@@ -220,6 +220,8 @@ pub struct Effect {
     pub offset: Vector,
     #[serde(default)]
     pub spread: f32,
+    #[serde(rename = "boundVariables")]
+    pub bound_variables: Option<BoundVariables>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

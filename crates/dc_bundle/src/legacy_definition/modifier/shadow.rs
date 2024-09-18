@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::definition::element::Color;
+use crate::definition::element::color_or_var::ColorOrVar;
 use serde::{Deserialize, Serialize};
 
 /// Shadows can be applied to the border box, or the stroke box.
@@ -45,14 +45,14 @@ pub enum BoxShadow {
     Outset {
         blur_radius: f32,
         spread_radius: f32,
-        color: Color,
+        color: ColorOrVar,
         offset: (f32, f32),
         shadow_box: ShadowBox,
     },
     Inset {
         blur_radius: f32,
         spread_radius: f32,
-        color: Color,
+        color: ColorOrVar,
         offset: (f32, f32),
         shadow_box: ShadowBox,
     },
@@ -63,7 +63,7 @@ impl BoxShadow {
     pub fn outset(
         blur_radius: f32,
         spread_radius: f32,
-        color: Color,
+        color: ColorOrVar,
         offset: (f32, f32),
     ) -> BoxShadow {
         BoxShadow::Outset {
@@ -78,7 +78,7 @@ impl BoxShadow {
     pub fn inset(
         blur_radius: f32,
         spread_radius: f32,
-        color: Color,
+        color: ColorOrVar,
         offset: (f32, f32),
     ) -> BoxShadow {
         BoxShadow::Inset {
@@ -94,6 +94,6 @@ impl BoxShadow {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TextShadow {
     pub blur_radius: f32,
-    pub color: Color,
+    pub color: ColorOrVar,
     pub offset: (f32, f32),
 }

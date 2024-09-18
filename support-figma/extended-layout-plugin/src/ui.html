@@ -17,7 +17,7 @@
 <head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
 <div id="errors" class="page page-padding-small" style="overflow-y: hidden; overflow-x: hidden">
@@ -1309,10 +1309,10 @@
       'ffd8ffe0': 'jpeg',
       'ffd8ffe1': 'jpeg',
       '89504e47': 'png',
-      '47494638': 'gif', 
+      '47494638': 'gif',
     };
     const hexSignature = bytesToHex(firstFewBytes);
-    const imageFormat = imageSignatures[hexSignature.toLowerCase()]; 
+    const imageFormat = imageSignatures[hexSignature.toLowerCase()];
     return imageFormat;
   }
 
@@ -1366,24 +1366,31 @@
   }
 
   // Display the images
-  async function createImageOutput(imageNodesArray, imageResNameArray, imageBytesArray) {
+  async function createImageOutput(imageNodesArray, imageResNameArray, imageBytesArray, exportedImageHashArray) {
     const imageInfo = document.getElementById('imageInfo');
     imageInfo.innerHTML = "";
 
     let imageNodesMap = new Map(imageNodesArray);
     let imageResMap = new Map(imageResNameArray);
+    let imageOutputMap = new Map();
 
-    const jszip = new JSZip();
     for (const [imageHash, imageBytes] of imageBytesArray) {
+      const resName = imageResMap.get(imageHash);
+
       const imageHashElement = document.createElement('div');
       imageHashElement.style.marginTop = '8px';
-      imageHashElement.textContent = `Image hash: ${imageHash}`;
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = exportedImageHashArray.includes(imageHash);
+      imageHashElement.appendChild(checkbox);
+      const span = document.createElement('span');
+      span.textContent = `Image hash: ${imageHash}`;
+      imageHashElement.appendChild(span);
       imageInfo.appendChild(imageHashElement);
 
       const resNameElement = document.createElement('div');
       resNameElement.style.marginTop = '8px';
       resNameElement.textContent = 'Image res name: ';
-      const resName = imageResMap.get(imageHash);
       const input = document.createElement("input");
       input.addEventListener('change', function (evt) {
         const newValue = this.value;
@@ -1403,6 +1410,30 @@
       let {element, outputImgBytes, imageFormat} = await processImage(imageHash, imageBytes);
       imageInfo.appendChild(element);
 
+      if (exportedImageHashArray.includes(imageHash)) {
+        imageOutputMap.set(resName, [outputImgBytes, imageFormat]);
+      }
+      checkbox.addEventListener('change', (event) => {
+        const include = event.target.checked;
+        if (include) {
+          parent.postMessage({
+            pluginMessage: {
+              msg: 'include-image',
+              imageHash: imageHash
+            }
+          }, '*');
+          imageOutputMap.set(resName, [outputImgBytes, imageFormat]);
+        } else {
+          parent.postMessage({
+            pluginMessage: {
+              msg: 'exclude-image',
+              imageHash: imageHash
+            }
+          }, '*');
+          imageOutputMap.delete(resName);
+        }
+      });
+
       for (const nodeId of imageNodesMap.get(imageHash)) {
         const nodeIdElement = document.createElement('div');
         nodeIdElement.style.marginTop = '8px';
@@ -1413,13 +1444,15 @@
 
       const divider = document.createElement('hr');
       imageInfo.appendChild(divider);
-      
-      jszip.file(`${resName}.${imageFormat}`, outputImgBytes, {base64: true});
     }
 
     const downloadButton = document.getElementById('downloadImageButton');
-    
+
     downloadButton.addEventListener('click', ()=>{
+      const jszip = new JSZip();
+      for (const [resName, [outputImgBytes, imageFormat]] of imageOutputMap) {
+        jszip.file(`${resName}.${imageFormat}`, outputImgBytes, {base64: true});
+      }
       jszip.generateAsync({ type: 'blob' })
         .then((content) => {
           const blobURL = window.URL.createObjectURL(content);
@@ -1435,7 +1468,6 @@
               msg: 'close-plugin'
             }
           }, '*');
-          resolve();
         });
     });
   }
@@ -1585,7 +1617,7 @@
       createOutputStringTable('outputStrings');
     } else if (msg.msg == 'image-export') {
       openPage('imageExport');
-      createImageOutput(msg.imageNodesArray, msg.imageResNameArray, msg.imageBytesArray);
+      createImageOutput(msg.imageNodesArray, msg.imageResNameArray, msg.imageBytesArray, msg.exportedImageHashArray);
     }
 
   }

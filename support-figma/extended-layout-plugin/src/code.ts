@@ -556,6 +556,10 @@ if (figma.command === "sync") {
       figma.closePlugin();
     } else if (msg.msg === "update-image-res-name") {
       ImageRes.updateResName(msg.imageHash, msg.resName);
+    } else if (msg.msg === "include-image") {
+      ImageRes.includeAnImage(msg.imageHash);
+    } else if (msg.msg === "exclude-image") {
+      ImageRes.excludeAnImage(msg.imageHash);
     }
   };
 } else if (figma.command === "clear-image-res") {

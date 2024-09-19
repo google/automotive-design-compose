@@ -242,3 +242,12 @@ function parseCachedImageHashToResMap(imageHashToResNameData?: string) {
   );
   return cachedImageHashToResMap;
 }
+
+export function loadImageDrawableResNames(): Array<string> {
+  let imageResNames = new Array<string>();
+  let cachedHashToResMap = loadExportedImages();
+  cachedHashToResMap.forEach((resName, _) => imageResNames.push(resName));
+  let cachedHashToResMapExcluded = loadNonExportedImages();
+  cachedHashToResMapExcluded.forEach((resName, _) => imageResNames.push(resName));
+  return imageResNames;
+}

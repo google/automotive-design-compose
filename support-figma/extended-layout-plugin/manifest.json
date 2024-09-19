@@ -18,7 +18,9 @@
         { "name": "Generate String Resource", "command": "localization" },
         { "name": "Clear String Resource", "command": "clear-localization" },
         { "name": "Export Images", "command": "export-images" },
-        { "name": "Clear Image Resource", "command": "clear-image-res" }
+        { "name": "Clear Image Resource", "command": "clear-image-res" },
+        { "name": "Export Vectors", "command": "export-vectors" },
+        { "name": "Clear Vector Resource", "command": "clear-vector-res" }
       ]
     }
   ],

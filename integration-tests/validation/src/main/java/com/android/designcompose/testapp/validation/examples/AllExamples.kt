@@ -16,7 +16,6 @@
 
 package com.android.designcompose.testapp.validation.examples
 
-import android.annotation.TargetApi
 import androidx.compose.runtime.Composable
 import com.android.designcompose.benchmarks.battleship.lib.BattleshipDoc
 import com.android.designcompose.benchmarks.battleship.lib.BattleshipTest
@@ -57,7 +56,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Styled Text Runs", { StyledTextRunsTest() }, StyledTextRunsDoc.javaClass.name),
         Triple(
             "State Customizations",
-            @TargetApi(28) { StateCustomizationsTest(Clock.systemDefaultZone()) },
+            { StateCustomizationsTest(Clock.systemDefaultZone()) },
             StateCustomizationsDoc.javaClass.name
         ),
         Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),

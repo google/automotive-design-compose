@@ -14,7 +14,7 @@
 
 
 name: Setup Build
-description: Configure Rust for the rest of the bui
+description: Configure Rust for the rest of the build
 
 inputs:
 
@@ -56,7 +56,7 @@ runs:
         if: ${{ inputs.setup-protoc }}
         uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b
         with:
-          version: "27.1"
+          version: "28.2"
           repo-token: ${{ github.token }}
 
       - name: Setup Android SDK

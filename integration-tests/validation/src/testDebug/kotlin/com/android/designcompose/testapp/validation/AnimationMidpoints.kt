@@ -181,6 +181,72 @@ class AnimationMidpoints {
         recordAnimation("Opacity")
     }
 
+    @Test
+    fun textAnimation() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(TestState.A)
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+            ) {
+                SmartAnimateTestDoc.TextTest(state = state.value)
+            }
+        }
+
+        waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+        state.value = TestState.B
+
+        recordAnimation("Text")
+    }
+
+    @Test
+    fun vectorAnimation() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(TestState.A)
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+            ) {
+                SmartAnimateTestDoc.VectorTest(state = state.value)
+            }
+        }
+
+        waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+        state.value = TestState.B
+
+        recordAnimation("VectorTest")
+    }
+
+    @Test
+    fun crossFadeOpacityAnimation() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(TestState.A)
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+            ) {
+                SmartAnimateTestDoc.CrossFadeOpacityTest(state = state.value)
+            }
+        }
+
+        waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+        state.value = TestState.B
+
+        recordAnimation("CrossFadeOpacityTest")
+    }
+
     private fun waitForContent(name: String) {
         composeTestRule.waitForIdle()
         composeTestRule

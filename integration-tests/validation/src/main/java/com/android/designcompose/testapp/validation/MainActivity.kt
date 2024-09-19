@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             currentDisplay = remember { mutableStateOf(EXAMPLES[0]) }
-            useSquoosh = remember { mutableStateOf(false) }
+            useSquoosh = remember { mutableStateOf(true) }
             enableRendererToggle = remember { mutableStateOf(true) }
             Row {
                 Column(modifier = Modifier.width(110.dp)) {

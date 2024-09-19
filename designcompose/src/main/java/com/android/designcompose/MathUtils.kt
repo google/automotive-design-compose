@@ -19,7 +19,6 @@ package com.android.designcompose
 import android.graphics.PointF
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Matrix
-import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -92,10 +91,6 @@ internal fun Matrix.toFloatList(): List<Float> {
 internal fun Optional<List<Float>>.decompose(density: Float): DecomposedMatrix2D {
     val matrix = this.asComposeTransform(density)
     return matrix?.decompose() ?: DecomposedMatrix2D()
-}
-
-internal fun hasTransformChange(from: ViewStyle, to: ViewStyle): Boolean {
-    return from.node_style.transform != to.node_style.transform
 }
 
 // Decompose a matrix into its translation, angle, and scale parts

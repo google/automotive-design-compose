@@ -303,6 +303,7 @@ fun SquooshRoot(
     // what's different from last time? Does the Rust side track
     val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
     keyEventTracker.clearListeners()
+    val variableState = VariableState.create()
     val root =
         resolveVariantsRecursively(
             startFrame,
@@ -318,7 +319,7 @@ fun SquooshRoot(
             layoutIdAllocator,
             variantParentName,
             isRoot,
-            VariableState.create(),
+            variableState,
             appContext = LocalContext.current,
             textMeasureCache = textMeasureCache,
             customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
@@ -435,7 +436,8 @@ fun SquooshRoot(
                 root,
                 transitionRoot,
                 requestedAnimations,
-                LocalDesignDocSettings.current.customVariantTransition
+                LocalDesignDocSettings.current.customVariantTransition,
+                variableState,
             )
 
         // Now create Compose animations for all of the requestedAnimations that

@@ -21,10 +21,12 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
 import com.android.designcompose.AnimatedAction
+import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
 import com.android.designcompose.decompose
 import com.android.designcompose.fixedHeight
 import com.android.designcompose.fixedWidth
+import com.android.designcompose.getValue
 import com.android.designcompose.hasTransformChange
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeStyle
@@ -103,11 +105,14 @@ internal class SquooshAnimatedLayout(
     private val from: SquooshResolvedNode,
     private val to: SquooshResolvedNode,
     transition: AnimationTransition,
+    private val variableState: VariableState,
 ) : SquooshAnimatedItem(transition) {
     private val transformedChanged = hasTransformChange(from.view.style, to.view.style)
     private val fromDecomposed = from.style.node_style.transform.decompose(1F)
     private val toDecomposed = to.style.node_style.transform.decompose(1F)
     private val needsOpacityTween = needsOpacityTween(from.view.style, to.view.style)
+    private val fontSizeTween =
+        from.view.style.node_style.font_size != to.view.style.node_style.font_size
 
     override fun apply(value: Float) {
         val iv = 1.0f - value
@@ -160,6 +165,31 @@ internal class SquooshAnimatedLayout(
                 toLayout.left * value + fromLayout.left * iv,
                 toLayout.top * value + fromLayout.top * iv
             )
+
+        if (fontSizeTween) {
+            // Calculate a scale for the "to" font size and set the transform to use it
+            val fromSize = from.style.node_style.font_size.getValue(variableState)
+            val toSize = to.style.node_style.font_size.getValue(variableState)
+            val animationScale = fromSize / toSize + value * (toSize - fromSize) / toSize
+            val toTransform = toDecomposed.copy()
+            toTransform.scaleX = animationScale
+            toTransform.scaleY = animationScale
+            this.target.style =
+                this.target.style.withNodeStyle { s ->
+                    s.transform = Optional.of(toTransform.toMatrix().toFloatList())
+                }
+
+            // Take the "to" layout size since we are scaling its font size, to ensure we have
+            // the space to fit the text
+            target.computedLayout =
+                Layout(
+                    0,
+                    toWidth,
+                    toHeight,
+                    toLayout.left * value + fromLayout.left * iv,
+                    toLayout.top * value + fromLayout.top * iv
+                )
+        }
     }
 }
 
@@ -266,6 +296,7 @@ internal fun createMergedAnimationTree(
     to: SquooshResolvedNode,
     requestedAnimations: HashMap<String, SquooshAnimationRequest>,
     customVariantTransition: CustomVariantTransition?,
+    variableState: VariableState,
     parent: SquooshResolvedNode? = null,
     alreadyMatchedSet: HashSet<Int> = HashSet()
 ): SquooshResolvedNode {
@@ -288,6 +319,7 @@ internal fun createMergedAnimationTree(
                         animations,
                         alreadyMatchedSet,
                         customVariantTransition,
+                        variableState,
                         requestedAnim.transition,
                     )
                 if (animations.isNotEmpty()) {
@@ -315,6 +347,7 @@ internal fun createMergedAnimationTree(
                 to,
                 requestedAnimations,
                 customVariantTransition,
+                variableState,
                 parent,
                 alreadyMatchedSet
             )
@@ -334,6 +367,7 @@ internal fun createMergedAnimationTree(
                     to,
                     requestedAnimations,
                     customVariantTransition,
+                    variableState,
                     cloned,
                     alreadyMatchedSet
                 )
@@ -380,6 +414,7 @@ private fun mergeRecursive(
     anims: ArrayList<SquooshAnimatedItem>,
     alreadyMatchedSet: HashSet<Int>,
     customVariantTransition: CustomVariantTransition?,
+    variableState: VariableState,
     parentTransition: AnimationTransition = DEFAULT_TRANSITION,
 ): SquooshResolvedNode {
     // We have an exact match on `from` and `to`, so we can construct various animation controls to
@@ -409,7 +444,7 @@ private fun mergeRecursive(
         customVariantTransition?.invoke(VariantTransitionContext(from.view, to.view))
             ?: parentTransition
 
-    if (isTweenable(from.view, to.view) && !needsStyleTween(from.style, to.style)) {
+    if (isTweenable(from.view, to.view)) {
         // Clone the "to" node.
         val n = to.cloneSelf(parent)
         var previousChild: SquooshResolvedNode? = null
@@ -436,6 +471,7 @@ private fun mergeRecursive(
                         anims,
                         alreadyMatchedSet,
                         customVariantTransition,
+                        variableState,
                         transition
                     )
                 if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
@@ -473,7 +509,7 @@ private fun mergeRecursive(
         }
 
         // Now see what kind of animations we can make; starting with a layout animation.
-        anims.add(SquooshAnimatedLayout(n, from, to, transition))
+        anims.add(SquooshAnimatedLayout(n, from, to, transition, variableState))
 
         // If they're both arcs, then they might need an arc animation.
         // XXX: Refactor this so we don't inspect every type right here.
@@ -502,8 +538,8 @@ private fun mergeRecursive(
 
         anims.add(SquooshAnimatedFadeOut(fromClone, transition))
         anims.add(SquooshAnimatedFadeIn(toClone, transition))
-        anims.add(SquooshAnimatedLayout(fromClone, from, to, transition))
-        anims.add(SquooshAnimatedLayout(toClone, from, to, transition))
+        anims.add(SquooshAnimatedLayout(fromClone, from, to, transition, variableState))
+        anims.add(SquooshAnimatedLayout(toClone, from, to, transition, variableState))
 
         return fromClone
     }
@@ -539,6 +575,8 @@ private fun findChildNamed(
 //  - They are both Containers
 //  - They both have a Rect or RoundRect shape (for now we need the shapes to be the same).
 private fun isTweenable(a: View, b: View): Boolean {
+    if (needsStyleTween(a.style, b.style)) return false
+
     val aData = a.data
     val bData = b.data
     if (aData is ViewData.Container && bData is ViewData.Container) {
@@ -554,6 +592,11 @@ private fun isTweenable(a: View, b: View): Boolean {
 
         // Arcs can be tweened.
         if (aData.shape is ViewShape.Arc && bData.shape is ViewShape.Arc) return true
+    } else if (aData is ViewData.Text && bData is ViewData.Text) {
+        // Text can only be tweened if the string is the same and the font is the same
+        return aData.content == bData.content &&
+            aData.res_name == bData.res_name &&
+            a.style.node_style.font_family == b.style.node_style.font_family
     }
     return false
 }

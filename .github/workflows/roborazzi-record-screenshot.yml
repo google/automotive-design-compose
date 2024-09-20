@@ -51,9 +51,7 @@ jobs:
           setup-protoc: true
 
       - name: Record fresh screenshots
-        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
-        with:
-          arguments: recordRoborazziDebug
+        run: ./gradlew recordRoborazziDebug
 
       # These screenshots are stored to use as a baseline for future runs of the
       # roborazzi-compare-screenshot workflow

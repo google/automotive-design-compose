@@ -15,7 +15,8 @@
 use crate::{Document, ProxyConfig};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use dc_bundle::legacy_definition::element::geometry::Dimension;
+use dc_bundle::definition::element::dimension_proto::Dimension;
+use dc_bundle::definition::element::DimensionProto;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::layout::positioning::LayoutSizing;
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
@@ -59,8 +60,8 @@ impl From<serde_json::Error> for ConvertError {
         ConvertError(format!("Error during image session serialization: {:?}", e))
     }
 }
-impl From<std::io::Error> for ConvertError {
-    fn from(e: std::io::Error) -> Self {
+impl From<io::Error> for ConvertError {
+    fn from(e: io::Error) -> Self {
         eprintln!("Error creating output file: {:?}", e);
         ConvertError(format!("Error creating output file: {:?}", e))
     }
@@ -131,65 +132,74 @@ fn test_layout(
     *id = *id + 1;
     if let ViewData::Text { content: _, res_name: _ } = &view.data {
         let mut use_measure_func = false;
-        if let Dimension::Auto = view.style.layout_style.width {
-            if let Dimension::Auto = view.style.layout_style.height {
+        if let Dimension::Auto(()) = view.style.layout_style.width.unwrap().dimension.unwrap() {
+            if let Dimension::Auto(()) = view.style.layout_style.height.unwrap().dimension.unwrap()
+            {
                 if view.style.node_style.horizontal_sizing == LayoutSizing::Fill {
                     use_measure_func = true;
                 }
             }
         }
         if use_measure_func {
-            layout_manager.add_style_measure(
-                my_id,
-                parent_layout_id,
-                child_index,
-                view.style.layout_style.clone(),
-                view.name.clone(),
-                measure_func,
-            );
+            layout_manager
+                .add_style_measure(
+                    my_id,
+                    parent_layout_id,
+                    child_index,
+                    view.style.layout_style.clone(),
+                    view.name.clone(),
+                    measure_func,
+                )
+                .expect("Failed to add style_measure");
         } else {
             let mut fixed_view = view.clone();
             fixed_view.style.layout_style.width =
-                Dimension::Points(view.style.layout_style.bounding_box.width);
+                DimensionProto::new_points(view.style.layout_style.bounding_box.width);
             fixed_view.style.layout_style.height =
-                Dimension::Points(view.style.layout_style.bounding_box.height);
-            layout_manager.add_style(
-                my_id,
-                parent_layout_id,
-                child_index,
-                fixed_view.style.layout_style.clone(),
-                fixed_view.name.clone(),
-                None,
-                Some(view.style.layout_style.bounding_box.width as i32),
-                Some(view.style.layout_style.bounding_box.height as i32),
-            );
+                DimensionProto::new_points(view.style.layout_style.bounding_box.height);
+            layout_manager
+                .add_style(
+                    my_id,
+                    parent_layout_id,
+                    child_index,
+                    fixed_view.style.layout_style.clone(),
+                    fixed_view.name.clone(),
+                    None,
+                    Some(view.style.layout_style.bounding_box.width as i32),
+                    Some(view.style.layout_style.bounding_box.height as i32),
+                )
+                .expect("Failed to add style");
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
         if view.name.starts_with("#Replacement") {
             let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
             if let Some(square) = square {
-                layout_manager.add_style(
+                layout_manager
+                    .add_style(
+                        my_id,
+                        parent_layout_id,
+                        child_index,
+                        square.style.layout_style.clone(),
+                        square.name.clone(),
+                        None,
+                        None,
+                        None,
+                    )
+                    .expect("Failed to add style");
+            }
+        } else {
+            layout_manager
+                .add_style(
                     my_id,
                     parent_layout_id,
                     child_index,
-                    square.style.layout_style.clone(),
-                    square.name.clone(),
+                    view.style.layout_style.clone(),
+                    view.name.clone(),
                     None,
                     None,
                     None,
-                );
-            }
-        } else {
-            layout_manager.add_style(
-                my_id,
-                parent_layout_id,
-                child_index,
-                view.style.layout_style.clone(),
-                view.name.clone(),
-                None,
-                None,
-                None,
-            );
+                )
+                .expect("Failed to add style");
         }
         let mut index = 0;
         for child in children {
@@ -267,7 +277,7 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
         name: doc.get_name(),
         version: doc.get_version(),
         id: doc.get_document_id(),
-        variable_map: variable_map,
+        variable_map,
     };
 
     // We don't bother with serialization headers or image sessions with

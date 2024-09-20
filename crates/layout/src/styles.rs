@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::IntoTaffy;
+use crate::into_taffy::IntoTaffy;
 use dc_bundle::legacy_definition::layout::positioning::ItemSpacing;
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, JustifyContent, PositionType,

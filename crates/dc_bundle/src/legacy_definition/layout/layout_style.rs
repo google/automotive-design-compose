@@ -14,35 +14,34 @@
  * limitations under the License.
  */
 
-use crate::Error;
-use serde::{Deserialize, Serialize};
-
-use crate::definition::element::Size;
-use crate::legacy_definition::element::geometry::{Dimension, Rect};
+use crate::definition::element::{DimensionProto, DimensionRect, Size};
 use crate::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
 };
 use crate::legacy_definition::proto;
+use crate::Error;
+use crate::Error::MissingFieldError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct LayoutStyle {
-    pub margin: Rect<Dimension>,
-    pub padding: Rect<Dimension>,
+    pub margin: Option<DimensionRect>,
+    pub padding: Option<DimensionRect>,
     pub item_spacing: ItemSpacing,
-    pub top: Dimension,
-    pub left: Dimension,
-    pub bottom: Dimension,
-    pub right: Dimension,
-    pub width: Dimension,
-    pub height: Dimension,
-    pub min_width: Dimension,
-    pub max_width: Dimension,
-    pub min_height: Dimension,
-    pub max_height: Dimension,
+    pub top: Option<DimensionProto>,
+    pub left: Option<DimensionProto>,
+    pub bottom: Option<DimensionProto>,
+    pub right: Option<DimensionProto>,
+    pub width: Option<DimensionProto>,
+    pub height: Option<DimensionProto>,
+    pub min_width: Option<DimensionProto>,
+    pub max_width: Option<DimensionProto>,
+    pub min_height: Option<DimensionProto>,
+    pub max_height: Option<DimensionProto>,
     pub bounding_box: Size,
     pub flex_grow: f32,
     pub flex_shrink: f32,
-    pub flex_basis: Dimension,
+    pub flex_basis: Option<DimensionProto>,
     pub align_self: AlignSelf,
     pub align_content: AlignContent,
     pub align_items: AlignItems,
@@ -54,23 +53,23 @@ pub struct LayoutStyle {
 impl Default for LayoutStyle {
     fn default() -> LayoutStyle {
         LayoutStyle {
-            margin: Rect::<Dimension>::default(),
-            padding: Rect::<Dimension>::default(),
+            margin: (DimensionRect::new()),
+            padding: (DimensionRect::new()),
             item_spacing: ItemSpacing::default(),
-            top: Dimension::default(),
-            left: Dimension::default(),
-            bottom: Dimension::default(),
-            right: Dimension::default(),
-            width: Dimension::default(),
-            height: Dimension::default(),
-            min_width: Dimension::default(),
-            max_width: Dimension::default(),
-            min_height: Dimension::default(),
-            max_height: Dimension::default(),
+            top: DimensionProto::new_undefined(),
+            left: DimensionProto::new_undefined(),
+            bottom: DimensionProto::new_undefined(),
+            right: DimensionProto::new_undefined(),
+            width: DimensionProto::new_undefined(),
+            height: DimensionProto::new_undefined(),
+            min_width: DimensionProto::new_undefined(),
+            max_width: DimensionProto::new_undefined(),
+            min_height: DimensionProto::new_undefined(),
+            max_height: DimensionProto::new_undefined(),
             bounding_box: Size::default(),
             flex_grow: 0.0,
             flex_shrink: 0.0,
-            flex_basis: Dimension::default(),
+            flex_basis: DimensionProto::new_undefined(),
             align_self: AlignSelf::Auto,
             align_content: AlignContent::Stretch,
             align_items: AlignItems::Stretch,
@@ -86,38 +85,31 @@ impl TryFrom<proto::layout::LayoutStyle> for LayoutStyle {
 
     fn try_from(proto: proto::layout::LayoutStyle) -> Result<Self, Self::Error> {
         let layout_style = LayoutStyle {
-            margin: proto
-                .margin
-                .clone()
-                .ok_or(Error::MissingFieldError { field: "margin".to_string() })?
-                .try_into()?,
-            padding: proto
-                .padding
-                .clone()
-                .ok_or(Error::MissingFieldError { field: "padding".to_string() })?
-                .try_into()?,
+            margin: proto.margin.clone(),
+            padding: proto.padding.clone(),
             item_spacing: proto
                 .item_spacing
                 .clone()
-                .ok_or(Error::MissingFieldError { field: "item_spacing".to_string() })?
+                .ok_or(MissingFieldError { field: "item_spacing".to_string() })?
                 .try_into()?,
-            top: proto.top.try_into()?,
-            left: proto.left.try_into()?,
-            right: proto.right.try_into()?,
-            bottom: proto.bottom.try_into()?,
-            width: proto.width.try_into()?,
-            height: proto.height.try_into()?,
-            min_width: proto.min_width.try_into()?,
-            min_height: proto.min_height.try_into()?,
-            max_width: proto.max_width.try_into()?,
-            max_height: proto.max_height.try_into()?,
+            top: proto.top,
+            left: proto.left,
+            right: proto.right,
+            bottom: proto.bottom,
+            width: proto.width,
+            height: proto.height,
+            min_width: proto.min_width,
+            min_height: proto.min_height,
+            max_width: proto.max_width,
+            max_height: proto.max_height,
             bounding_box: proto
                 .bounding_box
                 .clone()
-                .ok_or(Error::MissingFieldError { field: "bounding_box".to_string() })?,
+                .ok_or(MissingFieldError { field: "bounding_box".to_string() })?
+                .into(),
             flex_grow: proto.flex_grow,
             flex_shrink: proto.flex_shrink,
-            flex_basis: proto.flex_basis.try_into()?,
+            flex_basis: proto.flex_basis,
             align_self: proto.align_self().try_into()?,
             align_content: proto.align_content().try_into()?,
             align_items: proto.align_items().try_into()?,

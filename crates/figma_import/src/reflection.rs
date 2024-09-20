@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::legacy_definition::element::geometry::Dimension;
+use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::legacy_definition::EncodedImageMap;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
@@ -42,6 +42,12 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::modifier::shadow::BoxShadow>(&samples)
         .expect("couldn't trace BoxShadow");
     tracer.trace_type::<Dimension>(&samples).expect("couldn't trace Dimension");
+    tracer
+        .trace_type::<dc_bundle::definition::element::DimensionProto>(&samples)
+        .expect("couldn't trace DimensionProto");
+    tracer
+        .trace_type::<dc_bundle::definition::element::DimensionRect>(&samples)
+        .expect("couldn't trace DimensionRect");
     tracer
         .trace_type::<dc_bundle::legacy_definition::view::node_style::Display>(&samples)
         .expect("couldn't trace Display");

@@ -12,41 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::IntoTaffy;
-use dc_bundle::legacy_definition::element::geometry::Dimension;
 use serde::{Deserialize, Serialize};
-
-impl IntoTaffy<taffy::prelude::LengthPercentage> for &Dimension {
-    fn into_taffy(self) -> taffy::prelude::LengthPercentage {
-        match self {
-            Dimension::Percent(p) => taffy::prelude::LengthPercentage::Percent(*p),
-            Dimension::Points(p) => taffy::prelude::LengthPercentage::Points(*p),
-            _ => taffy::prelude::LengthPercentage::Points(0.0),
-        }
-    }
-}
-
-impl IntoTaffy<taffy::prelude::LengthPercentageAuto> for &Dimension {
-    fn into_taffy(self) -> taffy::prelude::LengthPercentageAuto {
-        match self {
-            Dimension::Percent(p) => taffy::prelude::LengthPercentageAuto::Percent(*p),
-            Dimension::Points(p) => taffy::prelude::LengthPercentageAuto::Points(*p),
-            Dimension::Auto => taffy::prelude::LengthPercentageAuto::Auto,
-            _ => taffy::prelude::LengthPercentageAuto::Points(0.0),
-        }
-    }
-}
-
-impl IntoTaffy<taffy::prelude::Dimension> for &Dimension {
-    fn into_taffy(self) -> taffy::prelude::Dimension {
-        match self {
-            Dimension::Percent(p) => taffy::prelude::Dimension::Percent(*p),
-            Dimension::Points(p) => taffy::prelude::Dimension::Points(*p),
-            Dimension::Auto => taffy::prelude::Dimension::Auto,
-            _ => taffy::prelude::Dimension::Auto,
-        }
-    }
-}
 
 /// The final result of a layout algorithm for a single taffy Node
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

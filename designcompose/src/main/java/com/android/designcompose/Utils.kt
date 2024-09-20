@@ -18,7 +18,6 @@ package com.android.designcompose
 
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Matrix
 import android.graphics.Rect
@@ -49,6 +48,14 @@ import androidx.compose.ui.graphics.isIdentity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.android.designcompose.proto.end
+import com.android.designcompose.proto.getDim
+import com.android.designcompose.proto.isDefault
+import com.android.designcompose.proto.newDimensionProtoUndefined
+import com.android.designcompose.proto.newDimensionRectPointsZero
+import com.android.designcompose.proto.start
+import com.android.designcompose.proto.toOptDimProto
+import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
@@ -128,18 +135,18 @@ internal fun absoluteLayout(style: ViewStyle, constraints: Constraints, density:
             0
         }
 
-    val left = style.layout_style.left.resolve(pw, density)
-    val top = style.layout_style.top.resolve(ph, density)
+    val left = style.layout_style.left.getDim().resolve(pw, density)
+    val top = style.layout_style.top.getDim().resolve(ph, density)
     // Right and bottom are insets from the right/bottom edge, so convert them to be relative to
     // the top/left corner.
-    val right = style.layout_style.right.resolve(pw, density)?.let { r -> pw - r }
-    val bottom = style.layout_style.bottom.resolve(ph, density)?.let { b -> ph - b }
-    val width = style.layout_style.width.resolve(pw, density)
-    val height = style.layout_style.height.resolve(ph, density)
+    val right = style.layout_style.right.getDim().resolve(pw, density)?.let { r -> pw - r }
+    val bottom = style.layout_style.bottom.getDim().resolve(ph, density)?.let { b -> ph - b }
+    val width = style.layout_style.width.getDim().resolve(pw, density)
+    val height = style.layout_style.height.getDim().resolve(ph, density)
     // We use the top and left margins for center anchored items, so they can be safely applied
     // as an offset here.
     val leftMargin = style.layout_style.margin.start.resolve(pw, density) ?: 0
-    val topMargin = style.layout_style.margin.top.resolve(ph, density) ?: 0
+    val topMargin = style.layout_style.margin.end.resolve(ph, density) ?: 0
 
     // XXX: Need layoutDirection; when left, right and width are specified we use left and
     //      width in LtoR direction, and use right and width in RtoL direction.
@@ -174,8 +181,8 @@ internal fun absoluteLayout(style: ViewStyle, constraints: Constraints, density:
                 0
             }
 
-    val minWidth = style.layout_style.min_width.resolve(pw, density)
-    val minHeight = style.layout_style.min_height.resolve(ph, density)
+    val minWidth = style.layout_style.min_width.getDim().resolve(pw, density)
+    val minHeight = style.layout_style.min_height.getDim().resolve(ph, density)
     if (minWidth != null && w < minWidth) {
         w = minWidth
     }
@@ -201,15 +208,15 @@ internal fun relativeLayout(style: ViewStyle, constraints: Constraints, density:
             0
         }
 
-    var w = style.layout_style.width.resolve(pw, density) ?: 0
-    var h = style.layout_style.height.resolve(ph, density) ?: 0
+    var w = style.layout_style.width.getDim().resolve(pw, density) ?: 0
+    var h = style.layout_style.height.getDim().resolve(ph, density) ?: 0
     // We use the top and left margins for center anchored items, so they can be safely applied
     // as an offset here.
     val x = style.layout_style.margin.start.resolve(pw, density) ?: 0
     val y = style.layout_style.margin.top.resolve(ph, density) ?: 0
 
-    val minWidth = style.layout_style.min_width.resolve(pw, density)
-    val minHeight = style.layout_style.min_height.resolve(ph, density)
+    val minWidth = style.layout_style.min_width.getDim().resolve(pw, density)
+    val minHeight = style.layout_style.min_height.getDim().resolve(ph, density)
     if (minWidth != null && w < minWidth) {
         w = minWidth
     }
@@ -485,35 +492,30 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.layout_style.justify_content
         }
     layoutStyle.top =
-        if (override.layout_style.top !is Dimension.Undefined) {
+        if (override.layout_style.top.getDim() !is Dimension.Undefined) {
             override.layout_style.top
         } else {
             base.layout_style.top
         }
     layoutStyle.left =
-        if (override.layout_style.left !is Dimension.Undefined) {
+        if (override.layout_style.left.getDim() !is Dimension.Undefined) {
             override.layout_style.left
         } else {
             base.layout_style.left
         }
     layoutStyle.bottom =
-        if (override.layout_style.bottom !is Dimension.Undefined) {
+        if (override.layout_style.bottom.getDim() !is Dimension.Undefined) {
             override.layout_style.bottom
         } else {
             base.layout_style.bottom
         }
     layoutStyle.right =
-        if (override.layout_style.right !is Dimension.Undefined) {
+        if (override.layout_style.right.getDim() !is Dimension.Undefined) {
             override.layout_style.right
         } else {
             base.layout_style.right
         }
-    fun com.android.designcompose.serdegen.Rect.isDefault(): Boolean {
-        return this.start is Dimension.Undefined &&
-            this.end is Dimension.Undefined &&
-            this.top is Dimension.Undefined &&
-            this.bottom is Dimension.Undefined
-    }
+
     layoutStyle.margin =
         if (!override.layout_style.margin.isDefault()) {
             override.layout_style.margin
@@ -554,7 +556,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.layout_style.flex_shrink
         }
     layoutStyle.flex_basis =
-        if (override.layout_style.flex_basis !is Dimension.Undefined) {
+        if (override.layout_style.flex_basis.getDim() !is Dimension.Undefined) {
             override.layout_style.flex_basis
         } else {
             base.layout_style.flex_basis
@@ -581,37 +583,37 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.vertical_sizing
         }
     layoutStyle.width =
-        if (override.layout_style.width !is Dimension.Undefined) {
+        if (override.layout_style.width.getDim() !is Dimension.Undefined) {
             override.layout_style.width
         } else {
             base.layout_style.width
         }
     layoutStyle.height =
-        if (override.layout_style.height !is Dimension.Undefined) {
+        if (override.layout_style.height.getDim() !is Dimension.Undefined) {
             override.layout_style.height
         } else {
             base.layout_style.height
         }
     layoutStyle.min_width =
-        if (override.layout_style.min_width !is Dimension.Undefined) {
+        if (override.layout_style.min_width.getDim() !is Dimension.Undefined) {
             override.layout_style.min_width
         } else {
             base.layout_style.min_width
         }
     layoutStyle.min_height =
-        if (override.layout_style.min_height !is Dimension.Undefined) {
+        if (override.layout_style.min_height.getDim() !is Dimension.Undefined) {
             override.layout_style.min_height
         } else {
             base.layout_style.min_height
         }
     layoutStyle.max_width =
-        if (override.layout_style.max_width !is Dimension.Undefined) {
+        if (override.layout_style.max_width.getDim() !is Dimension.Undefined) {
             override.layout_style.max_width
         } else {
             base.layout_style.max_width
         }
     layoutStyle.max_height =
-        if (override.layout_style.max_height !is Dimension.Undefined) {
+        if (override.layout_style.max_height.getDim() !is Dimension.Undefined) {
             override.layout_style.max_height
         } else {
             base.layout_style.max_height
@@ -669,14 +671,6 @@ internal fun LayoutStyle.asBuilder(): LayoutStyle.Builder {
     return builder
 }
 
-private fun zeroRect(): com.android.designcompose.serdegen.Rect =
-    com.android.designcompose.serdegen.Rect(
-        Dimension.Percent(0f),
-        Dimension.Percent(0f),
-        Dimension.Percent(0f),
-        Dimension.Percent(0f)
-    )
-
 internal fun defaultLayoutStyle(): LayoutStyle.Builder {
     val builder = LayoutStyle.Builder()
     builder.position_type = PositionType.Relative()
@@ -685,23 +679,23 @@ internal fun defaultLayoutStyle(): LayoutStyle.Builder {
     builder.align_self = AlignSelf.Auto()
     builder.align_content = AlignContent.FlexStart()
     builder.justify_content = JustifyContent.FlexStart()
-    builder.top = Dimension.Undefined()
-    builder.left = Dimension.Undefined()
-    builder.bottom = Dimension.Undefined()
-    builder.right = Dimension.Undefined()
-    builder.margin = zeroRect()
-    builder.padding = zeroRect()
+    builder.top = newDimensionProtoUndefined()
+    builder.left = newDimensionProtoUndefined()
+    builder.bottom = newDimensionProtoUndefined()
+    builder.right = newDimensionProtoUndefined()
+    builder.margin = newDimensionRectPointsZero()
+    builder.padding = newDimensionRectPointsZero()
     builder.item_spacing = ItemSpacing.Auto(0, 0)
     builder.flex_grow = 1.0f
     builder.flex_shrink = 0.0f
-    builder.flex_basis = Dimension.Undefined()
+    builder.flex_basis = newDimensionProtoUndefined()
     builder.bounding_box = com.android.designcompose.serdegen.Size(0f, 0f)
-    builder.width = Dimension.Undefined()
-    builder.height = Dimension.Undefined()
-    builder.min_width = Dimension.Undefined()
-    builder.min_height = Dimension.Undefined()
-    builder.max_width = Dimension.Undefined()
-    builder.max_height = Dimension.Undefined()
+    builder.width = newDimensionProtoUndefined()
+    builder.height = newDimensionProtoUndefined()
+    builder.min_width = newDimensionProtoUndefined()
+    builder.min_height = newDimensionProtoUndefined()
+    builder.max_width = newDimensionProtoUndefined()
+    builder.max_height = newDimensionProtoUndefined()
     return builder
 }
 
@@ -798,6 +792,7 @@ internal fun defaultNodeStyle(): NodeStyle.Builder {
     builder.hyperlink = Optional.empty()
     return builder
 }
+
 // XXX: Horrible code to deal with our terrible generated types. Maybe if style moves to proto then
 //      we'll get some more egonomic generated classes.
 internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
@@ -810,21 +805,21 @@ internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
 // Take the external layout fields of ViewStyle and put them into an ExternalLayoutData object.
 internal fun ViewStyle.externalLayoutData(): ExternalLayoutData {
     return ExternalLayoutData(
-        layout_style.margin,
-        layout_style.top,
-        layout_style.left,
-        layout_style.bottom,
-        layout_style.right,
-        layout_style.width,
-        layout_style.height,
-        layout_style.min_width,
-        layout_style.min_height,
-        layout_style.max_width,
-        layout_style.max_height,
+        layout_style.margin.orElseThrow { NoSuchFieldException("Malformed data: Margin unset") },
+        layout_style.top.getDim(),
+        layout_style.left.getDim(),
+        layout_style.bottom.getDim(),
+        layout_style.right.getDim(),
+        layout_style.width.getDim(),
+        layout_style.height.getDim(),
+        layout_style.min_width.getDim(),
+        layout_style.min_height.getDim(),
+        layout_style.max_width.getDim(),
+        layout_style.max_height.getDim(),
         node_style.node_size,
         layout_style.bounding_box,
         layout_style.flex_grow,
-        layout_style.flex_basis,
+        layout_style.flex_basis.getDim(),
         layout_style.align_self,
         layout_style.position_type,
         node_style.transform,
@@ -837,21 +832,22 @@ internal fun ViewStyle.externalLayoutData(): ExternalLayoutData {
 internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewStyle {
     val layoutStyle = layout_style.asBuilder()
     val nodeStyle = node_style.asBuilder()
-    layoutStyle.margin = data.margin
-    layoutStyle.top = data.top
-    layoutStyle.left = data.left
-    layoutStyle.bottom = data.bottom
-    layoutStyle.right = data.right
+    layoutStyle.margin = Optional.of(data.margin)
+    layoutStyle.top = data.top.toOptDimProto()
+    layoutStyle.left = data.left.toOptDimProto()
+    layoutStyle.bottom = data.bottom.toOptDimProto()
+    layoutStyle.right = data.right.toOptDimProto()
     nodeStyle.node_size = data.nodeSize
     layoutStyle.bounding_box = data.boundingBox
-    layoutStyle.width = data.width
-    layoutStyle.height = data.height
-    layoutStyle.min_width = data.minWidth
-    layoutStyle.min_height = data.minHeight
-    layoutStyle.max_width = data.maxWidth
-    layoutStyle.max_height = data.maxHeight
+    layoutStyle.width = data.width.toOptDimProto()
+    layoutStyle.height = data.height.toOptDimProto()
+
+    layoutStyle.min_width = data.minWidth.toOptDimProto()
+    layoutStyle.min_height = data.minHeight.toOptDimProto()
+    layoutStyle.max_width = data.maxWidth.toOptDimProto()
+    layoutStyle.max_height = data.maxHeight.toOptDimProto()
     layoutStyle.flex_grow = data.flexGrow
-    layoutStyle.flex_basis = data.flexBasis
+    layoutStyle.flex_basis = data.flexBasis.toOptDimProto()
     layoutStyle.align_self = data.alignSelf
     layoutStyle.position_type = data.positionType
     nodeStyle.transform = data.transform
@@ -866,15 +862,16 @@ internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewSty
 // Get the raw width in a view style from the width property if it is a fixed size, or from the
 // node_size property if not.
 internal fun ViewStyle.fixedWidth(density: Float): Float {
-    return if (layout_style.width is Dimension.Points) layout_style.width.pointsAsDp(density).value
+    return if (layout_style.width.getDim() is Dimension.Points)
+        layout_style.width.getDim().pointsAsDp(density).value
     else node_style.node_size.width * density
 }
 
 // Get the raw height in a view style from the height property if it is a fixed size, or from the
 // node_size property if not.
 internal fun ViewStyle.fixedHeight(density: Float): Float {
-    return if (layout_style.height is Dimension.Points)
-        layout_style.height.pointsAsDp(density).value
+    return if (layout_style.height.getDim() is Dimension.Points)
+        layout_style.height.getDim().pointsAsDp(density).value
     else node_style.node_size.height * density
 }
 
@@ -939,7 +936,7 @@ internal fun View.useInfiniteConstraints(): Boolean {
     if (data !is ViewData.Container) return false
 
     val container = data as ViewData.Container
-    if (container == null || container.children.size != 1) return false
+    if (container.children.size != 1) return false
 
     val child = container.children.first()
     return child.style.node_style.grid_layout.isPresent
@@ -969,7 +966,7 @@ internal constructor(
     private val stops: List<Float>? = null,
     private val start: Offset,
     private val end: Offset,
-    private val tileMode: TileMode = TileMode.Clamp
+    private val tileMode: TileMode = TileMode.Clamp,
 ) : ShaderBrush() {
     override fun createShader(size: Size): Shader {
         val startX = if (start.x == Float.POSITIVE_INFINITY) size.width else start.x * size.width
@@ -981,7 +978,7 @@ internal constructor(
             colorStops = stops,
             from = Offset(startX, startY),
             to = Offset(endX, endY),
-            tileMode = tileMode
+            tileMode = tileMode,
         )
     }
 
@@ -1026,7 +1023,7 @@ internal constructor(
     private val radiusX: Float,
     private val radiusY: Float,
     private val angle: Float,
-    private val tileMode: TileMode = TileMode.Clamp
+    private val tileMode: TileMode = TileMode.Clamp,
 ) : ShaderBrush() {
     override fun createShader(size: Size): Shader {
         val centerX: Float
@@ -1051,7 +1048,7 @@ internal constructor(
                 colorStops = stops,
                 center = Offset(centerX, centerY),
                 radius = radius,
-                tileMode = tileMode
+                tileMode = tileMode,
             )
 
         val transform = Matrix()
@@ -1059,7 +1056,7 @@ internal constructor(
         transform.postRotate(
             angle * 180.0f / Math.PI.toFloat() - 90.0f,
             center.x * size.width,
-            center.y * size.height
+            center.y * size.height,
         )
         shader.setLocalMatrix(transform)
 
@@ -1114,7 +1111,7 @@ internal constructor(
     private val angle: Float,
     private val scale: Float,
     private val colors: List<Color>,
-    private val stops: List<Float>? = null
+    private val stops: List<Float>? = null,
 ) : ShaderBrush() {
 
     override fun createShader(size: Size): Shader {
@@ -1127,11 +1124,11 @@ internal constructor(
                         if (center.x == Float.POSITIVE_INFINITY) size.width
                         else center.x * size.width,
                         if (center.y == Float.POSITIVE_INFINITY) size.height
-                        else center.y * size.height
+                        else center.y * size.height,
                     )
                 },
                 colors,
-                stops
+                stops,
             )
 
         // Use a local transform to apply the scale and rotation factors.
@@ -1140,7 +1137,7 @@ internal constructor(
         transform.postRotate(
             angle * 180.0f / Math.PI.toFloat() - 90.0f,
             center.x * size.width,
-            center.y * size.height
+            center.y * size.height,
         )
         shader.setLocalMatrix(transform)
 
@@ -1211,7 +1208,7 @@ internal constructor(
                 m.setScale(scale, scale)
                 m.postTranslate(
                     -(image.width.toFloat() * scale - size.width) / 2.0f,
-                    -(image.height.toFloat() * scale - size.height) / 2.0f
+                    -(image.height.toFloat() * scale - size.height) / 2.0f,
                 )
                 if (imageTransform != null) m.preConcat(imageTransform)
             }
@@ -1225,7 +1222,7 @@ internal constructor(
                 m.setScale(scale, scale)
                 m.postTranslate(
                     -(image.width.toFloat() * scale - size.width) / 2.0f,
-                    -(image.height.toFloat() * scale - size.height) / 2.0f
+                    -(image.height.toFloat() * scale - size.height) / 2.0f,
                 )
                 if (imageTransform != null) m.preConcat(imageTransform)
             }
@@ -1310,17 +1307,7 @@ internal fun Optional<List<Float>>.asSkiaMatrix(): Matrix? {
             } else {
                 val skMatrix = Matrix()
                 skMatrix.setValues(
-                    floatArrayOf(
-                        it[0],
-                        it[1],
-                        it[4],
-                        it[2],
-                        it[3],
-                        it[5],
-                        0.0f,
-                        0.0f,
-                        1.0f,
-                    )
+                    floatArrayOf(it[0], it[1], it[4], it[2], it[3], it[5], 0.0f, 0.0f, 1.0f)
                 )
                 skMatrix
             }
@@ -1376,9 +1363,9 @@ internal fun Background.asBrush(
                         imageDensity = imageDensity,
                         displayDensity = density,
                         imageTransform = imageTransform,
-                        scaleMode = backgroundImage.scale_mode
+                        scaleMode = backgroundImage.scale_mode,
                     ),
-                    backgroundImage.opacity
+                    backgroundImage.opacity,
                 )
             }
         }
@@ -1404,9 +1391,9 @@ internal fun Background.asBrush(
                                 .toList(),
                             linearGradient.color_stops.map { it.field0 }.toList(),
                             start = Offset(linearGradient.start_x, linearGradient.start_y),
-                            end = Offset(linearGradient.end_x, linearGradient.end_y)
+                            end = Offset(linearGradient.end_x, linearGradient.end_y),
                         ),
-                        1.0f
+                        1.0f,
                     )
             }
         }
@@ -1424,7 +1411,7 @@ internal fun Background.asBrush(
                             radialGradient.color_stops[0].field1.getValue(variableState)
                                 ?: Color.Transparent
                         ),
-                        1.0f
+                        1.0f,
                     )
                 }
                 else ->
@@ -1438,9 +1425,9 @@ internal fun Background.asBrush(
                             center = Offset(radialGradient.center_x, radialGradient.center_y),
                             radiusX = radialGradient.radius[0],
                             radiusY = radialGradient.radius[1],
-                            angle = radialGradient.angle
+                            angle = radialGradient.angle,
                         ),
-                        1.0f
+                        1.0f,
                     )
             }
         }
@@ -1458,7 +1445,7 @@ internal fun Background.asBrush(
                             angularGradient.color_stops[0].field1.getValue(variableState)
                                 ?: Color.Transparent
                         ),
-                        1.0f
+                        1.0f,
                     )
                 }
                 else ->
@@ -1471,9 +1458,9 @@ internal fun Background.asBrush(
                                 angularGradient.color_stops.map {
                                     it.field1.getValue(variableState) ?: Color.Transparent
                                 },
-                            stops = angularGradient.color_stops.map { it.field0 }
+                            stops = angularGradient.color_stops.map { it.field0 },
                         ),
-                        1.0f
+                        1.0f,
                     )
             }
         }
@@ -1484,7 +1471,7 @@ internal fun Background.asBrush(
 internal fun com.android.designcompose.serdegen.Path.asPath(
     density: Float,
     scaleX: Float,
-    scaleY: Float
+    scaleY: Float,
 ): Path {
     val MOVE_TO: Byte = 0
     val LINE_TO: Byte = 1
@@ -1522,7 +1509,7 @@ internal fun com.android.designcompose.serdegen.Path.asPath(
                     this.data[idx++] * density * scaleX,
                     this.data[idx++] * density * scaleY,
                     this.data[idx++] * density * scaleX,
-                    this.data[idx++] * density * scaleY
+                    this.data[idx++] * density * scaleY,
                 )
             }
             CLOSE -> {
@@ -1560,13 +1547,13 @@ internal fun com.android.designcompose.serdegen.Path.log() {
             CUBIC_TO -> {
                 Log.e(
                     TAG,
-                    "Cubic To ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]}"
+                    "Cubic To ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]}",
                 )
             }
             QUAD_TO -> {
                 Log.e(
                     TAG,
-                    "Quad To ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]}"
+                    "Quad To ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]}",
                 )
             }
             CLOSE -> {
@@ -1632,7 +1619,8 @@ internal fun StrokeWeight.right(): Float {
 // text measure func that, when it returns true, means the text can expand past the available width
 // passed into it.
 internal fun ViewStyle.isAutoWidthText() =
-    layout_style.width is Dimension.Auto && node_style.horizontal_sizing !is LayoutSizing.FILL
+    layout_style.width.getDim() is Dimension.Auto &&
+        node_style.horizontal_sizing !is LayoutSizing.FILL
 
 // Return the size of a node used to render the node.
 internal fun getNodeRenderSize(
@@ -1640,7 +1628,7 @@ internal fun getNodeRenderSize(
     layoutSize: Size,
     style: ViewStyle,
     layoutId: Int,
-    density: Float
+    density: Float,
 ): Size {
     // If an override size exists, use it. This is typically a size programmatically set for a dial
     // or gauge.
@@ -1651,11 +1639,13 @@ internal fun getNodeRenderSize(
     // box for a rotated node. We do not yet support rotated nodes with non-fixed constraints.
     val hasModifiedSize = LayoutManager.hasModifiedSize(layoutId)
     val width =
-        if (hasModifiedSize || style.layout_style.width !is Dimension.Points) layoutSize.width
-        else style.layout_style.width.pointsAsDp(density).value
+        if (hasModifiedSize || style.layout_style.width.getDim() !is Dimension.Points)
+            layoutSize.width
+        else style.layout_style.width.getDim().pointsAsDp(density).value
     val height =
-        if (hasModifiedSize || style.layout_style.height !is Dimension.Points) layoutSize.height
-        else style.layout_style.height.pointsAsDp(density).value
+        if (hasModifiedSize || style.layout_style.height.getDim() !is Dimension.Points)
+            layoutSize.height
+        else style.layout_style.height.getDim().pointsAsDp(density).value
     return Size(width, height)
 }
 
@@ -1667,7 +1657,7 @@ internal fun Layout.withDensity(density: Float): Layout {
         this.width * density,
         this.height * density,
         this.left * density,
-        this.top * density
+        this.top * density,
     )
 }
 
@@ -1709,7 +1699,7 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
             val critical = sqrt(4.0f * easing.value.stiffness * easing.value.mass)
             spring(
                 dampingRatio = easing.value.damping / critical,
-                stiffness = easing.value.stiffness
+                stiffness = easing.value.stiffness,
             )
         }
         is Easing.Bezier -> {
@@ -1720,8 +1710,8 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
                         easing.value.x1,
                         easing.value.y1,
                         easing.value.x2,
-                        easing.value.y2
-                    )
+                        easing.value.y2,
+                    ),
             )
         }
         else -> snap(0)

@@ -17,8 +17,6 @@
 package com.android.designcompose.proto
 
 import com.android.designcompose.android_interface.layoutNodeList
-import com.android.designcompose.definition.element.dimensionProto
-import com.android.designcompose.definition.element.dimensionRect
 import com.android.designcompose.definition.element.size
 import com.android.designcompose.definition.layout.AlignContent as ProtoAlignContent
 import com.android.designcompose.definition.layout.AlignItems as ProtoAlignItems
@@ -34,8 +32,6 @@ import com.android.designcompose.definition.layout.layoutStyle
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
-import com.android.designcompose.serdegen.Dimension
-import com.android.designcompose.serdegen.Dimension.Undefined
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.ItemSpacing.Auto
@@ -46,9 +42,7 @@ import com.android.designcompose.serdegen.LayoutNodeList
 import com.android.designcompose.serdegen.LayoutParentChildren
 import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.PositionType
-import com.android.designcompose.serdegen.Rect
 import com.android.designcompose.serdegen.Size
-import com.google.protobuf.Empty
 
 internal fun LayoutNode.intoProto() = layoutNode {
     val s = this@intoProto
@@ -71,24 +65,6 @@ internal fun LayoutParentChildren.intoProto() = layoutParentChildren {
 internal fun LayoutNodeList.intoProto() = layoutNodeList {
     layoutNodes.addAll(this@intoProto.layout_nodes.map { it.intoProto() })
     parentChildren.addAll(this@intoProto.parent_children.map { it.intoProto() })
-}
-
-internal fun Dimension.intoProto() = dimensionProto {
-    when (val s = this@intoProto) {
-        // These are empty types so we need to set them to default instances
-        is Undefined -> undefined = Empty.getDefaultInstance()
-        is Dimension.Auto -> auto = Empty.getDefaultInstance()
-        is Dimension.Points -> points = s.value.toFloat()
-        is Dimension.Percent -> percent = s.value.toFloat()
-    }
-}
-
-internal fun Rect.intoProto() = dimensionRect {
-    val s = this@intoProto
-    start = s.start.intoProto()
-    end = s.end.intoProto()
-    top = s.top.intoProto()
-    bottom = s.bottom.intoProto()
 }
 
 internal fun ItemSpacing.intoProto() = itemSpacing {
@@ -175,23 +151,25 @@ internal fun PositionType.intoProto() =
 /** Temporary (I hope) conversion from the Serde layout style to the proto layout style. */
 internal fun LayoutStyle.intoProto() = layoutStyle {
     val s = this@intoProto
-    margin = s.margin.intoProto()
-    padding = s.padding.intoProto()
+    margin =
+        s.margin.orElseThrow { NoSuchFieldException("Malformed data: margin unset") }.intoProto()
+    padding =
+        s.padding.orElseThrow { NoSuchFieldException("Malformed data: padding unset") }.intoProto()
     itemSpacing = s.item_spacing.intoProto()
-    top = s.top.intoProto()
-    left = s.left.intoProto()
-    bottom = s.bottom.intoProto()
-    right = s.right.intoProto()
-    width = s.width.intoProto()
-    height = s.height.intoProto()
-    minWidth = s.min_width.intoProto()
-    maxWidth = s.max_width.intoProto()
-    minHeight = s.min_height.intoProto()
-    maxHeight = s.max_height.intoProto()
+    top = s.top.getDim().intoProto()
+    left = s.left.getDim().intoProto()
+    bottom = s.bottom.getDim().intoProto()
+    right = s.right.getDim().intoProto()
+    width = s.width.getDim().intoProto()
+    height = s.height.getDim().intoProto()
+    minWidth = s.min_width.getDim().intoProto()
+    maxWidth = s.max_width.getDim().intoProto()
+    minHeight = s.min_height.getDim().intoProto()
+    maxHeight = s.max_height.getDim().intoProto()
     boundingBox = s.bounding_box.intoProto()
     flexGrow = s.flex_grow
     flexShrink = s.flex_shrink
-    flexBasis = s.flex_basis.intoProto()
+    flexBasis = s.flex_basis.getDim().intoProto()
     alignSelf = s.align_self.intoProto()
     alignContent = s.align_content.intoProto()
     alignItems = s.align_items.intoProto()

@@ -165,10 +165,10 @@ impl ViewStyle {
             delta.layout_style.right = other.layout_style.right;
         }
         if self.layout_style.margin != other.layout_style.margin {
-            delta.layout_style.margin = other.layout_style.margin;
+            delta.layout_style.margin = other.layout_style.margin.clone();
         }
         if self.layout_style.padding != other.layout_style.padding {
-            delta.layout_style.padding = other.layout_style.padding;
+            delta.layout_style.padding = other.layout_style.padding.clone();
         }
         if self.layout_style.item_spacing != other.layout_style.item_spacing {
             delta.layout_style.item_spacing = other.layout_style.item_spacing.clone();

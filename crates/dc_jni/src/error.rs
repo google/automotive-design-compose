@@ -35,6 +35,7 @@ pub enum Error {
     JNIError(#[from] jni::errors::Error),
 }
 
+#[allow(unused_qualifications)] // Linter thinks `std:` isn't needed but removing it fails the build
 pub fn throw_basic_exception(env: &mut JNIEnv, err: &dyn std::error::Error) {
     // An error occurring while trying to throw an exception shouldn't happen,
     // but let's at least panic with a decent error message

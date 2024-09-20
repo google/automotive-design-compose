@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate android_logger;
-extern crate log;
-pub mod into_taffy;
-pub mod layout_manager;
-pub mod layout_node;
-pub mod layout_style;
-pub mod proto;
-pub mod styles;
-pub mod types;
+mod dimension_proto;
+mod dimension_rect;
 
-pub use layout_manager::LayoutChangedResponse;
-pub use layout_manager::LayoutManager;
+pub trait IntoTaffy<T> {
+    fn into_taffy(self) -> T;
+}
+
+pub trait TryIntoTaffy<T> {
+    type Error;
+    fn try_into_taffy(self) -> Result<T, Self::Error>;
+}

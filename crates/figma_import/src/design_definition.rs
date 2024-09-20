@@ -67,7 +67,7 @@ pub fn save_design_def<P>(save_path: P, doc: &DesignComposeDefinition) -> Result
 where
     P: AsRef<Path>,
 {
-    let mut output = std::fs::File::create(save_path)?;
+    let mut output = File::create(save_path)?;
     let header = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
     let doc = bincode::serialize(&doc)?;
     output.write_all(header.as_slice())?;

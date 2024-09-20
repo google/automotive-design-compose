@@ -108,7 +108,7 @@ pub fn fetch_doc(
             name: doc.get_name(),
             version: doc.get_version(),
             id: doc.get_document_id(),
-            variable_map: variable_map,
+            variable_map,
         };
         let mut response = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
         response.append(&mut bincode::serialize(&ServerFigmaDoc {

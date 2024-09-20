@@ -15,6 +15,7 @@
 use crate::into_taffy::{IntoTaffy, TryIntoTaffy};
 use dc_bundle::definition::element::DimensionExt;
 use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
+use log::error;
 
 impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
     type Error = dc_bundle::Error;
@@ -30,17 +31,28 @@ impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
         tstyle.gap.height = (&self.item_spacing).into_taffy();
 
         tstyle.align_content = Some((&self.align_content).into_taffy());
+        error!("Into taffy align_content {:?}", &self.align_content);
         tstyle.justify_content = Some((&self.justify_content).into_taffy());
+        error!("Into taffy justify_content {:?}", &self.justify_content);
         tstyle.align_items = Some((&self.align_items).into_taffy());
+        error!("Into taffy align_items {:?}", &self.align_items);
         tstyle.flex_direction = (&self.flex_direction).into_taffy();
+        error!("Into taffy flex_direction {:?}", &self.flex_direction);
         tstyle.align_self = (&self.align_self).into_taffy();
+        error!("Into taffy align_self {:?}", &self.align_self);
 
         tstyle.size.width = (&self.width).try_into_taffy()?;
+        error!("Into taffy width {:?}", &self.width);
         tstyle.size.height = (&self.height).try_into_taffy()?;
+        error!("Into taffy height {:?}", &self.height);
         tstyle.min_size.width = (&self.min_width).try_into_taffy()?;
+        error!("Into taffy min_width {:?}", &self.min_width);
         tstyle.min_size.height = (&self.min_height).try_into_taffy()?;
+        error!("Into taffy min_height {:?}", &self.min_height);
         tstyle.max_size.width = (&self.max_width).try_into_taffy()?;
+        error!("Into taffy max_width {:?}", &self.max_width);
         tstyle.max_size.height = (&self.max_height).try_into_taffy()?;
+        error!("Into taffy max_height {:?}", &self.max_height);
 
         // If we have a fixed size, use the bounding box since that takes into
         // account scale and rotation, and disregard min/max sizes.
@@ -49,11 +61,13 @@ impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
             tstyle.size.width = taffy::prelude::Dimension::Points(self.bounding_box.width);
             tstyle.min_size.width = taffy::prelude::Dimension::Auto;
             tstyle.max_size.width = taffy::prelude::Dimension::Auto;
+            error!("Into taffy override max/min width to auto");
         }
         if self.height.is_points()? {
             tstyle.size.height = taffy::prelude::Dimension::Points(self.bounding_box.height);
             tstyle.min_size.height = taffy::prelude::Dimension::Auto;
             tstyle.max_size.height = taffy::prelude::Dimension::Auto;
+            error!("Into taffy override max/min height to auto");
         }
 
         tstyle.position = (&self.position_type).into_taffy();

@@ -29,6 +29,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("HelloVersion", { HelloVersion() }, HelloVersionDoc.javaClass.name),
         // Alphabetically ordered and trying to put similar tests together...
         Triple("Alignment", { AlignmentTest() }, AlignmentTestDoc.javaClass.name),
+        Triple("AutoLayout", { AutoLayoutTest() }, AutoLayoutTestDoc.javaClass.name),
         Triple("Battleship", { BattleshipTest() }, BattleshipDoc.javaClass.name),
         Triple("Blend Modes", { BlendModeTest() }, BlendModeTestDoc.javaClass.name),
         Triple("Component Replace", { ComponentReplaceTest() }, ComponentReplaceDoc.javaClass.name),

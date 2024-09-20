@@ -59,6 +59,7 @@ use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
 use dc_bundle::legacy_definition::view::view_style::ViewStyle;
 use log::error;
+
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -117,6 +118,13 @@ fn compute_layout(
     if let Some(bounds) = node.absolute_bounding_box {
         style.layout_style.bounding_box.width = bounds.width();
         style.layout_style.bounding_box.height = bounds.height();
+    }
+
+    if let Some(max_width) = node.max_width {
+        style.layout_style.max_width = DimensionProto::new_points(max_width);
+    }
+    if let Some(max_height) = node.max_height {
+        style.layout_style.max_height = DimensionProto::new_points(max_height);
     }
 
     // Frames can implement Auto Layout on their children.
@@ -320,20 +328,32 @@ fn compute_layout(
         style.layout_style.height = DimensionProto::new_auto();
     }
     if let Some(bounds) = node.absolute_bounding_box {
-        if !hug_width {
+        if let Some(min_width) = node.min_width {
+            error!("2. Node has min_width {:?}", min_width);
+            style.layout_style.min_width = DimensionProto::new_points(min_width)
+        } else if !hug_width {
             style.layout_style.min_width = DimensionProto::new_points(bounds.width().ceil());
         }
-        if !hug_height {
+        if let Some(min_height) = node.min_height {
+            error!("2. Node has min_height {:?}", min_height);
+            style.layout_style.min_height = DimensionProto::new_points(min_height)
+        } else if !hug_height {
             style.layout_style.min_height = DimensionProto::new_points(bounds.height().ceil());
         }
     }
 
     if let Some(size) = &node.size {
         if size.is_valid() {
-            if !hug_width {
+            if let Some(min_width) = node.min_width {
+                error!("3. Node has min_width {:?}", min_width);
+                style.layout_style.min_width = DimensionProto::new_points(min_width)
+            } else if !hug_width {
                 style.layout_style.min_width = DimensionProto::new_points(size.x());
             }
-            if !hug_height {
+            if let Some(min_height) = node.min_height {
+                error!("3. Node has min_height {:?}", min_height);
+                style.layout_style.min_height = DimensionProto::new_points(min_height)
+            } else if !hug_height {
                 style.layout_style.min_height = DimensionProto::new_points(size.y());
             }
             // Set fixed vector size

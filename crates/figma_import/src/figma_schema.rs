@@ -1024,6 +1024,10 @@ pub struct Node {
     pub stroke_cap: StrokeCap,
     pub bound_variables: Option<BoundVariables>,
     pub explicit_variable_modes: Option<HashMap<String, String>>,
+    pub min_width: Option<f32>,
+    pub min_height: Option<f32>,
+    pub max_width: Option<f32>,
+    pub max_height: Option<f32>,
 }
 
 impl Node {

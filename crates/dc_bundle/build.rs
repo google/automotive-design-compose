@@ -22,6 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     prost_config.message_attribute("DimensionProto", "#[derive(Copy)]");
     prost_config.message_attribute("DimensionProto.Auto", "#[derive(Copy)]");
     prost_config.message_attribute("DimensionProto.Undefined", "#[derive(Copy)]");
+    prost_config.message_attribute("LayoutTransform", "#[derive(Copy)]");
     prost_config.enum_attribute("Dimension", "#[derive(Copy)]");
     prost_config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
 

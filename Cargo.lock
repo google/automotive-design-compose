@@ -307,7 +307,6 @@ dependencies = [
 name = "dc_bundle"
 version = "0.31.0"
 dependencies = [
- "euclid",
  "prost",
  "prost-build",
  "serde",

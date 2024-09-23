@@ -33,7 +33,7 @@ import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
-import com.android.designcompose.toFloatList
+import com.android.designcompose.toLayoutTransform
 import java.util.Optional
 import kotlin.jvm.optionals.getOrElse
 
@@ -150,7 +150,7 @@ internal class SquooshAnimatedScale(
         transform.scaleY = scaleY
         target.style =
             target.style.withNodeStyle { s ->
-                s.transform = Optional.of(transform.toMatrix().toFloatList())
+                s.transform = Optional.of(transform.toMatrix().toLayoutTransform())
             }
 
         updateLayout(
@@ -211,7 +211,7 @@ internal class SquooshAnimatedLayout(
             val targetDecomposed = fromDecomposed.interpolateTo(toDecomposed, value)
             target.style =
                 target.style.withNodeStyle { s ->
-                    s.transform = Optional.of(targetDecomposed.toMatrix().toFloatList())
+                    s.transform = Optional.of(targetDecomposed.toMatrix().toLayoutTransform())
                 }
 
             val fromLayout = from.computedLayout!!

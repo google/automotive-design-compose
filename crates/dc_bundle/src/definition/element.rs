@@ -16,6 +16,7 @@
 
 use crate::definition::element::dimension_proto::Dimension;
 use crate::definition::element::dimension_proto::Dimension::Points;
+use crate::definition::element::path::WindingRule;
 use crate::Error;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
@@ -287,5 +288,81 @@ impl DimensionRectExt for Option<DimensionRect> {
         } else {
             Err(Error::MissingFieldError { field: "DimensionRect->bottom".to_string() })
         }
+    }
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum PathCommand {
+    MoveTo = 0,  // 1 Point
+    LineTo = 1,  // 1 Point
+    CubicTo = 2, // 3 Points
+    QuadTo = 3,  // 2 Points
+    Close = 4,   // 0 Points
+}
+impl TryFrom<u8> for PathCommand {
+    type Error = &'static str;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(PathCommand::MoveTo),
+            1 => Ok(PathCommand::LineTo),
+            2 => Ok(PathCommand::CubicTo),
+            3 => Ok(PathCommand::QuadTo),
+            4 => Ok(PathCommand::Close),
+            _ => Err("PathCommand out of range"),
+        }
+    }
+}
+
+impl Path {
+    pub fn new() -> Path {
+        Path { commands: Vec::new(), data: Vec::new(), winding_rule: WindingRule::NonZero.into() }
+    }
+    pub fn with_winding_rule(&mut self, winding_rule: WindingRule) -> &mut Path {
+        self.winding_rule = winding_rule.into();
+        self
+    }
+    pub fn move_to(&mut self, x: f32, y: f32) -> &mut Path {
+        self.commands.push(PathCommand::MoveTo as u8);
+        self.data.push(x);
+        self.data.push(y);
+        self
+    }
+    pub fn line_to(&mut self, x: f32, y: f32) -> &mut Path {
+        self.commands.push(PathCommand::LineTo as u8);
+        self.data.push(x);
+        self.data.push(y);
+        self
+    }
+    pub fn cubic_to(
+        &mut self,
+        c1_x: f32,
+        c1_y: f32,
+        c2_x: f32,
+        c2_y: f32,
+        x: f32,
+        y: f32,
+    ) -> &mut Path {
+        self.commands.push(PathCommand::CubicTo as u8);
+        self.data.push(c1_x);
+        self.data.push(c1_y);
+        self.data.push(c2_x);
+        self.data.push(c2_y);
+        self.data.push(x);
+        self.data.push(y);
+        self
+    }
+    pub fn quad_to(&mut self, c1_x: f32, c1_y: f32, x: f32, y: f32) -> &mut Path {
+        self.commands.push(PathCommand::QuadTo as u8);
+        self.data.push(c1_x);
+        self.data.push(c1_y);
+        self.data.push(x);
+        self.data.push(y);
+        self
+    }
+    pub fn close(&mut self) -> &mut Path {
+        self.commands.push(PathCommand::Close as u8);
+        self
     }
 }

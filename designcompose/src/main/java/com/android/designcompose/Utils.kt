@@ -95,7 +95,6 @@ import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
-import com.android.designcompose.serdegen.WindingRule
 import java.util.Optional
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -1481,8 +1480,14 @@ internal fun com.android.designcompose.serdegen.Path.asPath(
 
     val p = Path()
     p.fillType =
-        when (this.winding_rule) {
-            is WindingRule.EVENODD -> PathFillType.EvenOdd
+        when (this.winding_rule.toInt()) {
+            // winding_rule is defined in path.proto as an enum, but the generated Rust file has it
+            // as an i32. Since we generate a java file from the Rust from using serdegen, we lose
+            // the original enum values and need to hardcode them here. This can be fixed once we
+            // generate java directly from the proto file.
+            // 1 -> NonZero,
+            // 2 -> EvenOdd
+            2 -> PathFillType.EvenOdd
             else -> PathFillType.NonZero
         }
     var idx = 0

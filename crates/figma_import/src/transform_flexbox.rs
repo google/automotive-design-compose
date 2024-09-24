@@ -36,9 +36,10 @@ use crate::reaction_schema::ReactionJson;
 use dc_bundle::definition::element::color_or_var::ColorOrVar;
 use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::num_or_var::NumOrVar;
+use dc_bundle::definition::element::Path;
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::legacy_definition::element::background::Background;
-use dc_bundle::legacy_definition::element::path::{LineHeight, Path, StrokeAlign, StrokeWeight};
+use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
 use dc_bundle::legacy_definition::element::view_shape::ViewShape;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
@@ -1643,7 +1644,7 @@ fn parse_path(path: &figma_schema::Path) -> Option<Path> {
             Err(_) => return None,
         }
     }
-    output.winding_rule(path.winding_rule.into());
+    output.with_winding_rule(path.winding_rule.into());
     Some(output)
 }
 

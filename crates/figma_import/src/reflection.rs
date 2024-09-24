@@ -164,10 +164,10 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace Easing");
 
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::path::WindingRule>(&samples)
+        .trace_type::<dc_bundle::definition::element::path::WindingRule>(&samples)
         .expect("couldn't trace WindingRule");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::path::Path>(&samples)
+        .trace_type::<dc_bundle::definition::element::Path>(&samples)
         .expect("couldn't trace Path");
     tracer
         .trace_type::<dc_bundle::legacy_definition::view::component::ComponentContentOverride>(

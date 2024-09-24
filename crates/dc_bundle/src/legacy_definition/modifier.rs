@@ -15,6 +15,5 @@
  */
 
 pub mod blend;
-pub mod filter;
 pub mod shadow;
 pub mod text;

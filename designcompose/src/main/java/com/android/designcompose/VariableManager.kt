@@ -27,6 +27,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.serdegen.ColorOrVar
+import com.android.designcompose.serdegen.ColorOrVarType
 import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.Value
 import com.android.designcompose.serdegen.Variable
@@ -357,12 +358,15 @@ internal fun NumOrVar.getValue(variableState: VariableState): Float {
 
 // Return the value of a ColorOrVar enum
 internal fun ColorOrVar.getValue(variableState: VariableState): Color? {
-    return when (this) {
-        is ColorOrVar.Color -> value.toColor()
-        is ColorOrVar.Var -> {
-            val fallback = value.fallback.getOrNull()?.toColor()
-            VariableManager.getColor(value.id, fallback, variableState)
+    if (color_or_var_type.isPresent) {
+        return when (val colorOrVarType = color_or_var_type.get()) {
+            is ColorOrVarType.Color -> colorOrVarType.value.toColor()
+            is ColorOrVarType.Var -> {
+                val fallback = colorOrVarType.value.fallback.getOrNull()?.toColor()
+                VariableManager.getColor(colorOrVarType.value.id, fallback, variableState)
+            }
+            else -> null
         }
-        else -> null
     }
+    return null
 }

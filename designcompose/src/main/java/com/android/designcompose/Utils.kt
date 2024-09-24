@@ -24,6 +24,7 @@ import android.graphics.Rect
 import android.graphics.Shader
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.snap
@@ -48,19 +49,27 @@ import androidx.compose.ui.graphics.isIdentity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.android.designcompose.proto.StrokeAlignType
+import com.android.designcompose.proto.WindingRuleType
 import com.android.designcompose.proto.end
 import com.android.designcompose.proto.getDim
+import com.android.designcompose.proto.getType
 import com.android.designcompose.proto.isDefault
+import com.android.designcompose.proto.isType
 import com.android.designcompose.proto.newDimensionProtoUndefined
 import com.android.designcompose.proto.newDimensionRectPointsZero
+import com.android.designcompose.proto.scaleModeFromInt
 import com.android.designcompose.proto.start
+import com.android.designcompose.proto.strokeAlignTypeToInt
 import com.android.designcompose.proto.toOptDimProto
 import com.android.designcompose.proto.top
+import com.android.designcompose.proto.windingRuleFromInt
 import com.android.designcompose.serdegen.AffineTransform
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
 import com.android.designcompose.serdegen.Background
+import com.android.designcompose.serdegen.BackgroundType
 import com.android.designcompose.serdegen.BlendMode
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Display
@@ -84,9 +93,9 @@ import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
 import com.android.designcompose.serdegen.Stroke
-import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.StrokeWeight
+import com.android.designcompose.serdegen.StrokeWeightType
 import com.android.designcompose.serdegen.StyledTextRun
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
@@ -98,6 +107,7 @@ import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
@@ -239,7 +249,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
     val nodeStyle = NodeStyle.Builder()
     val layoutStyle = LayoutStyle.Builder()
     nodeStyle.text_color =
-        if (override.node_style.text_color !is Background.None) {
+        if (!override.node_style.text_color.isType<BackgroundType.None>()) {
             override.node_style.text_color
         } else {
             base.node_style.text_color
@@ -289,7 +299,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
     nodeStyle.background =
         if (
             override.node_style.background.size > 0 &&
-                override.node_style.background[0] !is Background.None
+                !override.node_style.background[0].isType<BackgroundType.None>()
         ) {
             override.node_style.background
         } else {
@@ -749,7 +759,7 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
 
 internal fun defaultNodeStyle(): NodeStyle.Builder {
     val builder = NodeStyle.Builder()
-    builder.text_color = Background.None()
+    builder.text_color = Background(Optional.of(BackgroundType.None(com.novi.serde.Unit())))
     builder.font_size = NumOrVar.Num(0f)
     builder.font_family = Optional.empty()
     builder.font_weight = FontWeight(NumOrVar.Num(0f))
@@ -757,7 +767,12 @@ internal fun defaultNodeStyle(): NodeStyle.Builder {
     builder.font_stretch = FontStretch(0f)
     builder.background = emptyList()
     builder.box_shadow = emptyList()
-    builder.stroke = Stroke(StrokeAlign.Center(), StrokeWeight.Uniform(0f), emptyList())
+    builder.stroke =
+        Stroke(
+            strokeAlignTypeToInt(StrokeAlignType.Center),
+            Optional.of(StrokeWeight(Optional.of(StrokeWeightType.Uniform(0f)))),
+            emptyList()
+        )
     builder.opacity = Optional.empty()
     builder.transform = Optional.empty()
     builder.relative_transform = Optional.empty()
@@ -1329,19 +1344,20 @@ internal fun Optional<AffineTransform>.asSkiaMatrix(): Matrix? {
 }
 
 /** Convert a Background to a Brush, returning a Pair of Brush and Opacity */
+@RequiresApi(Build.VERSION_CODES.N)
 internal fun Background.asBrush(
     appContext: Context,
     document: DocContent,
     density: Float,
     variableState: VariableState,
 ): Pair<Brush, Float>? {
-    when (this) {
-        is Background.Solid -> {
-            val color = value.getValue(variableState)
+    when (val bgType = getType()) {
+        is BackgroundType.Solid -> {
+            val color = bgType.value.getValue(variableState)
             return color?.let { Pair(SolidColor(color), 1.0f) }
         }
-        is Background.Image -> {
-            val backgroundImage = this
+        is BackgroundType.Image -> {
+            val backgroundImage = bgType.value
             val imageTransform = backgroundImage.transform.asSkiaMatrix()
             if (DebugNodeManager.getUseLocalRes().value) {
                 backgroundImage.res_name.orElse(null)?.let {
@@ -1356,7 +1372,7 @@ internal fun Background.asBrush(
                                 imageDensity = density,
                                 displayDensity = density,
                                 imageTransform = imageTransform,
-                                scaleMode = backgroundImage.scale_mode
+                                scaleMode = scaleModeFromInt(backgroundImage.scale_mode)
                             ),
                             backgroundImage.opacity
                         )
@@ -1366,7 +1382,7 @@ internal fun Background.asBrush(
                 }
             }
             val imageFillAndDensity =
-                backgroundImage.key.orElse(null)?.let { document.image(it.value, density) }
+                backgroundImage.key.orElse(null)?.let { document.image(it.key, density) }
             // val imageFilters = backgroundImage.filters;
             if (imageFillAndDensity != null) {
                 val (imageFill, imageDensity) = imageFillAndDensity
@@ -1376,14 +1392,14 @@ internal fun Background.asBrush(
                         imageDensity = imageDensity,
                         displayDensity = density,
                         imageTransform = imageTransform,
-                        scaleMode = backgroundImage.scale_mode,
+                        scaleMode = scaleModeFromInt(backgroundImage.scale_mode),
                     ),
                     backgroundImage.opacity,
                 )
             }
         }
-        is Background.LinearGradient -> {
-            val linearGradient = this
+        is BackgroundType.LinearGradient -> {
+            val linearGradient = bgType.value
             when (linearGradient.color_stops.size) {
                 0 -> {
                     Log.e(TAG, "No stops found for the linear gradient")
@@ -1392,7 +1408,7 @@ internal fun Background.asBrush(
                 1 -> {
                     Log.w(TAG, "Single stop found for the linear gradient and do it as a fill")
                     val color =
-                        linearGradient.color_stops[0].field1.getValue(variableState)
+                        linearGradient.color_stops[0].color.getOrNull()?.getValue(variableState)
                             ?: Color.Transparent
                     return Pair(SolidColor(color), 1.0f)
                 }
@@ -1400,9 +1416,12 @@ internal fun Background.asBrush(
                     return Pair(
                         RelativeLinearGradient(
                             linearGradient.color_stops
-                                .map { it.field1.getValue(variableState) ?: Color.Transparent }
+                                .map {
+                                    it.color.getOrNull()?.getValue(variableState)
+                                        ?: Color.Transparent
+                                }
                                 .toList(),
-                            linearGradient.color_stops.map { it.field0 }.toList(),
+                            linearGradient.color_stops.map { it.position }.toList(),
                             start = Offset(linearGradient.start_x, linearGradient.start_y),
                             end = Offset(linearGradient.end_x, linearGradient.end_y),
                         ),
@@ -1410,8 +1429,8 @@ internal fun Background.asBrush(
                     )
             }
         }
-        is Background.RadialGradient -> {
-            val radialGradient = this
+        is BackgroundType.RadialGradient -> {
+            val radialGradient = bgType.value
             return when (radialGradient.color_stops.size) {
                 0 -> {
                     Log.e(TAG, "No stops found for the radial gradient")
@@ -1421,7 +1440,7 @@ internal fun Background.asBrush(
                     Log.w(TAG, "Single stop found for the radial gradient and do it as a fill")
                     return Pair(
                         SolidColor(
-                            radialGradient.color_stops[0].field1.getValue(variableState)
+                            radialGradient.color_stops[0].color.getOrNull()?.getValue(variableState)
                                 ?: Color.Transparent
                         ),
                         1.0f,
@@ -1432,20 +1451,21 @@ internal fun Background.asBrush(
                         RelativeRadialGradient(
                             colors =
                                 radialGradient.color_stops.map {
-                                    it.field1.getValue(variableState) ?: Color.Transparent
+                                    it.color.getOrNull()?.getValue(variableState)
+                                        ?: Color.Transparent
                                 },
-                            stops = radialGradient.color_stops.map { it.field0 },
+                            stops = radialGradient.color_stops.map { it.position },
                             center = Offset(radialGradient.center_x, radialGradient.center_y),
-                            radiusX = radialGradient.radius[0],
-                            radiusY = radialGradient.radius[1],
+                            radiusX = radialGradient.radius_x,
+                            radiusY = radialGradient.radius_y,
                             angle = radialGradient.angle,
                         ),
                         1.0f,
                     )
             }
         }
-        is Background.AngularGradient -> {
-            val angularGradient = this
+        is BackgroundType.AngularGradient -> {
+            val angularGradient = bgType.value
             return when (angularGradient.color_stops.size) {
                 0 -> {
                     Log.e(TAG, "No stops found for the angular gradient")
@@ -1455,8 +1475,10 @@ internal fun Background.asBrush(
                     Log.w(TAG, "Single stop found for the angular gradient and do it as a fill")
                     return Pair(
                         SolidColor(
-                            angularGradient.color_stops[0].field1.getValue(variableState)
-                                ?: Color.Transparent
+                            angularGradient.color_stops[0]
+                                .color
+                                .getOrNull()
+                                ?.getValue(variableState) ?: Color.Transparent
                         ),
                         1.0f,
                     )
@@ -1469,9 +1491,10 @@ internal fun Background.asBrush(
                             scale = angularGradient.scale,
                             colors =
                                 angularGradient.color_stops.map {
-                                    it.field1.getValue(variableState) ?: Color.Transparent
+                                    it.color.getOrNull()?.getValue(variableState)
+                                        ?: Color.Transparent
                                 },
-                            stops = angularGradient.color_stops.map { it.field0 },
+                            stops = angularGradient.color_stops.map { it.position },
                         ),
                         1.0f,
                     )
@@ -1494,14 +1517,8 @@ internal fun com.android.designcompose.serdegen.Path.asPath(
 
     val p = Path()
     p.fillType =
-        when (this.winding_rule.toInt()) {
-            // winding_rule is defined in path.proto as an enum, but the generated Rust file has it
-            // as an i32. Since we generate a java file from the Rust from using serdegen, we lose
-            // the original enum values and need to hardcode them here. This can be fixed once we
-            // generate java directly from the proto file.
-            // 1 -> NonZero,
-            // 2 -> EvenOdd
-            2 -> PathFillType.EvenOdd
+        when (windingRuleFromInt(winding_rule.toInt())) {
+            WindingRuleType.EvenOdd -> PathFillType.EvenOdd
             else -> PathFillType.NonZero
         }
     var idx = 0
@@ -1580,58 +1597,6 @@ internal fun com.android.designcompose.serdegen.Path.log() {
             }
         }
     }
-}
-
-// Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
-// vectors that don't have sides.
-internal fun StrokeWeight.toUniform(): Float {
-    when (this) {
-        is StrokeWeight.Uniform -> return this.value
-        is StrokeWeight.Individual -> return this.top
-    }
-    return 0.0f
-}
-
-// Return a maximum stroke weight. This is used for computing the layer bounds when creating a
-// layer for compositing (transparency, blend modes, etc).
-internal fun StrokeWeight.max(): Float {
-    when (this) {
-        is StrokeWeight.Uniform -> return this.value
-        is StrokeWeight.Individual -> return maxOf(this.top, this.left, this.bottom, this.right)
-    }
-    return 0.0f
-}
-
-internal fun StrokeWeight.top(): Float {
-    when (this) {
-        is StrokeWeight.Uniform -> return this.value
-        is StrokeWeight.Individual -> return this.top
-    }
-    return 0.0f
-}
-
-internal fun StrokeWeight.left(): Float {
-    when (this) {
-        is StrokeWeight.Uniform -> return this.value
-        is StrokeWeight.Individual -> return this.left
-    }
-    return 0.0f
-}
-
-internal fun StrokeWeight.bottom(): Float {
-    when (this) {
-        is StrokeWeight.Uniform -> return this.value
-        is StrokeWeight.Individual -> return this.bottom
-    }
-    return 0.0f
-}
-
-internal fun StrokeWeight.right(): Float {
-    when (this) {
-        is StrokeWeight.Uniform -> return this.value
-        is StrokeWeight.Individual -> return this.right
-    }
-    return 0.0f
 }
 
 // Return whether a text node is auto width without a FILL sizing mode. This is a check used by the

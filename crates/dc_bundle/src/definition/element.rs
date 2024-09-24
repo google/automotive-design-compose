@@ -20,6 +20,7 @@ use crate::definition::element::path::WindingRule;
 use crate::Error;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 
 include!(concat!(env!("OUT_DIR"), "/designcompose.definition.element.rs"));
 
@@ -364,5 +365,48 @@ impl Path {
     pub fn close(&mut self) -> &mut Path {
         self.commands.push(PathCommand::Close as u8);
         self
+    }
+}
+
+// Implement the Eq and Hash traits so that ImageKey can be used as a hash table key
+impl Eq for ImageKey {}
+impl Hash for ImageKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.key.hash(state);
+    }
+}
+impl ImageKey {
+    pub fn new(str: String) -> Self {
+        ImageKey { key: str }
+    }
+}
+
+impl Background {
+    pub fn new(bg_type: background::BackgroundType) -> Self {
+        Background { background_type: Some(bg_type) }
+    }
+    pub fn is_some(&self) -> bool {
+        if let Some(bg) = &self.background_type {
+            match bg {
+                background::BackgroundType::None(_) => false,
+                _ => true,
+            }
+        } else {
+            false
+        }
+    }
+}
+
+impl ColorOrVar {
+    pub fn new_color(color: Color) -> Self {
+        ColorOrVar { color_or_var_type: Some(color_or_var::ColorOrVarType::Color(color)) }
+    }
+    pub fn new_var(id: String, fallback: Option<Color>) -> Self {
+        ColorOrVar {
+            color_or_var_type: Some(color_or_var::ColorOrVarType::Var(color_or_var::ColorVar {
+                id,
+                fallback,
+            })),
+        }
     }
 }

@@ -43,8 +43,10 @@ import com.android.designcompose.proto.newDimensionProtoPercent
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.Background
+import com.android.designcompose.serdegen.BackgroundType
 import com.android.designcompose.serdegen.Color
 import com.android.designcompose.serdegen.ColorOrVar
+import com.android.designcompose.serdegen.ColorOrVarType
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FrameExtras
@@ -550,7 +552,16 @@ private fun generateOverlayNode(
         colorBuilder.g = (color.g * 255.0).toInt()
         colorBuilder.b = (color.b * 255.0).toInt()
         colorBuilder.a = (color.a * 255.0).toInt()
-        nodeStyle.background = listOf(Background.Solid(ColorOrVar.Color(colorBuilder.build())))
+        nodeStyle.background =
+            listOf(
+                Background(
+                    Optional.of(
+                        BackgroundType.Solid(
+                            ColorOrVar(Optional.of(ColorOrVarType.Color(colorBuilder.build())))
+                        )
+                    )
+                )
+            )
     }
     overlayStyle.layout_style = layoutStyle.build()
     overlayStyle.node_style = nodeStyle.build()

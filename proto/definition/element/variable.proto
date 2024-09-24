@@ -88,7 +88,7 @@ message ColorOrVar {
     Color fallback = 2;
   }
 
-  oneof ColorOrVar {
+  oneof ColorOrVarType {
     Color color = 1;
     ColorVar var = 2;
   }

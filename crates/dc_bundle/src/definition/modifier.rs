@@ -16,3 +16,9 @@
 include!(concat!(env!("OUT_DIR"), "/designcompose.definition.modifier.rs"));
 pub mod affine_transform;
 pub mod layout_transform;
+
+impl FilterOp {
+    pub fn new(op_type: filter_op::FilterOpType) -> Self {
+        FilterOp { filter_op_type: Some(op_type) }
+    }
+}

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-use crate::definition::element::color_or_var::ColorOrVar;
 use crate::definition::element::num_or_var::NumOrVar;
 use crate::definition::element::Color;
+use crate::definition::element::ColorOrVar;
+use crate::definition::element::{background, Background};
 use crate::definition::element::{FontFeature, FontStyle, Hyperlink, TextDecoration};
-use crate::legacy_definition::element::background::Background;
 use crate::legacy_definition::element::font::{FontStretch, FontWeight};
 use crate::legacy_definition::element::path::LineHeight;
 use serde::{Deserialize, Serialize};
@@ -45,7 +45,9 @@ pub struct TextStyle {
 impl Default for TextStyle {
     fn default() -> Self {
         TextStyle {
-            text_color: Background::Solid(ColorOrVar::Color(Color::BLACK)),
+            text_color: Background::new(background::BackgroundType::Solid(ColorOrVar::new_color(
+                Color::BLACK,
+            ))),
             font_size: NumOrVar::Num(18.0),
             font_family: None,
             font_weight: FontWeight::NORMAL,

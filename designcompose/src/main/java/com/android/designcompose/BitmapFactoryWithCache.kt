@@ -39,7 +39,9 @@ object BitmapFactoryWithCache {
     }
 
     fun loadResource(resources: Resources, resId: Int): Bitmap {
-        val imageKey: String = resId.toString()
+        val locales = resources.configuration.locales
+        val localeId = if (locales.isEmpty) "" else locales[0].toString()
+        val imageKey: String = resId.toString() + localeId
 
         val bitmap: Bitmap =
             getBitmapFromMemCache(imageKey)

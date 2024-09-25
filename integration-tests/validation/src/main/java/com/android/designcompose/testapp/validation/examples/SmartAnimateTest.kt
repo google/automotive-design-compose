@@ -45,9 +45,24 @@ interface SmartAnimateTest {
         @DesignVariant(property = "#RotationTestState") state: TestState,
     )
 
-    @DesignComponent(node = "#RotationOpacityStage")
+    @DesignComponent(node = "#OpacityAnimationStage")
     fun OpacityTest(
         @DesignVariant(property = "#OpacityTestState") state: TestState,
+    )
+
+    @DesignComponent(node = "#TextAnimationStage")
+    fun TextTest(
+        @DesignVariant(property = "#TextTestState") state: TestState,
+    )
+
+    @DesignComponent(node = "#VectorAnimationStage")
+    fun VectorTest(
+        @DesignVariant(property = "#VectorTestState") state: TestState,
+    )
+
+    @DesignComponent(node = "#CrossFadeOpacityAnimationStage")
+    fun CrossFadeOpacityTest(
+        @DesignVariant(property = "#CrossFadeOpacityTestState") state: TestState,
     )
 
     @DesignComponent(node = "#OneInstance") fun OneInstance()

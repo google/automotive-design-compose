@@ -20,12 +20,13 @@ import android.util.Log
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.ui.geometry.Size
 import com.android.designcompose.AnimatedAction
+import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
 import com.android.designcompose.decompose
 import com.android.designcompose.fixedHeight
 import com.android.designcompose.fixedWidth
-import com.android.designcompose.hasTransformChange
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.View
@@ -46,7 +47,10 @@ import kotlin.jvm.optionals.getOrElse
 // Initially I'm just going to support Smart Animate, because it's the hardest, but I'll do the
 // others once Smart Animate is in shape.
 
-internal abstract class SquooshAnimatedItem(transition: AnimationTransition) {
+internal abstract class SquooshAnimatedItem(
+    val target: SquooshResolvedNode,
+    transition: AnimationTransition
+) {
     // The animation object that describes the easing and transition of this transition
     var animation: TargetBasedAnimation<Float, AnimationVector1D> =
         TargetBasedAnimation(
@@ -77,69 +81,121 @@ internal abstract class SquooshAnimatedItem(transition: AnimationTransition) {
         return playTimeNanos - (delayMillis.toLong() * 1000000L)
     }
 
+    fun updateLayout(value: Float, width: Float, height: Float, from: Layout, to: Layout) {
+        target.overrideLayoutSize = true
+        target.computedLayout =
+            Layout(
+                0,
+                width,
+                height,
+                to.left * value + from.left * (1f - value),
+                to.top * value + from.top * (1f - value),
+            )
+    }
+
     abstract fun apply(value: Float)
 }
 
 internal class SquooshAnimatedFadeIn(
-    private val target: SquooshResolvedNode,
+    target: SquooshResolvedNode,
     transition: AnimationTransition,
-) : SquooshAnimatedItem(transition) {
+) : SquooshAnimatedItem(target, transition) {
+    private val targetOpacity: Float = target.style.node_style.opacity.getOrElse { 1f }
+
     override fun apply(value: Float) {
-        target.style = target.style.withNodeStyle { s -> s.opacity = Optional.of(value) }
+        target.style =
+            target.style.withNodeStyle { s -> s.opacity = Optional.of(value * targetOpacity) }
     }
 }
 
 internal class SquooshAnimatedFadeOut(
-    private val target: SquooshResolvedNode,
+    target: SquooshResolvedNode,
     transition: AnimationTransition,
-) : SquooshAnimatedItem(transition) {
+) : SquooshAnimatedItem(target, transition) {
+    private val targetOpacity: Float = target.style.node_style.opacity.getOrElse { 1f }
+
     override fun apply(value: Float) {
-        target.style = target.style.withNodeStyle { s -> s.opacity = Optional.of(1.0f - value) }
+        target.style =
+            target.style.withNodeStyle { s ->
+                s.opacity = Optional.of((1.0f - value) * targetOpacity)
+            }
+    }
+}
+
+internal class SquooshAnimatedScale(
+    target: SquooshResolvedNode,
+    private val from: SquooshResolvedNode,
+    private val to: SquooshResolvedNode,
+    private val scaleFrom: Boolean,
+    transition: AnimationTransition,
+) : SquooshAnimatedItem(target, transition) {
+    private val fromDecomposed = from.style.node_style.transform.decompose(1F)
+
+    override fun apply(value: Float) {
+        if (from.computedLayout == null || to.computedLayout == null) return
+        val fromLayout = from.computedLayout!!
+        val toLayout = to.computedLayout!!
+        val fromSize = Size(fromLayout.width, fromLayout.height)
+        val toSize = Size(toLayout.width, toLayout.height)
+
+        // Calculate the scale factor, taking into account whether we are scaling the from or to
+        // node.
+        var scaleX = 1f + value * (toSize.width - fromSize.width) / fromSize.width
+        if (!scaleFrom) scaleX /= (toSize.width / fromSize.width)
+        var scaleY = 1f + value * (toSize.height - fromSize.height) / fromSize.height
+        if (!scaleFrom) scaleY /= (toSize.height / fromSize.height)
+
+        val transform = fromDecomposed.copy()
+        transform.scaleX = scaleX
+        transform.scaleY = scaleY
+        target.style =
+            target.style.withNodeStyle { s ->
+                s.transform = Optional.of(transform.toMatrix().toFloatList())
+            }
+
+        updateLayout(
+            value,
+            maxOf(toLayout.width, fromLayout.width),
+            maxOf(toLayout.height, fromLayout.height),
+            fromLayout,
+            toLayout
+        )
     }
 }
 
 internal class SquooshAnimatedLayout(
-    private val target: SquooshResolvedNode,
+    target: SquooshResolvedNode,
     private val from: SquooshResolvedNode,
     private val to: SquooshResolvedNode,
     transition: AnimationTransition,
-) : SquooshAnimatedItem(transition) {
-    private val transformedChanged = hasTransformChange(from.view.style, to.view.style)
+) : SquooshAnimatedItem(target, transition) {
     private val fromDecomposed = from.style.node_style.transform.decompose(1F)
     private val toDecomposed = to.style.node_style.transform.decompose(1F)
-    private val needsOpacityTween = needsOpacityTween(from.view.style, to.view.style)
+    private val tweenTypes = computeTweenTypes()
 
-    override fun apply(value: Float) {
-        val iv = 1.0f - value
-        val fromLayout = from.computedLayout
-        val toLayout = to.computedLayout
+    companion object {
+        const val TWEEN_TRANSFORM = 0x0001
+        const val TWEEN_OPACITY = 0x0002
+    }
 
-        if (fromLayout == null || toLayout == null) {
-            Log.e(
-                TAG,
-                "Unable to compute animated layout for ${target.view.name} because from $fromLayout /to $toLayout  layout is uncomputed."
-            )
-            return
-        }
+    private fun needsTransformTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
+        return from.view.style.node_style.transform != to.view.style.node_style.transform
+    }
 
-        // Pass in 1 for the density because at this stage, we just want the raw size from the
-        // design. The render code will take into account density.
-        val fromWidth = if (transformedChanged) from.view.style.fixedWidth(1F) else fromLayout.width
-        val fromHeight =
-            if (transformedChanged) from.view.style.fixedHeight(1F) else fromLayout.height
-        val toWidth = if (transformedChanged) to.view.style.fixedWidth(1F) else toLayout.width
-        val toHeight = if (transformedChanged) to.view.style.fixedHeight(1F) else toLayout.height
+    private fun needsOpacityTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
+        return from.view.style.node_style.opacity.getOrElse { 1F } !=
+            to.view.style.node_style.opacity.getOrElse { 1F }
+    }
 
-        if (transformedChanged) {
-            // Interpolate the decomposed matrix values, then construct a new matrix
-            val target = fromDecomposed.interpolateTo(toDecomposed, value)
-            this.target.style =
-                this.target.style.withNodeStyle { s ->
-                    s.transform = Optional.of(target.toMatrix().toFloatList())
-                }
-        }
+    private fun computeTweenTypes(): Int {
+        var types = 0
+        if (needsTransformTween(from, to)) types = types or TWEEN_TRANSFORM
+        if (needsOpacityTween(from, to)) types = types or TWEEN_OPACITY
+        return types
+    }
 
-        if (needsOpacityTween) {
+    private fun doOpacityTween(value: Float, iv: Float) {
+        if (tweenTypes and TWEEN_OPACITY != 0) {
             this.target.style =
                 this.target.style.withNodeStyle { s ->
                     val fromOpacity = from.style.node_style.opacity.getOrElse { 1F }
@@ -147,28 +203,76 @@ internal class SquooshAnimatedLayout(
                     s.opacity = Optional.of(toOpacity * value + fromOpacity * iv)
                 }
         }
+    }
 
-        // When doing a layout animation, set overrideLayoutSize to true so that the rendering code
-        // uses this computed size as opposed to the size of the node in ViewStyle. This ensures
-        // that size change animations and rotation animations render at the correct size.
-        target.overrideLayoutSize = true
-        target.computedLayout =
-            Layout(
-                0,
+    private fun doTransformTween(value: Float, iv: Float) {
+        if (tweenTypes and TWEEN_TRANSFORM != 0) {
+            // Interpolate the decomposed matrix values, then construct a new matrix
+            val targetDecomposed = fromDecomposed.interpolateTo(toDecomposed, value)
+            target.style =
+                target.style.withNodeStyle { s ->
+                    s.transform = Optional.of(targetDecomposed.toMatrix().toFloatList())
+                }
+
+            val fromLayout = from.computedLayout!!
+            val toLayout = to.computedLayout!!
+            // Pass in 1 for the density because at this stage, we just want the raw size from the
+            // design. The render code will take into account density.
+            val fromWidth = from.view.style.fixedWidth(1F)
+            val fromHeight = from.view.style.fixedHeight(1F)
+            val toWidth = to.view.style.fixedWidth(1F)
+            val toHeight = to.view.style.fixedHeight(1F)
+            updateLayout(
+                value,
                 toWidth * value + fromWidth * iv,
                 toHeight * value + fromHeight * iv,
-                toLayout.left * value + fromLayout.left * iv,
-                toLayout.top * value + fromLayout.top * iv
+                fromLayout,
+                toLayout
             )
+        }
+    }
+
+    private fun doLayoutTween(value: Float, iv: Float) {
+        // Don't tween again if something already tweened layout
+        if (tweenTypes and TWEEN_TRANSFORM == 0) {
+            // When doing a layout animation, set overrideLayoutSize to true so that the rendering
+            // code
+            // uses this computed size as opposed to the size of the node in ViewStyle. This ensures
+            // that size change animations and rotation animations render at the correct size.
+            val fromLayout = from.computedLayout!!
+            val toLayout = to.computedLayout!!
+            updateLayout(
+                value,
+                toLayout.width * value + fromLayout.width * iv,
+                toLayout.height * value + fromLayout.height * iv,
+                fromLayout,
+                toLayout
+            )
+        }
+    }
+
+    override fun apply(value: Float) {
+        val iv = 1.0f - value
+        if (from.computedLayout == null || to.computedLayout == null) {
+            Log.e(
+                TAG,
+                "Unable to compute animated layout for ${target.view.name} because from ${from.computedLayout} to ${to.computedLayout}  layout is uncomputed."
+            )
+            return
+        }
+
+        doOpacityTween(value, iv)
+        doTransformTween(value, iv)
+        doLayoutTween(value, iv)
     }
 }
 
 internal class SquooshAnimatedArc(
-    private val target: SquooshResolvedNode,
+    target: SquooshResolvedNode,
     private val from: ViewShape.Arc,
     private val to: ViewShape.Arc,
     transition: AnimationTransition,
-) : SquooshAnimatedItem(transition) {
+) : SquooshAnimatedItem(target, transition) {
     override fun apply(value: Float) {
         val iv = 1.0f - value
         val arcBuilder = ViewShape.Arc.Builder()
@@ -266,6 +370,7 @@ internal fun createMergedAnimationTree(
     to: SquooshResolvedNode,
     requestedAnimations: HashMap<String, SquooshAnimationRequest>,
     customVariantTransition: CustomVariantTransition?,
+    variableState: VariableState,
     parent: SquooshResolvedNode? = null,
     alreadyMatchedSet: HashSet<Int> = HashSet()
 ): SquooshResolvedNode {
@@ -288,6 +393,7 @@ internal fun createMergedAnimationTree(
                         animations,
                         alreadyMatchedSet,
                         customVariantTransition,
+                        variableState,
                         requestedAnim.transition,
                     )
                 if (animations.isNotEmpty()) {
@@ -315,6 +421,7 @@ internal fun createMergedAnimationTree(
                 to,
                 requestedAnimations,
                 customVariantTransition,
+                variableState,
                 parent,
                 alreadyMatchedSet
             )
@@ -334,6 +441,7 @@ internal fun createMergedAnimationTree(
                     to,
                     requestedAnimations,
                     customVariantTransition,
+                    variableState,
                     cloned,
                     alreadyMatchedSet
                 )
@@ -380,6 +488,7 @@ private fun mergeRecursive(
     anims: ArrayList<SquooshAnimatedItem>,
     alreadyMatchedSet: HashSet<Int>,
     customVariantTransition: CustomVariantTransition?,
+    variableState: VariableState,
     parentTransition: AnimationTransition = DEFAULT_TRANSITION,
 ): SquooshResolvedNode {
     // We have an exact match on `from` and `to`, so we can construct various animation controls to
@@ -409,7 +518,7 @@ private fun mergeRecursive(
         customVariantTransition?.invoke(VariantTransitionContext(from.view, to.view))
             ?: parentTransition
 
-    if (isTweenable(from.view, to.view) && !needsStyleTween(from.style, to.style)) {
+    if (isTweenable(from.view, to.view)) {
         // Clone the "to" node.
         val n = to.cloneSelf(parent)
         var previousChild: SquooshResolvedNode? = null
@@ -436,6 +545,7 @@ private fun mergeRecursive(
                         anims,
                         alreadyMatchedSet,
                         customVariantTransition,
+                        variableState,
                         transition
                     )
                 if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
@@ -502,8 +612,13 @@ private fun mergeRecursive(
 
         anims.add(SquooshAnimatedFadeOut(fromClone, transition))
         anims.add(SquooshAnimatedFadeIn(toClone, transition))
-        anims.add(SquooshAnimatedLayout(fromClone, from, to, transition))
-        anims.add(SquooshAnimatedLayout(toClone, from, to, transition))
+        if (shouldScale(from, to)) {
+            anims.add(SquooshAnimatedScale(fromClone, from, to, true, transition))
+            anims.add(SquooshAnimatedScale(toClone, from, to, false, transition))
+        } else {
+            anims.add(SquooshAnimatedLayout(fromClone, from, to, transition))
+            anims.add(SquooshAnimatedLayout(toClone, from, to, transition))
+        }
 
         return fromClone
     }
@@ -539,6 +654,8 @@ private fun findChildNamed(
 //  - They are both Containers
 //  - They both have a Rect or RoundRect shape (for now we need the shapes to be the same).
 private fun isTweenable(a: View, b: View): Boolean {
+    if (needsStyleTween(a.style, b.style)) return false
+
     val aData = a.data
     val bData = b.data
     if (aData is ViewData.Container && bData is ViewData.Container) {
@@ -565,8 +682,23 @@ private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     return false
 }
 
-private fun needsOpacityTween(a: ViewStyle, b: ViewStyle): Boolean {
-    return a.node_style.opacity.getOrElse { 1F } != b.node_style.opacity.getOrElse { 1F }
+// Return true if we should do a scale animation instead of a layout size animation
+private fun shouldScale(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
+    val fromData = from.view.data
+    val toData = to.view.data
+    if (from.view.data is ViewData.Container && to.view.data is ViewData.Container) {
+        // Scale vector paths
+        val fromContainer = from.view.data as ViewData.Container
+        val toContainer = to.view.data as ViewData.Container
+        return fromContainer.shape is ViewShape.Path && toContainer.shape is ViewShape.Path
+    } else if (fromData is ViewData.Text && toData is ViewData.Text) {
+        // Scale text if the string and font are the same
+        return fromData.content == toData.content &&
+            fromData.res_name == toData.res_name &&
+            from.style.node_style.font_family == to.style.node_style.font_family
+    }
+
+    return false
 }
 
 private fun ViewStyle.withNodeStyle(delta: (NodeStyle.Builder) -> Unit): ViewStyle {

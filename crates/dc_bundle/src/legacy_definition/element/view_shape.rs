@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 use crate::definition::element::num_or_var::NumOrVar;
-//use crate::legacy_definition::element::path::Path;
 use crate::definition::element::Path;
 use serde::{Deserialize, Serialize};
 

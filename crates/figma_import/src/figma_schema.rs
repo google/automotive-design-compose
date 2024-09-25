@@ -292,16 +292,12 @@ pub enum WindingRule {
     None,
 }
 
-impl Into<dc_bundle::legacy_definition::element::path::WindingRule> for WindingRule {
-    fn into(self) -> dc_bundle::legacy_definition::element::path::WindingRule {
+impl Into<dc_bundle::definition::element::path::WindingRule> for WindingRule {
+    fn into(self) -> dc_bundle::definition::element::path::WindingRule {
         match self {
-            WindingRule::NonZero => {
-                dc_bundle::legacy_definition::element::path::WindingRule::NonZero
-            }
-            WindingRule::EvenOdd => {
-                dc_bundle::legacy_definition::element::path::WindingRule::EvenOdd
-            }
-            WindingRule::None => dc_bundle::legacy_definition::element::path::WindingRule::None,
+            WindingRule::NonZero => dc_bundle::definition::element::path::WindingRule::NonZero,
+            WindingRule::EvenOdd => dc_bundle::definition::element::path::WindingRule::EvenOdd,
+            WindingRule::None => dc_bundle::definition::element::path::WindingRule::None,
         }
     }
 }

@@ -25,7 +25,7 @@ use layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;
 use std::io::prelude::*;
-use taffy::error::TaffyError;
+use taffy::TaffyError;
 
 fn _pause() {
     let mut stdin = io::stdin();
@@ -142,13 +142,15 @@ fn test_layout(
         }
         if use_measure_func {
             layout_manager
-                .add_style_measure(
+                .add_style(
                     my_id,
                     parent_layout_id,
                     child_index,
                     view.style.layout_style.clone(),
                     view.name.clone(),
-                    measure_func,
+                    true,
+                    None,
+                    None,
                 )
                 .expect("Failed to add style_measure");
         } else {
@@ -164,7 +166,7 @@ fn test_layout(
                     child_index,
                     fixed_view.style.layout_style.clone(),
                     fixed_view.name.clone(),
-                    None,
+                    false,
                     Some(view.style.layout_style.bounding_box.width as i32),
                     Some(view.style.layout_style.bounding_box.height as i32),
                 )
@@ -181,7 +183,7 @@ fn test_layout(
                         child_index,
                         square.style.layout_style.clone(),
                         square.name.clone(),
-                        None,
+                        false,
                         None,
                         None,
                     )
@@ -195,7 +197,7 @@ fn test_layout(
                     child_index,
                     view.style.layout_style.clone(),
                     view.name.clone(),
-                    None,
+                    false,
                     None,
                     None,
                 )
@@ -236,10 +238,10 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
         eprintln!("Warning: {error}");
     }
 
-    let stage = views.get(&NodeQuery::NodeName("#stage".to_string()));
+    let stage = views.get(&NodeQuery::NodeName(args.nodes.get(0).expect("NOT EMPTY").to_string()));
     if let Some(stage) = stage {
         let mut id = 0;
-        let mut layout_manager = LayoutManager::new();
+        let mut layout_manager = LayoutManager::new(measure_func);
         test_layout(&mut layout_manager, stage, &mut id, -1, -1, &views);
         layout_manager.print_layout(0, |msg| println!("{}", msg));
     }

@@ -19,8 +19,9 @@ use dc_bundle::Error;
 use log::{error, trace};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use taffy::prelude::{AvailableSpace, Size, Taffy};
-use taffy::tree::LayoutTree;
+use taffy::prelude::{AvailableSpace, Size};
+use taffy::style_helpers::{TaffyMaxContent, TaffyZero};
+use taffy::{Dimension, NodeId, TaffyTree};
 
 // Customizations that can applied to a node
 struct Customizations {
@@ -46,9 +47,9 @@ impl Customizations {
 
 pub struct LayoutManager {
     // taffy object that does all the layout computations
-    taffy: Taffy,
+    taffy: TaffyTree<i32>,
     // node id -> Taffy layout
-    layouts: HashMap<taffy::node::Node, Layout>,
+    layouts: HashMap<taffy::tree::NodeId, Layout>,
     // A struct that keeps track of all customizations
     customizations: Customizations,
     // Incrementing ID used to keep track of layout changes. Incremented
@@ -56,19 +57,58 @@ pub struct LayoutManager {
     layout_state: i32,
 
     // layout id -> Taffy node used to calculate layout
-    layout_id_to_taffy_node: HashMap<i32, taffy::node::Node>,
+    layout_id_to_taffy_node: HashMap<i32, taffy::tree::NodeId>,
     // Taffy node -> layout id
-    taffy_node_to_layout_id: HashMap<taffy::node::Node, i32>,
+    taffy_node_to_layout_id: HashMap<taffy::tree::NodeId, i32>,
     // layout id -> name
     layout_id_to_name: HashMap<i32, String>,
     // A list of root level layout IDs used to recompute layout whenever
     // something has changed
     root_layout_ids: HashSet<i32>,
+
+    // A "measure" function that the layout engine calls to consult on the
+    // size of an item.
+    measure_func: Box<
+        dyn FnMut(
+                Size<Option<f32>>,
+                Size<AvailableSpace>,
+                NodeId,
+                Option<&mut i32>,
+                &taffy::Style,
+            ) -> Size<f32>
+            + Sync
+            + Send,
+    >,
 }
 impl LayoutManager {
-    pub fn new() -> Self {
+    pub fn new(
+        mut measure_func: impl FnMut(i32, f32, f32, f32, f32) -> (f32, f32) + Sync + Send + 'static,
+    ) -> Self {
+        let layout_measure_func = move |size: Size<Option<f32>>,
+                                        available_size: Size<AvailableSpace>,
+                                        _node_id: NodeId,
+                                        layout_id: Option<&mut i32>,
+                                        _style: &taffy::Style|
+              -> Size<f32> {
+            let layout_id = if let Some(&mut id) = layout_id { id } else { return Size::ZERO };
+            let width = if let Some(w) = size.width { w } else { 0.0 };
+            let height = if let Some(h) = size.height { h } else { 0.0 };
+            let available_width = match available_size.width {
+                AvailableSpace::Definite(w) => w,
+                AvailableSpace::MaxContent => f32::MAX,
+                AvailableSpace::MinContent => 0.0,
+            };
+            let available_height = match available_size.height {
+                AvailableSpace::Definite(h) => h,
+                AvailableSpace::MaxContent => f32::MAX,
+                AvailableSpace::MinContent => 0.0,
+            };
+            let result = measure_func(layout_id, width, height, available_width, available_height);
+            Size { width: result.0, height: result.1 }
+        };
+
         LayoutManager {
-            taffy: Taffy::new(),
+            taffy: TaffyTree::new(),
             layouts: HashMap::new(),
             customizations: Customizations::new(),
             layout_state: 0,
@@ -77,6 +117,7 @@ impl LayoutManager {
             taffy_node_to_layout_id: HashMap::new(),
             layout_id_to_name: HashMap::new(),
             root_layout_ids: HashSet::new(),
+            measure_func: Box::new(layout_measure_func),
         }
     }
 
@@ -170,47 +211,6 @@ impl LayoutManager {
         }
     }
 
-    pub fn add_style_measure(
-        &mut self,
-        layout_id: i32,
-        parent_layout_id: i32,
-        child_index: i32,
-        style: LayoutStyle,
-        name: String,
-        measure_func: impl Send + Sync + 'static + Fn(i32, f32, f32, f32, f32) -> (f32, f32),
-    ) -> Result<(), Error> {
-        trace!("add_view_measure layoutId {}", layout_id);
-        let layout_measure_func = move |size: Size<Option<f32>>,
-                                        available_size: Size<AvailableSpace>|
-              -> Size<f32> {
-            let width = if let Some(w) = size.width { w } else { 0.0 };
-            let height = if let Some(h) = size.height { h } else { 0.0 };
-            let available_width = match available_size.width {
-                AvailableSpace::Definite(w) => w,
-                AvailableSpace::MaxContent => f32::MAX,
-                AvailableSpace::MinContent => 0.0,
-            };
-            let available_height = match available_size.height {
-                AvailableSpace::Definite(h) => h,
-                AvailableSpace::MaxContent => f32::MAX,
-                AvailableSpace::MinContent => 0.0,
-            };
-            let result = measure_func(layout_id, width, height, available_width, available_height);
-            Size { width: result.0, height: result.1 }
-        };
-
-        Ok(self.add_style(
-            layout_id,
-            parent_layout_id,
-            child_index,
-            style,
-            name,
-            Some(taffy::node::MeasureFunc::Boxed(Box::new(layout_measure_func))),
-            None,
-            None,
-        )?)
-    }
-
     pub fn add_style(
         &mut self,
         layout_id: i32,
@@ -218,7 +218,7 @@ impl LayoutManager {
         child_index: i32,
         style: LayoutStyle,
         name: String,
-        measure_func: Option<taffy::node::MeasureFunc>,
+        use_measure_func: bool,
         fixed_width: Option<i32>,
         fixed_height: Option<i32>,
     ) -> Result<(), Error> {
@@ -226,66 +226,68 @@ impl LayoutManager {
 
         self.apply_customizations(layout_id, &mut node_style);
         self.apply_fixed_size(&mut node_style, fixed_width, fixed_height);
+        self.apply_hacks(&mut node_style, &style);
+
+        let node_context = if use_measure_func { Some(layout_id) } else { None };
 
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
             // We already have this view in our tree. Update it's style
-            let result = self.taffy.set_style(*node, node_style);
-            if let Some(e) = result.err() {
+            if let Err(e) = self.taffy.set_style(*node, node_style) {
                 error!("taffy set_style error: {}", e);
             }
-        } else {
-            // This is a new view to add to our tree. Create a new node and add it
-            let result = if let Some(measure_func) = measure_func {
-                self.taffy.new_leaf_with_measure(node_style, measure_func)
-            } else {
-                self.taffy.new_leaf(node_style)
-            };
-            match result {
-                Ok(node) => {
-                    let parent_node = self.layout_id_to_taffy_node.get(&parent_layout_id);
-                    if let Some(parent_node) = parent_node {
-                        if child_index < 0 {
-                            // Don't bother inserting into the parent's child list. The caller will invoke set_children
-                            // manually instead.
-                            self.taffy_node_to_layout_id.insert(node, layout_id);
-                            self.layout_id_to_taffy_node.insert(layout_id, node);
-                            self.layout_id_to_name.insert(layout_id, name.clone());
-                        } else {
-                            // This has a parent node, so add it as a child
-                            let children_result = self.taffy.children(*parent_node);
-                            match children_result {
-                                Ok(mut children) => {
-                                    if child_index as usize > children.len() {
-                                        error!("omg! child index {} > children.len {} for node {} going into node {:?}", child_index, children.len(), name, self.layout_id_to_name.get(&parent_layout_id));
-                                    }
-                                    children.insert(child_index as usize, node);
-                                    let set_children_result =
-                                        self.taffy.set_children(*parent_node, children.as_ref());
-                                    if let Some(e) = set_children_result.err() {
-                                        error!("taffy set_children error: {}", e);
-                                    } else {
-                                        self.taffy_node_to_layout_id.insert(node, layout_id);
-                                        self.layout_id_to_taffy_node.insert(layout_id, node);
-                                        self.layout_id_to_name.insert(layout_id, name.clone());
-                                    }
-                                }
-                                Err(e) => {
-                                    error!("taffy_children error: {}", e);
-                                }
+
+            // Add the measure function.
+            let _ = self.taffy.set_node_context(*node, node_context);
+            return Ok(());
+        }
+
+        // This is a new view to add to our tree. Create a new node and add it
+        let node = match self.taffy.new_leaf(node_style) {
+            Ok(node) => node,
+            Err(e) => {
+                error!("taffy_new_leaf error: {}", e);
+                // TODO: Let it return error
+                return Ok(());
+            }
+        };
+
+        // Add the measure function.
+        let _ = self.taffy.set_node_context(node, node_context);
+
+        self.taffy_node_to_layout_id.insert(node, layout_id);
+        self.layout_id_to_taffy_node.insert(layout_id, node);
+        self.layout_id_to_name.insert(layout_id, name.clone());
+
+        match self.layout_id_to_taffy_node.get(&parent_layout_id) {
+            Some(parent_node) => {
+                // It's not a root layout node.
+                self.root_layout_ids.remove(&layout_id);
+
+                if child_index < 0 {
+                    // Don't bother inserting into the parent's child list. The caller will invoke set_children
+                    // manually instead.
+                } else {
+                    // This has a parent node, so add it as a child
+                    let children_result = self.taffy.children(*parent_node);
+                    match children_result {
+                        Ok(mut children) => {
+                            children.insert(child_index as usize, node);
+                            let set_children_result =
+                                self.taffy.set_children(*parent_node, children.as_ref());
+                            if let Some(e) = set_children_result.err() {
+                                error!("taffy set_children error: {}", e);
                             }
                         }
-                    } else {
-                        // No parent; this is a root node
-                        self.taffy_node_to_layout_id.insert(node, layout_id);
-                        self.layout_id_to_taffy_node.insert(layout_id, node);
-                        self.layout_id_to_name.insert(layout_id, name.clone());
-                        self.root_layout_ids.insert(layout_id);
+                        Err(e) => {
+                            error!("taffy_children error: {}", e);
+                        }
                     }
                 }
-                Err(e) => {
-                    error!("taffy_new_leaf error: {}", e);
-                }
+            }
+            None => {
+                // It's a root layout node.
+                self.root_layout_ids.insert(layout_id);
             }
         }
         Ok(())
@@ -357,12 +359,13 @@ impl LayoutManager {
             match result {
                 Ok(style) => {
                     let mut new_style = style.clone();
-                    new_style.min_size.width = taffy::prelude::Dimension::Points(width as f32);
-                    new_style.min_size.height = taffy::prelude::Dimension::Points(height as f32);
-                    new_style.size.width = taffy::prelude::Dimension::Points(width as f32);
-                    new_style.size.height = taffy::prelude::Dimension::Points(height as f32);
-                    new_style.max_size.width = taffy::prelude::Dimension::Points(width as f32);
-                    new_style.max_size.height = taffy::prelude::Dimension::Points(height as f32);
+                    new_style.min_size.width = taffy::prelude::Dimension::Length(width as f32);
+                    new_style.min_size.height = taffy::prelude::Dimension::Length(height as f32);
+                    new_style.size.width = taffy::prelude::Dimension::Length(width as f32);
+                    new_style.size.height = taffy::prelude::Dimension::Length(height as f32);
+                    new_style.max_size.width = taffy::prelude::Dimension::Length(width as f32);
+                    new_style.max_size.height = taffy::prelude::Dimension::Length(height as f32);
+                    error!("set new style: {:?}", new_style);
 
                     let result = self.taffy.set_style(*node, new_style);
                     if let Some(e) = result.err() {
@@ -384,12 +387,13 @@ impl LayoutManager {
     fn apply_customizations(&self, layout_id: i32, style: &mut taffy::style::Style) {
         let size = self.customizations.get_size(layout_id);
         if let Some(size) = size {
-            style.min_size.width = taffy::prelude::Dimension::Points(size.width as f32);
-            style.min_size.height = taffy::prelude::Dimension::Points(size.height as f32);
-            style.size.width = taffy::prelude::Dimension::Points(size.width as f32);
-            style.size.height = taffy::prelude::Dimension::Points(size.height as f32);
-            style.max_size.width = taffy::prelude::Dimension::Points(size.width as f32);
-            style.max_size.height = taffy::prelude::Dimension::Points(size.height as f32);
+            error!("apply_customization: size {:?}", size);
+            style.min_size.width = taffy::prelude::Dimension::Length(size.width as f32);
+            style.min_size.height = taffy::prelude::Dimension::Length(size.height as f32);
+            style.size.width = taffy::prelude::Dimension::Length(size.width as f32);
+            style.size.height = taffy::prelude::Dimension::Length(size.height as f32);
+            style.max_size.width = taffy::prelude::Dimension::Length(size.width as f32);
+            style.max_size.height = taffy::prelude::Dimension::Length(size.height as f32);
         }
     }
 
@@ -399,11 +403,28 @@ impl LayoutManager {
         fixed_width: Option<i32>,
         fixed_height: Option<i32>,
     ) {
+        error!("apply_fixed_size to min: w {:?} h {:?}", fixed_width, fixed_height);
         if let Some(fixed_width) = fixed_width {
-            style.min_size.width = taffy::prelude::Dimension::Points(fixed_width as f32);
+            style.min_size.width = taffy::prelude::Dimension::Length(fixed_width as f32);
         }
         if let Some(fixed_height) = fixed_height {
-            style.min_size.height = taffy::prelude::Dimension::Points(fixed_height as f32);
+            style.min_size.height = taffy::prelude::Dimension::Length(fixed_height as f32);
+        }
+    }
+
+    fn apply_hacks(&self, style: &mut taffy::style::Style, _layout_style: &LayoutStyle) {
+        // Flex containers that are meant to collapse and hide their children (e.g.: those
+        // that scroll, and those that have flex-basis 0, need to be given an explicit
+        // size rather than auto).
+        if style.align_self == Some(taffy::AlignItems::Stretch)
+            && style.flex_basis == Dimension::ZERO
+        {
+            if style.size.width == Dimension::Auto {
+                style.size.width = Dimension::ZERO;
+            }
+            if style.size.height == Dimension::Auto {
+                style.size.height = Dimension::ZERO;
+            }
         }
     }
 
@@ -411,19 +432,22 @@ impl LayoutManager {
     // a root level node.
     pub fn compute_node_layout(&mut self, layout_id: i32) -> LayoutChangedResponse {
         trace!("compute_node_layout {}", layout_id);
+        error!("compute_node_layout {}", layout_id);
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
-            let result = self.taffy.compute_layout(
+            let result = self.taffy.compute_layout_with_measure(
                 *node,
                 Size {
                     // TODO get this size from somewhere
                     height: AvailableSpace::Definite(500.0),
                     width: AvailableSpace::Definite(500.0),
                 },
+                &mut self.measure_func,
             );
             if let Some(e) = result.err() {
                 error!("compute_node_layout_internal: compute_layoute error: {}", e);
             }
+            self.taffy.print_tree(*node);
         }
 
         let changed_layouts = self.update_layout(layout_id);
@@ -462,6 +486,18 @@ impl LayoutManager {
                 }
             }
         }
+    }
+
+    /// Print the layout tree as an HTML document. This is useful for debugging layout issues -- either to
+    /// compare against a browser's rendition of the same flexbox tree, or to use the browser's inspector
+    /// to quickly try changing values as a rapid debug tool.
+    pub fn print_layout_as_html(self, layout_id: i32, print_func: fn(String) -> ()) {
+        let root_node_id = if let Some(node_id) = self.layout_id_to_taffy_node.get(&layout_id) {
+            *node_id
+        } else {
+            return;
+        };
+        crate::debug::print_tree_as_html(&self.taffy, root_node_id, print_func);
     }
 }
 

@@ -89,7 +89,6 @@ class InternalGradlePlugin : Plugin<Project> {
                 test.inputs.properties(mapOf("isFetch" to isFetch))
                 test.outputs.doNotCacheIf("Always fetch DCF files") { isFetch.get() }
 
-
                 test.doFirst {
                     if (isFetch.get()) {
                         test.useJUnit {

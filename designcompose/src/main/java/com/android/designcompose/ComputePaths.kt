@@ -26,8 +26,14 @@ import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asComposePath
 import androidx.core.graphics.minus
 import androidx.core.graphics.plus
+import com.android.designcompose.proto.StrokeAlignType
+import com.android.designcompose.proto.bottom
+import com.android.designcompose.proto.left
+import com.android.designcompose.proto.right
+import com.android.designcompose.proto.strokeAlignFromInt
+import com.android.designcompose.proto.toUniform
+import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.BoxShadow
-import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
@@ -222,23 +228,25 @@ internal fun ViewShape.computePaths(
                 Pair(listOf(path), listOf())
             }
         }
+
     // We need to make the stroke path if there is any stroke.
     // * Center stroke -> just use the stroke width.
     // * Outer stroke -> double the stroke width, clip out the inner bit
     // * Inner stroke -> double the stroke width, clip out the outer bit.
+    val strokeAlignType = strokeAlignFromInt(style.node_style.stroke.stroke_align)
     val rawStrokeWidth =
-        when (style.node_style.stroke.stroke_align) {
-            is StrokeAlign.Center -> style.node_style.stroke.stroke_weight.toUniform() * density
-            is StrokeAlign.Inside ->
+        when (strokeAlignType) {
+            StrokeAlignType.Center -> style.node_style.stroke.stroke_weight.toUniform() * density
+            StrokeAlignType.Inside ->
                 style.node_style.stroke.stroke_weight.toUniform() * 2.0f * density
-            is StrokeAlign.Outside ->
+            StrokeAlignType.Outside ->
                 style.node_style.stroke.stroke_weight.toUniform() * 2.0f * density
             else -> style.node_style.stroke.stroke_weight.toUniform() * density
         }
     val shadowStrokeWidth =
-        when (style.node_style.stroke.stroke_align) {
-            is StrokeAlign.Center -> style.node_style.stroke.stroke_weight.toUniform() * density
-            is StrokeAlign.Outside ->
+        when (strokeAlignType) {
+            StrokeAlignType.Center -> style.node_style.stroke.stroke_weight.toUniform() * density
+            StrokeAlignType.Outside ->
                 style.node_style.stroke.stroke_weight.toUniform() * 2.0f * density
             else -> 0.0f
         }
@@ -259,10 +267,10 @@ internal fun ViewShape.computePaths(
             fills.map { fill ->
                 val strokePath = android.graphics.Path()
                 strokePaint.getFillPath(fill.asAndroidPath(), strokePath)
-                when (style.node_style.stroke.stroke_align) {
-                    is StrokeAlign.Outside ->
+                when (strokeAlignType) {
+                    StrokeAlignType.Outside ->
                         strokePath.op(fill.asAndroidPath(), android.graphics.Path.Op.DIFFERENCE)
-                    is StrokeAlign.Inside ->
+                    StrokeAlignType.Inside ->
                         strokePath.op(fill.asAndroidPath(), android.graphics.Path.Op.INTERSECT)
                     else -> {}
                 }
@@ -386,19 +394,20 @@ private fun computeArcStrokePath(
     val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density
     val halfStrokeWidth = strokeWidth * 0.5f
 
-    when (style.node_style.stroke.stroke_align) {
-        is StrokeAlign.Inside -> {
+    when (strokeAlignFromInt(style.node_style.stroke.stroke_align)) {
+        StrokeAlignType.Inside -> {
             left += halfStrokeWidth
             top += halfStrokeWidth
             width -= halfStrokeWidth
             height -= halfStrokeWidth
         }
-        is StrokeAlign.Outside -> {
+        StrokeAlignType.Outside -> {
             left -= halfStrokeWidth
             top -= halfStrokeWidth
             width += halfStrokeWidth
             height += halfStrokeWidth
         }
+        else -> {}
     }
     path.addArc(
         Rect(left, top, width, height),
@@ -667,10 +676,10 @@ private fun computeRoundRectPathsFast(
     val fills = listOf(fill)
 
     val insetAmount =
-        when (style.node_style.stroke.stroke_align) {
-            is StrokeAlign.Center -> -0.5f
-            is StrokeAlign.Inside -> -1.0f
-            is StrokeAlign.Outside -> 0.0f
+        when (strokeAlignFromInt(style.node_style.stroke.stroke_align)) {
+            StrokeAlignType.Center -> -0.5f
+            StrokeAlignType.Inside -> -1.0f
+            StrokeAlignType.Outside -> 0.0f
             else -> -0.5f
         }
     val stroke = Path()

@@ -15,10 +15,11 @@
  */
 
 use crate::figma_schema;
-use dc_bundle::definition::element::color_or_var::{ColorOrVar, ColorVar};
+use dc_bundle::definition::element::color_or_var;
 use dc_bundle::definition::element::num_or_var::{NumOrVar, NumVar};
 use dc_bundle::definition::element::variable::{VariableType, VariableValueMap};
 use dc_bundle::definition::element::variable_value;
+use dc_bundle::definition::element::ColorOrVar;
 use dc_bundle::definition::element::FloatColor;
 use dc_bundle::definition::element::{Variable, VariableValue};
 use std::collections::HashMap;
@@ -55,9 +56,9 @@ impl FromFigmaVar<&FloatColor> for ColorOrVar {
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
-            ColorOrVar::Var(ColorVar { id: var, fallback: Some(color.into()) })
+            ColorOrVar::new_var(var, Some(color.into()))
         } else {
-            ColorOrVar::Color(color.into())
+            ColorOrVar::new_color(color.into())
         }
     }
 }
@@ -139,11 +140,13 @@ pub(crate) fn bound_variables_color(
     if let Some(vars) = bound_variables {
         ColorOrVar::from_var(vars, "color", &default_color.into())
     } else {
-        ColorOrVar::Color(crate::Color::from_f32s(
-            default_color.r,
-            default_color.g,
-            default_color.b,
-            default_color.a * last_opacity,
-        ))
+        ColorOrVar {
+            color_or_var_type: Some(color_or_var::ColorOrVarType::Color(crate::Color::from_f32s(
+                default_color.r,
+                default_color.g,
+                default_color.b,
+                default_color.a * last_opacity,
+            ))),
+        }
     }
 }

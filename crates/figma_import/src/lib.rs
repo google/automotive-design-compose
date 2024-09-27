@@ -44,8 +44,7 @@ pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
 pub use image_context::ImageContextSession;
 
 // Internal convenience
-pub use dc_bundle::definition::element::Color;
-pub use dc_bundle::legacy_definition::element::background::ImageKey;
+pub use dc_bundle::definition::element::{Color, ImageKey};
 pub use dc_bundle::legacy_definition::element::node::NodeQuery;
 pub use dc_bundle::legacy_definition::view::view::View;
 pub use dc_bundle::legacy_definition::view::view::ViewData;

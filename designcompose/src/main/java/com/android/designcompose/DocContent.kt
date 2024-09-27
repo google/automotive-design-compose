@@ -49,15 +49,15 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
     init {
         for ((imageKey, bytes) in c.document.images.value) {
             if (bytes.content().isEmpty()) {
-                if (previousDoc != null && previousDoc.images[imageKey.value] != null) {
-                    images[imageKey.value] = previousDoc.images[imageKey.value]!!
+                if (previousDoc != null && previousDoc.images[imageKey.key] != null) {
+                    images[imageKey.key] = previousDoc.images[imageKey.key]!!
                     // Replace this record in the decoded doc.
                     c.document.images.value[imageKey] =
                         previousDoc.c.document.images.value[imageKey]
                 }
             } else {
                 val bitmap = BitmapFactory.decodeByteArray(bytes.content(), 0, bytes.content().size)
-                images[imageKey.value] = bitmap
+                images[imageKey.key] = bitmap
             }
         }
         Feedback.documentDecodeImages(c.document.images.value.size, c.document.name, c.docId)

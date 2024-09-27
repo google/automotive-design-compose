@@ -17,8 +17,10 @@ syntax = "proto3";
 package designcompose.definition.element;
 
 import "definition/element/color.proto";
+import "definition/element/variable.proto";
 import "definition/modifier/filter.proto";
 import "definition/modifier/matrix_transform.proto";
+import "google/protobuf/empty.proto";
 
 option java_multiple_files = true;
 option java_package = "com.android.designcompose.definition.element";
@@ -34,7 +36,7 @@ message Background {
   // A single color stop within a gradient.
   message ColorStop {
     float position = 1;
-    element.Color color = 2;
+    element.ColorOrVar color = 2;
   }
 
   // A type of gradient where the colors transition smoothly along a straight
@@ -63,8 +65,9 @@ message Background {
     float center_x = 1;
     float center_y = 2;
     float angle = 3;
-    float scale = 4;
-    repeated ColorStop color_stops = 5;
+    float radius_x = 4;
+    float radius_y = 5;
+    repeated ColorStop color_stops = 6;
   }
   // Defines how an image background is scaled to fit the background area.
   enum ScaleMode {
@@ -86,17 +89,18 @@ message Background {
     modifier.AffineTransform transform = 3;
     ScaleMode scale_mode = 4;
     float opacity = 5;
+    optional string res_name = 6;
   }
 
-  oneof background {
-    bool none = 1;
-    element.Color solid = 2;
+  oneof background_type {
+    google.protobuf.Empty none = 1;
+    element.ColorOrVar solid = 2;
     LinearGradient linear_gradient = 3;
     AngularGradient angular_gradient = 4;
     RadialGradient radial_gradient = 5;
     Image image = 6;
     // Clear all the pixels underneath, used for hole-punch compositing.
-    bool clear = 7;
+    google.protobuf.Empty clear = 7;
     // DiamondGradient support possibly in the future.
   }
 }

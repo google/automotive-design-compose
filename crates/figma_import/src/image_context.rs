@@ -22,7 +22,7 @@ use std::{
 use crate::error::Error;
 use crate::fetch::ProxyConfig;
 use crate::figma_schema::{Paint, Transform};
-use dc_bundle::legacy_definition::element::background::ImageKey;
+use dc_bundle::definition::element::ImageKey;
 use dc_bundle::legacy_definition::EncodedImageMap;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
@@ -177,7 +177,7 @@ impl ImageContext {
                 url,
                 &self.proxy_config,
             ) {
-                url.unwrap_or(&None).as_ref().map(|url_string| ImageKey::new(url_string.clone()))
+                url.unwrap_or(&None).as_ref().map(|url_string| ImageKey { key: url_string.clone() })
             } else {
                 None
             }

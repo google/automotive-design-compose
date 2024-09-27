@@ -37,8 +37,12 @@ import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
+import com.android.designcompose.proto.StrokeAlignType
 import com.android.designcompose.proto.getDim
+import com.android.designcompose.proto.max
 import com.android.designcompose.proto.start
+import com.android.designcompose.proto.strokeAlignFromInt
+import com.android.designcompose.proto.toUniform
 import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.ArcMeterData
 import com.android.designcompose.serdegen.BoxShadow
@@ -48,7 +52,6 @@ import com.android.designcompose.serdegen.ProgressBarMeterData
 import com.android.designcompose.serdegen.ProgressMarkerMeterData
 import com.android.designcompose.serdegen.ProgressVectorMeterData
 import com.android.designcompose.serdegen.RotationMeterData
-import com.android.designcompose.serdegen.StrokeAlign
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squoosh.SquooshResolvedNode
@@ -745,9 +748,9 @@ internal fun squooshShapeRender(
             strokeOutset =
                 max(
                     strokeOutset,
-                    when (style.node_style.stroke.stroke_align) {
-                        is StrokeAlign.Outside -> style.node_style.stroke.stroke_weight.max()
-                        is StrokeAlign.Center -> style.node_style.stroke.stroke_weight.max() / 2.0f
+                    when (strokeAlignFromInt(style.node_style.stroke.stroke_align)) {
+                        StrokeAlignType.Outside -> style.node_style.stroke.stroke_weight.max()
+                        StrokeAlignType.Center -> style.node_style.stroke.stroke_weight.max() / 2.0f
                         else -> 0.0f
                     }
                 )

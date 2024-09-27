@@ -76,7 +76,7 @@ message StrokeWeight {
     float bottom = 3;
     float left = 4;
   }
-  oneof stroke_weight {
+  oneof stroke_weight_type {
     // One weight is used for all sides.
     float uniform = 1;
     Individual individual = 2;

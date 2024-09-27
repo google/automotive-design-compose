@@ -33,14 +33,16 @@ use dc_bundle::definition::element::{
 };
 
 use crate::reaction_schema::ReactionJson;
-use dc_bundle::definition::element::color_or_var::ColorOrVar;
 use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::num_or_var::NumOrVar;
 use dc_bundle::definition::element::Path;
+use dc_bundle::definition::element::{
+    background, stroke_weight, Background, StrokeAlign, StrokeWeight,
+};
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::definition::modifier::LayoutTransform;
-use dc_bundle::legacy_definition::element::background::Background;
-use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
+use dc_bundle::definition::modifier::{filter_op, FilterOp};
+use dc_bundle::legacy_definition::element::path::LineHeight;
 use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
 use dc_bundle::legacy_definition::element::view_shape::ViewShape;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
@@ -49,7 +51,7 @@ use dc_bundle::legacy_definition::layout::positioning::{
     Overflow, OverflowDirection, PositionType,
 };
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
-use dc_bundle::legacy_definition::modifier::filter::FilterOp;
+//use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
@@ -547,7 +549,7 @@ fn compute_background(
 ) -> Background {
     if let figma_schema::PaintData::Solid { color, bound_variables } = &last_paint.data {
         let solid_bg = bound_variables_color(bound_variables, color, last_paint.opacity);
-        Background::Solid(solid_bg)
+        Background::new(background::BackgroundType::Solid(solid_bg))
     } else if let figma_schema::PaintData::Image {
         image_ref: Some(image_ref),
         filters,
@@ -562,11 +564,13 @@ fn compute_background(
 
         if let Some(image_filters) = filters {
             if let Some(sat) = image_filters.saturation {
-                image_filter_list.push(FilterOp::Grayscale(sat * -1.0));
+                image_filter_list
+                    .push(FilterOp::new(filter_op::FilterOpType::Grayscale(sat * -1.0)));
             }
 
             if let Some(contrast) = image_filters.contrast {
-                image_filter_list.push(FilterOp::Contrast(contrast + 1.0));
+                image_filter_list
+                    .push(FilterOp::new(filter_op::FilterOpType::Contrast(contrast + 1.0)));
             }
 
             if let Some(exposure) = image_filters.exposure {
@@ -579,7 +583,7 @@ fn compute_background(
                     exp_adj = 0.1 + (1.0 + exposure);
                 }
 
-                image_filter_list.push(FilterOp::Brightness(exp_adj));
+                image_filter_list.push(FilterOp::new(filter_op::FilterOpType::Brightness(exp_adj)));
             }
         }
 
@@ -600,42 +604,34 @@ fn compute_background(
         }
 
         let bg_scale_mode = match scale_mode {
-            figma_schema::ScaleMode::Tile => {
-                dc_bundle::legacy_definition::element::background::ScaleMode::Tile
-            }
-            figma_schema::ScaleMode::Fill => {
-                dc_bundle::legacy_definition::element::background::ScaleMode::Fill
-            }
-            figma_schema::ScaleMode::Fit => {
-                dc_bundle::legacy_definition::element::background::ScaleMode::Fit
-            }
-            figma_schema::ScaleMode::Stretch => {
-                dc_bundle::legacy_definition::element::background::ScaleMode::Stretch
-            }
+            figma_schema::ScaleMode::Tile => background::ScaleMode::Tile,
+            figma_schema::ScaleMode::Fill => background::ScaleMode::Fill,
+            figma_schema::ScaleMode::Fit => background::ScaleMode::Fit,
+            figma_schema::ScaleMode::Stretch => background::ScaleMode::Stretch,
         };
 
         if let Some(fill) = images.image_fill(image_ref, node_name) {
-            Background::Image {
+            Background::new(background::BackgroundType::Image(background::Image {
                 key: Some(fill),
                 filters: image_filter_list,
                 transform: Some(transform.to_2d()),
+                scale_mode: bg_scale_mode as i32,
                 opacity: last_paint.opacity,
-                scale_mode: bg_scale_mode,
                 res_name: images.image_res(image_ref),
-            }
+            }))
         } else if !image_filter_list.is_empty() {
             // There's no image but we have filters, so store those with no image in case there's
             // a runtime customization that specifies an image source.
-            Background::Image {
+            Background::new(background::BackgroundType::Image(background::Image {
                 key: None,
                 filters: image_filter_list,
                 transform: Some(transform.to_2d()),
+                scale_mode: bg_scale_mode as i32,
                 opacity: last_paint.opacity,
-                scale_mode: bg_scale_mode,
                 res_name: None,
-            }
+            }))
         } else {
-            Background::None
+            Background::new(background::BackgroundType::None(()))
         }
     } else if let figma_schema::PaintData::GradientLinear { gradient } = &last_paint.data {
         let start_x = gradient.gradient_handle_positions[0].x();
@@ -643,21 +639,23 @@ fn compute_background(
         let end_x = gradient.gradient_handle_positions[1].x();
         let end_y = gradient.gradient_handle_positions[1].y();
 
-        let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
+        let mut g_stops: Vec<background::ColorStop> = Vec::new();
 
         let stops = &gradient.gradient_stops;
 
         if stops.is_empty() {
             error!("No stops found for linear gradient {:?}", gradient);
-            Background::None
+            Background::new(background::BackgroundType::None(()))
         } else {
             for s in stops {
                 let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
-                let g = (s.position, c);
+                let g = background::ColorStop { position: s.position, color: Some(c) };
                 g_stops.push(g);
             }
 
-            Background::LinearGradient { start_x, start_y, end_x, end_y, color_stops: g_stops }
+            Background::new(background::BackgroundType::LinearGradient(
+                background::LinearGradient { start_x, start_y, end_x, end_y, color_stops: g_stops },
+            ))
         }
     } else if let figma_schema::PaintData::GradientAngular { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
@@ -671,21 +669,29 @@ fn compute_background(
         let scale = f32::sqrt(f32::powf(end_x - center_x, 2.0) + f32::powf(end_y - center_y, 2.0))
             / f32::sqrt(f32::powf(cross_x - center_x, 2.0) + f32::powf(cross_y - center_y, 2.0));
 
-        let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
+        let mut g_stops: Vec<background::ColorStop> = Vec::new();
 
         let stops = &gradient.gradient_stops;
 
         if stops.is_empty() {
             error!("No stops found for angular gradient {:?}", gradient);
-            Background::None
+            Background::new(background::BackgroundType::None(()))
         } else {
             for s in stops {
                 let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
-                let g = (s.position, c);
+                let g = background::ColorStop { position: s.position, color: Some(c) };
                 g_stops.push(g);
             }
 
-            Background::AngularGradient { center_x, center_y, angle, scale, color_stops: g_stops }
+            Background::new(background::BackgroundType::AngularGradient(
+                background::AngularGradient {
+                    center_x: center_x,
+                    center_y: center_y,
+                    angle: angle,
+                    scale: scale,
+                    color_stops: g_stops,
+                },
+            ))
         }
     } else if let figma_schema::PaintData::GradientRadial { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
@@ -701,21 +707,30 @@ fn compute_background(
             f32::sqrt(f32::powf(width_x - center_x, 2.0) + f32::powf(width_y - center_y, 2.0)),
         );
 
-        let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
+        let mut g_stops: Vec<background::ColorStop> = Vec::new();
 
         let stops = &gradient.gradient_stops;
 
         if stops.is_empty() {
             error!("No stops found for radial gradient {:?}", gradient);
-            Background::None
+            Background::new(background::BackgroundType::None(()))
         } else {
             for s in stops {
                 let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
-                let g = (s.position, c);
+                let g = background::ColorStop { position: s.position, color: Some(c) };
                 g_stops.push(g);
             }
 
-            Background::RadialGradient { center_x, center_y, radius, angle, color_stops: g_stops }
+            Background::new(background::BackgroundType::RadialGradient(
+                background::RadialGradient {
+                    center_x: center_x,
+                    center_y: center_y,
+                    angle: angle,
+                    radius_x: radius.0,
+                    radius_y: radius.1,
+                    color_stops: g_stops,
+                },
+            ))
         }
     } else if let figma_schema::PaintData::GradientDiamond { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
@@ -731,23 +746,32 @@ fn compute_background(
             f32::sqrt(f32::powf(width_x - center_x, 2.0) + f32::powf(width_y - center_y, 2.0)),
         );
 
-        let mut g_stops: Vec<(f32, ColorOrVar)> = Vec::new();
+        let mut g_stops: Vec<background::ColorStop> = Vec::new();
 
         let stops = &gradient.gradient_stops;
         if stops.is_empty() {
             error!("No stops found for diamond gradient {:?}", gradient);
-            Background::None
+            Background::new(background::BackgroundType::None(()))
         } else {
             for s in stops {
                 let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
-                let g = (s.position, c);
+                let g = background::ColorStop { position: s.position, color: Some(c) };
                 g_stops.push(g);
             }
 
-            Background::RadialGradient { center_x, center_y, radius, angle, color_stops: g_stops }
+            Background::new(background::BackgroundType::RadialGradient(
+                background::RadialGradient {
+                    center_x: center_x,
+                    center_y: center_y,
+                    angle: angle,
+                    radius_x: radius.0,
+                    radius_y: radius.1,
+                    color_stops: g_stops,
+                },
+            ))
         }
     } else {
-        Background::None
+        Background::new(background::BackgroundType::None(()))
     }
 }
 
@@ -1070,19 +1094,25 @@ fn visit_node(
     // Copy out the common styles from frames and supported content.
     style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
     if let Some(individual_stroke_weights) = node.individual_stroke_weights {
-        style.node_style.stroke.stroke_weight = StrokeWeight::Individual {
-            top: individual_stroke_weights.top,
-            right: individual_stroke_weights.right,
-            bottom: individual_stroke_weights.bottom,
-            left: individual_stroke_weights.left,
-        };
+        style.node_style.stroke.stroke_weight = Some(StrokeWeight {
+            stroke_weight_type: Some(stroke_weight::StrokeWeightType::Individual(
+                stroke_weight::Individual {
+                    top: individual_stroke_weights.top,
+                    right: individual_stroke_weights.right,
+                    bottom: individual_stroke_weights.bottom,
+                    left: individual_stroke_weights.left,
+                },
+            )),
+        });
     } else if let Some(stroke_weight) = node.stroke_weight {
-        style.node_style.stroke.stroke_weight = StrokeWeight::Uniform(stroke_weight);
+        style.node_style.stroke.stroke_weight = Some(StrokeWeight {
+            stroke_weight_type: Some(stroke_weight::StrokeWeightType::Uniform(stroke_weight)),
+        });
     }
     style.node_style.stroke.stroke_align = match node.stroke_align {
-        Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::Inside,
-        Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center,
-        Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside,
+        Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::Inside as i32,
+        Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center as i32,
+        Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside as i32,
     };
 
     // Pull out the visual style for "frame-ish" nodes.
@@ -1553,10 +1583,16 @@ fn visit_node(
                 });
             }
             figma_schema::EffectType::LayerBlur => {
-                style.node_style.filter.push(FilterOp::Blur(effect.radius / 2.0));
+                style
+                    .node_style
+                    .filter
+                    .push(FilterOp::new(filter_op::FilterOpType::Blur(effect.radius / 2.0)));
             }
             figma_schema::EffectType::BackgroundBlur => {
-                style.node_style.backdrop_filter.push(FilterOp::Blur(effect.radius / 2.0));
+                style
+                    .node_style
+                    .backdrop_filter
+                    .push(FilterOp::new(filter_op::FilterOpType::Blur(effect.radius / 2.0)));
             }
         }
     }

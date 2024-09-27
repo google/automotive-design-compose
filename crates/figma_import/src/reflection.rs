@@ -30,10 +30,13 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::AlignSelf>(&samples)
         .expect("couldn't trace AlignSelf");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::background::ScaleMode>(&samples)
+        .trace_type::<dc_bundle::definition::element::background::ScaleMode>(&samples)
         .expect("couldn't trace ScaleMode");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::background::Background>(&samples)
+        .trace_type::<dc_bundle::definition::element::background::BackgroundType>(&samples)
+        .expect("couldn't trace BackgroundType");
+    tracer
+        .trace_type::<dc_bundle::definition::element::Background>(&samples)
         .expect("couldn't trace Background");
     tracer
         .trace_type::<dc_bundle::legacy_definition::modifier::blend::BlendMode>(&samples)
@@ -52,8 +55,11 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::view::node_style::Display>(&samples)
         .expect("couldn't trace Display");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::modifier::filter::FilterOp>(&samples)
+        .trace_type::<dc_bundle::definition::modifier::FilterOp>(&samples)
         .expect("couldn't trace FilterOp");
+    tracer
+        .trace_type::<dc_bundle::definition::modifier::filter_op::FilterOpType>(&samples)
+        .expect("couldn't trace FilterOpType");
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
@@ -113,11 +119,14 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::modifier::shadow::ShadowBox>(&samples)
         .expect("couldn't trace ShadowBox");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::path::StrokeAlign>(&samples)
+        .trace_type::<dc_bundle::definition::element::StrokeAlign>(&samples)
         .expect("couldn't trace StrokeAlign");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::path::StrokeWeight>(&samples)
+        .trace_type::<dc_bundle::definition::element::StrokeWeight>(&samples)
         .expect("couldn't trace StrokeWeight");
+    tracer
+        .trace_type::<dc_bundle::definition::element::stroke_weight::StrokeWeightType>(&samples)
+        .expect("couldn't trace StrokeWeightType");
     tracer
         .trace_type::<dc_bundle::legacy_definition::modifier::text::TextAlign>(&samples)
         .expect("couldn't trace TextAlign");
@@ -204,8 +213,11 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::num_or_var::NumOrVar>(&samples)
         .expect("couldn't trace NumOrVar");
     tracer
-        .trace_type::<dc_bundle::definition::element::color_or_var::ColorOrVar>(&samples)
+        .trace_type::<dc_bundle::definition::element::ColorOrVar>(&samples)
         .expect("couldn't trace ColorOrVar");
+    tracer
+        .trace_type::<dc_bundle::definition::element::color_or_var::ColorOrVarType>(&samples)
+        .expect("couldn't trace ColorOrVarType");
     tracer
         .trace_type::<dc_bundle::definition::element::VariableValue>(&samples)
         .expect("couldn't trace VariableValue");

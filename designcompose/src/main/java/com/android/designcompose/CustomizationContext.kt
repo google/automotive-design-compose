@@ -25,7 +25,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
 import com.android.designcompose.common.nodeNameToPropertyValueList
 import com.android.designcompose.serdegen.Background
-import com.android.designcompose.serdegen.ColorOrVar
+import com.android.designcompose.serdegen.BackgroundType
+import com.android.designcompose.serdegen.ColorOrVarType
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.NodeQuery
@@ -180,14 +181,19 @@ data class ImageContext(
     val height: Dimension,
 ) {
     fun getBackgroundColor(): Int? {
-        if (background.size == 1 && background[0] is Background.Solid) {
-            val color = (background[0] as Background.Solid).value
-            if (color is ColorOrVar.Color) {
-                val color = color.value
-                return ((color.a shl 24) and 0xFF000000.toInt()) or
-                    ((color.r shl 16) and 0x00FF0000) or
-                    ((color.g shl 8) and 0x0000FF00) or
-                    (color.b and 0x000000FF)
+        if (background.size == 1 && background[0].background_type.isPresent) {
+            if (background[0].background_type.get() is BackgroundType.Solid) {
+                val color = (background[0].background_type.get() as BackgroundType.Solid).value
+                if (
+                    color.color_or_var_type.isPresent &&
+                        color.color_or_var_type.get() is ColorOrVarType.Color
+                ) {
+                    val color = (color.color_or_var_type.get() as ColorOrVarType.Color).value
+                    return ((color.a shl 24) and 0xFF000000.toInt()) or
+                        ((color.r shl 16) and 0x00FF0000) or
+                        ((color.g shl 8) and 0x0000FF00) or
+                        (color.b and 0x000000FF)
+                }
             }
         }
         return null

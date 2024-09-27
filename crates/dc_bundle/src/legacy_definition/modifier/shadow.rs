@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::definition::element::color_or_var::ColorOrVar;
+use crate::definition::element::ColorOrVar;
 use serde::{Deserialize, Serialize};
 
 /// Shadows can be applied to the border box, or the stroke box.

@@ -22,7 +22,7 @@ option optimize_for = LITE_RUNTIME;
 
 // Various filters that can be applied and their intensity
 message FilterOp {
-  oneof FilterOp {
+  oneof FilterOpType {
     float blur = 1;
     float saturation = 2;  // not currently implemented
     float contrast = 3;

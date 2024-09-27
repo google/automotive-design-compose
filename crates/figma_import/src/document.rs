@@ -33,7 +33,7 @@ use crate::{
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };
-use dc_bundle::legacy_definition::element::background::ImageKey;
+use dc_bundle::definition::element::ImageKey;
 use dc_bundle::legacy_definition::view::component::{ComponentContentOverride, ComponentOverrides};
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
 use dc_bundle::legacy_definition::EncodedImageMap;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-use crate::legacy_definition::element::background::Background;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
@@ -26,52 +25,5 @@ pub enum LineHeight {
 impl Default for LineHeight {
     fn default() -> Self {
         LineHeight::Percent(1.0)
-    }
-}
-
-/// How is a stroke aligned to its containing box?
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub enum StrokeAlign {
-    /// The stroke is entirely within the containing view. The stroke's outer edge matches the
-    /// outer edge of the containing view.
-    Inside,
-    /// The stroke is centered on the edge of the containing view, and extends into the view
-    /// on the inside, and out of the view on the outside.
-    Center,
-    /// The stroke is entirely outside of the view. The stroke's inner edge is the outer edge
-    /// of the containing view.
-    Outside,
-}
-
-/// Stroke weight is either a uniform value for all sides, or individual
-/// weights for each side.
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
-pub enum StrokeWeight {
-    /// One weight is used for all sides.
-    Uniform(f32),
-    /// Individual weights for each side (typically only applied on boxes).
-    Individual { top: f32, right: f32, bottom: f32, left: f32 },
-}
-
-/// A stroke is similar to a border, except that it does not change layout (a border insets
-/// the children by the border size), it may be inset, centered or outset from the view bounds
-/// and there can be multiple strokes on a view.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct Stroke {
-    /// The alignment of strokes on this view.
-    pub stroke_align: StrokeAlign,
-    /// The thickness of strokes on this view (in pixels).
-    pub stroke_weight: StrokeWeight,
-    /// The stroke colors/fills
-    pub strokes: Vec<Background>,
-}
-
-impl Default for Stroke {
-    fn default() -> Self {
-        Stroke {
-            stroke_align: StrokeAlign::Center,
-            stroke_weight: StrokeWeight::Uniform(0.0),
-            strokes: Vec::new(),
-        }
     }
 }

@@ -46,13 +46,13 @@ import com.android.designcompose.asComposeTransform
 import com.android.designcompose.getBrush
 import com.android.designcompose.getBrushFunction
 import com.android.designcompose.isMask
+import com.android.designcompose.proto.toUniform
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squooshShapeRender
-import com.android.designcompose.toUniform
 import com.android.designcompose.useLayer
 import kotlin.jvm.optionals.getOrNull
 import kotlin.system.measureTimeMillis

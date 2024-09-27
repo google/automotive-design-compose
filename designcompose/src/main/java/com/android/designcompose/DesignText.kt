@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.tracing.trace
+import com.android.designcompose.proto.toUniform
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LineHeight

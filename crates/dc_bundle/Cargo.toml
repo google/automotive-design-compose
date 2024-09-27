@@ -13,8 +13,5 @@ thiserror.workspace = true
 serde.workspace = true
 serde_bytes.workspace = true
 
-# Temporary dependencies during the transition to protobuf structures
-euclid.workspace = true
-
 [build-dependencies]
 prost-build.workspace = true

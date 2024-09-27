@@ -38,6 +38,7 @@ use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::num_or_var::NumOrVar;
 use dc_bundle::definition::element::Path;
 use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::definition::modifier::LayoutTransform;
 use dc_bundle::legacy_definition::element::background::Background;
 use dc_bundle::legacy_definition::element::path::{LineHeight, StrokeAlign, StrokeWeight};
 use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
@@ -51,7 +52,6 @@ use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::filter::FilterOp;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
-use dc_bundle::legacy_definition::modifier::transform::LayoutTransform;
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
@@ -591,7 +591,8 @@ fn compute_background(
 
         // Figma has already applied the rotation in "stretch" mode.
         if *rotation != 0.0 && *scale_mode != figma_schema::ScaleMode::Stretch {
-            transform = transform.pre_rotate(0.0, 0.0, 1.0, euclid::Angle::degrees(*rotation));
+            transform =
+                transform.pre_rotate(0.0, 0.0, 1.0, euclid::Angle::degrees(*rotation).get());
         }
 
         if let Some(scale_factor) = *scaling_factor {
@@ -839,11 +840,11 @@ fn visit_node(
             // Provide an unaltered transform from the last relevant parent.
             style.node_style.relative_transform = Some(r.clone());
             // And an additional transform with translation removed.
-            let r = r.post_translate(euclid::vec3(
+            let r = r.post_translate(
                 -(bounds.x() - parent_bounds.x()),
                 -(bounds.y() - parent_bounds.y()),
                 0.0,
-            ));
+            );
             style.node_style.transform = Some(r);
         }
     }

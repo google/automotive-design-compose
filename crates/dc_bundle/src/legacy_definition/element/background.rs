@@ -15,8 +15,8 @@
  */
 
 use crate::definition::element::color_or_var::ColorOrVar;
+use crate::definition::modifier::AffineTransform;
 use crate::legacy_definition::modifier::filter::FilterOp;
-use crate::legacy_definition::modifier::transform::AffineTransform;
 use serde::{Deserialize, Serialize};
 
 /// Instead of keeping decoded images in ViewStyle objects, we keep keys to the images in the

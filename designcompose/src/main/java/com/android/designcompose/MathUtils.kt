@@ -19,6 +19,7 @@ package com.android.designcompose
 import android.graphics.PointF
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Matrix
+import com.android.designcompose.serdegen.LayoutTransform
 import java.util.Optional
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -66,29 +67,29 @@ internal data class DecomposedMatrix2D(
     }
 }
 
-internal fun Matrix.toFloatList(): List<Float> {
-    return listOf(
-        values[0],
-        values[1],
-        values[2],
-        values[3],
-        values[4],
-        values[5],
-        values[6],
-        values[7],
-        values[8],
-        values[9],
-        values[10],
-        values[11],
-        values[12],
-        values[13],
-        values[14],
-        values[15]
-    )
+internal fun Matrix.toLayoutTransform(): LayoutTransform {
+    val builder = LayoutTransform.Builder()
+    builder.m11 = values[0]
+    builder.m12 = values[1]
+    builder.m13 = values[2]
+    builder.m14 = values[3]
+    builder.m21 = values[4]
+    builder.m22 = values[5]
+    builder.m23 = values[6]
+    builder.m24 = values[7]
+    builder.m31 = values[8]
+    builder.m32 = values[9]
+    builder.m33 = values[10]
+    builder.m34 = values[11]
+    builder.m41 = values[12]
+    builder.m42 = values[13]
+    builder.m43 = values[14]
+    builder.m44 = values[15]
+    return builder.build()
 }
 
 // Decompose a matrix in list form into its translation, angle, and scale parts
-internal fun Optional<List<Float>>.decompose(density: Float): DecomposedMatrix2D {
+internal fun Optional<LayoutTransform>.decompose(density: Float): DecomposedMatrix2D {
     val matrix = this.asComposeTransform(density)
     return matrix?.decompose() ?: DecomposedMatrix2D()
 }

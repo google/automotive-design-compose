@@ -56,6 +56,7 @@ import com.android.designcompose.proto.newDimensionRectPointsZero
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.toOptDimProto
 import com.android.designcompose.proto.top
+import com.android.designcompose.serdegen.AffineTransform
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
@@ -74,6 +75,7 @@ import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LayoutStyle
+import com.android.designcompose.serdegen.LayoutTransform
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.NumOrVar
@@ -1275,41 +1277,53 @@ internal constructor(
  *
  * XXX: Doesn't consider transform origin.
  */
-internal fun Optional<List<Float>>.asComposeTransform(
+internal fun Optional<LayoutTransform>.asComposeTransform(
     density: Float
 ): androidx.compose.ui.graphics.Matrix? {
     return map {
-            if (it.size != 16) {
+            val transform =
+                androidx.compose.ui.graphics.Matrix(
+                    floatArrayOf(
+                        it.m11,
+                        it.m12,
+                        it.m13,
+                        it.m14,
+                        it.m21,
+                        it.m22,
+                        it.m23,
+                        it.m24,
+                        it.m31,
+                        it.m32,
+                        it.m33,
+                        it.m34,
+                        it.m41,
+                        it.m42,
+                        it.m43,
+                        it.m44
+                    )
+                )
+            if (transform.isIdentity()) {
                 null
             } else {
-                val transform = androidx.compose.ui.graphics.Matrix(it.toFloatArray())
-                if (transform.isIdentity()) {
-                    null
-                } else {
-                    val adjust = androidx.compose.ui.graphics.Matrix()
-                    adjust.scale(1.0f / density, 1.0f / density, 1.0f / density)
-                    adjust.timesAssign(transform)
-                    val unadjust = androidx.compose.ui.graphics.Matrix()
-                    unadjust.scale(density, density, density)
-                    adjust.timesAssign(unadjust)
-                    adjust
-                }
+                val adjust = androidx.compose.ui.graphics.Matrix()
+                adjust.scale(1.0f / density, 1.0f / density, 1.0f / density)
+                adjust.timesAssign(transform)
+                val unadjust = androidx.compose.ui.graphics.Matrix()
+                unadjust.scale(density, density, density)
+                adjust.timesAssign(unadjust)
+                adjust
             }
         }
         .orElse(null)
 }
 
-internal fun Optional<List<Float>>.asSkiaMatrix(): Matrix? {
+internal fun Optional<AffineTransform>.asSkiaMatrix(): Matrix? {
     return map {
-            if (it.size != 6) {
-                null
-            } else {
-                val skMatrix = Matrix()
-                skMatrix.setValues(
-                    floatArrayOf(it[0], it[1], it[4], it[2], it[3], it[5], 0.0f, 0.0f, 1.0f)
-                )
-                skMatrix
-            }
+            val skMatrix = Matrix()
+            skMatrix.setValues(
+                floatArrayOf(it.m11, it.m12, it.m31, it.m21, it.m22, it.m32, 0.0f, 0.0f, 1.0f)
+            )
+            skMatrix
         }
         .orElse(null)
 }

@@ -51,6 +51,7 @@ import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
+import com.android.designcompose.serdegen.LayoutTransform
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Size
@@ -112,8 +113,8 @@ data class ExternalLayoutData(
     val flexBasis: Dimension,
     val alignSelf: AlignSelf,
     val positionType: PositionType,
-    val transform: Optional<List<Float>>,
-    val relativeTransform: Optional<List<Float>>,
+    val transform: Optional<LayoutTransform>,
+    val relativeTransform: Optional<LayoutTransform>,
 )
 
 // ParentLayoutInfo holds data necessary to perform layout. When a node subscribes to layout, it

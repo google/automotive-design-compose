@@ -17,6 +17,7 @@
 use crate::definition::element::num_or_var::NumOrVar;
 use crate::definition::element::{FontFeature, FontStyle, Hyperlink, Size, TextDecoration};
 use crate::definition::layout::FlexWrap;
+use crate::definition::modifier::LayoutTransform;
 use crate::legacy_definition::element::background::Background;
 use crate::legacy_definition::element::font::{FontStretch, FontWeight};
 use crate::legacy_definition::element::path::{LineHeight, Stroke};
@@ -27,7 +28,6 @@ use crate::legacy_definition::modifier::blend::BlendMode;
 use crate::legacy_definition::modifier::filter::FilterOp;
 use crate::legacy_definition::modifier::shadow::{BoxShadow, TextShadow};
 use crate::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
-use crate::legacy_definition::modifier::transform::LayoutTransform;
 use crate::legacy_definition::plugin::meter_data::MeterData;
 use serde::{Deserialize, Serialize};
 

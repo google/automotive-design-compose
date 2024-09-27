@@ -48,6 +48,21 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("V Constraints", { VConstraintsTest() }, ConstraintsDoc.javaClass.name),
         Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
         Triple("Interaction", { InteractionTest() }, InteractionTestDoc.javaClass.name),
+        // Layout related tests
+        Triple("CrossAxis Fill", { CrossAxisFillTest() }, CrossAxisFillTestDoc.javaClass.name),
+        Triple("Item Spacing", { ItemSpacingTest() }, ItemSpacingTestDoc.javaClass.name),
+        Triple(
+            "Layout Replacement",
+            { LayoutReplacementTest() },
+            LayoutReplacementTestDoc.javaClass.name
+        ),
+        Triple(
+            "Recurse Customization",
+            { RecursiveCustomizations() },
+            RecursiveCustomizationsDoc.javaClass.name
+        ),
+        Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
+        // Masks/shadows
         Triple("Masks", { MaskTest() }, MaskTestDoc.javaClass.name),
         Triple("Shadows", { ShadowsTest() }, ShadowsTestDoc.javaClass.name),
         // Text validations
@@ -60,7 +75,13 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             StateCustomizationsDoc.javaClass.name
         ),
         Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
+        // Variant tests
         Triple("Variant *", { VariantAsteriskTest() }, VariantAsteriskTestDoc.javaClass.name),
+        Triple(
+            "Variant Interactions",
+            { VariantInteractionsTest() },
+            VariantInteractionsTestDoc.javaClass.name
+        ),
         Triple(
             "Variant Properties",
             { VariantPropertiesTest() },
@@ -104,7 +125,6 @@ val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> U
         Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
         // No support for hyperlinks.
         Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name),
-
         // Lazy Grid doesn't actually use a doc
         // This example is not using any of the renderers.
         Triple("Lazy Grid", { LazyGridItemSpans() }, null),
@@ -112,25 +132,8 @@ val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> U
         Triple("Grid Layout", { GridLayoutTest() }, GridLayoutTestDoc.javaClass.name),
         Triple("Grid Widget", { GridWidgetTest() }, GridWidgetTestDoc.javaClass.name),
         Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
-        // Squoosh doesn't work with ReplacementContent
-        Triple("CrossAxis Fill", { CrossAxisFillTest() }, CrossAxisFillTestDoc.javaClass.name),
-        Triple("Item Spacing", { ItemSpacingTest() }, ItemSpacingTestDoc.javaClass.name),
-        Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
-        Triple(
-            "Layout Replacement",
-            { LayoutReplacementTest() },
-            LayoutReplacementTestDoc.javaClass.name
-        ),
+        // Squoosh doesn't support OpenLink
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
-        Triple(
-            "Recurse Customization",
-            { RecursiveCustomizations() },
-            RecursiveCustomizationsDoc.javaClass.name
-        ),
+        // Squoosh has some problems with this example
         Triple("Shared Customization", { ModuleExample() }, ModuleExampleDoc.javaClass.name),
-        Triple(
-            "Variant Interactions",
-            { VariantInteractionsTest() },
-            VariantInteractionsTestDoc.javaClass.name
-        ),
     )

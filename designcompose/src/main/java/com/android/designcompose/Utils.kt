@@ -697,7 +697,7 @@ internal fun defaultLayoutStyle(): LayoutStyle.Builder {
     builder.margin = newDimensionRectPointsZero()
     builder.padding = newDimensionRectPointsZero()
     builder.item_spacing = ItemSpacing.Auto(0, 0)
-    builder.flex_grow = 1.0f
+    builder.flex_grow = 0.0f
     builder.flex_shrink = 0.0f
     builder.flex_basis = newDimensionProtoUndefined()
     builder.bounding_box = com.android.designcompose.serdegen.Size(0f, 0f)

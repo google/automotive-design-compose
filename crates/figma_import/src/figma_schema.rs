@@ -265,12 +265,9 @@ impl Vector {
     }
 }
 
-impl Into<dc_bundle::legacy_definition::element::vector::Vector> for Vector {
-    fn into(self) -> dc_bundle::legacy_definition::element::vector::Vector {
-        dc_bundle::legacy_definition::element::vector::Vector {
-            x: self.x.clone(),
-            y: self.y.clone(),
-        }
+impl Into<dc_bundle::definition::element::Vector> for Vector {
+    fn into(self) -> dc_bundle::definition::element::Vector {
+        dc_bundle::definition::element::Vector { x: self.x(), y: self.y() }
     }
 }
 #[derive(Deserialize, Serialize, Debug, Clone)]

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-use crate::definition::element::FloatColor;
-use crate::legacy_definition::element::vector::Vector;
+use crate::definition::element::{FloatColor, Vector};
 use serde::{Deserialize, Serialize};
 
 // This module can deserialize Figma's "reactions" struct, which is used to define the

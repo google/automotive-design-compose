@@ -1,6 +1,9 @@
 [versions]
 # DesignCompose
-designcompose = "0.31.0-SNAPSHOT"
+# LINT.IfChange
+designcompose = "0.32.0-SNAPSHOT"
+# LINT.ThenChange(Cargo.toml)
+
 
 jvmToolchain = "17"
 ndk = "27.0.12077973"

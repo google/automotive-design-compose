@@ -59,6 +59,7 @@ use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
 use dc_bundle::legacy_definition::view::view_style::ViewStyle;
 use log::error;
+
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -117,6 +118,20 @@ fn compute_layout(
     if let Some(bounds) = node.absolute_bounding_box {
         style.layout_style.bounding_box.width = bounds.width();
         style.layout_style.bounding_box.height = bounds.height();
+    }
+
+    if let Some(max_width) = node.max_width {
+        style.layout_style.max_width = DimensionProto::new_points(max_width);
+    }
+    if let Some(max_height) = node.max_height {
+        style.layout_style.max_height = DimensionProto::new_points(max_height);
+    }
+
+    if let Some(min_width) = node.min_width {
+        style.layout_style.min_width = DimensionProto::new_points(min_width);
+    }
+    if let Some(min_height) = node.min_height {
+        style.layout_style.min_height = DimensionProto::new_points(min_height);
     }
 
     // Frames can implement Auto Layout on their children.
@@ -216,7 +231,7 @@ fn compute_layout(
                         }
                         figma_schema::LayoutSizingMode::Auto => DimensionProto::new_auto(),
                     };
-                    if hug_width {
+                    if hug_width && node.min_width.is_none() {
                         style.layout_style.min_width = DimensionProto::new_auto();
                     }
                 }
@@ -237,7 +252,7 @@ fn compute_layout(
                         }
                         figma_schema::LayoutSizingMode::Auto => DimensionProto::new_auto(),
                     };
-                    if hug_height {
+                    if hug_height && node.min_height.is_none() {
                         style.layout_style.min_height = DimensionProto::new_auto();
                     }
                 }
@@ -314,20 +329,20 @@ fn compute_layout(
         style.layout_style.height = DimensionProto::new_auto();
     }
     if let Some(bounds) = node.absolute_bounding_box {
-        if !hug_width {
+        if !hug_width && node.min_width.is_none() {
             style.layout_style.min_width = DimensionProto::new_points(bounds.width().ceil());
         }
-        if !hug_height {
+        if !hug_height && node.min_height.is_none() {
             style.layout_style.min_height = DimensionProto::new_points(bounds.height().ceil());
         }
     }
 
     if let Some(size) = &node.size {
         if size.is_valid() {
-            if !hug_width {
+            if !hug_width && node.min_width.is_none() {
                 style.layout_style.min_width = DimensionProto::new_points(size.x());
             }
-            if !hug_height {
+            if !hug_height && node.min_height.is_none() {
                 style.layout_style.min_height = DimensionProto::new_points(size.y());
             }
             // Set fixed vector size
@@ -367,7 +382,9 @@ fn compute_layout(
                 style.layout_style.height = DimensionProto::new_auto();
             }
             figma_schema::TextAutoResize::WidthAndHeight => {
-                style.layout_style.min_width = DimensionProto::new_auto();
+                if node.min_width.is_none() {
+                    style.layout_style.min_width = DimensionProto::new_auto();
+                }
                 style.layout_style.width = DimensionProto::new_auto();
                 style.layout_style.height = DimensionProto::new_auto();
             }
@@ -450,7 +467,9 @@ fn compute_layout(
                             right / parent_bounds.width().ceil()
                         });
                         style.layout_style.width = DimensionProto::new_auto();
-                        style.layout_style.min_width = DimensionProto::new_auto();
+                        if node.min_width.is_none() {
+                            style.layout_style.min_width = DimensionProto::new_auto();
+                        }
                     }
                 }
 
@@ -496,7 +515,9 @@ fn compute_layout(
                         style.layout_style.top = DimensionProto::new_percent(top);
                         style.layout_style.bottom = DimensionProto::new_percent(bottom);
                         style.layout_style.height = DimensionProto::new_auto();
-                        style.layout_style.min_height = DimensionProto::new_auto();
+                        if node.min_height.is_none() {
+                            style.layout_style.min_height = DimensionProto::new_auto();
+                        }
                     }
                 }
             }

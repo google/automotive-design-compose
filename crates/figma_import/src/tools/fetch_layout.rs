@@ -236,7 +236,8 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
         eprintln!("Warning: {error}");
     }
 
-    let stage = views.get(&NodeQuery::NodeName("#stage".to_string()));
+    // Take the first argument as the root node
+    let stage = views.get(&NodeQuery::NodeName(args.nodes.get(0).expect("NotEmpty").to_string()));
     if let Some(stage) = stage {
         let mut id = 0;
         let mut layout_manager = LayoutManager::new();

@@ -14,10 +14,10 @@
 
 use serde::{Deserialize, Serialize};
 
+use dc_bundle::definition::element::Vector;
 use dc_bundle::legacy_definition::element::reactions::{
     Action, Bezier, Easing, Navigation, Reaction, Spring, Transition, TransitionDirection, Trigger,
 };
-use dc_bundle::legacy_definition::element::vector::Vector;
 
 #[cfg(test)]
 use dc_bundle::definition::element::FloatColor;

@@ -19,5 +19,4 @@ pub mod geometry;
 pub mod node;
 pub mod path;
 pub mod reactions;
-pub mod vector;
 pub mod view_shape;

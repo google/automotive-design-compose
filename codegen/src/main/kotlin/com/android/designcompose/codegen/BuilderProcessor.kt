@@ -582,9 +582,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             var hideDesignSwitcher = false
             if (switcherArg != null) hideDesignSwitcher = switcherArg.value as Boolean
 
-            // placeholder is a special name that gets mapped to a placeholder composable.
-            var placeholderComposable: String? = null
-
             // variantFuncParameters accumulates a list of all the DesignVariant parameters and is
             // used
             // when generating the *Node function after this one.
@@ -601,12 +598,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 args.add(Pair(name, typeName))
                 if (customizationType == CustomizationType.VariantProperty)
                     variantFuncParameters += "        $name: $typeName,\n"
-
-                if (
-                    name == "placeholder" &&
-                        customizationType == CustomizationType.ContentReplacement
-                )
-                    placeholderComposable = name
             }
 
             // Output all arguments
@@ -787,9 +778,6 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 "        CompositionLocalProvider(LocalCustomizationContext provides customizations) {\n"
             )
             out.appendText("            DesignDoc(\"$docName\", docId, rootNodeQuery,\n")
-            if (placeholderComposable != null) {
-                out.appendText("                placeholder = $placeholderComposable,")
-            }
             out.appendText("                customizations = customizations,\n")
             out.appendText(
                 "                modifier = modifier.semantics { sDocClass = className},\n"

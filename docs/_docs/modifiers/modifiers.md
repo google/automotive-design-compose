@@ -80,12 +80,13 @@ interface HelloWorld {
 ```
 
 ### Text content with State {#text-content-with-state}
+
 Text content can also be customized using a `State<String>`. Using a `State` can
 have performance benefits because reading the `value` out of a `State` will only
 cause the closest `@Composable` function in the call stack to be recomposed,
 whereas the simpler `String` customization will always recompose the function
-that uses the customization. By using a string State instead of a string value, 
-you can extend the time needed to read a state, which allows Compose to run less 
+that uses the customization. By using a string State instead of a string value,
+you can extend the time needed to read a state, which allows Compose to run less
 code when recomposing because it reads the state only when necessary.
 
 In this example, the `State<String>` replaces `text` in a design element.
@@ -145,6 +146,7 @@ interface HelloWorld {
 
 In this example, the generated Composable, `MainFrame`, takes a `Brush` and
 a function that generates a `Brush`. We could use `MainFrame` like so:
+
 ```kotlin
 // Create a State<Float> that is animated by Compose's animation system.
 val infiniteTransition = rememberInfiniteTransition(label = "animate shader")
@@ -172,7 +174,6 @@ MainFrame(
     }
 )
 ```
-
 
 ### Visibility {#visibility}
 
@@ -234,10 +235,10 @@ Do the following to create a reusable component with variants:
 1.  Create a `@DesignComponent` as usual with the node name being the name of
     the component set. That is, the parent of all the variants.
 
-1.  Create a `@DesignVariant` parameter for each property. The `property`
+2.  Create a `@DesignVariant` parameter for each property. The `property`
     annotation parameter takes the name of the property in Figma and the
     parameter type is an `enum` that has a value for every variant name of that
-   property.
+    property.
 
 In the following example, the `#Square` component set has two variant
 properties. The `#SquareShadow` variant property has two values described by the
@@ -664,53 +665,6 @@ The live view appears below after replacing the data with live content.
 
 **Figure 5.** Grid view in Android
 
-## Placeholder content {#placeholder-content}
-
-In development mode, Design Elements are fetched from your Figma document and
-saved to a file in the app's `data` directory. In production mode, this file is
-bundled into the APK as an asset. Loading occurs instantly and synchronously as
-your app uses Design Elements.
-
-On the first run of your app in development mode on a new device, a delay occurs
-while Figma returns the content. During first-run development, the SDK displays
-"Fetching your Document ID ...".
-
-Alternatively, declare a `placeholder` argument without the `@Design`
-annotation:
-
-```kotlin
-@DesignDoc(id = "<your figma doc id>")
-interface HelloWorld {
-    @DesignComponent(node = "#MainFrame")
-    fun MainFrame(
-        placeholder: @Composable () -> Unit
-    )
-}
-```
-
-After which you pass your placeholder `composable` as the `placeholder`
-argument. For example, to instruct a placeholder to use the Compose `BasicText`
-composable:
-
-```kotlin
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContent {
-            HelloWorldDoc.MainFrame(
-                placeholder = {
-                    BasicText(
-                        text = "This is my placeholder!",
-                        style = TextStyle(fontSize = 24.sp)
-                    )
-                }
-            )
-        }
-    }
-}
-```
-
 ## Callback customizations {#callback-customizations}
 
 When a design element is tapped with the `TapCallback` customization, add a
@@ -833,7 +787,7 @@ class MainActivity : ComponentActivity() {
                 onTapKey2 = { HelloWorldDoc.injectCtrlShiftB() },
             )
         }
-    )
+    }
 }
 
 ```
@@ -900,7 +854,7 @@ interface HelloList {
 For example:
 
 ```kotlin
-ListItem(Modifier.clickable { Log.i("MyApp", "clicked!" }, title = "Click Me")
+ListItem(Modifier.clickable { Log.i("MyApp", "clicked!") }, title = "Click Me")
 ```
 
 ## Automatically generated arguments {#automatically-generated}
@@ -944,7 +898,7 @@ generated @DesignComponent function generates these three optional parameters:
     interface HelloWorld {
         @DesignComponent(node = "#MainFrame")
         fun Main(
-            @Design(node = {{ '<strong>' }}#Content{{ '</strong>' }}") content: @Composable () -> Unit
+            @Design(node = "{{ '<strong>' }}#Content{{ '</strong>' }}") content: @Composable () -> Unit
         )
         @DesignComponent(node = "#ButtonVariant")
         fun ButtonVariant(
@@ -955,11 +909,15 @@ generated @DesignComponent function generates these three optional parameters:
     }
     ```
 
-*   `designComposeCallbacks: DesignComposeCallbacks? = null`. Set this parameter to register callbacks for a certain events. The `DesignComposeCallbacks` class supports the following event callbacks:
-    * `docReadyCallback: ((String) -> Unit)? = null` \
-    This callback is called when the Figma document has loaded is ready to be rendered.
-    * `newDocDataCallback: ((String, ByteArray?) -> Unit)? = null` \
-    This callback is called both when the Figma document has first loaded and whenever it updates from live update changes. The ByteArray passed in contains the serialized Figma file.
+*   `designComposeCallbacks: DesignComposeCallbacks? = null`. Set this parameter
+    to register callbacks for a certain events. The `DesignComposeCallbacks` class
+    supports the following event callbacks:
+    *   `docReadyCallback: ((String) -> Unit)? = null` \
+        This callback is called when the Figma document has loaded is ready to be rendered.
+    *   `newDocDataCallback: ((String, ByteArray?) -> Unit)? = null` \
+        This callback is called both when the Figma document has first loaded and whenever it
+        updates from live update changes. The ByteArray passed in contains the serialized Figma
+        file.
 
 This example illustrates the use of unique keys to ensure all `#ButtonVariant`
 instances are unique:

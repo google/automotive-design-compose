@@ -67,7 +67,11 @@ abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExe
     fun run() {
         generatedCodeDir.get().asFileTree.forEach { it.delete() }
         executor.exec {
-            executable = "cargo"
+            val localBinCargo =
+                project.providers.systemProperty("user.home").map { File(it, ".cargo/bin/cargo") }
+                    .get()
+            executable = if (localBinCargo.exists()) localBinCargo.absolutePath else "cargo"
+
             environment("CARGO_TARGET_DIR", cargoTargetDir.get().toString())
             workingDir(rustSrcs.asPath)
             args(

@@ -796,7 +796,6 @@ fun DesignDoc(
     docId: DesignDocId,
     rootNodeQuery: NodeQuery,
     modifier: Modifier = Modifier,
-    placeholder: (@Composable () -> Unit)? = null,
     customizations: CustomizationContext = CustomizationContext(),
     serverParams: DocumentServerParams = DocumentServerParams(),
     setDocId: (DesignDocId) -> Unit = {},
@@ -810,7 +809,6 @@ fun DesignDoc(
         docId,
         rootNodeQuery,
         modifier = modifier,
-        placeholder = placeholder,
         customizations = customizations,
         serverParams = serverParams,
         setDocId = setDocId,
@@ -827,7 +825,6 @@ internal fun DesignDocInternal(
     incomingDocId: DesignDocId,
     rootNodeQuery: NodeQuery,
     modifier: Modifier = Modifier,
-    placeholder: (@Composable () -> Unit)? = null,
     customizations: CustomizationContext = CustomizationContext(),
     serverParams: DocumentServerParams = DocumentServerParams(),
     setDocId: (DesignDocId) -> Unit = {},
@@ -1013,21 +1010,14 @@ internal fun DesignDocInternal(
             docRenderStatus = DocRenderStatus.Fetching
         }
     }
-
-    // If we have a placeholder then present it.
-    if (placeholder != null) {
-        placeholder()
-        designSwitcher()
-    } else {
-        CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
-            Box(
-                Modifier.fillMaxSize().background(noFrameBgColor).padding(20.dp).semantics {
-                    sDocRenderStatus = docRenderStatus
-                }
-            ) {
-                BasicText(text = noFrameErrorMessage, style = TextStyle(fontSize = 24.sp))
+    CompositionLocalProvider(LocalDesignIsRootContext provides DesignIsRoot(false)) {
+        Box(
+            Modifier.fillMaxSize().background(noFrameBgColor).padding(20.dp).semantics {
+                sDocRenderStatus = docRenderStatus
             }
-            designSwitcher()
+        ) {
+            BasicText(text = noFrameErrorMessage, style = TextStyle(fontSize = 24.sp))
         }
+        designSwitcher()
     }
 }

@@ -17,6 +17,7 @@
       "menu": [
         { "name": "Generate String Resource", "command": "localization" },
         { "name": "Clear String Resource", "command": "clear-localization" },
+        { "separator": true },
         { "name": "Export Images", "command": "export-images" },
         { "name": "Clear Image Resource", "command": "clear-image-res" }
       ]

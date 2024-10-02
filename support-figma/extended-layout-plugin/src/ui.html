@@ -1344,7 +1344,6 @@
   async function processImage(imageHash, imageBytes) {
     const imageType = getImageType(imageBytes);
     switch(imageType) {
-      case 'png':
       case 'jpeg':
         const fileFormat = 'png';
         const canvas = document.createElement('canvas');
@@ -1352,6 +1351,7 @@
         const ctx = canvas.getContext('2d');
         const newBytes = await convert(canvas, ctx, imageBytes);
         return {element: canvas, outputImgBytes: newBytes, imageFormat: fileFormat};
+      case 'png':
       case 'gif':
       default:
         const blob = new Blob([imageBytes], { type: `image/${imageType}` });
@@ -1382,6 +1382,7 @@
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.checked = exportedImageHashArray.includes(imageHash);
+      checkbox.value = resName;
       imageHashElement.appendChild(checkbox);
       const span = document.createElement('span');
       span.textContent = `Image hash: ${imageHash}`;
@@ -1392,16 +1393,6 @@
       resNameElement.style.marginTop = '8px';
       resNameElement.textContent = 'Image res name: ';
       const input = document.createElement("input");
-      input.addEventListener('change', function (evt) {
-        const newValue = this.value;
-        parent.postMessage({
-            pluginMessage: {
-              msg: 'update-image-res-name',
-              imageHash: imageHash,
-              resName: newValue
-            }
-          }, '*');
-        });
       input.setAttribute("type", "text");
       input.setAttribute("value", resName);
       resNameElement.appendChild(input);
@@ -1422,7 +1413,7 @@
               imageHash: imageHash
             }
           }, '*');
-          imageOutputMap.set(resName, [outputImgBytes, imageFormat]);
+          imageOutputMap.set(checkbox.value, [outputImgBytes, imageFormat]);
         } else {
           parent.postMessage({
             pluginMessage: {
@@ -1430,9 +1421,24 @@
               imageHash: imageHash
             }
           }, '*');
-          imageOutputMap.delete(resName);
+          imageOutputMap.delete(checkbox.value);
         }
       });
+      input.addEventListener('change', function (evt) {
+        const newValue = this.value;
+        parent.postMessage({
+            pluginMessage: {
+              msg: 'update-image-res-name',
+              imageHash: imageHash,
+              resName: newValue
+            }
+          }, '*');
+          checkbox.value = newValue;
+          if (imageOutputMap.has(resName)) {
+            imageOutputMap.set(newValue, [outputImgBytes, imageFormat]);
+            imageOutputMap.delete(resName);
+          }
+        });
 
       for (const nodeId of imageNodesMap.get(imageHash)) {
         const nodeIdElement = document.createElement('div');
@@ -1478,6 +1484,8 @@
   // Update the form from a selection change.
   window.onmessage = async function (event) {
     let msg = event.data.pluginMessage;
+    // JSZip also posts messages but not plugin messages. Add a check to avoid errors in logging.
+    if (!msg) return;
 
     if (msg.msg == 'selection-cleared') {
       currentSelection = null;

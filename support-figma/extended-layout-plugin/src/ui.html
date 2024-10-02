@@ -334,7 +334,7 @@
   </div>
   <div style="margin-top: 8px;">
     <input type="checkbox" id="groupSameText" name="localizationOptions" value="groupSameText" checked>
-    <label for="groupSameText">Group nodes with same text and use the same string resource name</label>
+    <label for="groupSameText">Match a new text node with existing text nodes to use the same string resource name.</label>
   </div>
   <div style="display: flex; justify-content: flex-end; align-items: flex-end;"><a href="#uploadStringPanel"
       style="text-decoration: underline;">&nbsp;Next >>&nbsp;</a></div>
@@ -962,25 +962,25 @@
     const block = document.createElement('div');
 
     if (!isSingleNode) {
-      const editBtn = document.createElement('span');
-      editBtn.style.width = '20px';
-      editBtn.style.height = '20px';
-      editBtn.style.padding = '0px';
-      editBtn.classList.add('icon-button');
-      editBtn.addEventListener('mouseover', (event) => {
+      const breakBtn = document.createElement('span');
+      breakBtn.style.width = '20px';
+      breakBtn.style.height = '20px';
+      breakBtn.style.padding = '0px';
+      breakBtn.classList.add('icon-button');
+      breakBtn.addEventListener('mouseover', (event) => {
         showToast('Use the break button for a different translation.', false);
       });
-      editBtn.addEventListener('mouseout', (event) => {
+      breakBtn.addEventListener('mouseout', (event) => {
         hideToast();
       });
       // Revise the cursor to default to be consistent with the icon below.
-      editBtn.style.cursor = 'default';
-      const editIcon = document.createElement('span');
-      editIcon.classList.add('icon', 'icon--break');
-      editIcon.style.width = '16px';
-      editIcon.style.height = '16px';
-      editBtn.appendChild(editIcon);
-      editBtn.onclick = () => {
+      breakBtn.style.cursor = 'default';
+      const breakIcon = document.createElement('span');
+      breakIcon.classList.add('icon', 'icon--break');
+      breakIcon.style.width = '16px';
+      breakIcon.style.height = '16px';
+      breakBtn.appendChild(breakIcon);
+      breakBtn.onclick = () => {
         parent.postMessage({
           pluginMessage: {
             msg: 'localization-ungroup-node',
@@ -988,8 +988,10 @@
             stringResMap: Array.from(outputStringData)
           }
         }, '*');
+        // The editButton will be removed. Clear the toast.
+        hideToast();
       };
-      block.append(editBtn);
+      block.append(breakBtn);
     }
 
     const checkbox = document.createElement('input');

@@ -18,7 +18,7 @@ package com.android.designcompose.common
 
 class DocumentServerParams(
     private val nodeQueries: ArrayList<String>? = null,
-    private val ignoredImages: HashMap<String, Array<String>>? = null
+    private val ignoredImages: HashMap<String, Array<String>>? = null,
 ) {
     fun toJsonSnippet(): String {
         val queriesStr = nodeQueries?.joinToString(",") { "\"$it\"" } ?: ""

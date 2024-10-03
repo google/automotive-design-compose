@@ -71,12 +71,12 @@ fun Project.getHostCargoOutputDir(buildType: CargoBuildType): Provider<Directory
  */
 fun Project.registerHostCargoTask(
     cargoExtension: CargoPluginExtension,
-    buildType: CargoBuildType
+    buildType: CargoBuildType,
 ): TaskProvider<CargoBuildHostTask> {
 
     return tasks.register(
         "cargoBuildHost${buildType.toString().capitalized()}",
-        CargoBuildHostTask::class.java
+        CargoBuildHostTask::class.java,
     ) { task ->
         task.applyCommonConfig(cargoExtension, this, buildType)
         task.outLibDir.set(getHostCargoOutputDir(buildType))

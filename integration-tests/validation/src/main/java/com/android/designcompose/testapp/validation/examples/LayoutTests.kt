@@ -67,8 +67,8 @@ interface LayoutTests {
                     PreviewNode(6, "#Item=Grid, #Playing=Off"),
                     PreviewNode(1, "#SectionTitle"),
                     PreviewNode(1, "#Item=List, #Playing=On"),
-                    PreviewNode(3, "#Item=List, #Playing=Off")
-                ]
+                    PreviewNode(3, "#Item=List, #Playing=Off"),
+                ],
         )
         @Design(node = "#column-auto-content")
         widgetItems: ListContent,
@@ -93,9 +93,7 @@ interface LayoutTests {
     @DesignComponent(node = "#center") fun Center()
 
     @DesignComponent(node = "#ButtonSquare")
-    fun ButtonSquare(
-        @DesignVariant(property = "#ButtonSquare") type: ButtonSquare,
-    )
+    fun ButtonSquare(@DesignVariant(property = "#ButtonSquare") type: ButtonSquare)
 
     @DesignComponent(node = "#Item")
     fun Item(
@@ -133,7 +131,7 @@ fun LayoutTests() {
                         if (index % 2 == 0) LayoutTestsDoc.BlueSquare()
                         else LayoutTestsDoc.RedSquare()
                     }
-                }
+                },
             ),
         parent = ReplacementContent(count = 3, content = { { LayoutTestsDoc.BlueSquare() } }),
         widgetItems = { spanFunc ->
@@ -144,10 +142,7 @@ fun LayoutTests() {
                     spanFunc(nodeData)
                 },
             ) {
-                LayoutTestsDoc.Item(
-                    title = "Hello",
-                    type = ItemType.Grid,
-                )
+                LayoutTestsDoc.Item(title = "Hello", type = ItemType.Grid)
             }
         },
         showRect1 = showRect1,
@@ -162,10 +157,10 @@ fun LayoutTests() {
                 newDocDataCallback = { docId, data ->
                     Log.i(
                         "DesignCompose",
-                        "HelloWorld Updated doc ID $docId: ${data?.size ?: 0} bytes"
+                        "HelloWorld Updated doc ID $docId: ${data?.size ?: 0} bytes",
                     )
                 },
-            )
+            ),
     )
     Column(Modifier.offset(10.dp, 820.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {

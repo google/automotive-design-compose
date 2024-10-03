@@ -62,7 +62,7 @@ const val TAG = "DesignCompose"
 enum class RendererType {
     SQUOOSH_ONLY,
     DEFAULT_ONLY,
-    BOTH
+    BOTH,
 }
 
 // Main Activity class. Setup auth token and font, then build the UI with buttons for each test
@@ -85,9 +85,7 @@ class MainActivity : ComponentActivity() {
             enableRendererToggle = remember { mutableStateOf(true) }
             Row {
                 Column(modifier = Modifier.width(110.dp)) {
-                    Text(
-                        text = "Squoosh ${if (useSquoosh.value) "on" else "off"}",
-                    )
+                    Text(text = "Squoosh ${if (useSquoosh.value) "on" else "off"}")
                     Switch(
                         checked = useSquoosh.value,
                         onCheckedChange = { useSquoosh.value = it },
@@ -97,7 +95,7 @@ class MainActivity : ComponentActivity() {
                 }
                 VerticalDivider(
                     color = Color.Black,
-                    modifier = Modifier.fillMaxHeight().width(1.dp)
+                    modifier = Modifier.fillMaxHeight().width(1.dp),
                 )
                 TestContent { currentDisplay.value.second() }
             }
@@ -120,7 +118,7 @@ class MainActivity : ComponentActivity() {
             stickyHeader {
                 Text(
                     text = "DEFAULT ONLY",
-                    Modifier.background(color = Color.LightGray).fillMaxWidth()
+                    Modifier.background(color = Color.LightGray).fillMaxWidth(),
                 )
             }
             itemsIndexed(items = DEFAULT_RENDERER_ONLY_EXAMPLES) { _, example ->
@@ -129,7 +127,7 @@ class MainActivity : ComponentActivity() {
             stickyHeader {
                 Text(
                     text = "SQUOOSH ONLY",
-                    Modifier.background(color = Color.LightGray).fillMaxWidth()
+                    Modifier.background(color = Color.LightGray).fillMaxWidth(),
                 )
             }
             itemsIndexed(items = SQUOOSH_ONLY_EXAMPLES) { _, example ->
@@ -142,7 +140,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun TestButton(
         example: Triple<String, @Composable () -> Unit, String?>,
-        rendererType: RendererType
+        rendererType: RendererType,
     ) {
         val weight = if (currentDisplay.value == example) FontWeight.Bold else FontWeight.Normal
 

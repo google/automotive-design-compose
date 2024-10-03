@@ -83,8 +83,8 @@ fun CompositingViewsTest() {
                     playerView.player = player
                     playerView
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
-        }
+        },
     )
 }

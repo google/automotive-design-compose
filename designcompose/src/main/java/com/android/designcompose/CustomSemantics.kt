@@ -30,7 +30,7 @@ enum class DocRenderStatus {
     Rendered,
     Fetching,
     NodeNotFound,
-    NotAvailable
+    NotAvailable,
 }
 
 val docRenderStatusSemanticsKey = SemanticsPropertyKey<DocRenderStatus>("DocRenderStatus")

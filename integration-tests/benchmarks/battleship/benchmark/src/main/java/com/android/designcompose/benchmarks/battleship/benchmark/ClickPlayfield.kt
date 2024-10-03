@@ -50,7 +50,7 @@ class ClickPlayfield {
                     // of the composable.
                     TraceSectionMetric(
                         "com.android.designcompose.benchmarks.battleship.lib.BattleshipGen.MainFrame %",
-                        Mode.Sum
+                        Mode.Sum,
                     ),
                     TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL, Mode.Sum),
                     TraceSectionMetric(DCTraces.DESIGNVIEW),
@@ -71,7 +71,7 @@ class ClickPlayfield {
                 pressHome()
                 killProcess()
                 startActivityAndWait()
-            }
+            },
         ) {
             val opponentBoardButton = device.findObject(By.textContains("Your Opponent"))
             opponentBoardButton.click()

@@ -109,7 +109,7 @@ internal fun squooshComputeTextInfo(
     fontResourceLoader: Font.ResourceLoader,
     variableState: VariableState,
     appContext: Context,
-    textMeasureCache: TextMeasureCache
+    textMeasureCache: TextMeasureCache,
 ): TextMeasureData? {
     val customizedText =
         customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
@@ -231,9 +231,9 @@ internal fun squooshComputeTextInfo(
                     offset =
                         Offset(
                             textShadow.offset[0] * density.density,
-                            textShadow.offset[1] * density.density
+                            textShadow.offset[1] * density.density,
                         ),
-                    color = textShadow.color.getValue(variableState) ?: Color.Transparent
+                    color = textShadow.color.getValue(variableState) ?: Color.Transparent,
                 )
             )
         }
@@ -265,8 +265,8 @@ internal fun squooshComputeTextInfo(
             lineHeightStyle =
                 LineHeightStyle(
                     alignment = LineHeightStyle.Alignment.Center,
-                    trim = LineHeightStyle.Trim.Both
-                )
+                    trim = LineHeightStyle.Trim.Both,
+                ),
         ))
 
     val paragraph =
@@ -275,7 +275,7 @@ internal fun squooshComputeTextInfo(
             style = textStyle,
             spanStyles = annotatedText.spanStyles,
             density = density,
-            resourceLoader = fontResourceLoader
+            resourceLoader = fontResourceLoader,
         )
 
     val maxLines =
@@ -288,12 +288,12 @@ internal fun squooshComputeTextInfo(
             paragraph,
             density,
             maxLines,
-            v.style.isAutoWidthText()
+            v.style.isAutoWidthText(),
         )
 
     textMeasureCache.put(
         layoutId,
-        TextMeasureCache.Entry(textMeasureData, customizedText, customTextStyle)
+        TextMeasureCache.Entry(textMeasureData, customizedText, customTextStyle),
     )
 
     return textMeasureData

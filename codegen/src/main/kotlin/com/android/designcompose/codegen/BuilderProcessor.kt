@@ -57,9 +57,6 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import java.io.OutputStream
 import java.util.Vector
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 
 class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSPLogger) :
     SymbolProcessor {
@@ -71,7 +68,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 dependencies = Dependencies(false, *dependencies.toTypedArray()),
                 packageName = packageName,
                 fileName = fileName,
-                extensionName = "json"
+                extensionName = "json",
             )
         }
 
@@ -369,7 +366,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             if (function.functionKind != FunctionKind.MEMBER) {
                 logger.error(
                     "Invalid function kind ${function.functionKind} with @DesignDoc",
-                    function
+                    function,
                 )
                 return
             }
@@ -393,7 +390,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private fun visitDesignComponent(
             function: KSFunctionDeclaration,
             data: Unit,
-            annotation: KSAnnotation
+            annotation: KSAnnotation,
         ) {
             // Get the 'node' argument
             val nodeArg: KSValueArgument =
@@ -416,7 +413,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
         private fun visitDesignKeyAction(
             function: KSFunctionDeclaration,
-            annotation: KSAnnotation
+            annotation: KSAnnotation,
         ) {
             // Get the 'key' argument
             val keyArg: KSValueArgument =
@@ -473,7 +470,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private fun visitFunctionNodeCustomizations(
             function: KSFunctionDeclaration,
             node: String,
-            isRoot: Boolean
+            isRoot: Boolean,
         ) {
             // Add the node and function name to the json components list
             val jsonComponent = JsonObject()
@@ -527,7 +524,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
         private fun visitFunctionIgnoredImagesBuild(
             function: KSFunctionDeclaration,
-            nodeName: String
+            nodeName: String,
         ) {
             val nodeImageSet = ignoredImages[nodeName] ?: HashSet()
             function.parameters.forEach { param ->
@@ -880,7 +877,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private fun addCustomization(
             valueParameter: KSValueParameter,
             annotation: KSAnnotation,
-            customizations: HashMap<String, Vector<Pair<String, String>>>
+            customizations: HashMap<String, Vector<Pair<String, String>>>,
         ) {
             val nodeArg: KSValueArgument =
                 annotation.arguments.first { arg -> arg.name?.asString() == "node" }
@@ -904,7 +901,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
         override fun visitDeclarationContainer(
             declarationContainer: KSDeclarationContainer,
-            data: Unit
+            data: Unit,
         ) {}
 
         override fun visitDynamicReference(reference: KSDynamicReference, data: Unit) {}

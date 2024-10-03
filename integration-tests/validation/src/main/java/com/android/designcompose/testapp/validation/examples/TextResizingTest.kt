@@ -40,7 +40,7 @@ val SAMPLE_TEXTS =
         "X",
         "Goodness me!",
         "Y",
-        "This is much longer! Let's see what happens!"
+        "This is much longer! Let's see what happens!",
     )
 
 @Composable

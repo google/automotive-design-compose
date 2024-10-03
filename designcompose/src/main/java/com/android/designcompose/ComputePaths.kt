@@ -139,7 +139,7 @@ internal fun ViewShape.computePaths(
     customArcAngle: Boolean,
     layoutId: Int,
     variableState: VariableState,
-    pathCache: ComputedPathCache
+    pathCache: ComputedPathCache,
 ): ComputedPaths {
     // Before we compute anything, see if this path didn't change since the last
     // time.
@@ -168,7 +168,7 @@ internal fun ViewShape.computePaths(
         val scaleY = 1F
         return Pair(
             path.map { p -> p.asPath(density, scaleX, scaleY) },
-            stroke.map { p -> p.asPath(density, scaleX, scaleY) }
+            stroke.map { p -> p.asPath(density, scaleX, scaleY) },
         )
     }
     fun getRectSize(overrideSize: Size?, style: ViewStyle, density: Float): Size {
@@ -344,7 +344,7 @@ internal fun ViewShape.computePaths(
                                 shadowPath.op(
                                     fill.asAndroidPath(),
                                     spreadStroke,
-                                    android.graphics.Path.Op.DIFFERENCE
+                                    android.graphics.Path.Op.DIFFERENCE,
                                 )
                             }
 
@@ -370,7 +370,7 @@ internal fun ViewShape.computePaths(
             overrideSize,
             customArcAngle,
             cornerRadius,
-        )
+        ),
     )
 
     return computedPaths
@@ -384,7 +384,7 @@ private fun computeArcStrokePath(
     frameSize: Size,
     shape: ViewShape.Arc,
     style: ViewStyle,
-    density: Float
+    density: Float,
 ): Pair<List<Path>, List<Path>> {
     val path = Path()
     var left = 0.0f
@@ -414,7 +414,7 @@ private fun computeArcStrokePath(
         // Arc angles rotate in the opposite direction than node rotations. To keep them consistent,
         // negate the angles
         -shape.start_angle_degrees,
-        -shape.sweep_angle_degrees
+        -shape.sweep_angle_degrees,
     )
 
     val arcPaint = android.graphics.Paint()
@@ -587,7 +587,7 @@ private fun RoundRect.offset(insets: Insets, amount: Float): RoundRect {
         topRightCornerRadius = topRightCornerRadius.offset(insets.right, insets.top, amount),
         bottomLeftCornerRadius = bottomLeftCornerRadius.offset(insets.left, insets.bottom, amount),
         bottomRightCornerRadius =
-            bottomRightCornerRadius.offset(insets.right, insets.bottom, amount)
+            bottomRightCornerRadius.offset(insets.right, insets.bottom, amount),
     )
 }
 
@@ -613,7 +613,7 @@ private fun CornerRadius.offset(offX: Float, offY: Float, amount: Float): Corner
 
     return CornerRadius(
         x = (x + coercedOffX * amount).coerceAtLeast(0.0f),
-        y = (y + coercedOffY * amount).coerceAtLeast(0.0f)
+        y = (y + coercedOffY * amount).coerceAtLeast(0.0f),
     )
 }
 
@@ -658,7 +658,7 @@ private fun computeRoundRectPathsFast(
             CornerRadius(cornerRadius[0] * density, cornerRadius[0] * density),
             CornerRadius(cornerRadius[1] * density, cornerRadius[1] * density),
             CornerRadius(cornerRadius[2] * density, cornerRadius[2] * density),
-            CornerRadius(cornerRadius[3] * density, cornerRadius[3] * density)
+            CornerRadius(cornerRadius[3] * density, cornerRadius[3] * density),
         )
 
     val strokeInsets =
@@ -666,7 +666,7 @@ private fun computeRoundRectPathsFast(
             top = style.node_style.stroke.stroke_weight.top() * density,
             left = style.node_style.stroke.stroke_weight.left() * density,
             bottom = style.node_style.stroke.stroke_weight.bottom() * density,
-            right = style.node_style.stroke.stroke_weight.right() * density
+            right = style.node_style.stroke.stroke_weight.right() * density,
         )
 
     // We can generate the fill path directly from `r`, and can make the stroke
@@ -704,7 +704,7 @@ private fun computeRoundRectPathsFast(
                     val insetShadowPath = Path()
                     insetShadowPath.addRoundRect(
                         insetShadowRect,
-                        android.graphics.Path.Direction.CW
+                        android.graphics.Path.Direction.CW,
                     )
                     insetShadowPath.asAndroidPath().fillType =
                         android.graphics.Path.FillType.INVERSE_EVEN_ODD
@@ -723,11 +723,5 @@ private fun computeRoundRectPathsFast(
             }
         }
 
-    return ComputedPaths(
-        fills,
-        strokes,
-        shadowClips,
-        shadows,
-        null,
-    )
+    return ComputedPaths(fills, strokes, shadowClips, shadows, null)
 }

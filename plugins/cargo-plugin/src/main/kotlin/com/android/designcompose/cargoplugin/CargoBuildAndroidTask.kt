@@ -37,12 +37,12 @@ import org.gradle.process.ExecOperations
  *
  * Builds the crate at the root of @rustSrcs, using the below properties
  *
- * @constructor Create empty Cargo build task
  * @property executor The Gradle ExecOperations service which provides methods for running other
  *   binaries.
  * @property ndkDirectory The directory containing the NDK to build with
  * @property androidAbi The ABI to build
  * @property compileApi The API version to build
+ * @constructor Create empty Cargo build task
  */
 @UntrackedTask(
     because =
@@ -88,6 +88,7 @@ abstract class CargoBuildAndroidTask @Inject constructor(private val executor: E
         }
     }
 }
+
 /**
  * Create cargo task
  *
@@ -102,11 +103,11 @@ fun Project.registerAndroidCargoTask(
     buildType: CargoBuildType,
     compileApi: Int,
     abi: String,
-    ndkDir: Provider<Directory>
+    ndkDir: Provider<Directory>,
 ): TaskProvider<CargoBuildAndroidTask> =
     tasks.register(
         "cargoBuild${abi.capitalized()}${buildType.toString().capitalized()}",
-        CargoBuildAndroidTask::class.java
+        CargoBuildAndroidTask::class.java,
     ) { task ->
         task.applyCommonConfig(cargoExtension, this, buildType)
         task.androidAbi.set(abi)

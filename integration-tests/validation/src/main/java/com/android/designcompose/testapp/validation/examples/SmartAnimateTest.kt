@@ -28,41 +28,33 @@ import com.android.designcompose.annotation.DesignVariant
 
 enum class TestState {
     A,
-    B
+    B,
 }
 
 @DesignDoc(id = "RW3lFurXCoVDeqY2Y7bf4v")
 interface SmartAnimateTest {
     @DesignComponent(node = "#MainFrame")
     fun MainFrame(
-        @Design(node = "#ReplaceMe") replacement: @Composable (ComponentReplacementContext) -> Unit,
+        @Design(node = "#ReplaceMe") replacement: @Composable (ComponentReplacementContext) -> Unit
     )
 
     @DesignComponent(node = "#BlueBox") fun BlueBox()
 
     @DesignComponent(node = "#RotationAnimationStage")
-    fun RotationTest(
-        @DesignVariant(property = "#RotationTestState") state: TestState,
-    )
+    fun RotationTest(@DesignVariant(property = "#RotationTestState") state: TestState)
 
     @DesignComponent(node = "#OpacityAnimationStage")
-    fun OpacityTest(
-        @DesignVariant(property = "#OpacityTestState") state: TestState,
-    )
+    fun OpacityTest(@DesignVariant(property = "#OpacityTestState") state: TestState)
 
     @DesignComponent(node = "#TextAnimationStage")
-    fun TextTest(
-        @DesignVariant(property = "#TextTestState") state: TestState,
-    )
+    fun TextTest(@DesignVariant(property = "#TextTestState") state: TestState)
 
     @DesignComponent(node = "#VectorAnimationStage")
-    fun VectorTest(
-        @DesignVariant(property = "#VectorTestState") state: TestState,
-    )
+    fun VectorTest(@DesignVariant(property = "#VectorTestState") state: TestState)
 
     @DesignComponent(node = "#CrossFadeOpacityAnimationStage")
     fun CrossFadeOpacityTest(
-        @DesignVariant(property = "#CrossFadeOpacityTestState") state: TestState,
+        @DesignVariant(property = "#CrossFadeOpacityTestState") state: TestState
     )
 
     @DesignComponent(node = "#OneInstance") fun OneInstance()

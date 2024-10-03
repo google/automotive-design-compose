@@ -74,7 +74,7 @@ fun TextElideTest() {
             Row(modifier = Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(
                     selected = (it == stageState.value),
-                    onClick = { stageState.value = it }
+                    onClick = { stageState.value = it },
                 )
                 Text(text = it, modifier = Modifier.padding(start = 4.dp))
             }
@@ -104,7 +104,7 @@ fun TextElideTest() {
 
             Text(
                 modifier = Modifier.padding(4.dp),
-                text = "%.1f".format(containerHeight.floatValue)
+                text = "%.1f".format(containerHeight.floatValue),
             )
         }
     }

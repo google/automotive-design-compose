@@ -65,7 +65,7 @@ val googleSansFont =
 
 enum class PlayState {
     Play,
-    Pause
+    Pause,
 }
 
 enum class GridItemType {
@@ -104,19 +104,13 @@ interface Tutorial {
                     PreviewNode(1, "#GridItem=Rect"),
                     PreviewNode(6, "#GridItem=Square"),
                     PreviewNode(1, "#GridItem=Rect"),
-                    PreviewNode(6, "#GridItem=Square")
-                ]
+                    PreviewNode(6, "#GridItem=Square"),
+                ],
         )
         @Design(node = "#browse/grid/auto-content")
         gridContent: ListContent,
         @DesignContentTypes(nodes = ["#Track"])
-        @DesignPreviewContent(
-            name = "Track List",
-            nodes =
-                [
-                    PreviewNode(8, "#Track"),
-                ]
-        )
+        @DesignPreviewContent(name = "Track List", nodes = [PreviewNode(8, "#Track")])
         @Design(node = "#browse/tracklist/auto-content")
         trackContent: ListContent,
         @DesignContentTypes(nodes = ["#GridItem2"])
@@ -129,17 +123,14 @@ interface Tutorial {
                     PreviewNode(1, "#GridItem2=Rect"),
                     PreviewNode(6, "#GridItem2=Square"),
                     PreviewNode(1, "#GridItem2=Rect"),
-                    PreviewNode(6, "#GridItem2=Square")
-                ]
+                    PreviewNode(6, "#GridItem2=Square"),
+                ],
         )
         @Design(node = "#browse/grid-outlined/auto-content")
         gridOutlinedContent: ListContent,
     )
 
-    @DesignComponent(node = "#Track")
-    fun Track(
-        @Design(node = "#title") title: String,
-    )
+    @DesignComponent(node = "#Track") fun Track(@Design(node = "#title") title: String)
 
     @DesignComponent(node = "#GridItem")
     fun GridItem(@DesignVariant(property = "#GridItem") itemType: GridItemType)

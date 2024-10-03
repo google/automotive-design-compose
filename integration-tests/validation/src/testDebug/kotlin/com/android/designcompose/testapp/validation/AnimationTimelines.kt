@@ -96,12 +96,7 @@ class AnimationTimelines {
     private fun waitForContent(name: String) {
         composeTestRule.waitForIdle()
         composeTestRule
-            .onAllNodes(
-                SemanticsMatcher.expectValue(
-                    docClassSemanticsKey,
-                    name,
-                )
-            )
+            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, name))
             .onFirst()
             .assertRenderStatus(DocRenderStatus.Rendered)
     }

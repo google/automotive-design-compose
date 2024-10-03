@@ -55,7 +55,7 @@ internal fun Optional<StrokeWeight>.max(): Float {
                         weightType.value.top,
                         weightType.value.left,
                         weightType.value.bottom,
-                        weightType.value.right
+                        weightType.value.right,
                     )
             }
         }

@@ -92,7 +92,7 @@ fun decodeDiskDoc(
     docStream: InputStream,
     previousDoc: DocContent?,
     docId: DesignDocId,
-    feedback: FeedbackImpl
+    feedback: FeedbackImpl,
 ): DocContent? {
     var docContent: DocContent? = null
     trace(DCTraces.DECODEDISKDOC) {
@@ -107,7 +107,7 @@ fun decodeServerDoc(
     previousDoc: DocContent?,
     docId: DesignDocId,
     save: File?,
-    feedback: FeedbackImpl
+    feedback: FeedbackImpl,
 ): DocContent? {
     // We must initialize the fully-decoded DocContent, which decodes images before
     // saving it to disk

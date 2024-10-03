@@ -53,18 +53,14 @@ class CargoPlugin : Plugin<Project> {
         project.pluginManager.withPlugin("com.android.library") {
             project.extensions
                 .getByType(LibraryAndroidComponentsExtension::class.java)
-                .configureCargoPlugin(
-                    project,
-                    cargoExtension,
-                    activeAbis,
-                )
+                .configureCargoPlugin(project, cargoExtension, activeAbis)
         }
     }
 
     private fun LibraryAndroidComponentsExtension.configureCargoPlugin(
         project: Project,
         cargoExtension: CargoPluginExtension,
-        activeAbis: Provider<Set<String>>
+        activeAbis: Provider<Set<String>>,
     ) {
         val ndkDir = this.findNdkDirectory(project)
 
@@ -90,7 +86,7 @@ class CargoPlugin : Plugin<Project> {
                         // defaultConfig minSdk.
                         androidExtension.defaultConfig.minSdk!!,
                         abi,
-                        ndkDir
+                        ndkDir,
                     )
             }
             androidCargoTasks = newTasks
@@ -136,14 +132,14 @@ class CargoPlugin : Plugin<Project> {
      */
     private fun getActiveAbis(
         configuredAbis: Provider<MutableSet<String>>,
-        project: Project
+        project: Project,
     ): Provider<Set<String>> =
         configuredAbis.map {
             if (project.findProperty(PROPERTY_ALLOW_ABI_OVERRIDE)?.toString() == "true") {
                 selectActiveAbis(
                     configuredAbis.get(),
                     project.findProperty(PROPERTY_BUILD_ABI)?.toString(),
-                    project.findProperty(PROPERTY_ABI_FILTER)?.toString()
+                    project.findProperty(PROPERTY_ABI_FILTER)?.toString(),
                 )
             } else {
                 it
@@ -188,7 +184,7 @@ class CargoPlugin : Plugin<Project> {
 internal fun selectActiveAbis(
     configuredAbis: Set<String>,
     androidInjectedAbis: String?,
-    abiFilter: String?
+    abiFilter: String?,
 ): Set<String> {
     return if (androidInjectedAbis != null) {
         // Android injects two ABIs for emulators. The first is the architecture of the host, the

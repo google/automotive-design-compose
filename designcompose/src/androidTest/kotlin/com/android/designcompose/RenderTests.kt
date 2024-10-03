@@ -37,7 +37,7 @@ fun DesignSwitcherDeadbeef() {
         doc = null,
         currentDocId = DesignDocId("DEADBEEF"),
         branchHash = null,
-        setDocId = {}
+        setDocId = {},
     )
 }
 
@@ -55,6 +55,7 @@ class RenderTests {
         // Clear any files from previous test runs
         InstrumentationRegistry.getInstrumentation().context.filesDir.deleteRecursively()
     }
+
     /**
      * Test that the DesignSwitcher will load from the disk and render. Test will fail if the doc
      * fails to deserialize

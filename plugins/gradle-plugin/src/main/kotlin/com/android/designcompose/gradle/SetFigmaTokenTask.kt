@@ -34,7 +34,6 @@ import org.gradle.process.ExecOperations
  * Base task for setting a user's Figma Access Token in a DesignCompose LiveUpdate-enabled
  * development app
  *
- * @constructor Create empty Figma token task
  * @property executor The Gradle ExecOperations service which provides methods for running other
  *   binaries. Injected by Gradle, used here to run `adb`
  * @property adbPath Path to the adb executable on the system. Should be configured using via AGP's
@@ -42,6 +41,7 @@ import org.gradle.process.ExecOperations
  * @property appID The applicationID of the target app.
  * @property figmaToken The token to set. Expected to be set using a system environment variable
  *   provider
+ * @constructor Create empty Figma token task
  */
 abstract class SetFigmaTokenTask @Inject constructor(private val executor: ExecOperations) :
     DefaultTask() {
@@ -127,7 +127,7 @@ abstract class SetFigmaTokenTask @Inject constructor(private val executor: ExecO
                     "setApiKey",
                     "-e",
                     "ApiKey",
-                    token
+                    token,
                 )
             }
         if (execResult.exitValue != 0) {

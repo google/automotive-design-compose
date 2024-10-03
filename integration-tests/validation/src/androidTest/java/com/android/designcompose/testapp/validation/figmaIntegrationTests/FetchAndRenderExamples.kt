@@ -40,16 +40,16 @@ import org.junit.runners.Parameterized
  *
  * Properties are set by the Junit4 Parameterized runner via initializeTestData()
  *
- * @constructor Create empty Fetch and render examples
  * @property testName Human readable name for a the test
  * @property testComposable The composable to run
  * @property fileClass The classname of the DesignCompose DesignDoc that is being tested file)
+ * @constructor Create empty Fetch and render examples
  */
 @RunWith(Parameterized::class)
 class FetchAndRenderExamples(
     private val testName: String,
     private val testComposable: @Composable () -> Unit,
-    private val fileClass: String
+    private val fileClass: String,
 ) {
     @get:Rule val composeTestRule = createComposeRule()
     @get:Rule val interFontRule = InterFontTestRule()

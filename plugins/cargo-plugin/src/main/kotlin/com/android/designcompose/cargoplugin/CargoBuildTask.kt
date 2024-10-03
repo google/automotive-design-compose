@@ -43,11 +43,11 @@ import org.gradle.process.ExecSpec
 /**
  * Cargo build task
  *
- * @constructor Create empty Cargo build task
  * @property rustSrcs The collection of files that will be compiled. Provided as a collection to aid
  *   Gradle's build cache, but only the root is passed to Cargo
  * @property cargoBin The cargo binary
  * @property outLibDir Where the libraries will be copied to. Actually set by the Android plugin
+ * @constructor Create empty Cargo build task
  */
 abstract class CargoBuildTask : DefaultTask() {
     @get:Inject abstract val fs: FileSystemOperations
@@ -80,7 +80,7 @@ abstract class CargoBuildTask : DefaultTask() {
     fun applyCommonConfig(
         cargoExtension: CargoPluginExtension,
         project: Project,
-        theBuildType: CargoBuildType
+        theBuildType: CargoBuildType,
     ) {
         // Set the cargoBinary location from the configured plugin extension, or default to
         // the standard install location

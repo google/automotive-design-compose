@@ -43,17 +43,17 @@ enum class PrndState {
     P,
     R,
     N,
-    D
+    D,
 }
 
 enum class ChargingState {
     off,
-    on
+    on,
 }
 
 enum class RegenState {
     off,
-    on
+    on,
 }
 
 data class Controls(
@@ -79,10 +79,7 @@ private fun Button(name: String, selected: Boolean, select: () -> Unit) {
             .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(8.dp))
             .absolutePadding(10.dp, 2.dp, 10.dp, 2.dp)
 
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier,
-    ) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
         Text(name, fontSize = 30.sp, color = textColor)
     }
 }
@@ -150,6 +147,6 @@ fun VariantAsteriskTest() {
         Modifier.absoluteOffset(x = 10.dp, y = 10.dp),
         prnd = shiftState.value,
         charging = charging.value,
-        regen = regen.value
+        regen = regen.value,
     )
 }

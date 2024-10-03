@@ -34,11 +34,7 @@ internal class ProxyConfig {
     var httpProxyConfig: HttpProxyConfig? = null
 }
 
-@Keep
-internal class TextSize(
-    var width: Float = 0F,
-    var height: Float = 0F,
-)
+@Keep internal class TextSize(var width: Float = 0F, var height: Float = 0F)
 
 @Keep
 internal object Jni {
@@ -47,7 +43,7 @@ internal object Jni {
         docId: String,
         versionId: String,
         requestJson: String,
-        proxyConfig: ProxyConfig
+        proxyConfig: ProxyConfig,
     ): ByteArray {
         lateinit var result: ByteArray
         trace(DCTraces.JNIFETCHDOC) {
@@ -61,7 +57,7 @@ internal object Jni {
         docId: String,
         versionId: String,
         requestJson: String,
-        proxyConfig: ProxyConfig
+        proxyConfig: ProxyConfig,
     ): ByteArray
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -73,13 +69,13 @@ internal object Jni {
         layoutId: Int,
         rootLayoutId: Int,
         width: Int,
-        height: Int
+        height: Int,
     ): ByteArray?
 
     fun tracedJniAddNodes(
         managerId: Int,
         rootLayoutId: Int,
-        serializedNodes: ByteArray
+        serializedNodes: ByteArray,
     ): ByteArray? {
         var result: ByteArray? = null
         trace(DCTraces.JNIADDNODES) {
@@ -100,7 +96,7 @@ internal object Jni {
         managerId: Int,
         layoutId: Int,
         rootLayoutId: Int,
-        computeLayout: Boolean
+        computeLayout: Boolean,
     ): ByteArray?
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)

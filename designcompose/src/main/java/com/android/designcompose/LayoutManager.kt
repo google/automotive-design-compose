@@ -94,7 +94,7 @@ internal object LayoutManager {
             childIndex,
             style.intoProto(),
             name,
-            false
+            false,
         )
     }
 
@@ -116,7 +116,7 @@ internal object LayoutManager {
             childIndex,
             style.intoProto(),
             name,
-            true
+            true,
         )
 
         // Text cannot have children, so call computeLayoutIfComplete() here so that if this is
@@ -135,7 +135,7 @@ internal object LayoutManager {
 
     internal fun squooshSetCustomMeasure(
         layoutId: Int,
-        m: ((Float, Float, Float, Float) -> SizeF?)
+        m: ((Float, Float, Float, Float) -> SizeF?),
     ) {
         customMeasure[layoutId] = m
     }
@@ -242,7 +242,7 @@ internal object LayoutManager {
             if (response.changedLayoutsMap.isNotEmpty())
                 Log.d(
                     TAG,
-                    "HandleResponse ${response.layoutState}, changed: ${response.changedLayoutsMap.keys}"
+                    "HandleResponse ${response.layoutState}, changed: ${response.changedLayoutsMap.keys}",
                 )
         } else {
             Log.d(TAG, "HandleResponse NULL")

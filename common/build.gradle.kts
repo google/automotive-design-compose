@@ -68,7 +68,9 @@ abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExe
         generatedCodeDir.get().asFileTree.forEach { it.delete() }
         executor.exec {
             val localBinCargo =
-                project.providers.systemProperty("user.home").map { File(it, ".cargo/bin/cargo") }
+                project.providers
+                    .systemProperty("user.home")
+                    .map { File(it, ".cargo/bin/cargo") }
                     .get()
             executable = if (localBinCargo.exists()) localBinCargo.absolutePath else "cargo"
 
@@ -83,7 +85,7 @@ abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExe
                     "--bin=reflection",
                     "--",
                     "--out-dir",
-                    generatedCodeDir.get().toString()
+                    generatedCodeDir.get().toString(),
                 )
             )
         }

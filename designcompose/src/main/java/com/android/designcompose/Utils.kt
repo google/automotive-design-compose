@@ -73,7 +73,7 @@ import com.android.designcompose.serdegen.BackgroundType
 import com.android.designcompose.serdegen.BlendMode
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.Display
-import com.android.designcompose.serdegen.Easing
+import com.android.designcompose.serdegen.EasingType
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStretch
@@ -102,6 +102,7 @@ import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.Transition
+import com.android.designcompose.serdegen.TransitionType
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
@@ -1647,32 +1648,33 @@ internal fun Layout.withDensity(density: Float): Layout {
 
 // Convert a DesignCompose animation transition into a Jetpack Compose animationSpec.
 internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
+    val transitionType = this.transition_type.getOrNull()
     val easing =
-        when (this) {
-            is Transition.SmartAnimate -> this.easing
-            is Transition.ScrollAnimate -> this.easing
-            is Transition.Push -> this.easing
-            is Transition.MoveIn -> this.easing
-            is Transition.MoveOut -> this.easing
-            is Transition.Dissolve -> this.easing
-            is Transition.SlideIn -> this.easing
-            is Transition.SlideOut -> this.easing
+        when (transitionType) {
+            is TransitionType.SmartAnimate -> transitionType.value.easing.get().easing_type.get()
+            is TransitionType.ScrollAnimate -> transitionType.value.easing.get().easing_type.get()
+            is TransitionType.Push -> transitionType.value.easing.get().easing_type.get()
+            is TransitionType.MoveIn -> transitionType.value.easing.get().easing_type.get()
+            is TransitionType.MoveOut -> transitionType.value.easing.get().easing_type.get()
+            is TransitionType.Dissolve -> transitionType.value.easing.get().easing_type.get()
+            is TransitionType.SlideIn -> transitionType.value.easing.get().easing_type.get()
+            is TransitionType.SlideOut -> transitionType.value.easing.get().easing_type.get()
             else -> return snap(0)
         }
     val duration =
-        when (this) {
-            is Transition.SmartAnimate -> this.duration
-            is Transition.ScrollAnimate -> this.duration
-            is Transition.Push -> this.duration
-            is Transition.MoveIn -> this.duration
-            is Transition.MoveOut -> this.duration
-            is Transition.Dissolve -> this.duration
-            is Transition.SlideIn -> this.duration
-            is Transition.SlideOut -> this.duration
+        when (transitionType) {
+            is TransitionType.SmartAnimate -> transitionType.value.duration
+            is TransitionType.ScrollAnimate -> transitionType.value.duration
+            is TransitionType.Push -> transitionType.value.duration
+            is TransitionType.MoveIn -> transitionType.value.duration
+            is TransitionType.MoveOut -> transitionType.value.duration
+            is TransitionType.Dissolve -> transitionType.value.duration
+            is TransitionType.SlideIn -> transitionType.value.duration
+            is TransitionType.SlideOut -> transitionType.value.duration
             else -> return snap(0)
         }
     return when (easing) {
-        is Easing.Spring -> {
+        is EasingType.Spring -> {
             // Compose takes damping as a fraction of the amount required for critical damping,
             // rather than as the actual damping value. So, we must calculate the damping required
             // for criticality with the given stiffness and mass.
@@ -1686,7 +1688,7 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
                 stiffness = easing.value.stiffness,
             )
         }
-        is Easing.Bezier -> {
+        is EasingType.Bezier -> {
             tween(
                 durationMillis = (duration * 1000.0).roundToInt(),
                 easing =

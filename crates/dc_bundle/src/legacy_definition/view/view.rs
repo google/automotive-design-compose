@@ -15,7 +15,8 @@
  */
 
 use crate::definition::element::Rectangle;
-use crate::legacy_definition::element::reactions::{FrameExtras, Reaction};
+use crate::definition::interaction::Reaction;
+use crate::definition::plugin::FrameExtras;
 use crate::legacy_definition::element::view_shape::ViewShape;
 use crate::legacy_definition::layout::positioning::OverflowDirection;
 use crate::legacy_definition::view::component::ComponentInfo;

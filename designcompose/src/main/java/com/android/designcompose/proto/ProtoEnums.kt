@@ -17,6 +17,10 @@
 package com.android.designcompose.proto
 
 import com.android.designcompose.serdegen.ScaleMode
+import com.android.designcompose.serdegen.Trigger
+import com.android.designcompose.serdegen.TriggerType
+import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 // We don't have enum values due to the java code being generated from Rust, which was
 // generated from proto. This file contains functions to translate between integers and enum values.
@@ -80,3 +84,69 @@ internal fun windingRuleFromInt(value: Int): WindingRuleType {
         else -> WindingRuleType.EvenOdd
     }
 }
+
+enum class OverlayPositionEnum {
+    UNSPECIFIED,
+    CENTER,
+    TOP_LEFT,
+    TOP_CENTER,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_CENTER,
+    BOTTOM_RIGHT,
+    MANUAL,
+}
+
+internal fun overlayPositionEnumFromInt(value: Int): OverlayPositionEnum {
+    return when (value) {
+        1 -> OverlayPositionEnum.CENTER
+        2 -> OverlayPositionEnum.TOP_LEFT
+        3 -> OverlayPositionEnum.TOP_CENTER
+        4 -> OverlayPositionEnum.TOP_RIGHT
+        5 -> OverlayPositionEnum.BOTTOM_LEFT
+        6 -> OverlayPositionEnum.BOTTOM_CENTER
+        7 -> OverlayPositionEnum.BOTTOM_RIGHT
+        8 -> OverlayPositionEnum.MANUAL
+        else -> OverlayPositionEnum.UNSPECIFIED
+    }
+}
+
+enum class OverlayBackgroundInteractionEnum {
+    UNSPECIFIED,
+    NONE,
+    CLOSE_ON_CLICK_OUTSIDE,
+}
+
+internal fun overlayBackgroundInteractionFromInt(value: Int): OverlayBackgroundInteractionEnum {
+    return when (value) {
+        1 -> OverlayBackgroundInteractionEnum.NONE
+        2 -> OverlayBackgroundInteractionEnum.CLOSE_ON_CLICK_OUTSIDE
+        else -> OverlayBackgroundInteractionEnum.UNSPECIFIED
+    }
+}
+
+enum class NavigationType {
+    Unspecified,
+    Navigate,
+    Swap,
+    Overlay,
+    ScrollTo,
+    ChangeTo
+}
+
+internal fun navigationTypeFromInt(value: Int): NavigationType {
+    return when (value) {
+        1 -> NavigationType.Navigate
+        2 -> NavigationType.Swap
+        3 -> NavigationType.Overlay
+        4 -> NavigationType.ScrollTo
+        5 -> NavigationType.ChangeTo
+        else -> NavigationType.Unspecified
+    }
+}
+
+// Getter for Trigger which returns it's TriggerType if it's not null.
+val Optional<Trigger>.type: TriggerType?
+    get() {
+        return this.getOrNull()?.trigger_type?.getOrNull()
+    }

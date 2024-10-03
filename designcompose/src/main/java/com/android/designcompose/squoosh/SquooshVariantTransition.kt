@@ -25,9 +25,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.android.designcompose.asAnimationSpec
 import com.android.designcompose.serdegen.Easing
+import com.android.designcompose.serdegen.EasingType
+import com.android.designcompose.serdegen.SmartAnimate
 import com.android.designcompose.serdegen.Spring
 import com.android.designcompose.serdegen.Transition
+import com.android.designcompose.serdegen.TransitionType
 import com.android.designcompose.serdegen.View
+import java.util.Optional
 
 // We want to perform an animated transition when a variant customization causes a presented
 // variant to change (but only when the component has an animation configured).
@@ -74,7 +78,7 @@ class SmartAnimateTransition(
     // The AnimationSpec, which includes the easing function and duration
     private val transition: AnimationSpec<Float>,
     // The time to delay before starting the animation, in milliseconds.
-    private val delayMillis: Int = 0
+    private val delayMillis: Int = 0,
 ) : AnimationTransition {
     override fun animationSpec(): AnimationSpec<Float> {
         return transition
@@ -87,7 +91,20 @@ class SmartAnimateTransition(
 
 val DEFAULT_TRANSITION =
     SmartAnimateTransition(
-        Transition.SmartAnimate(Easing.Spring(Spring(1.0f, 200.0f, 30.0f)), 1f).asAnimationSpec()
+        Transition(
+                // Too many Optional.ofs. Will go away when we get off Serdegen.
+                Optional.of(
+                    TransitionType.SmartAnimate(
+                        SmartAnimate(
+                            Optional.of(
+                                Easing(Optional.of(EasingType.Spring(Spring(1.0f, 200.0f, 30.0f))))
+                            ),
+                            1f,
+                        )
+                    )
+                )
+            )
+            .asAnimationSpec()
     )
 
 internal class VariantAnimationInfo(
@@ -274,7 +291,7 @@ internal class SquooshVariantTransition {
     internal fun selectedVariant(
         view: View,
         variantView: View,
-        customVariantTransition: CustomVariantTransition?
+        customVariantTransition: CustomVariantTransition?,
     ) {
         val viewId = view.id
         val variantViewId = variantView.id
@@ -337,7 +354,7 @@ internal class SquooshVariantTransition {
         transitions.remove(anim.nodeId)
         Log.d(
             TAG,
-            "completed variant animation: ${anim.nodeId}, now there are ${transitions.size} active transitions"
+            "completed variant animation: ${anim.nodeId}, now there are ${transitions.size} active transitions",
         )
         invalTransitions()
     }
@@ -347,7 +364,7 @@ internal class SquooshVariantTransition {
         newTransitions.remove(anim.nodeId)
         Log.d(
             TAG,
-            "failed to execute variant anim: ${anim.nodeId}, now there are ${transitions.size} active transitions"
+            "failed to execute variant anim: ${anim.nodeId}, now there are ${transitions.size} active transitions",
         )
         invalTransitions()
     }

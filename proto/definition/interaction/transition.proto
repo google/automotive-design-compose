@@ -40,7 +40,7 @@ message Easing {
     float damping = 3;
   }
 
-  oneof easing {
+  oneof easing_type {
     Bezier bezier = 1;
     Spring spring = 2;
   }
@@ -109,7 +109,7 @@ message Transition {
     bool match_layers = 4;
   }
 
-  oneof transition {
+  oneof transition_type {
     Dissolve dissolve = 1;
     SmartAnimate smart_animate = 2;
     ScrollAnimate scroll_animate = 3;

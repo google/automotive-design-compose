@@ -24,13 +24,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.VariantPropertyMap
+import com.android.designcompose.proto.NavigationType
+import com.android.designcompose.proto.navigationTypeFromInt
 import com.android.designcompose.serdegen.Action
-import com.android.designcompose.serdegen.Navigation
+import com.android.designcompose.serdegen.ActionType
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.squoosh.AnimationTransition
 import com.android.designcompose.squoosh.SmartAnimateTransition
+import kotlin.jvm.optionals.getOrNull
 
 // In order to differentiate multiple instances of a component, we use a combination of the node ID
 // and an optional key to uniquely identify a component instance. This allows us to apply changes
@@ -91,7 +94,7 @@ internal open class DeferredAction {
 internal fun DeferredAction.apply(
     state: InteractionState,
     targetInstanceId: String?,
-    key: String?
+    key: String?,
 ) {
     // XXX: track start time for animations? Would like to implement
     when (this) {
@@ -162,8 +165,9 @@ internal class AnimatedAction(
     val undoInstanceId: String?,
     val transition: AnimationTransition,
     val interruptedId: Int?,
-    val id: Int // just a counted value
+    val id: Int, // just a counted value
 )
+
 // XXX: Add subscriptions? Use Kotlin setters to trigger invalidations? How to batch invals?
 
 internal class InteractionState {
@@ -247,7 +251,7 @@ internal fun InteractionState.navigate(targetNodeId: String, undoInstanceId: Str
 internal fun InteractionState.overlay(
     targetNodeId: String,
     transition: Transition?,
-    undoInstanceId: String?
+    undoInstanceId: String?,
 ) {
     // Remember which overlay to close -- Figma itself just closes whatever the
     // top overlay is (so if you have a timeout that swaps or opens another overlay
@@ -300,7 +304,7 @@ internal fun InteractionState.close(undoInstanceId: String?) {
 internal fun InteractionState.swap(
     targetNodeId: String,
     transition: Transition?,
-    undoInstanceId: String?
+    undoInstanceId: String?,
 ) {
     val previousOverlayId = overlayMemory.removeLastOrNull()
     if (previousOverlayId != null) {
@@ -334,7 +338,7 @@ internal fun InteractionState.swap(
     }
     Log.i(
         TAG,
-        "Unable to swap overlay or navigation because no overlays are active and the navigation stack is empty."
+        "Unable to swap overlay or navigation because no overlays are active and the navigation stack is empty.",
     )
 }
 
@@ -345,7 +349,7 @@ internal fun InteractionState.changeTo(
     instanceNodeId: String,
     key: String?,
     newVariantId: String,
-    undoInstanceId: String?
+    undoInstanceId: String?,
 ) {
     val varKey = getInstanceIdWithKey(instanceNodeId, key)
     val previousVariant = this.variantMemory.put(varKey, newVariantId)
@@ -377,42 +381,36 @@ internal fun InteractionState.dispatch(
     action: Action,
     targetInstanceId: String?,
     key: String?,
-    undoInstanceId: String?
+    undoInstanceId: String?,
 ) {
-    when (action) {
-        is Action.Back -> this.back()
-        is Action.Close -> this.close(undoInstanceId)
-        is Action.Url -> this.openLink(action.url)
-        is Action.Node ->
-            when (action.navigation) {
-                is Navigation.NAVIGATE -> {
-                    if (action.destination_id.isPresent)
-                        this.navigate(action.destination_id.get(), undoInstanceId)
+    val actionType = action.action_type.get()
+    when (actionType) {
+        is ActionType.Back -> this.back()
+        is ActionType.Close -> this.close(undoInstanceId)
+        is ActionType.Url -> this.openLink(actionType.value.url)
+        is ActionType.Node -> {
+            val navigationType = navigationTypeFromInt(actionType.value.navigation)
+            val destinationId = actionType.value.destination_id.getOrNull()
+            val transition = actionType.value.transition.getOrNull()
+            when (navigationType) {
+                NavigationType.Navigate -> {
+                    if (destinationId != null) this.navigate(destinationId, undoInstanceId)
                     else Log.i(TAG, "Unable to dispatch NAVIGATE; missing destination id")
                 }
-                is Navigation.OVERLAY -> {
-                    if (action.destination_id.isPresent)
-                        this.overlay(
-                            action.destination_id.get(),
-                            action.transition.orElse(null),
-                            undoInstanceId
-                        )
+                NavigationType.Overlay -> {
+                    if (destinationId != null)
+                        this.overlay(destinationId, transition, undoInstanceId)
                     else Log.i(TAG, "Unable to dispatch OVERLAY; missing destination id")
                 }
-                is Navigation.SWAP -> {
-                    if (action.destination_id.isPresent)
-                        this.swap(
-                            action.destination_id.get(),
-                            action.transition.orElse(null),
-                            undoInstanceId
-                        )
+                NavigationType.Swap -> {
+                    if (destinationId != null) this.swap(destinationId, transition, undoInstanceId)
                     else Log.i(TAG, "Unable to dispatch SWAP; missing destination id")
                 }
-                is Navigation.CHANGE_TO -> {
-                    if (action.destination_id.isPresent && targetInstanceId != null) {
+                NavigationType.ChangeTo -> {
+                    if (destinationId != null && targetInstanceId != null) {
                         // If animated transitions are supported, and there's an animation on this
                         // action, then queue up the animation and notify.
-                        if (action.transition.isPresent && supportAnimations) {
+                        if (transition != null && supportAnimations) {
                             // If we already have a transition running for the target instance id
                             // then we need to stop it, and tell the animation system to start the
                             // new transition from the point where the previous one was interrupted.
@@ -423,7 +421,7 @@ internal fun InteractionState.dispatch(
                                         anim.instanceNodeId,
                                         anim.key,
                                         anim.newVariantId,
-                                        anim.undoInstanceId
+                                        anim.undoInstanceId,
                                     )
                                     interruptedId = anim.id
                                     true
@@ -435,33 +433,27 @@ internal fun InteractionState.dispatch(
                                 AnimatedAction(
                                     targetInstanceId,
                                     key,
-                                    action.destination_id.get(),
+                                    destinationId,
                                     undoInstanceId,
-                                    SmartAnimateTransition(
-                                        action.transition.get().asAnimationSpec()
-                                    ),
+                                    SmartAnimateTransition(transition.asAnimationSpec()),
                                     interruptedId,
                                     lastAnimationId++,
                                 )
                             )
                             invalAnimations()
                         } else {
-                            this.changeTo(
-                                targetInstanceId,
-                                key,
-                                action.destination_id.get(),
-                                undoInstanceId
-                            )
+                            this.changeTo(targetInstanceId, key, destinationId, undoInstanceId)
                         }
                     } else {
                         Log.i(
                             TAG,
-                            "Unable to dispatch CHANGE_TO; missing instance id or destination id"
+                            "Unable to dispatch CHANGE_TO; missing instance id or destination id",
                         )
                     }
                 }
                 else -> Log.i(TAG, "Unsupported node action")
             }
+        }
         else -> Log.i(TAG, "Unsupported action")
     }
 }
@@ -471,7 +463,7 @@ internal fun InteractionState.dispatch(
 internal fun InteractionState.undoDispatch(
     targetNodeId: String?,
     undoInstanceId: String,
-    key: String?
+    key: String?,
 ) {
     val undoKey = getInstanceIdWithKey(undoInstanceId, key)
     val undoAction = undoMemory.remove(undoKey)
@@ -494,7 +486,7 @@ internal fun InteractionState.clonedWithAnimatedActionsApplied(): InteractionSta
             instanceNodeId = anim.instanceNodeId,
             key = anim.key,
             newVariantId = anim.newVariantId,
-            undoInstanceId = anim.undoInstanceId
+            undoInstanceId = anim.undoInstanceId,
         )
     }
     return deltaInteractionState
@@ -546,7 +538,7 @@ private fun searchNodes(
                 variantPropertyMap.resolveVariantNameToView(
                     nodeName,
                     componentSetName,
-                    variantViewMap
+                    variantViewMap,
                 )
             view
         } else {
@@ -626,7 +618,7 @@ internal fun InteractionState.rootNode(
         doc.c.document.views,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
-        customizations
+        customizations,
     )
 }
 
@@ -687,7 +679,7 @@ internal fun InteractionState.squooshCompleteAnimatedAction(transition: Animated
         instanceNodeId = transition.instanceNodeId,
         key = transition.key,
         newVariantId = transition.newVariantId,
-        undoInstanceId = transition.undoInstanceId
+        undoInstanceId = transition.undoInstanceId,
     )
     invalAnimations()
 }
@@ -705,7 +697,7 @@ internal fun InteractionState.squooshFailedAnimatedAction(transition: AnimatedAc
 internal fun InteractionState.nodeVariant(
     instanceId: String,
     key: String?,
-    doc: DocContent
+    doc: DocContent,
 ): View? {
     val varKey = getInstanceIdWithKey(instanceId, key)
     val (variant, setVariant) = remember(instanceId) { mutableStateOf(variantMemory[varKey]) }
@@ -729,14 +721,14 @@ internal fun InteractionState.nodeVariant(
         NodeQuery.NodeId(variant),
         doc.c.document.views,
         doc.c.variantViewMap,
-        doc.c.variantPropertyMap
+        doc.c.variantPropertyMap,
     )
 }
 
 internal fun InteractionState.squooshNodeVariant(
     instanceId: String,
     key: String?,
-    doc: DocContent
+    doc: DocContent,
 ): View? {
     val varKey = getInstanceIdWithKey(instanceId, key)
     val variant = variantMemory[varKey] ?: return null
@@ -744,7 +736,7 @@ internal fun InteractionState.squooshNodeVariant(
         NodeQuery.NodeId(variant),
         doc.c.document.views,
         doc.c.variantViewMap,
-        doc.c.variantPropertyMap
+        doc.c.variantPropertyMap,
     )
 }
 
@@ -767,7 +759,7 @@ internal fun InteractionState.squooshRootNode(
         doc.c.document.views,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
-        customizations
+        customizations,
     )
 }
 

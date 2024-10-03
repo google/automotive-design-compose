@@ -51,7 +51,7 @@ enum OverlayPositionType {
 
 // The color of the overlay background.
 message OverlayBackground {
-  definition.element.Color color = 1;
+  definition.element.FloatColor color = 1;
 }
 
 // Defines how an overlay interacts with its background. It specifies whether

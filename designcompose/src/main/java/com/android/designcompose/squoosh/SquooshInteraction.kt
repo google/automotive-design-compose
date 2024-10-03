@@ -25,9 +25,12 @@ import com.android.designcompose.InteractionState
 import com.android.designcompose.dispatch
 import com.android.designcompose.getKey
 import com.android.designcompose.getTapCallback
+import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.Action
-import com.android.designcompose.serdegen.Trigger
+import com.android.designcompose.serdegen.ActionType
+import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.undoDispatch
+import kotlin.jvm.optionals.getOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
@@ -37,11 +40,13 @@ internal fun findTargetInstanceId(
     parentComponents: ParentComponentData?,
     action: Action
 ): String? {
-    val destinationId =
-        when (action) {
-            is Action.Node -> action.destination_id.orElse(null)
-            else -> null
-        } ?: return null
+    val destinationId: String? =
+        action.action_type.getOrNull()?.let { actionType ->
+            when (actionType) {
+                is ActionType.Node -> actionType.value.destination_id.getOrNull()
+                else -> null
+            }
+        }
 
     val componentSetId = document.c.document.component_sets[destinationId] ?: return null
 
@@ -81,48 +86,54 @@ internal fun Modifier.squooshInteraction(
                 detectTapGestures(
                     onPress = {
                         // Set the "pressed" state.
-                        for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
-                            interactionState.dispatch(
-                                r.action,
-                                findTargetInstanceId(
-                                    document,
-                                    childComposable.parentComponents,
-                                    r.action
-                                ),
-                                customizations.getKey(),
-                                node.unresolvedNodeId
-                            )
-                        }
+                        reactions
+                            .filter { r -> r.trigger.type is TriggerType.Press }
+                            .forEach {
+                                interactionState.dispatch(
+                                    it.action.get(),
+                                    findTargetInstanceId(
+                                        document,
+                                        childComposable.parentComponents,
+                                        it.action.get()
+                                    ),
+                                    customizations.getKey(),
+                                    node.unresolvedNodeId
+                                )
+                            }
                         val dispatchClickEvent = tryAwaitRelease()
 
                         // Clear the "pressed" state.
-                        for (r in reactions.filter { r -> r.trigger is Trigger.OnPress }) {
-                            interactionState.undoDispatch(
-                                findTargetInstanceId(
-                                    document,
-                                    childComposable.parentComponents,
-                                    r.action
-                                ),
-                                node.unresolvedNodeId,
-                                customizations.getKey()
-                            )
-                        }
+                        reactions
+                            .filter { r -> r.trigger.type is TriggerType.Press }
+                            .forEach {
+                                interactionState.undoDispatch(
+                                    findTargetInstanceId(
+                                        document,
+                                        childComposable.parentComponents,
+                                        it.action.get()
+                                    ),
+                                    node.unresolvedNodeId,
+                                    customizations.getKey()
+                                )
+                            }
 
                         // If the tap wasn't cancelled (turned into a drag, a window opened on top
                         // of us, etc) then we can run the action.
                         if (dispatchClickEvent) {
-                            for (r in reactions.filter { r -> r.trigger is Trigger.OnClick }) {
-                                interactionState.dispatch(
-                                    r.action,
-                                    findTargetInstanceId(
-                                        document,
-                                        childComposable.parentComponents,
-                                        r.action
-                                    ),
-                                    customizations.getKey(),
-                                    null // no undo
-                                )
-                            }
+                            reactions
+                                .filter { r -> r.trigger.type is TriggerType.Click }
+                                .forEach {
+                                    interactionState.dispatch(
+                                        it.action.get(),
+                                        findTargetInstanceId(
+                                            document,
+                                            childComposable.parentComponents,
+                                            it.action.get()
+                                        ),
+                                        customizations.getKey(),
+                                        null // no undo
+                                    )
+                                }
                         }
                         // Invoke the tap callback customization if one exists on this node
                         customizations.getTapCallback(node.view.name)?.invoke()

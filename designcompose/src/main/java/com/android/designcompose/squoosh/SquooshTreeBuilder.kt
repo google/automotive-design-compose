@@ -350,7 +350,7 @@ internal fun resolveVariantsRecursively(
         // To do this, we must synthesize a ResolvedSquooshNode for each child, and also consult
         // its intrinsic size before we perform layout.
         var previousReplacementChild: SquooshResolvedNode? = null
-        for (idx in 0 ..< replacementContent.count) {
+        for (idx in 0..<replacementContent.count) {
             val childComponent = replacementContent.content(idx)
             val replacementChild =
                 generateReplacementListChildNode(resolvedView, idx, layoutIdAllocator)

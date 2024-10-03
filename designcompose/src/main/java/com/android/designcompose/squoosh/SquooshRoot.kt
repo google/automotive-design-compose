@@ -29,7 +29,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -289,7 +288,7 @@ fun SquooshRoot(
         remember(
             docId,
             LocalContext.current.resources.configuration,
-            DebugNodeManager.getUseLocalRes().value
+            DebugNodeManager.getUseLocalRes().value,
         ) {
             TextMeasureCache()
         }

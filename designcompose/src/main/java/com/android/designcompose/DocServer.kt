@@ -72,10 +72,12 @@ class DesignDocStatus() {
     // If set, the time when the doc was last loaded from storage. Otherwise, this has not happened
     var lastLoadFromDisk: Instant? = null
         internal set
+
     // If set, the time when the doc's status was last updated from Figma, whether or not the doc
     // had changed. If unset then the doc has not been successfully queried from Figma yet
     var lastFetch: Instant? = null
         internal set
+
     // If set, the time when a full fetch of the doc from Figma was last performed.
     // Otherwise this has not happened
     var lastUpdateFromFetch: Instant? = null
@@ -99,9 +101,7 @@ object DesignSettings {
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyFigmaFetchStatus(fileId: DesignDocId) = fileFetchStatus[fileId]
 
-    fun enableLiveUpdates(
-        activity: ComponentActivity,
-    ) {
+    fun enableLiveUpdates(activity: ComponentActivity) {
         liveUpdatesEnabled = true
         // TODO: Holding onto references to activities isn't great, replace this (make
         // DesignSettings into a ViewModel?)
@@ -132,7 +132,7 @@ object DesignSettings {
                     } else {
                         showMessageInToast(
                             "No Figma API Key Set - LiveUpdate Disabled",
-                            Toast.LENGTH_LONG
+                            Toast.LENGTH_LONG,
                         )
                     }
                 }
@@ -282,14 +282,12 @@ internal fun DocServer.getProxyConfig(): ProxyConfig {
     return proxyConfig
 }
 
-internal fun DocServer.fetchDocuments(
-    firstFetch: Boolean,
-): Boolean {
+internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
     val figmaApiKey = DesignSettings.figmaToken.value
     if (figmaApiKey == null) {
         DesignSettings.showMessageInToast(
             "No Figma API Key Set - LiveUpdate Disabled",
-            Toast.LENGTH_LONG
+            Toast.LENGTH_LONG,
         )
         return false
     }
@@ -472,7 +470,7 @@ internal fun DocServer.doc(
                                 BufferedInputStream(FileInputStream(saveFile)),
                                 null,
                                 docId,
-                                Feedback
+                                Feedback,
                             )
                         if (targetDoc != null) {
                             documents[docId] = targetDoc

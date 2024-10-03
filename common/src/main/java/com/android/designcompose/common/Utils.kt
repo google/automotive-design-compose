@@ -77,7 +77,7 @@ class VariantPropertyMap {
     fun resolveVariantNameToView(
         nodeName: String,
         componentSetName: String,
-        variantViewMap: HashMap<String, View>
+        variantViewMap: HashMap<String, View>,
     ): View? {
         // Map this node's properties to their values
         val nodePropertyHash = HashMap<String, String>()
@@ -142,7 +142,7 @@ class VariantPropertyMap {
                 nodePropertyPossibleValues,
                 variantViewMap,
                 resolvedNameProperties,
-                0
+                0,
             )
         if (view != null) return view
 
@@ -155,7 +155,7 @@ class VariantPropertyMap {
         nodePropertyPossibleValues: HashMap<String, HashSet<String>>,
         variantViewMap: HashMap<String, View>,
         resolvedNameProperties: ArrayList<String>,
-        index: Int
+        index: Int,
     ): View? {
         val propertyName = nodePropertyList[index]
         val variantName = nodePropertyHash[propertyName]!!
@@ -174,7 +174,7 @@ class VariantPropertyMap {
                         nodePropertyPossibleValues,
                         variantViewMap,
                         resolvedNameProperties,
-                        index + 1
+                        index + 1,
                     )
                 if (view != null) return view
             }
@@ -193,7 +193,7 @@ class VariantPropertyMap {
                         nodePropertyPossibleValues,
                         variantViewMap,
                         resolvedNameProperties,
-                        index + 1
+                        index + 1,
                     )
                 if (view != null) return view
             }
@@ -204,7 +204,7 @@ class VariantPropertyMap {
 
     private fun getViewFromPropertyList(
         resolvedNameProperties: ArrayList<String>,
-        variantViewMap: HashMap<String, View>
+        variantViewMap: HashMap<String, View>,
     ): View? {
         val propertiesClone = ArrayList(resolvedNameProperties)
         propertiesClone.sort()

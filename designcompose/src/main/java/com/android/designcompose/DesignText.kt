@@ -25,7 +25,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -195,7 +194,7 @@ internal fun DesignText(
                             is TextDecoration.Strikethrough ->
                                 androidx.compose.ui.text.style.TextDecoration.LineThrough
                             else -> androidx.compose.ui.text.style.TextDecoration.None
-                        }
+                        },
                 )
             )
             if (run.style.hyperlink.isPresent) {
@@ -203,7 +202,7 @@ internal fun DesignText(
                 textBuilder.addUrlAnnotation(
                     UrlAnnotation(link),
                     startIndex,
-                    startIndex + run.text.length
+                    startIndex + run.text.length,
                 )
             }
             textBuilder.append(run.text)
@@ -260,9 +259,9 @@ internal fun DesignText(
                     offset =
                         Offset(
                             textShadow.offset[0] * density.density,
-                            textShadow.offset[1] * density.density
+                            textShadow.offset[1] * density.density,
                         ),
-                    color = textShadow.color.getValue(variableState) ?: Color.Transparent
+                    color = textShadow.color.getValue(variableState) ?: Color.Transparent,
                 )
             )
         }
@@ -311,8 +310,8 @@ internal fun DesignText(
             lineHeightStyle =
                 LineHeightStyle(
                     alignment = LineHeightStyle.Alignment.Center,
-                    trim = LineHeightStyle.Trim.Both
-                )
+                    trim = LineHeightStyle.Trim.Both,
+                ),
         )
     val overflow =
         if (style.node_style.text_overflow is com.android.designcompose.serdegen.TextOverflow.Clip)
@@ -325,7 +324,7 @@ internal fun DesignText(
             style = textStyle,
             spanStyles = annotatedText.spanStyles,
             density = density,
-            resourceLoader = LocalFontLoader.current
+            resourceLoader = LocalFontLoader.current,
         )
 
     val maxLines =
@@ -361,7 +360,7 @@ internal fun DesignText(
                 childIndex,
                 style.layout_style,
                 view.name,
-                textMeasureData
+                textMeasureData,
             )
         }
         onDispose {}
@@ -372,7 +371,7 @@ internal fun DesignText(
             LayoutManager.unsubscribe(
                 layoutId,
                 rootLayoutId,
-                parentLayout?.isWidgetAncestor == true
+                parentLayout?.isWidgetAncestor == true,
             )
         }
     }
@@ -446,7 +445,7 @@ internal fun DesignText(
                                                 textLayoutResult = textLayoutResult!!,
                                                 brush = brushAndOpacity.first,
                                                 alpha = brushAndOpacity.second,
-                                                drawStyle = Stroke(width = strokeWidth)
+                                                drawStyle = Stroke(width = strokeWidth),
                                             )
                                         }
                                 }
@@ -476,7 +475,7 @@ internal fun DesignText(
                     maxLines = textMeasureData.maxLines,
                     ellipsis =
                         style.node_style.text_overflow
-                            is com.android.designcompose.serdegen.TextOverflow.Ellipsis
+                            is com.android.designcompose.serdegen.TextOverflow.Ellipsis,
                 )
 
             when (style.node_style.text_align_vertical) {
@@ -492,7 +491,7 @@ internal fun DesignText(
         layoutWithDensity,
         layoutState,
         verticalOffset.roundToInt(),
-        content
+        content,
     )
     return true
 }
@@ -505,7 +504,7 @@ fun measureTextBoundsFunc(
     width: Float,
     @Suppress("unused") height: Float,
     availableWidth: Float,
-    @Suppress("unused") availableHeight: Float
+    @Suppress("unused") availableHeight: Float,
 ): Pair<Float, Float> {
     // We currently don't support vertical text, only horizontal, so this function just performs
     // height-for-width queries on text, and ignores the `height` and `availableHeight` args.
@@ -545,7 +544,7 @@ fun measureTextBoundsFunc(
         Paragraph(
             paragraphIntrinsics = textMeasureData.paragraph,
             width = layoutWidth,
-            maxLines = textMeasureData.maxLines
+            maxLines = textMeasureData.maxLines,
         )
 
     // The `textLayout.width` field doesn't give the tightest bounds.

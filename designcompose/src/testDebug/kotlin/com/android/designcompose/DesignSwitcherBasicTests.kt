@@ -45,7 +45,7 @@ fun DesignSwitcherTest(testName: TestName) {
         doc = null,
         currentDocId = DesignDocId(idState.value),
         branchHash = null,
-        setDocId = {}
+        setDocId = {},
     )
 }
 

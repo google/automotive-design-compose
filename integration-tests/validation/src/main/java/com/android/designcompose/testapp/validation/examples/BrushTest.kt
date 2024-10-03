@@ -86,8 +86,8 @@ fun CustomBrushTest() {
             animationSpec =
                 infiniteRepeatable(
                     animation = tween(10 * 1000, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                )
+                    repeatMode = RepeatMode.Reverse,
+                ),
         )
 
     // Android T introduces AGSL and RuntimeShader. Robolectric (part of our test infrastructure)

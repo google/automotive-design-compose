@@ -131,7 +131,7 @@ enum class NavigationType {
     Swap,
     Overlay,
     ScrollTo,
-    ChangeTo
+    ChangeTo,
 }
 
 internal fun navigationTypeFromInt(value: Int): NavigationType {

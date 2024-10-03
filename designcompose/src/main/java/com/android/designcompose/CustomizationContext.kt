@@ -43,10 +43,7 @@ typealias GetDesignNodeData = () -> DesignNodeData
 
 typealias GridSpanFunc = ((GetDesignNodeData) -> LazyContentSpan)
 
-data class LazyContentSpan(
-    val span: Int = 1,
-    val maxLineSpan: Boolean = false,
-)
+data class LazyContentSpan(val span: Int = 1, val maxLineSpan: Boolean = false)
 
 data class ListContentData(
     var count: Int = 0,
@@ -55,7 +52,7 @@ data class ListContentData(
     var contentType: (index: Int) -> Any? = { null },
     var initialSpan: (() -> LazyContentSpan)? = null,
     var initialContent: @Composable () -> Unit = {},
-    var itemContent: @Composable (index: Int) -> Unit
+    var itemContent: @Composable (index: Int) -> Unit,
 )
 
 typealias ListContent = (GridSpanFunc) -> ListContentData
@@ -224,7 +221,7 @@ interface ImageReplacementContext {
 
 fun CustomizationContext.setImageWithContext(
     nodeName: String,
-    imageWithContext: @Composable ((ImageReplacementContext) -> Bitmap?)?
+    imageWithContext: @Composable ((ImageReplacementContext) -> Bitmap?)?,
 ) {
     customize(nodeName) { c -> c.imageWithContext = Optional.ofNullable(imageWithContext) }
 }
@@ -283,7 +280,7 @@ interface ComponentReplacementContext {
 
 fun CustomizationContext.setComponent(
     nodeName: String,
-    component: @Composable ((ComponentReplacementContext) -> Unit)?
+    component: @Composable ((ComponentReplacementContext) -> Unit)?,
 ) {
     customize(nodeName) { c -> c.component = Optional.ofNullable(component) }
 }

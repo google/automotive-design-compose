@@ -36,7 +36,7 @@ interface StateCustomizations {
     fun root(
         @Design(node = "#time") time: androidx.compose.runtime.State<String>,
         @Design(node = "#firstHand") firstHand: MeterState,
-        @Design(node = "#secondHand") secondHand: MeterState
+        @Design(node = "#secondHand") secondHand: MeterState,
     )
 }
 

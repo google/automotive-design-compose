@@ -37,11 +37,7 @@ interface GridLayout {
         @DesignPreviewContent(name = "Loading", nodes = [PreviewNode(1, "#Loading")])
         @DesignPreviewContent(
             name = "LoadedList",
-            nodes =
-                [
-                    PreviewNode(1, "#SectionTitle"),
-                    PreviewNode(8, "#Item=Grid"),
-                ]
+            nodes = [PreviewNode(1, "#SectionTitle"), PreviewNode(8, "#Item=Grid")],
         )
         @Design(node = "#BrowseList")
         items: ListContent,
@@ -55,7 +51,7 @@ interface GridLayout {
     @DesignComponent(node = "#Item")
     fun Item(
         @DesignVariant(property = "#Item") itemType: ItemType,
-        @Design(node = "#Title") title: String
+        @Design(node = "#Title") title: String,
     )
 }
 
@@ -70,11 +66,7 @@ fun GridLayoutDocumentation() {
             },
         ) { index ->
             if (index == 0) GridLayoutDoc.SectionTitle(title = "Recently Played")
-            else
-                GridLayoutDoc.Item(
-                    itemType = ItemType.Grid,
-                    title = "Item $index",
-                )
+            else GridLayoutDoc.Item(itemType = ItemType.Grid, title = "Item $index")
         }
     }
 }

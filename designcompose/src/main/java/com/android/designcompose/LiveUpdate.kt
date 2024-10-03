@@ -24,7 +24,7 @@ internal object LiveUpdate {
     fun fetchDocBytes(
         docId: DesignDocId,
         requestJson: String,
-        proxyConfig: ProxyConfig
+        proxyConfig: ProxyConfig,
     ): ByteArray? {
         val serializedResponse: ByteArray =
             Jni.tracedJnifetchdoc(docId.id, docId.versionId, requestJson, proxyConfig)

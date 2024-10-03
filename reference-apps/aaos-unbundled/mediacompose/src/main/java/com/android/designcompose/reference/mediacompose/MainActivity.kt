@@ -35,32 +35,32 @@ import com.android.designcompose.annotation.DesignVariant
 
 enum class PlayState {
     Play,
-    Pause
+    Pause,
 }
 
 enum class BrowseItemType {
     Grid,
-    List
+    List,
 }
 
 enum class CurrentlyPlaying {
     On,
-    Off
+    Off,
 }
 
 enum class PageHeaderType {
     Nav,
-    DrillDown
+    DrillDown,
 }
 
 enum class SourceButtonType {
     Selected,
-    Unselected
+    Unselected,
 }
 
 enum class NavButtonType {
     Selected,
-    Unselected
+    Unselected,
 }
 
 // Media 1 7rvM6aVWe0jZCm7jhO9ITx
@@ -106,7 +106,7 @@ interface CenterDisplay {
     @DesignComponent(node = "#media/now-playing/custom-action-button")
     fun CustomActionButton(
         @Design(node = "#icon") icon: @Composable (ImageReplacementContext) -> Bitmap?,
-        @Design(node = "#media/now-playing/custom-action-button") onTap: TapCallback
+        @Design(node = "#media/now-playing/custom-action-button") onTap: TapCallback,
     )
 
     @DesignComponent(node = "#media/browse/loading") fun LoadingPage()
@@ -148,7 +148,7 @@ interface CenterDisplay {
         @Design(node = "#media/error/message") errorMessage: String,
         @Design(node = "#media/error/button-text") errorButtonText: String,
         @Design(node = "#media/error/button") showErrorButton: Boolean,
-        @Design(node = "#media/error/button") onTapErrorButton: TapCallback
+        @Design(node = "#media/error/button") onTapErrorButton: TapCallback,
     )
 
     @DesignComponent(node = "#media/browse/header-nav") fun BrowseHeaderNav()
@@ -180,7 +180,7 @@ class MainActivity : ComponentActivity() {
             NowPlayingProgressBarModule(
                 timeElapsed = mediaAdapter.getNowPlayingProgress().currentTimeText,
                 timeDuration = mediaAdapter.getNowPlayingProgress().maxTimeText,
-                progress = mediaAdapter.getNowPlayingProgress().progressWidth
+                progress = mediaAdapter.getNowPlayingProgress().progressWidth,
             )
         val nowPlayingModule =
             NowPlayingModule(
@@ -222,14 +222,9 @@ class MainActivity : ComponentActivity() {
                 browseTitle = browse.title,
                 onTapBackBrowse = browse.onTapBack,
             )
-        val browseContentModule =
-            BrowseContentModule(
-                browseContent = browse.content,
-            )
+        val browseContentModule = BrowseContentModule(browseContent = browse.content)
         val browsePageHeaderNavButtonsModule =
-            BrowsePageHeaderNavButtonsModule(
-                nav = browse.navContent,
-            )
+            BrowsePageHeaderNavButtonsModule(nav = browse.navContent)
         val upNextQueueModule =
             UpNextQueueModule(
                 upNextTitle = nowPlaying.upNextTitle,

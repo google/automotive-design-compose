@@ -44,8 +44,8 @@ interface GridLayoutTest {
                     PreviewNode(1, "#SectionTitle"),
                     PreviewNode(6, "#Item=Grid"),
                     PreviewNode(1, "#SectionTitle"),
-                    PreviewNode(4, "#Item=Grid")
-                ]
+                    PreviewNode(4, "#Item=Grid"),
+                ],
         )
         @Design(node = "#VerticalGrid1")
         vertical1: ListContent,
@@ -57,8 +57,8 @@ interface GridLayoutTest {
                     PreviewNode(1, "#SectionTitle"),
                     PreviewNode(6, "#VItem=Grid"),
                     PreviewNode(1, "#SectionTitle"),
-                    PreviewNode(4, "#VItem=Grid")
-                ]
+                    PreviewNode(4, "#VItem=Grid"),
+                ],
         )
         @Design(node = "#HorizontalGrid1")
         horizontal1: ListContent,
@@ -74,8 +74,8 @@ interface GridLayoutTest {
                     PreviewNode(1, "#SectionTitle"),
                     PreviewNode(6, "#Item=Grid"),
                     PreviewNode(1, "#SectionTitle"),
-                    PreviewNode(10, "#Item=List")
-                ]
+                    PreviewNode(10, "#Item=List"),
+                ],
         )
         @Design(node = "#VerticalGrid2")
         vertical2: ListContent,
@@ -91,8 +91,8 @@ interface GridLayoutTest {
                     PreviewNode(1, "#SectionTitle"),
                     PreviewNode(6, "#VItem=Grid"),
                     PreviewNode(1, "#SectionTitle"),
-                    PreviewNode(11, "#VItem=List")
-                ]
+                    PreviewNode(11, "#VItem=List"),
+                ],
         )
         @Design(node = "#HorizontalGrid2")
         horizontal2: ListContent,
@@ -160,36 +160,19 @@ fun GridLayoutTest() {
     }
 
     @Composable
-    fun itemComposable(
-        items: ArrayList<Pair<GridItemType, String>>,
-        index: Int,
-    ) {
+    fun itemComposable(items: ArrayList<Pair<GridItemType, String>>, index: Int) {
         when (items[index].first) {
             GridItemType.SectionTitle -> GridLayoutTestDoc.SectionTitle(title = items[index].second)
             GridItemType.VSectionTitle ->
-                GridLayoutTestDoc.VSectionTitle(
-                    title = items[index].second,
-                )
+                GridLayoutTestDoc.VSectionTitle(title = items[index].second)
             GridItemType.RowGrid ->
-                GridLayoutTestDoc.Item(
-                    type = ItemType.Grid,
-                    title = items[index].second,
-                )
+                GridLayoutTestDoc.Item(type = ItemType.Grid, title = items[index].second)
             GridItemType.RowList ->
-                GridLayoutTestDoc.Item(
-                    type = ItemType.List,
-                    title = items[index].second,
-                )
+                GridLayoutTestDoc.Item(type = ItemType.List, title = items[index].second)
             GridItemType.ColGrid ->
-                GridLayoutTestDoc.VItem(
-                    type = ItemType.Grid,
-                    title = items[index].second,
-                )
+                GridLayoutTestDoc.VItem(type = ItemType.Grid, title = items[index].second)
             GridItemType.ColList ->
-                GridLayoutTestDoc.VItem(
-                    type = ItemType.List,
-                    title = items[index].second,
-                )
+                GridLayoutTestDoc.VItem(type = ItemType.List, title = items[index].second)
         }
     }
 

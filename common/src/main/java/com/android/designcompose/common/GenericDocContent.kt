@@ -71,7 +71,7 @@ class GenericDocContent(
 fun decodeServerBaseDoc(
     docBytes: ByteArray,
     docId: DesignDocId,
-    feedback: FeedbackImpl
+    feedback: FeedbackImpl,
 ): GenericDocContent? {
     val deserializer = BincodeDeserializer(docBytes)
     val header = decodeHeader(deserializer, docId, feedback) ?: return null
@@ -94,7 +94,7 @@ fun decodeServerBaseDoc(
         imageSessionData.imageSessionData,
         imageSessionData.imageSession,
         serverDoc.branches,
-        serverDoc.project_files
+        serverDoc.project_files,
     )
 }
 
@@ -102,7 +102,7 @@ fun decodeServerBaseDoc(
 fun decodeDiskBaseDoc(
     doc: InputStream,
     docId: DesignDocId,
-    feedback: FeedbackImpl
+    feedback: FeedbackImpl,
 ): GenericDocContent? {
     val docBytes = readDocBytes(doc, docId, feedback)
     val deserializer = BincodeDeserializer(docBytes)
@@ -124,7 +124,7 @@ fun decodeDiskBaseDoc(
         variantMap,
         variantPropertyMap,
         imageSessionData.imageSessionData,
-        imageSessionData.imageSession
+        imageSessionData.imageSession,
     )
 }
 
@@ -206,7 +206,7 @@ fun readErrorBytes(errorStream: InputStream?): String {
 private fun decodeHeader(
     deserializer: BincodeDeserializer,
     docId: DesignDocId,
-    feedback: FeedbackImpl
+    feedback: FeedbackImpl,
 ): DesignComposeDefinitionHeader? {
     // Now attempt to deserialize the doc)
     val header = DesignComposeDefinitionHeader.deserialize(deserializer)

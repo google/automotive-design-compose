@@ -28,7 +28,7 @@ package com.android.designcompose.annotation
 annotation class DesignDoc(
     val id: String,
     val designVersion: String = "",
-    val customizationInterfaceVersion: String = "0"
+    val customizationInterfaceVersion: String = "0",
 )
 
 /**
@@ -45,7 +45,7 @@ annotation class DesignDoc(
 annotation class DesignComponent(
     val node: String,
     val hideDesignSwitcher: Boolean = false,
-    val isRoot: Boolean = false
+    val isRoot: Boolean = false,
 )
 
 /**
@@ -102,10 +102,7 @@ annotation class DesignContentTypes(val nodes: Array<String>)
 @Target(AnnotationTarget.PROPERTY)
 annotation class DesignContentTypesProperty(val nodes: Array<String>)
 
-annotation class PreviewNode(
-    val count: Int,
-    val node: String,
-)
+annotation class PreviewNode(val count: Int, val node: String)
 
 /**
  * An optional annotation that goes with a @Design annotation of type @Composable() -> Unit, which

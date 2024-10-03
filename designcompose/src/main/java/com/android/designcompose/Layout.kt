@@ -319,7 +319,7 @@ internal fun calcLayoutInfo(
                     },
                 selfModifier = modifier,
                 marginModifier = marginModifier,
-                padding = style.layout_style.padding.get()
+                padding = style.layout_style.padding.get(),
             )
         } else {
             val isColumnLayout =
@@ -361,7 +361,7 @@ internal fun calcLayoutInfo(
                 gridSpanContent = style.node_style.grid_span_content,
                 selfModifier = modifier,
                 scrollingEnabled = scrollingEnabled,
-                padding = style.layout_style.padding.get()
+                padding = style.layout_style.padding.get(),
             )
         }
     } else {

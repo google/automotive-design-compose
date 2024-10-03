@@ -49,7 +49,7 @@ import kotlin.jvm.optionals.getOrElse
 
 internal abstract class SquooshAnimatedItem(
     val target: SquooshResolvedNode,
-    transition: AnimationTransition
+    transition: AnimationTransition,
 ) {
     // The animation object that describes the easing and transition of this transition
     var animation: TargetBasedAnimation<Float, AnimationVector1D> =
@@ -57,7 +57,7 @@ internal abstract class SquooshAnimatedItem(
             animationSpec = transition.animationSpec(),
             typeConverter = Float.VectorConverter,
             initialValue = 0f,
-            targetValue = 1f
+            targetValue = 1f,
         )
     // Number of milliseconds to delay before starting this animation
     private val delayMillis: Int = transition.delayMillis()
@@ -96,10 +96,8 @@ internal abstract class SquooshAnimatedItem(
     abstract fun apply(value: Float)
 }
 
-internal class SquooshAnimatedFadeIn(
-    target: SquooshResolvedNode,
-    transition: AnimationTransition,
-) : SquooshAnimatedItem(target, transition) {
+internal class SquooshAnimatedFadeIn(target: SquooshResolvedNode, transition: AnimationTransition) :
+    SquooshAnimatedItem(target, transition) {
     private val targetOpacity: Float = target.style.node_style.opacity.getOrElse { 1f }
 
     override fun apply(value: Float) {
@@ -158,7 +156,7 @@ internal class SquooshAnimatedScale(
             maxOf(toLayout.width, fromLayout.width),
             maxOf(toLayout.height, fromLayout.height),
             fromLayout,
-            toLayout
+            toLayout,
         )
     }
 }
@@ -227,7 +225,7 @@ internal class SquooshAnimatedLayout(
                 toWidth * value + fromWidth * iv,
                 toHeight * value + fromHeight * iv,
                 fromLayout,
-                toLayout
+                toLayout,
             )
         }
     }
@@ -246,7 +244,7 @@ internal class SquooshAnimatedLayout(
                 toLayout.width * value + fromLayout.width * iv,
                 toLayout.height * value + fromLayout.height * iv,
                 fromLayout,
-                toLayout
+                toLayout,
             )
         }
     }
@@ -256,7 +254,7 @@ internal class SquooshAnimatedLayout(
         if (from.computedLayout == null || to.computedLayout == null) {
             Log.e(
                 TAG,
-                "Unable to compute animated layout for ${target.view.name} because from ${from.computedLayout} to ${to.computedLayout}  layout is uncomputed."
+                "Unable to compute animated layout for ${target.view.name} because from ${from.computedLayout} to ${to.computedLayout}  layout is uncomputed.",
             )
             return
         }
@@ -321,7 +319,7 @@ internal class SquooshAnimatedArc(
 internal class SquooshAnimationControl(
     private val items: List<SquooshAnimatedItem>,
     var animation: TargetBasedAnimation<Float, AnimationVector1D>? = null,
-    private var nextFrameValue: Float = 0F
+    private var nextFrameValue: Float = 0F,
 ) {
     // Given the current play time, calculate the next animation frame value to pass to apply()
     // for all animation items
@@ -355,7 +353,7 @@ internal class SquooshAnimationRequest(
     val transition: AnimationTransition,
     val action: AnimatedAction?,
     val variant: VariantAnimationInfo?,
-    var animationControl: SquooshAnimationControl? = null
+    var animationControl: SquooshAnimationControl? = null,
 )
 
 /// Create a new tree, based on "from", which additional nodes from "to" where an animation has
@@ -372,7 +370,7 @@ internal fun createMergedAnimationTree(
     customVariantTransition: CustomVariantTransition?,
     variableState: VariableState,
     parent: SquooshResolvedNode? = null,
-    alreadyMatchedSet: HashSet<Int> = HashSet()
+    alreadyMatchedSet: HashSet<Int> = HashSet(),
 ): SquooshResolvedNode {
     if (requestedAnimations.isEmpty()) return from.cloneSelfAndChildren(parent)
 
@@ -423,7 +421,7 @@ internal fun createMergedAnimationTree(
                 customVariantTransition,
                 variableState,
                 parent,
-                alreadyMatchedSet
+                alreadyMatchedSet,
             )
         // Insert at the end; does this reorder? Hope not
         var c: SquooshResolvedNode? = cloned
@@ -443,7 +441,7 @@ internal fun createMergedAnimationTree(
                     customVariantTransition,
                     variableState,
                     cloned,
-                    alreadyMatchedSet
+                    alreadyMatchedSet,
                 )
             cloned.firstChild = child
         }
@@ -462,7 +460,7 @@ private fun SquooshResolvedNode.cloneSelf(parent: SquooshResolvedNode?): Squoosh
         layoutNode = this,
         parent = parent,
         computedLayout = this.computedLayout,
-        needsChildRender = this.needsChildRender
+        needsChildRender = this.needsChildRender,
     )
 
 private fun SquooshResolvedNode.cloneSelfAndChildren(
@@ -546,7 +544,7 @@ private fun mergeRecursive(
                         alreadyMatchedSet,
                         customVariantTransition,
                         variableState,
-                        transition
+                        transition,
                     )
                 if (previousChild != null) previousChild.nextSibling = c else n.firstChild = c
                 previousChild = c
@@ -640,7 +638,7 @@ private fun findNode(n: SquooshResolvedNode, id: String): SquooshResolvedNode? {
 private fun findChildNamed(
     parent: SquooshResolvedNode,
     name: String,
-    alreadyMatchedSet: HashSet<Int>
+    alreadyMatchedSet: HashSet<Int>,
 ): SquooshResolvedNode? {
     var child = parent.firstChild
     while (child != null) {

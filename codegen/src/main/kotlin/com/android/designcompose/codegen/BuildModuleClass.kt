@@ -134,7 +134,7 @@ class ModuleNodeNameTable {
 internal fun processDesignModulesClasses(
     resolver: Resolver,
     codeGenerator: CodeGenerator,
-    logger: KSPLogger
+    logger: KSPLogger,
 ): ModuleNodeNameTable {
     val nodeNameTable = ModuleNodeNameTable()
 
@@ -143,14 +143,7 @@ internal fun processDesignModulesClasses(
             .getSymbolsWithAnnotation("com.android.designcompose.annotation.DesignModuleClass")
             .filterIsInstance<KSClassDeclaration>() // Making sure we take only class declarations.
     moduleClasses.forEach {
-        it.accept(
-            DesignModuleVisitor(
-                codeGenerator,
-                logger,
-                nodeNameTable,
-            ),
-            Unit
-        )
+        it.accept(DesignModuleVisitor(codeGenerator, logger, nodeNameTable), Unit)
     }
     return nodeNameTable
 }

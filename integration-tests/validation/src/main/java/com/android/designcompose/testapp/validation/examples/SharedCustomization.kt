@@ -91,7 +91,7 @@ interface ModuleExample {
 @Composable
 private fun getCustomizations(
     style: TextStyle,
-    replaceNode: @Composable (ComponentReplacementContext) -> Unit
+    replaceNode: @Composable (ComponentReplacementContext) -> Unit,
 ): TextModuleCombined {
     val blueBmp = remember {
         val bmp = Bitmap.createBitmap(25, 25, Bitmap.Config.ARGB_8888)

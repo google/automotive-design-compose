@@ -140,12 +140,12 @@ internal fun Modifier.squooshRender(
                         childRenderSelector.selectedRenderChild = node
                         drawContext.canvas.translate(
                             -offsetFromRoot.x * density,
-                            -offsetFromRoot.y * density
+                            -offsetFromRoot.y * density,
                         )
                         drawContent()
                         drawContext.canvas.translate(
                             offsetFromRoot.x * density,
-                            offsetFromRoot.y * density
+                            offsetFromRoot.y * density,
                         )
                         childRenderSelector.selectedRenderChild = null
                     } else {
@@ -189,7 +189,7 @@ internal fun Modifier.squooshRender(
                                         drawContext.canvas.saveLayer(nodeSize.toRect(), dstInPaint)
                                         translate(
                                             pendingMask.computedLayout!!.left * density,
-                                            pendingMask.computedLayout!!.top * density
+                                            pendingMask.computedLayout!!.top * density,
                                         ) {
                                             renderNode(pendingMask!!, variableState)
                                         }
@@ -215,7 +215,7 @@ internal fun Modifier.squooshRender(
                                     if (childLayout != null) {
                                         translate(
                                             childLayout.left * density,
-                                            childLayout.top * density
+                                            childLayout.top * density,
                                         ) {
                                             renderNode(child!!, variableState)
                                         }
@@ -234,7 +234,7 @@ internal fun Modifier.squooshRender(
                                 drawContext.canvas.saveLayer(nodeSize.toRect(), dstInPaint)
                                 translate(
                                     pendingMask.computedLayout!!.left * density,
-                                    pendingMask.computedLayout!!.top * density
+                                    pendingMask.computedLayout!!.top * density,
                                 ) {
                                     renderNode(pendingMask, variableState)
                                 }
@@ -274,7 +274,7 @@ private fun squooshTextRender(
             paragraphIntrinsics = textInfo.paragraph,
             width = layoutWidth,
             maxLines = textInfo.maxLines,
-            ellipsis = style.node_style.text_overflow is TextOverflow.Ellipsis
+            ellipsis = style.node_style.text_overflow is TextOverflow.Ellipsis,
         )
 
     val layoutHeight = computedLayout.height * density.density
@@ -338,7 +338,7 @@ private fun squooshTextRender(
         (xOffset - blurRadius - extraSpaceForStroke).coerceAtMost(0f),
         (yOffset - blurRadius - extraSpaceForStroke).coerceAtMost(0f),
         (xOffset + blurRadius + extraSpaceForStroke).coerceAtLeast(0f) + layoutWidth,
-        clipBottom
+        clipBottom,
     )
 
     // Every time calling paragraph.paint will save the new brush, alpha and drawStyle to the
@@ -358,7 +358,7 @@ private fun squooshTextRender(
             drawContext.canvas,
             brush = textBrushAndOpacity?.first ?: SolidColor(Color.Transparent),
             alpha = textBrushAndOpacity?.second ?: 1.0f,
-            drawStyle = Fill
+            drawStyle = Fill,
         )
     }
 
@@ -375,7 +375,7 @@ private fun squooshTextRender(
                 drawContext.canvas,
                 brush = brush,
                 alpha = strokeBrushAndOpacity.second,
-                drawStyle = Stroke(width = strokeWidth)
+                drawStyle = Stroke(width = strokeWidth),
             )
         }
     }

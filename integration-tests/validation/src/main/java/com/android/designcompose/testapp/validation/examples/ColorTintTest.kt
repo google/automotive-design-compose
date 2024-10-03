@@ -31,7 +31,7 @@ interface ColorTintTest {
     @DesignComponent(node = "#MainFrame")
     fun MainFrame(
         @Design(node = "#Square")
-        squareReplacement: @Composable (ImageReplacementContext) -> Bitmap?,
+        squareReplacement: @Composable (ImageReplacementContext) -> Bitmap?
     )
 }
 

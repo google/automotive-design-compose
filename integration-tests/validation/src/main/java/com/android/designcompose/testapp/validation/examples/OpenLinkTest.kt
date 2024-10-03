@@ -35,12 +35,12 @@ import com.android.designcompose.annotation.DesignVariant
 enum class SquareColor {
     Red,
     Green,
-    Blue
+    Blue,
 }
 
 enum class SquareShadow {
     On,
-    Off
+    Off,
 }
 
 @DesignDoc(id = "r7m4tqyKv6y9DWcg7QBEDf")
@@ -99,7 +99,7 @@ fun OpenLinkTest() {
                                     icon =
                                         ReplacementContent(
                                             count = 1,
-                                            content = { { OpenLinkTestDoc.PurpleCircle() } }
+                                            content = { { OpenLinkTestDoc.PurpleCircle() } },
                                         ),
                                 )
                             else ->
@@ -109,13 +109,13 @@ fun OpenLinkTest() {
                                     icon =
                                         ReplacementContent(
                                             count = 1,
-                                            content = { { OpenLinkTestDoc.PurpleCircle() } }
+                                            content = { { OpenLinkTestDoc.PurpleCircle() } },
                                         ),
                                 )
                         }
                     }
-                }
+                },
             ),
-        clickSwap = Modifier.clickable { setUseFuncOne(!useFuncOne) }
+        clickSwap = Modifier.clickable { setUseFuncOne(!useFuncOne) },
     )
 }

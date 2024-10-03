@@ -45,9 +45,7 @@ interface DialsGaugesTest {
     )
 
     @DesignComponent(node = "#stage-vector-progress")
-    fun VectorProgressMain(
-        @Design(node = "#progress-bar") progressBar: Meter,
-    )
+    fun VectorProgressMain(@Design(node = "#progress-bar") progressBar: Meter)
 
     @DesignComponent(node = "#stage-constraints")
     fun ProgressConstraintsMain(
@@ -71,7 +69,7 @@ fun DialsGaugesTest() {
 
     Row(
         Modifier.absoluteOffset(0.dp, 1410.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Dial angle: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(angle, 0f, 100f, "angle")
@@ -79,7 +77,7 @@ fun DialsGaugesTest() {
     }
     Row(
         Modifier.absoluteOffset(0.dp, 1460.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Dial rotation: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(rotation, 0f, 100f, "rotation")
@@ -87,7 +85,7 @@ fun DialsGaugesTest() {
     }
     Row(
         Modifier.absoluteOffset(0.dp, 1510.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(progress, 0f, 100f, "progress-bar")
@@ -95,7 +93,7 @@ fun DialsGaugesTest() {
     }
     Row(
         Modifier.absoluteOffset(0.dp, 1560.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Progress Indicator: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(progressIndicator, 0f, 100f, "progress-indicator")
@@ -109,7 +107,7 @@ fun ProgressVectorTest() {
     DialsGaugesTestDoc.VectorProgressMain(progressBar = progress.value)
     Row(
         Modifier.absoluteOffset(0.dp, 1410.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(progress, 0f, 100f, "progress-bar")
@@ -130,7 +128,7 @@ fun ProgressConstraintsTest() {
     )
     Row(
         Modifier.absoluteOffset(0.dp, 1410.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Progress Bar: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(progress, 0f, 100f, "progress-bar")
@@ -138,7 +136,7 @@ fun ProgressConstraintsTest() {
     }
     Row(
         Modifier.absoluteOffset(0.dp, 1460.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Progress Indicator: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(progressIndicator, 0f, 100f, "progress-indicator")
@@ -146,7 +144,7 @@ fun ProgressConstraintsTest() {
     }
     Row(
         Modifier.absoluteOffset(0.dp, 1510.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Width: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(stageWidth, 100f, 1000f, "main-width")
@@ -154,7 +152,7 @@ fun ProgressConstraintsTest() {
     }
     Row(
         Modifier.absoluteOffset(0.dp, 1560.dp).height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Height: ", Modifier.width(120.dp), fontSize = 20.sp)
         Slider(stageHeight, 100f, 1000f, "main-height")

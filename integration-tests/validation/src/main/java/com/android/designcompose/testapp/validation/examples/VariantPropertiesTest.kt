@@ -35,12 +35,12 @@ import com.android.designcompose.annotation.DesignVariant
 
 enum class SquareBorder {
     Sharp,
-    Curved
+    Curved,
 }
 
 enum class Shadow {
     On,
-    Off
+    Off,
 }
 
 enum class Shape {
@@ -161,13 +161,13 @@ fun VariantPropertiesTest() {
             Text("Inner Border ", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Inner Sharp",
-                innerBorder == SquareBorder.Sharp
+                innerBorder == SquareBorder.Sharp,
             ) {
                 setInnerBorder(SquareBorder.Sharp)
             }
             com.android.designcompose.testapp.validation.Button(
                 "Inner Curved",
-                innerBorder == SquareBorder.Curved
+                innerBorder == SquareBorder.Curved,
             ) {
                 setInnerBorder(SquareBorder.Curved)
             }
@@ -176,7 +176,7 @@ fun VariantPropertiesTest() {
             Text("Color ", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Green",
-                color == SquareColor.Green
+                color == SquareColor.Green,
             ) {
                 setColor(SquareColor.Green)
             }
@@ -191,13 +191,13 @@ fun VariantPropertiesTest() {
             Text("Comp 1 ", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Comp1 One",
-                comp1 == CompType.one
+                comp1 == CompType.one,
             ) {
                 setComp1(CompType.one)
             }
             com.android.designcompose.testapp.validation.Button(
                 "Comp1 Two",
-                comp1 == CompType.two
+                comp1 == CompType.two,
             ) {
                 setComp1(CompType.two)
             }
@@ -206,13 +206,13 @@ fun VariantPropertiesTest() {
             Text("Comp 2 ", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Comp2 One",
-                comp2 == CompType.one
+                comp2 == CompType.one,
             ) {
                 setComp2(CompType.one)
             }
             com.android.designcompose.testapp.validation.Button(
                 "Comp2 Two",
-                comp2 == CompType.two
+                comp2 == CompType.two,
             ) {
                 setComp2(CompType.two)
             }
@@ -221,13 +221,13 @@ fun VariantPropertiesTest() {
             Text("Comp 3 ", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Comp3 One",
-                comp3 == CompType.one
+                comp3 == CompType.one,
             ) {
                 setComp3(CompType.one)
             }
             com.android.designcompose.testapp.validation.Button(
                 "Comp3 Two",
-                comp3 == CompType.two
+                comp3 == CompType.two,
             ) {
                 setComp3(CompType.two)
             }
@@ -245,19 +245,19 @@ fun VariantPropertiesTest() {
             Text("Shade ", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Shade One",
-                shade == CompType.one
+                shade == CompType.one,
             ) {
                 setShade(CompType.one)
             }
             com.android.designcompose.testapp.validation.Button(
                 "Shade Two",
-                shade == CompType.two
+                shade == CompType.two,
             ) {
                 setShade(CompType.two)
             }
             com.android.designcompose.testapp.validation.Button(
                 "Shade Three",
-                shade == CompType.three
+                shade == CompType.three,
             ) {
                 setShade(CompType.three)
             }

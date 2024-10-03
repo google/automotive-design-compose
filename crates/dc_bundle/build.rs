@@ -24,6 +24,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     prost_config.message_attribute("DimensionProto.Undefined", "#[derive(Copy)]");
     prost_config.message_attribute("LayoutTransform", "#[derive(Copy)]");
     prost_config.enum_attribute("Dimension", "#[derive(Copy)]");
+    prost_config.enum_attribute("Navigation", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
+    prost_config
+        .enum_attribute("TransitionDirection", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
     prost_config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
 
     let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))

@@ -14,7 +14,7 @@
     "@figma/plugin-typings": "*",
     "@types/node": "^22.6.0",
     "css-loader": "^7.1.2",
-    "eslint": "^9.11.0",
+    "eslint": "^9.11.1",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-loader": "^5.1.0",
     "html-webpack-plugin": "^5.6.0",

@@ -107,7 +107,7 @@ dependencies {
     api("com.android.car:car-media-common:UNBUNDLED")
     compileOnly(
         files(
-            "$unbundledAAOSDir/prebuilts/sdk/${ libs.versions.compileSdk.get().toInt()}/system/android.car-system-stubs.jar"
+            "$unbundledAAOSDir/prebuilts/sdk/${ libs.versions.unbundledStubsSdk.get().toInt()}/system/android.car-system-stubs.jar"
         )
     )
 

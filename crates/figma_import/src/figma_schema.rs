@@ -757,6 +757,14 @@ pub enum LayoutSizing {
     Fill,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Default, Copy)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum LayoutPositioning {
+    #[default]
+    Auto,
+    Absolute,
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct VectorCommon {
@@ -775,6 +783,8 @@ pub struct VectorCommon {
     pub layout_sizing_horizontal: LayoutSizing,
     #[serde(default)]
     pub layout_sizing_vertical: LayoutSizing,
+    #[serde(default)]
+    pub layout_positioning: LayoutPositioning,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -827,6 +837,8 @@ pub struct FrameCommon {
     pub is_mask: bool,
     #[serde(default)]
     is_mask_outline: bool,
+    #[serde(default)]
+    pub layout_positioning: LayoutPositioning,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

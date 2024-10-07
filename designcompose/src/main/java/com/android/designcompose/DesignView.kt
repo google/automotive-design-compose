@@ -21,7 +21,6 @@ import android.os.Trace.endSection
 import android.util.Log
 import androidx.annotation.Discouraged
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
@@ -967,9 +966,7 @@ internal fun DesignDocInternal(
                         DesignOverlay(overlay.frame_extras.get(), interactionState) {
                             DesignParentLayout(rootParentLayoutInfo) {
                                 DesignView(
-                                    // Consume clicks inside the overlay so that it doesn't close
-                                    // the overlay
-                                    Modifier.clickable {},
+                                    modifier = Modifier,
                                     overlay,
                                     "",
                                     docId,

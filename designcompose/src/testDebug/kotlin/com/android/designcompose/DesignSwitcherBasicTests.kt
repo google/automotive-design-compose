@@ -90,7 +90,7 @@ class DesignSwitcherBasicTests {
             onDCDoc(DesignSwitcherDoc).performClick()
             onNodeWithText("Options", useUnmergedTree = true).performClick()
             captureRootRoboImage("OptionsScreenBeforeCheckingBox")
-            onAllNodes(hasClickAction())[2].performClick() // Currently the only way to find it
+            onAllNodes(hasClickAction())[1].performClick() // Currently the only way to find it
             captureRootRoboImage("OptionsScreenAfterCheckingBox")
         }
     }

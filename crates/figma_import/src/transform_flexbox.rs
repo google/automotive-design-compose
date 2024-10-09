@@ -52,6 +52,7 @@ use dc_bundle::legacy_definition::layout::positioning::{
 };
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 //use dc_bundle::legacy_definition::modifier::filter::FilterOp;
+use crate::figma_schema::LayoutPositioning;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
@@ -121,7 +122,10 @@ fn compute_layout(
 
     // Frames can implement Auto Layout on their children.
     if let Some(frame) = node.frame() {
-        style.layout_style.position_type = PositionType::Relative;
+        style.layout_style.position_type = match frame.layout_positioning {
+            LayoutPositioning::Absolute => PositionType::Absolute,
+            LayoutPositioning::Auto => PositionType::Relative,
+        };
         style.layout_style.width = DimensionProto::new_auto();
         style.layout_style.height = DimensionProto::new_auto();
         style.layout_style.flex_grow = frame.layout_grow;
@@ -309,7 +313,10 @@ fn compute_layout(
             }
             _ => (),
         };
-        style.layout_style.position_type = PositionType::Relative;
+        style.layout_style.position_type = match vector.layout_positioning {
+            LayoutPositioning::Absolute => PositionType::Absolute,
+            LayoutPositioning::Auto => PositionType::Relative,
+        };
         style.layout_style.width = DimensionProto::new_auto();
         style.layout_style.height = DimensionProto::new_auto();
     }
@@ -380,7 +387,7 @@ fn compute_layout(
         }
     }
 
-    if !parent_is_flexbox {
+    if !parent_is_flexbox || style.layout_style.position_type == PositionType::Absolute {
         match (node.absolute_bounding_box, parent_bounding_box) {
             (Some(bounds), Some(parent_bounds)) => {
                 style.layout_style.position_type = PositionType::Absolute;

@@ -50,6 +50,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Interaction", { InteractionTest() }, InteractionTestDoc.javaClass.name),
         // Layout related tests
         Triple("CrossAxis Fill", { CrossAxisFillTest() }, CrossAxisFillTestDoc.javaClass.name),
+        Triple(
+            "Ignore Auto Layout",
+            { IgnoreAutoLayoutTest() },
+            IgnoreAutoLayoutTestDoc.javaClass.name
+        ),
         Triple("Item Spacing", { ItemSpacingTest() }, ItemSpacingTestDoc.javaClass.name),
         Triple(
             "Layout Replacement",

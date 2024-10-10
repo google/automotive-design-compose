@@ -96,12 +96,12 @@ internal fun DeferredAction.apply(
     // XXX: track start time for animations? Would like to implement
     when (this) {
         is DeferredAction.NavigateBack -> {
-            state.navigationHistory.removeLast()
+            state.navigationHistory.removeLastOrNull()
             state.overlayMemory = ArrayList(this.overlayMemory)
             state.invalNavOverlay()
         }
         is DeferredAction.SwapNavigation -> {
-            state.navigationHistory.removeLast()
+            state.navigationHistory.removeLastOrNull()
             state.navigationHistory.add(this.nodeQuery)
             state.invalNavOverlay()
         }
@@ -126,7 +126,7 @@ internal fun DeferredAction.apply(
             }
         }
         is DeferredAction.SwapOverlay -> {
-            state.overlayMemory.removeLast()
+            state.overlayMemory.removeLastOrNull()
             state.overlayMemory.add(this.overlayId)
             state.invalNavOverlay()
         }
@@ -267,7 +267,7 @@ internal fun InteractionState.overlay(
 /// Perform a "back" action, by removing the last node name in the navigation stack.
 internal fun InteractionState.back() {
     if (this.navigationHistory.size > 0) {
-        this.navigationHistory.removeLast()
+        this.navigationHistory.removeLastOrNull()
         this.overlayMemory.clear()
         // When we navigate, the root view changes. Defer computations so that
         // we don't compute layout after every view in the previous root view

@@ -178,7 +178,7 @@ class VariantPropertyMap {
                     )
                 if (view != null) return view
             }
-            resolvedNameProperties.removeLast()
+            resolvedNameProperties.removeLastOrNull()
         }
         if (possibleValues.contains("*")) {
             resolvedNameProperties.add("$propertyName=*")
@@ -197,7 +197,7 @@ class VariantPropertyMap {
                     )
                 if (view != null) return view
             }
-            resolvedNameProperties.removeLast()
+            resolvedNameProperties.removeLastOrNull()
         }
         return null
     }

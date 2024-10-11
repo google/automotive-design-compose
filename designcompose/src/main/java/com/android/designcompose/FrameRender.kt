@@ -601,7 +601,7 @@ internal fun ContentDrawScope.render(
     drawContext.canvas.restore()
 }
 
-internal fun squooshShapeRender(
+internal fun ContentDrawScope.squooshShapeRender(
     drawContext: DrawContext,
     density: Float,
     size: Size,
@@ -852,12 +852,10 @@ internal fun squooshShapeRender(
         for (fill in shapePaths.fills) {
             drawContext.canvas.clipPath(fill)
         }
-        /* XXX XXX RALPH
         drawImage(
             customImage.asImageBitmap(),
             dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt())
         )
-         */
         drawContext.canvas.restore()
     } else {
         renderPaths(drawContext, shapePaths.fills, fillBrush)

@@ -43,6 +43,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             ComponentTapCallbackDoc.javaClass.name,
         ),
         Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
+        Triple("Shader Test", { ShaderTest() }, ShaderTestDoc.javaClass.name),
         // Dials gauges and progress vectors
         Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),
         Triple("Progress Vectors", { ProgressVectorTest() }, DialsGaugesTestDoc.javaClass.name),

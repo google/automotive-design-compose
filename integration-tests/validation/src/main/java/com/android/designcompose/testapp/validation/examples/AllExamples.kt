@@ -74,6 +74,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Text Elide", { TextElideTest() }, TextElideTestDoc.javaClass.name),
         Triple("Text Inval", { TextResizingTest() }, TextResizingTestDoc.javaClass.name),
         Triple("Styled Text Runs", { StyledTextRunsTest() }, StyledTextRunsDoc.javaClass.name),
+        Triple("Shared Customization", { ModuleExample() }, ModuleExampleDoc.javaClass.name),
         Triple(
             "State Customizations",
             { StateCustomizationsTest(Clock.systemDefaultZone()) },
@@ -139,6 +140,4 @@ val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> U
         Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
         // Squoosh doesn't support OpenLink
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
-        // Squoosh has some problems with this example
-        Triple("Shared Customization", { ModuleExample() }, ModuleExampleDoc.javaClass.name),
     )

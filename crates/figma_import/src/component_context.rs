@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::legacy_definition::element::node::NodeQuery;
-use dc_bundle::legacy_definition::element::reactions::{Action, Reaction};
-use std::collections::{HashMap, HashSet};
-
 use crate::figma_schema;
+use dc_bundle::definition::interaction::action::ActionType;
+use dc_bundle::definition::interaction::Reaction;
+use dc_bundle::legacy_definition::element::node::NodeQuery;
+use std::collections::{HashMap, HashSet};
 
 /// ComponentContext is created by Document, and is used to ensure that all dependent nodes and
 /// components are converted from the Figma source JSON. Reactions (interactive links) in a node
@@ -54,18 +54,15 @@ impl ComponentContext {
         for reaction in reactions {
             // Some actions (like Back and Close) don't have a destination ID, so we don't do
             // anything with those.
-            let destination_node_id = match &reaction.action {
-                Action::Node { destination_id: Some(id), .. } => id,
-                _ => continue,
-            };
-
-            // If we've already converted this node then don't add it again.
-            if self.converted_nodes.contains(destination_node_id) {
-                continue;
+            if let Some(ActionType::Node(node)) =
+                reaction.action.as_ref().and_then(|a| a.action_type.as_ref())
+            {
+                if let Some(destination_node_id) = &node.destination_id {
+                    if !self.converted_nodes.contains(destination_node_id) {
+                        self.referenced_nodes.insert(destination_node_id.clone());
+                    }
+                }
             }
-
-            // Add it to the list to convert.
-            self.referenced_nodes.insert(destination_node_id.clone());
         }
     }
 

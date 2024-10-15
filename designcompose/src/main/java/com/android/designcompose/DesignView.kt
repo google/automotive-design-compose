@@ -68,17 +68,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.Action
+import com.android.designcompose.serdegen.ActionType
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.Reaction
-import com.android.designcompose.serdegen.Trigger
+import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squoosh.SquooshRoot
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -142,7 +145,7 @@ private val recomposeModifier =
                             lerp(
                                 Color.Yellow.copy(alpha = 0.8f),
                                 Color.Red.copy(alpha = 0.5f),
-                                min(1f, (numCompositionsSinceTimeout - 1).toFloat() / 100f)
+                                min(1f, (numCompositionsSinceTimeout - 1).toFloat() / 100f),
                             ) to numCompositionsSinceTimeout.toInt().dp.toPx()
                         }
                     }
@@ -160,7 +163,7 @@ private val recomposeModifier =
                     brush = SolidColor(color),
                     topLeft = rectTopLeft,
                     size = size,
-                    style = style
+                    style = style,
                 )
             }
         }
@@ -243,7 +246,7 @@ internal fun DesignView(
                         // the NodeVariant. We know component_info is present here since
                         // variantNodeName is not null.
                         view.component_info.get().component_set_name
-                    }
+                    },
                 )
             val isRoot = LocalDesignIsRootContext.current.isRoot
             val variantView =
@@ -266,16 +269,19 @@ internal fun DesignView(
     // Look up the appropriate target instance by looking at the destination id
     // and finding a parent that is a member of a component set that contains that
     // id.
-    //
+    // ``
     // This ensures that we change the appropriate component if the design has embedded
     // components within components, and has actions set on some instance of an inner
     // component that should change the outer component.
     val findTargetInstanceId: (Action) -> String? = { action ->
-        val destinationId =
-            when (action) {
-                is Action.Node -> action.destination_id.orElse(null)
-                else -> null
+        val destinationId: String? =
+            action.action_type.getOrNull()?.let { actionType ->
+                when (actionType) {
+                    is ActionType.Node -> actionType.value.destination_id.getOrNull()
+                    else -> null
+                }
             }
+
         var targetInstanceId: String? = null
         if (destinationId != null) {
             val componentSetId = document.c.document.component_sets[destinationId]
@@ -308,19 +314,24 @@ internal fun DesignView(
     val onPressReactions: MutableList<Reaction> = ArrayList()
     val onDragReactions: MutableList<Reaction> = ArrayList()
     val onKeyReactions: MutableList<Reaction> = ArrayList()
+
     view.reactions.ifPresent { reactions ->
         for (reaction in reactions) {
-            when (reaction.trigger) {
-                is Trigger.OnClick -> onClickReactions.add(reaction)
-                is Trigger.OnPress -> onPressReactions.add(reaction)
-                is Trigger.OnDrag -> onDragReactions.add(reaction)
-                is Trigger.AfterTimeout -> {
-                    if ((reaction.trigger as Trigger.AfterTimeout).timeout < currentTimeout) {
-                        onTimeout = reaction
-                        currentTimeout = (reaction.trigger as Trigger.AfterTimeout).timeout
+            reaction.trigger.type?.run {
+                when (this) {
+                    is TriggerType.Click -> onClickReactions.add(reaction)
+                    is TriggerType.Press -> onPressReactions.add(reaction)
+                    is TriggerType.Drag -> onDragReactions.add(reaction)
+                    is TriggerType.AfterTimeout -> {
+                        if (value.timeout < currentTimeout) {
+                            onTimeout = reaction
+                            currentTimeout = value.timeout
+                        } else { // TSILB - needed by `when
+                        }
                     }
+                    is TriggerType.KeyDown -> onKeyReactions.add(reaction)
+                    else -> {}
                 }
-                is Trigger.OnKeyDown -> onKeyReactions.add(reaction)
             }
         }
     }
@@ -367,32 +378,42 @@ internal fun DesignView(
                         beginSection("DesignView InteractionScope")
                         detectTapGestures(
                             onPress = {
-                                for (onPressReaction in onPressReactions) {
-                                    interactionState.dispatch(
-                                        onPressReaction.action,
-                                        findTargetInstanceId(onPressReaction.action),
-                                        customizations.getKey(),
-                                        v.id
-                                    )
-                                }
-                                setIsPressed(true)
-                                val dispatchClickEvent = tryAwaitRelease()
-                                for (onPressReaction in onPressReactions) {
-                                    interactionState.undoDispatch(
-                                        findTargetInstanceId(onPressReaction.action),
-                                        v.id,
-                                        customizations.getKey()
-                                    )
-                                }
-                                if (dispatchClickEvent) {
-                                    for (onClickReaction in onClickReactions) {
+                                onPressReactions
+                                    .filter { it.action.isPresent }
+                                    .forEach {
+                                        val action = it.action.get()
                                         interactionState.dispatch(
-                                            onClickReaction.action,
-                                            findTargetInstanceId(onClickReaction.action),
+                                            action,
+                                            findTargetInstanceId(action),
                                             customizations.getKey(),
-                                            null
+                                            v.id,
                                         )
                                     }
+
+                                setIsPressed(true)
+                                val dispatchClickEvent = tryAwaitRelease()
+                                onPressReactions
+                                    .filter { it.action.isPresent }
+                                    .forEach {
+                                        val action = it.action.get()
+                                        interactionState.undoDispatch(
+                                            findTargetInstanceId(action),
+                                            v.id,
+                                            customizations.getKey(),
+                                        )
+                                    }
+                                if (dispatchClickEvent) {
+                                    onClickReactions
+                                        .filter { it.action.isPresent }
+                                        .forEach {
+                                            val action = it.action.get()
+                                            interactionState.dispatch(
+                                                action,
+                                                findTargetInstanceId(action),
+                                                customizations.getKey(),
+                                                null,
+                                            )
+                                        }
                                     // Execute tap callback if one exists
                                     if (tapCallback != null) tapCallback()
                                 }
@@ -410,14 +431,17 @@ internal fun DesignView(
                 Modifier.pointerInput(onDragReactions) {
                     detectDragGestures(
                         onDragStart = {
-                            for (onDragReaction in onDragReactions) {
-                                interactionState.dispatch(
-                                    onDragReaction.action,
-                                    findTargetInstanceId(onDragReaction.action),
-                                    customizations.getKey(),
-                                    null
-                                )
-                            }
+                            onDragReactions
+                                .filter { it.action.isPresent }
+                                .forEach {
+                                    val action = it.action.get()
+                                    interactionState.dispatch(
+                                        action,
+                                        findTargetInstanceId(action),
+                                        customizations.getKey(),
+                                        null,
+                                    )
+                                }
                         }
                     ) { change, _ ->
                         change.consumeAllChanges()
@@ -428,16 +452,16 @@ internal fun DesignView(
 
     // Register to be a listener for key reactions on this node
     for (keyReaction in onKeyReactions) {
-        val keyTrigger = keyReaction.trigger as Trigger.OnKeyDown
-        val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.key_codes)
+        val keyTrigger = keyReaction.trigger.get().trigger_type.get() as TriggerType.KeyDown
+        val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.value.key_codes)
         DisposableEffect(keyEvent) {
             val keyAction =
                 KeyAction(
                     interactionState,
-                    keyReaction.action,
-                    findTargetInstanceId(keyReaction.action),
+                    keyReaction.action.get(),
+                    findTargetInstanceId(keyReaction.action.get()),
                     customizations.getKey(),
-                    null
+                    null,
                 )
             KeyInjectManager.addListener(keyEvent, keyAction)
             onDispose { KeyInjectManager.removeListener(keyEvent, keyAction) }
@@ -449,10 +473,10 @@ internal fun DesignView(
         LaunchedEffect(timeout, view.id) {
             delay((currentTimeout * 1000.0).toLong())
             interactionState.dispatch(
-                timeout.action,
-                findTargetInstanceId(timeout.action),
+                timeout.action.get(),
+                findTargetInstanceId(timeout.action.get()),
                 customizations.getKey(),
-                null
+                null,
             )
         }
     }
@@ -535,11 +559,7 @@ internal fun DesignView(
                     DesignText(
                         modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
                         view = view,
-                        text =
-                            getTextContent(
-                                LocalContext.current,
-                                view.data as ViewData.Text,
-                            ),
+                        text = getTextContent(LocalContext.current, view.data as ViewData.Text),
                         style = style,
                         document = document,
                         nodeName = view.name,
@@ -552,10 +572,7 @@ internal fun DesignView(
                         modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
                         view = view,
                         runs =
-                            getTextContent(
-                                LocalContext.current,
-                                view.data as ViewData.StyledText,
-                            ),
+                            getTextContent(LocalContext.current, view.data as ViewData.StyledText),
                         style = style,
                         document = document,
                         nodeName = view.name,
@@ -644,7 +661,7 @@ internal fun DesignView(
                                                     layoutId,
                                                     childIndex,
                                                     rootLayoutId,
-                                                    isWidgetAncestor = isWidgetAncestor
+                                                    isWidgetAncestor = isWidgetAncestor,
                                                 )
                                             DesignParentLayout(parentLayoutInfo) {
                                                 val show =
@@ -670,7 +687,7 @@ internal fun DesignView(
                                             layoutId,
                                             childIndex,
                                             rootLayoutId,
-                                            isWidgetAncestor = isWidgetAncestor
+                                            isWidgetAncestor = isWidgetAncestor,
                                         )
                                     DesignParentLayout(parentLayoutInfo) {
                                         val show =
@@ -781,7 +798,7 @@ enum class DesignSwitcherPolicy {
 
 enum class LiveUpdateMode {
     LIVE, // Live updates on
-    OFFLINE // Live updates off (load from serialized file)
+    OFFLINE, // Live updates off (load from serialized file)
 }
 
 class DesignComposeCallbacks(
@@ -846,7 +863,7 @@ internal fun DesignDocInternal(
             setDocId = setDocId,
             designSwitcherPolicy = designSwitcherPolicy,
             liveUpdateMode = liveUpdateMode,
-            designComposeCallbacks = designComposeCallbacks
+            designComposeCallbacks = designComposeCallbacks,
         )
         return
     }
@@ -858,7 +875,7 @@ internal fun DesignDocInternal(
             docId,
             serverParams,
             designComposeCallbacks?.newDocDataCallback,
-            liveUpdateMode == LiveUpdateMode.OFFLINE
+            liveUpdateMode == LiveUpdateMode.OFFLINE,
         )
     val interactionState = InteractionStateManager.stateForDoc(docId)
     val interactionScope = rememberCoroutineScope()

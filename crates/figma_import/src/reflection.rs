@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use dc_bundle::definition::element::dimension_proto::Dimension;
+
 use dc_bundle::legacy_definition::EncodedImageMap;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
@@ -144,32 +145,28 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace ViewStyle");
 
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::reactions::Action>(&samples)
+        .trace_type::<dc_bundle::definition::interaction::action::ActionType>(&samples)
         .expect("couldn't trace Action");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::reactions::Trigger>(&samples)
+        .trace_type::<dc_bundle::definition::interaction::trigger::TriggerType>(&samples)
         .expect("couldn't trace Trigger");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::reactions::Transition>(&samples)
+        .trace_type::<dc_bundle::definition::interaction::transition::TransitionType>(&samples)
         .expect("couldn't trace transition");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::reactions::Navigation>(&samples)
+        .trace_type::<dc_bundle::definition::interaction::action::node::Navigation>(&samples)
         .expect("couldn't trace Navigation");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::reactions::OverlayBackgroundInteraction>(&samples)
+        .trace_type::<dc_bundle::definition::plugin::OverlayBackgroundInteraction>(&samples)
         .expect("couldn't trace OverlayBackgroundInteraction");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::reactions::OverlayPositionType>(
-            &samples,
-        )
+        .trace_type::<dc_bundle::definition::plugin::OverlayPositionType>(&samples)
         .expect("couldn't trace OverlayPositionType");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::reactions::TransitionDirection>(
-            &samples,
-        )
+        .trace_type::<dc_bundle::definition::interaction::transition::TransitionDirection>(&samples)
         .expect("couldn't trace TransitionDirection");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::reactions::Easing>(&samples)
+        .trace_type::<dc_bundle::definition::interaction::easing::EasingType>(&samples)
         .expect("couldn't trace Easing");
 
     tracer

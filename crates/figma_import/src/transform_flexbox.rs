@@ -32,18 +32,19 @@ use dc_bundle::definition::element::{
     DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
 };
 
-use crate::reaction_schema::ReactionJson;
+use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
 use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::num_or_var::NumOrVar;
 use dc_bundle::definition::element::Path;
 use dc_bundle::definition::element::{
     background, stroke_weight, Background, StrokeAlign, StrokeWeight,
 };
+use dc_bundle::definition::interaction::Reaction;
 use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::definition::modifier::LayoutTransform;
 use dc_bundle::definition::modifier::{filter_op, FilterOp};
+use dc_bundle::definition::plugin::FrameExtras;
 use dc_bundle::legacy_definition::element::path::LineHeight;
-use dc_bundle::legacy_definition::element::reactions::{FrameExtras, Reaction};
 use dc_bundle::legacy_definition::element::view_shape::ViewShape;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::positioning::{
@@ -925,7 +926,8 @@ fn visit_node(
     let frame_extras: Option<FrameExtras> = {
         if let Some(vsw_data) = plugin_data {
             if let Some(extras) = vsw_data.get("vsw-frame-extras") {
-                serde_json::from_str(extras.as_str()).ok()
+                let json: Option<FrameExtrasJson> = serde_json::from_str(extras.as_str()).ok();
+                json.map(|j| j.into())
             } else {
                 None
             }

@@ -28,9 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
+import com.android.designcompose.proto.OverlayPositionEnum
+import com.android.designcompose.proto.overlayBackgroundInteractionFromInt
+import com.android.designcompose.proto.overlayPositionEnumFromInt
 import com.android.designcompose.serdegen.FrameExtras
-import com.android.designcompose.serdegen.OverlayBackgroundInteraction
-import com.android.designcompose.serdegen.OverlayPositionType
 
 @Composable
 internal fun DesignOverlay(
@@ -39,18 +41,20 @@ internal fun DesignOverlay(
     content: @Composable () -> Unit
 ) {
     val alignment =
-        when (overlay.overlayPositionType) {
-            is OverlayPositionType.TOP_LEFT -> Alignment.TopStart
-            is OverlayPositionType.TOP_CENTER -> Alignment.TopCenter
-            is OverlayPositionType.TOP_RIGHT -> Alignment.TopEnd
-            is OverlayPositionType.CENTER -> Alignment.Center
-            is OverlayPositionType.BOTTOM_LEFT -> Alignment.BottomStart
-            is OverlayPositionType.BOTTOM_CENTER -> Alignment.BottomCenter
-            is OverlayPositionType.BOTTOM_RIGHT -> Alignment.BottomEnd
+        when (overlayPositionEnumFromInt(overlay.overlay_position_type)) {
+            OverlayPositionEnum.TOP_LEFT -> Alignment.TopStart
+            OverlayPositionEnum.TOP_CENTER -> Alignment.TopCenter
+            OverlayPositionEnum.TOP_RIGHT -> Alignment.TopEnd
+            OverlayPositionEnum.CENTER -> Alignment.Center
+            OverlayPositionEnum.BOTTOM_LEFT -> Alignment.BottomStart
+            OverlayPositionEnum.BOTTOM_CENTER -> Alignment.BottomCenter
+            OverlayPositionEnum.BOTTOM_RIGHT -> Alignment.BottomEnd
             else -> Alignment.TopStart
         }
+
     val closeOnTapOutside =
-        overlay.overlayBackgroundInteraction is OverlayBackgroundInteraction.CLOSE_ON_CLICK_OUTSIDE
+        overlayBackgroundInteractionFromInt(overlay.overlay_background_interaction) ==
+            OverlayBackgroundInteractionEnum.CLOSE_ON_CLICK_OUTSIDE
     var boxModifier =
         Modifier.fillMaxSize().clickable(
             interactionSource = remember { MutableInteractionSource() },
@@ -60,8 +64,10 @@ internal fun DesignOverlay(
             // behind the overlay background.
             if (closeOnTapOutside) interactionState.close(null)
         }
-    overlay.overlayBackground.color.ifPresent { color ->
-        boxModifier = boxModifier.background(Color(color.r, color.g, color.b, color.a))
+    overlay.overlay_background.ifPresent {
+        it.color.ifPresent { color ->
+            boxModifier = boxModifier.background(Color(color.r, color.g, color.b, color.a))
+        }
     }
 
     DisposableEffect(Unit) {

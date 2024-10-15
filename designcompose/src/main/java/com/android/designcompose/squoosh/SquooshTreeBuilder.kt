@@ -39,8 +39,14 @@ import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
 import com.android.designcompose.mergeStyles
+import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
+import com.android.designcompose.proto.OverlayPositionEnum
 import com.android.designcompose.proto.newDimensionProtoPercent
+import com.android.designcompose.proto.overlayBackgroundInteractionFromInt
+import com.android.designcompose.proto.overlayPositionEnumFromInt
+import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.Action
+import com.android.designcompose.serdegen.ActionType
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.Background
 import com.android.designcompose.serdegen.BackgroundType
@@ -54,13 +60,12 @@ import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.OverflowDirection
-import com.android.designcompose.serdegen.OverlayBackgroundInteraction
-import com.android.designcompose.serdegen.OverlayPositionType
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Reaction
 import com.android.designcompose.serdegen.RenderMethod
 import com.android.designcompose.serdegen.ScrollInfo
 import com.android.designcompose.serdegen.Trigger
+import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
@@ -300,17 +305,17 @@ internal fun resolveVariantsRecursively(
         reactions.forEach { r ->
             hasSupportedInteraction =
                 hasSupportedInteraction ||
-                    r.trigger is Trigger.OnClick ||
-                    r.trigger is Trigger.OnPress
-            if (r.trigger is Trigger.OnKeyDown) {
+                    r.trigger.type is TriggerType.Click ||
+                    r.trigger.type is TriggerType.Press
+            if (r.trigger.type is TriggerType.KeyDown) {
                 // Register to be a listener for key reactions on this node
-                val keyTrigger = r.trigger as Trigger.OnKeyDown
-                val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.key_codes)
+                val keyTrigger = r.trigger.type as TriggerType.KeyDown
+                val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.value.key_codes)
                 val keyAction =
                     KeyAction(
                         interactionState,
-                        r.action,
-                        findTargetInstanceId(document, parentComps, r.action),
+                        r.action.get(),
+                        findTargetInstanceId(document, parentComps, r.action.get()),
                         customizations.getKey(),
                         null,
                     )
@@ -512,28 +517,28 @@ private fun generateOverlayNode(
     layoutStyle.width = newDimensionProtoPercent(1.0f)
     layoutStyle.height = newDimensionProtoPercent(1.0f)
     layoutStyle.flex_direction = FlexDirection.Column()
-    when (overlay.overlayPositionType) {
-        is OverlayPositionType.TOP_LEFT -> {
+    when (overlayPositionEnumFromInt(overlay.overlay_position_type)) {
+        OverlayPositionEnum.TOP_LEFT -> {
             layoutStyle.justify_content = JustifyContent.FlexStart() // Y
             layoutStyle.align_items = AlignItems.FlexStart() // X
         }
-        is OverlayPositionType.TOP_CENTER -> {
+        OverlayPositionEnum.TOP_CENTER -> {
             layoutStyle.justify_content = JustifyContent.FlexStart() // Y
             layoutStyle.align_items = AlignItems.Center() // X
         }
-        is OverlayPositionType.TOP_RIGHT -> {
+        OverlayPositionEnum.TOP_RIGHT -> {
             layoutStyle.justify_content = JustifyContent.FlexStart() // Y
             layoutStyle.align_items = AlignItems.FlexEnd() // X
         }
-        is OverlayPositionType.BOTTOM_LEFT -> {
+        OverlayPositionEnum.BOTTOM_LEFT -> {
             layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
             layoutStyle.align_items = AlignItems.FlexStart() // X
         }
-        is OverlayPositionType.BOTTOM_CENTER -> {
+        OverlayPositionEnum.BOTTOM_CENTER -> {
             layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
             layoutStyle.align_items = AlignItems.Center() // X
         }
-        is OverlayPositionType.BOTTOM_RIGHT -> {
+        OverlayPositionEnum.BOTTOM_RIGHT -> {
             layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
             layoutStyle.align_items = AlignItems.FlexEnd() // X
         }
@@ -546,7 +551,7 @@ private fun generateOverlayNode(
     }
     nodeStyle.background = listOf()
 
-    overlay.overlayBackground.color.ifPresent { color ->
+    overlay.overlay_background.getOrNull()?.color?.getOrNull()?.let { color ->
         val colorBuilder = Color.Builder()
         colorBuilder.r = (color.r * 255.0).toInt()
         colorBuilder.g = (color.g * 255.0).toInt()
@@ -583,13 +588,13 @@ private fun generateOverlayNode(
     overlayView.component_info = Optional.empty()
     overlayView.reactions =
         if (
-            overlay.overlayBackgroundInteraction
-                is OverlayBackgroundInteraction.CLOSE_ON_CLICK_OUTSIDE
+            overlayBackgroundInteractionFromInt(overlay.overlay_background_interaction) ==
+                OverlayBackgroundInteractionEnum.CLOSE_ON_CLICK_OUTSIDE
         ) {
             // Synthesize a reaction that will close the overlay.
             val r = Reaction.Builder()
-            r.trigger = Trigger.OnClick()
-            r.action = Action.Close()
+            r.trigger = Optional.of(Trigger(Optional.of(TriggerType.Click(com.novi.serde.Unit()))))
+            r.action = Optional.of(Action(Optional.of(ActionType.Close(com.novi.serde.Unit()))))
             Optional.of(listOf(r.build()))
         } else {
             Optional.empty()

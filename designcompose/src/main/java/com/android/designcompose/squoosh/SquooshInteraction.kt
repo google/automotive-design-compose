@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 internal fun findTargetInstanceId(
     document: DocContent,
     parentComponents: ParentComponentData?,
-    action: Action
+    action: Action,
 ): String? {
     val destinationId: String? =
         action.action_type.getOrNull()?.let { actionType ->
@@ -69,7 +69,7 @@ internal fun Modifier.squooshInteraction(
     interactionState: InteractionState,
     interactionScope: CoroutineScope,
     customizations: CustomizationContext,
-    childComposable: SquooshChildComposable
+    childComposable: SquooshChildComposable,
 ): Modifier {
     val node = childComposable.node
     val maybeReactions = node.view.reactions
@@ -94,10 +94,10 @@ internal fun Modifier.squooshInteraction(
                                     findTargetInstanceId(
                                         document,
                                         childComposable.parentComponents,
-                                        it.action.get()
+                                        it.action.get(),
                                     ),
                                     customizations.getKey(),
-                                    node.unresolvedNodeId
+                                    node.unresolvedNodeId,
                                 )
                             }
                         val dispatchClickEvent = tryAwaitRelease()
@@ -110,10 +110,10 @@ internal fun Modifier.squooshInteraction(
                                     findTargetInstanceId(
                                         document,
                                         childComposable.parentComponents,
-                                        it.action.get()
+                                        it.action.get(),
                                     ),
                                     node.unresolvedNodeId,
-                                    customizations.getKey()
+                                    customizations.getKey(),
                                 )
                             }
 
@@ -128,10 +128,10 @@ internal fun Modifier.squooshInteraction(
                                         findTargetInstanceId(
                                             document,
                                             childComposable.parentComponents,
-                                            it.action.get()
+                                            it.action.get(),
                                         ),
                                         customizations.getKey(),
-                                        null // no undo
+                                        null, // no undo
                                     )
                                 }
                         }

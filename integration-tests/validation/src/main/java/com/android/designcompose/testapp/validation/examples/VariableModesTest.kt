@@ -123,7 +123,7 @@ fun VariableModesTest() {
             com.android.designcompose.testapp.validation.TestButton(
                 "None",
                 "RootThemeNone",
-                theme.value == null
+                theme.value == null,
             ) {
                 theme.value = null
                 useMaterialOverride.value = false
@@ -131,7 +131,7 @@ fun VariableModesTest() {
             com.android.designcompose.testapp.validation.TestButton(
                 "Material (Figma)",
                 "MaterialFigma",
-                theme.value == Theme.Material
+                theme.value == Theme.Material,
             ) {
                 theme.value = Theme.Material
                 useMaterialOverride.value = false
@@ -139,7 +139,7 @@ fun VariableModesTest() {
             com.android.designcompose.testapp.validation.TestButton(
                 "MyTheme (Figma)",
                 "MyThemeFigma",
-                theme.value == Theme.MyTheme
+                theme.value == Theme.MyTheme,
             ) {
                 theme.value = Theme.MyTheme
                 useMaterialOverride.value = false
@@ -147,7 +147,7 @@ fun VariableModesTest() {
             com.android.designcompose.testapp.validation.TestButton(
                 "Material (Device)",
                 "MaterialDevice",
-                useMaterialOverride.value
+                useMaterialOverride.value,
             ) {
                 theme.value = null
                 useMaterialOverride.value = true
@@ -158,21 +158,21 @@ fun VariableModesTest() {
             com.android.designcompose.testapp.validation.TestButton(
                 "Default",
                 "RootModeDefault",
-                mode.value == LightDarkMode.Default
+                mode.value == LightDarkMode.Default,
             ) {
                 mode.value = LightDarkMode.Default
             }
             com.android.designcompose.testapp.validation.TestButton(
                 "Light",
                 "RootModeLight",
-                mode.value == LightDarkMode.Light
+                mode.value == LightDarkMode.Light,
             ) {
                 mode.value = LightDarkMode.Light
             }
             com.android.designcompose.testapp.validation.TestButton(
                 "Dark",
                 "RootModeDark",
-                mode.value == LightDarkMode.Dark
+                mode.value == LightDarkMode.Dark,
             ) {
                 mode.value = LightDarkMode.Dark
             }
@@ -182,21 +182,21 @@ fun VariableModesTest() {
             com.android.designcompose.testapp.validation.TestButton(
                 "None",
                 "TopRightNone",
-                trTheme.value == null
+                trTheme.value == null,
             ) {
                 trTheme.value = null
             }
             com.android.designcompose.testapp.validation.TestButton(
                 "Material",
                 "TopRightMaterial",
-                trTheme.value == Theme.Material
+                trTheme.value == Theme.Material,
             ) {
                 trTheme.value = Theme.Material
             }
             com.android.designcompose.testapp.validation.TestButton(
                 "MyTheme",
                 "TopRightMyTheme",
-                trTheme.value == Theme.MyTheme
+                trTheme.value == Theme.MyTheme,
             ) {
                 trTheme.value = Theme.MyTheme
             }
@@ -206,21 +206,21 @@ fun VariableModesTest() {
             com.android.designcompose.testapp.validation.TestButton(
                 "Default",
                 "TopRightDefault",
-                trMode.value == LightDarkMode.Default
+                trMode.value == LightDarkMode.Default,
             ) {
                 trMode.value = LightDarkMode.Default
             }
             com.android.designcompose.testapp.validation.TestButton(
                 "Light",
                 "TopRightLight",
-                trMode.value == LightDarkMode.Light
+                trMode.value == LightDarkMode.Light,
             ) {
                 trMode.value = LightDarkMode.Light
             }
             com.android.designcompose.testapp.validation.TestButton(
                 "Dark",
                 "TopRightDark",
-                trMode.value == LightDarkMode.Dark
+                trMode.value == LightDarkMode.Dark,
             ) {
                 trMode.value = LightDarkMode.Dark
             }
@@ -232,13 +232,13 @@ fun VariableModesTest() {
             }
             com.android.designcompose.testapp.validation.Button(
                 "Material",
-                brTheme.value == Theme.Material
+                brTheme.value == Theme.Material,
             ) {
                 brTheme.value = Theme.Material
             }
             com.android.designcompose.testapp.validation.Button(
                 "MyTheme",
-                brTheme.value == Theme.MyTheme
+                brTheme.value == Theme.MyTheme,
             ) {
                 brTheme.value = Theme.MyTheme
             }
@@ -247,19 +247,19 @@ fun VariableModesTest() {
             Text("Bottom Right Mode", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.Button(
                 "Default",
-                brMode.value == LightDarkMode.Default
+                brMode.value == LightDarkMode.Default,
             ) {
                 brMode.value = LightDarkMode.Default
             }
             com.android.designcompose.testapp.validation.Button(
                 "Light",
-                brMode.value == LightDarkMode.Light
+                brMode.value == LightDarkMode.Light,
             ) {
                 brMode.value = LightDarkMode.Light
             }
             com.android.designcompose.testapp.validation.Button(
                 "Dark",
-                brMode.value == LightDarkMode.Dark
+                brMode.value == LightDarkMode.Dark,
             ) {
                 brMode.value = LightDarkMode.Dark
             }

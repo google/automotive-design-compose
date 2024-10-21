@@ -113,7 +113,7 @@ internal fun DesignFrame(
                         parentLayoutId,
                         childIndex,
                         style.layout_style,
-                        view.name
+                        view.name,
                     )
                 }
                 onDispose {}
@@ -125,7 +125,7 @@ internal fun DesignFrame(
                     LayoutManager.unsubscribe(
                         layoutId,
                         rootLayoutId,
-                        parentLayout?.isWidgetAncestor == true
+                        parentLayout?.isWidgetAncestor == true,
                     )
                 }
             }
@@ -259,7 +259,7 @@ internal fun DesignFrame(
                                     layoutId,
                                     rootLayoutId,
                                     it.width,
-                                    it.height
+                                    it.height,
                                 )
                             }
                         else Modifier.layoutSizeToModifier(layout)
@@ -283,7 +283,7 @@ internal fun DesignFrame(
                                         style.node_style.overflow_node_name.get(),
                                         NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
                                         parentComponents,
-                                        null
+                                        null,
                                     )
                                 }
                             } else {
@@ -295,7 +295,7 @@ internal fun DesignFrame(
                     Row(
                         layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
                         horizontalArrangement = layoutInfo.arrangement,
-                        verticalAlignment = layoutInfo.alignment
+                        verticalAlignment = layoutInfo.alignment,
                     ) {
                         content()
                     }
@@ -330,7 +330,7 @@ internal fun DesignFrame(
                                     layoutId,
                                     rootLayoutId,
                                     it.width,
-                                    it.height
+                                    it.height,
                                 )
                             }
                         else Modifier.layoutSizeToModifier(layout)
@@ -354,7 +354,7 @@ internal fun DesignFrame(
                                         style.node_style.overflow_node_name.get(),
                                         NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
                                         parentComponents,
-                                        null
+                                        null,
                                     )
                                 }
                             } else {
@@ -366,7 +366,7 @@ internal fun DesignFrame(
                     Column(
                         layoutInfo.selfModifier.then(m).then(layoutInfo.marginModifier),
                         verticalArrangement = layoutInfo.arrangement,
-                        horizontalAlignment = layoutInfo.alignment
+                        horizontalAlignment = layoutInfo.alignment,
                     ) {
                         content()
                     }
@@ -424,7 +424,7 @@ internal fun DesignFrame(
                                         spanFound =
                                             LazyContentSpan(
                                                 span = item.span,
-                                                maxLineSpan = item.max_span
+                                                maxLineSpan = item.max_span,
                                             )
                                 }
                             }
@@ -461,7 +461,7 @@ internal fun DesignFrame(
                         span = {
                             val span = lContent.initialSpan?.invoke() ?: LazyContentSpan()
                             GridItemSpan(if (span.maxLineSpan) maxLineSpan else span.span)
-                        }
+                        },
                     ) {
                         DesignListLayout(ListLayoutType.Grid) { lContent.initialContent() }
                     }
@@ -511,7 +511,7 @@ internal fun DesignFrame(
                                         style.node_style.overflow_node_name.get(),
                                         NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
                                         parentComponents,
-                                        null
+                                        null,
                                     )
                                 }
                             } else {
@@ -519,7 +519,7 @@ internal fun DesignFrame(
                                     lContent.itemContent(index)
                                 }
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -582,7 +582,7 @@ internal fun DesignFrame(
                                     return calculateCellsCrossAxisSizeImpl(
                                         availableSize,
                                         columnCount,
-                                        spacing
+                                        spacing,
                                     )
                                 }
                             },
@@ -633,7 +633,7 @@ internal fun DesignFrame(
                                     return calculateCellsCrossAxisSizeImpl(
                                         availableSize,
                                         rowCount,
-                                        spacing
+                                        spacing,
                                     )
                                 }
                             },
@@ -683,7 +683,7 @@ internal fun DesignFrame(
                                     scrollOffset.value =
                                         (scrollOffset.value + delta).coerceIn(-scrollMax.value, 0F)
                                     delta
-                                }
+                                },
                         )
                     )
             }
@@ -742,7 +742,7 @@ internal fun Modifier.frameRender(
                     val offset =
                         Offset(
                             -style.layout_style.margin.start.pointsAsDp(density).value,
-                            -style.layout_style.margin.top.pointsAsDp(density).value
+                            -style.layout_style.margin.top.pointsAsDp(density).value,
                         )
                     val parentSize = maskInfo?.parentSize?.value ?: size
                     drawContext.canvas.withSaveLayer(Rect(offset, parentSize), paint) { render() }

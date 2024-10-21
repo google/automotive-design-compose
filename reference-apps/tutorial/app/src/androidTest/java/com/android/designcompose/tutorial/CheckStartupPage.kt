@@ -44,7 +44,7 @@ class CheckStartupPage {
         composeTestRule
             .onNodeWithText(
                 "Congratulations on running the Automotive Design for Compose Tutorial app!",
-                substring = true
+                substring = true,
             )
             .assertExists()
     }

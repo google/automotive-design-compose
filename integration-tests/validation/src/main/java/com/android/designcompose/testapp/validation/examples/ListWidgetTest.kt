@@ -43,7 +43,7 @@ interface ListWidgetTest {
                     PreviewNode(4, "#Item=Grid, #Playing=Off"),
                     PreviewNode(1, "#Item=Grid, #Playing=On"),
                     PreviewNode(6, "#Item=Grid, #Playing=Off"),
-                ]
+                ],
         )
         @Design(node = "#row-content")
         rowItems: ListContent,
@@ -55,7 +55,7 @@ interface ListWidgetTest {
                     PreviewNode(4, "#Item=Grid, #Playing=Off"),
                     PreviewNode(1, "#Item=Grid, #Playing=On"),
                     PreviewNode(6, "#Item=Grid, #Playing=Off"),
-                ]
+                ],
         )
         @Design(node = "#row-content-scrolling")
         rowScrollItems: ListContent,
@@ -67,7 +67,7 @@ interface ListWidgetTest {
                     PreviewNode(4, "#VItem=Grid, #Playing=Off"),
                     PreviewNode(1, "#VItem=Grid, #Playing=On"),
                     PreviewNode(6, "#VItem=Grid, #Playing=Off"),
-                ]
+                ],
         )
         @Design(node = "#col-content")
         colItems: ListContent,
@@ -79,7 +79,7 @@ interface ListWidgetTest {
                     PreviewNode(4, "#VItem=Grid, #Playing=Off"),
                     PreviewNode(1, "#VItem=Grid, #Playing=On"),
                     PreviewNode(6, "#VItem=Grid, #Playing=Off"),
-                ]
+                ],
         )
         @Design(node = "#col-content-scrolling")
         colScrollItems: ListContent,
@@ -122,21 +122,11 @@ fun ListWidgetTest() {
     }
 
     @Composable
-    fun itemComposable(
-        items: ArrayList<Pair<GridItemType, String>>,
-        index: Int,
-    ) {
+    fun itemComposable(items: ArrayList<Pair<GridItemType, String>>, index: Int) {
         when (items[index].first) {
             GridItemType.RowGrid ->
-                ListWidgetTestDoc.Item(
-                    type = ItemType.Grid,
-                    title = items[index].second,
-                )
-            else ->
-                ListWidgetTestDoc.VItem(
-                    type = ItemType.Grid,
-                    title = items[index].second,
-                )
+                ListWidgetTestDoc.Item(type = ItemType.Grid, title = items[index].second)
+            else -> ListWidgetTestDoc.VItem(type = ItemType.Grid, title = items[index].second)
         }
     }
 

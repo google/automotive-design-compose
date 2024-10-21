@@ -44,8 +44,8 @@ class CheckStartupPage {
                 RoborazziRule.Options(
                     outputDirectoryPath = "src/testDebug/roborazzi",
                     // Always capture the last image of the test
-                    captureType = RoborazziRule.CaptureType.LastImage()
-                )
+                    captureType = RoborazziRule.CaptureType.LastImage(),
+                ),
         )
 
     @Test
@@ -54,7 +54,7 @@ class CheckStartupPage {
             setContent { TutorialMain() }
             onNodeWithText(
                     "Congratulations on running the Automotive Design for Compose Tutorial app!",
-                    substring = true
+                    substring = true,
                 )
                 .assertExists()
         }

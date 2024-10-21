@@ -23,7 +23,7 @@ val cargoTriples =
         "x86" to "i686-linux-android",
         "x86_64" to "x86_64-linux-android",
         "armeabi-v7a" to "armv7-linux-androideabi",
-        "arm64-v8a" to "aarch64-linux-android"
+        "arm64-v8a" to "aarch64-linux-android",
     )
 
 /**
@@ -32,16 +32,16 @@ val cargoTriples =
  * Provides convenience functions for determing Csrgo targets, compilers and other things required
  * for cross compiling
  *
- * @constructor Create empty Toolchain
  * @property androidAbi The ABI
  * @property compileApi The API version of the tools to use (set by minSDK)
  * @property ndkDirectory The path to the directory containing the NDK
+ * @constructor Create empty Toolchain
  */
 data class Toolchain(
     val androidAbi: String,
     val compileApi: Int,
     val ndkDirectory: File,
-    val hostOS: String
+    val hostOS: String,
 ) {
 
     init {
@@ -59,9 +59,11 @@ data class Toolchain(
     // The binary dir of the NDK
     private val binDir
         get() = File(ndkDirectory, "toolchains/llvm/prebuilt/$hostOS/bin")
+
     // The C compiler for this toolchain (also the linker)
     val cc
         get() = File(binDir, "${compilerTriple}$compileApi-clang")
+
     // The archiver for this toolchain
     val ar
         get() = File(binDir, "llvm-ar")

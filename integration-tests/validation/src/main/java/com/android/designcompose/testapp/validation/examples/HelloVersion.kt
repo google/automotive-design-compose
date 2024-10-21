@@ -40,9 +40,9 @@ fun HelloVersion() {
                 newDocDataCallback = { docId, data ->
                     Log.i(
                         "DesignCompose",
-                        "HelloWorld Updated doc ID $docId: ${data?.size ?: 0} bytes"
+                        "HelloWorld Updated doc ID $docId: ${data?.size ?: 0} bytes",
                     )
                 },
-            )
+            ),
     )
 }

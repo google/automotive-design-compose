@@ -48,7 +48,7 @@ val RELAYOUT_SAMPLE_TEXTS =
         "X",
         "Goodness me!",
         "Y",
-        "This is much longer! Let's see what happens!"
+        "This is much longer! Let's see what happens!",
     )
 
 @Composable
@@ -69,7 +69,7 @@ fun ComponentReplaceRelayoutTest() {
                                 "${RELAYOUT_SAMPLE_TEXTS[textIndex % RELAYOUT_SAMPLE_TEXTS.size]} $idx"
                         )
                     }
-                }
+                },
             ),
         b =
             ReplacementContent(
@@ -81,8 +81,8 @@ fun ComponentReplaceRelayoutTest() {
                                 "Hi! ${RELAYOUT_SAMPLE_TEXTS[textIndex % RELAYOUT_SAMPLE_TEXTS.size]} $idx"
                         )
                     }
-                }
-            )
+                },
+            ),
     )
     Row() {
         Button(name = "Next", selected = false) { setTextIndex(textIndex + 1) }

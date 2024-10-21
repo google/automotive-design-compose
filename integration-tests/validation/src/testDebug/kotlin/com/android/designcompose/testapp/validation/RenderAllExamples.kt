@@ -77,7 +77,7 @@ class RenderAllExamples(private val config: TestConfig) {
         internal val fileComposable: @Composable () -> Unit,
         internal val fileClass: String,
         // This value doesn't do anything if there is already one set in the test example.
-        internal val useSquoosh: Boolean = false
+        internal val useSquoosh: Boolean = false,
     )
 
     val dcfOutPath = System.getProperty("designcompose.test.dcfOutPath")
@@ -109,7 +109,7 @@ class RenderAllExamples(private val config: TestConfig) {
     companion object {
         private val disabledTests =
             listOf(
-                StateCustomizationsDoc.javaClass.name, // Separate test due to different set up
+                StateCustomizationsDoc.javaClass.name // Separate test due to different set up
             )
 
         @JvmStatic
@@ -141,7 +141,7 @@ class RenderAllExamples(private val config: TestConfig) {
                             it.first.replace("[\\s*]".toRegex(), "-").plus("_SQUOOSH"),
                             it.second,
                             it.third!!,
-                            useSquoosh = true
+                            useSquoosh = true,
                         )
                     }
             )

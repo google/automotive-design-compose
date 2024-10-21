@@ -54,8 +54,8 @@ class RenderHelloWorld {
                 RoborazziRule.Options(
                     outputDirectoryPath = "src/testDebug/roborazzi",
                     // Always capture the last image of the test
-                    captureType = RoborazziRule.CaptureType.LastImage()
-                )
+                    captureType = RoborazziRule.CaptureType.LastImage(),
+                ),
         )
 
     @Test

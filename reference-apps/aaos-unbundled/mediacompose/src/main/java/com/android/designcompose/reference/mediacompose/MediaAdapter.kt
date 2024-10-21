@@ -94,12 +94,7 @@ const val CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2
 // instead of filling the full available area.
 const val CONTENT_STYLE_CATEGORY_GRID_ITEM_HINT_VALUE = 4
 
-private data class MediaArtKey(
-    val uri: String?,
-    val width: Int,
-    val height: Int,
-    val color: Int?,
-) {
+private data class MediaArtKey(val uri: String?, val width: Int, val height: Int, val color: Int?) {
     fun isValid(): Boolean {
         return !uri.isNullOrEmpty() && width > 0 && height > 0
     }
@@ -224,7 +219,7 @@ private class MediaArtworkBinder(
                     }
                 )
             }
-        }
+        },
     ) {}
 
 private fun getMediaUrl(metadata: MediaItemMetadata?): String {
@@ -314,7 +309,7 @@ class MediaAdapter(
             Runtime.getRuntime().availableProcessors() * 2,
             60L,
             TimeUnit.SECONDS,
-            LinkedBlockingQueue<Runnable>()
+            LinkedBlockingQueue<Runnable>(),
         )
 
     private val mediaBrowsingObserver = Observer { newBrowsingState: BrowsingState? ->
@@ -338,7 +333,7 @@ class MediaAdapter(
             MediaBrowserConnector.ConnectionStatus.CONNECTED -> {
                 Log.i(
                     TAG,
-                    "Media Browse State CONNECTED ${newBrowsingState.mMediaSource.getDisplayName(context)}"
+                    "Media Browse State CONNECTED ${newBrowsingState.mMediaSource.getDisplayName(context)}",
                 )
                 val browser = newBrowsingState.mBrowser
                 canSearch.value = MediaBrowserViewModelImpl.getSupportsSearch(browser)
@@ -393,7 +388,7 @@ class MediaAdapter(
                 mediaArtKey.width,
                 mediaArtKey.height,
                 mediaArtKey.color,
-                artworkThreadPool
+                artworkThreadPool,
             ) { b: Bitmap? ->
                 val mainHandler = Handler(context.mainLooper)
                 mainHandler.post {
@@ -618,7 +613,7 @@ class MediaAdapter(
                 },
                 media,
                 false,
-                nowPlayingPlaybackViewModel
+                nowPlayingPlaybackViewModel,
             )
 
         return nowPlaying
@@ -662,7 +657,7 @@ class MediaAdapter(
                 span = { index ->
                     spanFunc { media.SourceButtonDesignNodeData(getSourceButtonType(index)) }
                 },
-                key = { index -> sources[index].toString() }
+                key = { index -> sources[index].toString() },
             ) { index ->
                 val source = sources[index]
                 media.SourceButton(
@@ -697,7 +692,7 @@ class MediaAdapter(
             return { spanFunc ->
                 ListContentData(
                     count = 1,
-                    span = { spanFunc { media.LoadingPageDesignNodeData() } }
+                    span = { spanFunc { media.LoadingPageDesignNodeData() } },
                 ) {
                     media.LoadingPage(Modifier)
                 }
@@ -714,7 +709,7 @@ class MediaAdapter(
             playFunc,
             media,
             showSectionTitles,
-            playbackViewModel
+            playbackViewModel,
         )
     }
 
@@ -725,7 +720,7 @@ class MediaAdapter(
         playFunc: (PlaybackViewModel.PlaybackController?, MediaItemMetadata) -> Unit,
         media: CenterDisplayGen,
         showSectionTitles: Boolean = true,
-        playbackViewModel: PlaybackViewModel
+        playbackViewModel: PlaybackViewModel,
     ): ListContent {
         if (list == null) return { ListContentData { _ -> } }
         val playbackController: PlaybackViewModel.PlaybackController? by
@@ -804,7 +799,7 @@ class MediaAdapter(
                 media.BrowseItemDesignNodeData(
                     browseType =
                         if (groupGridType[group]!!) BrowseItemType.Grid else BrowseItemType.List,
-                    currentlyPlaying = currentlyPlaying
+                    currentlyPlaying = currentlyPlaying,
                 )
             item.composable = {
                 // Use `key` to tell Compose not to try to morph one item into another
@@ -902,7 +897,7 @@ class MediaAdapter(
             browse.content = { spanFunc ->
                 ListContentData(
                     count = 1,
-                    span = { spanFunc { media.LoadingPageDesignNodeData() } }
+                    span = { spanFunc { media.LoadingPageDesignNodeData() } },
                 ) {
                     media.LoadingPage(Modifier)
                 }

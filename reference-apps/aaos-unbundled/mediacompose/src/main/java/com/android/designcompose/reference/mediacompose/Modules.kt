@@ -65,7 +65,7 @@ class PlaybackControlsModule(
     @DesignContentTypesProperty(nodes = ["#media/now-playing/custom-action-button"])
     @DesignPreviewContentProperty(
         name = "Buttons",
-        nodes = [PreviewNode(3, "#media/now-playing/custom-action-button")]
+        nodes = [PreviewNode(3, "#media/now-playing/custom-action-button")],
     )
     @DesignProperty(node = "#media/now-playing/custom-buttons/auto-content")
     val customActions: ListContent,
@@ -77,7 +77,7 @@ class ErrorFrameModule(
     @DesignContentTypesProperty(nodes = ["#media/error/frame"])
     @DesignPreviewContentProperty(
         name = "Error Page",
-        nodes = [PreviewNode(1, "#media/error/frame")]
+        nodes = [PreviewNode(1, "#media/error/frame")],
     )
     @DesignProperty(node = "#media/error/auto-content")
     val errorFrameContents: @Composable (ComponentReplacementContext) -> Unit,
@@ -94,8 +94,8 @@ class BrowseSourceButtonModule(
             [
                 PreviewNode(1, "#media/source-button=Unselected"),
                 PreviewNode(1, "#media/source-button=Selected"),
-                PreviewNode(3, "#media/source-button=Unselected")
-            ]
+                PreviewNode(3, "#media/source-button=Unselected"),
+            ],
     )
     @DesignProperty(node = "#media/browse/source-list/auto-content")
     val browseSourceList: ListContent,
@@ -108,11 +108,11 @@ class BrowsePageHeaderModule(
     )
     @DesignPreviewContentProperty(
         name = "Root Nav",
-        nodes = [PreviewNode(1, "#media/browse/header-nav")]
+        nodes = [PreviewNode(1, "#media/browse/header-nav")],
     )
     @DesignPreviewContentProperty(
         name = "Drill Down",
-        nodes = [PreviewNode(1, "#media/browse/header-drill-down")]
+        nodes = [PreviewNode(1, "#media/browse/header-drill-down")],
     )
     @DesignProperty(node = "#media/browse/page-header")
     val browseHeader: ListContent,
@@ -127,7 +127,7 @@ class BrowseContentModule(
     )
     @DesignPreviewContentProperty(
         name = "Loading Page",
-        nodes = [PreviewNode(1, "#media/browse/loading")]
+        nodes = [PreviewNode(1, "#media/browse/loading")],
     )
     @DesignPreviewContentProperty(
         name = "Browse",
@@ -136,8 +136,8 @@ class BrowseContentModule(
                 PreviewNode(1, "#media/browse/section-title"),
                 PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid"),
                 PreviewNode(1, "#media/browse/section-title"),
-                PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid")
-            ]
+                PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid"),
+            ],
     )
     @DesignPreviewContentProperty(
         name = "Album",
@@ -146,11 +146,11 @@ class BrowseContentModule(
                 PreviewNode(1, "#media/browse/section-title"),
                 PreviewNode(3, "#media/currently-playing=Off, #media/browse/item=List"),
                 PreviewNode(1, "#media/browse/currently-playing=On, #media/browse/item=List"),
-                PreviewNode(5, "#media/currently-playing=Off, #media/browse/item=List")
-            ]
+                PreviewNode(5, "#media/currently-playing=Off, #media/browse/item=List"),
+            ],
     )
     @DesignProperty(node = "#media/browse/auto-content")
-    val browseContent: ListContent,
+    val browseContent: ListContent
 )
 
 @DesignModuleClass
@@ -162,11 +162,11 @@ class BrowsePageHeaderNavButtonsModule(
             [
                 PreviewNode(1, "#media/page-header/nav-button=Unselected"),
                 PreviewNode(1, "#media/page-header/nav-button=Selected"),
-                PreviewNode(2, "#media/page-header/nav-button=Unselected")
-            ]
+                PreviewNode(2, "#media/page-header/nav-button=Unselected"),
+            ],
     )
     @DesignProperty(node = "#nav/auto-content")
-    val nav: ListContent,
+    val nav: ListContent
 )
 
 @DesignModuleClass
@@ -177,7 +177,7 @@ class UpNextQueueModule(
     )
     @DesignPreviewContentProperty(
         name = "Loading Page",
-        nodes = [PreviewNode(1, "#media/browse/loading")]
+        nodes = [PreviewNode(1, "#media/browse/loading")],
     )
     @DesignPreviewContentProperty(
         name = "Browse",
@@ -186,8 +186,8 @@ class UpNextQueueModule(
                 PreviewNode(1, "#media/browse/section-title"),
                 PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid"),
                 PreviewNode(1, "#media/browse/section-title"),
-                PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid")
-            ]
+                PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid"),
+            ],
     )
     @DesignPreviewContentProperty(
         name = "Album",
@@ -196,8 +196,8 @@ class UpNextQueueModule(
                 PreviewNode(1, "#media/browse/section-title"),
                 PreviewNode(3, "#media/currently-playing=Off, #media/browse/item=List"),
                 PreviewNode(1, "#media/browse/currently-playing=On, #media/browse/item=List"),
-                PreviewNode(5, "#media/currently-playing=Off, #media/browse/item=List")
-            ]
+                PreviewNode(5, "#media/currently-playing=Off, #media/browse/item=List"),
+            ],
     )
     @DesignProperty(node = "#media/up-next/auto-content")
     val upNextList: ListContent,
@@ -230,7 +230,7 @@ class SearchOverlayModule(
     )
     @DesignPreviewContentProperty(
         name = "Loading Page",
-        nodes = [PreviewNode(1, "#media/browse/loading")]
+        nodes = [PreviewNode(1, "#media/browse/loading")],
     )
     @DesignPreviewContentProperty(
         name = "Browse",
@@ -239,8 +239,8 @@ class SearchOverlayModule(
                 PreviewNode(1, "#media/browse/section-title"),
                 PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid"),
                 PreviewNode(1, "#media/browse/section-title"),
-                PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid")
-            ]
+                PreviewNode(6, "#media/currently-playing=Off, #media/browse/item=Grid"),
+            ],
     )
     @DesignPreviewContentProperty(
         name = "Album",
@@ -249,8 +249,8 @@ class SearchOverlayModule(
                 PreviewNode(1, "#media/browse/section-title"),
                 PreviewNode(3, "#media/currently-playing=Off, #media/browse/item=List"),
                 PreviewNode(1, "#media/browse/currently-playing=On, #media/browse/item=List"),
-                PreviewNode(5, "#media/currently-playing=Off, #media/browse/item=List")
-            ]
+                PreviewNode(5, "#media/currently-playing=Off, #media/browse/item=List"),
+            ],
     )
     @DesignProperty(node = "#media/search/auto-content")
     val searchResultsContent: ListContent,

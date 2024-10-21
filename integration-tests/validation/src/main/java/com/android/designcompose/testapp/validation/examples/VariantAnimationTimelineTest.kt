@@ -62,9 +62,7 @@ enum class SceneState {
 @DesignDoc(id = "vJRf4zxY4QX4zzSSUd1nJ5")
 interface VariantAnimationTimelineTest {
     @DesignComponent(node = "root/display_1")
-    fun Main(
-        @DesignVariant(property = "SceneState") sceneState: SceneState,
-    )
+    fun Main(@DesignVariant(property = "SceneState") sceneState: SceneState)
 }
 
 @Composable
@@ -90,7 +88,7 @@ fun VariantAnimationTimelineTest() {
                             if (childAnimType.value == ChildAnimType.Early) 0 else 1500
                         SmartAnimateTransition(
                             tween(durationMillis = 500, easing = defaultEasing),
-                            delayMillis
+                            delayMillis,
                         )
                     } else if (tNum != null) {
                         val durationMillis =
@@ -107,110 +105,108 @@ fun VariantAnimationTimelineTest() {
                             }
                         SmartAnimateTransition(
                             tween(durationMillis = durationMillis, easing = defaultEasing),
-                            delayMillis
+                            delayMillis,
                         )
                     } else {
                         SmartAnimateTransition(
                             tween(
                                 durationMillis = (1f * 1000.0).roundToInt(),
-                                easing = defaultEasing
+                                easing = defaultEasing,
                             ),
-                            0
+                            0,
                         )
                     }
-                }
+                },
             )
     ) {
-        VariantAnimationTimelineTestDoc.Main(
-            sceneState = sceneState.value,
-        )
+        VariantAnimationTimelineTestDoc.Main(sceneState = sceneState.value)
     }
 
     Column(Modifier.absoluteOffset(y = 750.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Animation Type:", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.TestButton(
                 name = "Normal",
                 tag = "Normal",
-                selected = animType.value == AnimType.Normal
+                selected = animType.value == AnimType.Normal,
             ) {
                 animType.value = AnimType.Normal
             }
             com.android.designcompose.testapp.validation.TestButton(
                 name = "OneByOne",
                 tag = "OneByOne",
-                selected = animType.value == AnimType.OneByOne
+                selected = animType.value == AnimType.OneByOne,
             ) {
                 animType.value = AnimType.OneByOne
             }
             com.android.designcompose.testapp.validation.TestButton(
                 name = "DifferentDurations",
                 tag = "DifferentDurations",
-                selected = animType.value == AnimType.DifferentDurations
+                selected = animType.value == AnimType.DifferentDurations,
             ) {
                 animType.value = AnimType.DifferentDurations
             }
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Child Animation Type:", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.TestButton(
                 name = "Normal",
                 tag = "ChildNormal",
-                selected = childAnimType.value == ChildAnimType.Normal
+                selected = childAnimType.value == ChildAnimType.Normal,
             ) {
                 childAnimType.value = ChildAnimType.Normal
             }
             com.android.designcompose.testapp.validation.TestButton(
                 name = "Early",
                 tag = "ChildEarly",
-                selected = childAnimType.value == ChildAnimType.Early
+                selected = childAnimType.value == ChildAnimType.Early,
             ) {
                 childAnimType.value = ChildAnimType.Early
             }
             com.android.designcompose.testapp.validation.TestButton(
                 name = "Late",
                 tag = "ChildLate",
-                selected = childAnimType.value == ChildAnimType.Late
+                selected = childAnimType.value == ChildAnimType.Late,
             ) {
                 childAnimType.value = ChildAnimType.Late
             }
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Variant:", fontSize = 30.sp, color = Color.Black)
             com.android.designcompose.testapp.validation.TestButton(
                 name = "Columns",
                 tag = "Columns",
-                selected = sceneState.value == SceneState.Closed
+                selected = sceneState.value == SceneState.Closed,
             ) {
                 sceneState.value = SceneState.Closed
             }
             com.android.designcompose.testapp.validation.TestButton(
                 name = "Spread",
                 tag = "Spread",
-                selected = sceneState.value == SceneState.BeforeWelcome
+                selected = sceneState.value == SceneState.BeforeWelcome,
             ) {
                 sceneState.value = SceneState.BeforeWelcome
             }
             com.android.designcompose.testapp.validation.TestButton(
                 name = "Center",
                 tag = "Center",
-                selected = sceneState.value == SceneState.CenterAll
+                selected = sceneState.value == SceneState.CenterAll,
             ) {
                 sceneState.value = SceneState.CenterAll
             }
             com.android.designcompose.testapp.validation.TestButton(
                 name = "Cluster",
                 tag = "Cluster",
-                selected = sceneState.value == SceneState.Open
+                selected = sceneState.value == SceneState.Open,
             ) {
                 sceneState.value = SceneState.Open
             }

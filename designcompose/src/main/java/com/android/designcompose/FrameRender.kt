@@ -116,7 +116,7 @@ private fun calculateRotationData(
     rotationData: RotationMeterData,
     meterValue: Float,
     style: ViewStyle,
-    density: Float
+    density: Float,
 ): androidx.compose.ui.graphics.Matrix {
     val rotation =
         (rotationData.start + meterValue / 100f * (rotationData.end - rotationData.start))
@@ -152,7 +152,7 @@ private fun calculateRotationData(
     translateBack.translate(
         moveX - style.layout_style.margin.start.pointsAsDp(density).value + xOffsetParent.toFloat(),
         moveY - style.layout_style.margin.top.pointsAsDp(density).value + yOffsetParent.toFloat(),
-        0f
+        0f,
     )
     overrideTransform.timesAssign(translateBack)
     return overrideTransform
@@ -163,7 +163,7 @@ private fun calculateProgressBarData(
     meterValue: Float,
     style: ViewStyle,
     parent: SquooshResolvedNode?,
-    density: Float
+    density: Float,
 ): Pair<Size, androidx.compose.ui.graphics.Matrix?> {
     // Progress bar discrete values are done by percentage
     val discretizedMeterValue =
@@ -212,7 +212,7 @@ private fun calculateProgressMarkerData(
     style: ViewStyle,
     node: SquooshResolvedNode?,
     parent: SquooshResolvedNode?,
-    density: Float
+    density: Float,
 ): androidx.compose.ui.graphics.Matrix {
     // Progress marker discrete values are done by percentage
     val discretizedMeterValue =
@@ -255,7 +255,7 @@ private fun calculateProgressMarkerData(
 private fun calculateArcData(
     arcData: ArcMeterData,
     meterValue: Float,
-    shape: ViewShape
+    shape: ViewShape,
 ): ViewShape {
     // Max out the arc to just below a full circle to avoid having the
     // path completely disappear
@@ -263,7 +263,7 @@ private fun calculateArcData(
     val arcAngleMeter =
         (arcMeterValue / 100f * (arcData.end - arcData.start)).coerceDiscrete(
             arcData.discrete,
-            arcData.discreteValue
+            arcData.discreteValue,
         )
     var returnShape = shape
     if (shape is ViewShape.Arc) {
@@ -290,7 +290,7 @@ private fun calculateProgressVectorData(
     p: Paint,
     style: ViewStyle,
     meterValue: Float,
-    density: Float
+    density: Float,
 ) {
     val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density
     val discretizedMeterValue = meterValue.coerceDiscrete(data.discrete, data.discreteValue)
@@ -364,7 +364,7 @@ internal fun ContentDrawScope.render(
                                 meterValue,
                                 style,
                                 null,
-                                density
+                                density,
                             )
                         rectSize = progressBarSizeTransform.first
                         overrideTransform = progressBarSizeTransform.second
@@ -380,7 +380,7 @@ internal fun ContentDrawScope.render(
                                 style,
                                 null,
                                 null,
-                                density
+                                density,
                             )
                     }
                 }
@@ -436,7 +436,7 @@ internal fun ContentDrawScope.render(
             customArcAngle,
             layoutId,
             variableState,
-            ComputedPathCache()
+            ComputedPathCache(),
         )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
@@ -502,19 +502,19 @@ internal fun ContentDrawScope.render(
             shadowPaint.maskFilter =
                 BlurMaskFilter(
                     shadow.shadowStyle.blur_radius * density * blurFudgeFactor,
-                    BlurMaskFilter.Blur.NORMAL
+                    BlurMaskFilter.Blur.NORMAL,
                 )
         }
         drawContext.canvas.translate(
             shadow.shadowStyle.offset[0] * density,
-            shadow.shadowStyle.offset[1] * density
+            shadow.shadowStyle.offset[1] * density,
         )
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
         drawContext.canvas.translate(
             -shadow.shadowStyle.offset[0] * density,
-            -shadow.shadowStyle.offset[1] * density
+            -shadow.shadowStyle.offset[1] * density,
         )
     }
     drawContext.canvas.restore()
@@ -532,7 +532,7 @@ internal fun ContentDrawScope.render(
         }
         drawImage(
             customImage.asImageBitmap(),
-            dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt())
+            dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
         )
         drawContext.canvas.restore()
     } else {
@@ -560,19 +560,19 @@ internal fun ContentDrawScope.render(
             shadowPaint.maskFilter =
                 BlurMaskFilter(
                     shadow.shadowStyle.blur_radius * density * blurFudgeFactor,
-                    BlurMaskFilter.Blur.NORMAL
+                    BlurMaskFilter.Blur.NORMAL,
                 )
         }
         drawContext.canvas.translate(
             shadow.shadowStyle.offset[0] * density,
-            shadow.shadowStyle.offset[1] * density
+            shadow.shadowStyle.offset[1] * density,
         )
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
         drawContext.canvas.translate(
             -shadow.shadowStyle.offset[0] * density,
-            -shadow.shadowStyle.offset[1] * density
+            -shadow.shadowStyle.offset[1] * density,
         )
     }
     drawContext.canvas.restore()
@@ -650,7 +650,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                                 meterValue,
                                 style,
                                 node.parent,
-                                density
+                                density,
                             )
                         rectSize = progressBarSizeTransform.first
                         overrideTransform = progressBarSizeTransform.second
@@ -666,7 +666,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                                 style,
                                 node,
                                 node.parent,
-                                density
+                                density,
                             )
                     }
                 }
@@ -739,7 +739,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                         shadowOutset,
                         shadow.shadowStyle.blur_radius * blurFudgeFactor +
                             shadow.shadowStyle.spread_radius +
-                            max(shadow.shadowStyle.offset[0], shadow.shadowStyle.offset[1])
+                            max(shadow.shadowStyle.offset[0], shadow.shadowStyle.offset[1]),
                     )
             }
         }
@@ -752,7 +752,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                         StrokeAlignType.Outside -> style.node_style.stroke.stroke_weight.max()
                         StrokeAlignType.Center -> style.node_style.stroke.stroke_weight.max() / 2.0f
                         else -> 0.0f
-                    }
+                    },
                 )
         }
         // The shadow outset is additive to the stroke outset, as shadows are applied to the stroke
@@ -824,19 +824,19 @@ internal fun ContentDrawScope.squooshShapeRender(
             shadowPaint.maskFilter =
                 BlurMaskFilter(
                     shadow.shadowStyle.blur_radius * density * blurFudgeFactor,
-                    BlurMaskFilter.Blur.NORMAL
+                    BlurMaskFilter.Blur.NORMAL,
                 )
         }
         drawContext.canvas.translate(
             shadow.shadowStyle.offset[0] * density,
-            shadow.shadowStyle.offset[1] * density
+            shadow.shadowStyle.offset[1] * density,
         )
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
         drawContext.canvas.translate(
             -shadow.shadowStyle.offset[0] * density,
-            -shadow.shadowStyle.offset[1] * density
+            -shadow.shadowStyle.offset[1] * density,
         )
     }
     drawContext.canvas.restore()
@@ -854,7 +854,7 @@ internal fun ContentDrawScope.squooshShapeRender(
         }
         drawImage(
             customImage.asImageBitmap(),
-            dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt())
+            dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
         )
         drawContext.canvas.restore()
     } else {
@@ -882,19 +882,19 @@ internal fun ContentDrawScope.squooshShapeRender(
             shadowPaint.maskFilter =
                 BlurMaskFilter(
                     shadow.shadowStyle.blur_radius * density * blurFudgeFactor,
-                    BlurMaskFilter.Blur.NORMAL
+                    BlurMaskFilter.Blur.NORMAL,
                 )
         }
         drawContext.canvas.translate(
             shadow.shadowStyle.offset[0] * density,
-            shadow.shadowStyle.offset[1] * density
+            shadow.shadowStyle.offset[1] * density,
         )
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
         drawContext.canvas.translate(
             -shadow.shadowStyle.offset[0] * density,
-            -shadow.shadowStyle.offset[1] * density
+            -shadow.shadowStyle.offset[1] * density,
         )
     }
     drawContext.canvas.restore()

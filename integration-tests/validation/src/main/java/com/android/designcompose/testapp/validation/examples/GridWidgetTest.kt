@@ -47,8 +47,8 @@ interface GridWidgetTest {
                     PreviewNode(6, "#Item=Grid, #Playing=Off"),
                     PreviewNode(1, "#SectionTitle"),
                     PreviewNode(1, "#Item=List, #Playing=On"),
-                    PreviewNode(3, "#Item=List, #Playing=Off")
-                ]
+                    PreviewNode(3, "#Item=List, #Playing=Off"),
+                ],
         )
         @DesignPreviewContent(
             name = "Album",
@@ -56,8 +56,8 @@ interface GridWidgetTest {
                 [
                     PreviewNode(1, "#SectionTitle"),
                     PreviewNode(1, "#Item=List, #Playing=On"),
-                    PreviewNode(16, "#Item=List, #Playing=Off")
-                ]
+                    PreviewNode(16, "#Item=List, #Playing=Off"),
+                ],
         )
         @DesignPreviewContent(name = "Loading", nodes = [PreviewNode(1, "#LoadingPage")])
         @DesignPreviewContent(name = "Error", nodes = [PreviewNode(1, "#ErrorPage")])
@@ -74,8 +74,8 @@ interface GridWidgetTest {
                     PreviewNode(4, "#VItem=Grid, #Playing=Off"),
                     PreviewNode(1, "#VSectionTitle"),
                     PreviewNode(1, "#VItem=List, #Playing=On"),
-                    PreviewNode(3, "#VItem=List, #Playing=Off")
-                ]
+                    PreviewNode(3, "#VItem=List, #Playing=Off"),
+                ],
         )
         @DesignPreviewContent(name = "Loading", nodes = [PreviewNode(1, "#LoadingPage")])
         @DesignPreviewContent(name = "Error", nodes = [PreviewNode(1, "#ErrorPage")])
@@ -147,39 +147,19 @@ fun GridWidgetTest() {
     }
 
     @Composable
-    fun itemComposable(
-        items: ArrayList<Pair<GridItemType, String>>,
-        index: Int,
-    ) {
+    fun itemComposable(items: ArrayList<Pair<GridItemType, String>>, index: Int) {
         when (items[index].first) {
-            GridItemType.SectionTitle ->
-                GridWidgetTestDoc.SectionTitle(
-                    title = items[index].second,
-                )
+            GridItemType.SectionTitle -> GridWidgetTestDoc.SectionTitle(title = items[index].second)
             GridItemType.VSectionTitle ->
-                GridWidgetTestDoc.VSectionTitle(
-                    title = items[index].second,
-                )
+                GridWidgetTestDoc.VSectionTitle(title = items[index].second)
             GridItemType.RowGrid ->
-                GridWidgetTestDoc.Item(
-                    type = ItemType.Grid,
-                    title = items[index].second,
-                )
+                GridWidgetTestDoc.Item(type = ItemType.Grid, title = items[index].second)
             GridItemType.RowList ->
-                GridWidgetTestDoc.Item(
-                    type = ItemType.List,
-                    title = items[index].second,
-                )
+                GridWidgetTestDoc.Item(type = ItemType.List, title = items[index].second)
             GridItemType.ColGrid ->
-                GridWidgetTestDoc.VItem(
-                    type = ItemType.Grid,
-                    title = items[index].second,
-                )
+                GridWidgetTestDoc.VItem(type = ItemType.Grid, title = items[index].second)
             GridItemType.ColList ->
-                GridWidgetTestDoc.VItem(
-                    type = ItemType.List,
-                    title = items[index].second,
-                )
+                GridWidgetTestDoc.VItem(type = ItemType.List, title = items[index].second)
         }
     }
 
@@ -208,14 +188,8 @@ fun GridWidgetTest() {
             }
         },
         items = {
-            ListContentData(
-                count = 10,
-                span = { LazyContentSpan(1) },
-            ) { index ->
-                GridWidgetTestDoc.Item(
-                    type = ItemType.Grid,
-                    title = "Item $index",
-                )
+            ListContentData(count = 10, span = { LazyContentSpan(1) }) { index ->
+                GridWidgetTestDoc.Item(type = ItemType.Grid, title = "Item $index")
             }
         },
     )

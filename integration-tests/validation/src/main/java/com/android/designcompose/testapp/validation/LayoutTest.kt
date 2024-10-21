@@ -77,12 +77,7 @@ private val Placeable.designChildData: DesignChildData?
 internal fun Modifier.layoutStyle(name: String, layoutId: Int) =
     this.then(DesignChildData(name, layoutId))
 
-data class LO(
-    val width: Float,
-    val height: Float,
-    val top: Float,
-    val left: Float,
-)
+data class LO(val width: Float, val height: Float, val top: Float, val left: Float)
 
 fun EmptyLO(): LO {
     return LO(0F, 0F, 0F, 0F)
@@ -177,10 +172,7 @@ internal object ColorMgr {
     }
 }
 
-internal fun Modifier.myRender(
-    name: String,
-    color: Color,
-): Modifier =
+internal fun Modifier.myRender(name: String, color: Color): Modifier =
     this.then(
         Modifier.drawWithContent {
             println("Render $name ${size.width} x ${size.height}")
@@ -203,12 +195,7 @@ internal fun Modifier.myRender(
     )
 
 @Composable
-fun MyFrame(
-    modifier: Modifier = Modifier,
-    name: String,
-    space: String = "",
-    showRect1: Boolean,
-) {
+fun MyFrame(modifier: Modifier = Modifier, name: String, space: String = "", showRect1: Boolean) {
     val layoutId = remember { LayoutMgr.getNextId() }
     val (layoutState, setLayoutState) = remember { mutableStateOf(0) }
 
@@ -237,7 +224,7 @@ fun MyFrame(
         layoutId,
         layoutState,
         space,
-        myContent
+        myContent,
     )
 }
 
@@ -248,7 +235,7 @@ internal inline fun DesignFrameLayout(
     layoutId: Int,
     layoutState: Int,
     space: String,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val measurePolicy = remember(layoutState) { designMeasurePolicy(name, layoutId, space) }
     Layout(content = content, measurePolicy = measurePolicy, modifier = modifier)
@@ -277,7 +264,7 @@ internal fun designMeasurePolicy(name: String, layoutId: Int, space: String) =
                         )
                         placeable.placeRelative(
                             x = myLayout.left.roundToInt(),
-                            y = myLayout.top.roundToInt()
+                            y = myLayout.top.roundToInt(),
                         )
                     } else {
                         val childLayout = LayoutMgr.get(layoutData?.layoutId ?: -1)
@@ -286,7 +273,7 @@ internal fun designMeasurePolicy(name: String, layoutId: Int, space: String) =
                         )
                         placeable.place(
                             x = childLayout.left.roundToInt(),
-                            y = childLayout.top.roundToInt()
+                            y = childLayout.top.roundToInt(),
                         )
                     }
                 }
@@ -305,10 +292,7 @@ internal fun Button(name: String, selected: Boolean, select: () -> Unit) {
             .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(8.dp))
             .absolutePadding(10.dp, 2.dp, 10.dp, 2.dp)
 
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier,
-    ) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
         Text(name, fontSize = 30.sp, color = textColor)
     }
 }
@@ -324,10 +308,7 @@ internal fun TestButton(name: String, tag: String, selected: Boolean, select: ()
             .absolutePadding(10.dp, 2.dp, 10.dp, 2.dp)
             .testTag(tag)
 
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier,
-    ) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
         Text(name, fontSize = 30.sp, color = textColor)
     }
 }

@@ -44,18 +44,18 @@ class StartupBenchmarks {
                     // of the composable.
                     TraceSectionMetric(
                         "com.android.designcompose.benchmarks.battleship.lib.BattleshipGen.MainFrame %",
-                        TraceSectionMetric.Mode.Sum
+                        TraceSectionMetric.Mode.Sum,
                     ),
                     TraceSectionMetric(DCTraces.DECODEDISKDOC),
                     TraceSectionMetric(DCTraces.DESIGNDOCINTERNAL),
                     TraceSectionMetric(
                         DCTraces.DESIGNFRAME_DE_SUBSCRIBE,
-                        TraceSectionMetric.Mode.Sum
+                        TraceSectionMetric.Mode.Sum,
                     ),
-                    TraceSectionMetric(DCTraces.FETCHDOCUMENTS)
+                    TraceSectionMetric(DCTraces.FETCHDOCUMENTS),
                 ),
             iterations = 5,
-            startupMode = StartupMode.COLD
+            startupMode = StartupMode.COLD,
         ) {
             pressHome()
             startActivityAndWait()

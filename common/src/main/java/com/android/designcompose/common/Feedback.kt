@@ -22,14 +22,14 @@ enum class FeedbackLevel {
     Debug,
     Info,
     Warn,
-    Error
+    Error,
 }
 
 class FeedbackMessage(
     val message: String,
     var count: Int,
     val timestamp: Long,
-    val level: FeedbackLevel
+    val level: FeedbackLevel,
 ) {}
 
 // Basic implementation of the Feedback class, used by docloader and Design Compose
@@ -74,7 +74,7 @@ abstract class FeedbackImpl {
         setStatus(
             "Unable to open $id from disk; will try live and from assets",
             FeedbackLevel.Debug,
-            docId
+            docId,
         )
     }
 
@@ -88,7 +88,7 @@ abstract class FeedbackImpl {
         setStatus(
             "Live update for $truncatedId fetched and informed $numSubscribers subscribers",
             FeedbackLevel.Info,
-            docId
+            docId,
         )
     }
 
@@ -97,7 +97,7 @@ abstract class FeedbackImpl {
         setStatus(
             "Live update for $truncatedId unexpected server response: $code",
             FeedbackLevel.Error,
-            docId
+            docId,
         )
     }
 
@@ -116,7 +116,7 @@ abstract class FeedbackImpl {
         setStatus(
             "Live update for $truncatedId failed: $msg, reverting to original doc ID",
             FeedbackLevel.Error,
-            docId
+            docId,
         )
     }
 
@@ -140,7 +140,7 @@ abstract class FeedbackImpl {
         setStatus(
             "Wrong version in doc $truncatedId: Expected $expected but found $actual",
             FeedbackLevel.Warn,
-            docId
+            docId,
         )
     }
 
@@ -148,12 +148,12 @@ abstract class FeedbackImpl {
         version: Int,
         name: String,
         lastModified: String,
-        docId: DesignDocId
+        docId: DesignDocId,
     ) {
         setStatus(
             "Successfully deserialized V$version doc. Name: $name, last modified: $lastModified",
             FeedbackLevel.Info,
-            docId
+            docId,
         )
     }
 
@@ -177,7 +177,7 @@ abstract class FeedbackImpl {
         setStatus(
             "Failed to get variable value for $varId in doc $truncatedId",
             FeedbackLevel.Warn,
-            docId
+            docId,
         )
     }
 

@@ -45,7 +45,7 @@ import kotlinx.coroutines.delay
 
 enum class State {
     X,
-    Y
+    Y,
 }
 
 @DesignDoc(id = "pghyUUhlzJNoxxSK86ngiw")
@@ -83,7 +83,7 @@ fun VariantAnimationTest() {
                         SmartAnimateTransition(
                             tween(
                                 durationMillis = (2f * 1000.0).roundToInt(),
-                                easing = CubicBezierEasing(0.37f, 0f, 0.63f, 1f)
+                                easing = CubicBezierEasing(0.37f, 0f, 0.63f, 1f),
                             )
                         )
                     } else if (context.hasVariantProperty("#state")) {
@@ -104,7 +104,7 @@ fun VariantAnimationTest() {
                             spring(dampingRatio = damping / critical, stiffness = stiffness)
                         )
                     }
-                }
+                },
             )
     ) {
         VariantAnimationTestDoc.MainFrame(state = state, text = text)

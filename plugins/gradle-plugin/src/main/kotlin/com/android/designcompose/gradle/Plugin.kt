@@ -75,7 +75,7 @@ class Plugin : Plugin<Project> {
     private fun Project.createSetFigmaTokenTask(
         variantName: String,
         variantId: Property<String>,
-        adb: Provider<RegularFile>
+        adb: Provider<RegularFile>,
     ) {
         tasks.register("setFigmaToken${variantName.capitalized()}", SetFigmaTokenTask::class.java) {
             it.adbPath.set(adb)

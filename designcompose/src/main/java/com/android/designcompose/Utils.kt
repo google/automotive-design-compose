@@ -772,7 +772,7 @@ internal fun defaultNodeStyle(): NodeStyle.Builder {
         Stroke(
             strokeAlignTypeToInt(StrokeAlignType.Center),
             Optional.of(StrokeWeight(Optional.of(StrokeWeightType.Uniform(0f)))),
-            emptyList()
+            emptyList(),
         )
     builder.opacity = Optional.empty()
     builder.transform = Optional.empty()
@@ -1315,7 +1315,7 @@ internal fun Optional<LayoutTransform>.asComposeTransform(
                         it.m41,
                         it.m42,
                         it.m43,
-                        it.m44
+                        it.m44,
                     )
                 )
             if (transform.isIdentity()) {
@@ -1373,9 +1373,9 @@ internal fun Background.asBrush(
                                 imageDensity = density,
                                 displayDensity = density,
                                 imageTransform = imageTransform,
-                                scaleMode = scaleModeFromInt(backgroundImage.scale_mode)
+                                scaleMode = scaleModeFromInt(backgroundImage.scale_mode),
                             ),
-                            backgroundImage.opacity
+                            backgroundImage.opacity,
                         )
                     } else {
                         Log.w(TAG, "No drawable resource $it found")
@@ -1713,10 +1713,7 @@ internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
     return Color(r, g, b, a)
 }
 
-internal fun getTextContent(
-    context: Context,
-    textData: ViewData.Text,
-): String {
+internal fun getTextContent(context: Context, textData: ViewData.Text): String {
     if (DebugNodeManager.getUseLocalRes().value && textData.res_name.isPresent) {
         val resName = textData.res_name.get()
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)

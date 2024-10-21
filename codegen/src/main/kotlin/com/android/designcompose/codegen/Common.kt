@@ -54,7 +54,7 @@ internal enum class CustomizationType {
     Meter,
     MeterState,
     Module,
-    Unknown
+    Unknown,
 }
 
 operator fun OutputStream.plusAssign(str: String) {
@@ -76,7 +76,7 @@ internal fun createNewFile(
         codeGenerator.createNewFile(
             dependencies = Dependencies(false, *dependencies.toTypedArray()),
             packageName = packageName,
-            fileName = fileName
+            fileName = fileName,
         )
     file += "package $packageName\n\n"
     file += "import androidx.compose.runtime.Composable\n"
@@ -280,7 +280,7 @@ internal fun KSAnnotated.getAnnotatedNodeName(): String? {
 // represents all node names that could be placed into this node as a child.
 internal fun KSAnnotated.buildDesignContentTypesJson(
     test: String? = null,
-    logger: KSPLogger? = null
+    logger: KSPLogger? = null,
 ): JsonArray? {
     val contentTypesAnnotation =
         annotations.find {

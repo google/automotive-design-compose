@@ -29,8 +29,5 @@ fun ComposeContentTestRule.captureRootRoboImage(screenshotName: String) {
 
 fun designComposeRoborazziRule(className: String) =
     RoborazziRule(
-        options =
-            RoborazziRule.Options(
-                outputDirectoryPath = "$ROBO_CAPTURE_DIR/$className",
-            )
+        options = RoborazziRule.Options(outputDirectoryPath = "$ROBO_CAPTURE_DIR/$className")
     )

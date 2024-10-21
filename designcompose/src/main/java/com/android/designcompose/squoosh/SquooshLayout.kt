@@ -48,7 +48,7 @@ internal object SquooshLayout {
     internal fun doLayout(
         manager: SquooshLayoutManager,
         rootLayoutId: Int,
-        layoutNodeList: LayoutNodeList
+        layoutNodeList: LayoutNodeList,
     ): Map<Int, Layout> {
         val serializedNodes = layoutNodeList.intoProto().toByteArray()
         val response =
@@ -216,7 +216,7 @@ private fun updateLayoutTree(
                 resolvedNode.view.name,
                 useMeasureFunc,
                 Optional.empty(),
-                Optional.empty()
+                Optional.empty(),
             )
         )
         layoutCache[layoutId] = layoutCacheKey
@@ -238,7 +238,7 @@ private fun updateLayoutTree(
                 layoutCache,
                 layoutNodes,
                 layoutParentChildren,
-                layoutId
+                layoutId,
             ) || updateLayoutChildren
         child = child.nextSibling
     }
@@ -254,7 +254,7 @@ private fun updateLayoutTree(
 /// so that the nodes can be used for presentation or interaction (hit testing).
 private fun populateComputedLayout(
     resolvedNode: SquooshResolvedNode,
-    layoutValueCache: HashMap<Int, Layout>
+    layoutValueCache: HashMap<Int, Layout>,
 ) {
     val layoutId = resolvedNode.layoutId
     val layoutValue = layoutValueCache[layoutId]
@@ -276,7 +276,7 @@ internal fun layoutTree(
     manager: SquooshLayoutManager,
     removalNodes: Set<Int>,
     layoutCache: HashMap<Int, Int>,
-    layoutValueCache: HashMap<Int, Layout>
+    layoutValueCache: HashMap<Int, Layout>,
 ) {
     // Remove any nodes that are no longer needed in this iteration
     for (layoutId in removalNodes) {

@@ -17,6 +17,7 @@
 package designcompose.conventions
 
 import com.google.devtools.ksp.gradle.KspTask
+import org.gradle.api.internal.artifacts.dsl.dependencies.DependenciesExtensionModule.module
 import org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin
 
 plugins {
@@ -25,7 +26,7 @@ plugins {
 }
 
 // Keep in sync with gradle/libs.versions.toml
-val ktfmtVersion = "0.47"
+val ktfmtVersion = "0.52"
 
 // Apply Spotless Kotlin configuration to projects with Kotlin
 project.plugins.withType(KotlinBasePlugin::class.java) {

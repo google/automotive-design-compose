@@ -38,7 +38,7 @@ import com.android.designcompose.serdegen.FrameExtras
 internal fun DesignOverlay(
     overlay: FrameExtras,
     interactionState: InteractionState,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val alignment =
         when (overlayPositionEnumFromInt(overlay.overlay_position_type)) {
@@ -58,7 +58,7 @@ internal fun DesignOverlay(
     var boxModifier =
         Modifier.fillMaxSize().clickable(
             interactionSource = remember { MutableInteractionSource() },
-            indication = null
+            indication = null,
         ) {
             // Always be clickable, because it also prevents taps and drags from going thru to views
             // behind the overlay background.

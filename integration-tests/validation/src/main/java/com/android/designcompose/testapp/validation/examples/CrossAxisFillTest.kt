@@ -54,7 +54,7 @@ fun CrossAxisFillTest() {
                             CrossAxisFillTestDoc.LargeFixedWidth(modifier = Modifier.width(200.dp))
                         else CrossAxisFillTestDoc.FillParentWidth()
                     }
-                }
-            )
+                },
+            ),
     )
 }

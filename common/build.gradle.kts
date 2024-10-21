@@ -41,11 +41,11 @@ publishing {
  *
  * Generates the Java files from our Rust code
  *
- * @constructor Create empty Serde gen task
  * @property executor: ExecOperations class
  * @property rustSrcs The files to watch to see if we should rebuild (should be filtered to not
  *   include the target dir
  * @property generatedCodeDir Where the generated code will be output
+ * @constructor Create empty Serde gen task
  */
 @CacheableTask
 abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExecOperations) :

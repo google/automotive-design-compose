@@ -41,6 +41,7 @@ interface InteractionTest {
     // Inject a ctrl-shift-B key when the 'clickedB()' function is called
     @DesignKeyAction(key = 'B', metaKeys = [DesignMetaKey.MetaShift, DesignMetaKey.MetaCtrl])
     fun clickedShiftCtrlB()
+
     // Inject a meta-C key when the 'clickedC()' function is called
     @DesignKeyAction(key = 'C', metaKeys = [DesignMetaKey.MetaMeta]) fun clickedMetaC()
 

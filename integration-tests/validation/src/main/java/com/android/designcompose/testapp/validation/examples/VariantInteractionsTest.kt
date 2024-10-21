@@ -47,7 +47,7 @@ interface VariantInteractionsTest {
     fun ButtonVariant1(
         @DesignVariant(property = "#ButtonVariant1") type: ItemType,
         @Design(node = "#Title") title: String,
-        @Design(node = "#ButtonVariant1") onTap: TapCallback
+        @Design(node = "#ButtonVariant1") onTap: TapCallback,
     )
 
     @DesignComponent(node = "#ButtonVariant2")
@@ -55,7 +55,7 @@ interface VariantInteractionsTest {
         @DesignVariant(property = "#ButtonVariant2") type: ItemType,
         @DesignVariant(property = "#PlayState") playState: PlayState,
         @Design(node = "#Title") title: String,
-        @Design(node = "#ButtonVariant2") onTap: TapCallback
+        @Design(node = "#ButtonVariant2") onTap: TapCallback,
     )
 }
 
@@ -75,21 +75,21 @@ fun VariantInteractionsTest() {
                                     type = ItemType.List,
                                     title = "One",
                                     onTap = { println("Tap One") },
-                                    key = "One"
+                                    key = "One",
                                 )
                             1 ->
                                 VariantInteractionsTestDoc.ButtonVariant1(
                                     type = ItemType.List,
                                     title = "Two",
                                     onTap = { println("Tap Two") },
-                                    key = "Two"
+                                    key = "Two",
                                 )
                             2 ->
                                 VariantInteractionsTestDoc.ButtonVariant1(
                                     type = ItemType.List,
                                     title = "Three",
                                     onTap = { println("Tap Three") },
-                                    key = "Three"
+                                    key = "Three",
                                 )
                             3 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
@@ -97,7 +97,7 @@ fun VariantInteractionsTest() {
                                     playState = PlayState.Play,
                                     title = "Four",
                                     onTap = { println("Tap Four") },
-                                    key = "Four"
+                                    key = "Four",
                                 )
                             4 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
@@ -105,7 +105,7 @@ fun VariantInteractionsTest() {
                                     playState = PlayState.Play,
                                     title = "Five",
                                     onTap = { println("Tap Five") },
-                                    key = "Five"
+                                    key = "Five",
                                 )
                             5 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
@@ -113,7 +113,7 @@ fun VariantInteractionsTest() {
                                     playState = PlayState.Pause,
                                     title = "Six",
                                     onTap = { println("Tap Six") },
-                                    key = "Six"
+                                    key = "Six",
                                 )
                             6 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
@@ -121,7 +121,7 @@ fun VariantInteractionsTest() {
                                     playState = PlayState.Pause,
                                     title = "Seven",
                                     onTap = { println("Tap Seven") },
-                                    key = "Seven"
+                                    key = "Seven",
                                 )
                             7 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
@@ -129,7 +129,7 @@ fun VariantInteractionsTest() {
                                     playState = PlayState.Pause,
                                     title = "Eight",
                                     onTap = { println("Tap Eight") },
-                                    key = "Eight"
+                                    key = "Eight",
                                 )
                             8 ->
                                 VariantInteractionsTestDoc.ButtonVariant2(
@@ -137,13 +137,13 @@ fun VariantInteractionsTest() {
                                     playState = PlayState.Pause,
                                     title = "Nine",
                                     onTap = { println("Tap Nine") },
-                                    key = "Nine"
+                                    key = "Nine",
                                 )
                         }
                     }
-                }
+                },
             ),
-        buttonCircleState = buttonCircleState
+        buttonCircleState = buttonCircleState,
     )
 }
 
@@ -151,5 +151,5 @@ enum class ButtonSquare {
     On,
     Off,
     Blue,
-    Green
+    Green,
 }

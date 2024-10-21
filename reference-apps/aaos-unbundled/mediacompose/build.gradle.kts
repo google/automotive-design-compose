@@ -61,7 +61,7 @@ android {
             signingConfig = signingConfigs.getByName("platform_UNSECURE")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }

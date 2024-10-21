@@ -62,6 +62,6 @@ fun TelltaleTest() {
         seatInstance = true,
         lowInstance = true,
         brightsInstance = true,
-        leftBlinker = visible
+        leftBlinker = visible,
     )
 }

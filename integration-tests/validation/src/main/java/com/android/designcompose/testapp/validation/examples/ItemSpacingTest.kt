@@ -41,6 +41,6 @@ fun ItemSpacingTest() {
     ItemSpacingTestDoc.MainFrame(
         horizontalItems =
             ReplacementContent(count = 3, content = { { ItemSpacingTestDoc.Square() } }),
-        verticalItems = ReplacementContent(count = 3, content = { { ItemSpacingTestDoc.Square() } })
+        verticalItems = ReplacementContent(count = 3, content = { { ItemSpacingTestDoc.Square() } }),
     )
 }

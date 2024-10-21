@@ -67,13 +67,13 @@ fun FakeBrowseItem(name: String) {
 fun AdaptiveButton(setAdaptive: (Boolean) -> Unit) {
     Box(
         modifier = Modifier.border(1.dp, Color.Black).width(130.dp).height(30.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             modifier = Modifier.clickable { setAdaptive(true) },
             text = "Adaptive",
             fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
     }
     Box(Modifier.width(10.dp))
@@ -96,7 +96,7 @@ internal fun Slider(value: MutableState<Float>, min: Float, max: Float, testTag:
                 Modifier.offset {
                         IntOffset(
                             v.value.roundToInt() + (5 * density).toInt(),
-                            (5 * density).toInt()
+                            (5 * density).toInt(),
                         )
                     }
                     .draggable(
@@ -106,10 +106,10 @@ internal fun Slider(value: MutableState<Float>, min: Float, max: Float, testTag:
                                 v.value =
                                     java.lang.Float.max(
                                         java.lang.Float.min(v.value + delta, sliderMax),
-                                        0f
+                                        0f,
                                     )
                                 value.value = min + (max - min) * v.value / sliderMax
-                            }
+                            },
                     )
                     .size(30.dp)
                     .border(width = 25.dp, color = Color.Black, shape = RoundedCornerShape(5.dp))
@@ -120,7 +120,7 @@ internal fun Slider(value: MutableState<Float>, min: Float, max: Float, testTag:
 
 enum class ItemType {
     Grid,
-    List
+    List,
 }
 
 enum class GridItemType {
@@ -134,21 +134,21 @@ enum class GridItemType {
 
 enum class PlayState {
     Play,
-    Pause
+    Pause,
 }
 
 enum class ButtonState {
     On,
     Off,
     Blue,
-    Green
+    Green,
 }
 
 @Composable
 fun NumColumnButton(num: Int, setNum: (Int) -> Unit, setAdaptive: (Boolean) -> Unit) {
     Box(
         modifier = Modifier.border(1.dp, Color.Black).width(30.dp).height(30.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             modifier =
@@ -158,7 +158,7 @@ fun NumColumnButton(num: Int, setNum: (Int) -> Unit, setAdaptive: (Boolean) -> U
                 },
             text = num.toString(),
             fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
     }
     Box(Modifier.width(10.dp))
@@ -207,7 +207,7 @@ fun LazyGridItemSpans() {
             columns =
                 if (adaptive) GridCells.Adaptive(adaptiveMinDp) else GridCells.Fixed(numColumns),
             horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.value.toInt().dp),
-            verticalArrangement = Arrangement.spacedBy(verticalSpacing.value.toInt().dp)
+            verticalArrangement = Arrangement.spacedBy(verticalSpacing.value.toInt().dp),
         ) {
             sections.forEachIndexed { index, items ->
                 item(span = { GridItemSpan(if (adaptive) maxLineSpan else numColumns) }) {
@@ -220,7 +220,7 @@ fun LazyGridItemSpans() {
                 items(
                     items,
                     // not required as it is the default
-                    span = { GridItemSpan(1) }
+                    span = { GridItemSpan(1) },
                 ) {
                     FakeBrowseItem("Item $it")
                 }

@@ -51,7 +51,7 @@ internal data class KeyAction(
     val action: Action,
     val targetInstanceId: String?,
     val key: String?,
-    val undoInstanceId: String?
+    val undoInstanceId: String?,
 )
 
 // Manager to handle key event injects and listeners of key events

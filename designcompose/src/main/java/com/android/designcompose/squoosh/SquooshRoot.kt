@@ -289,7 +289,7 @@ fun SquooshRoot(
         remember(
             docId,
             LocalContext.current.resources.configuration,
-            DebugNodeManager.getUseLocalRes().value
+            DebugNodeManager.getUseLocalRes().value,
         ) {
             TextMeasureCache()
         }

@@ -100,7 +100,7 @@ class AnimationMidpoints {
                             SmartAnimateTransition(
                                 spring(dampingRatio = damping / critical, stiffness = stiffness)
                             )
-                        }
+                        },
                     )
             ) {
                 VariantAnimationTestDoc.MainFrame(state = state.value, text = text.value)
@@ -250,12 +250,7 @@ class AnimationMidpoints {
     private fun waitForContent(name: String) {
         composeTestRule.waitForIdle()
         composeTestRule
-            .onAllNodes(
-                SemanticsMatcher.expectValue(
-                    docClassSemanticsKey,
-                    name,
-                )
-            )
+            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, name))
             .onFirst()
             .assertRenderStatus(DocRenderStatus.Rendered)
     }

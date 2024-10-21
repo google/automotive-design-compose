@@ -34,10 +34,7 @@ interface RecursiveCustomizations {
 
     @DesignComponent(node = "#NameFrame") fun NameFrame()
 
-    @DesignComponent(node = "#TitleFrame")
-    fun TitleFrame(
-        @Design(node = "#Name") title: String,
-    )
+    @DesignComponent(node = "#TitleFrame") fun TitleFrame(@Design(node = "#Name") title: String)
 }
 
 @Composable
@@ -57,7 +54,7 @@ fun RecursiveCustomizations() {
                             else -> RecursiveCustomizationsDoc.TitleFrame(title = "Third")
                         }
                     }
-                }
-            )
+                },
+            ),
     )
 }

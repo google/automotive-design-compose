@@ -41,7 +41,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple(
             "Grid Layout Documentation",
             { GridLayoutDocumentation() },
-            GridLayoutDoc.javaClass.name
+            GridLayoutDoc.javaClass.name,
         ),
         // H and V constraints
         Triple("H Constraints", { HConstraintsTest() }, ConstraintsDoc.javaClass.name),
@@ -53,18 +53,18 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple(
             "Ignore Auto Layout",
             { IgnoreAutoLayoutTest() },
-            IgnoreAutoLayoutTestDoc.javaClass.name
+            IgnoreAutoLayoutTestDoc.javaClass.name,
         ),
         Triple("Item Spacing", { ItemSpacingTest() }, ItemSpacingTestDoc.javaClass.name),
         Triple(
             "Layout Replacement",
             { LayoutReplacementTest() },
-            LayoutReplacementTestDoc.javaClass.name
+            LayoutReplacementTestDoc.javaClass.name,
         ),
         Triple(
             "Recurse Customization",
             { RecursiveCustomizations() },
-            RecursiveCustomizationsDoc.javaClass.name
+            RecursiveCustomizationsDoc.javaClass.name,
         ),
         Triple("Layout Tests", { LayoutTests() }, LayoutTestsDoc.javaClass.name),
         // Masks/shadows
@@ -78,7 +78,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple(
             "State Customizations",
             { StateCustomizationsTest(Clock.systemDefaultZone()) },
-            StateCustomizationsDoc.javaClass.name
+            StateCustomizationsDoc.javaClass.name,
         ),
         Triple("Telltales", { TelltaleTest() }, TelltaleTestDoc.javaClass.name),
         // Variant tests
@@ -86,19 +86,19 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple(
             "Variant Interactions",
             { VariantInteractionsTest() },
-            VariantInteractionsTestDoc.javaClass.name
+            VariantInteractionsTestDoc.javaClass.name,
         ),
         Triple(
             "Variant Properties",
             { VariantPropertiesTest() },
-            VariantPropertiesTestDoc.javaClass.name
+            VariantPropertiesTestDoc.javaClass.name,
         ),
         Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
         Triple("Variable Modes", { VariableModesTest() }, VariablesTestDoc.javaClass.name),
         Triple(
             "Vector Rendering",
             { VectorRenderingTest() },
-            VectorRenderingTestDoc.javaClass.name
+            VectorRenderingTestDoc.javaClass.name,
         ),
         Triple("1px Separator", { OnePxSeparatorTest() }, OnePxSeparatorDoc.javaClass.name),
         // Don't run in CI, need an annotation.
@@ -107,7 +107,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple(
             "Component Replace Relayout",
             { ComponentReplaceRelayoutTest() },
-            ComponentReplaceRelayoutDoc.javaClass.name
+            ComponentReplaceRelayoutDoc.javaClass.name,
         ),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
@@ -121,7 +121,7 @@ val SQUOOSH_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, Stri
         Triple(
             "SA Variant Timelines",
             { VariantAnimationTimelineTest() },
-            VariantAnimationTimelineTestDoc.javaClass.name
+            VariantAnimationTimelineTestDoc.javaClass.name,
         ),
     )
 

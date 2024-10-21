@@ -148,7 +148,7 @@ fun DesignVariableModeValues(modeValues: VariableModeValues?, content: @Composab
 @Composable
 internal fun DesignVariableExplicitModeValues(
     modeValues: VariableModeValues?,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) =
     if (modeValues != null)
         CompositionLocalProvider(LocalVariableModeValuesDoc provides modeValues) { content() }
@@ -283,7 +283,7 @@ internal object VariableManager {
     // Retrieve the VariableValue from this variable given the current variable state
     private fun Variable.getValue(
         variableMap: VariableMap,
-        variableState: VariableState
+        variableState: VariableState,
     ): VariableValue? {
         val collection = variableMap.collections[variable_collection_id]
         collection?.let { c ->
@@ -300,10 +300,7 @@ internal object VariableManager {
     }
 
     // Return this variable's color given the current variable state.
-    private fun Variable.getColor(
-        variableMap: VariableMap,
-        variableState: VariableState,
-    ): Color? {
+    private fun Variable.getColor(variableMap: VariableMap, variableState: VariableState): Color? {
         // Use the material theme override if one exists
         MaterialThemeValues.getColor(name, variable_collection_id, variableState)?.let {
             return it
@@ -327,10 +324,7 @@ internal object VariableManager {
     }
 
     // Return this variable's number given the current variable state.
-    private fun Variable.getNumber(
-        variableMap: VariableMap,
-        variableState: VariableState,
-    ): Float? {
+    private fun Variable.getNumber(variableMap: VariableMap, variableState: VariableState): Float? {
         val value = getValue(variableMap, variableState)
         value?.let { vv ->
             if (vv.value.isPresent) {

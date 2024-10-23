@@ -52,10 +52,13 @@ import com.android.designcompose.serdegen.ProgressBarMeterData
 import com.android.designcompose.serdegen.ProgressMarkerMeterData
 import com.android.designcompose.serdegen.ProgressVectorMeterData
 import com.android.designcompose.serdegen.RotationMeterData
+import com.android.designcompose.serdegen.Shape
+import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squoosh.SquooshResolvedNode
 import java.lang.Float.max
+import java.util.Optional
 import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.cos
@@ -265,21 +268,27 @@ private fun calculateArcData(
             arcData.discrete,
             arcData.discreteValue,
         )
-    var returnShape = shape
-    if (shape is ViewShape.Arc) {
-        returnShape =
-            ViewShape.Arc(
-                listOf(),
-                listOf(),
-                shape.stroke_cap,
-                arcData.start,
-                arcAngleMeter,
-                shape.inner_radius,
-                arcData.cornerRadius,
-                shape.is_mask,
+    if (shape.shape.get() is Shape.Arc) {
+        val arc = (shape.shape.get() as Shape.Arc).value
+        return ViewShape(
+            Optional.of(
+                Shape.Arc(
+                    VectorArc(
+                        listOf(),
+                        listOf(),
+                        arc.stroke_cap,
+                        arcData.start,
+                        arcAngleMeter,
+                        arc.inner_radius,
+                        arcData.cornerRadius,
+                        arc.is_mask,
+                    )
+                )
             )
+        )
+    } else {
+        return shape
     }
-    return returnShape
 }
 
 // Set up the paint object to render a vector path as a stroke with a single dash that matches the

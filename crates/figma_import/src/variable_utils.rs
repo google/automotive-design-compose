@@ -16,7 +16,7 @@
 
 use crate::figma_schema;
 use dc_bundle::definition::element::color_or_var;
-use dc_bundle::definition::element::num_or_var::{NumOrVar, NumVar};
+use dc_bundle::definition::element::num_or_var::{NumOrVarType, NumVar};
 use dc_bundle::definition::element::variable::{VariableType, VariableValueMap};
 use dc_bundle::definition::element::variable_value;
 use dc_bundle::definition::element::ColorOrVar;
@@ -33,7 +33,7 @@ pub(crate) trait FromFigmaVar<VarType> {
     ) -> Self;
 }
 // Create a NumOrVar from Figma variable name and number value
-impl FromFigmaVar<f32> for NumOrVar {
+impl FromFigmaVar<f32> for NumOrVarType {
     fn from_var(
         bound_variables: &figma_schema::BoundVariables,
         var_name: &str,
@@ -41,9 +41,9 @@ impl FromFigmaVar<f32> for NumOrVar {
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
-            NumOrVar::Var(NumVar { id: var, fallback: var_value })
+            NumOrVarType::Var(NumVar { id: var, fallback: var_value })
         } else {
-            NumOrVar::Num(var_value)
+            NumOrVarType::Num(var_value)
         }
     }
 }

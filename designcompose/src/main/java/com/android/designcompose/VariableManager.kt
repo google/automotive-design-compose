@@ -29,6 +29,7 @@ import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.serdegen.ColorOrVar
 import com.android.designcompose.serdegen.ColorOrVarType
 import com.android.designcompose.serdegen.NumOrVar
+import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Value
 import com.android.designcompose.serdegen.Variable
 import com.android.designcompose.serdegen.VariableMap
@@ -342,12 +343,17 @@ internal object VariableManager {
 }
 
 // Return the value out of a NumOrVar enum.
-internal fun NumOrVar.getValue(variableState: VariableState): Float {
+internal fun NumOrVarType.getValue(variableState: VariableState): Float {
     return when (this) {
-        is NumOrVar.Num -> value
-        is NumOrVar.Var -> VariableManager.getNumber(value.id, value.fallback, variableState) ?: 0F
+        is NumOrVarType.Num -> value
+        is NumOrVarType.Var ->
+            VariableManager.getNumber(value.id, value.fallback, variableState) ?: 0F
         else -> 0F
     }
+}
+
+internal fun NumOrVar.getValue(variableState: VariableState): Float {
+    return num_or_var_type.get().getValue(variableState)
 }
 
 // Return the value of a ColorOrVar enum

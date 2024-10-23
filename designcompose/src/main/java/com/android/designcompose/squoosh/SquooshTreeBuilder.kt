@@ -42,6 +42,7 @@ import com.android.designcompose.mergeStyles
 import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
 import com.android.designcompose.proto.OverlayPositionEnum
 import com.android.designcompose.proto.newDimensionProtoPercent
+import com.android.designcompose.proto.newViewShapeRect
 import com.android.designcompose.proto.overlayBackgroundInteractionFromInt
 import com.android.designcompose.proto.overlayPositionEnumFromInt
 import com.android.designcompose.proto.type
@@ -68,7 +69,6 @@ import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
-import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
@@ -455,7 +455,8 @@ private fun generateReplacementListChildNode(
     itemStyle.node_style = nodeStyle.build()
 
     val listChildViewData = ViewData.Container.Builder()
-    listChildViewData.shape = ViewShape.Rect(false)
+    listChildViewData.shape = newViewShapeRect(false)
+
     listChildViewData.children = emptyList()
 
     val listChildScrollInfo = ScrollInfo.Builder()
@@ -574,7 +575,7 @@ private fun generateOverlayNode(
 
     // Now synthesize a view.
     val overlayViewData = ViewData.Container.Builder()
-    overlayViewData.shape = ViewShape.Rect(false)
+    overlayViewData.shape = newViewShapeRect(false)
     overlayViewData.children = listOf(node.view)
 
     val overlayScrollInfo = ScrollInfo.Builder()

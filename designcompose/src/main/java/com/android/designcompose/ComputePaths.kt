@@ -31,12 +31,16 @@ import com.android.designcompose.proto.bottom
 import com.android.designcompose.proto.left
 import com.android.designcompose.proto.right
 import com.android.designcompose.proto.strokeAlignFromInt
+import com.android.designcompose.proto.strokeCapFromInt
 import com.android.designcompose.proto.toUniform
 import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.BoxShadow
+import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.StrokeCap
+import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
+import kotlin.jvm.optionals.getOrNull
 
 /// ComputedPaths is a set of paths derived from a shape and style definition. These
 /// paths are based on the style information (known at document conversion time)
@@ -123,9 +127,9 @@ internal class ComputedPathCache {
 
 private fun ViewShape.extractCornerRadii(variableState: VariableState): FloatArray {
     val cornerRadius =
-        when (this) {
-            is ViewShape.RoundRect -> this.corner_radius
-            is ViewShape.VectorRect -> this.corner_radius
+        when (val shape = this.shape.getOrNull()) {
+            is Shape.RoundRect -> shape.value.corner_radii
+            is Shape.VectorRect -> shape.value.corner_radii
             else -> return floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
         }
     return cornerRadius.map { radius -> radius.getValue(variableState) }.toFloatArray()
@@ -177,8 +181,8 @@ internal fun ViewShape.computePaths(
     var strokeCap: androidx.compose.ui.graphics.StrokeCap? = null
     // Fill then stroke.
     val (fills: List<Path>, precomputedStrokes: List<Path>) =
-        when (this) {
-            is ViewShape.Rect -> {
+        when (val shape = this.shape.getOrNull()) {
+            is Shape.Rect -> {
                 return computeRoundRectPathsFast(
                     style,
                     cornerRadius,
@@ -186,7 +190,7 @@ internal fun ViewShape.computePaths(
                     getRectSize(overrideSize, style, density),
                 )
             }
-            is ViewShape.RoundRect -> {
+            is Shape.RoundRect -> {
                 return computeRoundRectPathsFast(
                     style,
                     cornerRadius,
@@ -194,7 +198,7 @@ internal fun ViewShape.computePaths(
                     getRectSize(overrideSize, style, density),
                 )
             }
-            is ViewShape.VectorRect -> {
+            is Shape.VectorRect -> {
                 return computeRoundRectPathsFast(
                     style,
                     cornerRadius,
@@ -202,22 +206,25 @@ internal fun ViewShape.computePaths(
                     getRectSize(overrideSize, style, density),
                 )
             }
-            is ViewShape.Path -> {
-                strokeCap = stroke_cap.toComposeStrokeCap()
-                getPaths(this.path, this.stroke)
+            is Shape.Path -> {
+                strokeCap = strokeCapFromInt(shape.value.stroke_cap).toComposeStrokeCap()
+                getPaths(shape.value.paths, shape.value.strokes)
             }
-            is ViewShape.Arc -> {
-                if (!customArcAngle && (this.path.isNotEmpty() || this.stroke.isNotEmpty())) {
+            is Shape.Arc -> {
+                if (
+                    !customArcAngle &&
+                        (shape.value.paths.isNotEmpty() || shape.value.strokes.isNotEmpty())
+                ) {
                     // Render normally with Figma provided fill/stroke path
-                    getPaths(this.path, this.stroke)
+                    getPaths(shape.value.paths, shape.value.strokes)
                 } else {
                     // We have a custom angle set by a meter customization, so we can't use
                     // the path provided by Figma. Instead, we construct our own path given
                     // the arc parameters
-                    if (this.inner_radius < 1.0F) {
-                        computeArcPath(frameSize, this)
+                    if (shape.value.inner_radius < 1.0F) {
+                        computeArcPath(frameSize, shape.value)
                     } else {
-                        computeArcStrokePath(frameSize, this, style, density)
+                        computeArcStrokePath(frameSize, shape.value, style, density)
                     }
                 }
             }
@@ -382,7 +389,7 @@ internal fun ViewShape.computePaths(
 // width and converting it to a fill path using android.graphics.Paint.getFillPath()
 private fun computeArcStrokePath(
     frameSize: Size,
-    shape: ViewShape.Arc,
+    shape: VectorArc,
     style: ViewStyle,
     density: Float,
 ): Pair<List<Path>, List<Path>> {
@@ -421,9 +428,9 @@ private fun computeArcStrokePath(
     arcPaint.style = android.graphics.Paint.Style.STROKE
     arcPaint.strokeWidth = strokeWidth
     arcPaint.strokeCap =
-        when (shape.stroke_cap) {
-            is StrokeCap.ROUND -> android.graphics.Paint.Cap.ROUND
-            is StrokeCap.SQUARE -> android.graphics.Paint.Cap.SQUARE
+        when (strokeCapFromInt(shape.stroke_cap)) {
+            is StrokeCap.Round -> android.graphics.Paint.Cap.ROUND
+            is StrokeCap.Square -> android.graphics.Paint.Cap.SQUARE
             else -> android.graphics.Paint.Cap.BUTT
         }
     val arcStrokePath = android.graphics.Path()
@@ -442,7 +449,7 @@ private fun computeArcStrokePath(
 // Draw segment joining inner arc to outer
 // Draw cubic bezier from segment to outer arc (starting point)
 // Close path
-private fun computeArcPath(frameSize: Size, shape: ViewShape.Arc): Pair<List<Path>, List<Path>> {
+private fun computeArcPath(frameSize: Size, shape: VectorArc): Pair<List<Path>, List<Path>> {
     // Arc angles rotate in the opposite direction than node rotations. To keep them consistent,
     // negate the angles
     val startAngleDegrees = -shape.start_angle_degrees

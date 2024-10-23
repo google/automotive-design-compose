@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::definition::element::num_or_var::NumOrVar;
+use crate::definition::element::num_or_var::NumOrVarType;
 use crate::definition::element::Color;
 use crate::definition::element::ColorOrVar;
 use crate::definition::element::{background, Background};
@@ -30,7 +30,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TextStyle {
     pub text_color: Background, // also text shadow?
-    pub font_size: NumOrVar,
+    pub font_size: NumOrVarType,
     pub font_family: Option<String>,
     pub font_weight: FontWeight,
     pub font_style: FontStyle,
@@ -48,7 +48,7 @@ impl Default for TextStyle {
             text_color: Background::new(background::BackgroundType::Solid(ColorOrVar::new_color(
                 Color::BLACK,
             ))),
-            font_size: NumOrVar::Num(18.0),
+            font_size: NumOrVarType::Num(18.0),
             font_family: None,
             font_weight: FontWeight::NORMAL,
             font_style: FontStyle::Normal,
@@ -99,7 +99,7 @@ impl StyledTextRun {
     }
     pub fn size(self, size: f32) -> Self {
         StyledTextRun {
-            style: TextStyle { font_size: NumOrVar::Num(size), ..self.style },
+            style: TextStyle { font_size: NumOrVarType::Num(size), ..self.style },
             text: self.text,
         }
     }

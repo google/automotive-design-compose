@@ -18,8 +18,11 @@ package com.android.designcompose.proto
 
 import com.android.designcompose.serdegen.Background
 import com.android.designcompose.serdegen.BackgroundType
+import com.android.designcompose.serdegen.Box
+import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.StrokeWeightType
+import com.android.designcompose.serdegen.ViewShape
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
@@ -131,3 +134,11 @@ internal fun Background.getType(): BackgroundType {
     val bgType = background_type.getOrNull()
     return bgType ?: BackgroundType.None(com.novi.serde.Unit())
 }
+
+internal fun ViewShape.get(): Shape {
+    return this.shape.orElseThrow {
+        NoSuchFieldException("Malformed data: ViewShape has no shape field")
+    }
+}
+
+internal fun newViewShapeRect(isMask: Boolean) = ViewShape(Optional.of(Shape.Rect(Box(isMask))))

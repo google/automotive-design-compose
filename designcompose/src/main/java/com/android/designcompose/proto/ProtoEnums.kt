@@ -17,6 +17,7 @@
 package com.android.designcompose.proto
 
 import com.android.designcompose.serdegen.ScaleMode
+import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.TriggerType
 import java.util.Optional
@@ -150,3 +151,16 @@ val Optional<Trigger>.type: TriggerType?
     get() {
         return this.getOrNull()?.trigger_type?.getOrNull()
     }
+
+internal fun strokeCapFromInt(value: Int): StrokeCap {
+    return when (value) {
+        1 -> StrokeCap.None()
+        2 -> StrokeCap.Round()
+        3 -> StrokeCap.Square()
+        4 -> StrokeCap.LineArrow()
+        5 -> StrokeCap.TriangleArrow()
+        6 -> StrokeCap.CircleFilled()
+        7 -> StrokeCap.DiamondFilled()
+        else -> StrokeCap.Unspecified()
+    }
+}

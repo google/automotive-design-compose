@@ -410,3 +410,25 @@ impl ColorOrVar {
         }
     }
 }
+
+impl ViewShape {
+    pub fn new_rect(bx: view_shape::Box) -> Self {
+        ViewShape { shape: Some(view_shape::Shape::Rect(bx)) }
+    }
+
+    pub fn new_round_rect(rect: view_shape::RoundRect) -> Self {
+        ViewShape { shape: Some(view_shape::Shape::RoundRect(rect)) }
+    }
+
+    pub fn new_path(path: view_shape::VectorPath) -> Self {
+        ViewShape { shape: Some(view_shape::Shape::Path(path)) }
+    }
+
+    pub fn new_arc(arc: view_shape::VectorArc) -> Self {
+        ViewShape { shape: Some(view_shape::Shape::Arc(arc)) }
+    }
+
+    pub fn new_vector_rect(rect: view_shape::VectorRect) -> Self {
+        ViewShape { shape: Some(view_shape::Shape::VectorRect(rect)) }
+    }
+}

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::definition::element::num_or_var::NumOrVar;
+use crate::definition::element::num_or_var::NumOrVarType;
 use crate::definition::element::Background;
 use crate::definition::element::Stroke;
 use crate::definition::element::{
@@ -65,7 +65,7 @@ impl Default for Display {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct NodeStyle {
     pub text_color: Background,
-    pub font_size: NumOrVar,
+    pub font_size: NumOrVarType,
     pub font_family: Option<String>,
     pub font_weight: FontWeight,
     pub font_style: FontStyle,
@@ -113,7 +113,7 @@ impl Default for NodeStyle {
     fn default() -> NodeStyle {
         NodeStyle {
             text_color: Background::new(background::BackgroundType::None(())),
-            font_size: NumOrVar::Num(18.0),
+            font_size: NumOrVarType::Num(18.0),
             font_family: None,
             font_weight: FontWeight::NORMAL,
             font_style: FontStyle::Normal,

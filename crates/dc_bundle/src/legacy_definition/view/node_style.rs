@@ -15,15 +15,14 @@
  */
 
 use crate::definition::element::num_or_var::NumOrVarType;
-use crate::definition::element::Background;
 use crate::definition::element::Stroke;
 use crate::definition::element::{
     background, FontFeature, FontStyle, Hyperlink, Size, TextDecoration,
 };
+use crate::definition::element::{Background, FontStretch, FontWeight};
 use crate::definition::layout::FlexWrap;
 use crate::definition::modifier::FilterOp;
 use crate::definition::modifier::LayoutTransform;
-use crate::legacy_definition::element::font::{FontStretch, FontWeight};
 use crate::legacy_definition::element::path::LineHeight;
 use crate::legacy_definition::interaction::pointer::PointerEvents;
 use crate::legacy_definition::layout::grid::{GridLayoutType, GridSpan};

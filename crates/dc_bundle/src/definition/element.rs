@@ -16,6 +16,7 @@
 
 use crate::definition::element::dimension_proto::Dimension;
 use crate::definition::element::dimension_proto::Dimension::Points;
+use crate::definition::element::num_or_var::NumOrVarType;
 use crate::definition::element::path::WindingRule;
 use crate::Error;
 use std::fmt;
@@ -431,4 +432,61 @@ impl ViewShape {
     pub fn new_vector_rect(rect: view_shape::VectorRect) -> Self {
         ViewShape { shape: Some(view_shape::Shape::VectorRect(rect)) }
     }
+}
+
+impl FontStretch {
+    /// Ultra-condensed width (50%), the narrowest possible.
+    pub const ULTRA_CONDENSED: FontStretch = FontStretch { value: 0.5 };
+    /// Extra-condensed width (62.5%).
+    pub const EXTRA_CONDENSED: FontStretch = FontStretch { value: 0.625 };
+    /// Condensed width (75%).
+    pub const CONDENSED: FontStretch = FontStretch { value: 0.75 };
+    /// Semi-condensed width (87.5%).
+    pub const SEMI_CONDENSED: FontStretch = FontStretch { value: 0.875 };
+    /// Normal width (100%).
+    pub const NORMAL: FontStretch = FontStretch { value: 1.0 };
+    /// Semi-expanded width (112.5%).
+    pub const SEMI_EXPANDED: FontStretch = FontStretch { value: 1.125 };
+    /// Expanded width (125%).
+    pub const EXPANDED: FontStretch = FontStretch { value: 1.25 };
+    /// Extra-expanded width (150%).
+    pub const EXTRA_EXPANDED: FontStretch = FontStretch { value: 1.5 };
+    /// Ultra-expanded width (200%), the widest possible.
+    pub const ULTRA_EXPANDED: FontStretch = FontStretch { value: 2.0 };
+}
+
+impl Hash for FontStretch {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let x = (self.value * 100.0) as i32;
+        x.hash(state);
+    }
+}
+
+impl FontWeight {
+    pub fn new(num_or_var_type: NumOrVarType) -> Self {
+        FontWeight { weight: Some(NumOrVar { num_or_var_type: Some(num_or_var_type) }) }
+    }
+
+    pub const fn from_num(weight: f32) -> Self {
+        FontWeight { weight: Some(NumOrVar { num_or_var_type: Some(NumOrVarType::Num(weight)) }) }
+    }
+
+    /// Thin weight (100), the thinnest value.
+    pub const THIN: FontWeight = FontWeight::from_num(100.0);
+    /// Extra light weight (200).
+    pub const EXTRA_LIGHT: FontWeight = FontWeight::from_num(200.0);
+    /// Light weight (300).
+    pub const LIGHT: FontWeight = FontWeight::from_num(300.0);
+    /// Normal (400).
+    pub const NORMAL: FontWeight = FontWeight::from_num(400.0);
+    /// Medium weight (500, higher than normal).
+    pub const MEDIUM: FontWeight = FontWeight::from_num(500.0);
+    /// Semibold weight (600).
+    pub const SEMIBOLD: FontWeight = FontWeight::from_num(600.0);
+    /// Bold weight (700).
+    pub const BOLD: FontWeight = FontWeight::from_num(700.0);
+    /// Extra-bold weight (800).
+    pub const EXTRA_BOLD: FontWeight = FontWeight::from_num(800.0);
+    /// Black weight (900), the thickest value.
+    pub const BLACK: FontWeight = FontWeight::from_num(900.0);
 }

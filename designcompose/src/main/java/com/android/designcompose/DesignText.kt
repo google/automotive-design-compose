@@ -177,7 +177,7 @@ internal fun DesignText(
                     fontSize = run.style.font_size.getValue(variableState).sp,
                     fontWeight =
                         androidx.compose.ui.text.font.FontWeight(
-                            run.style.font_weight.value.getValue(variableState).roundToInt()
+                            run.style.font_weight.weight.get().getValue(variableState).roundToInt()
                         ),
                     fontStyle =
                         when (run.style.font_style) {
@@ -229,7 +229,7 @@ internal fun DesignText(
     val fontWeight =
         customTextStyle?.fontWeight
             ?: androidx.compose.ui.text.font.FontWeight(
-                style.node_style.font_weight.value.getValue(variableState).roundToInt()
+                style.node_style.font_weight.weight.get().getValue(variableState).roundToInt()
             )
     val fontStyle =
         customTextStyle?.fontStyle

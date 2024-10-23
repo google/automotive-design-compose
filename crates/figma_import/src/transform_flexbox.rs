@@ -19,7 +19,6 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 
 use crate::toolkit_style::MeterDataSchema;
-use dc_bundle::legacy_definition::element::font::FontWeight;
 
 use crate::{
     component_context::ComponentContext,
@@ -29,7 +28,8 @@ use crate::{
 };
 use crate::{figma_schema, Error};
 use dc_bundle::definition::element::{
-    view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle, ViewShape,
+    view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
+    FontWeight, ViewShape,
 };
 
 use crate::figma_schema::LayoutPositioning;
@@ -1150,9 +1150,9 @@ fn visit_node(
         };
 
         style.node_style.font_weight = if let Some(vars) = &node.bound_variables {
-            FontWeight(NumOrVarType::from_var(vars, "fontWeight", text_style.font_weight))
+            FontWeight::new(NumOrVarType::from_var(vars, "fontWeight", text_style.font_weight))
         } else {
-            FontWeight(NumOrVarType::Num(text_style.font_weight))
+            FontWeight::from_num(text_style.font_weight)
         };
         if text_style.italic {
             style.node_style.font_style = FontStyle::Italic;
@@ -1312,7 +1312,7 @@ fn visit_node(
                     style.node_style.font_family.clone()
                 };
                 let font_weight = if let Some(fw) = sub_style.font_weight {
-                    FontWeight(NumOrVarType::Num(fw))
+                    FontWeight::from_num(fw)
                 } else {
                     style.node_style.font_weight.clone()
                 };
@@ -1347,8 +1347,8 @@ fn visit_node(
                     font_size,
                     font_family,
                     font_weight,
-                    font_style,                                  // Italic or Normal
-                    font_stretch: style.node_style.font_stretch, // Not in SubTypeStyle.
+                    font_style, // Italic or Normal
+                    font_stretch: style.node_style.font_stretch.clone(), // Not in SubTypeStyle.
                     letter_spacing: sub_style
                         .letter_spacing
                         .unwrap_or(style.node_style.letter_spacing.unwrap_or(0.0)),

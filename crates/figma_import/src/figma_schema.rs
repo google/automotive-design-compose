@@ -865,27 +865,33 @@ fn default_stroke_cap() -> StrokeCap {
     StrokeCap::None
 }
 
-impl Into<dc_bundle::legacy_definition::element::view_shape::StrokeCap> for StrokeCap {
-    fn into(self) -> dc_bundle::legacy_definition::element::view_shape::StrokeCap {
+impl Into<dc_bundle::definition::element::view_shape::StrokeCap> for StrokeCap {
+    fn into(self) -> dc_bundle::definition::element::view_shape::StrokeCap {
         match self {
-            StrokeCap::None => dc_bundle::legacy_definition::element::view_shape::StrokeCap::None,
-            StrokeCap::Round => dc_bundle::legacy_definition::element::view_shape::StrokeCap::Round,
-            StrokeCap::Square => {
-                dc_bundle::legacy_definition::element::view_shape::StrokeCap::Square
-            }
+            StrokeCap::None => dc_bundle::definition::element::view_shape::StrokeCap::None,
+            StrokeCap::Round => dc_bundle::definition::element::view_shape::StrokeCap::Round,
+            StrokeCap::Square => dc_bundle::definition::element::view_shape::StrokeCap::Square,
             StrokeCap::LineArrow => {
-                dc_bundle::legacy_definition::element::view_shape::StrokeCap::LineArrow
+                dc_bundle::definition::element::view_shape::StrokeCap::LineArrow
             }
             StrokeCap::TriangleArrow => {
-                dc_bundle::legacy_definition::element::view_shape::StrokeCap::TriangleArrow
+                dc_bundle::definition::element::view_shape::StrokeCap::TriangleArrow
             }
             StrokeCap::CircleFilled => {
-                dc_bundle::legacy_definition::element::view_shape::StrokeCap::CircleFilled
+                dc_bundle::definition::element::view_shape::StrokeCap::CircleFilled
             }
             StrokeCap::DiamondFilled => {
-                dc_bundle::legacy_definition::element::view_shape::StrokeCap::DiamondFilled
+                dc_bundle::definition::element::view_shape::StrokeCap::DiamondFilled
             }
         }
+    }
+}
+
+impl StrokeCap {
+    pub fn to_proto(&self) -> i32 {
+        //Need to do in two steps because we need to convert to the proto-genned type and then to i32
+        let a: dc_bundle::definition::element::view_shape::StrokeCap = self.clone().into();
+        a.into()
     }
 }
 

@@ -72,7 +72,7 @@ message NumOrVar {
     float fallback = 2;
   }
 
-  oneof NumOrVar {
+  oneof NumOrVarType {
     float num = 1;
     NumVar var = 2;
   }

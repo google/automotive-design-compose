@@ -29,12 +29,15 @@ use crate::{
 };
 use crate::{figma_schema, Error};
 use dc_bundle::definition::element::{
-    DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
+    view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle, ViewShape,
 };
 
+use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
+use dc_bundle::definition;
 use dc_bundle::definition::element::dimension_proto::Dimension;
-use dc_bundle::definition::element::num_or_var::NumOrVar;
+use dc_bundle::definition::element::num_or_var::NumOrVarType;
+use dc_bundle::definition::element::view_shape::RoundRect;
 use dc_bundle::definition::element::Path;
 use dc_bundle::definition::element::{
     background, stroke_weight, Background, StrokeAlign, StrokeWeight,
@@ -45,15 +48,12 @@ use dc_bundle::definition::modifier::LayoutTransform;
 use dc_bundle::definition::modifier::{filter_op, FilterOp};
 use dc_bundle::definition::plugin::FrameExtras;
 use dc_bundle::legacy_definition::element::path::LineHeight;
-use dc_bundle::legacy_definition::element::view_shape::ViewShape;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, LayoutSizing,
     Overflow, OverflowDirection, PositionType,
 };
 use dc_bundle::legacy_definition::modifier::blend::BlendMode;
-//use dc_bundle::legacy_definition::modifier::filter::FilterOp;
-use crate::figma_schema::LayoutPositioning;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
@@ -1144,15 +1144,15 @@ fn visit_node(
             style.node_style.text_color = compute_background(text_fill, images, &node.name);
         }
         style.node_style.font_size = if let Some(vars) = &node.bound_variables {
-            NumOrVar::from_var(vars, "fontSize", text_style.font_size)
+            NumOrVarType::from_var(vars, "fontSize", text_style.font_size)
         } else {
-            NumOrVar::Num(text_style.font_size)
+            NumOrVarType::Num(text_style.font_size)
         };
 
         style.node_style.font_weight = if let Some(vars) = &node.bound_variables {
-            FontWeight(NumOrVar::from_var(vars, "fontWeight", text_style.font_weight))
+            FontWeight(NumOrVarType::from_var(vars, "fontWeight", text_style.font_weight))
         } else {
-            FontWeight(NumOrVar::Num(text_style.font_weight))
+            FontWeight(NumOrVarType::Num(text_style.font_weight))
         };
         if text_style.italic {
             style.node_style.font_style = FontStyle::Italic;
@@ -1302,7 +1302,7 @@ fn visit_node(
                     style.node_style.text_color.clone()
                 };
                 let font_size = if let Some(fs) = sub_style.font_size {
-                    NumOrVar::Num(fs)
+                    NumOrVarType::Num(fs)
                 } else {
                     style.node_style.font_size.clone()
                 };
@@ -1312,7 +1312,7 @@ fn visit_node(
                     style.node_style.font_family.clone()
                 };
                 let font_weight = if let Some(fw) = sub_style.font_weight {
-                    FontWeight(NumOrVar::Num(fw))
+                    FontWeight(NumOrVarType::Num(fw))
                 } else {
                     style.node_style.font_weight.clone()
                 };
@@ -1466,10 +1466,11 @@ fn visit_node(
     // Collect the corner radii values to be saved into the view. If the corner radii are set
     // to variables, they will be set to NumOrVar::Var. Otherwise they will be set to NumOrVar::Num.
     let corner_radius = if let Some(vars) = &node.bound_variables {
-        let top_left = NumOrVar::from_var(vars, "topLeftRadius", corner_radius_values[0]);
-        let top_right = NumOrVar::from_var(vars, "topRightRadius", corner_radius_values[1]);
-        let bottom_right = NumOrVar::from_var(vars, "bottomRightRadius", corner_radius_values[2]);
-        let bottom_left = NumOrVar::from_var(vars, "bottomLeftRadius", corner_radius_values[3]);
+        let top_left = NumOrVarType::from_var(vars, "topLeftRadius", corner_radius_values[0]);
+        let top_right = NumOrVarType::from_var(vars, "topRightRadius", corner_radius_values[1]);
+        let bottom_right =
+            NumOrVarType::from_var(vars, "bottomRightRadius", corner_radius_values[2]);
+        let bottom_left = NumOrVarType::from_var(vars, "bottomLeftRadius", corner_radius_values[3]);
         if vars.has_var("topLeftRadius")
             || vars.has_var("topRightRadius")
             || vars.has_var("bottomRightRadius")
@@ -1480,22 +1481,30 @@ fn visit_node(
         [top_left, top_right, bottom_right, bottom_left]
     } else {
         [
-            NumOrVar::Num(corner_radius_values[0]),
-            NumOrVar::Num(corner_radius_values[1]),
-            NumOrVar::Num(corner_radius_values[2]),
-            NumOrVar::Num(corner_radius_values[3]),
+            NumOrVarType::Num(corner_radius_values[0]),
+            NumOrVarType::Num(corner_radius_values[1]),
+            NumOrVarType::Num(corner_radius_values[2]),
+            NumOrVarType::Num(corner_radius_values[3]),
         ]
+    };
+
+    let to_vector = |array: &[NumOrVarType; 4]| -> Vec<definition::element::NumOrVar> {
+        array
+            .clone()
+            .map(|i| definition::element::NumOrVar { num_or_var_type: Some(i) })
+            .into_iter()
+            .collect()
     };
 
     let make_rect = |is_mask| -> ViewShape {
         if has_corner_radius {
-            ViewShape::RoundRect {
-                corner_radius: corner_radius.clone(),
+            ViewShape::new_round_rect(RoundRect {
+                corner_radii: to_vector(&corner_radius),
                 corner_smoothing: 0.0, // Not in Figma REST API
                 is_mask,
-            }
+            })
         } else {
-            ViewShape::Rect { is_mask }
+            ViewShape::new_rect(view_shape::Box { is_mask })
         }
     };
 
@@ -1525,37 +1534,43 @@ fn visit_node(
         | figma_schema::NodeData::Line { vector }
         | figma_schema::NodeData::RegularPolygon { vector }
         | figma_schema::NodeData::Star { vector }
-        | figma_schema::NodeData::Vector { vector } => ViewShape::Path {
-            path: fill_paths,
-            stroke: stroke_paths,
-            stroke_cap: node.stroke_cap.clone().into(),
-            is_mask: vector.is_mask,
-        },
+        | figma_schema::NodeData::Vector { vector } => {
+            ViewShape::new_path(view_shape::VectorPath {
+                paths: fill_paths,
+                strokes: stroke_paths,
+                stroke_cap: node.stroke_cap.to_proto(),
+                is_mask: vector.is_mask,
+            })
+        }
         // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
         // to support progress bars. If this node is set up as a progress bar, the renderer will
-        // construct the rectangle, modified by progress bar parameters. Otherwise it will be
+        // construct the rectangle, modified by progress bar parameters. Otherwise, it will be
         // rendered as a ViewShape::Path.
-        figma_schema::NodeData::Rectangle { vector } => ViewShape::VectorRect {
-            path: fill_paths,
-            stroke: stroke_paths,
-            corner_radius,
-            is_mask: vector.is_mask,
-        },
+        figma_schema::NodeData::Rectangle { vector } => {
+            ViewShape::new_vector_rect(view_shape::VectorRect {
+                paths: fill_paths.into(),
+                strokes: stroke_paths.into(),
+                corner_radii: to_vector(&corner_radius),
+                is_mask: vector.is_mask,
+            })
+        }
         // Ellipses get turned into an Arc in order to support dials/gauges with an arc type
         // meter customization. If this node is setup as an arc type meter, the renderer will
         // construct the ellipse, modified by the arc parameters. Otherwise it will be rendered
         // as a ViewShape::Path.
-        figma_schema::NodeData::Ellipse { vector, arc_data, .. } => ViewShape::Arc {
-            path: fill_paths,
-            stroke: stroke_paths,
-            stroke_cap: node.stroke_cap.clone().into(),
-            start_angle_degrees: euclid::Angle::radians(arc_data.starting_angle).to_degrees(),
-            sweep_angle_degrees: euclid::Angle::radians(arc_data.ending_angle).to_degrees(),
-            inner_radius: arc_data.inner_radius,
-            // corner radius for arcs in dials & gauges does not support variables yet
-            corner_radius: 0.0,
-            is_mask: vector.is_mask,
-        },
+        figma_schema::NodeData::Ellipse { vector, arc_data, .. } => {
+            ViewShape::new_arc(view_shape::VectorArc {
+                paths: fill_paths.into(),
+                strokes: stroke_paths.into(),
+                stroke_cap: node.stroke_cap.to_proto(),
+                start_angle_degrees: euclid::Angle::radians(arc_data.starting_angle).to_degrees(),
+                sweep_angle_degrees: euclid::Angle::radians(arc_data.ending_angle).to_degrees(),
+                inner_radius: arc_data.inner_radius,
+                // corner radius for arcs in dials & gauges does not support variables yet
+                corner_radius: 0.0,
+                is_mask: vector.is_mask,
+            })
+        }
         figma_schema::NodeData::Frame { frame }
         | figma_schema::NodeData::Group { frame }
         | figma_schema::NodeData::Component { frame }

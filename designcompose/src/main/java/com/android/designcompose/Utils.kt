@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import com.android.designcompose.proto.StrokeAlignType
 import com.android.designcompose.proto.WindingRuleType
 import com.android.designcompose.proto.end
+import com.android.designcompose.proto.get
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.getType
 import com.android.designcompose.proto.isDefault
@@ -87,11 +88,12 @@ import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.LayoutTransform
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.NodeStyle
-import com.android.designcompose.serdegen.NumOrVar
+import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
+import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.Stroke
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.StrokeWeight
@@ -256,13 +258,13 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.text_color
         }
     nodeStyle.font_size =
-        if (override.node_style.font_size != NumOrVar.Num(18.0f)) {
+        if (override.node_style.font_size != NumOrVarType.Num(18.0f)) {
             override.node_style.font_size
         } else {
             base.node_style.font_size
         }
     nodeStyle.font_weight =
-        if (override.node_style.font_weight.value != NumOrVar.Num(400.0f)) {
+        if (override.node_style.font_weight.value != NumOrVarType.Num(400.0f)) {
             override.node_style.font_weight
         } else {
             base.node_style.font_weight
@@ -761,9 +763,9 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
 internal fun defaultNodeStyle(): NodeStyle.Builder {
     val builder = NodeStyle.Builder()
     builder.text_color = Background(Optional.of(BackgroundType.None(com.novi.serde.Unit())))
-    builder.font_size = NumOrVar.Num(0f)
+    builder.font_size = NumOrVarType.Num(0f)
     builder.font_family = Optional.empty()
-    builder.font_weight = FontWeight(NumOrVar.Num(0f))
+    builder.font_weight = FontWeight(NumOrVarType.Num(0f))
     builder.font_style = FontStyle.Normal()
     builder.font_stretch = FontStretch(0f)
     builder.background = emptyList()
@@ -960,12 +962,12 @@ internal fun View.useInfiniteConstraints(): Boolean {
 }
 
 internal fun ViewShape.isMask(): Boolean {
-    when (this) {
-        is ViewShape.Rect -> return is_mask
-        is ViewShape.RoundRect -> return is_mask
-        is ViewShape.Path -> return is_mask
-        is ViewShape.Arc -> return is_mask
-        is ViewShape.VectorRect -> return is_mask
+    when (val shape = this.get()) {
+        is Shape.Rect -> return shape.value.is_mask
+        is Shape.RoundRect -> return shape.value.is_mask
+        is Shape.Path -> return shape.value.is_mask
+        is Shape.Arc -> return shape.value.is_mask
+        is Shape.VectorRect -> return shape.value.is_mask
     }
     return false
 }
@@ -1559,8 +1561,8 @@ internal fun com.android.designcompose.serdegen.Path.asPath(
 
 internal fun StrokeCap.toComposeStrokeCap(): androidx.compose.ui.graphics.StrokeCap {
     return when (this) {
-        is StrokeCap.ROUND -> androidx.compose.ui.graphics.StrokeCap.Round
-        is StrokeCap.SQUARE -> androidx.compose.ui.graphics.StrokeCap.Square
+        is StrokeCap.Round -> androidx.compose.ui.graphics.StrokeCap.Round
+        is StrokeCap.Square -> androidx.compose.ui.graphics.StrokeCap.Square
         else -> androidx.compose.ui.graphics.StrokeCap.Butt
     }
 }

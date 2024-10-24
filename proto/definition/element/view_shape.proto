@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package designcompose.definition.element;
 
+import "definition/element/path.proto";
 import "definition/element/variable.proto";
 
 option java_multiple_files = true;
@@ -26,6 +27,18 @@ option optimize_for = LITE_RUNTIME;
 //  ellipse, or a custom path. It determines the boundaries of the element and
 //  influences how it is rendered and interacted with within a design.
 message ViewShape {
+  // Defines the appearance of the stroke's end points (e.g., round, square).
+  enum StrokeCap {
+    STROKE_CAP_UNSPECIFIED = 0;
+    STROKE_CAP_NONE = 1;
+    STROKE_CAP_ROUND = 2;
+    STROKE_CAP_SQUARE = 3;
+    STROKE_CAP_LINE_ARROW = 4;
+    STROKE_CAP_TRIANGLE_ARROW = 5;
+    STROKE_CAP_CIRCLE_FILLED = 6;
+    STROKE_CAP_DIAMOND_FILLED = 7;  // Not supported
+  }
+
   // A container for other objects. Equivalent to a Compose Box or a Figma Frame
   message Box {
     bool is_mask = 1;
@@ -40,26 +53,15 @@ message ViewShape {
   }
 
   // A vector path
-  message Path {
+  message VectorPath {
     repeated Path paths = 1;
     repeated Path strokes = 2;
-    bool is_mask = 3;
+    StrokeCap stroke_cap = 3;
+    bool is_mask = 4;
   }
 
   // Represents a complex arc shape within a design.
-  message Arc {
-    // Defines the appearance of the stroke's end points (e.g., round, square).
-    enum StrokeCap {
-      STROKE_CAP_UNSPECIFIED = 0;
-      STROKE_CAP_NONE = 1;
-      STROKE_CAP_ROUND = 2;
-      STROKE_CAP_SQUARE = 3;
-      STROKE_CAP_LINE_ARROW = 4;
-      STROKE_CAP_TRIANGLE_ARROW = 5;
-      STROKE_CAP_CIRCLE_FILLED = 6;
-      STROKE_CAP_DIAMOND_FILLED = 7;  // Not supported
-    }
-
+  message VectorArc {
     // The outer path defining the overall shape of the arc.
     repeated Path paths = 1;
     // An optional inner path used for creating an outline or stroke effect.
@@ -83,8 +85,8 @@ message ViewShape {
   oneof shape {
     Box rect = 1;
     RoundRect round_rect = 2;
-    ViewShape.Path path = 3;
-    Arc arc = 4;
+    VectorPath path = 3;
+    VectorArc arc = 4;
     VectorRect vector_rect = 5;
   }
 }

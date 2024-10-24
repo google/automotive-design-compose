@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use crate::definition::element::num_or_var::NumOrVar;
+use crate::definition::element::num_or_var::NumOrVarType;
 use crate::utils::f32_eq;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -69,7 +69,7 @@ impl Hash for FontStretch {
 /// The degree of blackness or stroke thickness of a font. This value ranges from 100.0 to 900.0,
 /// with 400.0 as normal.
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct FontWeight(pub NumOrVar);
+pub struct FontWeight(pub NumOrVarType);
 
 impl Default for FontWeight {
     #[inline]
@@ -81,8 +81,8 @@ impl Default for FontWeight {
 impl PartialEq for FontWeight {
     fn eq(&self, other: &Self) -> bool {
         match (&self.0, &other.0) {
-            (NumOrVar::Num(a), NumOrVar::Num(b)) => a == b,
-            (NumOrVar::Var(nv1), NumOrVar::Var(nv2)) => {
+            (NumOrVarType::Num(a), NumOrVarType::Num(b)) => a == b,
+            (NumOrVarType::Var(nv1), NumOrVarType::Var(nv2)) => {
                 nv1.id == nv2.id && nv1.fallback == nv2.fallback
             }
             _ => false,
@@ -92,23 +92,23 @@ impl PartialEq for FontWeight {
 
 impl FontWeight {
     /// Thin weight (100), the thinnest value.
-    pub const THIN: FontWeight = FontWeight(NumOrVar::Num(100.0));
+    pub const THIN: FontWeight = FontWeight(NumOrVarType::Num(100.0));
     /// Extra light weight (200).
-    pub const EXTRA_LIGHT: FontWeight = FontWeight(NumOrVar::Num(200.0));
+    pub const EXTRA_LIGHT: FontWeight = FontWeight(NumOrVarType::Num(200.0));
     /// Light weight (300).
-    pub const LIGHT: FontWeight = FontWeight(NumOrVar::Num(300.0));
+    pub const LIGHT: FontWeight = FontWeight(NumOrVarType::Num(300.0));
     /// Normal (400).
-    pub const NORMAL: FontWeight = FontWeight(NumOrVar::Num(400.0));
+    pub const NORMAL: FontWeight = FontWeight(NumOrVarType::Num(400.0));
     /// Medium weight (500, higher than normal).
-    pub const MEDIUM: FontWeight = FontWeight(NumOrVar::Num(500.0));
+    pub const MEDIUM: FontWeight = FontWeight(NumOrVarType::Num(500.0));
     /// Semibold weight (600).
-    pub const SEMIBOLD: FontWeight = FontWeight(NumOrVar::Num(600.0));
+    pub const SEMIBOLD: FontWeight = FontWeight(NumOrVarType::Num(600.0));
     /// Bold weight (700).
-    pub const BOLD: FontWeight = FontWeight(NumOrVar::Num(700.0));
+    pub const BOLD: FontWeight = FontWeight(NumOrVarType::Num(700.0));
     /// Extra-bold weight (800).
-    pub const EXTRA_BOLD: FontWeight = FontWeight(NumOrVar::Num(800.0));
+    pub const EXTRA_BOLD: FontWeight = FontWeight(NumOrVarType::Num(800.0));
     /// Black weight (900), the thickest value.
-    pub const BLACK: FontWeight = FontWeight(NumOrVar::Num(900.0));
+    pub const BLACK: FontWeight = FontWeight(NumOrVarType::Num(900.0));
 }
 
 /// The width of a font as an approximate fraction of the normal width.

@@ -192,7 +192,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::view::view::RenderMethod>(&samples)
         .expect("couldn't trace RenderMethod");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::view_shape::StrokeCap>(&samples)
+        .trace_type::<dc_bundle::definition::element::view_shape::StrokeCap>(&samples)
         .expect("couldn't trace StrokeCap");
     tracer
         .trace_type::<dc_bundle::definition::element::Mode>(&samples)
@@ -207,7 +207,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::FloatColor>(&samples)
         .expect("couldn't trace FloatColor");
     tracer
-        .trace_type::<dc_bundle::definition::element::num_or_var::NumOrVar>(&samples)
+        .trace_type::<dc_bundle::definition::element::num_or_var::NumOrVarType>(&samples)
         .expect("couldn't trace NumOrVar");
     tracer
         .trace_type::<dc_bundle::definition::element::ColorOrVar>(&samples)
@@ -228,8 +228,11 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::VariableMap>(&samples)
         .expect("couldn't trace VariableMap");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::element::view_shape::ViewShape>(&samples)
+        .trace_type::<dc_bundle::definition::element::ViewShape>(&samples)
         .expect("couldn't trace ViewShape");
+    tracer
+        .trace_type::<dc_bundle::definition::element::view_shape::Shape>(&samples)
+        .expect("couldn't trace Shape");
     tracer
         .trace_type::<dc_bundle::legacy_definition::view::view::ViewData>(&samples)
         .expect("couldn't trace ViewData");

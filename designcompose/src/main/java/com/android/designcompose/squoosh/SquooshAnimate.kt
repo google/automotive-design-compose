@@ -27,8 +27,11 @@ import com.android.designcompose.asBuilder
 import com.android.designcompose.decompose
 import com.android.designcompose.fixedHeight
 import com.android.designcompose.fixedWidth
+import com.android.designcompose.proto.get
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeStyle
+import com.android.designcompose.serdegen.Shape
+import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
@@ -267,29 +270,28 @@ internal class SquooshAnimatedLayout(
 
 internal class SquooshAnimatedArc(
     target: SquooshResolvedNode,
-    private val from: ViewShape.Arc,
-    private val to: ViewShape.Arc,
+    private val from: Shape.Arc,
+    private val to: Shape.Arc,
     transition: AnimationTransition,
 ) : SquooshAnimatedItem(target, transition) {
     override fun apply(value: Float) {
         val iv = 1.0f - value
-        val arcBuilder = ViewShape.Arc.Builder()
-
-        arcBuilder.path = listOf()
-        arcBuilder.stroke = listOf()
-        arcBuilder.corner_radius = from.corner_radius * iv + to.corner_radius * value
-        arcBuilder.inner_radius = from.inner_radius * iv + to.inner_radius * value
-        arcBuilder.is_mask = to.is_mask
-        arcBuilder.start_angle_degrees =
-            from.start_angle_degrees * iv + to.start_angle_degrees * value
-        arcBuilder.stroke_cap = to.stroke_cap
-        arcBuilder.sweep_angle_degrees =
-            from.sweep_angle_degrees * iv + to.sweep_angle_degrees * value
-        val arc = arcBuilder.build()
-
+        val arc =
+            Shape.Arc(
+                VectorArc(
+                    listOf(),
+                    listOf(),
+                    to.value.stroke_cap,
+                    from.value.start_angle_degrees * iv + to.value.start_angle_degrees * value,
+                    from.value.sweep_angle_degrees * iv + to.value.sweep_angle_degrees * value,
+                    from.value.inner_radius * iv + to.value.inner_radius * value,
+                    from.value.corner_radius * iv + to.value.corner_radius * value,
+                    to.value.is_mask,
+                )
+            )
         // Unfortunately, the ViewData and View objects are also immutable.
         val viewDataBuilder = ViewData.Container.Builder()
-        viewDataBuilder.shape = arc
+        viewDataBuilder.shape = ViewShape(Optional.of(arc))
         viewDataBuilder.children = (target.view.data as ViewData.Container).children
         val viewData = viewDataBuilder.build()
 
@@ -587,13 +589,12 @@ private fun mergeRecursive(
         // XXX: Refactor this so we don't inspect every type right here.
         if (
             from.view.data is ViewData.Container &&
-                (from.view.data as ViewData.Container).shape is ViewShape.Arc &&
+                (from.view.data as ViewData.Container).shape.get() is Shape.Arc &&
                 to.view.data is ViewData.Container &&
-                (to.view.data as ViewData.Container).shape is ViewShape.Arc
+                (to.view.data as ViewData.Container).shape.get() is Shape.Arc
         ) {
-            val fromArc: ViewShape.Arc =
-                (from.view.data as ViewData.Container).shape as ViewShape.Arc
-            val toArc: ViewShape.Arc = (to.view.data as ViewData.Container).shape as ViewShape.Arc
+            val fromArc: Shape.Arc = (from.view.data as ViewData.Container).shape.get() as Shape.Arc
+            val toArc: Shape.Arc = (to.view.data as ViewData.Container).shape.get() as Shape.Arc
 
             if (fromArc != toArc) {
                 anims.add(SquooshAnimatedArc(n, fromArc, toArc, transition))
@@ -659,16 +660,16 @@ private fun isTweenable(a: View, b: View): Boolean {
     if (aData is ViewData.Container && bData is ViewData.Container) {
         // Rects and RoundRects can be tweened.
         if (
-            (aData.shape is ViewShape.Rect && bData.shape is ViewShape.Rect) ||
-                (aData.shape is ViewShape.RoundRect && bData.shape is ViewShape.RoundRect)
+            (aData.shape.get() is Shape.Rect && bData.shape.get() is Shape.Rect) ||
+                (aData.shape.get() is Shape.RoundRect && bData.shape.get() is Shape.RoundRect)
         )
             return true
 
-        if ((aData.shape is ViewShape.VectorRect && bData.shape is ViewShape.VectorRect))
+        if ((aData.shape.get() is Shape.VectorRect && bData.shape.get() is Shape.VectorRect))
             return true
 
         // Arcs can be tweened.
-        if (aData.shape is ViewShape.Arc && bData.shape is ViewShape.Arc) return true
+        if (aData.shape.get() is Shape.Arc && bData.shape.get() is Shape.Arc) return true
     }
     return false
 }
@@ -688,7 +689,7 @@ private fun shouldScale(from: SquooshResolvedNode, to: SquooshResolvedNode): Boo
         // Scale vector paths
         val fromContainer = from.view.data as ViewData.Container
         val toContainer = to.view.data as ViewData.Container
-        return fromContainer.shape is ViewShape.Path && toContainer.shape is ViewShape.Path
+        return fromContainer.shape.get() is Shape.Path && toContainer.shape.get() is Shape.Path
     } else if (fromData is ViewData.Text && toData is ViewData.Text) {
         // Scale text if the string and font are the same
         return fromData.content == toData.content &&

@@ -87,7 +87,7 @@ impl ViewStyle {
             delta.node_style.node_size = other.node_style.node_size.clone();
         }
         if self.node_style.line_height != other.node_style.line_height {
-            delta.node_style.line_height = other.node_style.line_height;
+            delta.node_style.line_height = other.node_style.line_height.clone();
         }
         if self.node_style.line_count != other.node_style.line_count {
             delta.node_style.line_count = other.node_style.line_count;

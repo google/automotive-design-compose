@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+use crate::definition::element::line_height::LineHeight;
 use crate::definition::element::num_or_var::NumOrVarType;
 use crate::definition::element::Stroke;
 use crate::definition::element::{
@@ -23,7 +24,6 @@ use crate::definition::element::{Background, FontStretch, FontWeight};
 use crate::definition::layout::FlexWrap;
 use crate::definition::modifier::FilterOp;
 use crate::definition::modifier::LayoutTransform;
-use crate::legacy_definition::element::path::LineHeight;
 use crate::legacy_definition::interaction::pointer::PointerEvents;
 use crate::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use crate::legacy_definition::layout::positioning::{LayoutSizing, Overflow};

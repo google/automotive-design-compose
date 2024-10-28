@@ -14,8 +14,6 @@
 
 use thiserror::Error;
 
-mod utils;
-
 pub mod android_interface;
 pub mod definition;
 pub mod legacy_definition;

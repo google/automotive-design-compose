@@ -45,7 +45,7 @@ use dc_bundle::definition::element::{
 };
 use dc_bundle::definition::interaction::Reaction;
 use dc_bundle::definition::layout::FlexWrap;
-use dc_bundle::definition::modifier::{filter_op, FilterOp};
+use dc_bundle::definition::modifier::{filter_op, BoxShadow, FilterOp, TextShadow};
 use dc_bundle::definition::modifier::{BlendMode, LayoutTransform};
 use dc_bundle::definition::plugin::FrameExtras;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
@@ -53,7 +53,6 @@ use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, LayoutSizing,
     Overflow, OverflowDirection, PositionType,
 };
-use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
@@ -1229,8 +1228,9 @@ fn visit_node(
                         bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
                     style.node_style.text_shadow = Some(TextShadow {
                         blur_radius: effect.radius,
-                        color: shadow_color,
-                        offset: (effect.offset.x(), effect.offset.y()),
+                        color: Some(shadow_color),
+                        offset_x: effect.offset.x(),
+                        offset_y: effect.offset.y(),
                     });
                 }
                 _ => {}
@@ -1586,24 +1586,22 @@ fn visit_node(
             figma_schema::EffectType::DropShadow => {
                 let shadow_color =
                     bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
-                style.node_style.box_shadow.push(BoxShadow::Outset {
-                    blur_radius: effect.radius,
-                    spread_radius: effect.spread,
-                    color: shadow_color,
-                    offset: (effect.offset.x(), effect.offset.y()),
-                    shadow_box: ShadowBox::StrokeBox,
-                });
+                style.node_style.box_shadow.push(BoxShadow::outset(
+                    effect.radius,
+                    effect.spread,
+                    shadow_color,
+                    (effect.offset.x(), effect.offset.y()),
+                ))
             }
             figma_schema::EffectType::InnerShadow => {
                 let shadow_color =
                     bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
-                style.node_style.box_shadow.push(BoxShadow::Inset {
-                    blur_radius: effect.radius,
-                    spread_radius: effect.spread,
-                    color: shadow_color,
-                    offset: (effect.offset.x(), effect.offset.y()),
-                    shadow_box: ShadowBox::StrokeBox,
-                });
+                style.node_style.box_shadow.push(BoxShadow::inset(
+                    effect.radius,
+                    effect.spread,
+                    shadow_color,
+                    (effect.offset.x(), effect.offset.y()),
+                ))
             }
             figma_schema::EffectType::LayerBlur => {
                 style

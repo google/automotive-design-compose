@@ -35,6 +35,7 @@ import com.android.designcompose.proto.strokeCapFromInt
 import com.android.designcompose.proto.toUniform
 import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.BoxShadow
+import com.android.designcompose.serdegen.ShadowBox
 import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.VectorArc
@@ -304,14 +305,14 @@ internal fun ViewShape.computePaths(
     // Shadow path calculation
     val computedShadows: List<ComputedShadow> =
         style.node_style.box_shadow.mapNotNull { shadow ->
-            when (shadow) {
-                is BoxShadow.Outset -> {
+            when (val shadowBox = shadow.shadow_box.get()) {
+                is ShadowBox.Outset -> {
                     // To calculate the outset path, we must inflate our outer bounds (our fill
                     // path plus the stroke width) plus the shadow spread. Since Skia always
                     // centers strokes, we do this by adding double the spread to the shadow
                     // stroke width.
                     shadowBoundsPaint.strokeWidth =
-                        shadowStrokeWidth + shadow.spread_radius * 2.0f * density
+                        shadowStrokeWidth + shadowBox.value.spread_radius * 2.0f * density
                     val shadowOutlines =
                         fills.map { fill ->
                             val shadowPath = android.graphics.Path()
@@ -320,7 +321,7 @@ internal fun ViewShape.computePaths(
                         }
                     ComputedShadow(shadowOutlines, shadow)
                 }
-                is BoxShadow.Inset -> {
+                is ShadowBox.Inset -> {
                     // Inset shadows are applied to the "stroke bounds", not the fill bounds. So we
                     // must inflate our fill bounds out to the stroke bounds by applying a stroke
                     // and
@@ -334,7 +335,7 @@ internal fun ViewShape.computePaths(
                     // then we stroke the excess spread and subtract it from the fill to make the
                     // path.
 
-                    val spreadWidth = shadow.spread_radius * 2.0f * density
+                    val spreadWidth = shadowBox.value.spread_radius * 2.0f * density
                     val needSpreadStroke = spreadWidth > shadowStrokeWidth
                     if (!needSpreadStroke)
                         shadowOutlinePaint.strokeWidth = shadowStrokeWidth - spreadWidth
@@ -704,9 +705,9 @@ private fun computeRoundRectPathsFast(
     // Generate the shadow descriptions from the style.
     val shadows =
         style.node_style.box_shadow.mapNotNull { shadow ->
-            when (shadow) {
-                is BoxShadow.Inset -> {
-                    val insetShadowInset = Insets.uniform(shadow.spread_radius * density)
+            when (val shadowbox = shadow.shadow_box.get()) {
+                is ShadowBox.Inset -> {
+                    val insetShadowInset = Insets.uniform(shadowbox.value.spread_radius * density)
                     val insetShadowRect = exterior.offset(insetShadowInset, -1.0f)
                     val insetShadowPath = Path()
                     insetShadowPath.addRoundRect(
@@ -717,8 +718,8 @@ private fun computeRoundRectPathsFast(
                         android.graphics.Path.FillType.INVERSE_EVEN_ODD
                     ComputedShadow(listOf(insetShadowPath), shadow)
                 }
-                is BoxShadow.Outset -> {
-                    val boxShadowOutset = Insets.uniform(shadow.spread_radius * density)
+                is ShadowBox.Outset -> {
+                    val boxShadowOutset = Insets.uniform(shadowbox.value.spread_radius * density)
                     val boxShadowRect = exterior.offset(boxShadowOutset, 1.0f)
                     val boxShadowPath = Path()
                     boxShadowPath.addRoundRect(boxShadowRect)

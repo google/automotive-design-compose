@@ -259,10 +259,10 @@ internal fun DesignText(
                     blurRadius = textShadow.blur_radius * density.density * blurFudgeFactor + 0.1f,
                     offset =
                         Offset(
-                            textShadow.offset[0] * density.density,
-                            textShadow.offset[1] * density.density,
+                            textShadow.offset_x * density.density,
+                            textShadow.offset_y * density.density,
                         ),
-                    color = textShadow.color.getValue(variableState) ?: Color.Transparent,
+                    color = textShadow.color.get().getValue(variableState) ?: Color.Transparent,
                 )
             )
         }

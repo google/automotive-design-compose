@@ -318,10 +318,10 @@ private fun squooshTextRender(
 
     val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density.density
     // Only drop shadow is supported now.
-    val blurRadius = (style.node_style.text_shadow.getOrNull()?.blur_radius ?: 0f) * density.density
-    val offset = style.node_style.text_shadow.getOrNull()?.offset
-    val xOffset = (offset?.get(0) ?: 0f) * density.density
-    val yOffset = (offset?.get(1) ?: 0f) * density.density
+    val shadow = style.node_style.text_shadow.getOrNull()
+    val blurRadius = (shadow?.blur_radius ?: 0f) * density.density
+    val xOffset = (shadow?.offset_x ?: 0f) * density.density
+    val yOffset = (shadow?.offset_y ?: 0f) * density.density
 
     // Right now only centered stroke is supported
     val extraSpaceForStroke = strokeWidth / 2

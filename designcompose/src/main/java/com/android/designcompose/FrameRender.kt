@@ -45,13 +45,13 @@ import com.android.designcompose.proto.strokeAlignFromInt
 import com.android.designcompose.proto.toUniform
 import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.ArcMeterData
-import com.android.designcompose.serdegen.BoxShadow
 import com.android.designcompose.serdegen.MeterData
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
 import com.android.designcompose.serdegen.ProgressMarkerMeterData
 import com.android.designcompose.serdegen.ProgressVectorMeterData
 import com.android.designcompose.serdegen.RotationMeterData
+import com.android.designcompose.serdegen.ShadowBox
 import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.ViewShape
@@ -501,30 +501,25 @@ internal fun ContentDrawScope.render(
     // Now paint the outset shadows.
     shapePaths.shadowFills.forEach { shadow ->
         // Only outset.
-        if (shadow.shadowStyle !is BoxShadow.Outset) return@forEach
+        val shadowBox =
+            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Outset)?.value ?: return@forEach
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
         shadowPaint.color =
-            shadow.shadowStyle.color.getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadow.shadowStyle.blur_radius > 0.0f) {
+            shadowBox.color.get().getValue(variableState)?.toArgb() ?: return@forEach
+        if (shadowBox.blur_radius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
-                    shadow.shadowStyle.blur_radius * density * blurFudgeFactor,
+                    shadowBox.blur_radius * density * blurFudgeFactor,
                     BlurMaskFilter.Blur.NORMAL,
                 )
         }
-        drawContext.canvas.translate(
-            shadow.shadowStyle.offset[0] * density,
-            shadow.shadowStyle.offset[1] * density,
-        )
+        drawContext.canvas.translate(shadowBox.offset_x * density, shadowBox.offset_y * density)
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
-        drawContext.canvas.translate(
-            -shadow.shadowStyle.offset[0] * density,
-            -shadow.shadowStyle.offset[1] * density,
-        )
+        drawContext.canvas.translate(-shadowBox.offset_x * density, -shadowBox.offset_y * density)
     }
     drawContext.canvas.restore()
 
@@ -559,30 +554,25 @@ internal fun ContentDrawScope.render(
 
     shapePaths.shadowFills.forEach { shadow ->
         // Only inset.
-        if (shadow.shadowStyle !is BoxShadow.Inset) return@forEach
+        val shadowBox =
+            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Inset)?.value ?: return@forEach
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
         shadowPaint.color =
-            shadow.shadowStyle.color.getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadow.shadowStyle.blur_radius > 0.0f) {
+            shadowBox.color.get().getValue(variableState)?.toArgb() ?: return@forEach
+        if (shadowBox.blur_radius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
-                    shadow.shadowStyle.blur_radius * density * blurFudgeFactor,
+                    shadowBox.blur_radius * density * blurFudgeFactor,
                     BlurMaskFilter.Blur.NORMAL,
                 )
         }
-        drawContext.canvas.translate(
-            shadow.shadowStyle.offset[0] * density,
-            shadow.shadowStyle.offset[1] * density,
-        )
+        drawContext.canvas.translate(shadowBox.offset_x * density, shadowBox.offset_y * density)
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
-        drawContext.canvas.translate(
-            -shadow.shadowStyle.offset[0] * density,
-            -shadow.shadowStyle.offset[1] * density,
-        )
+        drawContext.canvas.translate(-shadowBox.offset_x * density, -shadowBox.offset_y * density)
     }
     drawContext.canvas.restore()
 
@@ -742,13 +732,13 @@ internal fun ContentDrawScope.squooshShapeRender(
         // stroke or shadow.
         var shadowOutset = 0.0f
         for (shadow in shapePaths.shadowFills) {
-            if (shadow.shadowStyle is BoxShadow.Outset) {
+            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Outset)?.value?.let { shadowBox ->
                 shadowOutset =
                     max(
                         shadowOutset,
-                        shadow.shadowStyle.blur_radius * blurFudgeFactor +
-                            shadow.shadowStyle.spread_radius +
-                            max(shadow.shadowStyle.offset[0], shadow.shadowStyle.offset[1]),
+                        shadowBox.blur_radius * blurFudgeFactor +
+                            shadowBox.spread_radius +
+                            max(shadowBox.offset_x, shadowBox.offset_y),
                     )
             }
         }
@@ -823,30 +813,25 @@ internal fun ContentDrawScope.squooshShapeRender(
     // Now paint the outset shadows.
     shapePaths.shadowFills.forEach { shadow ->
         // Only outset.
-        if (shadow.shadowStyle !is BoxShadow.Outset) return@forEach
+        val shadowBox =
+            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Outset)?.value ?: return@forEach
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
         shadowPaint.color =
-            shadow.shadowStyle.color.getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadow.shadowStyle.blur_radius > 0.0f) {
+            shadowBox.color.get().getValue(variableState)?.toArgb() ?: return@forEach
+        if (shadowBox.blur_radius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
-                    shadow.shadowStyle.blur_radius * density * blurFudgeFactor,
+                    shadowBox.blur_radius * density * blurFudgeFactor,
                     BlurMaskFilter.Blur.NORMAL,
                 )
         }
-        drawContext.canvas.translate(
-            shadow.shadowStyle.offset[0] * density,
-            shadow.shadowStyle.offset[1] * density,
-        )
+        drawContext.canvas.translate(shadowBox.offset_x * density, shadowBox.offset_y * density)
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
-        drawContext.canvas.translate(
-            -shadow.shadowStyle.offset[0] * density,
-            -shadow.shadowStyle.offset[1] * density,
-        )
+        drawContext.canvas.translate(-shadowBox.offset_x * density, -shadowBox.offset_y * density)
     }
     drawContext.canvas.restore()
 
@@ -881,30 +866,25 @@ internal fun ContentDrawScope.squooshShapeRender(
 
     shapePaths.shadowFills.forEach { shadow ->
         // Only inset.
-        if (shadow.shadowStyle !is BoxShadow.Inset) return@forEach
+        val shadowBox =
+            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Inset)?.value ?: return@forEach
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
         shadowPaint.color =
-            shadow.shadowStyle.color.getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadow.shadowStyle.blur_radius > 0.0f) {
+            shadowBox.color.get().getValue(variableState)?.toArgb() ?: return@forEach
+        if (shadowBox.blur_radius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
-                    shadow.shadowStyle.blur_radius * density * blurFudgeFactor,
+                    shadowBox.blur_radius * density * blurFudgeFactor,
                     BlurMaskFilter.Blur.NORMAL,
                 )
         }
-        drawContext.canvas.translate(
-            shadow.shadowStyle.offset[0] * density,
-            shadow.shadowStyle.offset[1] * density,
-        )
+        drawContext.canvas.translate(shadowBox.offset_x * density, shadowBox.offset_y * density)
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
-        drawContext.canvas.translate(
-            -shadow.shadowStyle.offset[0] * density,
-            -shadow.shadowStyle.offset[1] * density,
-        )
+        drawContext.canvas.translate(-shadowBox.offset_x * density, -shadowBox.offset_y * density)
     }
     drawContext.canvas.restore()
 

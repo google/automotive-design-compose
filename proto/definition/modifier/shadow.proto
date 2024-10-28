@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package designcompose.definition.modifier;
 
-import "definition/element/color.proto";
+import "definition/element/variable.proto";
 
 option java_multiple_files = true;
 option java_package = "com.android.designcompose.definition.modifier";
@@ -45,7 +45,7 @@ message BoxShadow {
   message Shadow {
     float blur_radius = 1;
     float spread_radius = 2;
-    element.Color color = 3;
+    element.ColorOrVar color = 3;
     float offset_x = 4;
     float offset_y = 5;
     ShadowBox shadow_box = 6;
@@ -59,7 +59,7 @@ message BoxShadow {
 // A text shadow.
 message TextShadow {
   float blur_radius = 1;
-  element.Color color = 2;
+  element.ColorOrVar color = 2;
   float offset_x = 3;
   float offset_y = 4;
 }

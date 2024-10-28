@@ -22,12 +22,11 @@ use crate::definition::element::{
 };
 use crate::definition::element::{Background, FontStretch, FontWeight};
 use crate::definition::layout::FlexWrap;
-use crate::definition::modifier::FilterOp;
 use crate::definition::modifier::LayoutTransform;
+use crate::definition::modifier::{BlendMode, FilterOp};
 use crate::legacy_definition::interaction::pointer::PointerEvents;
 use crate::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use crate::legacy_definition::layout::positioning::{LayoutSizing, Overflow};
-use crate::legacy_definition::modifier::blend::BlendMode;
 use crate::legacy_definition::modifier::shadow::{BoxShadow, TextShadow};
 use crate::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use crate::legacy_definition::plugin::meter_data::MeterData;
@@ -135,7 +134,7 @@ impl Default for NodeStyle {
             font_features: Vec::new(),
             filter: Vec::new(),
             backdrop_filter: Vec::new(),
-            blend_mode: BlendMode::default(),
+            blend_mode: BlendMode::PassThrough,
             hyperlink: None,
             display_type: Display::default(),
             flex_wrap: FlexWrap::NoWrap,

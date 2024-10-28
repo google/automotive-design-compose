@@ -45,15 +45,14 @@ use dc_bundle::definition::element::{
 };
 use dc_bundle::definition::interaction::Reaction;
 use dc_bundle::definition::layout::FlexWrap;
-use dc_bundle::definition::modifier::LayoutTransform;
 use dc_bundle::definition::modifier::{filter_op, FilterOp};
+use dc_bundle::definition::modifier::{BlendMode, LayoutTransform};
 use dc_bundle::definition::plugin::FrameExtras;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, LayoutSizing,
     Overflow, OverflowDirection, PositionType,
 };
-use dc_bundle::legacy_definition::modifier::blend::BlendMode;
 use dc_bundle::legacy_definition::modifier::shadow::{BoxShadow, ShadowBox, TextShadow};
 use dc_bundle::legacy_definition::modifier::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::legacy_definition::view::component::ComponentInfo;

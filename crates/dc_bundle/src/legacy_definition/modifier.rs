@@ -14,6 +14,5 @@
  * limitations under the License.
  */
 
-pub mod blend;
 pub mod shadow;
 pub mod text;

@@ -129,13 +129,13 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::stroke_weight::StrokeWeightType>(&samples)
         .expect("couldn't trace StrokeWeightType");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::modifier::text::TextAlign>(&samples)
+        .trace_type::<dc_bundle::definition::modifier::TextAlign>(&samples)
         .expect("couldn't trace TextAlign");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::modifier::text::TextAlignVertical>(&samples)
+        .trace_type::<dc_bundle::definition::modifier::TextAlignVertical>(&samples)
         .expect("couldn't trace TextAlignVertical");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::modifier::text::TextOverflow>(&samples)
+        .trace_type::<dc_bundle::definition::modifier::TextOverflow>(&samples)
         .expect("couldn't trace TextOverflow");
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::LayoutSizing>(&samples)

@@ -14,6 +14,4 @@
  * limitations under the License.
  */
 
-pub mod geometry;
 pub mod node;
-pub mod path;

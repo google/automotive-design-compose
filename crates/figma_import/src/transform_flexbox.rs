@@ -36,6 +36,7 @@ use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
 use dc_bundle::definition;
 use dc_bundle::definition::element::dimension_proto::Dimension;
+use dc_bundle::definition::element::line_height::LineHeight;
 use dc_bundle::definition::element::num_or_var::NumOrVarType;
 use dc_bundle::definition::element::view_shape::RoundRect;
 use dc_bundle::definition::element::Path;
@@ -47,7 +48,6 @@ use dc_bundle::definition::layout::FlexWrap;
 use dc_bundle::definition::modifier::LayoutTransform;
 use dc_bundle::definition::modifier::{filter_op, FilterOp};
 use dc_bundle::definition::plugin::FrameExtras;
-use dc_bundle::legacy_definition::element::path::LineHeight;
 use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, LayoutSizing,
@@ -1353,7 +1353,7 @@ fn visit_node(
                         .letter_spacing
                         .unwrap_or(style.node_style.letter_spacing.unwrap_or(0.0)),
                     text_decoration,
-                    line_height: style.node_style.line_height,
+                    line_height: style.node_style.line_height.clone(),
                     font_features: convert_opentype_flags(
                         &sub_style
                             .opentype_flags

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use crate::definition::element::ColorOrVar;
+
 include!(concat!(env!("OUT_DIR"), "/designcompose.definition.modifier.rs"));
 pub mod affine_transform;
 pub mod layout_transform;
@@ -20,5 +22,44 @@ pub mod layout_transform;
 impl FilterOp {
     pub fn new(op_type: filter_op::FilterOpType) -> Self {
         FilterOp { filter_op_type: Some(op_type) }
+    }
+}
+
+impl BoxShadow {
+    /// Create an outset box shadow.
+    pub fn outset(
+        blur_radius: f32,
+        spread_radius: f32,
+        color: ColorOrVar,
+        offset: (f32, f32),
+    ) -> BoxShadow {
+        BoxShadow {
+            shadow_box: Some(box_shadow::ShadowBox::Outset(box_shadow::Shadow {
+                blur_radius,
+                spread_radius,
+                color: Some(color),
+                offset_x: offset.0,
+                offset_y: offset.1,
+                shadow_box: ShadowBox::BorderBox.into(),
+            })),
+        }
+    }
+    /// Create an inset shadow.
+    pub fn inset(
+        blur_radius: f32,
+        spread_radius: f32,
+        color: ColorOrVar,
+        offset: (f32, f32),
+    ) -> BoxShadow {
+        BoxShadow {
+            shadow_box: Some(box_shadow::ShadowBox::Inset(box_shadow::Shadow {
+                blur_radius,
+                spread_radius,
+                color: Some(color),
+                offset_x: offset.0,
+                offset_y: offset.1,
+                shadow_box: ShadowBox::BorderBox.into(),
+            })),
+        }
     }
 }

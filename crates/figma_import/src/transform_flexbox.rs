@@ -44,13 +44,12 @@ use dc_bundle::definition::element::{
     background, stroke_weight, Background, StrokeAlign, StrokeWeight,
 };
 use dc_bundle::definition::interaction::Reaction;
-use dc_bundle::definition::layout::FlexWrap;
+use dc_bundle::definition::layout::{FlexWrap, GridLayoutType, GridSpan};
 use dc_bundle::definition::modifier::{
     filter_op, BoxShadow, FilterOp, TextAlign, TextAlignVertical, TextOverflow, TextShadow,
 };
 use dc_bundle::definition::modifier::{BlendMode, LayoutTransform};
 use dc_bundle::definition::plugin::FrameExtras;
-use dc_bundle::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use dc_bundle::legacy_definition::layout::positioning::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, LayoutSizing,
     Overflow, OverflowDirection, PositionType,

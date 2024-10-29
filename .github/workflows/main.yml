@@ -91,7 +91,7 @@ jobs:
       - name: Full Gradle Test and publish
         run: ./gradlew publishAllPublicationsToLocalDirRepository
       - name: Upload maven repo
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo/
@@ -112,7 +112,7 @@ jobs:
       - name: Generate full comparison
         run: ./gradlew compareRoborazziDebug
       - name: Upload diff report
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: screenshot-diff-report
           path: |
@@ -187,12 +187,12 @@ jobs:
         working-directory: unbundled-aaos/packages/apps/Car/libs/aaos-apps-gradle-project/
         run: ./gradlew publishAllPublicationsToLocalRepository
       - name: Upload maven repo
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: unbundled_m2repo
           path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
       - name: Upload aaos prebuilts
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: unbundled_prebuilts
           path: unbundled-aaos/prebuilts/sdk/34/system/

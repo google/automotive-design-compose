@@ -40,7 +40,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::Background>(&samples)
         .expect("couldn't trace Background");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::modifier::blend::BlendMode>(&samples)
+        .trace_type::<dc_bundle::definition::modifier::BlendMode>(&samples)
         .expect("couldn't trace BlendMode");
     tracer
         .trace_type::<dc_bundle::legacy_definition::modifier::shadow::BoxShadow>(&samples)

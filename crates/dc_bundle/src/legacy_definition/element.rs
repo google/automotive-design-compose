@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-pub mod font;
 pub mod geometry;
 pub mod node;
 pub mod path;

@@ -51,7 +51,7 @@ impl ViewStyle {
             delta.node_style.letter_spacing = other.node_style.letter_spacing;
         }
         if self.node_style.font_stretch != other.node_style.font_stretch {
-            delta.node_style.font_stretch = other.node_style.font_stretch;
+            delta.node_style.font_stretch = other.node_style.font_stretch.clone();
         }
         if self.node_style.background != other.node_style.background {
             delta.node_style.background = other.node_style.background.clone();

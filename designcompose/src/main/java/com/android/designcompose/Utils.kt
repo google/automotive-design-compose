@@ -59,6 +59,7 @@ import com.android.designcompose.proto.isDefault
 import com.android.designcompose.proto.isType
 import com.android.designcompose.proto.newDimensionProtoUndefined
 import com.android.designcompose.proto.newDimensionRectPointsZero
+import com.android.designcompose.proto.newFontWeight
 import com.android.designcompose.proto.scaleModeFromInt
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.strokeAlignTypeToInt
@@ -79,7 +80,6 @@ import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStretch
 import com.android.designcompose.serdegen.FontStyle
-import com.android.designcompose.serdegen.FontWeight
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
@@ -264,7 +264,10 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.font_size
         }
     nodeStyle.font_weight =
-        if (override.node_style.font_weight.value != NumOrVarType.Num(400.0f)) {
+        if (
+            override.node_style.font_weight.weight.get().num_or_var_type.get() !=
+                NumOrVarType.Num(400.0f)
+        ) {
             override.node_style.font_weight
         } else {
             base.node_style.font_weight
@@ -765,7 +768,7 @@ internal fun defaultNodeStyle(): NodeStyle.Builder {
     builder.text_color = Background(Optional.of(BackgroundType.None(com.novi.serde.Unit())))
     builder.font_size = NumOrVarType.Num(0f)
     builder.font_family = Optional.empty()
-    builder.font_weight = FontWeight(NumOrVarType.Num(0f))
+    builder.font_weight = newFontWeight(0f)
     builder.font_style = FontStyle.Normal()
     builder.font_stretch = FontStretch(0f)
     builder.background = emptyList()

@@ -86,7 +86,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::Overflow>(&samples)
         .expect("couldn't trace Overflow");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::interaction::pointer::PointerEvents>(&samples)
+        .trace_type::<dc_bundle::definition::interaction::PointerEvents>(&samples)
         .expect("couldn't trace PointerEvents");
     tracer
         .trace_type::<dc_bundle::legacy_definition::layout::positioning::ItemSpacing>(&samples)

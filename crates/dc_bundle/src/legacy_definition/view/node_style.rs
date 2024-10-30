@@ -21,12 +21,12 @@ use crate::definition::element::{
     background, FontFeature, FontStyle, Hyperlink, Size, TextDecoration,
 };
 use crate::definition::element::{Background, FontStretch, FontWeight};
+use crate::definition::interaction::PointerEvents;
 use crate::definition::layout::FlexWrap;
 use crate::definition::modifier::{
     BlendMode, FilterOp, TextAlign, TextAlignVertical, TextOverflow,
 };
 use crate::definition::modifier::{BoxShadow, LayoutTransform, TextShadow};
-use crate::legacy_definition::interaction::pointer::PointerEvents;
 use crate::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use crate::legacy_definition::layout::positioning::{LayoutSizing, Overflow};
 use crate::legacy_definition::plugin::meter_data::MeterData;
@@ -150,7 +150,7 @@ impl Default for NodeStyle {
             horizontal_sizing: LayoutSizing::default(),
             vertical_sizing: LayoutSizing::default(),
             aspect_ratio: Number::default(),
-            pointer_events: PointerEvents::default(),
+            pointer_events: PointerEvents::Inherit,
             meter_data: None,
         }
     }

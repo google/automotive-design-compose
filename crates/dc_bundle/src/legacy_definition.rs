@@ -29,7 +29,6 @@ use crate::definition::element::VariableMap;
 use crate::legacy_definition::element::node::NodeQuery;
 
 pub mod element;
-pub mod interaction;
 pub mod layout;
 pub mod plugin;
 pub mod view;

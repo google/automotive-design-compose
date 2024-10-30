@@ -22,12 +22,11 @@ use crate::definition::element::{
 };
 use crate::definition::element::{Background, FontStretch, FontWeight};
 use crate::definition::interaction::PointerEvents;
-use crate::definition::layout::FlexWrap;
+use crate::definition::layout::{FlexWrap, GridLayoutType, GridSpan};
 use crate::definition::modifier::{
     BlendMode, FilterOp, TextAlign, TextAlignVertical, TextOverflow,
 };
 use crate::definition::modifier::{BoxShadow, LayoutTransform, TextShadow};
-use crate::legacy_definition::layout::grid::{GridLayoutType, GridSpan};
 use crate::legacy_definition::layout::positioning::{LayoutSizing, Overflow};
 use crate::legacy_definition::plugin::meter_data::MeterData;
 use serde::{Deserialize, Serialize};

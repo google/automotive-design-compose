@@ -17,6 +17,7 @@ use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::DimensionProto;
 use dc_bundle::Error;
 use taffy::prelude::Dimension as TaffyDimension;
+use taffy::style_helpers::TaffyZero;
 
 impl TryIntoTaffy<TaffyDimension> for &Option<DimensionProto> {
     type Error = Error;
@@ -26,7 +27,7 @@ impl TryIntoTaffy<TaffyDimension> for &Option<DimensionProto> {
                 Ok(TaffyDimension::Percent(*p))
             }
             Some(DimensionProto { dimension: Some(Dimension::Points(p)) }) => {
-                Ok(TaffyDimension::Points(*p))
+                Ok(TaffyDimension::Length(*p))
             }
             Some(DimensionProto { dimension: Some(Dimension::Auto(_)) }) => {
                 Ok(TaffyDimension::Auto)
@@ -45,9 +46,9 @@ impl TryIntoTaffy<taffy::prelude::LengthPercentage> for &Option<DimensionProto> 
                 Ok(taffy::prelude::LengthPercentage::Percent(*p))
             }
             Some(DimensionProto { dimension: Some(Dimension::Points(p)) }) => {
-                Ok(taffy::prelude::LengthPercentage::Points(*p))
+                Ok(taffy::prelude::LengthPercentage::Length(*p))
             }
-            Some(_) => Ok(taffy::prelude::LengthPercentage::Points(0.0)),
+            Some(_) => Ok(taffy::prelude::LengthPercentage::ZERO),
 
             None => Err(Error::MissingFieldError { field: "DimensionProto".to_string() }),
         }
@@ -62,12 +63,12 @@ impl TryIntoTaffy<taffy::prelude::LengthPercentageAuto> for &Option<DimensionPro
                 Ok(taffy::prelude::LengthPercentageAuto::Percent(*p))
             }
             Some(DimensionProto { dimension: Some(Dimension::Points(p)) }) => {
-                Ok(taffy::prelude::LengthPercentageAuto::Points(*p))
+                Ok(taffy::prelude::LengthPercentageAuto::Length(*p))
             }
             Some(DimensionProto { dimension: Some(Dimension::Auto(_)) }) => {
                 Ok(taffy::prelude::LengthPercentageAuto::Auto)
             }
-            Some(_) => Ok(taffy::prelude::LengthPercentageAuto::Points(0.0)),
+            Some(_) => Ok(taffy::prelude::LengthPercentageAuto::ZERO),
             None => Err(Error::MissingFieldError { field: "DimensionProto".to_string() }),
         }
     }

@@ -40,7 +40,7 @@ serde-generate = { version = "0.25.1" }
 serde_json = "1.0"
 serde-reflection = { version = "0.3" }
 svgtypes = "0.15.1"
-taffy = { version = "0.5", default-features = false, features = ["std", "taffy_tree", "flexbox"] }
+taffy = { version = "0.6", default-features = false, features = ["std", "taffy_tree", "flexbox"] }
 testdir = "0.9.1"
 thiserror = "1.0"
 unicode-segmentation = "1"

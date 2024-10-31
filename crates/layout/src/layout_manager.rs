@@ -20,8 +20,7 @@ use log::{error, trace};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size};
-use taffy::style_helpers::TaffyZero;
-use taffy::{Dimension, NodeId, TaffyTree};
+use taffy::{NodeId, TaffyTree};
 
 // Customizations that can applied to a node
 struct Customizations {
@@ -226,20 +225,19 @@ impl LayoutManager {
 
         self.apply_customizations(layout_id, &mut node_style);
         self.apply_fixed_size(&mut node_style, fixed_width, fixed_height);
-        self.apply_hacks(&mut node_style, &style);
 
         let node_context = if use_measure_func { Some(layout_id) } else { None };
 
         let node = self.layout_id_to_taffy_node.get(&layout_id);
         if let Some(node) = node {
-            // We already have this view in our tree. Update it's style
+            // We already have this view in our tree. Update its style
             if let Err(e) = self.taffy.set_style(*node, node_style) {
                 error!("taffy set_style error: {}", e);
             }
 
             // Add the measure function.
             let _ = self.taffy.set_node_context(*node, node_context);
-            return;
+            return Ok(());
         }
 
         // This is a new view to add to our tree. Create a new node and add it
@@ -247,7 +245,8 @@ impl LayoutManager {
             Ok(node) => node,
             Err(e) => {
                 error!("taffy_new_leaf error: {}", e);
-                return;
+                // TODO: return a proper error.
+                return Ok(());
             }
         };
 
@@ -405,22 +404,6 @@ impl LayoutManager {
         }
         if let Some(fixed_height) = fixed_height {
             style.min_size.height = taffy::prelude::Dimension::Length(fixed_height as f32);
-        }
-    }
-
-    fn apply_hacks(&self, style: &mut taffy::style::Style, _layout_style: &LayoutStyle) {
-        // Flex containers that are meant to collapse and hide their children (e.g.: those
-        // that scroll, and those that have flex-basis 0, need to be given an explicit
-        // size rather than auto).
-        if style.align_self == Some(taffy::AlignItems::Stretch)
-            && style.flex_basis == Dimension::ZERO
-        {
-            if style.size.width == Dimension::Auto {
-                style.size.width = Dimension::ZERO;
-            }
-            if style.size.height == Dimension::Auto {
-                style.size.height = Dimension::ZERO;
-            }
         }
     }
 

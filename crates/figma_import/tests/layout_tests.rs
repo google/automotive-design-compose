@@ -82,7 +82,7 @@ fn add_view_to_layout(
             }
         }
         if use_measure_func {
-            manager.add_style(
+            let _ = manager.add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
@@ -95,10 +95,10 @@ fn add_view_to_layout(
         } else {
             let mut fixed_view = view.clone();
             fixed_view.style.layout_style.width =
-                Dimension::Points(view.style.layout_style.bounding_box.width);
+                DimensionProto::new_points(view.style.layout_style.bounding_box.width);
             fixed_view.style.layout_style.height =
-                Dimension::Points(view.style.layout_style.bounding_box.height);
-            manager.add_style(
+                DimensionProto::new_points(view.style.layout_style.bounding_box.height);
+            let _ = manager.add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
@@ -110,7 +110,7 @@ fn add_view_to_layout(
             );
         }
     } else if let ViewData::Container { shape: _, children } = &view.data {
-        manager.add_style(
+        let _ = manager.add_style(
             my_id,
             parent_layout_id,
             child_index,

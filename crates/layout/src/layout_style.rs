@@ -69,6 +69,6 @@ impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
         tstyle.overflow.x = taffy::Overflow::Hidden;
         tstyle.overflow.y = taffy::Overflow::Hidden;
 
-        tstyle
+        Ok(tstyle)
     }
 }

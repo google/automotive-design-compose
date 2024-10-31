@@ -82,44 +82,50 @@ fn add_view_to_layout(
             }
         }
         if use_measure_func {
-            manager.add_style(
+            manager
+                .add_style(
+                    my_id,
+                    parent_layout_id,
+                    child_index,
+                    view.style.layout_style.clone(),
+                    view.name.clone(),
+                    use_measure_func,
+                    None,
+                    None,
+                )
+                .unwrap();
+        } else {
+            let mut fixed_view = view.clone();
+            fixed_view.style.layout_style.width =
+                DimensionProto::new_points(view.style.layout_style.bounding_box.width);
+            fixed_view.style.layout_style.height =
+                DimensionProto::new_points(view.style.layout_style.bounding_box.height);
+            manager
+                .add_style(
+                    my_id,
+                    parent_layout_id,
+                    child_index,
+                    fixed_view.style.layout_style.clone(),
+                    fixed_view.name.clone(),
+                    false,
+                    None,
+                    None,
+                )
+                .unwrap();
+        }
+    } else if let ViewData::Container { shape: _, children } = &view.data {
+        manager
+            .add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
                 view.style.layout_style.clone(),
                 view.name.clone(),
-                use_measure_func,
-                None,
-                None,
-            );
-        } else {
-            let mut fixed_view = view.clone();
-            fixed_view.style.layout_style.width =
-                Dimension::Points(view.style.layout_style.bounding_box.width);
-            fixed_view.style.layout_style.height =
-                Dimension::Points(view.style.layout_style.bounding_box.height);
-            manager.add_style(
-                my_id,
-                parent_layout_id,
-                child_index,
-                fixed_view.style.layout_style.clone(),
-                fixed_view.name.clone(),
                 false,
                 None,
                 None,
-            );
-        }
-    } else if let ViewData::Container { shape: _, children } = &view.data {
-        manager.add_style(
-            my_id,
-            parent_layout_id,
-            child_index,
-            view.style.layout_style.clone(),
-            view.name.clone(),
-            false,
-            None,
-            None,
-        );
+            )
+            .unwrap();
         let mut index = 0;
         for child in children {
             add_view_to_layout(child, manager, id, my_id, index, replacements, views);

@@ -8,7 +8,7 @@ designcompose = "0.32.0-SNAPSHOT"
 jvmToolchain = "17"
 ndk = "27.0.12077973"
 #Android Gradle Plugin
-agp = "8.7.1"
+agp = "8.7.2"
 # The minimum supported AGP version for DesignCompose Apps
 agp-minSupported = "8.4.2"
 
@@ -31,9 +31,9 @@ androidx-compose-runtime-tracing = "1.8.0-alpha04"
 android-car-ui = "2.6.0"
 android-gms-strictVersionMatcher = "1.2.4" # Used in build-logic
 androidx-appcompat = "1.7.0"
-androidx-core = "1.13.1"
+androidx-core = "1.15.0"
 androidx-activity = "1.9.2"
-androidx-constraintlayout = "2.1.4"
+androidx-constraintlayout = "2.2.0"
 androidx-legacy-support-v4 = "1.0.0"
 androidx-lifecycle = "2.7.0"
 androidx-media = "1.7.0"

@@ -32,7 +32,6 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,10 +53,11 @@ import androidx.tracing.trace
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.top
+import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
-import com.android.designcompose.serdegen.ItemSpacing
+import com.android.designcompose.serdegen.ItemSpacingType
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
@@ -454,7 +454,8 @@ internal fun DesignFrame(
                 // for the first frame and then in another on the second frame after the main axis
                 // size has been set.
                 val showInitContent =
-                    (gridMainAxisSize <= 0 && layoutInfo.mainAxisSpacing is ItemSpacing.Auto)
+                    (gridMainAxisSize <= 0 &&
+                        layoutInfo.mainAxisSpacing.type() is ItemSpacingType.Auto)
                 if (showInitContent)
                     items(
                         count = 1,
@@ -563,9 +564,7 @@ internal fun DesignFrame(
             ) {
                 val columnCount = calculateColumnRowCount(layoutInfo, gridMainAxisSize)
                 val horizontalSpacing =
-                    if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed)
-                        layoutInfo.mainAxisSpacing.value
-                    else 0
+                    (layoutInfo.mainAxisSpacing.type() as? ItemSpacingType.Fixed)?.value ?: 0
                 val verticalSpacing = layoutInfo.crossAxisSpacing
 
                 DesignParentLayout(rootParentLayoutInfo) {
@@ -588,15 +587,17 @@ internal fun DesignFrame(
                             },
                         horizontalArrangement =
                             Arrangement.spacedBy(
-                                (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
-                                        layoutInfo.mainAxisSpacing.value
-                                    } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
-                                        if (columnCount > 1)
-                                            (gridMainAxisSize -
-                                                (layoutInfo.mainAxisSpacing.field1 * columnCount)) /
-                                                (columnCount - 1)
-                                        else layoutInfo.mainAxisSpacing.field0
-                                    } else horizontalSpacing)
+                                (when (val spacing = layoutInfo.mainAxisSpacing.type()) {
+                                        is ItemSpacingType.Fixed -> spacing.value
+                                        is ItemSpacingType.Auto -> {
+                                            if (columnCount > 1)
+                                                (gridMainAxisSize -
+                                                    (spacing.value.height * columnCount)) /
+                                                    (columnCount - 1)
+                                            else spacing.value.width
+                                        }
+                                        else -> horizontalSpacing
+                                    })
                                     .dp
                             ),
                         verticalArrangement = Arrangement.spacedBy(verticalSpacing.dp),
@@ -616,9 +617,8 @@ internal fun DesignFrame(
                 val rowCount = calculateColumnRowCount(layoutInfo, gridMainAxisSize)
                 val horizontalSpacing = layoutInfo.crossAxisSpacing
                 val verticalSpacing =
-                    if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed)
-                        layoutInfo.mainAxisSpacing.value
-                    else 0
+                    (layoutInfo.mainAxisSpacing.type() as? ItemSpacingType.Fixed)?.value ?: 0
+
                 DesignParentLayout(rootParentLayoutInfo) {
                     LazyHorizontalGrid(
                         modifier = layoutInfo.selfModifier.then(gridSizeModifier).then(m),
@@ -640,16 +640,17 @@ internal fun DesignFrame(
                         horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.dp),
                         verticalArrangement =
                             Arrangement.spacedBy(
-                                (if (layoutInfo.mainAxisSpacing is ItemSpacing.Fixed) {
-                                        layoutInfo.mainAxisSpacing.value
-                                    } else if (layoutInfo.mainAxisSpacing is ItemSpacing.Auto) {
-
-                                        if (rowCount > 1)
-                                            (gridMainAxisSize -
-                                                (layoutInfo.mainAxisSpacing.field1 * rowCount)) /
-                                                (rowCount - 1)
-                                        else layoutInfo.mainAxisSpacing.field0
-                                    } else verticalSpacing)
+                                (when (val spacing = layoutInfo.mainAxisSpacing.type()) {
+                                        is ItemSpacingType.Fixed -> spacing.value
+                                        is ItemSpacingType.Auto -> {
+                                            if (rowCount > 1)
+                                                (gridMainAxisSize -
+                                                    (spacing.value.height * rowCount)) /
+                                                    (rowCount - 1)
+                                            else spacing.value.width
+                                        }
+                                        else -> verticalSpacing
+                                    })
                                     .dp
                             ),
                         userScrollEnabled = layoutInfo.scrollingEnabled,

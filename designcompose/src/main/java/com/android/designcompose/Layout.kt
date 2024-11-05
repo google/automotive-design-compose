@@ -38,10 +38,13 @@ import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.android.designcompose.proto.alignItemsFromInt
 import com.android.designcompose.proto.bottom
 import com.android.designcompose.proto.end
+import com.android.designcompose.proto.justifyContentFromInt
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.top
+import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
 import com.android.designcompose.serdegen.Dimension
@@ -49,6 +52,7 @@ import com.android.designcompose.serdegen.DimensionRect
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacing
+import com.android.designcompose.serdegen.ItemSpacingType
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutTransform
@@ -220,9 +224,9 @@ internal class LayoutInfoGrid(
 ) : SimplifiedLayoutInfo(selfModifier)
 
 internal fun itemSpacingAbs(itemSpacing: ItemSpacing): Int {
-    return when (itemSpacing) {
-        is ItemSpacing.Fixed -> itemSpacing.value
-        is ItemSpacing.Auto -> itemSpacing.field0
+    return when (val type = itemSpacing.type()) {
+        is ItemSpacingType.Fixed -> type.value
+        is ItemSpacingType.Auto -> type.value.width
         else -> 0
     }
 }
@@ -243,7 +247,7 @@ internal fun calcLayoutInfo(
         val gridLayout = style.node_style.grid_layout.get()
         val isHorizontalLayout = gridLayout is GridLayoutType.Horizontal
         val isVerticalLayout = gridLayout is GridLayoutType.Vertical
-        val itemSpacing = itemSpacingAbs(style.layout_style.item_spacing)
+        val itemSpacing = itemSpacingAbs(style.layout_style.item_spacing.get())
         val marginModifier =
             Modifier.padding(
                 if (style.layout_style.padding.start is Dimension.Points)
@@ -262,7 +266,7 @@ internal fun calcLayoutInfo(
         if (isHorizontalLayout) {
             return LayoutInfoRow(
                 arrangement =
-                    when (style.layout_style.justify_content) {
+                    when (justifyContentFromInt(style.layout_style.justify_content)) {
                         is JustifyContent.FlexStart ->
                             if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp)
                             else Arrangement.Start
@@ -280,7 +284,7 @@ internal fun calcLayoutInfo(
                         else -> Arrangement.Start
                     },
                 alignment =
-                    when (style.layout_style.align_items) {
+                    when (alignItemsFromInt(style.layout_style.align_items)) {
                         is AlignItems.FlexStart -> Alignment.Top
                         is AlignItems.Center -> Alignment.CenterVertically
                         is AlignItems.FlexEnd -> Alignment.Bottom
@@ -293,7 +297,7 @@ internal fun calcLayoutInfo(
         } else if (isVerticalLayout) {
             return LayoutInfoColumn(
                 arrangement =
-                    when (style.layout_style.justify_content) {
+                    when (justifyContentFromInt(style.layout_style.justify_content)) {
                         is JustifyContent.FlexStart ->
                             if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp)
                             else Arrangement.Top
@@ -311,7 +315,7 @@ internal fun calcLayoutInfo(
                         else -> Arrangement.Top
                     },
                 alignment =
-                    when (style.layout_style.align_items) {
+                    when (alignItemsFromInt(style.layout_style.align_items)) {
                         is AlignItems.FlexStart -> Alignment.Start
                         is AlignItems.Center -> Alignment.CenterHorizontally
                         is AlignItems.FlexEnd -> Alignment.End
@@ -327,15 +331,15 @@ internal fun calcLayoutInfo(
                     gridLayout is GridLayoutType.AutoColumns
             val scrollingEnabled =
                 when (view.scroll_info.overflow) {
-                    is OverflowDirection.VERTICAL_SCROLLING -> isColumnLayout
-                    is OverflowDirection.HORIZONTAL_SCROLLING -> !isColumnLayout
-                    is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> true
+                    is OverflowDirection.VerticalScrolling -> isColumnLayout
+                    is OverflowDirection.HorizontalScrolling -> !isColumnLayout
+                    is OverflowDirection.HorizontalAndVerticalScrolling -> true
                     else -> false
                 }
             return LayoutInfoGrid(
                 layout = style.node_style.grid_layout.get(),
                 minColumnRowSize = style.node_style.grid_adaptive_min_size,
-                mainAxisSpacing = style.layout_style.item_spacing,
+                mainAxisSpacing = style.layout_style.item_spacing.get(),
                 crossAxisSpacing = style.node_style.cross_axis_item_spacing.toInt(),
                 // TODO support these other alignments?
                 /*
@@ -368,13 +372,13 @@ internal fun calcLayoutInfo(
         var horizontalScroll = false
         var verticalScroll = false
         when (view.scroll_info.overflow) {
-            is OverflowDirection.VERTICAL_SCROLLING -> {
+            is OverflowDirection.VerticalScrolling -> {
                 verticalScroll = true
             }
-            is OverflowDirection.HORIZONTAL_SCROLLING -> {
+            is OverflowDirection.HorizontalScrolling -> {
                 horizontalScroll = true
             }
-            is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> {
+            is OverflowDirection.HorizontalAndVerticalScrolling -> {
                 // Currently we don't support both horizontal and vertical scrolling so disable both
                 verticalScroll = false
                 horizontalScroll = false

@@ -25,8 +25,8 @@
 
 use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::DimensionProto;
+use dc_bundle::definition::layout::LayoutSizing;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
-use dc_bundle::legacy_definition::layout::positioning::LayoutSizing;
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
 use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 use layout::LayoutManager;
@@ -95,9 +95,9 @@ fn add_view_to_layout(
         } else {
             let mut fixed_view = view.clone();
             fixed_view.style.layout_style.width =
-                DimensionProto::new_points(view.style.layout_style.bounding_box.width);
+                DimensionProto::new_points(view.style.layout_style.bounding_box().unwrap().width);
             fixed_view.style.layout_style.height =
-                DimensionProto::new_points(view.style.layout_style.bounding_box.height);
+                DimensionProto::new_points(view.style.layout_style.bounding_box().unwrap().height);
             manager
                 .add_style(
                     my_id,

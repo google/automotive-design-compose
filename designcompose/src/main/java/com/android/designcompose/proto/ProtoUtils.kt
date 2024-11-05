@@ -20,6 +20,7 @@ import com.android.designcompose.serdegen.Background
 import com.android.designcompose.serdegen.BackgroundType
 import com.android.designcompose.serdegen.Box
 import com.android.designcompose.serdegen.FontWeight
+import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Shape
@@ -148,3 +149,5 @@ internal fun newViewShapeRect(isMask: Boolean) = ViewShape(Optional.of(Shape.Rec
 
 internal fun newFontWeight(weight: Float) =
     FontWeight(Optional.of(NumOrVar(Optional.of(NumOrVarType.Num(weight)))))
+
+internal fun ItemSpacing.type() = item_spacing_type.getOrNull()

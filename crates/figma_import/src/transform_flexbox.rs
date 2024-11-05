@@ -29,7 +29,7 @@ use crate::{
 use crate::{figma_schema, Error};
 use dc_bundle::definition::element::{
     view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
-    FontWeight, ViewShape,
+    FontWeight, Size, ViewShape,
 };
 
 use crate::figma_schema::LayoutPositioning;
@@ -44,16 +44,16 @@ use dc_bundle::definition::element::{
     background, stroke_weight, Background, StrokeAlign, StrokeWeight,
 };
 use dc_bundle::definition::interaction::Reaction;
-use dc_bundle::definition::layout::{FlexWrap, GridLayoutType, GridSpan};
+use dc_bundle::definition::layout::{
+    AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, GridLayoutType, GridSpan,
+    ItemSpacing, JustifyContent, LayoutSizing, Overflow, OverflowDirection, PositionType,
+};
 use dc_bundle::definition::modifier::{
     filter_op, BoxShadow, FilterOp, TextAlign, TextAlignVertical, TextOverflow, TextShadow,
 };
 use dc_bundle::definition::modifier::{BlendMode, LayoutTransform};
 use dc_bundle::definition::plugin::FrameExtras;
-use dc_bundle::legacy_definition::layout::positioning::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, LayoutSizing,
-    Overflow, OverflowDirection, PositionType,
-};
+
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
@@ -115,15 +115,15 @@ fn compute_layout(
     let mut hug_height = false;
 
     if let Some(bounds) = node.absolute_bounding_box {
-        style.layout_style.bounding_box.width = bounds.width();
-        style.layout_style.bounding_box.height = bounds.height();
+        style.layout_style.bounding_box =
+            Some(Size { width: bounds.width(), height: bounds.height() })
     }
 
     // Frames can implement Auto Layout on their children.
     if let Some(frame) = node.frame() {
         style.layout_style.position_type = match frame.layout_positioning {
-            LayoutPositioning::Absolute => PositionType::Absolute,
-            LayoutPositioning::Auto => PositionType::Relative,
+            LayoutPositioning::Absolute => PositionType::Absolute.into(),
+            LayoutPositioning::Auto => PositionType::Relative.into(),
         };
         style.layout_style.width = DimensionProto::new_auto();
         style.layout_style.height = DimensionProto::new_auto();
@@ -144,15 +144,15 @@ fn compute_layout(
         let flex_direction_override = check_child_size_override(node);
         if let Some(dir) = flex_direction_override {
             style.layout_style.flex_direction = match dir {
-                LayoutType::Horizontal => FlexDirection::Row,
-                LayoutType::Vertical => FlexDirection::Column,
-                _ => FlexDirection::None,
+                LayoutType::Horizontal => FlexDirection::Row.into(),
+                LayoutType::Vertical => FlexDirection::Column.into(),
+                _ => FlexDirection::None.into(),
             };
         } else {
             style.layout_style.flex_direction = match frame.layout_mode {
-                figma_schema::LayoutMode::Horizontal => FlexDirection::Row,
-                figma_schema::LayoutMode::Vertical => FlexDirection::Column,
-                figma_schema::LayoutMode::None => FlexDirection::None,
+                figma_schema::LayoutMode::Horizontal => FlexDirection::Row.into(),
+                figma_schema::LayoutMode::Vertical => FlexDirection::Column.into(),
+                figma_schema::LayoutMode::None => FlexDirection::None.into(),
             };
         }
         style.layout_style.padding = Some(DimensionRect {
@@ -162,34 +162,33 @@ fn compute_layout(
             bottom: DimensionProto::new_points(frame.padding_bottom),
         });
 
-        style.layout_style.item_spacing = ItemSpacing::Fixed(frame.item_spacing as i32);
-
+        style.layout_style.item_spacing = Some(ItemSpacing::fixed(frame.item_spacing as i32));
         match frame.layout_align {
             // Counter axis stretch
             Some(figma_schema::LayoutAlign::Stretch) => {
-                style.layout_style.align_self = AlignSelf::Stretch;
+                style.layout_style.align_self = AlignSelf::Stretch.into();
             }
             _ => (),
         };
         style.layout_style.align_items = match frame.counter_axis_align_items {
-            figma_schema::LayoutAlignItems::Center => AlignItems::Center,
-            figma_schema::LayoutAlignItems::Max => AlignItems::FlexEnd,
-            figma_schema::LayoutAlignItems::Min => AlignItems::FlexStart,
-            figma_schema::LayoutAlignItems::SpaceBetween => AlignItems::FlexStart, // XXX
-            figma_schema::LayoutAlignItems::Baseline => AlignItems::FlexStart,
+            figma_schema::LayoutAlignItems::Center => AlignItems::Center.into(),
+            figma_schema::LayoutAlignItems::Max => AlignItems::FlexEnd.into(),
+            figma_schema::LayoutAlignItems::Min => AlignItems::FlexStart.into(),
+            figma_schema::LayoutAlignItems::SpaceBetween => AlignItems::FlexStart.into(), // XXX
+            figma_schema::LayoutAlignItems::Baseline => AlignItems::FlexStart.into(),
         };
         style.layout_style.justify_content = match frame.primary_axis_align_items {
-            figma_schema::LayoutAlignItems::Center => JustifyContent::Center,
-            figma_schema::LayoutAlignItems::Max => JustifyContent::FlexEnd,
-            figma_schema::LayoutAlignItems::Min => JustifyContent::FlexStart,
-            figma_schema::LayoutAlignItems::SpaceBetween => JustifyContent::SpaceBetween,
-            figma_schema::LayoutAlignItems::Baseline => JustifyContent::FlexStart,
+            figma_schema::LayoutAlignItems::Center => JustifyContent::Center.into(),
+            figma_schema::LayoutAlignItems::Max => JustifyContent::FlexEnd.into(),
+            figma_schema::LayoutAlignItems::Min => JustifyContent::FlexStart.into(),
+            figma_schema::LayoutAlignItems::SpaceBetween => JustifyContent::SpaceBetween.into(),
+            figma_schema::LayoutAlignItems::Baseline => JustifyContent::FlexStart.into(),
         };
         // The toolkit picks "Stretch" as a sensible default, but we don't
         // want that for Figma elements.
-        style.layout_style.align_content = AlignContent::FlexStart;
+        style.layout_style.align_content = AlignContent::FlexStart.into();
 
-        let align_self_stretch = style.layout_style.align_self == AlignSelf::Stretch;
+        let align_self_stretch = style.layout_style.align_self() == AlignSelf::Stretch;
         if let Some(bounds) = node.absolute_bounding_box {
             // If align_self is set to stretch, we want width/height to be Auto, even if the
             // frame's primary or counter axis sizing mode is set to Fixed.
@@ -294,7 +293,7 @@ fn compute_layout(
         }
     }
     if is_widget_or_parent_widget {
-        style.layout_style.position_type = PositionType::Absolute;
+        style.layout_style.position_type = PositionType::Absolute.into();
         style.layout_style.width = DimensionProto::new_auto();
         style.layout_style.height = DimensionProto::new_auto();
         style.layout_style.left = DimensionProto::new_points(0.0);
@@ -308,13 +307,13 @@ fn compute_layout(
         match vector.layout_align {
             // Counter axis stretch
             Some(figma_schema::LayoutAlign::Stretch) => {
-                style.layout_style.align_self = AlignSelf::Stretch;
+                style.layout_style.align_self = AlignSelf::Stretch.into();
             }
             _ => (),
         };
         style.layout_style.position_type = match vector.layout_positioning {
-            LayoutPositioning::Absolute => PositionType::Absolute,
-            LayoutPositioning::Auto => PositionType::Relative,
+            LayoutPositioning::Absolute => PositionType::Absolute.into(),
+            LayoutPositioning::Auto => PositionType::Relative.into(),
         };
         style.layout_style.width = DimensionProto::new_auto();
         style.layout_style.height = DimensionProto::new_auto();
@@ -386,10 +385,10 @@ fn compute_layout(
         }
     }
 
-    if !parent_is_flexbox || style.layout_style.position_type == PositionType::Absolute {
+    if !parent_is_flexbox || style.layout_style.position_type() == PositionType::Absolute {
         match (node.absolute_bounding_box, parent_bounding_box) {
             (Some(bounds), Some(parent_bounds)) => {
-                style.layout_style.position_type = PositionType::Absolute;
+                style.layout_style.position_type = PositionType::Absolute.into();
 
                 // Figure out all the values we might need when calculating the layout constraints.
                 let (width, height) = if let Some(size) = &node.size {
@@ -990,14 +989,14 @@ fn visit_node(
 
             style.layout_style.item_spacing = if gld.auto_spacing {
                 if horizontal {
-                    ItemSpacing::Auto(gld.horizontal_spacing, gld.auto_spacing_item_size)
+                    Some(ItemSpacing::auto(gld.horizontal_spacing, gld.auto_spacing_item_size))
                 } else {
-                    ItemSpacing::Auto(gld.vertical_spacing, gld.auto_spacing_item_size)
+                    Some(ItemSpacing::auto(gld.vertical_spacing, gld.auto_spacing_item_size))
                 }
             } else if horizontal {
-                ItemSpacing::Fixed(gld.horizontal_spacing)
+                Some(ItemSpacing::fixed(gld.horizontal_spacing))
             } else {
-                ItemSpacing::Fixed(gld.vertical_spacing)
+                Some(ItemSpacing::fixed(gld.vertical_spacing))
             };
             style.node_style.cross_axis_item_spacing = if horizontal {
                 gld.vertical_spacing as f32
@@ -1048,7 +1047,7 @@ fn visit_node(
                 };
             }
             if extended_auto_layout.auto_layout_data.space_between {
-                style.layout_style.justify_content = JustifyContent::SpaceBetween;
+                style.layout_style.justify_content = JustifyContent::SpaceBetween.into();
             }
             is_widget_list = true;
             size_policy = extended_auto_layout.auto_layout_data.size_policy;
@@ -1083,11 +1082,11 @@ fn visit_node(
     // we need to set our size depending on whether the size policy is hug or fixed.
     if is_widget_list {
         if size_policy == SizePolicy::Hug {
-            style.layout_style.position_type = PositionType::Relative;
+            style.layout_style.position_type = PositionType::Relative.into();
             style.layout_style.width = DimensionProto::new_auto();
             style.layout_style.height = DimensionProto::new_auto();
         } else {
-            style.layout_style.position_type = PositionType::Absolute;
+            style.layout_style.position_type = PositionType::Absolute.into();
         }
     }
 

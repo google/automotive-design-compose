@@ -14,7 +14,7 @@
 
 use crate::into_taffy::TryIntoTaffy;
 use crate::types::Layout;
-use dc_bundle::legacy_definition::layout::layout_style::LayoutStyle;
+use dc_bundle::definition::layout::LayoutStyle;
 use dc_bundle::Error;
 use log::{error, trace};
 use serde::{Deserialize, Serialize};

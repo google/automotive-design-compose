@@ -16,8 +16,8 @@
 
 use crate::definition::element::{Rectangle, ViewShape};
 use crate::definition::interaction::Reaction;
+use crate::definition::layout::OverflowDirection;
 use crate::definition::plugin::FrameExtras;
-use crate::legacy_definition::layout::positioning::OverflowDirection;
 use crate::legacy_definition::view::component::ComponentInfo;
 use crate::legacy_definition::view::text_style::StyledTextRun;
 use crate::legacy_definition::view::view_style::ViewStyle;

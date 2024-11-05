@@ -51,25 +51,34 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.proto.StrokeAlignType
 import com.android.designcompose.proto.WindingRuleType
+import com.android.designcompose.proto.alignContentFromInt
+import com.android.designcompose.proto.alignItemsFromInt
+import com.android.designcompose.proto.alignSelfFromInt
 import com.android.designcompose.proto.end
+import com.android.designcompose.proto.flexDirectionFromInt
 import com.android.designcompose.proto.get
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.getType
 import com.android.designcompose.proto.isDefault
 import com.android.designcompose.proto.isType
+import com.android.designcompose.proto.justifyContentFromInt
 import com.android.designcompose.proto.newDimensionProtoUndefined
 import com.android.designcompose.proto.newDimensionRectPointsZero
 import com.android.designcompose.proto.newFontWeight
+import com.android.designcompose.proto.positionTypeFromInt
 import com.android.designcompose.proto.scaleModeFromInt
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.strokeAlignTypeToInt
+import com.android.designcompose.proto.toInt
 import com.android.designcompose.proto.toOptDimProto
 import com.android.designcompose.proto.top
+import com.android.designcompose.proto.type
 import com.android.designcompose.proto.windingRuleFromInt
 import com.android.designcompose.serdegen.AffineTransform
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
+import com.android.designcompose.serdegen.Auto
 import com.android.designcompose.serdegen.Background
 import com.android.designcompose.serdegen.BackgroundType
 import com.android.designcompose.serdegen.BlendMode
@@ -81,6 +90,7 @@ import com.android.designcompose.serdegen.FlexWrap
 import com.android.designcompose.serdegen.FontStretch
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.ItemSpacing
+import com.android.designcompose.serdegen.ItemSpacingType
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutSizing
@@ -423,13 +433,13 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.display_type
         }
     layoutStyle.position_type =
-        if (override.layout_style.position_type !is PositionType.Relative) {
+        if (positionTypeFromInt(override.layout_style.position_type) !is PositionType.Relative) {
             override.layout_style.position_type
         } else {
             base.layout_style.position_type
         }
     layoutStyle.flex_direction =
-        if (override.layout_style.flex_direction !is FlexDirection.Row) {
+        if (flexDirectionFromInt(override.layout_style.flex_direction) !is FlexDirection.Row) {
             override.layout_style.flex_direction
         } else {
             base.layout_style.flex_direction
@@ -485,25 +495,28 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.overflow_node_name
         }
     layoutStyle.align_items =
-        if (override.layout_style.align_items !is AlignItems.Stretch) {
+        if (alignItemsFromInt(override.layout_style.align_items) !is AlignItems.Stretch) {
             override.layout_style.align_items
         } else {
             base.layout_style.align_items
         }
     layoutStyle.align_self =
-        if (override.layout_style.align_self !is AlignSelf.Auto) {
+        if (alignSelfFromInt(override.layout_style.align_self) !is AlignSelf.Auto) {
             override.layout_style.align_self
         } else {
             base.layout_style.align_self
         }
     layoutStyle.align_content =
-        if (override.layout_style.align_content !is AlignContent.Stretch) {
+        if (alignContentFromInt(override.layout_style.align_content) !is AlignContent.Stretch) {
             override.layout_style.align_content
         } else {
             base.layout_style.align_content
         }
     layoutStyle.justify_content =
-        if (override.layout_style.justify_content !is JustifyContent.FlexStart) {
+        if (
+            justifyContentFromInt(override.layout_style.justify_content)
+                !is JustifyContent.FlexStart
+        ) {
             override.layout_style.justify_content
         } else {
             base.layout_style.justify_content
@@ -546,10 +559,10 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.layout_style.padding
         }
     fun ItemSpacing.isDefault(): Boolean {
-        return this is ItemSpacing.Fixed && this.value == 0
+        return (type() as? ItemSpacingType.Fixed)?.value == 0
     }
     layoutStyle.item_spacing =
-        if (!override.layout_style.item_spacing.isDefault()) {
+        if (!override.layout_style.item_spacing.get().isDefault()) {
             override.layout_style.item_spacing
         } else {
             base.layout_style.item_spacing
@@ -580,21 +593,21 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         }
     layoutStyle.bounding_box =
         if (
-            override.layout_style.bounding_box.width != 0.0f ||
-                override.layout_style.bounding_box.height != 0.0f
+            override.layout_style.bounding_box.get().width != 0.0f ||
+                override.layout_style.bounding_box.get().height != 0.0f
         ) {
             override.layout_style.bounding_box
         } else {
             base.layout_style.bounding_box
         }
     nodeStyle.horizontal_sizing =
-        if (override.node_style.horizontal_sizing !is LayoutSizing.FIXED) {
+        if (override.node_style.horizontal_sizing !is LayoutSizing.Fixed) {
             override.node_style.horizontal_sizing
         } else {
             base.node_style.horizontal_sizing
         }
     nodeStyle.vertical_sizing =
-        if (override.node_style.vertical_sizing !is LayoutSizing.FIXED) {
+        if (override.node_style.vertical_sizing !is LayoutSizing.Fixed) {
             override.node_style.vertical_sizing
         } else {
             base.node_style.vertical_sizing
@@ -690,23 +703,23 @@ internal fun LayoutStyle.asBuilder(): LayoutStyle.Builder {
 
 internal fun defaultLayoutStyle(): LayoutStyle.Builder {
     val builder = LayoutStyle.Builder()
-    builder.position_type = PositionType.Relative()
-    builder.flex_direction = FlexDirection.Row()
-    builder.align_items = AlignItems.FlexStart()
-    builder.align_self = AlignSelf.Auto()
-    builder.align_content = AlignContent.FlexStart()
-    builder.justify_content = JustifyContent.FlexStart()
+    builder.position_type = PositionType.Relative().toInt()
+    builder.flex_direction = FlexDirection.Row().toInt()
+    builder.align_items = AlignItems.FlexStart().toInt()
+    builder.align_self = AlignSelf.Auto().toInt()
+    builder.align_content = AlignContent.FlexStart().toInt()
+    builder.justify_content = JustifyContent.FlexStart().toInt()
     builder.top = newDimensionProtoUndefined()
     builder.left = newDimensionProtoUndefined()
     builder.bottom = newDimensionProtoUndefined()
     builder.right = newDimensionProtoUndefined()
     builder.margin = newDimensionRectPointsZero()
     builder.padding = newDimensionRectPointsZero()
-    builder.item_spacing = ItemSpacing.Auto(0, 0)
+    builder.item_spacing = Optional.of(ItemSpacing(Optional.of(ItemSpacingType.Auto(Auto(0, 0)))))
     builder.flex_grow = 0.0f
     builder.flex_shrink = 0.0f
     builder.flex_basis = newDimensionProtoUndefined()
-    builder.bounding_box = com.android.designcompose.serdegen.Size(0f, 0f)
+    builder.bounding_box = Optional.of(com.android.designcompose.serdegen.Size(0f, 0f))
     builder.width = newDimensionProtoUndefined()
     builder.height = newDimensionProtoUndefined()
     builder.min_width = newDimensionProtoUndefined()
@@ -806,8 +819,8 @@ internal fun defaultNodeStyle(): NodeStyle.Builder {
     builder.overflow_node_id = Optional.empty()
     builder.overflow_node_name = Optional.empty()
     builder.cross_axis_item_spacing = 0f
-    builder.horizontal_sizing = LayoutSizing.HUG()
-    builder.vertical_sizing = LayoutSizing.HUG()
+    builder.horizontal_sizing = LayoutSizing.Hug()
+    builder.vertical_sizing = LayoutSizing.Hug()
     builder.aspect_ratio = com.android.designcompose.serdegen.Number.Undefined()
     builder.pointer_events = PointerEvents.Auto()
     builder.meter_data = Optional.empty()
@@ -839,11 +852,11 @@ internal fun ViewStyle.externalLayoutData(): ExternalLayoutData {
         layout_style.max_width.getDim(),
         layout_style.max_height.getDim(),
         node_style.node_size,
-        layout_style.bounding_box,
+        layout_style.bounding_box.get(),
         layout_style.flex_grow,
         layout_style.flex_basis.getDim(),
-        layout_style.align_self,
-        layout_style.position_type,
+        alignSelfFromInt(layout_style.align_self),
+        positionTypeFromInt(layout_style.position_type),
         node_style.transform,
         node_style.relative_transform,
     )
@@ -860,7 +873,7 @@ internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewSty
     layoutStyle.bottom = data.bottom.toOptDimProto()
     layoutStyle.right = data.right.toOptDimProto()
     nodeStyle.node_size = data.nodeSize
-    layoutStyle.bounding_box = data.boundingBox
+    layoutStyle.bounding_box = Optional.of(data.boundingBox)
     layoutStyle.width = data.width.toOptDimProto()
     layoutStyle.height = data.height.toOptDimProto()
 
@@ -870,8 +883,8 @@ internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewSty
     layoutStyle.max_height = data.maxHeight.toOptDimProto()
     layoutStyle.flex_grow = data.flexGrow
     layoutStyle.flex_basis = data.flexBasis.toOptDimProto()
-    layoutStyle.align_self = data.alignSelf
-    layoutStyle.position_type = data.positionType
+    layoutStyle.align_self = data.alignSelf.toInt()
+    layoutStyle.position_type = data.positionType.toInt()
     nodeStyle.transform = data.transform
     nodeStyle.relative_transform = data.relativeTransform
 
@@ -953,7 +966,8 @@ internal fun View.isMask(): Boolean {
 // Second, the position_type is relative, which is only set if the widget layout parameters are set
 // to hug contents.
 internal fun View.useInfiniteConstraints(): Boolean {
-    if (style.layout_style.position_type !is PositionType.Relative) return false
+    if (positionTypeFromInt(style.layout_style.position_type) !is PositionType.Relative)
+        return false
 
     if (data !is ViewData.Container) return false
 
@@ -1610,7 +1624,7 @@ internal fun com.android.designcompose.serdegen.Path.log() {
 // passed into it.
 internal fun ViewStyle.isAutoWidthText() =
     layout_style.width.getDim() is Dimension.Auto &&
-        node_style.horizontal_sizing !is LayoutSizing.FILL
+        node_style.horizontal_sizing !is LayoutSizing.Fill
 
 // Return the size of a node used to render the node.
 internal fun getNodeRenderSize(

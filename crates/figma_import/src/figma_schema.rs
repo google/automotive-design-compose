@@ -716,15 +716,19 @@ impl OverflowDirection {
     }
 }
 
-impl Into<dc_bundle::legacy_definition::layout::positioning::OverflowDirection>
-    for OverflowDirection
-{
-    fn into(self) -> dc_bundle::legacy_definition::layout::positioning::OverflowDirection {
+impl Into<dc_bundle::definition::layout::OverflowDirection> for OverflowDirection {
+    fn into(self) -> dc_bundle::definition::layout::OverflowDirection {
         match self {
-            OverflowDirection::None => dc_bundle::legacy_definition::layout::positioning::OverflowDirection::None,
-            OverflowDirection::HorizontalScrolling => dc_bundle::legacy_definition::layout::positioning::OverflowDirection::HorizontalScrolling,
-            OverflowDirection::VerticalScrolling => dc_bundle::legacy_definition::layout::positioning::OverflowDirection::VerticalScrolling,
-            OverflowDirection::HorizontalAndVerticalScrolling => dc_bundle::legacy_definition::layout::positioning::OverflowDirection::HorizontalAndVerticalScrolling,
+            OverflowDirection::None => dc_bundle::definition::layout::OverflowDirection::None,
+            OverflowDirection::HorizontalScrolling => {
+                dc_bundle::definition::layout::OverflowDirection::HorizontalScrolling
+            }
+            OverflowDirection::VerticalScrolling => {
+                dc_bundle::definition::layout::OverflowDirection::VerticalScrolling
+            }
+            OverflowDirection::HorizontalAndVerticalScrolling => {
+                dc_bundle::definition::layout::OverflowDirection::HorizontalAndVerticalScrolling
+            }
         }
     }
 }

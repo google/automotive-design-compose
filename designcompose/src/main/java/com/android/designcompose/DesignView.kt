@@ -496,19 +496,19 @@ internal fun DesignView(
     // Only add scroll modifiers if not a grid layout because grid layout adds its own scrolling
     if (viewLayoutInfo !is LayoutInfoGrid && viewLayoutInfo !is LayoutInfoAbsolute) {
         when (view.scroll_info.overflow) {
-            is OverflowDirection.VERTICAL_SCROLLING -> {
+            is OverflowDirection.VerticalScrolling -> {
                 m = Modifier.verticalScroll(rememberScrollState()).then(m)
             }
-            is OverflowDirection.HORIZONTAL_SCROLLING -> {
+            is OverflowDirection.HorizontalScrolling -> {
                 m = Modifier.horizontalScroll(rememberScrollState()).then(m)
             }
-            is OverflowDirection.HORIZONTAL_AND_VERTICAL_SCROLLING -> {
+            is OverflowDirection.HorizontalAndVerticalScrolling -> {
                 m =
                     Modifier.horizontalScroll(rememberScrollState())
                         .verticalScroll(rememberScrollState())
                         .then(m)
             }
-            is OverflowDirection.NONE -> {}
+            is OverflowDirection.None -> {}
         }
     }
 

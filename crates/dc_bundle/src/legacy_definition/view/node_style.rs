@@ -22,12 +22,11 @@ use crate::definition::element::{
 };
 use crate::definition::element::{Background, FontStretch, FontWeight};
 use crate::definition::interaction::PointerEvents;
-use crate::definition::layout::{FlexWrap, GridLayoutType, GridSpan};
+use crate::definition::layout::{FlexWrap, GridLayoutType, GridSpan, LayoutSizing, Overflow};
 use crate::definition::modifier::{
     BlendMode, FilterOp, TextAlign, TextAlignVertical, TextOverflow,
 };
 use crate::definition::modifier::{BoxShadow, LayoutTransform, TextShadow};
-use crate::legacy_definition::layout::positioning::{LayoutSizing, Overflow};
 use crate::legacy_definition::plugin::meter_data::MeterData;
 use serde::{Deserialize, Serialize};
 
@@ -141,13 +140,13 @@ impl Default for NodeStyle {
             grid_columns_rows: 0,
             grid_adaptive_min_size: 1,
             grid_span_content: vec![],
-            overflow: Overflow::default(),
+            overflow: Overflow::Visible,
             max_children: None,
             overflow_node_id: None,
             overflow_node_name: None,
             cross_axis_item_spacing: 0.0,
-            horizontal_sizing: LayoutSizing::default(),
-            vertical_sizing: LayoutSizing::default(),
+            horizontal_sizing: LayoutSizing::Fixed,
+            vertical_sizing: LayoutSizing::Fixed,
             aspect_ratio: Number::default(),
             pointer_events: PointerEvents::Inherit,
             meter_data: None,

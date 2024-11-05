@@ -29,7 +29,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,6 +92,7 @@ import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
+import java.util.Optional
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
@@ -146,7 +146,12 @@ private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints,
         layoutStyleBuilder.width = newDimensionProtoPoints(constraints.minWidth.toFloat() / density)
         // Layout implementation looks for width/height being set and then uses bounding box.
         layoutStyleBuilder.bounding_box =
-            Size(constraints.minWidth.toFloat() / density, layoutStyleBuilder.bounding_box.height)
+            Optional.of(
+                Size(
+                    constraints.minWidth.toFloat() / density,
+                    layoutStyleBuilder.bounding_box.get().height,
+                )
+            )
     }
 
     if (constraints.minHeight != 0)
@@ -162,7 +167,12 @@ private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints,
             newDimensionProtoPoints(constraints.minHeight.toFloat() / density)
         // Layout implementation looks for width/height being set and then uses bounding box.
         layoutStyleBuilder.bounding_box =
-            Size(layoutStyleBuilder.bounding_box.width, constraints.minHeight.toFloat() / density)
+            Optional.of(
+                Size(
+                    layoutStyleBuilder.bounding_box.get().width,
+                    constraints.minHeight.toFloat() / density,
+                )
+            )
     }
 
     rootStyleBuilder.layout_style = layoutStyleBuilder.build()

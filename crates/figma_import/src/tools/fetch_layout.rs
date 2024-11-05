@@ -17,8 +17,8 @@ use crate::{Document, ProxyConfig};
 use clap::Parser;
 use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::DimensionProto;
+use dc_bundle::definition::layout::LayoutSizing;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
-use dc_bundle::legacy_definition::layout::positioning::LayoutSizing;
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
 use dc_bundle::legacy_definition::DesignComposeDefinition;
 use layout::LayoutManager;
@@ -156,9 +156,9 @@ fn test_layout(
         } else {
             let mut fixed_view = view.clone();
             fixed_view.style.layout_style.width =
-                DimensionProto::new_points(view.style.layout_style.bounding_box.width);
+                DimensionProto::new_points(view.style.layout_style.bounding_box().unwrap().width);
             fixed_view.style.layout_style.height =
-                DimensionProto::new_points(view.style.layout_style.bounding_box.height);
+                DimensionProto::new_points(view.style.layout_style.bounding_box().unwrap().height);
             layout_manager
                 .add_style(
                     my_id,
@@ -167,8 +167,8 @@ fn test_layout(
                     fixed_view.style.layout_style.clone(),
                     fixed_view.name.clone(),
                     false,
-                    Some(view.style.layout_style.bounding_box.width as i32),
-                    Some(view.style.layout_style.bounding_box.height as i32),
+                    Some(view.style.layout_style.bounding_box().unwrap().width as i32),
+                    Some(view.style.layout_style.bounding_box().unwrap().height as i32),
                 )
                 .expect("Failed to add style");
         }

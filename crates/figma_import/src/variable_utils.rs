@@ -31,6 +31,13 @@ pub(crate) trait FromFigmaVar<VarType> {
         var_name: &str,
         var_value: VarType,
     ) -> Self;
+
+    fn from_var_hash(
+        bound_variables: &figma_schema::BoundVariables,
+        hash_name: &str,
+        var_name: &str,
+        var_value: VarType,
+    ) -> Self;
 }
 // Create a NumOrVar from Figma variable name and number value
 impl FromFigmaVar<f32> for NumOrVarType {
@@ -40,6 +47,19 @@ impl FromFigmaVar<f32> for NumOrVarType {
         var_value: f32,
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
+        if let Some(var) = var {
+            NumOrVarType::Var(NumVar { id: var, fallback: var_value })
+        } else {
+            NumOrVarType::Num(var_value)
+        }
+    }
+    fn from_var_hash(
+        bound_variables: &figma_schema::BoundVariables,
+        hash_name: &str,
+        var_name: &str,
+        var_value: f32,
+    ) -> Self {
+        let var = bound_variables.get_var_from_hash(hash_name, var_name);
         if let Some(var) = var {
             NumOrVarType::Var(NumVar { id: var, fallback: var_value })
         } else {
@@ -60,6 +80,15 @@ impl FromFigmaVar<&FloatColor> for ColorOrVar {
         } else {
             ColorOrVar::new_color(color.into())
         }
+    }
+    fn from_var_hash(
+        _bound_variables: &figma_schema::BoundVariables,
+        _hash_name: &str,
+        _var_name: &str,
+        color: &FloatColor,
+    ) -> Self {
+        // Currently, no color variables from a hash are yet supported
+        ColorOrVar::new_color(color.into())
     }
 }
 

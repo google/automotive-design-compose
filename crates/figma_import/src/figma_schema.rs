@@ -716,15 +716,19 @@ impl OverflowDirection {
     }
 }
 
-impl Into<dc_bundle::legacy_definition::layout::positioning::OverflowDirection>
-    for OverflowDirection
-{
-    fn into(self) -> dc_bundle::legacy_definition::layout::positioning::OverflowDirection {
+impl Into<dc_bundle::definition::layout::OverflowDirection> for OverflowDirection {
+    fn into(self) -> dc_bundle::definition::layout::OverflowDirection {
         match self {
-            OverflowDirection::None => dc_bundle::legacy_definition::layout::positioning::OverflowDirection::None,
-            OverflowDirection::HorizontalScrolling => dc_bundle::legacy_definition::layout::positioning::OverflowDirection::HorizontalScrolling,
-            OverflowDirection::VerticalScrolling => dc_bundle::legacy_definition::layout::positioning::OverflowDirection::VerticalScrolling,
-            OverflowDirection::HorizontalAndVerticalScrolling => dc_bundle::legacy_definition::layout::positioning::OverflowDirection::HorizontalAndVerticalScrolling,
+            OverflowDirection::None => dc_bundle::definition::layout::OverflowDirection::None,
+            OverflowDirection::HorizontalScrolling => {
+                dc_bundle::definition::layout::OverflowDirection::HorizontalScrolling
+            }
+            OverflowDirection::VerticalScrolling => {
+                dc_bundle::definition::layout::OverflowDirection::VerticalScrolling
+            }
+            OverflowDirection::HorizontalAndVerticalScrolling => {
+                dc_bundle::definition::layout::OverflowDirection::HorizontalAndVerticalScrolling
+            }
         }
     }
 }
@@ -1267,6 +1271,19 @@ impl BoundVariables {
         let var = self.variables.get(var_name);
         if let Some(var) = var {
             return var.get_name();
+        }
+        None
+    }
+
+    pub(crate) fn get_var_from_hash(&self, hash_name: &str, var_name: &str) -> Option<String> {
+        let var_hash = self.variables.get(hash_name);
+        if let Some(var) = var_hash {
+            if let VariableAliasOrList::Map(map) = var {
+                let var = map.get(var_name);
+                if let Some(var) = var {
+                    return Some(var.id.clone());
+                }
+            }
         }
         None
     }

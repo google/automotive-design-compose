@@ -29,8 +29,7 @@ impl TryFrom<LayoutNode> for layout_node::LayoutNode {
             child_index: proto.child_index,
             style: proto
                 .style
-                .ok_or(dc_bundle::Error::MissingFieldError { field: "style".to_string() })?
-                .try_into()?,
+                .ok_or(dc_bundle::Error::MissingFieldError { field: "style".to_string() })?,
             name: proto.name,
             use_measure_func: proto.use_measure_func,
             fixed_width: proto.fixed_width,

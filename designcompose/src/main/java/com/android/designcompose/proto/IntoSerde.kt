@@ -23,19 +23,27 @@ import com.android.designcompose.definition.layout.AlignSelf
 import com.android.designcompose.definition.layout.FlexDirection
 import com.android.designcompose.definition.layout.ItemSpacing
 import com.android.designcompose.definition.layout.JustifyContent
-import com.android.designcompose.definition.layout.LayoutStyle
 import com.android.designcompose.definition.layout.PositionType
 import com.android.designcompose.serdegen.Size
-import java.util.*
+import java.util.Optional
 
 internal fun LayoutChangedResponse.Layout.intoSerde() =
     com.android.designcompose.serdegen.Layout(order, width, height, left, top)
 
 internal fun ItemSpacing.intoSerde() =
-    when (typeCase) {
-        ItemSpacing.TypeCase.FIXED -> com.android.designcompose.serdegen.ItemSpacing.Fixed(fixed)
-        ItemSpacing.TypeCase.AUTO ->
-            com.android.designcompose.serdegen.ItemSpacing.Auto(auto.width, auto.height)
+    when (itemSpacingTypeCase) {
+        ItemSpacing.ItemSpacingTypeCase.FIXED ->
+            com.android.designcompose.serdegen.ItemSpacing(
+                Optional.of(com.android.designcompose.serdegen.ItemSpacingType.Fixed(fixed))
+            )
+        ItemSpacing.ItemSpacingTypeCase.AUTO ->
+            com.android.designcompose.serdegen.ItemSpacing(
+                Optional.of(
+                    com.android.designcompose.serdegen.ItemSpacingType.Auto(
+                        com.android.designcompose.serdegen.Auto(auto.width, auto.height)
+                    )
+                )
+            )
         else -> throw IllegalArgumentException("Unknown ItemSpacing: $this") // Should never happen.
     }
 
@@ -119,31 +127,3 @@ internal fun PositionType.intoSerde() =
             com.android.designcompose.serdegen.PositionType.Absolute()
         else -> throw IllegalArgumentException("Unknown PositionType: $this") // Should never happen
     }
-
-/** Temporary (I hope) conversion from the Proto layout style to the Serde layout style. */
-internal fun LayoutStyle.intoSerde() =
-    com.android.designcompose.serdegen.LayoutStyle(
-        Optional.of(margin.intoSerde()),
-        Optional.of(padding.intoSerde()),
-        itemSpacing.intoSerde(),
-        Optional.of(top.into()),
-        Optional.of(left.into()),
-        Optional.of(bottom.into()),
-        Optional.of(right.into()),
-        Optional.of(width.into()),
-        Optional.of(height.into()),
-        Optional.of(minWidth.into()),
-        Optional.of(maxWidth.into()),
-        Optional.of(minHeight.into()),
-        Optional.of(maxHeight.into()),
-        boundingBox.intoSerde(),
-        flexGrow,
-        flexShrink,
-        Optional.of(flexBasis.into()),
-        alignSelf.intoSerde(),
-        alignContent.intoSerde(),
-        alignItems.intoSerde(),
-        flexDirection.intoSerde(),
-        justifyContent.intoSerde(),
-        positionType.intoSerde(),
-    )

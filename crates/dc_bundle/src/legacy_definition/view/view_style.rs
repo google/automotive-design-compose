@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-use crate::legacy_definition::layout::layout_style::LayoutStyle;
+use crate::definition::layout::LayoutStyle;
 use crate::legacy_definition::view::node_style::NodeStyle;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct ViewStyle {
     pub layout_style: LayoutStyle,
     pub node_style: NodeStyle,
+}
+
+impl Default for ViewStyle {
+    fn default() -> Self {
+        Self { layout_style: LayoutStyle::new_default(), node_style: NodeStyle::default() }
+    }
 }
 
 impl ViewStyle {

@@ -77,6 +77,11 @@ module.exports = (env, argv) => ({
       template: 'src/ui.html',
       filename: 'ui.html',
       inject: false
-    })
+    }),
+    new HtmlWebpackPlugin({
+      template: 'src/shader.html',
+      filename: 'shader.html',
+      inject: false
+    }),
   ],
 });

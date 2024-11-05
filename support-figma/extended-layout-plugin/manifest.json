@@ -3,7 +3,10 @@
   "id": "1228101499915033562",
   "api": "1.0.0",
   "main": "dist/code.js",
-  "ui": "dist/ui.html",
+  "ui": {
+    "main": "dist/ui.html",
+    "shader": "dist/shader.html"
+  },
   "editorType": ["figma"],
   "menu": [
     { "name": "Dials and Gauges", "command": "meters" },
@@ -21,13 +24,21 @@
         { "name": "Export Images", "command": "export-images" },
         { "name": "Clear Image Resource", "command": "clear-image-res" }
       ]
+    },
+    { "separator": true },
+    {
+      "name": "Shader",
+      "command": "shader"
     }
+
   ],
   "networkAccess": {
     "allowedDomains": [
       "https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css",
       "https://rsms.me",
-      "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+      "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
+      "https://unpkg.com",
+      "https://shaders.skia.org"
     ],
     "reasoning": "The plugin uses the stylesheet from https://github.com/thomas-lowry/figma-plugin-ds to make the UI consistent with the rest of the Figma UI (https://www.figma.com/plugin-docs/figma-components/). It uses https://rsms.me for the Inter fonts. jszip is the tool to download images in zip."
   },

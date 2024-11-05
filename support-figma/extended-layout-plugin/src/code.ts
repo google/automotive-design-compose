@@ -526,7 +526,7 @@ if (figma.command === "sync") {
   }
   performSync();
 } else if (figma.command === "localization") {
-  figma.showUI(__html__, { width: 800, height: 600 });
+  figma.showUI(__uiFiles__.main, { width: 800, height: 600 });
   figma.ui.postMessage({
     msg: "localization",
   });
@@ -564,6 +564,8 @@ if (figma.command === "sync") {
   };
 } else if (figma.command === "clear-image-res") {
   ImageRes.clear();
+} else if (figma.command === "shader") {
+  figma.showUI(__uiFiles__.shader, { width: 600, height: 400 });
 } else if (figma.command === "move-plugin-data") {
   function movePluginDataWithKey(node: BaseNode, key: string) {
     // Read the private plugin data, write to shared
@@ -606,7 +608,7 @@ if (figma.command === "sync") {
   }
   performMove();
 } else if (figma.command === "meters") {
-  figma.showUI(__html__, { width: 400, height: 400 });
+  figma.showUI(__uiFiles__.main, { width: 400, height: 400 });
   figma.ui.postMessage({
     msg: "meters",
   });
@@ -1049,7 +1051,7 @@ if (figma.command === "sync") {
   }
   initMeters();
 } else if (figma.command === "clippy") {
-  figma.showUI(__html__, { width: 400, height: 600 });
+  figma.showUI(__uiFiles__.main, { width: 400, height: 600 });
   clippyRefresh();
 
   figma.ui.onmessage = (msg) => {
@@ -1095,6 +1097,6 @@ if (figma.command === "sync") {
     }
   };
 
-  figma.showUI(__html__, { width: 400, height: 300 });
+  figma.showUI(__uiFiles__.main, { width: 400, height: 300 });
   refresh();
 }

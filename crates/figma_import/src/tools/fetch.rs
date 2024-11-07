@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::env;
 use std::io::Write;
 
 use crate::{Document, ProxyConfig};
@@ -19,6 +20,7 @@ use crate::{Document, ProxyConfig};
 use clap::Parser;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use log::error;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -69,24 +71,62 @@ pub struct Args {
     pub output: std::path::PathBuf,
 }
 
+pub fn load_figma_token() -> Option<String> {
+    let env_var = env::var("FIGMA_ACCESS_TOKEN");
+    if let Ok(token) = env_var {
+        Some(token)
+    } else {
+        let config_path = std::path::Path::new(&env::var("HOME").unwrap())
+            .join(".config")
+            .join("figma_access_token");
+
+        match std::fs::read_to_string(config_path) {
+            Ok(token) => Some(token.trim().parse().unwrap()),
+            Err(_) => {
+                error!("Could not read Figma token from ~/.config/figma_access_token");
+                None
+            }
+        }
+    }
+}
+
+pub fn build_definition(
+    doc: &mut Document,
+    nodes: &Vec<String>,
+) -> Result<DesignComposeDefinition, ConvertError> {
+    let mut error_list = Vec::new();
+    // Convert the requested nodes from the Figma doc.
+    let views = doc.nodes(
+        &nodes.iter().map(|name| NodeQuery::name(name)).collect(),
+        &Vec::new(),
+        &mut error_list,
+    )?;
+    for error in error_list {
+        eprintln!("Warning: {error}");
+    }
+    let variable_map = doc.build_variable_map();
+
+    // Build the serializable doc structure
+    Ok(DesignComposeDefinition {
+        views,
+        component_sets: doc.component_sets().clone(),
+        images: doc.encoded_image_map(),
+        last_modified: doc.last_modified().clone(),
+        name: doc.get_name(),
+        version: doc.get_version(),
+        id: doc.get_document_id(),
+        variable_map,
+    })
+}
+
 pub fn fetch(args: Args) -> Result<(), ConvertError> {
     let proxy_config: ProxyConfig = match args.http_proxy {
         Some(x) => ProxyConfig::HttpProxyConfig(x),
         None => ProxyConfig::None,
     };
 
-    // If the API Key wasn't provided on the path or via env var, load it from ~/.config/figma_access_token
-    let api_key = args.api_key.unwrap_or_else(|| {
-        let config_path = std::path::Path::new(&std::env::var("HOME").unwrap())
-            .join(".config")
-            .join("figma_access_token");
-
-        std::fs::read_to_string(config_path)
-            .expect("Could not read API key from ~/.config/figma_access_token")
-            .trim()
-            .parse()
-            .unwrap()
-    });
+    // If the API Key wasn't provided on the path or via env var, load it from env or ~/.config/figma_access_token
+    let api_key = args.api_key.unwrap_or_else(|| load_figma_token().unwrap());
 
     let mut doc: Document = Document::new(
         api_key.as_str(),
@@ -95,30 +135,9 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
         &proxy_config,
         None,
     )?;
-    let mut error_list = Vec::new();
-    // Convert the requested nodes from the Figma doc.
-    let views = doc.nodes(
-        &args.nodes.iter().map(|name| NodeQuery::name(name)).collect(),
-        &Vec::new(),
-        &mut error_list,
-    )?;
-    for error in error_list {
-        eprintln!("Warning: {error}");
-    }
 
-    let variable_map = doc.build_variable_map();
+    let dc_definition = build_definition(&mut doc, &args.nodes)?;
 
-    // Build the serializable doc structure
-    let serializable_doc = DesignComposeDefinition {
-        views,
-        component_sets: doc.component_sets().clone(),
-        images: doc.encoded_image_map(),
-        last_modified: doc.last_modified().clone(),
-        name: doc.get_name(),
-        version: doc.get_version(),
-        id: doc.get_document_id(),
-        variable_map: variable_map,
-    };
     println!("Fetched document");
     println!("  DC Version: {}", DesignComposeDefinitionHeader::current().version);
     println!("  Doc ID: {}", doc.get_document_id());
@@ -128,7 +147,7 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
     // We don't bother with serialization of image sessions with this tool.
     let mut output = std::fs::File::create(args.output)?;
     let header = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
-    let doc = bincode::serialize(&serializable_doc)?;
+    let doc = bincode::serialize(&dc_definition)?;
     output.write_all(header.as_slice())?;
     output.write_all(doc.as_slice())?;
     Ok(())

@@ -10,10 +10,10 @@ rust-version.workspace = true
 [features]
 default = []
 reflection = ["serde-reflection", "serde-generate", "clap"]
-http_mock = ["phf"]
 fetch = ["clap"]
 dcf_info = ["clap"]
 fetch_layout = ["clap"]
+test_fetches = ["fetch"]
 
 
 [dependencies]
@@ -31,7 +31,6 @@ svgtypes.workspace = true
 unicode-segmentation.workspace = true
 image.workspace = true
 euclid.workspace = true
-phf = { workspace = true, optional = true }
 
 # layout dependencies
 taffy.workspace = true

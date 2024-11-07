@@ -32,6 +32,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Battleship", { BattleshipTest() }, BattleshipDoc.javaClass.name),
         Triple("Blend Modes", { BlendModeTest() }, BlendModeTestDoc.javaClass.name),
         Triple("Component Replace", { ComponentReplaceTest() }, ComponentReplaceDoc.javaClass.name),
+        Triple(
+            "ComponentTapCallback",
+            { ComponentTapCallbackTest() },
+            ComponentTapCallbackDoc.javaClass.name,
+        ),
         Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
         // Dials gauges and progress vectors
         Triple("Dials Gauges", { DialsGaugesTest() }, DialsGaugesTestDoc.javaClass.name),

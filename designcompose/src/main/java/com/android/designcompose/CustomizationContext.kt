@@ -30,7 +30,9 @@ import com.android.designcompose.serdegen.ColorOrVarType
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.View
 import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 // Node data associated with a Figma node that may be a variant. This is used for grid layouts to
 // determine the span of an item in the grid layout.
@@ -369,6 +371,17 @@ fun CustomizationContext.getTapCallback(nodeName: String): TapCallback? {
     val c = cs[nodeName] ?: return null
     if (c.tapCallback.isPresent) return c.tapCallback.get()
     return null
+}
+
+fun CustomizationContext.getTapCallback(view: View): TapCallback? {
+    var tapCallback = getTapCallback(view.name)
+    // If no tap callback was found but this is a variant of a component set,
+    // look for a tap callback in the component set
+    val componentSetName = view.component_info.getOrNull()?.component_set_name
+    if (tapCallback == null && !componentSetName.isNullOrBlank()) {
+        tapCallback = getTapCallback(componentSetName)
+    }
+    return tapCallback
 }
 
 fun CustomizationContext.getContent(nodeName: String): ReplacementContent? {

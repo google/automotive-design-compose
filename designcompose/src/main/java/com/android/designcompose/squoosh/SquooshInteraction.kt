@@ -73,11 +73,12 @@ internal fun Modifier.squooshInteraction(
 ): Modifier {
     val node = childComposable.node
     val maybeReactions = node.view.reactions
-    if (!maybeReactions.isPresent) return this
-    val reactions = maybeReactions.get()
+    val reactions = maybeReactions.getOrNull()
+
+    val tapCallback = customizations.getTapCallback(node.view)
 
     return this.then(
-        Modifier.pointerInput(reactions) {
+        Modifier.pointerInput(reactions, tapCallback) {
             // Use the interaction scope so that we don't have our event handler removed when our
             // Modifier node is removed from the tree (allowing interactions like "close the overlay
             // while pressed" applied to an overlay to actually receive the touch release event and
@@ -87,8 +88,8 @@ internal fun Modifier.squooshInteraction(
                     onPress = {
                         // Set the "pressed" state.
                         reactions
-                            .filter { r -> r.trigger.type is TriggerType.Press }
-                            .forEach {
+                            ?.filter { r -> r.trigger.type is TriggerType.Press }
+                            ?.forEach {
                                 interactionState.dispatch(
                                     it.action.get(),
                                     findTargetInstanceId(
@@ -104,8 +105,8 @@ internal fun Modifier.squooshInteraction(
 
                         // Clear the "pressed" state.
                         reactions
-                            .filter { r -> r.trigger.type is TriggerType.Press }
-                            .forEach {
+                            ?.filter { r -> r.trigger.type is TriggerType.Press }
+                            ?.forEach {
                                 interactionState.undoDispatch(
                                     findTargetInstanceId(
                                         document,
@@ -121,8 +122,8 @@ internal fun Modifier.squooshInteraction(
                         // of us, etc) then we can run the action.
                         if (dispatchClickEvent) {
                             reactions
-                                .filter { r -> r.trigger.type is TriggerType.Click }
-                                .forEach {
+                                ?.filter { r -> r.trigger.type is TriggerType.Click }
+                                ?.forEach {
                                     interactionState.dispatch(
                                         it.action.get(),
                                         findTargetInstanceId(
@@ -135,8 +136,8 @@ internal fun Modifier.squooshInteraction(
                                     )
                                 }
                         }
-                        // Invoke the tap callback customization if one exists on this node
-                        customizations.getTapCallback(node.view.name)?.invoke()
+
+                        tapCallback?.invoke()
                     }
                 )
             }

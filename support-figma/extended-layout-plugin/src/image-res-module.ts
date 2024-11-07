@@ -53,7 +53,7 @@ export async function exportAllImagesAsync() {
   }
   save();
 
-  figma.showUI(__html__, { width: 600, height: 600 });
+  figma.showUI(__uiFiles__.main, { width: 600, height: 600 });
   figma.ui.postMessage({
     msg: "image-export",
     imageBytesArray: Array.from(imageHashToBytesMap),

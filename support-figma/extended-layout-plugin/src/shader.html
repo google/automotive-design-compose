@@ -22,123 +22,195 @@
 
 <!-- BEGIN OF SHADER PLUGIN UI -->
 <div class="page-padding-large">
-    <div style="justify-content: center; align-items: flex-start; gap: 32px; display: inline-flex;">
+    <div style=" justify-content: center; align-items: flex-start; gap: 16px; display: inline-flex;">
         <div>
-            <canvas id="shaderPreview" width="256" height="256" style="border: 1px black solid" />
+            <canvas id="shaderPreview" width="256px" height="256px" style="border: 1px black solid" />
         </div>
-        <textarea id="shaderCode" name="shaderCode" rows="16" cols="30" placeholder="Enter your shader code">
-// Inputs supplied by shaders.skia.org:
-uniform float3 iResolution;      // Viewport resolution (pixels)
-uniform float  iTime;            // Shader playback time (s)
-uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
-uniform float3 iImageResolution; // iImage1 resolution (pixels)
-uniform shader iImage1;          // An input image.
+        <div style="display:flex; flex-wrap: wrap; overflow-y: auto; gap: 10px">
+            <div class="button button--primary" onclick="loadShaderCode('mesh2d')">Mesh 2D</div>
+            <div class="button button--primary" onclick="loadShaderCode('static_fence_mesh')">Static Fence Mesh</div>
+            <div class="button button--primary" onclick="loadShaderCode('static_mesh2d')">Static Mesh 2D</div>
+            <div class="button button--primary" onclick="loadShaderCode('static_dots')">Static Dots</div>
+            <div class="button button--primary" onclick="loadShaderCode('noisy_polka_dots')">Noisy Polka Dots</div>
+            <div class="button button--primary" onclick="loadShaderCode('gradient_flow')">Gradient Flow</div>
+            <div class="button button--primary" onclick="loadShaderCode('rainbow')">Rainbow</div>
+            <div class="button button--primary" onclick="loadShaderCode('road')">Road</div>
+            <div class="button button--primary" onclick="loadShaderCode('road_with_scene')">Road with Scene</div>
+            <div class="button button--primary" onclick="clearShaderCode()">Custom Shader</div>
+        </div>
+    </div>
 
-// Source: @notargs https://twitter.com/notargs/status/1250468645030858753
-float f(vec3 p) {
-    p.z -= iTime * 10.;
-    float a = p.z * .1;
-    p.xy *= mat2(cos(a), sin(a), -sin(a), cos(a));
-    return .1 - length(cos(p.xy) + sin(p.yz));
-}
+    <div style="margin-top: 16px; display: flex">
+        <textarea id="shaderCodeInput" name="shaderCodeInput" style="width: 100%;" rows="12"
+            placeholder="Enter your shader code"></textarea>
+    </div>
 
-half4 main(vec2 fragcoord) {
-    vec3 d = .5 - fragcoord.xy1 / iResolution.y;
-    vec3 p=vec3(0);
-    for (int i = 0; i < 32; i++) {
-        p += f(p) * d;
-    }
-    return ((sin(p) + vec3(2, 5, 9)) / length(p)).xyz1;
-}</textarea>
+    <div style="margin-top: 16px;">
+        <div>Uniforms:</div>
+        <div id="uniforms" style="border: 2px black solid;">
+            <div>uniform float3 iResolution;</div>
+            <div>uniform float iTime;</div>
+        </div>
     </div>
 
     <div class="container" style="margin-top: 16px;">
-        <button id="runShader" class="styled-button" style="width: 200px;">
-            Run
-        </button>
+        <button id="previewShaderButton" class="styled-button" style="width: 160px;"
+            onclick="runShader()">Preview</button>
+        <button id="insertImageButton" class="styled-button" style="width: 160px;" onclick="runShader()">Insert Running
+            Shader</button>
     </div>
 
-    <div style="margin-top: 16px;">Shader examples are from: <a target="_blank"
-            href="https://shaders.skia.org/">https://shaders.skia.org/</a></div>
+    <div style="margin-top: 16px">
+        Shader examples are from:
+        <a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a> and <a target="_blank"
+            href="https://shadertoy.com">https://shadertoy.com</a>
+    </div>
 
+    <div style="margin-top: 4px">
+        This tool is developed using Skia CanvasKit, please use
+        <a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a> to debug.
+    </div>
 </div>
 <!-- END OF SHADER PLUGIN UI -->
 
 <script>
     let canvas = document.getElementById("shaderPreview");
-    let shaderCode = document.getElementById("shaderCode");
-    let runShaderButton = document.getElementById("runShader");
+    let shaderCodeInput = document.getElementById("shaderCodeInput");
 
-    runShaderButton.addEventListener("click", () => {
+    let insertButton = document.getElementById("insertImageButton");
+    let currentShader = null;
+
+    function clearShaderCode() {
+        shaderCodeInput.value = "";
+        currentShader = null;
+    }
+
+    function loadShaderCode(shader) {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'loadShaderCode',
+                shader: shader,
+            }
+        }, '*');
+    }
+
+    async function runShader() {
         CanvasKitInit({
             locateFile: (file) =>
                 "https://unpkg.com/canvaskit-wasm@latest/bin/" + file,
         }).then((CanvasKit) => {
+            // Revisied from skia playground https://shaders.skia.org/
             const shaderWidth = 256;
             const shaderHeight = 256;
-            const loadImage1 = fetch("https://shaders.skia.org/img/mandrill.png")
-                .then((response) => response.arrayBuffer());
 
-            Promise.all([loadImage1]).then((values) => {
-                const [imageData1] = values;
-                const img1 = CanvasKit.MakeImageFromEncoded(imageData1);
-                const imgShader1 = img1.makeShaderCubic(
-                    CanvasKit.TileMode.Clamp, CanvasKit.TileMode.Clamp, 1 / 3, 1 / 3);
+            let surface = CanvasKit.MakeCanvasSurface(canvas.id);
+            if (!surface) {
+                throw "Could not make surface";
+            }
+            const skcanvas = surface.getCanvas();
+            const paint = new CanvasKit.Paint();
+            const startTimeMs = Date.now();
+            let mouseClickX = 0;
+            let mouseClickY = 0;
+            let mouseDragX = 0;
+            let mouseDragY = 0;
+            let lastMousePressure = 0;
 
-                const surface = CanvasKit.MakeCanvasSurface(canvas.id);
-                if (!surface) {
-                    throw "Could not make surface";
+            const prog = `
+// Inputs supplied by shaders.skia.org:
+uniform float3 iResolution;      // Viewport resolution (pixels)
+uniform float  iTime;            // Shader playback time (s)
+uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
+` + shaderCodeInput.value;
+
+            currentShader = prog;
+
+            const effect = CanvasKit.RuntimeEffect.Make(prog);
+
+            function drawFrame(canvas) {
+                canvas.clear();
+                const iTime = (Date.now() - startTimeMs) / 1000;
+                const uniforms = [
+                    shaderWidth,
+                    shaderHeight,
+                    1, // iResolution
+                    iTime, // iTime
+                    mouseClickX,
+                    mouseClickY,
+                    mouseDragX,
+                    mouseDragY, // iMouse
+                ];
+                const shader = effect.makeShader(uniforms);
+                if (!shader) {
+                    throw "Could not make shader";
                 }
-                const skcanvas = surface.getCanvas();
-                const paint = new CanvasKit.Paint();
-                const startTimeMs = Date.now();
-                let mouseClickX = 0;
-                let mouseClickY = 0;
-                let mouseDragX = 0;
-                let mouseDragY = 0;
-                let lastMousePressure = 0;
+                paint.setShader(shader);
+                skcanvas.drawPaint(paint);
+                shader.delete();
 
-                const prog1 = shaderCode.value;
-                const effect1 = CanvasKit.RuntimeEffect.Make(prog1);
-
-                function drawFrame(canvas) {
-                    skcanvas.clear(CanvasKit.BLACK);
-                    const iTime = (Date.now() - startTimeMs) / 1000;
-                    const uniforms1 = [
-                        shaderWidth, shaderHeight, 1,                     // iResolution
-                        iTime,                                            // iTime
-                        mouseClickX, mouseClickY, mouseDragX, mouseDragY, // iMouse
-                        img1.width(), img1.height(), 1,                   // iImageResolution
-                    ];
-                    const children1 = [
-                        imgShader1,                                       // iImage1
-                    ];
-                    const shader1 = effect1.makeShaderWithChildren(uniforms1, children1);
-                    if (!shader1) {
-                        throw "Could not make shader1";
-                    }
-                    paint.setShader(shader1);
-                    skcanvas.drawPaint(paint);
-                    shader1.delete();
-                    surface.requestAnimationFrame(drawFrame);
-                }
                 surface.requestAnimationFrame(drawFrame);
+            }
+            surface.requestAnimationFrame(drawFrame);
 
-                canvas.addEventListener("pointermove", (e) => {
-                    if (e.pressure && !lastMousePressure) {
-                        mouseClickX = e.offsetX;
-                        mouseClickY = e.offsetY;
-                    }
-                    lastMousePressure = e.pressure;
-                    if (!e.pressure) {
-                        return;
-                    }
-                    mouseDragX = e.offsetX;
-                    mouseDragY = e.offsetY;
-                });
-            }); // from the Promise.all
+            canvas.addEventListener("pointermove", (e) => {
+                if (e.pressure && !lastMousePressure) {
+                    mouseClickX = e.offsetX;
+                    mouseClickY = e.offsetY;
+                }
+                lastMousePressure = e.pressure;
+                if (!e.pressure) {
+                    return;
+                }
+                mouseDragX = e.offsetX;
+                mouseDragY = e.offsetY;
+            });
 
-            ////// END OF CANVAS KIT //////
-        });
-    });
+            insertButton.onclick = e => {
+                if (currentShader != null) {
+                    parent.postMessage({
+                        pluginMessage: {
+                            msg: 'setShader',
+                            shader: currentShader,
+                        }
+                    }, '*');
+                } else {
+                    console.error("There is no shader running....");
+                }
+
+                const skImage = surface.makeImageSnapshot();
+                if (skImage != null) {
+                    parent.postMessage({
+                        pluginMessage: {
+                            msg: 'insertImage',
+                            imageBytes: skImage.encodeToBytes(),
+                        }
+                    }, '*');
+                    skImage.delete();
+                } else {
+                    console.error("There is no image captured...");
+                }
+
+            };
+        }); ////// END OF CANVAS KIT //////
+    }
+
+    loadShaderCode('mesh2d');
+
+    window.onmessage = async function (event) {
+        let msg = event.data.pluginMessage;
+        if (msg.msg == 'shaderCode') {
+            shaderCodeInput.value = msg.code;
+            runShader();
+            return;
+        }
+
+        if (msg.msg == 'shader-selection-cleared') {
+            insertButton.disabled = true;
+            return;
+        }
+        if (msg.msg == "shader-selection") {
+            insertButton.disabled = false;
+            return;
+        }
+    }
 </script>

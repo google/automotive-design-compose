@@ -28,8 +28,16 @@ export async function showNode(nodeId: string) {
     figma.viewport.scrollAndZoomIntoView([highlightNode]);
     figma.currentPage.selection = [highlightNode as any]; // XXX support multiple pages!
   } else {
-    error(CONSOLE_TAG, "Can't find node", nodeId);
+    dcError("Can't find node", nodeId);
   }
+}
+
+export function dcLog(message?: any, ...optionalParams: any[]) {
+  log(CONSOLE_TAG, message, optionalParams);
+}
+
+export function dcError(message?: any, ...optionalParams: any[]) {
+  error(CONSOLE_TAG, message, optionalParams);
 }
 
 export function log(tag: string, message?: any, ...optionalParams: any[]) {

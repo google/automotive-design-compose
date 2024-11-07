@@ -18,6 +18,7 @@ import * as Utils from "./utils";
 import * as Localization from "./localization-module";
 import * as DesignSpecs from "./design-spec-module";
 import * as ImageRes from "./image-res-module";
+import * as Shader from "./shader";
 
 // Warning component.
 interface ClippyWarningRun {
@@ -565,7 +566,20 @@ if (figma.command === "sync") {
 } else if (figma.command === "clear-image-res") {
   ImageRes.clear();
 } else if (figma.command === "shader") {
-  figma.showUI(__uiFiles__.shader, { width: 600, height: 400 });
+  figma.showUI(__uiFiles__.shader, { width: 600, height: 720 });
+  figma.ui.onmessage = (msg) => {
+    if (msg.msg === "loadShaderCode") {
+      figma.ui.postMessage({
+        msg: "shaderCode",
+        code: Shader.shaderMap.get(msg.shader),
+      });
+    } else if (msg.msg === "insertImage") {
+      Shader.insertImage(msg.imageBytes);
+    } else if (msg.msg === "setShader") {
+      Shader.setShader(msg.shader);
+    }
+  };
+  figma.on("selectionchange", Shader.onSelectionChanged);
 } else if (figma.command === "move-plugin-data") {
   function movePluginDataWithKey(node: BaseNode, key: string) {
     // Read the private plugin data, write to shared

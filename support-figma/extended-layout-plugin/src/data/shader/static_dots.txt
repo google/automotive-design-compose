@@ -1,0 +1,18 @@
+// Revised from: https://www.shadertoy.com/view/fssGzf
+vec4 main(vec2 fragCoord)
+{
+    float dotResolution = 10.0;
+    
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = fragCoord/iResolution.y;
+    vec2 uv2 = 2.0 * fract(uv * dotResolution) - 1.0;
+    float distance = length(uv2);
+  
+    float intensity = smoothstep(0.2, 0.0, distance);
+
+    // Highlight for extra shine
+    float highlight = smoothstep(0.1, 0.0, distance);
+    vec3 color = vec3(intensity + highlight);
+    
+    return vec4(color, 1.0);
+}

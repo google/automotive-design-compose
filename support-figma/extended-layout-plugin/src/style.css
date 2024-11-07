@@ -296,6 +296,7 @@ a:active {
   display: flex; /* Enable flexbox */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
+  gap: 16px
 }
 
 .styled-button {

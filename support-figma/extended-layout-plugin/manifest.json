@@ -5,7 +5,16 @@
   "main": "dist/code.js",
   "ui": {
     "main": "dist/ui.html",
-    "shader": "dist/shader.html"
+    "shader": "dist/shader.html",
+    "gradient_flow": "dist/data/shader/gradient_flow.txt",
+    "mesh2d": "dist/data/shader/mesh2d.txt",
+    "noisy_polka_dots": "dist/data/shader/noisy_polka_dots.txt",
+    "rainbow": "dist/data/shader/rainbow.txt",
+    "road": "dist/data/shader/road.txt",
+    "road_with_scene": "dist/data/shader/road_with_scene.txt",
+    "static_dots": "dist/data/shader/static_dots.txt",
+    "static_fence_mesh": "dist/data/shader/static_fence_mesh.txt",
+    "static_mesh2d": "dist/data/shader/static_mesh2d.txt"
   },
   "editorType": ["figma"],
   "menu": [
@@ -37,8 +46,7 @@
       "https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css",
       "https://rsms.me",
       "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
-      "https://unpkg.com",
-      "https://shaders.skia.org"
+      "https://unpkg.com"
     ],
     "reasoning": "The plugin uses the stylesheet from https://github.com/thomas-lowry/figma-plugin-ds to make the UI consistent with the rest of the Figma UI (https://www.figma.com/plugin-docs/figma-components/). It uses https://rsms.me for the Inter fonts. jszip is the tool to download images in zip."
   },

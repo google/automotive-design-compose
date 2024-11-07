@@ -1,0 +1,47 @@
+// Rainbow - Source: https://www.shadertoy.com/view/WsV3D1
+// return a value between -1 & 1;
+float borderCircle(vec2 st, float pct, float minLimit, float maxLimit){
+  return  smoothstep( pct - minLimit, pct, distance(st,vec2(0.5,0.47))) -
+          smoothstep( pct, pct + maxLimit, distance(st,vec2(0.5, 0.499)));
+}
+
+float fillCircle(vec2 st, float pct){
+  return  step(0., distance(st,vec2(0.5))) -
+          step( pct, distance(st,vec2(0.5)));
+}
+
+float map(float value, float min1, float max1, float min2, float max2) {
+  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
+vec4 main(vec2 fragCoord ) {
+    // Centered thanks to Mosaic
+    vec2 st = (.5*iResolution.xy - fragCoord)/iResolution.y+.5;
+    
+    float drawCircle1 = map(sin(iTime * 1.), -1., 1., 0.40, 0.45);
+    float drawCircle2 = map(sin(iTime * 1.2), -1., 1., 0.35, 0.39);
+    float drawCircle3 = map(sin(iTime * 1.4), -1., 1., 0.30, 0.34);
+    float drawCircle4 = map(sin(iTime * 1.6), -1., 1., 0.25, 0.29);
+    float drawCircle5 = map(sin(iTime * 1.8), -1., 1., 0.20, 0.24);
+    float drawCircle6 = map(sin(iTime * 2.), -1., 1., 0.15, 0.19);
+    float drawCircle7 = map(sin(iTime * 2.2), -1., 1., 0.10, 0.14);
+    
+    vec3 circle1 = vec3(borderCircle(st, drawCircle1, 0.01, 0.01));
+    vec3 circle2 = vec3(borderCircle(st, drawCircle2, 0.01, 0.01));
+    vec3 circle3 = vec3(borderCircle(st, drawCircle3, 0.01, 0.01));
+    vec3 circle4 = vec3(borderCircle(st, drawCircle4, 0.01, 0.01));
+    vec3 circle5 = vec3(borderCircle(st, drawCircle5, 0.01, 0.01));
+    vec3 circle6 = vec3(borderCircle(st, drawCircle6, 0.01, 0.01));
+    vec3 circle7 = vec3(borderCircle(st, drawCircle7, 0.01, 0.01));
+
+    vec3 color = 
+        circle1*vec3(0.975,0.000,0.000) +
+        circle2*vec3(0.990,0.493,0.000) +
+        circle3*vec3(0.955,0.955,0.000) +
+        circle4*vec3(0.000,0.985,0.000) +
+        circle5*vec3(0.000,0.000,0.965) +
+        circle6*vec3(0.694,0.000,0.990) + 
+        circle7*vec3(0.571,0.000,0.990);
+    
+    return vec4(color,1.0);
+}

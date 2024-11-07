@@ -45,7 +45,7 @@ pub enum ProxyConfig {
 pub struct ConvertRequest<'r> {
     figma_api_key: &'r str,
     // Node names
-    queries: Vec<&'r str>,
+    pub queries: Vec<&'r str>,
     // Ignored images
     ignored_images: Vec<IgnoredImage<'r>>,
 
@@ -65,6 +65,19 @@ pub struct ConvertRequest<'r> {
     image_session: Option<ImageContextSession>,
 }
 
+impl<'r> ConvertRequest<'r> {
+    pub fn new(figma_api_key: &'r str, queries: Vec<&'r str>, version: Option<String>) -> Self {
+        Self {
+            figma_api_key,
+            queries,
+            ignored_images: Vec::new(),
+            last_modified: None,
+            version,
+            image_session: None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum ConvertResponse {
     Document(Vec<u8>),
@@ -74,7 +87,7 @@ pub enum ConvertResponse {
 pub fn fetch_doc(
     id: &str,
     requested_version_id: &str,
-    rq: ConvertRequest,
+    rq: &ConvertRequest,
     proxy_config: &ProxyConfig,
 ) -> Result<ConvertResponse, crate::Error> {
     if let Some(mut doc) = Document::new_if_changed(
@@ -82,8 +95,8 @@ pub fn fetch_doc(
         id.into(),
         requested_version_id.into(),
         proxy_config,
-        rq.last_modified.unwrap_or(String::new()),
-        rq.version.unwrap_or(String::new()),
+        rq.last_modified.clone().unwrap_or(String::new()),
+        rq.version.clone().unwrap_or(String::new()),
         rq.image_session.clone(),
     )? {
         // The document has changed since the version the client has, so we should fetch

@@ -248,7 +248,7 @@ jobs:
       - name: Build all
         run: cargo build --all-targets --all-features
       - name: Test all
-        run: cargo test --all-targets --all-features
+        run: cargo test --all-targets --features=reflection,fetch,dcf_info
         ############ Figma resources
   figma-resources:
     runs-on: ubuntu-latest

@@ -1230,6 +1230,7 @@ pub struct VariableAlias {
 pub enum VariableAliasOrList {
     Alias(VariableAlias),
     List(Vec<VariableAlias>),
+    Map(HashMap<String, VariableAlias>),
 }
 impl VariableAliasOrList {
     fn get_name(&self) -> Option<String> {
@@ -1242,6 +1243,9 @@ impl VariableAliasOrList {
                 if let Some(alias) = alias {
                     return Some(alias.id.clone());
                 }
+            }
+            VariableAliasOrList::Map(_) => {
+                panic!("We don't support Maps of Variables!");
             }
         }
         None

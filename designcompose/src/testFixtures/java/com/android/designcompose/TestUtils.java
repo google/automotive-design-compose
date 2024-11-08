@@ -18,6 +18,8 @@ package com.android.designcompose;
 
 import static com.android.designcompose.TestUtilsKt.testOnlyTriggerLiveUpdate;
 
+import android.content.res.Resources;
+
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.rules.TestRule;
@@ -48,11 +50,23 @@ public class TestUtils {
         InteractionStateManager.INSTANCE.getStates().clear();
     }
 
+    private static void clearDocServer() {
+        DocServer.INSTANCE.testOnlyClearDocuments();
+    }
+
+    private static void clearDesignSettings() {
+        DesignSettings.INSTANCE.testOnlyClearFileFetchStatus();
+        DesignSettings.INSTANCE.setRawResourceId(Resources.ID_NULL);
+    }
+
+
     public static class ClearStateTestRule implements TestRule {
 
         @Override
         public Statement apply(Statement base, Description description) {
             clearInteractionStates();
+            clearDocServer();
+            clearDesignSettings();
             return base;
         }
     }

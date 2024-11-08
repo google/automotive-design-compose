@@ -59,11 +59,14 @@ function fetch_design_switcher {
 
 function fetch_helloworld {
     DOC_ID=pxVlixodJqZL95zo2RzTHl
+    OUTPUT_FILE_REFERENCE_APP="$GIT_ROOT/reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_$DOC_ID.dcf"
+    OUTPUT_FILE_RAW_RES_TEST="$GIT_ROOT/designcompose/src/testDebug/res/raw/raw_resource_test_hello_world_doc"
     cargo run --bin fetch --features=fetch -- \
         --doc-id="$DOC_ID" \
         --nodes="#MainFrame" \
-        --output="$GIT_ROOT/reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_$DOC_ID.dcf"
-
+        --output=$OUTPUT_FILE_REFERENCE_APP
+   # Reuse Hello World doc for testing doc loading from res/raw
+   cp $OUTPUT_FILE_REFERENCE_APP $OUTPUT_FILE_RAW_RES_TEST
 }
 
 function fetch_tutorial {
@@ -113,3 +116,4 @@ function fetch_state_customizations {
       --nodes="#root" \
       --output="$GIT_ROOT/integration-tests/validation/src/main/assets/figma/StateCustomizationsDoc_$DOC_ID.dcf"
 }
+

@@ -16,11 +16,13 @@
 
 package com.android.designcompose
 
+import android.content.res.Resources
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.annotation.RawRes
 import androidx.annotation.RestrictTo
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
@@ -39,6 +41,7 @@ import com.android.designcompose.common.DocumentServerParams
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.InputStream
 import java.lang.ref.WeakReference
 import java.net.ConnectException
 import java.net.SocketException
@@ -96,6 +99,11 @@ object DesignSettings {
     internal var isDocumentLive = mutableStateOf(false)
     private var fontDb: HashMap<String, FontFamily> = HashMap()
     internal var fileFetchStatus: HashMap<DesignDocId, DesignDocStatus> = HashMap()
+    internal var rawResourceId: Int = Resources.ID_NULL
+
+    @VisibleForTesting
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    fun testOnlyClearFileFetchStatus() = fileFetchStatus.clear()
 
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
@@ -147,6 +155,18 @@ object DesignSettings {
 
     fun disableToasts() {
         toastsEnabled = false
+    }
+
+    /**
+     * Sets the raw resource id for serialized doc. Once set, the design doc will only be read from
+     * res/raw/the_dcf_file. Live updates do not work when this is set. All other files will be
+     * ignored: downloaded/cached files, assets/figma/
+     *
+     * @param resourceId of the raw dcf file placed in res/raw
+     * @sample R.raw.the_dcf_file
+     */
+    fun setRawResourceId(@RawRes resourceId: Int) {
+        rawResourceId = resourceId
     }
 
     fun addFontFamily(name: String, family: FontFamily) {
@@ -236,6 +256,10 @@ internal object DocServer {
                 scheduleLiveUpdate()
             }
         }
+
+    @VisibleForTesting
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    fun testOnlyClearDocuments() = documents.clear()
 }
 
 internal fun DocServer.initializeLiveUpdate() {
@@ -508,9 +532,21 @@ internal fun DocServer.doc(
     }
 
     // Use the LocalContext to locate this doc in the precompiled DesignComposeDefinitionuments
-    val assetManager = context.assets
     try {
-        val assetDoc = assetManager.open("figma/$id.dcf")
+        val assetDoc: InputStream =
+            if (DesignSettings.rawResourceId != Resources.ID_NULL) {
+                Log.i(
+                    TAG,
+                    "Loaded design doc from R.raw." +
+                        context.resources.getResourceEntryName(DesignSettings.rawResourceId),
+                )
+                context.resources.openRawResource(DesignSettings.rawResourceId)
+            } else {
+                val fileName = "figma/$id.dcf"
+                Log.i(TAG, "Loaded design doc from assets/$fileName")
+                context.assets.open(fileName)
+            }
+
         val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }

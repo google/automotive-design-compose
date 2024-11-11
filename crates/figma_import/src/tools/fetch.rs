@@ -83,6 +83,9 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
 
         std::fs::read_to_string(config_path)
             .expect("Could not read API key from ~/.config/figma_access_token")
+            .trim()
+            .parse()
+            .unwrap()
     });
 
     let mut doc: Document = Document::new(

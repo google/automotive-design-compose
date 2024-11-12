@@ -1274,6 +1274,19 @@ impl BoundVariables {
         }
         None
     }
+
+    pub(crate) fn get_var_from_hash(&self, hash_name: &str, var_name: &str) -> Option<String> {
+        let var_hash = self.variables.get(hash_name);
+        if let Some(var) = var_hash {
+            if let VariableAliasOrList::Map(map) = var {
+                let var = map.get(var_name);
+                if let Some(var) = var {
+                    return Some(var.id.clone());
+                }
+            }
+        }
+        None
+    }
 }
 
 // We use the "untagged" serde attribute because the value of a variable is

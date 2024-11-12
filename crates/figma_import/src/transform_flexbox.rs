@@ -1464,19 +1464,50 @@ fn visit_node(
     // Collect the corner radii values to be saved into the view. If the corner radii are set
     // to variables, they will be set to NumOrVar::Var. Otherwise they will be set to NumOrVar::Num.
     let corner_radius = if let Some(vars) = &node.bound_variables {
-        let top_left = NumOrVarType::from_var(vars, "topLeftRadius", corner_radius_values[0]);
-        let top_right = NumOrVarType::from_var(vars, "topRightRadius", corner_radius_values[1]);
-        let bottom_right =
-            NumOrVarType::from_var(vars, "bottomRightRadius", corner_radius_values[2]);
-        let bottom_left = NumOrVarType::from_var(vars, "bottomLeftRadius", corner_radius_values[3]);
+        let corner_values = if vars.has_var("rectangleCornerRadii") {
+            (
+                NumOrVarType::from_var_hash(
+                    vars,
+                    "rectangleCornerRadii",
+                    "RECTANGLE_TOP_LEFT_CORNER_RADIUS",
+                    corner_radius_values[0],
+                ),
+                NumOrVarType::from_var_hash(
+                    vars,
+                    "rectangleCornerRadii",
+                    "RECTANGLE_TOP_RIGHT_CORNER_RADIUS",
+                    corner_radius_values[1],
+                ),
+                NumOrVarType::from_var_hash(
+                    vars,
+                    "rectangleCornerRadii",
+                    "RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS",
+                    corner_radius_values[2],
+                ),
+                NumOrVarType::from_var_hash(
+                    vars,
+                    "rectangleCornerRadii",
+                    "RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS",
+                    corner_radius_values[3],
+                ),
+            )
+        } else {
+            (
+                NumOrVarType::from_var(vars, "topLeftRadius", corner_radius_values[0]),
+                NumOrVarType::from_var(vars, "topRightRadius", corner_radius_values[1]),
+                NumOrVarType::from_var(vars, "bottomRightRadius", corner_radius_values[2]),
+                NumOrVarType::from_var(vars, "bottomLeftRadius", corner_radius_values[3]),
+            )
+        };
         if vars.has_var("topLeftRadius")
             || vars.has_var("topRightRadius")
             || vars.has_var("bottomRightRadius")
             || vars.has_var("bottomLeftRadius")
+            || vars.has_var("rectangleCornerRadii")
         {
             has_corner_radius = true;
         }
-        [top_left, top_right, bottom_right, bottom_left]
+        [corner_values.0, corner_values.1, corner_values.2, corner_values.3]
     } else {
         [
             NumOrVarType::Num(corner_radius_values[0]),

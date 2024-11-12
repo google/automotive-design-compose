@@ -68,6 +68,13 @@ message ProgressMarkerMeterData {
   float end_y = 8;
 }
 
+// Schema for progress vector data that we write to serialized data
+message ProgressVectorMeterData {
+  bool enabled = 1;
+  bool discrete = 2;
+  float discrete_value = 3;
+}
+
 // A container message that holds one of the meter data types (rotation, arc,
 // progress bar, or progress marker).
 message MeterData {
@@ -76,5 +83,6 @@ message MeterData {
     ArcMeterData arc_data = 2;
     ProgressBarMeterData progress_bar_data = 3;
     ProgressMarkerMeterData progress_marker_data = 4;
+    ProgressVectorMeterData progress_vector_data = 5;
   }
 }

@@ -28,7 +28,6 @@ use crate::definition::element::VariableMap;
 use crate::legacy_definition::element::node::NodeQuery;
 
 pub mod element;
-pub mod plugin;
 pub mod view;
 
 /// EncodedImageMap contains a mapping from ImageKey to network bytes. It can create an

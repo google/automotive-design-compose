@@ -123,7 +123,7 @@ private fun calculateRotationData(
 ): androidx.compose.ui.graphics.Matrix {
     val rotation =
         (rotationData.start + meterValue / 100f * (rotationData.end - rotationData.start))
-            .coerceDiscrete(rotationData.discrete, rotationData.discreteValue)
+            .coerceDiscrete(rotationData.discrete, rotationData.discrete_value)
 
     val nodeWidth = style.fixedWidth(density)
     val nodeHeight = style.fixedHeight(density)
@@ -170,7 +170,7 @@ private fun calculateProgressBarData(
 ): Pair<Size, androidx.compose.ui.graphics.Matrix?> {
     // Progress bar discrete values are done by percentage
     val discretizedMeterValue =
-        meterValue.coerceDiscrete(progressBarData.discrete, progressBarData.discreteValue)
+        meterValue.coerceDiscrete(progressBarData.discrete, progressBarData.discrete_value)
 
     // Resize the progress bar by interpolating between 0 and endX or endY depending on whether it
     // is a horizontal or vertical progress bar
@@ -178,7 +178,7 @@ private fun calculateProgressBarData(
         val width = style.layout_style.width.getDim().pointsAsDp(density).value
         // Calculate bar extents from the parent layout if it exists, or from the progress bar data
         // if not.
-        var endY = progressBarData.endY
+        var endY = progressBarData.end_y
         parent?.let { p ->
             val parentSize = p.computedLayout?.let { Size(it.width, it.height) }
             parentSize?.let { pSize ->
@@ -196,7 +196,7 @@ private fun calculateProgressBarData(
         val height = style.layout_style.height.getDim().pointsAsDp(density).value
         // Calculate bar extents from the parent layout if it exists, or from the progress bar data
         // if not.
-        var endX = progressBarData.endX
+        var endX = progressBarData.end_x
         parent?.let { p ->
             val parentSize = p.computedLayout?.let { Size(it.width, it.height) }
             parentSize?.let { pSize ->
@@ -219,7 +219,7 @@ private fun calculateProgressMarkerData(
 ): androidx.compose.ui.graphics.Matrix {
     // Progress marker discrete values are done by percentage
     val discretizedMeterValue =
-        meterValue.coerceDiscrete(markerData.discrete, markerData.discreteValue)
+        meterValue.coerceDiscrete(markerData.discrete, markerData.discrete_value)
 
     // Calculate node and parent render sizes if available. These will only be available for
     // squoosh, and will be used to calculate the progress sizes and extents
@@ -239,14 +239,14 @@ private fun calculateProgressMarkerData(
     val overrideTransform = style.getTransform(density)
     if (markerData.vertical) {
         var startY =
-            parentSize?.let { it.height - (mySize?.height ?: 0f) / 2f } ?: markerData.startY
-        val endY = mySize?.let { -it.height / 2f } ?: markerData.endY
+            parentSize?.let { it.height - (mySize?.height ?: 0f) / 2f } ?: markerData.start_y
+        val endY = mySize?.let { -it.height / 2f } ?: markerData.end_y
         val moveY = lerp(startY, endY, discretizedMeterValue, density)
         val topOffset = style.layout_style.margin.top.pointsAsDp(density).value
         overrideTransform.setYTranslation(moveY - topOffset)
     } else {
-        var startX = mySize?.let { -it.width / 2f } ?: markerData.startX
-        var endX = parentSize?.let { it.width - (mySize?.width ?: 0f) / 2f } ?: markerData.endX
+        var startX = mySize?.let { -it.width / 2f } ?: markerData.start_x
+        var endX = parentSize?.let { it.width - (mySize?.width ?: 0f) / 2f } ?: markerData.end_x
         val moveX = lerp(startX, endX, discretizedMeterValue, density)
         val leftOffset = style.layout_style.margin.start.pointsAsDp(density).value
         overrideTransform.setXTranslation(moveX - leftOffset)
@@ -266,7 +266,7 @@ private fun calculateArcData(
     val arcAngleMeter =
         (arcMeterValue / 100f * (arcData.end - arcData.start)).coerceDiscrete(
             arcData.discrete,
-            arcData.discreteValue,
+            arcData.discrete_value,
         )
     if (shape.shape.get() is Shape.Arc) {
         val arc = (shape.shape.get() as Shape.Arc).value
@@ -280,7 +280,7 @@ private fun calculateArcData(
                         arcData.start,
                         arcAngleMeter,
                         arc.inner_radius,
-                        arcData.cornerRadius,
+                        arcData.corner_radius,
                         arc.is_mask,
                     )
                 )
@@ -302,7 +302,7 @@ private fun calculateProgressVectorData(
     density: Float,
 ) {
     val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density
-    val discretizedMeterValue = meterValue.coerceDiscrete(data.discrete, data.discreteValue)
+    val discretizedMeterValue = meterValue.coerceDiscrete(data.discrete, data.discrete_value)
 
     // Get full length of path
     var pathLen = 0f
@@ -357,14 +357,14 @@ internal fun ContentDrawScope.render(
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.node_style.meter_data.isPresent) {
             when (val meterData = style.node_style.meter_data.get()) {
-                is MeterData.rotationData -> {
+                is MeterData.RotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
                         overrideTransform =
                             calculateRotationData(rotationData, meterValue, style, density)
                     }
                 }
-                is MeterData.progressBarData -> {
+                is MeterData.ProgressBarData -> {
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
                         val progressBarSizeTransform =
@@ -379,7 +379,7 @@ internal fun ContentDrawScope.render(
                         overrideTransform = progressBarSizeTransform.second
                     }
                 }
-                is MeterData.progressMarkerData -> {
+                is MeterData.ProgressMarkerData -> {
                     val progressMarkerData = meterData.value
                     if (progressMarkerData.enabled) {
                         overrideTransform =
@@ -393,14 +393,14 @@ internal fun ContentDrawScope.render(
                             )
                     }
                 }
-                is MeterData.arcData -> {
+                is MeterData.ArcData -> {
                     val arcData = meterData.value
                     if (arcData.enabled) {
                         shape = calculateArcData(arcData, meterValue, shape)
                         customArcAngle = true
                     }
                 }
-                is MeterData.progressVectorData -> {
+                is MeterData.ProgressVectorData -> {
                     // If this is a vector path progress bar, save it here so we can convert it to a
                     // set of path instructions and render it instead of the normal stroke.
                     if (meterData.value.enabled) progressVectorMeterData = meterData.value
@@ -633,14 +633,14 @@ internal fun ContentDrawScope.squooshShapeRender(
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.node_style.meter_data.isPresent) {
             when (val meterData = style.node_style.meter_data.get()) {
-                is MeterData.rotationData -> {
+                is MeterData.RotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
                         overrideTransform =
                             calculateRotationData(rotationData, meterValue, style, density)
                     }
                 }
-                is MeterData.progressBarData -> {
+                is MeterData.ProgressBarData -> {
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
                         val progressBarSizeTransform =
@@ -655,7 +655,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                         overrideTransform = progressBarSizeTransform.second
                     }
                 }
-                is MeterData.progressMarkerData -> {
+                is MeterData.ProgressMarkerData -> {
                     val progressMarkerData = meterData.value
                     if (progressMarkerData.enabled) {
                         overrideTransform =
@@ -669,14 +669,14 @@ internal fun ContentDrawScope.squooshShapeRender(
                             )
                     }
                 }
-                is MeterData.arcData -> {
+                is MeterData.ArcData -> {
                     val arcData = meterData.value
                     if (arcData.enabled) {
                         shape = calculateArcData(arcData, meterValue, shape)
                         customArcAngle = true
                     }
                 }
-                is MeterData.progressVectorData -> {
+                is MeterData.ProgressVectorData -> {
                     // If this is a vector path progress bar, save it here so we can convert it to a
                     // set of path instructions and render it instead of the normal stroke.
                     if (meterData.value.enabled) progressVectorMeterData = meterData.value

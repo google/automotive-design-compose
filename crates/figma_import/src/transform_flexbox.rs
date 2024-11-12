@@ -18,18 +18,19 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use crate::toolkit_style::MeterDataSchema;
+use crate::meter_schema::MeterJson;
 
+use crate::Error;
 use crate::{
     component_context::ComponentContext,
     extended_layout_schema::{ExtendedAutoLayout, LayoutType, SizePolicy},
+    figma_schema,
     image_context::ImageContext,
     variable_utils::{bound_variables_color, FromFigmaVar},
 };
-use crate::{figma_schema, Error};
 use dc_bundle::definition::element::{
     view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
-    FontWeight, Size, ViewShape,
+    FontWeight, Path, Size, ViewShape,
 };
 
 use crate::figma_schema::LayoutPositioning;
@@ -39,7 +40,6 @@ use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::line_height::LineHeight;
 use dc_bundle::definition::element::num_or_var::NumOrVarType;
 use dc_bundle::definition::element::view_shape::RoundRect;
-use dc_bundle::definition::element::Path;
 use dc_bundle::definition::element::{
     background, stroke_weight, Background, StrokeAlign, StrokeWeight,
 };
@@ -52,8 +52,12 @@ use dc_bundle::definition::modifier::{
     filter_op, BoxShadow, FilterOp, TextAlign, TextAlignVertical, TextOverflow, TextShadow,
 };
 use dc_bundle::definition::modifier::{BlendMode, LayoutTransform};
-use dc_bundle::definition::plugin::FrameExtras;
+use dc_bundle::definition::plugin::{
+    ArcMeterData, FrameExtras, ProgressBarMeterData, ProgressMarkerMeterData,
+    ProgressVectorMeterData, RotationMeterData,
+};
 
+use dc_bundle::definition::plugin::meter_data::MeterData;
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
@@ -1562,18 +1566,67 @@ fn visit_node(
     // a type of meter (dials/gauges/progress bars)
     if let Some(vsw_data) = plugin_data {
         if let Some(data) = vsw_data.get("vsw-meter-data") {
-            let meter_data: Option<MeterDataSchema> = serde_json::from_str(data.as_str()).ok();
-            if let Some(meter_data) = meter_data {
-                if let MeterDataSchema::ProgressVectorData(vector_data) = &meter_data {
-                    // If this is a progress vector node, we read in data as a ProgressVectorMeterDataSchema,
-                    // which contains vector drawing instructions as a string. We convert this into vector
-                    // drawing instructions in a ProgressVectorMeterData struct and replace the normal stroke
-                    // vector data with it.
-                    if vector_data.enabled {
-                        stroke_paths = vector_data.paths.iter().filter_map(parse_path).collect();
-                    }
+            let meter_data = serde_json::from_str::<MeterJson>(data.as_str());
+            match meter_data {
+                Ok(meter_data) => {
+                    style.node_style.meter_data = Some(match meter_data {
+                        MeterJson::ArcData(data) => MeterData::ArcData(ArcMeterData {
+                            enabled: data.enabled,
+                            start: data.start,
+                            end: data.end,
+                            discrete: data.discrete,
+                            discrete_value: data.discrete_value,
+                            corner_radius: data.corner_radius,
+                        }),
+                        MeterJson::RotationData(data) => {
+                            MeterData::RotationData(RotationMeterData {
+                                enabled: data.enabled,
+                                start: data.start,
+                                end: data.end,
+                                discrete: data.discrete,
+                                discrete_value: data.discrete_value,
+                            })
+                        }
+                        MeterJson::ProgressBarData(data) => {
+                            MeterData::ProgressBarData(ProgressBarMeterData {
+                                enabled: data.enabled,
+                                discrete: data.discrete,
+                                discrete_value: data.discrete_value,
+                                vertical: data.vertical,
+                                end_x: data.end_x,
+                                end_y: data.end_y,
+                            })
+                        }
+                        MeterJson::ProgressMarkerData(data) => {
+                            MeterData::ProgressMarkerData(ProgressMarkerMeterData {
+                                enabled: data.enabled,
+                                discrete: data.discrete,
+                                discrete_value: data.discrete_value,
+                                vertical: data.vertical,
+                                start_x: data.start_x,
+                                end_x: data.end_x,
+                                start_y: data.start_y,
+                                end_y: data.end_y,
+                            })
+                        }
+                        MeterJson::ProgressVectorData(data) => {
+                            // ProgressVectors contain vector drawing instructions as a string. We convert this into vector
+                            // drawing instructions in a ProgressVectorMeterData struct and replace the normal stroke
+                            // vector data with it.
+                            if data.enabled {
+                                stroke_paths = data.paths.iter().filter_map(parse_path).collect();
+                            }
+                            MeterData::ProgressVectorData(ProgressVectorMeterData {
+                                enabled: data.enabled,
+                                discrete: data.discrete,
+                                discrete_value: data.discrete_value,
+                            })
+                        }
+                    })
                 }
-                style.node_style.meter_data = Some(meter_data.into());
+                Err(e) => {
+                    error!("Failed to parse meter data: {}", e);
+                }
             }
         }
     }

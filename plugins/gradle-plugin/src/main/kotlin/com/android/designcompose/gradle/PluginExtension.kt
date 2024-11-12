@@ -16,6 +16,7 @@
 
 package com.android.designcompose.gradle
 
+import java.awt.SystemColor.text
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
@@ -71,7 +72,7 @@ fun Project.initializeExtension(extension: PluginExtension) {
         providers
             .environmentVariable("FIGMA_ACCESS_TOKEN")
             .orElse(providers.gradleProperty(tokenGradlePropertyName))
-            .orElse(providers.fileContents(extension.figmaTokenFile).asText)
+            .orElse(providers.fileContents(extension.figmaTokenFile).asText.map { text -> text.trim() })
     )
     // Avoid odd behavior by only allowing changes to be made to the token before it's read
     extension.figmaToken.finalizeValueOnRead()

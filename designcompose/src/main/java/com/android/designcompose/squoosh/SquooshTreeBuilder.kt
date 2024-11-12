@@ -323,7 +323,8 @@ internal fun resolveVariantsRecursively(
             }
         }
     }
-    if (customizations.getTapCallback(view.name) != null) hasSupportedInteraction = true
+    val tapCallback = customizations.getTapCallback(view)
+    if (tapCallback != null) hasSupportedInteraction = true
 
     // If this node has a content customization, then we make a special record of it so that we can
     // zip through all of them after layout and render them in the right location.

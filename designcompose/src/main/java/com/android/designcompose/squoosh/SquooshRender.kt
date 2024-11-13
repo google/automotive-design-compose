@@ -171,7 +171,6 @@ internal fun Modifier.squooshRender(
                             nodeSize,
                             node,
                             shape,
-                            null, // customImageWithContext
                             document,
                             customizations,
                             variableState,

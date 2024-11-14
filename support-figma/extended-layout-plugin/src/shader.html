@@ -22,48 +22,55 @@
 
 <!-- BEGIN OF SHADER PLUGIN UI -->
 <div class="page-padding-large">
-    <div style=" justify-content: center; align-items: flex-start; gap: 16px; display: inline-flex;">
+    <div style=" justify-content: stretch; align-items: flex-start; gap: 16px; display: flex;">
         <div>
             <canvas id="shaderPreview" width="256px" height="256px" style="border: 1px black solid" />
         </div>
-        <div style="display:flex; flex-wrap: wrap; overflow-y: auto; gap: 10px">
-            <div class="button button--primary" onclick="loadShaderCode('mesh2d')">Mesh 2D</div>
-            <div class="button button--primary" onclick="loadShaderCode('static_fence_mesh')">Static Fence Mesh</div>
-            <div class="button button--primary" onclick="loadShaderCode('static_mesh2d')">Static Mesh 2D</div>
-            <div class="button button--primary" onclick="loadShaderCode('static_dots')">Static Dots</div>
-            <div class="button button--primary" onclick="loadShaderCode('noisy_polka_dots')">Noisy Polka Dots</div>
-            <div class="button button--primary" onclick="loadShaderCode('gradient_flow')">Gradient Flow</div>
-            <div class="button button--primary" onclick="loadShaderCode('rainbow')">Rainbow</div>
-            <div class="button button--primary" onclick="loadShaderCode('road')">Road</div>
-            <div class="button button--primary" onclick="loadShaderCode('road_with_scene')">Road with Scene</div>
-            <div class="button button--primary" onclick="clearShaderCode()">Custom Shader</div>
+        <div style="width: 100%;">
+            <div>Uniforms:</div>
+            <div id="uniforms" style="border: 2px black solid;">
+                <div>uniform float3 iResolution;</div>
+                <div>uniform float iTime;</div>
+            </div>
         </div>
     </div>
+    <div style="display:flex; flex-wrap: wrap; overflow-y: auto; gap: 4px; margin-top: 8px;">
+        <button class="button--primary" onclick="loadShaderCode('julia')">Julia</button>
+        <button class="button--primary" onclick="loadShaderCode('cloudy_sky')">CloudySky</button>
+        <button class="button--primary" onclick="loadShaderCode('discrete_ocean')">DiscreteOcean</button>
+        <button class="button--primary" onclick="loadShaderCode('fibonacci_sphere')">FibonacciSphere</button>
+        <button class="button--primary" onclick="loadShaderCode('gradient')">Gradient</button>
+        <button class="button--primary" onclick="loadShaderCode('star')">Star</button>
+        <button class="button--primary" onclick="clearShaderCode()">CUSTOM</button>
+    </div>
 
-    <div style="margin-top: 16px; display: flex">
+    <div style="margin-top: 8px; display: flex;">
         <textarea id="shaderCodeInput" name="shaderCodeInput" style="width: 100%;" rows="12"
             placeholder="Enter your shader code"></textarea>
+        <button id="previewShaderButton" class="button--primary" onclick="runShader()">Preview</button>
     </div>
 
-    <div style="margin-top: 16px;">
-        <div>Uniforms:</div>
-        <div id="uniforms" style="border: 2px black solid;">
-            <div>uniform float3 iResolution;</div>
-            <div>uniform float iTime;</div>
+    <div style="margin-top: 8px; display: flex; align-items: center;">
+        <div>
+            <input id="useShaderFallbackColor" type="checkbox" checked="true"></input>
+            <span class="tooltip">
+                <img src="images/dials/info-blue.svg">
+                <span class="tooltiptext left-20">When unchecked, DesignCompose will draw the
+                    background image from the figma node.</span>
+            </span>
+            Use the solid color <span style="background-color: #FF46A2;">#FF46A2</span> as background when shader is
+            not supported on lower sdks.
         </div>
+        <button id="setShaderButton" class="button--primary tooltip">Apply Shader
+            <span class="tooltiptext left-80">Use the runtime shader to render the background. It only works on
+                Android 13+.</span></button>
     </div>
 
-    <div class="container" style="margin-top: 16px;">
-        <button id="previewShaderButton" class="styled-button" style="width: 160px;"
-            onclick="runShader()">Preview</button>
-        <button id="insertImageButton" class="styled-button" style="width: 160px;" onclick="runShader()">Insert Running
-            Shader</button>
-    </div>
-
-    <div style="margin-top: 16px">
+    <hr />
+    <div>
         Shader examples are from:
-        <a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a> and <a target="_blank"
-            href="https://shadertoy.com">https://shadertoy.com</a>
+        <li><a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a></li>
+        <li><a target="_blank" href="https://godotshaders.com/">https://godotshaders.com/</a></li>
     </div>
 
     <div style="margin-top: 4px">
@@ -77,8 +84,11 @@
     let canvas = document.getElementById("shaderPreview");
     let shaderCodeInput = document.getElementById("shaderCodeInput");
 
-    let insertButton = document.getElementById("insertImageButton");
+    let setShaderButton = document.getElementById("setShaderButton");
+    let useShaderFallbackColor = document.getElementById("useShaderFallbackColor");
     let currentShader = null;
+
+    let currentImageSnapshot = null;
 
     function clearShaderCode() {
         shaderCodeInput.value = "";
@@ -99,7 +109,6 @@
             locateFile: (file) =>
                 "https://unpkg.com/canvaskit-wasm@latest/bin/" + file,
         }).then((CanvasKit) => {
-            // Revisied from skia playground https://shaders.skia.org/
             const shaderWidth = 256;
             const shaderHeight = 256;
 
@@ -128,17 +137,11 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             const effect = CanvasKit.RuntimeEffect.Make(prog);
 
             function drawFrame(canvas) {
-                canvas.clear();
                 const iTime = (Date.now() - startTimeMs) / 1000;
                 const uniforms = [
-                    shaderWidth,
-                    shaderHeight,
-                    1, // iResolution
+                    shaderWidth, shaderHeight, 1, // vec3 iResolution(x, y, z);
                     iTime, // iTime
-                    mouseClickX,
-                    mouseClickY,
-                    mouseDragX,
-                    mouseDragY, // iMouse
+                    mouseDragX, mouseDragY, mouseClickX, mouseClickY, // iMouse(x, y, z, w)
                 ];
                 const shader = effect.makeShader(uniforms);
                 if (!shader) {
@@ -147,6 +150,14 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 paint.setShader(shader);
                 skcanvas.drawPaint(paint);
                 shader.delete();
+
+                // Have to make image snapshot in draw frame to capture an image successfully.
+                // Simply calling make image snapshot when clicking on the set shader button only
+                // captures an empty image.
+                if (currentImageSnapshot != null) {
+                    currentImageSnapshot.delete();
+                }
+                currentImageSnapshot = surface.makeImageSnapshot();
 
                 surface.requestAnimationFrame(drawFrame);
             }
@@ -165,12 +176,14 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 mouseDragY = e.offsetY;
             });
 
-            insertButton.onclick = e => {
+            setShaderButton.onclick = e => {
                 if (currentShader != null) {
+                    const color = useShaderFallbackColor.checked ? "#FF46A2" : undefined;
                     parent.postMessage({
                         pluginMessage: {
                             msg: 'setShader',
                             shader: currentShader,
+                            shaderFallbackColor: color,
                         }
                     }, '*');
                 } else {
@@ -194,7 +207,12 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
         }); ////// END OF CANVAS KIT //////
     }
 
-    loadShaderCode('mesh2d');
+    loadShaderCode('julia');
+
+    function showModal() {
+        var modal = document.getElementById("shaderInfo");
+        modal.style.display = "block";
+    }
 
     window.onmessage = async function (event) {
         let msg = event.data.pluginMessage;
@@ -205,11 +223,11 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
         }
 
         if (msg.msg == 'shader-selection-cleared') {
-            insertButton.disabled = true;
+            setShaderButton.disabled = true;
             return;
         }
         if (msg.msg == "shader-selection") {
-            insertButton.disabled = false;
+            setShaderButton.disabled = false;
             return;
         }
     }

@@ -17,17 +17,15 @@
 import * as Utils from "./utils";
 
 const SHADER_PLUGIN_DATA_KEY = "shader";
+const SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY = "shaderFallbackColor";
 
 export const shaderMap: ReadonlyMap<string, string> = new Map([
-  ["gradient_flow", __uiFiles__.gradient_flow],
-  ["mesh2d", __uiFiles__.mesh2d],
-  ["noisy_polka_dots", __uiFiles__.noisy_polka_dots],
-  ["rainbow", __uiFiles__.rainbow],
-  ["road", __uiFiles__.road],
-  ["road_with_scene", __uiFiles__.road_with_scene],
-  ["static_dots", __uiFiles__.static_dots],
-  ["static_fence_mesh", __uiFiles__.static_fence_mesh],
-  ["static_mesh2d", __uiFiles__.static_mesh2d],
+  ["cloudy_sky", __uiFiles__.cloudy_sky],
+  ["discrete_ocean", __uiFiles__.discrete_ocean],
+  ["fibonacci_sphere", __uiFiles__.fibonacci_sphere],
+  ["gradient", __uiFiles__.gradient],
+  ["julia", __uiFiles__.julia],
+  ["star", __uiFiles__.star],
 ]);
 
 export function onSelectionChanged() {
@@ -50,7 +48,6 @@ export function onSelectionChanged() {
 }
 
 export async function insertImage(imageBytes: Uint8Array) {
-  Utils.dcLog("Insert image", imageBytes);
   await figma.loadAllPagesAsync();
 
   let selection = figma.currentPage.selection;
@@ -81,8 +78,7 @@ export async function insertImage(imageBytes: Uint8Array) {
   }
 }
 
-export async function setShader(shader: string) {
-  Utils.dcLog("Set shader: \n", shader);
+export async function setShader(shader: string, shaderFallbackColor: string) {
   await figma.loadAllPagesAsync();
   let selection = figma.currentPage.selection;
 
@@ -101,6 +97,32 @@ export async function setShader(shader: string) {
         Utils.SHARED_PLUGIN_NAMESPACE,
         SHADER_PLUGIN_DATA_KEY,
         shader
+      );
+    } else {
+      // Clears the shader
+      selection[0].setSharedPluginData(
+        Utils.SHARED_PLUGIN_NAMESPACE,
+        SHADER_PLUGIN_DATA_KEY,
+        ""
+      );
+    }
+    if (shaderFallbackColor) {
+      const rgbaPresent = figma.util.rgba(shaderFallbackColor);
+      selection[0].setSharedPluginData(
+        Utils.SHARED_PLUGIN_NAMESPACE,
+        SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY,
+        rgbaPresent ? JSON.stringify(rgbaPresent) : ""
+      );
+      if (!rgbaPresent) {
+        // Not expecting this to happen but shows an error message if anything unexpected raises up.
+        figma.notify("Invalid shader fallback color! Not using any shader fallback color.");
+      }
+    } else {
+      // Clears the fallback color
+      selection[0].setSharedPluginData(
+        Utils.SHARED_PLUGIN_NAMESPACE,
+        SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY,
+        ""
       );
     }
   } else {

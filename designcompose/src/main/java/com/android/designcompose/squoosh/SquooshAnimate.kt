@@ -317,6 +317,8 @@ internal class SquooshAnimatedArc(
         viewBuilder.design_absolute_bounding_box =
             target.view.design_absolute_bounding_box // didn't we delete this?
         viewBuilder.frame_extras = target.view.frame_extras
+        viewBuilder.shader = target.view.shader
+        viewBuilder.shader_fallback_color = target.view.shader_fallback_color
         viewBuilder.reactions = target.view.reactions
         viewBuilder.render_method = target.view.render_method
         viewBuilder.explicit_variable_modes = target.view.explicit_variable_modes

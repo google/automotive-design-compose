@@ -105,6 +105,22 @@
   opacity: 1;
 }
 
+/* Class to override the left position to 20% */
+.tooltip .tooltiptext.left-20 {
+  margin-left: -40px;
+}
+.tooltip .tooltiptext.left-20::after {
+  left: 20%;
+}
+
+/* Class to override the right position to 20% */
+.tooltip .tooltiptext.left-80 {
+  margin-left: -160px;
+}
+.tooltip .tooltiptext.left-80::after {
+  left: 80%;
+}
+
 /*
  * Modal tooltips
  */

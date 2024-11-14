@@ -33,14 +33,14 @@ use dc_bundle::definition::element::{
     FontWeight, LineHeight, NumOrVar, Path, Size, ViewShape,
 };
 
-use crate::figma_schema::LayoutPositioning;
+use crate::figma_schema::{FigmaColor, LayoutPositioning};
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
 use dc_bundle::definition;
 use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::num_or_var::NumOrVarType;
 use dc_bundle::definition::element::view_shape::RoundRect;
 use dc_bundle::definition::element::{
-    background, stroke_weight, Background, StrokeAlign, StrokeWeight,
+    background, stroke_weight, Background, Color, StrokeAlign, StrokeWeight,
 };
 use dc_bundle::definition::interaction::Reaction;
 use dc_bundle::definition::layout::{
@@ -959,6 +959,24 @@ fn visit_node(
         }
     };
 
+    // We have shader which is a string that can be used to draw the background.
+    let shader: Option<String> = {
+        if let Some(vsw_data) = plugin_data {
+            if let Some(extras) = vsw_data.get("shader") {
+                Option::from(extras.to_owned())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    };
+    // Shader fallback color is the color used when shader isn't supported on lower sdks.
+    let shader_fallback_color: Option<Color> = plugin_data
+        .and_then(|vsw_data| vsw_data.get("shaderFallbackColor"))
+        .and_then(|extras| serde_json::from_str::<FigmaColor>(extras).ok())
+        .map(|figma_color| (&figma_color).into());
+
     let mut scroll_info = ScrollInfo::new_default();
 
     let extended_auto_layout: Option<ExtendedAutoLayout> = {
@@ -1766,6 +1784,8 @@ fn visit_node(
         reactions,
         scroll_info,
         frame_extras,
+        shader,
+        shader_fallback_color,
         node.absolute_bounding_box.map(|r| (&r).into()),
         RenderMethod::None,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),

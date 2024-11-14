@@ -45,6 +45,7 @@ import com.android.designcompose.proto.newDimensionProtoPercent
 import com.android.designcompose.proto.newViewShapeRect
 import com.android.designcompose.proto.overlayBackgroundInteractionFromInt
 import com.android.designcompose.proto.overlayPositionEnumFromInt
+import com.android.designcompose.proto.toInt
 import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.ActionType
@@ -462,7 +463,7 @@ private fun generateReplacementListChildNode(
 
     val listChildScrollInfo = ScrollInfo.Builder()
     listChildScrollInfo.paged_scrolling = false
-    listChildScrollInfo.overflow = OverflowDirection.NONE()
+    listChildScrollInfo.overflow = OverflowDirection.None()
 
     val listChildView = View.Builder()
     listChildView.unique_id = 0 // This is unused.
@@ -511,44 +512,44 @@ private fun generateOverlayNode(
     val layoutStyle = node.style.layout_style.asBuilder()
     val nodeStyle = node.style.node_style.asBuilder()
     nodeStyle.overflow = Overflow.Visible()
-    layoutStyle.position_type = PositionType.Absolute()
+    layoutStyle.position_type = PositionType.Absolute().toInt()
     layoutStyle.top = newDimensionProtoPercent(0.0f)
     layoutStyle.left = newDimensionProtoPercent(0.0f)
     layoutStyle.right = newDimensionProtoPercent(0.0f)
     layoutStyle.bottom = newDimensionProtoPercent(0.0f)
     layoutStyle.width = newDimensionProtoPercent(1.0f)
     layoutStyle.height = newDimensionProtoPercent(1.0f)
-    layoutStyle.flex_direction = FlexDirection.Column()
+    layoutStyle.flex_direction = FlexDirection.Column().toInt()
     when (overlayPositionEnumFromInt(overlay.overlay_position_type)) {
         OverlayPositionEnum.TOP_LEFT -> {
-            layoutStyle.justify_content = JustifyContent.FlexStart() // Y
-            layoutStyle.align_items = AlignItems.FlexStart() // X
+            layoutStyle.justify_content = JustifyContent.FlexStart().toInt() // Y
+            layoutStyle.align_items = AlignItems.FlexStart().toInt() // X
         }
         OverlayPositionEnum.TOP_CENTER -> {
-            layoutStyle.justify_content = JustifyContent.FlexStart() // Y
-            layoutStyle.align_items = AlignItems.Center() // X
+            layoutStyle.justify_content = JustifyContent.FlexStart().toInt() // Y
+            layoutStyle.align_items = AlignItems.Center().toInt() // X
         }
         OverlayPositionEnum.TOP_RIGHT -> {
-            layoutStyle.justify_content = JustifyContent.FlexStart() // Y
-            layoutStyle.align_items = AlignItems.FlexEnd() // X
+            layoutStyle.justify_content = JustifyContent.FlexStart().toInt() // Y
+            layoutStyle.align_items = AlignItems.FlexEnd().toInt() // X
         }
         OverlayPositionEnum.BOTTOM_LEFT -> {
-            layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
-            layoutStyle.align_items = AlignItems.FlexStart() // X
+            layoutStyle.justify_content = JustifyContent.FlexEnd().toInt() // Y
+            layoutStyle.align_items = AlignItems.FlexStart().toInt() // X
         }
         OverlayPositionEnum.BOTTOM_CENTER -> {
-            layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
-            layoutStyle.align_items = AlignItems.Center() // X
+            layoutStyle.justify_content = JustifyContent.FlexEnd().toInt() // Y
+            layoutStyle.align_items = AlignItems.Center().toInt() // X
         }
         OverlayPositionEnum.BOTTOM_RIGHT -> {
-            layoutStyle.justify_content = JustifyContent.FlexEnd() // Y
-            layoutStyle.align_items = AlignItems.FlexEnd() // X
+            layoutStyle.justify_content = JustifyContent.FlexEnd().toInt() // Y
+            layoutStyle.align_items = AlignItems.FlexEnd().toInt() // X
         }
         // Center and Manual both are centered; not clear how to implement manual positioning
         // without making a layout-dependent query.
         else -> {
-            layoutStyle.justify_content = JustifyContent.Center()
-            layoutStyle.align_items = AlignItems.Center()
+            layoutStyle.justify_content = JustifyContent.Center().toInt()
+            layoutStyle.align_items = AlignItems.Center().toInt()
         }
     }
     nodeStyle.background = listOf()
@@ -581,7 +582,7 @@ private fun generateOverlayNode(
 
     val overlayScrollInfo = ScrollInfo.Builder()
     overlayScrollInfo.paged_scrolling = false
-    overlayScrollInfo.overflow = OverflowDirection.NONE()
+    overlayScrollInfo.overflow = OverflowDirection.None()
 
     val overlayView = View.Builder()
     overlayView.unique_id = (node.view.unique_id + 0x2000).toShort()

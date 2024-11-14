@@ -12,90 +12,124 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::into_taffy::IntoTaffy;
+use crate::into_taffy::TryIntoTaffy;
 use ::taffy::style_helpers::TaffyZero;
-use dc_bundle::legacy_definition::layout::positioning::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
+use dc_bundle::definition::layout::{
+    item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent,
+    PositionType,
 };
+use dc_bundle::Error;
 use taffy::prelude as taffy;
 
-impl IntoTaffy<taffy::AlignItems> for &AlignItems {
-    fn into_taffy(self) -> taffy::AlignItems {
+impl TryIntoTaffy<taffy::AlignItems> for AlignItems {
+    type Error = dc_bundle::Error;
+    fn try_into_taffy(self) -> Result<taffy::AlignItems, Self::Error> {
         match self {
-            AlignItems::Center => taffy::AlignItems::Center,
-            AlignItems::FlexStart => taffy::AlignItems::FlexStart,
-            AlignItems::FlexEnd => taffy::AlignItems::FlexEnd,
-            AlignItems::Baseline => taffy::AlignItems::Baseline,
-            AlignItems::Stretch => taffy::AlignItems::Stretch,
+            AlignItems::Center => Ok(taffy::AlignItems::Center),
+            AlignItems::FlexStart => Ok(taffy::AlignItems::FlexStart),
+            AlignItems::FlexEnd => Ok(taffy::AlignItems::FlexEnd),
+            AlignItems::Baseline => Ok(taffy::AlignItems::Baseline),
+            AlignItems::Stretch => Ok(taffy::AlignItems::Stretch),
+            AlignItems::Unspecified => {
+                Err(Error::UnknownEnumVariant { enum_name: "AlignItems".to_string() })
+            }
         }
     }
 }
 
-impl IntoTaffy<Option<taffy::AlignItems>> for &AlignSelf {
-    fn into_taffy(self) -> Option<taffy::AlignItems> {
+impl TryIntoTaffy<Option<taffy::AlignItems>> for AlignSelf {
+    type Error = dc_bundle::Error;
+    fn try_into_taffy(self) -> Result<Option<taffy::AlignItems>, Self::Error> {
         match self {
-            AlignSelf::Auto => None,
-            AlignSelf::FlexStart => Some(taffy::AlignItems::FlexStart),
-            AlignSelf::FlexEnd => Some(taffy::AlignItems::FlexEnd),
-            AlignSelf::Center => Some(taffy::AlignItems::Center),
-            AlignSelf::Baseline => Some(taffy::AlignItems::Baseline),
-            AlignSelf::Stretch => Some(taffy::AlignItems::Stretch),
+            AlignSelf::Auto => Ok(None),
+            AlignSelf::FlexStart => Ok(Some(taffy::AlignItems::FlexStart)),
+            AlignSelf::FlexEnd => Ok(Some(taffy::AlignItems::FlexEnd)),
+            AlignSelf::Center => Ok(Some(taffy::AlignItems::Center)),
+            AlignSelf::Baseline => Ok(Some(taffy::AlignItems::Baseline)),
+            AlignSelf::Stretch => Ok(Some(taffy::AlignItems::Stretch)),
+            AlignSelf::Unspecified => {
+                Err(Error::UnknownEnumVariant { enum_name: "AlignSelf".to_string() })
+            }
         }
     }
 }
 
-impl IntoTaffy<taffy::AlignContent> for &AlignContent {
-    fn into_taffy(self) -> taffy::AlignContent {
+impl TryIntoTaffy<taffy::AlignContent> for AlignContent {
+    type Error = dc_bundle::Error;
+    fn try_into_taffy(self) -> Result<taffy::AlignContent, Self::Error> {
         match self {
-            AlignContent::Center => taffy::AlignContent::Center,
-            AlignContent::FlexStart => taffy::AlignContent::FlexStart,
-            AlignContent::FlexEnd => taffy::AlignContent::FlexEnd,
-            AlignContent::SpaceAround => taffy::AlignContent::SpaceAround,
-            AlignContent::SpaceBetween => taffy::AlignContent::SpaceBetween,
-            AlignContent::Stretch => taffy::AlignContent::Stretch,
+            AlignContent::Center => Ok(taffy::AlignContent::Center),
+            AlignContent::FlexStart => Ok(taffy::AlignContent::FlexStart),
+            AlignContent::FlexEnd => Ok(taffy::AlignContent::FlexEnd),
+            AlignContent::SpaceAround => Ok(taffy::AlignContent::SpaceAround),
+            AlignContent::SpaceBetween => Ok(taffy::AlignContent::SpaceBetween),
+            AlignContent::Stretch => Ok(taffy::AlignContent::Stretch),
+            AlignContent::Unspecified => {
+                Err(Error::UnknownEnumVariant { enum_name: "AlignContent".to_string() })
+            }
         }
     }
 }
 
-impl IntoTaffy<taffy::FlexDirection> for &FlexDirection {
-    fn into_taffy(self) -> taffy::FlexDirection {
+impl TryIntoTaffy<taffy::FlexDirection> for FlexDirection {
+    type Error = dc_bundle::Error;
+    fn try_into_taffy(self) -> Result<taffy::FlexDirection, Self::Error> {
         match self {
-            FlexDirection::Row => taffy::FlexDirection::Row,
-            FlexDirection::Column => taffy::FlexDirection::Column,
-            FlexDirection::RowReverse => taffy::FlexDirection::RowReverse,
-            FlexDirection::ColumnReverse => taffy::FlexDirection::ColumnReverse,
-            FlexDirection::None => taffy::FlexDirection::Row,
+            FlexDirection::Row => Ok(taffy::FlexDirection::Row),
+            FlexDirection::Column => Ok(taffy::FlexDirection::Column),
+            FlexDirection::RowReverse => Ok(taffy::FlexDirection::ColumnReverse),
+            FlexDirection::ColumnReverse => Ok(taffy::FlexDirection::ColumnReverse),
+            FlexDirection::None => Ok(taffy::FlexDirection::Row),
+            FlexDirection::Unspecified => {
+                Err(Error::UnknownEnumVariant { enum_name: "FlexDirection".to_string() })
+            }
         }
     }
 }
 
-impl IntoTaffy<taffy::JustifyContent> for &JustifyContent {
-    fn into_taffy(self) -> taffy::JustifyContent {
+impl TryIntoTaffy<taffy::JustifyContent> for JustifyContent {
+    type Error = dc_bundle::Error;
+    fn try_into_taffy(self) -> Result<taffy::JustifyContent, Self::Error> {
         match self {
-            JustifyContent::Center => taffy::JustifyContent::Center,
-            JustifyContent::FlexStart => taffy::JustifyContent::FlexStart,
-            JustifyContent::FlexEnd => taffy::JustifyContent::FlexEnd,
-            JustifyContent::SpaceAround => taffy::JustifyContent::SpaceAround,
-            JustifyContent::SpaceBetween => taffy::JustifyContent::SpaceBetween,
-            JustifyContent::SpaceEvenly => taffy::JustifyContent::SpaceEvenly,
+            JustifyContent::Center => Ok(taffy::JustifyContent::Center),
+            JustifyContent::FlexStart => Ok(taffy::JustifyContent::FlexStart),
+            JustifyContent::FlexEnd => Ok(taffy::JustifyContent::FlexEnd),
+            JustifyContent::SpaceAround => Ok(taffy::JustifyContent::SpaceAround),
+            JustifyContent::SpaceBetween => Ok(taffy::JustifyContent::SpaceBetween),
+            JustifyContent::SpaceEvenly => Ok(taffy::JustifyContent::SpaceEvenly),
+            JustifyContent::Unspecified => {
+                Err(Error::UnknownEnumVariant { enum_name: "JustifyContent".to_string() })
+            }
         }
     }
 }
 
-impl IntoTaffy<taffy::Position> for &PositionType {
-    fn into_taffy(self) -> taffy::Position {
+impl TryIntoTaffy<taffy::Position> for PositionType {
+    type Error = dc_bundle::Error;
+    fn try_into_taffy(self) -> Result<taffy::Position, Self::Error> {
         match self {
-            PositionType::Absolute => taffy::Position::Absolute,
-            PositionType::Relative => taffy::Position::Relative,
+            PositionType::Absolute => Ok(taffy::Position::Absolute),
+            PositionType::Relative => Ok(taffy::Position::Relative),
+            PositionType::Unspecified => {
+                Err(Error::UnknownEnumVariant { enum_name: "PositionType".to_string() })
+            }
         }
     }
 }
-
-impl IntoTaffy<taffy::LengthPercentage> for &ItemSpacing {
-    fn into_taffy(self) -> taffy::LengthPercentage {
+impl TryIntoTaffy<taffy::LengthPercentage> for &Option<ItemSpacing> {
+    type Error = dc_bundle::Error;
+    fn try_into_taffy(self) -> Result<taffy::LengthPercentage, Self::Error> {
         match self {
-            ItemSpacing::Fixed(s) => taffy::LengthPercentage::Length(*s as f32),
-            ItemSpacing::Auto(..) => taffy::LengthPercentage::ZERO,
+            Some(spacing) => match spacing.item_spacing_type {
+                Some(item_spacing::ItemSpacingType::Fixed(s)) => {
+                    Ok(taffy::LengthPercentage::Length(s as f32))
+                }
+                Some(item_spacing::ItemSpacingType::Auto(..)) => Ok(taffy::LengthPercentage::ZERO),
+                None => Err(dc_bundle::Error::UnknownEnumVariant {
+                    enum_name: "ItemSpacing".to_string(),
+                }),
+            },
+            None => Err(Error::MissingFieldError { field: "ItemSpacing".to_string() }),
         }
     }
 }

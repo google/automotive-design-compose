@@ -22,13 +22,13 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
     let samples = Samples::new();
 
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::AlignContent>(&samples)
+        .trace_type::<dc_bundle::definition::layout::AlignContent>(&samples)
         .expect("couldn't trace AlignContent");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::AlignItems>(&samples)
+        .trace_type::<dc_bundle::definition::layout::AlignItems>(&samples)
         .expect("couldn't trace AlignItems");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::AlignSelf>(&samples)
+        .trace_type::<dc_bundle::definition::layout::AlignSelf>(&samples)
         .expect("couldn't trace AlignSelf");
     tracer
         .trace_type::<dc_bundle::definition::element::background::ScaleMode>(&samples)
@@ -62,7 +62,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::modifier::filter_op::FilterOpType>(&samples)
         .expect("couldn't trace FilterOpType");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::FlexDirection>(&samples)
+        .trace_type::<dc_bundle::definition::layout::FlexDirection>(&samples)
         .expect("couldn't trace FlexDirection");
     tracer
         .trace_type::<dc_bundle::definition::layout::FlexWrap>(&samples)
@@ -74,7 +74,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::TextDecoration>(&samples)
         .expect("couldn't trace TextDecoration");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::JustifyContent>(&samples)
+        .trace_type::<dc_bundle::definition::layout::JustifyContent>(&samples)
         .expect("couldn't trace JustifyContent");
     tracer
         .trace_type::<dc_bundle::definition::element::line_height::LineHeight>(&samples)
@@ -83,13 +83,13 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::view::node_style::Number>(&samples)
         .expect("couldn't trace Number");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::Overflow>(&samples)
+        .trace_type::<dc_bundle::definition::layout::Overflow>(&samples)
         .expect("couldn't trace Overflow");
     tracer
         .trace_type::<dc_bundle::definition::interaction::PointerEvents>(&samples)
         .expect("couldn't trace PointerEvents");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::ItemSpacing>(&samples)
+        .trace_type::<dc_bundle::definition::layout::ItemSpacing>(&samples)
         .expect("couldn't trace ItemSpacing");
     tracer
         .trace_type::<dc_bundle::definition::layout::GridLayoutType>(&samples)
@@ -114,7 +114,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::plugin::meter_data::MeterData>(&samples)
         .expect("couldn't trace MeterData");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::PositionType>(&samples)
+        .trace_type::<dc_bundle::definition::layout::PositionType>(&samples)
         .expect("couldn't trace PositionType");
     tracer
         .trace_type::<dc_bundle::definition::modifier::box_shadow::ShadowBox>(&samples)
@@ -138,7 +138,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::modifier::TextOverflow>(&samples)
         .expect("couldn't trace TextOverflow");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::LayoutSizing>(&samples)
+        .trace_type::<dc_bundle::definition::layout::LayoutSizing>(&samples)
         .expect("couldn't trace LayoutSizing");
     tracer
         .trace_type::<dc_bundle::legacy_definition::view::view_style::ViewStyle>(&samples)
@@ -184,9 +184,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::legacy_definition::view::component::ComponentInfo>(&samples)
         .expect("couldn't trace ComponentInfo");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::layout::positioning::OverflowDirection>(
-            &samples,
-        )
+        .trace_type::<dc_bundle::definition::layout::OverflowDirection>(&samples)
         .expect("couldn't trace OverflowDirection");
     tracer
         .trace_type::<dc_bundle::legacy_definition::view::view::RenderMethod>(&samples)
@@ -259,6 +257,9 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace SerializedDesignDoc");
     tracer.trace_type::<crate::ServerFigmaDoc>(&samples).expect("couldn't trace ServerFigmaDoc");
     tracer.trace_type::<crate::ConvertResponse>(&samples).expect("couldn't trace ConvertResponse");
+    tracer
+        .trace_type::<dc_bundle::definition::layout::item_spacing::ItemSpacingType>(&samples)
+        .expect("couldn't trace ItemSpacingType");
 
     tracer.registry()
 }

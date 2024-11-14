@@ -34,8 +34,7 @@ import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.ItemSpacing
-import com.android.designcompose.serdegen.ItemSpacing.Auto
-import com.android.designcompose.serdegen.ItemSpacing.Fixed
+import com.android.designcompose.serdegen.ItemSpacingType
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
@@ -68,11 +67,11 @@ internal fun LayoutNodeList.intoProto() = layoutNodeList {
 }
 
 internal fun ItemSpacing.intoProto() = itemSpacing {
-    when (val s = this@intoProto) {
-        is Fixed -> fixed = s.value
-        is Auto -> auto = auto {
-                width = s.field0
-                height = s.field1
+    when (val s = this@intoProto.type()) {
+        is ItemSpacingType.Fixed -> fixed = s.value
+        is ItemSpacingType.Auto -> auto = auto {
+                width = s.value.width
+                height = s.value.height
             }
         else -> throw IllegalArgumentException("Unknown ItemSpacing: $this") // Should never happen.
     }
@@ -155,7 +154,7 @@ internal fun LayoutStyle.intoProto() = layoutStyle {
         s.margin.orElseThrow { NoSuchFieldException("Malformed data: margin unset") }.intoProto()
     padding =
         s.padding.orElseThrow { NoSuchFieldException("Malformed data: padding unset") }.intoProto()
-    itemSpacing = s.item_spacing.intoProto()
+    itemSpacing = s.item_spacing.get().intoProto()
     top = s.top.getDim().intoProto()
     left = s.left.getDim().intoProto()
     bottom = s.bottom.getDim().intoProto()
@@ -166,14 +165,14 @@ internal fun LayoutStyle.intoProto() = layoutStyle {
     maxWidth = s.max_width.getDim().intoProto()
     minHeight = s.min_height.getDim().intoProto()
     maxHeight = s.max_height.getDim().intoProto()
-    boundingBox = s.bounding_box.intoProto()
+    boundingBox = s.bounding_box.get().intoProto()
     flexGrow = s.flex_grow
     flexShrink = s.flex_shrink
     flexBasis = s.flex_basis.getDim().intoProto()
-    alignSelf = s.align_self.intoProto()
-    alignContent = s.align_content.intoProto()
-    alignItems = s.align_items.intoProto()
-    flexDirection = s.flex_direction.intoProto()
-    justifyContent = s.justify_content.intoProto()
-    positionType = s.position_type.intoProto()
+    alignSelf = alignSelfFromInt(s.align_self).intoProto()
+    alignContent = alignContentFromInt(s.align_content).intoProto()
+    alignItems = alignItemsFromInt(s.align_items).intoProto()
+    flexDirection = flexDirectionFromInt(s.flex_direction).intoProto()
+    justifyContent = justifyContentFromInt(s.justify_content).intoProto()
+    positionType = positionTypeFromInt(s.position_type).intoProto()
 }

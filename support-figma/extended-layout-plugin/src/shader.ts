@@ -19,15 +19,12 @@ import * as Utils from "./utils";
 const SHADER_PLUGIN_DATA_KEY = "shader";
 
 export const shaderMap: ReadonlyMap<string, string> = new Map([
-  ["gradient_flow", __uiFiles__.gradient_flow],
-  ["mesh2d", __uiFiles__.mesh2d],
-  ["noisy_polka_dots", __uiFiles__.noisy_polka_dots],
-  ["rainbow", __uiFiles__.rainbow],
-  ["road", __uiFiles__.road],
-  ["road_with_scene", __uiFiles__.road_with_scene],
-  ["static_dots", __uiFiles__.static_dots],
-  ["static_fence_mesh", __uiFiles__.static_fence_mesh],
-  ["static_mesh2d", __uiFiles__.static_mesh2d],
+  ["cloudy_sky", __uiFiles__.cloudy_sky],
+  ["discrete_ocean", __uiFiles__.discrete_ocean],
+  ["fibonacci_sphere", __uiFiles__.fibonacci_sphere],
+  ["gradient", __uiFiles__.gradient],
+  ["julia", __uiFiles__.julia],
+  ["star", __uiFiles__.star],
 ]);
 
 export function onSelectionChanged() {

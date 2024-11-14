@@ -74,6 +74,10 @@ typealias MeterState = FloatState
 
 typealias Meter = Float
 
+typealias ShaderUniformTime = Float
+
+typealias ShaderUniformTimeState = FloatState
+
 // A Customization changes the way a node is presented, or changes the content of a node.
 data class Customization(
     // Text content customization
@@ -109,6 +113,7 @@ data class Customization(
     var meterValue: Optional<Float> = Optional.empty(),
     // Meter (dial, gauge, progress bar) customization as a function that returns a percentage 0-100
     var meterState: Optional<MeterState> = Optional.empty(),
+    var shaderUniformTimeState: Optional<ShaderUniformTimeState> = Optional.empty(),
 )
 
 private fun Customization.clone(): Customization {
@@ -130,6 +135,7 @@ private fun Customization.clone(): Customization {
     c.openLinkCallback = openLinkCallback
     c.meterValue = meterValue
     c.meterState = meterState
+    c.shaderUniformTimeState = shaderUniformTimeState
 
     return c
 }
@@ -306,6 +312,13 @@ fun CustomizationContext.setMeterState(nodeName: String, value: MeterState) {
     customize(nodeName) { c -> c.meterState = Optional.ofNullable(value) }
 }
 
+fun CustomizationContext.setShaderUniformTimeState(
+    nodeName: String,
+    value: ShaderUniformTimeState,
+) {
+    customize(nodeName) { c -> c.shaderUniformTimeState = Optional.ofNullable(value) }
+}
+
 fun CustomizationContext.setVariantProperties(vp: HashMap<String, String>) {
     variantProperties = vp
 }
@@ -479,6 +492,10 @@ fun CustomizationContext.getMeterState(nodeName: String): MeterState? {
     val c = cs[nodeName] ?: return null
     if (c.meterState.isPresent) return c.meterState.get()
     return null
+}
+
+fun CustomizationContext.getShaderUniformTimeState(nodeName: String): ShaderUniformTimeState? {
+    return cs[nodeName]?.shaderUniformTimeState?.getOrNull()
 }
 
 fun CustomizationContext.getKey(): String? {

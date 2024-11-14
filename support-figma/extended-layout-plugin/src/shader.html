@@ -22,20 +22,19 @@
 
 <!-- BEGIN OF SHADER PLUGIN UI -->
 <div class="page-padding-large">
-    <div style=" justify-content: center; align-items: flex-start; gap: 16px; display: inline-flex;">
+    <div style="border: solid #000; color: #f00; font-size: small;">!!Shader only works with Android 13 and
+        above. We will fallback to the image fill if there is any on lower sdks!!</div>
+    <div style=" justify-content: center; align-items: flex-start; gap: 16px; display: inline-flex; margin-top: 16px;">
         <div>
             <canvas id="shaderPreview" width="256px" height="256px" style="border: 1px black solid" />
         </div>
         <div style="display:flex; flex-wrap: wrap; overflow-y: auto; gap: 10px">
-            <div class="button button--primary" onclick="loadShaderCode('mesh2d')">Mesh 2D</div>
-            <div class="button button--primary" onclick="loadShaderCode('static_fence_mesh')">Static Fence Mesh</div>
-            <div class="button button--primary" onclick="loadShaderCode('static_mesh2d')">Static Mesh 2D</div>
-            <div class="button button--primary" onclick="loadShaderCode('static_dots')">Static Dots</div>
-            <div class="button button--primary" onclick="loadShaderCode('noisy_polka_dots')">Noisy Polka Dots</div>
-            <div class="button button--primary" onclick="loadShaderCode('gradient_flow')">Gradient Flow</div>
-            <div class="button button--primary" onclick="loadShaderCode('rainbow')">Rainbow</div>
-            <div class="button button--primary" onclick="loadShaderCode('road')">Road</div>
-            <div class="button button--primary" onclick="loadShaderCode('road_with_scene')">Road with Scene</div>
+            <div class="button button--primary" onclick="loadShaderCode('julia')">Julia</div>
+            <div class="button button--primary" onclick="loadShaderCode('cloudy_sky')">Cloudy Sky</div>
+            <div class="button button--primary" onclick="loadShaderCode('discrete_ocean')">Discrete Ocean</div>
+            <div class="button button--primary" onclick="loadShaderCode('fibonacci_sphere')">Fibonacci Sphere</div>
+            <div class="button button--primary" onclick="loadShaderCode('gradient')">Gradient</div>
+            <div class="button button--primary" onclick="loadShaderCode('star')">Star</div>
             <div class="button button--primary" onclick="clearShaderCode()">Custom Shader</div>
         </div>
     </div>
@@ -56,14 +55,13 @@
     <div class="container" style="margin-top: 16px;">
         <button id="previewShaderButton" class="styled-button" style="width: 160px;"
             onclick="runShader()">Preview</button>
-        <button id="insertImageButton" class="styled-button" style="width: 160px;" onclick="runShader()">Insert Running
-            Shader</button>
+        <button id="insertImageButton" class="styled-button" style="width: 160px;">Insert Running Shader</button>
     </div>
 
     <div style="margin-top: 16px">
         Shader examples are from:
-        <a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a> and <a target="_blank"
-            href="https://shadertoy.com">https://shadertoy.com</a>
+        <li><a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a></li>
+        <li><a target="_blank" href="https://godotshaders.com/">https://godotshaders.com/</a></li>
     </div>
 
     <div style="margin-top: 4px">
@@ -79,6 +77,8 @@
 
     let insertButton = document.getElementById("insertImageButton");
     let currentShader = null;
+
+    let currentImageSnapshot = null;
 
     function clearShaderCode() {
         shaderCodeInput.value = "";
@@ -128,17 +128,11 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             const effect = CanvasKit.RuntimeEffect.Make(prog);
 
             function drawFrame(canvas) {
-                canvas.clear();
                 const iTime = (Date.now() - startTimeMs) / 1000;
                 const uniforms = [
-                    shaderWidth,
-                    shaderHeight,
-                    1, // iResolution
+                    shaderWidth, shaderHeight, 1, // vec3 iResolution(x, y, z);
                     iTime, // iTime
-                    mouseClickX,
-                    mouseClickY,
-                    mouseDragX,
-                    mouseDragY, // iMouse
+                    mouseDragX, mouseDragY, mouseClickX, mouseClickY, // iMouse(x, y, z, w)
                 ];
                 const shader = effect.makeShader(uniforms);
                 if (!shader) {
@@ -147,6 +141,14 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 paint.setShader(shader);
                 skcanvas.drawPaint(paint);
                 shader.delete();
+
+                // Have to make image snapshot in draw frame to capture an image successfully.
+                // Simply calling make image snapshot when clicking on the insert button only
+                // captures an empty image.
+                if (currentImageSnapshot != null) {
+                    currentImageSnapshot.delete();
+                }
+                currentImageSnapshot = surface.makeImageSnapshot();
 
                 surface.requestAnimationFrame(drawFrame);
             }
@@ -194,7 +196,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
         }); ////// END OF CANVAS KIT //////
     }
 
-    loadShaderCode('mesh2d');
+    loadShaderCode('julia');
 
     window.onmessage = async function (event) {
         let msg = event.data.pluginMessage;

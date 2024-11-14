@@ -28,6 +28,8 @@ import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTest
+import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTestDoc
 import com.android.designcompose.testapp.validation.examples.CustomBrushTest
 import com.android.designcompose.testapp.validation.examples.CustomBrushTestDoc
 import org.junit.Before
@@ -76,6 +78,31 @@ class ShaderTest {
                 }
             }
             captureRootRoboImage("CustomBrush-Shader_SQUOOSH")
+        }
+    }
+
+    @Test
+    fun shaderPluginBrush() {
+        with(composeTestRule) {
+            setContent { BrushFromShaderPluginTest() }
+
+            liveUpdateTestRule.performLiveFetch()
+            composeTestRule.waitForContent(BrushFromShaderPluginTestDoc.javaClass.name)
+            captureRootRoboImage("ShaderPluginBrush")
+        }
+    }
+
+    @Test
+    fun shaderPluginBrush_SQUOOSH() {
+        with(composeTestRule) {
+            setContent {
+                CompositionLocalProvider(
+                    LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+                ) {
+                    BrushFromShaderPluginTest()
+                }
+            }
+            captureRootRoboImage("ShaderPluginBrush_SQUOOSH")
         }
     }
 }

@@ -119,6 +119,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             { ComponentReplaceRelayoutTest() },
             ComponentReplaceRelayoutDoc.javaClass.name,
         ),
+        Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )
@@ -148,6 +149,4 @@ val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> U
         Triple("Grid Layout", { GridLayoutTest() }, GridLayoutTestDoc.javaClass.name),
         Triple("Grid Widget", { GridWidgetTest() }, GridWidgetTestDoc.javaClass.name),
         Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
-        // Squoosh doesn't support OpenLink
-        Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
     )

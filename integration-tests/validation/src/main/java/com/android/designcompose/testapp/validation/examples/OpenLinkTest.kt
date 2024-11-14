@@ -17,13 +17,12 @@
 package com.android.designcompose.testapp.validation.examples
 
 import android.util.Log
-import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import com.android.designcompose.OpenLinkCallback
 import com.android.designcompose.ReplacementContent
+import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -49,7 +48,7 @@ interface OpenLinkTest {
     fun MainFrame(
         @Design(node = "#Name") name: String,
         @Design(node = "#Content") content: ReplacementContent,
-        @Design(node = "#Swap") clickSwap: Modifier,
+        @Design(node = "#Swap") clickSwap: TapCallback,
     )
 
     @DesignComponent(node = "#Red") fun Red() {}
@@ -116,6 +115,6 @@ fun OpenLinkTest() {
                     }
                 },
             ),
-        clickSwap = Modifier.clickable { setUseFuncOne(!useFuncOne) },
+        clickSwap = { setUseFuncOne(!useFuncOne) },
     )
 }

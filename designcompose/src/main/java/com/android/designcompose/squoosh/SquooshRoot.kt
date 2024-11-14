@@ -80,7 +80,9 @@ import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
+import com.android.designcompose.getOpenLinkCallback
 import com.android.designcompose.proto.newDimensionProtoPoints
+import com.android.designcompose.registerOpenLinkCallback
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
@@ -92,6 +94,7 @@ import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
+import com.android.designcompose.unregisterOpenLinkCallback
 import java.util.Optional
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -291,6 +294,13 @@ fun SquooshRoot(
     DisposableEffect(docId, rootNodeQuery) {
         KeyInjectManager.addTracker(keyEventTracker)
         onDispose { KeyInjectManager.removeTracker(keyEventTracker) }
+    }
+
+    // Register an open link callback function if one was specified
+    val openLinkCallback = customizationContext.getOpenLinkCallback(startFrame.name)
+    DisposableEffect(docId, rootNodeQuery, openLinkCallback) {
+        openLinkCallback?.let { interactionState.registerOpenLinkCallback(it) }
+        onDispose { openLinkCallback?.let { interactionState.unregisterOpenLinkCallback(it) } }
     }
 
     // When device configuration changes or debug setting of using local string resource changes,

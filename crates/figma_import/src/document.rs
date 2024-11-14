@@ -33,7 +33,8 @@ use crate::{
     variable_utils::create_variable,
 };
 use dc_bundle::definition::element::ImageKey;
-use dc_bundle::legacy_definition::view::component::{ComponentContentOverride, ComponentOverrides};
+use dc_bundle::definition::view::component_overrides::ComponentContentOverride;
+use dc_bundle::definition::view::ComponentOverrides;
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
 use dc_bundle::legacy_definition::EncodedImageMap;
 use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
@@ -501,7 +502,7 @@ impl Document {
                 view.component_info = view.component_info.take().map(|mut info| {
                     info.overrides = Some(ComponentOverrides {
                         style: Some(component.style.difference(&view.style)),
-                        data: ComponentContentOverride::None,
+                        component_content_override: Some(ComponentContentOverride::None(())),
                     });
                     info
                 });

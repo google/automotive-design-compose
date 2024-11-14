@@ -57,12 +57,11 @@ use dc_bundle::definition::plugin::{
 };
 
 use dc_bundle::definition::plugin::meter_data::MeterDataType;
-use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
 use log::error;
 
 use dc_bundle::definition::element::line_height::LineHeightType;
-use dc_bundle::definition::view::{StyledTextRun, TextStyle, ViewStyle};
+use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, ViewStyle};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this

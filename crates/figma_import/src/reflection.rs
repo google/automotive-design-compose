@@ -169,12 +169,12 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::Path>(&samples)
         .expect("couldn't trace Path");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::view::component::ComponentContentOverride>(
+        .trace_type::<dc_bundle::definition::view::component_overrides::ComponentContentOverride>(
             &samples,
         )
         .expect("couldn't trace ComponentContentOverride");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::view::component::ComponentInfo>(&samples)
+        .trace_type::<dc_bundle::definition::view::ComponentInfo>(&samples)
         .expect("couldn't trace ComponentInfo");
     tracer
         .trace_type::<dc_bundle::definition::layout::OverflowDirection>(&samples)

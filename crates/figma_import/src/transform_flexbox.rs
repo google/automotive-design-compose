@@ -959,6 +959,19 @@ fn visit_node(
         }
     };
 
+    // We have shader which is a string that can be used to draw the background.
+    let shader: Option<String> = {
+        if let Some(vsw_data) = plugin_data {
+            if let Some(extras) = vsw_data.get("shader") {
+                Option::from(extras.to_owned())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    };
+
     let mut scroll_info = ScrollInfo::new_default();
 
     let extended_auto_layout: Option<ExtendedAutoLayout> = {
@@ -1766,6 +1779,7 @@ fn visit_node(
         reactions,
         scroll_info,
         frame_extras,
+        shader,
         node.absolute_bounding_box.map(|r| (&r).into()),
         RenderMethod::None,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),

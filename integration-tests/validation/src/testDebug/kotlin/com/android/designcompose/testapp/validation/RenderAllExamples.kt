@@ -26,6 +26,7 @@ import com.android.designcompose.test.Fetchable
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTestDoc
 import com.android.designcompose.testapp.validation.examples.CustomBrushTestDoc
 import com.android.designcompose.testapp.validation.examples.DEFAULT_RENDERER_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
@@ -83,7 +84,13 @@ class RenderAllExamples(private val config: TestConfig) {
         // Separate tests due to different set up. Please also make the new tests fetch-able
         // to fetch dcf files.
         private val disabledTests =
-            listOf(StateCustomizationsDoc.javaClass.name, CustomBrushTestDoc.javaClass.name)
+            listOf(
+                /** See [StateCustomizationsUnitTest]. */
+                StateCustomizationsDoc.javaClass.name,
+                /** See [ShaderTest]. */
+                CustomBrushTestDoc.javaClass.name,
+                BrushFromShaderPluginTestDoc.javaClass.name,
+            )
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")

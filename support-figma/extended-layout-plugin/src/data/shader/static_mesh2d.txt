@@ -1,7 +1,0 @@
-// 2d pattern mesh - Source: https://www.shadertoy.com/view/4sKXzy
-vec4 main(vec2 fragCoord)
-{
-	vec2 g = abs(fract(fragCoord/1e2)-.5);
-  	vec3 f = vec3(max(max(g.x, g.y), min(g.x, g.y)*2.));
-  	return vec4(f, 1.0);
-}

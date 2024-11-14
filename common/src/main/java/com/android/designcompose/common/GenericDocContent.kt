@@ -31,7 +31,7 @@ import java.io.InputStream
 
 class GenericDocContent(
     var docId: DesignDocId,
-    private val header: DesignComposeDefinitionHeader,
+    val header: DesignComposeDefinitionHeader,
     val document: DesignComposeDefinition,
     val variantViewMap: HashMap<String, HashMap<String, View>>,
     val variantPropertyMap: VariantPropertyMap,
@@ -81,7 +81,7 @@ fun decodeServerBaseDoc(
     serverDoc.errors?.forEach { feedback.documentUpdateWarnings(docId, it) }
     val content = serverDoc.figma_doc
     val imageSessionData = decodeImageSession(docBytes, deserializer)
-    feedback.documentDecodeSuccess(header.version, content.name, content.last_modified, docId)
+    feedback.documentDecodeSuccess(header.dc_version, header.name, header.last_modified, docId)
 
     val variantViewMap = createVariantViewMap(content.views)
     val variantPropertyMap = createVariantPropertyMap(content.views)
@@ -115,7 +115,7 @@ fun decodeDiskBaseDoc(
     val variantMap = createVariantViewMap(content.views)
     val variantPropertyMap = createVariantPropertyMap(content.views)
 
-    feedback.documentDecodeSuccess(header.version, content.name, content.last_modified, docId)
+    feedback.documentDecodeSuccess(header.dc_version, header.name, header.last_modified, docId)
 
     return GenericDocContent(
         docId,
@@ -210,8 +210,8 @@ private fun decodeHeader(
 ): DesignComposeDefinitionHeader? {
     // Now attempt to deserialize the doc)
     val header = DesignComposeDefinitionHeader.deserialize(deserializer)
-    if (header.version != FSAAS_DOC_VERSION) {
-        feedback.documentDecodeVersionMismatch(FSAAS_DOC_VERSION, header.version, docId)
+    if (header.dc_version != FSAAS_DOC_VERSION) {
+        feedback.documentDecodeVersionMismatch(FSAAS_DOC_VERSION, header.dc_version, docId)
         return null
     }
     return header

@@ -20,7 +20,9 @@ use std::path::Path;
 use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use serde::{Deserialize, Serialize};
 
-use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use dc_bundle::legacy_definition::{
+    DesignComposeDefinition, DesignComposeDefinitionHeader, DesignComposeDefinitionHeaderV0,
+};
 
 // This is the struct we send over to the client. It contains the serialized document
 // along with some extra data: document branches, project files, and errors
@@ -30,6 +32,20 @@ pub struct ServerFigmaDoc {
     pub branches: Vec<FigmaDocInfo>,
     pub project_files: Vec<FigmaDocInfo>,
     pub errors: Vec<String>,
+}
+
+/// A helper method to load the old DesignCompose Definition header format from a dcf file
+pub fn load_design_def_header_v0<P>(load_path: P) -> Result<DesignComposeDefinitionHeaderV0, Error>
+where
+    P: AsRef<Path>,
+{
+    let mut document_file = File::open(&load_path)?;
+
+    let mut buf: Vec<u8> = vec![];
+    let _bytes = document_file.read_to_end(&mut buf)?;
+
+    let header: DesignComposeDefinitionHeaderV0 = bincode::deserialize(buf.as_slice())?;
+    Ok(header)
 }
 
 /// A helper method to load a DesignCompose Definition from figma.
@@ -47,11 +63,11 @@ where
     let header: DesignComposeDefinitionHeader = bincode::deserialize(buf.as_slice())?;
 
     // Ensure the version of the document matches this version of automotive design compose.
-    if header.version != DesignComposeDefinitionHeader::current().version {
+    if header.dc_version != DesignComposeDefinitionHeader::current_version() {
         return Err(Error::DocumentLoadError(format!(
             "Serialized Figma doc incorrect version. Expected {} Found: {}",
-            DesignComposeDefinitionHeader::current().version,
-            header.version
+            DesignComposeDefinitionHeader::current_version(),
+            header.dc_version
         )));
     }
 
@@ -63,12 +79,16 @@ where
 }
 
 /// A helper method to save serialized figma design docs.
-pub fn save_design_def<P>(save_path: P, doc: &DesignComposeDefinition) -> Result<(), Error>
+pub fn save_design_def<P>(
+    save_path: P,
+    header: &DesignComposeDefinitionHeader,
+    doc: &DesignComposeDefinition,
+) -> Result<(), Error>
 where
     P: AsRef<Path>,
 {
     let mut output = File::create(save_path)?;
-    let header = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
+    let header = bincode::serialize(header)?;
     let doc = bincode::serialize(&doc)?;
     output.write_all(header.as_slice())?;
     output.write_all(doc.as_slice())?;
@@ -97,7 +117,7 @@ mod serialized_document_tests {
         // Re-save the test doc into a temporary file in a temporary directory.
         let tmp_dir = testdir!();
         let tmp_doc_path = PathBuf::from(&tmp_dir).join("tmp_pxVlixodJqZL95zo2RzTHl.dcf");
-        save_design_def(&tmp_doc_path, &doc)
+        save_design_def(&tmp_doc_path, &header, &doc)
             .expect("Failed to save temporary DesignCompose Definition.");
 
         // Re-load the temporary file

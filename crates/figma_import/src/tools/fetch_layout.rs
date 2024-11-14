@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::save_design_def;
 use crate::{Document, ProxyConfig};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
@@ -20,7 +21,7 @@ use dc_bundle::definition::element::DimensionProto;
 use dc_bundle::definition::layout::LayoutSizing;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
-use dc_bundle::legacy_definition::DesignComposeDefinition;
+use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;
@@ -272,20 +273,20 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
     let variable_map = doc.build_variable_map();
 
     // Build the serializable doc structure
-    let serializable_doc = DesignComposeDefinition {
+    let definition = DesignComposeDefinition {
         views,
         component_sets: doc.component_sets().clone(),
         images: doc.encoded_image_map(),
-        last_modified: doc.last_modified().clone(),
-        name: doc.get_name(),
-        version: doc.get_version(),
-        id: doc.get_document_id(),
         variable_map,
     };
 
-    // We don't bother with serialization headers or image sessions with
-    // this tool.
-    let output = std::fs::File::create(args.output)?;
-    bincode::serialize_into(output, &serializable_doc)?;
+    let header = DesignComposeDefinitionHeader::current(
+        doc.last_modified().clone(),
+        doc.get_name(),
+        doc.get_version(),
+        doc.get_document_id(),
+    );
+
+    save_design_def(args.output, &header, &definition)?;
     Ok(())
 }

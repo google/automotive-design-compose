@@ -117,13 +117,14 @@ pub fn fetch_doc(
             views,
             component_sets: doc.component_sets().clone(),
             images: doc.encoded_image_map(),
-            last_modified: doc.last_modified().clone(),
-            name: doc.get_name(),
-            version: doc.get_version(),
-            id: doc.get_document_id(),
             variable_map,
         };
-        let mut response = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
+        let mut response = bincode::serialize(&DesignComposeDefinitionHeader::current(
+            doc.last_modified().clone(),
+            doc.get_name(),
+            doc.get_version(),
+            doc.get_document_id(),
+        ))?;
         response.append(&mut bincode::serialize(&ServerFigmaDoc {
             figma_doc,
             errors: error_list,

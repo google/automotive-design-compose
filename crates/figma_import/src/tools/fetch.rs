@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::io::Write;
+use std::env;
+use std::io::{Error, ErrorKind, Write};
 
 use crate::{Document, ProxyConfig};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use log::error;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -69,24 +71,80 @@ pub struct Args {
     pub output: std::path::PathBuf,
 }
 
+//Loads a Figma access token from either the FIGMA_ACCESS_TOKEN environment variable or a file located at ~/.config/figma_access_token.
+// Returns a Result<String, Error> where:
+//  Ok(token) contains the loaded token as a String, with leading and trailing whitespace removed.
+//  Err(Error) indicates an error occurred during the loading process. Possible errors include:
+//      Failure to read the HOME environment variable.
+//      Failure to read the token file (e.g., file not found, permission denied).
+// This function prioritizes reading the token from the environment variable. If it's not set, it attempts to read the token from the specified file. The file path is constructed using the user's home directory.
+pub fn load_figma_token() -> Result<String, Error> {
+    match env::var("FIGMA_ACCESS_TOKEN") {
+        Ok(token) => Ok(token),
+        Err(_) => {
+            let home_dir = match env::var("HOME") {
+                Ok(val) => val,
+                Err(_) => return Err(Error::new(ErrorKind::Other, "Could not read HOME from env")),
+            };
+            let config_path =
+                std::path::Path::new(&home_dir).join(".config").join("figma_access_token");
+            let token = match std::fs::read_to_string(config_path) {
+                Ok(token) => token.trim().to_string(),
+                Err(e) => {
+                    return Err(Error::new(
+                        ErrorKind::NotFound,
+                        format!(
+                            "Could not read Figma token from ~/.config/figma_access_token: {}",
+                            e
+                        ),
+                    ))
+                }
+            };
+            Ok(token)
+        }
+    }
+}
+
+pub fn build_definition(
+    doc: &mut Document,
+    nodes: &Vec<String>,
+) -> Result<DesignComposeDefinition, ConvertError> {
+    let mut error_list = Vec::new();
+    // Convert the requested nodes from the Figma doc.
+    let views = doc.nodes(
+        &nodes.iter().map(|name| NodeQuery::name(name)).collect(),
+        &Vec::new(),
+        &mut error_list,
+    )?;
+    for error in error_list {
+        eprintln!("Warning: {error}");
+    }
+    let variable_map = doc.build_variable_map();
+
+    // Build the serializable doc structure
+    Ok(DesignComposeDefinition {
+        views,
+        component_sets: doc.component_sets().clone(),
+        images: doc.encoded_image_map(),
+        last_modified: doc.last_modified().clone(),
+        name: doc.get_name(),
+        version: doc.get_version(),
+        id: doc.get_document_id(),
+        variable_map,
+    })
+}
+
 pub fn fetch(args: Args) -> Result<(), ConvertError> {
     let proxy_config: ProxyConfig = match args.http_proxy {
         Some(x) => ProxyConfig::HttpProxyConfig(x),
         None => ProxyConfig::None,
     };
 
-    // If the API Key wasn't provided on the path or via env var, load it from ~/.config/figma_access_token
-    let api_key = args.api_key.unwrap_or_else(|| {
-        let config_path = std::path::Path::new(&std::env::var("HOME").unwrap())
-            .join(".config")
-            .join("figma_access_token");
-
-        std::fs::read_to_string(config_path)
-            .expect("Could not read API key from ~/.config/figma_access_token")
-            .trim()
-            .parse()
-            .unwrap()
-    });
+    // If the API Key wasn't provided on the path or via env var, load it from env or ~/.config/figma_access_token
+    let api_key = match args.api_key {
+        Some(x) => x,
+        None => load_figma_token()?,
+    };
 
     let mut doc: Document = Document::new(
         api_key.as_str(),
@@ -95,30 +153,9 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
         &proxy_config,
         None,
     )?;
-    let mut error_list = Vec::new();
-    // Convert the requested nodes from the Figma doc.
-    let views = doc.nodes(
-        &args.nodes.iter().map(|name| NodeQuery::name(name)).collect(),
-        &Vec::new(),
-        &mut error_list,
-    )?;
-    for error in error_list {
-        eprintln!("Warning: {error}");
-    }
 
-    let variable_map = doc.build_variable_map();
+    let dc_definition = build_definition(&mut doc, &args.nodes)?;
 
-    // Build the serializable doc structure
-    let serializable_doc = DesignComposeDefinition {
-        views,
-        component_sets: doc.component_sets().clone(),
-        images: doc.encoded_image_map(),
-        last_modified: doc.last_modified().clone(),
-        name: doc.get_name(),
-        version: doc.get_version(),
-        id: doc.get_document_id(),
-        variable_map: variable_map,
-    };
     println!("Fetched document");
     println!("  DC Version: {}", DesignComposeDefinitionHeader::current().version);
     println!("  Doc ID: {}", doc.get_document_id());
@@ -128,7 +165,7 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
     // We don't bother with serialization of image sessions with this tool.
     let mut output = std::fs::File::create(args.output)?;
     let header = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
-    let doc = bincode::serialize(&serializable_doc)?;
+    let doc = bincode::serialize(&dc_definition)?;
     output.write_all(header.as_slice())?;
     output.write_all(doc.as_slice())?;
     Ok(())

@@ -72,7 +72,9 @@ fun Project.initializeExtension(extension: PluginExtension) {
         providers
             .environmentVariable("FIGMA_ACCESS_TOKEN")
             .orElse(providers.gradleProperty(tokenGradlePropertyName))
-            .orElse(providers.fileContents(extension.figmaTokenFile).asText.map { text -> text.trim() })
+            .orElse(
+                providers.fileContents(extension.figmaTokenFile).asText.map { text -> text.trim() }
+            )
     )
     // Avoid odd behavior by only allowing changes to be made to the token before it's read
     extension.figmaToken.finalizeValueOnRead()

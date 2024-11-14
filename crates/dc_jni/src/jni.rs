@@ -28,7 +28,7 @@ use jni::sys::{jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 
 use lazy_static::lazy_static;
-use log::{error, LevelFilter};
+use log::{error, info, LevelFilter};
 
 lazy_static! {
     static ref JAVA_VM: Mutex<Option<Arc<JavaVM>>> = Mutex::new(None);
@@ -126,9 +126,19 @@ fn jni_fetch_doc_impl(
     let request: ConvertRequest = serde_json::from_str(&request_json)?;
 
     let convert_result: figma_import::ConvertResponse =
-        match fetch_doc(&doc_id, &version_id, request, proxy_config).map_err(Error::from) {
+        match fetch_doc(&doc_id, &version_id, &request, proxy_config).map_err(Error::from) {
             Ok(it) => it,
             Err(err) => {
+                let queries_string = request
+                    .queries
+                    .iter()
+                    .map(|q| format!("--nodes=\"{}\" ", q))
+                    .collect::<Vec<String>>()
+                    .join(" ");
+
+                info!("Failed to fetch {}, Try fetching locally", doc_id);
+                info!("fetch --doc-id={} --version-id={} {} ", doc_id, version_id, queries_string);
+
                 map_err_to_exception(env, &err, doc_id).expect("Failed to throw exception");
                 return Err(err);
             }

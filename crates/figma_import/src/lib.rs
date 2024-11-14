@@ -49,8 +49,6 @@ pub use dc_bundle::legacy_definition::element::node::NodeQuery;
 pub use dc_bundle::legacy_definition::view::view::View;
 pub use dc_bundle::legacy_definition::view::view::ViewData;
 
-#[cfg(feature = "http_mock")]
-mod figma_v1_document_mocks;
 /// Functionality related to reflection for deserializing our bincode archives in other
 /// languages
 #[cfg(feature = "reflection")]

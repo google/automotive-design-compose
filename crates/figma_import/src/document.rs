@@ -16,7 +16,6 @@ use dc_bundle::definition::element::{
     variable_map::NameIdMap, Collection, Mode, Variable, VariableMap,
 };
 use dc_bundle::legacy_definition::element::node::NodeQuery;
-#[cfg(not(feature = "http_mock"))]
 use std::time::Duration;
 use std::{
     collections::{HashMap, HashSet},
@@ -40,13 +39,11 @@ use dc_bundle::legacy_definition::EncodedImageMap;
 use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use log::error;
 
-#[cfg(not(feature = "http_mock"))]
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
 const BASE_FILE_URL: &str = "https://api.figma.com/v1/files/";
 const BASE_COMPONENT_URL: &str = "https://api.figma.com/v1/components/";
 const BASE_PROJECT_URL: &str = "https://api.figma.com/v1/projects/";
 
-#[cfg(not(feature = "http_mock"))]
 fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<String, Error> {
     let mut agent_builder = ureq::AgentBuilder::new();
     let mut buffer = Vec::new();
@@ -68,9 +65,6 @@ fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<
 
     Ok(body)
 }
-
-#[cfg(feature = "http_mock")]
-use crate::figma_v1_document_mocks::http_fetch;
 
 /// Document update requests return this value to indicate if an update was
 /// made or not.

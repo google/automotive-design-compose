@@ -46,7 +46,9 @@ import com.android.designcompose.getTextState
 import com.android.designcompose.getTextStyle
 import com.android.designcompose.getValue
 import com.android.designcompose.isAutoWidthText
-import com.android.designcompose.serdegen.LineHeight
+import com.android.designcompose.proto.fontStyleFromInt
+import com.android.designcompose.proto.textDecorationFromInt
+import com.android.designcompose.serdegen.LineHeightType
 import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
@@ -143,35 +145,57 @@ internal fun squooshComputeTextInfo(
                 is ViewData.StyledText -> {
                     val builder = AnnotatedString.Builder()
                     for (run in getTextContent(appContext, v.data as ViewData.StyledText)) {
+                        val style =
+                            run.style.orElseThrow {
+                                NoSuchFieldException("Malformed data: StyledTextRun's style unset")
+                            }
                         val textBrushAndOpacity =
-                            run.style.text_color.asBrush(
-                                appContext,
-                                document,
-                                density.density,
-                                variableState,
-                            )
-                        val fontWeight = run.style.font_weight.weight.get().getValue(variableState)
+                            style.text_color
+                                .orElseThrow {
+                                    NoSuchFieldException(
+                                        "Malformed data: ViewStyle's text_color unset"
+                                    )
+                                }
+                                .asBrush(appContext, document, density.density, variableState)
+                        val fontWeight =
+                            style.font_weight
+                                .orElseThrow {
+                                    NoSuchFieldException(
+                                        "Malformed data: ViewStyle's font_weight unset"
+                                    )
+                                }
+                                .weight
+                                .get()
+                                .getValue(variableState)
                         builder.pushStyle(
                             (SpanStyle(
                                 brush = textBrushAndOpacity?.first,
                                 alpha = textBrushAndOpacity?.second ?: 1.0f,
-                                fontSize = run.style.font_size.getValue(variableState).sp,
+                                fontSize =
+                                    style.font_size
+                                        .orElseThrow {
+                                            NoSuchFieldException(
+                                                "Malformed data: ViewStyle's font_size unset"
+                                            )
+                                        }
+                                        .getValue(variableState)
+                                        .sp,
                                 fontWeight = FontWeight(fontWeight.roundToInt()),
                                 fontStyle =
-                                    when (run.style.font_style) {
+                                    when (fontStyleFromInt(style.font_style)) {
                                         is com.android.designcompose.serdegen.FontStyle.Italic ->
                                             FontStyle.Italic
                                         else -> FontStyle.Normal
                                     },
                                 fontFamily =
-                                    DesignSettings.fontFamily(run.style.font_family, fontFamily),
+                                    DesignSettings.fontFamily(style.font_family, fontFamily),
                                 fontFeatureSettings =
-                                    run.style.font_features.joinToString(", ") { feature ->
+                                    style.font_features.joinToString(", ") { feature ->
                                         String(feature.tag.toByteArray())
                                     },
-                                letterSpacing = run.style.letter_spacing.sp,
+                                letterSpacing = style.letter_spacing.sp,
                                 textDecoration =
-                                    when (run.style.text_decoration) {
+                                    when (textDecorationFromInt(style.text_decoration)) {
                                         is TextDecoration.Underline ->
                                             androidx.compose.ui.text.style.TextDecoration.Underline
                                         is TextDecoration.Strikethrough ->
@@ -195,8 +219,8 @@ internal fun squooshComputeTextInfo(
     val lineHeight =
         customTextStyle?.lineHeight
             ?: when (v.style.node_style.line_height) {
-                is LineHeight.Pixels ->
-                    (v.style.node_style.line_height as LineHeight.Pixels).value.sp
+                is LineHeightType.Pixels ->
+                    (v.style.node_style.line_height as LineHeightType.Pixels).value.sp
                 else -> TextUnit.Unspecified
             }
     val fontWeight =

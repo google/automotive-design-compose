@@ -46,7 +46,7 @@ message Path {
 
 // Determines the vertical spacing between lines of text.
 message LineHeight {
-  oneof line_height {
+  oneof line_height_type {
     float pixels = 1;
     float percent = 2;
   }

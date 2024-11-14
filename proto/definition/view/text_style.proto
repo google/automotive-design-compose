@@ -38,8 +38,10 @@ message TextStyle {
   element.FontStyle font_style = 5;
   element.FontStretch font_stretch = 6;
   float letter_spacing = 7;
-  element.LineHeight line_height = 8;
-  repeated element.FontFeature font_features = 9;
+  element.TextDecoration text_decoration = 8;
+  element.LineHeight line_height = 9;
+  repeated element.FontFeature font_features = 10;
+  element.Hyperlink hyperlink = 11;
 }
 
 // A section of text with a specific style

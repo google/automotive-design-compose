@@ -77,7 +77,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::layout::JustifyContent>(&samples)
         .expect("couldn't trace JustifyContent");
     tracer
-        .trace_type::<dc_bundle::definition::element::line_height::LineHeight>(&samples)
+        .trace_type::<dc_bundle::definition::element::line_height::LineHeightType>(&samples)
         .expect("couldn't trace LineHeight");
     tracer
         .trace_type::<dc_bundle::legacy_definition::view::node_style::Number>(&samples)

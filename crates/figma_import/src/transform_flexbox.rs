@@ -30,14 +30,13 @@ use crate::{
 };
 use dc_bundle::definition::element::{
     view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
-    FontWeight, Path, Size, ViewShape,
+    FontWeight, LineHeight, NumOrVar, Path, Size, ViewShape,
 };
 
 use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
 use dc_bundle::definition;
 use dc_bundle::definition::element::dimension_proto::Dimension;
-use dc_bundle::definition::element::line_height::LineHeight;
 use dc_bundle::definition::element::num_or_var::NumOrVarType;
 use dc_bundle::definition::element::view_shape::RoundRect;
 use dc_bundle::definition::element::{
@@ -59,11 +58,12 @@ use dc_bundle::definition::plugin::{
 
 use dc_bundle::definition::plugin::meter_data::MeterData;
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
-use dc_bundle::legacy_definition::view::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
 use dc_bundle::legacy_definition::view::view_style::ViewStyle;
 use log::error;
 
+use dc_bundle::definition::element::line_height::LineHeightType;
+use dc_bundle::definition::view::{StyledTextRun, TextStyle};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -1213,15 +1213,17 @@ fn visit_node(
         };
         style.node_style.line_height = match text_style.line_height_unit {
             // It's a percentage of the font size.
-            figma_schema::LineHeightUnit::FontSizePercentage => LineHeight::Pixels(
+            figma_schema::LineHeightUnit::FontSizePercentage => LineHeightType::Pixels(
                 text_style.font_size * text_style.line_height_percent_font_size / 100.0,
             ),
             // It's a percentage of the intrinsic line height of the font itself.
             figma_schema::LineHeightUnit::IntrinsicPercentage => {
-                LineHeight::Percent(text_style.line_height_percent_font_size / 100.0)
+                LineHeightType::Percent(text_style.line_height_percent_font_size / 100.0)
             }
             // It's an absolute value in pixels.
-            figma_schema::LineHeightUnit::Pixels => LineHeight::Pixels(text_style.line_height_px),
+            figma_schema::LineHeightUnit::Pixels => {
+                LineHeightType::Pixels(text_style.line_height_px)
+            }
         };
         style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
         let convert_opentype_flags = |flags: &HashMap<String, u32>| -> Vec<FontFeature> {
@@ -1366,17 +1368,19 @@ fn visit_node(
                     None
                 };
                 let style = TextStyle {
-                    text_color,
-                    font_size,
+                    text_color: Some(text_color),
+                    font_size: Some(NumOrVar { num_or_var_type: Some(font_size) }),
                     font_family,
-                    font_weight,
-                    font_style, // Italic or Normal
-                    font_stretch: style.node_style.font_stretch.clone(), // Not in SubTypeStyle.
+                    font_weight: Some(font_weight),
+                    font_style: font_style.into(), // Italic or Normal
+                    font_stretch: Some(style.node_style.font_stretch.clone()), // Not in SubTypeStyle.
                     letter_spacing: sub_style
                         .letter_spacing
                         .unwrap_or(style.node_style.letter_spacing.unwrap_or(0.0)),
-                    text_decoration,
-                    line_height: style.node_style.line_height.clone(),
+                    text_decoration: text_decoration.into(),
+                    line_height: Some(LineHeight {
+                        line_height_type: Some(style.node_style.line_height.clone()),
+                    }),
                     font_features: convert_opentype_flags(
                         &sub_style
                             .opentype_flags
@@ -1389,26 +1393,33 @@ fn visit_node(
                 if runs.len() > 0 {
                     let last_run = runs.get(runs.len() - 1);
                     if let Some(lr) = last_run {
-                        let last_run_style = lr.style.clone();
-                        if last_run_style == style {
-                            error!(
-                                "The two styles are the same. This might fail to match the
+                        if let Some(last_run_style) = lr.style.clone() {
+                            if last_run_style == style {
+                                error!(
+                                    "The two styles are the same. This might fail to match the
                                 localization plugin generated string resource. We will merge
                                 them together."
-                            );
-                            let to_be_merged = runs.pop();
-                            let mut new_run = String::new();
-                            if let Some(tbm) = to_be_merged {
-                                new_run.push_str(&tbm.text);
-                                new_run.push_str(current_run);
-                                runs.push(StyledTextRun { text: new_run, style: style.clone() });
-                                has_handled = true;
+                                );
+                                let to_be_merged = runs.pop();
+                                let mut new_run = String::new();
+                                if let Some(tbm) = to_be_merged {
+                                    new_run.push_str(&tbm.text);
+                                    new_run.push_str(current_run);
+                                    runs.push(StyledTextRun {
+                                        text: new_run,
+                                        style: Some(style.clone()),
+                                    });
+                                    has_handled = true;
+                                }
                             }
                         }
                     }
                 }
                 if !has_handled {
-                    runs.push(StyledTextRun { text: current_run.clone(), style: style.clone() });
+                    runs.push(StyledTextRun {
+                        text: current_run.clone(),
+                        style: Some(style.clone()),
+                    });
                 }
                 *current_run = String::new();
                 *last_style = None;

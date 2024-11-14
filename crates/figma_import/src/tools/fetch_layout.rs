@@ -238,6 +238,7 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
         eprintln!("Warning: {error}");
     }
 
+    // Take the first argument as the root node
     let stage = views.get(&NodeQuery::NodeName(args.nodes.get(0).expect("NOT EMPTY").to_string()));
     if let Some(stage) = stage {
         let mut id = 0;

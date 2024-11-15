@@ -135,9 +135,9 @@ internal fun Modifier.squooshInteraction(
                                         null, // no undo
                                     )
                                 }
+                            // Execute tap callback if one exists
+                            tapCallback?.invoke()
                         }
-
-                        tapCallback?.invoke()
                     }
                 )
             }

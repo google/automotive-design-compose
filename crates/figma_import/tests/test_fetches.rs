@@ -19,18 +19,14 @@ use figma_import::tools::fetch::{build_definition, load_figma_token};
 use figma_import::{Document, ProxyConfig};
 
 // Simply fetches and serializes a doc
-#[test]
-#[cfg_attr(not(feature = "test_fetches"), ignore)]
-fn fetch_variable_modes() {
-    const DOC_ID: &str = "HhGxvL4aHhP8ALsLNz56TP";
-    const QUERIES: &[&str] = &["#stage", "#Box"];
-    let queries: Vec<String> = QUERIES.iter().map(|s| s.to_string()).collect();
+fn run_test(doc_id: &str, queries: &[&str]) {
+    let queries: Vec<String> = queries.iter().map(|s| s.to_string()).collect();
 
     let figma_token = load_figma_token().unwrap();
 
     let mut doc: Document = Document::new(
         figma_token.as_str(),
-        DOC_ID.to_string(),
+        doc_id.to_string(),
         String::new(),
         &ProxyConfig::None,
         None,
@@ -40,4 +36,19 @@ fn fetch_variable_modes() {
     let dc_definition = build_definition(&mut doc, &queries).unwrap();
 
     bincode::serialize(&dc_definition).unwrap();
+}
+
+#[test]
+#[cfg_attr(not(feature = "test_fetches"), ignore)]
+fn fetch_variable_modes() {
+    run_test("HhGxvL4aHhP8ALsLNz56TP", &["#stage", "#Box"]);
+}
+
+#[test]
+#[cfg_attr(not(feature = "test_fetches"), ignore)]
+fn fetch_dials_gauges_progress_constraints() {
+    run_test(
+        "lZj6E9GtIQQE4HNLpzgETw",
+        &["#stage-constraints", "#progress-bar", "#progress-indicator"],
+    );
 }

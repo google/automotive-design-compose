@@ -27,7 +27,7 @@ use crate::definition::modifier::{
     BlendMode, FilterOp, TextAlign, TextAlignVertical, TextOverflow,
 };
 use crate::definition::modifier::{BoxShadow, LayoutTransform, TextShadow};
-use crate::legacy_definition::plugin::meter_data::MeterData;
+use crate::definition::plugin::meter_data::MeterData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]

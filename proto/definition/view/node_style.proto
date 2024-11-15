@@ -20,6 +20,7 @@ import "definition/element/background.proto";
 import "definition/element/font.proto";
 import "definition/element/geometry.proto";
 import "definition/element/path.proto";
+import "definition/element/variable.proto";
 import "definition/interaction/pointer.proto";
 import "definition/layout/grid.proto";
 import "definition/layout/positioning.proto";
@@ -43,57 +44,58 @@ enum Display {
 
 // Contains all of the styleable parameters accepted by the Rect and Text
 // components.
-// Next id = 42
+// Next id = 43
 message NodeStyle {
   // Text properties
   element.Background text_color = 1;
-  float font_size = 2;
+  element.NumOrVar font_size = 2;
   optional string font_family = 3;
-  float font_weight = 4;
-  definition.element.FontStyle font_style = 5;
-  definition.element.TextDecoration text_decoration = 40;
+  element.FontWeight font_weight = 4;
+  element.FontStyle font_style = 5;
+  element.TextDecoration text_decoration = 40;
   optional float letter_spacing = 41;
-  float font_stretch = 6;
+  element.FontStretch font_stretch = 6;
   repeated element.Background backgrounds = 7;
-  repeated definition.modifier.BoxShadow box_shadows = 8;
-  definition.element.Stroke stroke = 9;
-  float opacity = 10;
+  repeated modifier.BoxShadow box_shadows = 8;
+  element.Stroke stroke = 9;
+  optional float opacity = 10;
 
   // Transforms
-  definition.modifier.LayoutTransform transform = 11;
-  definition.modifier.LayoutTransform relative_transform = 12;
+  modifier.LayoutTransform transform = 11;
+  modifier.LayoutTransform relative_transform = 12;
 
   // Text layout
-  definition.modifier.TextAlign text_align = 13;
-  definition.modifier.TextAlignVertical text_align_vertical = 14;
-  definition.modifier.TextOverflow text_overflow = 15;
-  definition.modifier.TextShadow text_shadow = 16;
+  modifier.TextAlign text_align = 13;
+  modifier.TextAlignVertical text_align_vertical = 14;
+  modifier.TextOverflow text_overflow = 15;
+  modifier.TextShadow text_shadow = 16;
 
 
   // Size and layout
-  definition.element.Size node_size = 17;
-  definition.element.LineHeight line_height = 18;
-  int32 line_count = 19;
-  repeated definition.element.FontFeature font_features = 20;
-  repeated definition.modifier.FilterOp filters = 21;
-  repeated definition.modifier.FilterOp backdrop_filters = 22;
-  definition.modifier.BlendMode blend_mode = 23;
-
+  element.Size node_size = 17;
+  element.LineHeight line_height = 18;
+  optional int32 line_count = 19;
+  repeated element.FontFeature font_features = 20;
+  repeated modifier.FilterOp filters = 21;
+  repeated modifier.FilterOp backdrop_filters = 22;
+  modifier.BlendMode blend_mode = 23;
+  
   // Layout properties
   Display display_type = 24;
-  definition.layout.FlexWrap flex_wrap = 25;
-  definition.layout.GridLayoutType grid_layout = 26;
+  layout.FlexWrap flex_wrap = 25;
+  optional layout.GridLayoutType grid_layout_type = 26;
   uint32 grid_columns_rows = 27;
   uint32 grid_adaptive_min_size = 28;
-  repeated definition.layout.GridSpan grid_span_contents = 29;
-  definition.layout.Overflow overflow = 30;
+  repeated layout.GridSpan grid_span_contents = 29;
+  layout.Overflow overflow = 30;
   optional uint32 max_children = 31;
   optional string overflow_node_id = 32;
   optional string overflow_node_name = 33;
   float cross_axis_item_spacing = 34;
-  definition.layout.LayoutSizing horizontal_sizing = 35;
-  definition.layout.LayoutSizing vertical_sizing = 36;
+  layout.LayoutSizing horizontal_sizing = 35;
+  layout.LayoutSizing vertical_sizing = 36;
   optional float aspect_ratio = 37;
   interaction.PointerEvents pointer_events = 38;
   plugin.MeterData meter_data = 39;
+  element.Hyperlink hyperlinks = 42;
 }

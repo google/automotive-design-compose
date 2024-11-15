@@ -54,21 +54,33 @@ import com.android.designcompose.proto.WindingRuleType
 import com.android.designcompose.proto.alignContentFromInt
 import com.android.designcompose.proto.alignItemsFromInt
 import com.android.designcompose.proto.alignSelfFromInt
+import com.android.designcompose.proto.blendModeFromInt
+import com.android.designcompose.proto.displayFromInt
 import com.android.designcompose.proto.end
 import com.android.designcompose.proto.flexDirectionFromInt
+import com.android.designcompose.proto.flexWrapFromInt
+import com.android.designcompose.proto.fontStyleFromInt
 import com.android.designcompose.proto.get
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.getType
 import com.android.designcompose.proto.isDefault
 import com.android.designcompose.proto.isType
 import com.android.designcompose.proto.justifyContentFromInt
+import com.android.designcompose.proto.layoutSizingFromInt
 import com.android.designcompose.proto.newDimensionProtoUndefined
 import com.android.designcompose.proto.newDimensionRectPointsZero
 import com.android.designcompose.proto.newFontWeight
+import com.android.designcompose.proto.newNumOrVar
+import com.android.designcompose.proto.overflowFromInt
+import com.android.designcompose.proto.pointerEventsFromInt
 import com.android.designcompose.proto.positionTypeFromInt
 import com.android.designcompose.proto.scaleModeFromInt
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.strokeAlignTypeToInt
+import com.android.designcompose.proto.textAlignFromInt
+import com.android.designcompose.proto.textAlignVerticalFromInt
+import com.android.designcompose.proto.textDecorationFromInt
+import com.android.designcompose.proto.textOverflowFromInt
 import com.android.designcompose.proto.toInt
 import com.android.designcompose.proto.toOptDimProto
 import com.android.designcompose.proto.top
@@ -96,6 +108,7 @@ import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.LayoutTransform
+import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.LineHeightType
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.NumOrVarType
@@ -120,6 +133,7 @@ import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
+import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -262,20 +276,26 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
     val nodeStyle = NodeStyle.Builder()
     val layoutStyle = LayoutStyle.Builder()
     nodeStyle.text_color =
-        if (!override.node_style.text_color.isType<BackgroundType.None>()) {
+        if (
+            override.node_style.text_color.getOrNull()?.getType() ==
+                BackgroundType.None(com.novi.serde.Unit())
+        ) {
             override.node_style.text_color
         } else {
             base.node_style.text_color
         }
     nodeStyle.font_size =
-        if (override.node_style.font_size != NumOrVarType.Num(18.0f)) {
+        if (
+            override.node_style.font_size.getOrNull()?.num_or_var_type?.get() ==
+                NumOrVarType.Num(18.0f)
+        ) {
             override.node_style.font_size
         } else {
             base.node_style.font_size
         }
     nodeStyle.font_weight =
         if (
-            override.node_style.font_weight.weight.get().num_or_var_type.get() !=
+            override.node_style.font_weight.getOrNull()?.weight?.get()?.num_or_var_type?.get() !=
                 NumOrVarType.Num(400.0f)
         ) {
             override.node_style.font_weight
@@ -283,13 +303,13 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.font_weight
         }
     nodeStyle.font_style =
-        if (override.node_style.font_style !is FontStyle.Normal) {
+        if (fontStyleFromInt(override.node_style.font_style) !is FontStyle.Normal) {
             override.node_style.font_style
         } else {
             base.node_style.font_style
         }
     nodeStyle.text_decoration =
-        if (override.node_style.text_decoration !is TextDecoration.None) {
+        if (textDecorationFromInt(override.node_style.text_decoration) !is TextDecoration.None) {
             override.node_style.text_decoration
         } else {
             base.node_style.text_decoration
@@ -307,28 +327,28 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.font_family
         }
     nodeStyle.font_stretch =
-        if (override.node_style.font_stretch.value != 1.0f) {
+        if (override.node_style.font_stretch.getOrNull()?.value != 1.0f) {
             override.node_style.font_stretch
         } else {
             base.node_style.font_stretch
         }
-    nodeStyle.background =
+    nodeStyle.backgrounds =
         if (
-            override.node_style.background.size > 0 &&
-                !override.node_style.background[0].isType<BackgroundType.None>()
+            override.node_style.backgrounds.size > 0 &&
+                !override.node_style.backgrounds[0].isType<BackgroundType.None>()
         ) {
-            override.node_style.background
+            override.node_style.backgrounds
         } else {
-            base.node_style.background
+            base.node_style.backgrounds
         }
-    nodeStyle.box_shadow =
-        if (override.node_style.box_shadow.size > 0) {
-            override.node_style.box_shadow
+    nodeStyle.box_shadows =
+        if (override.node_style.box_shadows.size > 0) {
+            override.node_style.box_shadows
         } else {
-            base.node_style.box_shadow
+            base.node_style.box_shadows
         }
     nodeStyle.stroke =
-        if (override.node_style.stroke.strokes.size > 0) {
+        if ((override.node_style.stroke.getOrNull()?.strokes?.size ?: 0) > 0) {
             override.node_style.stroke
         } else {
             base.node_style.stroke
@@ -352,19 +372,22 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.relative_transform
         }
     nodeStyle.text_align =
-        if (override.node_style.text_align !is TextAlign.Left) {
+        if (textAlignFromInt(override.node_style.text_align) !is TextAlign.Left) {
             override.node_style.text_align
         } else {
             base.node_style.text_align
         }
     nodeStyle.text_align_vertical =
-        if (override.node_style.text_align_vertical !is TextAlignVertical.Top) {
+        if (
+            textAlignVerticalFromInt(override.node_style.text_align_vertical)
+                !is TextAlignVertical.Top
+        ) {
             override.node_style.text_align_vertical
         } else {
             base.node_style.text_align_vertical
         }
     nodeStyle.text_overflow =
-        if (override.node_style.text_overflow !is TextOverflow.Clip) {
+        if (textOverflowFromInt(override.node_style.text_overflow) !is TextOverflow.Clip) {
             override.node_style.text_overflow
         } else {
             base.node_style.text_overflow
@@ -377,8 +400,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         }
     nodeStyle.node_size =
         if (
-            override.node_style.node_size.width != 0.0f ||
-                override.node_style.node_size.height != 0.0f
+            override.node_style.node_size.getOrNull().let { it?.width != 0.0f || it.height != 0.0f }
         ) {
             override.node_style.node_size
         } else {
@@ -402,32 +424,32 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.node_style.font_features
         }
-    nodeStyle.filter =
-        if (override.node_style.filter.size > 0) {
-            override.node_style.filter
+    nodeStyle.filters =
+        if (override.node_style.filters.size > 0) {
+            override.node_style.filters
         } else {
-            base.node_style.filter
+            base.node_style.filters
         }
-    nodeStyle.backdrop_filter =
-        if (override.node_style.backdrop_filter.size > 0) {
-            override.node_style.backdrop_filter
+    nodeStyle.backdrop_filters =
+        if (override.node_style.backdrop_filters.size > 0) {
+            override.node_style.backdrop_filters
         } else {
-            base.node_style.backdrop_filter
+            base.node_style.backdrop_filters
         }
     nodeStyle.blend_mode =
-        if (override.node_style.blend_mode is BlendMode.PassThrough) {
+        if (blendModeFromInt(override.node_style.blend_mode) is BlendMode.PassThrough) {
             override.node_style.blend_mode
         } else {
             base.node_style.blend_mode
         }
-    nodeStyle.hyperlink =
-        if (override.node_style.hyperlink.isPresent) {
-            override.node_style.hyperlink
+    nodeStyle.hyperlinks =
+        if (override.node_style.hyperlinks.isPresent) {
+            override.node_style.hyperlinks
         } else {
-            base.node_style.hyperlink
+            base.node_style.hyperlinks
         }
     nodeStyle.display_type =
-        if (override.node_style.display_type !is Display.flex) {
+        if (displayFromInt(override.node_style.display_type) !is Display.Flex) {
             override.node_style.display_type
         } else {
             base.node_style.display_type
@@ -445,16 +467,16 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.layout_style.flex_direction
         }
     nodeStyle.flex_wrap =
-        if (override.node_style.flex_wrap !is FlexWrap.NoWrap) {
+        if (flexWrapFromInt(override.node_style.flex_wrap) !is FlexWrap.NoWrap) {
             override.node_style.flex_wrap
         } else {
             base.node_style.flex_wrap
         }
-    nodeStyle.grid_layout =
-        if (override.node_style.grid_layout.isPresent) {
-            override.node_style.grid_layout
+    nodeStyle.grid_layout_type =
+        if (override.node_style.grid_layout_type.isPresent) {
+            override.node_style.grid_layout_type
         } else {
-            base.node_style.grid_layout
+            base.node_style.grid_layout_type
         }
     nodeStyle.grid_columns_rows =
         if (override.node_style.grid_columns_rows > 0) {
@@ -468,10 +490,10 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
         } else {
             base.node_style.grid_adaptive_min_size
         }
-    nodeStyle.grid_span_content =
-        override.node_style.grid_span_content.ifEmpty { base.node_style.grid_span_content }
+    nodeStyle.grid_span_contents =
+        override.node_style.grid_span_contents.ifEmpty { base.node_style.grid_span_contents }
     nodeStyle.overflow =
-        if (override.node_style.overflow !is Overflow.Visible) {
+        if (overflowFromInt(override.node_style.overflow) !is Overflow.Visible) {
             override.node_style.overflow
         } else {
             base.node_style.overflow
@@ -601,13 +623,13 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.layout_style.bounding_box
         }
     nodeStyle.horizontal_sizing =
-        if (override.node_style.horizontal_sizing !is LayoutSizing.Fixed) {
+        if (layoutSizingFromInt(override.node_style.horizontal_sizing) !is LayoutSizing.Fixed) {
             override.node_style.horizontal_sizing
         } else {
             base.node_style.horizontal_sizing
         }
     nodeStyle.vertical_sizing =
-        if (override.node_style.vertical_sizing !is LayoutSizing.Fixed) {
+        if (layoutSizingFromInt(override.node_style.vertical_sizing) !is LayoutSizing.Fixed) {
             override.node_style.vertical_sizing
         } else {
             base.node_style.vertical_sizing
@@ -649,15 +671,13 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.layout_style.max_height
         }
     nodeStyle.aspect_ratio =
-        if (
-            override.node_style.aspect_ratio !is com.android.designcompose.serdegen.Number.Undefined
-        ) {
+        if (override.node_style.aspect_ratio.isPresent) {
             override.node_style.aspect_ratio
         } else {
             base.node_style.aspect_ratio
         }
     nodeStyle.pointer_events =
-        if (override.node_style.pointer_events !is PointerEvents.Auto) {
+        if (pointerEventsFromInt(override.node_style.pointer_events) !is PointerEvents.Auto) {
             override.node_style.pointer_events
         } else {
             base.node_style.pointer_events
@@ -739,8 +759,8 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
     builder.text_decoration = text_decoration
     builder.letter_spacing = letter_spacing
     builder.font_stretch = font_stretch
-    builder.background = background
-    builder.box_shadow = box_shadow
+    builder.backgrounds = backgrounds
+    builder.box_shadows = box_shadows
     builder.stroke = stroke
     builder.opacity = opacity
     builder.transform = transform
@@ -753,16 +773,16 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
     builder.line_height = line_height
     builder.line_count = line_count
     builder.font_features = font_features
-    builder.filter = filter
-    builder.backdrop_filter = backdrop_filter
+    builder.filters = filters
+    builder.backdrop_filters = backdrop_filters
     builder.blend_mode = blend_mode
-    builder.hyperlink = hyperlink
+    builder.hyperlinks = hyperlinks
     builder.display_type = display_type
     builder.flex_wrap = flex_wrap
-    builder.grid_layout = grid_layout
+    builder.grid_layout_type = grid_layout_type
     builder.grid_columns_rows = grid_columns_rows
     builder.grid_adaptive_min_size = grid_adaptive_min_size
-    builder.grid_span_content = grid_span_content
+    builder.grid_span_contents = grid_span_contents
     builder.overflow = overflow
     builder.max_children = max_children
     builder.overflow_node_id = overflow_node_id
@@ -778,53 +798,56 @@ internal fun NodeStyle.asBuilder(): NodeStyle.Builder {
 
 internal fun defaultNodeStyle(): NodeStyle.Builder {
     val builder = NodeStyle.Builder()
-    builder.text_color = Background(Optional.of(BackgroundType.None(com.novi.serde.Unit())))
-    builder.font_size = NumOrVarType.Num(0f)
+    builder.text_color =
+        Optional.of(Background(Optional.of(BackgroundType.None(com.novi.serde.Unit()))))
+    builder.font_size = Optional.of(newNumOrVar(0f))
     builder.font_family = Optional.empty()
-    builder.font_weight = newFontWeight(0f)
-    builder.font_style = FontStyle.Normal()
-    builder.font_stretch = FontStretch(0f)
-    builder.background = emptyList()
-    builder.box_shadow = emptyList()
+    builder.font_weight = Optional.of(newFontWeight(0f))
+    builder.font_style = FontStyle.Normal().toInt()
+    builder.font_stretch = Optional.of(FontStretch(0f))
+    builder.backgrounds = emptyList()
+    builder.box_shadows = emptyList()
     builder.stroke =
-        Stroke(
-            strokeAlignTypeToInt(StrokeAlignType.Center),
-            Optional.of(StrokeWeight(Optional.of(StrokeWeightType.Uniform(0f)))),
-            emptyList(),
+        Optional.of(
+            Stroke(
+                strokeAlignTypeToInt(StrokeAlignType.Center),
+                Optional.of(StrokeWeight(Optional.of(StrokeWeightType.Uniform(0f)))),
+                emptyList(),
+            )
         )
     builder.opacity = Optional.empty()
     builder.transform = Optional.empty()
     builder.relative_transform = Optional.empty()
-    builder.text_decoration = TextDecoration.None()
-    builder.text_align = TextAlign.Left()
-    builder.text_align_vertical = TextAlignVertical.Top()
-    builder.text_overflow = TextOverflow.Clip()
+    builder.text_decoration = TextDecoration.None().toInt()
+    builder.text_align = TextAlign.Left().toInt()
+    builder.text_align_vertical = TextAlignVertical.Top().toInt()
+    builder.text_overflow = TextOverflow.Clip().toInt()
     builder.text_shadow = Optional.empty()
-    builder.node_size = com.android.designcompose.serdegen.Size(0f, 0f)
-    builder.line_height = LineHeightType.Percent(1.0f)
+    builder.node_size = Optional.of(com.android.designcompose.serdegen.Size(0f, 0f))
+    builder.line_height = Optional.of(LineHeight(Optional.of(LineHeightType.Percent(1.0f))))
     builder.line_count = Optional.empty()
     builder.letter_spacing = Optional.empty()
     builder.font_features = emptyList()
-    builder.filter = emptyList()
-    builder.backdrop_filter = emptyList()
-    builder.blend_mode = BlendMode.PassThrough()
-    builder.display_type = Display.flex()
-    builder.flex_wrap = FlexWrap.NoWrap()
-    builder.grid_layout = Optional.empty()
+    builder.filters = emptyList()
+    builder.backdrop_filters = emptyList()
+    builder.blend_mode = BlendMode.PassThrough().toInt()
+    builder.display_type = Display.Flex().toInt()
+    builder.flex_wrap = FlexWrap.NoWrap().toInt()
+    builder.grid_layout_type = Optional.empty()
     builder.grid_columns_rows = 0
     builder.grid_adaptive_min_size = 0
-    builder.grid_span_content = emptyList()
-    builder.overflow = Overflow.Visible()
+    builder.grid_span_contents = emptyList()
+    builder.overflow = Overflow.Visible().toInt()
     builder.max_children = Optional.empty()
     builder.overflow_node_id = Optional.empty()
     builder.overflow_node_name = Optional.empty()
     builder.cross_axis_item_spacing = 0f
-    builder.horizontal_sizing = LayoutSizing.Hug()
-    builder.vertical_sizing = LayoutSizing.Hug()
-    builder.aspect_ratio = com.android.designcompose.serdegen.Number.Undefined()
-    builder.pointer_events = PointerEvents.Auto()
+    builder.horizontal_sizing = LayoutSizing.Hug().toInt()
+    builder.vertical_sizing = LayoutSizing.Hug().toInt()
+    builder.aspect_ratio = Optional.empty()
+    builder.pointer_events = PointerEvents.Auto().toInt()
     builder.meter_data = Optional.empty()
-    builder.hyperlink = Optional.empty()
+    builder.hyperlinks = Optional.empty()
     return builder
 }
 
@@ -851,7 +874,7 @@ internal fun ViewStyle.externalLayoutData(): ExternalLayoutData {
         layout_style.min_height.getDim(),
         layout_style.max_width.getDim(),
         layout_style.max_height.getDim(),
-        node_style.node_size,
+        node_style.node_size.getOrDefault(com.android.designcompose.serdegen.Size(0f, 0f)),
         layout_style.bounding_box.get(),
         layout_style.flex_grow,
         layout_style.flex_basis.getDim(),
@@ -872,7 +895,7 @@ internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewSty
     layoutStyle.left = data.left.toOptDimProto()
     layoutStyle.bottom = data.bottom.toOptDimProto()
     layoutStyle.right = data.right.toOptDimProto()
-    nodeStyle.node_size = data.nodeSize
+    nodeStyle.node_size = Optional.of(data.nodeSize)
     layoutStyle.bounding_box = Optional.of(data.boundingBox)
     layoutStyle.width = data.width.toOptDimProto()
     layoutStyle.height = data.height.toOptDimProto()
@@ -899,7 +922,7 @@ internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewSty
 internal fun ViewStyle.fixedWidth(density: Float): Float {
     return if (layout_style.width.getDim() is Dimension.Points)
         layout_style.width.getDim().pointsAsDp(density).value
-    else node_style.node_size.width * density
+    else node_style.node_size.get().width * density
 }
 
 // Get the raw height in a view style from the height property if it is a fixed size, or from the
@@ -907,7 +930,7 @@ internal fun ViewStyle.fixedWidth(density: Float): Float {
 internal fun ViewStyle.fixedHeight(density: Float): Float {
     return if (layout_style.height.getDim() is Dimension.Points)
         layout_style.height.getDim().pointsAsDp(density).value
-    else node_style.node_size.height * density
+    else node_style.node_size.get().height * density
 }
 
 internal fun validateFigmaDocId(id: String): Boolean {
@@ -975,7 +998,7 @@ internal fun View.useInfiniteConstraints(): Boolean {
     if (container.children.size != 1) return false
 
     val child = container.children.first()
-    return child.style.node_style.grid_layout.isPresent
+    return child.style.node_style.grid_layout_type.isPresent
 }
 
 internal fun ViewShape.isMask(): Boolean {
@@ -1624,7 +1647,7 @@ internal fun com.android.designcompose.serdegen.Path.log() {
 // passed into it.
 internal fun ViewStyle.isAutoWidthText() =
     layout_style.width.getDim() is Dimension.Auto &&
-        node_style.horizontal_sizing !is LayoutSizing.Fill
+        layoutSizingFromInt(node_style.horizontal_sizing) !is LayoutSizing.Fill
 
 // Return the size of a node used to render the node.
 internal fun getNodeRenderSize(

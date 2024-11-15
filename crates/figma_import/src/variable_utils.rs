@@ -15,12 +15,12 @@
  */
 
 use crate::figma_schema;
-use dc_bundle::definition::element::color_or_var;
 use dc_bundle::definition::element::num_or_var::{NumOrVarType, NumVar};
 use dc_bundle::definition::element::variable::{VariableType, VariableValueMap};
 use dc_bundle::definition::element::variable_value;
 use dc_bundle::definition::element::ColorOrVar;
 use dc_bundle::definition::element::FloatColor;
+use dc_bundle::definition::element::{color_or_var, NumOrVar};
 use dc_bundle::definition::element::{Variable, VariableValue};
 use std::collections::HashMap;
 
@@ -67,6 +67,34 @@ impl FromFigmaVar<f32> for NumOrVarType {
         }
     }
 }
+
+impl FromFigmaVar<f32> for NumOrVar {
+    fn from_var(
+        bound_variables: &figma_schema::BoundVariables,
+        var_name: &str,
+        var_value: f32,
+    ) -> NumOrVar {
+        NumOrVar {
+            num_or_var_type: Some(NumOrVarType::from_var(bound_variables, var_name, var_value)),
+        }
+    }
+    fn from_var_hash(
+        bound_variables: &figma_schema::BoundVariables,
+        hash_name: &str,
+        var_name: &str,
+        var_value: f32,
+    ) -> NumOrVar {
+        NumOrVar {
+            num_or_var_type: Some(NumOrVarType::from_var_hash(
+                bound_variables,
+                hash_name,
+                var_name,
+                var_value,
+            )),
+        }
+    }
+}
+
 // Create a ColorOrVar from Figma variable name and color value
 impl FromFigmaVar<&FloatColor> for ColorOrVar {
     fn from_var(

@@ -760,6 +760,21 @@ pub enum LayoutSizing {
     Hug,
     Fill,
 }
+impl Into<dc_bundle::definition::layout::LayoutSizing> for LayoutSizing {
+    fn into(self) -> dc_bundle::definition::layout::LayoutSizing {
+        match self {
+            LayoutSizing::Fixed => dc_bundle::definition::layout::LayoutSizing::Fixed,
+            LayoutSizing::Hug => dc_bundle::definition::layout::LayoutSizing::Hug,
+            LayoutSizing::Fill => dc_bundle::definition::layout::LayoutSizing::Fill,
+        }
+    }
+}
+impl LayoutSizing {
+    pub fn into_proto_val(self) -> i32 {
+        let proto_type: dc_bundle::definition::layout::LayoutSizing = self.into();
+        proto_type.into()
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Default, Copy)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

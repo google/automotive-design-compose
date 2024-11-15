@@ -75,7 +75,7 @@ fn add_view_to_layout(
         if let Dimension::Auto(()) = view.style.layout_style.width.unwrap().dimension.unwrap() {
             if let Dimension::Auto(()) = view.style.layout_style.height.unwrap().dimension.unwrap()
             {
-                if view.style.node_style.horizontal_sizing == LayoutSizing::Fill {
+                if view.style.node_style.horizontal_sizing == i32::from(LayoutSizing::Fill) {
                     use_measure_func = true;
                 }
             }

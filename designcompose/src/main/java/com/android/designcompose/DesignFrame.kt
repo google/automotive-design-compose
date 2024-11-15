@@ -189,7 +189,7 @@ internal fun DesignFrame(
                 object : ImageReplacementContext {
                     override val imageContext =
                         ImageContext(
-                            background = style.node_style.background,
+                            background = style.node_style.backgrounds,
                             minWidth = style.layout_style.min_width.getDim(),
                             maxWidth = style.layout_style.max_width.getDim(),
                             width = style.layout_style.width.getDim(),

@@ -38,8 +38,10 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import com.android.designcompose.proto.StrokeAlignType
+import com.android.designcompose.proto.blendModeFromInt
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.max
+import com.android.designcompose.proto.overflowFromInt
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.strokeAlignFromInt
 import com.android.designcompose.proto.toUniform
@@ -301,7 +303,7 @@ private fun calculateProgressVectorData(
     meterValue: Float,
     density: Float,
 ) {
-    val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density
+    val strokeWidth = style.node_style.stroke.get().stroke_weight.toUniform() * density
     val discretizedMeterValue = meterValue.coerceDiscrete(data.discrete, data.discrete_value)
 
     // Get full length of path
@@ -356,7 +358,7 @@ internal fun ContentDrawScope.render(
     if (meterValue != null) {
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.node_style.meter_data.isPresent) {
-            when (val meterData = style.node_style.meter_data.get()) {
+            when (val meterData = style.node_style.meter_data.get().meter_data_type.get()) {
                 is MeterDataType.RotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
@@ -421,8 +423,8 @@ internal fun ContentDrawScope.render(
     }
 
     // Blend mode
-    val blendMode = style.node_style.blend_mode.asComposeBlendMode()
-    val useBlendMode = style.node_style.blend_mode.useLayer()
+    val blendMode = blendModeFromInt(style.node_style.blend_mode).asComposeBlendMode()
+    val useBlendMode = blendModeFromInt(style.node_style.blend_mode).useLayer()
     val opacity = style.node_style.opacity.orElse(1.0f)
 
     // Either use a graphicsLayer to apply the opacity effect, or use saveLayer if
@@ -463,7 +465,7 @@ internal fun ContentDrawScope.render(
             customFillBrush.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
-            style.node_style.background.mapNotNull { background ->
+            style.node_style.backgrounds.mapNotNull { background ->
                 val p = Paint()
                 val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
@@ -477,7 +479,7 @@ internal fun ContentDrawScope.render(
         }
 
     val strokeBrush =
-        style.node_style.stroke.strokes.mapNotNull { background ->
+        style.node_style.stroke.get().strokes.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -578,7 +580,7 @@ internal fun ContentDrawScope.render(
 
     // Now draw our stroke and our children. The order of drawing the stroke and the
     // children is different depending on whether we clip children.
-    val shouldClip = style.node_style.overflow is Overflow.Hidden
+    val shouldClip = overflowFromInt(style.node_style.overflow) is Overflow.Hidden
     if (shouldClip) {
         // Clip children, and paint our stroke on top of them.
         drawContext.canvas.save()
@@ -632,7 +634,7 @@ internal fun ContentDrawScope.squooshShapeRender(
     if (meterValue != null) {
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.node_style.meter_data.isPresent) {
-            when (val meterData = style.node_style.meter_data.get()) {
+            when (val meterData = style.node_style.meter_data.get().meter_data_type.get()) {
                 is MeterDataType.RotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
@@ -718,8 +720,8 @@ internal fun ContentDrawScope.squooshShapeRender(
         )
 
     // Blend mode
-    val blendMode = style.node_style.blend_mode.asComposeBlendMode()
-    val useBlendMode = style.node_style.blend_mode.useLayer()
+    val blendMode = blendModeFromInt(style.node_style.blend_mode).asComposeBlendMode()
+    val useBlendMode = blendModeFromInt(style.node_style.blend_mode).useLayer()
     val opacity = style.node_style.opacity.orElse(1.0f)
 
     // Always use saveLayer for opacity; no graphicsLayer since we're not in
@@ -743,13 +745,14 @@ internal fun ContentDrawScope.squooshShapeRender(
             }
         }
         var strokeOutset = 0.0f
-        if (style.node_style.stroke.strokes.isNotEmpty()) {
+        val strokeStyle = style.node_style.stroke.get()
+        if (strokeStyle.strokes.isNotEmpty()) {
             strokeOutset =
                 max(
                     strokeOutset,
-                    when (strokeAlignFromInt(style.node_style.stroke.stroke_align)) {
-                        StrokeAlignType.Outside -> style.node_style.stroke.stroke_weight.max()
-                        StrokeAlignType.Center -> style.node_style.stroke.stroke_weight.max() / 2.0f
+                    when (strokeAlignFromInt(strokeStyle.stroke_align)) {
+                        StrokeAlignType.Outside -> strokeStyle.stroke_weight.max()
+                        StrokeAlignType.Center -> strokeStyle.stroke_weight.max() / 2.0f
                         else -> 0.0f
                     },
                 )
@@ -776,7 +779,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             customFillBrush.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
-            style.node_style.background.mapNotNull { background ->
+            style.node_style.backgrounds.mapNotNull { background ->
                 val p = Paint()
                 val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
@@ -789,7 +792,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             }
         }
     val strokeBrush =
-        style.node_style.stroke.strokes.mapNotNull { background ->
+        style.node_style.stroke.get().strokes.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -890,7 +893,7 @@ internal fun ContentDrawScope.squooshShapeRender(
 
     // Now draw our stroke and our children. The order of drawing the stroke and the
     // children is different depending on whether we clip children.
-    val shouldClip = style.node_style.overflow is Overflow.Hidden
+    val shouldClip = overflowFromInt(style.node_style.overflow) is Overflow.Hidden
     if (shouldClip) {
         // Clip children, and paint our stroke on top of them.
         drawContext.canvas.save()

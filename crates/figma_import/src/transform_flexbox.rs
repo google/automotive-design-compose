@@ -45,14 +45,14 @@ use dc_bundle::definition::element::{
 use dc_bundle::definition::interaction::Reaction;
 use dc_bundle::definition::layout::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, GridLayoutType, GridSpan,
-    ItemSpacing, JustifyContent, LayoutSizing, Overflow, OverflowDirection, PositionType,
+    ItemSpacing, JustifyContent, Overflow, OverflowDirection, PositionType,
 };
 use dc_bundle::definition::modifier::{
     filter_op, BoxShadow, FilterOp, TextAlign, TextAlignVertical, TextOverflow, TextShadow,
 };
 use dc_bundle::definition::modifier::{BlendMode, LayoutTransform};
 use dc_bundle::definition::plugin::{
-    ArcMeterData, FrameExtras, ProgressBarMeterData, ProgressMarkerMeterData,
+    ArcMeterData, FrameExtras, MeterData, ProgressBarMeterData, ProgressMarkerMeterData,
     ProgressVectorMeterData, RotationMeterData,
 };
 
@@ -156,8 +156,8 @@ fn compute_layout(
             DimensionProto::new_undefined()
         };
         style.layout_style.flex_shrink = 0.0;
-        style.node_style.horizontal_sizing = frame.layout_sizing_horizontal.into();
-        style.node_style.vertical_sizing = frame.layout_sizing_vertical.into();
+        style.node_style.horizontal_sizing = frame.layout_sizing_horizontal.into_proto_val();
+        style.node_style.vertical_sizing = frame.layout_sizing_vertical.into_proto_val();
 
         // Check for a flex direction override, which can happen if this node has a child widget
         let flex_direction_override = check_child_size_override(node);
@@ -361,8 +361,10 @@ fn compute_layout(
                 style.layout_style.height = DimensionProto::new_points(size.y());
             }
 
-            style.node_style.node_size.width = size.x();
-            style.node_style.node_size.height = size.y();
+            style.node_style.node_size.as_mut().map(|s| {
+                s.width = size.x();
+                s.height = size.y();
+            });
         }
     }
 
@@ -376,8 +378,8 @@ fn compute_layout(
             // starts out small and grows to fill the container
             style.layout_style.flex_basis = DimensionProto::new_points(0.0);
         }
-        style.node_style.horizontal_sizing = vector.layout_sizing_horizontal.into();
-        style.node_style.vertical_sizing = vector.layout_sizing_vertical.into();
+        style.node_style.horizontal_sizing = vector.layout_sizing_horizontal.into_proto_val();
+        style.node_style.vertical_sizing = vector.layout_sizing_vertical.into_proto_val();
 
         // The text style also contains some layout information. We previously exposed
         // auto-width text in our plugin.
@@ -984,15 +986,15 @@ fn visit_node(
         // or our old extended layout plugin.
         has_extended_auto_layout = layout != LayoutType::None;
         style.node_style.flex_wrap =
-            if extended_auto_layout.wrap { FlexWrap::Wrap } else { FlexWrap::NoWrap };
+            if extended_auto_layout.wrap { FlexWrap::Wrap.into() } else { FlexWrap::NoWrap.into() };
 
-        style.node_style.grid_layout = match layout {
-            LayoutType::AutoColumns => Some(GridLayoutType::AutoColumns),
-            LayoutType::FixedColumns => Some(GridLayoutType::FixedColumns),
-            LayoutType::FixedRows => Some(GridLayoutType::FixedRows),
-            LayoutType::AutoRows => Some(GridLayoutType::AutoRows),
-            LayoutType::Horizontal => Some(GridLayoutType::Horizontal),
-            LayoutType::Vertical => Some(GridLayoutType::Vertical),
+        style.node_style.grid_layout_type = match layout {
+            LayoutType::AutoColumns => Some(GridLayoutType::AutoColumns.into()),
+            LayoutType::FixedColumns => Some(GridLayoutType::FixedColumns.into()),
+            LayoutType::FixedRows => Some(GridLayoutType::FixedRows.into()),
+            LayoutType::AutoRows => Some(GridLayoutType::AutoRows.into()),
+            LayoutType::Horizontal => Some(GridLayoutType::Horizontal.into()),
+            LayoutType::Vertical => Some(GridLayoutType::Vertical.into()),
             _ => None,
         };
 
@@ -1052,7 +1054,7 @@ fn visit_node(
                     }
                 }
 
-                style.node_style.grid_span_content.push(GridSpan {
+                style.node_style.grid_span_contents.push(GridSpan {
                     node_name: grid_span.node_name.clone(),
                     node_variant: variant_hash,
                     span: grid_span.span,
@@ -1116,40 +1118,41 @@ fn visit_node(
     }
 
     // Blend mode is common to all elements.
-    style.node_style.blend_mode = convert_blend_mode(node.blend_mode);
+    style.node_style.blend_mode = convert_blend_mode(node.blend_mode).into();
 
-    for stroke in node.strokes.iter().filter(|paint| paint.visible) {
-        style.node_style.stroke.strokes.push(compute_background(stroke, images, &node.name));
-    }
+    style.node_style.stroke.as_mut().map(|stroke| {
+        for visible_stroke in node.strokes.iter().filter(|paint| paint.visible) {
+            stroke.strokes.push(compute_background(visible_stroke, images, &node.name));
+        }
 
-    // Copy out the common styles from frames and supported content.
-    style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
-    if let Some(individual_stroke_weights) = node.individual_stroke_weights {
-        style.node_style.stroke.stroke_weight = Some(StrokeWeight {
-            stroke_weight_type: Some(stroke_weight::StrokeWeightType::Individual(
-                stroke_weight::Individual {
-                    top: individual_stroke_weights.top,
-                    right: individual_stroke_weights.right,
-                    bottom: individual_stroke_weights.bottom,
-                    left: individual_stroke_weights.left,
-                },
-            )),
-        });
-    } else if let Some(stroke_weight) = node.stroke_weight {
-        style.node_style.stroke.stroke_weight = Some(StrokeWeight {
-            stroke_weight_type: Some(stroke_weight::StrokeWeightType::Uniform(stroke_weight)),
-        });
-    }
-    style.node_style.stroke.stroke_align = match node.stroke_align {
-        Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::Inside as i32,
-        Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center as i32,
-        Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside as i32,
-    };
-
+        // Copy out the common styles from frames and supported content.
+        style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
+        if let Some(individual_stroke_weights) = node.individual_stroke_weights {
+            stroke.stroke_weight = Some(StrokeWeight {
+                stroke_weight_type: Some(stroke_weight::StrokeWeightType::Individual(
+                    stroke_weight::Individual {
+                        top: individual_stroke_weights.top,
+                        right: individual_stroke_weights.right,
+                        bottom: individual_stroke_weights.bottom,
+                        left: individual_stroke_weights.left,
+                    },
+                )),
+            });
+        } else if let Some(stroke_weight) = node.stroke_weight {
+            stroke.stroke_weight = Some(StrokeWeight {
+                stroke_weight_type: Some(stroke_weight::StrokeWeightType::Uniform(stroke_weight)),
+            });
+        }
+        stroke.stroke_align = match node.stroke_align {
+            Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::Inside as i32,
+            Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center as i32,
+            Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside as i32,
+        };
+    });
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {
         style.node_style.overflow =
-            if frame.clips_content { Overflow::Hidden } else { Overflow::Visible };
+            if frame.clips_content { Overflow::Hidden.into() } else { Overflow::Visible.into() };
         // Don't overwrite scroll behavior if it was already set from grid layout
         if scroll_info.overflow == OverflowDirection::None {
             scroll_info.overflow = frame.overflow_direction.into();
@@ -1163,67 +1166,75 @@ fn visit_node(
     } = &node.data
     {
         if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
-            style.node_style.text_color = compute_background(text_fill, images, &node.name);
+            style.node_style.text_color = Some(compute_background(text_fill, images, &node.name));
         }
         style.node_style.font_size = if let Some(vars) = &node.bound_variables {
-            NumOrVarType::from_var(vars, "fontSize", text_style.font_size)
+            Some(NumOrVar::from_var(vars, "fontSize", text_style.font_size))
         } else {
-            NumOrVarType::Num(text_style.font_size)
+            Some(NumOrVar::from_num(text_style.font_size))
         };
 
         style.node_style.font_weight = if let Some(vars) = &node.bound_variables {
-            FontWeight::new(NumOrVarType::from_var(vars, "fontWeight", text_style.font_weight))
+            Some(FontWeight::new(NumOrVarType::from_var(
+                vars,
+                "fontWeight",
+                text_style.font_weight,
+            )))
         } else {
-            FontWeight::from_num(text_style.font_weight)
+            Some(FontWeight::from_num(text_style.font_weight))
         };
         if text_style.italic {
-            style.node_style.font_style = FontStyle::Italic;
+            style.node_style.font_style = FontStyle::Italic.into();
         }
         style.node_style.text_decoration = match text_style.text_decoration {
             figma_schema::TextDecoration::None => {
-                dc_bundle::definition::element::TextDecoration::None
+                dc_bundle::definition::element::TextDecoration::None.into()
             }
             figma_schema::TextDecoration::Underline => {
-                dc_bundle::definition::element::TextDecoration::Underline
+                dc_bundle::definition::element::TextDecoration::Underline.into()
             }
             figma_schema::TextDecoration::Strikethrough => {
-                dc_bundle::definition::element::TextDecoration::Strikethrough
+                dc_bundle::definition::element::TextDecoration::Strikethrough.into()
             }
         };
         style.node_style.letter_spacing = Some(text_style.letter_spacing.clone());
         style.node_style.font_family = text_style.font_family.clone();
         match text_style.text_align_horizontal {
             figma_schema::TextAlignHorizontal::Center => {
-                style.node_style.text_align = TextAlign::Center
+                style.node_style.text_align = TextAlign::Center.into()
             }
             figma_schema::TextAlignHorizontal::Left => {
-                style.node_style.text_align = TextAlign::Left
+                style.node_style.text_align = TextAlign::Left.into()
             }
             figma_schema::TextAlignHorizontal::Right => {
-                style.node_style.text_align = TextAlign::Right
+                style.node_style.text_align = TextAlign::Right.into()
             }
             figma_schema::TextAlignHorizontal::Justified => {
-                style.node_style.text_align = TextAlign::Center
+                style.node_style.text_align = TextAlign::Center.into()
             } // XXX
         }
         style.node_style.text_align_vertical = match text_style.text_align_vertical {
-            figma_schema::TextAlignVertical::Center => TextAlignVertical::Center,
-            figma_schema::TextAlignVertical::Top => TextAlignVertical::Top,
-            figma_schema::TextAlignVertical::Bottom => TextAlignVertical::Bottom,
+            figma_schema::TextAlignVertical::Center => TextAlignVertical::Center.into(),
+            figma_schema::TextAlignVertical::Top => TextAlignVertical::Top.into(),
+            figma_schema::TextAlignVertical::Bottom => TextAlignVertical::Bottom.into(),
         };
         style.node_style.line_height = match text_style.line_height_unit {
             // It's a percentage of the font size.
-            figma_schema::LineHeightUnit::FontSizePercentage => LineHeightType::Pixels(
-                text_style.font_size * text_style.line_height_percent_font_size / 100.0,
-            ),
+            figma_schema::LineHeightUnit::FontSizePercentage => Some(LineHeight {
+                line_height_type: Some(LineHeightType::Pixels(
+                    text_style.font_size * text_style.line_height_percent_font_size / 100.0,
+                )),
+            }),
             // It's a percentage of the intrinsic line height of the font itself.
-            figma_schema::LineHeightUnit::IntrinsicPercentage => {
-                LineHeightType::Percent(text_style.line_height_percent_font_size / 100.0)
-            }
+            figma_schema::LineHeightUnit::IntrinsicPercentage => Some(LineHeight {
+                line_height_type: Some(LineHeightType::Percent(
+                    text_style.line_height_percent_font_size / 100.0,
+                )),
+            }),
             // It's an absolute value in pixels.
-            figma_schema::LineHeightUnit::Pixels => {
-                LineHeightType::Pixels(text_style.line_height_px)
-            }
+            figma_schema::LineHeightUnit::Pixels => Some(LineHeight {
+                line_height_type: Some(LineHeightType::Pixels(text_style.line_height_px)),
+            }),
         };
         style.node_style.opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
         let convert_opentype_flags = |flags: &HashMap<String, u32>| -> Vec<FontFeature> {
@@ -1264,7 +1275,7 @@ fn visit_node(
         }
 
         if text_style.text_truncation == figma_schema::TextTruncation::Ending {
-            style.node_style.text_overflow = TextOverflow::Ellipsis;
+            style.node_style.text_overflow = TextOverflow::Ellipsis.into();
         }
 
         if text_style.max_lines > 0 {
@@ -1272,9 +1283,9 @@ fn visit_node(
         }
         if let Some(hl) = text_style.hyperlink.clone() {
             if hl.url.is_empty() {
-                style.node_style.hyperlink = None
+                style.node_style.hyperlinks = None
             } else {
-                style.node_style.hyperlink = Some(hl.into());
+                style.node_style.hyperlinks = Some(hl.into());
             }
         }
 
@@ -1321,15 +1332,21 @@ fn visit_node(
                     if substyle_fill.is_some() {
                         substyle_fill
                     } else {
-                        style.node_style.text_color.clone()
+                        style.node_style.text_color.clone().unwrap_or_default()
                     }
                 } else {
-                    style.node_style.text_color.clone()
+                    style.node_style.text_color.clone().unwrap_or_default()
                 };
                 let font_size = if let Some(fs) = sub_style.font_size {
                     NumOrVarType::Num(fs)
                 } else {
-                    style.node_style.font_size.clone()
+                    style
+                        .node_style
+                        .font_size
+                        .clone()
+                        .unwrap_or_default()
+                        .num_or_var_type
+                        .unwrap_or(NumOrVarType::Num(0.0))
                 };
                 let font_family = if sub_style.font_family.is_some() {
                     sub_style.font_family.clone()
@@ -1339,12 +1356,12 @@ fn visit_node(
                 let font_weight = if let Some(fw) = sub_style.font_weight {
                     FontWeight::from_num(fw)
                 } else {
-                    style.node_style.font_weight.clone()
+                    style.node_style.font_weight.clone().unwrap_or_default()
                 };
                 let font_style = if let Some(true) = sub_style.italic {
                     FontStyle::Italic
                 } else {
-                    style.node_style.font_style.clone()
+                    style.node_style.font_style().clone()
                 };
                 let text_decoration = match sub_style.text_decoration {
                     Some(figma_schema::TextDecoration::Strikethrough) => {
@@ -1353,10 +1370,8 @@ fn visit_node(
                     Some(figma_schema::TextDecoration::Underline) => {
                         dc_bundle::definition::element::TextDecoration::Underline
                     }
-                    Some(figma_schema::TextDecoration::None) => {
-                        style.node_style.text_decoration.clone()
-                    }
-                    None => style.node_style.text_decoration.clone(),
+                    Some(figma_schema::TextDecoration::None) => style.node_style.text_decoration(),
+                    None => style.node_style.text_decoration(),
                 };
                 let hyperlink = if let Some(hl) = sub_style.hyperlink.clone() {
                     if hl.url.is_empty() {
@@ -1373,14 +1388,13 @@ fn visit_node(
                     font_family,
                     font_weight: Some(font_weight),
                     font_style: font_style.into(), // Italic or Normal
-                    font_stretch: Some(style.node_style.font_stretch.clone()), // Not in SubTypeStyle.
+                    font_stretch: style.node_style.font_stretch.clone(), // Not in SubTypeStyle.
                     letter_spacing: sub_style
                         .letter_spacing
                         .unwrap_or(style.node_style.letter_spacing.unwrap_or(0.0)),
                     text_decoration: text_decoration.into(),
-                    line_height: Some(LineHeight {
-                        line_height_type: Some(style.node_style.line_height.clone()),
-                    }),
+                    line_height: style.node_style.line_height.clone(),
+
                     font_features: convert_opentype_flags(
                         &sub_style
                             .opentype_flags
@@ -1458,7 +1472,7 @@ fn visit_node(
     }
 
     for fill in node.fills.iter().filter(|paint| paint.visible) {
-        style.node_style.background.push(compute_background(fill, images, &node.name));
+        style.node_style.backgrounds.push(compute_background(fill, images, &node.name));
     }
 
     // Convert any path data we have; we'll use it for non-frame types.
@@ -1580,7 +1594,7 @@ fn visit_node(
             let meter_data = serde_json::from_str::<MeterJson>(data.as_str());
             match meter_data {
                 Ok(meter_data) => {
-                    style.node_style.meter_data = Some(match meter_data {
+                    let proto_data = match meter_data {
                         MeterJson::ArcData(data) => MeterDataType::ArcData(ArcMeterData {
                             enabled: data.enabled,
                             start: data.start,
@@ -1633,7 +1647,9 @@ fn visit_node(
                                 discrete_value: data.discrete_value,
                             })
                         }
-                    })
+                    };
+                    style.node_style.meter_data =
+                        Some(MeterData { meter_data_type: Some(proto_data) });
                 }
                 Err(e) => {
                     error!("Failed to parse meter data: {}", e);
@@ -1701,7 +1717,7 @@ fn visit_node(
             figma_schema::EffectType::DropShadow => {
                 let shadow_color =
                     bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
-                style.node_style.box_shadow.push(BoxShadow::outset(
+                style.node_style.box_shadows.push(BoxShadow::outset(
                     effect.radius,
                     effect.spread,
                     shadow_color,
@@ -1711,7 +1727,7 @@ fn visit_node(
             figma_schema::EffectType::InnerShadow => {
                 let shadow_color =
                     bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
-                style.node_style.box_shadow.push(BoxShadow::inset(
+                style.node_style.box_shadows.push(BoxShadow::inset(
                     effect.radius,
                     effect.spread,
                     shadow_color,
@@ -1721,13 +1737,13 @@ fn visit_node(
             figma_schema::EffectType::LayerBlur => {
                 style
                     .node_style
-                    .filter
+                    .filters
                     .push(FilterOp::new(filter_op::FilterOpType::Blur(effect.radius / 2.0)));
             }
             figma_schema::EffectType::BackgroundBlur => {
                 style
                     .node_style
-                    .backdrop_filter
+                    .backdrop_filters
                     .push(FilterOp::new(filter_op::FilterOpType::Blur(effect.radius / 2.0)));
             }
         }
@@ -1819,14 +1835,4 @@ fn parse_path(path: &figma_schema::Path) -> Option<Path> {
     }
     output.with_winding_rule(path.winding_rule.into());
     Some(output)
-}
-
-impl Into<LayoutSizing> for figma_schema::LayoutSizing {
-    fn into(self) -> LayoutSizing {
-        match self {
-            figma_schema::LayoutSizing::Fill => LayoutSizing::Fill,
-            figma_schema::LayoutSizing::Fixed => LayoutSizing::Fixed,
-            figma_schema::LayoutSizing::Hug => LayoutSizing::Hug,
-        }
-    }
 }

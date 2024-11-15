@@ -15,7 +15,7 @@
  */
 
 use crate::definition::layout::LayoutStyle;
-use crate::legacy_definition::view::node_style::NodeStyle;
+use crate::definition::view::NodeStyle;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -26,7 +26,7 @@ pub struct ViewStyle {
 
 impl Default for ViewStyle {
     fn default() -> Self {
-        Self { layout_style: LayoutStyle::new_default(), node_style: NodeStyle::default() }
+        Self { layout_style: LayoutStyle::new_default(), node_style: NodeStyle::new_default() }
     }
 }
 
@@ -59,11 +59,11 @@ impl ViewStyle {
         if self.node_style.font_stretch != other.node_style.font_stretch {
             delta.node_style.font_stretch = other.node_style.font_stretch.clone();
         }
-        if self.node_style.background != other.node_style.background {
-            delta.node_style.background = other.node_style.background.clone();
+        if self.node_style.backgrounds != other.node_style.backgrounds {
+            delta.node_style.backgrounds = other.node_style.backgrounds.clone();
         }
-        if self.node_style.box_shadow != other.node_style.box_shadow {
-            delta.node_style.box_shadow = other.node_style.box_shadow.clone();
+        if self.node_style.box_shadows != other.node_style.box_shadows {
+            delta.node_style.box_shadows = other.node_style.box_shadows.clone();
         }
         if self.node_style.stroke != other.node_style.stroke {
             delta.node_style.stroke = other.node_style.stroke.clone();
@@ -101,17 +101,17 @@ impl ViewStyle {
         if self.node_style.font_features != other.node_style.font_features {
             delta.node_style.font_features = other.node_style.font_features.clone();
         }
-        if self.node_style.filter != other.node_style.filter {
-            delta.node_style.filter = other.node_style.filter.clone();
+        if self.node_style.filters != other.node_style.filters {
+            delta.node_style.filters = other.node_style.filters.clone();
         }
-        if self.node_style.backdrop_filter != other.node_style.backdrop_filter {
-            delta.node_style.backdrop_filter = other.node_style.backdrop_filter.clone();
+        if self.node_style.backdrop_filters != other.node_style.backdrop_filters {
+            delta.node_style.backdrop_filters = other.node_style.backdrop_filters.clone();
         }
         if self.node_style.blend_mode != other.node_style.blend_mode {
             delta.node_style.blend_mode = other.node_style.blend_mode;
         }
-        if self.node_style.hyperlink != other.node_style.hyperlink {
-            delta.node_style.hyperlink = other.node_style.hyperlink.clone();
+        if self.node_style.hyperlinks != other.node_style.hyperlinks {
+            delta.node_style.hyperlinks = other.node_style.hyperlinks.clone();
         }
         if self.node_style.display_type != other.node_style.display_type {
             delta.node_style.display_type = other.node_style.display_type;
@@ -125,8 +125,8 @@ impl ViewStyle {
         if self.node_style.flex_wrap != other.node_style.flex_wrap {
             delta.node_style.flex_wrap = other.node_style.flex_wrap;
         }
-        if self.node_style.grid_layout != other.node_style.grid_layout {
-            delta.node_style.grid_layout = other.node_style.grid_layout;
+        if self.node_style.grid_layout_type != other.node_style.grid_layout_type {
+            delta.node_style.grid_layout_type = other.node_style.grid_layout_type;
         }
         if self.node_style.grid_columns_rows != other.node_style.grid_columns_rows {
             delta.node_style.grid_columns_rows = other.node_style.grid_columns_rows;
@@ -134,8 +134,8 @@ impl ViewStyle {
         if self.node_style.grid_adaptive_min_size != other.node_style.grid_adaptive_min_size {
             delta.node_style.grid_adaptive_min_size = other.node_style.grid_adaptive_min_size;
         }
-        if self.node_style.grid_span_content != other.node_style.grid_span_content {
-            delta.node_style.grid_span_content = other.node_style.grid_span_content.clone();
+        if self.node_style.grid_span_contents != other.node_style.grid_span_contents {
+            delta.node_style.grid_span_contents = other.node_style.grid_span_contents.clone();
         }
         if self.node_style.overflow != other.node_style.overflow {
             delta.node_style.overflow = other.node_style.overflow;

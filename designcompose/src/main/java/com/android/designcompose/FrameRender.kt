@@ -45,7 +45,7 @@ import com.android.designcompose.proto.strokeAlignFromInt
 import com.android.designcompose.proto.toUniform
 import com.android.designcompose.proto.top
 import com.android.designcompose.serdegen.ArcMeterData
-import com.android.designcompose.serdegen.MeterData
+import com.android.designcompose.serdegen.MeterDataType
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.ProgressBarMeterData
 import com.android.designcompose.serdegen.ProgressMarkerMeterData
@@ -357,14 +357,14 @@ internal fun ContentDrawScope.render(
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.node_style.meter_data.isPresent) {
             when (val meterData = style.node_style.meter_data.get()) {
-                is MeterData.RotationData -> {
+                is MeterDataType.RotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
                         overrideTransform =
                             calculateRotationData(rotationData, meterValue, style, density)
                     }
                 }
-                is MeterData.ProgressBarData -> {
+                is MeterDataType.ProgressBarData -> {
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
                         val progressBarSizeTransform =
@@ -379,7 +379,7 @@ internal fun ContentDrawScope.render(
                         overrideTransform = progressBarSizeTransform.second
                     }
                 }
-                is MeterData.ProgressMarkerData -> {
+                is MeterDataType.ProgressMarkerData -> {
                     val progressMarkerData = meterData.value
                     if (progressMarkerData.enabled) {
                         overrideTransform =
@@ -393,14 +393,14 @@ internal fun ContentDrawScope.render(
                             )
                     }
                 }
-                is MeterData.ArcData -> {
+                is MeterDataType.ArcData -> {
                     val arcData = meterData.value
                     if (arcData.enabled) {
                         shape = calculateArcData(arcData, meterValue, shape)
                         customArcAngle = true
                     }
                 }
-                is MeterData.ProgressVectorData -> {
+                is MeterDataType.ProgressVectorData -> {
                     // If this is a vector path progress bar, save it here so we can convert it to a
                     // set of path instructions and render it instead of the normal stroke.
                     if (meterData.value.enabled) progressVectorMeterData = meterData.value
@@ -633,14 +633,14 @@ internal fun ContentDrawScope.squooshShapeRender(
         // Check if there is meter data for a dial/gauge/progress bar
         if (style.node_style.meter_data.isPresent) {
             when (val meterData = style.node_style.meter_data.get()) {
-                is MeterData.RotationData -> {
+                is MeterDataType.RotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
                         overrideTransform =
                             calculateRotationData(rotationData, meterValue, style, density)
                     }
                 }
-                is MeterData.ProgressBarData -> {
+                is MeterDataType.ProgressBarData -> {
                     val progressBarData = meterData.value
                     if (progressBarData.enabled) {
                         val progressBarSizeTransform =
@@ -655,7 +655,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                         overrideTransform = progressBarSizeTransform.second
                     }
                 }
-                is MeterData.ProgressMarkerData -> {
+                is MeterDataType.ProgressMarkerData -> {
                     val progressMarkerData = meterData.value
                     if (progressMarkerData.enabled) {
                         overrideTransform =
@@ -669,14 +669,14 @@ internal fun ContentDrawScope.squooshShapeRender(
                             )
                     }
                 }
-                is MeterData.ArcData -> {
+                is MeterDataType.ArcData -> {
                     val arcData = meterData.value
                     if (arcData.enabled) {
                         shape = calculateArcData(arcData, meterValue, shape)
                         customArcAngle = true
                     }
                 }
-                is MeterData.ProgressVectorData -> {
+                is MeterDataType.ProgressVectorData -> {
                     // If this is a vector path progress bar, save it here so we can convert it to a
                     // set of path instructions and render it instead of the normal stroke.
                     if (meterData.value.enabled) progressVectorMeterData = meterData.value

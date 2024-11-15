@@ -56,7 +56,7 @@ use dc_bundle::definition::plugin::{
     ProgressVectorMeterData, RotationMeterData,
 };
 
-use dc_bundle::definition::plugin::meter_data::MeterData;
+use dc_bundle::definition::plugin::meter_data::MeterDataType;
 use dc_bundle::legacy_definition::view::component::ComponentInfo;
 use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
 use dc_bundle::legacy_definition::view::view_style::ViewStyle;
@@ -1581,7 +1581,7 @@ fn visit_node(
             match meter_data {
                 Ok(meter_data) => {
                     style.node_style.meter_data = Some(match meter_data {
-                        MeterJson::ArcData(data) => MeterData::ArcData(ArcMeterData {
+                        MeterJson::ArcData(data) => MeterDataType::ArcData(ArcMeterData {
                             enabled: data.enabled,
                             start: data.start,
                             end: data.end,
@@ -1590,7 +1590,7 @@ fn visit_node(
                             corner_radius: data.corner_radius,
                         }),
                         MeterJson::RotationData(data) => {
-                            MeterData::RotationData(RotationMeterData {
+                            MeterDataType::RotationData(RotationMeterData {
                                 enabled: data.enabled,
                                 start: data.start,
                                 end: data.end,
@@ -1599,7 +1599,7 @@ fn visit_node(
                             })
                         }
                         MeterJson::ProgressBarData(data) => {
-                            MeterData::ProgressBarData(ProgressBarMeterData {
+                            MeterDataType::ProgressBarData(ProgressBarMeterData {
                                 enabled: data.enabled,
                                 discrete: data.discrete,
                                 discrete_value: data.discrete_value,
@@ -1609,7 +1609,7 @@ fn visit_node(
                             })
                         }
                         MeterJson::ProgressMarkerData(data) => {
-                            MeterData::ProgressMarkerData(ProgressMarkerMeterData {
+                            MeterDataType::ProgressMarkerData(ProgressMarkerMeterData {
                                 enabled: data.enabled,
                                 discrete: data.discrete,
                                 discrete_value: data.discrete_value,
@@ -1627,7 +1627,7 @@ fn visit_node(
                             if data.enabled {
                                 stroke_paths = data.paths.iter().filter_map(parse_path).collect();
                             }
-                            MeterData::ProgressVectorData(ProgressVectorMeterData {
+                            MeterDataType::ProgressVectorData(ProgressVectorMeterData {
                                 enabled: data.enabled,
                                 discrete: data.discrete,
                                 discrete_value: data.discrete_value,

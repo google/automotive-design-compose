@@ -60,7 +60,7 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
                 images[imageKey.key] = bitmap
             }
         }
-        Feedback.documentDecodeImages(c.document.images.value.size, c.document.name, c.docId)
+        Feedback.documentDecodeImages(c.document.images.value.size, c.header.name, c.docId)
     }
 
     /**

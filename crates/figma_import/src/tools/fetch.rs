@@ -20,7 +20,6 @@ use crate::{Document, ProxyConfig};
 use clap::Parser;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
-use log::error;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -126,10 +125,6 @@ pub fn build_definition(
         views,
         component_sets: doc.component_sets().clone(),
         images: doc.encoded_image_map(),
-        last_modified: doc.last_modified().clone(),
-        name: doc.get_name(),
-        version: doc.get_version(),
-        id: doc.get_document_id(),
         variable_map,
     })
 }
@@ -157,14 +152,19 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
     let dc_definition = build_definition(&mut doc, &args.nodes)?;
 
     println!("Fetched document");
-    println!("  DC Version: {}", DesignComposeDefinitionHeader::current().version);
+    println!("  DC Version: {}", DesignComposeDefinitionHeader::current_version());
     println!("  Doc ID: {}", doc.get_document_id());
     println!("  Version: {}", doc.get_version());
     println!("  Name: {}", doc.get_name());
     println!("  Last Modified: {}", doc.last_modified().clone());
     // We don't bother with serialization of image sessions with this tool.
     let mut output = std::fs::File::create(args.output)?;
-    let header = bincode::serialize(&DesignComposeDefinitionHeader::current())?;
+    let header = bincode::serialize(&DesignComposeDefinitionHeader::current(
+        doc.last_modified().clone(),
+        doc.get_name().clone(),
+        doc.get_version().clone(),
+        doc.get_document_id().clone(),
+    ))?;
     let doc = bincode::serialize(&dc_definition)?;
     output.write_all(header.as_slice())?;
     output.write_all(doc.as_slice())?;

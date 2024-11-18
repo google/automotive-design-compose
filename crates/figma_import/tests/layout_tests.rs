@@ -28,11 +28,10 @@ use dc_bundle::definition::element::DimensionProto;
 use dc_bundle::definition::layout::LayoutSizing;
 use dc_bundle::legacy_definition::element::node::NodeQuery;
 use dc_bundle::legacy_definition::view::view::{View, ViewData};
-use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use dc_bundle::legacy_definition::DesignComposeDefinition;
+use figma_import::load_design_def;
 use layout::LayoutManager;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::prelude::*;
 
 fn measure_func(
     layout_id: i32,
@@ -138,17 +137,8 @@ fn add_view_to_layout(
     }
 }
 
-fn load_doc() -> std::io::Result<DesignComposeDefinition> {
-    let mut file = File::open("tests/layout-unit-tests.dcf")?;
-    let mut buf: Vec<u8> = vec![];
-    let bytes_read = file.read_to_end(&mut buf)?;
-    let bytes = buf.as_slice();
-    println!("Read {} bytes", bytes_read);
-
-    let header: DesignComposeDefinitionHeader = bincode::deserialize(bytes).unwrap();
-    let header_size = bincode::serialized_size(&header).unwrap() as usize;
-
-    let figma_doc: DesignComposeDefinition = bincode::deserialize(&bytes[header_size..]).unwrap();
+fn load_doc() -> Result<DesignComposeDefinition, figma_import::Error> {
+    let (_header, figma_doc) = load_design_def("tests/layout-unit-tests.dcf")?;
     Ok(figma_doc)
 }
 

@@ -534,7 +534,7 @@ internal fun DesignSwitcher(
 
     val lastModifiedString =
         if (doc != null) {
-            val lastModifiedInstant = Instant.parse(doc.c.document.last_modified)
+            val lastModifiedInstant = Instant.parse(doc.c.header.last_modified)
             val lastModifiedSeconds =
                 System.currentTimeMillis() / 1000 - lastModifiedInstant.epochSecond
             val elapsed = elapsedTimeString(lastModifiedSeconds)
@@ -555,7 +555,7 @@ internal fun DesignSwitcher(
         DesignSwitcherDoc.SettingsView(
             modifier = Modifier,
             mini_view_message = miniMessage,
-            current_doc_name = doc?.c?.document?.name ?: "",
+            current_doc_name = doc?.c?.header?.name ?: "",
             last_mod_time = lastModifiedString,
             branch_file_count = branchHash?.size.toString(),
             project_file_count = GetProjectFileCount(doc),

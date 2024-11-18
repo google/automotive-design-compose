@@ -37,7 +37,7 @@ pub use dc_bundle::definition::element::Rectangle;
 pub use dc_bundle::legacy_definition::DesignComposeDefinition;
 pub use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
 pub use design_definition::ServerFigmaDoc;
-pub use design_definition::{load_design_def, save_design_def};
+pub use design_definition::{load_design_def, load_design_def_header_v0, save_design_def};
 pub use document::Document;
 pub use error::Error;
 pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};

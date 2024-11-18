@@ -21,8 +21,9 @@
 // or
 // `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
-use crate::load_design_def;
+use crate::{load_design_def, load_design_def_header_v0};
 use clap::Parser;
+use dc_bundle::legacy_definition::DesignComposeDefinitionHeaderV0;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -58,14 +59,26 @@ pub fn dcf_info(args: Args) -> Result<(), ParseError> {
     let file_path = &args.dcf_file;
     let node = args.node;
 
+    // First attempt to load the old dcf format. If too old, print truncated info.
+    let header_v0 = load_design_def_header_v0(file_path)?;
+    if header_v0.version <= DesignComposeDefinitionHeaderV0::max_version() {
+        println!("Deserialized file");
+        println!("  DC Version: {}", header_v0.version);
+        println!(
+            "DCF files with versions <= {} do not have additional header info",
+            DesignComposeDefinitionHeaderV0::max_version()
+        );
+        return Ok(());
+    }
+
     let (header, doc) = load_design_def(file_path)?;
 
     println!("Deserialized file");
-    println!("  Header Version: {}", header.version);
-    println!("  Doc ID: {}", doc.id);
-    println!("  Figma Version: {}", doc.version);
-    println!("  Name: {}", doc.name);
-    println!("  Last Modified: {}", doc.last_modified);
+    println!("  DC Version: {}", header.dc_version);
+    println!("  Doc ID: {}", header.id);
+    println!("  Figma Version: {}", header.response_version);
+    println!("  Name: {}", header.name);
+    println!("  Last Modified: {}", header.last_modified);
 
     if let Some(node) = node {
         println!("Dumping file from node: {}:", node);

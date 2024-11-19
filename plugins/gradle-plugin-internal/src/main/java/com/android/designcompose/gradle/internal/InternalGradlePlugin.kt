@@ -16,7 +16,7 @@
 
 package com.android.designcompose.gradle.internal
 
-import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.android.designcompose.gradle.PluginExtension
 import org.gradle.api.GradleException
@@ -92,9 +92,7 @@ class InternalGradlePlugin : Plugin<Project> {
                 test.doFirst {
                     if (isFetch.get()) {
                         test.useJUnit {
-                            it.includeCategories(
-                                "com.android.designcompose.testapp.common.Fetchable"
-                            )
+                            it.includeCategories("com.android.designcompose.test.Fetchable")
                         }
 
                         // Make sure we have a figmaToken set
@@ -131,17 +129,16 @@ class InternalGradlePlugin : Plugin<Project> {
         }
 
         // Configure the fetch tasks for each variant of the android app
-        project.pluginManager.withPlugin("com.android.application") {
-            project.extensions
-                .getByType(ApplicationAndroidComponentsExtension::class.java)
-                .onVariants { variant ->
-                    val unitTest = variant.unitTest ?: return@onVariants
+        project.pluginManager.withPlugin("designcompose.conventions.roborazzi") {
+            project.extensions.getByType(AndroidComponentsExtension::class.java).onVariants {
+                variant ->
+                val unitTest = variant.unitTest ?: return@onVariants
 
-                    project.configureFetchTasks(
-                        variant.name.capitalized(),
-                        "test${unitTest.name.capitalized()}",
-                    )
-                }
+                project.configureFetchTasks(
+                    variant.name.capitalized(),
+                    "test${unitTest.name.capitalized()}",
+                )
+            }
         }
     }
 }

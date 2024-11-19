@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.BasicTextField
@@ -298,15 +299,26 @@ internal fun designSwitcherDocName() = "DesignSwitcherDoc"
  *
  * Controls whether the Design Switcher will fetch updates to it's DesignDoc from Figma.
  *
- * This should only be changed temporarily. Do not commit a change to `false`.
+ * This should only be changed temporarily. Do not commit a change to `true`.
  */
-private const val DISABLE_LIVE_MODE = true
+private const val ENABLE_LIVE_MODE = false
+
+private var enableLiveModeForTesting = false
+
+internal fun enableLiveModeForTesting(enabled: Boolean) {
+    if (Build.FINGERPRINT == "robolectric") {
+        enableLiveModeForTesting = enabled
+    } else {
+        // TODO: no exception for integration tests...
+        throw IllegalAccessException("Not designed for production...")
+    }
+}
 
 private fun getLiveMode(): LiveUpdateMode {
-    return if (DISABLE_LIVE_MODE) {
-        LiveUpdateMode.OFFLINE
-    } else {
+    return if (ENABLE_LIVE_MODE || enableLiveModeForTesting) {
         LiveUpdateMode.LIVE
+    } else {
+        LiveUpdateMode.OFFLINE
     }
 }
 

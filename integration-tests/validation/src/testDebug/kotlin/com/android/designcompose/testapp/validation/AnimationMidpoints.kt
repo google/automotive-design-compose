@@ -20,19 +20,15 @@ import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onFirst
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DesignDocSettings
-import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
-import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.squoosh.SmartAnimateTransition
-import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.SmartAnimateTestDoc
 import com.android.designcompose.testapp.validation.examples.State
@@ -71,7 +67,7 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent(VariantAnimationTestDoc.javaClass.name)
+        composeTestRule.waitForContent(VariantAnimationTestDoc.javaClass.name)
 
         state.value = State.Y
         text.value = "Y"
@@ -107,7 +103,7 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent(VariantAnimationTestDoc.javaClass.name)
+        composeTestRule.waitForContent(VariantAnimationTestDoc.javaClass.name)
 
         state.value = State.Y
         text.value = "Y"
@@ -130,7 +126,7 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent(VariantAnimationTestDoc.javaClass.name)
+        composeTestRule.waitForContent(VariantAnimationTestDoc.javaClass.name)
 
         state.value = State.Y
 
@@ -152,7 +148,7 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent(SmartAnimateTestDoc.javaClass.name)
+        composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
         state.value = TestState.B
 
@@ -174,7 +170,7 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent(SmartAnimateTestDoc.javaClass.name)
+        composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
         state.value = TestState.B
 
@@ -196,7 +192,7 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent(SmartAnimateTestDoc.javaClass.name)
+        composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
         state.value = TestState.B
 
@@ -218,7 +214,7 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent(SmartAnimateTestDoc.javaClass.name)
+        composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
         state.value = TestState.B
 
@@ -240,19 +236,11 @@ class AnimationMidpoints {
             }
         }
 
-        waitForContent(SmartAnimateTestDoc.javaClass.name)
+        composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
         state.value = TestState.B
 
         recordAnimation("CrossFadeOpacityTest")
-    }
-
-    private fun waitForContent(name: String) {
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, name))
-            .onFirst()
-            .assertRenderStatus(DocRenderStatus.Rendered)
     }
 
     private fun recordAnimation(name: String) {

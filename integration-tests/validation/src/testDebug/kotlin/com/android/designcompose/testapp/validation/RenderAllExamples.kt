@@ -16,28 +16,22 @@
 
 package com.android.designcompose.testapp.validation
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onFirst
-import androidx.test.core.app.ApplicationProvider
 import com.android.designcompose.DesignDocSettings
-import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
-import com.android.designcompose.docClassSemanticsKey
-import com.android.designcompose.test.assertRenderStatus
+import com.android.designcompose.test.Fetchable
 import com.android.designcompose.test.internal.designComposeRoborazziRule
-import com.android.designcompose.testapp.common.Fetchable
+import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.CustomBrushTestDoc
 import com.android.designcompose.testapp.validation.examples.DEFAULT_RENDERER_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
 import com.android.designcompose.testapp.validation.examples.SQUOOSH_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.StateCustomizationsDoc
 import com.github.takahirom.roborazzi.captureRoboImage
-import java.io.File
 import org.junit.Rule
 import org.junit.Test
 import org.junit.experimental.categories.Category
@@ -45,21 +39,6 @@ import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-
-fun performLiveFetch(dcfOutPath: String?) {
-    if (dcfOutPath == null) throw RuntimeException("designcompose.test.dcfOutPath not set")
-
-    TestUtils.triggerLiveUpdate()
-    val context = ApplicationProvider.getApplicationContext<Context>()
-
-    context
-        .fileList()
-        .filter { it.endsWith(".dcf") }
-        .forEach {
-            val filepath = File(context.filesDir.absolutePath, it)
-            filepath.copyTo(File(dcfOutPath, it), overwrite = true)
-        }
-}
 
 @Category(Fetchable::class)
 // Enable Robolectric Native Graphics (RNG)
@@ -71,6 +50,7 @@ class RenderAllExamples(private val config: TestConfig) {
     @get:Rule val composeTestRule = createComposeRule()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
     @get:Rule val interFontRule = InterFontTestRule()
+    @get:Rule val liveUpdateTestRule = TestUtils.LiveUpdateTestRule()
 
     data class TestConfig(
         internal val fileName: String,
@@ -79,9 +59,6 @@ class RenderAllExamples(private val config: TestConfig) {
         // This value doesn't do anything if there is already one set in the test example.
         internal val useSquoosh: Boolean = false,
     )
-
-    val dcfOutPath = System.getProperty("designcompose.test.dcfOutPath")
-    val runFigmaFetch = System.getProperty("designcompose.test.fetchFigma")
 
     @Test
     fun testRender() {
@@ -97,20 +74,15 @@ class RenderAllExamples(private val config: TestConfig) {
             composeTestRule.setContent(config.fileComposable)
         }
 
-        if (runFigmaFetch == "true") performLiveFetch(dcfOutPath)
+        liveUpdateTestRule.performLiveFetch()
 
-        composeTestRule
-            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, config.fileClass))
-            .onFirst()
-            .assertRenderStatus(DocRenderStatus.Rendered)
-            .captureRoboImage("${config.fileName}.png")
+        composeTestRule.waitForContent(config.fileClass).captureRoboImage("${config.fileName}.png")
     }
 
     companion object {
+        // Separate test due to different set up
         private val disabledTests =
-            listOf(
-                StateCustomizationsDoc.javaClass.name // Separate test due to different set up
-            )
+            listOf(StateCustomizationsDoc.javaClass.name, CustomBrushTestDoc.javaClass.name)
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")

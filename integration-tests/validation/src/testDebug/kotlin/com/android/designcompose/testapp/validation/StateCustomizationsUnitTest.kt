@@ -21,19 +21,24 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils
+import com.android.designcompose.test.Fetchable
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.StateCustomizationsDoc
 import com.android.designcompose.testapp.validation.examples.StateCustomizationsTest
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import org.junit.Rule
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
+@Category(Fetchable::class)
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -46,6 +51,8 @@ class StateCustomizationsUnitTest {
 
     @get:Rule val interFontTestRule = InterFontTestRule()
 
+    @get:Rule val liveUpdateTestRule = TestUtils.LiveUpdateTestRule()
+
     @Test
     @TargetApi(26)
     fun testTextCustomization() {
@@ -53,6 +60,10 @@ class StateCustomizationsUnitTest {
             val fixedClock: Clock =
                 Clock.fixed(Instant.parse("2023-12-25T10:15:30Z"), ZoneId.of("UTC"))
             setContent { StateCustomizationsTest(fixedClock) }
+
+            liveUpdateTestRule.performLiveFetch()
+            waitForContent(StateCustomizationsDoc.javaClass.name)
+
             captureRootRoboImage("State-Customizations")
         }
     }

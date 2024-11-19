@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-package com.android.designcompose.testapp.common
+package com.android.designcompose.test
 
 interface Fetchable

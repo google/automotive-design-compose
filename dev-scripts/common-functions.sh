@@ -106,14 +106,3 @@ function fetch_layout_tests {
         --nodes='ConstraintsLayoutWidget' \
         --nodes='VectorScale'
 }
-
-# This doc is difficult to fetch because the test that would fetch it can only run on older APIs
-function fetch_state_customizations {
-  DOC_ID=POWyniB6moGRmhZTJyejwa
-
-  cargo run --bin fetch --features=fetch -- \
-      --doc-id="$DOC_ID" \
-      --nodes="#root" \
-      --output="$GIT_ROOT/integration-tests/validation/src/main/assets/figma/StateCustomizationsDoc_$DOC_ID.dcf"
-}
-

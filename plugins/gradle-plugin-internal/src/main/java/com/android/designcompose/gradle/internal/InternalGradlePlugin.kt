@@ -128,7 +128,8 @@ class InternalGradlePlugin : Plugin<Project> {
             figmaTokenProvider.set(extension.figmaToken.map { it })
         }
 
-        // Configure the fetch tasks for each variant of the android app
+        // Configure the fetch tasks for each variant of the android app and library with
+        // roborazzi test setup.
         project.pluginManager.withPlugin("designcompose.conventions.roborazzi") {
             project.extensions.getByType(AndroidComponentsExtension::class.java).onVariants {
                 variant ->

@@ -82,11 +82,15 @@ public class TestUtils {
 
     public static class LiveUpdateTestRule implements TestRule {
         private final String dcfOutPath;
-        private final Boolean runFigmaFetch;
+        private final boolean runFigmaFetch;
 
         public LiveUpdateTestRule() {
             dcfOutPath = System.getProperty("designcompose.test.dcfOutPath");
             runFigmaFetch = Boolean.valueOf(System.getProperty("designcompose.test.fetchFigma"));
+        }
+
+        public boolean shouldRunFigmaFetch() {
+            return runFigmaFetch;
         }
 
         @Override

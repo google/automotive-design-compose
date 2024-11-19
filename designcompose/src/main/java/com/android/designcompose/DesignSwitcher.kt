@@ -309,7 +309,6 @@ internal fun enableLiveModeForTesting(enabled: Boolean) {
     if (Build.FINGERPRINT == "robolectric") {
         enableLiveModeForTesting = enabled
     } else {
-        // TODO: no exception for integration tests...
         throw IllegalAccessException("Not designed for production...")
     }
 }

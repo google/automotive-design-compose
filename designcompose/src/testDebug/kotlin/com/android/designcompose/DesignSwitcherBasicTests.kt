@@ -65,11 +65,13 @@ class DesignSwitcherBasicTests {
 
     @Test
     fun canExpandDesignSwitcher() {
-        // This needs to enabled before setting content.
-        enableLiveModeForTesting(true)
-        composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
-        liveUpdateTestRule.performLiveFetch()
-        composeTestRule.onDCDoc(DesignSwitcherDoc).assertRenderStatus(DocRenderStatus.Rendered)
+        with(liveUpdateTestRule) {
+            // This needs to enable before setting content.
+            enableLiveModeForTesting(shouldRunFigmaFetch())
+            composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
+            performLiveFetch()
+            composeTestRule.onDCDoc(DesignSwitcherDoc).assertRenderStatus(DocRenderStatus.Rendered)
+        }
 
         with(composeTestRule) {
             captureRootRoboImage("CollapsedSwitcher")

@@ -80,7 +80,8 @@ class RenderAllExamples(private val config: TestConfig) {
     }
 
     companion object {
-        // Separate test due to different set up
+        // Separate tests due to different set up. Please also make the new tests fetch-able
+        // to fetch dcf files.
         private val disabledTests =
             listOf(StateCustomizationsDoc.javaClass.name, CustomBrushTestDoc.javaClass.name)
 

@@ -26,6 +26,8 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -79,24 +81,25 @@ class SizingShaderBrush(private val shader: RuntimeShader) : ShaderBrush() {
 fun CustomBrushTest() {
     val infiniteTransition = rememberInfiniteTransition(label = "animate shader")
     val movingValue =
-        infiniteTransition.animateFloat(
-            label = "moving value for shader",
-            initialValue = 0.0f,
-            targetValue = 10.0f,
-            animationSpec =
-                infiniteRepeatable(
-                    animation = tween(10 * 1000, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse,
-                ),
-        )
+        if ("robolectric" != Build.FINGERPRINT) {
+            infiniteTransition.animateFloat(
+                label = "moving value for shader",
+                initialValue = 0.0f,
+                targetValue = 10.0f,
+                animationSpec =
+                    infiniteRepeatable(
+                        animation = tween(10 * 1000, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse,
+                    ),
+            )
+        } else {
+            remember { mutableFloatStateOf(3.0f) }
+        }
 
     // Android T introduces AGSL and RuntimeShader. Robolectric (part of our test infrastructure)
     // only supports software rendering.
     val brush: () -> Brush =
-        if (
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                "robolectric" != Build.FINGERPRINT
-        ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val shader = RuntimeShader(CUSTOM_SHADER)
             val shaderBrush = SizingShaderBrush(shader)
             // The kotlin compiler seems to get confused without semicolons on these statements.

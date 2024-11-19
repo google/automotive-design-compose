@@ -43,18 +43,48 @@ impl EncodedImageMap {
 }
 
 // LINT.IfChange
-static CURRENT_VERSION: u32 = 22;
+static CURRENT_VERSION: u32 = 23;
 // Lint.ThenChange(common/src/main/java/com/android/designcompose/common/FsaasSession.kt)
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct DesignComposeDefinitionHeader {
+pub struct DesignComposeDefinitionHeaderV0 {
     pub version: u32,
+}
+impl DesignComposeDefinitionHeaderV0 {
+    // Return the max serialized document version that used this old V0 header
+    pub fn max_version() -> u32 {
+        22
+    }
+}
+
+// This is our serialized document type.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DesignComposeDefinitionHeader {
+    pub dc_version: u32,
+    pub last_modified: String,
+    pub name: String,
+    pub response_version: String,
+    pub id: String,
 }
 
 impl DesignComposeDefinitionHeader {
-    pub fn current() -> DesignComposeDefinitionHeader {
-        DesignComposeDefinitionHeader { version: CURRENT_VERSION }
+    pub fn current(
+        last_modified: String,
+        name: String,
+        response_version: String,
+        id: String,
+    ) -> DesignComposeDefinitionHeader {
+        DesignComposeDefinitionHeader {
+            dc_version: CURRENT_VERSION,
+            last_modified,
+            name,
+            response_version,
+            id,
+        }
+    }
+    pub fn current_version() -> u32 {
+        CURRENT_VERSION
     }
 }
 
@@ -62,20 +92,20 @@ impl fmt::Display for DesignComposeDefinitionHeader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // NOTE: Using `write!` here instead of typical `format!`
         // to keep newlines.
-        write!(f, "DC Version: {}\nVersion: {}", CURRENT_VERSION, &self.version)
+        write!(
+            f,
+            "DC Version: {}\nDoc ID: {}\nName: {}\nLast Modified: {}\nResponse Version: {}",
+            CURRENT_VERSION, &self.id, &self.name, &self.last_modified, &self.response_version
+        )
     }
 }
 
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DesignComposeDefinition {
-    pub last_modified: String,
     pub views: HashMap<NodeQuery, view::view::View>,
     pub images: EncodedImageMap,
-    pub name: String,
     pub component_sets: HashMap<String, String>,
-    pub version: String,
-    pub id: String,
     pub variable_map: VariableMap,
 }
 
@@ -85,8 +115,9 @@ impl fmt::Display for DesignComposeDefinition {
         // to keep newlines.
         write!(
             f,
-            "Doc ID: {}\nName: {}\nLast Modified: {}",
-            &self.id, &self.name, &self.last_modified
+            "Views: {}\nComponent Sets: {}",
+            self.views.keys().count(),
+            self.component_sets.keys().count()
         )
     }
 }

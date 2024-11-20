@@ -27,7 +27,7 @@ use crate::definition::modifier::{
     BlendMode, FilterOp, TextAlign, TextAlignVertical, TextOverflow,
 };
 use crate::definition::modifier::{BoxShadow, LayoutTransform, TextShadow};
-use crate::definition::plugin::meter_data::MeterData;
+use crate::definition::plugin::meter_data::MeterDataType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -102,7 +102,7 @@ pub struct NodeStyle {
     pub vertical_sizing: LayoutSizing,
     pub aspect_ratio: Number,
     pub pointer_events: PointerEvents,
-    pub meter_data: Option<MeterData>,
+    pub meter_data: Option<MeterDataType>,
 }
 
 impl Default for NodeStyle {

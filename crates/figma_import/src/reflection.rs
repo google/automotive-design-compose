@@ -107,7 +107,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::plugin::ProgressVectorMeterData>(&samples)
         .expect("couldn't trace ProgressVectorMeterData");
     tracer
-        .trace_type::<dc_bundle::definition::plugin::meter_data::MeterData>(&samples)
+        .trace_type::<dc_bundle::definition::plugin::meter_data::MeterDataType>(&samples)
         .expect("couldn't trace MeterData");
     tracer
         .trace_type::<dc_bundle::definition::layout::PositionType>(&samples)

@@ -78,7 +78,7 @@ message ProgressVectorMeterData {
 // A container message that holds one of the meter data types (rotation, arc,
 // progress bar, or progress marker).
 message MeterData {
-  oneof meter_data {
+  oneof meter_data_type {
     RotationMeterData rotation_data = 1;
     ArcMeterData arc_data = 2;
     ProgressBarMeterData progress_bar_data = 3;

@@ -60,7 +60,7 @@ class DesignRawResourceTest {
     fun testHelloWorldDoc_setRawResourceId_passes() {
         with(composeTestRule) {
             DesignSettings.setRawResourceId(
-                DesignDocId("pxVlixodJqZL95zo2RzTHl", ""),
+                DesignDocId("pxVlixodJqZL95zo2RzTHl"),
                 R.raw.raw_resource_test_hello_world_doc,
             )
             composeTestRule.setContent { HelloWorld() }

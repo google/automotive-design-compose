@@ -17,18 +17,14 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.TestUtils
-import com.android.designcompose.docClassSemanticsKey
-import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.VariantAnimationTimelineTest
 import com.android.designcompose.testapp.validation.examples.VariantAnimationTimelineTestDoc
@@ -54,7 +50,7 @@ class AnimationTimelines {
 
         composeTestRule.setContent { VariantAnimationTimelineTest() }
 
-        waitForContent(VariantAnimationTimelineTestDoc.javaClass.name)
+        composeTestRule.waitForContent(VariantAnimationTimelineTestDoc.javaClass.name)
 
         composeTestRule.onNodeWithTag("OneByOne").performClick()
         composeTestRule.onNodeWithTag("Spread").performClick()
@@ -69,7 +65,7 @@ class AnimationTimelines {
 
         composeTestRule.setContent { VariantAnimationTimelineTest() }
 
-        waitForContent(VariantAnimationTimelineTestDoc.javaClass.name)
+        composeTestRule.waitForContent(VariantAnimationTimelineTestDoc.javaClass.name)
 
         composeTestRule.onNodeWithTag("DifferentDurations").performClick()
         composeTestRule.onNodeWithTag("Spread").performClick()
@@ -84,21 +80,13 @@ class AnimationTimelines {
 
         composeTestRule.setContent { VariantAnimationTimelineTest() }
 
-        waitForContent(VariantAnimationTimelineTestDoc.javaClass.name)
+        composeTestRule.waitForContent(VariantAnimationTimelineTestDoc.javaClass.name)
 
         composeTestRule.onNodeWithTag("OneByOne").performClick()
         composeTestRule.onNodeWithTag("ChildEarly").performClick()
         composeTestRule.onNodeWithTag("Spread").performClick()
 
         recordAnimation("ChildCustomAnim")
-    }
-
-    private fun waitForContent(name: String) {
-        composeTestRule.waitForIdle()
-        composeTestRule
-            .onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, name))
-            .onFirst()
-            .assertRenderStatus(DocRenderStatus.Rendered)
     }
 
     private fun recordAnimation(name: String) {

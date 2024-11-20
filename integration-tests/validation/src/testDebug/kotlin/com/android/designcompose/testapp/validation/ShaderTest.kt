@@ -23,13 +23,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
+import com.android.designcompose.test.Fetchable
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.CustomBrushTest
+import com.android.designcompose.testapp.validation.examples.CustomBrushTestDoc
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -37,11 +41,13 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav", sdk = [35])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Category(Fetchable::class)
 class ShaderTest {
     @get:Rule val clearStateTestRule = TestUtils.ClearStateTestRule()
     @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
     @get:Rule val interFontTestRule = InterFontTestRule()
+    @get:Rule val liveUpdateTestRule = TestUtils.LiveUpdateTestRule()
 
     @Before
     fun setUp() {
@@ -52,6 +58,9 @@ class ShaderTest {
     fun customBrush() {
         with(composeTestRule) {
             setContent { CustomBrushTest() }
+
+            liveUpdateTestRule.performLiveFetch()
+            composeTestRule.waitForContent(CustomBrushTestDoc.javaClass.name)
             captureRootRoboImage("CustomBrush-Shader")
         }
     }

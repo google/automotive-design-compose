@@ -20,6 +20,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.onFirst
 import com.android.designcompose.DocRenderStatus
 import com.android.designcompose.docClassSemanticsKey
 import com.android.designcompose.docRenderStatusSemanticsKey
@@ -32,3 +33,10 @@ fun SemanticsNodeInteraction.assertRenderStatus(status: DocRenderStatus) =
 
 fun ComposeContentTestRule.assertDCRenderStatus(status: DocRenderStatus) =
     onNode(SemanticsMatcher.expectValue(docRenderStatusSemanticsKey, status)).assertExists()
+
+fun ComposeContentTestRule.waitForContent(name: String): SemanticsNodeInteraction {
+    waitForIdle()
+    return onAllNodes(SemanticsMatcher.expectValue(docClassSemanticsKey, name))
+        .onFirst()
+        .assertRenderStatus(DocRenderStatus.Rendered)
+}

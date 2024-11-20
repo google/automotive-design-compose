@@ -26,13 +26,15 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils.ClearStateTestRule
 import com.android.designcompose.common.DesignDocId
+import com.android.designcompose.test.Fetchable
+import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.test.onDCDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -49,6 +51,7 @@ fun DesignSwitcherTest(testName: TestName) {
     )
 }
 
+@Category(Fetchable::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = RobolectricDeviceQualifiers.SmallPhone, sdk = [34])
@@ -58,14 +61,18 @@ class DesignSwitcherBasicTests {
     @get:Rule val composeTestRule = createComposeRule()
     @get:Rule val testName = TestName()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
-
-    @Before
-    fun setup() {
-        composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
-    }
+    @get:Rule val liveUpdateTestRule = TestUtils.LiveUpdateTestRule()
 
     @Test
     fun canExpandDesignSwitcher() {
+        with(liveUpdateTestRule) {
+            // This needs to enable before setting content.
+            enableLiveModeForTesting(shouldRunFigmaFetch())
+            composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
+            performLiveFetch()
+            composeTestRule.onDCDoc(DesignSwitcherDoc).assertRenderStatus(DocRenderStatus.Rendered)
+        }
+
         with(composeTestRule) {
             captureRootRoboImage("CollapsedSwitcher")
             onDCDoc(DesignSwitcherDoc).performClick()
@@ -76,6 +83,8 @@ class DesignSwitcherBasicTests {
 
     @Test
     fun showChangeScreen() {
+        composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
+
         with(composeTestRule) {
             onDCDoc(DesignSwitcherDoc).performClick()
             onNodeWithText("Change", useUnmergedTree = true).performClick()
@@ -86,6 +95,8 @@ class DesignSwitcherBasicTests {
 
     @Test
     fun canCheckACheckBox() {
+        composeTestRule.setContent { DesignSwitcherTest(testName = testName) }
+
         with(composeTestRule) {
             onDCDoc(DesignSwitcherDoc).performClick()
             onNodeWithText("Options", useUnmergedTree = true).performClick()

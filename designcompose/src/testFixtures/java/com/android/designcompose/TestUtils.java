@@ -18,13 +18,22 @@ package com.android.designcompose;
 
 import static com.android.designcompose.TestUtilsKt.testOnlyTriggerLiveUpdate;
 
+import android.content.Context;
 import android.content.res.Resources;
 
+import androidx.annotation.Nullable;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 
 public class TestUtils {
 
@@ -68,6 +77,49 @@ public class TestUtils {
             clearDocServer();
             clearDesignSettings();
             return base;
+        }
+    }
+
+    public static class LiveUpdateTestRule implements TestRule {
+        private final String dcfOutPath;
+        private final boolean runFigmaFetch;
+
+        public LiveUpdateTestRule() {
+            dcfOutPath = System.getProperty("designcompose.test.dcfOutPath");
+            runFigmaFetch = Boolean.valueOf(System.getProperty("designcompose.test.fetchFigma"));
+        }
+
+        public boolean shouldRunFigmaFetch() {
+            return runFigmaFetch;
+        }
+
+        @Override
+        public Statement apply(Statement base, Description description) {
+            return base;
+        }
+
+        public void performLiveFetch() {
+            if (runFigmaFetch) {
+                performLiveFetch(dcfOutPath);
+            }
+        }
+
+        private void performLiveFetch(@Nullable String dcfOutPath) {
+            if (dcfOutPath == null)
+                throw new RuntimeException("designcompose.test.dcfOutPath not set");
+            triggerLiveUpdate();
+            Context context = ApplicationProvider.getApplicationContext();
+            Arrays.stream(context.fileList()).filter(it -> it.endsWith(".dcf"))
+                    .forEach(it -> {
+                        File filepath = new File(context.getFilesDir().getAbsolutePath(), it);
+                        try {
+                            Files.copy(filepath.toPath(),
+                                    new File(dcfOutPath, it).toPath(),
+                                    StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
         }
     }
 }

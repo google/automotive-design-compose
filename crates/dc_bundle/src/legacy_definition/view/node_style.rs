@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::definition::element::line_height::LineHeight;
+use crate::definition::element::line_height::LineHeightType;
 use crate::definition::element::num_or_var::NumOrVarType;
 use crate::definition::element::Stroke;
 use crate::definition::element::{
@@ -79,7 +79,7 @@ pub struct NodeStyle {
     pub text_overflow: TextOverflow,
     pub text_shadow: Option<TextShadow>,
     pub node_size: Size,
-    pub line_height: LineHeight,
+    pub line_height: LineHeightType,
     pub line_count: Option<usize>, // None means no limit on # lines.
     pub font_features: Vec<FontFeature>,
     pub filter: Vec<FilterOp>,
@@ -127,7 +127,7 @@ impl Default for NodeStyle {
             text_overflow: TextOverflow::Clip,
             text_shadow: None,
             node_size: Size::default(),
-            line_height: LineHeight::Percent(1.0),
+            line_height: LineHeightType::Percent(1.0),
             line_count: None,
             font_features: Vec::new(),
             filter: Vec::new(),

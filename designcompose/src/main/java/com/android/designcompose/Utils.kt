@@ -96,7 +96,7 @@ import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.LayoutTransform
-import com.android.designcompose.serdegen.LineHeight
+import com.android.designcompose.serdegen.LineHeightType
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Overflow
@@ -385,7 +385,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             base.node_style.node_size
         }
     nodeStyle.line_height =
-        if (!override.node_style.line_height.equals(LineHeight.Percent(1.0f))) {
+        if (!override.node_style.line_height.equals(LineHeightType.Percent(1.0f))) {
             override.node_style.line_height
         } else {
             base.node_style.line_height
@@ -801,7 +801,7 @@ internal fun defaultNodeStyle(): NodeStyle.Builder {
     builder.text_overflow = TextOverflow.Clip()
     builder.text_shadow = Optional.empty()
     builder.node_size = com.android.designcompose.serdegen.Size(0f, 0f)
-    builder.line_height = LineHeight.Percent(1.0f)
+    builder.line_height = LineHeightType.Percent(1.0f)
     builder.line_count = Optional.empty()
     builder.letter_spacing = Optional.empty()
     builder.font_features = emptyList()

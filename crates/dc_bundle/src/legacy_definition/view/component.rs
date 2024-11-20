@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-use crate::legacy_definition::view::text_style::StyledTextRun;
+use crate::definition::view::StyledTextRun;
 use crate::legacy_definition::view::view_style::ViewStyle;
 use serde::{Deserialize, Serialize};
 

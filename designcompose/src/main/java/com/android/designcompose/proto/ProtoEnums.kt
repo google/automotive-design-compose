@@ -307,3 +307,19 @@ internal fun layoutSizingFromInt(value: Int) =
         3 -> com.android.designcompose.serdegen.LayoutSizing.Fill()
         else -> com.android.designcompose.serdegen.LayoutSizing.Unspecified()
     }
+
+internal fun fontStyleFromInt(value: Int) =
+    when (value) {
+        1 -> com.android.designcompose.serdegen.FontStyle.Normal()
+        2 -> com.android.designcompose.serdegen.FontStyle.Italic()
+        3 -> com.android.designcompose.serdegen.FontStyle.Oblique()
+        else -> com.android.designcompose.serdegen.FontStyle.Unspecified()
+    }
+
+internal fun textDecorationFromInt(value: Int) =
+    when (value) {
+        1 -> com.android.designcompose.serdegen.TextDecoration.None()
+        2 -> com.android.designcompose.serdegen.TextDecoration.Underline()
+        3 -> com.android.designcompose.serdegen.TextDecoration.Strikethrough()
+        else -> com.android.designcompose.serdegen.TextDecoration.Unspecified()
+    }

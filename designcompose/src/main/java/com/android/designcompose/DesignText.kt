@@ -64,10 +64,12 @@ import androidx.compose.ui.unit.sp
 import androidx.tracing.trace
 import com.android.designcompose.DesignTextMeasure.AVAILABLE_SIZE_CONTENT_MAXIMUM
 import com.android.designcompose.DesignTextMeasure.AVAILABLE_SIZE_CONTENT_MINIMUM
+import com.android.designcompose.proto.fontStyleFromInt
+import com.android.designcompose.proto.textDecorationFromInt
 import com.android.designcompose.proto.toUniform
 import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.LineHeight
+import com.android.designcompose.serdegen.LineHeightType
 import com.android.designcompose.serdegen.StyledTextRun
 import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.TextAlignVertical
@@ -166,33 +168,51 @@ internal fun DesignText(
     } else if (runs != null) {
         var startIndex = 0
         for (run in runs) {
+            val style =
+                run.style.orElseThrow {
+                    NoSuchFieldException("Malformed data: StyledTextRun's style unset")
+                }
             val textBrushAndOpacity =
-                run.style.text_color.asBrush(
-                    LocalContext.current,
-                    document,
-                    density.density,
-                    variableState,
-                )
+                style.text_color
+                    .orElseThrow {
+                        NoSuchFieldException("Malformed data: ViewStyle's text_color unset")
+                    }
+                    .asBrush(LocalContext.current, document, density.density, variableState)
             textBuilder.pushStyle(
                 SpanStyle(
                     brush = textBrushAndOpacity?.first,
                     alpha = textBrushAndOpacity?.second ?: 1.0f,
-                    fontSize = run.style.font_size.getValue(variableState).sp,
+                    fontSize =
+                        style.font_size
+                            .orElseThrow {
+                                NoSuchFieldException("Malformed data: ViewStyle's font_size unset")
+                            }
+                            .getValue(variableState)
+                            .sp,
                     fontWeight =
                         androidx.compose.ui.text.font.FontWeight(
-                            run.style.font_weight.weight.get().getValue(variableState).roundToInt()
+                            style.font_weight
+                                .orElseThrow {
+                                    NoSuchFieldException(
+                                        "Malformed data: ViewStyle's font_weight unset"
+                                    )
+                                }
+                                .weight
+                                .get()
+                                .getValue(variableState)
+                                .roundToInt()
                         ),
                     fontStyle =
-                        when (run.style.font_style) {
+                        when (fontStyleFromInt(style.font_style)) {
                             is FontStyle.Italic -> androidx.compose.ui.text.font.FontStyle.Italic
                             else -> androidx.compose.ui.text.font.FontStyle.Normal
                         },
-                    fontFamily = DesignSettings.fontFamily(run.style.font_family, fontFamily),
+                    fontFamily = DesignSettings.fontFamily(style.font_family, fontFamily),
                     fontFeatureSettings =
-                        run.style.font_features.joinToString(", ") { feature -> feature.tag },
-                    letterSpacing = run.style.letter_spacing.sp,
+                        style.font_features.joinToString(", ") { feature -> feature.tag },
+                    letterSpacing = style.letter_spacing.sp,
                     textDecoration =
-                        when (run.style.text_decoration) {
+                        when (textDecorationFromInt(style.text_decoration)) {
                             is TextDecoration.Underline ->
                                 androidx.compose.ui.text.style.TextDecoration.Underline
                             is TextDecoration.Strikethrough ->
@@ -201,8 +221,8 @@ internal fun DesignText(
                         },
                 )
             )
-            if (run.style.hyperlink.isPresent) {
-                val link = run.style.hyperlink.get().value
+            if (style.hyperlink.isPresent) {
+                val link = style.hyperlink.get().value
                 textBuilder.addUrlAnnotation(
                     UrlAnnotation(link),
                     startIndex,
@@ -219,13 +239,13 @@ internal fun DesignText(
     val lineHeight =
         customTextStyle?.lineHeight
             ?: when (style.node_style.line_height) {
-                is LineHeight.Pixels ->
+                is LineHeightType.Pixels ->
                     if (runs != null) {
-                        ((style.node_style.line_height as LineHeight.Pixels).value /
+                        ((style.node_style.line_height as LineHeightType.Pixels).value /
                                 style.node_style.font_size.getValue(variableState))
                             .em
                     } else {
-                        (style.node_style.line_height as LineHeight.Pixels).value.sp
+                        (style.node_style.line_height as LineHeightType.Pixels).value.sp
                     }
                 else -> TextUnit.Unspecified
             }

@@ -65,7 +65,7 @@ public class TestUtils {
 
     private static void clearDesignSettings() {
         DesignSettings.INSTANCE.testOnlyClearFileFetchStatus();
-        DesignSettings.INSTANCE.setRawResourceId(Resources.ID_NULL);
+        DesignSettings.INSTANCE.clearRawResources();
     }
 
 

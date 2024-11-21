@@ -24,6 +24,7 @@ import com.android.designcompose.TestUtils.ClearStateTestRule
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.test.R
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.onDCDoc
@@ -58,7 +59,10 @@ class DesignRawResourceTest {
     @Test
     fun testHelloWorldDoc_setRawResourceId_passes() {
         with(composeTestRule) {
-            DesignSettings.setRawResourceId(R.raw.raw_resource_test_hello_world_doc)
+            DesignSettings.setRawResourceId(
+                DesignDocId("pxVlixodJqZL95zo2RzTHl"),
+                R.raw.raw_resource_test_hello_world_doc,
+            )
             composeTestRule.setContent { HelloWorld() }
 
             onDCDoc(HelloWorldDoc).assertRenderStatus(DocRenderStatus.Rendered)

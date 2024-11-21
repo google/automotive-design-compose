@@ -16,7 +16,6 @@
 
 package com.android.designcompose
 
-import android.content.res.Resources
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -99,7 +98,7 @@ object DesignSettings {
     internal var isDocumentLive = mutableStateOf(false)
     private var fontDb: HashMap<String, FontFamily> = HashMap()
     internal var fileFetchStatus: HashMap<DesignDocId, DesignDocStatus> = HashMap()
-    internal var rawResourceId: Int = Resources.ID_NULL
+    internal var rawResourceId: HashMap<DesignDocId, Int> = HashMap()
 
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
@@ -158,15 +157,19 @@ object DesignSettings {
     }
 
     /**
-     * Sets the raw resource id for serialized doc. Once set, the design doc will only be read from
-     * res/raw/the_dcf_file. Live updates do not work when this is set. All other files will be
-     * ignored: downloaded/cached files, assets/figma/
+     * Sets the raw resource id for serialized doc associated with the designDocId. Once set, the
+     * design doc will be read from res/raw/the_dcf_file instead of assets.
      *
+     * @param designDocId the Figma
      * @param resourceId of the raw dcf file placed in res/raw
      * @sample R.raw.the_dcf_file
      */
-    fun setRawResourceId(@RawRes resourceId: Int) {
-        rawResourceId = resourceId
+    fun setRawResourceId(designDocId: DesignDocId, @RawRes resourceId: Int) {
+        rawResourceId[designDocId] = resourceId
+    }
+
+    fun clearRawResources() {
+        rawResourceId.clear()
     }
 
     fun addFontFamily(name: String, family: FontFamily) {
@@ -533,14 +536,15 @@ internal fun DocServer.doc(
 
     // Use the LocalContext to locate this doc in the precompiled DesignComposeDefinitionuments
     try {
+        val rawResource = DesignSettings.rawResourceId[docId]
         val assetDoc: InputStream =
-            if (DesignSettings.rawResourceId != Resources.ID_NULL) {
+            if (rawResource != null) {
                 Log.i(
                     TAG,
                     "Loaded design doc from R.raw." +
-                        context.resources.getResourceEntryName(DesignSettings.rawResourceId),
+                        context.resources.getResourceEntryName(rawResource),
                 )
-                context.resources.openRawResource(DesignSettings.rawResourceId)
+                context.resources.openRawResource(rawResource)
             } else {
                 val fileName = "figma/$id.dcf"
                 Log.i(TAG, "Loaded design doc from assets/$fileName")

@@ -47,6 +47,7 @@ jobs:
         uses: super-linter/super-linter@b92721f792f381cedc002ecdbb9847a15ece5bb8
         env:
           # To report GitHub Actions status checks
+          GITHUB_ACTIONS_CONFIG_FILE: .github/actionlint.yaml
           LINTER_RULES_PATH: /
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_PROTOBUF: true

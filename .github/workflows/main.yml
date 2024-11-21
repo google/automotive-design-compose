@@ -160,7 +160,7 @@ jobs:
         working-directory: reference-apps/tutorial
         run: ./gradlew  --init-script ../local-design-compose-repo.init.gradle.kts build
   build-unbundled:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-32core
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1

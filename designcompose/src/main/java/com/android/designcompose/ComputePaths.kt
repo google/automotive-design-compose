@@ -29,6 +29,7 @@ import androidx.core.graphics.plus
 import com.android.designcompose.proto.StrokeAlignType
 import com.android.designcompose.proto.bottom
 import com.android.designcompose.proto.left
+import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.right
 import com.android.designcompose.proto.strokeAlignFromInt
 import com.android.designcompose.proto.strokeCapFromInt
@@ -241,8 +242,8 @@ internal fun ViewShape.computePaths(
     // * Center stroke -> just use the stroke width.
     // * Outer stroke -> double the stroke width, clip out the inner bit
     // * Inner stroke -> double the stroke width, clip out the outer bit.
-    val strokeAlignType = strokeAlignFromInt(style.node_style.stroke.get().stroke_align)
-    val strokeWeight = style.node_style.stroke.get().stroke_weight
+    val strokeAlignType = strokeAlignFromInt(style.nodeStyle.stroke.get().stroke_align)
+    val strokeWeight = style.nodeStyle.stroke.get().stroke_weight
     val rawStrokeWidth =
         when (strokeAlignType) {
             StrokeAlignType.Center -> strokeWeight.toUniform() * density
@@ -302,7 +303,7 @@ internal fun ViewShape.computePaths(
 
     // Shadow path calculation
     val computedShadows: List<ComputedShadow> =
-        style.node_style.box_shadows.mapNotNull { shadow ->
+        style.nodeStyle.box_shadows.mapNotNull { shadow ->
             when (val shadowBox = shadow.shadow_box.get()) {
                 is ShadowBox.Outset -> {
                     // To calculate the outset path, we must inflate our outer bounds (our fill
@@ -397,10 +398,10 @@ private fun computeArcStrokePath(
     var top = 0.0f
     var width = frameSize.width
     var height = frameSize.height
-    val strokeWidth = style.node_style.stroke.get().stroke_weight.toUniform() * density
+    val strokeWidth = style.nodeStyle.stroke.get().stroke_weight.toUniform() * density
     val halfStrokeWidth = strokeWidth * 0.5f
 
-    when (strokeAlignFromInt(style.node_style.stroke.get().stroke_align)) {
+    when (strokeAlignFromInt(style.nodeStyle.stroke.get().stroke_align)) {
         StrokeAlignType.Inside -> {
             left += halfStrokeWidth
             top += halfStrokeWidth
@@ -667,7 +668,7 @@ private fun computeRoundRectPathsFast(
             CornerRadius(cornerRadius[3] * density, cornerRadius[3] * density),
         )
 
-    val strokeWeight = style.node_style.stroke.get().stroke_weight
+    val strokeWeight = style.nodeStyle.stroke.get().stroke_weight
     val strokeInsets =
         Insets(
             top = strokeWeight.top() * density,
@@ -683,7 +684,7 @@ private fun computeRoundRectPathsFast(
     val fills = listOf(fill)
 
     val insetAmount =
-        when (strokeAlignFromInt(style.node_style.stroke.get().stroke_align)) {
+        when (strokeAlignFromInt(style.nodeStyle.stroke.get().stroke_align)) {
             StrokeAlignType.Center -> -0.5f
             StrokeAlignType.Inside -> -1.0f
             StrokeAlignType.Outside -> 0.0f
@@ -703,7 +704,7 @@ private fun computeRoundRectPathsFast(
 
     // Generate the shadow descriptions from the style.
     val shadows =
-        style.node_style.box_shadows.mapNotNull { shadow ->
+        style.nodeStyle.box_shadows.mapNotNull { shadow ->
             when (val shadowbox = shadow.shadow_box.get()) {
                 is ShadowBox.Inset -> {
                     val insetShadowInset = Insets.uniform(shadowbox.value.spread_radius * density)

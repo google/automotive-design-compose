@@ -23,6 +23,7 @@ import com.android.designcompose.LayoutManager
 import com.android.designcompose.android_interface.LayoutChangedResponse
 import com.android.designcompose.proto.intoProto
 import com.android.designcompose.proto.intoSerde
+import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutNode
 import com.android.designcompose.serdegen.LayoutNodeList
@@ -212,7 +213,7 @@ private fun updateLayoutTree(
                 layoutId,
                 parentLayoutId,
                 -1, // not childIdx!
-                resolvedNode.style.layout_style,
+                resolvedNode.style.layoutStyle,
                 resolvedNode.view.name,
                 useMeasureFunc,
                 Optional.empty(),

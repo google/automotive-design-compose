@@ -43,6 +43,8 @@ import com.android.designcompose.proto.bottom
 import com.android.designcompose.proto.end
 import com.android.designcompose.proto.gridLayoutTypeFromInt
 import com.android.designcompose.proto.justifyContentFromInt
+import com.android.designcompose.proto.layoutStyle
+import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.top
 import com.android.designcompose.proto.type
@@ -244,30 +246,30 @@ internal fun calcLayoutInfo(
     view: View,
     style: ViewStyle,
 ): SimplifiedLayoutInfo {
-    if (style.node_style.grid_layout_type.isPresent) {
-        val gridLayout = gridLayoutTypeFromInt(style.node_style.grid_layout_type.get())
+    if (style.nodeStyle.grid_layout_type.isPresent) {
+        val gridLayout = gridLayoutTypeFromInt(style.nodeStyle.grid_layout_type.get())
         val isHorizontalLayout = gridLayout is GridLayoutType.Horizontal
         val isVerticalLayout = gridLayout is GridLayoutType.Vertical
-        val itemSpacing = itemSpacingAbs(style.layout_style.item_spacing.get())
+        val itemSpacing = itemSpacingAbs(style.layoutStyle.item_spacing.get())
         val marginModifier =
             Modifier.padding(
-                if (style.layout_style.padding.start is Dimension.Points)
-                    (style.layout_style.padding.start as Dimension.Points).value.dp
+                if (style.layoutStyle.padding.start is Dimension.Points)
+                    (style.layoutStyle.padding.start as Dimension.Points).value.dp
                 else 0.dp,
-                if (style.layout_style.padding.top is Dimension.Points)
-                    (style.layout_style.padding.top as Dimension.Points).value.dp
+                if (style.layoutStyle.padding.top is Dimension.Points)
+                    (style.layoutStyle.padding.top as Dimension.Points).value.dp
                 else 0.dp,
-                if (style.layout_style.padding.end is Dimension.Points)
-                    (style.layout_style.padding.end as Dimension.Points).value.dp
+                if (style.layoutStyle.padding.end is Dimension.Points)
+                    (style.layoutStyle.padding.end as Dimension.Points).value.dp
                 else 0.dp,
-                if (style.layout_style.padding.bottom is Dimension.Points)
-                    (style.layout_style.padding.bottom as Dimension.Points).value.dp
+                if (style.layoutStyle.padding.bottom is Dimension.Points)
+                    (style.layoutStyle.padding.bottom as Dimension.Points).value.dp
                 else 0.dp,
             )
         if (isHorizontalLayout) {
             return LayoutInfoRow(
                 arrangement =
-                    when (justifyContentFromInt(style.layout_style.justify_content)) {
+                    when (justifyContentFromInt(style.layoutStyle.justify_content)) {
                         is JustifyContent.FlexStart ->
                             if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp)
                             else Arrangement.Start
@@ -285,7 +287,7 @@ internal fun calcLayoutInfo(
                         else -> Arrangement.Start
                     },
                 alignment =
-                    when (alignItemsFromInt(style.layout_style.align_items)) {
+                    when (alignItemsFromInt(style.layoutStyle.align_items)) {
                         is AlignItems.FlexStart -> Alignment.Top
                         is AlignItems.Center -> Alignment.CenterVertically
                         is AlignItems.FlexEnd -> Alignment.Bottom
@@ -293,12 +295,12 @@ internal fun calcLayoutInfo(
                     },
                 selfModifier = modifier,
                 marginModifier = marginModifier,
-                padding = style.layout_style.padding.get(),
+                padding = style.layoutStyle.padding.get(),
             )
         } else if (isVerticalLayout) {
             return LayoutInfoColumn(
                 arrangement =
-                    when (justifyContentFromInt(style.layout_style.justify_content)) {
+                    when (justifyContentFromInt(style.layoutStyle.justify_content)) {
                         is JustifyContent.FlexStart ->
                             if (itemSpacing != 0) Arrangement.spacedBy(itemSpacing.dp)
                             else Arrangement.Top
@@ -316,7 +318,7 @@ internal fun calcLayoutInfo(
                         else -> Arrangement.Top
                     },
                 alignment =
-                    when (alignItemsFromInt(style.layout_style.align_items)) {
+                    when (alignItemsFromInt(style.layoutStyle.align_items)) {
                         is AlignItems.FlexStart -> Alignment.Start
                         is AlignItems.Center -> Alignment.CenterHorizontally
                         is AlignItems.FlexEnd -> Alignment.End
@@ -324,7 +326,7 @@ internal fun calcLayoutInfo(
                     },
                 selfModifier = modifier,
                 marginModifier = marginModifier,
-                padding = style.layout_style.padding.get(),
+                padding = style.layoutStyle.padding.get(),
             )
         } else {
             val isColumnLayout =
@@ -338,10 +340,10 @@ internal fun calcLayoutInfo(
                     else -> false
                 }
             return LayoutInfoGrid(
-                layout = gridLayoutTypeFromInt(style.node_style.grid_layout_type.get()),
-                minColumnRowSize = style.node_style.grid_adaptive_min_size,
-                mainAxisSpacing = style.layout_style.item_spacing.get(),
-                crossAxisSpacing = style.node_style.cross_axis_item_spacing.toInt(),
+                layout = gridLayoutTypeFromInt(style.nodeStyle.grid_layout_type.get()),
+                minColumnRowSize = style.nodeStyle.grid_adaptive_min_size,
+                mainAxisSpacing = style.layoutStyle.item_spacing.get(),
+                crossAxisSpacing = style.nodeStyle.cross_axis_item_spacing.toInt(),
                 // TODO support these other alignments?
                 /*
                 mainAxisAlignment =
@@ -362,11 +364,11 @@ internal fun calcLayoutInfo(
                   else -> FlowCrossAxisAlignment.Start
                 },
                 */
-                numColumnsRows = style.node_style.grid_columns_rows,
-                gridSpanContent = style.node_style.grid_span_contents,
+                numColumnsRows = style.nodeStyle.grid_columns_rows,
+                gridSpanContent = style.nodeStyle.grid_span_contents,
                 selfModifier = modifier,
                 scrollingEnabled = scrollingEnabled,
-                padding = style.layout_style.padding.get(),
+                padding = style.layoutStyle.padding.get(),
             )
         }
     } else {
@@ -532,13 +534,13 @@ internal fun designMeasurePolicy(
                             val density = LayoutManager.getDensity()
                             if (designScroll.orientation == Orientation.Horizontal) {
                                 val hMargin =
-                                    view.style.layout_style.padding.end.pointsAsDp(density).value
+                                    view.style.layoutStyle.padding.end.pointsAsDp(density).value
                                 designScroll.scrollMax.value =
                                     (childLayout.left + childLayout.width - myWidth + hMargin)
                                         .coerceAtLeast(0F)
                             } else {
                                 val vMargin =
-                                    view.style.layout_style.padding.bottom.pointsAsDp(density).value
+                                    view.style.layoutStyle.padding.bottom.pointsAsDp(density).value
                                 designScroll.scrollMax.value =
                                     (childLayout.top + childLayout.height - myHeight + vMargin)
                                         .coerceAtLeast(0F)

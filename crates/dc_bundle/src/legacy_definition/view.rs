@@ -16,4 +16,3 @@
 
 pub mod component;
 pub mod view;
-pub mod view_style;

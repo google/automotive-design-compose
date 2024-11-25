@@ -81,6 +81,7 @@ import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
 import com.android.designcompose.getOpenLinkCallback
+import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.newDimensionProtoPoints
 import com.android.designcompose.registerOpenLinkCallback
 import com.android.designcompose.rootNode
@@ -135,7 +136,7 @@ private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints,
     // we should always start with `view.style` (immutable, from the DCF) and apply constraints to
     // that. Otherwise, we end up progressively adding different style rules to the root style as we
     // get different layout queries (especially during the intrinsic width/height query process).
-    val layoutStyleBuilder = view.style.layout_style.asBuilder()
+    val layoutStyleBuilder = view.style.layoutStyle.asBuilder()
 
     if (constraints.minWidth != 0)
         layoutStyleBuilder.min_width =
@@ -178,7 +179,7 @@ private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints,
             )
     }
 
-    rootStyleBuilder.layout_style = layoutStyleBuilder.build()
+    rootStyleBuilder.layout_style = Optional.of(layoutStyleBuilder.build())
     style = rootStyleBuilder.build()
 }
 

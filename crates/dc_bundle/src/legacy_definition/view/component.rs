@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-use crate::definition::view::StyledTextRun;
-use crate::legacy_definition::view::view_style::ViewStyle;
+use crate::definition::view::{StyledTextRun, ViewStyle};
 use serde::{Deserialize, Serialize};
 
 /// Figma component properties can be "overridden" in the UI. These overrides

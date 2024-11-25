@@ -16,14 +16,20 @@
 
 package com.android.designcompose.proto
 
+import androidx.compose.ui.text.style.TextDecoration
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
+import com.android.designcompose.serdegen.BlendMode
+import com.android.designcompose.serdegen.Display
 import com.android.designcompose.serdegen.FlexDirection
+import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.JustifyContent
+import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
 import com.android.designcompose.serdegen.StrokeCap
+import com.android.designcompose.serdegen.TextAlign
 import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.TriggerType
 import java.util.Optional
@@ -308,6 +314,14 @@ internal fun layoutSizingFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.LayoutSizing.Unspecified()
     }
 
+internal fun com.android.designcompose.serdegen.LayoutSizing.toInt() =
+    when (this) {
+        is com.android.designcompose.serdegen.LayoutSizing.Fixed -> 1
+        is com.android.designcompose.serdegen.LayoutSizing.Hug -> 2
+        is com.android.designcompose.serdegen.LayoutSizing.Fill -> 3
+        else -> 0
+    }
+
 internal fun fontStyleFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.FontStyle.Normal()
@@ -316,10 +330,194 @@ internal fun fontStyleFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.FontStyle.Unspecified()
     }
 
+internal fun FontStyle.toInt() =
+    when (this) {
+        is FontStyle.Normal -> 1
+        is FontStyle.Italic -> 2
+        is FontStyle.Oblique -> 3
+        else -> 0
+    }
+
 internal fun textDecorationFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.TextDecoration.None()
         2 -> com.android.designcompose.serdegen.TextDecoration.Underline()
         3 -> com.android.designcompose.serdegen.TextDecoration.Strikethrough()
         else -> com.android.designcompose.serdegen.TextDecoration.Unspecified()
+    }
+
+internal fun com.android.designcompose.serdegen.TextDecoration.toInt() =
+    when (this) {
+        is com.android.designcompose.serdegen.TextDecoration.None -> 1
+        is com.android.designcompose.serdegen.TextDecoration.Underline -> 2
+        is com.android.designcompose.serdegen.TextDecoration.Strikethrough -> 3
+        else -> 0
+    }
+
+internal fun blendModeFromInt(value: Int) =
+    when (value) {
+        1 -> com.android.designcompose.serdegen.BlendMode.PassThrough()
+        2 -> com.android.designcompose.serdegen.BlendMode.Normal()
+        3 -> com.android.designcompose.serdegen.BlendMode.Darken()
+        4 -> com.android.designcompose.serdegen.BlendMode.Multiply()
+        5 -> com.android.designcompose.serdegen.BlendMode.LinearBurn()
+        6 -> com.android.designcompose.serdegen.BlendMode.ColorBurn()
+        7 -> com.android.designcompose.serdegen.BlendMode.Lighten()
+        8 -> com.android.designcompose.serdegen.BlendMode.Screen()
+        9 -> com.android.designcompose.serdegen.BlendMode.LinearDodge()
+        10 -> com.android.designcompose.serdegen.BlendMode.ColorDodge()
+        11 -> com.android.designcompose.serdegen.BlendMode.Overlay()
+        12 -> com.android.designcompose.serdegen.BlendMode.SoftLight()
+        13 -> com.android.designcompose.serdegen.BlendMode.HardLight()
+        14 -> com.android.designcompose.serdegen.BlendMode.Difference()
+        15 -> com.android.designcompose.serdegen.BlendMode.Exclusion()
+        16 -> com.android.designcompose.serdegen.BlendMode.Hue()
+        17 -> com.android.designcompose.serdegen.BlendMode.Saturation()
+        18 -> com.android.designcompose.serdegen.BlendMode.Color()
+        19 -> com.android.designcompose.serdegen.BlendMode.Luminosity()
+        else -> com.android.designcompose.serdegen.BlendMode.Unspecified()
+    }
+
+internal fun BlendMode.toInt() =
+    when (this) {
+        is BlendMode.PassThrough -> 1
+        is BlendMode.Normal -> 2
+        is BlendMode.Darken -> 3
+        is BlendMode.Multiply -> 4
+        is BlendMode.LinearBurn -> 5
+        is BlendMode.ColorBurn -> 6
+        is BlendMode.Lighten -> 7
+        is BlendMode.Screen -> 8
+        is BlendMode.LinearDodge -> 9
+        is BlendMode.ColorDodge -> 10
+        is BlendMode.Overlay -> 11
+        is BlendMode.SoftLight -> 12
+        is BlendMode.HardLight -> 13
+        is BlendMode.Difference -> 14
+        is BlendMode.Exclusion -> 15
+        is BlendMode.Hue -> 16
+        is BlendMode.Saturation -> 17
+        is BlendMode.Color -> 18
+        is BlendMode.Luminosity -> 19
+
+        else -> 0
+    }
+
+internal fun overflowFromInt(value: Int) =
+    when (value) {
+        1 -> Overflow.Visible()
+        2 -> Overflow.Hidden()
+        3 -> Overflow.Scroll()
+        else -> Overflow.Unspecified()
+    }
+
+internal fun Overflow.toInt() =
+    when (this) {
+        is Overflow.Visible -> 1
+        is Overflow.Hidden -> 2
+        is Overflow.Scroll -> 3
+        else -> 0
+    }
+
+internal fun textAlignFromInt(value: Int) =
+    when (value) {
+        1 -> TextAlign.Left()
+        2 -> TextAlign.Center()
+        3 -> TextAlign.Right()
+        else -> TextAlign.Unspecified()
+    }
+
+internal fun TextAlign.toInt() =
+    when (this) {
+        is TextAlign.Left -> 1
+        is TextAlign.Center -> 2
+        is TextAlign.Right -> 3
+        else -> 0
+    }
+
+internal fun textAlignVerticalFromInt(value: Int) =
+    when (value) {
+        1 -> com.android.designcompose.serdegen.TextAlignVertical.Top()
+        2 -> com.android.designcompose.serdegen.TextAlignVertical.Center()
+        3 -> com.android.designcompose.serdegen.TextAlignVertical.Bottom()
+        else -> com.android.designcompose.serdegen.TextAlignVertical.Unspecified()
+    }
+
+internal fun com.android.designcompose.serdegen.TextAlignVertical.toInt() =
+    when (this) {
+        is com.android.designcompose.serdegen.TextAlignVertical.Top -> 1
+        is com.android.designcompose.serdegen.TextAlignVertical.Center -> 2
+        is com.android.designcompose.serdegen.TextAlignVertical.Bottom -> 3
+        else -> 0
+    }
+
+internal fun textOverflowFromInt(value: Int) =
+    when (value) {
+        1 -> com.android.designcompose.serdegen.TextOverflow.Clip()
+        2 -> com.android.designcompose.serdegen.TextOverflow.Ellipsis()
+        else -> com.android.designcompose.serdegen.TextOverflow.Unspecified()
+    }
+
+internal fun com.android.designcompose.serdegen.TextOverflow.toInt() =
+    when (this) {
+        is com.android.designcompose.serdegen.TextOverflow.Clip -> 1
+        is com.android.designcompose.serdegen.TextOverflow.Ellipsis -> 2
+        else -> 0
+    }
+
+internal fun pointerEventsFromInt(value: Int) =
+    when (value) {
+        1 -> com.android.designcompose.serdegen.PointerEvents.Auto()
+        2 -> com.android.designcompose.serdegen.PointerEvents.None()
+        3 -> com.android.designcompose.serdegen.PointerEvents.Inherit()
+        else -> com.android.designcompose.serdegen.PointerEvents.Unspecified()
+    }
+
+internal fun com.android.designcompose.serdegen.PointerEvents.toInt() =
+    when (this) {
+        is com.android.designcompose.serdegen.PointerEvents.Auto -> 1
+        is com.android.designcompose.serdegen.PointerEvents.None -> 2
+        is com.android.designcompose.serdegen.PointerEvents.Inherit -> 3
+        else -> 0
+    }
+
+internal fun displayFromInt(value: Int) =
+    when (value) {
+        1 -> Display.Flex()
+        2 -> Display.None()
+        else -> Display.Unspecified()
+    }
+
+internal fun Display.toInt() =
+    when (this) {
+        is Display.Flex -> 1
+        is Display.None -> 2
+        else -> 0
+    }
+
+internal fun flexWrapFromInt(value: Int) =
+    when (value) {
+        1 -> com.android.designcompose.serdegen.FlexWrap.NoWrap()
+        2 -> com.android.designcompose.serdegen.FlexWrap.Wrap()
+        3 -> com.android.designcompose.serdegen.FlexWrap.WrapReverse()
+        else -> com.android.designcompose.serdegen.FlexWrap.Unspecified()
+    }
+
+internal fun com.android.designcompose.serdegen.FlexWrap.toInt() =
+    when (this) {
+        is com.android.designcompose.serdegen.FlexWrap.NoWrap -> 1
+        is com.android.designcompose.serdegen.FlexWrap.Wrap -> 2
+        is com.android.designcompose.serdegen.FlexWrap.WrapReverse -> 3
+        else -> 0
+    }
+
+internal fun gridLayoutTypeFromInt(value: Int) =
+    when (value) {
+        1 -> com.android.designcompose.serdegen.GridLayoutType.FixedColumns()
+        2 -> com.android.designcompose.serdegen.GridLayoutType.FixedRows()
+        3 -> com.android.designcompose.serdegen.GridLayoutType.AutoColumns()
+        4 -> com.android.designcompose.serdegen.GridLayoutType.AutoRows()
+        5 -> com.android.designcompose.serdegen.GridLayoutType.Horizontal()
+        6 -> com.android.designcompose.serdegen.GridLayoutType.Vertical()
+        else -> com.android.designcompose.serdegen.GridLayoutType.Unspecified()
     }

@@ -462,13 +462,19 @@ impl Hash for FontStretch {
     }
 }
 
+impl NumOrVar {
+    pub const fn from_num(num: f32) -> Self {
+        NumOrVar { num_or_var_type: Some(NumOrVarType::Num(num)) }
+    }
+}
+
 impl FontWeight {
     pub fn new(num_or_var_type: NumOrVarType) -> Self {
         FontWeight { weight: Some(NumOrVar { num_or_var_type: Some(num_or_var_type) }) }
     }
 
     pub const fn from_num(weight: f32) -> Self {
-        FontWeight { weight: Some(NumOrVar { num_or_var_type: Some(NumOrVarType::Num(weight)) }) }
+        FontWeight { weight: Some(NumOrVar::from_num(weight)) }
     }
 
     /// Thin weight (100), the thinnest value.

@@ -46,6 +46,9 @@ import com.android.designcompose.asComposeTransform
 import com.android.designcompose.getBrush
 import com.android.designcompose.getBrushFunction
 import com.android.designcompose.isMask
+import com.android.designcompose.proto.blendModeFromInt
+import com.android.designcompose.proto.textAlignVerticalFromInt
+import com.android.designcompose.proto.textOverflowFromInt
 import com.android.designcompose.proto.toUniform
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.TextAlignVertical
@@ -274,7 +277,7 @@ private fun squooshTextRender(
             paragraphIntrinsics = textInfo.paragraph,
             width = layoutWidth,
             maxLines = textInfo.maxLines,
-            ellipsis = style.node_style.text_overflow is TextOverflow.Ellipsis,
+            ellipsis = textOverflowFromInt(style.node_style.text_overflow) is TextOverflow.Ellipsis,
         )
 
     val layoutHeight = computedLayout.height * density.density
@@ -282,8 +285,8 @@ private fun squooshTextRender(
     // Apply any styled transform or blend mode.
     // XXX: transform customization?
     val transform = style.node_style.transform.asComposeTransform(density.density)
-    val blendMode = style.node_style.blend_mode.asComposeBlendMode()
-    val useBlendModeLayer = style.node_style.blend_mode.useLayer()
+    val blendMode = blendModeFromInt(style.node_style.blend_mode).asComposeBlendMode()
+    val useBlendModeLayer = blendModeFromInt(style.node_style.blend_mode).useLayer()
     val opacity = style.node_style.opacity.orElse(1.0f)
 
     if (useBlendModeLayer || opacity < 1.0f) {
@@ -299,7 +302,7 @@ private fun squooshTextRender(
 
     // Apply vertical centering; this would be better done in layout.
     val verticalCenterOffset =
-        when (style.node_style.text_align_vertical) {
+        when (textAlignVerticalFromInt(style.node_style.text_align_vertical)) {
             is TextAlignVertical.Center -> (layoutHeight - paragraph.height).coerceAtLeast(0f) / 2f
             is TextAlignVertical.Bottom -> (layoutHeight - paragraph.height).coerceAtLeast(0f)
             else -> 0.0f
@@ -316,7 +319,7 @@ private fun squooshTextRender(
     drawContext.canvas.save()
     drawContext.canvas.translate(0.0f, verticalCenterOffset)
 
-    val strokeWidth = style.node_style.stroke.stroke_weight.toUniform() * density.density
+    val strokeWidth = style.node_style.stroke.get().stroke_weight.toUniform() * density.density
     // Only drop shadow is supported now.
     val shadow = style.node_style.text_shadow.getOrNull()
     val blurRadius = (shadow?.blur_radius ?: 0f) * density.density
@@ -348,12 +351,14 @@ private fun squooshTextRender(
         paragraph.paint(drawContext.canvas, brush = customFillBrush, alpha = 1.0f, drawStyle = Fill)
     } else {
         val textBrushAndOpacity =
-            style.node_style.text_color.asBrush(
-                appContext = appContext,
-                document = document,
-                density = density.density,
-                variableState = variableState,
-            )
+            style.node_style.text_color
+                .get()
+                .asBrush(
+                    appContext = appContext,
+                    document = document,
+                    density = density.density,
+                    variableState = variableState,
+                )
         paragraph.paint(
             drawContext.canvas,
             brush = textBrushAndOpacity?.first ?: SolidColor(Color.Transparent),
@@ -362,7 +367,7 @@ private fun squooshTextRender(
         )
     }
 
-    style.node_style.stroke.strokes.forEach {
+    style.node_style.stroke.get().strokes.forEach {
         val strokeBrushAndOpacity =
             it.asBrush(
                 appContext = appContext,

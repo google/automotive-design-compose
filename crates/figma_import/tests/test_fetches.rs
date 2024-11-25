@@ -46,9 +46,17 @@ fn fetch_variable_modes() {
 
 #[test]
 #[cfg_attr(not(feature = "test_fetches"), ignore)]
-fn fetch_dials_gauges_progress_constraints() {
+fn fetch_dials_gauges() {
     run_test(
         "lZj6E9GtIQQE4HNLpzgETw",
-        &["#stage-constraints", "#progress-bar", "#progress-indicator"],
+        &[
+            "#stage",
+            "#stage-vector-progress",
+            "#stage-constraints",
+            "#arc-angle",
+            "#needle-rotation",
+            "#progress-bar",
+            "#progress-indicator",
+        ],
     );
 }

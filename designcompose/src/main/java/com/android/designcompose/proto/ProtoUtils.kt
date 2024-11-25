@@ -151,3 +151,5 @@ internal fun newFontWeight(weight: Float) =
     FontWeight(Optional.of(NumOrVar(Optional.of(NumOrVarType.Num(weight)))))
 
 internal fun ItemSpacing.type() = item_spacing_type.getOrNull()
+
+internal fun newNumOrVar(value: Float) = NumOrVar(Optional.of(NumOrVarType.Num(value)))

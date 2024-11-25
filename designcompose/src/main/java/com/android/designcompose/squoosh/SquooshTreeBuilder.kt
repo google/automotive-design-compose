@@ -511,7 +511,7 @@ private fun generateOverlayNode(
     val overlayStyle = node.style.asBuilder()
     val layoutStyle = node.style.layout_style.asBuilder()
     val nodeStyle = node.style.node_style.asBuilder()
-    nodeStyle.overflow = Overflow.Visible()
+    nodeStyle.overflow = Overflow.Visible().toInt()
     layoutStyle.position_type = PositionType.Absolute().toInt()
     layoutStyle.top = newDimensionProtoPercent(0.0f)
     layoutStyle.left = newDimensionProtoPercent(0.0f)
@@ -552,7 +552,7 @@ private fun generateOverlayNode(
             layoutStyle.align_items = AlignItems.Center().toInt()
         }
     }
-    nodeStyle.background = listOf()
+    nodeStyle.backgrounds = listOf()
 
     overlay.overlay_background.getOrNull()?.color?.getOrNull()?.let { color ->
         val colorBuilder = Color.Builder()
@@ -560,7 +560,7 @@ private fun generateOverlayNode(
         colorBuilder.g = (color.g * 255.0).toInt()
         colorBuilder.b = (color.b * 255.0).toInt()
         colorBuilder.a = (color.a * 255.0).toInt()
-        nodeStyle.background =
+        nodeStyle.backgrounds =
             listOf(
                 Background(
                     Optional.of(

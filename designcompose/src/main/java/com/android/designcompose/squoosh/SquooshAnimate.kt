@@ -676,7 +676,7 @@ private fun isTweenable(a: View, b: View): Boolean {
 
 private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     // Compare some style things and decide if we need to tween the styles.
-    if (a.node_style.background != b.node_style.background) return true
+    if (a.node_style.backgrounds != b.node_style.backgrounds) return true
     if (a.node_style.stroke != b.node_style.stroke) return true
     return false
 }

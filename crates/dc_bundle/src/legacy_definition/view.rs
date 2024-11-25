@@ -15,6 +15,5 @@
  */
 
 pub mod component;
-pub mod node_style;
 pub mod view;
 pub mod view_style;

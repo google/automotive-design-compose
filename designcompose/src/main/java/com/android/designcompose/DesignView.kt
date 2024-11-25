@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.proto.overflowFromInt
 import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.ActionType
@@ -624,7 +625,8 @@ internal fun DesignView(
                                 var currentMask: View? = null
                                 (view.data as ViewData.Container).children.forEach { child ->
                                     val shouldClip =
-                                        child.style.node_style.overflow is Overflow.Hidden
+                                        overflowFromInt(child.style.node_style.overflow) is
+                                            Overflow.Hidden
                                     if (child.isMask()) {
                                         // Add the mask to the list and set the current mask
                                         viewList.add(Pair(child, ArrayList()))

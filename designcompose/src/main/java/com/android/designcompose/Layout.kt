@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.android.designcompose.proto.alignItemsFromInt
 import com.android.designcompose.proto.bottom
 import com.android.designcompose.proto.end
+import com.android.designcompose.proto.gridLayoutTypeFromInt
 import com.android.designcompose.proto.justifyContentFromInt
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.top
@@ -243,8 +244,8 @@ internal fun calcLayoutInfo(
     view: View,
     style: ViewStyle,
 ): SimplifiedLayoutInfo {
-    if (style.node_style.grid_layout.isPresent) {
-        val gridLayout = style.node_style.grid_layout.get()
+    if (style.node_style.grid_layout_type.isPresent) {
+        val gridLayout = gridLayoutTypeFromInt(style.node_style.grid_layout_type.get())
         val isHorizontalLayout = gridLayout is GridLayoutType.Horizontal
         val isVerticalLayout = gridLayout is GridLayoutType.Vertical
         val itemSpacing = itemSpacingAbs(style.layout_style.item_spacing.get())
@@ -337,7 +338,7 @@ internal fun calcLayoutInfo(
                     else -> false
                 }
             return LayoutInfoGrid(
-                layout = style.node_style.grid_layout.get(),
+                layout = gridLayoutTypeFromInt(style.node_style.grid_layout_type.get()),
                 minColumnRowSize = style.node_style.grid_adaptive_min_size,
                 mainAxisSpacing = style.layout_style.item_spacing.get(),
                 crossAxisSpacing = style.node_style.cross_axis_item_spacing.toInt(),
@@ -362,7 +363,7 @@ internal fun calcLayoutInfo(
                 },
                 */
                 numColumnsRows = style.node_style.grid_columns_rows,
-                gridSpanContent = style.node_style.grid_span_content,
+                gridSpanContent = style.node_style.grid_span_contents,
                 selfModifier = modifier,
                 scrollingEnabled = scrollingEnabled,
                 padding = style.layout_style.padding.get(),

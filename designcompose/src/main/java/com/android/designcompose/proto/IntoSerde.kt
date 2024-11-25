@@ -28,7 +28,15 @@ import com.android.designcompose.serdegen.Size
 import java.util.Optional
 
 internal fun LayoutChangedResponse.Layout.intoSerde() =
-    com.android.designcompose.serdegen.Layout(order, width, height, left, top)
+    com.android.designcompose.serdegen.Layout(
+        order,
+        width,
+        height,
+        left,
+        top,
+        contentWidth,
+        contentHeight,
+    )
 
 internal fun ItemSpacing.intoSerde() =
     when (itemSpacingTypeCase) {

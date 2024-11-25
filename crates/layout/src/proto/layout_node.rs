@@ -102,6 +102,8 @@ impl From<Layout> for crate::types::Layout {
             height: proto.height,
             left: proto.left,
             top: proto.top,
+            content_width: proto.content_width,
+            content_height: proto.content_height,
         }
     }
 }
@@ -114,6 +116,8 @@ impl From<crate::types::Layout> for Layout {
             height: layout.height,
             left: layout.left,
             top: layout.top,
+            content_width: layout.content_width,
+            content_height: layout.content_height,
         }
     }
 }

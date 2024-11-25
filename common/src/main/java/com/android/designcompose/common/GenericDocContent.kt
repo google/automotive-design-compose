@@ -22,6 +22,7 @@ import com.android.designcompose.serdegen.FigmaDocInfo
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.ServerFigmaDoc
 import com.android.designcompose.serdegen.View
+import com.android.designcompose.serdegen.ViewData
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
 import java.io.ByteArrayOutputStream
@@ -35,6 +36,7 @@ class GenericDocContent(
     val document: DesignComposeDefinition,
     val variantViewMap: HashMap<String, HashMap<String, View>>,
     val variantPropertyMap: VariantPropertyMap,
+    val nodeIdMap: HashMap<String, View>,
     private val imageSessionData: ByteArray,
     val imageSession: String?,
     val branches: List<FigmaDocInfo>? = null,
@@ -85,12 +87,14 @@ fun decodeServerBaseDoc(
 
     val variantViewMap = createVariantViewMap(content.views)
     val variantPropertyMap = createVariantPropertyMap(content.views)
+    val nodeIdMap = createNodeIdMap(content.views)
     return GenericDocContent(
         docId,
         header,
         content,
         variantViewMap,
         variantPropertyMap,
+        nodeIdMap,
         imageSessionData.imageSessionData,
         imageSessionData.imageSession,
         serverDoc.branches,
@@ -114,6 +118,7 @@ fun decodeDiskBaseDoc(
     val imageSessionData = decodeImageSession(docBytes, deserializer)
     val variantMap = createVariantViewMap(content.views)
     val variantPropertyMap = createVariantPropertyMap(content.views)
+    val nodeIdMap = createNodeIdMap(content.views)
 
     feedback.documentDecodeSuccess(header.dc_version, header.name, header.last_modified, docId)
 
@@ -123,6 +128,7 @@ fun decodeDiskBaseDoc(
         content,
         variantMap,
         variantPropertyMap,
+        nodeIdMap,
         imageSessionData.imageSessionData,
         imageSessionData.imageSession,
     )
@@ -168,6 +174,20 @@ private fun createVariantPropertyMap(nodes: Map<NodeQuery, View>?): VariantPrope
         }
     }
     return propertyMap
+}
+
+// Recursively add all views to a map indexed by the node id so that we can look up any view that
+// we already have in our hash of views.
+private fun createNodeIdMap(nodes: Map<NodeQuery, View>?): HashMap<String, View> {
+    val nodeIdMap = HashMap<String, View>()
+    fun addViewToMap(view: View) {
+        nodeIdMap[view.id] = view
+        if (view.data is ViewData.Container) {
+            view.data.children.forEach { addViewToMap(it) }
+        }
+    }
+    nodes?.values?.forEach { addViewToMap(it) }
+    return nodeIdMap
 }
 
 fun readDocBytes(doc: InputStream, docId: DesignDocId, feedback: FeedbackImpl): ByteArray {

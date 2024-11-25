@@ -476,6 +476,36 @@ fn test_zero_width_height() {
     assert_eq!(vert_bar_layout.height, 20.0);
 }
 
+#[test]
+fn test_vertical_scroll_contents() {
+    let figma_doc_result = load_doc();
+    let manager = load_view("VerticalScrolling", &figma_doc_result.unwrap());
+
+    // Test that the layout manager calculates the correct size and content height for a
+    // frame that scrolls vertically
+    let scroll_frame_layout_result = manager.get_node_layout(1);
+    assert!(scroll_frame_layout_result.is_some());
+    let scroll_layout = scroll_frame_layout_result.unwrap();
+    assert_eq!(scroll_layout.width, 80.0);
+    assert_eq!(scroll_layout.height, 100.0);
+    assert_eq!(scroll_layout.content_height, 210.0);
+}
+
+#[test]
+fn test_horizontal_scroll_contents() {
+    let figma_doc_result = load_doc();
+    let manager = load_view("HorizontalScrolling", &figma_doc_result.unwrap());
+
+    // Test that the layout manager calculates the correct size and content width for a
+    // frame that scrolls horizontally
+    let scroll_frame_layout_result = manager.get_node_layout(1);
+    assert!(scroll_frame_layout_result.is_some());
+    let scroll_layout = scroll_frame_layout_result.unwrap();
+    assert_eq!(scroll_layout.width, 100.0);
+    assert_eq!(scroll_layout.height, 80.0);
+    assert_eq!(scroll_layout.content_width, 210.0);
+}
+
 // Add tests:
 //
 // 2. Nodes in horizontal layout

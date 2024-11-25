@@ -94,6 +94,8 @@ internal abstract class SquooshAnimatedItem(
                 height,
                 to.left * value + from.left * (1f - value),
                 to.top * value + from.top * (1f - value),
+                to.content_width,
+                to.content_height,
             )
     }
 

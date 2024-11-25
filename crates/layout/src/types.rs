@@ -22,9 +22,13 @@ pub struct Layout {
     pub order: u32,
     pub width: f32,
     pub height: f32,
-    /// The top-left corner of the node
+    // The top-left corner of the node
     pub left: f32,
     pub top: f32,
+    // For nodes with children, this contains the size of all the child content.
+    // This is used to calculate the scrollable area when scrolling is enabled.
+    pub content_width: f32,
+    pub content_height: f32,
 }
 
 impl Layout {
@@ -35,6 +39,8 @@ impl Layout {
             height: l.size.height,
             left: l.location.x,
             top: l.location.y,
+            content_width: l.content_size.width,
+            content_height: l.content_size.height,
         }
     }
 }

@@ -525,6 +525,7 @@ private fun searchNodes(
     nodes: Map<NodeQuery, View>,
     parentViewMap: HashMap<String, HashMap<String, View>>,
     variantPropertyMap: VariantPropertyMap,
+    nodeIdMap: HashMap<String, View>,
     customizations: CustomizationContext? = null,
 ): View? {
     val findVariantView: (NodeQuery.NodeVariant) -> View? = { query ->
@@ -588,6 +589,12 @@ private fun searchNodes(
             }
         }
     }
+
+    if (q is NodeQuery.NodeId) {
+        // Look for the view in our map of views indexed by node ID.
+        return nodeIdMap[q.value]
+    }
+
     return null
 }
 
@@ -618,6 +625,7 @@ internal fun InteractionState.rootNode(
         doc.c.document.views,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
+        doc.c.nodeIdMap,
         customizations,
     )
 }
@@ -639,7 +647,13 @@ internal fun InteractionState.rootOverlays(doc: DocContent): List<View> {
     // the latest doc nodes, rather than causing an invalidation here and returning
     // an updated value later).
     return rootOverlays.mapNotNull { query ->
-        searchNodes(query, doc.c.document.views, doc.c.variantViewMap, doc.c.variantPropertyMap)
+        searchNodes(
+            query,
+            doc.c.document.views,
+            doc.c.variantViewMap,
+            doc.c.variantPropertyMap,
+            doc.c.nodeIdMap,
+        )
     }
 }
 
@@ -722,6 +736,7 @@ internal fun InteractionState.nodeVariant(
         doc.c.document.views,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
+        doc.c.nodeIdMap,
     )
 }
 
@@ -737,6 +752,7 @@ internal fun InteractionState.squooshNodeVariant(
         doc.c.document.views,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
+        doc.c.nodeIdMap,
     )
 }
 
@@ -759,6 +775,7 @@ internal fun InteractionState.squooshRootNode(
         doc.c.document.views,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
+        doc.c.nodeIdMap,
         customizations,
     )
 }

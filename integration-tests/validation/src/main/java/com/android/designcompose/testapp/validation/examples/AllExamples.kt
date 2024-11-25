@@ -121,6 +121,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         ),
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
         Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
+        Triple("Scrolling", { ScrollingTest() }, ScrollingTestDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

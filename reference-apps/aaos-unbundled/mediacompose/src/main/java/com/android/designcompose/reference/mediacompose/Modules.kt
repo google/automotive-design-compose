@@ -38,7 +38,7 @@ class NowPlayingModule(
     @DesignProperty(node = "#media/now-playing/subtitle") val artist: String,
     @DesignProperty(node = "#media/now-playing/album") val album: String,
     @DesignProperty(node = "#media/now-playing/artwork")
-    val albumArt: @Composable (ImageReplacementContext) -> Bitmap?,
+    val albumArt: (ImageReplacementContext) -> Bitmap?,
     @DesignProperty(node = "#media/now-playing/source-icon") val appIcon: Bitmap?,
     @DesignProperty(node = "#media/now-playing/source-name") val appName: String,
     @DesignModuleProperty val nowPlayingProgressBarModule: NowPlayingProgressBarModule,

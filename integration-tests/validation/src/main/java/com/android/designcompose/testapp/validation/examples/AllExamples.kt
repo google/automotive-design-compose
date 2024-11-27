@@ -120,6 +120,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             ComponentReplaceRelayoutDoc.javaClass.name,
         ),
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
+        Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )
@@ -138,8 +139,6 @@ val SQUOOSH_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, Stri
 
 val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
-        // Squoosh doesn't work with ImageReplacementContext
-        Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
         // No support for hyperlinks.
         Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name),
         // Lazy Grid doesn't actually use a doc

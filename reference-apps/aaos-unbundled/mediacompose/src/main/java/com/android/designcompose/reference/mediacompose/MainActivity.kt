@@ -105,7 +105,7 @@ interface CenterDisplay {
 
     @DesignComponent(node = "#media/now-playing/custom-action-button")
     fun CustomActionButton(
-        @Design(node = "#icon") icon: @Composable (ImageReplacementContext) -> Bitmap?,
+        @Design(node = "#icon") icon: (ImageReplacementContext) -> Bitmap?,
         @Design(node = "#media/now-playing/custom-action-button") onTap: TapCallback,
     )
 
@@ -129,7 +129,7 @@ interface CenterDisplay {
         @DesignVariant(property = "#media/page-header/nav-button") navButtonType: NavButtonType,
         @Design(node = "#media/page-header/nav-button") onTap: TapCallback,
         @Design(node = "#name") name: String,
-        @Design(node = "#icon") icon: @Composable (ImageReplacementContext) -> Bitmap?,
+        @Design(node = "#icon") icon: (ImageReplacementContext) -> Bitmap?,
     )
 
     @DesignComponent(node = "#media/browse/item")
@@ -140,7 +140,7 @@ interface CenterDisplay {
         @Design(node = "#title") title: String,
         @Design(node = "#subtitle") subtitle: String,
         @Design(node = "#subtitle") showSubtitle: Boolean,
-        @Design(node = "#icon") icon: @Composable (ImageReplacementContext) -> Bitmap?,
+        @Design(node = "#icon") icon: (ImageReplacementContext) -> Bitmap?,
     )
 
     @DesignComponent(node = "#media/error/frame")
@@ -189,7 +189,8 @@ class MainActivity : ComponentActivity() {
                 album = nowPlaying.album,
                 albumArt = nowPlaying.albumArt,
                 appIcon = nowPlayingMediaSource?.croppedPackageIcon,
-                appName = nowPlayingMediaSource?.getDisplayName(applicationContext) as String,
+                appName =
+                    nowPlayingMediaSource?.getDisplayName(applicationContext)?.toString() ?: "",
                 nowPlayingProgressBarModule = nowPlayingProgressBarModule,
             )
         val playbackControlsModule =
@@ -213,7 +214,7 @@ class MainActivity : ComponentActivity() {
         val browseSourceButtonModule =
             BrowseSourceButtonModule(
                 browseAppIcon = browseMediaSource?.croppedPackageIcon,
-                browseAppName = browseMediaSource?.getDisplayName(application) as String,
+                browseAppName = browseMediaSource?.getDisplayName(application)?.toString() ?: "",
                 browseSourceList = browse.sourceButtons,
             )
         val browsePageHeaderModule =

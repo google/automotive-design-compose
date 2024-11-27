@@ -184,7 +184,7 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "@Composable (ComponentReplacementContext) -> Unit" ->
             CustomizationType.ComponentReplacement
         "com.android.designcompose.ListContent" -> CustomizationType.ListContent
-        "@Composable (ImageReplacementContext) -> Bitmap?" -> CustomizationType.ImageWithContext
+        "(ImageReplacementContext) -> Bitmap?" -> CustomizationType.ImageWithContext
         "Boolean" -> CustomizationType.Visibility
         "State<Boolean>" -> CustomizationType.VisibilityState
         "TextStyle" -> CustomizationType.TextStyle

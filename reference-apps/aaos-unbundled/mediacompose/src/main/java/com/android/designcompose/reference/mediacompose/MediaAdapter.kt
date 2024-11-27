@@ -122,7 +122,7 @@ class MediaNowPlaying {
     var title: String = ""
     var artist: String = ""
     var album: String = ""
-    var albumArt: @Composable (ImageReplacementContext) -> Bitmap? = { null }
+    var albumArt: (ImageReplacementContext) -> Bitmap? = { null }
     var showPlay: Boolean = false
     var showPause: Boolean = false
     var showPrev: Boolean = false
@@ -165,16 +165,25 @@ class MediaSearch {
 private class MediaArtRequestManager {
     private var artRequestSubscriptions: HashMap<MediaArtKey, HashSet<(Bitmap?) -> Unit>> =
         HashMap()
+    // Maps a bitmap setter function to the MediaArtKey that initiated the request
+    private var setBitmapSubscriptions: HashMap<(Bitmap?) -> Unit, MediaArtKey> = HashMap()
 
     fun subscribe(key: MediaArtKey, func: (Bitmap?) -> Unit) {
         val set = artRequestSubscriptions[key] ?: HashSet()
         set.add(func)
         artRequestSubscriptions[key] = set
+
+        // Save the MediaArtKey associated with this setter function so we can unsubscribe later
+        setBitmapSubscriptions[func] = key
     }
 
-    fun unsubscribe(key: MediaArtKey, func: (Bitmap?) -> Unit) {
-        val subscriptions = artRequestSubscriptions[key]
-        subscriptions?.remove(func)
+    fun unsubscribe(func: (Bitmap?) -> Unit) {
+        // Remove the subscription associated with this setter function
+        val key = setBitmapSubscriptions[func]
+        key?.let {
+            val subscriptions = artRequestSubscriptions[it]
+            subscriptions?.remove(func)
+        }
     }
 
     fun updateAll(key: MediaArtKey, img: Bitmap?) {
@@ -355,7 +364,6 @@ class MediaAdapter(
         }
     }
 
-    @Composable
     private fun getArtwork(
         mediaItemMetadata: MediaItemMetadata,
         width: Int,
@@ -370,10 +378,7 @@ class MediaAdapter(
         if (!mediaArtKey.isValid()) return null
 
         // Subscribe to be notified when this artwork is updated
-        DisposableEffect(mediaArtKey) {
-            artRequestManager.subscribe(mediaArtKey, setBitmap)
-            onDispose { artRequestManager.unsubscribe(mediaArtKey, setBitmap) }
-        }
+        artRequestManager.subscribe(mediaArtKey, setBitmap)
 
         // If the image is cached, return it
         val cachedImage = artCache.get(mediaArtKey)
@@ -415,6 +420,10 @@ class MediaAdapter(
 
         val currentlyPlaying =
             if (isMetadataSame(item, currentMetadata)) CurrentlyPlaying.On else CurrentlyPlaying.Off
+
+        // Unsubscribe this setter function whenever this leaves the composition
+        DisposableEffect(setIcon) { onDispose { artRequestManager.unsubscribe(setIcon) } }
+
         media.BrowseItem(
             modifier = Modifier,
             openLinkCallback = null,
@@ -445,6 +454,9 @@ class MediaAdapter(
         val navButtonType =
             if (item.id == browseStack.selectedRootId()) NavButtonType.Selected
             else NavButtonType.Unselected
+
+        // Unsubscribe this setter function whenever this leaves the composition
+        DisposableEffect(setIcon) { onDispose { artRequestManager.unsubscribe(setIcon) } }
         media.PageHeaderNavButton(
             modifier = Modifier,
             openLinkCallback = null,
@@ -580,6 +592,10 @@ class MediaAdapter(
 
         // Album art
         val (albumBitmap, setAlbumBitmap) = remember { mutableStateOf<Bitmap?>(null) }
+        // Unsubscribe this setter function whenever this leaves the composition
+        DisposableEffect(setAlbumBitmap) {
+            onDispose { artRequestManager.unsubscribe(setAlbumBitmap) }
+        }
         nowPlaying.albumArt = { context ->
             val width = context.imageContext.getPixelWidth() ?: 300
             val height = context.imageContext.getPixelHeight() ?: 300

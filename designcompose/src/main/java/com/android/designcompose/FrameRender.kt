@@ -608,7 +608,6 @@ internal fun ContentDrawScope.squooshShapeRender(
     size: Size,
     node: SquooshResolvedNode,
     frameShape: ViewShape,
-    customImageWithContext: Bitmap?,
     document: DocContent,
     customizations: CustomizationContext,
     variableState: VariableState,
@@ -841,8 +840,28 @@ internal fun ContentDrawScope.squooshShapeRender(
     // Now draw the actual shape, or fill it with an image if we have an image
     // replacement; we might want to do image replacement as a Brush in the
     // future.
-    var customImage = customImageWithContext
-    if (customImage == null) customImage = customizations.getImage(name)
+    var customImage = customizations.getImage(name)
+    if (customImage == null) {
+        // Check for an image customization with context. If it exists, call the custom image
+        // function and provide it with the frame's background and size.
+        customizations.getImageWithContext(node.view.name)?.let {
+            customImage =
+                it(
+                    object : ImageReplacementContext {
+                        override val imageContext =
+                            ImageContext(
+                                background = node.style.node_style.backgrounds,
+                                minWidth = node.style.layout_style.min_width.getDim(),
+                                maxWidth = node.style.layout_style.max_width.getDim(),
+                                width = node.style.layout_style.width.getDim(),
+                                minHeight = node.style.layout_style.min_height.getDim(),
+                                maxHeight = node.style.layout_style.max_height.getDim(),
+                                height = node.style.layout_style.height.getDim(),
+                            )
+                    }
+                )
+        }
+    }
     if (customImage != null) {
         // Apply custom image as background
         drawContext.canvas.save()
@@ -850,7 +869,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             drawContext.canvas.clipPath(fill)
         }
         drawImage(
-            customImage.asImageBitmap(),
+            customImage!!.asImageBitmap(),
             dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
         )
         drawContext.canvas.restore()

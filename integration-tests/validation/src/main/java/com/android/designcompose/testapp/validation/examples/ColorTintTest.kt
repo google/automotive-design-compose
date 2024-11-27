@@ -29,10 +29,7 @@ import com.android.designcompose.annotation.DesignDoc
 @DesignDoc(id = "MCtUD3yjONxK6rQm65yqM5")
 interface ColorTintTest {
     @DesignComponent(node = "#MainFrame")
-    fun MainFrame(
-        @Design(node = "#Square")
-        squareReplacement: @Composable (ImageReplacementContext) -> Bitmap?
-    )
+    fun MainFrame(@Design(node = "#Square") squareReplacement: (ImageReplacementContext) -> Bitmap?)
 }
 
 @Composable

@@ -28,13 +28,17 @@ import com.android.designcompose.decompose
 import com.android.designcompose.fixedHeight
 import com.android.designcompose.fixedWidth
 import com.android.designcompose.proto.get
+import com.android.designcompose.proto.ifContainerGetShape
+import com.android.designcompose.proto.ifTextGetText
 import com.android.designcompose.proto.nodeStyle
+import com.android.designcompose.serdegen.Container
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.toLayoutTransform
@@ -183,12 +187,12 @@ internal class SquooshAnimatedLayout(
     }
 
     private fun needsTransformTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
-        return from.view.style.nodeStyle.transform != to.view.style.nodeStyle.transform
+        return from.view.style.get().nodeStyle.transform != to.view.style.get().nodeStyle.transform
     }
 
     private fun needsOpacityTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
-        return from.view.style.nodeStyle.opacity.getOrElse { 1F } !=
-            to.view.style.nodeStyle.opacity.getOrElse { 1F }
+        return from.view.style.get().nodeStyle.opacity.getOrElse { 1F } !=
+            to.view.style.get().nodeStyle.opacity.getOrElse { 1F }
     }
 
     private fun computeTweenTypes(): Int {
@@ -222,10 +226,10 @@ internal class SquooshAnimatedLayout(
             val toLayout = to.computedLayout!!
             // Pass in 1 for the density because at this stage, we just want the raw size from the
             // design. The render code will take into account density.
-            val fromWidth = from.view.style.fixedWidth(1F)
-            val fromHeight = from.view.style.fixedHeight(1F)
-            val toWidth = to.view.style.fixedWidth(1F)
-            val toHeight = to.view.style.fixedHeight(1F)
+            val fromWidth = from.view.style.get().fixedWidth(1F)
+            val fromHeight = from.view.style.get().fixedHeight(1F)
+            val toWidth = to.view.style.get().fixedWidth(1F)
+            val toHeight = to.view.style.get().fixedHeight(1F)
             updateLayout(
                 value,
                 toWidth * value + fromWidth * iv,
@@ -293,13 +297,19 @@ internal class SquooshAnimatedArc(
                 )
             )
         // Unfortunately, the ViewData and View objects are also immutable.
-        val viewDataBuilder = ViewData.Container.Builder()
-        viewDataBuilder.shape = ViewShape(Optional.of(arc))
-        viewDataBuilder.children = (target.view.data as ViewData.Container).children
-        val viewData = viewDataBuilder.build()
+        val viewDataValue =
+            Container.Builder()
+                .apply {
+                    shape = Optional.of(ViewShape(Optional.of(arc)))
+                    children =
+                        (target.view.data.get().view_data_type.get() as ViewDataType.Container)
+                            .value
+                            .children
+                }
+                .build()
 
         val viewBuilder = View.Builder()
-        viewBuilder.data = viewData
+        viewBuilder.data = Optional.of(ViewData(Optional.of(ViewDataType.Container(viewDataValue))))
         viewBuilder.id = target.view.id
         viewBuilder.name = target.view.name
         viewBuilder.style = target.view.style
@@ -590,18 +600,11 @@ private fun mergeRecursive(
 
         // If they're both arcs, then they might need an arc animation.
         // XXX: Refactor this so we don't inspect every type right here.
-        if (
-            from.view.data is ViewData.Container &&
-                (from.view.data as ViewData.Container).shape.get() is Shape.Arc &&
-                to.view.data is ViewData.Container &&
-                (to.view.data as ViewData.Container).shape.get() is Shape.Arc
-        ) {
-            val fromArc: Shape.Arc = (from.view.data as ViewData.Container).shape.get() as Shape.Arc
-            val toArc: Shape.Arc = (to.view.data as ViewData.Container).shape.get() as Shape.Arc
 
-            if (fromArc != toArc) {
-                anims.add(SquooshAnimatedArc(n, fromArc, toArc, transition))
-            }
+        val fromArc: Shape.Arc? = from.view.data.ifContainerGetShape()?.let { it as? Shape.Arc }
+        val toArc: Shape.Arc? = from.view.data.ifContainerGetShape()?.let { it as? Shape.Arc }
+        if (fromArc != null && toArc != null && fromArc != toArc) {
+            anims.add(SquooshAnimatedArc(n, fromArc, toArc, transition))
         }
 
         return n
@@ -656,25 +659,14 @@ private fun findChildNamed(
 //  - They are both Containers
 //  - They both have a Rect or RoundRect shape (for now we need the shapes to be the same).
 private fun isTweenable(a: View, b: View): Boolean {
-    if (needsStyleTween(a.style, b.style)) return false
+    if (needsStyleTween(a.style.get(), b.style.get())) return false
 
-    val aData = a.data
-    val bData = b.data
-    if (aData is ViewData.Container && bData is ViewData.Container) {
-        // Rects and RoundRects can be tweened.
-        if (
-            (aData.shape.get() is Shape.Rect && bData.shape.get() is Shape.Rect) ||
-                (aData.shape.get() is Shape.RoundRect && bData.shape.get() is Shape.RoundRect)
-        )
-            return true
-
-        if ((aData.shape.get() is Shape.VectorRect && bData.shape.get() is Shape.VectorRect))
-            return true
-
-        // Arcs can be tweened.
-        if (aData.shape.get() is Shape.Arc && bData.shape.get() is Shape.Arc) return true
-    }
-    return false
+    val aShape = a.data.ifContainerGetShape()
+    val bShape = b.data.ifContainerGetShape()
+    return (aShape is Shape.Rect && bShape is Shape.Rect) ||
+        (aShape is Shape.RoundRect && aShape is Shape.RoundRect) ||
+        (aShape is Shape.VectorRect && bShape is Shape.VectorRect) ||
+        (aShape is Shape.Arc && bShape is Shape.Arc)
 }
 
 private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
@@ -688,19 +680,18 @@ private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
 private fun shouldScale(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
     val fromData = from.view.data
     val toData = to.view.data
-    if (from.view.data is ViewData.Container && to.view.data is ViewData.Container) {
-        // Scale vector paths
-        val fromContainer = from.view.data as ViewData.Container
-        val toContainer = to.view.data as ViewData.Container
-        return fromContainer.shape.get() is Shape.Path && toContainer.shape.get() is Shape.Path
-    } else if (fromData is ViewData.Text && toData is ViewData.Text) {
-        // Scale text if the string and font are the same
-        return fromData.content == toData.content &&
-            fromData.res_name == toData.res_name &&
-            from.style.nodeStyle.font_family == to.style.nodeStyle.font_family
-    }
 
-    return false
+    if (
+        fromData.ifContainerGetShape() is Shape.Path && toData.ifContainerGetShape() is Shape.Path
+    ) {
+        return true
+    } else {
+        val fromText = fromData.ifTextGetText() ?: return false
+        val toText = toData.ifTextGetText() ?: return false
+        return (fromText.content == toText.content &&
+            fromText.res_name == toText.res_name &&
+            from.style.nodeStyle.font_family == to.style.nodeStyle.font_family)
+    }
 }
 
 private fun ViewStyle.withNodeStyle(delta: (NodeStyle.Builder) -> Unit): ViewStyle {

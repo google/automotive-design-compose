@@ -87,6 +87,7 @@ import com.android.designcompose.getContent
 import com.android.designcompose.getOpenLinkCallback
 import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.newDimensionProtoPoints
+import com.android.designcompose.proto.overflowDirectionFromInt
 import com.android.designcompose.registerOpenLinkCallback
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
@@ -105,6 +106,7 @@ import java.util.Optional
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -141,7 +143,7 @@ private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints,
     // we should always start with `view.style` (immutable, from the DCF) and apply constraints to
     // that. Otherwise, we end up progressively adding different style rules to the root style as we
     // get different layout queries (especially during the intrinsic width/height query process).
-    val layoutStyleBuilder = view.style.layoutStyle.asBuilder()
+    val layoutStyleBuilder = view.style.get().layoutStyle.asBuilder()
 
     if (constraints.minWidth != 0)
         layoutStyleBuilder.min_width =
@@ -581,8 +583,13 @@ fun SquooshRoot(
     // If this view is scrollable, scrollOffset keeps track of the scroll position and is used to
     // translate child contents.
     val scrollOffset = remember { mutableStateOf(Offset.Zero) }
+
     val orientation =
-        when (presentationRoot.view.scroll_info.overflow) {
+        when (
+            presentationRoot.view.scroll_info.getOrNull()?.overflow?.let {
+                overflowDirectionFromInt(it)
+            }
+        ) {
             is OverflowDirection.VerticalScrolling -> Optional.of(Orientation.Vertical)
             is OverflowDirection.HorizontalScrolling -> Optional.of(Orientation.Horizontal)
             else -> Optional.empty()

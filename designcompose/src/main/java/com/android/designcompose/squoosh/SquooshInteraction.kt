@@ -72,9 +72,7 @@ internal fun Modifier.squooshInteraction(
     childComposable: SquooshChildComposable,
 ): Modifier {
     val node = childComposable.node
-    val maybeReactions = node.view.reactions
-    val reactions = maybeReactions.getOrNull()
-
+    val reactions = node.view.reactions
     val tapCallback = customizations.getTapCallback(node.view)
 
     return this.then(

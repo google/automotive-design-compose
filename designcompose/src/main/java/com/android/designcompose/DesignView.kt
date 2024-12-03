@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.proto.nodeStyle
+import com.android.designcompose.proto.overflowDirectionFromInt
 import com.android.designcompose.proto.overflowFromInt
 import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.Action
@@ -80,7 +81,7 @@ import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.Reaction
 import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squoosh.SquooshRoot
 import kotlin.jvm.optionals.getOrNull
@@ -317,23 +318,21 @@ internal fun DesignView(
     val onDragReactions: MutableList<Reaction> = ArrayList()
     val onKeyReactions: MutableList<Reaction> = ArrayList()
 
-    view.reactions.ifPresent { reactions ->
-        for (reaction in reactions) {
-            reaction.trigger.type?.run {
-                when (this) {
-                    is TriggerType.Click -> onClickReactions.add(reaction)
-                    is TriggerType.Press -> onPressReactions.add(reaction)
-                    is TriggerType.Drag -> onDragReactions.add(reaction)
-                    is TriggerType.AfterTimeout -> {
-                        if (value.timeout < currentTimeout) {
-                            onTimeout = reaction
-                            currentTimeout = value.timeout
-                        } else { // TSILB - needed by `when
-                        }
+    for (reaction in view.reactions) {
+        reaction.trigger.type?.run {
+            when (this) {
+                is TriggerType.Click -> onClickReactions.add(reaction)
+                is TriggerType.Press -> onPressReactions.add(reaction)
+                is TriggerType.Drag -> onDragReactions.add(reaction)
+                is TriggerType.AfterTimeout -> {
+                    if (value.timeout < currentTimeout) {
+                        onTimeout = reaction
+                        currentTimeout = value.timeout
+                    } else { // TSILB - needed by `when
                     }
-                    is TriggerType.KeyDown -> onKeyReactions.add(reaction)
-                    else -> {}
                 }
+                is TriggerType.KeyDown -> onKeyReactions.add(reaction)
+                else -> {}
             }
         }
     }
@@ -487,9 +486,9 @@ internal fun DesignView(
     // that on top of the view (or variant) style.
     val style =
         if (overrideStyle != null) {
-            mergeStyles(view.style, overrideStyle)
+            mergeStyles(view.style.get(), overrideStyle)
         } else {
-            view.style
+            view.style.get()
         }
 
     val viewLayoutInfo = calcLayoutInfo(modifier, view, style)
@@ -497,7 +496,7 @@ internal fun DesignView(
     // Add various scroll modifiers depending on the overflow flag.
     // Only add scroll modifiers if not a grid layout because grid layout adds its own scrolling
     if (viewLayoutInfo !is LayoutInfoGrid && viewLayoutInfo !is LayoutInfoAbsolute) {
-        when (view.scroll_info.overflow) {
+        when (overflowDirectionFromInt(view.scroll_info.get().overflow)) {
             is OverflowDirection.VerticalScrolling -> {
                 m = Modifier.verticalScroll(rememberScrollState()).then(m)
             }
@@ -555,33 +554,37 @@ internal fun DesignView(
     parentLayout = parentLayout?.withRootIdIfNone(layoutId)
     var visible = false
     DesignParentLayout(parentLayout) {
-        when (view.data) {
-            is ViewData.Text ->
+        val viewData = view.data.get().view_data_type.get()
+        when (viewData) {
+            is ViewDataType.Text ->
                 visible =
                     DesignText(
                         modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
                         view = view,
-                        text = getTextContent(LocalContext.current, view.data as ViewData.Text),
+                        text = getTextContent(LocalContext.current, viewData as ViewDataType.Text),
                         style = style,
                         document = document,
                         nodeName = view.name,
                         customizations = customizations,
                         layoutId = layoutId,
                     )
-            is ViewData.StyledText ->
+            is ViewDataType.StyledText ->
                 visible =
                     DesignText(
                         modifier = positionModifierFunc(Color(0f, 0.6f, 0f, 0.7f)),
                         view = view,
                         runs =
-                            getTextContent(LocalContext.current, view.data as ViewData.StyledText),
+                            getTextContent(
+                                LocalContext.current,
+                                viewData as ViewDataType.StyledText,
+                            ),
                         style = style,
                         document = document,
                         nodeName = view.name,
                         customizations = customizations,
                         layoutId = layoutId,
                     )
-            is ViewData.Container -> {
+            is ViewDataType.Container -> {
                 // Get the mask info from parameters unless we have a child that is a mask, in which
                 // case we know the mask view type is MaskParent and we create a new parent size
                 // mutable state.
@@ -614,7 +617,7 @@ internal fun DesignView(
                                 }
                             }
                         } else {
-                            if ((view.data as ViewData.Container).children.isNotEmpty()) {
+                            if ((viewData as ViewDataType.Container).value.children.isNotEmpty()) {
                                 // Create  a list of views to render. If the view is a mask, the
                                 // second item in the pair is a list of views that they mask. This
                                 // lets us iterate through all the views that a mask affects first,
@@ -624,9 +627,10 @@ internal fun DesignView(
                                 // nodes under a parent when there exists a mask.
                                 val viewList: ArrayList<Pair<View, ArrayList<View>>> = ArrayList()
                                 var currentMask: View? = null
-                                (view.data as ViewData.Container).children.forEach { child ->
+                                (viewData as ViewDataType.Container).value.children.forEach { child
+                                    ->
                                     val shouldClip =
-                                        overflowFromInt(child.style.nodeStyle.overflow) is
+                                        overflowFromInt(child.style.get().nodeStyle.overflow) is
                                             Overflow.Hidden
                                     if (child.isMask()) {
                                         // Add the mask to the list and set the current mask

@@ -25,10 +25,10 @@ use std::sync::Arc;
 // inside `legacy_definition` must be prepended with `proto::`
 use crate::definition::element::ImageKey;
 use crate::definition::element::VariableMap;
+use crate::definition::view::View;
 use crate::legacy_definition::element::node::NodeQuery;
 
 pub mod element;
-pub mod view;
 
 /// EncodedImageMap contains a mapping from ImageKey to network bytes. It can create an
 /// ImageMap and is intended to be used when we want to use Figma-defined components but do
@@ -103,7 +103,7 @@ impl fmt::Display for DesignComposeDefinitionHeader {
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DesignComposeDefinition {
-    pub views: HashMap<NodeQuery, view::view::View>,
+    pub views: HashMap<NodeQuery, View>,
     pub images: EncodedImageMap,
     pub component_sets: HashMap<String, String>,
     pub variable_map: VariableMap,

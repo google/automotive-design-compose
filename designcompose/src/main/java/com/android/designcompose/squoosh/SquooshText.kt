@@ -47,13 +47,14 @@ import com.android.designcompose.getTextStyle
 import com.android.designcompose.getValue
 import com.android.designcompose.isAutoWidthText
 import com.android.designcompose.proto.fontStyleFromInt
+import com.android.designcompose.proto.getType
 import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.textAlignFromInt
 import com.android.designcompose.proto.textDecorationFromInt
 import com.android.designcompose.serdegen.LineHeightType
 import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
@@ -119,7 +120,7 @@ internal fun squooshComputeTextInfo(
     val customizedText =
         customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
     val customTextStyle = customizations.getTextStyle(v.name)
-    val fontFamily = DesignSettings.fontFamily(v.style.nodeStyle.font_family)
+    val fontFamily = DesignSettings.fontFamily(v.style.get().nodeStyle.font_family)
 
     val cachedText = textMeasureCache.get(layoutId)
     if (
@@ -137,17 +138,19 @@ internal fun squooshComputeTextInfo(
             builder.append(normalizeNewlines(customizedText))
             builder.toAnnotatedString()
         } else
-            when (v.data) {
-                is ViewData.Text -> {
+            when (val vDatatype = v.data.getType()) {
+                is ViewDataType.Text -> {
                     val builder = AnnotatedString.Builder()
                     builder.append(
-                        normalizeNewlines(getTextContent(appContext, v.data as ViewData.Text))
+                        normalizeNewlines(
+                            getTextContent(appContext, vDatatype as ViewDataType.Text)
+                        )
                     )
                     builder.toAnnotatedString()
                 }
-                is ViewData.StyledText -> {
+                is ViewDataType.StyledText -> {
                     val builder = AnnotatedString.Builder()
-                    for (run in getTextContent(appContext, v.data as ViewData.StyledText)) {
+                    for (run in getTextContent(appContext, vDatatype as ViewDataType.StyledText)) {
                         val style =
                             run.style.orElseThrow {
                                 NoSuchFieldException("Malformed data: StyledTextRun's style unset")
@@ -223,7 +226,7 @@ internal fun squooshComputeTextInfo(
         customTextStyle?.lineHeight
             ?: when (
                 val lineHeightType =
-                    v.style.nodeStyle.line_height.getOrNull()?.line_height_type?.getOrNull()
+                    v.style.get().nodeStyle.line_height.getOrNull()?.line_height_type?.getOrNull()
             ) {
                 is LineHeightType.Pixels -> lineHeightType.value.sp
                 else -> TextUnit.Unspecified
@@ -231,7 +234,10 @@ internal fun squooshComputeTextInfo(
     val fontWeight =
         customTextStyle?.fontWeight
             ?: FontWeight(
-                v.style.nodeStyle.font_weight
+                v.style
+                    .get()
+                    .nodeStyle
+                    .font_weight
                     .get()
                     .weight
                     .get()
@@ -240,13 +246,13 @@ internal fun squooshComputeTextInfo(
             )
     val fontStyle =
         customTextStyle?.fontStyle
-            ?: when (fontStyleFromInt(v.style.nodeStyle.font_style)) {
+            ?: when (fontStyleFromInt(v.style.get().nodeStyle.font_style)) {
                 is com.android.designcompose.serdegen.FontStyle.Italic -> FontStyle.Italic
                 else -> FontStyle.Normal
             }
     val textDecoration =
         customTextStyle?.textDecoration
-            ?: when (textDecorationFromInt(v.style.nodeStyle.text_decoration)) {
+            ?: when (textDecorationFromInt(v.style.get().nodeStyle.text_decoration)) {
                 is TextDecoration.Underline ->
                     androidx.compose.ui.text.style.TextDecoration.Underline
                 is TextDecoration.Strikethrough ->
@@ -254,11 +260,11 @@ internal fun squooshComputeTextInfo(
                 else -> androidx.compose.ui.text.style.TextDecoration.None
             }
     val letterSpacing =
-        customTextStyle?.letterSpacing ?: v.style.nodeStyle.letter_spacing.orElse(0f).sp
+        customTextStyle?.letterSpacing ?: v.style.get().nodeStyle.letter_spacing.orElse(0f).sp
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.
     val shadow =
-        v.style.nodeStyle.text_shadow.flatMap { textShadow ->
+        v.style.get().nodeStyle.text_shadow.flatMap { textShadow ->
             Optional.of(
                 Shadow(
                     // Ensure that blur radius is never zero, because Compose interprets that as no
@@ -278,10 +284,10 @@ internal fun squooshComputeTextInfo(
         (TextStyle(
             fontSize =
                 customTextStyle?.fontSize
-                    ?: v.style.nodeStyle.font_size.get().getValue(variableState).sp,
+                    ?: v.style.get().nodeStyle.font_size.get().getValue(variableState).sp,
             fontFamily = fontFamily,
             fontFeatureSettings =
-                v.style.nodeStyle.font_features.joinToString(", ") { feature ->
+                v.style.get().nodeStyle.font_features.joinToString(", ") { feature ->
                     String(feature.tag.toByteArray())
                 },
             lineHeight = lineHeight,
@@ -291,7 +297,7 @@ internal fun squooshComputeTextInfo(
             fontStyle = fontStyle,
             textAlign =
                 customTextStyle?.textAlign
-                    ?: when (textAlignFromInt(v.style.nodeStyle.text_align)) {
+                    ?: when (textAlignFromInt(v.style.get().nodeStyle.text_align)) {
                         is com.android.designcompose.serdegen.TextAlign.Center -> TextAlign.Center
                         is com.android.designcompose.serdegen.TextAlign.Right -> TextAlign.Right
                         else -> TextAlign.Left
@@ -315,7 +321,8 @@ internal fun squooshComputeTextInfo(
         )
 
     val maxLines =
-        if (v.style.nodeStyle.line_count.isPresent) v.style.nodeStyle.line_count.get().toInt()
+        if (v.style.get().nodeStyle.line_count.isPresent)
+            v.style.get().nodeStyle.line_count.get().toInt()
         else Int.MAX_VALUE
 
     val textMeasureData =
@@ -324,7 +331,7 @@ internal fun squooshComputeTextInfo(
             paragraph,
             density,
             maxLines,
-            v.style.isAutoWidthText(),
+            v.style.get().isAutoWidthText(),
         )
 
     textMeasureCache.put(

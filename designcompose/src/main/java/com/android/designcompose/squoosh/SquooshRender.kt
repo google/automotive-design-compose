@@ -48,6 +48,7 @@ import com.android.designcompose.getBrush
 import com.android.designcompose.getBrushFunction
 import com.android.designcompose.isMask
 import com.android.designcompose.proto.blendModeFromInt
+import com.android.designcompose.proto.getType
 import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.textAlignVerticalFromInt
 import com.android.designcompose.proto.textOverflowFromInt
@@ -55,7 +56,7 @@ import com.android.designcompose.proto.toUniform
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
-import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.useLayer
@@ -107,8 +108,8 @@ internal fun Modifier.squooshRender(
                     // If there is no programmatic mode override and this node has explicitly set
                     // mode values, update variablestate with these values
                     val variableState =
-                        if (!hasModeOverride && node.view.explicit_variable_modes.isPresent) {
-                            val explicitModeValues = node.view.explicit_variable_modes.get()
+                        if (!hasModeOverride && node.view.explicit_variable_modes.isNotEmpty()) {
+                            val explicitModeValues = node.view.explicit_variable_modes
                             parentVariableState.copyWithModeValues(explicitModeValues)
                         } else {
                             parentVariableState
@@ -128,8 +129,8 @@ internal fun Modifier.squooshRender(
                     // not supported by Kotlin.
                     val scrollRestore = { if (scroll) drawContext.canvas.restore() }
                     val shape =
-                        when (node.view.data) {
-                            is ViewData.Container -> (node.view.data as ViewData.Container).shape
+                        when (val nodeViewDataType = node.view.data.getType()) {
+                            is ViewDataType.Container -> nodeViewDataType.value.shape
                             else -> {
                                 if (node.textInfo != null) {
                                     squooshTextRender(
@@ -187,7 +188,7 @@ internal fun Modifier.squooshRender(
                             density,
                             nodeSize,
                             node,
-                            shape,
+                            shape.get(),
                             document,
                             customizations,
                             variableState,

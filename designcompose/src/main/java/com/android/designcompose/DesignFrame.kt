@@ -62,7 +62,7 @@ import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacingType
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 
@@ -209,7 +209,7 @@ internal fun DesignFrame(
     subscribeLayout(style)
 
     // Only render the frame if we don't have a replacement node and layout is absolute
-    val shape = (view.data as ViewData.Container).shape
+    val shape = (view.data.get().view_data_type.get() as ViewDataType.Container).value.shape.get()
     if (replacementComponent == null && layoutInfo.shouldRender()) {
         val varMaterialState = VariableState.create(modeValues)
         m =
@@ -253,7 +253,7 @@ internal fun DesignFrame(
                     // itself. Then when the size is determined, inform the layout manager.
                     // Otherwise,
                     // get the fixed size from the layout manager and use it in a Modifier.
-                    val hugContents = view.style.layoutStyle.width.getDim() is Dimension.Auto
+                    val hugContents = view.style.get().layoutStyle.width.getDim() is Dimension.Auto
                     val rowModifier =
                         if (hugContents)
                             Modifier.onSizeChanged {
@@ -324,7 +324,7 @@ internal fun DesignFrame(
                     // itself. Then when the size is determined, inform the layout manager.
                     // Otherwise,
                     // get the fixed size from the layout manager and use it in a Modifier.
-                    val hugContents = view.style.layoutStyle.height.getDim() is Dimension.Auto
+                    val hugContents = view.style.get().layoutStyle.height.getDim() is Dimension.Auto
                     val columnModifier =
                         if (hugContents)
                             Modifier.onSizeChanged {

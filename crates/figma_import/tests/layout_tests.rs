@@ -26,8 +26,10 @@
 use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::DimensionProto;
 use dc_bundle::definition::layout::LayoutSizing;
+use dc_bundle::definition::view::view_data::ViewDataType;
+use dc_bundle::definition::view::view_data::ViewDataType::{Container, Text};
+use dc_bundle::definition::view::{view_data, View};
 use dc_bundle::legacy_definition::element::node::NodeQuery;
-use dc_bundle::legacy_definition::view::view::{View, ViewData};
 use dc_bundle::legacy_definition::DesignComposeDefinition;
 use figma_import::load_design_def;
 use layout::LayoutManager;
@@ -70,13 +72,15 @@ fn add_view_to_layout(
     //println!("add_view_to_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
     let my_id: i32 = id.clone();
     *id = *id + 1;
-    if let ViewData::Text { content: _, res_name: _ } = &view.data {
+    let data: &ViewDataType = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
+
+    if let Text { .. } = data {
         let mut use_measure_func = false;
-        if let Dimension::Auto(()) = view.style.layout_style().width.unwrap().dimension.unwrap() {
+        if let Dimension::Auto(()) = view.style().layout_style().width.unwrap().dimension.unwrap() {
             if let Dimension::Auto(()) =
-                view.style.layout_style().height.unwrap().dimension.unwrap()
+                view.style().layout_style().height.unwrap().dimension.unwrap()
             {
-                if view.style.node_style().horizontal_sizing == i32::from(LayoutSizing::Fill) {
+                if view.style().node_style().horizontal_sizing == i32::from(LayoutSizing::Fill) {
                     use_measure_func = true;
                 }
             }
@@ -87,7 +91,7 @@ fn add_view_to_layout(
                     my_id,
                     parent_layout_id,
                     child_index,
-                    view.style.layout_style().clone(),
+                    view.style().layout_style().clone(),
                     view.name.clone(),
                     use_measure_func,
                     None,
@@ -96,17 +100,18 @@ fn add_view_to_layout(
                 .unwrap();
         } else {
             let mut fixed_view = view.clone();
-            fixed_view.style.layout_style_mut().width =
-                DimensionProto::new_points(view.style.layout_style().bounding_box().unwrap().width);
-            fixed_view.style.layout_style_mut().height = DimensionProto::new_points(
-                view.style.layout_style().bounding_box().unwrap().height,
+            fixed_view.style_mut().layout_style_mut().width = DimensionProto::new_points(
+                view.style().layout_style().bounding_box().unwrap().width,
+            );
+            fixed_view.style_mut().layout_style_mut().height = DimensionProto::new_points(
+                view.style().layout_style().bounding_box().unwrap().height,
             );
             manager
                 .add_style(
                     my_id,
                     parent_layout_id,
                     child_index,
-                    fixed_view.style.layout_style().clone(),
+                    fixed_view.style().layout_style().clone(),
                     fixed_view.name.clone(),
                     false,
                     None,
@@ -114,13 +119,13 @@ fn add_view_to_layout(
                 )
                 .unwrap();
         }
-    } else if let ViewData::Container { shape: _, children } = &view.data {
+    } else if let Container { 0: view_data::Container { shape: _, children } } = data {
         manager
             .add_style(
                 my_id,
                 parent_layout_id,
                 child_index,
-                view.style.layout_style().clone(),
+                view.style().layout_style().clone(),
                 view.name.clone(),
                 false,
                 None,

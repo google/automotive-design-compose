@@ -180,7 +180,7 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::layout::OverflowDirection>(&samples)
         .expect("couldn't trace OverflowDirection");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::view::view::RenderMethod>(&samples)
+        .trace_type::<dc_bundle::definition::view::view::RenderMethod>(&samples)
         .expect("couldn't trace RenderMethod");
     tracer
         .trace_type::<dc_bundle::definition::element::view_shape::StrokeCap>(&samples)
@@ -225,11 +225,21 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .trace_type::<dc_bundle::definition::element::view_shape::Shape>(&samples)
         .expect("couldn't trace Shape");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::view::view::ViewData>(&samples)
+        .trace_type::<dc_bundle::definition::view::ViewData>(&samples)
         .expect("couldn't trace ViewData");
     tracer
-        .trace_type::<dc_bundle::legacy_definition::view::view::View>(&samples)
-        .expect("couldn't trace View");
+        .trace_type::<dc_bundle::definition::view::view_data::ViewDataType>(&samples)
+        .expect("couldn't trace ViewDataType");
+    tracer
+        .trace_type::<dc_bundle::definition::view::view_data::StyledTextRuns>(&samples)
+        .expect("couldn't trace StyledTextRuns");
+    tracer
+        .trace_type::<dc_bundle::definition::view::view_data::Container>(&samples)
+        .expect("couldn't trace Container");
+    tracer
+        .trace_type::<dc_bundle::definition::view::view_data::Text>(&samples)
+        .expect("couldn't trace Text");
+    tracer.trace_type::<dc_bundle::definition::view::View>(&samples).expect("couldn't trace View");
     tracer.trace_type::<layout::types::Layout>(&samples).expect("couldn't trace Layout");
     tracer
         .trace_type::<layout::layout_manager::LayoutChangedResponse>(&samples)

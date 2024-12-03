@@ -45,7 +45,7 @@ use dc_bundle::definition::element::{
 use dc_bundle::definition::interaction::Reaction;
 use dc_bundle::definition::layout::{
     AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, GridLayoutType, GridSpan,
-    ItemSpacing, JustifyContent, Overflow, OverflowDirection, PositionType,
+    ItemSpacing, JustifyContent, Overflow, OverflowDirection, PositionType, ScrollInfo,
 };
 use dc_bundle::definition::modifier::{
     filter_op, BoxShadow, FilterOp, TextAlign, TextAlignVertical, TextOverflow, TextShadow,
@@ -57,11 +57,11 @@ use dc_bundle::definition::plugin::{
 };
 
 use dc_bundle::definition::plugin::meter_data::MeterDataType;
-use dc_bundle::legacy_definition::view::view::{RenderMethod, ScrollInfo, View};
 use log::error;
 
 use dc_bundle::definition::element::line_height::LineHeightType;
-use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, ViewStyle};
+use dc_bundle::definition::view::view::RenderMethod;
+use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -959,7 +959,7 @@ fn visit_node(
         }
     };
 
-    let mut scroll_info = ScrollInfo::default();
+    let mut scroll_info = ScrollInfo::new_default();
 
     let extended_auto_layout: Option<ExtendedAutoLayout> = {
         if let Some(vsw_data) = plugin_data {
@@ -1033,9 +1033,9 @@ fn visit_node(
 
             if cld.scrolling {
                 scroll_info.overflow = if horizontal {
-                    OverflowDirection::VerticalScrolling
+                    i32::from(OverflowDirection::VerticalScrolling)
                 } else {
-                    OverflowDirection::HorizontalScrolling
+                    i32::from(OverflowDirection::HorizontalScrolling)
                 };
             }
 
@@ -1068,9 +1068,9 @@ fn visit_node(
             // space between boolean.
             if extended_auto_layout.common_data.scrolling {
                 scroll_info.overflow = if layout == LayoutType::Vertical {
-                    OverflowDirection::VerticalScrolling
+                    i32::from(OverflowDirection::VerticalScrolling)
                 } else {
-                    OverflowDirection::HorizontalScrolling
+                    i32::from(OverflowDirection::HorizontalScrolling)
                 };
             }
             if extended_auto_layout.auto_layout_data.space_between {
@@ -1155,8 +1155,11 @@ fn visit_node(
         style.node_style_mut().overflow =
             if frame.clips_content { Overflow::Hidden.into() } else { Overflow::Visible.into() };
         // Don't overwrite scroll behavior if it was already set from grid layout
-        if scroll_info.overflow == OverflowDirection::None {
-            scroll_info.overflow = frame.overflow_direction.into();
+        if scroll_info.overflow == i32::from(OverflowDirection::None) {
+            scroll_info.overflow = {
+                let p: OverflowDirection = frame.overflow_direction.into();
+                p.into()
+            }
         }
     } else if let figma_schema::NodeData::Text {
         characters,
@@ -1303,7 +1306,7 @@ fn visit_node(
                 check_text_node_string_res(node),
                 node.absolute_bounding_box.map(|r| (&r).into()),
                 RenderMethod::None,
-                node.explicit_variable_modes.clone(),
+                node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
             ))
         } else {
             // Build some runs of custom styled text out of the style overrides. We need to be able to iterate
@@ -1765,7 +1768,7 @@ fn visit_node(
         frame_extras,
         node.absolute_bounding_box.map(|r| (&r).into()),
         RenderMethod::None,
-        node.explicit_variable_modes.clone(),
+        node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
     );
 
     // Iterate over our visible children, but not vectors because they always
@@ -1803,7 +1806,7 @@ pub fn create_component_flexbox(
     component_set_map: &HashMap<String, figma_schema::ComponentSet>,
     component_context: &mut ComponentContext,
     image_context: &mut ImageContext,
-) -> core::result::Result<dc_bundle::legacy_definition::view::view::View, Error> {
+) -> core::result::Result<View, Error> {
     visit_node(
         component,
         None,

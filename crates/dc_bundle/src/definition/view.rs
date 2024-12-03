@@ -15,12 +15,19 @@
  */
 use crate::definition::element::line_height::LineHeightType;
 use crate::definition::element::{
-    background, Background, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar, Size, Stroke,
-    TextDecoration,
+    background, Background, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar, Rectangle,
+    Size, Stroke, TextDecoration, ViewShape,
 };
-use crate::definition::interaction::PointerEvents;
-use crate::definition::layout::{FlexWrap, LayoutSizing, LayoutStyle, Overflow};
+use crate::definition::interaction::{PointerEvents, Reaction};
+use crate::definition::layout::{
+    FlexWrap, LayoutSizing, LayoutStyle, Overflow, OverflowDirection, ScrollInfo,
+};
 use crate::definition::modifier::{BlendMode, TextAlign, TextAlignVertical, TextOverflow};
+use crate::definition::plugin::FrameExtras;
+use crate::definition::view::view::RenderMethod;
+use crate::definition::view::view_data::{Container, ViewDataType};
+use std::collections::HashMap;
+use std::sync::atomic::AtomicU16;
 
 include!(concat!(env!("OUT_DIR"), "/designcompose.definition.view.rs"));
 
@@ -287,5 +294,127 @@ impl ViewStyle {
             delta.node_style_mut().meter_data = other.node_style().meter_data.clone();
         }
         delta
+    }
+}
+
+impl ScrollInfo {
+    pub fn new_default() -> Self {
+        ScrollInfo { overflow: i32::from(OverflowDirection::None), paged_scrolling: false }
+    }
+}
+
+impl View {
+    fn next_unique_id() -> u16 {
+        static COUNTER: AtomicU16 = AtomicU16::new(0);
+        COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    }
+    pub fn new_rect(
+        id: &String,
+        name: &String,
+        shape: ViewShape,
+        style: ViewStyle,
+        component_info: Option<ComponentInfo>,
+        reactions: Option<Vec<Reaction>>,
+        scroll_info: ScrollInfo,
+        frame_extras: Option<FrameExtras>,
+        design_absolute_bounding_box: Option<Rectangle>,
+        render_method: RenderMethod,
+        explicit_variable_modes: HashMap<String, String>,
+    ) -> View {
+        View {
+            unique_id: View::next_unique_id() as u32,
+            id: id.clone(),
+            name: name.clone(),
+            component_info,
+            reactions: reactions.unwrap_or_default(),
+            style: Some(style),
+            frame_extras,
+            scroll_info: Some(scroll_info),
+            data: Some(ViewData {
+                view_data_type: Some(ViewDataType::Container {
+                    0: Container { shape: Some(shape), children: vec![] },
+                }),
+            }),
+            design_absolute_bounding_box,
+            render_method: i32::from(render_method),
+            explicit_variable_modes,
+        }
+    }
+    pub fn new_text(
+        id: &String,
+        name: &String,
+        style: ViewStyle,
+        component_info: Option<ComponentInfo>,
+        reactions: Option<Vec<Reaction>>,
+        text: &str,
+        text_res_name: Option<String>,
+        design_absolute_bounding_box: Option<Rectangle>,
+        render_method: RenderMethod,
+        explicit_variable_modes: HashMap<String, String>,
+    ) -> View {
+        View {
+            unique_id: View::next_unique_id() as u32,
+            id: id.clone(),
+            name: name.clone(),
+            component_info,
+            reactions: reactions.unwrap_or_default(),
+            style: Some(style),
+            frame_extras: None,
+            scroll_info: Some(ScrollInfo::new_default()),
+            data: Some(ViewData {
+                view_data_type: Some(ViewDataType::Text {
+                    0: view_data::Text { content: text.into(), res_name: text_res_name },
+                }),
+            }),
+            design_absolute_bounding_box,
+            render_method: i32::from(render_method),
+            explicit_variable_modes,
+        }
+    }
+    pub fn new_styled_text(
+        id: &String,
+        name: &String,
+        style: ViewStyle,
+        component_info: Option<ComponentInfo>,
+        reactions: Option<Vec<Reaction>>,
+        text: Vec<StyledTextRun>,
+        text_res_name: Option<String>,
+        design_absolute_bounding_box: Option<Rectangle>,
+        render_method: RenderMethod,
+    ) -> View {
+        View {
+            unique_id: View::next_unique_id() as u32,
+            id: id.clone(),
+            name: name.clone(),
+            style: Some(style),
+            component_info,
+            reactions: reactions.unwrap_or_default(),
+            frame_extras: None,
+            scroll_info: Some(ScrollInfo::new_default()),
+            data: Some(ViewData {
+                view_data_type: Some(ViewDataType::StyledText {
+                    0: view_data::StyledTextRuns { styled_texts: text, res_name: text_res_name },
+                }),
+            }),
+            design_absolute_bounding_box,
+            render_method: i32::from(render_method),
+            explicit_variable_modes: HashMap::new(),
+        }
+    }
+    pub fn add_child(&mut self, child: View) {
+        if let Some(data) = self.data.as_mut() {
+            if let Some(ViewDataType::Container { 0: Container { children, .. } }) =
+                data.view_data_type.as_mut()
+            {
+                children.push(child);
+            }
+        }
+    }
+
+    pub fn style(&self) -> &ViewStyle {
+        self.style.as_ref().expect("ViewStyle is required.")
+    }
+    pub fn style_mut(&mut self) -> &mut ViewStyle {
+        self.style.as_mut().expect("ViewStyle is required.")
     }
 }

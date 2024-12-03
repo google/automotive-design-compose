@@ -151,7 +151,10 @@ internal fun computeComponentLayoutId(rootLayoutId: Int, componentLayoutId: Int)
 }
 
 /// Compute a final layout ID from a component layout ID (16bits) and a unique node ID from the DCF
-internal fun computeLayoutId(componentLayoutId: Int, uniqueViewId: Short): Int {
+internal fun computeLayoutId(componentLayoutId: Int, uniqueViewId: Int): Int {
+    if (uniqueViewId !in 0..0xFFFF) {
+        throw RuntimeException("View's unique ID must be in the range 0..0xFFFF")
+    }
     return componentLayoutId + uniqueViewId
 }
 

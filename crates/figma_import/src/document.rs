@@ -34,8 +34,8 @@ use crate::{
 };
 use dc_bundle::definition::element::ImageKey;
 use dc_bundle::definition::view::component_overrides::ComponentContentOverride;
-use dc_bundle::definition::view::ComponentOverrides;
-use dc_bundle::legacy_definition::view::view::{View, ViewData};
+use dc_bundle::definition::view::view_data::ViewDataType::Container;
+use dc_bundle::definition::view::{view_data, ComponentOverrides, View};
 use dc_bundle::legacy_definition::EncodedImageMap;
 use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use log::error;
@@ -481,9 +481,13 @@ impl Document {
                     action(view, reference_component);
                 }
             }
-            if let ViewData::Container { children, .. } = &mut view.data {
-                for child in children {
-                    for_each_component_instance(reference_components, child, action);
+            if let Some(data) = view.data.as_mut() {
+                if let Some(Container { 0: view_data::Container { children, .. } }) =
+                    data.view_data_type.as_mut()
+                {
+                    for child in children {
+                        for_each_component_instance(reference_components, child, action);
+                    }
                 }
             }
         }
@@ -501,7 +505,7 @@ impl Document {
                 }
                 view.component_info = view.component_info.take().map(|mut info| {
                     info.overrides = Some(ComponentOverrides {
-                        style: Some(component.style.difference(&view.style)),
+                        style: Some(component.style().difference(&view.style())),
                         component_content_override: Some(ComponentContentOverride::None(())),
                     });
                     info

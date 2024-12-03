@@ -14,5 +14,4 @@
  * limitations under the License.
  */
 
-pub mod component;
 pub mod view;

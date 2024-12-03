@@ -42,6 +42,8 @@ message LayoutChangedResponse {
     float height = 3;
     float left = 4; // The top-left corner of the node
     float top = 5;
+    float content_width = 6; // Width of child content
+    float content_height = 7; // Height of child content
   }
 
   int32 layout_state = 1;

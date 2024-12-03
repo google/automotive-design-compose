@@ -38,6 +38,7 @@ import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
+import com.android.designcompose.hasScrolling
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
 import com.android.designcompose.proto.OverlayPositionEnum
@@ -83,7 +84,11 @@ import kotlin.jvm.optionals.getOrNull
 internal class SquooshChildComposable(
     // If this child composable is to host an external composable (e.g.: for component replacement)
     // then this value will be non-null.
-    val component: @Composable ((ComponentReplacementContext) -> Unit)?,
+    var component: @Composable ((ComponentReplacementContext) -> Unit)? = null,
+
+    // If this view is scrollable, set the view here and SquooshRoot() will compose another
+    // SquooshRoot() of this view so that scrolling can be handled on it.
+    val scrollView: View? = null,
 
     // Used for node resolution for interactions
     val parentComponents: ParentComponentData?,
@@ -157,6 +162,7 @@ internal fun resolveVariantsRecursively(
     textMeasureCache: TextMeasureCache,
     componentLayoutId: Int = 0,
     overlays: List<View>? = null,
+    isScrollComponent: Boolean = false,
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(v.name)) return null
     customizations.getVisibleState(v.name)?.let { if (!it.value) return null }
@@ -343,6 +349,18 @@ internal fun resolveVariantsRecursively(
         )
         // Make sure that the renderer knows that it needs to do an external render for this
         // node.
+        resolvedView.needsChildRender = true
+    } else if (view.hasScrolling() && resolvedView.layoutId != 0 && !isScrollComponent) {
+        // If the view has scrolling, is not the root, and isScrollComponent is false (to prevent
+        // infinite recursion), add the view to the list so it can be composed separately in order
+        // to support scrolling.
+        composableList.add(
+            SquooshChildComposable(
+                scrollView = view,
+                node = resolvedView,
+                parentComponents = parentComps,
+            )
+        )
         resolvedView.needsChildRender = true
     } else if (replacementContent != null) {
         // Replacement Content represents a (short, non-virtualized) list of child composables.

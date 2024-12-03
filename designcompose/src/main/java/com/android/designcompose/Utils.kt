@@ -115,6 +115,7 @@ import com.android.designcompose.serdegen.LineHeightType
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Overflow
+import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PointerEvents
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.ScaleMode
@@ -1001,6 +1002,14 @@ internal fun View.useInfiniteConstraints(): Boolean {
     return child.style.nodeStyle.grid_layout_type.isPresent
 }
 
+internal fun View.hasScrolling(): Boolean {
+    return when (scroll_info.overflow) {
+        is OverflowDirection.HorizontalScrolling -> true
+        is OverflowDirection.VerticalScrolling -> true
+        else -> false
+    }
+}
+
 internal fun ViewShape.isMask(): Boolean {
     when (val shape = this.get()) {
         is Shape.Rect -> return shape.value.is_mask
@@ -1685,6 +1694,8 @@ internal fun Layout.withDensity(density: Float): Layout {
         this.height * density,
         this.left * density,
         this.top * density,
+        this.content_width * density,
+        this.content_height * density,
     )
 }
 

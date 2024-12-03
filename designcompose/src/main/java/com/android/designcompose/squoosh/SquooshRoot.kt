@@ -21,6 +21,9 @@ import android.util.SizeF
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -37,6 +40,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Measurable
@@ -89,6 +93,7 @@ import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.Size
 import com.android.designcompose.squooshAnimatedActions
 import com.android.designcompose.squooshCompleteAnimatedAction
@@ -206,6 +211,7 @@ fun SquooshRoot(
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
+    isScrollComponent: Boolean = false, // true if SquooshRoot() called from a scrollable child
 ) {
     // Basic init and doc loading.
     val isRoot = LocalSquooshIsRootContext.current.isRoot
@@ -351,6 +357,7 @@ fun SquooshRoot(
             textMeasureCache = textMeasureCache,
             customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
             overlays = overlays,
+            isScrollComponent = isScrollComponent,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -402,6 +409,7 @@ fun SquooshRoot(
                 textMeasureCache = textMeasureCache,
                 customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
                 overlays = overlays,
+                isScrollComponent = isScrollComponent,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }
@@ -570,6 +578,55 @@ fun SquooshRoot(
     // Select which child to draw using this holder.
     val childRenderSelector = SquooshChildRenderSelector()
 
+    // If this view is scrollable, scrollOffset keeps track of the scroll position and is used to
+    // translate child contents.
+    val scrollOffset = remember { mutableStateOf(Offset.Zero) }
+    val orientation =
+        when (presentationRoot.view.scroll_info.overflow) {
+            is OverflowDirection.VerticalScrolling -> Optional.of(Orientation.Vertical)
+            is OverflowDirection.HorizontalScrolling -> Optional.of(Orientation.Horizontal)
+            else -> Optional.empty()
+        }
+    // Create a Modifier to handle scroll inputs if this is a scrollable view
+    val scrollModifier =
+        if (isScrollComponent && orientation.isPresent) {
+            Modifier.scrollable(
+                orientation = orientation.get(),
+                // Scrollable state: describes how to consume scrolling delta and update offset
+                state =
+                    rememberScrollableState { delta ->
+                        when (orientation.get()) {
+                            Orientation.Vertical -> {
+                                // Bound the scroll offset to the area bounded by content_height
+                                val contentHeight =
+                                    presentationRoot.computedLayout?.content_height ?: 0F
+                                val frameHeight = presentationRoot.computedLayout?.height ?: 0F
+                                val maxScroll = frameHeight - contentHeight
+                                scrollOffset.value =
+                                    Offset(
+                                        0F,
+                                        (scrollOffset.value.y + delta).coerceIn(maxScroll, 0F),
+                                    )
+                            }
+                            Orientation.Horizontal -> {
+                                // Bound the scroll offset to the area bounded by content_width
+                                val contentWidth =
+                                    presentationRoot.computedLayout?.content_width ?: 0F
+                                val frameWidth = presentationRoot.computedLayout?.width ?: 0F
+                                val maxScroll = frameWidth - contentWidth
+                                scrollOffset.value =
+                                    Offset(
+                                        (scrollOffset.value.x + delta).coerceIn(maxScroll, 0F),
+                                        0F,
+                                    )
+                            }
+                        }
+                        delta
+                    },
+            )
+        } else {
+            Modifier
+        }
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
         androidx.compose.ui.layout.Layout(
             modifier =
@@ -587,8 +644,10 @@ fun SquooshRoot(
                         LocalVariableState.hasOverrideModeValues(),
                         computedPathCache,
                         appContext = LocalContext.current,
+                        scrollOffset,
                     )
-                    .semantics { sDocRenderStatus = DocRenderStatus.Rendered },
+                    .semantics { sDocRenderStatus = DocRenderStatus.Rendered }
+                    .then(scrollModifier),
             measurePolicy =
                 squooshLayoutMeasurePolicy(
                     presentationRoot,
@@ -619,7 +678,27 @@ fun SquooshRoot(
                             }
                             .then(SquooshParentData(node = child.node))
 
-                    if (child.component == null) {
+                    if (child.scrollView != null) {
+                        // Compose a scrollable view as a separate composable in order to detect
+                        // scroll input for it and translate its children. Construct a NodeQuery
+                        // using the ID of the scrollview and compose SquooshRoot() with it.
+                        val scrollNodeQuery = NodeQuery.NodeId(child.scrollView.id)
+                        child.component = {
+                            SquooshRoot(
+                                docName,
+                                incomingDocId,
+                                scrollNodeQuery,
+                                Modifier,
+                                customizationContext,
+                                serverParams,
+                                setDocId,
+                                designSwitcherPolicy,
+                                liveUpdateMode,
+                                designComposeCallbacks,
+                                true, // Is scroll component
+                            )
+                        }
+                    } else if (child.component == null) {
                         composableChildModifier =
                             composableChildModifier.squooshInteraction(
                                 doc,
@@ -984,14 +1063,12 @@ private fun SquooshChildLayout(modifier: Modifier, child: SquooshChildComposable
     androidx.compose.ui.layout.Layout(
         modifier = modifier,
         content = {
-            if (child.component != null) {
-                child.component.invoke(
-                    object : ComponentReplacementContext {
-                        override val layoutModifier: Modifier = Modifier
-                        override val textStyle: TextStyle? = null
-                    }
-                )
-            }
+            child.component?.invoke(
+                object : ComponentReplacementContext {
+                    override val layoutModifier: Modifier = Modifier
+                    override val textStyle: TextStyle? = null
+                }
+            )
         },
         measurePolicy = { measurables, constraints ->
             // Just overlay everything, like a box, but with exactly the incoming

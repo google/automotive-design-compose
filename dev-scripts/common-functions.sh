@@ -104,5 +104,7 @@ function fetch_layout_tests {
         --nodes='ConstraintsLayoutLRTB' \
         --nodes='ConstraintsLayoutCenter' \
         --nodes='ConstraintsLayoutWidget' \
-        --nodes='VectorScale'
+        --nodes='VectorScale' \
+        --nodes='VerticalScrolling' \
+        --nodes='HorizontalScrolling'
 }

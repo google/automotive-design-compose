@@ -21,6 +21,7 @@ import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.toRect
@@ -80,9 +81,11 @@ internal fun Modifier.squooshRender(
     hasModeOverride: Boolean,
     computedPathCache: ComputedPathCache,
     appContext: Context,
+    scrollOffset: State<Offset>,
 ): Modifier =
     this.then(
         Modifier.drawWithContent {
+            val parentNode = node.view
             computedPathCache.collect()
             val animPlayTimesMap = animPlayTimeNanosState.value
             for ((id, transition) in animations) {
@@ -102,8 +105,7 @@ internal fun Modifier.squooshRender(
             val renderTime = measureTimeMillis {
                 fun renderNode(node: SquooshResolvedNode, parentVariableState: VariableState) {
                     // If there is no programmatic mode override and this node has explicitly set
-                    // mode values,
-                    // update variablestate with these values
+                    // mode values, update variablestate with these values
                     val variableState =
                         if (!hasModeOverride && node.view.explicit_variable_modes.isPresent) {
                             val explicitModeValues = node.view.explicit_variable_modes.get()
@@ -112,6 +114,19 @@ internal fun Modifier.squooshRender(
                             parentVariableState
                         }
                     val computedLayout = node.computedLayout ?: return
+                    // Translate by the scroll amount if the parent node is the scroll view.
+                    // Call drawContext.canvas.restore() if scrolling is enabled in order to restore
+                    // the canvas matrix/clip state. This is a good candidate for RAII but this is
+                    // not supported by Kotlin.
+                    val scroll = node.parent?.view == parentNode
+                    if (scroll) {
+                        drawContext.canvas.save()
+                        drawContext.canvas.translate(scrollOffset.value.x, scrollOffset.value.y)
+                    }
+                    // Call scrollRestore() whenever returning from renderNode() in order to restore
+                    // the canvas matrix/clip state. This is a good candidate for RAII but this is
+                    // not supported by Kotlin.
+                    val scrollRestore = { if (scroll) drawContext.canvas.restore() }
                     val shape =
                         when (node.view.data) {
                             is ViewData.Container -> (node.view.data as ViewData.Container).shape
@@ -131,6 +146,7 @@ internal fun Modifier.squooshRender(
                                     )
                                     nodeRenderCount++
                                 }
+                                if (scroll) drawContext.canvas.restore()
                                 return
                             }
                         }
@@ -250,6 +266,7 @@ internal fun Modifier.squooshRender(
                         }
                     }
                     nodeRenderCount++
+                    if (scroll) drawContext.canvas.restore()
                 }
                 renderNode(node, variableState)
             }

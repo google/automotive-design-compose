@@ -17,12 +17,6 @@ than they appear in the design. This can be an issue if a design contains a list
 (auto-content) with more placeholder items in the design than the app provides
 at runtime.
 
-### Absolute positioned items within an Auto Layout container {#AbsolutePositionedItems}
-
-DesignCompose does not support absolute-positioned items within Auto
-Layout containers. For news on possible future support for this or other Figma
-features, ask your Google point of contact.
-
 ### Layout properties are not supported on Figma Group elements {#LayoutPropertiesNotSupported}
 
 Layout properties applied to Figma Group elements are not supported. A
@@ -57,7 +51,7 @@ are ignored.
 
 ### Text {#Text}
 
-Underline and strikethrough text properties are ignored. Strokes on text are ignored. Letter case is ignored.
+Centered strokes on text are supported. Inside and outside strokes on text are rendered as centered strokes. Letter case is ignored.
 
 ## Interaction {#Interaction}
 
@@ -77,8 +71,3 @@ on possible future support, ask your Google point of contact.
 
 Live updates don't immediately reflect updates to the Shadow Effect property
 when applied to vectors.
-
-### Localization {#Localization}
-
-DesignCompose doesn't support localization. For news on possible future support,
-ask your Google point of contact.

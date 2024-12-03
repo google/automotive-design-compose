@@ -40,7 +40,9 @@ import androidx.compose.ui.unit.IntSize
 import com.android.designcompose.proto.StrokeAlignType
 import com.android.designcompose.proto.blendModeFromInt
 import com.android.designcompose.proto.getDim
+import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.max
+import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.overflowFromInt
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.strokeAlignFromInt
@@ -78,14 +80,14 @@ private fun calculateParentOffsets(
     nodeHeight: Double,
     density: Float,
 ): Pair<Double, Double> {
-    val decomposed = style.node_style.transform.decompose(density)
+    val decomposed = style.nodeStyle.transform.decompose(density)
 
     // X Node position offset by the X translation value of the transform matrix
     val nodeX =
-        style.layout_style.margin.start.pointsAsDp(density).value.toDouble() + decomposed.translateX
+        style.layoutStyle.margin.start.pointsAsDp(density).value.toDouble() + decomposed.translateX
     // Y Node position offset by the Y translation value of the transform matrix
     val nodeY =
-        style.layout_style.margin.top.pointsAsDp(density).value.toDouble() + decomposed.translateY
+        style.layoutStyle.margin.top.pointsAsDp(density).value.toDouble() + decomposed.translateY
 
     // Radius of the circle encapsulating the node
     val r = sqrt(nodeWidth * nodeWidth + nodeHeight * nodeHeight) / 2
@@ -110,7 +112,7 @@ private fun calculateParentOffsets(
 }
 
 private fun ViewStyle.getTransform(density: Float): androidx.compose.ui.graphics.Matrix {
-    return node_style.transform.asComposeTransform(density) ?: androidx.compose.ui.graphics.Matrix()
+    return nodeStyle.transform.asComposeTransform(density) ?: androidx.compose.ui.graphics.Matrix()
 }
 
 private fun lerp(start: Float, end: Float, percent: Float, density: Float): Float {
@@ -155,8 +157,8 @@ private fun calculateRotationData(
     // Translate back, with an additional offset from the parent
     val translateBack = androidx.compose.ui.graphics.Matrix()
     translateBack.translate(
-        moveX - style.layout_style.margin.start.pointsAsDp(density).value + xOffsetParent.toFloat(),
-        moveY - style.layout_style.margin.top.pointsAsDp(density).value + yOffsetParent.toFloat(),
+        moveX - style.layoutStyle.margin.start.pointsAsDp(density).value + xOffsetParent.toFloat(),
+        moveY - style.layoutStyle.margin.top.pointsAsDp(density).value + yOffsetParent.toFloat(),
         0f,
     )
     overrideTransform.timesAssign(translateBack)
@@ -177,7 +179,7 @@ private fun calculateProgressBarData(
     // Resize the progress bar by interpolating between 0 and endX or endY depending on whether it
     // is a horizontal or vertical progress bar
     if (progressBarData.vertical) {
-        val width = style.layout_style.width.getDim().pointsAsDp(density).value
+        val width = style.layoutStyle.width.getDim().pointsAsDp(density).value
         // Calculate bar extents from the parent layout if it exists, or from the progress bar data
         // if not.
         var endY = progressBarData.end_y
@@ -190,12 +192,12 @@ private fun calculateProgressBarData(
         }
         val barHeight = lerp(0F, endY, discretizedMeterValue, density)
         val moveY = (endY * density - barHeight)
-        val topOffset = style.layout_style.margin.top.pointsAsDp(density).value
+        val topOffset = style.layoutStyle.margin.top.pointsAsDp(density).value
         val overrideTransform = style.getTransform(density)
         overrideTransform.setYTranslation(moveY - topOffset)
         return Pair(Size(width, barHeight), overrideTransform)
     } else {
-        val height = style.layout_style.height.getDim().pointsAsDp(density).value
+        val height = style.layoutStyle.height.getDim().pointsAsDp(density).value
         // Calculate bar extents from the parent layout if it exists, or from the progress bar data
         // if not.
         var endX = progressBarData.end_x
@@ -244,13 +246,13 @@ private fun calculateProgressMarkerData(
             parentSize?.let { it.height - (mySize?.height ?: 0f) / 2f } ?: markerData.start_y
         val endY = mySize?.let { -it.height / 2f } ?: markerData.end_y
         val moveY = lerp(startY, endY, discretizedMeterValue, density)
-        val topOffset = style.layout_style.margin.top.pointsAsDp(density).value
+        val topOffset = style.layoutStyle.margin.top.pointsAsDp(density).value
         overrideTransform.setYTranslation(moveY - topOffset)
     } else {
         var startX = mySize?.let { -it.width / 2f } ?: markerData.start_x
         var endX = parentSize?.let { it.width - (mySize?.width ?: 0f) / 2f } ?: markerData.end_x
         val moveX = lerp(startX, endX, discretizedMeterValue, density)
-        val leftOffset = style.layout_style.margin.start.pointsAsDp(density).value
+        val leftOffset = style.layoutStyle.margin.start.pointsAsDp(density).value
         overrideTransform.setXTranslation(moveX - leftOffset)
     }
 
@@ -303,7 +305,7 @@ private fun calculateProgressVectorData(
     meterValue: Float,
     density: Float,
 ) {
-    val strokeWidth = style.node_style.stroke.get().stroke_weight.toUniform() * density
+    val strokeWidth = style.nodeStyle.stroke.get().stroke_weight.toUniform() * density
     val discretizedMeterValue = meterValue.coerceDiscrete(data.discrete, data.discrete_value)
 
     // Get full length of path
@@ -357,8 +359,8 @@ internal fun ContentDrawScope.render(
         customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
     if (meterValue != null) {
         // Check if there is meter data for a dial/gauge/progress bar
-        if (style.node_style.meter_data.isPresent) {
-            when (val meterData = style.node_style.meter_data.get().meter_data_type.get()) {
+        if (style.nodeStyle.meter_data.isPresent) {
+            when (val meterData = style.nodeStyle.meter_data.get().meter_data_type.get()) {
                 is MeterDataType.RotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
@@ -412,20 +414,20 @@ internal fun ContentDrawScope.render(
     }
 
     // Push any transforms
-    val transform = overrideTransform ?: style.node_style.transform.asComposeTransform(density)
+    val transform = overrideTransform ?: style.nodeStyle.transform.asComposeTransform(density)
     var vectorScaleX = 1F
     var vectorScaleY = 1F
     if (transform != null) {
-        val decomposed = style.node_style.transform.decompose(density)
+        val decomposed = style.nodeStyle.transform.decompose(density)
         vectorScaleX = abs(decomposed.scaleX)
         vectorScaleY = abs(decomposed.scaleY)
         drawContext.transform.transform(transform)
     }
 
     // Blend mode
-    val blendMode = blendModeFromInt(style.node_style.blend_mode).asComposeBlendMode()
-    val useBlendMode = blendModeFromInt(style.node_style.blend_mode).useLayer()
-    val opacity = style.node_style.opacity.orElse(1.0f)
+    val blendMode = blendModeFromInt(style.nodeStyle.blend_mode).asComposeBlendMode()
+    val useBlendMode = blendModeFromInt(style.nodeStyle.blend_mode).useLayer()
+    val opacity = style.nodeStyle.opacity.orElse(1.0f)
 
     // Either use a graphicsLayer to apply the opacity effect, or use saveLayer if
     // we have a blend mode.
@@ -465,7 +467,7 @@ internal fun ContentDrawScope.render(
             customFillBrush.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
-            style.node_style.backgrounds.mapNotNull { background ->
+            style.nodeStyle.backgrounds.mapNotNull { background ->
                 val p = Paint()
                 val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
@@ -479,7 +481,7 @@ internal fun ContentDrawScope.render(
         }
 
     val strokeBrush =
-        style.node_style.stroke.get().strokes.mapNotNull { background ->
+        style.nodeStyle.stroke.get().strokes.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -580,7 +582,7 @@ internal fun ContentDrawScope.render(
 
     // Now draw our stroke and our children. The order of drawing the stroke and the
     // children is different depending on whether we clip children.
-    val shouldClip = overflowFromInt(style.node_style.overflow) is Overflow.Hidden
+    val shouldClip = overflowFromInt(style.nodeStyle.overflow) is Overflow.Hidden
     if (shouldClip) {
         // Clip children, and paint our stroke on top of them.
         drawContext.canvas.save()
@@ -632,8 +634,8 @@ internal fun ContentDrawScope.squooshShapeRender(
         customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
     if (meterValue != null) {
         // Check if there is meter data for a dial/gauge/progress bar
-        if (style.node_style.meter_data.isPresent) {
-            when (val meterData = style.node_style.meter_data.get().meter_data_type.get()) {
+        if (style.nodeStyle.meter_data.isPresent) {
+            when (val meterData = style.nodeStyle.meter_data.get().meter_data_type.get()) {
                 is MeterDataType.RotationData -> {
                     val rotationData = meterData.value
                     if (rotationData.enabled) {
@@ -687,11 +689,11 @@ internal fun ContentDrawScope.squooshShapeRender(
     }
 
     // Push any transforms
-    val transform = overrideTransform ?: style.node_style.transform.asComposeTransform(density)
+    val transform = overrideTransform ?: style.nodeStyle.transform.asComposeTransform(density)
     var vectorScaleX = 1F
     var vectorScaleY = 1F
     if (transform != null) {
-        val decomposed = style.node_style.transform.decompose(density)
+        val decomposed = style.nodeStyle.transform.decompose(density)
         vectorScaleX = abs(decomposed.scaleX)
         vectorScaleY = abs(decomposed.scaleY)
         drawContext.transform.transform(transform)
@@ -719,9 +721,9 @@ internal fun ContentDrawScope.squooshShapeRender(
         )
 
     // Blend mode
-    val blendMode = blendModeFromInt(style.node_style.blend_mode).asComposeBlendMode()
-    val useBlendMode = blendModeFromInt(style.node_style.blend_mode).useLayer()
-    val opacity = style.node_style.opacity.orElse(1.0f)
+    val blendMode = blendModeFromInt(style.nodeStyle.blend_mode).asComposeBlendMode()
+    val useBlendMode = blendModeFromInt(style.nodeStyle.blend_mode).useLayer()
+    val opacity = style.nodeStyle.opacity.orElse(1.0f)
 
     // Always use saveLayer for opacity; no graphicsLayer since we're not in
     // Compose.
@@ -744,7 +746,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             }
         }
         var strokeOutset = 0.0f
-        val strokeStyle = style.node_style.stroke.get()
+        val strokeStyle = style.nodeStyle.stroke.get()
         if (strokeStyle.strokes.isNotEmpty()) {
             strokeOutset =
                 max(
@@ -778,7 +780,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             customFillBrush.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
-            style.node_style.backgrounds.mapNotNull { background ->
+            style.nodeStyle.backgrounds.mapNotNull { background ->
                 val p = Paint()
                 val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
@@ -791,7 +793,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             }
         }
     val strokeBrush =
-        style.node_style.stroke.get().strokes.mapNotNull { background ->
+        style.nodeStyle.stroke.get().strokes.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -850,13 +852,13 @@ internal fun ContentDrawScope.squooshShapeRender(
                     object : ImageReplacementContext {
                         override val imageContext =
                             ImageContext(
-                                background = node.style.node_style.backgrounds,
-                                minWidth = node.style.layout_style.min_width.getDim(),
-                                maxWidth = node.style.layout_style.max_width.getDim(),
-                                width = node.style.layout_style.width.getDim(),
-                                minHeight = node.style.layout_style.min_height.getDim(),
-                                maxHeight = node.style.layout_style.max_height.getDim(),
-                                height = node.style.layout_style.height.getDim(),
+                                background = node.style.node_style.get().backgrounds,
+                                minWidth = node.style.layout_style.get().min_width.getDim(),
+                                maxWidth = node.style.layout_style.get().max_width.getDim(),
+                                width = node.style.layout_style.get().width.getDim(),
+                                minHeight = node.style.layout_style.get().min_height.getDim(),
+                                maxHeight = node.style.layout_style.get().max_height.getDim(),
+                                height = node.style.layout_style.get().height.getDim(),
                             )
                     }
                 )
@@ -912,7 +914,7 @@ internal fun ContentDrawScope.squooshShapeRender(
 
     // Now draw our stroke and our children. The order of drawing the stroke and the
     // children is different depending on whether we clip children.
-    val shouldClip = overflowFromInt(style.node_style.overflow) is Overflow.Hidden
+    val shouldClip = overflowFromInt(style.nodeStyle.overflow) is Overflow.Hidden
     if (shouldClip) {
         // Clip children, and paint our stroke on top of them.
         drawContext.canvas.save()

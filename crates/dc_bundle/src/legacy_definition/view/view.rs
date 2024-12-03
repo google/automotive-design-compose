@@ -19,12 +19,11 @@ use crate::definition::interaction::Reaction;
 use crate::definition::layout::OverflowDirection;
 use crate::definition::plugin::FrameExtras;
 use crate::definition::view::StyledTextRun;
+use crate::definition::view::ViewStyle;
 use crate::legacy_definition::view::component::ComponentInfo;
-use crate::legacy_definition::view::view_style::ViewStyle;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU16;
-
 /// This enum may be used as a hint by the DesignCompose renderer implementation
 /// to determine if it is important for the content to be rendered identically on different platforms.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

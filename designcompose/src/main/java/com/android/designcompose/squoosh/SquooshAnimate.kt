@@ -28,6 +28,7 @@ import com.android.designcompose.decompose
 import com.android.designcompose.fixedHeight
 import com.android.designcompose.fixedWidth
 import com.android.designcompose.proto.get
+import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.Shape
@@ -101,7 +102,7 @@ internal abstract class SquooshAnimatedItem(
 
 internal class SquooshAnimatedFadeIn(target: SquooshResolvedNode, transition: AnimationTransition) :
     SquooshAnimatedItem(target, transition) {
-    private val targetOpacity: Float = target.style.node_style.opacity.getOrElse { 1f }
+    private val targetOpacity: Float = target.style.nodeStyle.opacity.getOrElse { 1f }
 
     override fun apply(value: Float) {
         target.style =
@@ -113,7 +114,7 @@ internal class SquooshAnimatedFadeOut(
     target: SquooshResolvedNode,
     transition: AnimationTransition,
 ) : SquooshAnimatedItem(target, transition) {
-    private val targetOpacity: Float = target.style.node_style.opacity.getOrElse { 1f }
+    private val targetOpacity: Float = target.style.nodeStyle.opacity.getOrElse { 1f }
 
     override fun apply(value: Float) {
         target.style =
@@ -130,7 +131,7 @@ internal class SquooshAnimatedScale(
     private val scaleFrom: Boolean,
     transition: AnimationTransition,
 ) : SquooshAnimatedItem(target, transition) {
-    private val fromDecomposed = from.style.node_style.transform.decompose(1F)
+    private val fromDecomposed = from.style.nodeStyle.transform.decompose(1F)
 
     override fun apply(value: Float) {
         if (from.computedLayout == null || to.computedLayout == null) return
@@ -170,8 +171,8 @@ internal class SquooshAnimatedLayout(
     private val to: SquooshResolvedNode,
     transition: AnimationTransition,
 ) : SquooshAnimatedItem(target, transition) {
-    private val fromDecomposed = from.style.node_style.transform.decompose(1F)
-    private val toDecomposed = to.style.node_style.transform.decompose(1F)
+    private val fromDecomposed = from.style.nodeStyle.transform.decompose(1F)
+    private val toDecomposed = to.style.nodeStyle.transform.decompose(1F)
     private val tweenTypes = computeTweenTypes()
 
     companion object {
@@ -180,12 +181,12 @@ internal class SquooshAnimatedLayout(
     }
 
     private fun needsTransformTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
-        return from.view.style.node_style.transform != to.view.style.node_style.transform
+        return from.view.style.nodeStyle.transform != to.view.style.nodeStyle.transform
     }
 
     private fun needsOpacityTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
-        return from.view.style.node_style.opacity.getOrElse { 1F } !=
-            to.view.style.node_style.opacity.getOrElse { 1F }
+        return from.view.style.nodeStyle.opacity.getOrElse { 1F } !=
+            to.view.style.nodeStyle.opacity.getOrElse { 1F }
     }
 
     private fun computeTweenTypes(): Int {
@@ -199,8 +200,8 @@ internal class SquooshAnimatedLayout(
         if (tweenTypes and TWEEN_OPACITY != 0) {
             this.target.style =
                 this.target.style.withNodeStyle { s ->
-                    val fromOpacity = from.style.node_style.opacity.getOrElse { 1F }
-                    val toOpacity = to.style.node_style.opacity.getOrElse { 1F }
+                    val fromOpacity = from.style.nodeStyle.opacity.getOrElse { 1F }
+                    val toOpacity = to.style.nodeStyle.opacity.getOrElse { 1F }
                     s.opacity = Optional.of(toOpacity * value + fromOpacity * iv)
                 }
         }
@@ -676,8 +677,8 @@ private fun isTweenable(a: View, b: View): Boolean {
 
 private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     // Compare some style things and decide if we need to tween the styles.
-    if (a.node_style.backgrounds != b.node_style.backgrounds) return true
-    if (a.node_style.stroke != b.node_style.stroke) return true
+    if (a.nodeStyle.backgrounds != b.nodeStyle.backgrounds) return true
+    if (a.nodeStyle.stroke != b.nodeStyle.stroke) return true
     return false
 }
 
@@ -694,7 +695,7 @@ private fun shouldScale(from: SquooshResolvedNode, to: SquooshResolvedNode): Boo
         // Scale text if the string and font are the same
         return fromData.content == toData.content &&
             fromData.res_name == toData.res_name &&
-            from.style.node_style.font_family == to.style.node_style.font_family
+            from.style.nodeStyle.font_family == to.style.nodeStyle.font_family
     }
 
     return false
@@ -702,8 +703,8 @@ private fun shouldScale(from: SquooshResolvedNode, to: SquooshResolvedNode): Boo
 
 private fun ViewStyle.withNodeStyle(delta: (NodeStyle.Builder) -> Unit): ViewStyle {
     val builder = asBuilder()
-    val nodeStyleBuilder = node_style.asBuilder()
+    val nodeStyleBuilder = nodeStyle.asBuilder()
     delta(nodeStyleBuilder)
-    builder.node_style = nodeStyleBuilder.build()
+    builder.node_style = Optional.of(nodeStyleBuilder.build())
     return builder.build()
 }

@@ -21,12 +21,15 @@ import com.android.designcompose.serdegen.BackgroundType
 import com.android.designcompose.serdegen.Box
 import com.android.designcompose.serdegen.FontWeight
 import com.android.designcompose.serdegen.ItemSpacing
+import com.android.designcompose.serdegen.LayoutStyle
+import com.android.designcompose.serdegen.NodeStyle
 import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.StrokeWeightType
 import com.android.designcompose.serdegen.ViewShape
+import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
@@ -153,3 +156,15 @@ internal fun newFontWeight(weight: Float) =
 internal fun ItemSpacing.type() = item_spacing_type.getOrNull()
 
 internal fun newNumOrVar(value: Float) = NumOrVar(Optional.of(NumOrVarType.Num(value)))
+
+internal val ViewStyle.nodeStyle: NodeStyle
+    get() =
+        this.node_style.orElseThrow {
+            NoSuchFieldException("Malformed data: ViewStyle has no node_style field")
+        }
+
+internal val ViewStyle.layoutStyle: LayoutStyle
+    get() =
+        this.layout_style.orElseThrow {
+            NoSuchFieldException("Malformed data: ViewStyle has no layout_style field")
+        }

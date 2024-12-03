@@ -41,8 +41,10 @@ import com.android.designcompose.getVisibleState
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
 import com.android.designcompose.proto.OverlayPositionEnum
+import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.newDimensionProtoPercent
 import com.android.designcompose.proto.newViewShapeRect
+import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.overlayBackgroundInteractionFromInt
 import com.android.designcompose.proto.overlayPositionEnumFromInt
 import com.android.designcompose.proto.toInt
@@ -453,8 +455,8 @@ private fun generateReplacementListChildNode(
     val layoutStyle = defaultLayoutStyle()
     val nodeStyle = defaultNodeStyle()
 
-    itemStyle.layout_style = layoutStyle.build()
-    itemStyle.node_style = nodeStyle.build()
+    itemStyle.layout_style = Optional.of(layoutStyle.build())
+    itemStyle.node_style = Optional.of(nodeStyle.build())
 
     val listChildViewData = ViewData.Container.Builder()
     listChildViewData.shape = newViewShapeRect(false)
@@ -509,8 +511,8 @@ private fun generateOverlayNode(
 ): SquooshResolvedNode {
     // Make a view based on the child node which uses a synthesized style.
     val overlayStyle = node.style.asBuilder()
-    val layoutStyle = node.style.layout_style.asBuilder()
-    val nodeStyle = node.style.node_style.asBuilder()
+    val layoutStyle = node.style.layoutStyle.asBuilder()
+    val nodeStyle = node.style.nodeStyle.asBuilder()
     nodeStyle.overflow = Overflow.Visible().toInt()
     layoutStyle.position_type = PositionType.Absolute().toInt()
     layoutStyle.top = newDimensionProtoPercent(0.0f)
@@ -571,8 +573,8 @@ private fun generateOverlayNode(
                 )
             )
     }
-    overlayStyle.layout_style = layoutStyle.build()
-    overlayStyle.node_style = nodeStyle.build()
+    overlayStyle.layout_style = Optional.of(layoutStyle.build())
+    overlayStyle.node_style = Optional.of(nodeStyle.build())
     val style = overlayStyle.build()
 
     // Now synthesize a view.

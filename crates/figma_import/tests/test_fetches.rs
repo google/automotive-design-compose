@@ -40,6 +40,29 @@ fn run_test(doc_id: &str, queries: &[&str]) {
 
 #[test]
 #[cfg_attr(not(feature = "test_fetches"), ignore)]
+fn fetch_design_switcher() {
+    run_test(
+        "Ljph4e3sC0lHcynfXpoh9f",
+        &[
+            "SettingsView",
+            "FigmaDoc",
+            "Message",
+            "MessageFailed",
+            "LoadingSpinner",
+            "Checkbox",
+            "NodeNamesCheckbox",
+            "MiniMessagesCheckbox",
+            "ShowRecompositionCheckbox",
+            "UseLocalResCheckbox",
+            "DesignViewMain",
+            "LiveMode",
+            "TopStatusBar",
+        ],
+    )
+}
+
+#[test]
+#[cfg_attr(not(feature = "test_fetches"), ignore)]
 fn fetch_variable_modes() {
     run_test("HhGxvL4aHhP8ALsLNz56TP", &["#stage", "#Box"]);
 }

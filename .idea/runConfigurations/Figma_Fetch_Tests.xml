@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Figma Fetch Tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+    <option name="buildProfileId" value="test" />
     <option name="command" value="test --package figma_import --test test_fetches -- --exact" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <envs />

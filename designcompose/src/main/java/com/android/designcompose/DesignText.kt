@@ -65,6 +65,8 @@ import com.android.designcompose.DesignTextMeasure.AVAILABLE_SIZE_CONTENT_MAXIMU
 import com.android.designcompose.DesignTextMeasure.AVAILABLE_SIZE_CONTENT_MINIMUM
 import com.android.designcompose.proto.blendModeFromInt
 import com.android.designcompose.proto.fontStyleFromInt
+import com.android.designcompose.proto.layoutStyle
+import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.textAlignFromInt
 import com.android.designcompose.proto.textAlignVerticalFromInt
 import com.android.designcompose.proto.textDecorationFromInt
@@ -86,12 +88,12 @@ import kotlin.math.roundToInt
 internal fun Modifier.textTransform(style: ViewStyle) =
     this.then(
         Modifier.drawWithContent {
-            val transform = style.node_style.transform.asComposeTransform(density)
+            val transform = style.nodeStyle.transform.asComposeTransform(density)
             if (transform != null && !transform.isIdentity()) {
                 drawContext.transform.transform(transform)
             }
-            val blendMode = blendModeFromInt(style.node_style.blend_mode).asComposeBlendMode()
-            val useBlendModeLayer = blendModeFromInt(style.node_style.blend_mode).useLayer()
+            val blendMode = blendModeFromInt(style.nodeStyle.blend_mode).asComposeBlendMode()
+            val useBlendModeLayer = blendModeFromInt(style.nodeStyle.blend_mode).useLayer()
             if (useBlendModeLayer) {
                 val paint = Paint()
                 paint.blendMode = blendMode
@@ -154,7 +156,7 @@ internal fun DesignText(
     var useText = customizations.getText(nodeName)
     if (useText == null) useText = customizations.getTextState(nodeName)?.value ?: newlineFixedText
 
-    val fontFamily = DesignSettings.fontFamily(style.node_style.font_family)
+    val fontFamily = DesignSettings.fontFamily(style.nodeStyle.font_family)
     val customTextStyle = customizations.getTextStyle(nodeName)
     val textBuilder = AnnotatedString.Builder()
 
@@ -164,8 +166,8 @@ internal fun DesignText(
 
     if (useText != null) {
         textBuilder.append(useText)
-        if (style.node_style.hyperlinks.isPresent) {
-            val link = style.node_style.hyperlinks.get().value
+        if (style.nodeStyle.hyperlinks.isPresent) {
+            val link = style.nodeStyle.hyperlinks.get().value
             textBuilder.addUrlAnnotation(UrlAnnotation(link), 0, useText.length)
         }
     } else if (runs != null) {
@@ -242,11 +244,11 @@ internal fun DesignText(
     val lineHeight =
         customTextStyle?.lineHeight
             ?: when (
-                val lineHeightType = style.node_style.line_height.get().line_height_type.get()
+                val lineHeightType = style.nodeStyle.line_height.get().line_height_type.get()
             ) {
                 is LineHeightType.Pixels ->
                     if (runs != null) {
-                        val fontSizeVal = style.node_style.font_size.get().getValue(variableState)
+                        val fontSizeVal = style.nodeStyle.font_size.get().getValue(variableState)
                         (lineHeightType.value / fontSizeVal).em
                     } else {
                         lineHeightType.value.sp
@@ -256,17 +258,17 @@ internal fun DesignText(
     val fontWeight =
         customTextStyle?.fontWeight
             ?: androidx.compose.ui.text.font.FontWeight(
-                style.node_style.font_weight.get().weight.get().getValue(variableState).roundToInt()
+                style.nodeStyle.font_weight.get().weight.get().getValue(variableState).roundToInt()
             )
     val fontStyle =
         customTextStyle?.fontStyle
-            ?: when (fontStyleFromInt(style.node_style.font_style)) {
+            ?: when (fontStyleFromInt(style.nodeStyle.font_style)) {
                 is FontStyle.Italic -> androidx.compose.ui.text.font.FontStyle.Italic
                 else -> androidx.compose.ui.text.font.FontStyle.Normal
             }
     val textDecoration =
         customTextStyle?.textDecoration
-            ?: when (textDecorationFromInt(style.node_style.text_decoration)) {
+            ?: when (textDecorationFromInt(style.nodeStyle.text_decoration)) {
                 is TextDecoration.Underline ->
                     androidx.compose.ui.text.style.TextDecoration.Underline
                 is TextDecoration.Strikethrough ->
@@ -274,11 +276,11 @@ internal fun DesignText(
                 else -> androidx.compose.ui.text.style.TextDecoration.None
             }
     val letterSpacing =
-        customTextStyle?.letterSpacing ?: style.node_style.letter_spacing.orElse(0f).sp
+        customTextStyle?.letterSpacing ?: style.nodeStyle.letter_spacing.orElse(0f).sp
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.
     val shadow =
-        style.node_style.text_shadow.flatMap { textShadow ->
+        style.nodeStyle.text_shadow.flatMap { textShadow ->
             Optional.of(
                 Shadow(
                     // Ensure that blur radius is never zero, because Compose interprets that as no
@@ -302,7 +304,7 @@ internal fun DesignText(
         }
 
     val textBrushAndOpacity =
-        style.node_style.text_color
+        style.nodeStyle.text_color
             .get()
             .asBrush(LocalContext.current, document, density.density, variableState)
 
@@ -313,10 +315,10 @@ internal fun DesignText(
             alpha = textBrushAndOpacity?.second ?: 1.0f,
             fontSize =
                 customTextStyle?.fontSize
-                    ?: style.node_style.font_size.get().getValue(variableState).sp,
+                    ?: style.nodeStyle.font_size.get().getValue(variableState).sp,
             fontFamily = fontFamily,
             fontFeatureSettings =
-                style.node_style.font_features.joinToString(", ") { feature ->
+                style.nodeStyle.font_features.joinToString(", ") { feature ->
                     String(feature.tag.toByteArray())
                 },
             lineHeight = lineHeight,
@@ -326,7 +328,7 @@ internal fun DesignText(
             letterSpacing = letterSpacing,
             textAlign =
                 customTextStyle?.textAlign
-                    ?: when (textAlignFromInt(style.node_style.text_align)) {
+                    ?: when (textAlignFromInt(style.nodeStyle.text_align)) {
                         is TextAlign.Center -> androidx.compose.ui.text.style.TextAlign.Center
                         is TextAlign.Right -> androidx.compose.ui.text.style.TextAlign.Right
                         else -> androidx.compose.ui.text.style.TextAlign.Left
@@ -341,7 +343,7 @@ internal fun DesignText(
         )
     val overflow =
         if (
-            textOverflowFromInt(style.node_style.text_overflow)
+            textOverflowFromInt(style.nodeStyle.text_overflow)
                 is com.android.designcompose.serdegen.TextOverflow.Clip
         )
             TextOverflow.Clip
@@ -357,7 +359,7 @@ internal fun DesignText(
         )
 
     val maxLines =
-        if (style.node_style.line_count.isPresent) style.node_style.line_count.get().toInt()
+        if (style.nodeStyle.line_count.isPresent) style.nodeStyle.line_count.get().toInt()
         else Int.MAX_VALUE
     val textMeasureData =
         TextMeasureData(
@@ -387,7 +389,7 @@ internal fun DesignText(
                 parentLayoutId,
                 rootLayoutId,
                 childIndex,
-                style.layout_style,
+                style.layoutStyle,
                 view.name,
                 textMeasureData,
             )
@@ -458,10 +460,10 @@ internal fun DesignText(
                             textLayoutResult?.let {
                                 drawContent()
                                 val strokeWidth =
-                                    style.node_style.stroke.get().stroke_weight.toUniform() *
+                                    style.nodeStyle.stroke.get().stroke_weight.toUniform() *
                                         density.density
 
-                                style.node_style.stroke.get().strokes.forEach { stroke ->
+                                style.nodeStyle.stroke.get().strokes.forEach { stroke ->
                                     stroke
                                         .asBrush(
                                             appContext,
@@ -503,11 +505,11 @@ internal fun DesignText(
                     width = layoutWithDensity.width,
                     maxLines = textMeasureData.maxLines,
                     ellipsis =
-                        textOverflowFromInt(style.node_style.text_overflow)
+                        textOverflowFromInt(style.nodeStyle.text_overflow)
                             is com.android.designcompose.serdegen.TextOverflow.Ellipsis,
                 )
 
-            when (textAlignVerticalFromInt(style.node_style.text_align_vertical)) {
+            when (textAlignVerticalFromInt(style.nodeStyle.text_align_vertical)) {
                 is TextAlignVertical.Center -> (layoutWithDensity.height - paragraph.height) / 2F
                 is TextAlignVertical.Bottom -> layoutWithDensity.height - paragraph.height
                 else -> 0F

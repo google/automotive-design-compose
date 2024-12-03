@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.tracing.trace
 import com.android.designcompose.proto.getDim
+import com.android.designcompose.proto.layoutStyle
+import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.top
 import com.android.designcompose.proto.type
@@ -112,7 +114,7 @@ internal fun DesignFrame(
                         setLayoutState,
                         parentLayoutId,
                         childIndex,
-                        style.layout_style,
+                        style.layoutStyle,
                         view.name,
                     )
                 }
@@ -189,13 +191,13 @@ internal fun DesignFrame(
                 object : ImageReplacementContext {
                     override val imageContext =
                         ImageContext(
-                            background = style.node_style.backgrounds,
-                            minWidth = style.layout_style.min_width.getDim(),
-                            maxWidth = style.layout_style.max_width.getDim(),
-                            width = style.layout_style.width.getDim(),
-                            minHeight = style.layout_style.min_height.getDim(),
-                            maxHeight = style.layout_style.max_height.getDim(),
-                            height = style.layout_style.height.getDim(),
+                            background = style.nodeStyle.backgrounds,
+                            minWidth = style.layoutStyle.min_width.getDim(),
+                            maxWidth = style.layoutStyle.max_width.getDim(),
+                            width = style.layoutStyle.width.getDim(),
+                            minHeight = style.layoutStyle.min_height.getDim(),
+                            maxHeight = style.layoutStyle.max_height.getDim(),
+                            height = style.layoutStyle.height.getDim(),
                         )
                 }
             )
@@ -239,19 +241,19 @@ internal fun DesignFrame(
                     var count = content.count
                     var overflowNodeId: String? = null
                     if (
-                        style.node_style.max_children.isPresent &&
-                            style.node_style.max_children.get() < count
+                        style.nodeStyle.max_children.isPresent &&
+                            style.nodeStyle.max_children.get() < count
                     ) {
-                        count = style.node_style.max_children.get()
-                        if (style.node_style.overflow_node_id.isPresent)
-                            overflowNodeId = style.node_style.overflow_node_id.get()
+                        count = style.nodeStyle.max_children.get()
+                        if (style.nodeStyle.overflow_node_id.isPresent)
+                            overflowNodeId = style.nodeStyle.overflow_node_id.get()
                     }
 
                     // If the widget is set to hug contents, don't give Row() a size and let it size
                     // itself. Then when the size is determined, inform the layout manager.
                     // Otherwise,
                     // get the fixed size from the layout manager and use it in a Modifier.
-                    val hugContents = view.style.layout_style.width.getDim() is Dimension.Auto
+                    val hugContents = view.style.layoutStyle.width.getDim() is Dimension.Auto
                     val rowModifier =
                         if (hugContents)
                             Modifier.onSizeChanged {
@@ -280,8 +282,8 @@ internal fun DesignFrame(
                                 if (customComposable != null) {
                                     customComposable(
                                         Modifier,
-                                        style.node_style.overflow_node_name.get(),
-                                        NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
+                                        style.nodeStyle.overflow_node_name.get(),
+                                        NodeQuery.NodeId(style.nodeStyle.overflow_node_id.get()),
                                         parentComponents,
                                         null,
                                     )
@@ -309,12 +311,12 @@ internal fun DesignFrame(
                     var count = content.count
                     var overflowNodeId: String? = null
                     if (
-                        style.node_style.max_children.isPresent &&
-                            style.node_style.max_children.get() < count
+                        style.nodeStyle.max_children.isPresent &&
+                            style.nodeStyle.max_children.get() < count
                     ) {
-                        count = style.node_style.max_children.get()
-                        if (style.node_style.overflow_node_id.isPresent)
-                            overflowNodeId = style.node_style.overflow_node_id.get()
+                        count = style.nodeStyle.max_children.get()
+                        if (style.nodeStyle.overflow_node_id.isPresent)
+                            overflowNodeId = style.nodeStyle.overflow_node_id.get()
                     }
 
                     // If the widget is set to hug contents, don't give Column() a size and let it
@@ -322,7 +324,7 @@ internal fun DesignFrame(
                     // itself. Then when the size is determined, inform the layout manager.
                     // Otherwise,
                     // get the fixed size from the layout manager and use it in a Modifier.
-                    val hugContents = view.style.layout_style.height.getDim() is Dimension.Auto
+                    val hugContents = view.style.layoutStyle.height.getDim() is Dimension.Auto
                     val columnModifier =
                         if (hugContents)
                             Modifier.onSizeChanged {
@@ -351,8 +353,8 @@ internal fun DesignFrame(
                                 if (customComposable != null) {
                                     customComposable(
                                         Modifier,
-                                        style.node_style.overflow_node_name.get(),
-                                        NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
+                                        style.nodeStyle.overflow_node_name.get(),
+                                        NodeQuery.NodeId(style.nodeStyle.overflow_node_id.get()),
                                         parentComponents,
                                         null,
                                     )
@@ -470,12 +472,12 @@ internal fun DesignFrame(
                     var count = lContent.count
                     var overflowNodeId: String? = null
                     if (
-                        style.node_style.max_children.isPresent &&
-                            style.node_style.max_children.get() < count
+                        style.nodeStyle.max_children.isPresent &&
+                            style.nodeStyle.max_children.get() < count
                     ) {
-                        count = style.node_style.max_children.get()
-                        if (style.node_style.overflow_node_id.isPresent)
-                            overflowNodeId = style.node_style.overflow_node_id.get()
+                        count = style.nodeStyle.max_children.get()
+                        if (style.nodeStyle.overflow_node_id.isPresent)
+                            overflowNodeId = style.nodeStyle.overflow_node_id.get()
                     }
                     items(
                         count,
@@ -509,8 +511,8 @@ internal fun DesignFrame(
                                 if (customComposable != null) {
                                     customComposable(
                                         Modifier,
-                                        style.node_style.overflow_node_name.get(),
-                                        NodeQuery.NodeId(style.node_style.overflow_node_id.get()),
+                                        style.nodeStyle.overflow_node_name.get(),
+                                        NodeQuery.NodeId(style.nodeStyle.overflow_node_id.get()),
                                         parentComponents,
                                         null,
                                     )
@@ -742,8 +744,8 @@ internal fun Modifier.frameRender(
                     paint.blendMode = BlendMode.DstIn
                     val offset =
                         Offset(
-                            -style.layout_style.margin.start.pointsAsDp(density).value,
-                            -style.layout_style.margin.top.pointsAsDp(density).value,
+                            -style.layoutStyle.margin.start.pointsAsDp(density).value,
+                            -style.layoutStyle.margin.top.pointsAsDp(density).value,
                         )
                     val parentSize = maskInfo?.parentSize?.value ?: size
                     drawContext.canvas.withSaveLayer(Rect(offset, parentSize), paint) { render() }

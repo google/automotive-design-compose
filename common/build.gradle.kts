@@ -27,6 +27,8 @@ plugins {
     idea // required so that Android Studio will detect the protobuf files correctly
 }
 
+kotlin { jvmToolchain(11) }
+
 publishing {
     publications.named<MavenPublication>("release") {
         pom {
@@ -124,4 +126,6 @@ dependencies {
     api(libs.javax.annotationApi)
     implementation(libs.kotlin.stdlib)
     implementation(libs.protobuf.kotlin.lite)
+    testImplementation(libs.junit.junit)
+    testImplementation(kotlin("test"))
 }

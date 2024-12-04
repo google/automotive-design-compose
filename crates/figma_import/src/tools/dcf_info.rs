@@ -82,7 +82,7 @@ pub fn dcf_info(args: Args) -> Result<(), ParseError> {
 
     if let Some(node) = node {
         println!("Dumping file from node: {}:", node);
-        if let Some(view) = doc.views.get(&crate::NodeQuery::name(&node)) {
+        if let Some(view) = doc.views.get(&crate::NodeQuery::name(&node).encode()) {
             // NOTE: uses format and Debug implementation to pretty print the node and all children.
             // See: https://doc.rust-lang.org/std/fmt/#usage
             println!("{:#?}", view);

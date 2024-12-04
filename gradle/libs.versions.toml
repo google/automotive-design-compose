@@ -65,6 +65,7 @@ androidx-material3 = "1.3.1"
 # Keep in sync with the "Install Protoc" steps in .github/workflows
 protoc = "4.29.0"
 protobuf-plugin = "0.9.4"
+junitVersion = "4.12"
 
 [libraries]
 # Android
@@ -145,6 +146,7 @@ roborazzi-junit = {module = "io.github.takahirom.roborazzi:roborazzi-junit-rule"
 spotless-plugin-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protoc"}
 protobuf-kotlin-lite = {module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protoc"}
+junit-junit = { group = "junit", name = "junit", version.ref = "junitVersion" }
 
 
 [plugins]

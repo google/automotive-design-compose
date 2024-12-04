@@ -35,7 +35,7 @@ import androidx.compose.ui.text.TextStyle
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.FeedbackLevel
-import com.android.designcompose.serdegen.NodeQuery
+import com.android.designcompose.common.NodeQuery
 import java.time.Instant
 import kotlin.collections.HashMap
 import kotlinx.coroutines.delay

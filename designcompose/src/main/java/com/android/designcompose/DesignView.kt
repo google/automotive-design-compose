@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.overflowDirectionFromInt
 import com.android.designcompose.proto.overflowFromInt
@@ -75,7 +76,6 @@ import com.android.designcompose.proto.type
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.ActionType
 import com.android.designcompose.serdegen.ComponentInfo
-import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.Reaction
@@ -893,15 +893,15 @@ internal fun DesignDocInternal(
             DesignSettings.liveUpdatesEnabled
     val rootFrameName =
         when (rootNodeQuery) {
-            is NodeQuery.NodeName -> rootNodeQuery.value
-            is NodeQuery.NodeId -> rootNodeQuery.value
-            is NodeQuery.NodeVariant -> rootNodeQuery.field0
+            is NodeQuery.NodeName -> rootNodeQuery.name
+            is NodeQuery.NodeId -> rootNodeQuery.id
+            is NodeQuery.NodeVariant -> rootNodeQuery.name
             else -> ""
         }
 
     var variantParentName =
         when (rootNodeQuery) {
-            is NodeQuery.NodeVariant -> rootNodeQuery.field1
+            is NodeQuery.NodeVariant -> rootNodeQuery.parent
             else -> ""
         }
 

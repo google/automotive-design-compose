@@ -28,6 +28,9 @@ import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.StrokeWeightType
+import com.android.designcompose.serdegen.Text
+import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
@@ -168,3 +171,13 @@ internal val ViewStyle.layoutStyle: LayoutStyle
         this.layout_style.orElseThrow {
             NoSuchFieldException("Malformed data: ViewStyle has no layout_style field")
         }
+
+internal fun Optional<ViewData>.getType() = this.get().view_data_type.get()
+
+internal fun Optional<ViewData>.ifContainerGetShape(): Shape? {
+    return (this.get().view_data_type.get() as? ViewDataType.Container)?.value?.shape?.get()?.get()
+}
+
+internal fun Optional<ViewData>.ifTextGetText(): Text? {
+    return (this.get().view_data_type.get() as? ViewDataType.Text)?.value
+}

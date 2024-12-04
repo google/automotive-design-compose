@@ -27,6 +27,7 @@ import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.PositionType
+import com.android.designcompose.serdegen.RenderMethod
 import com.android.designcompose.serdegen.ScaleMode
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.TextAlign
@@ -306,6 +307,15 @@ internal fun overflowDirectionFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.OverflowDirection.Unspecified()
     }
 
+internal fun com.android.designcompose.serdegen.OverflowDirection.toInt() =
+    when (this) {
+        is com.android.designcompose.serdegen.OverflowDirection.None -> 1
+        is com.android.designcompose.serdegen.OverflowDirection.HorizontalScrolling -> 2
+        is com.android.designcompose.serdegen.OverflowDirection.VerticalScrolling -> 3
+        is com.android.designcompose.serdegen.OverflowDirection.HorizontalAndVerticalScrolling -> 4
+        else -> 0
+    }
+
 internal fun layoutSizingFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.LayoutSizing.Fixed()
@@ -520,4 +530,11 @@ internal fun gridLayoutTypeFromInt(value: Int) =
         5 -> com.android.designcompose.serdegen.GridLayoutType.Horizontal()
         6 -> com.android.designcompose.serdegen.GridLayoutType.Vertical()
         else -> com.android.designcompose.serdegen.GridLayoutType.Unspecified()
+    }
+
+internal fun RenderMethod.toInt() =
+    when (this) {
+        is RenderMethod.None -> 1
+        is RenderMethod.PixelPerfect -> 2
+        else -> 0
     }

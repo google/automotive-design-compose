@@ -44,6 +44,8 @@ message View {
   // unique numeric id (not replicated within one DesignCompose file), which is
   // used by the renderer when building a layout tree, or when mapping from an
   // integer to a View.
+  // IMPORTANT: This is a u16, but proto doesn't do short types. Convert back to 
+  // u16 after deserializing 
   uint32 unique_id = 1;
   // id doesn't exist in vsw toolkit, but is useful for tracing from Figma node
   // to output
@@ -82,10 +84,20 @@ message ViewData {
     definition.element.ViewShape shape = 1;
     repeated View children = 2;
   }
+  // A Text view with a possible resource name attached to it
+  message Text {
+    string content = 1;
+    optional string res_name =2;
+  }
+  // A collection of styled text sections
+  message StyledTextRuns {
+    repeated StyledTextRun styled_texts = 1;
+    optional string res_name =2;
+  }
 
-  oneof view_data {
+  oneof view_data_type {
     Container container = 1;
-    string text = 2;
-    StyledText styled_text = 3;
+    Text text = 2;
+    StyledTextRuns styled_text = 3;
   }
 }

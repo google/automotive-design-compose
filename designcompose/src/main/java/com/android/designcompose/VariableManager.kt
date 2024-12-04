@@ -34,7 +34,6 @@ import com.android.designcompose.serdegen.Value
 import com.android.designcompose.serdegen.Variable
 import com.android.designcompose.serdegen.VariableMap
 import com.android.designcompose.serdegen.VariableValue
-import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
 // A variable mode, e.g. "light" or "dark"
@@ -194,12 +193,12 @@ internal object VariableManager {
     // variable modes have been set on this node. If so, return the modeValues set.
     @Composable
     internal fun currentModeValues(
-        explicitVariableModes: Optional<MutableMap<String, String>>
+        explicitVariableModes: MutableMap<String, String>
     ): VariableModeValues? {
         var modeValues: VariableModeValues? = null
         if (!LocalVariableState.hasOverrideModeValues()) {
-            if (explicitVariableModes.isPresent) {
-                val modes = explicitVariableModes.get()
+            if (explicitVariableModes.isNotEmpty()) {
+                val modes = explicitVariableModes
                 modeValues = updateVariableStateFromModeValues(modes)
             } else {
                 modeValues = LocalVariableModeValuesDoc.current

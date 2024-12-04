@@ -45,9 +45,8 @@ pub use image_context::ImageContextSession;
 
 // Internal convenience
 pub use dc_bundle::definition::element::{Color, ImageKey};
+pub use dc_bundle::definition::view::{View, ViewData};
 pub use dc_bundle::legacy_definition::element::node::NodeQuery;
-pub use dc_bundle::legacy_definition::view::view::View;
-pub use dc_bundle::legacy_definition::view::view::ViewData;
 
 /// Functionality related to reflection for deserializing our bincode archives in other
 /// languages

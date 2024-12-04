@@ -49,8 +49,3 @@ message StyledTextRun {
   string text = 1;
   TextStyle style = 2;
 }
-
-// A collection of styled text sections
-message StyledText {
-  repeated StyledTextRun styled_texts = 1;
-}

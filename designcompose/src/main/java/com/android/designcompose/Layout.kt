@@ -45,6 +45,7 @@ import com.android.designcompose.proto.gridLayoutTypeFromInt
 import com.android.designcompose.proto.justifyContentFromInt
 import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.nodeStyle
+import com.android.designcompose.proto.overflowDirectionFromInt
 import com.android.designcompose.proto.start
 import com.android.designcompose.proto.top
 import com.android.designcompose.proto.type
@@ -333,7 +334,7 @@ internal fun calcLayoutInfo(
                 gridLayout is GridLayoutType.FixedColumns ||
                     gridLayout is GridLayoutType.AutoColumns
             val scrollingEnabled =
-                when (view.scroll_info.overflow) {
+                when (overflowDirectionFromInt(view.scroll_info.get().overflow)) {
                     is OverflowDirection.VerticalScrolling -> isColumnLayout
                     is OverflowDirection.HorizontalScrolling -> !isColumnLayout
                     is OverflowDirection.HorizontalAndVerticalScrolling -> true
@@ -374,7 +375,7 @@ internal fun calcLayoutInfo(
     } else {
         var horizontalScroll = false
         var verticalScroll = false
-        when (view.scroll_info.overflow) {
+        when (overflowDirectionFromInt(view.scroll_info.get().overflow)) {
             is OverflowDirection.VerticalScrolling -> {
                 verticalScroll = true
             }
@@ -534,13 +535,25 @@ internal fun designMeasurePolicy(
                             val density = LayoutManager.getDensity()
                             if (designScroll.orientation == Orientation.Horizontal) {
                                 val hMargin =
-                                    view.style.layoutStyle.padding.end.pointsAsDp(density).value
+                                    view.style
+                                        .get()
+                                        .layoutStyle
+                                        .padding
+                                        .end
+                                        .pointsAsDp(density)
+                                        .value
                                 designScroll.scrollMax.value =
                                     (childLayout.left + childLayout.width - myWidth + hMargin)
                                         .coerceAtLeast(0F)
                             } else {
                                 val vMargin =
-                                    view.style.layoutStyle.padding.bottom.pointsAsDp(density).value
+                                    view.style
+                                        .get()
+                                        .layoutStyle
+                                        .padding
+                                        .bottom
+                                        .pointsAsDp(density)
+                                        .value
                                 designScroll.scrollMax.value =
                                     (childLayout.top + childLayout.height - myHeight + vMargin)
                                         .coerceAtLeast(0F)

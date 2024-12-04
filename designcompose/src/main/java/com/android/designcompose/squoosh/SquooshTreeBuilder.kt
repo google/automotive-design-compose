@@ -42,6 +42,7 @@ import com.android.designcompose.hasScrolling
 import com.android.designcompose.mergeStyles
 import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
 import com.android.designcompose.proto.OverlayPositionEnum
+import com.android.designcompose.proto.getType
 import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.newDimensionProtoPercent
 import com.android.designcompose.proto.newViewShapeRect
@@ -59,6 +60,7 @@ import com.android.designcompose.serdegen.Color
 import com.android.designcompose.serdegen.ColorOrVar
 import com.android.designcompose.serdegen.ColorOrVarType
 import com.android.designcompose.serdegen.ComponentInfo
+import com.android.designcompose.serdegen.Container
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FrameExtras
 import com.android.designcompose.serdegen.JustifyContent
@@ -73,6 +75,7 @@ import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
@@ -243,11 +246,11 @@ internal fun resolveVariantsRecursively(
     // that on top of the view (or variant) style.
     val style =
         if (overrideStyle == null) {
-            view.style
+            view.style.get()
         } else {
             // XXX-PERF: This is not needed by Battleship, and takes over 50% of the runtime of
             //           resolveVariants (not including computeTextInfo).
-            mergeStyles(view.style, overrideStyle)
+            mergeStyles(view.style.get(), overrideStyle)
         }
 
     // Now we know the view we want to render, the style we want to use, etc. We can create
@@ -271,11 +274,10 @@ internal fun resolveVariantsRecursively(
         )
     val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id, layoutNode = null)
 
-    if (view.data is ViewData.Container) {
-        val viewData = view.data as ViewData.Container
+    (view.data.getType() as? ViewDataType.Container)?.let { viewData ->
         var previousChild: SquooshResolvedNode? = null
 
-        for (child in viewData.children) {
+        for (child in viewData.value.children) {
             val childResolvedNode =
                 resolveVariantsRecursively(
                     child,
@@ -310,26 +312,24 @@ internal fun resolveVariantsRecursively(
     // Find out if we have some supported interactions; currently that's just on press and on click.
     // We'll add timeouts and the others later...
     var hasSupportedInteraction = false
-    view.reactions.ifPresent { reactions ->
-        reactions.forEach { r ->
-            hasSupportedInteraction =
-                hasSupportedInteraction ||
-                    r.trigger.type is TriggerType.Click ||
-                    r.trigger.type is TriggerType.Press
-            if (r.trigger.type is TriggerType.KeyDown) {
-                // Register to be a listener for key reactions on this node
-                val keyTrigger = r.trigger.type as TriggerType.KeyDown
-                val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.value.key_codes)
-                val keyAction =
-                    KeyAction(
-                        interactionState,
-                        r.action.get(),
-                        findTargetInstanceId(document, parentComps, r.action.get()),
-                        customizations.getKey(),
-                        null,
-                    )
-                keyTracker.addListener(keyEvent, keyAction)
-            }
+    view.reactions.forEach { r ->
+        hasSupportedInteraction =
+            hasSupportedInteraction ||
+                r.trigger.type is TriggerType.Click ||
+                r.trigger.type is TriggerType.Press
+        if (r.trigger.type is TriggerType.KeyDown) {
+            // Register to be a listener for key reactions on this node
+            val keyTrigger = r.trigger.type as TriggerType.KeyDown
+            val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.value.key_codes)
+            val keyAction =
+                KeyAction(
+                    interactionState,
+                    r.action.get(),
+                    findTargetInstanceId(document, parentComps, r.action.get()),
+                    customizations.getKey(),
+                    null,
+                )
+            keyTracker.addListener(keyEvent, keyAction)
         }
     }
     val tapCallback = customizations.getTapCallback(view)
@@ -469,35 +469,47 @@ private fun generateReplacementListChildNode(
     childIdx: Int,
     layoutIdAllocator: SquooshLayoutIdAllocator,
 ): SquooshResolvedNode {
-    val itemStyle = ViewStyle.Builder()
     val layoutStyle = defaultLayoutStyle()
     val nodeStyle = defaultNodeStyle()
 
-    itemStyle.layout_style = Optional.of(layoutStyle.build())
-    itemStyle.node_style = Optional.of(nodeStyle.build())
+    val itemStyle =
+        ViewStyle.Builder()
+            .apply {
+                layout_style = Optional.of(layoutStyle.build())
+                node_style = Optional.of(nodeStyle.build())
+            }
+            .build()
 
-    val listChildViewData = ViewData.Container.Builder()
-    listChildViewData.shape = newViewShapeRect(false)
+    val listChildViewData =
+        Container.Builder()
+            .apply {
+                shape = Optional.of(newViewShapeRect(false))
+                children = emptyList()
+            }
+            .build()
 
-    listChildViewData.children = emptyList()
-
-    val listChildScrollInfo = ScrollInfo.Builder()
-    listChildScrollInfo.paged_scrolling = false
-    listChildScrollInfo.overflow = OverflowDirection.None()
+    val listChildScrollInfo =
+        ScrollInfo.Builder()
+            .apply {
+                paged_scrolling = false
+                overflow = OverflowDirection.None().toInt()
+            }
+            .build()
 
     val listChildView = View.Builder()
     listChildView.unique_id = 0 // This is unused.
     listChildView.id = "replacement-${node.view.id}-${childIdx}"
     listChildView.name = "Replacement List ${node.view.name} / $childIdx"
     listChildView.component_info = Optional.empty()
-    listChildView.reactions = Optional.empty()
+    listChildView.reactions = emptyList()
     listChildView.frame_extras = Optional.empty()
-    listChildView.scroll_info = listChildScrollInfo.build()
-    listChildView.style = itemStyle.build()
-    listChildView.data = listChildViewData.build()
+    listChildView.scroll_info = Optional.of(listChildScrollInfo)
+    listChildView.style = Optional.of(itemStyle)
+    listChildView.data =
+        Optional.of(ViewData(Optional.of(ViewDataType.Container(listChildViewData))))
     listChildView.design_absolute_bounding_box = Optional.empty()
-    listChildView.render_method = RenderMethod.None()
-    listChildView.explicit_variable_modes = Optional.empty()
+    listChildView.render_method = RenderMethod.None().toInt()
+    listChildView.explicit_variable_modes = emptyMap()
 
     val listLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)
     val layoutId = computeSyntheticListItemLayoutId(listLayoutId, childIdx)
@@ -506,7 +518,7 @@ private fun generateReplacementListChildNode(
     val listChildNode =
         SquooshResolvedNode(
             view = listChildView.build(),
-            style = listChildView.style,
+            style = listChildView.style.get(),
             layoutId = layoutId,
             textInfo = null,
             unresolvedNodeId = "list-child-${node.unresolvedNodeId}-${childIdx}",
@@ -596,16 +608,27 @@ private fun generateOverlayNode(
     val style = overlayStyle.build()
 
     // Now synthesize a view.
-    val overlayViewData = ViewData.Container.Builder()
-    overlayViewData.shape = newViewShapeRect(false)
-    overlayViewData.children = listOf(node.view)
+    val overlayViewData =
+        Container.Builder()
+            .apply {
+                shape = Optional.of(newViewShapeRect(false))
+                children = listOf(node.view)
+            }
+            .build()
 
-    val overlayScrollInfo = ScrollInfo.Builder()
-    overlayScrollInfo.paged_scrolling = false
-    overlayScrollInfo.overflow = OverflowDirection.None()
+    val overlayScrollInfo =
+        ScrollInfo.Builder()
+            .apply {
+                paged_scrolling = false
+                overflow = OverflowDirection.None().toInt()
+            }
+            .build()
 
     val overlayView = View.Builder()
-    overlayView.unique_id = (node.view.unique_id + 0x2000).toShort()
+    if (node.view.unique_id !in 0..0xFFFF) {
+        throw RuntimeException("View's unique ID must be in the range 0..0xFFFF")
+    }
+    overlayView.unique_id = (node.view.unique_id + 0x2000)
     overlayView.id = "overlay-${node.view.id}"
     overlayView.name = "Overlay ${node.view.name}"
     overlayView.component_info = Optional.empty()
@@ -618,17 +641,17 @@ private fun generateOverlayNode(
             val r = Reaction.Builder()
             r.trigger = Optional.of(Trigger(Optional.of(TriggerType.Click(com.novi.serde.Unit()))))
             r.action = Optional.of(Action(Optional.of(ActionType.Close(com.novi.serde.Unit()))))
-            Optional.of(listOf(r.build()))
+            listOf(r.build())
         } else {
-            Optional.empty()
+            emptyList()
         }
     overlayView.frame_extras = Optional.empty()
-    overlayView.scroll_info = overlayScrollInfo.build()
-    overlayView.style = style
-    overlayView.data = overlayViewData.build()
+    overlayView.scroll_info = Optional.of(overlayScrollInfo)
+    overlayView.style = Optional.of(style)
+    overlayView.data = Optional.of(ViewData(Optional.of(ViewDataType.Container(overlayViewData))))
     overlayView.design_absolute_bounding_box = Optional.empty()
-    overlayView.render_method = RenderMethod.None()
-    overlayView.explicit_variable_modes = Optional.empty()
+    overlayView.render_method = RenderMethod.None().toInt()
+    overlayView.explicit_variable_modes = emptyMap()
 
     val overlayLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)
     val layoutId =

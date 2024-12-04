@@ -31,6 +31,10 @@ option optimize_for = LITE_RUNTIME;
 // and apply it to the variant. This struct keeps track of those overrides that
 // need to be applied to variant instances.
 message ComponentOverrides {
+  // A list of styled text
+  message StyledText {
+    repeated StyledTextRun text_runs = 1;
+  }
   ViewStyle style = 1;
   oneof component_content_override {
     google.protobuf.Empty none = 2;

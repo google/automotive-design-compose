@@ -73,6 +73,7 @@ import com.android.designcompose.proto.newDimensionRectPointsZero
 import com.android.designcompose.proto.newFontWeight
 import com.android.designcompose.proto.newNumOrVar
 import com.android.designcompose.proto.nodeStyle
+import com.android.designcompose.proto.overflowDirectionFromInt
 import com.android.designcompose.proto.overflowFromInt
 import com.android.designcompose.proto.pointerEventsFromInt
 import com.android.designcompose.proto.positionTypeFromInt
@@ -132,7 +133,7 @@ import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.TransitionType
 import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
@@ -974,14 +975,18 @@ internal fun BlendMode.useLayer() =
     }
 
 internal fun View.hasChildMask(): Boolean {
-    if (data is ViewData.Container) {
-        (data as ViewData.Container).children.forEach { child -> if (child.isMask()) return true }
+    val containerData = data.get()?.view_data_type?.get()
+    if (containerData is ViewDataType.Container) {
+        return containerData.value.children.any { it.isMask() }
     }
     return false
 }
 
 internal fun View.isMask(): Boolean {
-    return this.data is ViewData.Container && (this.data as ViewData.Container).shape.isMask()
+    val containerData = data.get()?.view_data_type?.get()
+    return if (containerData is ViewDataType.Container) {
+        containerData.value.shape.get().isMask()
+    } else false
 }
 
 // Returns whether this view should use infinite constraints on its children. This is true if two
@@ -991,19 +996,21 @@ internal fun View.isMask(): Boolean {
 // Second, the position_type is relative, which is only set if the widget layout parameters are set
 // to hug contents.
 internal fun View.useInfiniteConstraints(): Boolean {
-    if (positionTypeFromInt(style.layoutStyle.position_type) !is PositionType.Relative) return false
+    if (positionTypeFromInt(style.get().layoutStyle.position_type) !is PositionType.Relative)
+        return false
 
-    if (data !is ViewData.Container) return false
+    val containerData = data.get()?.view_data_type?.get()
+    if (containerData !is ViewDataType.Container) return false
 
-    val container = data as ViewData.Container
-    if (container.children.size != 1) return false
+    val container = containerData as ViewDataType.Container
+    if (container.value.children.size != 1) return false
 
-    val child = container.children.first()
-    return child.style.nodeStyle.grid_layout_type.isPresent
+    val child = container.value.children.first()
+    return child.style.get().nodeStyle.grid_layout_type.isPresent
 }
 
 internal fun View.hasScrolling(): Boolean {
-    return when (scroll_info.overflow) {
+    return when (scroll_info.getOrNull()?.overflow?.let { overflowDirectionFromInt(it) }) {
         is OverflowDirection.HorizontalScrolling -> true
         is OverflowDirection.VerticalScrolling -> true
         else -> false
@@ -1766,9 +1773,9 @@ internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
     return Color(r, g, b, a)
 }
 
-internal fun getTextContent(context: Context, textData: ViewData.Text): String {
-    if (DebugNodeManager.getUseLocalRes().value && textData.res_name.isPresent) {
-        val resName = textData.res_name.get()
+internal fun getTextContent(context: Context, textData: ViewDataType.Text): String {
+    if (DebugNodeManager.getUseLocalRes().value && textData.value.res_name.isPresent) {
+        val resName = textData.value.res_name.get()
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)
         if (resId != Resources.ID_NULL) {
             return context.getString(resId)
@@ -1776,22 +1783,24 @@ internal fun getTextContent(context: Context, textData: ViewData.Text): String {
             Log.w(TAG, "No string resource $resName found")
         }
     }
-    return textData.content
+    return textData.value.content
 }
 
 internal fun getTextContent(
     context: Context,
-    styledTextData: ViewData.StyledText,
+    styledTextData: ViewDataType.StyledText,
 ): List<StyledTextRun> {
-    if (DebugNodeManager.getUseLocalRes().value && styledTextData.res_name.isPresent) {
-        val resName = styledTextData.res_name.get()
+    if (DebugNodeManager.getUseLocalRes().value && styledTextData.value.res_name.isPresent) {
+        val resName = styledTextData.value.res_name.get()
         val strArrayResId = context.resources.getIdentifier(resName, "array", context.packageName)
         if (strArrayResId != Resources.ID_NULL) {
             val textArray = context.resources.getStringArray(strArrayResId)
-            if (textArray.size == styledTextData.content.size) {
+            if (textArray.size == styledTextData.value.styled_texts.size) {
                 val output = mutableListOf<StyledTextRun>()
                 for (i in textArray.indices) {
-                    output.add(StyledTextRun(textArray[i], styledTextData.content[i].style))
+                    output.add(
+                        StyledTextRun(textArray[i], styledTextData.value.styled_texts[i].style)
+                    )
                 }
                 return output
             } else {
@@ -1799,17 +1808,20 @@ internal fun getTextContent(
             }
         }
         Log.w(TAG, "No string array resource $resName found for styled runs")
-        if (styledTextData.content.size == 1) {
+        if (styledTextData.value.styled_texts.size == 1) {
             val strResId = context.resources.getIdentifier(resName, "string", context.packageName)
             if (strResId != Resources.ID_NULL) {
                 Log.w(TAG, "Single style found, fallback to string resource")
                 return mutableListOf(
-                    StyledTextRun(context.getString(strResId), styledTextData.content[0].style)
+                    StyledTextRun(
+                        context.getString(strResId),
+                        styledTextData.value.styled_texts[0].style,
+                    )
                 )
             } else {
                 Log.w(TAG, "No string resource $resName found for styled runs")
             }
         }
     }
-    return styledTextData.content
+    return styledTextData.value.styled_texts
 }

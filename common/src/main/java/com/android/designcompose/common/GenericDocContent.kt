@@ -22,7 +22,7 @@ import com.android.designcompose.serdegen.FigmaDocInfo
 import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.ServerFigmaDoc
 import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewData
+import com.android.designcompose.serdegen.ViewDataType
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
 import java.io.ByteArrayOutputStream
@@ -182,8 +182,8 @@ private fun createNodeIdMap(nodes: Map<NodeQuery, View>?): HashMap<String, View>
     val nodeIdMap = HashMap<String, View>()
     fun addViewToMap(view: View) {
         nodeIdMap[view.id] = view
-        if (view.data is ViewData.Container) {
-            view.data.children.forEach { addViewToMap(it) }
+        (view.data.get().view_data_type.get() as? ViewDataType.Container)?.let { container ->
+            container.value.children.forEach { addViewToMap(it) }
         }
     }
     nodes?.values?.forEach { addViewToMap(it) }

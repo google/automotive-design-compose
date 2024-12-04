@@ -143,6 +143,39 @@ will be saved in the default Roborazzi location.
 **Remember**, screenshots are **only captured** when running `./gradlew recordRoborazziDebug` and checked
 when running `./gradlew verifyRoborazziDebug`.
 
+### Testing touch input
+
+Touch input such as taps and drags can be simulated in tests using functions such as `onNodeWithTag()`. As long as the node has a `Modifier.testTag()` attached to it, the test framework can find the node by matching the tag name and performing some input event on it. For example, to perform a click on a node tagged with "MyTag":
+```kotlin
+onNodeWithTag("MyTag").performClick()
+```
+
+When working with the squoosh code branch, nodes are harder to find since the entire view tree is rendered together. To find a node using `onNodeWithTag`, a replacement component or replacement content customization must be used in order to tag the data with `Modifier.testTag()`. Here is an example where a node named `#replace-node` is replaced with a node `#BlueNode` and tagged with a test tag.
+```kotlin
+interface ComponentReplace {
+    @DesignComponent(node = "#stage")
+    fun Main(
+        @Design(node = "#replace-node")
+        replaceNode: @Composable (ComponentReplacementContext) -> Unit,
+    )
+
+    @DesignComponent(node = "#BlueNode") fun BlueNode()
+}
+
+@Composable
+fun ComponentReplaceTest() {
+    CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
+        ComponentReplaceDoc.Main(
+            replaceNode = { ComponentReplaceDoc.BlueNode(modifier = Modifier.testTag("Blue")) }
+        )
+    }
+}
+```
+Now the `#BlueNode` node is tagged and can be found with the test framework:
+```kotlin
+onNodeWithTag("Blue").performClick()
+```
+
 # Rust tests
 
 Simply run `cargo test` to run the unit tests for the rust code. There are no integration tests at this time.

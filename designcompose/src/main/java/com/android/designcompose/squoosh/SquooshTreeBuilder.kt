@@ -18,6 +18,7 @@ package com.android.designcompose.squoosh
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density
 import com.android.designcompose.ComponentReplacementContext
@@ -27,13 +28,20 @@ import com.android.designcompose.DocContent
 import com.android.designcompose.InteractionState
 import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
+import com.android.designcompose.LayoutInfoRow
+import com.android.designcompose.LazyContentSpan
+import com.android.designcompose.ListContent
+import com.android.designcompose.SimplifiedLayoutInfo
 import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
+import com.android.designcompose.calcLayoutInfo
 import com.android.designcompose.defaultLayoutStyle
 import com.android.designcompose.defaultNodeStyle
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
+import com.android.designcompose.getCustomComposable
 import com.android.designcompose.getKey
+import com.android.designcompose.getListContent
 import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
@@ -82,6 +90,12 @@ import com.android.designcompose.squooshRootNode
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
+internal class ListWidgetContent(
+    val listContent: ListContent,
+    val layoutInfo: SimplifiedLayoutInfo,
+    val view: View,
+)
+
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
 internal class SquooshChildComposable(
@@ -98,6 +112,8 @@ internal class SquooshChildComposable(
 
     // We use this to look up the transform and layout translation.
     val node: SquooshResolvedNode,
+
+    val listWidgetContent: ListWidgetContent? = null,
 )
 
 /// Record parent component info with a singly linked list; each child sees a straight path
@@ -339,6 +355,7 @@ internal fun resolveVariantsRecursively(
     // zip through all of them after layout and render them in the right location.
     val replacementContent = customizations.getContent(view.name)
     val replacementComponent = customizations.getComponent(view.name)
+    val listWidgetContent = customizations.getListContent(view.name)
     if (replacementComponent != null) {
         composableList.add(
             SquooshChildComposable(
@@ -389,6 +406,72 @@ internal fun resolveVariantsRecursively(
                 )
             )
         }
+    } else if (listWidgetContent != null) {
+        addListWidget(listWidgetContent, resolvedView, style, customizations, layoutIdAllocator, parentComps, composableList)
+        /*
+        val layoutInfo = calcLayoutInfo(Modifier, resolvedView.view, resolvedView.style)
+        if (layoutInfo is LayoutInfoRow) {
+            val content = listWidgetContent { LazyContentSpan() }
+            var count = content.count
+
+            var overflowNodeId: String? = null
+            if (
+                style.nodeStyle.max_children.isPresent &&
+                style.nodeStyle.max_children.get() < count
+            ) {
+                count = style.nodeStyle.max_children.get()
+                if (style.nodeStyle.overflow_node_id.isPresent)
+                    overflowNodeId = style.nodeStyle.overflow_node_id.get()
+            }
+
+            var previousReplacementChild: SquooshResolvedNode? = null
+            for (idx in 0..<count) {
+                val childComponent = @Composable {
+                    if (overflowNodeId != null && idx == count - 1) {
+                        // This is the last item we can show and there are more, and there
+                        // is an
+                        // overflow node, so show the overflow node here
+                        val customComposable = customizations.getCustomComposable()
+                        if (customComposable != null) {
+                            customComposable(
+                                Modifier,
+                                style.nodeStyle.overflow_node_name.get(),
+                                NodeQuery.NodeId(style.nodeStyle.overflow_node_id.get()),
+                                listOf(), //parentComponents,
+                                null,
+                            )
+                        }
+                    } else {
+                        content.itemContent(idx)
+                    }
+                }
+                val replacementChild =
+                    generateReplacementListChildNode(resolvedView, idx, layoutIdAllocator)
+                if (previousReplacementChild != null)
+                    previousReplacementChild.nextSibling = replacementChild
+                else resolvedView.firstChild = replacementChild
+                previousReplacementChild = replacementChild
+
+                composableList.add(
+                    SquooshChildComposable(
+                        component = @Composable { childComponent() },
+                        node = replacementChild,
+                        parentComponents = parentComps,
+                    )
+                )
+            }
+        } else {
+            composableList.add(
+                SquooshChildComposable(
+                    listWidgetContent = ListWidgetContent(listWidgetContent, layoutInfo, view),
+                    node = resolvedView,
+                    parentComponents = parentComps,
+                )
+            )
+            resolvedView.needsChildRender = true
+        }
+
+         */
     } else if (hasSupportedInteraction) {
         // Add a SquooshChildComposable to handle the interaction.
         composableList.add(
@@ -464,7 +547,7 @@ internal fun resolveVariantsRecursively(
 /// Create a SquooshResolvedNode for a content replacement list child. The minimum width and
 /// height will come later (at layout time) by asking the Composable child for its intrinsic
 /// size.
-private fun generateReplacementListChildNode(
+internal fun generateReplacementListChildNode(
     node: SquooshResolvedNode,
     childIdx: Int,
     layoutIdAllocator: SquooshLayoutIdAllocator,

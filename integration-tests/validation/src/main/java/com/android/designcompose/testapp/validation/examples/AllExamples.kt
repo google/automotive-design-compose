@@ -23,6 +23,7 @@ import java.time.Clock
 
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
+        Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
         // First comes the "HelloWorld" examples.
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
         Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
@@ -148,5 +149,4 @@ val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> U
         // Squoosh doesn't work with ListContent
         Triple("Grid Layout", { GridLayoutTest() }, GridLayoutTestDoc.javaClass.name),
         Triple("Grid Widget", { GridWidgetTest() }, GridWidgetTestDoc.javaClass.name),
-        Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
     )

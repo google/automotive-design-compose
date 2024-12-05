@@ -134,6 +134,7 @@ fn test_layout(
     let my_id: i32 = id.clone();
     *id = *id + 1;
     let data: &ViewDataType = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
+    let mut skip_children = false;
     if let Text { .. } = data {
         let mut use_measure_func = false;
         if let Dimension::Auto(()) = view.style().layout_style().width.unwrap().dimension.unwrap() {
@@ -180,21 +181,39 @@ fn test_layout(
                 .expect("Failed to add style");
         }
     } else if let Container { 0: view_data::Container { shape: _, children } } = data {
-        if view.name.starts_with("#Replacement") {
-            let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
+        if view.name == "#row-content" {
+            layout_manager
+                .add_style(
+                    my_id,
+                    parent_layout_id,
+                    child_index,
+                    view.style().layout_style().clone(),
+                    view.name.clone(),
+                    false,
+                    None,
+                    None,
+                )
+                .expect("Failed to add style");
+
+            let square = views.get(&NodeQuery::NodeName("#OverflowButton2".to_string()));
             if let Some(square) = square {
-                layout_manager
-                    .add_style(
-                        my_id,
-                        parent_layout_id,
-                        child_index,
-                        square.style().layout_style().clone(),
-                        square.name.clone(),
-                        false,
-                        None,
-                        None,
-                    )
-                    .expect("Failed to add style");
+                for i in 0..7 {
+                    let mut cid: i32 = id.clone();
+                    *id = *id + 1;
+                    layout_manager
+                        .add_style(
+                            cid,
+                            my_id,
+                            i,
+                            square.style().layout_style().clone(),
+                            square.name.clone(),
+                            false,
+                            None,
+                            None,
+                        )
+                        .expect("Failed to add style");
+                }
+                skip_children = true;
             }
         } else {
             layout_manager
@@ -210,10 +229,12 @@ fn test_layout(
                 )
                 .expect("Failed to add style");
         }
-        let mut index = 0;
-        for child in children {
-            test_layout(layout_manager, child, id, my_id, index, views);
-            index = index + 1;
+        if !skip_children {
+            let mut index = 0;
+            for child in children {
+                test_layout(layout_manager, child, id, my_id, index, views);
+                index = index + 1;
+            }
         }
     }
 

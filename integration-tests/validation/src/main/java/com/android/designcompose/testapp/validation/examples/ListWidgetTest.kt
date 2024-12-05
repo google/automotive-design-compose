@@ -16,12 +16,24 @@
 
 package com.android.designcompose.testapp.validation.examples
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.GetDesignNodeData
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
+import com.android.designcompose.ReplacementContent
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignContentTypes
@@ -33,7 +45,7 @@ import com.android.designcompose.annotation.PreviewNode
 // TEST List Preview Widget
 @DesignDoc(id = "9ev0MBNHFrgTqJOrAGcEpV")
 interface ListWidgetTest {
-    @DesignComponent(node = "#Main")
+    @DesignComponent(node = "#Main2")
     fun MainFrame(
         @DesignContentTypes(nodes = ["#Item"])
         @DesignPreviewContent(
@@ -45,8 +57,9 @@ interface ListWidgetTest {
                     PreviewNode(6, "#Item=Grid, #Playing=Off"),
                 ],
         )
-        @Design(node = "#row-content")
-        rowItems: ListContent,
+        @Design(node = "#row-content") rowItems: ListContent,
+        @Design(node = "#row-content2") rowItems2: ReplacementContent,
+        @Design(node = "#row-content3") rowItems3: @Composable (ComponentReplacementContext) -> Unit,
         @DesignContentTypes(nodes = ["#Item"])
         @DesignPreviewContent(
             name = "Items",
@@ -141,6 +154,36 @@ fun ListWidgetTest() {
                 },
             ) { index ->
                 itemComposable(rowItems, index)
+            }
+        },
+        rowItems2 = ReplacementContent(
+            count = rowItems.size,
+            content = { idx ->
+                @Composable {
+                    itemComposable(rowItems, idx)
+                }
+            },
+        ),
+        rowItems3 = { ctx ->
+            Row(
+                //modifier = Modifier.requiredWidth(500.dp),
+                modifier = ctx.layoutModifier,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(Modifier.width(80.dp).height(80.dp).background(Color.Blue))
+                Box(Modifier.width(80.dp).height(80.dp).background(Color.Blue))
+                Box(Modifier.width(80.dp).height(80.dp).background(Color.Blue))
+                Box(Modifier.width(80.dp).height(80.dp).background(Color.Blue))
+                Box(Modifier.width(80.dp).height(80.dp).background(Color.Blue))
+                /*
+                itemComposable(rowItems, 0)
+                itemComposable(rowItems, 1)
+                itemComposable(rowItems, 2)
+                itemComposable(rowItems, 3)
+                itemComposable(rowItems, 4)
+                itemComposable(rowItems, 5)
+
+                 */
             }
         },
         rowScrollItems = { spanFunc ->

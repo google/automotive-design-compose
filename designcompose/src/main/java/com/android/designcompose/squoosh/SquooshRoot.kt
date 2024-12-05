@@ -84,6 +84,7 @@ import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
+import com.android.designcompose.getCustomComposable
 import com.android.designcompose.getOpenLinkCallback
 import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.newDimensionProtoPoints
@@ -705,6 +706,28 @@ fun SquooshRoot(
                                 true, // Is scroll component
                             )
                         }
+                    }
+                    else if (child.listWidgetContent != null) {
+                        /*
+                        child.component = {
+                            val widgetNodeQuery = NodeQuery.NodeId(child.listWidgetContent.view.id)
+                            SquooshRoot(
+                                docName,
+                                incomingDocId,
+                                widgetNodeQuery,
+                                Modifier,
+                                customizationContext,
+                                serverParams,
+                                setDocId,
+                                designSwitcherPolicy,
+                                liveUpdateMode,
+                                designComposeCallbacks,
+                                false,
+                            )
+                            //ListWidget(child, customizationContext) //.listWidgetContent, child.node.style, child.layoutInfo!!)
+                        }
+
+                         */
                     } else if (child.component == null) {
                         composableChildModifier =
                             composableChildModifier.squooshInteraction(
@@ -736,7 +759,7 @@ fun SquooshRoot(
                 }
             },
         )
-        designSwitcher()
+        //designSwitcher()
     }
 }
 

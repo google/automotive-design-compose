@@ -1441,7 +1441,7 @@ internal fun Background.asBrush(
                 }
             }
             val imageFillAndDensity =
-                backgroundImage.key.orElse(null)?.let { document.image(it.key, density) }
+                backgroundImage.key.takeIf {it.isNotEmpty()}?.let { document.image(it, density) }
             // val imageFilters = backgroundImage.filters;
             if (imageFillAndDensity != null) {
                 val (imageFill, imageDensity) = imageFillAndDensity

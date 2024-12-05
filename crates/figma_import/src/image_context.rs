@@ -22,10 +22,10 @@ use std::{
 use crate::error::Error;
 use crate::fetch::ProxyConfig;
 use crate::figma_schema::{Paint, Transform};
-use dc_bundle::definition::element::ImageKey;
 use dc_bundle::legacy_definition::EncodedImageMap;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct VectorImageId {
@@ -163,7 +163,7 @@ impl ImageContext {
     /// and not fetched again.
     ///
     /// * `image_ref`: the Figma imageRef to fetch.
-    pub fn image_fill(&mut self, image_ref: impl ToString, node_name: &String) -> Option<ImageKey> {
+    pub fn image_fill(&mut self, image_ref: impl ToString, node_name: &String) -> Option<String> {
         if self.ignored_images.contains(node_name) {
             None
         } else {
@@ -177,7 +177,7 @@ impl ImageContext {
                 url,
                 &self.proxy_config,
             ) {
-                url.unwrap_or(&None).as_ref().map(|url_string| ImageKey { key: url_string.clone() })
+                url.unwrap_or(&None).as_ref().map(|url_string|   url_string.clone() )
             } else {
                 None
             }
@@ -195,13 +195,13 @@ impl ImageContext {
     //Return a copy of the current vector map
     // TODO: we shouldn't have HashMap values which are Option<>,
     // The correct approach would be just just not have entries for those keys.
-    pub fn cache(&self) -> HashMap<String, Option<ImageKey>> {
+    pub fn cache(&self) -> HashMap<String, String> {
         let mut map = HashMap::new();
         let url_map = self.node_urls.clone();
 
         for (node, addr) in url_map {
             if let Some(url) = addr {
-                map.insert(node, Some(ImageKey::new(url.clone())));
+                map.insert(node, url);
             }
         }
 
@@ -214,14 +214,13 @@ impl ImageContext {
 
     /// Create a EncodedImageMap.
     pub fn encoded_image_map(&self) -> EncodedImageMap {
-        let mut image_bytes = HashMap::new();
+        let mut image_bytes: HashMap<String, Arc<ByteBuf>> = HashMap::new();
         for (k, v) in &self.network_bytes {
-            image_bytes.insert(ImageKey::new(k.clone()), v.clone());
+            image_bytes.insert(k.clone(), v.clone());
         }
         // Add empty entries for any referenced images which we don't have network bytes for.
         for k in &self.referenced_images {
-            let key = ImageKey::new(k.clone());
-            image_bytes.entry(key).or_insert_with(|| Arc::new(serde_bytes::ByteBuf::new()));
+            image_bytes.entry(k.clone()).or_insert_with(|| Arc::new(serde_bytes::ByteBuf::new()));
         }
         EncodedImageMap(image_bytes)
     }

@@ -369,19 +369,6 @@ impl Path {
     }
 }
 
-// Implement the Eq and Hash traits so that ImageKey can be used as a hash table key
-impl Eq for ImageKey {}
-impl Hash for ImageKey {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.key.hash(state);
-    }
-}
-impl ImageKey {
-    pub fn new(str: String) -> Self {
-        ImageKey { key: str }
-    }
-}
-
 impl Background {
     pub fn new(bg_type: background::BackgroundType) -> Self {
         Background { background_type: Some(bg_type) }

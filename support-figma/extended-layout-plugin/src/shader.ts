@@ -18,6 +18,7 @@ import * as Utils from "./utils";
 
 const SHADER_PLUGIN_DATA_KEY = "shader";
 const SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY = "shaderFallbackColor";
+const SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY = "shaderFloatUniforms";
 // Private plugin data, used for clearing shader functionalities
 const SHADER_IMAGE_HASH = "shaderImageHash";
 
@@ -81,7 +82,7 @@ export async function insertImage(imageBytes: Uint8Array) {
   }
 }
 
-export async function setShader(shader: string, shaderFallbackColor: string) {
+export async function setShader(shader: string, shaderFallbackColor: string, shaderFloatUniforms: Array<[string, string]>) {
   await figma.loadAllPagesAsync();
   let selection = figma.currentPage.selection;
 
@@ -92,13 +93,14 @@ export async function setShader(shader: string, shaderFallbackColor: string) {
     );
     return;
   }
-  setShaderToNode(selection[0], shader, shaderFallbackColor);
+  setShaderToNode(selection[0], shader, shaderFallbackColor, shaderFloatUniforms);
 }
 
 function setShaderToNode(
   node: SceneNode,
-  shader: string,
-  shaderFallbackColor: string
+  shader: string|undefined|null,
+  shaderFallbackColor: string|undefined|null,
+  shaderFloatUniforms: Array<[string, string]>|undefined|null,
 ) {
   let nodeWithFills: MinimalFillsMixin = node as MinimalFillsMixin;
 
@@ -137,6 +139,27 @@ function setShaderToNode(
         SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY,
         ""
       );
+    }
+    if (shaderFloatUniforms) {
+      const floatUniformsJson: { [key: string]: string } = {};
+      for (const [key, value] of shaderFloatUniforms) {
+        floatUniformsJson[key] = value;
+      }
+      console.log(JSON.stringify(floatUniformsJson));
+
+      node.setSharedPluginData(
+        Utils.SHARED_PLUGIN_NAMESPACE,
+        SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY,
+        JSON.stringify(floatUniformsJson)
+      );
+    } else {
+      // Clears the float uniforms
+      node.setSharedPluginData(
+        Utils.SHARED_PLUGIN_NAMESPACE,
+        SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY,
+        ""
+      );
+      console.log("clear shader float uniforms");
     }
   } else {
     figma.notify(
@@ -193,7 +216,7 @@ function clearShaderFromNode(node: SceneNode) {
     // Clear the saved shader image hash.
     node.setPluginData(SHADER_IMAGE_HASH, "");
   }
-  setShaderToNode(node, "", "");
+  setShaderToNode(node, "", "", null);
 }
 
 export async function clearAll() {

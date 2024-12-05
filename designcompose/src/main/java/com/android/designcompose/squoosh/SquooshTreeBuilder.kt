@@ -523,8 +523,7 @@ internal fun generateReplacementListChildNode(
     listChildView.component_info = Optional.empty()
     listChildView.reactions = emptyList()
     listChildView.frame_extras = Optional.empty()
-    listChildView.shader = Optional.empty()
-    listChildView.shader_fallback_color = Optional.empty()
+    listChildView.shader_data = Optional.empty()
     listChildView.scroll_info = Optional.of(listChildScrollInfo)
     listChildView.style = Optional.of(itemStyle)
     listChildView.data =
@@ -668,8 +667,7 @@ private fun generateOverlayNode(
             emptyList()
         }
     overlayView.frame_extras = Optional.empty()
-    overlayView.shader = Optional.empty()
-    overlayView.shader_fallback_color = Optional.empty()
+    overlayView.shader_data = Optional.empty()
     overlayView.scroll_info = Optional.of(overlayScrollInfo)
     overlayView.style = Optional.of(style)
     overlayView.data = Optional.of(ViewData(Optional.of(ViewDataType.Container(overlayViewData))))

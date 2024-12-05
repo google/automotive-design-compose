@@ -61,7 +61,9 @@ use log::error;
 
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
-use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle};
+use dc_bundle::definition::view::{
+    ComponentInfo, ShaderData, StyledTextRun, TextStyle, View, ViewStyle,
+};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -960,22 +962,21 @@ fn visit_node(
     };
 
     // We have shader which is a string that can be used to draw the background.
-    let shader: Option<String> = {
-        if let Some(vsw_data) = plugin_data {
-            if let Some(extras) = vsw_data.get("shader") {
-                Option::from(extras.to_owned())
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    };
+    let shader: Option<String> =
+        plugin_data.and_then(|vsw_data| vsw_data.get("shader")).map(|extras| extras.to_owned());
     // Shader fallback color is the color used when shader isn't supported on lower sdks.
     let shader_fallback_color: Option<Color> = plugin_data
         .and_then(|vsw_data| vsw_data.get("shaderFallbackColor"))
         .and_then(|extras| serde_json::from_str::<FigmaColor>(extras).ok())
         .map(|figma_color| (&figma_color).into());
+    // Shader float uniforms with uniform name maps to the float string value set in the figma shader plugin
+    let shader_float_uniform_map: HashMap<String, String> = plugin_data
+        .and_then(|vsw_data| vsw_data.get("shaderFloatUniforms"))
+        .and_then(|shader_float_uniforms| serde_json::from_str(shader_float_uniforms.as_str()).ok())
+        .unwrap_or_default();
+
+    let shader_data =
+        ShaderData::new_shader_data(shader, shader_fallback_color, shader_float_uniform_map);
 
     let mut scroll_info = ScrollInfo::new_default();
 
@@ -1784,8 +1785,7 @@ fn visit_node(
         reactions,
         scroll_info,
         frame_extras,
-        shader,
-        shader_fallback_color,
+        shader_data,
         node.absolute_bounding_box.map(|r| (&r).into()),
         RenderMethod::None,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),

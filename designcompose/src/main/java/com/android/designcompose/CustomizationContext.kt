@@ -75,9 +75,9 @@ typealias MeterState = FloatState
 
 typealias Meter = Float
 
-typealias ShaderUniformTime = Float
+typealias ShaderFloatUniformMap = Map<String, Float>
 
-typealias ShaderUniformTimeState = FloatState
+typealias ShaderFloatStateUniformMap = Map<String, FloatState>
 
 // A class that holds the scroll state of a horizontal or vertical autolayout view (row/column)
 data class DesignScrollState(
@@ -138,8 +138,8 @@ data class Customization(
     var meterValue: Optional<Float> = Optional.empty(),
     // Meter (dial, gauge, progress bar) customization as a function that returns a percentage 0-100
     var meterState: Optional<MeterState> = Optional.empty(),
-    var shaderUniformTimeState: Optional<ShaderUniformTimeState> = Optional.empty(),
-    // Scrollable state and scroll state changed callbacks
+    var shaderFloatUniformMap: Optional<ShaderFloatUniformMap> = Optional.empty(),
+    var shaderFloatStateUniformMap: Optional<ShaderFloatStateUniformMap> = Optional.empty(),    // Scrollable state and scroll state changed callbacks
     var scrollCallbacks: Optional<DesignScrollCallbacks> = Optional.empty(),
 )
 
@@ -162,9 +162,9 @@ private fun Customization.clone(): Customization {
     c.openLinkCallback = openLinkCallback
     c.meterValue = meterValue
     c.meterState = meterState
-    c.shaderUniformTimeState = shaderUniformTimeState
+    c.shaderFloatUniformMap = shaderFloatUniformMap
+    c.shaderFloatStateUniformMap = shaderFloatStateUniformMap
     c.scrollCallbacks = scrollCallbacks
-
     return c
 }
 
@@ -340,11 +340,15 @@ fun CustomizationContext.setMeterState(nodeName: String, value: MeterState) {
     customize(nodeName) { c -> c.meterState = Optional.ofNullable(value) }
 }
 
-fun CustomizationContext.setShaderUniformTimeState(
+fun CustomizationContext.setShaderFloatUniformMap(nodeName: String, map: ShaderFloatUniformMap) {
+    customize(nodeName) { c -> c.shaderFloatUniformMap = Optional.ofNullable(map) }
+}
+
+fun CustomizationContext.setShaderFloatStateUniformMap(
     nodeName: String,
-    value: ShaderUniformTimeState,
+    map: ShaderFloatStateUniformMap,
 ) {
-    customize(nodeName) { c -> c.shaderUniformTimeState = Optional.ofNullable(value) }
+    customize(nodeName) { c -> c.shaderFloatStateUniformMap = Optional.ofNullable(map) }
 }
 
 fun CustomizationContext.setScrollCallbacks(nodeName: String, value: DesignScrollCallbacks) {
@@ -497,8 +501,14 @@ fun CustomizationContext.getMeterState(nodeName: String): MeterState? {
     return cs[nodeName]?.meterState?.getOrNull()
 }
 
-fun CustomizationContext.getShaderUniformTimeState(nodeName: String): ShaderUniformTimeState? {
-    return cs[nodeName]?.shaderUniformTimeState?.getOrNull()
+fun CustomizationContext.getShaderFloatUniformMap(nodeName: String): ShaderFloatUniformMap? {
+    return cs[nodeName]?.shaderFloatUniformMap?.getOrNull()
+}
+
+fun CustomizationContext.getShaderFloatStateUniformMap(
+    nodeName: String
+): ShaderFloatStateUniformMap? {
+    return cs[nodeName]?.shaderFloatStateUniformMap?.getOrNull()
 }
 
 fun CustomizationContext.getScrollCallbacks(nodeName: String): DesignScrollCallbacks? {

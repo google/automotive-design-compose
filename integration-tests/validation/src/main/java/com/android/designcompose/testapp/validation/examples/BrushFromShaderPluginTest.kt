@@ -16,14 +16,11 @@
 
 package com.android.designcompose.testapp.validation.examples
 
-import android.os.Build
-import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.asFloatState
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import com.android.designcompose.ShaderUniformTimeState
+import androidx.compose.runtime.FloatState
+import com.android.designcompose.ShaderFloatStateUniformMap
+import com.android.designcompose.ShaderFloatUniformMap
+import com.android.designcompose.ShaderHelper
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -31,22 +28,22 @@ import com.android.designcompose.annotation.DesignDoc
 @DesignDoc(id = "TkgjNl81e5joWeAivmIdzm")
 interface BrushFromShaderPluginTest {
     @DesignComponent(node = "#stage")
-    fun MainFrame(@Design(node = "#stage") backgroundShaderUniformTimeState: ShaderUniformTimeState)
+    fun MainFrame(
+        @Design(node = "#stage") shaderFloatStateUniformMap: ShaderFloatStateUniformMap,
+        @Design(node = "#stage") shaderFloatUniformMap: ShaderFloatUniformMap,
+    )
 }
 
 @Composable
 fun BrushFromShaderPluginTest() {
-    val movingValue =
-        if ("robolectric" != Build.FINGERPRINT) {
-            produceState(0f) {
-                while (true) {
-                    withInfiniteAnimationFrameMillis { value = it / 1000f }
-                }
-            }
-        } else {
-            remember { mutableFloatStateOf(3.0f) }
-        }
+    val shaderFloatStateUniformMap = HashMap<String, FloatState>()
+    shaderFloatStateUniformMap[ShaderHelper.UNIFORM_TIME] = ShaderHelper.getShaderUniformTimeState()
+    val shaderFloatUniformMap = HashMap<String, Float>()
+    shaderFloatUniformMap["speed"] = 0.5f
+    shaderFloatUniformMap["clouddark"] = 0.5f
+    shaderFloatUniformMap["cloudcover"] = 0.23f
     BrushFromShaderPluginTestDoc.MainFrame(
-        backgroundShaderUniformTimeState = movingValue.asFloatState()
+        shaderFloatStateUniformMap = shaderFloatStateUniformMap,
+        shaderFloatUniformMap = shaderFloatUniformMap,
     )
 }

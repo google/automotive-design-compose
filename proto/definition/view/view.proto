@@ -74,11 +74,20 @@ message View {
   // this view
   map<string, string> explicit_variable_modes = 12;
 
+  // Runtime shader from the shader plugin
+  optional ShaderData shader_data = 13;
+}
+
+// Details for the runtime shader
+message ShaderData {
   // string for runtime shader code
-  optional string shader = 13;
+  string shader = 1;
 
   // fallback color when runtime shader code isn't supported
-  optional definition.element.Color shader_fallback_color = 14;
+  optional definition.element.Color shader_fallback_color = 2;
+
+  // shader float uniforms: name -> value
+  map<string, float> shader_float_uniforms = 3;
 }
 
 // Details that are unique to each view type.

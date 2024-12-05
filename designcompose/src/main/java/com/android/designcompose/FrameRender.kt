@@ -469,17 +469,32 @@ internal fun ContentDrawScope.render(
             customizations.getBrush(name)
         }
     if (customFillBrush == null) {
-        view.shader.getOrNull()?.let {
+        view.shader_data.getOrNull()?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val shader = RuntimeShader(it.trim().trimIndent())
+                val shaderProg = it.shader.trim().trimIndent()
+                val shader = RuntimeShader(shaderProg)
                 customFillBrush = SizingShaderBrush(shader)
-                val shaderUniformTime = customizations.getShaderUniformTimeState(name)
-                if (shaderUniformTime != null) {
-                    shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
+                customizations.getShaderFloatUniformMap(name)?.forEach { (k, v) ->
+                    if (k == ShaderHelper.UNIFORM_TIME || it.shader_float_uniforms.containsKey(k)) {
+                        shader.setFloatUniform(k, v)
+                    }
                 }
-                return@let
+                customizations.getShaderFloatStateUniformMap(name)?.forEach { (k, v) ->
+                    if (k == ShaderHelper.UNIFORM_TIME || it.shader_float_uniforms.containsKey(k)) {
+                        shader.setFloatUniform(k, v.floatValue)
+                    }
+                }
+                it.shader_float_uniforms.forEach { (k, v) ->
+                    if (
+                        customizations.getShaderFloatUniformMap(name)?.containsKey(k) == false &&
+                            customizations.getShaderFloatStateUniformMap(name)?.containsKey(k) ==
+                                false
+                    ) {
+                        shader.setFloatUniform(k, v)
+                    }
+                }
             } else {
-                view.shader_fallback_color.getOrNull()?.let { color ->
+                it.shader_fallback_color.getOrNull()?.let { color ->
                     customFillBrush = SolidColor(color.toColor())
                 }
             }
@@ -799,17 +814,32 @@ internal fun ContentDrawScope.squooshShapeRender(
             customizations.getBrush(name)
         }
     if (customFillBrush == null) {
-        node.view.shader.getOrNull()?.let {
+        node.view.shader_data.getOrNull()?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val shader = RuntimeShader(it.trim().trimIndent())
+                val shaderProg = it.shader.trim().trimIndent()
+                val shader = RuntimeShader(shaderProg)
                 customFillBrush = SizingShaderBrush(shader)
-                val shaderUniformTime = customizations.getShaderUniformTimeState(name)
-                if (shaderUniformTime != null) {
-                    shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
+                customizations.getShaderFloatUniformMap(name)?.forEach { (k, v) ->
+                    if (k == ShaderHelper.UNIFORM_TIME || it.shader_float_uniforms.containsKey(k)) {
+                        shader.setFloatUniform(k, v)
+                    }
                 }
-                return@let
+                customizations.getShaderFloatStateUniformMap(name)?.forEach { (k, v) ->
+                    if (k == ShaderHelper.UNIFORM_TIME || it.shader_float_uniforms.containsKey(k)) {
+                        shader.setFloatUniform(k, v.floatValue)
+                    }
+                }
+                it.shader_float_uniforms.forEach { (k, v) ->
+                    if (
+                        customizations.getShaderFloatUniformMap(name)?.containsKey(k) == false &&
+                            customizations.getShaderFloatStateUniformMap(name)?.containsKey(k) ==
+                                false
+                    ) {
+                        shader.setFloatUniform(k, v)
+                    }
+                }
             } else {
-                node.view.shader_fallback_color.getOrNull()?.let { color ->
+                it.shader_fallback_color.getOrNull()?.let { color ->
                     customFillBrush = SolidColor(color.toColor())
                 }
             }

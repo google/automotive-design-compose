@@ -288,9 +288,12 @@ private class DesignModuleVisitor(
                 out += "    customizations.setMeterValue(\"$nodeName\", $propertyName)\n"
             CustomizationType.MeterState ->
                 out += "    customizations.setMeterState(\"$nodeName\", $propertyName)\n"
-            CustomizationType.ShaderUniformTimeState -> {
+            CustomizationType.ShaderFloatUniformMap -> {
+                out += "    customizations.setShaderFloatUniformMap(\"$nodeName\", $propertyName)\n"
+            }
+            CustomizationType.ShaderFloatStateUniformMap -> {
                 out +=
-                    "    customizations.setShaderUniformTimeState(\"$nodeName\", $propertyName)\n"
+                    "    customizations.setShaderFloatStateUniformMap(\"$nodeName\", $propertyName)\n"
             }
             CustomizationType.ScrollCallbacks ->
                 out += "    customizations.setScrollCallbacks(\"$nodeName\", $propertyName)\n"

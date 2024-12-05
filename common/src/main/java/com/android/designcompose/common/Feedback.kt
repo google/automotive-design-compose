@@ -181,6 +181,8 @@ abstract class FeedbackImpl {
         )
     }
 
+    fun shaderUniformNotFound(shader: String, uniform: String, docId: DesignDocId) {}
+
     open fun setStatus(str: String, level: FeedbackLevel, docId: DesignDocId) {
         // Ignore log levels we don't care about
         if (level < logLevel) return

@@ -31,7 +31,6 @@ use crate::{
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };
-use dc_bundle::definition::element::ImageKey;
 use dc_bundle::definition::view::component_overrides::ComponentContentOverride;
 use dc_bundle::definition::view::view_data::ViewDataType::Container;
 use dc_bundle::definition::view::{view_data, ComponentOverrides, View};
@@ -984,7 +983,7 @@ impl Document {
         self.document_root.version.clone()
     }
 
-    pub fn cache(&self) -> HashMap<String, Option<ImageKey>> {
+    pub fn cache(&self) -> HashMap<String, String> {
         self.image_context.cache()
     }
 }

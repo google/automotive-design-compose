@@ -380,7 +380,7 @@ fun SquooshRoot(
     val transitionedInteractionState = interactionState.clonedWithAnimatedActionsApplied()
 
     var transitionRoot: SquooshResolvedNode? = null
-    var transitionRootRemovalNodes: Set<Int>? = null
+    var transitionRootRemovalNodes: HashSet<Int>? = null
     // Now see if we need to compute a transition root and generate animated transitions.
     if (
         isRoot && (transitionedInteractionState != null && animatedActions.isNotEmpty()) ||
@@ -783,9 +783,9 @@ private fun measureExternal(
 private fun squooshLayoutMeasurePolicy(
     presentationRoot: SquooshResolvedNode,
     root: SquooshResolvedNode,
-    rootRemovalNodes: Set<Int>,
+    rootRemovalNodes: HashSet<Int>,
     transitionRoot: SquooshResolvedNode?,
-    transitionRootRemovalNodes: Set<Int>?,
+    transitionRootRemovalNodes: HashSet<Int>?,
     layoutCache: HashMap<Int, Int>,
     layoutValueCache: HashMap<Int, Layout>,
     layoutManager: SquooshLayoutManager,

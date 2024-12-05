@@ -110,7 +110,7 @@ internal class SquooshLayoutIdAllocator(
     }
 
     /// Get the set of layout nodes to remove.
-    fun removalNodes(): Set<Int> {
+    fun removalNodes(): HashSet<Int> {
         val removalSet = remainingSet
         remainingSet = visitedSet
         visitedSet = HashSet()
@@ -278,7 +278,7 @@ private fun populateComputedLayout(
 internal fun layoutTree(
     root: SquooshResolvedNode,
     manager: SquooshLayoutManager,
-    removalNodes: Set<Int>,
+    removalNodes: HashSet<Int>,
     layoutCache: HashMap<Int, Int>,
     layoutValueCache: HashMap<Int, Layout>,
 ) {
@@ -288,6 +288,8 @@ internal fun layoutTree(
         layoutValueCache.remove(layoutId)
         layoutCache.remove(layoutId)
     }
+    // Clear removalNodes so that multiple calls to this don't try to remove the same nodes
+    removalNodes.clear()
 
     // Update the layout tree which the Rust JNI code is maintaining
     val layoutNodes = arrayListOf<LayoutNode>()

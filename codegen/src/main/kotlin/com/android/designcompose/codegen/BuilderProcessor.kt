@@ -158,7 +158,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var meterCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var meterStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
-        private var shaderUniformTimeStateCustomizations:
+        private var shaderFloatUniformMapCustomizations:
+            HashMap<String, Vector<Pair<String, String>>> =
+            HashMap()
+        private var shaderFloatStateUniformMapCustomizations:
             HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var scrollCallbackCustomizations: HashMap<String, Vector<Pair<String, String>>> =
@@ -747,12 +750,21 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setMeterState(\"$node\", $value)\n")
             }
 
-            val shaderUniformTimeStateCustom =
-                shaderUniformTimeStateCustomizations[function.toString()]
+            val shaderFloatUniformMapCustom =
+                shaderFloatUniformMapCustomizations[function.toString()]
                     ?: Vector<Pair<String, String>>()
-            for ((node, value) in shaderUniformTimeStateCustom) {
+            for ((node, value) in shaderFloatUniformMapCustom) {
                 out.appendText(
-                    "        customizations.setShaderUniformTimeState(\"$node\", $value)\n"
+                    "        customizations.setShaderFloatUniformMap(\"$node\", $value)\n"
+                )
+            }
+
+            val shaderFloatStateUniformMapCustom =
+                shaderFloatStateUniformMapCustomizations[function.toString()]
+                    ?: Vector<Pair<String, String>>()
+            for ((node, value) in shaderFloatStateUniformMapCustom) {
+                out.appendText(
+                    "        customizations.setShaderFloatStateUniformMap(\"$node\", $value)\n"
                 )
             }
 
@@ -882,11 +894,17 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, meterCustomizations)
                 CustomizationType.MeterState ->
                     addCustomization(valueParameter, annotation, meterStateCustomizations)
-                CustomizationType.ShaderUniformTimeState ->
+                CustomizationType.ShaderFloatUniformMap ->
                     addCustomization(
                         valueParameter,
                         annotation,
-                        shaderUniformTimeStateCustomizations,
+                        shaderFloatUniformMapCustomizations,
+                    )
+                CustomizationType.ShaderFloatStateUniformMap ->
+                    addCustomization(
+                        valueParameter,
+                        annotation,
+                        shaderFloatStateUniformMapCustomizations,
                     )
                 CustomizationType.ScrollCallbacks ->
                     addCustomization(valueParameter, annotation, scrollCallbackCustomizations)

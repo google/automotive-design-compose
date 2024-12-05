@@ -308,6 +308,19 @@ a:active {
 }
 
 /* Widgets */
+.center-vertically-container {
+  display: flex;
+  align-items: center;
+  gap: 8px
+}
+
+.hug-width-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: fit-content; /* Hug content width */
+}
+
 .container {
   display: flex; /* Enable flexbox */
   justify-content: center; /* Center horizontally */

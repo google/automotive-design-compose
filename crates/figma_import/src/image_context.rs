@@ -177,7 +177,7 @@ impl ImageContext {
                 url,
                 &self.proxy_config,
             ) {
-                url.unwrap_or(&None).as_ref().map(|url_string|   url_string.clone() )
+                url.unwrap_or(&None).as_ref().map(|url_string| url_string.clone())
             } else {
                 None
             }

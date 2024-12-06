@@ -47,20 +47,20 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
     private var images: HashMap<String, Bitmap> = HashMap()
 
     init {
-        for ((imageKey, bytes) in c.document.images.value) {
-            if (bytes.content().isEmpty()) {
+        for ((imageKey, bytes) in c.document.images) {
+            if (bytes.isEmpty()) {
                 if (previousDoc != null && previousDoc.images[imageKey] != null) {
                     images[imageKey] = previousDoc.images[imageKey]!!
                     // Replace this record in the decoded doc.
-                    c.document.images.value[imageKey] =
-                        previousDoc.c.document.images.value[imageKey]
+                    c.document.images[imageKey] = previousDoc.c.document.images[imageKey]
                 }
             } else {
-                val bitmap = BitmapFactory.decodeByteArray(bytes.content(), 0, bytes.content().size)
+                val byteArray = ByteArray(bytes.size) { i -> bytes[i] }
+                val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                 images[imageKey] = bitmap
             }
         }
-        Feedback.documentDecodeImages(c.document.images.value.size, c.header.name, c.docId)
+        Feedback.documentDecodeImages(c.document.images.size, c.header.name, c.docId)
     }
 
     /**

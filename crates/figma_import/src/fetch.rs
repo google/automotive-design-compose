@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use crate::{Document, ImageContextSession, ServerFigmaDoc};
-use dc_bundle::definition::NodeQuery;
-use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
+use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]

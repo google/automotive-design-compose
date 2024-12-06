@@ -18,8 +18,8 @@ use std::io::{Error, ErrorKind, Write};
 use crate::{Document, ProxyConfig};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use dc_bundle::definition::NodeQuery;
-use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
+use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
 
 #[derive(Debug)]
 #[allow(dead_code)]

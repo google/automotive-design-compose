@@ -17,12 +17,12 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 
+use dc_bundle::definition::DesignComposeDefinition;
+use dc_bundle::legacy_definition::{
+    DesignComposeDefinitionHeader, DesignComposeDefinitionHeaderV0,
+};
 use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use serde::{Deserialize, Serialize};
-
-use dc_bundle::legacy_definition::{
-    DesignComposeDefinition, DesignComposeDefinitionHeader, DesignComposeDefinitionHeaderV0,
-};
 
 // This is the struct we send over to the client. It contains the serialized document
 // along with some extra data: document branches, project files, and errors

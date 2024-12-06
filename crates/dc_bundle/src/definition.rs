@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use crate::definition::element::VariableMap;
+use crate::definition::view::View;
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::hash::Hash;
 use std::sync::Arc;
 
@@ -27,6 +30,41 @@ pub mod plugin;
 pub mod view;
 
 include!(concat!(env!("OUT_DIR"), "/designcompose.definition.rs"));
+
+impl DesignComposeDefinition {
+    pub fn new(
+        views: HashMap<NodeQuery, View>,
+        images: EncodedImageMap,
+        component_sets: HashMap<String, String>,
+        variable_map: VariableMap,
+    ) -> DesignComposeDefinition {
+        DesignComposeDefinition {
+            views: views.iter().map(|(k, v)| (k.encode(), v.to_owned())).collect(),
+            images: images.into(),
+            component_sets,
+            variable_map: Some(variable_map),
+        }
+    }
+    pub fn views(&self) -> Result<HashMap<NodeQuery, View>, Error> {
+        self.views
+            .iter()
+            .map(|(k, v)| NodeQuery::decode(k).map(|query| (query, v.clone())))
+            .collect::<Result<HashMap<NodeQuery, View>, Error>>()
+    }
+}
+
+impl fmt::Display for DesignComposeDefinition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // NOTE: Using `write!` here instead of typical `format!`
+        // to keep newlines.
+        write!(
+            f,
+            "Views: {}\nComponent Sets: {}",
+            self.views.keys().count(),
+            self.component_sets.keys().count()
+        )
+    }
+}
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Serialize, Deserialize)]
 pub enum NodeQuery {

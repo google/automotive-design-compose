@@ -643,7 +643,7 @@ fn compute_background(
 
         if let Some(fill) = images.image_fill(image_ref, node_name) {
             Background::new(background::BackgroundType::Image(background::Image {
-                key: Some(fill),
+                key: fill,
                 filters: image_filter_list,
                 transform: Some(transform.to_2d()),
                 scale_mode: bg_scale_mode as i32,
@@ -654,7 +654,7 @@ fn compute_background(
             // There's no image but we have filters, so store those with no image in case there's
             // a runtime customization that specifies an image source.
             Background::new(background::BackgroundType::Image(background::Image {
-                key: None,
+                key: String::new(),
                 filters: image_filter_list,
                 transform: Some(transform.to_2d()),
                 scale_mode: bg_scale_mode as i32,

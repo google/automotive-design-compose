@@ -608,7 +608,7 @@ fun SquooshRoot(
                                 val contentHeight =
                                     presentationRoot.computedLayout?.content_height ?: 0F
                                 val frameHeight = presentationRoot.computedLayout?.height ?: 0F
-                                val maxScroll = frameHeight - contentHeight
+                                val maxScroll = (frameHeight - contentHeight).coerceAtMost(0F)
                                 scrollOffset.value =
                                     Offset(
                                         0F,
@@ -620,7 +620,7 @@ fun SquooshRoot(
                                 val contentWidth =
                                     presentationRoot.computedLayout?.content_width ?: 0F
                                 val frameWidth = presentationRoot.computedLayout?.width ?: 0F
-                                val maxScroll = frameWidth - contentWidth
+                                val maxScroll = (frameWidth - contentWidth).coerceAtMost(0F)
                                 scrollOffset.value =
                                     Offset(
                                         (scrollOffset.value.x + delta).coerceIn(maxScroll, 0F),
@@ -699,7 +699,7 @@ fun SquooshRoot(
                                 customizationContext,
                                 serverParams,
                                 setDocId,
-                                designSwitcherPolicy,
+                                designSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
                                 liveUpdateMode,
                                 designComposeCallbacks,
                                 true, // Is scroll component

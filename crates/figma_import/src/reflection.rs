@@ -14,7 +14,7 @@
 
 use dc_bundle::definition::element::dimension_proto::Dimension;
 
-use dc_bundle::legacy_definition::EncodedImageMap;
+use dc_bundle::definition::EncodedImageMap;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
 pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {

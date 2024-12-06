@@ -19,26 +19,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use std::sync::Arc;
 // To help keep the legacy definition files clear we alias `crate::definition`, which is the base
 // module for the generated protobuf files to `proto`, so that all of the protobuf-generated types
 // inside `legacy_definition` must be prepended with `proto::`
 use crate::definition::element::VariableMap;
 use crate::definition::view::View;
-use crate::definition::NodeQuery;
+use crate::definition::{EncodedImageMap, NodeQuery};
 use crate::Error;
-
-/// EncodedImageMap contains a mapping from ImageKey to network bytes. It can create an
-/// ImageMap and is intended to be used when we want to use Figma-defined components but do
-/// not want to communicate with the Figma service.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EncodedImageMap(pub HashMap<String, Arc<serde_bytes::ByteBuf>>);
-
-impl EncodedImageMap {
-    pub fn map(&self) -> HashMap<String, Arc<serde_bytes::ByteBuf>> {
-        self.0.clone()
-    }
-}
 
 // LINT.IfChange
 static CURRENT_VERSION: u32 = 23;
@@ -102,7 +89,7 @@ impl fmt::Display for DesignComposeDefinitionHeader {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DesignComposeDefinition {
     pub views: HashMap<String, View>,
-    pub images: EncodedImageMap,
+    pub images: HashMap<String, Vec<u8>>,
     pub component_sets: HashMap<String, String>,
     pub variable_map: VariableMap,
 }
@@ -116,7 +103,7 @@ impl DesignComposeDefinition {
     ) -> DesignComposeDefinition {
         DesignComposeDefinition {
             views: views.iter().map(|(k, v)| (k.encode(), v.to_owned())).collect(),
-            images,
+            images: images.into(),
             component_sets,
             variable_map,
         }

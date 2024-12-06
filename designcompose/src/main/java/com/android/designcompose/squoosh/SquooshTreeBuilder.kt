@@ -290,41 +290,6 @@ internal fun resolveVariantsRecursively(
         )
     val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id, layoutNode = null)
 
-    (view.data.getType() as? ViewDataType.Container)?.let { viewData ->
-        var previousChild: SquooshResolvedNode? = null
-
-        for (child in viewData.value.children) {
-            val childResolvedNode =
-                resolveVariantsRecursively(
-                    child,
-                    document,
-                    customizations,
-                    variantTransition,
-                    interactionState,
-                    keyTracker,
-                    parentComps,
-                    density,
-                    fontResourceLoader,
-                    composableList,
-                    layoutIdAllocator,
-                    "",
-                    false,
-                    variableState,
-                    appContext = appContext,
-                    textMeasureCache = textMeasureCache,
-                    customVariantTransition = customVariantTransition,
-                    componentLayoutId = componentLayoutId,
-                ) ?: continue
-
-            childResolvedNode.parent = resolvedView
-
-            if (resolvedView.firstChild == null) resolvedView.firstChild = childResolvedNode
-            if (previousChild != null) previousChild.nextSibling = childResolvedNode
-
-            previousChild = childResolvedNode
-        }
-    }
-
     // Find out if we have some supported interactions; currently that's just on press and on click.
     // We'll add timeouts and the others later...
     var hasSupportedInteraction = false
@@ -356,6 +321,7 @@ internal fun resolveVariantsRecursively(
     val replacementContent = customizations.getContent(view.name)
     val replacementComponent = customizations.getComponent(view.name)
     val listWidgetContent = customizations.getListContent(view.name)
+    var skipChildren = false
     if (replacementComponent != null) {
         composableList.add(
             SquooshChildComposable(
@@ -367,6 +333,7 @@ internal fun resolveVariantsRecursively(
         // Make sure that the renderer knows that it needs to do an external render for this
         // node.
         resolvedView.needsChildRender = true
+        skipChildren = true
     } else if (view.hasScrolling() && resolvedView.layoutId != 0 && !isScrollComponent) {
         // If the view has scrolling, is not the root, and isScrollComponent is false (to prevent
         // infinite recursion), add the view to the list so it can be composed separately in order
@@ -406,8 +373,10 @@ internal fun resolveVariantsRecursively(
                 )
             )
         }
+        skipChildren = true
     } else if (listWidgetContent != null) {
         addListWidget(listWidgetContent, resolvedView, style, customizations, layoutIdAllocator, parentComps, composableList)
+        skipChildren = true
         /*
         val layoutInfo = calcLayoutInfo(Modifier, resolvedView.view, resolvedView.style)
         if (layoutInfo is LayoutInfoRow) {
@@ -481,6 +450,43 @@ internal fun resolveVariantsRecursively(
                 parentComponents = parentComps,
             )
         )
+    }
+
+    if (!skipChildren) {
+        (view.data.getType() as? ViewDataType.Container)?.let { viewData ->
+            var previousChild: SquooshResolvedNode? = null
+
+            for (child in viewData.value.children) {
+                val childResolvedNode =
+                    resolveVariantsRecursively(
+                        child,
+                        document,
+                        customizations,
+                        variantTransition,
+                        interactionState,
+                        keyTracker,
+                        parentComps,
+                        density,
+                        fontResourceLoader,
+                        composableList,
+                        layoutIdAllocator,
+                        "",
+                        false,
+                        variableState,
+                        appContext = appContext,
+                        textMeasureCache = textMeasureCache,
+                        customVariantTransition = customVariantTransition,
+                        componentLayoutId = componentLayoutId,
+                    ) ?: continue
+
+                childResolvedNode.parent = resolvedView
+
+                if (resolvedView.firstChild == null) resolvedView.firstChild = childResolvedNode
+                if (previousChild != null) previousChild.nextSibling = childResolvedNode
+
+                previousChild = childResolvedNode
+            }
+        }
     }
 
     // Roots also get overlays

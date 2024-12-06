@@ -39,7 +39,6 @@ internal object SquooshLayout {
     }
 
     internal fun removeNode(manager: SquooshLayoutManager, rootLayoutId: Int, layoutId: Int) {
-        println("### Remove $layoutId")
         Jni.jniRemoveNode(manager.id, layoutId, rootLayoutId, false)
     }
 
@@ -53,10 +52,6 @@ internal object SquooshLayout {
         layoutNodeList: LayoutNodeList,
     ): Map<Int, Layout> {
         val serializedNodes = layoutNodeList.intoProto().toByteArray()
-        println("### doLayout() root $rootLayoutId")
-        layoutNodeList.layout_nodes.forEach {
-            println("  ### Add ${it.layout_id}, ${it.name}")
-        }
         val response =
             Jni.jniAddNodes(manager.id, rootLayoutId, serializedNodes) ?: return emptyMap()
         val layoutChangedResponse =
@@ -110,9 +105,6 @@ internal class SquooshLayoutIdAllocator(
             Log.e(TAG, "Duplicate layout ID: $id; cannot proceed...")
             throw RuntimeException("Duplicate layout ID: $id")
         }
-        if (id == 130) {
-            println("### VISIT 130 !!!")
-        }
         visitedSet.add(id)
         remainingSet.remove(id)
     }
@@ -123,9 +115,6 @@ internal class SquooshLayoutIdAllocator(
         remainingSet = visitedSet
         visitedSet = HashSet()
 
-        if (removalSet.contains(130)) {
-            println("### REMOVE 130 !!!")
-        }
         return removalSet
     }
 }

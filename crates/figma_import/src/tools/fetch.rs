@@ -18,7 +18,7 @@ use std::io::{Error, ErrorKind, Write};
 use crate::{Document, ProxyConfig};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use dc_bundle::legacy_definition::element::node::NodeQuery;
+use dc_bundle::definition::NodeQuery;
 use dc_bundle::legacy_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 
 #[derive(Debug)]
@@ -121,12 +121,12 @@ pub fn build_definition(
     let variable_map = doc.build_variable_map();
 
     // Build the serializable doc structure
-    Ok(DesignComposeDefinition {
+    Ok(DesignComposeDefinition::new(
         views,
-        component_sets: doc.component_sets().clone(),
-        images: doc.encoded_image_map(),
+        doc.encoded_image_map(),
+        doc.component_sets().clone(),
         variable_map,
-    })
+    ))
 }
 
 pub fn fetch(args: Args) -> Result<(), ConvertError> {

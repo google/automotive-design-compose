@@ -83,3 +83,9 @@ fn fetch_dials_gauges() {
         ],
     );
 }
+
+#[test]
+#[cfg_attr(not(feature = "test_fetches"), ignore)]
+fn fetch_styled_text_runs() {
+    run_test("mIYV4YsYYaMTsBMCVskA4N", &["#MainFrame"])
+}

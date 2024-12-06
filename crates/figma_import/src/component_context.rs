@@ -15,7 +15,7 @@
 use crate::figma_schema;
 use dc_bundle::definition::interaction::action::ActionType;
 use dc_bundle::definition::interaction::Reaction;
-use dc_bundle::legacy_definition::element::node::NodeQuery;
+use dc_bundle::definition::NodeQuery;
 use std::collections::{HashMap, HashSet};
 
 /// ComponentContext is created by Document, and is used to ensure that all dependent nodes and

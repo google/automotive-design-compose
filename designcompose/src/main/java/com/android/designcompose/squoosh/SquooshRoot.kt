@@ -82,6 +82,7 @@ import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
 import com.android.designcompose.getOpenLinkCallback
@@ -93,7 +94,6 @@ import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.Size
 import com.android.designcompose.squooshAnimatedActions
@@ -291,7 +291,7 @@ fun SquooshRoot(
 
     val variantParentName =
         when (rootNodeQuery) {
-            is NodeQuery.NodeVariant -> rootNodeQuery.field1
+            is NodeQuery.NodeVariant -> rootNodeQuery.parent
             else -> ""
         }
 

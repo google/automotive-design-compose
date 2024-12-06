@@ -29,6 +29,7 @@ import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.VariableState
 import com.android.designcompose.asBuilder
+import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.defaultLayoutStyle
 import com.android.designcompose.defaultNodeStyle
 import com.android.designcompose.getComponent
@@ -64,7 +65,6 @@ import com.android.designcompose.serdegen.Container
 import com.android.designcompose.serdegen.FlexDirection
 import com.android.designcompose.serdegen.FrameExtras
 import com.android.designcompose.serdegen.JustifyContent
-import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PositionType

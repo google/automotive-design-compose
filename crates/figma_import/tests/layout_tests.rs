@@ -29,7 +29,7 @@ use dc_bundle::definition::layout::LayoutSizing;
 use dc_bundle::definition::view::view_data::ViewDataType;
 use dc_bundle::definition::view::view_data::ViewDataType::{Container, Text};
 use dc_bundle::definition::view::{view_data, View};
-use dc_bundle::legacy_definition::element::node::NodeQuery;
+use dc_bundle::definition::NodeQuery;
 use dc_bundle::legacy_definition::DesignComposeDefinition;
 use figma_import::load_design_def;
 use layout::LayoutManager;
@@ -150,12 +150,20 @@ fn load_doc() -> Result<DesignComposeDefinition, figma_import::Error> {
 }
 
 fn load_view(node_name: &str, doc: &DesignComposeDefinition) -> LayoutManager {
-    let view_result = doc.views.get(&NodeQuery::NodeName(node_name.into()));
+    let view_result = doc.views.get(&NodeQuery::NodeName(node_name.into()).encode());
     assert!(view_result.is_some());
     let view = view_result.unwrap();
     let mut id = 0;
     let mut manager = LayoutManager::new(measure_func);
-    add_view_to_layout(&view, &mut manager, &mut id, -1, -1, &HashMap::new(), &doc.views);
+    add_view_to_layout(
+        &view,
+        &mut manager,
+        &mut id,
+        -1,
+        -1,
+        &HashMap::new(),
+        &doc.views().unwrap(),
+    );
     manager
 }
 

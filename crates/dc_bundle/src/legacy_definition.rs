@@ -26,9 +26,8 @@ use std::sync::Arc;
 use crate::definition::element::ImageKey;
 use crate::definition::element::VariableMap;
 use crate::definition::view::View;
-use crate::legacy_definition::element::node::NodeQuery;
-
-pub mod element;
+use crate::definition::NodeQuery;
+use crate::Error;
 
 /// EncodedImageMap contains a mapping from ImageKey to network bytes. It can create an
 /// ImageMap and is intended to be used when we want to use Figma-defined components but do
@@ -103,10 +102,32 @@ impl fmt::Display for DesignComposeDefinitionHeader {
 // This is our serialized document type.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DesignComposeDefinition {
-    pub views: HashMap<NodeQuery, View>,
+    pub views: HashMap<String, View>,
     pub images: EncodedImageMap,
     pub component_sets: HashMap<String, String>,
     pub variable_map: VariableMap,
+}
+
+impl DesignComposeDefinition {
+    pub fn new(
+        views: HashMap<NodeQuery, View>,
+        images: EncodedImageMap,
+        component_sets: HashMap<String, String>,
+        variable_map: VariableMap,
+    ) -> DesignComposeDefinition {
+        DesignComposeDefinition {
+            views: views.iter().map(|(k, v)| (k.encode(), v.to_owned())).collect(),
+            images,
+            component_sets,
+            variable_map,
+        }
+    }
+    pub fn views(&self) -> Result<HashMap<NodeQuery, View>, Error> {
+        self.views
+            .iter()
+            .map(|(k, v)| NodeQuery::decode(k).map(|query| (query, v.clone())))
+            .collect::<Result<HashMap<NodeQuery, View>, Error>>()
+    }
 }
 
 impl fmt::Display for DesignComposeDefinition {

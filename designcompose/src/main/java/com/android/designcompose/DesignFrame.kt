@@ -50,6 +50,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.tracing.trace
+import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.nodeStyle
@@ -60,7 +61,6 @@ import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacingType
-import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape

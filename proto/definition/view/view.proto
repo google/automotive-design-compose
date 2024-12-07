@@ -72,6 +72,9 @@ message View {
   // a hash of variable collection id -> mode id if variable modes are set on
   // this view
   map<string, string> explicit_variable_modes = 12;
+
+  // string for runtime shader code
+  optional string shader = 13;
 }
 
 // Details that are unique to each view type.

@@ -317,6 +317,7 @@ impl View {
         reactions: Option<Vec<Reaction>>,
         scroll_info: ScrollInfo,
         frame_extras: Option<FrameExtras>,
+        shader: Option<String>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
@@ -338,6 +339,7 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
+            shader,
         }
     }
     pub fn new_text(
@@ -369,6 +371,7 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
+            shader: None,
         }
     }
     pub fn new_styled_text(
@@ -399,6 +402,7 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes: HashMap::new(),
+            shader: None,
         }
     }
     pub fn add_child(&mut self, child: View) {

@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://unpkg.com/canvaskit-wasm/bin/canvaskit.js"></script>
 </head>
 
 <div id="errors" class="page page-padding-small" style="overflow-y: hidden; overflow-x: hidden">
@@ -1491,12 +1492,14 @@
 
     if (msg.msg == 'selection-cleared') {
       currentSelection = null;
+      return;
     }
-    else if (msg.msg == 'selection') {
+    if (msg.msg == 'selection') {
       currentSelection = {
         nodeType: msg.nodeType,
         extendedLayout: msg.extendedLayout,
       };
+      return;
     }
 
     if (msg.msg == 'clippy') {
@@ -1572,6 +1575,7 @@
       showErrors(errorsHigh);
       showHeader("Warnings", errorsLow.length > 0);
       showErrors(errorsLow);
+      return;
     }
 
     if (msg.msg == "check-keywords") {
@@ -1581,12 +1585,14 @@
       let keywordsName = document.getElementById('keywordsName');
       let keywordsVersion = document.getElementById('keywordsVersion');
 
-      keywordsFilename.textContent = msg.file ? msg.file : ""
-      keywordsName.textContent = msg.name ? msg.name : ""
-      keywordsVersion.textContent = msg.version ? msg.version : ""
+      keywordsFilename.textContent = msg.file ? msg.file : "";
+      keywordsName.textContent = msg.name ? msg.name : "";
+      keywordsVersion.textContent = msg.version ? msg.version : "";
+      return;
     }
-    else if (msg.msg == "meters") {
+    if (msg.msg == "meters") {
       openPage('meters');
+      return;
     }
     if (msg.msg == 'meters-selection-cleared') {
       currentSelection = null;
@@ -1609,26 +1615,37 @@
       markerControls.style.display = 'none';
       markerSwitch.checked = false;
       markerSwitch.disabled = true;
+      return;
     }
-    else if (msg.msg == 'meters-selection') {
+    if (msg.msg == 'meters-selection') {
       setMeterData(msg);
+      return;
     }
 
+    ////// Localization //////
     if (msg.msg == 'localization') {
-      openPage('localizationOptions')
-    } else if (msg.msg == 'localization-output') {
+      openPage('localizationOptions');
+      return;
+    }
+    if (msg.msg == 'localization-output') {
       loadOutputStringData(msg.output);
       createOutputStringTable('outputStrings');
-    } else if (msg.msg == 'localization-exclude-node-callback') {
+      return;
+    }
+    if (msg.msg == 'localization-exclude-node-callback') {
       // Refresh the table, which recreate the whole table...
       createOutputStringTable('outputStrings');
-    } else if (msg.msg == 'localization-ungroup-node-callback') {
+      return;
+    }
+    if (msg.msg == 'localization-ungroup-node-callback') {
       loadOutputStringData(msg.output);
       createOutputStringTable('outputStrings');
-    } else if (msg.msg == 'image-export') {
+      return;
+    }
+    if (msg.msg == 'image-export') {
       openPage('imageExport');
       createImageOutput(msg.imageNodesArray, msg.imageResNameArray, msg.imageBytesArray, msg.exportedImageHashArray);
+      return;
     }
-
   }
 </script>

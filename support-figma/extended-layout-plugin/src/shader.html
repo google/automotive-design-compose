@@ -1,0 +1,218 @@
+<!--
+ Copyright 2024 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/canvaskit-wasm/bin/canvaskit.js"></script>
+</head>
+
+<!-- BEGIN OF SHADER PLUGIN UI -->
+<div class="page-padding-large">
+    <div style="border: solid #000; color: #f00; font-size: small;">!!Shader only works with Android 13 and
+        above. We will fallback to the image fill if there is any on lower sdks!!</div>
+    <div style=" justify-content: center; align-items: flex-start; gap: 16px; display: inline-flex; margin-top: 16px;">
+        <div>
+            <canvas id="shaderPreview" width="256px" height="256px" style="border: 1px black solid" />
+        </div>
+        <div style="display:flex; flex-wrap: wrap; overflow-y: auto; gap: 10px">
+            <div class="button button--primary" onclick="loadShaderCode('julia')">Julia</div>
+            <div class="button button--primary" onclick="loadShaderCode('cloudy_sky')">Cloudy Sky</div>
+            <div class="button button--primary" onclick="loadShaderCode('discrete_ocean')">Discrete Ocean</div>
+            <div class="button button--primary" onclick="loadShaderCode('fibonacci_sphere')">Fibonacci Sphere</div>
+            <div class="button button--primary" onclick="loadShaderCode('gradient')">Gradient</div>
+            <div class="button button--primary" onclick="loadShaderCode('star')">Star</div>
+            <div class="button button--primary" onclick="clearShaderCode()">Custom Shader</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 16px; display: flex">
+        <textarea id="shaderCodeInput" name="shaderCodeInput" style="width: 100%;" rows="12"
+            placeholder="Enter your shader code"></textarea>
+    </div>
+
+    <div style="margin-top: 16px;">
+        <div>Uniforms:</div>
+        <div id="uniforms" style="border: 2px black solid;">
+            <div>uniform float3 iResolution;</div>
+            <div>uniform float iTime;</div>
+        </div>
+    </div>
+
+    <div class="container" style="margin-top: 16px;">
+        <button id="previewShaderButton" class="styled-button" style="width: 160px;"
+            onclick="runShader()">Preview</button>
+        <button id="insertImageButton" class="styled-button" style="width: 160px;">Insert Running Shader</button>
+    </div>
+
+    <div style="margin-top: 16px">
+        Shader examples are from:
+        <li><a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a></li>
+        <li><a target="_blank" href="https://godotshaders.com/">https://godotshaders.com/</a></li>
+    </div>
+
+    <div style="margin-top: 4px">
+        This tool is developed using Skia CanvasKit, please use
+        <a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a> to debug.
+    </div>
+</div>
+<!-- END OF SHADER PLUGIN UI -->
+
+<script>
+    let canvas = document.getElementById("shaderPreview");
+    let shaderCodeInput = document.getElementById("shaderCodeInput");
+
+    let insertButton = document.getElementById("insertImageButton");
+    let currentShader = null;
+
+    let currentImageSnapshot = null;
+
+    function clearShaderCode() {
+        shaderCodeInput.value = "";
+        currentShader = null;
+    }
+
+    function loadShaderCode(shader) {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'loadShaderCode',
+                shader: shader,
+            }
+        }, '*');
+    }
+
+    async function runShader() {
+        CanvasKitInit({
+            locateFile: (file) =>
+                "https://unpkg.com/canvaskit-wasm@latest/bin/" + file,
+        }).then((CanvasKit) => {
+            // Revisied from skia playground https://shaders.skia.org/
+            const shaderWidth = 256;
+            const shaderHeight = 256;
+
+            let surface = CanvasKit.MakeCanvasSurface(canvas.id);
+            if (!surface) {
+                throw "Could not make surface";
+            }
+            const skcanvas = surface.getCanvas();
+            const paint = new CanvasKit.Paint();
+            const startTimeMs = Date.now();
+            let mouseClickX = 0;
+            let mouseClickY = 0;
+            let mouseDragX = 0;
+            let mouseDragY = 0;
+            let lastMousePressure = 0;
+
+            const prog = `
+// Inputs supplied by shaders.skia.org:
+uniform float3 iResolution;      // Viewport resolution (pixels)
+uniform float  iTime;            // Shader playback time (s)
+uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
+` + shaderCodeInput.value;
+
+            currentShader = prog;
+
+            const effect = CanvasKit.RuntimeEffect.Make(prog);
+
+            function drawFrame(canvas) {
+                const iTime = (Date.now() - startTimeMs) / 1000;
+                const uniforms = [
+                    shaderWidth, shaderHeight, 1, // vec3 iResolution(x, y, z);
+                    iTime, // iTime
+                    mouseDragX, mouseDragY, mouseClickX, mouseClickY, // iMouse(x, y, z, w)
+                ];
+                const shader = effect.makeShader(uniforms);
+                if (!shader) {
+                    throw "Could not make shader";
+                }
+                paint.setShader(shader);
+                skcanvas.drawPaint(paint);
+                shader.delete();
+
+                // Have to make image snapshot in draw frame to capture an image successfully.
+                // Simply calling make image snapshot when clicking on the insert button only
+                // captures an empty image.
+                if (currentImageSnapshot != null) {
+                    currentImageSnapshot.delete();
+                }
+                currentImageSnapshot = surface.makeImageSnapshot();
+
+                surface.requestAnimationFrame(drawFrame);
+            }
+            surface.requestAnimationFrame(drawFrame);
+
+            canvas.addEventListener("pointermove", (e) => {
+                if (e.pressure && !lastMousePressure) {
+                    mouseClickX = e.offsetX;
+                    mouseClickY = e.offsetY;
+                }
+                lastMousePressure = e.pressure;
+                if (!e.pressure) {
+                    return;
+                }
+                mouseDragX = e.offsetX;
+                mouseDragY = e.offsetY;
+            });
+
+            insertButton.onclick = e => {
+                if (currentShader != null) {
+                    parent.postMessage({
+                        pluginMessage: {
+                            msg: 'setShader',
+                            shader: currentShader,
+                        }
+                    }, '*');
+                } else {
+                    console.error("There is no shader running....");
+                }
+
+                const skImage = surface.makeImageSnapshot();
+                if (skImage != null) {
+                    parent.postMessage({
+                        pluginMessage: {
+                            msg: 'insertImage',
+                            imageBytes: skImage.encodeToBytes(),
+                        }
+                    }, '*');
+                    skImage.delete();
+                } else {
+                    console.error("There is no image captured...");
+                }
+
+            };
+        }); ////// END OF CANVAS KIT //////
+    }
+
+    loadShaderCode('julia');
+
+    window.onmessage = async function (event) {
+        let msg = event.data.pluginMessage;
+        if (msg.msg == 'shaderCode') {
+            shaderCodeInput.value = msg.code;
+            runShader();
+            return;
+        }
+
+        if (msg.msg == 'shader-selection-cleared') {
+            insertButton.disabled = true;
+            return;
+        }
+        if (msg.msg == "shader-selection") {
+            insertButton.disabled = false;
+            return;
+        }
+    }
+</script>

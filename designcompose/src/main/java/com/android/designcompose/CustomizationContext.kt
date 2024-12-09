@@ -17,6 +17,7 @@
 package com.android.designcompose
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.State
@@ -74,6 +75,18 @@ typealias MeterState = FloatState
 
 typealias Meter = Float
 
+data class DesignScrollState(
+    val value: Float,
+    val containerSize: Float,
+    val contentSize: Float,
+    val maxValue: Float,
+)
+
+data class DesignScrollCallbacks(
+    val setScrollableState: ((ScrollableState) -> Unit)? = null,
+    val scrollStateChanged: ((DesignScrollState) -> Unit)? = null,
+)
+
 // A Customization changes the way a node is presented, or changes the content of a node.
 data class Customization(
     // Text content customization
@@ -109,6 +122,8 @@ data class Customization(
     var meterValue: Optional<Float> = Optional.empty(),
     // Meter (dial, gauge, progress bar) customization as a function that returns a percentage 0-100
     var meterState: Optional<MeterState> = Optional.empty(),
+    // Scrollable state and scroll state changed callbacks
+    var scrollCallbacks: Optional<DesignScrollCallbacks> = Optional.empty(),
 )
 
 private fun Customization.clone(): Customization {
@@ -130,6 +145,7 @@ private fun Customization.clone(): Customization {
     c.openLinkCallback = openLinkCallback
     c.meterValue = meterValue
     c.meterState = meterState
+    c.scrollCallbacks = scrollCallbacks
 
     return c
 }
@@ -306,6 +322,10 @@ fun CustomizationContext.setMeterState(nodeName: String, value: MeterState) {
     customize(nodeName) { c -> c.meterState = Optional.ofNullable(value) }
 }
 
+fun CustomizationContext.setScrollCallbacks(nodeName: String, value: DesignScrollCallbacks) {
+    customize(nodeName) { c -> c.scrollCallbacks = Optional.ofNullable(value) }
+}
+
 fun CustomizationContext.setVariantProperties(vp: HashMap<String, String>) {
     variantProperties = vp
 }
@@ -478,6 +498,12 @@ fun CustomizationContext.getMeterValue(nodeName: String): Float? {
 fun CustomizationContext.getMeterState(nodeName: String): MeterState? {
     val c = cs[nodeName] ?: return null
     if (c.meterState.isPresent) return c.meterState.get()
+    return null
+}
+
+fun CustomizationContext.getScrollCallbacks(nodeName: String): DesignScrollCallbacks? {
+    val c = cs[nodeName] ?: return null
+    if (c.scrollCallbacks.isPresent) return c.scrollCallbacks.get()
     return null
 }
 

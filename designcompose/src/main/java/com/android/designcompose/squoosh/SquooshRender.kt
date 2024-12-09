@@ -122,12 +122,8 @@ internal fun Modifier.squooshRender(
                     val scroll = node.parent?.view == parentNode
                     if (scroll) {
                         drawContext.canvas.save()
-                        drawContext.canvas.translate(scrollOffset.value.x, scrollOffset.value.y)
+                        drawContext.canvas.translate(-scrollOffset.value.x, -scrollOffset.value.y)
                     }
-                    // Call scrollRestore() whenever returning from renderNode() in order to restore
-                    // the canvas matrix/clip state. This is a good candidate for RAII but this is
-                    // not supported by Kotlin.
-                    val scrollRestore = { if (scroll) drawContext.canvas.restore() }
                     val shape =
                         when (val nodeViewDataType = node.view.data.getType()) {
                             is ViewDataType.Container -> nodeViewDataType.value.shape

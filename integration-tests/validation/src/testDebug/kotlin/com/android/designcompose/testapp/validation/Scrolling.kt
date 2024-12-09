@@ -16,20 +16,28 @@
 
 package com.android.designcompose.testapp.validation
 
+import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DesignDocSettings
+import com.android.designcompose.DesignScrollCallbacks
 import com.android.designcompose.LocalDesignDocSettings
+import com.android.designcompose.ReplacementContent
 import com.android.designcompose.TestUtils
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.ScrollingTest
+import com.android.designcompose.testapp.validation.examples.ScrollingTestDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import kotlin.test.assertNotNull
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,7 +54,7 @@ class Scrolling {
     @get:Rule val interFontRule = InterFontTestRule()
 
     @Test
-    fun scrollTests() {
+    fun dragsScroll() {
         with(composeTestRule) {
             setContent {
                 CompositionLocalProvider(
@@ -64,6 +72,47 @@ class Scrolling {
             onNodeWithTag("DragHorizontal").performTouchInput { moveTo(Offset(-200f, 0F)) }
             onNodeWithTag("DragHorizontal").performTouchInput { cancel() }
             captureRootRoboImage("scroll-horizontal")
+        }
+    }
+
+    @Test
+    fun manualScroll() = runTest {
+        with(composeTestRule) {
+            val verticalScrollableState = mutableStateOf<ScrollableState?>(null)
+            val horizontalScrollableState = mutableStateOf<ScrollableState?>(null)
+            setContent {
+                CompositionLocalProvider(
+                    LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+                ) {
+                    ScrollingTestDoc.Main(
+                        verticalContents = ReplacementContent(content = { {} }),
+                        horizontalContents = ReplacementContent(content = { {} }),
+                        verticalScrollCallbacks =
+                            DesignScrollCallbacks(
+                                setScrollableState = { scrollableState ->
+                                    verticalScrollableState.value = scrollableState
+                                }
+                            ),
+                        horizontalScrollCallbacks =
+                            DesignScrollCallbacks(
+                                setScrollableState = { scrollableState ->
+                                    horizontalScrollableState.value = scrollableState
+                                }
+                            ),
+                    )
+                }
+            }
+            composeTestRule.waitUntil {
+                verticalScrollableState.value != null && horizontalScrollableState.value != null
+            }
+            assertNotNull(verticalScrollableState.value)
+            assertNotNull(horizontalScrollableState.value)
+
+            verticalScrollableState.value!!.scrollBy(-50F)
+            captureRootRoboImage("scroll-manual-vertical")
+
+            horizontalScrollableState.value!!.scrollBy(-50F)
+            captureRootRoboImage("scroll-manual-horizontal")
         }
     }
 }

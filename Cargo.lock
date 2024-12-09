@@ -426,6 +426,7 @@ dependencies = [
  "lazy_static",
  "log",
  "prost",
+ "prost-build",
  "serde",
  "serde-generate",
  "serde-reflection",

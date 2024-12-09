@@ -32,23 +32,14 @@ message DesignComposeDefinition {
   // The string here is a NodeQuery, encoded to a string so that it can be used
   // as the key to the map.  See crates/dc_bundle/src/definition.rs for encoding/decoding
   map<string, definition.view.View> views = 2;
-  EncodedImageMap images = 3;
+  // Images contains a mapping from ImageKey to network bytes. It can
+  // create an ImageMap and is intended to be used when we want to use
+  // Figma-defined components but do not want to communicate with the Figma
+  // service.
+  map<string, bytes> images = 3;
   string name = 4;
   map<string, string> component_sets = 5;
   string version = 6;
   string id = 7;
   definition.element.VariableMap variable_map = 8;
-}
-
-
-// EncodedImageMap contains a mapping from ImageKey to network bytes. It can
-// create an ImageMap and is intended to be used when we want to use
-// Figma-defined components but do not want to communicate with the Figma
-// service.
-message EncodedImageMap {map<string, EncodedImage> images = 1;}
-
-// A raw image
-message EncodedImage {
-  bytes data = 1;
-  string mime_type = 2;
 }

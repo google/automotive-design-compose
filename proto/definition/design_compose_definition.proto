@@ -28,18 +28,14 @@ option optimize_for = LITE_RUNTIME;
 // designs in a DesignCompose project.
 message DesignComposeDefinition {
   
-  string last_modified = 1;
   // The string here is a NodeQuery, encoded to a string so that it can be used
   // as the key to the map.  See crates/dc_bundle/src/definition.rs for encoding/decoding
-  map<string, definition.view.View> views = 2;
+  map<string, definition.view.View> views = 1;
   // Images contains a mapping from ImageKey to network bytes. It can
   // create an ImageMap and is intended to be used when we want to use
   // Figma-defined components but do not want to communicate with the Figma
   // service.
-  map<string, bytes> images = 3;
-  string name = 4;
-  map<string, string> component_sets = 5;
-  string version = 6;
-  string id = 7;
-  definition.element.VariableMap variable_map = 8;
+  map<string, bytes> images = 2;
+  map<string, string> component_sets = 3;
+  definition.element.VariableMap variable_map = 4;
 }

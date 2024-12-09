@@ -18,5 +18,5 @@ package com.android.designcompose.common
 
 // LINT.IfChange
 // Current serialized doc version
-const val FSAAS_DOC_VERSION = 23
+const val FSAAS_DOC_VERSION = 24
 // LINT.ThenChange(crates/dc_bundle/src/legacy_definition.rs)

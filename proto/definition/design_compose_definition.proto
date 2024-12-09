@@ -27,9 +27,10 @@ option optimize_for = LITE_RUNTIME;
 // version, ID, and variable map. It's used for storing and loading Figma
 // designs in a DesignCompose project.
 message DesignComposeDefinition {
+  
   string last_modified = 1;
-  // TODO: GH-1282 views should be a map of NodeQuery to View, but you can't use messages as keys
-  // in a proto map. This will need to figured out.
+  // The string here is a NodeQuery, encoded to a string so that it can be used
+  // as the key to the map.  See crates/dc_bundle/src/definition.rs for encoding/decoding
   map<string, definition.view.View> views = 2;
   EncodedImageMap images = 3;
   string name = 4;

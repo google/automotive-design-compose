@@ -15,7 +15,6 @@
 use dc_bundle::definition::element::{
     variable_map::NameIdMap, Collection, Mode, Variable, VariableMap,
 };
-use dc_bundle::legacy_definition::element::node::NodeQuery;
 use std::time::Duration;
 use std::{
     collections::{HashMap, HashSet},
@@ -36,6 +35,7 @@ use dc_bundle::definition::element::ImageKey;
 use dc_bundle::definition::view::component_overrides::ComponentContentOverride;
 use dc_bundle::definition::view::view_data::ViewDataType::Container;
 use dc_bundle::definition::view::{view_data, ComponentOverrides, View};
+use dc_bundle::definition::NodeQuery;
 use dc_bundle::legacy_definition::EncodedImageMap;
 use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use log::error;

@@ -25,6 +25,8 @@ pub enum Error {
     MissingFieldError { field: String },
     #[error("Unknown enum variant for {enum_name}")]
     UnknownEnumVariant { enum_name: String },
+    #[error("Attempted to parse unknown NodeQuery string {query}")]
+    InvalidNodeQuery { query: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

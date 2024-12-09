@@ -19,7 +19,6 @@ package com.android.designcompose.common
 import com.android.designcompose.serdegen.DesignComposeDefinition
 import com.android.designcompose.serdegen.DesignComposeDefinitionHeader
 import com.android.designcompose.serdegen.FigmaDocInfo
-import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.ServerFigmaDoc
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewDataType
@@ -85,9 +84,10 @@ fun decodeServerBaseDoc(
     val imageSessionData = decodeImageSession(docBytes, deserializer)
     feedback.documentDecodeSuccess(header.dc_version, header.name, header.last_modified, docId)
 
-    val variantViewMap = createVariantViewMap(content.views)
-    val variantPropertyMap = createVariantPropertyMap(content.views)
-    val nodeIdMap = createNodeIdMap(content.views)
+    val viewMap = content.views()
+    val variantViewMap = createVariantViewMap(viewMap)
+    val variantPropertyMap = createVariantPropertyMap(viewMap)
+    val nodeIdMap = createNodeIdMap(viewMap)
     return GenericDocContent(
         docId,
         header,
@@ -116,9 +116,10 @@ fun decodeDiskBaseDoc(
     // Disk loads are in the format of DesignComposeDefinition
     val content = DesignComposeDefinition.deserialize(deserializer)
     val imageSessionData = decodeImageSession(docBytes, deserializer)
-    val variantMap = createVariantViewMap(content.views)
-    val variantPropertyMap = createVariantPropertyMap(content.views)
-    val nodeIdMap = createNodeIdMap(content.views)
+    val viewMap = content.views()
+    val variantMap = createVariantViewMap(viewMap)
+    val variantPropertyMap = createVariantPropertyMap(viewMap)
+    val nodeIdMap = createNodeIdMap(viewMap)
 
     feedback.documentDecodeSuccess(header.dc_version, header.name, header.last_modified, docId)
 
@@ -145,8 +146,8 @@ private fun createVariantViewMap(
         val nodeQuery = it.key
         val view = it.value
         if (nodeQuery is NodeQuery.NodeVariant) {
-            val nodeName = nodeQuery.field0
-            val parentNodeName = nodeQuery.field1
+            val nodeName = nodeQuery.name
+            val parentNodeName = nodeQuery.parent
 
             val nodeNameToView = variantMap[parentNodeName] ?: HashMap()
             val sortedNodeName = createSortedVariantName(nodeName)
@@ -167,8 +168,8 @@ private fun createVariantPropertyMap(nodes: Map<NodeQuery, View>?): VariantPrope
     val propertyMap = VariantPropertyMap()
     nodes?.keys?.forEach {
         if (it is NodeQuery.NodeVariant) {
-            val nodeName = it.field0!!
-            val parentNodeName = it.field1!!
+            val nodeName = it.name
+            val parentNodeName = it.parent
             val propertyValueList = nodeNameToPropertyValueList(nodeName)
             for (p in propertyValueList) propertyMap.addProperty(parentNodeName, p.first, p.second)
         }

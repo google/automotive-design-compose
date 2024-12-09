@@ -23,12 +23,13 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.android.designcompose.common.DesignDocId
+import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.VariantPropertyMap
+import com.android.designcompose.common.views
 import com.android.designcompose.proto.NavigationType
 import com.android.designcompose.proto.navigationTypeFromInt
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.ActionType
-import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.squoosh.AnimationTransition
@@ -529,8 +530,8 @@ private fun searchNodes(
     customizations: CustomizationContext? = null,
 ): View? {
     val findVariantView: (NodeQuery.NodeVariant) -> View? = { query ->
-        val nodeName = query.field0
-        val componentSetName = query.field1
+        val nodeName = query.name
+        val componentSetName = query.parent
         val variantViewMap = parentViewMap[componentSetName]
         if (variantViewMap != null) {
             // Using the properties and variant names in the node name, try to find a view that
@@ -557,7 +558,7 @@ private fun searchNodes(
                 val nodeNames: ArrayList<String> = arrayListOf()
                 properties.forEach { nodeNames.add("${it.key}=${it.value}") }
                 val nodeName = nodeNames.joinToString(",")
-                val view = findVariantView(NodeQuery.NodeVariant(nodeName, q.value))
+                val view = findVariantView(NodeQuery.NodeVariant(nodeName, q.name))
                 view?.let { v ->
                     return v
                 }
@@ -579,20 +580,23 @@ private fun searchNodes(
     for (node in nodes.values) {
         when (q) {
             is NodeQuery.NodeId ->
-                if (node.id == q.value) {
+                if (node.id == q.id) {
                     return node
                 }
             is NodeQuery.NodeName -> {
-                if (node.name == q.value) {
+                if (node.name == q.name) {
                     return node
                 }
+            }
+            else -> {
+                continue
             }
         }
     }
 
     if (q is NodeQuery.NodeId) {
         // Look for the view in our map of views indexed by node ID.
-        return nodeIdMap[q.value]
+        return nodeIdMap[q.id]
     }
 
     return null
@@ -622,7 +626,7 @@ internal fun InteractionState.rootNode(
     }
     return searchNodes(
         query,
-        doc.c.document.views,
+        doc.c.document.views(),
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
         doc.c.nodeIdMap,
@@ -649,7 +653,7 @@ internal fun InteractionState.rootOverlays(doc: DocContent): List<View> {
     return rootOverlays.mapNotNull { query ->
         searchNodes(
             query,
-            doc.c.document.views,
+            doc.c.document.views(),
             doc.c.variantViewMap,
             doc.c.variantPropertyMap,
             doc.c.nodeIdMap,
@@ -733,7 +737,7 @@ internal fun InteractionState.nodeVariant(
     if (variant == null) return null
     return searchNodes(
         NodeQuery.NodeId(variant),
-        doc.c.document.views,
+        doc.c.document.views(),
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
         doc.c.nodeIdMap,
@@ -749,7 +753,7 @@ internal fun InteractionState.squooshNodeVariant(
     val variant = variantMemory[varKey] ?: return null
     return searchNodes(
         NodeQuery.NodeId(variant),
-        doc.c.document.views,
+        doc.c.document.views(),
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
         doc.c.nodeIdMap,
@@ -772,7 +776,7 @@ internal fun InteractionState.squooshRootNode(
     val query = findRootNode()
     return searchNodes(
         query,
-        doc.c.document.views,
+        doc.c.document.views(),
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
         doc.c.nodeIdMap,

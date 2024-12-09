@@ -23,13 +23,13 @@ import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
+import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.nodeNameToPropertyValueList
 import com.android.designcompose.serdegen.Background
 import com.android.designcompose.serdegen.BackgroundType
 import com.android.designcompose.serdegen.ColorOrVarType
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.Dimension
-import com.android.designcompose.serdegen.NodeQuery
 import com.android.designcompose.serdegen.View
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull

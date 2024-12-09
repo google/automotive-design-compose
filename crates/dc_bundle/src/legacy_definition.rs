@@ -23,7 +23,6 @@ use std::sync::Arc;
 // To help keep the legacy definition files clear we alias `crate::definition`, which is the base
 // module for the generated protobuf files to `proto`, so that all of the protobuf-generated types
 // inside `legacy_definition` must be prepended with `proto::`
-use crate::definition::element::ImageKey;
 use crate::definition::element::VariableMap;
 use crate::definition::view::View;
 use crate::definition::NodeQuery;
@@ -33,10 +32,10 @@ use crate::Error;
 /// ImageMap and is intended to be used when we want to use Figma-defined components but do
 /// not want to communicate with the Figma service.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EncodedImageMap(pub HashMap<ImageKey, Arc<serde_bytes::ByteBuf>>);
+pub struct EncodedImageMap(pub HashMap<String, Arc<serde_bytes::ByteBuf>>);
 
 impl EncodedImageMap {
-    pub fn map(&self) -> HashMap<ImageKey, Arc<serde_bytes::ByteBuf>> {
+    pub fn map(&self) -> HashMap<String, Arc<serde_bytes::ByteBuf>> {
         self.0.clone()
     }
 }

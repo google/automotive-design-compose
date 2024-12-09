@@ -26,11 +26,6 @@ option java_multiple_files = true;
 option java_package = "com.android.designcompose.definition.element";
 option optimize_for = LITE_RUNTIME;
 
-// ImageKey is used to represent a unique identifier for an image.
-message ImageKey {
-  string key = 1;
-}
-
 // The background of a node
 message Background {
   // A single color stop within a gradient.
@@ -84,7 +79,7 @@ message Background {
     // the images in the ImageContext and then fetch decoded images when
     // rendering. This means we can serialize the whole ImageContext, and always
     // get the right image when we render.
-    ImageKey key = 1;
+    string key = 1;
     repeated modifier.FilterOp filters = 2;
     modifier.AffineTransform transform = 3;
     ScaleMode scale_mode = 4;

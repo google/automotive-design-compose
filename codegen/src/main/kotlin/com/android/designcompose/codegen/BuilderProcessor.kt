@@ -158,6 +158,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var meterCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var meterStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
+        private var shaderUniformTimeStateCustomizations:
+            HashMap<String, Vector<Pair<String, String>>> =
+            HashMap()
         private var moduleCustomizations: HashMap<String, Vector<String>> = HashMap()
         private var nodeNameBuilder: ArrayList<String> = ArrayList()
         private var variantProperties: HashMap<String, String> = HashMap()
@@ -742,6 +745,15 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setMeterState(\"$node\", $value)\n")
             }
 
+            val shaderUniformTimeStateCustom =
+                shaderUniformTimeStateCustomizations[function.toString()]
+                    ?: Vector<Pair<String, String>>()
+            for ((node, value) in shaderUniformTimeStateCustom) {
+                out.appendText(
+                    "        customizations.setShaderUniformTimeState(\"$node\", $value)\n"
+                )
+            }
+
             val moduleCustom = moduleCustomizations[function.toString()] ?: Vector()
             for (value in moduleCustom) {
                 out.appendText("        customizations.mergeFrom($value.customizations())\n")
@@ -862,6 +874,12 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, meterCustomizations)
                 CustomizationType.MeterState ->
                     addCustomization(valueParameter, annotation, meterStateCustomizations)
+                CustomizationType.ShaderUniformTimeState ->
+                    addCustomization(
+                        valueParameter,
+                        annotation,
+                        shaderUniformTimeStateCustomizations,
+                    )
                 CustomizationType.Module -> {
                     valueParameter.name?.let {
                         val name = it.asString()

@@ -28,29 +28,31 @@ if ! which "$GOPATH"/addlicense; then
     exit 1
 fi
 
-"$GOPATH"/addlicense \
-    -ignore "**/.idea/**" \
-    -ignore "**/.vscode/**" \
-    -ignore "**/.gradle/**" \
-    -ignore "**/build/**" \
-    -ignore "**/target/**" \
-    -ignore "**/gen_strings.xml" \
-    -c "Google LLC" \
-    -l apache \
-    "$GIT_ROOT"
-
-(
-    cd "$GIT_ROOT/build-logic" || exit
-    ./gradlew spotlessApply --no-configuration-cache
-)
-(
-    cd "$GIT_ROOT/plugins" || exit
-    ./gradlew spotlessApply --no-configuration-cache
-)
+# Run in a subshell so that we don't end up in the wrong directory if the script fails
 (
     cd "$GIT_ROOT" || exit
-    ./gradlew spotlessApply --no-configuration-cache
+    "$GOPATH"/addlicense \
+        -ignore "**/.idea/**" \
+        -ignore "**/.vscode/**" \
+        -ignore "**/.gradle/**" \
+        -ignore "**/build/**" \
+        -ignore "**/target/**" \
+        -ignore "**/gen_strings.xml" \
+        -c "Google LLC" \
+        -l apache \
+        "$GIT_ROOT"
+
+    cargo fix --allow-dirty --allow-staged --workspace --all-features
     cargo fmt
+
+    # Format each Gradle project individually, so that Gradle doesn't complain that build files
+    # changed while we were running the format
+    cd "$GIT_ROOT/build-logic" || exit
+    ./gradlew spotlessApply --no-configuration-cache
+    cd "$GIT_ROOT/plugins" || exit
+    ./gradlew spotlessApply --no-configuration-cache
+    cd "$GIT_ROOT" || exit
+    ./gradlew spotlessApply --no-configuration-cache
 )
 
 if which protolint >/dev/null; then

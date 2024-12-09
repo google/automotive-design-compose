@@ -80,7 +80,7 @@ fun decodeServerBaseDoc(
     // Server sends content in the format of ServerFigmaDoc, which has additional data
     val serverDoc = ServerFigmaDoc.deserialize(deserializer)
     serverDoc.errors?.forEach { feedback.documentUpdateWarnings(docId, it) }
-    val content = serverDoc.figma_doc
+    val content = serverDoc.figma_doc.get()
     val imageSessionData = decodeImageSession(docBytes, deserializer)
     feedback.documentDecodeSuccess(header.dc_version, header.name, header.last_modified, docId)
 

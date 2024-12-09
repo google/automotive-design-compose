@@ -33,7 +33,7 @@ message FigmaDocInfo {
 // document along with some extra data: document branches, project files, and
 // errors
 message ServerFigmaDoc {
-  definition.DesignComposeDefinition figma_doc = 1;
+  designcompose.definition.DesignComposeDefinition figma_doc = 1;
   repeated FigmaDocInfo branches = 2;
   repeated FigmaDocInfo project_files = 3;
   repeated string errors = 4;

@@ -15,7 +15,9 @@
  */
 use crate::Error;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::hash::Hash;
+use std::sync::Arc;
 
 pub mod element;
 pub mod interaction;
@@ -157,5 +159,23 @@ mod tests {
         let parent = "parent";
         let query = NodeQuery::variant(name_with_separator, parent);
         query.encode();
+    }
+}
+
+/// EncodedImageMap contains a mapping from ImageKey to network bytes. It can create an
+/// ImageMap and is intended to be used when we want to use Figma-defined components but do
+/// not want to communicate with the Figma service.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EncodedImageMap(pub HashMap<String, Arc<serde_bytes::ByteBuf>>);
+
+impl EncodedImageMap {
+    pub fn map(&self) -> HashMap<String, Arc<serde_bytes::ByteBuf>> {
+        self.0.clone()
+    }
+}
+
+impl Into<HashMap<String, Vec<u8>>> for EncodedImageMap {
+    fn into(self) -> HashMap<String, Vec<u8>> {
+        self.0.iter().map(|(k, v)| (k.clone(), v.to_vec())).collect()
     }
 }

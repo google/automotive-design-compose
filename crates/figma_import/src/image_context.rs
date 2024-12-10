@@ -22,7 +22,7 @@ use std::{
 use crate::error::Error;
 use crate::fetch::ProxyConfig;
 use crate::figma_schema::{Paint, Transform};
-use dc_bundle::legacy_definition::EncodedImageMap;
+use dc_bundle::definition::EncodedImageMap;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;

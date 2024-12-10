@@ -626,7 +626,7 @@ internal fun InteractionState.rootNode(
     }
     return searchNodes(
         query,
-        doc.c.document.views(),
+        doc.c.document.viewsMap,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
         doc.c.nodeIdMap,
@@ -653,7 +653,7 @@ internal fun InteractionState.rootOverlays(doc: DocContent): List<View> {
     return rootOverlays.mapNotNull { query ->
         searchNodes(
             query,
-            doc.c.document.views(),
+            doc.c.document.viewsMap,
             doc.c.variantViewMap,
             doc.c.variantPropertyMap,
             doc.c.nodeIdMap,
@@ -737,7 +737,7 @@ internal fun InteractionState.nodeVariant(
     if (variant == null) return null
     return searchNodes(
         NodeQuery.NodeId(variant),
-        doc.c.document.views(),
+        doc.c.document.viewsMap,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
         doc.c.nodeIdMap,
@@ -753,7 +753,7 @@ internal fun InteractionState.squooshNodeVariant(
     val variant = variantMemory[varKey] ?: return null
     return searchNodes(
         NodeQuery.NodeId(variant),
-        doc.c.document.views(),
+        doc.c.document.viewsMap,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
         doc.c.nodeIdMap,
@@ -776,7 +776,7 @@ internal fun InteractionState.squooshRootNode(
     val query = findRootNode()
     return searchNodes(
         query,
-        doc.c.document.views(),
+        doc.c.document.viewsMap,
         doc.c.variantViewMap,
         doc.c.variantPropertyMap,
         doc.c.nodeIdMap,

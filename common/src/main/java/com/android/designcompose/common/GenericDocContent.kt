@@ -16,11 +16,13 @@
 
 package com.android.designcompose.common
 
-import com.android.designcompose.serdegen.DesignComposeDefinition
+import com.android.designcompose.definition.DesignComposeDefinition
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewData
+import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.serdegen.DesignComposeDefinitionHeader
 import com.android.designcompose.serdegen.FigmaDocInfo
 import com.android.designcompose.serdegen.ServerFigmaDoc
-import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewDataType
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer
@@ -28,6 +30,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import sun.jvm.hotspot.oops.CellTypeState.value
 
 class GenericDocContent(
     var docId: DesignDocId,
@@ -183,8 +186,9 @@ private fun createNodeIdMap(nodes: Map<NodeQuery, View>?): HashMap<String, View>
     val nodeIdMap = HashMap<String, View>()
     fun addViewToMap(view: View) {
         nodeIdMap[view.id] = view
-        (view.data.get().view_data_type.get() as? ViewDataType.Container)?.let { container ->
-            container.value.children.forEach { addViewToMap(it) }
+        if(view.data.viewDataTypeCase == ViewData.ViewDataTypeCase.CONTAINER){
+            view.data.containerOrNull?.childrenList?.forEach { addViewToMap(it) }
+            view.data.takeIf { it.hasContainer() }?.container?.childrenList?.forEach { addViewToMap(it) }
         }
     }
     nodes?.values?.forEach { addViewToMap(it) }

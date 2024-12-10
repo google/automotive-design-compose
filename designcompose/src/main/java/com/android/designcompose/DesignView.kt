@@ -287,7 +287,7 @@ internal fun DesignView(
 
         var targetInstanceId: String? = null
         if (destinationId != null) {
-            val componentSetId = document.c.document.component_sets[destinationId]
+            val componentSetId = document.c.document.componentSetsMap[destinationId]
             if (componentSetId != null) {
                 // Look up our list of parent components and try to find one that is a member of
                 // this component set.

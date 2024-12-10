@@ -37,7 +37,6 @@ import androidx.compose.ui.geometry.isFinite
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.RadialGradientShader
@@ -45,6 +44,7 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.SweepGradientShader
 import androidx.compose.ui.graphics.TileMode
+import com.android.designcompose.definition.element.Color
 import androidx.compose.ui.graphics.isIdentity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -141,6 +141,7 @@ import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
+import org.checkerframework.checker.units.qual.g
 
 /** Multiply out a dimension against available space */
 internal fun Dimension.resolve(available: Int, density: Float): Int? {
@@ -1037,7 +1038,7 @@ internal fun ViewShape.isMask(): Boolean {
 // the gradient pixel size in advance as Compose apps generally do.
 internal class RelativeLinearGradient
 internal constructor(
-    private val colors: List<Color>,
+    private val colors: List<androidx.compose.ui.graphics.Color>,
     private val stops: List<Float>? = null,
     private val start: Offset,
     private val end: Offset,
@@ -1092,7 +1093,7 @@ internal constructor(
 
 internal class RelativeRadialGradient
 internal constructor(
-    private val colors: List<Color>,
+    private val colors: List<androidx.compose.ui.graphics.Color>,
     private val stops: List<Float>? = null,
     private val center: Offset,
     private val radiusX: Float,
@@ -1185,7 +1186,7 @@ internal constructor(
     private val center: Offset,
     private val angle: Float,
     private val scale: Float,
-    private val colors: List<Color>,
+    private val colors: List<androidx.compose.ui.graphics.Color>,
     private val stops: List<Float>? = null,
 ) : ShaderBrush() {
 
@@ -1468,7 +1469,7 @@ internal fun Background.asBrush(
                     Log.w(TAG, "Single stop found for the linear gradient and do it as a fill")
                     val color =
                         linearGradient.color_stops[0].color.getOrNull()?.getValue(variableState)
-                            ?: Color.Transparent
+                            ?: androidx.compose.ui.graphics.Color.Transparent
                     return Pair(SolidColor(color), 1.0f)
                 }
                 else ->
@@ -1477,7 +1478,7 @@ internal fun Background.asBrush(
                             linearGradient.color_stops
                                 .map {
                                     it.color.getOrNull()?.getValue(variableState)
-                                        ?: Color.Transparent
+                                        ?: androidx.compose.ui.graphics.Color.Transparent
                                 }
                                 .toList(),
                             linearGradient.color_stops.map { it.position }.toList(),
@@ -1500,7 +1501,7 @@ internal fun Background.asBrush(
                     return Pair(
                         SolidColor(
                             radialGradient.color_stops[0].color.getOrNull()?.getValue(variableState)
-                                ?: Color.Transparent
+                                ?: androidx.compose.ui.graphics.Color.Transparent
                         ),
                         1.0f,
                     )
@@ -1511,7 +1512,7 @@ internal fun Background.asBrush(
                             colors =
                                 radialGradient.color_stops.map {
                                     it.color.getOrNull()?.getValue(variableState)
-                                        ?: Color.Transparent
+                                        ?: androidx.compose.ui.graphics.Color.Transparent
                                 },
                             stops = radialGradient.color_stops.map { it.position },
                             center = Offset(radialGradient.center_x, radialGradient.center_y),
@@ -1537,7 +1538,7 @@ internal fun Background.asBrush(
                             angularGradient.color_stops[0]
                                 .color
                                 .getOrNull()
-                                ?.getValue(variableState) ?: Color.Transparent
+                                ?.getValue(variableState) ?: androidx.compose.ui.graphics.Color.Transparent
                         ),
                         1.0f,
                     )
@@ -1551,7 +1552,7 @@ internal fun Background.asBrush(
                             colors =
                                 angularGradient.color_stops.map {
                                     it.color.getOrNull()?.getValue(variableState)
-                                        ?: Color.Transparent
+                                        ?: androidx.compose.ui.graphics.Color.Transparent
                                 },
                             stops = angularGradient.color_stops.map { it.position },
                         ),
@@ -1765,12 +1766,12 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
 }
 
 /** Convert a serialized color to a Compose color */
-internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
+internal fun Color.toColor(): androidx.compose.ui.graphics.Color {
     val a = a.toInt()
     val r = r.toInt()
     val g = g.toInt()
     val b = b.toInt()
-    return Color(r, g, b, a)
+    return androidx.compose.ui.graphics.Color(r, g, b, a)
 }
 
 internal fun getTextContent(context: Context, textData: ViewDataType.Text): String {

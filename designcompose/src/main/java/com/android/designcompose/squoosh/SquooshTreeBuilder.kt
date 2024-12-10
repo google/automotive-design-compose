@@ -587,17 +587,19 @@ private fun generateOverlayNode(
     nodeStyle.backgrounds = listOf()
 
     overlay.overlay_background.getOrNull()?.color?.getOrNull()?.let { color ->
-        val colorBuilder = Color.Builder()
-        colorBuilder.r = (color.r * 255.0).toInt()
-        colorBuilder.g = (color.g * 255.0).toInt()
-        colorBuilder.b = (color.b * 255.0).toInt()
-        colorBuilder.a = (color.a * 255.0).toInt()
+        val bgColor = com.android.designcompose.definition.element.color {
+            r = (color.r * 255.0).toInt()
+            g = (color.g * 255.0).toInt()
+            b = (color.b * 255.0).toInt()
+            a = (color.a * 255.0).toInt()
+        }
+
         nodeStyle.backgrounds =
             listOf(
                 Background(
                     Optional.of(
                         BackgroundType.Solid(
-                            ColorOrVar(Optional.of(ColorOrVarType.Color(colorBuilder.build())))
+                            ColorOrVar(Optional.of(ColorOrVarType.Color(bgColor)))
                         )
                     )
                 )

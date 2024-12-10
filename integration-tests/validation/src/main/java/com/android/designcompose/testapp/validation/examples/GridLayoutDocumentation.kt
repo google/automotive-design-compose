@@ -29,7 +29,7 @@ import com.android.designcompose.annotation.PreviewNode
 
 // TEST Grid Layout for Documentation
 @DesignDoc(id = "MBNjjSbzzKeN7nBjVoewsl")
-interface GridLayout {
+interface GridLayoutDocumentation {
     @DesignComponent(node = "#stage")
     fun MainFrame(
         @Design(node = "#ListTitle") title: String,
@@ -56,17 +56,20 @@ interface GridLayout {
 }
 
 @Composable
-fun GridLayoutDocumentation() {
-    GridLayoutDoc.MainFrame(title = "Media Browse") { spanFunc ->
+fun GridLayoutDocumentationExample() {
+    GridLayoutDocumentationDoc.MainFrame(title = "Media Browse") { spanFunc ->
         ListContentData(
             count = 9,
             span = { index ->
-                if (index == 0) spanFunc { GridLayoutDoc.SectionTitleDesignNodeData() }
-                else spanFunc { GridLayoutDoc.ItemDesignNodeData(itemType = ItemType.Grid) }
+                if (index == 0) spanFunc { GridLayoutDocumentationDoc.SectionTitleDesignNodeData() }
+                else
+                    spanFunc {
+                        GridLayoutDocumentationDoc.ItemDesignNodeData(itemType = ItemType.Grid)
+                    }
             },
         ) { index ->
-            if (index == 0) GridLayoutDoc.SectionTitle(title = "Recently Played")
-            else GridLayoutDoc.Item(itemType = ItemType.Grid, title = "Item $index")
+            if (index == 0) GridLayoutDocumentationDoc.SectionTitle(title = "Recently Played")
+            else GridLayoutDocumentationDoc.Item(itemType = ItemType.Grid, title = "Item $index")
         }
     }
 }

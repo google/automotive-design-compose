@@ -53,6 +53,7 @@ internal enum class CustomizationType {
     VariantProperty,
     Meter,
     MeterState,
+    ScrollCallbacks,
     Module,
     Unknown,
 }
@@ -123,6 +124,8 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setBrushFunction\n"
     file += "import com.android.designcompose.setMeterValue\n"
     file += "import com.android.designcompose.setMeterState\n"
+    file += "import com.android.designcompose.DesignScrollCallbacks\n"
+    file += "import com.android.designcompose.setScrollCallbacks\n"
     file += "import com.android.designcompose.setModifier\n"
     file += "import com.android.designcompose.setTapCallback\n"
     file += "import com.android.designcompose.setOpenLinkCallback\n"
@@ -190,6 +193,7 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "TextStyle" -> CustomizationType.TextStyle
         "com.android.designcompose.Meter" -> CustomizationType.Meter
         "com.android.designcompose.MeterState" -> CustomizationType.MeterState
+        "com.android.designcompose.DesignScrollCallbacks" -> CustomizationType.ScrollCallbacks
         else -> CustomizationType.Unknown
     }
 }

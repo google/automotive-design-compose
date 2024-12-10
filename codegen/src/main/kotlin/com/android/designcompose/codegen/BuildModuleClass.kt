@@ -288,6 +288,8 @@ private class DesignModuleVisitor(
                 out += "    customizations.setMeterValue(\"$nodeName\", $propertyName)\n"
             CustomizationType.MeterState ->
                 out += "    customizations.setMeterState(\"$nodeName\", $propertyName)\n"
+            CustomizationType.ScrollCallbacks ->
+                out += "    customizations.setScrollCallbacks(\"$nodeName\", $propertyName)\n"
             else ->
                 logger.error(
                     "Invalid parameter type ${property.type.typeString()} property \"$propertyName\""

@@ -47,6 +47,7 @@ log.workspace = true
 [build-dependencies]
 vergen.workspace = true
 anyhow.workspace = true
+prost-build.workspace = true
 
 [dev-dependencies]
 testdir.workspace = true

@@ -21,17 +21,13 @@ use dc_bundle::definition::DesignComposeDefinition;
 use dc_bundle::legacy_definition::{
     DesignComposeDefinitionHeader, DesignComposeDefinitionHeaderV0,
 };
-use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
-use serde::{Deserialize, Serialize};
 
-// This is the struct we send over to the client. It contains the serialized document
-// along with some extra data: document branches, project files, and errors
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ServerFigmaDoc {
-    pub figma_doc: DesignComposeDefinition,
-    pub branches: Vec<FigmaDocInfo>,
-    pub project_files: Vec<FigmaDocInfo>,
-    pub errors: Vec<String>,
+include!(concat!(env!("OUT_DIR"), "/designcompose.live_update.figma.rs"));
+
+impl FigmaDocInfo {
+    pub fn new(name: String, id: String, version_id: String) -> FigmaDocInfo {
+        FigmaDocInfo { name, id, version_id }
+    }
 }
 
 /// A helper method to load the old DesignCompose Definition header format from a dcf file

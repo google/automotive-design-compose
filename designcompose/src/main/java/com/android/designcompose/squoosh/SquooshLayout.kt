@@ -114,6 +114,7 @@ internal class SquooshLayoutIdAllocator(
         val removalSet = remainingSet
         remainingSet = visitedSet
         visitedSet = HashSet()
+
         return removalSet
     }
 }

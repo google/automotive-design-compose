@@ -122,6 +122,14 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
         Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
         Triple("Scrolling", { ScrollingTest() }, ScrollingTestDoc.javaClass.name),
+        // List widget grid layout
+        Triple("Grid Layout", { GridLayoutTest() }, GridLayoutTestDoc.javaClass.name),
+        Triple("Grid Widget", { GridWidgetTest() }, GridWidgetTestDoc.javaClass.name),
+        // List widget horizontal/vertical layout
+        Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
+        // Lazy Grid doesn't actually use a doc
+        // This example is not using any of the renderers.
+        Triple("Lazy Grid", { LazyGridItemSpans() }, null),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )
@@ -141,12 +149,5 @@ val SQUOOSH_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, Stri
 val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
         // No support for hyperlinks.
-        Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name),
-        // Lazy Grid doesn't actually use a doc
-        // This example is not using any of the renderers.
-        Triple("Lazy Grid", { LazyGridItemSpans() }, null),
-        // Squoosh doesn't work with ListContent
-        Triple("Grid Layout", { GridLayoutTest() }, GridLayoutTestDoc.javaClass.name),
-        Triple("Grid Widget", { GridWidgetTest() }, GridWidgetTestDoc.javaClass.name),
-        Triple("List Widget", { ListWidgetTest() }, ListWidgetTestDoc.javaClass.name),
+        Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name)
     )

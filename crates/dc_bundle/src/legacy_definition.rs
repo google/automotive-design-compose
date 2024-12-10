@@ -17,18 +17,13 @@
 // This module holds the original structures that made up the serialized design doc, and which will be replaced with the protobuf implementations of the Design Definition
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fmt;
 // To help keep the legacy definition files clear we alias `crate::definition`, which is the base
 // module for the generated protobuf files to `proto`, so that all of the protobuf-generated types
 // inside `legacy_definition` must be prepended with `proto::`
-use crate::definition::element::VariableMap;
-use crate::definition::view::View;
-use crate::definition::{EncodedImageMap, NodeQuery};
-use crate::Error;
 
 // LINT.IfChange
-static CURRENT_VERSION: u32 = 23;
+static CURRENT_VERSION: u32 = 24;
 // Lint.ThenChange(common/src/main/java/com/android/designcompose/common/FsaasSession.kt)
 
 // This is our serialized document type.
@@ -81,50 +76,6 @@ impl fmt::Display for DesignComposeDefinitionHeader {
             f,
             "DC Version: {}\nDoc ID: {}\nName: {}\nLast Modified: {}\nResponse Version: {}",
             CURRENT_VERSION, &self.id, &self.name, &self.last_modified, &self.response_version
-        )
-    }
-}
-
-// This is our serialized document type.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DesignComposeDefinition {
-    pub views: HashMap<String, View>,
-    pub images: HashMap<String, Vec<u8>>,
-    pub component_sets: HashMap<String, String>,
-    pub variable_map: VariableMap,
-}
-
-impl DesignComposeDefinition {
-    pub fn new(
-        views: HashMap<NodeQuery, View>,
-        images: EncodedImageMap,
-        component_sets: HashMap<String, String>,
-        variable_map: VariableMap,
-    ) -> DesignComposeDefinition {
-        DesignComposeDefinition {
-            views: views.iter().map(|(k, v)| (k.encode(), v.to_owned())).collect(),
-            images: images.into(),
-            component_sets,
-            variable_map,
-        }
-    }
-    pub fn views(&self) -> Result<HashMap<NodeQuery, View>, Error> {
-        self.views
-            .iter()
-            .map(|(k, v)| NodeQuery::decode(k).map(|query| (query, v.clone())))
-            .collect::<Result<HashMap<NodeQuery, View>, Error>>()
-    }
-}
-
-impl fmt::Display for DesignComposeDefinition {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // NOTE: Using `write!` here instead of typical `format!`
-        // to keep newlines.
-        write!(
-            f,
-            "Views: {}\nComponent Sets: {}",
-            self.views.keys().count(),
-            self.component_sets.keys().count()
         )
     }
 }

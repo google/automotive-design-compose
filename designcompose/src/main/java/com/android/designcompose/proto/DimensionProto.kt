@@ -24,22 +24,31 @@ import com.google.protobuf.Empty
 import com.novi.serde.Unit
 import java.util.Optional
 
+/** @deprecated This function will be removed in the future. */
+@Deprecated("This function will be removed in the future.")
 fun Optional<DimensionProto>.getDim(): Dimension =
     this.orElseThrow { NoSuchFieldException("Malformed data: DimensionProto unset") }
         .dimension
         .orElseThrow { NoSuchFieldException("Malformed data: DimensionProto's dimension unset") }
 
+/** @deprecated This function will be removed in the future. */
+@Deprecated("This function will be removed in the future.")
 fun newDimensionProtoPoints(value: Float = 0f) =
     Optional.of(DimensionProto(Optional.of(Dimension.Points(value))))
 
+/** @deprecated This function will be removed in the future. */
+@Deprecated("This function will be removed in the future.")
 fun newDimensionProtoPercent(value: Float = 0f) =
     Optional.of(DimensionProto(Optional.of(Dimension.Percent(value))))
 
+@Deprecated("This function will be removed in the future.")
 fun newDimensionProtoUndefined() =
     Optional.of(DimensionProto(Optional.of(Dimension.Undefined(com.novi.serde.Unit()))))
 
+@Deprecated("This function will be removed in the future.")
 fun Dimension.toOptDimProto() = Optional.of(DimensionProto(Optional.of(this)))
 
+@Deprecated("This function will be removed in the future.")
 internal fun com.android.designcompose.definition.element.DimensionProto.intoSerde(): Dimension =
     when (dimensionCase) {
         com.android.designcompose.definition.element.DimensionProto.DimensionCase.UNDEFINED ->
@@ -54,15 +63,20 @@ internal fun com.android.designcompose.definition.element.DimensionProto.intoSer
             throw IllegalArgumentException("Unknown DimensionProto: $this") // Should never happen.
     }
 
+/** @deprecated This function will be removed in the future. */
+@Deprecated("This function will be removed in the future.")
 fun com.android.designcompose.definition.element.DimensionProto.into(): DimensionProto =
     com.android.designcompose.serdegen.DimensionProto(Optional.of(this.intoSerde()))
 
-internal fun Dimension.intoProto() = dimensionProto {
-    when (val s = this@intoProto) {
-        // These are empty types so we need to set them to default instances
-        is Undefined -> undefined = Empty.getDefaultInstance()
-        is Dimension.Auto -> auto = Empty.getDefaultInstance()
-        is Dimension.Points -> points = s.value.toFloat()
-        is Dimension.Percent -> percent = s.value.toFloat()
+/** @deprecated This function will be removed in the future. */
+@Deprecated("This function will be removed in the future.")
+internal fun Dimension.intoProto(): com.android.designcompose.definition.element.DimensionProto =
+    dimensionProto {
+        when (val s = this@intoProto) {
+            // These are empty types so we need to set them to default instances
+            is Undefined -> undefined = Empty.getDefaultInstance()
+            is Dimension.Auto -> auto = Empty.getDefaultInstance()
+            is Dimension.Points -> points = s.value.toFloat()
+            is Dimension.Percent -> percent = s.value.toFloat()
+        }
     }
-}

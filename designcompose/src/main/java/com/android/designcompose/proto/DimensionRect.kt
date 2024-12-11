@@ -21,6 +21,7 @@ import com.android.designcompose.serdegen.Dimension
 import com.android.designcompose.serdegen.DimensionRect
 import java.util.Optional
 
+@Deprecated("This API surface area is experimental and is likely to change in the future.")
 val Optional<DimensionRect>.start: Dimension
     get() =
         this.orElseThrow { NoSuchFieldException("Malformed data: DimensionRect unset") }
@@ -28,23 +29,27 @@ val Optional<DimensionRect>.start: Dimension
             .getDim()
 
 val Optional<DimensionRect>.end: Dimension
+    @Deprecated("This API surface area is experimental and is likely to change in the future.")
     get() =
         this.orElseThrow { NoSuchFieldException("Malformed data: DimensionRect unset") }
             .end
             .getDim()
 
 val Optional<DimensionRect>.top: Dimension
+    @Deprecated("This API surface area is experimental and is likely to change in the future.")
     get() =
         this.orElseThrow { NoSuchFieldException("Malformed data: DimensionRect unset") }
             .top
             .getDim()
 
 val Optional<DimensionRect>.bottom: Dimension
+    @Deprecated("This API surface area is experimental and is likely to change in the future.")
     get() =
         this.orElseThrow { NoSuchFieldException("Malformed data: DimensionRect unset") }
             .bottom
             .getDim()
 
+@Deprecated("This API surface area is experimental and is likely to change in the future.")
 fun Optional<DimensionRect>.isDefault(): Boolean {
     return this.start is Dimension.Undefined &&
         this.end is Dimension.Undefined &&
@@ -52,6 +57,7 @@ fun Optional<DimensionRect>.isDefault(): Boolean {
         this.bottom is Dimension.Undefined
 }
 
+@Deprecated("This API surface area is experimental and is likely to change in the future.")
 fun newDimensionRectPointsZero(): Optional<DimensionRect> =
     Optional.of(
         DimensionRect(
@@ -62,6 +68,7 @@ fun newDimensionRectPointsZero(): Optional<DimensionRect> =
         )
     )
 
+@Deprecated("This API surface area is experimental and is likely to change in the future.")
 internal fun com.android.designcompose.definition.element.DimensionRect.intoSerde() =
     com.android.designcompose.serdegen.DimensionRect(
         Optional.of(
@@ -78,6 +85,7 @@ internal fun com.android.designcompose.definition.element.DimensionRect.intoSerd
         ),
     )
 
+@Deprecated("This API surface area is experimental and is likely to change in the future.")
 internal fun DimensionRect.intoProto() = dimensionRect {
     val s = this@intoProto
     start = s.start.getDim().intoProto()

@@ -43,6 +43,7 @@ import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Size
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun LayoutNode.intoProto() = layoutNode {
     val s = this@intoProto
     layoutId = s.layout_id
@@ -55,18 +56,21 @@ internal fun LayoutNode.intoProto() = layoutNode {
     if (s.fixed_height.isPresent) fixedHeight = s.fixed_height.get()
 }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun LayoutParentChildren.intoProto() = layoutParentChildren {
     val s = this@intoProto
     parentLayoutId = s.parent_layout_id
     childLayoutIds.addAll(s.child_layout_ids)
 }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun LayoutNodeList.intoProto() = layoutNodeList {
     layoutNodes.addAll(this@intoProto.layout_nodes.map { it.intoProto() })
     parentChildren.addAll(this@intoProto.parent_children.map { it.intoProto() })
 }
 
-internal fun ItemSpacing.intoProto() = itemSpacing {
+@Deprecated("This is for temporary use by DesignCompose.")
+internal fun ItemSpacing.intoProto() = itemSpacing { // ktlint-disable indent
     when (val s = this@intoProto.type()) {
         is ItemSpacingType.Fixed -> fixed = s.value
         is ItemSpacingType.Auto -> auto = auto {
@@ -77,12 +81,14 @@ internal fun ItemSpacing.intoProto() = itemSpacing {
     }
 }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun Size.intoProto() = size {
     val s = this@intoProto
     width = s.width
     height = s.height
 }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun AlignSelf.intoProto() =
     when (this) {
         is AlignSelf.Auto -> ProtoAlignSelf.ALIGN_SELF_AUTO
@@ -94,6 +100,7 @@ internal fun AlignSelf.intoProto() =
         else -> throw IllegalArgumentException("Unknown AlignSelf: $this") // Should never happen.
     }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun AlignContent.intoProto() =
     when (this) {
         is AlignContent.FlexStart -> ProtoAlignContent.ALIGN_CONTENT_FLEX_START
@@ -106,6 +113,7 @@ internal fun AlignContent.intoProto() =
             throw IllegalArgumentException("Unknown AlignContent: $this") // Should never happen.
     }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun AlignItems.intoProto() =
     when (this) {
         is AlignItems.FlexStart -> ProtoAlignItems.ALIGN_ITEMS_FLEX_START
@@ -116,6 +124,7 @@ internal fun AlignItems.intoProto() =
         else -> throw IllegalArgumentException("Unknown AlignItems: $this") // Should never happen.
     }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun FlexDirection.intoProto() =
     when (this) {
         is FlexDirection.Row -> ProtoFlexDirection.FLEX_DIRECTION_ROW
@@ -127,6 +136,7 @@ internal fun FlexDirection.intoProto() =
             throw IllegalArgumentException("Unknown FlexDirection: $this") // Should never happen.
     }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun JustifyContent.intoProto() =
     when (this) {
         is JustifyContent.FlexStart -> ProtoJustifyContent.JUSTIFY_CONTENT_FLEX_START
@@ -139,6 +149,7 @@ internal fun JustifyContent.intoProto() =
             throw IllegalArgumentException("Unknown JustifyContent: $this") // Should never happen.
     }
 
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun PositionType.intoProto() =
     when (this) {
         is PositionType.Relative -> ProtoPositionType.POSITION_TYPE_RELATIVE
@@ -148,6 +159,7 @@ internal fun PositionType.intoProto() =
     }
 
 /** Temporary (I hope) conversion from the Serde layout style to the proto layout style. */
+@Deprecated("This is for temporary use by DesignCompose.")
 internal fun LayoutStyle.intoProto() = layoutStyle {
     val s = this@intoProto
     margin =

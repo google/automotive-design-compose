@@ -53,7 +53,7 @@ import com.android.designcompose.proto.textAlignFromInt
 import com.android.designcompose.proto.textDecorationFromInt
 import com.android.designcompose.serdegen.LineHeightType
 import com.android.designcompose.serdegen.TextDecoration
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.serdegen.ViewDataType
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull

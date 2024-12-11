@@ -21,6 +21,25 @@ import androidx.compose.ui.text.Paragraph
 import androidx.compose.ui.unit.Constraints
 import com.android.designcompose.DesignTextMeasure.AVAILABLE_SIZE_CONTENT_MAXIMUM
 import com.android.designcompose.DesignTextMeasure.AVAILABLE_SIZE_CONTENT_MINIMUM
+import com.android.designcompose.proto.blendModeFromInt
+import com.android.designcompose.proto.fontStyleFromInt
+import com.android.designcompose.proto.layoutStyle
+import com.android.designcompose.proto.nodeStyle
+import com.android.designcompose.proto.textAlignFromInt
+import com.android.designcompose.proto.textAlignVerticalFromInt
+import com.android.designcompose.proto.textDecorationFromInt
+import com.android.designcompose.proto.textOverflowFromInt
+import com.android.designcompose.proto.toUniform
+import com.android.designcompose.serdegen.FontStyle
+import com.android.designcompose.serdegen.Layout
+import com.android.designcompose.serdegen.LineHeightType
+import com.android.designcompose.serdegen.StyledTextRun
+import com.android.designcompose.serdegen.TextAlign
+import com.android.designcompose.serdegen.TextAlignVertical
+import com.android.designcompose.serdegen.TextDecoration
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewStyle
+import java.util.Optional
 import kotlin.math.ceil
 
 // Measure text height given a width. Called from Rust as a measure function for text that has auto

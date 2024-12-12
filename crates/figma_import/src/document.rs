@@ -21,6 +21,7 @@ use std::{
     iter::FromIterator,
 };
 
+use crate::design_definition::FigmaDocInfo;
 use crate::{
     component_context::ComponentContext,
     error::Error,
@@ -36,7 +37,6 @@ use dc_bundle::definition::view::view_data::ViewDataType::Container;
 use dc_bundle::definition::view::{view_data, ComponentOverrides, View};
 use dc_bundle::definition::EncodedImageMap;
 use dc_bundle::definition::NodeQuery;
-use dc_bundle::legacy_figma_live_update::FigmaDocInfo;
 use log::error;
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";

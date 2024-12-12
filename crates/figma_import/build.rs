@@ -14,8 +14,29 @@
 
 use ::vergen::EmitBuilder;
 use std::error::Error;
+use std::path::Path;
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let mut prost_config = prost_build::Config::new();
+    prost_config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+
+    // The DesignComposeDefinition is built by the dc_bundle crate. This line configures the compiler
+    // to use the message from there, rather than compiling it's own copy of the message
+    prost_config.extern_path(
+        ".designcompose.definition.DesignComposeDefinition",
+        "::dc_bundle::definition::DesignComposeDefinition",
+    );
+
+    let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(Path::parent)
+        .unwrap()
+        .join("proto");
+
+    prost_config
+        .compile_protos(&[proto_path.join("live_update/figma/figma_doc.proto")], &[&proto_path])?;
+
+    println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
     // Generate the default 'cargo:' instruction output
     EmitBuilder::builder().emit()?;
     Ok(())

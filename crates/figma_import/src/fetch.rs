@@ -125,7 +125,7 @@ pub fn fetch_doc(
             doc.get_document_id(),
         ))?;
         response.append(&mut bincode::serialize(&ServerFigmaDoc {
-            figma_doc,
+            figma_doc: Some(figma_doc),
             errors: error_list,
             branches: doc.branches.clone(),
             project_files: vec![],

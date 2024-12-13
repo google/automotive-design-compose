@@ -50,20 +50,36 @@
         <button id="previewShaderButton" class="button--primary" onclick="runShader()">Preview</button>
     </div>
 
-    <div style="margin-top: 8px; display: flex; align-items: center;">
-        <div>
-            <input id="useShaderFallbackColor" type="checkbox" checked="true"></input>
-            <span class="tooltip">
-                <img src="images/dials/info-blue.svg">
-                <span class="tooltiptext left-20">When unchecked, DesignCompose will draw the
-                    background image from the figma node.</span>
-            </span>
-            Use the solid color <span style="background-color: #FF46A2;">#FF46A2</span> as background when shader is
-            not supported on lower sdks.
+    <div id="nodeSection" class="collapsible" style="margin-top: 8px;">
+        <div id="cleared">No nodes selected. Select a node that can have a background to start.</div>
+        <div id="selected"></div>
+    </div>
+    <div id="nodeActions" class="content">
+        <div style="display: flex; align-items: center; gap:4px;">
+            <div style="width: 100%;">
+                <input id="useShaderFallbackColor" type="checkbox" checked="true"></input>
+                <span class="tooltip">
+                    <img src="images/dials/info-blue.svg">
+                    <span class="tooltiptext left-20">When unchecked, DesignCompose will draw the background image from
+                        the figma node.</span>
+                </span>
+                Use the solid color <span style="background-color: #FF46A2;">#FF46A2</span> as background when shader is
+                not supported on lower sdks.
+            </div>
+            <button id="setShaderButton" class="button--primary tooltip">Apply Shader
+                <span class="tooltiptext left-80">Use the runtime shader to render the background. It only works on
+                    Android 13+.</span></button>
         </div>
-        <button id="setShaderButton" class="button--primary tooltip">Apply Shader
-            <span class="tooltiptext left-80">Use the runtime shader to render the background. It only works on
-                Android 13+.</span></button>
+        <hr />
+        <div style="margin-top: 4px; display: flex; gap:4px; align-items: center;">
+            <div style="width: 100%;">
+                When clear shader, shader preview image will be removed. If a text has no background after shader
+                preview image gets removed, we will set the text color to the solid color <span
+                    style="background-color: #FF46A2;">#FF46A2</span>.
+            </div>
+            <button id="clearShaderButton" class="button--primary" onclick="clearShaderFromFigmaNode()">Clear
+                Shader</button>
+        </div>
     </div>
 
     <hr />
@@ -84,11 +100,25 @@
     let canvas = document.getElementById("shaderPreview");
     let shaderCodeInput = document.getElementById("shaderCodeInput");
 
+    let nodeSection = document.getElementById("nodeSection");
+    let nodeCleared = document.getElementById("cleared");
+    let nodeSelected = document.getElementById("selected");
+    let nodeActions = document.getElementById("nodeActions");
     let setShaderButton = document.getElementById("setShaderButton");
     let useShaderFallbackColor = document.getElementById("useShaderFallbackColor");
+    let clearShaderButton = document.getElementById("clearShaderButton");
+
     let currentShader = null;
 
     let currentImageSnapshot = null;
+
+    function clearShaderFromFigmaNode() {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'clearShader',
+            }
+        }, '*');
+    }
 
     function clearShaderCode() {
         shaderCodeInput.value = "";
@@ -112,11 +142,6 @@
             const shaderWidth = 256;
             const shaderHeight = 256;
 
-            let surface = CanvasKit.MakeCanvasSurface(canvas.id);
-            if (!surface) {
-                throw "Could not make surface";
-            }
-            const skcanvas = surface.getCanvas();
             const paint = new CanvasKit.Paint();
             const startTimeMs = Date.now();
             let mouseClickX = 0;
@@ -132,9 +157,17 @@ uniform float  iTime;            // Shader playback time (s)
 uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
 ` + shaderCodeInput.value;
 
-            currentShader = prog;
-
             const effect = CanvasKit.RuntimeEffect.Make(prog);
+            if (!effect) {
+                throw "Can not compile..."
+            }
+
+            // Create new surface only when the shader code compiles fine.
+            let surface = CanvasKit.MakeCanvasSurface(canvas.id);
+            if (!surface) {
+                throw "Could not make surface";
+            }
+            const skcanvas = surface.getCanvas();
 
             function drawFrame(canvas) {
                 const iTime = (Date.now() - startTimeMs) / 1000;
@@ -150,6 +183,8 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 paint.setShader(shader);
                 skcanvas.drawPaint(paint);
                 shader.delete();
+
+                currentShader = prog;
 
                 // Have to make image snapshot in draw frame to capture an image successfully.
                 // Simply calling make image snapshot when clicking on the set shader button only
@@ -218,16 +253,23 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
         let msg = event.data.pluginMessage;
         if (msg.msg == 'shaderCode') {
             shaderCodeInput.value = msg.code;
-            runShader();
+            await runShader();
             return;
         }
 
         if (msg.msg == 'shader-selection-cleared') {
-            setShaderButton.disabled = true;
+            nodeSection.classList.remove("active");
+            nodeCleared.style.display = "block";
+            nodeSelected.style.display = "none";
+            nodeActions.style.display = "none";
             return;
         }
         if (msg.msg == "shader-selection") {
-            setShaderButton.disabled = false;
+            nodeCleared.style.display = "none";
+            nodeSelected.innerHTML = `Node selected: ${msg.nodeId}`;
+            nodeSelected.style.display = "block";
+            nodeSection.classList.add("active");
+            nodeActions.style.display = "block";
             return;
         }
     }

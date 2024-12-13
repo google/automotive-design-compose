@@ -566,7 +566,6 @@ if (figma.command === "sync") {
 } else if (figma.command === "clear-image-res") {
   ImageRes.clear();
 } else if (figma.command === "shader") {
-  figma.showUI(__uiFiles__.shader, { width: 600, height: 720 });
   figma.ui.onmessage = (msg) => {
     if (msg.msg === "loadShaderCode") {
       figma.ui.postMessage({
@@ -577,9 +576,16 @@ if (figma.command === "sync") {
       Shader.insertImage(msg.imageBytes);
     } else if (msg.msg === "setShader") {
       Shader.setShader(msg.shader, msg.shaderFallbackColor);
+    } else if (msg.msg === "clearShader") {
+      Shader.clearShader();
     }
   };
+  figma.showUI(__uiFiles__.shader, { width: 600, height: 720 });
+  // Notify current selection on showing UI.
+  Shader.onSelectionChanged();
   figma.on("selectionchange", Shader.onSelectionChanged);
+} else if (figma.command === "shader-clear-all") {
+  Shader.clearAll();
 } else if (figma.command === "move-plugin-data") {
   function movePluginDataWithKey(node: BaseNode, key: string) {
     // Read the private plugin data, write to shared

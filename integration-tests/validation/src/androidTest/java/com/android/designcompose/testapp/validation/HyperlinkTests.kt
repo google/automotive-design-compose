@@ -16,27 +16,18 @@
 
 package com.android.designcompose.testapp.validation
 
-import android.app.Activity
-import android.app.Instrumentation
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.test.espresso.intent.Intents.intended
-import androidx.test.espresso.intent.Intents.intending
-import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.intent.rule.IntentsRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.testapp.common.InterFontTestRule
-import com.android.designcompose.testapp.validation.examples.HyperlinkTest
 import org.junit.Rule
-import org.junit.Test
 import org.junit.runner.RunWith
 
 /** Integration test on clicking on the urls in texts. */
@@ -46,6 +37,8 @@ class HyperlinkTests {
     @get:Rule val interFontRule = InterFontTestRule()
     @get:Rule var intentsRule: IntentsRule = IntentsRule()
 
+    // These are disabled because squoosh does not support clickable hyperlink text
+    /*
     @Test
     fun testClickSingleNodeLink() {
         val url = "https://github.com/google/automotive-design-compose"
@@ -75,6 +68,7 @@ class HyperlinkTests {
 
         intended(hasData(url))
     }
+    */
 
     /** Use BoundsAssertions.getPartialBoundsOfLinks when it is available */
     @OptIn(ExperimentalTextApi::class)

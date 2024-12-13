@@ -17,11 +17,12 @@
 package com.android.designcompose.tutorial
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToLog
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DesignSettings
+import com.android.designcompose.test.assertHasText
+import com.android.designcompose.test.onDCDoc
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -41,11 +42,13 @@ class CheckStartupPage {
         composeTestRule.setContent { TutorialMain() }
         composeTestRule.onRoot().printToLog("TAG")
 
-        composeTestRule
-            .onNodeWithText(
-                "Congratulations on running the Automotive Design for Compose Tutorial app!",
-                substring = true,
-            )
-            .assertExists()
+        with(composeTestRule) {
+            with(onDCDoc(TutorialDoc)) {
+                assertHasText(
+                    "Congratulations on running the Automotive Design for Compose Tutorial app!",
+                    substring = true,
+                )
+            }
+        }
     }
 }

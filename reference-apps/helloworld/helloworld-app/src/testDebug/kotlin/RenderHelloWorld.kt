@@ -17,10 +17,10 @@
 package com.android.designcompose.testapp.helloworld
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DocRenderStatus
+import com.android.designcompose.test.assertHasText
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.onDCDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -63,7 +63,7 @@ class RenderHelloWorld {
         with(composeTestRule) {
             setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
             onDCDoc(HelloWorldDoc).assertRenderStatus(DocRenderStatus.Rendered)
-            onNodeWithText("Testers!", substring = true).assertExists()
+            onDCDoc(HelloWorldDoc).assertHasText("Testers!", substring = true)
         }
     }
 }

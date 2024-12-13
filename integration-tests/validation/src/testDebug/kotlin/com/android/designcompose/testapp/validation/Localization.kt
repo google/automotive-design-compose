@@ -18,17 +18,21 @@ package com.android.designcompose.testapp.validation
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils
+import com.android.designcompose.test.assertHasText
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.onDCDoc
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.HelloWorld
+import com.android.designcompose.testapp.validation.examples.HelloWorldDoc
 import com.android.designcompose.testapp.validation.examples.ImageUpdateTest
 import com.android.designcompose.testapp.validation.examples.StyledTextRunsTest
 import com.android.designcompose.testapp.validation.examples.VariantAsteriskTest
+import com.android.designcompose.testapp.validation.examples.VariantAsteriskTestDoc
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,8 +53,10 @@ class Localization {
     fun helloWorldLocaleZh() {
         with(composeTestRule) {
             setContent { HelloWorld() }
-            onNodeWithText("你好，").assertExists()
-            onNodeWithText("世界").assertExists()
+            with(onDCDoc(HelloWorldDoc)) {
+                assertHasText("你好，")
+                assertHasText("世界")
+            }
             captureRootRoboImage("HelloWorld-zh")
         }
     }
@@ -60,8 +66,10 @@ class Localization {
     fun helloWorldLocaleEs() {
         with(composeTestRule) {
             setContent { HelloWorld() }
-            onNodeWithText("Hola,").assertExists()
-            onNodeWithText("Mundo").assertExists()
+            with(onDCDoc(HelloWorldDoc)) {
+                assertHasText("Hola,").assertExists()
+                assertHasText("Mundo").assertExists()
+            }
             captureRootRoboImage("HelloWorld-es")
         }
     }
@@ -72,10 +80,12 @@ class Localization {
     fun variantAsteriskLocaleEs() {
         with(composeTestRule) {
             setContent { VariantAsteriskTest() }
-            onNodeWithText("Aparcado").assertExists()
-            onNodeWithText("R").performClick()
-            onNodeWithText("Inverso").assertExists()
-            captureRootRoboImage("VariantAsteriskTest-es")
+            with(onDCDoc(VariantAsteriskTestDoc)) {
+                assertHasText("Aparcado")
+                onNodeWithTag("R").performClick()
+                assertHasText("Inverso")
+                captureRootRoboImage("VariantAsteriskTest-es")
+            }
         }
     }
 

@@ -18,7 +18,6 @@ package com.android.designcompose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils.ClearStateTestRule
 import com.android.designcompose.annotation.Design
@@ -26,6 +25,7 @@ import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.test.R
+import com.android.designcompose.test.assertHasText
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.onDCDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -65,9 +65,11 @@ class DesignRawResourceTest {
             )
             composeTestRule.setContent { HelloWorld() }
 
-            onDCDoc(HelloWorldDoc).assertRenderStatus(DocRenderStatus.Rendered)
-            onNodeWithText("Testers!", substring = true).assertExists()
-            onNodeWithText("Hello", substring = true).assertExists()
+            with(onDCDoc(HelloWorldDoc)) {
+                assertRenderStatus(DocRenderStatus.Rendered)
+                assertHasText("Testers!", substring = true)
+                assertHasText("Hello", substring = true)
+            }
         }
     }
 

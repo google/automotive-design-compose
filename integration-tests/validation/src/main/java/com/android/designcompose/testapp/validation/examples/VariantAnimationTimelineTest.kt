@@ -75,7 +75,6 @@ fun VariantAnimationTimelineTest() {
     CompositionLocalProvider(
         LocalDesignDocSettings provides
             DesignDocSettings(
-                useSquoosh = true,
                 customVariantTransition = { context ->
                     val defaultEasing = CubicBezierEasing(0.37f, 0f, 0.63f, 1f)
                     val regexMatch = tNumRegex.find(context.from?.name ?: "")
@@ -116,7 +115,7 @@ fun VariantAnimationTimelineTest() {
                             0,
                         )
                     }
-                },
+                }
             )
     ) {
         VariantAnimationTimelineTestDoc.Main(sceneState = sceneState.value)

@@ -17,13 +17,17 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.test.assertDoesNotHaveText
+import com.android.designcompose.test.assertHasText
+import com.android.designcompose.test.onDCDocAnyNode
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.InteractionTest
+import com.android.designcompose.testapp.validation.examples.InteractionTestDoc
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,38 +42,43 @@ class InteractionTests {
     fun testTriggersTimeouts() {
         composeTestRule.setContent { InteractionTest() }
 
-        // Navigate to the Triggers -> Timeouts menu
-        composeTestRule.onNodeWithText("Triggers").performClick()
-        composeTestRule.onNodeWithText("While Pressed").assertExists().performClick()
-        composeTestRule.onNodeWithText("Timeouts").assertExists().performClick()
+        with(composeTestRule) {
+            with(onDCDocAnyNode(InteractionTestDoc)) {
+                // Navigate to the Triggers -> Timeouts menu
+                onNodeWithTag("Triggers").performClick()
+                assertHasText("While Pressed")
+                onNodeWithTag("While Pressed").performClick()
+                assertHasText("Timeouts")
+                onNodeWithTag("Timeouts").performClick()
 
-        // Confirm initial state
-        composeTestRule.onNodeWithText("pressed").assertDoesNotExist()
-        composeTestRule.onNodeWithText("idle").assertExists()
+                // Confirm initial state
+                assertDoesNotHaveText("pressed")
+                assertHasText("idle")
 
-        // Hold the button down for half a second and release
-        composeTestRule
-            .onNodeWithText("idle")
-            .performTouchInput { down(center) }
-            .assertDoesNotExist()
-        composeTestRule.onNodeWithText("pressed").assertExists()
-        composeTestRule.onRoot().performTouchInput { cancel(500) }
-        composeTestRule.onNodeWithText("pressed").assertDoesNotExist()
-        composeTestRule.onNodeWithText("idle").assertExists()
+                // Hold the button down for half a second and release
 
-        // Hold the button down for more than a second, make sure it switches to display "timeout",
-        composeTestRule
-            .onNodeWithText("idle")
-            .performTouchInput { down(center) }
-            .assertDoesNotExist()
-        composeTestRule.onNodeWithText("pressed").assertExists()
-        composeTestRule.mainClock.advanceTimeBy(1250)
-        composeTestRule.onNodeWithText("pressed").assertDoesNotExist()
-        composeTestRule.onNodeWithText("timeout").assertExists()
+                onNodeWithTag("idle").performTouchInput { down(center) }
+                assertDoesNotHaveText("idle")
 
-        // Release the button, make sure it returns to idle.
-        composeTestRule.onRoot().performTouchInput { cancel() }
-        composeTestRule.onNodeWithText("timeout").assertDoesNotExist()
-        composeTestRule.onNodeWithText("idle").assertExists()
+                assertHasText("pressed")
+                onRoot().performTouchInput { cancel(500) }
+                assertDoesNotHaveText("pressed")
+                assertHasText("idle")
+
+                // Hold the button down for more than a second, make sure it switches to display
+                // "timeout",
+                onNodeWithTag("idle").performTouchInput { down(center) }
+                assertDoesNotHaveText("idle")
+                assertHasText("pressed")
+                mainClock.advanceTimeBy(1250)
+                assertDoesNotHaveText("pressed")
+                assertHasText("timeout")
+
+                // Release the button, make sure it returns to idle.
+                onRoot().performTouchInput { cancel() }
+                assertDoesNotHaveText("timeout")
+                assertHasText("idle")
+            }
+        }
     }
 }

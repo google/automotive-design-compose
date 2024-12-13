@@ -288,6 +288,10 @@ private class DesignModuleVisitor(
                 out += "    customizations.setMeterValue(\"$nodeName\", $propertyName)\n"
             CustomizationType.MeterState ->
                 out += "    customizations.setMeterState(\"$nodeName\", $propertyName)\n"
+            CustomizationType.ShaderUniformTimeState -> {
+                out +=
+                    "    customizations.setShaderUniformTimeState(\"$nodeName\", $propertyName)\n"
+            }
             else ->
                 logger.error(
                     "Invalid parameter type ${property.type.typeString()} property \"$propertyName\""

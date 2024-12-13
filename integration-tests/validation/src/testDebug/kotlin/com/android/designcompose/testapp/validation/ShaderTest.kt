@@ -16,6 +16,7 @@
 
 package com.android.designcompose.testapp.validation
 
+import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -28,6 +29,8 @@ import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTest
+import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTestDoc
 import com.android.designcompose.testapp.validation.examples.CustomBrushTest
 import com.android.designcompose.testapp.validation.examples.CustomBrushTestDoc
 import org.junit.Before
@@ -39,7 +42,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
-@Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav", sdk = [35])
+@Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Category(Fetchable::class)
 class ShaderTest {
@@ -55,6 +58,7 @@ class ShaderTest {
     }
 
     @Test
+    @Config(sdk = [35])
     fun customBrush() {
         with(composeTestRule) {
             setContent { CustomBrushTest() }
@@ -66,6 +70,7 @@ class ShaderTest {
     }
 
     @Test
+    @Config(sdk = [35])
     fun customBrush_SQUOOSH() {
         with(composeTestRule) {
             setContent {
@@ -76,6 +81,33 @@ class ShaderTest {
                 }
             }
             captureRootRoboImage("CustomBrush-Shader_SQUOOSH")
+        }
+    }
+
+    @Test
+    @Config(sdk = [32, 35])
+    fun shaderPluginBrush() {
+        with(composeTestRule) {
+            setContent { BrushFromShaderPluginTest() }
+
+            liveUpdateTestRule.performLiveFetch()
+            composeTestRule.waitForContent(BrushFromShaderPluginTestDoc.javaClass.name)
+            captureRootRoboImage("ShaderPluginBrush_${Build.VERSION.SDK_INT}")
+        }
+    }
+
+    @Test
+    @Config(sdk = [32, 35])
+    fun shaderPluginBrush_SQUOOSH() {
+        with(composeTestRule) {
+            setContent {
+                CompositionLocalProvider(
+                    LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
+                ) {
+                    BrushFromShaderPluginTest()
+                }
+            }
+            captureRootRoboImage("ShaderPluginBrush_SQUOOSH_${Build.VERSION.SDK_INT}")
         }
     }
 }

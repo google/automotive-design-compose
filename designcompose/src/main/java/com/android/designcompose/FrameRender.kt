@@ -19,6 +19,9 @@ package com.android.designcompose
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
+import android.graphics.RuntimeShader
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
@@ -30,6 +33,9 @@ import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
@@ -58,11 +64,13 @@ import com.android.designcompose.serdegen.RotationMeterData
 import com.android.designcompose.serdegen.ShadowBox
 import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.VectorArc
+import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squoosh.SquooshResolvedNode
 import java.lang.Float.max
 import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.cos
@@ -339,12 +347,13 @@ internal fun ContentDrawScope.render(
     frameShape: ViewShape,
     customImageWithContext: Bitmap?,
     document: DocContent,
-    name: String,
+    view: View,
     customizations: CustomizationContext,
     layoutId: Int,
     variableState: VariableState,
     appContext: Context,
 ) {
+    val name = view.name
     if (size.width <= 0F && size.height <= 0F) return
 
     drawContext.canvas.save()
@@ -453,18 +462,35 @@ internal fun ContentDrawScope.render(
         )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
-    val customFillBrush =
+    var customFillBrush =
         if (customFillBrushFunction != null) {
             customFillBrushFunction()
         } else {
             customizations.getBrush(name)
         }
+    if (customFillBrush == null) {
+        view.shader.getOrNull()?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val shader = RuntimeShader(it.trim().trimIndent())
+                customFillBrush = SizingShaderBrush(shader)
+                val shaderUniformTime = customizations.getShaderUniformTimeState(name)
+                if (shaderUniformTime != null) {
+                    shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
+                }
+                return@let
+            } else {
+                view.shader_fallback_color.getOrNull()?.let { color ->
+                    customFillBrush = SolidColor(color.toColor())
+                }
+            }
+        }
+    }
 
     val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
     val fillBrush: List<Paint> =
         if (customFillBrush != null) {
             val p = Paint()
-            customFillBrush.applyTo(brushSize, p, 1.0f)
+            customFillBrush!!.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
             style.nodeStyle.backgrounds.mapNotNull { background ->
@@ -766,18 +792,35 @@ internal fun ContentDrawScope.squooshShapeRender(
     }
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
-    val customFillBrush =
+    var customFillBrush =
         if (customFillBrushFunction != null) {
             customFillBrushFunction()
         } else {
             customizations.getBrush(name)
         }
+    if (customFillBrush == null) {
+        node.view.shader.getOrNull()?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val shader = RuntimeShader(it.trim().trimIndent())
+                customFillBrush = SizingShaderBrush(shader)
+                val shaderUniformTime = customizations.getShaderUniformTimeState(name)
+                if (shaderUniformTime != null) {
+                    shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
+                }
+                return@let
+            } else {
+                node.view.shader_fallback_color.getOrNull()?.let { color ->
+                    customFillBrush = SolidColor(color.toColor())
+                }
+            }
+        }
+    }
 
     val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
     val fillBrush: List<Paint> =
         if (customFillBrush != null) {
             val p = Paint()
-            customFillBrush.applyTo(brushSize, p, 1.0f)
+            customFillBrush!!.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
             style.nodeStyle.backgrounds.mapNotNull { background ->
@@ -934,4 +977,12 @@ internal fun ContentDrawScope.squooshShapeRender(
         drawContext.canvas.restore()
     }
     drawContext.canvas.restore()
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+class SizingShaderBrush(private val shader: RuntimeShader) : ShaderBrush() {
+    override fun createShader(size: Size): Shader {
+        shader.setFloatUniform("iResolution", size.width, size.height, 0.0f)
+        return shader
+    }
 }

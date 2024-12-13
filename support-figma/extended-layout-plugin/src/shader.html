@@ -1,0 +1,234 @@
+<!--
+ Copyright 2024 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/canvaskit-wasm/bin/canvaskit.js"></script>
+</head>
+
+<!-- BEGIN OF SHADER PLUGIN UI -->
+<div class="page-padding-large">
+    <div style=" justify-content: stretch; align-items: flex-start; gap: 16px; display: flex;">
+        <div>
+            <canvas id="shaderPreview" width="256px" height="256px" style="border: 1px black solid" />
+        </div>
+        <div style="width: 100%;">
+            <div>Uniforms:</div>
+            <div id="uniforms" style="border: 2px black solid;">
+                <div>uniform float3 iResolution;</div>
+                <div>uniform float iTime;</div>
+            </div>
+        </div>
+    </div>
+    <div style="display:flex; flex-wrap: wrap; overflow-y: auto; gap: 4px; margin-top: 8px;">
+        <button class="button--primary" onclick="loadShaderCode('julia')">Julia</button>
+        <button class="button--primary" onclick="loadShaderCode('cloudy_sky')">CloudySky</button>
+        <button class="button--primary" onclick="loadShaderCode('discrete_ocean')">DiscreteOcean</button>
+        <button class="button--primary" onclick="loadShaderCode('fibonacci_sphere')">FibonacciSphere</button>
+        <button class="button--primary" onclick="loadShaderCode('gradient')">Gradient</button>
+        <button class="button--primary" onclick="loadShaderCode('star')">Star</button>
+        <button class="button--primary" onclick="clearShaderCode()">CUSTOM</button>
+    </div>
+
+    <div style="margin-top: 8px; display: flex;">
+        <textarea id="shaderCodeInput" name="shaderCodeInput" style="width: 100%;" rows="12"
+            placeholder="Enter your shader code"></textarea>
+        <button id="previewShaderButton" class="button--primary" onclick="runShader()">Preview</button>
+    </div>
+
+    <div style="margin-top: 8px; display: flex; align-items: center;">
+        <div>
+            <input id="useShaderFallbackColor" type="checkbox" checked="true"></input>
+            <span class="tooltip">
+                <img src="images/dials/info-blue.svg">
+                <span class="tooltiptext left-20">When unchecked, DesignCompose will draw the
+                    background image from the figma node.</span>
+            </span>
+            Use the solid color <span style="background-color: #FF46A2;">#FF46A2</span> as background when shader is
+            not supported on lower sdks.
+        </div>
+        <button id="setShaderButton" class="button--primary tooltip">Apply Shader
+            <span class="tooltiptext left-80">Use the runtime shader to render the background. It only works on
+                Android 13+.</span></button>
+    </div>
+
+    <hr />
+    <div>
+        Shader examples are from:
+        <li><a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a></li>
+        <li><a target="_blank" href="https://godotshaders.com/">https://godotshaders.com/</a></li>
+    </div>
+
+    <div style="margin-top: 4px">
+        This tool is developed using Skia CanvasKit, please use
+        <a target="_blank" href="https://shaders.skia.org/">https://shaders.skia.org/</a> to debug.
+    </div>
+</div>
+<!-- END OF SHADER PLUGIN UI -->
+
+<script>
+    let canvas = document.getElementById("shaderPreview");
+    let shaderCodeInput = document.getElementById("shaderCodeInput");
+
+    let setShaderButton = document.getElementById("setShaderButton");
+    let useShaderFallbackColor = document.getElementById("useShaderFallbackColor");
+    let currentShader = null;
+
+    let currentImageSnapshot = null;
+
+    function clearShaderCode() {
+        shaderCodeInput.value = "";
+        currentShader = null;
+    }
+
+    function loadShaderCode(shader) {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'loadShaderCode',
+                shader: shader,
+            }
+        }, '*');
+    }
+
+    async function runShader() {
+        CanvasKitInit({
+            locateFile: (file) =>
+                "https://unpkg.com/canvaskit-wasm@latest/bin/" + file,
+        }).then((CanvasKit) => {
+            const shaderWidth = 256;
+            const shaderHeight = 256;
+
+            let surface = CanvasKit.MakeCanvasSurface(canvas.id);
+            if (!surface) {
+                throw "Could not make surface";
+            }
+            const skcanvas = surface.getCanvas();
+            const paint = new CanvasKit.Paint();
+            const startTimeMs = Date.now();
+            let mouseClickX = 0;
+            let mouseClickY = 0;
+            let mouseDragX = 0;
+            let mouseDragY = 0;
+            let lastMousePressure = 0;
+
+            const prog = `
+// Inputs supplied by shaders.skia.org:
+uniform float3 iResolution;      // Viewport resolution (pixels)
+uniform float  iTime;            // Shader playback time (s)
+uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
+` + shaderCodeInput.value;
+
+            currentShader = prog;
+
+            const effect = CanvasKit.RuntimeEffect.Make(prog);
+
+            function drawFrame(canvas) {
+                const iTime = (Date.now() - startTimeMs) / 1000;
+                const uniforms = [
+                    shaderWidth, shaderHeight, 1, // vec3 iResolution(x, y, z);
+                    iTime, // iTime
+                    mouseDragX, mouseDragY, mouseClickX, mouseClickY, // iMouse(x, y, z, w)
+                ];
+                const shader = effect.makeShader(uniforms);
+                if (!shader) {
+                    throw "Could not make shader";
+                }
+                paint.setShader(shader);
+                skcanvas.drawPaint(paint);
+                shader.delete();
+
+                // Have to make image snapshot in draw frame to capture an image successfully.
+                // Simply calling make image snapshot when clicking on the set shader button only
+                // captures an empty image.
+                if (currentImageSnapshot != null) {
+                    currentImageSnapshot.delete();
+                }
+                currentImageSnapshot = surface.makeImageSnapshot();
+
+                surface.requestAnimationFrame(drawFrame);
+            }
+            surface.requestAnimationFrame(drawFrame);
+
+            canvas.addEventListener("pointermove", (e) => {
+                if (e.pressure && !lastMousePressure) {
+                    mouseClickX = e.offsetX;
+                    mouseClickY = e.offsetY;
+                }
+                lastMousePressure = e.pressure;
+                if (!e.pressure) {
+                    return;
+                }
+                mouseDragX = e.offsetX;
+                mouseDragY = e.offsetY;
+            });
+
+            setShaderButton.onclick = e => {
+                if (currentShader != null) {
+                    const color = useShaderFallbackColor.checked ? "#FF46A2" : undefined;
+                    parent.postMessage({
+                        pluginMessage: {
+                            msg: 'setShader',
+                            shader: currentShader,
+                            shaderFallbackColor: color,
+                        }
+                    }, '*');
+                } else {
+                    console.error("There is no shader running....");
+                }
+
+                const skImage = surface.makeImageSnapshot();
+                if (skImage != null) {
+                    parent.postMessage({
+                        pluginMessage: {
+                            msg: 'insertImage',
+                            imageBytes: skImage.encodeToBytes(),
+                        }
+                    }, '*');
+                    skImage.delete();
+                } else {
+                    console.error("There is no image captured...");
+                }
+
+            };
+        }); ////// END OF CANVAS KIT //////
+    }
+
+    loadShaderCode('julia');
+
+    function showModal() {
+        var modal = document.getElementById("shaderInfo");
+        modal.style.display = "block";
+    }
+
+    window.onmessage = async function (event) {
+        let msg = event.data.pluginMessage;
+        if (msg.msg == 'shaderCode') {
+            shaderCodeInput.value = msg.code;
+            runShader();
+            return;
+        }
+
+        if (msg.msg == 'shader-selection-cleared') {
+            setShaderButton.disabled = true;
+            return;
+        }
+        if (msg.msg == "shader-selection") {
+            setShaderButton.disabled = false;
+            return;
+        }
+    }
+</script>

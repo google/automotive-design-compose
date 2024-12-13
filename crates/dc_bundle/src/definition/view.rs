@@ -15,8 +15,8 @@
  */
 use crate::definition::element::line_height::LineHeightType;
 use crate::definition::element::{
-    background, Background, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar, Rectangle,
-    Size, Stroke, TextDecoration, ViewShape,
+    background, Background, Color, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar,
+    Rectangle, Size, Stroke, TextDecoration, ViewShape,
 };
 use crate::definition::interaction::{PointerEvents, Reaction};
 use crate::definition::layout::{
@@ -317,6 +317,8 @@ impl View {
         reactions: Option<Vec<Reaction>>,
         scroll_info: ScrollInfo,
         frame_extras: Option<FrameExtras>,
+        shader: Option<String>,
+        shader_fallback_color: Option<Color>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
@@ -338,6 +340,8 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
+            shader,
+            shader_fallback_color,
         }
     }
     pub fn new_text(
@@ -369,6 +373,8 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
+            shader: None,
+            shader_fallback_color: None,
         }
     }
     pub fn new_styled_text(
@@ -399,6 +405,8 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes: HashMap::new(),
+            shader: None,
+            shader_fallback_color: None,
         }
     }
     pub fn add_child(&mut self, child: View) {

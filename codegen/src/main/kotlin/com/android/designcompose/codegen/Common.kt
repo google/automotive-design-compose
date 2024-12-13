@@ -53,6 +53,7 @@ internal enum class CustomizationType {
     VariantProperty,
     Meter,
     MeterState,
+    ShaderUniformTimeState,
     Module,
     Unknown,
 }
@@ -123,6 +124,7 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setBrushFunction\n"
     file += "import com.android.designcompose.setMeterValue\n"
     file += "import com.android.designcompose.setMeterState\n"
+    file += "import com.android.designcompose.setShaderUniformTimeState\n"
     file += "import com.android.designcompose.setModifier\n"
     file += "import com.android.designcompose.setTapCallback\n"
     file += "import com.android.designcompose.setOpenLinkCallback\n"
@@ -190,6 +192,8 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "TextStyle" -> CustomizationType.TextStyle
         "com.android.designcompose.Meter" -> CustomizationType.Meter
         "com.android.designcompose.MeterState" -> CustomizationType.MeterState
+        "com.android.designcompose.ShaderUniformTimeState" ->
+            CustomizationType.ShaderUniformTimeState
         else -> CustomizationType.Unknown
     }
 }

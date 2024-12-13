@@ -1,0 +1,35 @@
+/*
+ * This is free and unencumbered software released into the public domain.
+ *
+ * For more information, please refer to <https://unlicense.org/>.
+ */
+ 
+// Source: https://shaders.skia.org/?id=7cd08fc6b1b23121529c62e31e00b4bd6b49deba9a3904fd01fda3dc5c590050
+float julia(vec2 uv, vec2 c) {
+    const float maxSteps = 400;
+    for (float i = 0; i < maxSteps; i++) {
+        uv = vec2(uv.x * uv.x - uv.y * uv.y + c.x,
+                  2.0 * uv.x * uv.y + c.y);
+        if (length(uv) > 2) {
+            return i / maxSteps;
+        }
+    }
+    return 1.0;
+}
+
+
+vec4 main( in vec2 fragCoord )
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = -1.0 + 2.0 * fragCoord / iResolution.xy;
+
+    float aspect = iResolution.x / iResolution.y;
+    uv.x *= aspect;
+
+    uv *= pow(0.5, -1.0 + 15.0 * (0.5 + 0.5 * sin(iTime * 0.80 - (3.14159265))));
+    uv += vec2(-0.51, -0.61351); // an interesting coordinate to zoom in on 
+    float f = julia(vec2(0.0, 0.0), uv);
+    
+    // Output to screen
+    return vec4((1.0 - uv) * pow(f, 0.5), f, 1.0);
+}

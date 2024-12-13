@@ -336,53 +336,37 @@ fun CustomizationContext.get(nodeName: String): Optional<Customization> {
 }
 
 fun CustomizationContext.getImage(nodeName: String): Bitmap? {
-    val c = cs[nodeName] ?: return null
-    if (c.image.isPresent) return c.image.get()
-    return null
+    return cs[nodeName]?.image?.getOrNull()
 }
 
 fun CustomizationContext.getImageWithContext(
     nodeName: String
 ): ((ImageReplacementContext) -> Bitmap?)? {
-    val c = cs[nodeName] ?: return null
-    if (c.imageWithContext.isPresent) return c.imageWithContext.get()
-    return null
+    return cs[nodeName]?.imageWithContext?.getOrNull()
 }
 
 fun CustomizationContext.getBrush(nodeName: String): Brush? {
-    val c = cs[nodeName] ?: return null
-    if (c.brush.isPresent) return c.brush.get()
-    return null
+    return cs[nodeName]?.brush?.getOrNull()
 }
 
 fun CustomizationContext.getBrushFunction(nodeName: String): (() -> Brush)? {
-    val c = cs[nodeName] ?: return null
-    if (c.brushFunction.isPresent) return c.brushFunction.get()
-    return null
+    return cs[nodeName]?.brushFunction?.getOrNull()
 }
 
 fun CustomizationContext.getText(nodeName: String): String? {
-    val c = cs[nodeName] ?: return null
-    if (c.text.isPresent) return c.text.get()
-    return null
+    return cs[nodeName]?.text?.getOrNull()
 }
 
 fun CustomizationContext.getTextState(nodeName: String): State<String>? {
-    val c = cs[nodeName] ?: return null
-    if (c.textState.isPresent) return c.textState.get()
-    return null
+    return cs[nodeName]?.textState?.getOrNull()
 }
 
 fun CustomizationContext.getModifier(nodeName: String): Modifier? {
-    val c = cs[nodeName] ?: return null
-    if (c.modifier.isPresent) return c.modifier.get()
-    return null
+    return cs[nodeName]?.modifier?.getOrNull()
 }
 
 fun CustomizationContext.getTapCallback(nodeName: String): TapCallback? {
-    val c = cs[nodeName] ?: return null
-    if (c.tapCallback.isPresent) return c.tapCallback.get()
-    return null
+    return cs[nodeName]?.tapCallback?.getOrNull()
 }
 
 fun CustomizationContext.getTapCallback(view: View): TapCallback? {
@@ -397,23 +381,17 @@ fun CustomizationContext.getTapCallback(view: View): TapCallback? {
 }
 
 fun CustomizationContext.getContent(nodeName: String): ReplacementContent? {
-    val c = cs[nodeName] ?: return null
-    if (c.content.isPresent) return c.content.get()
-    return null
+    return cs[nodeName]?.content?.getOrNull()
 }
 
 fun CustomizationContext.getListContent(nodeName: String): ListContent? {
-    val c = cs[nodeName] ?: return null
-    if (c.listContent.isPresent) return c.listContent.get()
-    return null
+    return cs[nodeName]?.listContent?.getOrNull()
 }
 
 fun CustomizationContext.getComponent(
     nodeName: String
 ): @Composable ((ComponentReplacementContext) -> Unit)? {
-    val c = cs[nodeName] ?: return null
-    if (c.component.isPresent) return c.component.get()
-    return null
+    return cs[nodeName]?.component?.getOrNull()
 }
 
 // XXX-PERF: This function shows up on profiles because we call it for every component during render
@@ -459,39 +437,32 @@ private fun parseNodeVariants(nodeName: String): HashMap<String, String> {
 }
 
 fun CustomizationContext.getVisible(nodeName: String): Boolean {
-    val c = cs[nodeName] ?: return true
-    return c.visible
+    return cs[nodeName]?.visible ?: true
 }
 
 fun CustomizationContext.getVisibleState(nodeName: String): State<Boolean>? {
-    val c = cs[nodeName] ?: return null
-    if (c.visibleState.isPresent) return c.visibleState.get()
-    return null
+    return cs[nodeName]?.visibleState?.getOrNull()
 }
 
 fun CustomizationContext.getTextStyle(nodeName: String): TextStyle? {
-    val c = cs[nodeName] ?: return null
-    if (c.textStyle.isPresent) return c.textStyle.get()
-    return null
+    return cs[nodeName]?.textStyle?.getOrNull()
 }
 
 fun CustomizationContext.getOpenLinkCallback(nodeName: String): OpenLinkCallback? {
-    val c = cs[nodeName] ?: return null
-    if (c.openLinkCallback.isPresent) return c.openLinkCallback.get()
-    return null
+    return cs[nodeName]?.openLinkCallback?.getOrNull()
 }
 
 fun CustomizationContext.getMeterValue(nodeName: String): Float? {
-    val c = cs[nodeName] ?: return null
-    var value = if (c.meterValue.isPresent) c.meterValue.get() else return null
-    if (!value.isFinite()) value = 0F
-    return value
+    val meterValue = cs[nodeName]?.meterValue?.getOrNull()
+    return if (meterValue == null) {
+        null
+    } else {
+        if (meterValue.isFinite()) meterValue else 0F
+    }
 }
 
 fun CustomizationContext.getMeterState(nodeName: String): MeterState? {
-    val c = cs[nodeName] ?: return null
-    if (c.meterState.isPresent) return c.meterState.get()
-    return null
+    return cs[nodeName]?.meterState?.getOrNull()
 }
 
 fun CustomizationContext.getShaderUniformTimeState(nodeName: String): ShaderUniformTimeState? {
@@ -504,8 +475,7 @@ fun CustomizationContext.getKey(): String? {
 
 fun CustomizationContext.getCustomComposable():
     @Composable ((Modifier, String, NodeQuery, List<ParentComponentInfo>, TapCallback?) -> Unit)? {
-    if (customComposable.isPresent) return customComposable.get()
-    return null
+    return customComposable.getOrNull()
 }
 
 fun CustomizationContext.mergeFrom(other: CustomizationContext) {

@@ -83,9 +83,13 @@ import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
+import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
+import com.android.designcompose.getKey
 import com.android.designcompose.getOpenLinkCallback
+import com.android.designcompose.proto.isPressOrClick
+import com.android.designcompose.proto.isTimeout
 import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.newDimensionProtoPoints
 import com.android.designcompose.proto.overflowDirectionFromInt
@@ -96,6 +100,7 @@ import com.android.designcompose.sDocRenderStatus
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.Size
+import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.squooshAnimatedActions
 import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
@@ -111,6 +116,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 const val TAG: String = "DC_SQUOOSH"
@@ -675,6 +681,7 @@ fun SquooshRoot(
             content = {
                 // Now render all of the children
                 for (child in childComposables) {
+                    var needsComposition = true
                     var composableChildModifier =
                         Modifier.drawWithContent {
                                 if (
@@ -706,15 +713,46 @@ fun SquooshRoot(
                             )
                         }
                     } else if (child.component == null) {
-                        composableChildModifier =
-                            composableChildModifier.squooshInteraction(
-                                doc,
-                                interactionState,
-                                interactionScope,
-                                customizationContext,
-                                child,
-                            )
+                        // If there are press or click reactions, composition is needed
+                        var hasPressClick = false
+                        child.node.view.reactions.forEach {
+                            if (it.trigger.isPressOrClick()) hasPressClick = true
+                            else if (it.trigger.isTimeout()) {
+                                // If there is a timeout trigger, execute the reaction in a suspend
+                                // function after the timeout
+                                val timeoutTrigger =
+                                    it.trigger.get().trigger_type.get() as TriggerType.AfterTimeout
+                                val timeoutMs = timeoutTrigger.value.timeout
+                                LaunchedEffect(child.node.view.id, it) {
+                                    delay((timeoutMs * 1000.0).toLong())
+                                    interactionState.dispatch(
+                                        it.action.get(),
+                                        findTargetInstanceId(
+                                            doc,
+                                            child.parentComponents,
+                                            it.action.get(),
+                                        ),
+                                        customizationContext.getKey(),
+                                        null,
+                                    )
+                                }
+                            }
+                        }
+
+                        if (hasPressClick)
+                            composableChildModifier =
+                                composableChildModifier.squooshInteraction(
+                                    doc,
+                                    interactionState,
+                                    interactionScope,
+                                    customizationContext,
+                                    child,
+                                )
+                        else needsComposition = false
                     }
+
+                    // If composition is not needed, continue to the next child
+                    if (!needsComposition) continue
 
                     // We use a custom layout for children that just passes through the layout
                     // constraints that we calculate in our layout glue code above. This gives

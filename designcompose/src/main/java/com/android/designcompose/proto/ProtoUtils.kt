@@ -29,6 +29,8 @@ import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.StrokeWeight
 import com.android.designcompose.serdegen.StrokeWeightType
 import com.android.designcompose.serdegen.Text
+import com.android.designcompose.serdegen.Trigger
+import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
@@ -181,3 +183,13 @@ internal fun Optional<ViewData>.ifContainerGetShape(): Shape? {
 internal fun Optional<ViewData>.ifTextGetText(): Text? {
     return (this.get().view_data_type.get() as? ViewDataType.Text)?.value
 }
+
+internal fun Optional<Trigger>.isSupportedInteraction() =
+    this.type is TriggerType.AfterTimeout ||
+        this.type is TriggerType.Click ||
+        this.type is TriggerType.Press
+
+internal fun Optional<Trigger>.isPressOrClick() =
+    this.type is TriggerType.Press || this.type is TriggerType.Click
+
+internal fun Optional<Trigger>.isTimeout() = this.type is TriggerType.AfterTimeout

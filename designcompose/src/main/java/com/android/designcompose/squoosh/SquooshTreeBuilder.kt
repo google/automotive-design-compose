@@ -45,6 +45,7 @@ import com.android.designcompose.mergeStyles
 import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
 import com.android.designcompose.proto.OverlayPositionEnum
 import com.android.designcompose.proto.getType
+import com.android.designcompose.proto.isSupportedInteraction
 import com.android.designcompose.proto.layoutStyle
 import com.android.designcompose.proto.newDimensionProtoPercent
 import com.android.designcompose.proto.newViewShapeRect
@@ -275,14 +276,11 @@ internal fun resolveVariantsRecursively(
         )
     val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id, layoutNode = null)
 
-    // Find out if we have some supported interactions; currently that's just on press and on click.
-    // We'll add timeouts and the others later...
+    // Find out if we have some supported interactions. These currently include press, click,
+    // timeout, and key press.
     var hasSupportedInteraction = false
     view.reactions.forEach { r ->
-        hasSupportedInteraction =
-            hasSupportedInteraction ||
-                r.trigger.type is TriggerType.Click ||
-                r.trigger.type is TriggerType.Press
+        hasSupportedInteraction = hasSupportedInteraction || r.trigger.isSupportedInteraction()
         if (r.trigger.type is TriggerType.KeyDown) {
             // Register to be a listener for key reactions on this node
             val keyTrigger = r.trigger.type as TriggerType.KeyDown

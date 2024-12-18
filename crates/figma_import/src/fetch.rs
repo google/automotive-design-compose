@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use prost::Message;
 use crate::{Document, ImageContextSession, ServerFigmaDoc};
-use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
-use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
+use dc_bundle::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader, NodeQuery};
 use serde::{Deserialize, Serialize};
+use dc_bundle::definition_file::encode_dcd_with_header;
 
 #[derive(Serialize, Deserialize)]
 struct IgnoredImage<'r> {
@@ -118,19 +119,22 @@ pub fn fetch_doc(
             doc.component_sets().clone(),
             variable_map,
         );
-        let mut response = bincode::serialize(&DesignComposeDefinitionHeader::current(
+        
+        let header = DesignComposeDefinitionHeader::current(
             doc.last_modified().clone(),
             doc.get_name(),
             doc.get_version(),
             doc.get_document_id(),
-        ))?;
-        response.append(&mut bincode::serialize(&ServerFigmaDoc {
+        );
+        let serverDoc = ServerFigmaDoc {
             figma_doc: Some(figma_doc),
             errors: error_list,
             branches: doc.branches.clone(),
             project_files: vec![],
-        })?);
-
+        };
+        
+        let mut response = header.encode_length_delimited_to_vec();
+        response.append(&mut serverDoc.encode_length_delimited_to_vec());
         // Return the image session as a JSON blob; we might want to encode this differently so we
         // can be more robust if there's corruption.
         response.append(&mut serde_json::to_vec(&doc.image_session())?);

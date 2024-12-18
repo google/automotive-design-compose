@@ -17,6 +17,7 @@ use thiserror::Error;
 pub mod android_interface;
 pub mod definition;
 pub mod legacy_definition;
+pub mod definition_file;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -26,6 +27,13 @@ pub enum Error {
     UnknownEnumVariant { enum_name: String },
     #[error("Attempted to parse unknown NodeQuery string {query}")]
     InvalidNodeQuery { query: String },
+    #[error("IO Error")]
+    IoError(#[from] std::io::Error),
+    #[error("Prost Decode error")]
+    DecodeError(#[from] prost::DecodeError),
+#[error("DesignComposeDefinition Load Error")]
+DCDLoadError(String),
+
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

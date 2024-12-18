@@ -38,6 +38,14 @@ publishing {
     }
 }
 
+sourceSets{
+    test {
+        resources.srcDirs(rootProject.rootDir.resolve("designcompose/src/main/assets"))
+        resources.srcDirs(rootProject.rootDir.resolve("reference-apps/helloworld/helloworld-app/src/main/assets"))
+    }
+
+}
+
 /**
  * Serde gen task
  *

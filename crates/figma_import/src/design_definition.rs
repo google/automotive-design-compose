@@ -12,15 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::Error;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{Read };
+use dc_bundle::legacy_definition::DesignComposeDefinitionHeaderV0;
 use std::path::Path;
-
-use dc_bundle::definition::DesignComposeDefinition;
-use dc_bundle::legacy_definition::{
-    DesignComposeDefinitionHeader, DesignComposeDefinitionHeaderV0,
-};
 
 include!(concat!(env!("OUT_DIR"), "/designcompose.live_update.figma.rs"));
 
@@ -31,7 +26,7 @@ impl FigmaDocInfo {
 }
 
 /// A helper method to load the old DesignCompose Definition header format from a dcf file
-pub fn load_design_def_header_v0<P>(load_path: P) -> Result<DesignComposeDefinitionHeaderV0, Error>
+pub fn load_design_def_header_v0<P>(load_path: P) -> Result<DesignComposeDefinitionHeaderV0, crate::Error>
 where
     P: AsRef<Path>,
 {
@@ -44,60 +39,18 @@ where
     Ok(header)
 }
 
-/// A helper method to load a DesignCompose Definition from figma.
-pub fn load_design_def<P>(
-    load_path: P,
-) -> Result<(DesignComposeDefinitionHeader, DesignComposeDefinition), Error>
-where
-    P: AsRef<Path>,
-{
-    let mut document_file = File::open(&load_path)?;
 
-    let mut buf: Vec<u8> = vec![];
-    let _bytes = document_file.read_to_end(&mut buf)?;
 
-    let header: DesignComposeDefinitionHeader = bincode::deserialize(buf.as_slice())?;
-
-    // Ensure the version of the document matches this version of automotive design compose.
-    if header.dc_version != DesignComposeDefinitionHeader::current_version() {
-        return Err(Error::DocumentLoadError(format!(
-            "Serialized Figma doc incorrect version. Expected {} Found: {}",
-            DesignComposeDefinitionHeader::current_version(),
-            header.dc_version
-        )));
-    }
-
-    let header_size = bincode::serialized_size(&header)? as usize;
-
-    let doc: DesignComposeDefinition = bincode::deserialize(&buf.as_slice()[header_size..])?;
-
-    Ok((header, doc))
-}
-
-/// A helper method to save serialized figma design docs.
-pub fn save_design_def<P>(
-    save_path: P,
-    header: &DesignComposeDefinitionHeader,
-    doc: &DesignComposeDefinition,
-) -> Result<(), Error>
-where
-    P: AsRef<Path>,
-{
-    let mut output = File::create(save_path)?;
-    let header = bincode::serialize(header)?;
-    let doc = bincode::serialize(&doc)?;
-    output.write_all(header.as_slice())?;
-    output.write_all(doc.as_slice())?;
-    Ok(())
-}
 
 #[cfg(test)]
 mod serialized_document_tests {
 
-    use super::*;
+    use std::io::Write;
+use super::*;
     use std::fs::File;
     use std::path::PathBuf;
     use testdir::testdir;
+    use dc_bundle::definition_file::{load_design_def, save_design_def};
 
     #[test]
     fn load_save_load() {
@@ -148,3 +101,4 @@ mod serialized_document_tests {
             .expect("Failed to load garbage DesignCompose Definition.");
     }
 }
+

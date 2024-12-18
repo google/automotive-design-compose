@@ -31,7 +31,7 @@ import com.android.designcompose.serdegen.BackgroundType
 import com.android.designcompose.serdegen.ColorOrVarType
 import com.android.designcompose.serdegen.ComponentInfo
 import com.android.designcompose.serdegen.Dimension
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.view.View
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 

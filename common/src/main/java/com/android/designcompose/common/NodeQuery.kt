@@ -16,8 +16,8 @@
 
 package com.android.designcompose.common
 
-import com.android.designcompose.serdegen.DesignComposeDefinition
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.DesignComposeDefinition
+import com.android.designcompose.definition.view.View
 
 sealed class NodeQuery {
     data class NodeId(val id: String) : NodeQuery()

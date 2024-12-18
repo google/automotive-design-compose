@@ -22,7 +22,7 @@ import com.android.designcompose.serdegen.Box
 import com.android.designcompose.serdegen.FontWeight
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.LayoutStyle
-import com.android.designcompose.serdegen.NodeStyle
+import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Shape
@@ -34,7 +34,7 @@ import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.ViewStyle
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 

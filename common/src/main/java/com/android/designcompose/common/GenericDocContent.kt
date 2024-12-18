@@ -16,11 +16,11 @@
 
 package com.android.designcompose.common
 
-import com.android.designcompose.serdegen.DesignComposeDefinition
+import com.android.designcompose.definition.DesignComposeDefinition
 import com.android.designcompose.serdegen.DesignComposeDefinitionHeader
 import com.android.designcompose.serdegen.FigmaDocInfo
-import com.android.designcompose.serdegen.ServerFigmaDoc
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.live_update.figma.ServerFigmaDoc
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.serdegen.ViewDataType
 import com.novi.bincode.BincodeDeserializer
 import com.novi.bincode.BincodeSerializer

@@ -307,11 +307,10 @@ internal object VariableManager {
         return when (value?.valueCase) {
             VariableValue.ValueCase.COLOR -> value.color.toColor()
             VariableValue.ValueCase.ALIAS ->
-                resolveVariable(value.alias, variableState)
-                    ?.getColor(variableMap, variableState)
+                resolveVariable(value.alias, variableState)?.getColor(variableMap, variableState)
 
             else -> null
-            }
+        }
     }
 
     // Return this variable's number given the current variable state.
@@ -320,8 +319,7 @@ internal object VariableManager {
         return when (value?.valueCase) {
             VariableValue.ValueCase.NUMBER -> value.number
             VariableValue.ValueCase.ALIAS ->
-                resolveVariable(value.alias, variableState)
-                    ?.getNumber(variableMap, variableState)
+                resolveVariable(value.alias, variableState)?.getNumber(variableMap, variableState)
 
             else -> null
         }
@@ -346,6 +344,6 @@ internal fun ColorOrVar.getValue(variableState: VariableState): Color? {
             val fallback = `var`.fallback.toColor()
             VariableManager.getColor(`var`.id, fallback, variableState)
         }
-            else -> null
+        else -> null
     }
 }

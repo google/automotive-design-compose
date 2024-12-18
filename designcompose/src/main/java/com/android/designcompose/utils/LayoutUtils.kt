@@ -22,28 +22,27 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.LayoutManager
+import com.android.designcompose.definition.element.DimensionProto
 import com.android.designcompose.definition.view.ViewStyle
-import com.android.designcompose.serdegen.Dimension
 import kotlin.math.roundToInt
 
 /** Multiply out a dimension against available space */
-internal fun Dimension.resolve(available: Int, density: Float): Int? {
-    return when (this) {
-        is Dimension.Percent -> (available * value).roundToInt()
-        is Dimension.Points -> (value * density).roundToInt()
-        else -> null
+internal fun DimensionProto.resolve(available: Int, density: Float): Int? {
+    if (hasPercent()) {
+        return (available * percent).roundToInt()
     }
+    if (hasPoints()) {
+        return (points * density).roundToInt()
+    }
+    return null
 }
 
-internal fun Dimension.pointsAsDp(density: Float): Dp {
-    return when (this) {
-        is Dimension.Points -> (value * density).dp
-        else -> 0.dp
-    }
+internal fun DimensionProto.pointsAsDp(density: Float): Dp {
+    return if (hasPoints()) (points * density).dp else 0.dp
 }
 
-internal fun Dimension.isFixed(): Boolean {
-    return this is Dimension.Points
+internal fun DimensionProto.isFixed(): Boolean {
+    return hasPoints()
 }
 
 /** Evaluate an absolute layout within the given constraints */
@@ -61,14 +60,14 @@ internal fun absoluteLayout(style: ViewStyle, constraints: Constraints, density:
             0
         }
 
-    val left = style.layoutStyle.left.getDim().resolve(pw, density)
-    val top = style.layoutStyle.top.getDim().resolve(ph, density)
+    val left = style.layoutStyle.left.resolve(pw, density)
+    val top = style.layoutStyle.top.resolve(ph, density)
     // Right and bottom are insets from the right/bottom edge, so convert them to be relative to
     // the top/left corner.
-    val right = style.layoutStyle.right.getDim().resolve(pw, density)?.let { r -> pw - r }
-    val bottom = style.layoutStyle.bottom.getDim().resolve(ph, density)?.let { b -> ph - b }
-    val width = style.layoutStyle.width.getDim().resolve(pw, density)
-    val height = style.layoutStyle.height.getDim().resolve(ph, density)
+    val right = style.layoutStyle.right.resolve(pw, density)?.let { r -> pw - r }
+    val bottom = style.layoutStyle.bottom.resolve(ph, density)?.let { b -> ph - b }
+    val width = style.layoutStyle.width.resolve(pw, density)
+    val height = style.layoutStyle.height.resolve(ph, density)
     // We use the top and left margins for center anchored items, so they can be safely applied
     // as an offset here.
     val leftMargin = style.layoutStyle.margin.start.resolve(pw, density) ?: 0
@@ -107,8 +106,8 @@ internal fun absoluteLayout(style: ViewStyle, constraints: Constraints, density:
                 0
             }
 
-    val minWidth = style.layoutStyle.min_width.getDim().resolve(pw, density)
-    val minHeight = style.layoutStyle.min_height.getDim().resolve(ph, density)
+    val minWidth = style.layoutStyle.minWidth.resolve(pw, density)
+    val minHeight = style.layoutStyle.minHeight.resolve(ph, density)
     if (minWidth != null && w < minWidth) {
         w = minWidth
     }
@@ -134,15 +133,15 @@ internal fun relativeLayout(style: ViewStyle, constraints: Constraints, density:
             0
         }
 
-    var w = style.layoutStyle.width.getDim().resolve(pw, density) ?: 0
-    var h = style.layoutStyle.height.getDim().resolve(ph, density) ?: 0
+    var w = style.layoutStyle.width.resolve(pw, density) ?: 0
+    var h = style.layoutStyle.height.resolve(ph, density) ?: 0
     // We use the top and left margins for center anchored items, so they can be safely applied
     // as an offset here.
     val x = style.layoutStyle.margin.start.resolve(pw, density) ?: 0
     val y = style.layoutStyle.margin.top.resolve(ph, density) ?: 0
 
-    val minWidth = style.layoutStyle.min_width.getDim().resolve(pw, density)
-    val minHeight = style.layoutStyle.min_height.getDim().resolve(ph, density)
+    val minWidth = style.layoutStyle.minWidth.resolve(pw, density)
+    val minHeight = style.layoutStyle.minHeight.resolve(ph, density)
     if (minWidth != null && w < minWidth) {
         w = minWidth
     }
@@ -170,12 +169,10 @@ internal fun getNodeRenderSize(
     // box for a rotated node. We do not yet support rotated nodes with non-fixed constraints.
     val hasModifiedSize = LayoutManager.hasModifiedSize(layoutId)
     val width =
-        if (hasModifiedSize || style.layoutStyle.width.getDim() !is Dimension.Points)
-            layoutSize.width
-        else style.layoutStyle.width.getDim().pointsAsDp(density).value
+        if (hasModifiedSize || !style.layoutStyle.width.hasPoints()) layoutSize.width
+        else style.layoutStyle.width.pointsAsDp(density).value
     val height =
-        if (hasModifiedSize || style.layoutStyle.height.getDim() !is Dimension.Points)
-            layoutSize.height
-        else style.layoutStyle.height.getDim().pointsAsDp(density).value
+        if (hasModifiedSize || !style.layoutStyle.height.hasPoints()) layoutSize.height
+        else style.layoutStyle.height.pointsAsDp(density).value
     return Size(width, height)
 }

@@ -26,12 +26,12 @@ import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.VariantPropertyMap
 import com.android.designcompose.common.views
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.proto.NavigationType
 import com.android.designcompose.proto.navigationTypeFromInt
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.ActionType
 import com.android.designcompose.serdegen.Transition
-import com.android.designcompose.definition.view.View
 import com.android.designcompose.squoosh.AnimationTransition
 import com.android.designcompose.squoosh.SmartAnimateTransition
 import com.android.designcompose.utils.asAnimationSpec

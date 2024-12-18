@@ -79,7 +79,6 @@ import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.LocalVariableState
 import com.android.designcompose.VariableState
-import com.android.designcompose.utils.asBuilder
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DesignDocId
@@ -148,13 +147,13 @@ internal class SquooshAnimationRenderingInfo(
 /// Apply layout constraints to a node; this is only used for the root node and gives the DC
 /// layout system the context of what it is being embedded in.
 private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, density: Float) {
-    val rootStyleBuilder = style.asBuilder()
+    val rootStyleBuilder = style.toBuilder()
 
     // This function mutates `this.style` in different ways depending on the constraints. Therefore,
     // we should always start with `view.style` (immutable, from the DCF) and apply constraints to
     // that. Otherwise, we end up progressively adding different style rules to the root style as we
     // get different layout queries (especially during the intrinsic width/height query process).
-    val layoutStyleBuilder = view.style.get().layoutStyle.asBuilder()
+    val layoutStyleBuilder = view.style.layoutStyle.toBuilder()
 
     if (constraints.minWidth != 0)
         layoutStyleBuilder.min_width =

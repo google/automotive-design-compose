@@ -26,10 +26,10 @@ import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asComposePath
 import androidx.core.graphics.minus
 import androidx.core.graphics.plus
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.proto.StrokeAlignType
 import com.android.designcompose.proto.bottom
 import com.android.designcompose.proto.left
-import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.right
 import com.android.designcompose.proto.strokeAlignFromInt
 import com.android.designcompose.proto.strokeCapFromInt
@@ -41,7 +41,6 @@ import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.utils.asPath
 import com.android.designcompose.utils.getNodeRenderSize
 import com.android.designcompose.utils.toComposeStrokeCap

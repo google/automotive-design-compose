@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignVariant
+import com.android.designcompose.testapp.validation.TestButton
 
 enum class PrndState {
     P,
@@ -90,34 +91,34 @@ private fun Controls(controls: Controls) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Shift State:   ", fontSize = 30.sp, color = Color.Black)
-                Button("P", controls.shiftState.value == PrndState.P) {
+                TestButton("P", "P", controls.shiftState.value == PrndState.P) {
                     controls.shiftState.value = PrndState.P
                 }
-                Button("R", controls.shiftState.value == PrndState.R) {
+                TestButton("R", "R", controls.shiftState.value == PrndState.R) {
                     controls.shiftState.value = PrndState.R
                 }
-                Button("N", controls.shiftState.value == PrndState.N) {
+                TestButton("N", "N", controls.shiftState.value == PrndState.N) {
                     controls.shiftState.value = PrndState.N
                 }
-                Button("D", controls.shiftState.value == PrndState.D) {
+                TestButton("D", "D", controls.shiftState.value == PrndState.D) {
                     controls.shiftState.value = PrndState.D
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Charging:   ", fontSize = 30.sp, color = Color.Black)
-                Button("On", controls.charging.value == ChargingState.on) {
+                TestButton("On", "ChargeOn", controls.charging.value == ChargingState.on) {
                     controls.charging.value = ChargingState.on
                 }
-                Button("Off", controls.charging.value == ChargingState.off) {
+                TestButton("Off", "ChargeOff", controls.charging.value == ChargingState.off) {
                     controls.charging.value = ChargingState.off
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Regen:   ", fontSize = 30.sp, color = Color.Black)
-                Button("On", controls.regen.value == RegenState.on) {
+                TestButton("On", "RegenOn", controls.regen.value == RegenState.on) {
                     controls.regen.value = RegenState.on
                 }
-                Button("Off", controls.regen.value == RegenState.off) {
+                TestButton("Off", "RegenOff", controls.regen.value == RegenState.off) {
                     controls.regen.value = RegenState.off
                 }
             }

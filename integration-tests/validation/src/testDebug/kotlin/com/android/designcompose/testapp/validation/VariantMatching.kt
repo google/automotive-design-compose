@@ -22,10 +22,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils
+import com.android.designcompose.test.assertHasText
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.onDCDocRoot
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.VariantPropertiesTest
+import com.android.designcompose.testapp.validation.examples.VariantPropertiesTestDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Before
 import org.junit.Rule
@@ -51,112 +54,118 @@ class VariantMatching {
     @Test
     fun variantBackgroundMatches() {
         with(composeTestRule) {
-            onNodeWithText("Green").performClick()
-            onNodeWithText("BG1 Square").performClick()
-            onNodeWithText("Background1Square").assertExists()
-            captureRootRoboImage("Background1Square")
+            with(onDCDocRoot(VariantPropertiesTestDoc)) {
+                onNodeWithText("Green").performClick()
+                onNodeWithText("BG1 Square").performClick()
+                assertHasText("Background1Square")
+                captureRootRoboImage("Background1Square")
 
-            onNodeWithText("BG1 Circle").performClick()
-            onNodeWithText("Background1Circle").assertExists()
-            captureRootRoboImage("Background1Circle")
+                onNodeWithText("BG1 Circle").performClick()
+                assertHasText("Background1Circle")
+                captureRootRoboImage("Background1Circle")
 
-            onNodeWithText("BG2 Square").performClick()
-            onNodeWithText("Background2Square").assertExists()
-            captureRootRoboImage("Background2Square")
+                onNodeWithText("BG2 Square").performClick()
+                assertHasText("Background2Square")
+                captureRootRoboImage("Background2Square")
 
-            onNodeWithText("BG2 Circle").performClick()
-            onNodeWithText("Background2Circle").assertExists()
-            captureRootRoboImage("Background2Circle")
+                onNodeWithText("BG2 Circle").performClick()
+                assertHasText("Background2Circle")
+                captureRootRoboImage("Background2Circle")
 
-            onNodeWithText("Inner Sharp").performClick()
-            onNodeWithText("SquareBorder").assertExists()
-            captureRootRoboImage("SquareBorder")
+                onNodeWithText("Inner Sharp").performClick()
+                assertHasText("SquareBorder")
+                captureRootRoboImage("SquareBorder")
 
-            onNodeWithText("Inner Curved").performClick()
-            onNodeWithText("CurvedBorder").assertExists()
-            captureRootRoboImage("CurvedBorder")
+                onNodeWithText("Inner Curved").performClick()
+                assertHasText("CurvedBorder")
+                captureRootRoboImage("CurvedBorder")
+            }
         }
     }
 
     @Test
     fun variantNestedMatches() {
         with(composeTestRule) {
-            onNodeWithText("Curved").performClick()
-            onNodeWithText("Comp1 One").performClick()
-            onNodeWithText("Comp1One").assertExists()
-            captureRootRoboImage("Comp1One")
+            with(onDCDocRoot(VariantPropertiesTestDoc)) {
+                onNodeWithText("Curved").performClick()
+                onNodeWithText("Comp1 One").performClick()
+                assertHasText("Comp1One")
+                captureRootRoboImage("Comp1One")
 
-            onNodeWithText("Comp1 Two").performClick()
-            onNodeWithText("Comp1Two").assertExists()
-            captureRootRoboImage("Comp1Two")
+                onNodeWithText("Comp1 Two").performClick()
+                assertHasText("Comp1Two")
+                captureRootRoboImage("Comp1Two")
 
-            onNodeWithText("Comp2 One").performClick()
-            onNodeWithText("Comp2One").assertExists()
-            captureRootRoboImage("Comp2One")
+                onNodeWithText("Comp2 One").performClick()
+                assertHasText("Comp2One")
+                captureRootRoboImage("Comp2One")
 
-            onNodeWithText("Comp2 Two").performClick()
-            onNodeWithText("Comp2Two").assertExists()
-            captureRootRoboImage("Comp2Two")
+                onNodeWithText("Comp2 Two").performClick()
+                assertHasText("Comp2Two")
+                captureRootRoboImage("Comp2Two")
 
-            onNodeWithText("Comp3 One").performClick()
-            onNodeWithText("C31").assertExists()
-            captureRootRoboImage("C31")
+                onNodeWithText("Comp3 One").performClick()
+                assertHasText("C31")
+                captureRootRoboImage("C31")
 
-            onNodeWithText("Comp3 Two").performClick()
-            onNodeWithText("C32").assertExists()
-            captureRootRoboImage("C32")
+                onNodeWithText("Comp3 Two").performClick()
+                assertHasText("C32")
+                captureRootRoboImage("C32")
 
-            onNodeWithText("Square").performClick()
-            onNodeWithText("C34").assertExists()
-            captureRootRoboImage("C34")
+                onNodeWithText("Square").performClick()
+                assertHasText("C34")
+                captureRootRoboImage("C34")
 
-            onNodeWithText("Comp3 One").performClick()
-            onNodeWithText("C33").assertExists()
-            captureRootRoboImage("C33")
+                onNodeWithText("Comp3 One").performClick()
+                assertHasText("C33")
+                captureRootRoboImage("C33")
+            }
         }
     }
 
     @Test
     fun variantComponentSetsFound() {
         with(composeTestRule) {
-            onNodeWithText("Green").performClick()
-            onNodeWithText("Shade One").performClick()
-            onNodeWithText("GreenOne").assertExists()
-            captureRootRoboImage("GreenOne")
+            with(onDCDocRoot(VariantPropertiesTestDoc)) {
+                onNodeWithText("Green").performClick()
+                onNodeWithText("Shade One").performClick()
+                assertHasText("GreenOne")
+                captureRootRoboImage("GreenOne")
 
-            onNodeWithText("Shade Two").performClick()
-            onNodeWithText("GreenTwo").assertExists()
-            captureRootRoboImage("GreenTwo")
+                onNodeWithText("Shade Two").performClick()
+                assertHasText("GreenTwo")
+                captureRootRoboImage("GreenTwo")
 
-            onNodeWithText("Shade Three").performClick()
-            onNodeWithText("GreenThree").assertExists()
-            captureRootRoboImage("GreenThree")
+                onNodeWithText("Shade Three").performClick()
+                assertHasText("GreenThree")
+                captureRootRoboImage("GreenThree")
 
-            onNodeWithText("Blue").performClick()
-            onNodeWithText("Shade One").performClick()
-            onNodeWithText("BlueOne").assertExists()
-            captureRootRoboImage("BlueOne")
+                onNodeWithText("Blue").performClick()
+                onNodeWithText("Shade One").performClick()
+                assertHasText("BlueOne")
+                captureRootRoboImage("BlueOne")
 
-            onNodeWithText("Shade Two").performClick()
-            onNodeWithText("BlueTwo").assertExists()
-            captureRootRoboImage("BlueTwo")
+                onNodeWithText("Shade Two").performClick()
+                assertHasText("BlueTwo")
+                captureRootRoboImage("BlueTwo")
 
-            onNodeWithText("Shade Three").performClick()
-            onNodeWithText("BlueThree").assertExists()
-            captureRootRoboImage("BlueThree")
+                onNodeWithText("Shade Three").performClick()
+                assertHasText("BlueThree")
+                captureRootRoboImage("BlueThree")
 
-            onNodeWithText("Red").performClick()
-            onNodeWithText("Shade One").performClick()
-            onNodeWithText("RedOne").assertExists()
-            captureRootRoboImage("RedOne")
+                onNodeWithText("Red").performClick()
+                onNodeWithText("Shade One").performClick()
+                assertHasText("RedOne")
+                captureRootRoboImage("RedOne")
 
-            onNodeWithText("Shade Two").performClick()
-            onNodeWithText("RedTwo").assertExists()
-            captureRootRoboImage("RedTwo")
+                onNodeWithText("Shade Two").performClick()
+                assertHasText("RedTwo")
+                captureRootRoboImage("RedTwo")
 
-            onNodeWithText("Shade Three").performClick()
-            onNodeWithText("RedThree").assertExists()
-            captureRootRoboImage("RedThree")
+                onNodeWithText("Shade Three").performClick()
+                assertHasText("RedThree")
+                captureRootRoboImage("RedThree")
+            }
         }
     }
 }

@@ -17,9 +17,10 @@
 package com.android.designcompose.tutorial
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.test.assertHasText
+import com.android.designcompose.test.onDCDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.RoborazziRule
 import org.junit.Rule
@@ -52,11 +53,12 @@ class CheckStartupPage {
     fun testStartupPage() {
         with(composeTestRule) {
             setContent { TutorialMain() }
-            onNodeWithText(
+            with(onDCDoc(TutorialDoc)) {
+                assertHasText(
                     "Congratulations on running the Automotive Design for Compose Tutorial app!",
                     substring = true,
                 )
-                .assertExists()
+            }
         }
     }
 }

@@ -165,6 +165,7 @@ internal fun resolveVariantsRecursively(
     appContext: Context,
     customVariantTransition: CustomVariantTransition?,
     textMeasureCache: TextMeasureCache,
+    textHash: HashSet<String>,
     componentLayoutId: Int = 0,
     overlays: List<View>? = null,
     isScrollComponent: Boolean = false,
@@ -271,8 +272,9 @@ internal fun resolveVariantsRecursively(
             customizations,
             fontResourceLoader,
             variableState,
-            appContext = appContext,
-            textMeasureCache = textMeasureCache,
+            appContext,
+            textMeasureCache,
+            textHash,
         )
     val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id, layoutNode = null)
 
@@ -402,6 +404,7 @@ internal fun resolveVariantsRecursively(
                         variableState,
                         appContext = appContext,
                         textMeasureCache = textMeasureCache,
+                        textHash = textHash,
                         customVariantTransition = customVariantTransition,
                         componentLayoutId = componentLayoutId,
                     ) ?: continue
@@ -447,6 +450,7 @@ internal fun resolveVariantsRecursively(
                     variableState,
                     appContext = appContext,
                     textMeasureCache = textMeasureCache,
+                    textHash = textHash,
                     customVariantTransition = customVariantTransition,
                     componentLayoutId = componentLayoutId,
                 ) ?: continue

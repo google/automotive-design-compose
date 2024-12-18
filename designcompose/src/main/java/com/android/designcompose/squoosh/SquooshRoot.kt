@@ -52,6 +52,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
@@ -88,6 +89,7 @@ import com.android.designcompose.doc
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getOpenLinkCallback
+import com.android.designcompose.getTapCallback
 import com.android.designcompose.proto.isPressOrClick
 import com.android.designcompose.proto.isTimeout
 import com.android.designcompose.proto.layoutStyle
@@ -97,6 +99,7 @@ import com.android.designcompose.registerOpenLinkCallback
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
+import com.android.designcompose.sDocRenderText
 import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.Size
@@ -345,6 +348,7 @@ fun SquooshRoot(
     val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
     keyEventTracker.clearListeners()
     val variableState = VariableState.create()
+    val textHash = HashSet<String>()
     val root =
         resolveVariantsRecursively(
             startFrame,
@@ -363,6 +367,7 @@ fun SquooshRoot(
             variableState,
             appContext = LocalContext.current,
             textMeasureCache = textMeasureCache,
+            textHash = textHash,
             customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
             overlays = overlays,
             isScrollComponent = isScrollComponent,
@@ -415,6 +420,7 @@ fun SquooshRoot(
                 VariableState.create(),
                 appContext = LocalContext.current,
                 textMeasureCache = textMeasureCache,
+                textHash = textHash,
                 customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
                 overlays = overlays,
                 isScrollComponent = isScrollComponent,
@@ -659,7 +665,10 @@ fun SquooshRoot(
                         appContext = LocalContext.current,
                         scrollOffset,
                     )
-                    .semantics { sDocRenderStatus = DocRenderStatus.Rendered }
+                    .semantics {
+                        sDocRenderStatus = DocRenderStatus.Rendered
+                        sDocRenderText = textHash
+                    }
                     .then(scrollModifier),
             measurePolicy =
                 squooshLayoutMeasurePolicy(
@@ -691,6 +700,7 @@ fun SquooshRoot(
                                     drawContent()
                             }
                             .then(SquooshParentData(node = child.node))
+                            .then(Modifier.testTag(child.node.view.name))
 
                     if (child.scrollView != null) {
                         // Compose a scrollable view as a separate composable in order to detect
@@ -714,7 +724,8 @@ fun SquooshRoot(
                         }
                     } else if (child.component == null) {
                         // If there are press or click reactions, composition is needed
-                        var hasPressClick = false
+                        var hasPressClick =
+                            customizationContext.getTapCallback(child.node.view) != null
                         child.node.view.reactions.forEach {
                             if (it.trigger.isPressOrClick()) hasPressClick = true
                             else if (it.trigger.isTimeout()) {

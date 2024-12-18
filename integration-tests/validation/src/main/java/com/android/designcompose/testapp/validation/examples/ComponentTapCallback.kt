@@ -19,6 +19,8 @@ package com.android.designcompose.testapp.validation.examples
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
@@ -52,7 +54,14 @@ fun ComponentTapCallbackTest() {
     val drivingState = remember { mutableStateOf(DrivingState.P) }
     ComponentTapCallbackDoc.mainFrame(
         drivingStateIndicator = {
+            val testTag =
+                when (drivingState.value) {
+                    DrivingState.P -> "Parked"
+                    DrivingState.R -> "Reverse"
+                    DrivingState.D -> "Drive"
+                }
             ComponentTapCallbackDoc.drivingStateIndicator(
+                modifier = Modifier.testTag(testTag),
                 state = drivingState.value,
                 onPress = {
                     drivingState.value =

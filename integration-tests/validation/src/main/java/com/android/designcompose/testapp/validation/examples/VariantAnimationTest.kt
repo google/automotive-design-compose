@@ -77,7 +77,6 @@ fun VariantAnimationTest() {
     CompositionLocalProvider(
         LocalDesignDocSettings provides
             DesignDocSettings(
-                useSquoosh = true,
                 customVariantTransition = { context ->
                     if (context.fromComponentSet("RightPanelAndroid")) {
                         SmartAnimateTransition(
@@ -104,7 +103,7 @@ fun VariantAnimationTest() {
                             spring(dampingRatio = damping / critical, stiffness = stiffness)
                         )
                     }
-                },
+                }
             )
     ) {
         VariantAnimationTestDoc.MainFrame(state = state, text = text)

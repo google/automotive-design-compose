@@ -18,18 +18,22 @@ package com.android.designcompose.testapp.validation
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils
+import com.android.designcompose.test.assertDoesNotHaveText
+import com.android.designcompose.test.assertHasText
+import com.android.designcompose.test.hasDesignText
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.onDCDocAnyNode
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.InteractionTest
+import com.android.designcompose.testapp.validation.examples.InteractionTestDoc
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Before
 import org.junit.Rule
@@ -56,92 +60,98 @@ class InteractionTests {
     @Test
     fun whilePressedTimeoutTimesOut() {
         with(composeTestRule) {
-            onNodeWithText("Triggers").performClick()
-            onNodeWithText("While Pressed").performClick()
-            onNodeWithText("Timeouts").performClick()
-            captureRootRoboImage("whilePressed-start")
+            with(onDCDocAnyNode(InteractionTestDoc)) {
+                onNodeWithTag("Triggers").performClick()
+                onNodeWithTag("While Pressed").performClick()
+                onNodeWithTag("Timeouts").performClick()
+                captureRootRoboImage("whilePressed-start")
 
-            onNodeWithText("idle").performTouchInput { down(Offset.Zero) }
-            onNodeWithText("pressed").assertExists()
-            captureRootRoboImage("whilePressed-pressed")
+                onNodeWithTag("idle").performTouchInput { down(Offset.Zero) }
+                assertHasText("pressed")
+                captureRootRoboImage("whilePressed-pressed")
 
-            waitUntilDoesNotExist(hasText("pressed"), 1000)
-            onNodeWithText("timeout").assertExists()
-            captureRootRoboImage("whilePressed-timedOut")
+                waitUntilDoesNotExist(hasDesignText("pressed"), 1000)
+                assertHasText("timeout")
+                captureRootRoboImage("whilePressed-timedOut")
 
-            onRoot().performTouchInput { cancel() }
-            onNodeWithText("idle").assertExists()
-            captureRootRoboImage("whilePressed-final")
+                onRoot().performTouchInput { cancel() }
+                assertHasText("idle")
+                captureRootRoboImage("whilePressed-final")
+            }
         }
     }
 
     @Test
     fun overlayPositionsTests() {
         with(composeTestRule) {
-            onNodeWithText("Overlay Tests").performClick()
-            onNodeWithText("Overlay Positions").performClick()
-            captureRootRoboImage("overlay-positions-start")
+            with(onDCDocAnyNode(InteractionTestDoc)) {
+                onNodeWithTag("Overlay Tests").performClick()
+                onNodeWithTag("Overlay Positions").performClick()
+                captureRootRoboImage("overlay-positions-start")
 
-            // Test Top Left
-            onNodeWithText("Top Left").assertDoesNotExist()
-            onNodeWithText("TL").performClick()
-            onNodeWithText("Top Left").assertExists()
-            captureRootRoboImage("overlay-positions-tl")
+                // Test Top Left
+                assertDoesNotHaveText("Top Left")
+                onNodeWithTag("TL").performClick()
+                assertHasText("Top Left")
+                captureRootRoboImage("overlay-positions-tl")
 
-            // Close the overlay. Need to use the unmerged tree to click the node
-            onNodeWithText("Click To Close", useUnmergedTree = true).performClick()
-            onNodeWithText("Top Left").assertDoesNotExist()
-            captureRootRoboImage("overlay-positions-tl-final")
+                // Close the overlay. Need to use the unmerged tree to click the node
+                onNodeWithTag("Overlay Top Left").performClick()
+                assertDoesNotHaveText("Top Left")
+                captureRootRoboImage("overlay-positions-tl-final")
 
-            // Test Top Right
-            onNodeWithText("Top Right").assertDoesNotExist()
-            onNodeWithText("TR").performClick()
-            onNodeWithText("Top Right").assertExists()
-            captureRootRoboImage("overlay-positions-tr")
-            onNodeWithText("Click To Close", useUnmergedTree = true).performClick()
-            onNodeWithText("Top Right").assertDoesNotExist()
-            captureRootRoboImage("overlay-positions-tr-final")
+                // Test Top Right
+                assertDoesNotHaveText("Top Right")
+                onNodeWithTag("TR").performClick()
+                assertHasText("Top Right")
+                captureRootRoboImage("overlay-positions-tr")
+                onNodeWithTag("Overlay Top Right").performClick()
+                assertDoesNotHaveText("Top Right")
+                captureRootRoboImage("overlay-positions-tr-final")
 
-            // Test Manual
-            onNodeWithText("Manual").assertDoesNotExist()
-            onNodeWithText("M").performClick()
-            onNodeWithText("Manual").assertExists()
-            captureRootRoboImage("overlay-positions-manual")
-            onNodeWithText("Click To Close", useUnmergedTree = true).performClick()
-            onNodeWithText("Manual").assertDoesNotExist()
-            captureRootRoboImage("overlay-positions-manual-final")
+                // Test Manual
+                assertDoesNotHaveText("Manual")
+                onNodeWithTag("M").performClick()
+                assertHasText("Manual")
+                captureRootRoboImage("overlay-positions-manual")
+                onNodeWithTag("Overlay Manual").performClick()
+                assertDoesNotHaveText("Manual")
+                captureRootRoboImage("overlay-positions-manual-final")
+            }
         }
     }
 
     @Test
     fun navigationTests() {
         with(composeTestRule) {
-            onNodeWithText("Navigation Tests").performClick()
-            captureRootRoboImage("navigation-start")
+            with(onDCDocAnyNode(InteractionTestDoc)) {
+                onNodeWithTag("Navigation Tests").performClick()
+                captureRootRoboImage("navigation-start")
 
-            // Initial state
-            onNodeWithText("Navigation #1").assertExists()
+                // Initial state
+                assertHasText("Navigation #1")
 
-            onNodeWithText("Nav 2").performClick()
-            onNodeWithText("Navigation #2").assertExists()
-            onNodeWithText("Navigation #1").assertDoesNotExist()
-            captureRootRoboImage("navigation-nav2")
+                onNodeWithTag("Nav 2").performClick()
+                assertHasText("Navigation #2")
+                assertDoesNotHaveText("Navigation #1")
+                captureRootRoboImage("navigation-nav2")
 
-            onNodeWithText("Nav 1").performClick()
-            onNodeWithText("Navigation #1").assertExists()
-            onNodeWithText("Navigation #2").assertDoesNotExist()
-            captureRootRoboImage("navigation-nav1")
+                onNodeWithTag("Nav 1").performClick()
+                assertHasText("Navigation #1")
+                assertDoesNotHaveText("Navigation #2")
+                captureRootRoboImage("navigation-nav1")
 
-            // Test the back button
-            onNodeWithText("<--").performClick()
-            onNodeWithText("Navigation #2").assertExists()
-            onNodeWithText("Navigation #1").assertDoesNotExist()
-            captureRootRoboImage("navigation-back1")
+                // Test the back button
+                onNodeWithTag("<--").performClick()
+                assertHasText("Navigation #2")
+                assertDoesNotHaveText("Navigation #1")
+                captureRootRoboImage("navigation-back1")
 
-            onNodeWithText("<--").performClick()
-            onNodeWithText("Navigation #1").assertExists()
-            onNodeWithText("Navigation #2").assertDoesNotExist()
-            captureRootRoboImage("navigation-back2")
+                onNodeWithTag("<--").performClick()
+                assertHasText("Navigation #1")
+                assertDoesNotHaveText("Navigation #2")
+                captureRootRoboImage("navigation-back2")
+            }
         }
     }
 }

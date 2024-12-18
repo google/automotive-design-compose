@@ -30,7 +30,7 @@ import com.android.designcompose.squoosh.CustomVariantTransition
  *   better integrate with external layout.
  */
 class DesignDocSettings(
-    val useSquoosh: Boolean = false,
+    val useSquoosh: Boolean = true,
     val customVariantTransition: CustomVariantTransition? = null,
 )
 

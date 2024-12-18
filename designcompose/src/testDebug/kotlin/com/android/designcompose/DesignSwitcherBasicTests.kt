@@ -16,17 +16,26 @@
 
 package com.android.designcompose
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils.ClearStateTestRule
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.test.Fetchable
+import com.android.designcompose.test.assertHasText
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
@@ -43,12 +52,18 @@ import org.robolectric.annotation.GraphicsMode
 @Composable
 fun DesignSwitcherTest(testName: TestName) {
     val idState = remember { mutableStateOf(testName.methodName) }
-    DesignSwitcher(
-        doc = null,
-        currentDocId = DesignDocId(idState.value),
-        branchHash = null,
-        setDocId = {},
-    )
+    Row(
+        modifier = Modifier.size(360.dp, 640.dp).background(Color.Gray),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.End,
+    ) {
+        DesignSwitcher(
+            doc = null,
+            currentDocId = DesignDocId(idState.value),
+            branchHash = null,
+            setDocId = {},
+        )
+    }
 }
 
 @Category(Fetchable::class)
@@ -75,8 +90,10 @@ class DesignSwitcherBasicTests {
 
         with(composeTestRule) {
             captureRootRoboImage("CollapsedSwitcher")
-            onDCDoc(DesignSwitcherDoc).performClick()
-            onNodeWithText("Change").assertExists()
+            with(onDCDoc(DesignSwitcherDoc)) {
+                performClick()
+                assertHasText("Change")
+            }
             captureRootRoboImage("ExpandedSwitcher")
         }
     }
@@ -87,8 +104,10 @@ class DesignSwitcherBasicTests {
 
         with(composeTestRule) {
             onDCDoc(DesignSwitcherDoc).performClick()
-            onNodeWithText("Change", useUnmergedTree = true).performClick()
-            onNodeWithText("Load", useUnmergedTree = true).assertExists()
+            with(onDCDoc(DesignSwitcherDoc)) {
+                onNodeWithTag("#ChangeButton").performClick()
+                assertHasText("Load")
+            }
             captureRootRoboImage("ChangeFileScreen")
         }
     }
@@ -99,9 +118,9 @@ class DesignSwitcherBasicTests {
 
         with(composeTestRule) {
             onDCDoc(DesignSwitcherDoc).performClick()
-            onNodeWithText("Options", useUnmergedTree = true).performClick()
+            onNodeWithTag("#Options", useUnmergedTree = true).performClick()
             captureRootRoboImage("OptionsScreenBeforeCheckingBox")
-            onAllNodes(hasClickAction())[1].performClick() // Currently the only way to find it
+            onAllNodes(hasClickAction())[0].performClick() // Currently the only way to find it
             captureRootRoboImage("OptionsScreenAfterCheckingBox")
         }
     }

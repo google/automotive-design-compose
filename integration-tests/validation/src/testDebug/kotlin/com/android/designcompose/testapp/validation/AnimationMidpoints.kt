@@ -60,11 +60,7 @@ class AnimationMidpoints {
         val text = mutableStateOf("X")
 
         composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-            ) {
-                VariantAnimationTestDoc.MainFrame(state = state.value, text = text.value)
-            }
+            VariantAnimationTestDoc.MainFrame(state = state.value, text = text.value)
         }
 
         composeTestRule.waitForContent(VariantAnimationTestDoc.javaClass.name)
@@ -87,7 +83,6 @@ class AnimationMidpoints {
             CompositionLocalProvider(
                 LocalDesignDocSettings provides
                     DesignDocSettings(
-                        useSquoosh = true,
                         customVariantTransition = {
                             val mass = 1.0f
                             val stiffness = 120.0f
@@ -96,7 +91,7 @@ class AnimationMidpoints {
                             SmartAnimateTransition(
                                 spring(dampingRatio = damping / critical, stiffness = stiffness)
                             )
-                        },
+                        }
                     )
             ) {
                 VariantAnimationTestDoc.MainFrame(state = state.value, text = text.value)
@@ -118,13 +113,7 @@ class AnimationMidpoints {
 
         val state = mutableStateOf(State.X)
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-            ) {
-                VariantAnimationTestDoc.AllSameName(state = state.value)
-            }
-        }
+        composeTestRule.setContent { VariantAnimationTestDoc.AllSameName(state = state.value) }
 
         composeTestRule.waitForContent(VariantAnimationTestDoc.javaClass.name)
 
@@ -140,13 +129,7 @@ class AnimationMidpoints {
 
         val state = mutableStateOf(TestState.A)
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-            ) {
-                SmartAnimateTestDoc.RotationTest(state = state.value)
-            }
-        }
+        composeTestRule.setContent { SmartAnimateTestDoc.RotationTest(state = state.value) }
 
         composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
@@ -162,13 +145,7 @@ class AnimationMidpoints {
 
         val state = mutableStateOf(TestState.A)
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-            ) {
-                SmartAnimateTestDoc.OpacityTest(state = state.value)
-            }
-        }
+        composeTestRule.setContent { SmartAnimateTestDoc.OpacityTest(state = state.value) }
 
         composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
@@ -184,13 +161,7 @@ class AnimationMidpoints {
 
         val state = mutableStateOf(TestState.A)
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-            ) {
-                SmartAnimateTestDoc.TextTest(state = state.value)
-            }
-        }
+        composeTestRule.setContent { SmartAnimateTestDoc.TextTest(state = state.value) }
 
         composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
@@ -206,13 +177,7 @@ class AnimationMidpoints {
 
         val state = mutableStateOf(TestState.A)
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-            ) {
-                SmartAnimateTestDoc.VectorTest(state = state.value)
-            }
-        }
+        composeTestRule.setContent { SmartAnimateTestDoc.VectorTest(state = state.value) }
 
         composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 
@@ -228,13 +193,7 @@ class AnimationMidpoints {
 
         val state = mutableStateOf(TestState.A)
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-            ) {
-                SmartAnimateTestDoc.CrossFadeOpacityTest(state = state.value)
-            }
-        }
+        composeTestRule.setContent { SmartAnimateTestDoc.CrossFadeOpacityTest(state = state.value) }
 
         composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
 

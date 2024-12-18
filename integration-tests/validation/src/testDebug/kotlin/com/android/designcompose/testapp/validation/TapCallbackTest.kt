@@ -18,13 +18,16 @@ package com.android.designcompose.testapp.validation
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils
+import com.android.designcompose.test.assertHasText
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.onDCDocAnyNode
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.ComponentTapCallbackDoc
 import com.android.designcompose.testapp.validation.examples.ComponentTapCallbackTest
 import org.junit.Rule
 import org.junit.Test
@@ -45,10 +48,12 @@ class TapCallbackTest {
     fun componentInstanceTapCallbackTest() {
         with(composeTestRule) {
             setContent { ComponentTapCallbackTest() }
-            onNodeWithText("Parked").assertExists()
-            onNodeWithText("Parked").performClick()
-            onNodeWithText("Reverse").assertExists()
-            captureRootRoboImage("ComponentTapCallbackTest-tapped")
+            with(onDCDocAnyNode(ComponentTapCallbackDoc)) {
+                assertHasText("Parked")
+                onNodeWithTag("Parked").performClick()
+                assertHasText("Reverse")
+                captureRootRoboImage("ComponentTapCallbackTest-tapped")
+            }
         }
     }
 }

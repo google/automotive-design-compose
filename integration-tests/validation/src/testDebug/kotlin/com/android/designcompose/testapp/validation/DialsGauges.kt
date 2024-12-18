@@ -16,14 +16,11 @@
 
 package com.android.designcompose.testapp.validation
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.designcompose.DesignDocSettings
-import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
@@ -50,6 +47,7 @@ class DialsGauges {
     fun progressTests() {
         with(composeTestRule) {
             setContent { DialsGaugesTest() }
+
             onNodeWithTag("angle").performTouchInput { down(Offset.Zero) }
             onNodeWithTag("angle").performTouchInput { moveTo(Offset(-200f, 0f)) }
             onNodeWithTag("angle").performTouchInput { cancel() }
@@ -112,13 +110,7 @@ class DialsGauges {
     @Test
     fun progressConstraintsTests() {
         with(composeTestRule) {
-            setContent {
-                CompositionLocalProvider(
-                    LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-                ) {
-                    ProgressConstraintsTest()
-                }
-            }
+            setContent { ProgressConstraintsTest() }
 
             onNodeWithTag("progress-bar").performTouchInput { down(Offset.Zero) }
             onNodeWithTag("progress-bar").performTouchInput { moveTo(Offset(-200f, 0f)) }

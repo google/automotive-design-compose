@@ -22,13 +22,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.ImageReplacementContext
-import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -166,13 +163,7 @@ class MainActivity : ComponentActivity() {
         DesignSettings.enableLiveUpdates(this)
         DesignSettings.addFontFamily(name = "Inter", family = NotosansFont)
 
-        setContent {
-            CompositionLocalProvider(
-                LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-            ) {
-                MainFrame()
-            }
-        }
+        setContent { MainFrame() }
     }
 
     @Composable

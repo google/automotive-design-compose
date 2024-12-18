@@ -35,3 +35,6 @@ enum class DocRenderStatus {
 
 val docRenderStatusSemanticsKey = SemanticsPropertyKey<DocRenderStatus>("DocRenderStatus")
 var SemanticsPropertyReceiver.sDocRenderStatus by docRenderStatusSemanticsKey
+
+val docRenderTextSemanticsKey = SemanticsPropertyKey<HashSet<String>>("DocRenderText")
+var SemanticsPropertyReceiver.sDocRenderText by docRenderTextSemanticsKey

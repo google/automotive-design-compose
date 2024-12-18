@@ -130,13 +130,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         // Lazy Grid doesn't actually use a doc
         // This example is not using any of the renderers.
         Triple("Lazy Grid", { LazyGridItemSpans() }, null),
-        // GH-636: Test takes too long to execute.
-        // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
-    )
-
-// Default renderer doesn't support animations
-val SQUOOSH_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
-    arrayListOf(
+        // Animations
         Triple("SA", { SmartAnimateTest() }, SmartAnimateTestDoc.javaClass.name),
         Triple("SA Variant", { VariantAnimationTest() }, VariantAnimationTestDoc.javaClass.name),
         Triple(
@@ -144,10 +138,8 @@ val SQUOOSH_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, Stri
             { VariantAnimationTimelineTest() },
             VariantAnimationTimelineTestDoc.javaClass.name,
         ),
-    )
-
-val DEFAULT_RENDERER_ONLY_EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
-    arrayListOf(
-        // No support for hyperlinks.
-        Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name)
+        // No support for hyperlinks in squoosh.
+        Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name),
+        // GH-636: Test takes too long to execute.
+        // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

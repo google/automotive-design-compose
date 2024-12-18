@@ -17,10 +17,7 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.android.designcompose.DesignDocSettings
-import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.TestUtils
 import com.android.designcompose.test.Fetchable
 import com.android.designcompose.test.internal.designComposeRoborazziRule
@@ -28,9 +25,7 @@ import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTestDoc
 import com.android.designcompose.testapp.validation.examples.CustomBrushTestDoc
-import com.android.designcompose.testapp.validation.examples.DEFAULT_RENDERER_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.EXAMPLES
-import com.android.designcompose.testapp.validation.examples.SQUOOSH_ONLY_EXAMPLES
 import com.android.designcompose.testapp.validation.examples.StateCustomizationsDoc
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
@@ -58,22 +53,11 @@ class RenderAllExamples(private val config: TestConfig) {
         internal val fileComposable: @Composable () -> Unit,
         internal val fileClass: String,
         // This value doesn't do anything if there is already one set in the test example.
-        internal val useSquoosh: Boolean = false,
     )
 
     @Test
     fun testRender() {
-        if (config.useSquoosh) {
-            composeTestRule.setContent {
-                CompositionLocalProvider(
-                    LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)
-                ) {
-                    config.fileComposable()
-                }
-            }
-        } else {
-            composeTestRule.setContent(config.fileComposable)
-        }
+        composeTestRule.setContent(config.fileComposable)
 
         liveUpdateTestRule.performLiveFetch()
 
@@ -99,7 +83,6 @@ class RenderAllExamples(private val config: TestConfig) {
             val defaultRendererExamples =
                 mutableListOf<Triple<String, @Composable () -> Unit, String?>>()
             defaultRendererExamples.addAll(EXAMPLES)
-            defaultRendererExamples.addAll(DEFAULT_RENDERER_ONLY_EXAMPLES)
             testConfigs.addAll(
                 defaultRendererExamples
                     .filter { it.third != null && !disabledTests.contains(it.third!!) }
@@ -108,23 +91,6 @@ class RenderAllExamples(private val config: TestConfig) {
                     }
             )
 
-            val squooshRendererExamples =
-                mutableListOf<Triple<String, @Composable () -> Unit, String?>>()
-            squooshRendererExamples.addAll(SQUOOSH_ONLY_EXAMPLES)
-            squooshRendererExamples.addAll(EXAMPLES)
-
-            testConfigs.addAll(
-                squooshRendererExamples
-                    .filter { it.third != null && !disabledTests.contains(it.third!!) }
-                    .map {
-                        TestConfig(
-                            it.first.replace("[\\s*]".toRegex(), "-").plus("_SQUOOSH"),
-                            it.second,
-                            it.third!!,
-                            useSquoosh = true,
-                        )
-                    }
-            )
             return testConfigs
         }
     }

@@ -85,7 +85,6 @@ import com.android.designcompose.proto.textAlignVerticalFromInt
 import com.android.designcompose.proto.textDecorationFromInt
 import com.android.designcompose.proto.textOverflowFromInt
 import com.android.designcompose.proto.toInt
-import com.android.designcompose.proto.toOptDimProto
 import com.android.designcompose.proto.top
 import com.android.designcompose.proto.type
 import com.android.designcompose.proto.windingRuleFromInt
@@ -107,7 +106,6 @@ import com.android.designcompose.serdegen.FontStyle
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.ItemSpacingType
 import com.android.designcompose.serdegen.JustifyContent
-import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.LayoutSizing
 import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.LayoutTransform
@@ -137,7 +135,6 @@ import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.serdegen.ViewStyle
 import java.util.Optional
-import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -863,63 +860,6 @@ internal fun ViewStyle.asBuilder(): ViewStyle.Builder {
     return builder
 }
 
-// Take the external layout fields of ViewStyle and put them into an ExternalLayoutData object.
-internal fun ViewStyle.externalLayoutData(): ExternalLayoutData {
-    return ExternalLayoutData(
-        layoutStyle.margin.orElseThrow { NoSuchFieldException("Malformed data: Margin unset") },
-        layoutStyle.top.getDim(),
-        layoutStyle.left.getDim(),
-        layoutStyle.bottom.getDim(),
-        layoutStyle.right.getDim(),
-        layoutStyle.width.getDim(),
-        layoutStyle.height.getDim(),
-        layoutStyle.min_width.getDim(),
-        layoutStyle.min_height.getDim(),
-        layoutStyle.max_width.getDim(),
-        layoutStyle.max_height.getDim(),
-        nodeStyle.node_size.getOrDefault(com.android.designcompose.serdegen.Size(0f, 0f)),
-        layoutStyle.bounding_box.get(),
-        layoutStyle.flex_grow,
-        layoutStyle.flex_basis.getDim(),
-        alignSelfFromInt(layoutStyle.align_self),
-        positionTypeFromInt(layoutStyle.position_type),
-        nodeStyle.transform,
-        nodeStyle.relative_transform,
-    )
-}
-
-// Take the external layout data and merge it into this ViewStyle, overriding its values and
-// returning a new ViewStyle.
-internal fun ViewStyle.withExternalLayoutData(data: ExternalLayoutData): ViewStyle {
-    val layoutStyle = layoutStyle.asBuilder()
-    val nodeStyle = nodeStyle.asBuilder()
-    layoutStyle.margin = Optional.of(data.margin)
-    layoutStyle.top = data.top.toOptDimProto()
-    layoutStyle.left = data.left.toOptDimProto()
-    layoutStyle.bottom = data.bottom.toOptDimProto()
-    layoutStyle.right = data.right.toOptDimProto()
-    nodeStyle.node_size = Optional.of(data.nodeSize)
-    layoutStyle.bounding_box = Optional.of(data.boundingBox)
-    layoutStyle.width = data.width.toOptDimProto()
-    layoutStyle.height = data.height.toOptDimProto()
-
-    layoutStyle.min_width = data.minWidth.toOptDimProto()
-    layoutStyle.min_height = data.minHeight.toOptDimProto()
-    layoutStyle.max_width = data.maxWidth.toOptDimProto()
-    layoutStyle.max_height = data.maxHeight.toOptDimProto()
-    layoutStyle.flex_grow = data.flexGrow
-    layoutStyle.flex_basis = data.flexBasis.toOptDimProto()
-    layoutStyle.align_self = data.alignSelf.toInt()
-    layoutStyle.position_type = data.positionType.toInt()
-    nodeStyle.transform = data.transform
-    nodeStyle.relative_transform = data.relativeTransform
-
-    val overrideStyle = this.asBuilder()
-    overrideStyle.layout_style = Optional.of(layoutStyle.build())
-    overrideStyle.node_style = Optional.of(nodeStyle.build())
-    return overrideStyle.build()
-}
-
 // Get the raw width in a view style from the width property if it is a fixed size, or from the
 // node_size property if not.
 internal fun ViewStyle.fixedWidth(density: Float): Float {
@@ -974,39 +914,11 @@ internal fun BlendMode.useLayer() =
         else -> true
     }
 
-internal fun View.hasChildMask(): Boolean {
-    val containerData = data.get()?.view_data_type?.get()
-    if (containerData is ViewDataType.Container) {
-        return containerData.value.children.any { it.isMask() }
-    }
-    return false
-}
-
 internal fun View.isMask(): Boolean {
     val containerData = data.get()?.view_data_type?.get()
     return if (containerData is ViewDataType.Container) {
         containerData.value.shape.get().isMask()
     } else false
-}
-
-// Returns whether this view should use infinite constraints on its children. This is true if two
-// things are true:
-// First, the view has a child that has a grid_layout field in its style, meaning it was created
-// using the list preview widget.
-// Second, the position_type is relative, which is only set if the widget layout parameters are set
-// to hug contents.
-internal fun View.useInfiniteConstraints(): Boolean {
-    if (positionTypeFromInt(style.get().layoutStyle.position_type) !is PositionType.Relative)
-        return false
-
-    val containerData = data.get()?.view_data_type?.get()
-    if (containerData !is ViewDataType.Container) return false
-
-    val container = containerData as ViewDataType.Container
-    if (container.value.children.size != 1) return false
-
-    val child = container.value.children.first()
-    return child.style.get().nodeStyle.grid_layout_type.isPresent
 }
 
 internal fun View.hasScrolling(): Boolean {
@@ -1690,20 +1602,6 @@ internal fun getNodeRenderSize(
             layoutSize.height
         else style.layoutStyle.height.getDim().pointsAsDp(density).value
     return Size(width, height)
-}
-
-internal fun com.android.designcompose.serdegen.Size.isValid(): Boolean = width >= 0 && height >= 0
-
-internal fun Layout.withDensity(density: Float): Layout {
-    return Layout(
-        this.order,
-        this.width * density,
-        this.height * density,
-        this.left * density,
-        this.top * density,
-        this.content_width * density,
-        this.content_height * density,
-    )
 }
 
 // Convert a DesignCompose animation transition into a Jetpack Compose animationSpec.

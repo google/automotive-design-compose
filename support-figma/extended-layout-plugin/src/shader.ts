@@ -18,6 +18,8 @@ import * as Utils from "./utils";
 
 const SHADER_PLUGIN_DATA_KEY = "shader";
 const SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY = "shaderFallbackColor";
+// Private plugin data, used for clearing shader functionalities
+const SHADER_IMAGE_HASH = "shaderImageHash";
 
 export const shaderMap: ReadonlyMap<string, string> = new Map([
   ["cloudy_sky", __uiFiles__.cloudy_sky],
@@ -71,6 +73,7 @@ export async function insertImage(imageBytes: Uint8Array) {
         scaleMode: "FILL",
       },
     ];
+    selection[0].setPluginData(SHADER_IMAGE_HASH, imageHash);
   } else {
     figma.notify(
       "Current selection doesn't support image fill. Please select 1 node that can have an image fill..."
@@ -89,18 +92,26 @@ export async function setShader(shader: string, shaderFallbackColor: string) {
     );
     return;
   }
-  let nodeWithFills: MinimalFillsMixin = selection[0] as MinimalFillsMixin;
+  setShaderToNode(selection[0], shader, shaderFallbackColor);
+}
+
+function setShaderToNode(
+  node: SceneNode,
+  shader: string,
+  shaderFallbackColor: string
+) {
+  let nodeWithFills: MinimalFillsMixin = node as MinimalFillsMixin;
 
   if (nodeWithFills) {
     if (shader) {
-      selection[0].setSharedPluginData(
+      node.setSharedPluginData(
         Utils.SHARED_PLUGIN_NAMESPACE,
         SHADER_PLUGIN_DATA_KEY,
         shader
       );
     } else {
       // Clears the shader
-      selection[0].setSharedPluginData(
+      node.setSharedPluginData(
         Utils.SHARED_PLUGIN_NAMESPACE,
         SHADER_PLUGIN_DATA_KEY,
         ""
@@ -108,18 +119,20 @@ export async function setShader(shader: string, shaderFallbackColor: string) {
     }
     if (shaderFallbackColor) {
       const rgbaPresent = figma.util.rgba(shaderFallbackColor);
-      selection[0].setSharedPluginData(
+      node.setSharedPluginData(
         Utils.SHARED_PLUGIN_NAMESPACE,
         SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY,
         rgbaPresent ? JSON.stringify(rgbaPresent) : ""
       );
       if (!rgbaPresent) {
         // Not expecting this to happen but shows an error message if anything unexpected raises up.
-        figma.notify("Invalid shader fallback color! Not using any shader fallback color.");
+        figma.notify(
+          "Invalid shader fallback color! Not using any shader fallback color."
+        );
       }
     } else {
       // Clears the fallback color
-      selection[0].setSharedPluginData(
+      node.setSharedPluginData(
         Utils.SHARED_PLUGIN_NAMESPACE,
         SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY,
         ""
@@ -129,5 +142,81 @@ export async function setShader(shader: string, shaderFallbackColor: string) {
     figma.notify(
       "Current selection doesn't support image fill. Please select 1 node that can have an image fill..."
     );
+  }
+}
+
+////////////////// Clear //////////////////
+export async function clearShader() {
+  await figma.loadAllPagesAsync();
+  let selection = figma.currentPage.selection;
+
+  // We don't support multiple selections.
+  if (!selection || selection.length != 1 || !selection[0]) {
+    figma.notify(
+      "No selections or multiple selections. Please select 1 node that can have an image fill..."
+    );
+    return;
+  }
+
+  clearShaderFromNode(selection[0]);
+
+  figma.notify("Shader has been removed from the current node.");
+}
+
+function clearShaderFromNode(node: SceneNode) {
+  let shaderCode = node.getSharedPluginData(
+    Utils.SHARED_PLUGIN_NAMESPACE,
+    SHADER_PLUGIN_DATA_KEY
+  );
+  if (shaderCode && shaderCode.length != 0) {
+    let nodeWithFills: MinimalFillsMixin = node as MinimalFillsMixin;
+
+    if (nodeWithFills) {
+      const shaderImageHash = node.getPluginData(SHADER_IMAGE_HASH);
+      let fills = nodeWithFills.fills as ReadonlyArray<Paint>;
+      if (fills) {
+        let filteredFills = fills.filter(
+          (paint) => paint.type != "IMAGE" || paint.imageHash != shaderImageHash
+        );
+        if (node.type == "TEXT" && filteredFills.length == 0) {
+          nodeWithFills.fills = [
+            {
+              type: "SOLID",
+              color: figma.util.rgb("#FF46A2"),
+            },
+          ];
+        } else {
+          nodeWithFills.fills = filteredFills;
+        }
+      }
+    }
+    // Clear the saved shader image hash.
+    node.setPluginData(SHADER_IMAGE_HASH, "");
+  }
+  setShaderToNode(node, "", "");
+}
+
+export async function clearAll() {
+  Utils.dcLog("Clear shader data from plugin data.");
+
+  await figma.loadAllPagesAsync();
+
+  for (let page of figma.root.children) {
+    for (let child of page.children) {
+      await clearNodeRecursivelyAsync(child);
+    }
+  }
+  figma.closePlugin("All shaders have been removed.");
+}
+
+async function clearNodeRecursivelyAsync(node: SceneNode) {
+  clearShaderFromNode(node);
+
+  // Recurse into any children.
+  let maybeParent = node as ChildrenMixin;
+  if (maybeParent.children) {
+    for (let child of maybeParent.children) {
+      await clearNodeRecursivelyAsync(child);
+    }
   }
 }

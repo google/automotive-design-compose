@@ -411,3 +411,25 @@ a:active {
 .page-padding-small {
   padding: 8px;
 }
+
+/** Collapsible */
+.collapsible {
+  padding: 8px;
+  background-color: #777;
+  color: white;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: var(--font-size-medium);
+  font-weight: var(--font-weight-medium);
+}
+
+.active {
+  background-color: #555;
+}
+
+.content {
+  display: none;
+  background-color: #f1f1f1;
+}

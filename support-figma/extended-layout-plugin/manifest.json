@@ -35,6 +35,10 @@
     {
       "name": "Shader",
       "command": "shader"
+    },
+    {
+      "name": "Clear All Shaders",
+      "command": "shader-clear-all"
     }
 
   ],

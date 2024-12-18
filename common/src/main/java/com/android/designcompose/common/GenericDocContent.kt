@@ -17,13 +17,10 @@
 package com.android.designcompose.common
 
 import com.android.designcompose.definition.DesignComposeDefinition
+import com.android.designcompose.definition.DesignComposeDefinitionHeader
 import com.android.designcompose.definition.view.View
+import com.android.designcompose.live_update.figma.FigmaDocInfo
 import com.android.designcompose.live_update.figma.ServerFigmaDoc
-import com.android.designcompose.serdegen.DesignComposeDefinitionHeader
-import com.android.designcompose.serdegen.FigmaDocInfo
-import com.android.designcompose.serdegen.ViewDataType
-import com.novi.bincode.BincodeDeserializer
-import com.novi.bincode.BincodeSerializer
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -57,10 +54,11 @@ class GenericDocContent(
     @kotlin.ExperimentalUnsignedTypes
     fun toSerializedBytes(feedback: FeedbackImpl): ByteArray? {
         try {
-            val serializer = BincodeSerializer()
-            header.serialize(serializer)
-            document.serialize(serializer)
-            return serializer._bytes.toUByteArray().asByteArray() + imageSessionData
+            val outputStream = ByteArrayOutputStream()
+            header.writeDelimitedTo(outputStream)
+            document.writeDelimitedTo(outputStream)
+            outputStream.write(imageSessionData)
+            return outputStream.toByteArray()
         } catch (error: Throwable) {
             feedback.documentSaveError(error.toString(), docId)
         }
@@ -74,15 +72,15 @@ fun decodeServerBaseDoc(
     docId: DesignDocId,
     feedback: FeedbackImpl,
 ): GenericDocContent? {
-    val deserializer = BincodeDeserializer(docBytes)
-    val header = decodeHeader(deserializer, docId, feedback) ?: return null
+    val docStream = docBytes.inputStream()
+    val header = decodeHeader(docStream, docId, feedback) ?: return null
 
     // Server sends content in the format of ServerFigmaDoc, which has additional data
-    val serverDoc = ServerFigmaDoc.deserialize(deserializer)
-    serverDoc.errors?.forEach { feedback.documentUpdateWarnings(docId, it) }
-    val content = serverDoc.figma_doc.get()
-    val imageSessionData = decodeImageSession(docBytes, deserializer)
-    feedback.documentDecodeSuccess(header.dc_version, header.name, header.last_modified, docId)
+    val serverDoc = ServerFigmaDoc.parseDelimitedFrom(docStream)
+    serverDoc.errorsList?.forEach { feedback.documentUpdateWarnings(docId, it) }
+    val content = serverDoc.figmaDoc
+    val imageSessionData = decodeImageSession(docStream)
+    feedback.documentDecodeSuccess(header.dcVersion, header.name, header.lastModified, docId)
 
     val viewMap = content.views()
     val variantViewMap = createVariantViewMap(viewMap)
@@ -97,31 +95,29 @@ fun decodeServerBaseDoc(
         nodeIdMap,
         imageSessionData.imageSessionData,
         imageSessionData.imageSession,
-        serverDoc.branches,
-        serverDoc.project_files,
+        serverDoc.branchesList,
+        serverDoc.projectFilesList,
     )
 }
 
 /// Read a serialized disk document from the given stream. Deserialize it and deserialize its images
 fun decodeDiskBaseDoc(
-    doc: InputStream,
+    docStream: InputStream,
     docId: DesignDocId,
     feedback: FeedbackImpl,
 ): GenericDocContent? {
-    val docBytes = readDocBytes(doc, docId, feedback)
-    val deserializer = BincodeDeserializer(docBytes)
+    feedback.documentDecodeStart(docId)
 
-    val header = decodeHeader(deserializer, docId, feedback) ?: return null
+    val header = decodeHeader(docStream, docId, feedback) ?: return null
+    val content = DesignComposeDefinition.parseDelimitedFrom(docStream)
 
-    // Disk loads are in the format of DesignComposeDefinition
-    val content = DesignComposeDefinition.deserialize(deserializer)
-    val imageSessionData = decodeImageSession(docBytes, deserializer)
+    val imageSessionData = decodeImageSession(docStream)
     val viewMap = content.views()
     val variantMap = createVariantViewMap(viewMap)
     val variantPropertyMap = createVariantPropertyMap(viewMap)
     val nodeIdMap = createNodeIdMap(viewMap)
 
-    feedback.documentDecodeSuccess(header.dc_version, header.name, header.last_modified, docId)
+    feedback.documentDecodeSuccess(header.dcVersion, header.name, header.lastModified, docId)
 
     return GenericDocContent(
         docId,
@@ -183,56 +179,23 @@ private fun createNodeIdMap(nodes: Map<NodeQuery, View>?): HashMap<String, View>
     val nodeIdMap = HashMap<String, View>()
     fun addViewToMap(view: View) {
         nodeIdMap[view.id] = view
-        (view.data.get().view_data_type.get() as? ViewDataType.Container)?.let { container ->
-            container.value.children.forEach { addViewToMap(it) }
+        if (view.data.hasContainer()) {
+            view.data.container.childrenList.forEach { addViewToMap(it) }
         }
     }
     nodes?.values?.forEach { addViewToMap(it) }
     return nodeIdMap
 }
 
-fun readDocBytes(doc: InputStream, docId: DesignDocId, feedback: FeedbackImpl): ByteArray {
-    // Read the doc from assets or network...
-    feedback.documentDecodeStart(docId)
-    val buffer = ByteArrayOutputStream()
-    var nRead: Int
-    val tmp = ByteArray(128)
-
-    do {
-        nRead = doc.read(tmp, 0, tmp.size)
-        if (nRead != -1) buffer.write(tmp, 0, nRead)
-    } while (nRead != -1)
-    buffer.flush()
-    val docBytes = buffer.toByteArray()
-    feedback.documentDecodeReadBytes(docBytes.size, docId)
-    return docBytes
-}
-
-fun readErrorBytes(errorStream: InputStream?): String {
-    if (errorStream == null) return ""
-
-    val buffer = ByteArrayOutputStream()
-    var nRead: Int
-    val tmp = ByteArray(128)
-
-    do {
-        nRead = errorStream.read(tmp, 0, tmp.size)
-        if (nRead != -1) buffer.write(tmp, 0, nRead)
-    } while (nRead != -1)
-    buffer.flush()
-    val docBytes = buffer.toByteArray()
-    return String(docBytes)
-}
-
 private fun decodeHeader(
-    deserializer: BincodeDeserializer,
+    docStream: InputStream,
     docId: DesignDocId,
     feedback: FeedbackImpl,
 ): DesignComposeDefinitionHeader? {
     // Now attempt to deserialize the doc)
-    val header = DesignComposeDefinitionHeader.deserialize(deserializer)
-    if (header.dc_version != FSAAS_DOC_VERSION) {
-        feedback.documentDecodeVersionMismatch(FSAAS_DOC_VERSION, header.dc_version, docId)
+    val header = DesignComposeDefinitionHeader.parseDelimitedFrom(docStream)
+    if (header.dcVersion != FSAAS_DOC_VERSION) {
+        feedback.documentDecodeVersionMismatch(FSAAS_DOC_VERSION, header.dcVersion, docId)
         return null
     }
     return header
@@ -258,12 +221,9 @@ private data class ImageSession(val imageSessionData: ByteArray, var imageSessio
     }
 }
 
-private fun decodeImageSession(
-    docBytes: ByteArray,
-    deserializer: BincodeDeserializer,
-): ImageSession {
-    // The image session data is a JSON blob attached after the bincode document content.
-    val imageSessionData = docBytes.copyOfRange(deserializer._buffer_offset, docBytes.size)
+private fun decodeImageSession(docStream: InputStream): ImageSession {
+    // The image session data is a JSON blob attached after the proto document content.
+    val imageSessionData = docStream.readBytes()
     val imageSession =
         if (imageSessionData.isNotEmpty()) {
             String(imageSessionData, Charsets.UTF_8)

@@ -434,6 +434,7 @@ dependencies = [
  "serde_json",
  "svgtypes",
  "taffy",
+ "tempfile",
  "testdir",
  "thiserror",
  "unicode-segmentation",

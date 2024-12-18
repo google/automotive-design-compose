@@ -38,6 +38,17 @@ publishing {
     }
 }
 
+sourceSets {
+    test {
+        resources.srcDirs(rootProject.rootDir.resolve("designcompose/src/main/assets"))
+        resources.srcDirs(
+            rootProject.rootDir.resolve("reference-apps/helloworld/helloworld-app/src/main/assets")
+        )
+        // Enable testing of the Validation dcf files once we're able to serialize them again
+        // resources.srcDirs(rootProject.rootDir.resolve("integration-tests/validation/src/main/assets"))
+    }
+}
+
 /**
  * Serde gen task
  *

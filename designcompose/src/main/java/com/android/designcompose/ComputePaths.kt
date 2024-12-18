@@ -42,6 +42,9 @@ import com.android.designcompose.serdegen.StrokeCap
 import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.utils.asPath
+import com.android.designcompose.utils.getNodeRenderSize
+import com.android.designcompose.utils.toComposeStrokeCap
 import kotlin.jvm.optionals.getOrNull
 
 /// ComputedPaths is a set of paths derived from a shape and style definition. These

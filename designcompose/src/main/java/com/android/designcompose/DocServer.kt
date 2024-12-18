@@ -37,6 +37,7 @@ import androidx.tracing.Trace.beginSection
 import androidx.tracing.Trace.endSection
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.utils.validateFigmaDocId
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream

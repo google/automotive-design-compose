@@ -79,7 +79,7 @@ import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.LocalVariableState
 import com.android.designcompose.VariableState
-import com.android.designcompose.asBuilder
+import com.android.designcompose.utils.asBuilder
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DesignDocId

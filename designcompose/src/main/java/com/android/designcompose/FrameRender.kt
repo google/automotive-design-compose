@@ -68,6 +68,16 @@ import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewShape
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.squoosh.SquooshResolvedNode
+import com.android.designcompose.utils.asBrush
+import com.android.designcompose.utils.asComposeBlendMode
+import com.android.designcompose.utils.asComposeTransform
+import com.android.designcompose.utils.blurFudgeFactor
+import com.android.designcompose.utils.fixedHeight
+import com.android.designcompose.utils.fixedWidth
+import com.android.designcompose.utils.getNodeRenderSize
+import com.android.designcompose.utils.pointsAsDp
+import com.android.designcompose.utils.toColor
+import com.android.designcompose.utils.useLayer
 import java.lang.Float.max
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull

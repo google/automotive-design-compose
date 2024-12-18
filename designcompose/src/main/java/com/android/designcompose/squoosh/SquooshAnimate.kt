@@ -23,11 +23,10 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.ui.geometry.Size
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.VariableState
-import com.android.designcompose.asBuilder
+import com.android.designcompose.utils.asBuilder
 import com.android.designcompose.decompose
-import com.android.designcompose.fixedHeight
-import com.android.designcompose.fixedWidth
-import com.android.designcompose.proto.get
+import com.android.designcompose.utils.fixedHeight
+import com.android.designcompose.utils.fixedWidth
 import com.android.designcompose.proto.ifContainerGetShape
 import com.android.designcompose.proto.ifTextGetText
 import com.android.designcompose.proto.nodeStyle

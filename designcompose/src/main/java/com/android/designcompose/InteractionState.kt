@@ -34,6 +34,7 @@ import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.squoosh.AnimationTransition
 import com.android.designcompose.squoosh.SmartAnimateTransition
+import com.android.designcompose.utils.asAnimationSpec
 import kotlin.jvm.optionals.getOrNull
 
 // In order to differentiate multiple instances of a component, we use a combination of the node ID

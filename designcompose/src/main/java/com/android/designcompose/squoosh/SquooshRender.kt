@@ -41,12 +41,12 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.VariableState
-import com.android.designcompose.asBrush
-import com.android.designcompose.asComposeBlendMode
-import com.android.designcompose.asComposeTransform
+import com.android.designcompose.utils.asBrush
+import com.android.designcompose.utils.asComposeBlendMode
+import com.android.designcompose.utils.asComposeTransform
 import com.android.designcompose.getBrush
 import com.android.designcompose.getBrushFunction
-import com.android.designcompose.isMask
+import com.android.designcompose.utils.isMask
 import com.android.designcompose.proto.blendModeFromInt
 import com.android.designcompose.proto.getType
 import com.android.designcompose.proto.nodeStyle
@@ -59,7 +59,7 @@ import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.squooshShapeRender
-import com.android.designcompose.useLayer
+import com.android.designcompose.utils.useLayer
 import kotlin.jvm.optionals.getOrNull
 import kotlin.system.measureTimeMillis
 

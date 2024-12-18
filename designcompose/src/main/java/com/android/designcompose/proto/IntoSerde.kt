@@ -27,6 +27,8 @@ import com.android.designcompose.definition.layout.PositionType
 import com.android.designcompose.serdegen.Size
 import java.util.Optional
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun LayoutChangedResponse.Layout.intoSerde() =
     com.android.designcompose.serdegen.Layout(
         order,
@@ -38,6 +40,8 @@ internal fun LayoutChangedResponse.Layout.intoSerde() =
         contentHeight,
     )
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun ItemSpacing.intoSerde() =
     when (itemSpacingTypeCase) {
         ItemSpacing.ItemSpacingTypeCase.FIXED ->
@@ -55,8 +59,12 @@ internal fun ItemSpacing.intoSerde() =
         else -> throw IllegalArgumentException("Unknown ItemSpacing: $this") // Should never happen.
     }
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun com.android.designcompose.definition.element.Size.intoSerde() = Size(width, height)
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun AlignSelf.intoSerde() =
     when (this) {
         AlignSelf.ALIGN_SELF_AUTO -> com.android.designcompose.serdegen.AlignSelf.Auto()
@@ -68,6 +76,8 @@ internal fun AlignSelf.intoSerde() =
         else -> throw IllegalArgumentException("Unknown AlignSelf: $this") // Should never happen
     }
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun AlignContent.intoSerde() =
     when (this) {
         AlignContent.ALIGN_CONTENT_FLEX_START ->
@@ -85,6 +95,8 @@ internal fun AlignContent.intoSerde() =
         else -> throw IllegalArgumentException("Unknown AlignContent: $this") // Should never happen
     }
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun AlignItems.intoSerde() =
     when (this) {
         AlignItems.ALIGN_ITEMS_FLEX_START ->
@@ -96,6 +108,8 @@ internal fun AlignItems.intoSerde() =
         else -> throw IllegalArgumentException("Unknown AlignItems: $this") // Should never happen
     }
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun FlexDirection.intoSerde() =
     when (this) {
         FlexDirection.FLEX_DIRECTION_ROW -> com.android.designcompose.serdegen.FlexDirection.Row()
@@ -109,6 +123,8 @@ internal fun FlexDirection.intoSerde() =
             throw IllegalArgumentException("Unknown FlexDirection: $this") // Should never happen
     }
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun JustifyContent.intoSerde() =
     when (this) {
         JustifyContent.JUSTIFY_CONTENT_FLEX_START ->
@@ -127,6 +143,8 @@ internal fun JustifyContent.intoSerde() =
             throw IllegalArgumentException("Unknown JustifyContent: $this") // Should never happen
     }
 
+/** @deprecated This is for the old Design Compose infra, please don't use it anymore. */
+@Deprecated("b/314820134: This is for the old Design Compose infra, please don't use it anymore.")
 internal fun PositionType.intoSerde() =
     when (this) {
         PositionType.POSITION_TYPE_RELATIVE ->

@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.proto.StrokeAlignType
 import com.android.designcompose.proto.blendModeFromInt
 import com.android.designcompose.proto.getDim
@@ -66,8 +67,17 @@ import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.squoosh.SquooshResolvedNode
+import com.android.designcompose.utils.asBrush
+import com.android.designcompose.utils.asComposeBlendMode
+import com.android.designcompose.utils.asComposeTransform
+import com.android.designcompose.utils.blurFudgeFactor
+import com.android.designcompose.utils.fixedHeight
+import com.android.designcompose.utils.fixedWidth
+import com.android.designcompose.utils.getNodeRenderSize
+import com.android.designcompose.utils.pointsAsDp
+import com.android.designcompose.utils.toColor
+import com.android.designcompose.utils.useLayer
 import java.lang.Float.max
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull

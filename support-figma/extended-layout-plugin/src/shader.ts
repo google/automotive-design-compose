@@ -18,6 +18,7 @@ import * as Utils from "./utils";
 
 const SHADER_PLUGIN_DATA_KEY = "shader";
 const SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY = "shaderFallbackColor";
+const SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY = "shaderFloatUniforms";
 
 export const shaderMap: ReadonlyMap<string, string> = new Map([
   ["cloudy_sky", __uiFiles__.cloudy_sky],
@@ -78,7 +79,7 @@ export async function insertImage(imageBytes: Uint8Array) {
   }
 }
 
-export async function setShader(shader: string, shaderFallbackColor: string) {
+export async function setShader(shader: string, shaderFallbackColor: string, shaderFloatUniforms: Array<[string, string]>) {
   await figma.loadAllPagesAsync();
   let selection = figma.currentPage.selection;
 
@@ -122,6 +123,26 @@ export async function setShader(shader: string, shaderFallbackColor: string) {
       selection[0].setSharedPluginData(
         Utils.SHARED_PLUGIN_NAMESPACE,
         SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY,
+        ""
+      );
+    }
+    if (shaderFloatUniforms) {
+      const floatUniformsJson: { [key: string]: string } = {};
+      for (const [key, value] of shaderFloatUniforms) {
+        floatUniformsJson[key] = value;
+      }
+      console.log(JSON.stringify(floatUniformsJson));
+
+      selection[0].setSharedPluginData(
+        Utils.SHARED_PLUGIN_NAMESPACE,
+        SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY,
+        JSON.stringify(floatUniformsJson)
+      );
+    } else {
+      // Clears the float uniforms
+      selection[0].setSharedPluginData(
+        Utils.SHARED_PLUGIN_NAMESPACE,
+        SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY,
         ""
       );
     }

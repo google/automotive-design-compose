@@ -26,6 +26,7 @@ use crate::definition::modifier::{BlendMode, TextAlign, TextAlignVertical, TextO
 use crate::definition::plugin::FrameExtras;
 use crate::definition::view::view::RenderMethod;
 use crate::definition::view::view_data::{Container, ViewDataType};
+use log::error;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU16;
 
@@ -317,8 +318,7 @@ impl View {
         reactions: Option<Vec<Reaction>>,
         scroll_info: ScrollInfo,
         frame_extras: Option<FrameExtras>,
-        shader: Option<String>,
-        shader_fallback_color: Option<Color>,
+        shader_data: Option<ShaderData>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
@@ -340,8 +340,7 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
-            shader,
-            shader_fallback_color,
+            shader_data,
         }
     }
     pub fn new_text(
@@ -373,8 +372,7 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
-            shader: None,
-            shader_fallback_color: None,
+            shader_data: None,
         }
     }
     pub fn new_styled_text(
@@ -405,8 +403,7 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes: HashMap::new(),
-            shader: None,
-            shader_fallback_color: None,
+            shader_data: None,
         }
     }
     pub fn add_child(&mut self, child: View) {
@@ -424,5 +421,34 @@ impl View {
     }
     pub fn style_mut(&mut self) -> &mut ViewStyle {
         self.style.as_mut().expect("ViewStyle is required.")
+    }
+}
+
+impl ShaderData {
+    pub fn new_shader_data(
+        shader: Option<String>,
+        shader_fallback_color: Option<Color>,
+        shader_float_uniform_map: HashMap<String, String>,
+    ) -> Option<ShaderData> {
+        if let Some(shader_prog) = shader {
+            let mut shader_float_uniforms: HashMap<String, f32> = HashMap::new();
+            for (key, value) in shader_float_uniform_map {
+                match value.parse::<f32>() {
+                    Ok(float_val) => {
+                        shader_float_uniforms.insert(key, float_val);
+                    }
+                    Err(e) => {
+                        error!("Error parsing float for shader float uniform '{}': {}", key, e);
+                    }
+                }
+            }
+            return Some(ShaderData {
+                shader: shader_prog,
+                shader_fallback_color,
+                shader_float_uniforms,
+            });
+        } else {
+            None
+        }
     }
 }

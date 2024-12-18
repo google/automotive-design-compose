@@ -22,16 +22,7 @@ import com.android.designcompose.squoosh.CustomVariantTransition
 /**
  * When applied as a compositionLocal, these settings will alter features or add functionality to
  * DesignCompose Composables
- *
- * @property useSquoosh: Enable use of the Squoosh renderer. Squoosh implements its own view tree,
- *   rather than using Compose, which brings some performance and flexibility benefits. Squoosh
- *   isn't feature complete (no scrolling, no lists, no transformed input), but it does add
- *   animations and is likely the direction that DesignCompose will move in to be lighter weight and
- *   better integrate with external layout.
  */
-class DesignDocSettings(
-    val useSquoosh: Boolean = true,
-    val customVariantTransition: CustomVariantTransition? = null,
-)
+class DesignDocSettings(val customVariantTransition: CustomVariantTransition? = null)
 
 val LocalDesignDocSettings = compositionLocalOf { DesignDocSettings() }

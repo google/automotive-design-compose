@@ -32,7 +32,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.CustomizationContext
-import com.android.designcompose.DesignParentLayout
 import com.android.designcompose.GetDesignNodeData
 import com.android.designcompose.LayoutInfoColumn
 import com.android.designcompose.LayoutInfoGrid
@@ -48,7 +47,6 @@ import com.android.designcompose.pointsAsDp
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.type
-import com.android.designcompose.rootParentLayoutInfo
 import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacingType
@@ -355,43 +353,40 @@ private fun addGridContent(
                 val verticalSpacing =
                     (layoutInfo.mainAxisSpacing.type() as? ItemSpacingType.Fixed)?.value ?: 0
 
-                DesignParentLayout(rootParentLayoutInfo) {
-                    LazyHorizontalGrid(
-                        rows =
-                            object : GridCells {
-                                override fun Density.calculateCrossAxisCellSizes(
-                                    availableSize: Int,
-                                    spacing: Int,
-                                ): List<Int> {
-                                    val mainAxisSize = (availableSize.toFloat() / density).toInt()
-                                    setGridMainAxisSize(mainAxisSize)
-                                    return calculateCellsCrossAxisSizeImpl(
-                                        availableSize,
-                                        rowCount,
-                                        spacing,
-                                    )
-                                }
-                            },
-                        horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(
-                                (when (val spacing = layoutInfo.mainAxisSpacing.type()) {
-                                        is ItemSpacingType.Fixed -> spacing.value
-                                        is ItemSpacingType.Auto -> {
-                                            if (rowCount > 1)
-                                                (gridMainAxisSize -
-                                                    (spacing.value.height * rowCount)) /
-                                                    (rowCount - 1)
-                                            else spacing.value.width
-                                        }
-                                        else -> verticalSpacing
-                                    })
-                                    .dp
-                            ),
-                        userScrollEnabled = layoutInfo.scrollingEnabled,
-                    ) {
-                        lazyItemContent()
-                    }
+                LazyHorizontalGrid(
+                    rows =
+                        object : GridCells {
+                            override fun Density.calculateCrossAxisCellSizes(
+                                availableSize: Int,
+                                spacing: Int,
+                            ): List<Int> {
+                                val mainAxisSize = (availableSize.toFloat() / density).toInt()
+                                setGridMainAxisSize(mainAxisSize)
+                                return calculateCellsCrossAxisSizeImpl(
+                                    availableSize,
+                                    rowCount,
+                                    spacing,
+                                )
+                            }
+                        },
+                    horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.dp),
+                    verticalArrangement =
+                        Arrangement.spacedBy(
+                            (when (val spacing = layoutInfo.mainAxisSpacing.type()) {
+                                    is ItemSpacingType.Fixed -> spacing.value
+                                    is ItemSpacingType.Auto -> {
+                                        if (rowCount > 1)
+                                            (gridMainAxisSize - (spacing.value.height * rowCount)) /
+                                                (rowCount - 1)
+                                        else spacing.value.width
+                                    }
+                                    else -> verticalSpacing
+                                })
+                                .dp
+                        ),
+                    userScrollEnabled = layoutInfo.scrollingEnabled,
+                ) {
+                    lazyItemContent()
                 }
             }
         }
@@ -414,7 +409,7 @@ internal fun addListWidget(
     parentComps: ParentComponentData?,
     composableList: ArrayList<SquooshChildComposable>,
 ) {
-    val layoutInfo = calcLayoutInfo(Modifier, resolvedView.view, resolvedView.style)
+    val layoutInfo = calcLayoutInfo(resolvedView.view, resolvedView.style)
     when (layoutInfo) {
         is LayoutInfoRow -> {
             addRowColumnContent(

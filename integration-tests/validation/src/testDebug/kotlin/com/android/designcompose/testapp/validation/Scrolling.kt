@@ -16,17 +16,27 @@
 
 package com.android.designcompose.testapp.validation
 
+import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.DesignScrollCallbacks
+import com.android.designcompose.ReplacementContent
 import com.android.designcompose.TestUtils
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.GridWidgetTest
+import com.android.designcompose.testapp.validation.examples.GridWidgetTestContent
 import com.android.designcompose.testapp.validation.examples.ScrollingTest
-import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import com.android.designcompose.testapp.validation.examples.ScrollingTestDoc
+import kotlin.test.assertNotNull
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,7 +45,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet)
+@Config(qualifiers = "w1200dp-h1920dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav")
 class Scrolling {
     @get:Rule val clearStateTestRule = TestUtils.ClearStateTestRule()
     @get:Rule val composeTestRule = createComposeRule()
@@ -43,7 +53,7 @@ class Scrolling {
     @get:Rule val interFontRule = InterFontTestRule()
 
     @Test
-    fun scrollTests() {
+    fun dragScroll() {
         with(composeTestRule) {
             setContent { ScrollingTest() }
             onNodeWithTag("DragVertical").performTouchInput { down(Offset.Zero) }
@@ -55,6 +65,80 @@ class Scrolling {
             onNodeWithTag("DragHorizontal").performTouchInput { moveTo(Offset(-200f, 0F)) }
             onNodeWithTag("DragHorizontal").performTouchInput { cancel() }
             captureRootRoboImage("scroll-horizontal")
+        }
+    }
+
+    @Test
+    fun manualScroll() = runTest {
+        with(composeTestRule) {
+            val verticalScrollableState = mutableStateOf<ScrollableState?>(null)
+            val horizontalScrollableState = mutableStateOf<ScrollableState?>(null)
+            setContent {
+                ScrollingTestDoc.Main(
+                    verticalContents = ReplacementContent(content = { {} }),
+                    horizontalContents = ReplacementContent(content = { {} }),
+                    verticalScrollCallbacks =
+                        DesignScrollCallbacks(
+                            setScrollableState = { scrollableState ->
+                                verticalScrollableState.value = scrollableState
+                            }
+                        ),
+                    horizontalScrollCallbacks =
+                        DesignScrollCallbacks(
+                            setScrollableState = { scrollableState ->
+                                horizontalScrollableState.value = scrollableState
+                            }
+                        ),
+                )
+            }
+            waitUntil(1000) {
+                verticalScrollableState.value != null && horizontalScrollableState.value != null
+            }
+            assertNotNull(verticalScrollableState.value)
+            assertNotNull(horizontalScrollableState.value)
+
+            verticalScrollableState.value!!.scrollBy(50F)
+            captureRootRoboImage("scroll-manual-vertical")
+
+            horizontalScrollableState.value!!.scrollBy(50F)
+            captureRootRoboImage("scroll-manual-horizontal")
+        }
+    }
+
+    @Test
+    fun dragGridScroll() {
+        with(composeTestRule) {
+            setContent { GridWidgetTest() }
+            onNodeWithTag("DragVertical").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("DragVertical").performTouchInput { moveTo(Offset(0f, -200F)) }
+            onNodeWithTag("DragVertical").performTouchInput { cancel() }
+            captureRootRoboImage("scroll-grid-vertical")
+
+            onNodeWithTag("DragHorizontal").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("DragHorizontal").performTouchInput { moveTo(Offset(-200f, 0F)) }
+            onNodeWithTag("DragHorizontal").performTouchInput { cancel() }
+            captureRootRoboImage("scroll-grid-horizontal")
+        }
+    }
+
+    @Test
+    fun manualGridScroll() = runTest {
+        with(composeTestRule) {
+            val verticalScrollableState = mutableStateOf<LazyGridState?>(null)
+            val horizontalScrollableState = mutableStateOf<LazyGridState?>(null)
+            setContent { GridWidgetTestContent(verticalScrollableState, horizontalScrollableState) }
+
+            waitUntil(1000) {
+                verticalScrollableState.value != null && horizontalScrollableState.value != null
+            }
+            assertNotNull(verticalScrollableState.value)
+            assertNotNull(horizontalScrollableState.value)
+
+            verticalScrollableState.value!!.scrollBy(100F)
+            captureRootRoboImage("scroll-manual-grid-vertical")
+
+            horizontalScrollableState.value!!.scrollBy(100F)
+            captureRootRoboImage("scroll-manual-grid-horizontal")
         }
     }
 }

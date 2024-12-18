@@ -17,6 +17,7 @@
 package com.android.designcompose
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.State
@@ -78,6 +79,30 @@ typealias ShaderUniformTime = Float
 
 typealias ShaderUniformTimeState = FloatState
 
+// A class that holds the scroll state of a horizontal or vertical autolayout view (row/column)
+data class DesignScrollState(
+    // The current scroll position
+    val value: Float,
+    // The height of a vertical scrollable container or width of a horizontal scrollable container
+    val containerSize: Float,
+    // The height of the contents of a vertical scrollable container or the width of the contents
+    // of a vertical scrollable container
+    val contentSize: Float,
+    // The max scroll value, typically contentSize - containerSize
+    val maxValue: Float,
+)
+
+// A customization class to get a ScrollableState object that can be used to set the scroll position
+// and a callback that is called whenever the scroll state of a row or column changes
+data class DesignScrollCallbacks(
+    // Callback called at initialization time of a scrollable view. For a row or column, this is
+    // just a ScrollableState used to set the scroll position. For a grid view, this can be casted
+    // to a LazyGridState that can be used to obtain additional data about the grid view.
+    val setScrollableState: ((ScrollableState) -> Unit)? = null,
+    // Callback when scroll state changes for a row or column. Not used for grid views
+    val scrollStateChanged: ((DesignScrollState) -> Unit)? = null,
+)
+
 // A Customization changes the way a node is presented, or changes the content of a node.
 data class Customization(
     // Text content customization
@@ -114,6 +139,8 @@ data class Customization(
     // Meter (dial, gauge, progress bar) customization as a function that returns a percentage 0-100
     var meterState: Optional<MeterState> = Optional.empty(),
     var shaderUniformTimeState: Optional<ShaderUniformTimeState> = Optional.empty(),
+    // Scrollable state and scroll state changed callbacks
+    var scrollCallbacks: Optional<DesignScrollCallbacks> = Optional.empty(),
 )
 
 private fun Customization.clone(): Customization {
@@ -136,6 +163,7 @@ private fun Customization.clone(): Customization {
     c.meterValue = meterValue
     c.meterState = meterState
     c.shaderUniformTimeState = shaderUniformTimeState
+    c.scrollCallbacks = scrollCallbacks
 
     return c
 }
@@ -319,6 +347,10 @@ fun CustomizationContext.setShaderUniformTimeState(
     customize(nodeName) { c -> c.shaderUniformTimeState = Optional.ofNullable(value) }
 }
 
+fun CustomizationContext.setScrollCallbacks(nodeName: String, value: DesignScrollCallbacks) {
+    customize(nodeName) { c -> c.scrollCallbacks = Optional.ofNullable(value) }
+}
+
 fun CustomizationContext.setVariantProperties(vp: HashMap<String, String>) {
     variantProperties = vp
 }
@@ -467,6 +499,10 @@ fun CustomizationContext.getMeterState(nodeName: String): MeterState? {
 
 fun CustomizationContext.getShaderUniformTimeState(nodeName: String): ShaderUniformTimeState? {
     return cs[nodeName]?.shaderUniformTimeState?.getOrNull()
+}
+
+fun CustomizationContext.getScrollCallbacks(nodeName: String): DesignScrollCallbacks? {
+    return cs[nodeName]?.scrollCallbacks?.getOrNull()
 }
 
 fun CustomizationContext.getKey(): String? {

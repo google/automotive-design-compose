@@ -63,6 +63,7 @@ import com.android.designcompose.ComputedPathCache
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DebugNodeManager
 import com.android.designcompose.DesignComposeCallbacks
+import com.android.designcompose.DesignScrollState
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DesignSwitcher
 import com.android.designcompose.DesignSwitcherPolicy
@@ -89,6 +90,7 @@ import com.android.designcompose.doc
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
 import com.android.designcompose.getOpenLinkCallback
+import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.proto.isPressOrClick
 import com.android.designcompose.proto.isTimeout
@@ -606,42 +608,53 @@ fun SquooshRoot(
             is OverflowDirection.HorizontalScrolling -> Optional.of(Orientation.Horizontal)
             else -> Optional.empty()
         }
+
+    // If a scroll callback customization exists, call it when the scroll state changes
+    val scrollStateChangedCallback =
+        customizationContext.getScrollCallbacks(presentationRoot.view.name)?.scrollStateChanged
+    val scrollState = rememberScrollableState { delta ->
+        when (orientation.get()) {
+            Orientation.Vertical -> {
+                // Bound the scroll offset to the area bounded by content_height
+                val contentHeight = presentationRoot.computedLayout?.content_height ?: 0F
+                val frameHeight = presentationRoot.computedLayout?.height ?: 0F
+                val maxScroll = (contentHeight - frameHeight).coerceAtLeast(0F)
+                val scrollValue = (scrollOffset.value.y + delta).coerceIn(0F, maxScroll)
+                scrollOffset.value = Offset(0F, scrollValue)
+                scrollStateChangedCallback?.invoke(
+                    DesignScrollState(scrollValue, frameHeight, contentHeight, maxScroll)
+                )
+            }
+            Orientation.Horizontal -> {
+                // Bound the scroll offset to the area bounded by content_width
+                val contentWidth = presentationRoot.computedLayout?.content_width ?: 0F
+                val frameWidth = presentationRoot.computedLayout?.width ?: 0F
+                val maxScroll = (contentWidth - frameWidth).coerceAtLeast(0F)
+                val scrollValue = (scrollOffset.value.x + delta).coerceIn(0F, maxScroll)
+                scrollOffset.value = Offset(scrollValue, 0F)
+                scrollStateChangedCallback?.invoke(
+                    DesignScrollState(scrollValue, frameWidth, contentWidth, maxScroll)
+                )
+            }
+        }
+        delta
+    }
+
     // Create a Modifier to handle scroll inputs if this is a scrollable view
     val scrollModifier =
         if (isScrollComponent && orientation.isPresent) {
+            // If a callback to get the scrollable state exists, call it
+            val setScrollableStateCallback =
+                customizationContext
+                    .getScrollCallbacks(presentationRoot.view.name)
+                    ?.setScrollableState
+            LaunchedEffect(scrollState, setScrollableStateCallback) {
+                setScrollableStateCallback?.invoke(scrollState)
+            }
             Modifier.scrollable(
                 orientation = orientation.get(),
-                // Scrollable state: describes how to consume scrolling delta and update offset
-                state =
-                    rememberScrollableState { delta ->
-                        when (orientation.get()) {
-                            Orientation.Vertical -> {
-                                // Bound the scroll offset to the area bounded by content_height
-                                val contentHeight =
-                                    presentationRoot.computedLayout?.content_height ?: 0F
-                                val frameHeight = presentationRoot.computedLayout?.height ?: 0F
-                                val maxScroll = (frameHeight - contentHeight).coerceAtMost(0F)
-                                scrollOffset.value =
-                                    Offset(
-                                        0F,
-                                        (scrollOffset.value.y + delta).coerceIn(maxScroll, 0F),
-                                    )
-                            }
-                            Orientation.Horizontal -> {
-                                // Bound the scroll offset to the area bounded by content_width
-                                val contentWidth =
-                                    presentationRoot.computedLayout?.content_width ?: 0F
-                                val frameWidth = presentationRoot.computedLayout?.width ?: 0F
-                                val maxScroll = (frameWidth - contentWidth).coerceAtMost(0F)
-                                scrollOffset.value =
-                                    Offset(
-                                        (scrollOffset.value.x + delta).coerceIn(maxScroll, 0F),
-                                        0F,
-                                    )
-                            }
-                        }
-                        delta
-                    },
+                reverseDirection = true,
+                state = scrollState,
             )
         } else {
             Modifier

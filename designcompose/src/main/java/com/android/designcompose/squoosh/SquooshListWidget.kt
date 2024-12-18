@@ -24,7 +24,9 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -42,6 +44,7 @@ import com.android.designcompose.SpanCache
 import com.android.designcompose.calcLayoutInfo
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.getCustomComposable
+import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.itemSpacingAbs
 import com.android.designcompose.pointsAsDp
 import com.android.designcompose.proto.getDim
@@ -294,6 +297,12 @@ private fun addGridContent(
             }
 
             val density = LocalDensity.current.density
+            val lazyGridState = rememberLazyGridState()
+            val setScrollableStateCallback =
+                customizations.getScrollCallbacks(resolvedView.view.name)?.setScrollableState
+            LaunchedEffect(lazyGridState, setScrollableStateCallback) {
+                setScrollableStateCallback?.invoke(lazyGridState)
+            }
 
             if (
                 layoutInfo.layout is GridLayoutType.FixedColumns ||
@@ -303,8 +312,8 @@ private fun addGridContent(
                 val horizontalSpacing =
                     (layoutInfo.mainAxisSpacing.type() as? ItemSpacingType.Fixed)?.value ?: 0
                 val verticalSpacing = layoutInfo.crossAxisSpacing
-
                 LazyVerticalGrid(
+                    state = lazyGridState,
                     columns =
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(
@@ -354,6 +363,7 @@ private fun addGridContent(
                     (layoutInfo.mainAxisSpacing.type() as? ItemSpacingType.Fixed)?.value ?: 0
 
                 LazyHorizontalGrid(
+                    state = lazyGridState,
                     rows =
                         object : GridCells {
                             override fun Density.calculateCrossAxisCellSizes(

@@ -292,6 +292,8 @@ private class DesignModuleVisitor(
                 out +=
                     "    customizations.setShaderUniformTimeState(\"$nodeName\", $propertyName)\n"
             }
+            CustomizationType.ScrollCallbacks ->
+                out += "    customizations.setScrollCallbacks(\"$nodeName\", $propertyName)\n"
             else ->
                 logger.error(
                     "Invalid parameter type ${property.type.typeString()} property \"$propertyName\""

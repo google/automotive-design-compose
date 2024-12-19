@@ -19,6 +19,8 @@ package com.android.designcompose
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.unit.Density
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.proto.alignItemsFromInt
 import com.android.designcompose.proto.gridLayoutTypeFromInt
 import com.android.designcompose.proto.layoutStyle
@@ -38,8 +40,6 @@ import com.android.designcompose.serdegen.LayoutTransform
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Size
-import com.android.designcompose.definition.view.View
-import com.android.designcompose.definition.view.ViewStyle
 import java.util.Optional
 import kotlin.math.roundToInt
 

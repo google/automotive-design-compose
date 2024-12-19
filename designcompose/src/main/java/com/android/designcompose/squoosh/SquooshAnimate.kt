@@ -23,24 +23,23 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.ui.geometry.Size
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.VariableState
-import com.android.designcompose.utils.asBuilder
 import com.android.designcompose.decompose
-import com.android.designcompose.utils.fixedHeight
-import com.android.designcompose.utils.fixedWidth
+import com.android.designcompose.definition.view.NodeStyle
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.proto.ifContainerGetShape
 import com.android.designcompose.proto.ifTextGetText
 import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.serdegen.Container
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.VectorArc
-import com.android.designcompose.definition.view.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.toLayoutTransform
+import com.android.designcompose.utils.fixedHeight
+import com.android.designcompose.utils.fixedWidth
 import java.util.Optional
 import kotlin.jvm.optionals.getOrElse
 
@@ -696,9 +695,9 @@ private fun shouldScale(from: SquooshResolvedNode, to: SquooshResolvedNode): Boo
 }
 
 private fun ViewStyle.withNodeStyle(delta: (NodeStyle.Builder) -> Unit): ViewStyle {
-    val builder = asBuilder()
-    val nodeStyleBuilder = nodeStyle.asBuilder()
+    val builder = toBuilder()
+    val nodeStyleBuilder = nodeStyle.toBuilder()
     delta(nodeStyleBuilder)
-    builder.node_style = Optional.of(nodeStyleBuilder.build())
+    builder.nodeStyle = nodeStyleBuilder.build()
     return builder.build()
 }

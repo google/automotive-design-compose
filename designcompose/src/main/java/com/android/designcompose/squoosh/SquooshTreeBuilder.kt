@@ -28,10 +28,11 @@ import com.android.designcompose.InteractionState
 import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.VariableState
-import com.android.designcompose.utils.asBuilder
 import com.android.designcompose.common.NodeQuery
-import com.android.designcompose.utils.defaultLayoutStyle
-import com.android.designcompose.utils.defaultNodeStyle
+import com.android.designcompose.definition.layout.LayoutStyle
+import com.android.designcompose.definition.view.NodeStyle
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
@@ -40,8 +41,6 @@ import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
-import com.android.designcompose.utils.hasScrolling
-import com.android.designcompose.utils.mergeStyles
 import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
 import com.android.designcompose.proto.OverlayPositionEnum
 import com.android.designcompose.proto.getType
@@ -75,12 +74,12 @@ import com.android.designcompose.serdegen.RenderMethod
 import com.android.designcompose.serdegen.ScrollInfo
 import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.TriggerType
-import com.android.designcompose.definition.view.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewDataType
-import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
+import com.android.designcompose.utils.hasScrolling
+import com.android.designcompose.utils.mergeStyles
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
@@ -489,8 +488,8 @@ internal fun generateReplacementListChildNode(
     childIdx: Int,
     layoutIdAllocator: SquooshLayoutIdAllocator,
 ): SquooshResolvedNode {
-    val layoutStyle = defaultLayoutStyle()
-    val nodeStyle = defaultNodeStyle()
+    val layoutStyle = LayoutStyle.newBuilder()
+    val nodeStyle = NodeStyle.newBuilder()
 
     val itemStyle =
         ViewStyle.Builder()
@@ -562,9 +561,9 @@ private fun generateOverlayNode(
     layoutIdAllocator: SquooshLayoutIdAllocator,
 ): SquooshResolvedNode {
     // Make a view based on the child node which uses a synthesized style.
-    val overlayStyle = node.style.asBuilder()
-    val layoutStyle = node.style.layoutStyle.asBuilder()
-    val nodeStyle = node.style.nodeStyle.asBuilder()
+    val overlayStyle = node.style.toBuilder()
+    val layoutStyle = node.style.layoutStyle.toBuilder()
+    val nodeStyle = node.style.nodeStyle.toBuilder()
     nodeStyle.overflow = Overflow.Visible().toInt()
     layoutStyle.position_type = PositionType.Absolute().toInt()
     layoutStyle.top = newDimensionProtoPercent(0.0f)

@@ -42,14 +42,12 @@ import com.android.designcompose.DebugNodeManager
 import com.android.designcompose.DocContent
 import com.android.designcompose.TAG
 import com.android.designcompose.VariableState
-import com.android.designcompose.proto.getType
-import com.android.designcompose.proto.scaleModeFromInt
-import com.android.designcompose.serdegen.AffineTransform
-import com.android.designcompose.serdegen.Background
-import com.android.designcompose.serdegen.BackgroundType
-import com.android.designcompose.serdegen.ScaleMode
-import java.util.Optional
-import kotlin.jvm.optionals.getOrNull
+import com.android.designcompose.definition.element.Background
+import com.android.designcompose.definition.element.Background.ScaleMode
+import com.android.designcompose.definition.element.colorOrNull
+import com.android.designcompose.definition.element.transformOrNull
+import com.android.designcompose.definition.modifier.AffineTransform
+import com.android.designcompose.getValue
 
 // Figma expresses gradients in relative terms (offsets are between 0..1), but the built-in
 // LinearGradient and RadialGradient types in Compose use absolute pixel offsets. These
@@ -290,13 +288,13 @@ internal constructor(
             }
         val m = Matrix()
         when (scaleMode) {
-            is ScaleMode.Tile -> {
+            ScaleMode.SCALE_MODE_TILE -> {
                 // Scale the image such that normalized coordinates are device coordinates.
                 m.setScale(displayDensity / imageDensity, displayDensity / imageDensity)
                 tileMode = Shader.TileMode.REPEAT
                 if (imageTransform != null) m.preConcat(imageTransform)
             }
-            is ScaleMode.Fill -> {
+            ScaleMode.SCALE_MODE_FILL -> {
                 // Scale the image such that it fills the `size` completely, cropping one
                 // axis if required.
                 var scale = size.width / image.width.toFloat()
@@ -310,7 +308,7 @@ internal constructor(
                 )
                 if (imageTransform != null) m.preConcat(imageTransform)
             }
-            is ScaleMode.Fit -> {
+            ScaleMode.SCALE_MODE_FIT -> {
                 // Scale the image such that it fits the `size`, with empty space instead
                 // of cropping.
                 var scale = size.width / image.width.toFloat()
@@ -324,7 +322,7 @@ internal constructor(
                 )
                 if (imageTransform != null) m.preConcat(imageTransform)
             }
-            is ScaleMode.Stretch -> {
+            ScaleMode.SCALE_MODE_STRETCH -> {
                 // An identity imageTransform means that the fill should fit the bounds of the
                 // container, so the last matrix operation is to scale the image to stretch to
                 // the container bounds. Otherwise, the imageTransform here is in a normalized
@@ -334,6 +332,7 @@ internal constructor(
                 if (imageTransform != null) m.postConcat(imageTransform)
                 m.postScale(size.width, size.height)
             }
+            else -> {}
         }
 
         val bitmapShader = BitmapShader(image, tileMode, tileMode)
@@ -368,17 +367,11 @@ internal constructor(
     }
 }
 
-internal fun Optional<AffineTransform>.asSkiaMatrix(): Matrix? {
-    return map {
-        val skMatrix = Matrix()
-        skMatrix.setValues(
-            floatArrayOf(it.m11, it.m12, it.m31, it.m21, it.m22, it.m32, 0.0f, 0.0f, 1.0f)
-        )
-        skMatrix
-    }
-        .orElse(null)
+internal fun AffineTransform.asSkiaMatrix(): Matrix {
+    val skMatrix = Matrix()
+    skMatrix.setValues(floatArrayOf(m11, m12, m31, m21, m22, m32, 0.0f, 0.0f, 1.0f))
+    return skMatrix
 }
-
 
 /** Convert a Background to a Brush, returning a Pair of Brush and Opacity */
 @RequiresApi(Build.VERSION_CODES.N)
@@ -388,154 +381,145 @@ internal fun Background.asBrush(
     density: Float,
     variableState: VariableState,
 ): Pair<Brush, Float>? {
-    when (val bgType = getType()) {
-        is BackgroundType.Solid -> {
-            val color = bgType.value.getValue(variableState)
-            return color?.let { Pair(SolidColor(color), 1.0f) }
-        }
-        is BackgroundType.Image -> {
-            val backgroundImage = bgType.value
-            val imageTransform = backgroundImage.transform.asSkiaMatrix()
-            if (DebugNodeManager.getUseLocalRes().value) {
-                backgroundImage.res_name.orElse(null)?.let {
-                    val resId =
-                        appContext.resources.getIdentifier(it, "drawable", appContext.packageName)
-                    if (resId != Resources.ID_NULL) {
-                        val bitmap =
-                            BitmapFactoryWithCache.loadResource(appContext.resources, resId)
-                        return Pair(
-                            RelativeImageFill(
-                                image = bitmap,
-                                imageDensity = density,
-                                displayDensity = density,
-                                imageTransform = imageTransform,
-                                scaleMode = scaleModeFromInt(backgroundImage.scale_mode),
-                            ),
-                            backgroundImage.opacity,
-                        )
-                    } else {
-                        Log.w(TAG, "No drawable resource $it found")
-                    }
-                }
-            }
-            val imageFillAndDensity =
-                backgroundImage.key.takeIf { it.isNotEmpty() }?.let { document.image(it, density) }
-            // val imageFilters = backgroundImage.filters;
-            if (imageFillAndDensity != null) {
-                val (imageFill, imageDensity) = imageFillAndDensity
+    if (hasSolid()) {
+        val color = solid.getValue(variableState)
+        return color?.let { Pair(SolidColor(color), 1.0f) }
+    }
+    if (hasImage()) {
+        val imageTransform = image.transformOrNull?.asSkiaMatrix()
+        if (DebugNodeManager.getUseLocalRes().value && image.hasResName()) {
+            val resId =
+                appContext.resources.getIdentifier(
+                    image.resName,
+                    "drawable",
+                    appContext.packageName,
+                )
+            if (resId != Resources.ID_NULL) {
+                val bitmap = BitmapFactoryWithCache.loadResource(appContext.resources, resId)
                 return Pair(
                     RelativeImageFill(
-                        image = imageFill,
-                        imageDensity = imageDensity,
+                        image = bitmap,
+                        imageDensity = density,
                         displayDensity = density,
                         imageTransform = imageTransform,
-                        scaleMode = scaleModeFromInt(backgroundImage.scale_mode),
+                        scaleMode = image.scaleMode,
                     ),
-                    backgroundImage.opacity,
+                    image.opacity,
+                )
+            } else {
+                Log.w(TAG, "No drawable resource ${image.resName} found")
+            }
+        }
+        val imageFillAndDensity =
+            image.key.takeIf { it.isNotEmpty() }?.let { document.image(it, density) }
+        // val imageFilters = backgroundImage.filters;
+        if (imageFillAndDensity != null) {
+            val (imageFill, imageDensity) = imageFillAndDensity
+            return Pair(
+                RelativeImageFill(
+                    image = imageFill,
+                    imageDensity = imageDensity,
+                    displayDensity = density,
+                    imageTransform = imageTransform,
+                    scaleMode = image.scaleMode,
+                ),
+                image.opacity,
+            )
+        }
+        return null
+    }
+
+    if (hasLinearGradient()) {
+        when (linearGradient.colorStopsCount) {
+            0 -> {
+                Log.e(TAG, "No stops found for the linear gradient")
+                return null
+            }
+            1 -> {
+                Log.w(TAG, "Single stop found for the linear gradient and do it as a fill")
+                val color =
+                    linearGradient.getColorStops(0).colorOrNull?.getValue(variableState)
+                        ?: Color.Transparent
+                return Pair(SolidColor(color), 1.0f)
+            }
+            else ->
+                return Pair(
+                    RelativeLinearGradient(
+                        linearGradient.colorStopsList
+                            .map { it.colorOrNull?.getValue(variableState) ?: Color.Transparent }
+                            .toList(),
+                        linearGradient.colorStopsList.map { it.position }.toList(),
+                        start = Offset(linearGradient.startX, linearGradient.startY),
+                        end = Offset(linearGradient.endX, linearGradient.endY),
+                    ),
+                    1.0f,
+                )
+        }
+    }
+
+    if (hasRadialGradient()) {
+        when (radialGradient.colorStopsCount) {
+            0 -> {
+                Log.e(TAG, "No stops found for the radial gradient")
+                return null
+            }
+            1 -> {
+                Log.w(TAG, "Single stop found for the radial gradient and do it as a fill")
+                return Pair(
+                    SolidColor(
+                        radialGradient.getColorStops(0).colorOrNull?.getValue(variableState)
+                            ?: Color.Transparent
+                    ),
+                    1.0f,
                 )
             }
+            else ->
+                return Pair(
+                    RelativeRadialGradient(
+                        colors =
+                            radialGradient.colorStopsList.map {
+                                it.colorOrNull?.getValue(variableState) ?: Color.Transparent
+                            },
+                        stops = radialGradient.colorStopsList.map { it.position },
+                        center = Offset(radialGradient.centerX, radialGradient.centerY),
+                        radiusX = radialGradient.radiusX,
+                        radiusY = radialGradient.radiusY,
+                        angle = radialGradient.angle,
+                    ),
+                    1.0f,
+                )
         }
-        is BackgroundType.LinearGradient -> {
-            val linearGradient = bgType.value
-            when (linearGradient.color_stops.size) {
-                0 -> {
-                    Log.e(TAG, "No stops found for the linear gradient")
-                    return null
-                }
-                1 -> {
-                    Log.w(TAG, "Single stop found for the linear gradient and do it as a fill")
-                    val color =
-                        linearGradient.color_stops[0].color.getOrNull()?.getValue(variableState)
+    }
+    if (hasAngularGradient()) {
+        when (angularGradient.colorStopsCount) {
+            0 -> {
+                Log.e(TAG, "No stops found for the angular gradient")
+                return null
+            }
+            1 -> {
+                Log.w(TAG, "Single stop found for the angular gradient and do it as a fill")
+                return Pair(
+                    SolidColor(
+                        angularGradient.getColorStops(0).colorOrNull?.getValue(variableState)
                             ?: Color.Transparent
-                    return Pair(SolidColor(color), 1.0f)
-                }
-                else ->
-                    return Pair(
-                        RelativeLinearGradient(
-                            linearGradient.color_stops
-                                .map {
-                                    it.color.getOrNull()?.getValue(variableState)
-                                        ?: Color.Transparent
-                                }
-                                .toList(),
-                            linearGradient.color_stops.map { it.position }.toList(),
-                            start = Offset(linearGradient.start_x, linearGradient.start_y),
-                            end = Offset(linearGradient.end_x, linearGradient.end_y),
-                        ),
-                        1.0f,
-                    )
+                    ),
+                    1.0f,
+                )
             }
-        }
-        is BackgroundType.RadialGradient -> {
-            val radialGradient = bgType.value
-            return when (radialGradient.color_stops.size) {
-                0 -> {
-                    Log.e(TAG, "No stops found for the radial gradient")
-                    return null
-                }
-                1 -> {
-                    Log.w(TAG, "Single stop found for the radial gradient and do it as a fill")
-                    return Pair(
-                        SolidColor(
-                            radialGradient.color_stops[0].color.getOrNull()?.getValue(variableState)
-                                ?: Color.Transparent
-                        ),
-                        1.0f,
-                    )
-                }
-                else ->
-                    return Pair(
-                        RelativeRadialGradient(
-                            colors =
-                            radialGradient.color_stops.map {
-                                it.color.getOrNull()?.getValue(variableState)
-                                    ?: Color.Transparent
+            else ->
+                return Pair(
+                    RelativeSweepGradient(
+                        center = Offset(angularGradient.centerX, angularGradient.centerY),
+                        angle = angularGradient.angle,
+                        scale = angularGradient.scale,
+                        colors =
+                            angularGradient.colorStopsList.map {
+                                it.colorOrNull?.getValue(variableState) ?: Color.Transparent
                             },
-                            stops = radialGradient.color_stops.map { it.position },
-                            center = Offset(radialGradient.center_x, radialGradient.center_y),
-                            radiusX = radialGradient.radius_x,
-                            radiusY = radialGradient.radius_y,
-                            angle = radialGradient.angle,
-                        ),
-                        1.0f,
-                    )
-            }
-        }
-        is BackgroundType.AngularGradient -> {
-            val angularGradient = bgType.value
-            return when (angularGradient.color_stops.size) {
-                0 -> {
-                    Log.e(TAG, "No stops found for the angular gradient")
-                    return null
-                }
-                1 -> {
-                    Log.w(TAG, "Single stop found for the angular gradient and do it as a fill")
-                    return Pair(
-                        SolidColor(
-                            angularGradient.color_stops[0]
-                                .color
-                                .getOrNull()
-                                ?.getValue(variableState) ?: Color.Transparent
-                        ),
-                        1.0f,
-                    )
-                }
-                else ->
-                    return Pair(
-                        RelativeSweepGradient(
-                            center = Offset(angularGradient.center_x, angularGradient.center_y),
-                            angle = angularGradient.angle,
-                            scale = angularGradient.scale,
-                            colors =
-                            angularGradient.color_stops.map {
-                                it.color.getOrNull()?.getValue(variableState)
-                                    ?: Color.Transparent
-                            },
-                            stops = angularGradient.color_stops.map { it.position },
-                        ),
-                        1.0f,
-                    )
-            }
+                        stops = angularGradient.colorStopsList.map { it.position },
+                    ),
+                    1.0f,
+                )
         }
     }
     return null

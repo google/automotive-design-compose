@@ -23,14 +23,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.android.designcompose.utils.asAnimationSpec
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.serdegen.Easing
 import com.android.designcompose.serdegen.EasingType
 import com.android.designcompose.serdegen.SmartAnimate
 import com.android.designcompose.serdegen.Spring
 import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.TransitionType
-import com.android.designcompose.definition.view.View
+import com.android.designcompose.utils.asAnimationSpec
 import java.util.Optional
 
 // We want to perform an animated transition when a variant customization causes a presented

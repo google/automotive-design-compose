@@ -18,131 +18,32 @@ package com.android.designcompose.utils
 
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.BitmapShader
-import android.graphics.Matrix
-import android.graphics.Rect
-import android.graphics.Shader
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.geometry.isFinite
-import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.geometry.isUnspecified
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
-import androidx.compose.ui.graphics.RadialGradientShader
-import androidx.compose.ui.graphics.ShaderBrush
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.SweepGradientShader
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.isIdentity
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import com.android.designcompose.BitmapFactoryWithCache
 import com.android.designcompose.DebugNodeManager
-import com.android.designcompose.DocContent
-import com.android.designcompose.LayoutManager
 import com.android.designcompose.TAG
-import com.android.designcompose.VariableState
-import com.android.designcompose.getValue
-import com.android.designcompose.proto.StrokeAlignType
-import com.android.designcompose.proto.WindingRuleType
-import com.android.designcompose.proto.alignContentFromInt
-import com.android.designcompose.proto.alignItemsFromInt
-import com.android.designcompose.proto.alignSelfFromInt
-import com.android.designcompose.proto.blendModeFromInt
-import com.android.designcompose.proto.displayFromInt
-import com.android.designcompose.proto.end
-import com.android.designcompose.proto.flexDirectionFromInt
-import com.android.designcompose.proto.flexWrapFromInt
-import com.android.designcompose.proto.fontStyleFromInt
-import com.android.designcompose.proto.get
-import com.android.designcompose.proto.getDim
-import com.android.designcompose.proto.getType
-import com.android.designcompose.proto.isDefault
-import com.android.designcompose.proto.isType
-import com.android.designcompose.proto.justifyContentFromInt
-import com.android.designcompose.proto.layoutSizingFromInt
-import com.android.designcompose.proto.layoutStyle
-import com.android.designcompose.proto.newDimensionProtoUndefined
-import com.android.designcompose.proto.newDimensionRectPointsZero
-import com.android.designcompose.proto.newFontWeight
-import com.android.designcompose.proto.newNumOrVar
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.proto.overflowDirectionFromInt
-import com.android.designcompose.proto.overflowFromInt
-import com.android.designcompose.proto.pointerEventsFromInt
-import com.android.designcompose.proto.positionTypeFromInt
-import com.android.designcompose.proto.scaleModeFromInt
-import com.android.designcompose.proto.start
-import com.android.designcompose.proto.strokeAlignTypeToInt
-import com.android.designcompose.proto.textAlignFromInt
-import com.android.designcompose.proto.textAlignVerticalFromInt
-import com.android.designcompose.proto.textDecorationFromInt
-import com.android.designcompose.proto.textOverflowFromInt
-import com.android.designcompose.proto.toInt
-import com.android.designcompose.proto.top
-import com.android.designcompose.proto.type
-import com.android.designcompose.proto.windingRuleFromInt
-import com.android.designcompose.serdegen.AffineTransform
-import com.android.designcompose.serdegen.AlignContent
-import com.android.designcompose.serdegen.AlignItems
-import com.android.designcompose.serdegen.AlignSelf
-import com.android.designcompose.serdegen.Auto
-import com.android.designcompose.serdegen.Background
-import com.android.designcompose.serdegen.BackgroundType
-import com.android.designcompose.serdegen.BlendMode
-import com.android.designcompose.serdegen.Dimension
-import com.android.designcompose.serdegen.Display
-import com.android.designcompose.serdegen.EasingType
-import com.android.designcompose.serdegen.FlexDirection
-import com.android.designcompose.serdegen.FlexWrap
-import com.android.designcompose.serdegen.FontStretch
-import com.android.designcompose.serdegen.FontStyle
-import com.android.designcompose.serdegen.ItemSpacing
-import com.android.designcompose.serdegen.ItemSpacingType
-import com.android.designcompose.serdegen.JustifyContent
-import com.android.designcompose.serdegen.LayoutSizing
-import com.android.designcompose.definition.layout.LayoutStyle
-import com.android.designcompose.serdegen.LayoutTransform
-import com.android.designcompose.serdegen.LineHeight
-import com.android.designcompose.serdegen.LineHeightType
-import com.android.designcompose.definition.view.NodeStyle
-import com.android.designcompose.serdegen.NumOrVarType
-import com.android.designcompose.serdegen.Overflow
-import com.android.designcompose.serdegen.OverflowDirection
-import com.android.designcompose.serdegen.PointerEvents
-import com.android.designcompose.serdegen.PositionType
-import com.android.designcompose.serdegen.ScaleMode
-import com.android.designcompose.serdegen.Shape
-import com.android.designcompose.serdegen.Stroke
-import com.android.designcompose.serdegen.StrokeCap
-import com.android.designcompose.serdegen.StrokeWeight
-import com.android.designcompose.serdegen.StrokeWeightType
-import com.android.designcompose.serdegen.StyledTextRun
-import com.android.designcompose.serdegen.TextAlign
-import com.android.designcompose.serdegen.TextAlignVertical
-import com.android.designcompose.serdegen.TextDecoration
-import com.android.designcompose.serdegen.TextOverflow
-import com.android.designcompose.serdegen.Transition
-import com.android.designcompose.serdegen.TransitionType
+import com.android.designcompose.definition.element.Color
+import com.android.designcompose.definition.element.Path
+import com.android.designcompose.definition.element.ViewShape
+import com.android.designcompose.definition.interaction.Easing.EasingTypeCase
+import com.android.designcompose.definition.interaction.Transition
+import com.android.designcompose.definition.layout.OverflowDirection
+import com.android.designcompose.definition.modifier.BlendMode
+import com.android.designcompose.definition.modifier.LayoutTransform
+import com.android.designcompose.definition.view.StyledTextRun
 import com.android.designcompose.definition.view.View
-import com.android.designcompose.serdegen.ViewDataType
-import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.definition.view.ViewStyle
-import java.util.Optional
-import kotlin.jvm.optionals.getOrNull
+import com.android.designcompose.definition.view.ViewData
+import com.android.designcompose.definition.view.containerOrNull
+import com.android.designcompose.definition.view.dataOrNull
+import com.android.designcompose.definition.view.scrollInfoOrNull
+import com.android.designcompose.definition.view.shapeOrNull
+import com.android.designcompose.definition.view.styledTextRun
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
@@ -159,150 +60,127 @@ internal fun validateFigmaDocId(id: String): Boolean {
 /** Convert a BlendMode to the Compose form. */
 internal fun BlendMode.asComposeBlendMode() =
     when (this) {
-        is BlendMode.PassThrough -> androidx.compose.ui.graphics.BlendMode.SrcOver
-        is BlendMode.Normal -> androidx.compose.ui.graphics.BlendMode.SrcOver
-        is BlendMode.Darken -> androidx.compose.ui.graphics.BlendMode.Darken
-        is BlendMode.Multiply -> androidx.compose.ui.graphics.BlendMode.Multiply
-        is BlendMode.ColorBurn -> androidx.compose.ui.graphics.BlendMode.ColorBurn
-        is BlendMode.Lighten -> androidx.compose.ui.graphics.BlendMode.Lighten
-        is BlendMode.Screen -> androidx.compose.ui.graphics.BlendMode.Screen
-        is BlendMode.ColorDodge -> androidx.compose.ui.graphics.BlendMode.ColorDodge
-        is BlendMode.Overlay -> androidx.compose.ui.graphics.BlendMode.Overlay
-        is BlendMode.SoftLight -> androidx.compose.ui.graphics.BlendMode.Softlight
-        is BlendMode.HardLight -> androidx.compose.ui.graphics.BlendMode.Hardlight
-        is BlendMode.Difference -> androidx.compose.ui.graphics.BlendMode.Difference
-        is BlendMode.Exclusion -> androidx.compose.ui.graphics.BlendMode.Exclusion
-        is BlendMode.Hue -> androidx.compose.ui.graphics.BlendMode.Hue
-        is BlendMode.Saturation -> androidx.compose.ui.graphics.BlendMode.Saturation
-        is BlendMode.Color -> androidx.compose.ui.graphics.BlendMode.Color
-        is BlendMode.Luminosity -> androidx.compose.ui.graphics.BlendMode.Luminosity
+        BlendMode.BLEND_MODE_PASS_THROUGH -> androidx.compose.ui.graphics.BlendMode.SrcOver
+        BlendMode.BLEND_MODE_NORMAL -> androidx.compose.ui.graphics.BlendMode.SrcOver
+        BlendMode.BLEND_MODE_DARKEN -> androidx.compose.ui.graphics.BlendMode.Darken
+        BlendMode.BLEND_MODE_MULTIPLY -> androidx.compose.ui.graphics.BlendMode.Multiply
+        BlendMode.BLEND_MODE_COLOR_BURN -> androidx.compose.ui.graphics.BlendMode.ColorBurn
+        BlendMode.BLEND_MODE_LIGHTEN -> androidx.compose.ui.graphics.BlendMode.Lighten
+        BlendMode.BLEND_MODE_SCREEN -> androidx.compose.ui.graphics.BlendMode.Screen
+        BlendMode.BLEND_MODE_COLOR_DODGE -> androidx.compose.ui.graphics.BlendMode.ColorDodge
+        BlendMode.BLEND_MODE_OVERLAY -> androidx.compose.ui.graphics.BlendMode.Overlay
+        BlendMode.BLEND_MODE_SOFT_LIGHT -> androidx.compose.ui.graphics.BlendMode.Softlight
+        BlendMode.BLEND_MODE_HARD_LIGHT -> androidx.compose.ui.graphics.BlendMode.Hardlight
+        BlendMode.BLEND_MODE_DIFFERENCE -> androidx.compose.ui.graphics.BlendMode.Difference
+        BlendMode.BLEND_MODE_EXCLUSION -> androidx.compose.ui.graphics.BlendMode.Exclusion
+        BlendMode.BLEND_MODE_HUE -> androidx.compose.ui.graphics.BlendMode.Hue
+        BlendMode.BLEND_MODE_SATURATION -> androidx.compose.ui.graphics.BlendMode.Saturation
+        BlendMode.BLEND_MODE_COLOR -> androidx.compose.ui.graphics.BlendMode.Color
+        BlendMode.BLEND_MODE_LUMINOSITY -> androidx.compose.ui.graphics.BlendMode.Luminosity
         // Unsupported
-        is BlendMode.LinearBurn -> androidx.compose.ui.graphics.BlendMode.ColorBurn
-        is BlendMode.LinearDodge -> androidx.compose.ui.graphics.BlendMode.ColorDodge
+        BlendMode.BLEND_MODE_LINEAR_BURN -> androidx.compose.ui.graphics.BlendMode.ColorBurn
+        BlendMode.BLEND_MODE_LINEAR_DODGE -> androidx.compose.ui.graphics.BlendMode.ColorDodge
         else -> androidx.compose.ui.graphics.BlendMode.SrcOver
     }
 
 /** Does the BlendMode need a layer? */
 internal fun BlendMode.useLayer() =
     when (this) {
-        is BlendMode.PassThrough -> false
+        BlendMode.BLEND_MODE_PASS_THROUGH -> false
         else -> true
     }
 
-internal fun View.isMask(): Boolean {
-    val containerData = data.get()?.view_data_type?.get()
-    return if (containerData is ViewDataType.Container) {
-        containerData.value.shape.get().isMask()
-    } else false
-}
-
 internal fun View.hasScrolling(): Boolean {
-    return when (scroll_info.getOrNull()?.overflow?.let { overflowDirectionFromInt(it) }) {
-        is OverflowDirection.HorizontalScrolling -> true
-        is OverflowDirection.VerticalScrolling -> true
+    return when (scrollInfoOrNull?.overflow) {
+        OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING -> true
+        OverflowDirection.OVERFLOW_DIRECTION_VERTICAL_SCROLLING -> true
+        OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_AND_VERTICAL_SCROLLING -> true
         else -> false
     }
 }
 
+internal fun View.isMask(): Boolean {
+    val containerData = dataOrNull
+    return if (containerData?.hasContainer() == true) {
+        containerData.containerOrNull?.shapeOrNull?.isMask() ?: false
+    } else false
+}
+
 internal fun ViewShape.isMask(): Boolean {
-    when (val shape = this.get()) {
-        is Shape.Rect -> return shape.value.is_mask
-        is Shape.RoundRect -> return shape.value.is_mask
-        is Shape.Path -> return shape.value.is_mask
-        is Shape.Arc -> return shape.value.is_mask
-        is Shape.VectorRect -> return shape.value.is_mask
+    if (hasRect()) {
+        return rect.isMask
+    }
+    if (hasRoundRect()) {
+        return roundRect.isMask
+    }
+    if (hasVectorRect()) {
+        return vectorRect.isMask
+    }
+    if (hasPath()) {
+        return path.isMask
+    }
+    if (hasArc()) {
+        return arc.isMask
     }
     return false
 }
 
-/**
- * Convert a LayoutTransform to a Compose transformation matrix, adjusted to operate on pixels at
- * the given display density.
- *
- * XXX: Doesn't consider transform origin.
- */
-internal fun Optional<LayoutTransform>.asComposeTransform(
-    density: Float
-): androidx.compose.ui.graphics.Matrix? {
-    return map {
-            val transform =
-                androidx.compose.ui.graphics.Matrix(
-                    floatArrayOf(
-                        it.m11,
-                        it.m12,
-                        it.m13,
-                        it.m14,
-                        it.m21,
-                        it.m22,
-                        it.m23,
-                        it.m24,
-                        it.m31,
-                        it.m32,
-                        it.m33,
-                        it.m34,
-                        it.m41,
-                        it.m42,
-                        it.m43,
-                        it.m44,
-                    )
-                )
-            if (transform.isIdentity()) {
-                null
-            } else {
-                val adjust = androidx.compose.ui.graphics.Matrix()
-                adjust.scale(1.0f / density, 1.0f / density, 1.0f / density)
-                adjust.timesAssign(transform)
-                val unadjust = androidx.compose.ui.graphics.Matrix()
-                unadjust.scale(density, density, density)
-                adjust.timesAssign(unadjust)
-                adjust
-            }
-        }
-        .orElse(null)
+internal fun ViewShape.StrokeCap.toComposeStrokeCap(): androidx.compose.ui.graphics.StrokeCap {
+    return when (this) {
+        ViewShape.StrokeCap.STROKE_CAP_ROUND -> androidx.compose.ui.graphics.StrokeCap.Round
+        ViewShape.StrokeCap.STROKE_CAP_SQUARE -> androidx.compose.ui.graphics.StrokeCap.Square
+        else -> androidx.compose.ui.graphics.StrokeCap.Butt
+    }
 }
 
-internal fun com.android.designcompose.serdegen.Path.asPath(
+internal fun Path.asPath(
     density: Float,
     scaleX: Float,
     scaleY: Float,
-): Path {
+): androidx.compose.ui.graphics.Path {
     val MOVE_TO: Byte = 0
     val LINE_TO: Byte = 1
     val CUBIC_TO: Byte = 2
     val QUAD_TO: Byte = 3
     val CLOSE: Byte = 4
 
-    val p = Path()
+    val p = androidx.compose.ui.graphics.Path()
     p.fillType =
-        when (windingRuleFromInt(winding_rule.toInt())) {
-            WindingRuleType.EvenOdd -> PathFillType.EvenOdd
+        when (windingRule) {
+            Path.WindingRule.WINDING_RULE_EVEN_ODD -> PathFillType.EvenOdd
             else -> PathFillType.NonZero
         }
     var idx = 0
     for (cmd in this.commands) {
         when (cmd) {
             MOVE_TO -> {
-                p.moveTo(this.data[idx++] * density * scaleX, this.data[idx++] * density * scaleY)
+                p.moveTo(
+                    this.getData(idx++) * density * scaleX,
+                    this.getData(idx++) * density * scaleY,
+                )
             }
             LINE_TO -> {
-                p.lineTo(this.data[idx++] * density * scaleX, this.data[idx++] * density * scaleY)
+                p.lineTo(
+                    this.getData(idx++) * density * scaleX,
+                    this.getData(idx++) * density * scaleY,
+                )
             }
             CUBIC_TO -> {
                 p.cubicTo(
-                    this.data[idx++] * density * scaleX,
-                    this.data[idx++] * density * scaleY,
-                    this.data[idx++] * density * scaleX,
-                    this.data[idx++] * density * scaleY,
-                    this.data[idx++] * density * scaleX,
-                    this.data[idx++] * density * scaleY,
+                    this.getData(idx++) * density * scaleX,
+                    this.getData(idx++) * density * scaleY,
+                    this.getData(idx++) * density * scaleX,
+                    this.getData(idx++) * density * scaleY,
+                    this.getData(idx++) * density * scaleX,
+                    this.getData(idx++) * density * scaleY,
                 )
             }
             QUAD_TO -> {
-                p.quadraticBezierTo(
-                    this.data[idx++] * density * scaleX,
-                    this.data[idx++] * density * scaleY,
-                    this.data[idx++] * density * scaleX,
-                    this.data[idx++] * density * scaleY,
+                p.quadraticTo(
+                    this.getData(idx++) * density * scaleX,
+                    this.getData(idx++) * density * scaleY,
+                    this.getData(idx++) * density * scaleX,
+                    this.getData(idx++) * density * scaleY,
                 )
             }
             CLOSE -> {
@@ -313,15 +191,7 @@ internal fun com.android.designcompose.serdegen.Path.asPath(
     return p
 }
 
-internal fun StrokeCap.toComposeStrokeCap(): androidx.compose.ui.graphics.StrokeCap {
-    return when (this) {
-        is StrokeCap.Round -> androidx.compose.ui.graphics.StrokeCap.Round
-        is StrokeCap.Square -> androidx.compose.ui.graphics.StrokeCap.Square
-        else -> androidx.compose.ui.graphics.StrokeCap.Butt
-    }
-}
-
-internal fun com.android.designcompose.serdegen.Path.log() {
+internal fun Path.log() {
     val MOVE_TO: Byte = 0
     val LINE_TO: Byte = 1
     val CUBIC_TO: Byte = 2
@@ -332,21 +202,21 @@ internal fun com.android.designcompose.serdegen.Path.log() {
     for (cmd in this.commands) {
         when (cmd) {
             MOVE_TO -> {
-                Log.e(TAG, "Move To ${this.data[idx++]}+${this.data[idx++]}")
+                Log.e(TAG, "Move To ${this.getData(idx++)}+${this.getData(idx++)}")
             }
             LINE_TO -> {
-                Log.e(TAG, "Line To ${this.data[idx++]}+${this.data[idx++]}")
+                Log.e(TAG, "Line To ${this.getData(idx++)}+${this.getData(idx++)}")
             }
             CUBIC_TO -> {
                 Log.e(
                     TAG,
-                    "Cubic To ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]}",
+                    "Cubic To ${this.getData(idx++)}+${this.getData(idx++)} ${this.getData(idx++)}+${this.getData(idx++)} ${this.getData(idx++)}+${this.getData(idx++)}",
                 )
             }
             QUAD_TO -> {
                 Log.e(
                     TAG,
-                    "Quad To ${this.data[idx++]}+${this.data[idx++]} ${this.data[idx++]}+${this.data[idx++]}",
+                    "Quad To ${this.getData(idx++)}+${this.getData(idx++)} ${this.getData(idx++)}+${this.getData(idx++)}",
                 )
             }
             CLOSE -> {
@@ -358,33 +228,33 @@ internal fun com.android.designcompose.serdegen.Path.log() {
 
 // Convert a DesignCompose animation transition into a Jetpack Compose animationSpec.
 internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
-    val transitionType = this.transition_type.getOrNull()
+    val transitionTypeCase = this.transitionTypeCase
     val easing =
-        when (transitionType) {
-            is TransitionType.SmartAnimate -> transitionType.value.easing.get().easing_type.get()
-            is TransitionType.ScrollAnimate -> transitionType.value.easing.get().easing_type.get()
-            is TransitionType.Push -> transitionType.value.easing.get().easing_type.get()
-            is TransitionType.MoveIn -> transitionType.value.easing.get().easing_type.get()
-            is TransitionType.MoveOut -> transitionType.value.easing.get().easing_type.get()
-            is TransitionType.Dissolve -> transitionType.value.easing.get().easing_type.get()
-            is TransitionType.SlideIn -> transitionType.value.easing.get().easing_type.get()
-            is TransitionType.SlideOut -> transitionType.value.easing.get().easing_type.get()
+        when (transitionTypeCase) {
+            Transition.TransitionTypeCase.SMART_ANIMATE -> smartAnimate.easing
+            Transition.TransitionTypeCase.SCROLL_ANIMATE -> scrollAnimate.easing
+            Transition.TransitionTypeCase.PUSH -> push.easing
+            Transition.TransitionTypeCase.MOVE_IN -> moveIn.easing
+            Transition.TransitionTypeCase.MOVE_OUT -> moveOut.easing
+            Transition.TransitionTypeCase.DISSOLVE -> dissolve.easing
+            Transition.TransitionTypeCase.SLIDE_IN -> slideIn.easing
+            Transition.TransitionTypeCase.SLIDE_OUT -> slideOut.easing
             else -> return snap(0)
         }
     val duration =
-        when (transitionType) {
-            is TransitionType.SmartAnimate -> transitionType.value.duration
-            is TransitionType.ScrollAnimate -> transitionType.value.duration
-            is TransitionType.Push -> transitionType.value.duration
-            is TransitionType.MoveIn -> transitionType.value.duration
-            is TransitionType.MoveOut -> transitionType.value.duration
-            is TransitionType.Dissolve -> transitionType.value.duration
-            is TransitionType.SlideIn -> transitionType.value.duration
-            is TransitionType.SlideOut -> transitionType.value.duration
+        when (transitionTypeCase) {
+            Transition.TransitionTypeCase.SMART_ANIMATE -> smartAnimate.duration
+            Transition.TransitionTypeCase.SCROLL_ANIMATE -> scrollAnimate.duration
+            Transition.TransitionTypeCase.PUSH -> push.duration
+            Transition.TransitionTypeCase.MOVE_IN -> moveIn.duration
+            Transition.TransitionTypeCase.MOVE_OUT -> moveOut.duration
+            Transition.TransitionTypeCase.DISSOLVE -> dissolve.duration
+            Transition.TransitionTypeCase.SLIDE_IN -> slideIn.duration
+            Transition.TransitionTypeCase.SLIDE_OUT -> slideOut.duration
             else -> return snap(0)
         }
-    return when (easing) {
-        is EasingType.Spring -> {
+    return when (easing.easingTypeCase) {
+        EasingTypeCase.SPRING -> {
             // Compose takes damping as a fraction of the amount required for critical damping,
             // rather than as the actual damping value. So, we must calculate the damping required
             // for criticality with the given stiffness and mass.
@@ -392,21 +262,21 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
             // Reference implementation of a simple spring based on integrating Hooke's law:
             //  https://github.com/iamralpht/gravitas-rs/blob/master/src/spring.rs#L23
 
-            val critical = sqrt(4.0f * easing.value.stiffness * easing.value.mass)
+            val critical = sqrt(4.0f * easing.spring.stiffness * easing.spring.mass)
             spring(
-                dampingRatio = easing.value.damping / critical,
-                stiffness = easing.value.stiffness,
+                dampingRatio = easing.spring.damping / critical,
+                stiffness = easing.spring.stiffness,
             )
         }
-        is EasingType.Bezier -> {
+        EasingTypeCase.BEZIER -> {
             tween(
                 durationMillis = (duration * 1000.0).roundToInt(),
                 easing =
                     CubicBezierEasing(
-                        easing.value.x1,
-                        easing.value.y1,
-                        easing.value.x2,
-                        easing.value.y2,
+                        easing.bezier.x1,
+                        easing.bezier.y1,
+                        easing.bezier.x2,
+                        easing.bezier.y2,
                     ),
             )
         }
@@ -414,18 +284,57 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
     }
 }
 
-/** Convert a serialized color to a Compose color */
-internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
-    val a = a.toInt()
-    val r = r.toInt()
-    val g = g.toInt()
-    val b = b.toInt()
-    return Color(r, g, b, a)
+/**
+ * Convert a LayoutTransform to a Compose transformation matrix, adjusted to operate on pixels at
+ * the given display density.
+ *
+ * XXX: Doesn't consider transform origin.
+ */
+internal fun LayoutTransform.asComposeTransform(
+    density: Float
+): androidx.compose.ui.graphics.Matrix? {
+    val transform =
+        androidx.compose.ui.graphics.Matrix(
+            floatArrayOf(
+                m11,
+                m12,
+                m13,
+                m14,
+                m21,
+                m22,
+                m23,
+                m24,
+                m31,
+                m32,
+                m33,
+                m34,
+                m41,
+                m42,
+                m43,
+                m44,
+            )
+        )
+    if (transform.isIdentity()) {
+        return null
+    } else {
+        val adjust = androidx.compose.ui.graphics.Matrix()
+        adjust.scale(1.0f / density, 1.0f / density, 1.0f / density)
+        adjust.timesAssign(transform)
+        val unadjust = androidx.compose.ui.graphics.Matrix()
+        unadjust.scale(density, density, density)
+        adjust.timesAssign(unadjust)
+        return adjust
+    }
 }
 
-internal fun getTextContent(context: Context, textData: ViewDataType.Text): String {
-    if (DebugNodeManager.getUseLocalRes().value && textData.value.res_name.isPresent) {
-        val resName = textData.value.res_name.get()
+/** Convert a serialized color to a Compose color */
+internal fun Color.toColor(): androidx.compose.ui.graphics.Color {
+    return androidx.compose.ui.graphics.Color(r, g, b, a)
+}
+
+internal fun getTextContent(context: Context, textData: ViewData.Text): String {
+    if (DebugNodeManager.getUseLocalRes().value && textData.hasResName()) {
+        val resName = textData.resName
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)
         if (resId != Resources.ID_NULL) {
             return context.getString(resId)
@@ -433,23 +342,26 @@ internal fun getTextContent(context: Context, textData: ViewDataType.Text): Stri
             Log.w(TAG, "No string resource $resName found")
         }
     }
-    return textData.value.content
+    return textData.content
 }
 
 internal fun getTextContent(
     context: Context,
-    styledTextData: ViewDataType.StyledText,
+    styledTextData: ViewData.StyledTextRuns,
 ): List<StyledTextRun> {
-    if (DebugNodeManager.getUseLocalRes().value && styledTextData.value.res_name.isPresent) {
-        val resName = styledTextData.value.res_name.get()
+    if (DebugNodeManager.getUseLocalRes().value && styledTextData.hasResName()) {
+        val resName = styledTextData.resName
         val strArrayResId = context.resources.getIdentifier(resName, "array", context.packageName)
         if (strArrayResId != Resources.ID_NULL) {
             val textArray = context.resources.getStringArray(strArrayResId)
-            if (textArray.size == styledTextData.value.styled_texts.size) {
+            if (textArray.size == styledTextData.styledTextsCount) {
                 val output = mutableListOf<StyledTextRun>()
                 for (i in textArray.indices) {
                     output.add(
-                        StyledTextRun(textArray[i], styledTextData.value.styled_texts[i].style)
+                        styledTextRun {
+                            text = textArray[i]
+                            style = styledTextData.getStyledTexts(i).style
+                        }
                     )
                 }
                 return output
@@ -458,20 +370,20 @@ internal fun getTextContent(
             }
         }
         Log.w(TAG, "No string array resource $resName found for styled runs")
-        if (styledTextData.value.styled_texts.size == 1) {
+        if (styledTextData.styledTextsCount == 1) {
             val strResId = context.resources.getIdentifier(resName, "string", context.packageName)
             if (strResId != Resources.ID_NULL) {
                 Log.w(TAG, "Single style found, fallback to string resource")
                 return mutableListOf(
-                    StyledTextRun(
-                        context.getString(strResId),
-                        styledTextData.value.styled_texts[0].style,
-                    )
+                    styledTextRun {
+                        text = context.getString(strResId)
+                        style = styledTextData.getStyledTexts(0).style
+                    }
                 )
             } else {
                 Log.w(TAG, "No string resource $resName found for styled runs")
             }
         }
     }
-    return styledTextData.value.styled_texts
+    return styledTextData.styledTextsList
 }

@@ -217,7 +217,7 @@ private fun updateLayoutTree(
                 useMeasureFunc
                 null
                 null
-            },
+            }
         )
         layoutCache[layoutId] = layoutCacheKey
     }
@@ -243,7 +243,13 @@ private fun updateLayoutTree(
         child = child.nextSibling
     }
 
-    if (updateLayoutChildren) layoutParentChildren.add(layoutParentChildren { layoutId; layoutChildren })
+    if (updateLayoutChildren)
+        layoutParentChildren.add(
+            layoutParentChildren {
+                layoutId
+                layoutChildren
+            }
+        )
 
     return needsLayoutUpdate
 }
@@ -289,7 +295,10 @@ internal fun layoutTree(
     val layoutNodes = arrayListOf<LayoutNode>()
     val layoutParentChildren = arrayListOf<LayoutParentChildren>()
     updateLayoutTree(manager, root, layoutCache, layoutNodes, layoutParentChildren)
-    val layoutNodeList = layoutNodeList{layoutNodes; layoutParentChildren}
+    val layoutNodeList = layoutNodeList {
+        layoutNodes
+        layoutParentChildren
+    }
 
     // Now we can give the new layoutNodeList to the Rust JNI layout implementation
     val updatedLayouts = SquooshLayout.doLayout(manager, root.layoutId, layoutNodeList)

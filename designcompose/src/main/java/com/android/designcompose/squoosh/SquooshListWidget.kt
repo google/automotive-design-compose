@@ -46,7 +46,6 @@ import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.getCustomComposable
 import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.itemSpacingAbs
-import com.android.designcompose.utils.pointsAsDp
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.type
@@ -54,6 +53,7 @@ import com.android.designcompose.serdegen.GridLayoutType
 import com.android.designcompose.serdegen.GridSpan
 import com.android.designcompose.serdegen.ItemSpacingType
 import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.utils.pointsAsDp
 
 // For a list widget whose layout is set to horizontal or vertical, add the widget's children into
 // composableList so that they can be composed separately.

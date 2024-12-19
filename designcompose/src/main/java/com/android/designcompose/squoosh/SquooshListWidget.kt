@@ -46,7 +46,7 @@ import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.getCustomComposable
 import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.itemSpacingAbs
-import com.android.designcompose.pointsAsDp
+import com.android.designcompose.utils.pointsAsDp
 import com.android.designcompose.proto.getDim
 import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.proto.type

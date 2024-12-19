@@ -28,10 +28,10 @@ import com.android.designcompose.InteractionState
 import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.VariableState
-import com.android.designcompose.asBuilder
+import com.android.designcompose.utils.asBuilder
 import com.android.designcompose.common.NodeQuery
-import com.android.designcompose.defaultLayoutStyle
-import com.android.designcompose.defaultNodeStyle
+import com.android.designcompose.utils.defaultLayoutStyle
+import com.android.designcompose.utils.defaultNodeStyle
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
@@ -40,8 +40,8 @@ import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
-import com.android.designcompose.hasScrolling
-import com.android.designcompose.mergeStyles
+import com.android.designcompose.utils.hasScrolling
+import com.android.designcompose.utils.mergeStyles
 import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
 import com.android.designcompose.proto.OverlayPositionEnum
 import com.android.designcompose.proto.getType

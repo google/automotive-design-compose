@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.designcompose
+package com.android.designcompose.utils
 
 import android.content.Context
 import android.content.res.Resources
@@ -49,6 +49,13 @@ import androidx.compose.ui.graphics.isIdentity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.android.designcompose.BitmapFactoryWithCache
+import com.android.designcompose.DebugNodeManager
+import com.android.designcompose.DocContent
+import com.android.designcompose.LayoutManager
+import com.android.designcompose.TAG
+import com.android.designcompose.VariableState
+import com.android.designcompose.getValue
 import com.android.designcompose.proto.StrokeAlignType
 import com.android.designcompose.proto.WindingRuleType
 import com.android.designcompose.proto.alignContentFromInt

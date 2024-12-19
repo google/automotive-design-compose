@@ -23,7 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.android.designcompose.asAnimationSpec
+import com.android.designcompose.utils.asAnimationSpec
 import com.android.designcompose.serdegen.Easing
 import com.android.designcompose.serdegen.EasingType
 import com.android.designcompose.serdegen.SmartAnimate

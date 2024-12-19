@@ -31,6 +31,7 @@ import com.android.designcompose.definition.element.NumOrVar
 import com.android.designcompose.definition.element.Variable
 import com.android.designcompose.definition.element.VariableMap
 import com.android.designcompose.definition.element.VariableValue
+import com.android.designcompose.utils.toColor
 
 // A variable mode, e.g. "light" or "dark"
 typealias VariableMode = String

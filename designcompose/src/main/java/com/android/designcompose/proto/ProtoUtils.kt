@@ -27,8 +27,6 @@ import com.android.designcompose.serdegen.LayoutStyle
 import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Shape
-import com.android.designcompose.serdegen.StrokeWeight
-import com.android.designcompose.serdegen.StrokeWeightType
 import com.android.designcompose.serdegen.Text
 import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.TriggerType
@@ -37,104 +35,6 @@ import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
-
-//
-// StrokeWeight Helper Functions
-//
-
-// Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
-// vectors that don't have sides.
-@Deprecated("This function will be removed in the future.")
-internal fun Optional<StrokeWeight>.toUniform(): Float {
-    if (this.isPresent) {
-        val weightTypeOpt = this.get().stroke_weight_type
-        if (weightTypeOpt.isPresent) {
-            when (val weightType = weightTypeOpt.get()) {
-                is StrokeWeightType.Uniform -> return weightType.value
-                is StrokeWeightType.Individual -> return weightType.value.top
-            }
-        }
-    }
-    return 0.0f
-}
-
-// Return a maximum stroke weight. This is used for computing the layer bounds when creating a
-// layer for compositing (transparency, blend modes, etc).
-@Deprecated("This function will be removed in the future.")
-internal fun Optional<StrokeWeight>.max(): Float {
-    if (this.isPresent) {
-        val weightTypeOpt = this.get().stroke_weight_type
-        if (weightTypeOpt.isPresent) {
-            when (val weightType = weightTypeOpt.get()) {
-                is StrokeWeightType.Uniform -> return weightType.value
-                is StrokeWeightType.Individual ->
-                    return maxOf(
-                        weightType.value.top,
-                        weightType.value.left,
-                        weightType.value.bottom,
-                        weightType.value.right,
-                    )
-            }
-        }
-    }
-    return 0.0f
-}
-
-@Deprecated("This function will be removed in the future.")
-internal fun Optional<StrokeWeight>.top(): Float {
-    if (this.isPresent) {
-        val weightTypeOpt = this.get().stroke_weight_type
-        if (weightTypeOpt.isPresent) {
-            when (val weightType = weightTypeOpt.get()) {
-                is StrokeWeightType.Uniform -> return weightType.value
-                is StrokeWeightType.Individual -> return weightType.value.top
-            }
-        }
-    }
-    return 0.0f
-}
-
-@Deprecated("This function will be removed in the future.")
-internal fun Optional<StrokeWeight>.left(): Float {
-    if (this.isPresent) {
-        val weightTypeOpt = this.get().stroke_weight_type
-        if (weightTypeOpt.isPresent) {
-            when (val weightType = weightTypeOpt.get()) {
-                is StrokeWeightType.Uniform -> return weightType.value
-                is StrokeWeightType.Individual -> return weightType.value.left
-            }
-        }
-    }
-    return 0.0f
-}
-
-@Deprecated("This function will be removed in the future.")
-internal fun Optional<StrokeWeight>.bottom(): Float {
-    if (this.isPresent) {
-        val weightTypeOpt = this.get().stroke_weight_type
-        if (weightTypeOpt.isPresent) {
-            when (val weightType = weightTypeOpt.get()) {
-                is StrokeWeightType.Uniform -> return weightType.value
-                is StrokeWeightType.Individual -> return weightType.value.bottom
-            }
-        }
-    }
-    return 0.0f
-}
-
-@Deprecated("This function will be removed in the future.")
-internal fun Optional<StrokeWeight>.right(): Float {
-    if (this.isPresent) {
-        val weightTypeOpt = this.get().stroke_weight_type
-        if (weightTypeOpt.isPresent) {
-            when (val weightType = weightTypeOpt.get()) {
-                is StrokeWeightType.Uniform -> return weightType.value
-                is StrokeWeightType.Individual -> return weightType.value.right
-            }
-        }
-    }
-    return 0.0f
-}
 
 //
 // Background Helper functions

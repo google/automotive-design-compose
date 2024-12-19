@@ -20,6 +20,7 @@ import android.graphics.PointF
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Matrix
 import com.android.designcompose.serdegen.LayoutTransform
+import com.android.designcompose.utils.asComposeTransform
 import java.util.Optional
 import kotlin.math.atan2
 import kotlin.math.cos

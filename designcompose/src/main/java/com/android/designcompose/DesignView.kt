@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
-import com.android.designcompose.serdegen.ComponentInfo
+import com.android.designcompose.definition.view.ComponentInfo
 import com.android.designcompose.squoosh.SquooshRoot
 import kotlin.math.min
 import kotlinx.coroutines.delay

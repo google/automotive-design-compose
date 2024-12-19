@@ -24,6 +24,7 @@ import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.GenericDocContent
 import com.android.designcompose.common.decodeDiskBaseDoc
 import com.android.designcompose.common.decodeServerBaseDoc
+import com.google.protobuf.kotlin.get
 import java.io.File
 import java.io.InputStream
 
@@ -47,20 +48,20 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
     private var images: HashMap<String, Bitmap> = HashMap()
 
     init {
-        for ((imageKey, bytes) in c.document.images) {
+        for ((imageKey, bytes) in c.document.imagesMap) {
             if (bytes.isEmpty()) {
                 if (previousDoc != null && previousDoc.images[imageKey] != null) {
                     images[imageKey] = previousDoc.images[imageKey]!!
                     // Replace this record in the decoded doc.
-                    c.document.images[imageKey] = previousDoc.c.document.images[imageKey]
+                    c.document.imagesMap[imageKey] = previousDoc.c.document.imagesMap[imageKey]
                 }
             } else {
-                val byteArray = ByteArray(bytes.size) { i -> bytes[i] }
+                val byteArray = ByteArray(bytes.size()) { i -> bytes[i] }
                 val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                 images[imageKey] = bitmap
             }
         }
-        Feedback.documentDecodeImages(c.document.images.size, c.header.name, c.docId)
+        Feedback.documentDecodeImages(c.document.imagesMap.size, c.header.name, c.docId)
     }
 
     /**

@@ -44,6 +44,7 @@ import com.android.designcompose.TAG
 import com.android.designcompose.VariableState
 import com.android.designcompose.definition.element.Background
 import com.android.designcompose.definition.element.Background.ScaleMode
+import com.android.designcompose.definition.element.StrokeWeight
 import com.android.designcompose.definition.element.colorOrNull
 import com.android.designcompose.definition.element.transformOrNull
 import com.android.designcompose.definition.modifier.AffineTransform
@@ -523,4 +524,61 @@ internal fun Background.asBrush(
         }
     }
     return null
+}
+
+///////////////////////////////////
+// StrokeWeight Helper Functions //
+///////////////////////////////////
+
+// Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
+// vectors that don't have sides.
+internal fun StrokeWeight.toUniform(): Float {
+    return when (strokeWeightTypeCase) {
+        StrokeWeight.StrokeWeightTypeCase.UNIFORM -> uniform
+        StrokeWeight.StrokeWeightTypeCase.INDIVIDUAL -> individual.top
+        else -> 0.0f
+    }
+}
+
+// Return a maximum stroke weight. This is used for computing the layer bounds when creating a
+// layer for compositing (transparency, blend modes, etc).
+internal fun StrokeWeight.max(): Float {
+    return when (strokeWeightTypeCase) {
+        StrokeWeight.StrokeWeightTypeCase.UNIFORM -> uniform
+        StrokeWeight.StrokeWeightTypeCase.INDIVIDUAL ->
+            maxOf(individual.top, individual.left, individual.bottom, individual.right)
+        else -> 0.0f
+    }
+}
+
+internal fun StrokeWeight.top(): Float {
+    return when (strokeWeightTypeCase) {
+        StrokeWeight.StrokeWeightTypeCase.UNIFORM -> uniform
+        StrokeWeight.StrokeWeightTypeCase.INDIVIDUAL -> individual.top
+        else -> 0.0f
+    }
+}
+
+internal fun StrokeWeight.left(): Float {
+    return when (strokeWeightTypeCase) {
+        StrokeWeight.StrokeWeightTypeCase.UNIFORM -> uniform
+        StrokeWeight.StrokeWeightTypeCase.INDIVIDUAL -> individual.left
+        else -> 0.0f
+    }
+}
+
+internal fun StrokeWeight.bottom(): Float {
+    return when (strokeWeightTypeCase) {
+        StrokeWeight.StrokeWeightTypeCase.UNIFORM -> uniform
+        StrokeWeight.StrokeWeightTypeCase.INDIVIDUAL -> individual.bottom
+        else -> 0.0f
+    }
+}
+
+internal fun StrokeWeight.right(): Float {
+    return when (strokeWeightTypeCase) {
+        StrokeWeight.StrokeWeightTypeCase.UNIFORM -> uniform
+        StrokeWeight.StrokeWeightTypeCase.INDIVIDUAL -> individual.right
+        else -> 0.0f
+    }
 }

@@ -43,30 +43,21 @@ import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
+import com.android.designcompose.definition.element.StrokeAlign
+import com.android.designcompose.definition.element.ViewShape
+import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
+import com.android.designcompose.definition.element.viewShape
+import com.android.designcompose.definition.layout.Overflow
+import com.android.designcompose.definition.modifier.outsetOrNull
+import com.android.designcompose.definition.plugin.ArcMeterData
+import com.android.designcompose.definition.plugin.MeterData
+import com.android.designcompose.definition.plugin.ProgressBarMeterData
+import com.android.designcompose.definition.plugin.ProgressMarkerMeterData
+import com.android.designcompose.definition.plugin.ProgressVectorMeterData
+import com.android.designcompose.definition.plugin.RotationMeterData
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
-import com.android.designcompose.proto.StrokeAlignType
-import com.android.designcompose.proto.blendModeFromInt
-import com.android.designcompose.proto.getDim
-import com.android.designcompose.proto.layoutStyle
-import com.android.designcompose.proto.max
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.proto.overflowFromInt
-import com.android.designcompose.proto.start
-import com.android.designcompose.proto.strokeAlignFromInt
-import com.android.designcompose.proto.toUniform
-import com.android.designcompose.proto.top
-import com.android.designcompose.serdegen.ArcMeterData
-import com.android.designcompose.serdegen.MeterDataType
-import com.android.designcompose.serdegen.Overflow
-import com.android.designcompose.serdegen.ProgressBarMeterData
-import com.android.designcompose.serdegen.ProgressMarkerMeterData
-import com.android.designcompose.serdegen.ProgressVectorMeterData
-import com.android.designcompose.serdegen.RotationMeterData
-import com.android.designcompose.serdegen.ShadowBox
-import com.android.designcompose.serdegen.Shape
-import com.android.designcompose.serdegen.VectorArc
-import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewShape
+import com.android.designcompose.definition.view.shaderFallbackColorOrNull
 import com.android.designcompose.squoosh.SquooshResolvedNode
 import com.android.designcompose.utils.asBrush
 import com.android.designcompose.utils.asComposeBlendMode
@@ -75,12 +66,12 @@ import com.android.designcompose.utils.blurFudgeFactor
 import com.android.designcompose.utils.fixedHeight
 import com.android.designcompose.utils.fixedWidth
 import com.android.designcompose.utils.getNodeRenderSize
+import com.android.designcompose.utils.max
 import com.android.designcompose.utils.pointsAsDp
 import com.android.designcompose.utils.toColor
+import com.android.designcompose.utils.toUniform
 import com.android.designcompose.utils.useLayer
 import java.lang.Float.max
-import java.util.Optional
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.cos
@@ -145,7 +136,7 @@ private fun calculateRotationData(
 ): androidx.compose.ui.graphics.Matrix {
     val rotation =
         (rotationData.start + meterValue / 100f * (rotationData.end - rotationData.start))
-            .coerceDiscrete(rotationData.discrete, rotationData.discrete_value)
+            .coerceDiscrete(rotationData.discrete, rotationData.discreteValue)
 
     val nodeWidth = style.fixedWidth(density)
     val nodeHeight = style.fixedHeight(density)
@@ -192,15 +183,15 @@ private fun calculateProgressBarData(
 ): Pair<Size, androidx.compose.ui.graphics.Matrix?> {
     // Progress bar discrete values are done by percentage
     val discretizedMeterValue =
-        meterValue.coerceDiscrete(progressBarData.discrete, progressBarData.discrete_value)
+        meterValue.coerceDiscrete(progressBarData.discrete, progressBarData.discreteValue)
 
     // Resize the progress bar by interpolating between 0 and endX or endY depending on whether it
     // is a horizontal or vertical progress bar
     if (progressBarData.vertical) {
-        val width = style.layoutStyle.width.getDim().pointsAsDp(density).value
+        val width = style.layoutStyle.width.pointsAsDp(density).value
         // Calculate bar extents from the parent layout if it exists, or from the progress bar data
         // if not.
-        var endY = progressBarData.end_y
+        var endY = progressBarData.endY
         parent?.let { p ->
             val parentSize = p.computedLayout?.let { Size(it.width, it.height) }
             parentSize?.let { pSize ->
@@ -215,10 +206,10 @@ private fun calculateProgressBarData(
         overrideTransform.setYTranslation(moveY - topOffset)
         return Pair(Size(width, barHeight), overrideTransform)
     } else {
-        val height = style.layoutStyle.height.getDim().pointsAsDp(density).value
+        val height = style.layoutStyle.height.pointsAsDp(density).value
         // Calculate bar extents from the parent layout if it exists, or from the progress bar data
         // if not.
-        var endX = progressBarData.end_x
+        var endX = progressBarData.endX
         parent?.let { p ->
             val parentSize = p.computedLayout?.let { Size(it.width, it.height) }
             parentSize?.let { pSize ->
@@ -241,7 +232,7 @@ private fun calculateProgressMarkerData(
 ): androidx.compose.ui.graphics.Matrix {
     // Progress marker discrete values are done by percentage
     val discretizedMeterValue =
-        meterValue.coerceDiscrete(markerData.discrete, markerData.discrete_value)
+        meterValue.coerceDiscrete(markerData.discrete, markerData.discreteValue)
 
     // Calculate node and parent render sizes if available. These will only be available for
     // squoosh, and will be used to calculate the progress sizes and extents
@@ -261,14 +252,14 @@ private fun calculateProgressMarkerData(
     val overrideTransform = style.getTransform(density)
     if (markerData.vertical) {
         var startY =
-            parentSize?.let { it.height - (mySize?.height ?: 0f) / 2f } ?: markerData.start_y
-        val endY = mySize?.let { -it.height / 2f } ?: markerData.end_y
+            parentSize?.let { it.height - (mySize?.height ?: 0f) / 2f } ?: markerData.startY
+        val endY = mySize?.let { -it.height / 2f } ?: markerData.endY
         val moveY = lerp(startY, endY, discretizedMeterValue, density)
         val topOffset = style.layoutStyle.margin.top.pointsAsDp(density).value
         overrideTransform.setYTranslation(moveY - topOffset)
     } else {
-        var startX = mySize?.let { -it.width / 2f } ?: markerData.start_x
-        var endX = parentSize?.let { it.width - (mySize?.width ?: 0f) / 2f } ?: markerData.end_x
+        var startX = mySize?.let { -it.width / 2f } ?: markerData.startX
+        var endX = parentSize?.let { it.width - (mySize?.width ?: 0f) / 2f } ?: markerData.endX
         val moveX = lerp(startX, endX, discretizedMeterValue, density)
         val leftOffset = style.layoutStyle.margin.start.pointsAsDp(density).value
         overrideTransform.setXTranslation(moveX - leftOffset)
@@ -288,29 +279,20 @@ private fun calculateArcData(
     val arcAngleMeter =
         (arcMeterValue / 100f * (arcData.end - arcData.start)).coerceDiscrete(
             arcData.discrete,
-            arcData.discrete_value,
+            arcData.discreteValue,
         )
-    if (shape.shape.get() is Shape.Arc) {
-        val arc = (shape.shape.get() as Shape.Arc).value
-        return ViewShape(
-            Optional.of(
-                Shape.Arc(
-                    VectorArc(
-                        listOf(),
-                        listOf(),
-                        arc.stroke_cap,
-                        arcData.start,
-                        arcAngleMeter,
-                        arc.inner_radius,
-                        arcData.corner_radius,
-                        arc.is_mask,
-                    )
-                )
-            )
-        )
-    } else {
-        return shape
+    return if (!shape.hasArc()) shape
+    else viewShape {
+        vectorArc {
+            strokeCap = shape.arc.strokeCap
+            startAngleDegrees = arcData.start
+            sweepAngleDegrees = arcAngleMeter
+            innerRadius = shape.arc.innerRadius
+            cornerRadius = arcData.cornerRadius
+            isMask = shape.arc.isMask
+        }
     }
+
 }
 
 // Set up the paint object to render a vector path as a stroke with a single dash that matches the
@@ -323,8 +305,8 @@ private fun calculateProgressVectorData(
     meterValue: Float,
     density: Float,
 ) {
-    val strokeWidth = style.nodeStyle.stroke.get().stroke_weight.toUniform() * density
-    val discretizedMeterValue = meterValue.coerceDiscrete(data.discrete, data.discrete_value)
+    val strokeWidth = style.nodeStyle.stroke.strokeWeight.toUniform() * density
+    val discretizedMeterValue = meterValue.coerceDiscrete(data.discrete, data.discreteValue)
 
     // Get full length of path
     var pathLen = 0f
@@ -376,19 +358,18 @@ internal fun ContentDrawScope.render(
 
     val meterValue =
         customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
-    if (meterValue != null) {
-        // Check if there is meter data for a dial/gauge/progress bar
-        if (style.nodeStyle.meter_data.isPresent) {
-            when (val meterData = style.nodeStyle.meter_data.get().meter_data_type.get()) {
-                is MeterDataType.RotationData -> {
-                    val rotationData = meterData.value
+    // Check if there is meter data for a dial/gauge/progress bar
+    if (meterValue != null && style.nodeStyle.hasMeterData()) {
+        with(style.nodeStyle.meterData) {
+            when (meterDataTypeCase) {
+                MeterData.MeterDataTypeCase.ROTATION_DATA -> {
                     if (rotationData.enabled) {
                         overrideTransform =
                             calculateRotationData(rotationData, meterValue, style, density)
                     }
                 }
-                is MeterDataType.ProgressBarData -> {
-                    val progressBarData = meterData.value
+
+                MeterData.MeterDataTypeCase.PROGRESS_BAR_DATA -> {
                     if (progressBarData.enabled) {
                         val progressBarSizeTransform =
                             calculateProgressBarData(
@@ -402,8 +383,8 @@ internal fun ContentDrawScope.render(
                         overrideTransform = progressBarSizeTransform.second
                     }
                 }
-                is MeterDataType.ProgressMarkerData -> {
-                    val progressMarkerData = meterData.value
+
+                MeterData.MeterDataTypeCase.PROGRESS_MARKER_DATA -> {
                     if (progressMarkerData.enabled) {
                         overrideTransform =
                             calculateProgressMarkerData(
@@ -416,18 +397,21 @@ internal fun ContentDrawScope.render(
                             )
                     }
                 }
-                is MeterDataType.ArcData -> {
-                    val arcData = meterData.value
+
+                MeterData.MeterDataTypeCase.ARC_DATA -> {
                     if (arcData.enabled) {
                         shape = calculateArcData(arcData, meterValue, shape)
                         customArcAngle = true
                     }
                 }
-                is MeterDataType.ProgressVectorData -> {
+
+                MeterData.MeterDataTypeCase.PROGRESS_VECTOR_DATA -> {
                     // If this is a vector path progress bar, save it here so we can convert it to a
                     // set of path instructions and render it instead of the normal stroke.
-                    if (meterData.value.enabled) progressVectorMeterData = meterData.value
+                    if (progressVectorData.enabled) progressVectorMeterData = progressVectorData
                 }
+
+                else -> {}
             }
         }
     }
@@ -444,9 +428,10 @@ internal fun ContentDrawScope.render(
     }
 
     // Blend mode
-    val blendMode = blendModeFromInt(style.nodeStyle.blend_mode).asComposeBlendMode()
-    val useBlendMode = blendModeFromInt(style.nodeStyle.blend_mode).useLayer()
-    val opacity = style.nodeStyle.opacity.orElse(1.0f)
+    val blendMode = (style.nodeStyle.blendMode).asComposeBlendMode()
+    val useBlendMode = (style.nodeStyle.blendMode).useLayer()
+    val opacity = style.nodeStyle.opacity.takeIf { style.nodeStyle.hasOpacity() } ?: 1.0f
+
 
     // Either use a graphicsLayer to apply the opacity effect, or use saveLayer if
     // we have a blend mode.
@@ -478,22 +463,19 @@ internal fun ContentDrawScope.render(
         } else {
             customizations.getBrush(name)
         }
-    if (customFillBrush == null) {
-        view.shader.getOrNull()?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val shader = RuntimeShader(it.trim().trimIndent())
+    if (customFillBrush == null && view.hasShader()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val shader = RuntimeShader(view.shader.trim().trimIndent())
                 customFillBrush = SizingShaderBrush(shader)
                 val shaderUniformTime = customizations.getShaderUniformTimeState(name)
                 if (shaderUniformTime != null) {
                     shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
                 }
-                return@let
             } else {
-                view.shader_fallback_color.getOrNull()?.let { color ->
+            view.shaderFallbackColorOrNull?.let { color ->
                     customFillBrush = SolidColor(color.toColor())
                 }
             }
-        }
     }
 
     val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
@@ -503,7 +485,7 @@ internal fun ContentDrawScope.render(
             customFillBrush!!.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
-            style.nodeStyle.backgrounds.mapNotNull { background ->
+            style.nodeStyle.backgroundsList.mapNotNull { background ->
                 val p = Paint()
                 val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
@@ -516,8 +498,7 @@ internal fun ContentDrawScope.render(
             }
         }
 
-    val strokeBrush =
-        style.nodeStyle.stroke.get().strokes.mapNotNull { background ->
+    val strokeBrush = style.nodeStyle.stroke.strokesList.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -539,27 +520,24 @@ internal fun ContentDrawScope.render(
     shapePaths.shadowClips.forEach { path -> drawContext.canvas.clipPath(path, ClipOp.Difference) }
 
     // Now paint the outset shadows.
-    shapePaths.shadowFills.forEach { shadow ->
-        // Only outset.
-        val shadowBox =
-            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Outset)?.value ?: return@forEach
+    shapePaths.shadowFills.filter { it.shadowStyle.hasOutset() }.forEach { shadow ->
+        val shadowBox = shadow.shadowStyle.outset
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color =
-            shadowBox.color.get().getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadowBox.blur_radius > 0.0f) {
+        shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
+        if (shadowBox.blurRadius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
-                    shadowBox.blur_radius * density * blurFudgeFactor,
+                    shadowBox.blurRadius * density * blurFudgeFactor,
                     BlurMaskFilter.Blur.NORMAL,
                 )
         }
-        drawContext.canvas.translate(shadowBox.offset_x * density, shadowBox.offset_y * density)
+        drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
-        drawContext.canvas.translate(-shadowBox.offset_x * density, -shadowBox.offset_y * density)
+        drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
     }
     drawContext.canvas.restore()
 
@@ -592,34 +570,30 @@ internal fun ContentDrawScope.render(
     val shadowSpreadPaint = android.graphics.Paint()
     shadowSpreadPaint.style = android.graphics.Paint.Style.STROKE
 
-    shapePaths.shadowFills.forEach { shadow ->
-        // Only inset.
-        val shadowBox =
-            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Inset)?.value ?: return@forEach
+    shapePaths.shadowFills.filter { it.shadowStyle.hasInset() }.forEach { shadow ->
+        val shadowBox = shadow.shadowStyle.inset
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color =
-            shadowBox.color.get().getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadowBox.blur_radius > 0.0f) {
+        shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
+        if (shadowBox.blurRadius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
-                    shadowBox.blur_radius * density * blurFudgeFactor,
+                    shadowBox.blurRadius * density * blurFudgeFactor,
                     BlurMaskFilter.Blur.NORMAL,
                 )
         }
-        drawContext.canvas.translate(shadowBox.offset_x * density, shadowBox.offset_y * density)
+        drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
-        drawContext.canvas.translate(-shadowBox.offset_x * density, -shadowBox.offset_y * density)
+        drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
     }
     drawContext.canvas.restore()
 
     // Now draw our stroke and our children. The order of drawing the stroke and the
     // children is different depending on whether we clip children.
-    val shouldClip = overflowFromInt(style.nodeStyle.overflow) is Overflow.Hidden
-    if (shouldClip) {
+    if (style.nodeStyle.overflow == Overflow.OVERFLOW_HIDDEN) {
         // Clip children, and paint our stroke on top of them.
         drawContext.canvas.save()
         for (fill in shapePaths.fills) {
@@ -668,19 +642,18 @@ internal fun ContentDrawScope.squooshShapeRender(
 
     val meterValue =
         customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
-    if (meterValue != null) {
-        // Check if there is meter data for a dial/gauge/progress bar
-        if (style.nodeStyle.meter_data.isPresent) {
-            when (val meterData = style.nodeStyle.meter_data.get().meter_data_type.get()) {
-                is MeterDataType.RotationData -> {
-                    val rotationData = meterData.value
+    // Check if there is meter data for a dial/gauge/progress bar
+    if (meterValue != null && style.nodeStyle.hasMeterData()) {
+        with(style.nodeStyle.meterData) {
+            when (meterDataTypeCase) {
+                MeterData.MeterDataTypeCase.ROTATION_DATA -> {
                     if (rotationData.enabled) {
                         overrideTransform =
                             calculateRotationData(rotationData, meterValue, style, density)
                     }
                 }
-                is MeterDataType.ProgressBarData -> {
-                    val progressBarData = meterData.value
+
+                MeterData.MeterDataTypeCase.PROGRESS_BAR_DATA -> {
                     if (progressBarData.enabled) {
                         val progressBarSizeTransform =
                             calculateProgressBarData(
@@ -694,8 +667,8 @@ internal fun ContentDrawScope.squooshShapeRender(
                         overrideTransform = progressBarSizeTransform.second
                     }
                 }
-                is MeterDataType.ProgressMarkerData -> {
-                    val progressMarkerData = meterData.value
+
+                MeterData.MeterDataTypeCase.PROGRESS_MARKER_DATA -> {
                     if (progressMarkerData.enabled) {
                         overrideTransform =
                             calculateProgressMarkerData(
@@ -708,19 +681,23 @@ internal fun ContentDrawScope.squooshShapeRender(
                             )
                     }
                 }
-                is MeterDataType.ArcData -> {
-                    val arcData = meterData.value
+
+                MeterData.MeterDataTypeCase.ARC_DATA -> {
                     if (arcData.enabled) {
                         shape = calculateArcData(arcData, meterValue, shape)
                         customArcAngle = true
                     }
                 }
-                is MeterDataType.ProgressVectorData -> {
+
+                MeterData.MeterDataTypeCase.PROGRESS_VECTOR_DATA -> {
                     // If this is a vector path progress bar, save it here so we can convert it to a
                     // set of path instructions and render it instead of the normal stroke.
-                    if (meterData.value.enabled) progressVectorMeterData = meterData.value
+                    if (progressVectorData.enabled) progressVectorMeterData = progressVectorData
                 }
+
+                else -> {}
             }
+
         }
     }
 
@@ -757,9 +734,9 @@ internal fun ContentDrawScope.squooshShapeRender(
         )
 
     // Blend mode
-    val blendMode = blendModeFromInt(style.nodeStyle.blend_mode).asComposeBlendMode()
-    val useBlendMode = blendModeFromInt(style.nodeStyle.blend_mode).useLayer()
-    val opacity = style.nodeStyle.opacity.orElse(1.0f)
+    val blendMode = style.nodeStyle.blendMode.asComposeBlendMode()
+    val useBlendMode = style.nodeStyle.blendMode.useLayer()
+    val opacity = style.nodeStyle.opacity.takeIf { style.nodeStyle.hasMeterData() } ?: 1.0f
 
     // Always use saveLayer for opacity; no graphicsLayer since we're not in
     // Compose.
@@ -771,25 +748,26 @@ internal fun ContentDrawScope.squooshShapeRender(
         // stroke or shadow.
         var shadowOutset = 0.0f
         for (shadow in shapePaths.shadowFills) {
-            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Outset)?.value?.let { shadowBox ->
+            shadow.shadowStyle.outsetOrNull?.let { shadowBox ->
                 shadowOutset =
                     max(
                         shadowOutset,
-                        shadowBox.blur_radius * blurFudgeFactor +
-                            shadowBox.spread_radius +
-                            max(shadowBox.offset_x, shadowBox.offset_y),
+                        shadowBox.blurRadius * blurFudgeFactor + shadowBox.spreadRadius + max(
+                            shadowBox.offsetX,
+                            shadowBox.offsetY,
+                        ),
                     )
             }
         }
         var strokeOutset = 0.0f
-        val strokeStyle = style.nodeStyle.stroke.get()
-        if (strokeStyle.strokes.isNotEmpty()) {
+        val strokeStyle = style.nodeStyle.stroke
+        if (strokeStyle.strokesList.isNotEmpty()) {
             strokeOutset =
                 max(
                     strokeOutset,
-                    when (strokeAlignFromInt(strokeStyle.stroke_align)) {
-                        StrokeAlignType.Outside -> strokeStyle.stroke_weight.max()
-                        StrokeAlignType.Center -> strokeStyle.stroke_weight.max() / 2.0f
+                    when (strokeStyle.strokeAlign) {
+                        StrokeAlign.STROKE_ALIGN_OUTSIDE -> strokeStyle.strokeWeight.max()
+                        StrokeAlign.STROKE_ALIGN_CENTER -> strokeStyle.strokeWeight.max() / 2.0f
                         else -> 0.0f
                     },
                 )
@@ -809,7 +787,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             customizations.getBrush(name)
         }
     if (customFillBrush == null) {
-        node.view.shader.getOrNull()?.let {
+        node.view.shader.takeIf { node.view.hasShader() }?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val shader = RuntimeShader(it.trim().trimIndent())
                 customFillBrush = SizingShaderBrush(shader)
@@ -819,7 +797,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                 }
                 return@let
             } else {
-                node.view.shader_fallback_color.getOrNull()?.let { color ->
+                node.view.shaderFallbackColorOrNull?.let { color ->
                     customFillBrush = SolidColor(color.toColor())
                 }
             }
@@ -833,7 +811,7 @@ internal fun ContentDrawScope.squooshShapeRender(
             customFillBrush!!.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
-            style.nodeStyle.backgrounds.mapNotNull { background ->
+            style.nodeStyle.backgroundsList.mapNotNull { background ->
                 val p = Paint()
                 val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
@@ -845,8 +823,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                 }
             }
         }
-    val strokeBrush =
-        style.nodeStyle.stroke.get().strokes.mapNotNull { background ->
+    val strokeBrush = style.nodeStyle.stroke.strokesList.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -868,27 +845,24 @@ internal fun ContentDrawScope.squooshShapeRender(
     shapePaths.shadowClips.forEach { path -> drawContext.canvas.clipPath(path, ClipOp.Difference) }
 
     // Now paint the outset shadows.
-    shapePaths.shadowFills.forEach { shadow ->
-        // Only outset.
-        val shadowBox =
-            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Outset)?.value ?: return@forEach
+    shapePaths.shadowFills.filter { it.shadowStyle.hasOutset() }.forEach { shadow ->
+        val shadowBox = shadow.shadowStyle.outset
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color =
-            shadowBox.color.get().getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadowBox.blur_radius > 0.0f) {
+        shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
+        if (shadowBox.blurRadius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
-                    shadowBox.blur_radius * density * blurFudgeFactor,
+                    shadowBox.blurRadius * density * blurFudgeFactor,
                     BlurMaskFilter.Blur.NORMAL,
                 )
         }
-        drawContext.canvas.translate(shadowBox.offset_x * density, shadowBox.offset_y * density)
+        drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
-        drawContext.canvas.translate(-shadowBox.offset_x * density, -shadowBox.offset_y * density)
+        drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
     }
     drawContext.canvas.restore()
 
@@ -905,15 +879,15 @@ internal fun ContentDrawScope.squooshShapeRender(
                     object : ImageReplacementContext {
                         override val imageContext =
                             ImageContext(
-                                background = node.style.node_style.get().backgrounds,
-                                minWidth = node.style.layout_style.get().min_width.getDim(),
-                                maxWidth = node.style.layout_style.get().max_width.getDim(),
-                                width = node.style.layout_style.get().width.getDim(),
-                                minHeight = node.style.layout_style.get().min_height.getDim(),
-                                maxHeight = node.style.layout_style.get().max_height.getDim(),
-                                height = node.style.layout_style.get().height.getDim(),
+                                background = node.style.nodeStyle.backgroundsList,
+                                minWidth = node.style.layoutStyle.minWidth,
+                                maxWidth = node.style.layoutStyle.maxWidth,
+                                width = node.style.layoutStyle.width,
+                                minHeight = node.style.layoutStyle.minHeight,
+                                maxHeight = node.style.layoutStyle.maxHeight,
+                                height = node.style.layoutStyle.height,
                             )
-                    }
+                    },
                 )
         }
     }
@@ -941,33 +915,30 @@ internal fun ContentDrawScope.squooshShapeRender(
     val shadowSpreadPaint = android.graphics.Paint()
     shadowSpreadPaint.style = android.graphics.Paint.Style.STROKE
 
-    shapePaths.shadowFills.forEach { shadow ->
-        // Only inset.
-        val shadowBox =
-            (shadow.shadowStyle.shadow_box.get() as? ShadowBox.Inset)?.value ?: return@forEach
+    shapePaths.shadowFills.filter { it.shadowStyle.hasInset() }.forEach { shadow ->
+        val shadowBox = shadow.shadowStyle.inset
 
         // Make an appropriate paint.
         val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color =
-            shadowBox.color.get().getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadowBox.blur_radius > 0.0f) {
+        shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
+        if (shadowBox.blurRadius > 0.0f) {
             shadowPaint.maskFilter =
                 BlurMaskFilter(
-                    shadowBox.blur_radius * density * blurFudgeFactor,
+                    shadowBox.blurRadius * density * blurFudgeFactor,
                     BlurMaskFilter.Blur.NORMAL,
                 )
         }
-        drawContext.canvas.translate(shadowBox.offset_x * density, shadowBox.offset_y * density)
+        drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
         shadow.fills.forEach { shadowPath ->
             drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
         }
-        drawContext.canvas.translate(-shadowBox.offset_x * density, -shadowBox.offset_y * density)
+        drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
     }
     drawContext.canvas.restore()
 
     // Now draw our stroke and our children. The order of drawing the stroke and the
     // children is different depending on whether we clip children.
-    val shouldClip = overflowFromInt(style.nodeStyle.overflow) is Overflow.Hidden
+    val shouldClip = (style.nodeStyle.overflow) == Overflow.OVERFLOW_HIDDEN
     if (shouldClip) {
         // Clip children, and paint our stroke on top of them.
         drawContext.canvas.save()

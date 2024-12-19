@@ -75,10 +75,10 @@ import com.android.designcompose.serdegen.RenderMethod
 import com.android.designcompose.serdegen.ScrollInfo
 import com.android.designcompose.serdegen.Trigger
 import com.android.designcompose.serdegen.TriggerType
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewDataType
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
 import java.util.Optional

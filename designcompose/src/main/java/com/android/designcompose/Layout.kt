@@ -38,8 +38,8 @@ import com.android.designcompose.serdegen.LayoutTransform
 import com.android.designcompose.serdegen.OverflowDirection
 import com.android.designcompose.serdegen.PositionType
 import com.android.designcompose.serdegen.Size
-import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewStyle
 import java.util.Optional
 import kotlin.math.roundToInt
 

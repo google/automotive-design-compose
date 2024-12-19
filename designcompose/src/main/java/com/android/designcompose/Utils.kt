@@ -107,11 +107,11 @@ import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.ItemSpacingType
 import com.android.designcompose.serdegen.JustifyContent
 import com.android.designcompose.serdegen.LayoutSizing
-import com.android.designcompose.serdegen.LayoutStyle
+import com.android.designcompose.definition.layout.LayoutStyle
 import com.android.designcompose.serdegen.LayoutTransform
 import com.android.designcompose.serdegen.LineHeight
 import com.android.designcompose.serdegen.LineHeightType
-import com.android.designcompose.serdegen.NodeStyle
+import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Overflow
 import com.android.designcompose.serdegen.OverflowDirection
@@ -130,10 +130,10 @@ import com.android.designcompose.serdegen.TextDecoration
 import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.TransitionType
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.ViewStyle
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt

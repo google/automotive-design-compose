@@ -30,7 +30,7 @@ import com.android.designcompose.serdegen.SmartAnimate
 import com.android.designcompose.serdegen.Spring
 import com.android.designcompose.serdegen.Transition
 import com.android.designcompose.serdegen.TransitionType
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.view.View
 import java.util.Optional
 
 // We want to perform an animated transition when a variant customization causes a presented

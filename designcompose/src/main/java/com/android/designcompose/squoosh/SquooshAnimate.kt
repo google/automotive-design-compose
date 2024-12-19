@@ -33,14 +33,14 @@ import com.android.designcompose.proto.ifTextGetText
 import com.android.designcompose.proto.nodeStyle
 import com.android.designcompose.serdegen.Container
 import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.NodeStyle
+import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.VectorArc
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.toLayoutTransform
 import java.util.Optional
 import kotlin.jvm.optionals.getOrElse

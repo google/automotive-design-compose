@@ -31,7 +31,7 @@ import com.android.designcompose.proto.navigationTypeFromInt
 import com.android.designcompose.serdegen.Action
 import com.android.designcompose.serdegen.ActionType
 import com.android.designcompose.serdegen.Transition
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.squoosh.AnimationTransition
 import com.android.designcompose.squoosh.SmartAnimateTransition
 import kotlin.jvm.optionals.getOrNull

@@ -66,7 +66,7 @@ import com.android.designcompose.serdegen.Shape
 import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.squoosh.SquooshResolvedNode
 import java.lang.Float.max
 import java.util.Optional

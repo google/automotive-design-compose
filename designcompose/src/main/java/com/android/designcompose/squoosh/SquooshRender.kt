@@ -57,7 +57,7 @@ import com.android.designcompose.serdegen.Layout
 import com.android.designcompose.serdegen.TextAlignVertical
 import com.android.designcompose.serdegen.TextOverflow
 import com.android.designcompose.serdegen.ViewDataType
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.useLayer
 import kotlin.jvm.optionals.getOrNull

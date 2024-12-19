@@ -22,7 +22,7 @@ import com.android.designcompose.serdegen.Box
 import com.android.designcompose.serdegen.FontWeight
 import com.android.designcompose.serdegen.ItemSpacing
 import com.android.designcompose.serdegen.LayoutStyle
-import com.android.designcompose.serdegen.NodeStyle
+import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.serdegen.NumOrVar
 import com.android.designcompose.serdegen.NumOrVarType
 import com.android.designcompose.serdegen.Shape
@@ -34,7 +34,7 @@ import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.serdegen.ViewData
 import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.ViewStyle
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
@@ -44,6 +44,7 @@ import kotlin.jvm.optionals.getOrNull
 
 // Return a "uniform" stroke weight even if we have individual weights. This is used for stroking
 // vectors that don't have sides.
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<StrokeWeight>.toUniform(): Float {
     if (this.isPresent) {
         val weightTypeOpt = this.get().stroke_weight_type
@@ -59,6 +60,7 @@ internal fun Optional<StrokeWeight>.toUniform(): Float {
 
 // Return a maximum stroke weight. This is used for computing the layer bounds when creating a
 // layer for compositing (transparency, blend modes, etc).
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<StrokeWeight>.max(): Float {
     if (this.isPresent) {
         val weightTypeOpt = this.get().stroke_weight_type
@@ -78,6 +80,7 @@ internal fun Optional<StrokeWeight>.max(): Float {
     return 0.0f
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<StrokeWeight>.top(): Float {
     if (this.isPresent) {
         val weightTypeOpt = this.get().stroke_weight_type
@@ -91,6 +94,7 @@ internal fun Optional<StrokeWeight>.top(): Float {
     return 0.0f
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<StrokeWeight>.left(): Float {
     if (this.isPresent) {
         val weightTypeOpt = this.get().stroke_weight_type
@@ -104,6 +108,7 @@ internal fun Optional<StrokeWeight>.left(): Float {
     return 0.0f
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<StrokeWeight>.bottom(): Float {
     if (this.isPresent) {
         val weightTypeOpt = this.get().stroke_weight_type
@@ -117,6 +122,7 @@ internal fun Optional<StrokeWeight>.bottom(): Float {
     return 0.0f
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<StrokeWeight>.right(): Float {
     if (this.isPresent) {
         val weightTypeOpt = this.get().stroke_weight_type
@@ -142,44 +148,55 @@ internal inline fun <reified T> Background.isType(): Boolean {
     return false
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Background.getType(): BackgroundType {
     val bgType = background_type.getOrNull()
     return bgType ?: BackgroundType.None(com.novi.serde.Unit())
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun ViewShape.get(): Shape {
     return this.shape.orElseThrow {
         NoSuchFieldException("Malformed data: ViewShape has no shape field")
     }
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun newViewShapeRect(isMask: Boolean) = ViewShape(Optional.of(Shape.Rect(Box(isMask))))
 
+@Deprecated("This function will be removed in the future.")
 internal fun newFontWeight(weight: Float) =
     FontWeight(Optional.of(NumOrVar(Optional.of(NumOrVarType.Num(weight)))))
 
+@Deprecated("This function will be removed in the future.")
 internal fun ItemSpacing.type() = item_spacing_type.getOrNull()
 
+@Deprecated("This function will be removed in the future.")
 internal fun newNumOrVar(value: Float) = NumOrVar(Optional.of(NumOrVarType.Num(value)))
 
+@Deprecated("This function will be removed in the future.")
 internal val ViewStyle.nodeStyle: NodeStyle
     get() =
         this.node_style.orElseThrow {
             NoSuchFieldException("Malformed data: ViewStyle has no node_style field")
         }
 
+@Deprecated("This function will be removed in the future.")
 internal val ViewStyle.layoutStyle: LayoutStyle
     get() =
         this.layout_style.orElseThrow {
             NoSuchFieldException("Malformed data: ViewStyle has no layout_style field")
         }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<ViewData>.getType() = this.get().view_data_type.get()
 
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<ViewData>.ifContainerGetShape(): Shape? {
     return (this.get().view_data_type.get() as? ViewDataType.Container)?.value?.shape?.get()?.get()
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<ViewData>.ifTextGetText(): Text? {
     return (this.get().view_data_type.get() as? ViewDataType.Text)?.value
 }

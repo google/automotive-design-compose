@@ -17,7 +17,7 @@
 package com.android.designcompose
 
 import com.android.designcompose.annotation.DesignMetaKey
-import com.android.designcompose.serdegen.Action
+import com.android.designcompose.definition.interaction.Action
 
 // Represents a key press event with optional meta keys. A DesignKeyEvent can be created with a
 // single character representing the key and a list of meta keys. It can also be created from a

@@ -37,6 +37,7 @@ import androidx.tracing.Trace.beginSection
 import androidx.tracing.Trace.endSection
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.utils.validateFigmaDocId
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -358,7 +359,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     DesignSettings.fileFetchStatus[id]?.lastUpdateFromFetch = now
                 }
 
-                VariableManager.init(doc.c.docId, doc.c.document.variable_map.get())
+                VariableManager.init(doc.c.docId, doc.c.document.variableMap)
 
                 // Get the list of subscribers to this document id
                 val subs: Array<LiveDocSubscription> =
@@ -512,7 +513,7 @@ internal fun DocServer.doc(
                 }
                 targetDoc
             }
-        targetDoc?.let { VariableManager.init(it.c.docId, it.c.document.variable_map.get()) }
+        targetDoc?.let { VariableManager.init(it.c.docId, it.c.document.variableMap) }
         docUpdateCallback?.invoke(docId, targetDoc?.c?.toSerializedBytes(Feedback))
         setLiveDoc(targetDoc)
 
@@ -528,7 +529,7 @@ internal fun DocServer.doc(
     // Don't return a doc with the wrong ID.
     if (liveDoc != null && liveDoc.c.docId == docId) return liveDoc
     if (preloadedDoc != null && preloadedDoc.c.docId == docId) {
-        VariableManager.init(preloadedDoc.c.docId, preloadedDoc.c.document.variable_map.get())
+        VariableManager.init(preloadedDoc.c.docId, preloadedDoc.c.document.variableMap)
         docUpdateCallback?.invoke(docId, preloadedDoc.c.toSerializedBytes(Feedback))
         endSection()
         return preloadedDoc
@@ -557,7 +558,7 @@ internal fun DocServer.doc(
             synchronized(DesignSettings.fileFetchStatus) {
                 DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
             }
-            VariableManager.init(decodedDoc.c.docId, decodedDoc.c.document.variable_map.get())
+            VariableManager.init(decodedDoc.c.docId, decodedDoc.c.document.variableMap)
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             endSection()
             return decodedDoc

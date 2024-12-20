@@ -46,7 +46,6 @@ import java.lang.ref.WeakReference
 import java.net.ConnectException
 import java.net.SocketException
 import java.time.Instant
-import java.util.Optional
 import kotlin.concurrent.thread
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -187,10 +186,10 @@ object DesignSettings {
     }
 
     internal fun fontFamily(
-        fontFamily: Optional<String>,
+        fontFamily: String?,
         fallback: FontFamily = FontFamily.Default,
     ): FontFamily {
-        val family = fontFamily.map { fam -> fontDb[fam] }.orElse(null)
+        val family = fontFamily?.let { fontDb[fontFamily] }
         if (family == null) {
             // TODO find a better to show this font error. Currently it spams too much
             // fontFamily.ifPresent { familyName -> Log.w("DesignCompose", "Unable to find font

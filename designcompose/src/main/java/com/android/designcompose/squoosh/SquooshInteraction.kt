@@ -22,15 +22,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.InteractionState
+import com.android.designcompose.definition.interaction.Action
 import com.android.designcompose.dispatch
 import com.android.designcompose.getKey
 import com.android.designcompose.getTapCallback
-import com.android.designcompose.proto.type
-import com.android.designcompose.serdegen.Action
-import com.android.designcompose.serdegen.ActionType
-import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.undoDispatch
-import kotlin.jvm.optionals.getOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
@@ -41,20 +37,15 @@ internal fun findTargetInstanceId(
     action: Action,
 ): String? {
     val destinationId: String? =
-        action.action_type.getOrNull()?.let { actionType ->
-            when (actionType) {
-                is ActionType.Node -> actionType.value.destination_id.getOrNull()
-                else -> null
-            }
-        }
+        if (action.actionTypeCase == Action.ActionTypeCase.NODE) action.node.destinationId else null
 
-    val componentSetId = document.c.document.component_sets[destinationId] ?: return null
+    val componentSetId = document.c.document.componentSetsMap[destinationId] ?: return null
 
     // Look up our list of parent components and try to find one that is a member of
     // this component set.
     var currentParent = parentComponents
     while (currentParent != null) {
-        if (componentSetId == document.c.document.component_sets[currentParent.componentInfo.id]) {
+        if (componentSetId == document.c.document.componentSetsMap[currentParent.componentInfo.id]) {
             return currentParent.instanceId
         }
 
@@ -72,7 +63,7 @@ internal fun Modifier.squooshInteraction(
     childComposable: SquooshChildComposable,
 ): Modifier {
     val node = childComposable.node
-    val reactions = node.view.reactions
+    val reactions = node.view.reactionsList
     val tapCallback = customizations.getTapCallback(node.view)
 
     return this.then(
@@ -86,14 +77,14 @@ internal fun Modifier.squooshInteraction(
                     onPress = {
                         // Set the "pressed" state.
                         reactions
-                            ?.filter { r -> r.trigger.type is TriggerType.Press }
+                            ?.filter { r -> r.trigger.hasPress() }
                             ?.forEach {
                                 interactionState.dispatch(
-                                    it.action.get(),
+                                    it.action,
                                     findTargetInstanceId(
                                         document,
                                         childComposable.parentComponents,
-                                        it.action.get(),
+                                        it.action,
                                     ),
                                     customizations.getKey(),
                                     node.unresolvedNodeId,
@@ -103,13 +94,13 @@ internal fun Modifier.squooshInteraction(
 
                         // Clear the "pressed" state.
                         reactions
-                            ?.filter { r -> r.trigger.type is TriggerType.Press }
+                            ?.filter { r -> r.trigger.hasPress()}
                             ?.forEach {
                                 interactionState.undoDispatch(
                                     findTargetInstanceId(
                                         document,
                                         childComposable.parentComponents,
-                                        it.action.get(),
+                                        it.action,
                                     ),
                                     node.unresolvedNodeId,
                                     customizations.getKey(),
@@ -120,14 +111,14 @@ internal fun Modifier.squooshInteraction(
                         // of us, etc) then we can run the action.
                         if (dispatchClickEvent) {
                             reactions
-                                ?.filter { r -> r.trigger.type is TriggerType.Click }
+                                ?.filter { r -> r.trigger.hasClick() }
                                 ?.forEach {
                                     interactionState.dispatch(
-                                        it.action.get(),
+                                        it.action,
                                         findTargetInstanceId(
                                             document,
                                             childComposable.parentComponents,
-                                            it.action.get(),
+                                            it.action,
                                         ),
                                         customizations.getKey(),
                                         null, // no undo

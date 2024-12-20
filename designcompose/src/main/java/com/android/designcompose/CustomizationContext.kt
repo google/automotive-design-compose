@@ -214,7 +214,7 @@ data class ImageContext(
 ) {
     fun getBackgroundColor(): Int? {
         if (background.size == 1) {
-            if (background[0].backgroundTypeCase ==  Background.BackgroundTypeCase.SOLID) {
+            if (background[0].backgroundTypeCase == Background.BackgroundTypeCase.SOLID) {
                 if (background[0].solid.colorOrVarTypeCase == ColorOrVarTypeCase.COLOR) {
                     val color = background[0].solid.color
                     return ((color.a shl 24) and 0xFF000000.toInt()) or

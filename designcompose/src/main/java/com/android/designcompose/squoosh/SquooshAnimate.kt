@@ -23,25 +23,23 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.ui.geometry.Size
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.VariableState
+import com.android.designcompose.android_interface.LayoutChangedResponse
+import com.android.designcompose.android_interface.LayoutChangedResponseKt.layout
 import com.android.designcompose.decompose
+import com.android.designcompose.definition.element.ViewShape
+import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
+import com.android.designcompose.definition.element.arcOrNull
+import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
-import com.android.designcompose.proto.ifContainerGetShape
-import com.android.designcompose.proto.ifTextGetText
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.serdegen.Container
-import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.Shape
-import com.android.designcompose.serdegen.VectorArc
-import com.android.designcompose.serdegen.ViewData
-import com.android.designcompose.serdegen.ViewDataType
-import com.android.designcompose.serdegen.ViewShape
+import com.android.designcompose.definition.view.containerOrNull
+import com.android.designcompose.definition.view.shapeOrNull
+import com.android.designcompose.definition.view.textOrNull
+import com.android.designcompose.definition.view.viewData
 import com.android.designcompose.toLayoutTransform
 import com.android.designcompose.utils.fixedHeight
 import com.android.designcompose.utils.fixedWidth
-import java.util.Optional
-import kotlin.jvm.optionals.getOrElse
 
 // Squoosh animation design
 //
@@ -87,18 +85,23 @@ internal abstract class SquooshAnimatedItem(
         return playTimeNanos - (delayMillis.toLong() * 1000000L)
     }
 
-    fun updateLayout(value: Float, width: Float, height: Float, from: Layout, to: Layout) {
+    fun updateLayout(
+        value: Float,
+        interpolatedWidth: Float,
+        interpolatedHeight: Float,
+        from: LayoutChangedResponse.Layout,
+        to: LayoutChangedResponse.Layout,
+    ) {
         target.overrideLayoutSize = true
-        target.computedLayout =
-            Layout(
-                0,
-                width,
-                height,
-                to.left * value + from.left * (1f - value),
-                to.top * value + from.top * (1f - value),
-                to.content_width,
-                to.content_height,
-            )
+        target.computedLayout = layout {
+            order = 0
+            width = interpolatedWidth
+            height = interpolatedHeight
+            left = to.left * value + from.left * (1f - value)
+            top = to.top * value + from.top * (1f - value)
+            contentWidth = to.contentWidth
+            contentHeight = to.contentHeight
+        }
     }
 
     abstract fun apply(value: Float)
@@ -106,11 +109,11 @@ internal abstract class SquooshAnimatedItem(
 
 internal class SquooshAnimatedFadeIn(target: SquooshResolvedNode, transition: AnimationTransition) :
     SquooshAnimatedItem(target, transition) {
-    private val targetOpacity: Float = target.style.nodeStyle.opacity.getOrElse { 1f }
+    private val targetOpacity: Float =
+        target.style.nodeStyle.takeIf { it.hasOpacity() }?.opacity ?: 1f
 
     override fun apply(value: Float) {
-        target.style =
-            target.style.withNodeStyle { s -> s.opacity = Optional.of(value * targetOpacity) }
+        target.style = target.style.withNodeStyle { s -> s.opacity = value * targetOpacity }
     }
 }
 
@@ -118,13 +121,12 @@ internal class SquooshAnimatedFadeOut(
     target: SquooshResolvedNode,
     transition: AnimationTransition,
 ) : SquooshAnimatedItem(target, transition) {
-    private val targetOpacity: Float = target.style.nodeStyle.opacity.getOrElse { 1f }
+    private val targetOpacity: Float =
+        target.style.nodeStyle.takeIf { it.hasOpacity() }?.opacity ?: 1f
 
     override fun apply(value: Float) {
         target.style =
-            target.style.withNodeStyle { s ->
-                s.opacity = Optional.of((1.0f - value) * targetOpacity)
-            }
+            target.style.withNodeStyle { s -> s.opacity = (1.0f - value) * targetOpacity }
     }
 }
 
@@ -156,7 +158,7 @@ internal class SquooshAnimatedScale(
         transform.scaleY = scaleY
         target.style =
             target.style.withNodeStyle { s ->
-                s.transform = Optional.of(transform.toMatrix().toLayoutTransform())
+                s.transform = transform.toMatrix().toLayoutTransform()
             }
 
         updateLayout(
@@ -185,12 +187,12 @@ internal class SquooshAnimatedLayout(
     }
 
     private fun needsTransformTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
-        return from.view.style.get().nodeStyle.transform != to.view.style.get().nodeStyle.transform
+        return from.view.style.nodeStyle.transform != to.view.style.nodeStyle.transform
     }
 
     private fun needsOpacityTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
-        return from.view.style.get().nodeStyle.opacity.getOrElse { 1F } !=
-            to.view.style.get().nodeStyle.opacity.getOrElse { 1F }
+        return (from.view.style.nodeStyle.takeIf { it.hasOpacity() }?.opacity ?: 1f) !=
+            (to.view.style.nodeStyle.takeIf { it.hasOpacity() }?.opacity ?: 1f)
     }
 
     private fun computeTweenTypes(): Int {
@@ -204,9 +206,9 @@ internal class SquooshAnimatedLayout(
         if (tweenTypes and TWEEN_OPACITY != 0) {
             this.target.style =
                 this.target.style.withNodeStyle { s ->
-                    val fromOpacity = from.style.nodeStyle.opacity.getOrElse { 1F }
-                    val toOpacity = to.style.nodeStyle.opacity.getOrElse { 1F }
-                    s.opacity = Optional.of(toOpacity * value + fromOpacity * iv)
+                    val fromOpacity = from.style.nodeStyle.takeIf { it.hasOpacity() }?.opacity ?: 1f
+                    val toOpacity = to.style.nodeStyle.takeIf { it.hasOpacity() }?.opacity ?: 1f
+                    s.opacity = toOpacity * value + fromOpacity * iv
                 }
         }
     }
@@ -217,17 +219,17 @@ internal class SquooshAnimatedLayout(
             val targetDecomposed = fromDecomposed.interpolateTo(toDecomposed, value)
             target.style =
                 target.style.withNodeStyle { s ->
-                    s.transform = Optional.of(targetDecomposed.toMatrix().toLayoutTransform())
+                    s.transform = targetDecomposed.toMatrix().toLayoutTransform()
                 }
 
             val fromLayout = from.computedLayout!!
             val toLayout = to.computedLayout!!
             // Pass in 1 for the density because at this stage, we just want the raw size from the
             // design. The render code will take into account density.
-            val fromWidth = from.view.style.get().fixedWidth(1F)
-            val fromHeight = from.view.style.get().fixedHeight(1F)
-            val toWidth = to.view.style.get().fixedWidth(1F)
-            val toHeight = to.view.style.get().fixedHeight(1F)
+            val fromWidth = from.view.style.fixedWidth(1F)
+            val fromHeight = from.view.style.fixedHeight(1F)
+            val toWidth = to.view.style.fixedWidth(1F)
+            val toHeight = to.view.style.fixedHeight(1F)
             updateLayout(
                 value,
                 toWidth * value + fromWidth * iv,
@@ -275,56 +277,29 @@ internal class SquooshAnimatedLayout(
 
 internal class SquooshAnimatedArc(
     target: SquooshResolvedNode,
-    private val from: Shape.Arc,
-    private val to: Shape.Arc,
+    private val from: ViewShape.VectorArc,
+    private val to: ViewShape.VectorArc,
     transition: AnimationTransition,
 ) : SquooshAnimatedItem(target, transition) {
     override fun apply(value: Float) {
         val iv = 1.0f - value
-        val arc =
-            Shape.Arc(
-                VectorArc(
-                    listOf(),
-                    listOf(),
-                    to.value.stroke_cap,
-                    from.value.start_angle_degrees * iv + to.value.start_angle_degrees * value,
-                    from.value.sweep_angle_degrees * iv + to.value.sweep_angle_degrees * value,
-                    from.value.inner_radius * iv + to.value.inner_radius * value,
-                    from.value.corner_radius * iv + to.value.corner_radius * value,
-                    to.value.is_mask,
-                )
-            )
-        // Unfortunately, the ViewData and View objects are also immutable.
+        val interpolatedArc = vectorArc {
+            strokeCap = to.strokeCap
+            startAngleDegrees = from.startAngleDegrees * iv + to.startAngleDegrees * value
+            sweepAngleDegrees = from.sweepAngleDegrees * iv + to.sweepAngleDegrees * value
+            innerRadius = from.innerRadius * iv + to.innerRadius * value
+            cornerRadius = from.cornerRadius * iv + to.cornerRadius * value
+            isMask = to.isMask
+        }
+
         val viewDataValue =
-            Container.Builder()
-                .apply {
-                    shape = Optional.of(ViewShape(Optional.of(arc)))
-                    children =
-                        (target.view.data.get().view_data_type.get() as ViewDataType.Container)
-                            .value
-                            .children
-                }
+            target.view.data.container
+                .toBuilder()
+                .apply { shape = viewShape { arc = interpolatedArc } }
                 .build()
 
-        val viewBuilder = View.Builder()
-        viewBuilder.data = Optional.of(ViewData(Optional.of(ViewDataType.Container(viewDataValue))))
-        viewBuilder.id = target.view.id
-        viewBuilder.name = target.view.name
-        viewBuilder.style = target.view.style
-        viewBuilder.component_info = target.view.component_info
-        viewBuilder.design_absolute_bounding_box =
-            target.view.design_absolute_bounding_box // didn't we delete this?
-        viewBuilder.frame_extras = target.view.frame_extras
-        viewBuilder.shader = target.view.shader
-        viewBuilder.shader_fallback_color = target.view.shader_fallback_color
-        viewBuilder.reactions = target.view.reactions
-        viewBuilder.render_method = target.view.render_method
-        viewBuilder.explicit_variable_modes = target.view.explicit_variable_modes
-        viewBuilder.scroll_info = target.view.scroll_info
-        viewBuilder.unique_id = target.view.unique_id
-        val view = viewBuilder.build()
-
-        target.view = view
+        target.view =
+            target.view.toBuilder().apply { data = viewData { container = viewDataValue } }.build()
     }
 }
 
@@ -601,8 +576,8 @@ private fun mergeRecursive(
         // If they're both arcs, then they might need an arc animation.
         // XXX: Refactor this so we don't inspect every type right here.
 
-        val fromArc: Shape.Arc? = from.view.data.ifContainerGetShape()?.let { it as? Shape.Arc }
-        val toArc: Shape.Arc? = from.view.data.ifContainerGetShape()?.let { it as? Shape.Arc }
+        val fromArc = from.view.data.containerOrNull?.shapeOrNull?.arcOrNull
+        val toArc = from.view.data.containerOrNull?.shapeOrNull?.arcOrNull
         if (fromArc != null && toArc != null && fromArc != toArc) {
             anims.add(SquooshAnimatedArc(n, fromArc, toArc, transition))
         }
@@ -659,19 +634,19 @@ private fun findChildNamed(
 //  - They are both Containers
 //  - They both have a Rect or RoundRect shape (for now we need the shapes to be the same).
 private fun isTweenable(a: View, b: View): Boolean {
-    if (needsStyleTween(a.style.get(), b.style.get())) return false
+    if (needsStyleTween(a.style, b.style)) return false
 
-    val aShape = a.data.ifContainerGetShape()
-    val bShape = b.data.ifContainerGetShape()
-    return (aShape is Shape.Rect && bShape is Shape.Rect) ||
-        (aShape is Shape.RoundRect && aShape is Shape.RoundRect) ||
-        (aShape is Shape.VectorRect && bShape is Shape.VectorRect) ||
-        (aShape is Shape.Arc && bShape is Shape.Arc)
+    val aShape = a.data.containerOrNull?.shapeOrNull
+    val bShape = b.data.containerOrNull?.shapeOrNull
+    return (aShape?.hasRect() == true && bShape?.hasRect() == true) ||
+        (aShape?.hasRoundRect() == true && bShape?.hasRoundRect() == true) ||
+        (aShape?.hasVectorRect() == true && bShape?.hasVectorRect() == true) ||
+        (aShape?.hasArc() == true && bShape?.hasArc() == true)
 }
 
 private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     // Compare some style things and decide if we need to tween the styles.
-    if (a.nodeStyle.backgrounds != b.nodeStyle.backgrounds) return true
+    if (a.nodeStyle.backgroundsList != b.nodeStyle.backgroundsList) return true
     if (a.nodeStyle.stroke != b.nodeStyle.stroke) return true
     return false
 }
@@ -682,15 +657,16 @@ private fun shouldScale(from: SquooshResolvedNode, to: SquooshResolvedNode): Boo
     val toData = to.view.data
 
     if (
-        fromData.ifContainerGetShape() is Shape.Path && toData.ifContainerGetShape() is Shape.Path
+        fromData.containerOrNull?.shapeOrNull?.hasPath() == true &&
+            toData.containerOrNull?.shapeOrNull?.hasPath() == true
     ) {
         return true
     } else {
-        val fromText = fromData.ifTextGetText() ?: return false
-        val toText = toData.ifTextGetText() ?: return false
+        val fromText = fromData.textOrNull ?: return false
+        val toText = toData.textOrNull ?: return false
         return (fromText.content == toText.content &&
-            fromText.res_name == toText.res_name &&
-            from.style.nodeStyle.font_family == to.style.nodeStyle.font_family)
+            fromText.resName == toText.resName &&
+            from.style.nodeStyle.fontFamily == to.style.nodeStyle.fontFamily)
     }
 }
 

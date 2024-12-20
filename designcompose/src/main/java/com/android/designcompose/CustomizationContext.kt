@@ -26,12 +26,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.nodeNameToPropertyValueList
+import com.android.designcompose.definition.element.Background
+import com.android.designcompose.definition.element.ColorOrVar.ColorOrVarTypeCase
+import com.android.designcompose.definition.element.DimensionProto
+import com.android.designcompose.definition.view.ComponentInfo
 import com.android.designcompose.definition.view.View
-import com.android.designcompose.serdegen.Background
-import com.android.designcompose.serdegen.BackgroundType
-import com.android.designcompose.serdegen.ColorOrVarType
-import com.android.designcompose.serdegen.ComponentInfo
-import com.android.designcompose.serdegen.Dimension
+import com.android.designcompose.definition.view.componentInfoOrNull
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
@@ -205,22 +205,18 @@ fun CustomizationContext.setImage(nodeName: String, image: Bitmap?) {
 // ViewStyle elements that we expose in ImageReplacementContext
 data class ImageContext(
     val background: List<Background>,
-    val minWidth: Dimension,
-    val maxWidth: Dimension,
-    val width: Dimension,
-    val minHeight: Dimension,
-    val maxHeight: Dimension,
-    val height: Dimension,
+    val minWidth: DimensionProto,
+    val maxWidth: DimensionProto,
+    val width: DimensionProto,
+    val minHeight: DimensionProto,
+    val maxHeight: DimensionProto,
+    val height: DimensionProto,
 ) {
     fun getBackgroundColor(): Int? {
-        if (background.size == 1 && background[0].background_type.isPresent) {
-            if (background[0].background_type.get() is BackgroundType.Solid) {
-                val color = (background[0].background_type.get() as BackgroundType.Solid).value
-                if (
-                    color.color_or_var_type.isPresent &&
-                        color.color_or_var_type.get() is ColorOrVarType.Color
-                ) {
-                    val color = (color.color_or_var_type.get() as ColorOrVarType.Color).value
+        if (background.size == 1) {
+            if (background[0].backgroundTypeCase ==  Background.BackgroundTypeCase.SOLID) {
+                if (background[0].solid.colorOrVarTypeCase == ColorOrVarTypeCase.COLOR) {
+                    val color = background[0].solid.color
                     return ((color.a shl 24) and 0xFF000000.toInt()) or
                         ((color.r shl 16) and 0x00FF0000) or
                         ((color.g shl 8) and 0x0000FF00) or
@@ -232,16 +228,16 @@ data class ImageContext(
     }
 
     fun getPixelWidth(): Int? {
-        if (width is Dimension.Points) return width.value.toInt()
-        if (minWidth is Dimension.Points) return minWidth.value.toInt()
-        if (maxWidth is Dimension.Points) return maxWidth.value.toInt()
+        if (width.hasPoints()) return width.points.toInt()
+        if (minWidth.hasPoints()) return minWidth.points.toInt()
+        if (maxWidth.hasPoints()) return maxWidth.points.toInt()
         return null
     }
 
     fun getPixelHeight(): Int? {
-        if (height is Dimension.Points) return height.value.toInt()
-        if (minHeight is Dimension.Points) return minHeight.value.toInt()
-        if (maxHeight is Dimension.Points) return maxHeight.value.toInt()
+        if (height.hasPoints()) return height.points.toInt()
+        if (minHeight.hasPoints()) return minHeight.points.toInt()
+        if (maxHeight.hasPoints()) return maxHeight.points.toInt()
         return null
     }
 }
@@ -405,7 +401,7 @@ fun CustomizationContext.getTapCallback(view: View): TapCallback? {
     var tapCallback = getTapCallback(view.name)
     // If no tap callback was found but this is a variant of a component set,
     // look for a tap callback in the component set
-    val componentSetName = view.component_info.getOrNull()?.component_set_name
+    val componentSetName = view.componentInfoOrNull?.componentSetName
     if (tapCallback == null && !componentSetName.isNullOrBlank()) {
         tapCallback = getTapCallback(componentSetName)
     }

@@ -45,7 +45,9 @@ internal fun findTargetInstanceId(
     // this component set.
     var currentParent = parentComponents
     while (currentParent != null) {
-        if (componentSetId == document.c.document.componentSetsMap[currentParent.componentInfo.id]) {
+        if (
+            componentSetId == document.c.document.componentSetsMap[currentParent.componentInfo.id]
+        ) {
             return currentParent.instanceId
         }
 
@@ -94,7 +96,7 @@ internal fun Modifier.squooshInteraction(
 
                         // Clear the "pressed" state.
                         reactions
-                            ?.filter { r -> r.trigger.hasPress()}
+                            ?.filter { r -> r.trigger.hasPress() }
                             ?.forEach {
                                 interactionState.undoDispatch(
                                     findTargetInstanceId(

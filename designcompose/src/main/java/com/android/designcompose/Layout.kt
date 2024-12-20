@@ -126,33 +126,37 @@ internal fun calcLayoutInfo(view: View, style: ViewStyle): SimplifiedLayoutInfo 
     when (val gridLayout = style.nodeStyle.gridLayoutType) {
         GridLayoutType.GRID_LAYOUT_TYPE_HORIZONTAL -> {
             return LayoutInfoRow(
-                alignment = when (style.layoutStyle.alignItems) {
-                    AlignItems.ALIGN_ITEMS_FLEX_START -> Alignment.Top
-                    AlignItems.ALIGN_ITEMS_CENTER -> Alignment.CenterVertically
-                    AlignItems.ALIGN_ITEMS_FLEX_END -> Alignment.Bottom
-                    else -> Alignment.Top
-                },
+                alignment =
+                    when (style.layoutStyle.alignItems) {
+                        AlignItems.ALIGN_ITEMS_FLEX_START -> Alignment.Top
+                        AlignItems.ALIGN_ITEMS_CENTER -> Alignment.CenterVertically
+                        AlignItems.ALIGN_ITEMS_FLEX_END -> Alignment.Bottom
+                        else -> Alignment.Top
+                    }
             )
         }
 
         GridLayoutType.GRID_LAYOUT_TYPE_VERTICAL -> {
             return LayoutInfoColumn(
-                alignment = when (style.layoutStyle.alignItems) {
-                    AlignItems.ALIGN_ITEMS_FLEX_START -> Alignment.Start
-                    AlignItems.ALIGN_ITEMS_CENTER -> Alignment.CenterHorizontally
-                    AlignItems.ALIGN_ITEMS_FLEX_END -> Alignment.End
+                alignment =
+                    when (style.layoutStyle.alignItems) {
+                        AlignItems.ALIGN_ITEMS_FLEX_START -> Alignment.Start
+                        AlignItems.ALIGN_ITEMS_CENTER -> Alignment.CenterHorizontally
+                        AlignItems.ALIGN_ITEMS_FLEX_END -> Alignment.End
                         else -> Alignment.End
-                },
+                    }
             )
         }
 
         else -> {
             val isColumnLayout =
-                (gridLayout == GridLayoutType.GRID_LAYOUT_TYPE_FIXED_COLUMNS || gridLayout == GridLayoutType.GRID_LAYOUT_TYPE_AUTO_COLUMNS)
-            val scrollingEnabled = when (view.scrollInfo.overflow) {
-                OverflowDirection.OVERFLOW_DIRECTION_VERTICAL_SCROLLING -> isColumnLayout
-                OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING -> !isColumnLayout
-                OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_AND_VERTICAL_SCROLLING -> true
+                (gridLayout == GridLayoutType.GRID_LAYOUT_TYPE_FIXED_COLUMNS ||
+                    gridLayout == GridLayoutType.GRID_LAYOUT_TYPE_AUTO_COLUMNS)
+            val scrollingEnabled =
+                when (view.scrollInfo.overflow) {
+                    OverflowDirection.OVERFLOW_DIRECTION_VERTICAL_SCROLLING -> isColumnLayout
+                    OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING -> !isColumnLayout
+                    OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_AND_VERTICAL_SCROLLING -> true
                     else -> false
                 }
             return LayoutInfoGrid(
@@ -186,12 +190,13 @@ internal fun calcLayoutInfo(view: View, style: ViewStyle): SimplifiedLayoutInfo 
                 padding = style.layoutStyle.padding,
             )
         }
+    }
 }
 
-    fun LayoutChangedResponse.Layout.width() = this.width.roundToInt()
+fun LayoutChangedResponse.Layout.width() = this.width.roundToInt()
 
-    fun LayoutChangedResponse.Layout.height() = this.height.roundToInt()
+fun LayoutChangedResponse.Layout.height() = this.height.roundToInt()
 
-    fun LayoutChangedResponse.Layout.left() = this.left.roundToInt()
+fun LayoutChangedResponse.Layout.left() = this.left.roundToInt()
 
-    fun LayoutChangedResponse.Layout.top() = this.top.roundToInt()
+fun LayoutChangedResponse.Layout.top() = this.top.roundToInt()

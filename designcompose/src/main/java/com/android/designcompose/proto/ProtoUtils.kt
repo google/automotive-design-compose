@@ -101,6 +101,7 @@ internal fun Optional<ViewData>.ifTextGetText(): Text? {
     return (this.get().view_data_type.get() as? ViewDataType.Text)?.value
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Optional<Trigger>.isSupportedInteraction() =
     this.type is TriggerType.AfterTimeout ||
         this.type is TriggerType.Click ||

@@ -16,6 +16,8 @@
 
 package com.android.designcompose.common
 
+import java.util.logging.Logger
+
 const val TAG = "DesignCompose"
 
 enum class FeedbackLevel {
@@ -215,7 +217,6 @@ abstract class FeedbackImpl {
 // This has been commented out since it was only used by the gradle preview plugin which currently
 // has been disabled. If we bring the plugin back we may need to uncomment this code so that the
 // plugin can log feedback messages.
-/*
 // Instance of the Feedback class used in non-Android environments
 
 object Feedback : FeedbackImpl() {
@@ -231,4 +232,3 @@ object Feedback : FeedbackImpl() {
     }
   }
 }
-*/

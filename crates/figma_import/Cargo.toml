@@ -51,6 +51,7 @@ prost-build.workspace = true
 
 [dev-dependencies]
 testdir.workspace = true
+tempfile = "3"
 
 [[bin]]
 name = "reflection"

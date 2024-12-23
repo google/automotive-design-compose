@@ -282,17 +282,17 @@ private fun calculateArcData(
             arcData.discreteValue,
         )
     return if (!shape.hasArc()) shape
-    else viewShape {
-        vectorArc {
-            strokeCap = shape.arc.strokeCap
-            startAngleDegrees = arcData.start
-            sweepAngleDegrees = arcAngleMeter
-            innerRadius = shape.arc.innerRadius
-            cornerRadius = arcData.cornerRadius
-            isMask = shape.arc.isMask
+    else
+        viewShape {
+            vectorArc {
+                strokeCap = shape.arc.strokeCap
+                startAngleDegrees = arcData.start
+                sweepAngleDegrees = arcAngleMeter
+                innerRadius = shape.arc.innerRadius
+                cornerRadius = arcData.cornerRadius
+                isMask = shape.arc.isMask
+            }
         }
-    }
-
 }
 
 // Set up the paint object to render a vector path as a stroke with a single dash that matches the
@@ -432,7 +432,6 @@ internal fun ContentDrawScope.render(
     val useBlendMode = (style.nodeStyle.blendMode).useLayer()
     val opacity = style.nodeStyle.opacity.takeIf { style.nodeStyle.hasOpacity() } ?: 1.0f
 
-
     // Either use a graphicsLayer to apply the opacity effect, or use saveLayer if
     // we have a blend mode.
     if (!useBlendMode && opacity < 1.0f) {
@@ -466,16 +465,16 @@ internal fun ContentDrawScope.render(
     if (customFillBrush == null && view.hasShader()) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val shader = RuntimeShader(view.shader.trim().trimIndent())
-                customFillBrush = SizingShaderBrush(shader)
-                val shaderUniformTime = customizations.getShaderUniformTimeState(name)
-                if (shaderUniformTime != null) {
-                    shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
-                }
-            } else {
-            view.shaderFallbackColorOrNull?.let { color ->
-                    customFillBrush = SolidColor(color.toColor())
-                }
+            customFillBrush = SizingShaderBrush(shader)
+            val shaderUniformTime = customizations.getShaderUniformTimeState(name)
+            if (shaderUniformTime != null) {
+                shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
             }
+        } else {
+            view.shaderFallbackColorOrNull?.let { color ->
+                customFillBrush = SolidColor(color.toColor())
+            }
+        }
     }
 
     val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
@@ -498,7 +497,8 @@ internal fun ContentDrawScope.render(
             }
         }
 
-    val strokeBrush = style.nodeStyle.stroke.strokesList.mapNotNull { background ->
+    val strokeBrush =
+        style.nodeStyle.stroke.strokesList.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -520,25 +520,27 @@ internal fun ContentDrawScope.render(
     shapePaths.shadowClips.forEach { path -> drawContext.canvas.clipPath(path, ClipOp.Difference) }
 
     // Now paint the outset shadows.
-    shapePaths.shadowFills.filter { it.shadowStyle.hasOutset() }.forEach { shadow ->
-        val shadowBox = shadow.shadowStyle.outset
+    shapePaths.shadowFills
+        .filter { it.shadowStyle.hasOutset() }
+        .forEach { shadow ->
+            val shadowBox = shadow.shadowStyle.outset
 
-        // Make an appropriate paint.
-        val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadowBox.blurRadius > 0.0f) {
-            shadowPaint.maskFilter =
-                BlurMaskFilter(
-                    shadowBox.blurRadius * density * blurFudgeFactor,
-                    BlurMaskFilter.Blur.NORMAL,
-                )
+            // Make an appropriate paint.
+            val shadowPaint = Paint().asFrameworkPaint()
+            shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
+            if (shadowBox.blurRadius > 0.0f) {
+                shadowPaint.maskFilter =
+                    BlurMaskFilter(
+                        shadowBox.blurRadius * density * blurFudgeFactor,
+                        BlurMaskFilter.Blur.NORMAL,
+                    )
+            }
+            drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
+            shadow.fills.forEach { shadowPath ->
+                drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
+            }
+            drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
         }
-        drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
-        shadow.fills.forEach { shadowPath ->
-            drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
-        }
-        drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
-    }
     drawContext.canvas.restore()
 
     // Now draw the actual shape, or fill it with an image if we have an image
@@ -570,25 +572,27 @@ internal fun ContentDrawScope.render(
     val shadowSpreadPaint = android.graphics.Paint()
     shadowSpreadPaint.style = android.graphics.Paint.Style.STROKE
 
-    shapePaths.shadowFills.filter { it.shadowStyle.hasInset() }.forEach { shadow ->
-        val shadowBox = shadow.shadowStyle.inset
+    shapePaths.shadowFills
+        .filter { it.shadowStyle.hasInset() }
+        .forEach { shadow ->
+            val shadowBox = shadow.shadowStyle.inset
 
-        // Make an appropriate paint.
-        val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadowBox.blurRadius > 0.0f) {
-            shadowPaint.maskFilter =
-                BlurMaskFilter(
-                    shadowBox.blurRadius * density * blurFudgeFactor,
-                    BlurMaskFilter.Blur.NORMAL,
-                )
+            // Make an appropriate paint.
+            val shadowPaint = Paint().asFrameworkPaint()
+            shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
+            if (shadowBox.blurRadius > 0.0f) {
+                shadowPaint.maskFilter =
+                    BlurMaskFilter(
+                        shadowBox.blurRadius * density * blurFudgeFactor,
+                        BlurMaskFilter.Blur.NORMAL,
+                    )
+            }
+            drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
+            shadow.fills.forEach { shadowPath ->
+                drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
+            }
+            drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
         }
-        drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
-        shadow.fills.forEach { shadowPath ->
-            drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
-        }
-        drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
-    }
     drawContext.canvas.restore()
 
     // Now draw our stroke and our children. The order of drawing the stroke and the
@@ -697,7 +701,6 @@ internal fun ContentDrawScope.squooshShapeRender(
 
                 else -> {}
             }
-
         }
     }
 
@@ -752,10 +755,9 @@ internal fun ContentDrawScope.squooshShapeRender(
                 shadowOutset =
                     max(
                         shadowOutset,
-                        shadowBox.blurRadius * blurFudgeFactor + shadowBox.spreadRadius + max(
-                            shadowBox.offsetX,
-                            shadowBox.offsetY,
-                        ),
+                        shadowBox.blurRadius * blurFudgeFactor +
+                            shadowBox.spreadRadius +
+                            max(shadowBox.offsetX, shadowBox.offsetY),
                     )
             }
         }
@@ -787,21 +789,23 @@ internal fun ContentDrawScope.squooshShapeRender(
             customizations.getBrush(name)
         }
     if (customFillBrush == null) {
-        node.view.shader.takeIf { node.view.hasShader() }?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val shader = RuntimeShader(it.trim().trimIndent())
-                customFillBrush = SizingShaderBrush(shader)
-                val shaderUniformTime = customizations.getShaderUniformTimeState(name)
-                if (shaderUniformTime != null) {
-                    shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
-                }
-                return@let
-            } else {
-                node.view.shaderFallbackColorOrNull?.let { color ->
-                    customFillBrush = SolidColor(color.toColor())
+        node.view.shader
+            .takeIf { node.view.hasShader() }
+            ?.let {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val shader = RuntimeShader(it.trim().trimIndent())
+                    customFillBrush = SizingShaderBrush(shader)
+                    val shaderUniformTime = customizations.getShaderUniformTimeState(name)
+                    if (shaderUniformTime != null) {
+                        shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
+                    }
+                    return@let
+                } else {
+                    node.view.shaderFallbackColorOrNull?.let { color ->
+                        customFillBrush = SolidColor(color.toColor())
+                    }
                 }
             }
-        }
     }
 
     val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
@@ -823,7 +827,8 @@ internal fun ContentDrawScope.squooshShapeRender(
                 }
             }
         }
-    val strokeBrush = style.nodeStyle.stroke.strokesList.mapNotNull { background ->
+    val strokeBrush =
+        style.nodeStyle.stroke.strokesList.mapNotNull { background ->
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -845,25 +850,27 @@ internal fun ContentDrawScope.squooshShapeRender(
     shapePaths.shadowClips.forEach { path -> drawContext.canvas.clipPath(path, ClipOp.Difference) }
 
     // Now paint the outset shadows.
-    shapePaths.shadowFills.filter { it.shadowStyle.hasOutset() }.forEach { shadow ->
-        val shadowBox = shadow.shadowStyle.outset
+    shapePaths.shadowFills
+        .filter { it.shadowStyle.hasOutset() }
+        .forEach { shadow ->
+            val shadowBox = shadow.shadowStyle.outset
 
-        // Make an appropriate paint.
-        val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadowBox.blurRadius > 0.0f) {
-            shadowPaint.maskFilter =
-                BlurMaskFilter(
-                    shadowBox.blurRadius * density * blurFudgeFactor,
-                    BlurMaskFilter.Blur.NORMAL,
-                )
+            // Make an appropriate paint.
+            val shadowPaint = Paint().asFrameworkPaint()
+            shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
+            if (shadowBox.blurRadius > 0.0f) {
+                shadowPaint.maskFilter =
+                    BlurMaskFilter(
+                        shadowBox.blurRadius * density * blurFudgeFactor,
+                        BlurMaskFilter.Blur.NORMAL,
+                    )
+            }
+            drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
+            shadow.fills.forEach { shadowPath ->
+                drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
+            }
+            drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
         }
-        drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
-        shadow.fills.forEach { shadowPath ->
-            drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
-        }
-        drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
-    }
     drawContext.canvas.restore()
 
     // Now draw the actual shape, or fill it with an image if we have an image
@@ -887,7 +894,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                                 maxHeight = node.style.layoutStyle.maxHeight,
                                 height = node.style.layoutStyle.height,
                             )
-                    },
+                    }
                 )
         }
     }
@@ -915,25 +922,27 @@ internal fun ContentDrawScope.squooshShapeRender(
     val shadowSpreadPaint = android.graphics.Paint()
     shadowSpreadPaint.style = android.graphics.Paint.Style.STROKE
 
-    shapePaths.shadowFills.filter { it.shadowStyle.hasInset() }.forEach { shadow ->
-        val shadowBox = shadow.shadowStyle.inset
+    shapePaths.shadowFills
+        .filter { it.shadowStyle.hasInset() }
+        .forEach { shadow ->
+            val shadowBox = shadow.shadowStyle.inset
 
-        // Make an appropriate paint.
-        val shadowPaint = Paint().asFrameworkPaint()
-        shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
-        if (shadowBox.blurRadius > 0.0f) {
-            shadowPaint.maskFilter =
-                BlurMaskFilter(
-                    shadowBox.blurRadius * density * blurFudgeFactor,
-                    BlurMaskFilter.Blur.NORMAL,
-                )
+            // Make an appropriate paint.
+            val shadowPaint = Paint().asFrameworkPaint()
+            shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
+            if (shadowBox.blurRadius > 0.0f) {
+                shadowPaint.maskFilter =
+                    BlurMaskFilter(
+                        shadowBox.blurRadius * density * blurFudgeFactor,
+                        BlurMaskFilter.Blur.NORMAL,
+                    )
+            }
+            drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
+            shadow.fills.forEach { shadowPath ->
+                drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
+            }
+            drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
         }
-        drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
-        shadow.fills.forEach { shadowPath ->
-            drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
-        }
-        drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
-    }
     drawContext.canvas.restore()
 
     // Now draw our stroke and our children. The order of drawing the stroke and the

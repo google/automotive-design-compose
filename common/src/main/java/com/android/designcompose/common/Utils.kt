@@ -16,7 +16,7 @@
 
 package com.android.designcompose.common
 
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.view.View
 
 // Given a variant name with comma separated properties in the form of property=variant, return the
 // same node name with the properties sorted.

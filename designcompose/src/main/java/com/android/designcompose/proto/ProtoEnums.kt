@@ -16,7 +16,6 @@
 
 package com.android.designcompose.proto
 
-import androidx.compose.ui.text.style.TextDecoration
 import com.android.designcompose.serdegen.AlignContent
 import com.android.designcompose.serdegen.AlignItems
 import com.android.designcompose.serdegen.AlignSelf
@@ -45,6 +44,7 @@ import kotlin.jvm.optionals.getOrNull
 // Inside = 1,
 // Center = 2,
 // Outside = 3,
+@Deprecated("This function will be removed in the future.")
 enum class StrokeAlignType {
     Unspecified,
     Inside,
@@ -52,6 +52,7 @@ enum class StrokeAlignType {
     Outside,
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun strokeAlignFromInt(int: Int): StrokeAlignType {
     return when (int) {
         1 -> StrokeAlignType.Inside
@@ -61,6 +62,7 @@ internal fun strokeAlignFromInt(int: Int): StrokeAlignType {
     }
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun strokeAlignTypeToInt(align: StrokeAlignType): Int {
     return when (align) {
         StrokeAlignType.Inside -> 1
@@ -75,6 +77,7 @@ internal fun strokeAlignTypeToInt(align: StrokeAlignType): Int {
 // Fit = 2,
 // Tile = 3,
 // Stretch = 4,
+@Deprecated("This function will be removed in the future.")
 internal fun scaleModeFromInt(value: Int): ScaleMode {
     return when (value) {
         1 -> ScaleMode.Fill()
@@ -85,11 +88,13 @@ internal fun scaleModeFromInt(value: Int): ScaleMode {
     }
 }
 
+@Deprecated("This function will be removed in the future.")
 enum class WindingRuleType {
     NonZero,
     EvenOdd,
 }
 
+@Deprecated("This function will be removed in the future.")
 // 1 -> NonZero,
 // 2 -> EvenOdd
 internal fun windingRuleFromInt(value: Int): WindingRuleType {
@@ -99,6 +104,7 @@ internal fun windingRuleFromInt(value: Int): WindingRuleType {
     }
 }
 
+@Deprecated("This function will be removed in the future.")
 enum class OverlayPositionEnum {
     UNSPECIFIED,
     CENTER,
@@ -111,6 +117,7 @@ enum class OverlayPositionEnum {
     MANUAL,
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun overlayPositionEnumFromInt(value: Int): OverlayPositionEnum {
     return when (value) {
         1 -> OverlayPositionEnum.CENTER
@@ -125,12 +132,14 @@ internal fun overlayPositionEnumFromInt(value: Int): OverlayPositionEnum {
     }
 }
 
+@Deprecated("This function will be removed in the future.")
 enum class OverlayBackgroundInteractionEnum {
     UNSPECIFIED,
     NONE,
     CLOSE_ON_CLICK_OUTSIDE,
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun overlayBackgroundInteractionFromInt(value: Int): OverlayBackgroundInteractionEnum {
     return when (value) {
         1 -> OverlayBackgroundInteractionEnum.NONE
@@ -139,6 +148,7 @@ internal fun overlayBackgroundInteractionFromInt(value: Int): OverlayBackgroundI
     }
 }
 
+@Deprecated("This function will be removed in the future.")
 enum class NavigationType {
     Unspecified,
     Navigate,
@@ -148,6 +158,7 @@ enum class NavigationType {
     ChangeTo,
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun navigationTypeFromInt(value: Int): NavigationType {
     return when (value) {
         1 -> NavigationType.Navigate
@@ -159,12 +170,14 @@ internal fun navigationTypeFromInt(value: Int): NavigationType {
     }
 }
 
+@Deprecated("This function will be removed in the future.")
 // Getter for Trigger which returns it's TriggerType if it's not null.
 val Optional<Trigger>.type: TriggerType?
     get() {
         return this.getOrNull()?.trigger_type?.getOrNull()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun strokeCapFromInt(value: Int): StrokeCap {
     return when (value) {
         1 -> StrokeCap.None()
@@ -178,6 +191,7 @@ internal fun strokeCapFromInt(value: Int): StrokeCap {
     }
 }
 
+@Deprecated("This function will be removed in the future.")
 internal fun alignItemsFromInt(value: Int) =
     when (value) {
         1 -> AlignItems.FlexStart()
@@ -188,6 +202,7 @@ internal fun alignItemsFromInt(value: Int) =
         else -> AlignItems.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun AlignItems.toInt() =
     when (this) {
         is AlignItems.FlexStart -> 1
@@ -198,6 +213,7 @@ internal fun AlignItems.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun alignSelfFromInt(value: Int) =
     when (value) {
         1 -> AlignSelf.Auto()
@@ -209,6 +225,7 @@ internal fun alignSelfFromInt(value: Int) =
         else -> AlignSelf.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun AlignSelf.toInt() =
     when (this) {
         is AlignSelf.Auto -> 1
@@ -220,6 +237,7 @@ internal fun AlignSelf.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun alignContentFromInt(value: Int) =
     when (value) {
         1 -> AlignContent.FlexStart()
@@ -231,6 +249,7 @@ internal fun alignContentFromInt(value: Int) =
         else -> AlignContent.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun AlignContent.toInt() =
     when (this) {
         is AlignContent.FlexStart -> 1
@@ -242,6 +261,7 @@ internal fun AlignContent.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun flexDirectionFromInt(value: Int) =
     when (value) {
         1 -> FlexDirection.Row()
@@ -252,6 +272,7 @@ internal fun flexDirectionFromInt(value: Int) =
         else -> FlexDirection.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun FlexDirection.toInt() =
     when (this) {
         is FlexDirection.Row -> 1
@@ -262,6 +283,7 @@ internal fun FlexDirection.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun justifyContentFromInt(value: Int) =
     when (value) {
         1 -> JustifyContent.FlexStart()
@@ -273,6 +295,7 @@ internal fun justifyContentFromInt(value: Int) =
         else -> JustifyContent.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun JustifyContent.toInt() =
     when (this) {
         is JustifyContent.FlexStart -> 1
@@ -284,6 +307,7 @@ internal fun JustifyContent.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun positionTypeFromInt(value: Int) =
     when (value) {
         1 -> PositionType.Relative()
@@ -291,6 +315,7 @@ internal fun positionTypeFromInt(value: Int) =
         else -> PositionType.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun PositionType.toInt() =
     when (this) {
         is PositionType.Relative -> 1
@@ -298,6 +323,7 @@ internal fun PositionType.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun overflowDirectionFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.OverflowDirection.None()
@@ -307,6 +333,7 @@ internal fun overflowDirectionFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.OverflowDirection.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun com.android.designcompose.serdegen.OverflowDirection.toInt() =
     when (this) {
         is com.android.designcompose.serdegen.OverflowDirection.None -> 1
@@ -316,6 +343,7 @@ internal fun com.android.designcompose.serdegen.OverflowDirection.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun layoutSizingFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.LayoutSizing.Fixed()
@@ -324,6 +352,7 @@ internal fun layoutSizingFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.LayoutSizing.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun com.android.designcompose.serdegen.LayoutSizing.toInt() =
     when (this) {
         is com.android.designcompose.serdegen.LayoutSizing.Fixed -> 1
@@ -332,6 +361,7 @@ internal fun com.android.designcompose.serdegen.LayoutSizing.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun fontStyleFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.FontStyle.Normal()
@@ -340,6 +370,7 @@ internal fun fontStyleFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.FontStyle.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun FontStyle.toInt() =
     when (this) {
         is FontStyle.Normal -> 1
@@ -348,6 +379,7 @@ internal fun FontStyle.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun textDecorationFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.TextDecoration.None()
@@ -356,6 +388,7 @@ internal fun textDecorationFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.TextDecoration.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun com.android.designcompose.serdegen.TextDecoration.toInt() =
     when (this) {
         is com.android.designcompose.serdegen.TextDecoration.None -> 1
@@ -364,6 +397,7 @@ internal fun com.android.designcompose.serdegen.TextDecoration.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun blendModeFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.BlendMode.PassThrough()
@@ -388,6 +422,7 @@ internal fun blendModeFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.BlendMode.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun BlendMode.toInt() =
     when (this) {
         is BlendMode.PassThrough -> 1
@@ -413,6 +448,7 @@ internal fun BlendMode.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun overflowFromInt(value: Int) =
     when (value) {
         1 -> Overflow.Visible()
@@ -421,6 +457,7 @@ internal fun overflowFromInt(value: Int) =
         else -> Overflow.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Overflow.toInt() =
     when (this) {
         is Overflow.Visible -> 1
@@ -429,6 +466,7 @@ internal fun Overflow.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun textAlignFromInt(value: Int) =
     when (value) {
         1 -> TextAlign.Left()
@@ -437,6 +475,7 @@ internal fun textAlignFromInt(value: Int) =
         else -> TextAlign.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun TextAlign.toInt() =
     when (this) {
         is TextAlign.Left -> 1
@@ -445,6 +484,7 @@ internal fun TextAlign.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun textAlignVerticalFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.TextAlignVertical.Top()
@@ -453,6 +493,7 @@ internal fun textAlignVerticalFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.TextAlignVertical.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun com.android.designcompose.serdegen.TextAlignVertical.toInt() =
     when (this) {
         is com.android.designcompose.serdegen.TextAlignVertical.Top -> 1
@@ -461,6 +502,7 @@ internal fun com.android.designcompose.serdegen.TextAlignVertical.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun textOverflowFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.TextOverflow.Clip()
@@ -468,6 +510,7 @@ internal fun textOverflowFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.TextOverflow.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun com.android.designcompose.serdegen.TextOverflow.toInt() =
     when (this) {
         is com.android.designcompose.serdegen.TextOverflow.Clip -> 1
@@ -475,6 +518,7 @@ internal fun com.android.designcompose.serdegen.TextOverflow.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun pointerEventsFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.PointerEvents.Auto()
@@ -483,6 +527,7 @@ internal fun pointerEventsFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.PointerEvents.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun com.android.designcompose.serdegen.PointerEvents.toInt() =
     when (this) {
         is com.android.designcompose.serdegen.PointerEvents.Auto -> 1
@@ -491,6 +536,7 @@ internal fun com.android.designcompose.serdegen.PointerEvents.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun displayFromInt(value: Int) =
     when (value) {
         1 -> Display.Flex()
@@ -498,6 +544,7 @@ internal fun displayFromInt(value: Int) =
         else -> Display.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun Display.toInt() =
     when (this) {
         is Display.Flex -> 1
@@ -505,6 +552,7 @@ internal fun Display.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun flexWrapFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.FlexWrap.NoWrap()
@@ -513,6 +561,7 @@ internal fun flexWrapFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.FlexWrap.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun com.android.designcompose.serdegen.FlexWrap.toInt() =
     when (this) {
         is com.android.designcompose.serdegen.FlexWrap.NoWrap -> 1
@@ -521,6 +570,7 @@ internal fun com.android.designcompose.serdegen.FlexWrap.toInt() =
         else -> 0
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun gridLayoutTypeFromInt(value: Int) =
     when (value) {
         1 -> com.android.designcompose.serdegen.GridLayoutType.FixedColumns()
@@ -532,6 +582,7 @@ internal fun gridLayoutTypeFromInt(value: Int) =
         else -> com.android.designcompose.serdegen.GridLayoutType.Unspecified()
     }
 
+@Deprecated("This function will be removed in the future.")
 internal fun RenderMethod.toInt() =
     when (this) {
         is RenderMethod.None -> 1

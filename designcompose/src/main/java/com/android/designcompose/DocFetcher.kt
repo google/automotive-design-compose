@@ -28,8 +28,8 @@ fun constructPostJson(
     params: DocumentServerParams,
     first: Boolean = true,
 ): String {
-    val lastModified = previousDoc?.header?.last_modified
-    val version = previousDoc?.header?.response_version
+    val lastModified = previousDoc?.header?.lastModified
+    val version = previousDoc?.header?.responseVersion
     val imageSession = previousDoc?.imageSession
 
     var postData = "{ "

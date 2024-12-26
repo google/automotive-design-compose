@@ -545,7 +545,7 @@ internal fun DesignSwitcher(
 
     val lastModifiedString =
         if (doc != null) {
-            val lastModifiedInstant = Instant.parse(doc.c.header.last_modified)
+            val lastModifiedInstant = Instant.parse(doc.c.header.lastModified)
             val lastModifiedSeconds =
                 System.currentTimeMillis() / 1000 - lastModifiedInstant.epochSecond
             val elapsed = elapsedTimeString(lastModifiedSeconds)

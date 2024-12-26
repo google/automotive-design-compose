@@ -42,6 +42,7 @@ serde-reflection = { version = "0.3" }
 svgtypes = "0.15.1"
 taffy = { version = "0.6", default-features = false, features = ["std", "taffy_tree", "flexbox", "content_size"] }
 testdir = "0.9.1"
+tempfile = "3.11.0"
 thiserror = "1.0"
 unicode-segmentation = "1"
 ureq = "2"

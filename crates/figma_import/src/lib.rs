@@ -35,9 +35,8 @@ mod variable_utils;
 // Exports for library users
 pub use dc_bundle::definition::element::Rectangle;
 pub use dc_bundle::definition::DesignComposeDefinition;
-pub use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
+pub use dc_bundle::definition::DesignComposeDefinitionHeader;
 pub use design_definition::ServerFigmaDoc;
-pub use design_definition::{load_design_def, load_design_def_header_v0, save_design_def};
 pub use document::Document;
 pub use error::Error;
 pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
@@ -47,6 +46,9 @@ pub use image_context::ImageContextSession;
 pub use dc_bundle::definition::element::Color;
 pub use dc_bundle::definition::view::{View, ViewData};
 pub use dc_bundle::definition::NodeQuery;
+pub use dc_bundle::definition_file::load_design_def;
+pub use dc_bundle::definition_file::save_design_def;
+pub use design_definition::load_design_def_header_v0;
 
 /// Functionality related to reflection for deserializing our bincode archives in other
 /// languages

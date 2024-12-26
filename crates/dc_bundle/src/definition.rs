@@ -31,6 +31,42 @@ pub mod view;
 
 include!(concat!(env!("OUT_DIR"), "/designcompose.definition.rs"));
 
+// LINT.IfChange
+pub static CURRENT_VERSION: u32 = 25;
+// Lint.ThenChange(common/src/main/java/com/android/designcompose/common/DCDVersion.kt)
+
+impl DesignComposeDefinitionHeader {
+    pub fn current(
+        last_modified: String,
+        name: String,
+        response_version: String,
+        id: String,
+    ) -> DesignComposeDefinitionHeader {
+        DesignComposeDefinitionHeader {
+            dc_version: CURRENT_VERSION,
+            last_modified,
+            name,
+            response_version,
+            id,
+        }
+    }
+    pub fn current_version() -> u32 {
+        CURRENT_VERSION
+    }
+}
+
+impl fmt::Display for DesignComposeDefinitionHeader {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // NOTE: Using `write!` here instead of typical `format!`
+        // to keep newlines.
+        write!(
+            f,
+            "DC Version: {}\nDoc ID: {}\nName: {}\nLast Modified: {}\nResponse Version: {}",
+            &self.dc_version, &self.id, &self.name, &self.last_modified, &self.response_version
+        )
+    }
+}
+
 impl DesignComposeDefinition {
     pub fn new(
         views: HashMap<NodeQuery, View>,

@@ -111,3 +111,8 @@ internal fun Optional<Trigger>.isPressOrClick() =
     this.type is TriggerType.Press || this.type is TriggerType.Click
 
 internal fun Optional<Trigger>.isTimeout() = this.type is TriggerType.AfterTimeout
+
+internal fun <T> T?.getOrThrow(field: String): T {
+    if (this == null) throw NoSuchFieldException("Malformed data: $field unset")
+    return this
+}

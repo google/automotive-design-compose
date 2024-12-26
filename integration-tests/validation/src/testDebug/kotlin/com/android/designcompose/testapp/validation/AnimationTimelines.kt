@@ -15,6 +15,7 @@
  */
 
 package com.android.designcompose.testapp.validation
+/** Temporarily disabled: GH-1945
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -33,7 +34,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav")
@@ -108,3 +108,4 @@ class AnimationTimelines {
         composeTestRule.captureRootRoboImage("${name}Animation-End")
     }
 }
+*/

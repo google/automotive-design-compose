@@ -41,26 +41,22 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.VariableState
+import com.android.designcompose.android_interface.LayoutChangedResponse
+import com.android.designcompose.definition.modifier.TextAlignVertical
+import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.definition.view.strokeOrNull
+import com.android.designcompose.definition.view.textColorOrNull
+import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.getBrush
 import com.android.designcompose.getBrushFunction
-import com.android.designcompose.proto.blendModeFromInt
-import com.android.designcompose.proto.getType
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.proto.textAlignVerticalFromInt
-import com.android.designcompose.proto.textOverflowFromInt
-import com.android.designcompose.proto.toUniform
-import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.TextAlignVertical
-import com.android.designcompose.serdegen.TextOverflow
-import com.android.designcompose.serdegen.ViewDataType
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.utils.asBrush
 import com.android.designcompose.utils.asComposeBlendMode
 import com.android.designcompose.utils.asComposeTransform
 import com.android.designcompose.utils.isMask
+import com.android.designcompose.utils.toUniform
 import com.android.designcompose.utils.useLayer
-import kotlin.jvm.optionals.getOrNull
 import kotlin.system.measureTimeMillis
 
 // This is a holder for the current child composable that we want to draw. Compose doesn't
@@ -108,8 +104,8 @@ internal fun Modifier.squooshRender(
                     // If there is no programmatic mode override and this node has explicitly set
                     // mode values, update variablestate with these values
                     val variableState =
-                        if (!hasModeOverride && node.view.explicit_variable_modes.isNotEmpty()) {
-                            val explicitModeValues = node.view.explicit_variable_modes
+                        if (!hasModeOverride && node.view.explicitVariableModesMap.isNotEmpty()) {
+                            val explicitModeValues = node.view.explicitVariableModesMap
                             parentVariableState.copyWithModeValues(explicitModeValues)
                         } else {
                             parentVariableState
@@ -125,27 +121,26 @@ internal fun Modifier.squooshRender(
                         drawContext.canvas.translate(-scrollOffset.value.x, -scrollOffset.value.y)
                     }
                     val shape =
-                        when (val nodeViewDataType = node.view.data.getType()) {
-                            is ViewDataType.Container -> nodeViewDataType.value.shape
-                            else -> {
-                                if (node.textInfo != null) {
-                                    squooshTextRender(
-                                        document,
-                                        drawContext,
-                                        this,
-                                        node.textInfo,
-                                        node.style,
-                                        computedLayout,
-                                        customizations,
-                                        node.view.name,
-                                        variableState,
-                                        appContext = appContext,
-                                    )
-                                    nodeRenderCount++
-                                }
-                                if (scroll) drawContext.canvas.restore()
-                                return
+                        if (node.view.data.hasContainer()) {
+                            node.view.data.container.shape
+                        } else {
+                            if (node.textInfo != null) {
+                                squooshTextRender(
+                                    document,
+                                    drawContext,
+                                    this,
+                                    node.textInfo,
+                                    node.style,
+                                    computedLayout,
+                                    customizations,
+                                    node.view.name,
+                                    variableState,
+                                    appContext = appContext,
+                                )
+                                nodeRenderCount++
                             }
+                            if (scroll) drawContext.canvas.restore()
+                            return
                         }
 
                     if (node.needsChildRender) {
@@ -184,7 +179,7 @@ internal fun Modifier.squooshRender(
                             density,
                             nodeSize,
                             node,
-                            shape.get(),
+                            shape,
                             document,
                             customizations,
                             variableState,
@@ -279,7 +274,7 @@ private fun squooshTextRender(
     density: Density,
     textInfo: TextMeasureData,
     style: ViewStyle,
-    computedLayout: Layout,
+    computedLayout: LayoutChangedResponse.Layout,
     customizations: CustomizationContext,
     nodeName: String,
     variableState: VariableState,
@@ -291,17 +286,17 @@ private fun squooshTextRender(
             paragraphIntrinsics = textInfo.paragraph,
             width = layoutWidth,
             maxLines = textInfo.maxLines,
-            ellipsis = textOverflowFromInt(style.nodeStyle.text_overflow) is TextOverflow.Ellipsis,
+            ellipsis = style.nodeStyle.textOverflow == TextOverflow.TEXT_OVERFLOW_ELLIPSIS,
         )
 
     val layoutHeight = computedLayout.height * density.density
 
     // Apply any styled transform or blend mode.
     // XXX: transform customization?
-    val transform = style.nodeStyle.transform.asComposeTransform(density.density)
-    val blendMode = blendModeFromInt(style.nodeStyle.blend_mode).asComposeBlendMode()
-    val useBlendModeLayer = blendModeFromInt(style.nodeStyle.blend_mode).useLayer()
-    val opacity = style.nodeStyle.opacity.orElse(1.0f)
+    val transform = style.nodeStyle.transformOrNull?.asComposeTransform(density.density)
+    val blendMode = style.nodeStyle.blendMode.asComposeBlendMode()
+    val useBlendModeLayer = style.nodeStyle.blendMode.useLayer()
+    val opacity = style.nodeStyle.takeIf { it.hasOpacity() }?.opacity ?: 1.0f
 
     if (useBlendModeLayer || opacity < 1.0f) {
         val paint = Paint()
@@ -316,9 +311,11 @@ private fun squooshTextRender(
 
     // Apply vertical centering; this would be better done in layout.
     val verticalCenterOffset =
-        when (textAlignVerticalFromInt(style.nodeStyle.text_align_vertical)) {
-            is TextAlignVertical.Center -> (layoutHeight - paragraph.height).coerceAtLeast(0f) / 2f
-            is TextAlignVertical.Bottom -> (layoutHeight - paragraph.height).coerceAtLeast(0f)
+        when (style.nodeStyle.textAlignVertical) {
+            TextAlignVertical.TEXT_ALIGN_VERTICAL_CENTER ->
+                (layoutHeight - paragraph.height).coerceAtLeast(0f) / 2f
+            TextAlignVertical.TEXT_ALIGN_VERTICAL_BOTTOM ->
+                (layoutHeight - paragraph.height).coerceAtLeast(0f)
             else -> 0.0f
         }
 
@@ -333,12 +330,12 @@ private fun squooshTextRender(
     drawContext.canvas.save()
     drawContext.canvas.translate(0.0f, verticalCenterOffset)
 
-    val strokeWidth = style.nodeStyle.stroke.get().stroke_weight.toUniform() * density.density
+    val strokeWidth = style.nodeStyle.stroke.strokeWeight.toUniform() * density.density
     // Only drop shadow is supported now.
-    val shadow = style.nodeStyle.text_shadow.getOrNull()
-    val blurRadius = (shadow?.blur_radius ?: 0f) * density.density
-    val xOffset = (shadow?.offset_x ?: 0f) * density.density
-    val yOffset = (shadow?.offset_y ?: 0f) * density.density
+    val shadow = style.nodeStyle.textShadow
+    val blurRadius = shadow.blurRadius * density.density
+    val xOffset = shadow.offsetX * density.density
+    val yOffset = shadow.offsetY * density.density
 
     // Right now only centered stroke is supported
     val extraSpaceForStroke = strokeWidth / 2
@@ -365,14 +362,12 @@ private fun squooshTextRender(
         paragraph.paint(drawContext.canvas, brush = customFillBrush, alpha = 1.0f, drawStyle = Fill)
     } else {
         val textBrushAndOpacity =
-            style.nodeStyle.text_color
-                .get()
-                .asBrush(
-                    appContext = appContext,
-                    document = document,
-                    density = density.density,
-                    variableState = variableState,
-                )
+            style.nodeStyle.textColorOrNull?.asBrush(
+                appContext = appContext,
+                document = document,
+                density = density.density,
+                variableState = variableState,
+            )
         paragraph.paint(
             drawContext.canvas,
             brush = textBrushAndOpacity?.first ?: SolidColor(Color.Transparent),
@@ -381,7 +376,7 @@ private fun squooshTextRender(
         )
     }
 
-    style.nodeStyle.stroke.get().strokes.forEach {
+    style.nodeStyle.strokeOrNull?.strokesList?.forEach {
         val strokeBrushAndOpacity =
             it.asBrush(
                 appContext = appContext,

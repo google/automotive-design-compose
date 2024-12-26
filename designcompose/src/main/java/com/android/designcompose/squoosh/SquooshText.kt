@@ -151,24 +151,23 @@ internal fun squooshComputeTextInfo(
                 for (run in getTextContent(appContext, v.data.styledText)) {
                     val style = run.styleOrNull!!
                     val textBrushAndOpacity =
-                        style.textColorOrNull!!
-                            .asBrush(appContext, document, density.density, variableState)
-                    val fontWeight =
-                        style.fontWeightOrNull!!
-                            .weight
-                            .getValue(variableState)
+                        style.textColorOrNull!!.asBrush(
+                            appContext,
+                            document,
+                            density.density,
+                            variableState,
+                        )
+                    val fontWeight = style.fontWeightOrNull!!.weight.getValue(variableState)
                     builder.pushStyle(
                         (SpanStyle(
                             brush = textBrushAndOpacity?.first,
                             alpha = textBrushAndOpacity?.second ?: 1.0f,
-                            fontSize =
-                                style.fontSizeOrNull!!
-                                    .getValue(variableState)
-                                    .sp,
+                            fontSize = style.fontSizeOrNull!!.getValue(variableState).sp,
                             fontWeight = FontWeight(fontWeight.roundToInt()),
                             fontStyle =
                                 when (style.fontStyle) {
-                                    com.android.designcompose.definition.element.FontStyle.FONT_STYLE_ITALIC -> FontStyle.Italic
+                                    com.android.designcompose.definition.element.FontStyle
+                                        .FONT_STYLE_ITALIC -> FontStyle.Italic
                                     else -> FontStyle.Normal
                                 },
                             fontFamily =
@@ -192,7 +191,7 @@ internal fun squooshComputeTextInfo(
                                     else -> androidx.compose.ui.text.style.TextDecoration.None
                                 },
                             // platformStyle = PlatformSpanStyle(includeFontPadding = false),
-                        )),
+                        ))
                     )
                     builder.append(run.text)
                     builder.pop()

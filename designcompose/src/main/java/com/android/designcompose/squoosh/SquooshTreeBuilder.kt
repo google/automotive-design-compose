@@ -31,6 +31,7 @@ import com.android.designcompose.VariableState
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.definition.element.ViewShapeKt.box
 import com.android.designcompose.definition.element.background
+import com.android.designcompose.definition.element.color
 import com.android.designcompose.definition.element.colorOrVar
 import com.android.designcompose.definition.element.dimensionProto
 import com.android.designcompose.definition.element.viewShape
@@ -164,7 +165,7 @@ internal fun resolveVariantsRecursively(
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(viewFromTree.name)) return null
     customizations.getVisibleState(viewFromTree.name)?.let { if (!it.value) return null }
-    var componentLayoutId = componentLayoutId
+    var thisLayoutId = componentLayoutId
     var parentComps = parentComponents
     var overrideStyle: ViewStyle? = null
     var view = viewFromTree
@@ -177,11 +178,8 @@ internal fun resolveVariantsRecursively(
 
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
-        componentLayoutId =
-            computeComponentLayoutId(
-                componentLayoutId,
-                layoutIdAllocator.componentLayoutId(parentComps),
-            )
+        thisLayoutId =
+            computeComponentLayoutId(thisLayoutId, layoutIdAllocator.componentLayoutId(parentComps))
 
         // Do we have an override style? This is style data which we should apply to the final style
         // even if we're swapping out our view definition for a variant.
@@ -197,7 +195,9 @@ internal fun resolveVariantsRecursively(
 
         // If we didn't replace the component because of an interaction, we might want to replace it
         // because of a variant customization.
-        if (view.name == viewFromTree.name) { // TODO: why we don't check if view == viewFromTree????
+        if (
+            view.name == viewFromTree.name
+        ) { // TODO: why we don't check if view == viewFromTree????
             // If an interaction has not changed the current variant, then check to see if this node
             // is part of a component set with variants and if any @DesignVariant annotations
             // set variant properties that match. If so, variantNodeName will be set to the
@@ -249,7 +249,7 @@ internal fun resolveVariantsRecursively(
     // Now we know the view we want to render, the style we want to use, etc. We can create
     // a record of it. After this, another pass can be done to build a layout tree. Finally,
     // layout can be performed and rendering done.
-    val layoutId = computeLayoutId(componentLayoutId, viewFromTree.uniqueId)
+    val layoutId = computeLayoutId(thisLayoutId, viewFromTree.uniqueId)
     layoutIdAllocator.visitLayoutId(layoutId)
 
     // XXX-PERF: computeTextInfo is *super* slow. It needs to use a cache between frames.
@@ -397,7 +397,7 @@ internal fun resolveVariantsRecursively(
                         textMeasureCache = textMeasureCache,
                         textHash = textHash,
                         customVariantTransition = customVariantTransition,
-                        componentLayoutId = componentLayoutId,
+                        componentLayoutId = thisLayoutId,
                     ) ?: continue
 
                 childResolvedNode.parent = resolvedView
@@ -443,7 +443,7 @@ internal fun resolveVariantsRecursively(
                     textMeasureCache = textMeasureCache,
                     textHash = textHash,
                     customVariantTransition = customVariantTransition,
-                    componentLayoutId = componentLayoutId,
+                    componentLayoutId = thisLayoutId,
                 ) ?: continue
 
             // Make a synthetic parent for the overlay.
@@ -567,22 +567,26 @@ private fun generateOverlayNode(
         }
     }
 
-    val newNodeStyle = node.style.nodeStyle.copy {
-        this.overflow = Overflow.OVERFLOW_VISIBLE
-        this.backgrounds.clear()
+    val newNodeStyle =
+        node.style.nodeStyle.copy {
+            this.overflow = Overflow.OVERFLOW_VISIBLE
+            this.backgrounds.clear()
 
-        overlay.overlayBackgroundOrNull?.colorOrNull?.let {
-            val bgColor =
-                com.android.designcompose.definition.element.color {
-                    r = (it.r * 255.0).toInt()
-                    g = (it.g * 255.0).toInt()
-                    b = (it.b * 255.0).toInt()
-                    a = (it.a * 255.0).toInt()
-                }
-            this.backgrounds.add(background { solid = colorOrVar { color = bgColor } })
+            overlay.overlayBackgroundOrNull?.colorOrNull?.let {
+                this.backgrounds.add(
+                    background {
+                        solid = colorOrVar {
+                            color = color {
+                                r = (it.r * 255.0).toInt()
+                                g = (it.g * 255.0).toInt()
+                                b = (it.b * 255.0).toInt()
+                                a = (it.a * 255.0).toInt()
+                            }
+                        }
+                    }
+                )
+            }
         }
-    }
-
 
     val overlayStyle = viewStyle {
         this.layoutStyle = layoutStyleBuilder.build()

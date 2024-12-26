@@ -27,8 +27,8 @@ data class DesignKeyEvent(val key: Char, val metaKeys: List<DesignMetaKey>) {
     companion object {
         // Construct a DesignKeyEvent from a list of javascript key codes
         fun fromJsKeyCodes(jsKeyCodes: List<Byte>): DesignKeyEvent {
-            var metaKeys: ArrayList<DesignMetaKey> = arrayListOf()
-            var key: Char = '0'
+            val metaKeys: ArrayList<DesignMetaKey> = arrayListOf()
+            var key = '0'
             jsKeyCodes
                 .map { it.toInt() }
                 .forEach {

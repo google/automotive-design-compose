@@ -109,4 +109,4 @@ class AnimationTimelines {
         composeTestRule.captureRootRoboImage("${name}Animation-End")
     }
 }
-*/
+ */

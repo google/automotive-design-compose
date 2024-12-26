@@ -374,7 +374,7 @@ private fun GetBranches(
 }
 
 private fun GetProjectFileCount(doc: DocContent?): String {
-    var count = doc?.c?.project_files?.size ?: 0
+    val count = doc?.c?.project_files?.size ?: 0
     return count.toString()
 }
 

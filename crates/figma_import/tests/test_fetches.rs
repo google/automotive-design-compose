@@ -16,9 +16,7 @@
 #![cfg(feature = "fetch")]
 
 use dc_bundle::definition::DesignComposeDefinitionHeader;
-use dc_bundle::definition_file::{
-    load_design_def, save_design_def,
-};
+use dc_bundle::definition_file::{load_design_def, save_design_def};
 use figma_import::tools::fetch::{build_definition, load_figma_token};
 use figma_import::{Document, ProxyConfig};
 use tempfile::NamedTempFile;

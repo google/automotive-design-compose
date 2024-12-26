@@ -194,7 +194,7 @@ private fun calculateProgressBarData(
         var endY = progressBarData.endY
         parent?.let { p ->
             val parentSize = p.computedLayout?.let { Size(it.width, it.height) }
-            parentSize?.let { pSize ->
+            parentSize?.let {
                 val parentRenderSize = getNodeRenderSize(null, parentSize, p.style, p.layoutId, 1f)
                 endY = parentRenderSize.height
             }
@@ -212,7 +212,7 @@ private fun calculateProgressBarData(
         var endX = progressBarData.endX
         parent?.let { p ->
             val parentSize = p.computedLayout?.let { Size(it.width, it.height) }
-            parentSize?.let { pSize ->
+            parentSize?.let {
                 val parentRenderSize = getNodeRenderSize(null, parentSize, p.style, p.layoutId, 1f)
                 endX = parentRenderSize.width
             }
@@ -251,15 +251,15 @@ private fun calculateProgressMarkerData(
     // along the x or y axis depending on whether it is horizontal or vertical
     val overrideTransform = style.getTransform(density)
     if (markerData.vertical) {
-        var startY =
+        val startY =
             parentSize?.let { it.height - (mySize?.height ?: 0f) / 2f } ?: markerData.startY
         val endY = mySize?.let { -it.height / 2f } ?: markerData.endY
         val moveY = lerp(startY, endY, discretizedMeterValue, density)
         val topOffset = style.layoutStyle.margin.top.pointsAsDp(density).value
         overrideTransform.setYTranslation(moveY - topOffset)
     } else {
-        var startX = mySize?.let { -it.width / 2f } ?: markerData.startX
-        var endX = parentSize?.let { it.width - (mySize?.width ?: 0f) / 2f } ?: markerData.endX
+        val startX = mySize?.let { -it.width / 2f } ?: markerData.startX
+        val endX = parentSize?.let { it.width - (mySize?.width ?: 0f) / 2f } ?: markerData.endX
         val moveX = lerp(startX, endX, discretizedMeterValue, density)
         val leftOffset = style.layoutStyle.margin.start.pointsAsDp(density).value
         overrideTransform.setXTranslation(moveX - leftOffset)

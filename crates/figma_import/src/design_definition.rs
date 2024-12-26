@@ -44,7 +44,6 @@ where
 #[cfg(test)]
 mod serialized_document_tests {
 
-    
     use dc_bundle::definition_file::{load_design_def, save_design_def};
     use std::fs::File;
     use std::io::Write;

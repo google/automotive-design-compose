@@ -371,7 +371,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     SpanCache.clear()
                     for (subscriber in subs) {
                         subscriber.onUpdate(doc)
-                        subscriber.docUpdateCallback?.invoke(id, doc.c?.toSerializedBytes(Feedback))
+                        subscriber.docUpdateCallback?.invoke(id, doc.c.toSerializedBytes(Feedback))
                     }
                 }
                 Feedback.documentUpdated(id, subs.size)

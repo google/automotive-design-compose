@@ -174,17 +174,17 @@ internal object VariableManager {
         varMap = varMap.copy {
             // Remove old entries for docId
             val oldVarMap = docVarMap[docId.id]
-            oldVarMap?.collectionsMap?.forEach { collections.remove(it.key) }
-            oldVarMap?.collectionNameMapMap?.forEach { collectionNameMap.remove(it.key) }
-            oldVarMap?.variablesMap?.forEach { variables.remove(it.key) }
-            oldVarMap?.variableNameMapMap?.forEach { variableNameMap.remove(it.key) }
+            oldVarMap?.collectionsMap?.forEach { this.collections.remove(it.key) }
+            oldVarMap?.collectionNameMapMap?.forEach { this.collectionNameMap.remove(it.key) }
+            oldVarMap?.variablesMap?.forEach { this.variables.remove(it.key) }
+            oldVarMap?.variableNameMapMap?.forEach { this.variableNameMap.remove(it.key) }
 
             // Add new entries for docId
             docVarMap[docId.id] = map
-            collections.putAll(map.collectionsMap)
-            collectionNameMap.putAll(map.collectionNameMapMap)
-            variables.putAll(map.variablesMap)
-            variableNameMap.putAll(map.variableNameMapMap)
+            this.collections.putAll(map.collectionsMap)
+            this.collectionNameMap.putAll(map.collectionNameMapMap)
+            this.variables.putAll(map.variablesMap)
+            this.variableNameMap.putAll(map.variableNameMapMap)
         }
         currentDocId = docId
     }

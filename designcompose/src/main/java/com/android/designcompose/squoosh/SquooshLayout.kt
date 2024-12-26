@@ -209,14 +209,14 @@ private fun updateLayoutTree(
 
         layoutNodes.add(
             layoutNode {
-                layoutId
-                parentLayoutId
-                -1 // not childIdx!
-                resolvedNode.style.layoutStyle
-                resolvedNode.view.name
-                useMeasureFunc
-                null
-                null
+                this.layoutId = layoutId
+                this.parentLayoutId = parentLayoutId
+                this.childIndex = -1 // not childIdx!
+                this.style = resolvedNode.style.layoutStyle
+                this.name = resolvedNode.view.name
+                this.useMeasureFunc = useMeasureFunc
+                clearFixedWidth()
+                clearFixedHeight()
             }
         )
         layoutCache[layoutId] = layoutCacheKey
@@ -296,8 +296,8 @@ internal fun layoutTree(
     val layoutParentChildren = arrayListOf<LayoutParentChildren>()
     updateLayoutTree(manager, root, layoutCache, layoutNodes, layoutParentChildren)
     val layoutNodeList = layoutNodeList {
-        layoutNodes
-        layoutParentChildren
+        this.layoutNodes.addAll(layoutNodes)
+        this.parentChildren.addAll(layoutParentChildren)
     }
 
     // Now we can give the new layoutNodeList to the Rust JNI layout implementation

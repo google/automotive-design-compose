@@ -54,6 +54,7 @@ import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewDataKt.container
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
+import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.frameExtrasOrNull
 import com.android.designcompose.definition.view.overridesOrNull
 import com.android.designcompose.definition.view.styleOrNull
@@ -566,59 +567,61 @@ private fun generateOverlayNode(
         }
     }
 
-    val nodeStyleBuilder = node.style.nodeStyle.toBuilder()
-    nodeStyleBuilder.overflow = Overflow.OVERFLOW_VISIBLE
-    nodeStyleBuilder.backgroundsList.clear()
+    val newNodeStyle = node.style.nodeStyle.copy {
+        this.overflow = Overflow.OVERFLOW_VISIBLE
+        this.backgrounds.clear()
 
-    overlay.overlayBackgroundOrNull?.colorOrNull?.let {
-        val bgColor =
-            com.android.designcompose.definition.element.color {
-                r = (it.r * 255.0).toInt()
-                g = (it.g * 255.0).toInt()
-                b = (it.b * 255.0).toInt()
-                a = (it.a * 255.0).toInt()
-            }
-        nodeStyleBuilder.backgroundsList.add(background { solid = colorOrVar { color = bgColor } })
+        overlay.overlayBackgroundOrNull?.colorOrNull?.let {
+            val bgColor =
+                com.android.designcompose.definition.element.color {
+                    r = (it.r * 255.0).toInt()
+                    g = (it.g * 255.0).toInt()
+                    b = (it.b * 255.0).toInt()
+                    a = (it.a * 255.0).toInt()
+                }
+            this.backgrounds.add(background { solid = colorOrVar { color = bgColor } })
+        }
     }
 
+
     val overlayStyle = viewStyle {
-        layoutStyle = layoutStyleBuilder.build()
-        nodeStyle = nodeStyleBuilder.build()
+        this.layoutStyle = layoutStyleBuilder.build()
+        this.nodeStyle = newNodeStyle
     }
 
     // Now synthesize a view.
     val overlayViewData = container {
-        shape = viewShape { rect = box { isMask = false } }
-        children.add(node.view)
+        this.shape = viewShape { rect = box { isMask = false } }
+        this.children.add(node.view)
     }
 
     val overlayScrollInfo = scrollInfo {
-        pagedScrolling = false
-        overflow = OverflowDirection.OVERFLOW_DIRECTION_NONE
+        this.pagedScrolling = false
+        this.overflow = OverflowDirection.OVERFLOW_DIRECTION_NONE
     }
 
     if (node.view.uniqueId !in 0..0xFFFF) {
         throw RuntimeException("View's unique ID must be in the range 0..0xFFFF")
     }
     val overlayView = view {
-        uniqueId = (node.view.uniqueId + 0x2000)
-        id = "overlay-${node.view.id}"
-        name = "Overlay ${node.view.name}"
+        this.uniqueId = (node.view.uniqueId + 0x2000)
+        this.id = "overlay-${node.view.id}"
+        this.name = "Overlay ${node.view.name}"
         if (
             overlay.overlayBackgroundInteraction ==
                 OverlayBackgroundInteraction.OVERLAY_BACKGROUND_INTERACTION_CLOSE_ON_CLICK_OUTSIDE
         ) {
-            reactions.add(
+            this.reactions.add(
                 reaction {
                     trigger = trigger { click = empty {} }
                     action = action { close = empty {} }
                 }
             )
         }
-        scrollInfo = overlayScrollInfo
-        style = overlayStyle
-        data = viewData { container = overlayViewData }
-        renderMethod = View.RenderMethod.RENDER_METHOD_NONE
+        this.scrollInfo = overlayScrollInfo
+        this.style = overlayStyle
+        this.data = viewData { container = overlayViewData }
+        this.renderMethod = View.RenderMethod.RENDER_METHOD_NONE
     }
     val overlayLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)
     val layoutId =

@@ -31,6 +31,7 @@ import com.android.designcompose.definition.element.NumOrVar
 import com.android.designcompose.definition.element.Variable
 import com.android.designcompose.definition.element.VariableMap
 import com.android.designcompose.definition.element.VariableValue
+import com.android.designcompose.definition.element.copy
 import com.android.designcompose.utils.toColor
 
 // A variable mode, e.g. "light" or "dark"
@@ -170,20 +171,21 @@ internal object VariableManager {
 
     internal fun init(docId: DesignDocId, map: VariableMap) {
 
-        // Remove old entries for docId
-        val oldVarMap = docVarMap[docId.id]
-        oldVarMap?.collectionsMap?.forEach { varMap.collectionsMap.remove(it.key) }
-        oldVarMap?.collectionNameMapMap?.forEach { varMap.collectionNameMapMap.remove(it.key) }
-        oldVarMap?.variablesMap?.forEach { varMap.variablesMap.remove(it.key) }
-        oldVarMap?.variableNameMapMap?.forEach { varMap.variableNameMapMap.remove(it.key) }
+        varMap = varMap.copy {
+            // Remove old entries for docId
+            val oldVarMap = docVarMap[docId.id]
+            oldVarMap?.collectionsMap?.forEach { collections.remove(it.key) }
+            oldVarMap?.collectionNameMapMap?.forEach { collectionNameMap.remove(it.key) }
+            oldVarMap?.variablesMap?.forEach { variables.remove(it.key) }
+            oldVarMap?.variableNameMapMap?.forEach { variableNameMap.remove(it.key) }
 
-        // Add new entries for docId
-        docVarMap[docId.id] = map
-        varMap.collectionsMap.putAll(map.collectionsMap)
-        varMap.collectionNameMapMap.putAll(map.collectionNameMapMap)
-        varMap.variablesMap.putAll(map.variablesMap)
-        varMap.variableNameMapMap.putAll(map.variableNameMapMap)
-
+            // Add new entries for docId
+            docVarMap[docId.id] = map
+            collections.putAll(map.collectionsMap)
+            collectionNameMap.putAll(map.collectionNameMapMap)
+            variables.putAll(map.variablesMap)
+            variableNameMap.putAll(map.variableNameMapMap)
+        }
         currentDocId = docId
     }
 

@@ -42,16 +42,12 @@ import com.android.designcompose.definition.element.LineHeight.LineHeightTypeCas
 import com.android.designcompose.definition.element.TextDecoration
 import com.android.designcompose.definition.element.weightOrNull
 import com.android.designcompose.definition.view.View
-import com.android.designcompose.definition.view.fontSizeOrNull
 import com.android.designcompose.definition.view.fontWeightOrNull
-import com.android.designcompose.definition.view.styleOrNull
-import com.android.designcompose.definition.view.textColorOrNull
 import com.android.designcompose.definition.view.textShadowOrNull
 import com.android.designcompose.getText
 import com.android.designcompose.getTextState
 import com.android.designcompose.getTextStyle
 import com.android.designcompose.getValue
-import com.android.designcompose.proto.getOrThrow
 import com.android.designcompose.utils.asBrush
 import com.android.designcompose.utils.blurFudgeFactor
 import com.android.designcompose.utils.getTextContent
@@ -150,23 +146,19 @@ internal fun squooshComputeTextInfo(
             } else if (v.data.hasStyledText()) {
                 val builder = AnnotatedString.Builder()
                 for (run in getTextContent(appContext, v.data.styledText)) {
-                    val style = run.styleOrNull.getOrThrow("StyledTextRun")
+                    val style = run.style
                     val textBrushAndOpacity =
-                        style.textColorOrNull
-                            .getOrThrow("textColor")
+                        style.textColor
                             .asBrush(appContext, document, density.density, variableState)
                     val fontWeight =
-                        style.fontWeightOrNull
-                            .getOrThrow("fontWeight")
-                            .weight
+                        style.fontWeight.weight
                             .getValue(variableState)
                     builder.pushStyle(
                         (SpanStyle(
                             brush = textBrushAndOpacity?.first,
                             alpha = textBrushAndOpacity?.second ?: 1.0f,
                             fontSize =
-                                style.fontSizeOrNull
-                                    .getOrThrow("fontSize")
+                                style.fontSize
                                     .getValue(variableState)
                                     .sp,
                             fontWeight = FontWeight(fontWeight.roundToInt()),
@@ -174,6 +166,7 @@ internal fun squooshComputeTextInfo(
                                 when (style.fontStyle) {
                                     com.android.designcompose.definition.element.FontStyle
                                         .FONT_STYLE_ITALIC -> FontStyle.Italic
+
                                     else -> FontStyle.Normal
                                 },
                             fontFamily =
@@ -190,12 +183,14 @@ internal fun squooshComputeTextInfo(
                                 when (style.textDecoration) {
                                     TextDecoration.TEXT_DECORATION_UNDERLINE ->
                                         androidx.compose.ui.text.style.TextDecoration.Underline
+
                                     TextDecoration.TEXT_DECORATION_STRIKETHROUGH ->
                                         androidx.compose.ui.text.style.TextDecoration.LineThrough
+
                                     else -> androidx.compose.ui.text.style.TextDecoration.None
                                 },
                             // platformStyle = PlatformSpanStyle(includeFontPadding = false),
-                        ))
+                        )),
                     )
                     builder.append(run.text)
                     builder.pop()

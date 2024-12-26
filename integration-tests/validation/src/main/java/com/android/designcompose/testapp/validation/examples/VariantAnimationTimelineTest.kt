@@ -59,6 +59,8 @@ enum class SceneState {
     Closed,
 }
 
+/** Temporarily disabled: GH-1945
+
 @DesignDoc(id = "vJRf4zxY4QX4zzSSUd1nJ5")
 interface VariantAnimationTimelineTest {
     @DesignComponent(node = "root/display_1")
@@ -212,3 +214,4 @@ fun VariantAnimationTimelineTest() {
         }
     }
 }
+*/

@@ -58,6 +58,7 @@ import com.android.designcompose.definition.plugin.RotationMeterData
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.shaderFallbackColorOrNull
+import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.squoosh.SquooshResolvedNode
 import com.android.designcompose.utils.asBrush
 import com.android.designcompose.utils.asComposeBlendMode
@@ -89,7 +90,7 @@ private fun calculateParentOffsets(
     nodeHeight: Double,
     density: Float,
 ): Pair<Double, Double> {
-    val decomposed = style.nodeStyle.transform.decompose(density)
+    val decomposed = style.nodeStyle.transformOrNull.decompose(density)
 
     // X Node position offset by the X translation value of the transform matrix
     val nodeX =
@@ -121,7 +122,8 @@ private fun calculateParentOffsets(
 }
 
 private fun ViewStyle.getTransform(density: Float): androidx.compose.ui.graphics.Matrix {
-    return nodeStyle.transform.asComposeTransform(density) ?: androidx.compose.ui.graphics.Matrix()
+    return nodeStyle.transformOrNull.asComposeTransform(density)
+        ?: androidx.compose.ui.graphics.Matrix()
 }
 
 private fun lerp(start: Float, end: Float, percent: Float, density: Float): Float {
@@ -417,11 +419,11 @@ internal fun ContentDrawScope.render(
     }
 
     // Push any transforms
-    val transform = overrideTransform ?: style.nodeStyle.transform.asComposeTransform(density)
+    val transform = overrideTransform ?: style.nodeStyle.transformOrNull.asComposeTransform(density)
     var vectorScaleX = 1F
     var vectorScaleY = 1F
     if (transform != null) {
-        val decomposed = style.nodeStyle.transform.decompose(density)
+        val decomposed = style.nodeStyle.transformOrNull.decompose(density)
         vectorScaleX = abs(decomposed.scaleX)
         vectorScaleY = abs(decomposed.scaleY)
         drawContext.transform.transform(transform)
@@ -705,11 +707,11 @@ internal fun ContentDrawScope.squooshShapeRender(
     }
 
     // Push any transforms
-    val transform = overrideTransform ?: style.nodeStyle.transform.asComposeTransform(density)
+    val transform = style.nodeStyle.transformOrNull.asComposeTransform(density)
     var vectorScaleX = 1F
     var vectorScaleY = 1F
     if (transform != null) {
-        val decomposed = style.nodeStyle.transform.decompose(density)
+        val decomposed = style.nodeStyle.transformOrNull.decompose(density)
         vectorScaleX = abs(decomposed.scaleX)
         vectorScaleY = abs(decomposed.scaleY)
         drawContext.transform.transform(transform)

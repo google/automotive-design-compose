@@ -88,7 +88,7 @@ internal fun Matrix.toLayoutTransform() = layoutTransform {
 }
 
 // Decompose a matrix in list form into its translation, angle, and scale parts
-internal fun LayoutTransform.decompose(density: Float): DecomposedMatrix2D {
+internal fun LayoutTransform?.decompose(density: Float): DecomposedMatrix2D {
     val matrix = this.asComposeTransform(density)
     return matrix?.decompose() ?: DecomposedMatrix2D()
 }

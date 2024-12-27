@@ -290,9 +290,10 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
  *
  * XXX: Doesn't consider transform origin.
  */
-internal fun LayoutTransform.asComposeTransform(
+internal fun LayoutTransform?.asComposeTransform(
     density: Float
 ): androidx.compose.ui.graphics.Matrix? {
+    if (this == null) return null
     val transform =
         androidx.compose.ui.graphics.Matrix(
             floatArrayOf(

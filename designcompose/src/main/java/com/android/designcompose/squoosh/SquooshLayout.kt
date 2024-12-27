@@ -246,8 +246,8 @@ private fun updateLayoutTree(
     if (updateLayoutChildren)
         layoutParentChildren.add(
             layoutParentChildren {
-                layoutId
-                layoutChildren
+                this.parentLayoutId = layoutId
+                this.childLayoutIds.addAll(layoutChildren)
             }
         )
 

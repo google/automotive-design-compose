@@ -206,14 +206,9 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             if (override.nodeStyle.fontFeaturesCount > 0) override.nodeStyle.fontFeaturesList
             else base.nodeStyle.fontFeaturesList
         )
-        filters.addAll(
-            if (override.nodeStyle.filtersList.isNotEmpty()) override.nodeStyle.filtersList
-            else base.nodeStyle.filtersList
-        )
+        filters.addAll(override.nodeStyle.filtersList.ifEmpty { base.nodeStyle.filtersList })
         backdropFilters.addAll(
-            if (override.nodeStyle.backdropFiltersList.isNotEmpty())
-                override.nodeStyle.backdropFiltersList
-            else base.nodeStyle.backdropFiltersList
+            override.nodeStyle.backdropFiltersList.ifEmpty { base.nodeStyle.backdropFiltersList }
         )
         blendMode =
             if (
@@ -267,11 +262,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
                 base.nodeStyle.gridAdaptiveMinSize
             }
         gridSpanContents.addAll(
-            if (override.nodeStyle.gridSpanContentsList.isNotEmpty()) {
-                override.nodeStyle.gridSpanContentsList
-            } else {
-                base.nodeStyle.gridSpanContentsList
-            }
+            override.nodeStyle.gridSpanContentsList.ifEmpty { base.nodeStyle.gridSpanContentsList }
         )
         overflow =
             if (

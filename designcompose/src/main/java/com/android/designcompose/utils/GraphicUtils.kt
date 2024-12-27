@@ -23,7 +23,6 @@ import android.graphics.Matrix
 import android.graphics.Shader
 import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
@@ -375,7 +374,6 @@ internal fun AffineTransform.asSkiaMatrix(): Matrix {
 }
 
 /** Convert a Background to a Brush, returning a Pair of Brush and Opacity */
-@RequiresApi(Build.VERSION_CODES.N)
 internal fun Background.asBrush(
     appContext: Context,
     document: DocContent,

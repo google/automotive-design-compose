@@ -17,12 +17,10 @@
 package com.android.designcompose
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
 import android.graphics.RuntimeShader
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -55,7 +53,6 @@ import com.android.designcompose.definition.plugin.ProgressBarMeterData
 import com.android.designcompose.definition.plugin.ProgressMarkerMeterData
 import com.android.designcompose.definition.plugin.ProgressVectorMeterData
 import com.android.designcompose.definition.plugin.RotationMeterData
-import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.shaderFallbackColorOrNull
 import com.android.designcompose.definition.view.transformOrNull
@@ -335,291 +332,6 @@ private fun renderPaths(drawContext: DrawContext, paths: List<Path>, brushes: Li
     }
 }
 
-internal fun ContentDrawScope.render(
-    modifier: Modifier,
-    style: ViewStyle,
-    frameShape: ViewShape,
-    customImageWithContext: Bitmap?,
-    document: DocContent,
-    view: View,
-    customizations: CustomizationContext,
-    layoutId: Int,
-    variableState: VariableState,
-    appContext: Context,
-) {
-    val name = view.name
-    if (size.width <= 0F && size.height <= 0F) return
-
-    drawContext.canvas.save()
-
-    var overrideTransform: androidx.compose.ui.graphics.Matrix? = null
-    var rectSize: Size? = null
-    var shape = frameShape
-    var customArcAngle = false
-    var progressVectorMeterData: ProgressVectorMeterData? = null
-
-    val meterValue =
-        customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
-    // Check if there is meter data for a dial/gauge/progress bar
-    if (meterValue != null && style.nodeStyle.hasMeterData()) {
-        with(style.nodeStyle.meterData) {
-            when (meterDataTypeCase) {
-                MeterData.MeterDataTypeCase.ROTATION_DATA -> {
-                    if (rotationData.enabled) {
-                        overrideTransform =
-                            calculateRotationData(rotationData, meterValue, style, density)
-                    }
-                }
-
-                MeterData.MeterDataTypeCase.PROGRESS_BAR_DATA -> {
-                    if (progressBarData.enabled) {
-                        val progressBarSizeTransform =
-                            calculateProgressBarData(
-                                progressBarData,
-                                meterValue,
-                                style,
-                                null,
-                                density,
-                            )
-                        rectSize = progressBarSizeTransform.first
-                        overrideTransform = progressBarSizeTransform.second
-                    }
-                }
-
-                MeterData.MeterDataTypeCase.PROGRESS_MARKER_DATA -> {
-                    if (progressMarkerData.enabled) {
-                        overrideTransform =
-                            calculateProgressMarkerData(
-                                progressMarkerData,
-                                meterValue,
-                                style,
-                                null,
-                                null,
-                                density,
-                            )
-                    }
-                }
-
-                MeterData.MeterDataTypeCase.ARC_DATA -> {
-                    if (arcData.enabled) {
-                        shape = calculateArcData(arcData, meterValue, shape)
-                        customArcAngle = true
-                    }
-                }
-
-                MeterData.MeterDataTypeCase.PROGRESS_VECTOR_DATA -> {
-                    // If this is a vector path progress bar, save it here so we can convert it to a
-                    // set of path instructions and render it instead of the normal stroke.
-                    if (progressVectorData.enabled) progressVectorMeterData = progressVectorData
-                }
-
-                else -> {}
-            }
-        }
-    }
-
-    // Push any transforms
-    val transform = overrideTransform ?: style.nodeStyle.transformOrNull.asComposeTransform(density)
-    var vectorScaleX = 1F
-    var vectorScaleY = 1F
-    if (transform != null) {
-        val decomposed = style.nodeStyle.transformOrNull.decompose(density)
-        vectorScaleX = abs(decomposed.scaleX)
-        vectorScaleY = abs(decomposed.scaleY)
-        drawContext.transform.transform(transform)
-    }
-
-    // Blend mode
-    val blendMode = (style.nodeStyle.blendMode).asComposeBlendMode()
-    val useBlendMode = (style.nodeStyle.blendMode).useLayer()
-    val opacity = style.nodeStyle.opacity.takeIf { style.nodeStyle.hasOpacity() } ?: 1.0f
-
-    // Either use a graphicsLayer to apply the opacity effect, or use saveLayer if
-    // we have a blend mode.
-    if (!useBlendMode && opacity < 1.0f) {
-        modifier.alpha(opacity)
-    }
-    if (useBlendMode) {
-        val paint = Paint()
-        paint.alpha = opacity
-        paint.blendMode = blendMode
-        drawContext.canvas.saveLayer(Rect(Offset.Zero, size), paint)
-    }
-    val shapePaths =
-        shape.computePaths(
-            style,
-            density,
-            size,
-            rectSize,
-            customArcAngle,
-            layoutId,
-            variableState,
-            ComputedPathCache(),
-        )
-
-    val customFillBrushFunction = customizations.getBrushFunction(name)
-    var customFillBrush =
-        if (customFillBrushFunction != null) {
-            customFillBrushFunction()
-        } else {
-            customizations.getBrush(name)
-        }
-    if (customFillBrush == null && view.hasShader()) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val shader = RuntimeShader(view.shader.trim().trimIndent())
-            customFillBrush = SizingShaderBrush(shader)
-            val shaderUniformTime = customizations.getShaderUniformTimeState(name)
-            if (shaderUniformTime != null) {
-                shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
-            }
-        } else {
-            view.shaderFallbackColorOrNull?.let { color ->
-                customFillBrush = SolidColor(color.toColor())
-            }
-        }
-    }
-
-    val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
-    val fillBrush: List<Paint> =
-        if (customFillBrush != null) {
-            val p = Paint()
-            customFillBrush!!.applyTo(brushSize, p, 1.0f)
-            listOf(p)
-        } else {
-            style.nodeStyle.backgroundsList.mapNotNull { background ->
-                val p = Paint()
-                val b = background.asBrush(appContext, document, density, variableState)
-                if (b != null) {
-                    val (brush, fillOpacity) = b
-                    brush.applyTo(brushSize, p, fillOpacity)
-                    p
-                } else {
-                    null
-                }
-            }
-        }
-
-    val strokeBrush =
-        style.nodeStyle.stroke.strokesList.mapNotNull { background ->
-            val p = Paint()
-            progressVectorMeterData?.let {
-                calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
-            }
-            val b = background.asBrush(appContext, document, density, variableState)
-            if (b != null) {
-                val (brush, strokeOpacity) = b
-                brush.applyTo(brushSize, p, strokeOpacity)
-                p
-            } else {
-                null
-            }
-        }
-
-    // Outset shadows
-    // XXX: only do this if there are shadows.
-    drawContext.canvas.save()
-    // Don't draw shadows under objects.
-    shapePaths.shadowClips.forEach { path -> drawContext.canvas.clipPath(path, ClipOp.Difference) }
-
-    // Now paint the outset shadows.
-    shapePaths.shadowFills
-        .filter { it.shadowStyle.hasOutset() }
-        .forEach { shadow ->
-            val shadowBox = shadow.shadowStyle.outset
-
-            // Make an appropriate paint.
-            val shadowPaint = Paint().asFrameworkPaint()
-            shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
-            if (shadowBox.blurRadius > 0.0f) {
-                shadowPaint.maskFilter =
-                    BlurMaskFilter(
-                        shadowBox.blurRadius * density * blurFudgeFactor,
-                        BlurMaskFilter.Blur.NORMAL,
-                    )
-            }
-            drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
-            shadow.fills.forEach { shadowPath ->
-                drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
-            }
-            drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
-        }
-    drawContext.canvas.restore()
-
-    // Now draw the actual shape, or fill it with an image if we have an image
-    // replacement; we might want to do image replacement as a Brush in the
-    // future.
-    var customImage = customImageWithContext
-    if (customImage == null) customImage = customizations.getImage(name)
-    if (customImage != null) {
-        // Apply custom image as background
-        drawContext.canvas.save()
-        for (fill in shapePaths.fills) {
-            drawContext.canvas.clipPath(fill)
-        }
-        drawImage(
-            customImage.asImageBitmap(),
-            dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
-        )
-        drawContext.canvas.restore()
-    } else {
-        renderPaths(drawContext, shapePaths.fills, fillBrush)
-    }
-
-    // Now do inset shadows
-    drawContext.canvas.save()
-    // Don't draw inset shadows outside of the stroke bounds.
-    shapePaths.shadowClips.forEach { path -> drawContext.canvas.clipPath(path) }
-    val shadowOutlinePaint = android.graphics.Paint()
-    shadowOutlinePaint.style = android.graphics.Paint.Style.FILL_AND_STROKE
-    val shadowSpreadPaint = android.graphics.Paint()
-    shadowSpreadPaint.style = android.graphics.Paint.Style.STROKE
-
-    shapePaths.shadowFills
-        .filter { it.shadowStyle.hasInset() }
-        .forEach { shadow ->
-            val shadowBox = shadow.shadowStyle.inset
-
-            // Make an appropriate paint.
-            val shadowPaint = Paint().asFrameworkPaint()
-            shadowPaint.color = shadowBox.color.getValue(variableState)?.toArgb() ?: return@forEach
-            if (shadowBox.blurRadius > 0.0f) {
-                shadowPaint.maskFilter =
-                    BlurMaskFilter(
-                        shadowBox.blurRadius * density * blurFudgeFactor,
-                        BlurMaskFilter.Blur.NORMAL,
-                    )
-            }
-            drawContext.canvas.translate(shadowBox.offsetX * density, shadowBox.offsetY * density)
-            shadow.fills.forEach { shadowPath ->
-                drawContext.canvas.nativeCanvas.drawPath(shadowPath.asAndroidPath(), shadowPaint)
-            }
-            drawContext.canvas.translate(-shadowBox.offsetX * density, -shadowBox.offsetY * density)
-        }
-    drawContext.canvas.restore()
-
-    // Now draw our stroke and our children. The order of drawing the stroke and the
-    // children is different depending on whether we clip children.
-    if (style.nodeStyle.overflow == Overflow.OVERFLOW_HIDDEN) {
-        // Clip children, and paint our stroke on top of them.
-        drawContext.canvas.save()
-        for (fill in shapePaths.fills) {
-            drawContext.canvas.clipPath(fill)
-        }
-        drawContent()
-        drawContext.canvas.restore()
-        renderPaths(drawContext, shapePaths.strokes, strokeBrush)
-    } else {
-        // No clipping; paint our stroke first and then paint our children.
-        renderPaths(drawContext, shapePaths.strokes, strokeBrush)
-        drawContent()
-    }
-
-    if (useBlendMode) {
-        drawContext.canvas.restore()
-    }
-    drawContext.canvas.restore()
-}
-
 internal fun ContentDrawScope.squooshShapeRender(
     drawContext: DrawContext,
     density: Float,
@@ -707,7 +419,7 @@ internal fun ContentDrawScope.squooshShapeRender(
     }
 
     // Push any transforms
-    val transform = style.nodeStyle.transformOrNull.asComposeTransform(density)
+    val transform = overrideTransform ?: style.nodeStyle.transformOrNull.asComposeTransform(density)
     var vectorScaleX = 1F
     var vectorScaleY = 1F
     if (transform != null) {

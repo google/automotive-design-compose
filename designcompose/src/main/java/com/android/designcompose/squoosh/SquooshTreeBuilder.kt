@@ -34,16 +34,22 @@ import com.android.designcompose.definition.element.background
 import com.android.designcompose.definition.element.color
 import com.android.designcompose.definition.element.colorOrVar
 import com.android.designcompose.definition.element.dimensionProto
+import com.android.designcompose.definition.element.dimensionRect
 import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.interaction.action
 import com.android.designcompose.definition.interaction.reaction
 import com.android.designcompose.definition.interaction.trigger
+import com.android.designcompose.definition.layout.AlignContent
 import com.android.designcompose.definition.layout.AlignItems
+import com.android.designcompose.definition.layout.AlignSelf
 import com.android.designcompose.definition.layout.FlexDirection
+import com.android.designcompose.definition.layout.ItemSpacingKt.auto
 import com.android.designcompose.definition.layout.JustifyContent
 import com.android.designcompose.definition.layout.Overflow
 import com.android.designcompose.definition.layout.OverflowDirection
 import com.android.designcompose.definition.layout.PositionType
+import com.android.designcompose.definition.layout.itemSpacing
+import com.android.designcompose.definition.layout.layoutStyle
 import com.android.designcompose.definition.layout.scrollInfo
 import com.android.designcompose.definition.plugin.FrameExtras
 import com.android.designcompose.definition.plugin.OverlayBackgroundInteraction
@@ -494,6 +500,43 @@ internal fun generateReplacementListChildNode(
         scrollInfo = listChildScrollInfo
         data = viewData { container = listChildViewData }
         renderMethod = View.RenderMethod.RENDER_METHOD_NONE
+
+        // The Rust code currently fails if any of these fields are unset so we initialize
+        // a default viewStyle. (the nodeStyle isn't needed right now)
+        style = viewStyle {
+            layoutStyle = layoutStyle {
+                padding = dimensionRect {
+                    start = dimensionProto { undefined }
+                    end = dimensionProto { undefined }
+                    top = dimensionProto { undefined }
+                    bottom = dimensionProto { undefined }
+                }
+                flexBasis = dimensionProto { undefined }
+                itemSpacing = itemSpacing { auto = auto {} }
+                alignContent = AlignContent.ALIGN_CONTENT_FLEX_START
+                justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START
+                alignItems = AlignItems.ALIGN_ITEMS_FLEX_START
+                flexDirection = FlexDirection.FLEX_DIRECTION_NONE
+                alignSelf = AlignSelf.ALIGN_SELF_AUTO
+                width = dimensionProto { undefined }
+                height = dimensionProto { undefined }
+                minWidth = dimensionProto { undefined }
+                minHeight = dimensionProto { undefined }
+                maxWidth = dimensionProto { undefined }
+                maxHeight = dimensionProto { undefined }
+                positionType = PositionType.POSITION_TYPE_ABSOLUTE
+                left = dimensionProto { undefined }
+                top = dimensionProto { undefined }
+                right = dimensionProto { undefined }
+                bottom = dimensionProto { undefined }
+                margin = dimensionRect {
+                    start = dimensionProto { undefined }
+                    end = dimensionProto { undefined }
+                    top = dimensionProto { undefined }
+                    bottom = dimensionProto { undefined }
+                }
+            }
+        }
     }
 
     val listLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)

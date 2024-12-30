@@ -27,6 +27,7 @@ import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.test.waitForContent
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTest
+import com.android.designcompose.testapp.validation.examples.BrushFromShaderPluginTestDoc
 import com.android.designcompose.testapp.validation.examples.CustomBrushTest
 import com.android.designcompose.testapp.validation.examples.CustomBrushTestDoc
 import org.junit.Before
@@ -70,6 +71,9 @@ class ShaderTest {
     fun shaderPluginBrush() {
         with(composeTestRule) {
             setContent { BrushFromShaderPluginTest() }
+            liveUpdateTestRule.performLiveFetch()
+            composeTestRule.waitForContent(BrushFromShaderPluginTestDoc.javaClass.name)
+
             captureRootRoboImage("ShaderPluginBrush_${Build.VERSION.SDK_INT}")
         }
     }

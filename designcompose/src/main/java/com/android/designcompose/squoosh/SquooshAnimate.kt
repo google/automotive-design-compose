@@ -36,6 +36,7 @@ import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.shapeOrNull
 import com.android.designcompose.definition.view.textOrNull
+import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.definition.view.viewData
 import com.android.designcompose.toLayoutTransform
 import com.android.designcompose.utils.fixedHeight
@@ -137,7 +138,7 @@ internal class SquooshAnimatedScale(
     private val scaleFrom: Boolean,
     transition: AnimationTransition,
 ) : SquooshAnimatedItem(target, transition) {
-    private val fromDecomposed = from.style.nodeStyle.transform.decompose(1F)
+    private val fromDecomposed = from.style.nodeStyle.transformOrNull.decompose(1F)
 
     override fun apply(value: Float) {
         if (from.computedLayout == null || to.computedLayout == null) return
@@ -177,8 +178,8 @@ internal class SquooshAnimatedLayout(
     private val to: SquooshResolvedNode,
     transition: AnimationTransition,
 ) : SquooshAnimatedItem(target, transition) {
-    private val fromDecomposed = from.style.nodeStyle.transform.decompose(1F)
-    private val toDecomposed = to.style.nodeStyle.transform.decompose(1F)
+    private val fromDecomposed = from.style.nodeStyle.transformOrNull.decompose(1F)
+    private val toDecomposed = to.style.nodeStyle.transformOrNull.decompose(1F)
     private val tweenTypes = computeTweenTypes()
 
     companion object {
@@ -187,7 +188,7 @@ internal class SquooshAnimatedLayout(
     }
 
     private fun needsTransformTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {
-        return from.view.style.nodeStyle.transform != to.view.style.nodeStyle.transform
+        return from.view.style.nodeStyle.transformOrNull != to.view.style.nodeStyle.transformOrNull
     }
 
     private fun needsOpacityTween(from: SquooshResolvedNode, to: SquooshResolvedNode): Boolean {

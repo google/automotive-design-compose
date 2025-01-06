@@ -30,6 +30,7 @@ import com.android.designcompose.definition.layout.JustifyContent
 import com.android.designcompose.definition.layout.LayoutSizing
 import com.android.designcompose.definition.layout.Overflow
 import com.android.designcompose.definition.layout.PositionType
+import com.android.designcompose.definition.layout.copy
 import com.android.designcompose.definition.layout.layoutStyle
 import com.android.designcompose.definition.modifier.BlendMode
 import com.android.designcompose.definition.modifier.TextAlign
@@ -37,6 +38,7 @@ import com.android.designcompose.definition.modifier.TextAlignVertical
 import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.definition.view.Display
 import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.fontStretchOrNull
 import com.android.designcompose.definition.view.nodeSizeOrNull
 import com.android.designcompose.definition.view.nodeStyle
@@ -46,470 +48,267 @@ import com.android.designcompose.definition.view.viewStyle
 // Merge styles; any non-default properties of the override style are copied over the base style.
 // TODO: look into if we can use proto's own merge functionalities.
 internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
-    val mergedNodeStyle = nodeStyle {
-        textColor =
-            if (!override.nodeStyle.textColor.hasNone()) {
-                override.nodeStyle.textColor
-            } else {
-                base.nodeStyle.textColor
-            }
+    var mergedNodeStyle =
+        base.nodeStyle.copy {
+            if (!override.nodeStyle.textColor.hasNone()) textColor = override.nodeStyle.textColor
 
-        fontSize =
-            if (!override.nodeStyle.fontSize.hasNum() || override.nodeStyle.fontSize.num != 18.0f) {
-                override.nodeStyle.fontSize
-            } else {
-                base.nodeStyle.fontSize
-            }
-        fontWeight =
+            if (!override.nodeStyle.fontSize.hasNum() || override.nodeStyle.fontSize.num != 18.0f)
+                fontSize = override.nodeStyle.fontSize
+
             if (
                 !override.nodeStyle.fontWeight.weight.hasNum() ||
                     override.nodeStyle.fontWeight.weight.num != 400.0f
-            ) {
-                override.nodeStyle.fontWeight
-            } else {
-                base.nodeStyle.fontWeight
-            }
-        fontStyle =
+            )
+                fontWeight = override.nodeStyle.fontWeight
             if (
                 override.nodeStyle.fontStyle != FontStyle.FONT_STYLE_UNSPECIFIED &&
                     override.nodeStyle.fontStyle != FontStyle.FONT_STYLE_NORMAL
-            ) {
-                override.nodeStyle.fontStyle
-            } else {
-                base.nodeStyle.fontStyle
-            }
-        textDecoration =
+            )
+                fontStyle = override.nodeStyle.fontStyle
+
             if (
                 override.nodeStyle.textDecoration != TextDecoration.TEXT_DECORATION_UNSPECIFIED &&
                     override.nodeStyle.textDecoration != TextDecoration.TEXT_DECORATION_NONE
-            ) {
-                override.nodeStyle.textDecoration
-            } else {
-                base.nodeStyle.textDecoration
-            }
-        letterSpacing =
-            if (override.nodeStyle.hasLetterSpacing()) {
-                override.nodeStyle.letterSpacing
-            } else {
-                base.nodeStyle.letterSpacing
-            }
-        fontFamily =
-            if (override.nodeStyle.hasFontFamily()) {
-                override.nodeStyle.fontFamily
-            } else {
-                base.nodeStyle.fontFamily
-            }
-        fontStretch =
-            if (override.nodeStyle.fontStretchOrNull?.value != 1.0f) {
-                override.nodeStyle.fontStretch
-            } else {
-                base.nodeStyle.fontStretch
-            }
-        backgrounds.addAll(
+            )
+                textDecoration = override.nodeStyle.textDecoration
+
+            if (override.nodeStyle.hasLetterSpacing())
+                letterSpacing = override.nodeStyle.letterSpacing
+
+            if (override.nodeStyle.hasFontFamily()) fontFamily = override.nodeStyle.fontFamily
+
+            if (override.nodeStyle.fontStretchOrNull?.value != 1.0f)
+                fontStretch = override.nodeStyle.fontStretch
+
             if (
                 override.nodeStyle.backgroundsCount > 0 &&
                     !override.nodeStyle.getBackgrounds(0).hasNone()
-            ) {
-                override.nodeStyle.backgroundsList
-            } else {
-                base.nodeStyle.backgroundsList
-            }
-        )
-        boxShadows.addAll(
-            if (override.nodeStyle.boxShadowsCount > 0) {
-                override.nodeStyle.boxShadowsList
-            } else {
-                base.nodeStyle.boxShadowsList
-            }
-        )
-        stroke =
-            if ((override.nodeStyle.strokeOrNull?.strokesCount ?: 0) > 0) {
-                override.nodeStyle.stroke
-            } else {
-                base.nodeStyle.stroke
-            }
-        opacity =
-            if (override.nodeStyle.hasOpacity()) {
-                override.nodeStyle.opacity
-            } else {
-                base.nodeStyle.opacity
-            }
-        transform =
-            if (override.nodeStyle.hasTransform()) {
-                override.nodeStyle.transform
-            } else {
-                base.nodeStyle.transform
-            }
-        relativeTransform =
-            if (override.nodeStyle.hasRelativeTransform()) {
-                override.nodeStyle.relativeTransform
-            } else {
-                base.nodeStyle.relativeTransform
-            }
-        textAlign =
+            )
+                backgrounds.addAll(override.nodeStyle.backgroundsList)
+
+            if (override.nodeStyle.boxShadowsCount > 0)
+                boxShadows.addAll(override.nodeStyle.boxShadowsList)
+
+            if ((override.nodeStyle.strokeOrNull?.strokesCount ?: 0) > 0)
+                stroke = override.nodeStyle.stroke
+
+            if (override.nodeStyle.hasOpacity()) opacity = override.nodeStyle.opacity
+
+            if (override.nodeStyle.hasTransform()) transform = override.nodeStyle.transform
+
+            if (override.nodeStyle.hasRelativeTransform())
+                relativeTransform = override.nodeStyle.relativeTransform
+
             if (
                 override.nodeStyle.textAlign != TextAlign.TEXT_ALIGN_UNSPECIFIED &&
                     override.nodeStyle.textAlign != TextAlign.TEXT_ALIGN_LEFT
-            ) {
-                override.nodeStyle.textAlign
-            } else {
-                base.nodeStyle.textAlign
-            }
-        textAlignVertical =
+            )
+                textAlign = override.nodeStyle.textAlign
+
             if (
                 override.nodeStyle.textAlignVertical !=
                     TextAlignVertical.TEXT_ALIGN_VERTICAL_UNSPECIFIED &&
                     override.nodeStyle.textAlignVertical !=
                         TextAlignVertical.TEXT_ALIGN_VERTICAL_TOP
-            ) {
-                override.nodeStyle.textAlignVertical
-            } else {
-                base.nodeStyle.textAlignVertical
-            }
-        textOverflow =
+            )
+                textAlignVertical = override.nodeStyle.textAlignVertical
+
             if (
                 override.nodeStyle.textOverflow != TextOverflow.TEXT_OVERFLOW_UNSPECIFIED &&
                     override.nodeStyle.textOverflow != TextOverflow.TEXT_OVERFLOW_CLIP
-            ) {
-                override.nodeStyle.textOverflow
-            } else {
-                base.nodeStyle.textOverflow
-            }
-        textShadow =
-            if (override.nodeStyle.hasTextShadow()) {
-                override.nodeStyle.textShadow
-            } else {
-                base.nodeStyle.textShadow
-            }
-        nodeSize =
-            if (override.nodeStyle.nodeSizeOrNull.let { it?.width != 0.0f || it.height != 0.0f }) {
-                override.nodeStyle.nodeSize
-            } else {
-                base.nodeStyle.nodeSize
-            }
-        lineHeight =
+            )
+                textOverflow = override.nodeStyle.textOverflow
+
+            if (override.nodeStyle.hasTextShadow()) textShadow = override.nodeStyle.textShadow
+
+            if (override.nodeStyle.nodeSizeOrNull.let { it?.width != 0.0f || it.height != 0.0f })
+                nodeSize = override.nodeStyle.nodeSize
+
             if (
                 !override.nodeStyle.lineHeight.hasPercent() ||
                     override.nodeStyle.lineHeight.percent != 1.0f
-            ) {
-                override.nodeStyle.lineHeight
-            } else {
-                base.nodeStyle.lineHeight
-            }
-        lineCount =
-            if (override.nodeStyle.hasLineCount()) {
-                override.nodeStyle.lineCount
-            } else {
-                base.nodeStyle.lineCount
-            }
-        fontFeatures.addAll(
-            if (override.nodeStyle.fontFeaturesCount > 0) override.nodeStyle.fontFeaturesList
-            else base.nodeStyle.fontFeaturesList
-        )
-        filters.addAll(override.nodeStyle.filtersList.ifEmpty { base.nodeStyle.filtersList })
-        backdropFilters.addAll(
-            override.nodeStyle.backdropFiltersList.ifEmpty { base.nodeStyle.backdropFiltersList }
-        )
-        blendMode =
+            )
+                lineHeight = override.nodeStyle.lineHeight
+
+            if (override.nodeStyle.hasLineCount()) lineCount = override.nodeStyle.lineCount
+
+            if (override.nodeStyle.fontFeaturesCount > 0)
+                fontFeatures.addAll(override.nodeStyle.fontFeaturesList)
+
+            if (override.nodeStyle.filtersCount > 0) filters.addAll(override.nodeStyle.filtersList)
+
+            if (override.nodeStyle.backdropFiltersCount > 0)
+                backdropFilters.addAll(override.nodeStyle.backdropFiltersList)
+
             if (
                 override.nodeStyle.blendMode != BlendMode.BLEND_MODE_UNSPECIFIED &&
                     override.nodeStyle.blendMode != BlendMode.BLEND_MODE_PASS_THROUGH
-            ) {
-                override.nodeStyle.blendMode
-            } else {
-                base.nodeStyle.blendMode
-            }
-        hyperlinks =
-            if (override.nodeStyle.hasHyperlinks()) {
-                override.nodeStyle.hyperlinks
-            } else {
-                base.nodeStyle.hyperlinks
-            }
-        displayType =
+            )
+                blendMode = override.nodeStyle.blendMode
+
+            if (override.nodeStyle.hasHyperlinks()) hyperlinks = override.nodeStyle.hyperlinks
+
             if (
                 override.nodeStyle.displayType != Display.DISPLAY_UNSPECIFIED &&
                     override.nodeStyle.displayType != Display.DISPLAY_FLEX
-            ) {
-                override.nodeStyle.displayType
-            } else {
-                base.nodeStyle.displayType
-            }
-        flexWrap =
+            )
+                displayType = override.nodeStyle.displayType
+
             if (
                 override.nodeStyle.flexWrap != FlexWrap.FLEX_WRAP_UNSPECIFIED &&
                     override.nodeStyle.flexWrap != FlexWrap.FLEX_WRAP_NO_WRAP
-            ) {
-                override.nodeStyle.flexWrap
-            } else {
-                base.nodeStyle.flexWrap
-            }
-        gridLayoutType =
-            if (override.nodeStyle.hasGridLayoutType()) {
-                override.nodeStyle.gridLayoutType
-            } else {
-                base.nodeStyle.gridLayoutType
-            }
-        gridColumnsRows =
-            if (override.nodeStyle.gridColumnsRows > 0) {
-                override.nodeStyle.gridColumnsRows
-            } else {
-                base.nodeStyle.gridColumnsRows
-            }
-        gridAdaptiveMinSize =
-            if (override.nodeStyle.gridAdaptiveMinSize > 1) {
-                override.nodeStyle.gridAdaptiveMinSize
-            } else {
-                base.nodeStyle.gridAdaptiveMinSize
-            }
-        gridSpanContents.addAll(
-            override.nodeStyle.gridSpanContentsList.ifEmpty { base.nodeStyle.gridSpanContentsList }
-        )
-        overflow =
+            )
+                flexWrap = override.nodeStyle.flexWrap
+
+            if (override.nodeStyle.hasGridLayoutType())
+                gridLayoutType = override.nodeStyle.gridLayoutType
+
+            if (override.nodeStyle.gridColumnsRows > 0)
+                gridColumnsRows = override.nodeStyle.gridColumnsRows
+
+            if (override.nodeStyle.gridAdaptiveMinSize > 1)
+                gridAdaptiveMinSize = override.nodeStyle.gridAdaptiveMinSize
+
+            if (override.nodeStyle.gridSpanContentsCount > 0)
+                gridSpanContents.addAll(override.nodeStyle.gridSpanContentsList)
+
             if (
                 override.nodeStyle.overflow != Overflow.OVERFLOW_UNSPECIFIED &&
                     override.nodeStyle.overflow != Overflow.OVERFLOW_VISIBLE
-            ) {
-                override.nodeStyle.overflow
-            } else {
-                base.nodeStyle.overflow
-            }
-        maxChildren =
-            if (override.nodeStyle.hasMaxChildren()) {
-                override.nodeStyle.maxChildren
-            } else {
-                base.nodeStyle.maxChildren
-            }
-        overflowNodeId =
-            if (override.nodeStyle.hasOverflowNodeId()) {
-                override.nodeStyle.overflowNodeId
-            } else {
-                base.nodeStyle.overflowNodeId
-            }
-        overflowNodeName =
-            if (override.nodeStyle.hasOverflowNodeName()) {
-                override.nodeStyle.overflowNodeName
-            } else {
-                base.nodeStyle.overflowNodeName
-            }
-        crossAxisItemSpacing =
-            if (override.nodeStyle.crossAxisItemSpacing != 0.0f) {
-                override.nodeStyle.crossAxisItemSpacing
-            } else {
-                base.nodeStyle.crossAxisItemSpacing
-            }
-        horizontalSizing =
+            )
+                overflow = override.nodeStyle.overflow
+
+            if (override.nodeStyle.hasMaxChildren()) maxChildren = override.nodeStyle.maxChildren
+
+            if (override.nodeStyle.hasOverflowNodeId())
+                overflowNodeId = override.nodeStyle.overflowNodeId
+
+            if (override.nodeStyle.hasOverflowNodeName())
+                overflowNodeName = override.nodeStyle.overflowNodeName
+
+            if (override.nodeStyle.crossAxisItemSpacing != 0.0f)
+                crossAxisItemSpacing = override.nodeStyle.crossAxisItemSpacing
+
             if (
                 override.nodeStyle.horizontalSizing != LayoutSizing.LAYOUT_SIZING_UNSPECIFIED &&
                     override.nodeStyle.horizontalSizing != LayoutSizing.LAYOUT_SIZING_FIXED
-            ) {
-                override.nodeStyle.horizontalSizing
-            } else {
-                base.nodeStyle.horizontalSizing
-            }
-        verticalSizing =
+            )
+                horizontalSizing = override.nodeStyle.horizontalSizing
+
             if (
                 override.nodeStyle.verticalSizing != LayoutSizing.LAYOUT_SIZING_UNSPECIFIED &&
                     override.nodeStyle.verticalSizing != LayoutSizing.LAYOUT_SIZING_FIXED
-            ) {
-                override.nodeStyle.verticalSizing
-            } else {
-                base.nodeStyle.verticalSizing
-            }
-        aspectRatio =
-            if (override.nodeStyle.hasAspectRatio()) {
-                override.nodeStyle.aspectRatio
-            } else {
-                base.nodeStyle.aspectRatio
-            }
-        pointerEvents =
+            )
+                verticalSizing = override.nodeStyle.verticalSizing
+
+            if (override.nodeStyle.hasAspectRatio()) aspectRatio = override.nodeStyle.aspectRatio
+
             if (
                 override.nodeStyle.pointerEvents != PointerEvents.POINTER_EVENTS_AUTO &&
                     override.nodeStyle.pointerEvents != PointerEvents.POINTER_EVENTS_UNSPECIFIED
-            ) {
-                override.nodeStyle.pointerEvents
-            } else {
-                base.nodeStyle.pointerEvents
-            }
-        meterData =
-            if (override.nodeStyle.hasMeterData()) {
-                override.nodeStyle.meterData
-            } else {
-                base.nodeStyle.meterData
-            }
-    }
-    val mergedLayoutStyle = layoutStyle {
-        positionType =
+            )
+                pointerEvents = override.nodeStyle.pointerEvents
+
+            if (override.nodeStyle.hasMeterData()) meterData = override.nodeStyle.meterData
+        }
+
+    val mergedLayoutStyle =
+        base.layoutStyle.copy {
             if (
                 override.layoutStyle.positionType != PositionType.POSITION_TYPE_UNSPECIFIED &&
                     override.layoutStyle.positionType != PositionType.POSITION_TYPE_RELATIVE
-            ) {
-                override.layoutStyle.positionType
-            } else {
-                base.layoutStyle.positionType
-            }
-        flexDirection =
+            )
+                positionType = override.layoutStyle.positionType
+
             if (
                 override.layoutStyle.flexDirection != FlexDirection.FLEX_DIRECTION_UNSPECIFIED &&
                     override.layoutStyle.flexDirection != FlexDirection.FLEX_DIRECTION_ROW
-            ) {
-                override.layoutStyle.flexDirection
-            } else {
-                base.layoutStyle.flexDirection
-            }
-        alignItems =
+            )
+                flexDirection = override.layoutStyle.flexDirection
+
             if (
                 override.layoutStyle.alignItems != AlignItems.ALIGN_ITEMS_UNSPECIFIED &&
                     override.layoutStyle.alignItems != AlignItems.ALIGN_ITEMS_STRETCH
-            ) {
-                override.layoutStyle.alignItems
-            } else {
-                base.layoutStyle.alignItems
-            }
-        alignSelf =
+            )
+                alignItems = override.layoutStyle.alignItems
+
             if (
                 override.layoutStyle.alignSelf != AlignSelf.ALIGN_SELF_UNSPECIFIED &&
                     override.layoutStyle.alignSelf != AlignSelf.ALIGN_SELF_AUTO
-            ) {
-                override.layoutStyle.alignSelf
-            } else {
-                base.layoutStyle.alignSelf
-            }
-        alignContent =
+            )
+                alignSelf = override.layoutStyle.alignSelf
+
             if (
                 override.layoutStyle.alignContent != AlignContent.ALIGN_CONTENT_UNSPECIFIED &&
                     override.layoutStyle.alignContent != AlignContent.ALIGN_CONTENT_STRETCH
-            ) {
-                override.layoutStyle.alignContent
-            } else {
-                base.layoutStyle.alignContent
-            }
-        justifyContent =
+            )
+                alignContent = override.layoutStyle.alignContent
+
             if (
                 override.layoutStyle.justifyContent != JustifyContent.JUSTIFY_CONTENT_UNSPECIFIED &&
                     override.layoutStyle.justifyContent != JustifyContent.JUSTIFY_CONTENT_FLEX_START
-            ) {
-                override.layoutStyle.justifyContent
-            } else {
-                base.layoutStyle.justifyContent
-            }
-        top =
-            if (!override.layoutStyle.top.hasUndefined()) {
-                override.layoutStyle.top
-            } else {
-                base.layoutStyle.top
-            }
-        left =
-            if (!override.layoutStyle.left.hasUndefined()) {
-                override.layoutStyle.left
-            } else {
-                base.layoutStyle.left
-            }
-        bottom =
-            if (!override.layoutStyle.bottom.hasUndefined()) {
-                override.layoutStyle.bottom
-            } else {
-                base.layoutStyle.bottom
-            }
-        right =
-            if (!override.layoutStyle.right.hasUndefined()) {
-                override.layoutStyle.right
-            } else {
-                base.layoutStyle.right
+            )
+                justifyContent = override.layoutStyle.justifyContent
+
+            if (!override.layoutStyle.top.hasUndefined()) top = override.layoutStyle.top
+
+            if (!override.layoutStyle.left.hasUndefined()) left = override.layoutStyle.left
+
+            if (!override.layoutStyle.bottom.hasUndefined()) bottom = override.layoutStyle.bottom
+
+            if (!override.layoutStyle.right.hasUndefined()) right = override.layoutStyle.right
+
+            fun DimensionRect.isDefault(): Boolean {
+                return start.hasUndefined() &&
+                    end.hasUndefined() &&
+                    top.hasUndefined() &&
+                    bottom.hasUndefined()
             }
 
-        fun DimensionRect.isDefault(): Boolean {
-            return start.hasUndefined() &&
-                end.hasUndefined() &&
-                top.hasUndefined() &&
-                bottom.hasUndefined()
-        }
-        margin =
-            if (!override.layoutStyle.margin.isDefault()) {
-                override.layoutStyle.margin
-            } else {
-                base.layoutStyle.margin
-            }
-        padding =
-            if (!override.layoutStyle.padding.isDefault()) {
-                override.layoutStyle.padding
-            } else {
-                base.layoutStyle.padding
+            if (!override.layoutStyle.margin.isDefault()) margin = override.layoutStyle.margin
+
+            if (!override.layoutStyle.padding.isDefault()) padding = override.layoutStyle.padding
+
+            fun ItemSpacing.isDefault(): Boolean {
+                return itemSpacingTypeCase ==
+                    ItemSpacing.ItemSpacingTypeCase.ITEMSPACINGTYPE_NOT_SET ||
+                    itemSpacingTypeCase == ItemSpacing.ItemSpacingTypeCase.FIXED
             }
 
-        fun ItemSpacing.isDefault(): Boolean {
-            return itemSpacingTypeCase == ItemSpacing.ItemSpacingTypeCase.ITEMSPACINGTYPE_NOT_SET ||
-                itemSpacingTypeCase == ItemSpacing.ItemSpacingTypeCase.FIXED
-        }
-        itemSpacing =
-            if (!override.layoutStyle.itemSpacing.isDefault()) {
-                override.layoutStyle.itemSpacing
-            } else {
-                base.layoutStyle.itemSpacing
-            }
-        flexGrow =
-            if (override.layoutStyle.flexGrow != 0.0f) {
-                override.layoutStyle.flexGrow
-            } else {
-                base.layoutStyle.flexGrow
-            }
-        flexShrink =
-            if (override.layoutStyle.flexShrink != 0.0f) {
-                override.layoutStyle.flexShrink
-            } else {
-                base.layoutStyle.flexShrink
-            }
-        flexBasis =
-            if (!override.layoutStyle.flexBasis.hasUndefined()) {
-                override.layoutStyle.flexBasis
-            } else {
-                base.layoutStyle.flexBasis
-            }
-        boundingBox =
+            if (!override.layoutStyle.itemSpacing.isDefault())
+                itemSpacing = override.layoutStyle.itemSpacing
+
+            if (override.layoutStyle.flexGrow != 0.0f) flexGrow = override.layoutStyle.flexGrow
+
+            if (override.layoutStyle.flexShrink != 0.0f)
+                flexShrink = override.layoutStyle.flexShrink
+
+            if (!override.layoutStyle.flexBasis.hasUndefined())
+                flexBasis = override.layoutStyle.flexBasis
+
             if (
                 override.layoutStyle.boundingBox.width != 0.0f ||
                     override.layoutStyle.boundingBox.height != 0.0f
-            ) {
-                override.layoutStyle.boundingBox
-            } else {
-                base.layoutStyle.boundingBox
-            }
-        width =
-            if (!override.layoutStyle.width.hasUndefined()) {
-                override.layoutStyle.width
-            } else {
-                base.layoutStyle.width
-            }
-        height =
-            if (!override.layoutStyle.height.hasUndefined()) {
-                override.layoutStyle.height
-            } else {
-                base.layoutStyle.height
-            }
-        minWidth =
-            if (!override.layoutStyle.minWidth.hasUndefined()) {
-                override.layoutStyle.minWidth
-            } else {
-                base.layoutStyle.minWidth
-            }
-        minHeight =
-            if (!override.layoutStyle.minHeight.hasUndefined()) {
-                override.layoutStyle.minHeight
-            } else {
-                base.layoutStyle.minHeight
-            }
-        maxWidth =
-            if (!override.layoutStyle.maxWidth.hasUndefined()) {
-                override.layoutStyle.maxWidth
-            } else {
-                base.layoutStyle.maxWidth
-            }
-        maxHeight =
-            if (!override.layoutStyle.maxHeight.hasUndefined()) {
-                override.layoutStyle.maxHeight
-            } else {
-                base.layoutStyle.maxHeight
-            }
-    }
+            )
+                boundingBox = override.layoutStyle.boundingBox
+
+            if (!override.layoutStyle.width.hasUndefined()) width = override.layoutStyle.width
+
+            if (!override.layoutStyle.height.hasUndefined()) height = override.layoutStyle.height
+
+            if (!override.layoutStyle.minWidth.hasUndefined())
+                minWidth = override.layoutStyle.minWidth
+
+            if (!override.layoutStyle.minHeight.hasUndefined())
+                minHeight = override.layoutStyle.minHeight
+
+            if (!override.layoutStyle.maxWidth.hasUndefined())
+                maxWidth = override.layoutStyle.maxWidth
+
+            if (!override.layoutStyle.maxHeight.hasUndefined())
+                maxHeight = override.layoutStyle.maxHeight
+        }
+
     return viewStyle {
         layoutStyle = mergedLayoutStyle
         nodeStyle = mergedNodeStyle

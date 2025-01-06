@@ -29,7 +29,6 @@ import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.VariableState
 import com.android.designcompose.common.NodeQuery
-import com.android.designcompose.definition.element.Background
 import com.android.designcompose.definition.element.FontStyle
 import com.android.designcompose.definition.element.StrokeAlign
 import com.android.designcompose.definition.element.TextDecoration
@@ -102,7 +101,6 @@ import com.android.designcompose.utils.hasScrolling
 import com.android.designcompose.utils.isSupportedInteraction
 import com.android.designcompose.utils.mergeStyles
 import com.google.protobuf.empty
-import com.google.protobuf.kotlin.DslList
 
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
@@ -574,9 +572,7 @@ internal fun generateReplacementListChildNode(
                 boxShadows.clear()
                 stroke = stroke {
                     strokeAlign = StrokeAlign.STROKE_ALIGN_CENTER
-                    strokeWeight = strokeWeight {
-                        uniform = 0f
-                    }
+                    strokeWeight = strokeWeight { uniform = 0f }
                     strokes.clear()
                 }
                 clearOpacity()
@@ -593,9 +589,7 @@ internal fun generateReplacementListChildNode(
                     width = 0f
                     height = 0f
                 }
-                lineHeight = lineHeight {
-                    percent = 0f
-                }
+                lineHeight = lineHeight { percent = 0f }
                 clearLineCount()
                 clearLetterSpacing()
                 fontFeatures.clear()

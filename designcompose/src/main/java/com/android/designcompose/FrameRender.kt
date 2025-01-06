@@ -21,7 +21,6 @@ import android.graphics.BlurMaskFilter
 import android.graphics.RuntimeShader
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -283,7 +282,7 @@ private fun calculateArcData(
     return if (!shape.hasArc()) shape
     else
         viewShape {
-            vectorArc {
+            arc = vectorArc {
                 strokeCap = shape.arc.strokeCap
                 startAngleDegrees = arcData.start
                 sweepAngleDegrees = arcAngleMeter

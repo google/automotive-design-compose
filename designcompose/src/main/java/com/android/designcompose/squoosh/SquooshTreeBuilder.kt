@@ -29,13 +29,25 @@ import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.VariableState
 import com.android.designcompose.common.NodeQuery
+import com.android.designcompose.definition.element.Background
+import com.android.designcompose.definition.element.FontStyle
+import com.android.designcompose.definition.element.StrokeAlign
+import com.android.designcompose.definition.element.TextDecoration
 import com.android.designcompose.definition.element.ViewShapeKt.box
 import com.android.designcompose.definition.element.background
 import com.android.designcompose.definition.element.color
 import com.android.designcompose.definition.element.colorOrVar
 import com.android.designcompose.definition.element.dimensionProto
 import com.android.designcompose.definition.element.dimensionRect
+import com.android.designcompose.definition.element.fontStretch
+import com.android.designcompose.definition.element.fontWeight
+import com.android.designcompose.definition.element.lineHeight
+import com.android.designcompose.definition.element.numOrVar
+import com.android.designcompose.definition.element.size
+import com.android.designcompose.definition.element.stroke
+import com.android.designcompose.definition.element.strokeWeight
 import com.android.designcompose.definition.element.viewShape
+import com.android.designcompose.definition.interaction.PointerEvents
 import com.android.designcompose.definition.interaction.action
 import com.android.designcompose.definition.interaction.reaction
 import com.android.designcompose.definition.interaction.trigger
@@ -43,26 +55,34 @@ import com.android.designcompose.definition.layout.AlignContent
 import com.android.designcompose.definition.layout.AlignItems
 import com.android.designcompose.definition.layout.AlignSelf
 import com.android.designcompose.definition.layout.FlexDirection
+import com.android.designcompose.definition.layout.FlexWrap
 import com.android.designcompose.definition.layout.ItemSpacingKt.auto
 import com.android.designcompose.definition.layout.JustifyContent
+import com.android.designcompose.definition.layout.LayoutSizing
 import com.android.designcompose.definition.layout.Overflow
 import com.android.designcompose.definition.layout.OverflowDirection
 import com.android.designcompose.definition.layout.PositionType
 import com.android.designcompose.definition.layout.itemSpacing
 import com.android.designcompose.definition.layout.layoutStyle
 import com.android.designcompose.definition.layout.scrollInfo
+import com.android.designcompose.definition.modifier.BlendMode
+import com.android.designcompose.definition.modifier.TextAlign
+import com.android.designcompose.definition.modifier.TextAlignVertical
+import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.definition.plugin.FrameExtras
 import com.android.designcompose.definition.plugin.OverlayBackgroundInteraction
 import com.android.designcompose.definition.plugin.OverlayPositionType
 import com.android.designcompose.definition.plugin.colorOrNull
 import com.android.designcompose.definition.plugin.overlayBackgroundOrNull
 import com.android.designcompose.definition.view.ComponentInfo
+import com.android.designcompose.definition.view.Display
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewDataKt.container
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.frameExtrasOrNull
+import com.android.designcompose.definition.view.nodeStyle
 import com.android.designcompose.definition.view.overridesOrNull
 import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.definition.view.view
@@ -82,6 +102,7 @@ import com.android.designcompose.utils.hasScrolling
 import com.android.designcompose.utils.isSupportedInteraction
 import com.android.designcompose.utils.mergeStyles
 import com.google.protobuf.empty
+import com.google.protobuf.kotlin.DslList
 
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
@@ -505,26 +526,12 @@ internal fun generateReplacementListChildNode(
         // a default viewStyle. (the nodeStyle isn't needed right now)
         style = viewStyle {
             layoutStyle = layoutStyle {
-                padding = dimensionRect {
-                    start = dimensionProto { undefined }
-                    end = dimensionProto { undefined }
-                    top = dimensionProto { undefined }
-                    bottom = dimensionProto { undefined }
-                }
-                flexBasis = dimensionProto { undefined }
-                itemSpacing = itemSpacing { auto = auto {} }
+                positionType = PositionType.POSITION_TYPE_RELATIVE
+                flexDirection = FlexDirection.FLEX_DIRECTION_ROW
+                alignItems = AlignItems.ALIGN_ITEMS_FLEX_START
+                alignSelf = AlignSelf.ALIGN_SELF_AUTO
                 alignContent = AlignContent.ALIGN_CONTENT_FLEX_START
                 justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START
-                alignItems = AlignItems.ALIGN_ITEMS_FLEX_START
-                flexDirection = FlexDirection.FLEX_DIRECTION_NONE
-                alignSelf = AlignSelf.ALIGN_SELF_AUTO
-                width = dimensionProto { undefined }
-                height = dimensionProto { undefined }
-                minWidth = dimensionProto { undefined }
-                minHeight = dimensionProto { undefined }
-                maxWidth = dimensionProto { undefined }
-                maxHeight = dimensionProto { undefined }
-                positionType = PositionType.POSITION_TYPE_ABSOLUTE
                 left = dimensionProto { undefined }
                 top = dimensionProto { undefined }
                 right = dimensionProto { undefined }
@@ -535,6 +542,83 @@ internal fun generateReplacementListChildNode(
                     top = dimensionProto { undefined }
                     bottom = dimensionProto { undefined }
                 }
+                padding = dimensionRect {
+                    start = dimensionProto { undefined }
+                    end = dimensionProto { undefined }
+                    top = dimensionProto { undefined }
+                    bottom = dimensionProto { undefined }
+                }
+                itemSpacing = itemSpacing { auto = auto {} }
+                flexGrow = 0f
+                flexShrink = 0f
+                flexBasis = dimensionProto { undefined }
+                boundingBox = size {
+                    width = 0f
+                    height = 0f
+                }
+                width = dimensionProto { undefined }
+                height = dimensionProto { undefined }
+                minWidth = dimensionProto { undefined }
+                minHeight = dimensionProto { undefined }
+                maxWidth = dimensionProto { undefined }
+                maxHeight = dimensionProto { undefined }
+            }
+            nodeStyle = nodeStyle {
+                textColor = background { none }
+                fontSize = numOrVar { num = 0f }
+                fontFamily = ""
+                fontWeight = fontWeight { weight = numOrVar { 0f } }
+                fontStyle = FontStyle.FONT_STYLE_NORMAL
+                fontStretch = fontStretch { value = 0f }
+                backgrounds.clear()
+                boxShadows.clear()
+                stroke = stroke {
+                    strokeAlign = StrokeAlign.STROKE_ALIGN_CENTER
+                    strokeWeight = strokeWeight {
+                        uniform = 0f
+                    }
+                    strokes.clear()
+                }
+                clearOpacity()
+                clearTransform()
+                clearRelativeTransform()
+
+                textDecoration = TextDecoration.TEXT_DECORATION_NONE
+                textAlign = TextAlign.TEXT_ALIGN_LEFT
+                textAlignVertical = TextAlignVertical.TEXT_ALIGN_VERTICAL_TOP
+                textOverflow = TextOverflow.TEXT_OVERFLOW_CLIP
+
+                clearTextShadow()
+                nodeSize = size {
+                    width = 0f
+                    height = 0f
+                }
+                lineHeight = lineHeight {
+                    percent = 0f
+                }
+                clearLineCount()
+                clearLetterSpacing()
+                fontFeatures.clear()
+                filters.clear()
+                backdropFilters.clear()
+                blendMode = BlendMode.BLEND_MODE_PASS_THROUGH
+                displayType = Display.DISPLAY_FLEX
+                flexWrap = FlexWrap.FLEX_WRAP_NO_WRAP
+                clearGridLayoutType()
+                gridColumnsRows = 0
+                gridAdaptiveMinSize = 0
+                gridSpanContents.clear()
+                overflow = Overflow.OVERFLOW_VISIBLE
+                clearMaxChildren()
+                clearOverflowNodeId()
+                clearOverflowNodeName()
+                crossAxisItemSpacing = 0f
+                horizontalSizing = LayoutSizing.LAYOUT_SIZING_HUG
+                verticalSizing = LayoutSizing.LAYOUT_SIZING_HUG
+                clearAspectRatio()
+                pointerEvents = PointerEvents.POINTER_EVENTS_AUTO
+                clearMeterData()
+                clearHyperlinks()
             }
         }
     }

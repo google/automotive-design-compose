@@ -648,12 +648,12 @@ private fun generateOverlayNode(
     // Make a view based on the child node which uses a synthesized style.
     val layoutStyleBuilder = node.style.layoutStyle.toBuilder()
     layoutStyleBuilder.positionType = PositionType.POSITION_TYPE_ABSOLUTE
-    layoutStyleBuilder.top = dimensionProto { points = 0.0f }
-    layoutStyleBuilder.left = dimensionProto { points = 0.0f }
-    layoutStyleBuilder.right = dimensionProto { points = 0.0f }
-    layoutStyleBuilder.bottom = dimensionProto { points = 0.0f }
-    layoutStyleBuilder.width = dimensionProto { points = 0.0f }
-    layoutStyleBuilder.height = dimensionProto { points = 0.0f }
+    layoutStyleBuilder.top = dimensionProto { percent = 0.0f }
+    layoutStyleBuilder.left = dimensionProto { percent = 0.0f }
+    layoutStyleBuilder.right = dimensionProto { percent = 0.0f }
+    layoutStyleBuilder.bottom = dimensionProto { percent = 0.0f }
+    layoutStyleBuilder.width = dimensionProto { percent = 1.0f }
+    layoutStyleBuilder.height = dimensionProto { percent = 1.0f }
     layoutStyleBuilder.flexDirection = FlexDirection.FLEX_DIRECTION_COLUMN
     when (overlay.overlayPositionType) {
         OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_LEFT -> {

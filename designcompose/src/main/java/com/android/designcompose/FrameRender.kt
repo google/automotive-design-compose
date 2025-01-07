@@ -452,7 +452,7 @@ internal fun ContentDrawScope.squooshShapeRender(
     // Blend mode
     val blendMode = style.nodeStyle.blendMode.asComposeBlendMode()
     val useBlendMode = style.nodeStyle.blendMode.useLayer()
-    val opacity = style.nodeStyle.opacity.takeIf { style.nodeStyle.hasOpacity() } ?: 1.0f
+    val opacity = style.nodeStyle.takeIf { it.hasOpacity() }?.opacity ?: 1.0f
 
     // Always use saveLayer for opacity; no graphicsLayer since we're not in
     // Compose.
@@ -502,8 +502,9 @@ internal fun ContentDrawScope.squooshShapeRender(
             customizations.getBrush(name)
         }
     if (customFillBrush == null) {
-        node.view.shader
-            .takeIf { node.view.hasShader() }
+        node.view
+            .takeIf { it.hasShader() }
+            ?.shader
             ?.let {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     val shader = RuntimeShader(it.trim().trimIndent())

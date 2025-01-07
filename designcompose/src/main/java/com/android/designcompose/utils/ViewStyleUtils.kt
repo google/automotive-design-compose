@@ -83,11 +83,15 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             if (
                 override.nodeStyle.backgroundsCount > 0 &&
                     !override.nodeStyle.getBackgrounds(0).hasNone()
-            )
+            ) {
+                backgrounds.clear()
                 backgrounds.addAll(override.nodeStyle.backgroundsList)
+            }
 
-            if (override.nodeStyle.boxShadowsCount > 0)
+            if (override.nodeStyle.boxShadowsCount > 0) {
+                boxShadows.clear()
                 boxShadows.addAll(override.nodeStyle.boxShadowsList)
+            }
 
             if ((override.nodeStyle.strokeOrNull?.strokesCount ?: 0) > 0)
                 stroke = override.nodeStyle.stroke
@@ -132,13 +136,20 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
 
             if (override.nodeStyle.hasLineCount()) lineCount = override.nodeStyle.lineCount
 
-            if (override.nodeStyle.fontFeaturesCount > 0)
+            if (override.nodeStyle.fontFeaturesCount > 0) {
+                fontFeatures.clear()
                 fontFeatures.addAll(override.nodeStyle.fontFeaturesList)
+            }
 
-            if (override.nodeStyle.filtersCount > 0) filters.addAll(override.nodeStyle.filtersList)
+            if (override.nodeStyle.filtersCount > 0) {
+                filters.clear()
+                filters.addAll(override.nodeStyle.filtersList)
+            }
 
-            if (override.nodeStyle.backdropFiltersCount > 0)
+            if (override.nodeStyle.backdropFiltersCount > 0) {
+                backdropFilters.clear()
                 backdropFilters.addAll(override.nodeStyle.backdropFiltersList)
+            }
 
             if (
                 override.nodeStyle.blendMode != BlendMode.BLEND_MODE_UNSPECIFIED &&
@@ -169,8 +180,10 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             if (override.nodeStyle.gridAdaptiveMinSize > 1)
                 gridAdaptiveMinSize = override.nodeStyle.gridAdaptiveMinSize
 
-            if (override.nodeStyle.gridSpanContentsCount > 0)
+            if (override.nodeStyle.gridSpanContentsCount > 0) {
+                gridSpanContents.clear()
                 gridSpanContents.addAll(override.nodeStyle.gridSpanContentsList)
+            }
 
             if (
                 override.nodeStyle.overflow != Overflow.OVERFLOW_UNSPECIFIED &&

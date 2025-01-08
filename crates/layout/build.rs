@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@ use std::path::Path;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut prost_config = prost_build::Config::new();
-    // Derive Copy for Dimension. Must derive it for both the enum and
-    // for the proto message that holds the enum.
-    prost_config.message_attribute("DimensionProto", "#[derive(Copy)]");
-    prost_config.message_attribute("DimensionProto.Auto", "#[derive(Copy)]");
-    prost_config.message_attribute("DimensionProto.Undefined", "#[derive(Copy)]");
-    prost_config.message_attribute("LayoutTransform", "#[derive(Copy)]");
-    prost_config.enum_attribute("Dimension", "#[derive(Copy)]");
-    prost_config.enum_attribute("Navigation", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
-    prost_config
-        .enum_attribute("TransitionDirection", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
     prost_config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+
+    // Some of the messages used here are compiled by another crate. This line configures the compiler
+    // to use the message from there, rather than compiling it's own copy of the message
+    prost_config.extern_path(
+        ".designcompose.definition.layout.LayoutStyle",
+        "dc_bundle::definition::layout::LayoutStyle",
+    );
 
     let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -35,10 +32,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .unwrap()
         .join("proto");
 
-    prost_config.compile_protos(
-        &[proto_path.join("definition/design_compose_definition.proto")],
-        &[&proto_path],
-    )?;
+    prost_config
+        .compile_protos(&[proto_path.join("layout_interface/jni_layout.proto")], &[&proto_path])?;
 
     println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
     Ok(())

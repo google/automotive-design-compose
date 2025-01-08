@@ -16,19 +16,24 @@ use std::ffi::c_void;
 
 use std::sync::{Arc, Mutex};
 
+use crate::android_interface::convert_request::fetch_doc;
+use crate::android_interface::ConvertRequest;
+use crate::android_interface::ConvertResponse;
 use crate::error::{throw_basic_exception, Error};
 use crate::error_map::map_err_to_exception;
 use crate::layout_manager::{
     jni_add_nodes, jni_create_layout_manager, jni_mark_dirty, jni_remove_node, jni_set_node_size,
 };
 use android_logger::Config;
-use figma_import::{fetch_doc, ConvertRequest, ProxyConfig};
+use bytes::Bytes;
+use figma_import::ProxyConfig;
 use jni::objects::{JByteArray, JClass, JObject, JString};
 use jni::sys::{jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
+use prost::Message;
 
 lazy_static! {
     static ref JAVA_VM: Mutex<Option<Arc<JavaVM>>> = Mutex::new(None);
@@ -67,7 +72,7 @@ fn jni_fetch_doc<'local>(
     _class: JClass,
     jdoc_id: JString,
     jversion_id: JString,
-    jrequest_json: JString,
+    jrequest: JByteArray,
     jproxy_config: JObject,
 ) -> JByteArray<'local> {
     let doc_id: String = match env.get_string(&jdoc_id) {
@@ -86,8 +91,15 @@ fn jni_fetch_doc<'local>(
         }
     };
 
-    let request_json: String = match env.get_string(&jrequest_json) {
+    let request_bytes: Bytes = match env.convert_byte_array(&jrequest) {
         Ok(it) => it.into(),
+        Err(err) => {
+            throw_basic_exception(&mut env, &err);
+            return JObject::null().into();
+        }
+    };
+    let request: ConvertRequest = match ConvertRequest::decode(request_bytes).map_err(Error::from) {
+        Ok(it) => it,
         Err(err) => {
             throw_basic_exception(&mut env, &err);
             return JObject::null().into();
@@ -99,13 +111,13 @@ fn jni_fetch_doc<'local>(
         Err(_) => ProxyConfig::None,
     };
 
-    let ser_result =
-        match jni_fetch_doc_impl(&mut env, doc_id, version_id, request_json, &proxy_config) {
-            Ok(it) => it,
-            Err(_err) => {
-                return JObject::null().into();
-            }
-        };
+    let ser_result = match jni_fetch_doc_impl(&mut env, doc_id, version_id, request, &proxy_config)
+    {
+        Ok(it) => it,
+        Err(_err) => {
+            return JObject::null().into();
+        }
+    };
 
     match env.byte_array_from_slice(&ser_result) {
         Ok(it) => it,
@@ -120,12 +132,10 @@ fn jni_fetch_doc_impl(
     env: &mut JNIEnv,
     doc_id: String,
     version_id: String,
-    request_json: String,
+    request: ConvertRequest,
     proxy_config: &ProxyConfig,
 ) -> Result<Vec<u8>, Error> {
-    let request: ConvertRequest = serde_json::from_str(&request_json)?;
-
-    let convert_result: figma_import::ConvertResponse =
+    let convert_result: ConvertResponse =
         match fetch_doc(&doc_id, &version_id, &request, proxy_config).map_err(Error::from) {
             Ok(it) => it,
             Err(err) => {

@@ -20,6 +20,3 @@ pub mod fetch_layout;
 
 #[cfg(feature = "fetch")]
 pub mod fetch;
-
-#[cfg(feature = "reflection")]
-pub mod reflection;

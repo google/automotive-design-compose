@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{Document, ProxyConfig};
+use crate::fetch::ProxyConfig;
+use crate::Document;
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use dc_bundle::definition::element::dimension_proto::Dimension;

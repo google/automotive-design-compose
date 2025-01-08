@@ -13,9 +13,6 @@
 // limitations under the License.
 
 use std::collections::HashMap;
-
-use std::convert::TryFrom;
-
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -23,8 +20,8 @@ use bytes::Bytes;
 use jni::objects::{JByteArray, JClass, JObject, JValue, JValueGen};
 use jni::sys::{jboolean, jint};
 use jni::JNIEnv;
-use layout::layout_node::{LayoutNodeList, LayoutParentChildren};
-use layout::{LayoutChangedResponse, LayoutManager};
+use layout::android_interface::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
+use layout::LayoutManager;
 use lazy_static::lazy_static;
 use log::{error, info};
 use prost::Message;
@@ -58,9 +55,7 @@ fn layout_response_to_bytearray(
     mut env: JNIEnv,
     layout_response: LayoutChangedResponse,
 ) -> JByteArray {
-    let proto_msg: dc_bundle::android_interface::LayoutChangedResponse = layout_response.into();
-
-    let bytes = proto_msg.encode_to_vec();
+    let bytes = layout_response.encode_to_vec();
     match env.byte_array_from_slice(bytes.as_slice()) {
         Ok(it) => it,
         Err(err) => {
@@ -123,9 +118,7 @@ pub(crate) fn jni_add_nodes<'local>(
         serialized_views: JByteArray,
     ) -> Result<LayoutNodeList, Error> {
         let bytes_views: Bytes = env.convert_byte_array(serialized_views)?.into();
-        let proto_msg = dc_bundle::android_interface::LayoutNodeList::decode(bytes_views)
-            .map_err(Error::from)?;
-        LayoutNodeList::try_from(proto_msg).map_err(Error::from)
+        LayoutNodeList::decode(bytes_views).map_err(Error::from)
     }
 
     match deprotolize_layout_node_list(&mut env, serialized_views) {
@@ -156,7 +149,7 @@ fn handle_layout_node_list(
             node.layout_id,
             node.parent_layout_id,
             node.child_index,
-            node.style,
+            node.style.expect("Malformed Data, style is required"),
             node.name,
             node.use_measure_func,
             if node.use_measure_func { None } else { node.fixed_width },

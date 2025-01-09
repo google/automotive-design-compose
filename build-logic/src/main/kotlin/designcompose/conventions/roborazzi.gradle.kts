@@ -42,7 +42,6 @@ project.pluginManager.withPlugin("com.android.base") {
                         showExceptions = true
                         showStackTraces = true
                         showCauses = true
-                        showStandardStreams = true
                         exceptionFormat = TestExceptionFormat.FULL
                     }
                 }

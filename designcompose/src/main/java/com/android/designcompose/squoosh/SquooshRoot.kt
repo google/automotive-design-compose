@@ -87,6 +87,8 @@ import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.definition.element.dimensionProto
 import com.android.designcompose.definition.element.size
+import com.android.designcompose.definition.layout.copy
+import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.scrollInfoOrNull
 import com.android.designcompose.dispatch
 import com.android.designcompose.doc
@@ -140,58 +142,49 @@ internal class SquooshAnimationRenderingInfo(
 /// Apply layout constraints to a node; this is only used for the root node and gives the DC
 /// layout system the context of what it is being embedded in.
 private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, density: Float) {
-    val rootStyleBuilder = style.toBuilder()
-
     // This function mutates `this.style` in different ways depending on the constraints. Therefore,
     // we should always start with `view.style` (immutable, from the DCF) and apply constraints to
     // that. Otherwise, we end up progressively adding different style rules to the root style as we
     // get different layout queries (especially during the intrinsic width/height query process).
-    val layoutStyleBuilder = view.style.layoutStyle.toBuilder()
+    val layoutStyle =
+        view.style.layoutStyle.copy {
+            if (constraints.minWidth != 0)
+                minWidth = dimensionProto { points = constraints.minWidth.toFloat() / density }
 
-    if (constraints.minWidth != 0)
-        layoutStyleBuilder.minWidth = dimensionProto {
-            points = constraints.minWidth.toFloat() / density
+            if (constraints.maxWidth != Constraints.Infinity)
+                maxWidth = dimensionProto { points = constraints.maxWidth.toFloat() / density }
+
+            if (constraints.hasFixedWidth) {
+                width = dimensionProto { points = constraints.minWidth.toFloat() / density }
+                // Layout implementation looks for width/height being set and then uses bounding
+                // box.
+                val h = boundingBox.height
+                boundingBox = size {
+                    width = constraints.minWidth.toFloat() / density
+                    height = h
+                }
+            }
+
+            if (constraints.minHeight != 0)
+                minHeight = dimensionProto { points = constraints.minHeight.toFloat() / density }
+
+            if (constraints.maxHeight != Constraints.Infinity)
+                maxHeight = dimensionProto { points = constraints.maxHeight.toFloat() / density }
+
+            if (constraints.hasFixedHeight) {
+                height = dimensionProto { points = constraints.minHeight.toFloat() / density }
+                // Layout implementation looks for width/height being set and then uses bounding
+                // box.
+                val w = boundingBox.width
+                boundingBox = size {
+                    width = w
+                    height = constraints.minHeight.toFloat() / density
+                }
+            }
         }
 
-    if (constraints.maxWidth != Constraints.Infinity)
-        layoutStyleBuilder.maxWidth = dimensionProto {
-            points = constraints.maxWidth.toFloat() / density
-        }
-
-    if (constraints.hasFixedWidth) {
-        layoutStyleBuilder.width = dimensionProto {
-            points = constraints.minWidth.toFloat() / density
-        }
-        // Layout implementation looks for width/height being set and then uses bounding box.
-        layoutStyleBuilder.boundingBox = size {
-            width = constraints.minWidth.toFloat() / density
-            height = layoutStyleBuilder.boundingBox.height
-        }
-    }
-
-    if (constraints.minHeight != 0)
-        layoutStyleBuilder.minHeight = dimensionProto {
-            points = constraints.minHeight.toFloat() / density
-        }
-
-    if (constraints.maxHeight != Constraints.Infinity)
-        layoutStyleBuilder.maxHeight = dimensionProto {
-            points = constraints.maxHeight.toFloat() / density
-        }
-
-    if (constraints.hasFixedHeight) {
-        layoutStyleBuilder.height = dimensionProto {
-            points = constraints.minHeight.toFloat() / density
-        }
-        // Layout implementation looks for width/height being set and then uses bounding box.
-        layoutStyleBuilder.boundingBox = size {
-            width = layoutStyleBuilder.boundingBox.width
-            height = constraints.minHeight.toFloat() / density
-        }
-    }
-
-    rootStyleBuilder.layoutStyle = layoutStyleBuilder.build()
-    style = rootStyleBuilder.build()
+    val rootStyleBuilder = style.copy { this.layoutStyle = layoutStyle }
+    style = rootStyleBuilder
 }
 
 // Mutable field to remember animation information that is computed during the layout phase which

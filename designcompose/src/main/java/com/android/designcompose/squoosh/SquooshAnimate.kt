@@ -34,6 +34,7 @@ import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
+import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.shapeOrNull
 import com.android.designcompose.definition.view.textOrNull
 import com.android.designcompose.definition.view.transformOrNull
@@ -294,13 +295,9 @@ internal class SquooshAnimatedArc(
         }
 
         val viewDataValue =
-            target.view.data.container
-                .toBuilder()
-                .apply { shape = viewShape { arc = interpolatedArc } }
-                .build()
+            target.view.data.container.copy { shape = viewShape { arc = interpolatedArc } }
 
-        target.view =
-            target.view.toBuilder().apply { data = viewData { container = viewDataValue } }.build()
+        target.view = target.view.copy { data = viewData { container = viewDataValue } }
     }
 }
 

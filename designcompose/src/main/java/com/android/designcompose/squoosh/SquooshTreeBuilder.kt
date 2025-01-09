@@ -61,6 +61,7 @@ import com.android.designcompose.definition.layout.LayoutSizing
 import com.android.designcompose.definition.layout.Overflow
 import com.android.designcompose.definition.layout.OverflowDirection
 import com.android.designcompose.definition.layout.PositionType
+import com.android.designcompose.definition.layout.copy
 import com.android.designcompose.definition.layout.itemSpacing
 import com.android.designcompose.definition.layout.layoutStyle
 import com.android.designcompose.definition.layout.scrollInfo
@@ -646,47 +647,55 @@ private fun generateOverlayNode(
     layoutIdAllocator: SquooshLayoutIdAllocator,
 ): SquooshResolvedNode {
     // Make a view based on the child node which uses a synthesized style.
-    val layoutStyleBuilder = node.style.layoutStyle.toBuilder()
-    layoutStyleBuilder.positionType = PositionType.POSITION_TYPE_ABSOLUTE
-    layoutStyleBuilder.top = dimensionProto { percent = 0.0f }
-    layoutStyleBuilder.left = dimensionProto { percent = 0.0f }
-    layoutStyleBuilder.right = dimensionProto { percent = 0.0f }
-    layoutStyleBuilder.bottom = dimensionProto { percent = 0.0f }
-    layoutStyleBuilder.width = dimensionProto { percent = 1.0f }
-    layoutStyleBuilder.height = dimensionProto { percent = 1.0f }
-    layoutStyleBuilder.flexDirection = FlexDirection.FLEX_DIRECTION_COLUMN
-    when (overlay.overlayPositionType) {
-        OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_LEFT -> {
-            layoutStyleBuilder.justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
-            layoutStyleBuilder.alignItems = AlignItems.ALIGN_ITEMS_FLEX_START // X
+    val layoutStyle =
+        node.style.layoutStyle.copy {
+            positionType = PositionType.POSITION_TYPE_ABSOLUTE
+            top = dimensionProto { percent = 0.0f }
+            left = dimensionProto { percent = 0.0f }
+            right = dimensionProto { percent = 0.0f }
+            bottom = dimensionProto { percent = 0.0f }
+            width = dimensionProto { percent = 1.0f }
+            height = dimensionProto { percent = 1.0f }
+            flexDirection = FlexDirection.FLEX_DIRECTION_COLUMN
+            when (overlay.overlayPositionType) {
+                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_LEFT -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_START // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_CENTER -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_RIGHT -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_END // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_LEFT -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_START // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_CENTER -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_RIGHT -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_END // X
+                }
+                // Center and Manual both are centered; not clear how to implement manual
+                // positioning
+                // without making a layout-dependent query.
+                else -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_CENTER // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
+                }
+            }
         }
-        OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_CENTER -> {
-            layoutStyleBuilder.justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
-            layoutStyleBuilder.alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
-        }
-        OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_RIGHT -> {
-            layoutStyleBuilder.justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
-            layoutStyleBuilder.alignItems = AlignItems.ALIGN_ITEMS_FLEX_END // X
-        }
-        OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_LEFT -> {
-            layoutStyleBuilder.justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
-            layoutStyleBuilder.alignItems = AlignItems.ALIGN_ITEMS_FLEX_START // X
-        }
-        OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_CENTER -> {
-            layoutStyleBuilder.justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
-            layoutStyleBuilder.alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
-        }
-        OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_RIGHT -> {
-            layoutStyleBuilder.justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
-            layoutStyleBuilder.alignItems = AlignItems.ALIGN_ITEMS_FLEX_END // X
-        }
-        // Center and Manual both are centered; not clear how to implement manual positioning
-        // without making a layout-dependent query.
-        else -> {
-            layoutStyleBuilder.justifyContent = JustifyContent.JUSTIFY_CONTENT_CENTER // Y
-            layoutStyleBuilder.alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
-        }
-    }
 
     val newNodeStyle =
         node.style.nodeStyle.copy {
@@ -710,7 +719,7 @@ private fun generateOverlayNode(
         }
 
     val overlayStyle = viewStyle {
-        this.layoutStyle = layoutStyleBuilder.build()
+        this.layoutStyle = layoutStyle
         this.nodeStyle = newNodeStyle
     }
 

@@ -20,13 +20,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.designcompose.AccessDeniedException
 import com.android.designcompose.Feedback
 import com.android.designcompose.FigmaFileNotFoundException
-import com.android.designcompose.Jni
-import com.android.designcompose.LiveUpdate
-import com.android.designcompose.ProxyConfig
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
-import com.android.designcompose.constructPostJson
 import com.android.designcompose.decodeServerDoc
+import com.android.designcompose.fetchDocument
+import com.android.designcompose.live_update.documentOrNull
 import io.mockk.mockkObject
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -37,7 +35,6 @@ import org.junit.Test
 const val smallDocID = "pxVlixodJqZL95zo2RzTHl" // HelloWorld Doc
 const val largeDocID = "RfGl9SWnBEvdg8T1Ex6ZAR" // Battleship Doc
 const val veryLargeDocID = "f5zC8J6uGPzsWLUeE4AW4D" // Cluster Doc
-val dummyFigmaTokenJson = constructPostJson("NOT_A_FIGMA_TOKEN", null, DocumentServerParams())
 
 /**
  * Jni fetch tests
@@ -51,30 +48,22 @@ class JniFetchTests {
 
     private val actualFigmaToken: String? =
         InstrumentationRegistry.getArguments().getString("FIGMA_ACCESS_TOKEN")
-    private lateinit var firstFetchJson: String
 
     @Before
     fun setup() {
         assertNotNull(actualFigmaToken, "Cannot run this test without Figma Access Token")
-        firstFetchJson = constructPostJson(actualFigmaToken, null, DocumentServerParams())
-
         mockkObject(Feedback)
     }
 
-    @Test
-    fun invalidDocId() {
-        assertFailsWith<FigmaFileNotFoundException> {
-            Jni.jniFetchDoc("InvalidDocID", "", firstFetchJson, ProxyConfig())
-        }
-    }
-
     private fun testFetch(docID: String) {
-        with(LiveUpdate.fetchDocBytes(DesignDocId(docID), firstFetchJson, ProxyConfig())) {
-            assertNotNull(this)
-            val decodedDoc = decodeServerDoc(this, null, DesignDocId(docID), null, Feedback)
-            assertNotNull(decodedDoc)
-            assertEquals(decodedDoc.c.docId.id, docID)
-        }
+        val response =
+            fetchDocument(actualFigmaToken!!, DocumentServerParams(), null, DesignDocId(docID))
+
+        assertNotNull(response)
+        val decodedDoc =
+            decodeServerDoc(response.documentOrNull!!, null, DesignDocId(docID), null, Feedback)
+        assertNotNull(decodedDoc)
+        assertEquals(decodedDoc.c.docId.id, docID)
     }
 
     @Test
@@ -91,11 +80,28 @@ class JniFetchTests {
     //    fun veryLargeFetch() {
     //        testFetch(veryLargeDocID)
     //    }
-    //
+
     @Test
     fun invalidToken() {
         assertFailsWith(AccessDeniedException::class) {
-            Jni.jniFetchDoc("DummyDocId", "", dummyFigmaTokenJson, ProxyConfig())
+            fetchDocument(
+                "NOT_A_FIGMA_TOKEN",
+                DocumentServerParams(),
+                null,
+                DesignDocId(smallDocID),
+            )
+        }
+    }
+
+    @Test
+    fun invalidDocId() {
+        assertFailsWith<FigmaFileNotFoundException> {
+            fetchDocument(
+                actualFigmaToken!!,
+                DocumentServerParams(),
+                null,
+                DesignDocId("NOT_A_DOC"),
+            )
         }
     }
 }

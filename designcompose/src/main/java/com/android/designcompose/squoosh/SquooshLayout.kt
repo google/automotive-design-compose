@@ -20,13 +20,14 @@ import android.util.Log
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
-import com.android.designcompose.android_interface.LayoutChangedResponse
-import com.android.designcompose.android_interface.LayoutNodeList
-import com.android.designcompose.android_interface.layoutNodeList
-import com.android.designcompose.definition.layout.LayoutNode
-import com.android.designcompose.definition.layout.LayoutParentChildren
-import com.android.designcompose.definition.layout.layoutNode
-import com.android.designcompose.definition.layout.layoutParentChildren
+import com.android.designcompose.layout_interface.Layout
+import com.android.designcompose.layout_interface.LayoutChangedResponse
+import com.android.designcompose.layout_interface.LayoutNode
+import com.android.designcompose.layout_interface.LayoutNodeList
+import com.android.designcompose.layout_interface.LayoutParentChildren
+import com.android.designcompose.layout_interface.layoutNode
+import com.android.designcompose.layout_interface.layoutNodeList
+import com.android.designcompose.layout_interface.layoutParentChildren
 
 internal class SquooshLayoutManager(val id: Int)
 
@@ -48,7 +49,7 @@ internal object SquooshLayout {
         manager: SquooshLayoutManager,
         rootLayoutId: Int,
         layoutNodeList: LayoutNodeList,
-    ): Map<Int, LayoutChangedResponse.Layout> {
+    ): Map<Int, Layout> {
         val serializedNodes = layoutNodeList.toByteArray()
         val response =
             Jni.jniAddNodes(manager.id, rootLayoutId, serializedNodes) ?: return emptyMap()
@@ -258,7 +259,7 @@ private fun updateLayoutTree(
 /// so that the nodes can be used for presentation or interaction (hit testing).
 private fun populateComputedLayout(
     resolvedNode: SquooshResolvedNode,
-    layoutValueCache: HashMap<Int, LayoutChangedResponse.Layout>,
+    layoutValueCache: HashMap<Int, Layout>,
 ) {
     val layoutId = resolvedNode.layoutId
     val layoutValue = layoutValueCache[layoutId]
@@ -280,7 +281,7 @@ internal fun layoutTree(
     manager: SquooshLayoutManager,
     removalNodes: HashSet<Int>,
     layoutCache: HashMap<Int, Int>,
-    layoutValueCache: HashMap<Int, LayoutChangedResponse.Layout>,
+    layoutValueCache: HashMap<Int, Layout>,
 ) {
     // Remove any nodes that are no longer needed in this iteration
     for (layoutId in removalNodes) {

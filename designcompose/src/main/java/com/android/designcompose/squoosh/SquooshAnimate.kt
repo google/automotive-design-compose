@@ -23,8 +23,6 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.ui.geometry.Size
 import com.android.designcompose.AnimatedAction
 import com.android.designcompose.VariableState
-import com.android.designcompose.android_interface.LayoutChangedResponse
-import com.android.designcompose.android_interface.LayoutChangedResponseKt.layout
 import com.android.designcompose.decompose
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
@@ -39,6 +37,8 @@ import com.android.designcompose.definition.view.shapeOrNull
 import com.android.designcompose.definition.view.textOrNull
 import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.definition.view.viewData
+import com.android.designcompose.layout_interface.Layout
+import com.android.designcompose.layout_interface.layout
 import com.android.designcompose.toLayoutTransform
 import com.android.designcompose.utils.fixedHeight
 import com.android.designcompose.utils.fixedWidth
@@ -91,8 +91,8 @@ internal abstract class SquooshAnimatedItem(
         value: Float,
         interpolatedWidth: Float,
         interpolatedHeight: Float,
-        from: LayoutChangedResponse.Layout,
-        to: LayoutChangedResponse.Layout,
+        from: Layout,
+        to: Layout,
     ) {
         target.overrideLayoutSize = true
         target.computedLayout = layout {

@@ -16,9 +16,7 @@ use std::ffi::c_void;
 
 use std::sync::{Arc, Mutex};
 
-use crate::android_interface::convert_request::fetch_doc;
-use crate::android_interface::ConvertRequest;
-use crate::android_interface::ConvertResponse;
+use crate::android_interface::{convert_request::fetch_doc, ConvertRequest, ConvertResponse};
 use crate::error::{throw_basic_exception, Error};
 use crate::error_map::map_err_to_exception;
 use crate::layout_manager::{
@@ -98,6 +96,7 @@ fn jni_fetch_doc<'local>(
             return JObject::null().into();
         }
     };
+
     let request: ConvertRequest = match ConvertRequest::decode(request_bytes).map_err(Error::from) {
         Ok(it) => it,
         Err(err) => {
@@ -154,7 +153,7 @@ fn jni_fetch_doc_impl(
             }
         };
 
-    bincode::serialize(&convert_result).map_err(|e| e.into())
+    Ok(convert_result.encode_to_vec())
 }
 
 #[allow(non_snake_case)]
@@ -175,7 +174,7 @@ pub extern "system" fn JNI_OnLoad(vm: JavaVM, _: *mut c_void) -> jint {
             &[
                 jni::NativeMethod {
                     name: "jniFetchDoc".into(),
-                    sig: "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/android/designcompose/ProxyConfig;)[B".into(),
+                    sig: "(Ljava/lang/String;Ljava/lang/String;[BLcom/android/designcompose/ProxyConfig;)[B".into(),
                     fn_ptr: jni_fetch_doc as *mut c_void,
                 },
                 jni::NativeMethod {

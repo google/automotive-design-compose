@@ -24,6 +24,7 @@ import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.GenericDocContent
 import com.android.designcompose.common.decodeDiskBaseDoc
 import com.android.designcompose.common.decodeServerBaseDoc
+import com.android.designcompose.live_update.ConvertResponse
 import com.google.protobuf.kotlin.get
 import java.io.File
 import java.io.InputStream
@@ -104,7 +105,7 @@ fun decodeDiskDoc(
 }
 
 fun decodeServerDoc(
-    docBytes: ByteArray,
+    docResponse: ConvertResponse.Document,
     previousDoc: DocContent?,
     docId: DesignDocId,
     save: File?,
@@ -112,7 +113,7 @@ fun decodeServerDoc(
 ): DocContent? {
     // We must initialize the fully-decoded DocContent, which decodes images before
     // saving it to disk
-    val baseDoc = decodeServerBaseDoc(docBytes, docId, feedback) ?: return null
+    val baseDoc = decodeServerBaseDoc(docResponse, docId, feedback) ?: return null
     val fullDoc = DocContent(baseDoc, previousDoc)
     save?.let { fullDoc.c.save(save, Feedback) }
     return fullDoc

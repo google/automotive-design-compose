@@ -15,7 +15,7 @@
 use std::env;
 use std::io::{Error, ErrorKind};
 
-use crate::{fetch::ProxyConfig, Document};
+use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use dc_bundle::definition::DesignComposeDefinitionHeader;

@@ -19,8 +19,10 @@ package com.android.designcompose.common
 import com.android.designcompose.definition.DesignComposeDefinition
 import com.android.designcompose.definition.DesignComposeDefinitionHeader
 import com.android.designcompose.definition.view.View
+import com.android.designcompose.live_update.ConvertResponse
 import com.android.designcompose.live_update.figma.FigmaDocInfo
-import com.android.designcompose.live_update.figma.ServerFigmaDoc
+import com.google.protobuf.ByteString
+import com.google.protobuf.kotlin.toByteString
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -33,8 +35,7 @@ class GenericDocContent(
     val variantViewMap: HashMap<String, HashMap<String, View>>,
     val variantPropertyMap: VariantPropertyMap,
     val nodeIdMap: HashMap<String, View>,
-    private val imageSessionData: ByteArray,
-    val imageSession: String?,
+    val imageSession: ByteString,
     val branches: List<FigmaDocInfo>? = null,
     val project_files: List<FigmaDocInfo>? = null,
 ) {
@@ -57,7 +58,7 @@ class GenericDocContent(
             val outputStream = ByteArrayOutputStream()
             header.writeDelimitedTo(outputStream)
             document.writeDelimitedTo(outputStream)
-            outputStream.write(imageSessionData)
+            outputStream.write(imageSession.toByteArray())
             return outputStream.toByteArray()
         } catch (error: Throwable) {
             feedback.documentSaveError(error.toString(), docId)
@@ -68,19 +69,19 @@ class GenericDocContent(
 
 /// Read a serialized server document from the given stream. Deserialize it and save it to disk.
 fun decodeServerBaseDoc(
-    docBytes: ByteArray,
+    docResponse: ConvertResponse.Document,
     docId: DesignDocId,
     feedback: FeedbackImpl,
 ): GenericDocContent? {
-    val docStream = docBytes.inputStream()
-    val header = decodeHeader(docStream, docId, feedback) ?: return null
+
+    val header = docResponse.header
+    feedback.documentDecodeSuccess(header.dcVersion, header.name, header.lastModified, docId)
 
     // Server sends content in the format of ServerFigmaDoc, which has additional data
-    val serverDoc = ServerFigmaDoc.parseDelimitedFrom(docStream)
+    //    val serverDoc = ServerFigmaDoc.parseDelimitedFrom(docStream)
+    val serverDoc = docResponse.serverDoc
     serverDoc.errorsList?.forEach { feedback.documentUpdateWarnings(docId, it) }
     val content = serverDoc.figmaDoc
-    val imageSessionData = decodeImageSession(docStream)
-    feedback.documentDecodeSuccess(header.dcVersion, header.name, header.lastModified, docId)
 
     val viewMap = content.views()
     val variantViewMap = createVariantViewMap(viewMap)
@@ -93,8 +94,7 @@ fun decodeServerBaseDoc(
         variantViewMap,
         variantPropertyMap,
         nodeIdMap,
-        imageSessionData.imageSessionData,
-        imageSessionData.imageSession,
+        docResponse.imageSessionJson,
         serverDoc.branchesList,
         serverDoc.projectFilesList,
     )
@@ -111,7 +111,9 @@ fun decodeDiskBaseDoc(
     val header = decodeHeader(docStream, docId, feedback) ?: return null
     val content = DesignComposeDefinition.parseDelimitedFrom(docStream)
 
-    val imageSessionData = decodeImageSession(docStream)
+    // Proto bytes are parsed to their immutable ByteString representation. It's just a ByteArray
+    // that's immutable, basically.
+    val imageSession = docStream.readBytes().toByteString()
     val viewMap = content.views()
     val variantMap = createVariantViewMap(viewMap)
     val variantPropertyMap = createVariantPropertyMap(viewMap)
@@ -126,8 +128,7 @@ fun decodeDiskBaseDoc(
         variantMap,
         variantPropertyMap,
         nodeIdMap,
-        imageSessionData.imageSessionData,
-        imageSessionData.imageSession,
+        imageSession,
     )
 }
 
@@ -199,36 +200,4 @@ private fun decodeHeader(
         return null
     }
     return header
-}
-
-private data class ImageSession(val imageSessionData: ByteArray, var imageSession: String?) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as ImageSession
-
-        if (!imageSessionData.contentEquals(other.imageSessionData)) return false
-        if (imageSession != other.imageSession) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = imageSessionData.contentHashCode()
-        result = 31 * result + (imageSession?.hashCode() ?: 0)
-        return result
-    }
-}
-
-private fun decodeImageSession(docStream: InputStream): ImageSession {
-    // The image session data is a JSON blob attached after the proto document content.
-    val imageSessionData = docStream.readBytes()
-    val imageSession =
-        if (imageSessionData.isNotEmpty()) {
-            String(imageSessionData, Charsets.UTF_8)
-        } else {
-            null
-        }
-    return ImageSession(imageSessionData, imageSession)
 }

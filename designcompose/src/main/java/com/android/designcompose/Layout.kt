@@ -19,7 +19,6 @@ package com.android.designcompose
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.unit.Density
-import com.android.designcompose.android_interface.LayoutChangedResponse
 import com.android.designcompose.definition.element.DimensionProto
 import com.android.designcompose.definition.element.DimensionRect
 import com.android.designcompose.definition.element.Size
@@ -33,6 +32,7 @@ import com.android.designcompose.definition.layout.PositionType
 import com.android.designcompose.definition.modifier.LayoutTransform
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.layout_interface.Layout
 import java.util.Optional
 import kotlin.math.roundToInt
 
@@ -193,10 +193,10 @@ internal fun calcLayoutInfo(view: View, style: ViewStyle): SimplifiedLayoutInfo 
     }
 }
 
-fun LayoutChangedResponse.Layout.width() = this.width.roundToInt()
+fun Layout.width() = this.width.roundToInt()
 
-fun LayoutChangedResponse.Layout.height() = this.height.roundToInt()
+fun Layout.height() = this.height.roundToInt()
 
-fun LayoutChangedResponse.Layout.left() = this.left.roundToInt()
+fun Layout.left() = this.left.roundToInt()
 
-fun LayoutChangedResponse.Layout.top() = this.top.roundToInt()
+fun Layout.top() = this.top.roundToInt()

@@ -39,7 +39,6 @@ message LayoutParentChildren {
   repeated int32 child_layout_ids = 2;
 }
 
-
 // A list of Figma nodes to register for layout
 message LayoutNodeList {
   repeated LayoutNode layout_nodes = 1;

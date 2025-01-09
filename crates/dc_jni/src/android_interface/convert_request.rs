@@ -27,7 +27,7 @@ pub fn fetch_doc(
 ) -> Result<ConvertResponse, Error> {
     let image_session: Option<ImageContextSession> = {
         match &rq.image_session_json {
-            Some(json) => match serde_json::from_str(json.as_str()) {
+            Some(json) => match serde_json::from_slice(json) {
                 Ok(session) => Some(session),
                 Err(_) => None,
             },
@@ -85,7 +85,7 @@ pub fn fetch_doc(
                     server_doc: Some(server_doc),
                     // Return the image session as a JSON blob; we might want to encode this differently so we
                     // can be more robust if there's corruption.
-                    image_session_json: serde_json::to_string(&doc.image_session())?,
+                    image_session_json: serde_json::to_vec(&doc.image_session())?,
                 },
             )),
         })

@@ -42,13 +42,11 @@ internal object Jni {
     fun tracedJnifetchdoc(
         docId: String,
         versionId: String,
-        requestJson: String,
+        request: ByteArray,
         proxyConfig: ProxyConfig,
     ): ByteArray {
         lateinit var result: ByteArray
-        trace(DCTraces.JNIFETCHDOC) {
-            result = jniFetchDoc(docId, versionId, requestJson, proxyConfig)
-        }
+        trace(DCTraces.JNIFETCHDOC) { result = jniFetchDoc(docId, versionId, request, proxyConfig) }
         return result
     }
 
@@ -56,7 +54,7 @@ internal object Jni {
     external fun jniFetchDoc(
         docId: String,
         versionId: String,
-        requestJson: String,
+        request: ByteArray,
         proxyConfig: ProxyConfig,
     ): ByteArray
 

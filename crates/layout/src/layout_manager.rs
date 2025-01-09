@@ -329,11 +329,7 @@ impl LayoutManager {
         if compute_layout {
             self.compute_node_layout(root_layout_id)
         } else {
-            LayoutChangedResponse {
-                layout_state: self.layout_state,
-                changed_layouts: HashMap::new(),
-            }
-            // LayoutChangedResponse::unchanged(self.layout_state)
+            LayoutChangedResponse::unchanged(self.layout_state)
         }
     }
 

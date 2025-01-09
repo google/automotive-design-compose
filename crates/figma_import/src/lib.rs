@@ -23,10 +23,10 @@ mod design_definition;
 mod document;
 mod error;
 mod extended_layout_schema;
-mod fetch;
 mod figma_schema;
 mod image_context;
 pub mod meter_schema;
+mod proxy_config;
 pub mod reaction_schema;
 pub mod tools;
 mod transform_flexbox;
@@ -40,8 +40,8 @@ pub use design_definition::IgnoredImage;
 pub use design_definition::ServerFigmaDoc;
 pub use document::Document;
 pub use error::Error;
-pub use fetch::ProxyConfig;
 pub use image_context::ImageContextSession;
+pub use proxy_config::ProxyConfig;
 
 // Internal convenience
 pub use dc_bundle::definition::element::Color;

@@ -31,7 +31,6 @@ import com.android.designcompose.definition.layout.LayoutSizing
 import com.android.designcompose.definition.layout.Overflow
 import com.android.designcompose.definition.layout.PositionType
 import com.android.designcompose.definition.layout.copy
-import com.android.designcompose.definition.layout.layoutStyle
 import com.android.designcompose.definition.modifier.BlendMode
 import com.android.designcompose.definition.modifier.TextAlign
 import com.android.designcompose.definition.modifier.TextAlignVertical
@@ -41,7 +40,6 @@ import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.fontStretchOrNull
 import com.android.designcompose.definition.view.nodeSizeOrNull
-import com.android.designcompose.definition.view.nodeStyle
 import com.android.designcompose.definition.view.strokeOrNull
 import com.android.designcompose.definition.view.viewStyle
 

@@ -15,7 +15,6 @@
  */
 
 package com.android.designcompose.testapp.validation.examples
-/** Temporarily disabled: GH-1945
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -23,7 +22,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absoluteOffset
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
@@ -78,10 +77,10 @@ fun VariantAnimationTimelineTest() {
             DesignDocSettings(
                 customVariantTransition = { context ->
                     val defaultEasing = CubicBezierEasing(0.37f, 0f, 0.63f, 1f)
-                    val regexMatch = tNumRegex.find(context.from?.name ?: "")
+                    val regexMatch = tNumRegex.find(context.getFromViewName())
                     val tNum = regexMatch?.let { it.groupValues[1].toInt() }
                     if (
-                        context.from?.name == "T3Rect" &&
+                        context.getFromViewName() == "T3Rect" &&
                             childAnimType.value != ChildAnimType.Normal
                     ) {
                         val delayMillis =
@@ -213,4 +212,3 @@ fun VariantAnimationTimelineTest() {
         }
     }
 }
- */

@@ -130,7 +130,27 @@ internal class VariantAnimationInfo(
     val transition: AnimationTransition,
 )
 
-class VariantTransitionContext(val from: View?, val to: View?) {
+class VariantTransitionContext(private val from: View?, private val to: View?) {
+    @Discouraged(
+        message =
+            "This helper function returns the name of the `from` View. This function is intended to " +
+                "temporarily help with creating custom variant transitions, but may be deprecated or " +
+                "removed in the future."
+    )
+    fun getFromViewName(): String {
+        return from?.name ?: ""
+    }
+
+    @Discouraged(
+        message =
+            "This helper function returns the name of the `to` View. This function is intended to " +
+                "temporarily help with creating custom variant transitions, but may be deprecated or " +
+                "removed in the future."
+    )
+    fun getToViewName(): String {
+        return to?.name ?: ""
+    }
+
     @Discouraged(
         message =
             "This helper function will return true if the transition is within a variant from the " +

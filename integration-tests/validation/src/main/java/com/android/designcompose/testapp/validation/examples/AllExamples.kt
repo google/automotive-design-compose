@@ -133,10 +133,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         // Animations
         Triple("SA", { SmartAnimateTest() }, SmartAnimateTestDoc.javaClass.name),
         Triple("SA Variant", { VariantAnimationTest() }, VariantAnimationTestDoc.javaClass.name),
-        /**
-         * Temporarily disabled: GH-1945 Triple( "SA Variant Timelines", {
-         * VariantAnimationTimelineTest() }, VariantAnimationTimelineTestDoc.javaClass.name, ),
-         */
+        Triple(
+            "SA Variant Timelines",
+            { VariantAnimationTimelineTest() },
+            VariantAnimationTimelineTestDoc.javaClass.name,
+        ),
         // No support for hyperlinks in squoosh.
         Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name),
         // GH-636: Test takes too long to execute.

@@ -16,140 +16,15 @@
 
 package com.android.designcompose.utils
 
-import android.graphics.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.LayoutManager
 import com.android.designcompose.definition.element.DimensionProto
 import com.android.designcompose.definition.view.ViewStyle
-import kotlin.math.roundToInt
-
-/** Multiply out a dimension against available space */
-internal fun DimensionProto.resolve(available: Int, density: Float): Int? {
-    if (hasPercent()) {
-        return (available * percent).roundToInt()
-    }
-    if (hasPoints()) {
-        return (points * density).roundToInt()
-    }
-    return null
-}
 
 internal fun DimensionProto.pointsAsDp(density: Float): Dp {
     return if (hasPoints()) (points * density).dp else 0.dp
-}
-
-internal fun DimensionProto.isFixed(): Boolean {
-    return hasPoints()
-}
-
-/** Evaluate an absolute layout within the given constraints */
-internal fun absoluteLayout(style: ViewStyle, constraints: Constraints, density: Float): Rect {
-    val pw =
-        if (constraints.hasBoundedWidth) {
-            constraints.maxWidth
-        } else {
-            0
-        }
-    val ph =
-        if (constraints.hasBoundedHeight) {
-            constraints.maxHeight
-        } else {
-            0
-        }
-
-    val left = style.layoutStyle.left.resolve(pw, density)
-    val top = style.layoutStyle.top.resolve(ph, density)
-    // Right and bottom are insets from the right/bottom edge, so convert them to be relative to
-    // the top/left corner.
-    val right = style.layoutStyle.right.resolve(pw, density)?.let { r -> pw - r }
-    val bottom = style.layoutStyle.bottom.resolve(ph, density)?.let { b -> ph - b }
-    val width = style.layoutStyle.width.resolve(pw, density)
-    val height = style.layoutStyle.height.resolve(ph, density)
-    // We use the top and left margins for center anchored items, so they can be safely applied
-    // as an offset here.
-    val leftMargin = style.layoutStyle.margin.start.resolve(pw, density) ?: 0
-    val topMargin = style.layoutStyle.margin.end.resolve(ph, density) ?: 0
-
-    // XXX: Need layoutDirection; when left, right and width are specified we use left and
-    //      width in LtoR direction, and use right and width in RtoL direction.
-    val x =
-        leftMargin +
-            (left
-                ?: if (right != null && width != null) {
-                    right - width
-                } else {
-                    0
-                })
-    val y =
-        topMargin +
-            (top
-                ?: if (bottom != null && height != null) {
-                    bottom - height
-                } else {
-                    0
-                })
-    var w =
-        width
-            ?: if (left != null && right != null) {
-                right - left
-            } else {
-                0
-            }
-    var h =
-        height
-            ?: if (top != null && bottom != null) {
-                bottom - top
-            } else {
-                0
-            }
-
-    val minWidth = style.layoutStyle.minWidth.resolve(pw, density)
-    val minHeight = style.layoutStyle.minHeight.resolve(ph, density)
-    if (minWidth != null && w < minWidth) {
-        w = minWidth
-    }
-    if (minHeight != null && h < minHeight) {
-        h = minHeight
-    }
-
-    return Rect(x, y, x + w, y + h)
-}
-
-/** Evaluate a relative layout against the given constraints */
-internal fun relativeLayout(style: ViewStyle, constraints: Constraints, density: Float): Rect {
-    val pw =
-        if (constraints.hasBoundedWidth) {
-            constraints.maxWidth
-        } else {
-            0
-        }
-    val ph =
-        if (constraints.hasBoundedHeight) {
-            constraints.maxHeight
-        } else {
-            0
-        }
-
-    var w = style.layoutStyle.width.resolve(pw, density) ?: 0
-    var h = style.layoutStyle.height.resolve(ph, density) ?: 0
-    // We use the top and left margins for center anchored items, so they can be safely applied
-    // as an offset here.
-    val x = style.layoutStyle.margin.start.resolve(pw, density) ?: 0
-    val y = style.layoutStyle.margin.top.resolve(ph, density) ?: 0
-
-    val minWidth = style.layoutStyle.minWidth.resolve(pw, density)
-    val minHeight = style.layoutStyle.minHeight.resolve(ph, density)
-    if (minWidth != null && w < minWidth) {
-        w = minWidth
-    }
-    if (minHeight != null && h < minHeight) {
-        h = minHeight
-    }
-
-    return Rect(x, y, x + w, y + h)
 }
 
 // Return the size of a node used to render the node.

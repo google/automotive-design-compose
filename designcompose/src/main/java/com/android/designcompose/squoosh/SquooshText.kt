@@ -40,7 +40,6 @@ import com.android.designcompose.TextMeasureData
 import com.android.designcompose.VariableState
 import com.android.designcompose.definition.element.LineHeight.LineHeightTypeCase
 import com.android.designcompose.definition.element.TextDecoration
-import com.android.designcompose.definition.element.weightOrNull
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.fontSizeOrNull
 import com.android.designcompose.definition.view.fontWeightOrNull
@@ -59,8 +58,6 @@ import kotlin.math.roundToInt
 
 val newlineRegex = Regex("\\R+")
 val lineSeparator: String? = System.getProperty("line.separator")
-const val defaultFontWeight = 400
-const val defaultFontSize = 18f
 
 private fun normalizeNewlines(text: String): String {
     if (lineSeparator != null) return text.replace(newlineRegex, lineSeparator)
@@ -208,12 +205,7 @@ internal fun squooshComputeTextInfo(
             }
     val fontWeight =
         customTextStyle?.fontWeight
-            ?: FontWeight(
-                v.style.nodeStyle.fontWeightOrNull
-                    ?.weightOrNull
-                    ?.getValue(variableState)
-                    ?.roundToInt() ?: defaultFontWeight
-            )
+            ?: FontWeight(v.style.nodeStyle.fontWeight.weight.getValue(variableState).roundToInt())
     val fontStyle =
         customTextStyle?.fontStyle
             ?: when (v.style.nodeStyle.fontStyle) {
@@ -253,8 +245,7 @@ internal fun squooshComputeTextInfo(
     val textStyle =
         (TextStyle(
             fontSize =
-                customTextStyle?.fontSize
-                    ?: (v.style.nodeStyle.fontSize?.getValue(variableState) ?: defaultFontSize).sp,
+                customTextStyle?.fontSize ?: v.style.nodeStyle.fontSize.getValue(variableState).sp,
             fontFamily = fontFamily,
             fontFeatureSettings =
                 v.style.nodeStyle.fontFeaturesList.joinToString(", ") { feature ->

@@ -15,7 +15,6 @@
  */
 
 package com.android.designcompose.testapp.validation.examples
-/** Temporarily disabled: GH-1945
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -213,4 +212,3 @@ fun VariantAnimationTimelineTest() {
         }
     }
 }
- */

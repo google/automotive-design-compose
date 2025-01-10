@@ -59,10 +59,11 @@ use dc_bundle::definition::plugin::{
 use dc_bundle::definition::plugin::meter_data::MeterDataType;
 use log::error;
 
+use crate::shader_schema::ShaderUniformJson;
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
 use dc_bundle::definition::view::{
-    ComponentInfo, ShaderData, StyledTextRun, TextStyle, View, ViewStyle,
+    ComponentInfo, ShaderData, ShaderUniform, StyledTextRun, TextStyle, View, ViewStyle,
 };
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -969,14 +970,23 @@ fn visit_node(
         .and_then(|vsw_data| vsw_data.get("shaderFallbackColor"))
         .and_then(|extras| serde_json::from_str::<FigmaColor>(extras).ok())
         .map(|figma_color| (&figma_color).into());
-    // Shader float uniforms with uniform name maps to the float string value set in the figma shader plugin
-    let shader_float_uniform_map: HashMap<String, String> = plugin_data
-        .and_then(|vsw_data| vsw_data.get("shaderFloatUniforms"))
-        .and_then(|shader_float_uniforms| serde_json::from_str(shader_float_uniforms.as_str()).ok())
-        .unwrap_or_default();
+    // Shader uniforms: float, float array, color and color with alpha
+    let shader_uniforms: HashMap<String, ShaderUniform> = plugin_data
+        .and_then(|vsw_data| vsw_data.get("shaderUniforms"))
+        .and_then(|shader_uniforms| {
+            serde_json::from_str::<Vec<ShaderUniformJson>>(shader_uniforms.as_str()).ok()
+        })
+        .unwrap_or_default()
+        .into_iter()
+        .map(ShaderUniformJson::into)
+        .collect();
+    println!("shader_uniforms: {:?}", shader_uniforms);
 
-    let shader_data =
-        ShaderData::new_shader_data(shader, shader_fallback_color, shader_float_uniform_map);
+    let shader_data = if let Some(shader_code) = shader {
+        Some(ShaderData { shader: shader_code, shader_fallback_color, shader_uniforms })
+    } else {
+        None
+    };
 
     let mut scroll_info = ScrollInfo::new_default();
 

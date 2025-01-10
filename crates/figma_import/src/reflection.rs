@@ -138,6 +138,22 @@ pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
         .expect("couldn't trace ViewStyle");
 
     tracer
+        .trace_type::<dc_bundle::definition::view::ShaderData>(&samples)
+        .expect("couldn't trace ShaderData");
+    tracer
+        .trace_type::<dc_bundle::definition::view::ShaderUniform>(&samples)
+        .expect("couldn't trace ShaderUniform");
+    tracer
+        .trace_type::<dc_bundle::definition::view::ShaderUniformValue>(&samples)
+        .expect("couldn't trace ShaderUniformValue");
+    tracer
+        .trace_type::<dc_bundle::definition::view::shader_uniform_value::ValueType>(&samples)
+        .expect("couldn't trace shader_uniform_value::ValueType");
+    tracer
+        .trace_type::<dc_bundle::definition::view::shader_uniform_value::FloatArray>(&samples)
+        .expect("couldn't trace shader_uniform_value::FloatArray");
+
+    tracer
         .trace_type::<dc_bundle::definition::interaction::action::ActionType>(&samples)
         .expect("couldn't trace Action");
     tracer

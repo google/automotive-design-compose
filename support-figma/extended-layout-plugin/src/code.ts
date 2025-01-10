@@ -575,7 +575,7 @@ if (figma.command === "sync") {
     } else if (msg.msg === "insertImage") {
       Shader.insertImage(msg.imageBytes);
     } else if (msg.msg === "setShader") {
-      Shader.setShader(msg.shader, msg.shaderFallbackColor, msg.shaderFloatUniforms);
+      Shader.setShader(msg.shader, msg.shaderFallbackColor, msg.shaderUniforms);
     } else if (msg.msg === "clearShader") {
       Shader.clearShader();
     }

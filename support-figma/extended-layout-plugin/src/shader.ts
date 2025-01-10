@@ -18,9 +18,15 @@ import * as Utils from "./utils";
 
 const SHADER_PLUGIN_DATA_KEY = "shader";
 const SHADER_FALLBACK_COLOR_PLUGIN_DATA_KEY = "shaderFallbackColor";
-const SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY = "shaderFloatUniforms";
+const SHADER_UNIFORMS_PLUGIN_DATA_KEY = "shaderUniforms";
 // Private plugin data, used for clearing shader functionalities
 const SHADER_IMAGE_HASH = "shaderImageHash";
+
+export interface ShaderUniform {
+  uniformName: string,
+  uniformType: string,
+  uniformValue: number|Float32Array|RGBA
+}
 
 export const shaderMap: ReadonlyMap<string, string> = new Map([
   ["cloudy_sky", __uiFiles__.cloudy_sky],
@@ -82,7 +88,7 @@ export async function insertImage(imageBytes: Uint8Array) {
   }
 }
 
-export async function setShader(shader: string, shaderFallbackColor: string, shaderFloatUniforms: Array<[string, string]>) {
+export async function setShader(shader: string, shaderFallbackColor: string, shaderUniforms: Array<ShaderUniform>) {
   await figma.loadAllPagesAsync();
   let selection = figma.currentPage.selection;
 
@@ -93,14 +99,14 @@ export async function setShader(shader: string, shaderFallbackColor: string, sha
     );
     return;
   }
-  setShaderToNode(selection[0], shader, shaderFallbackColor, shaderFloatUniforms);
+  setShaderToNode(selection[0], shader, shaderFallbackColor, shaderUniforms);
 }
 
 function setShaderToNode(
   node: SceneNode,
   shader: string|undefined|null,
   shaderFallbackColor: string|undefined|null,
-  shaderFloatUniforms: Array<[string, string]>|undefined|null,
+  shaderUniforms: Array<ShaderUniform>|undefined|null,
 ) {
   let nodeWithFills: MinimalFillsMixin = node as MinimalFillsMixin;
 
@@ -140,23 +146,23 @@ function setShaderToNode(
         ""
       );
     }
-    if (shaderFloatUniforms) {
-      const floatUniformsJson: { [key: string]: string } = {};
-      for (const [key, value] of shaderFloatUniforms) {
-        floatUniformsJson[key] = value;
+    if (shaderUniforms) {
+      for (const shaderUniform of shaderUniforms) {
+        console.log(JSON.stringify(shaderUniform));
       }
-      console.log(JSON.stringify(floatUniformsJson));
+
+      console.log(JSON.stringify(shaderUniforms));
 
       node.setSharedPluginData(
         Utils.SHARED_PLUGIN_NAMESPACE,
-        SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY,
-        JSON.stringify(floatUniformsJson)
+        SHADER_UNIFORMS_PLUGIN_DATA_KEY,
+        JSON.stringify(shaderUniforms)
       );
     } else {
       // Clears the float uniforms
       node.setSharedPluginData(
         Utils.SHARED_PLUGIN_NAMESPACE,
-        SHADER_FLOAT_UNIFORMS_PLUGIN_DATA_KEY,
+        SHADER_UNIFORMS_PLUGIN_DATA_KEY,
         ""
       );
       console.log("clear shader float uniforms");

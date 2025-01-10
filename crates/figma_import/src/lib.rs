@@ -52,3 +52,4 @@ pub use dc_bundle::definition::NodeQuery;
 /// languages
 #[cfg(feature = "reflection")]
 pub mod reflection;
+pub mod shader_schema;

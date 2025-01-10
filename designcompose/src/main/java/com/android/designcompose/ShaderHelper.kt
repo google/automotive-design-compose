@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 
 object ShaderHelper {
     const val UNIFORM_TIME = "iTime"
+    const val UNIFORM_TYPE_FLOAT = "float"
     private lateinit var shaderUniformTimeState: FloatState
 
     @Composable

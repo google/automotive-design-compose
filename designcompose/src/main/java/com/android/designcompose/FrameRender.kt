@@ -63,6 +63,7 @@ import com.android.designcompose.serdegen.ProgressVectorMeterData
 import com.android.designcompose.serdegen.RotationMeterData
 import com.android.designcompose.serdegen.ShadowBox
 import com.android.designcompose.serdegen.Shape
+import com.android.designcompose.serdegen.ValueType
 import com.android.designcompose.serdegen.VectorArc
 import com.android.designcompose.serdegen.View
 import com.android.designcompose.serdegen.ViewShape
@@ -462,50 +463,18 @@ internal fun ContentDrawScope.render(
         )
 
     val customFillBrushFunction = customizations.getBrushFunction(name)
-    var customFillBrush =
+    val customFillBrush =
         if (customFillBrushFunction != null) {
             customFillBrushFunction()
         } else {
             customizations.getBrush(name)
         }
-    if (customFillBrush == null) {
-        view.shader_data.getOrNull()?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val shaderProg = it.shader.trim().trimIndent()
-                val shader = RuntimeShader(shaderProg)
-                customFillBrush = SizingShaderBrush(shader)
-                customizations.getShaderFloatUniformMap(name)?.forEach { (k, v) ->
-                    if (k == ShaderHelper.UNIFORM_TIME || it.shader_float_uniforms.containsKey(k)) {
-                        shader.setFloatUniform(k, v)
-                    }
-                }
-                customizations.getShaderFloatStateUniformMap(name)?.forEach { (k, v) ->
-                    if (k == ShaderHelper.UNIFORM_TIME || it.shader_float_uniforms.containsKey(k)) {
-                        shader.setFloatUniform(k, v.floatValue)
-                    }
-                }
-                it.shader_float_uniforms.forEach { (k, v) ->
-                    if (
-                        customizations.getShaderFloatUniformMap(name)?.containsKey(k) == false &&
-                            customizations.getShaderFloatStateUniformMap(name)?.containsKey(k) ==
-                                false
-                    ) {
-                        shader.setFloatUniform(k, v)
-                    }
-                }
-            } else {
-                it.shader_fallback_color.getOrNull()?.let { color ->
-                    customFillBrush = SolidColor(color.toColor())
-                }
-            }
-        }
-    }
 
     val brushSize = getNodeRenderSize(rectSize, size, style, layoutId, density)
     val fillBrush: List<Paint> =
         if (customFillBrush != null) {
             val p = Paint()
-            customFillBrush!!.applyTo(brushSize, p, 1.0f)
+            customFillBrush.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
             style.nodeStyle.backgrounds.mapNotNull { background ->
@@ -820,24 +789,46 @@ internal fun ContentDrawScope.squooshShapeRender(
                 val shader = RuntimeShader(shaderProg)
                 customFillBrush = SizingShaderBrush(shader)
                 customizations.getShaderFloatUniformMap(name)?.forEach { (k, v) ->
-                    if (k == ShaderHelper.UNIFORM_TIME || it.shader_float_uniforms.containsKey(k)) {
-                        shader.setFloatUniform(k, v)
-                    }
-                }
-                customizations.getShaderFloatStateUniformMap(name)?.forEach { (k, v) ->
-                    if (k == ShaderHelper.UNIFORM_TIME || it.shader_float_uniforms.containsKey(k)) {
-                        shader.setFloatUniform(k, v.floatValue)
-                    }
-                }
-                it.shader_float_uniforms.forEach { (k, v) ->
                     if (
-                        customizations.getShaderFloatUniformMap(name)?.containsKey(k) == false &&
-                            customizations.getShaderFloatStateUniformMap(name)?.containsKey(k) ==
-                                false
+                        k == ShaderHelper.UNIFORM_TIME ||
+                            it.shader_uniforms[k]?.type == ShaderHelper.UNIFORM_TYPE_FLOAT
                     ) {
                         shader.setFloatUniform(k, v)
                     }
                 }
+                customizations.getShaderFloatStateUniformMap(name)?.forEach { (k, v) ->
+                    if (
+                        k == ShaderHelper.UNIFORM_TIME ||
+                            it.shader_uniforms[k]?.type == ShaderHelper.UNIFORM_TYPE_FLOAT
+                    ) {
+                        shader.setFloatUniform(k, v.floatValue)
+                    }
+                }
+                it.shader_uniforms
+                    .filterKeys { key ->
+                        customizations.getShaderFloatUniformMap(name)?.containsKey(key) != true &&
+                            customizations.getShaderFloatStateUniformMap(name)?.containsKey(key) !=
+                                true
+                    }
+                    .forEach { (k, v) ->
+                        v.value.getOrNull()?.let { uniformValue ->
+                            if (uniformValue.value_type.isPresent) {
+                                when (val valueType = uniformValue.value_type.get()) {
+                                    is ValueType.FloatValue -> {
+                                        shader.setFloatUniform(k, valueType.value)
+                                    }
+                                    is ValueType.FloatArrayValue ->
+                                        shader.setFloatUniform(
+                                            k,
+                                            valueType.value.array.toFloatArray(),
+                                        )
+                                    is ValueType.FloatColorValue -> {
+                                        shader.setColorUniform(k, valueType.value.toColor())
+                                    }
+                                }
+                            }
+                        }
+                    }
             } else {
                 it.shader_fallback_color.getOrNull()?.let { color ->
                     customFillBrush = SolidColor(color.toColor())

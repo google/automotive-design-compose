@@ -1671,6 +1671,10 @@ internal fun com.android.designcompose.serdegen.Color.toColor(): Color {
     return Color(r, g, b, a)
 }
 
+internal fun com.android.designcompose.serdegen.FloatColor.toColor(): android.graphics.Color {
+    return android.graphics.Color.valueOf(r, g, b, a)
+}
+
 internal fun getTextContent(context: Context, textData: ViewDataType.Text): String {
     if (DebugNodeManager.getUseLocalRes().value && textData.value.res_name.isPresent) {
         val resName = textData.value.res_name.get()

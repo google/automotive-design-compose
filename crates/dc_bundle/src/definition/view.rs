@@ -15,8 +15,8 @@
  */
 use crate::definition::element::line_height::LineHeightType;
 use crate::definition::element::{
-    background, Background, Color, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar,
-    Rectangle, Size, Stroke, TextDecoration, ViewShape,
+    background, Background, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar, Rectangle,
+    Size, Stroke, TextDecoration, ViewShape,
 };
 use crate::definition::interaction::{PointerEvents, Reaction};
 use crate::definition::layout::{
@@ -26,7 +26,6 @@ use crate::definition::modifier::{BlendMode, TextAlign, TextAlignVertical, TextO
 use crate::definition::plugin::FrameExtras;
 use crate::definition::view::view::RenderMethod;
 use crate::definition::view::view_data::{Container, ViewDataType};
-use log::error;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU16;
 
@@ -421,34 +420,5 @@ impl View {
     }
     pub fn style_mut(&mut self) -> &mut ViewStyle {
         self.style.as_mut().expect("ViewStyle is required.")
-    }
-}
-
-impl ShaderData {
-    pub fn new_shader_data(
-        shader: Option<String>,
-        shader_fallback_color: Option<Color>,
-        shader_float_uniform_map: HashMap<String, String>,
-    ) -> Option<ShaderData> {
-        if let Some(shader_prog) = shader {
-            let mut shader_float_uniforms: HashMap<String, f32> = HashMap::new();
-            for (key, value) in shader_float_uniform_map {
-                match value.parse::<f32>() {
-                    Ok(float_val) => {
-                        shader_float_uniforms.insert(key, float_val);
-                    }
-                    Err(e) => {
-                        error!("Error parsing float for shader float uniform '{}': {}", key, e);
-                    }
-                }
-            }
-            return Some(ShaderData {
-                shader: shader_prog,
-                shader_fallback_color,
-                shader_float_uniforms,
-            });
-        } else {
-            None
-        }
     }
 }

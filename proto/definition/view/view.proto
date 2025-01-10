@@ -86,8 +86,30 @@ message ShaderData {
   // fallback color when runtime shader code isn't supported
   optional definition.element.Color shader_fallback_color = 2;
 
-  // shader float uniforms: name -> value
-  map<string, float> shader_float_uniforms = 3;
+  // shader uniforms, name => ShaderUniform
+  map<string, ShaderUniform> shader_uniforms = 3;
+}
+
+message ShaderUniform {
+  // name
+  string name = 1;
+  // type
+  string type = 2;
+  // shader uniform value
+  optional ShaderUniformValue value = 3;
+}
+
+message ShaderUniformValue {
+
+  message FloatArray {
+    repeated float array = 1;
+  }
+
+  oneof value_type {
+    float float_value = 1;
+    FloatArray float_array_value = 2;
+    definition.element.FloatColor float_color_value = 3;
+  }
 }
 
 // Details that are unique to each view type.

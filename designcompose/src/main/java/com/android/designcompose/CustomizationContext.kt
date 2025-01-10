@@ -139,7 +139,8 @@ data class Customization(
     // Meter (dial, gauge, progress bar) customization as a function that returns a percentage 0-100
     var meterState: Optional<MeterState> = Optional.empty(),
     var shaderFloatUniformMap: Optional<ShaderFloatUniformMap> = Optional.empty(),
-    var shaderFloatStateUniformMap: Optional<ShaderFloatStateUniformMap> = Optional.empty(),    // Scrollable state and scroll state changed callbacks
+    var shaderFloatStateUniformMap: Optional<ShaderFloatStateUniformMap> =
+        Optional.empty(), // Scrollable state and scroll state changed callbacks
     var scrollCallbacks: Optional<DesignScrollCallbacks> = Optional.empty(),
 )
 

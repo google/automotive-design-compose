@@ -54,6 +54,10 @@ abstract class FeedbackImpl {
         maxMessages = num
     }
 
+    internal fun clearMessages() {
+        messages.clear()
+    }
+
     fun addIgnoredDocument(docId: DesignDocId): Boolean {
         ignoredDocuments.add(docId)
         return true
@@ -69,8 +73,6 @@ abstract class FeedbackImpl {
     }
 
     // Message functions
-    //    fun newDocServer(url: String){
-    //    }
 
     fun diskLoadFail(id: String, docId: DesignDocId) {
         setStatus(

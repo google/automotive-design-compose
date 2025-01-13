@@ -23,7 +23,7 @@ source "https://rubygems.org"
 # Happy Jekylling!
 gem "jekyll", "~> 4.3.4"
 
-gem "just-the-docs", "0.10.0" # pinned to the current release
+gem "just-the-docs", "0.10.1" # pinned to the current release
 gem "jekyll-github-metadata"
 
 # Testing

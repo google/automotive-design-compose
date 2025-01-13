@@ -36,7 +36,7 @@ fn run_test(doc_id: &str, queries: &[&str]) {
     )
     .unwrap();
 
-    let dc_definition = build_definition(&mut doc, &queries).unwrap();
+    let (dc_definition, dc_extras) = build_definition(&mut doc, &queries).unwrap();
     let header = DesignComposeDefinitionHeader::current(
         "".to_string(),
         "testFetch".to_string(),
@@ -46,7 +46,8 @@ fn run_test(doc_id: &str, queries: &[&str]) {
 
     // Check that we can encode it out to a file and read it back in again
     let doc_file = NamedTempFile::new().unwrap();
-    save_design_def(doc_file.path(), &header, &dc_definition).expect("Failed to save doc");
+    save_design_def(doc_file.path(), &header, &dc_definition, &dc_extras)
+        .expect("Failed to save doc");
     load_design_def(doc_file.path()).expect("Failed to load the doc again");
 }
 

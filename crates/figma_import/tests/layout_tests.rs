@@ -144,7 +144,7 @@ fn add_view_to_layout(
 }
 
 fn load_doc() -> Result<DesignComposeDefinition, figma_import::Error> {
-    let (_header, figma_doc) = load_design_def("tests/layout-unit-tests.dcf")?;
+    let (_header, figma_doc, _extras) = load_design_def("tests/layout-unit-tests.dcf")?;
     Ok(figma_doc)
 }
 

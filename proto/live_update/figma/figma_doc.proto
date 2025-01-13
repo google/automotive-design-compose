@@ -40,7 +40,8 @@ message FigmaDocInfo {
 // errors
 message ServerFigmaDoc {
   designcompose.definition.DesignComposeDefinition figma_doc = 1;
-  repeated FigmaDocInfo branches = 2;
-  repeated FigmaDocInfo project_files = 3;
-  repeated string errors = 4;
+  designcompose.definition.DesignComposeDefinitionExtras doc_extras = 2;
+  repeated FigmaDocInfo branches = 3;
+  repeated FigmaDocInfo project_files = 4;
+  repeated string errors = 5;
 }

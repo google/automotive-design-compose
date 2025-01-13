@@ -46,15 +46,19 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
     // We also want to build a complete set of images for the doc we save to disk (if we're saving);
     // since we can't write to our just decoded doc, so any zero length byte arrays get updated to
     // point to the actual bytes we already have in heap.
-    private var images: HashMap<String, Bitmap> = HashMap()
+    private val images: HashMap<String, Bitmap> = HashMap()
 
     init {
-        for ((imageKey, bytes) in c.document.imagesMap) {
-            if (bytes.isEmpty()) {
-                if (previousDoc != null && previousDoc.images[imageKey] != null) {
+        for ((imageKey, bytes) in c.imagesMap) {
+            if (bytes.isEmpty) {
+                if (
+                    previousDoc != null &&
+                        previousDoc.images[imageKey] != null &&
+                        previousDoc.c.imagesMap[imageKey] != null
+                ) {
                     images[imageKey] = previousDoc.images[imageKey]!!
                     // Replace this record in the decoded doc.
-                    c.document.imagesMap[imageKey] = previousDoc.c.document.imagesMap[imageKey]
+                    c.imagesMap[imageKey] = previousDoc.c.imagesMap[imageKey]!!
                 }
             } else {
                 val byteArray = ByteArray(bytes.size()) { i -> bytes[i] }
@@ -62,7 +66,7 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
                 images[imageKey] = bitmap
             }
         }
-        Feedback.documentDecodeImages(c.document.imagesMap.size, c.header.name, c.docId)
+        Feedback.documentDecodeImages(c.imagesMap.size, c.header.name, c.docId)
     }
 
     /**

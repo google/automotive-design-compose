@@ -55,23 +55,26 @@ mod serialized_document_tests {
         //Load a test doc.
         let mut doc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         doc_path.push("../../reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_pxVlixodJqZL95zo2RzTHl.dcf");
-        let (header, doc) = load_design_def(doc_path).expect("Failed to load design bundle.");
+        let (header, doc, extras) =
+            load_design_def(doc_path).expect("Failed to load design bundle.");
 
         // Dump some info
         println!("Deserialized header: {}", &header);
         println!("Deserialized doc: {}", &doc);
+        println!("Deserialized extras {}", &extras);
 
         // Re-save the test doc into a temporary file in a temporary directory.
         let tmp_dir = testdir!();
         let tmp_doc_path = PathBuf::from(&tmp_dir).join("tmp_pxVlixodJqZL95zo2RzTHl.dcf");
-        save_design_def(&tmp_doc_path, &header, &doc)
+        save_design_def(&tmp_doc_path, &header, &doc, &extras)
             .expect("Failed to save temporary DesignCompose Definition.");
 
         // Re-load the temporary file
-        let (tmp_header, tmp_doc) =
+        let (tmp_header, tmp_doc, tmp_extras) =
             load_design_def(&tmp_doc_path).expect("Failed to load tmp DesignCompose Definition.");
         println!("Tmp deserialized header: {}", &tmp_header);
         println!("Tmp deserialized doc: {}", &tmp_doc);
+        println!("Tmp deserialized extras: {}", &tmp_extras);
     }
 
     #[test]
@@ -80,7 +83,7 @@ mod serialized_document_tests {
         // Try to load a doc which doesn't exist. This should fail with a clean error.
         let mut doc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         doc_path.push("this.doc.does.not.exist.dcf");
-        let (_tmp_header, _tmp_doc) =
+        let (_tmp_header, _tmp_doc, _tmp_extras) =
             load_design_def(&doc_path).expect("Failed to load tmp DesignCompose Definition.");
     }
 
@@ -95,7 +98,7 @@ mod serialized_document_tests {
         let data: Vec<u8> = (0..48).map(|v| v).collect();
         file.write_all(&data).expect("Failed to write garbage data to garbage file.");
 
-        let (_tmp_header, _tmp_doc) = load_design_def(&garbage_doc_path)
+        let (_tmp_header, _tmp_doc, _tmp_extras) = load_design_def(&garbage_doc_path)
             .expect("Failed to load garbage DesignCompose Definition.");
     }
 }

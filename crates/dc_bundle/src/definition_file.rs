@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use crate::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use crate::definition::{
+    DesignComposeDefinition, DesignComposeDefinitionExtras, DesignComposeDefinitionHeader,
+};
 use crate::Error;
 use prost::bytes::{Buf, Bytes};
 use prost::Message;
@@ -24,15 +26,20 @@ use std::path::Path;
 pub fn encode_dcd_with_header(
     header: &DesignComposeDefinitionHeader,
     doc: &DesignComposeDefinition,
+    extras: &DesignComposeDefinitionExtras,
 ) -> Vec<u8> {
     let mut encoded = header.encode_length_delimited_to_vec();
     encoded.append(&mut doc.encode_length_delimited_to_vec());
+    encoded.append(&mut extras.encode_length_delimited_to_vec());
     encoded
 }
 
 pub fn decode_dcd_with_header<B>(
     mut msg: B,
-) -> Result<(DesignComposeDefinitionHeader, DesignComposeDefinition), Error>
+) -> Result<
+    (DesignComposeDefinitionHeader, DesignComposeDefinition, DesignComposeDefinitionExtras),
+    Error,
+>
 where
     B: Buf,
 {
@@ -47,8 +54,9 @@ where
         )));
     }
 
-    let dcd = DesignComposeDefinition::decode_length_delimited(msg)?;
-    Ok((header, dcd))
+    let dcd = DesignComposeDefinition::decode_length_delimited(&mut msg)?;
+    let extras = DesignComposeDefinitionExtras::decode_length_delimited(msg)?;
+    Ok((header, dcd, extras))
 }
 
 /// A helper method to save serialized figma design docs.
@@ -56,19 +64,23 @@ pub fn save_design_def<P>(
     save_path: P,
     header: &DesignComposeDefinitionHeader,
     doc: &DesignComposeDefinition,
+    extras: &DesignComposeDefinitionExtras,
 ) -> Result<(), Error>
 where
     P: AsRef<Path>,
 {
     let mut output = File::create(save_path)?;
-    output.write_all(encode_dcd_with_header(header, doc).as_slice())?;
+    output.write_all(encode_dcd_with_header(header, doc, extras).as_slice())?;
     Ok(())
 }
 
 /// A helper method to load a DesignCompose Definition from a file.
 pub fn load_design_def<P>(
     load_path: P,
-) -> Result<(DesignComposeDefinitionHeader, DesignComposeDefinition), Error>
+) -> Result<
+    (DesignComposeDefinitionHeader, DesignComposeDefinition, DesignComposeDefinitionExtras),
+    Error,
+>
 where
     P: AsRef<Path>,
 {
@@ -76,7 +88,7 @@ where
     let mut document_file = File::open(&load_path)?;
     let _bytes = document_file.read_to_end(&mut buf)?;
 
-    let (header, doc) = decode_dcd_with_header(Bytes::from(buf))?;
+    let (header, doc, extras) = decode_dcd_with_header(Bytes::from(buf))?;
 
-    Ok((header, doc))
+    Ok((header, doc, extras))
 }

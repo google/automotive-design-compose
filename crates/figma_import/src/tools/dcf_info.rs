@@ -78,7 +78,7 @@ pub fn dcf_info(args: Args) -> Result<(), ParseError> {
         return Ok(());
     }
 
-    let (header, doc) = load_design_def(file_path)?;
+    let (header, doc, _extras) = load_design_def(file_path)?;
 
     println!("Deserialized file");
     println!("  DC Version: {}", header.dc_version);

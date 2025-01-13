@@ -15,7 +15,10 @@
 use crate::android_interface::convert_response;
 use crate::android_interface::{ConvertRequest, ConvertResponse};
 use crate::error::Error;
-use dc_bundle::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader, NodeQuery};
+use dc_bundle::definition::{
+    DesignComposeDefinition, DesignComposeDefinitionExtras, DesignComposeDefinitionHeader,
+    NodeQuery,
+};
 use figma_import::ProxyConfig;
 use figma_import::{ImageContextSession, ServerFigmaDoc};
 
@@ -58,12 +61,9 @@ pub fn fetch_doc(
 
         let variable_map = doc.build_variable_map();
 
-        let figma_doc = DesignComposeDefinition::new(
-            views,
-            doc.encoded_image_map(),
-            doc.component_sets().clone(),
-            variable_map,
-        );
+        let figma_doc =
+            DesignComposeDefinition::new(views, doc.component_sets().clone(), variable_map);
+        let doc_extras = DesignComposeDefinitionExtras::new(doc.encoded_image_map());
 
         let header = DesignComposeDefinitionHeader::current(
             doc.last_modified().clone(),
@@ -73,6 +73,7 @@ pub fn fetch_doc(
         );
         let server_doc = ServerFigmaDoc {
             figma_doc: Some(figma_doc),
+            doc_extras: Some(doc_extras),
             errors: error_list,
             branches: doc.branches.clone(),
             project_files: vec![],

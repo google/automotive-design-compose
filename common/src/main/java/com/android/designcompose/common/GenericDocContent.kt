@@ -17,7 +17,9 @@
 package com.android.designcompose.common
 
 import com.android.designcompose.definition.DesignComposeDefinition
+import com.android.designcompose.definition.DesignComposeDefinitionExtras
 import com.android.designcompose.definition.DesignComposeDefinitionHeader
+import com.android.designcompose.definition.designComposeDefinitionExtras
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.live_update.ConvertResponse
 import com.android.designcompose.live_update.figma.FigmaDocInfo
@@ -32,6 +34,7 @@ class GenericDocContent(
     var docId: DesignDocId,
     val header: DesignComposeDefinitionHeader,
     val document: DesignComposeDefinition,
+    private val extras: DesignComposeDefinitionExtras,
     val variantViewMap: HashMap<String, HashMap<String, View>>,
     val variantPropertyMap: VariantPropertyMap,
     val nodeIdMap: HashMap<String, View>,
@@ -39,6 +42,8 @@ class GenericDocContent(
     val branches: List<FigmaDocInfo>? = null,
     val project_files: List<FigmaDocInfo>? = null,
 ) {
+    val imagesMap: MutableMap<String, ByteString> = extras.imagesMap.toMutableMap()
+
     fun save(filepath: File, feedback: FeedbackImpl) {
         feedback.documentSaveTo(filepath.absolutePath, docId)
         try {
@@ -58,6 +63,8 @@ class GenericDocContent(
             val outputStream = ByteArrayOutputStream()
             header.writeDelimitedTo(outputStream)
             document.writeDelimitedTo(outputStream)
+            designComposeDefinitionExtras { images.putAll(imagesMap) }
+                .writeDelimitedTo(outputStream)
             outputStream.write(imageSession.toByteArray())
             return outputStream.toByteArray()
         } catch (error: Throwable) {
@@ -91,6 +98,7 @@ fun decodeServerBaseDoc(
         docId,
         header,
         content,
+        serverDoc.docExtras,
         variantViewMap,
         variantPropertyMap,
         nodeIdMap,
@@ -110,6 +118,7 @@ fun decodeDiskBaseDoc(
 
     val header = decodeHeader(docStream, docId, feedback) ?: return null
     val content = DesignComposeDefinition.parseDelimitedFrom(docStream)
+    val extras = DesignComposeDefinitionExtras.parseDelimitedFrom(docStream)
 
     // Proto bytes are parsed to their immutable ByteString representation. It's just a ByteArray
     // that's immutable, basically.
@@ -125,6 +134,7 @@ fun decodeDiskBaseDoc(
         docId,
         header,
         content,
+        extras,
         variantMap,
         variantPropertyMap,
         nodeIdMap,

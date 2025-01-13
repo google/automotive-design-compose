@@ -25,6 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         ".designcompose.definition.DesignComposeDefinitionHeader",
         "dc_bundle::definition::DesignComposeDefinitionHeader",
     );
+
     prost_config
         .extern_path(".designcompose.live_update.figma.IgnoredImage", "figma_import::IgnoredImage");
     prost_config.extern_path(

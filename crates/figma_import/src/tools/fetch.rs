@@ -18,8 +18,8 @@ use std::io::{Error, ErrorKind};
 use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use dc_bundle::definition::DesignComposeDefinitionHeader;
 use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
+use dc_bundle::definition::{DesignComposeDefinitionExtras, DesignComposeDefinitionHeader};
 use dc_bundle::definition_file::save_design_def;
 
 #[derive(Debug)]
@@ -114,7 +114,7 @@ pub fn load_figma_token() -> Result<String, Error> {
 pub fn build_definition(
     doc: &mut Document,
     nodes: &Vec<String>,
-) -> Result<DesignComposeDefinition, ConvertError> {
+) -> Result<(DesignComposeDefinition, DesignComposeDefinitionExtras), ConvertError> {
     let mut error_list = Vec::new();
     // Convert the requested nodes from the Figma doc.
     let views = doc.nodes(
@@ -128,11 +128,9 @@ pub fn build_definition(
     let variable_map = doc.build_variable_map();
 
     // Build the serializable doc structure
-    Ok(DesignComposeDefinition::new(
-        views,
-        doc.encoded_image_map(),
-        doc.component_sets().clone(),
-        variable_map,
+    Ok((
+        DesignComposeDefinition::new(views, doc.component_sets().clone(), variable_map),
+        DesignComposeDefinitionExtras::new(doc.encoded_image_map()),
     ))
 }
 
@@ -156,7 +154,7 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
         None,
     )?;
 
-    let dc_definition = build_definition(&mut doc, &args.nodes)?;
+    let (dc_definition, dc_extras) = build_definition(&mut doc, &args.nodes)?;
 
     println!("Fetched document");
     println!("  DC Version: {}", DesignComposeDefinitionHeader::current_version());
@@ -175,6 +173,7 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
             doc.get_document_id().clone(),
         ),
         &dc_definition,
+        &dc_extras,
     )?;
     Ok(())
 }

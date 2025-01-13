@@ -40,12 +40,16 @@ message DesignComposeDefinition {
   // The string here is a NodeQuery, encoded to a string so that it can be used
   // as the key to the map.  See crates/dc_bundle/src/definition.rs for encoding/decoding
   map<string, definition.view.View> views = 1;
+  map<string, string> component_sets = 2;
+  definition.element.VariableMap variable_map = 3;
+}
+
+// Separate extras that contains data like image key to network bytes map.
+message DesignComposeDefinitionExtras {
   // Images contains a mapping from ImageKey to network bytes. It can
   // create an ImageMap and is intended to be used when we want to use
   // Figma-defined components but do not want to communicate with the Figma
   // service.
-  map<string, bytes> images = 2;
-  map<string, string> component_sets = 3;
-  definition.element.VariableMap variable_map = 4;
+  map<string, bytes> images = 1;
 }
 

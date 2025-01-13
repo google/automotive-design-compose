@@ -21,7 +21,10 @@ use dc_bundle::definition::layout::LayoutSizing;
 use dc_bundle::definition::view::view_data::ViewDataType;
 use dc_bundle::definition::view::view_data::ViewDataType::{Container, Text};
 use dc_bundle::definition::view::{view_data, View};
-use dc_bundle::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader, NodeQuery};
+use dc_bundle::definition::{
+    DesignComposeDefinition, DesignComposeDefinitionExtras, DesignComposeDefinitionHeader,
+    NodeQuery,
+};
 use dc_bundle::definition_file::save_design_def;
 use layout::LayoutManager;
 use std::collections::HashMap;
@@ -284,12 +287,8 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
     let variable_map = doc.build_variable_map();
 
     // Build the serializable doc structure
-    let definition = DesignComposeDefinition::new(
-        views,
-        doc.encoded_image_map(),
-        doc.component_sets().clone(),
-        variable_map,
-    );
+    let definition =
+        DesignComposeDefinition::new(views, doc.component_sets().clone(), variable_map);
 
     let header = DesignComposeDefinitionHeader::current(
         doc.last_modified().clone(),
@@ -298,6 +297,8 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
         doc.get_document_id(),
     );
 
-    save_design_def(args.output, &header, &definition)?;
+    let extras = DesignComposeDefinitionExtras::new(doc.encoded_image_map());
+
+    save_design_def(args.output, &header, &definition, &extras)?;
     Ok(())
 }

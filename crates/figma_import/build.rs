@@ -26,6 +26,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         ".designcompose.definition.DesignComposeDefinition",
         "::dc_bundle::definition::DesignComposeDefinition",
     );
+    // The DesignComposeDefinitionExtras is built by the dc_bundle crate. This line configures the compiler
+    // to use the message from there, rather than compiling it's own copy of the message
+    prost_config.extern_path(
+        ".designcompose.definition.DesignComposeDefinitionExtras",
+        "::dc_bundle::definition::DesignComposeDefinitionExtras",
+    );
 
     let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()

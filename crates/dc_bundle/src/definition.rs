@@ -67,16 +67,28 @@ impl fmt::Display for DesignComposeDefinitionHeader {
     }
 }
 
+impl DesignComposeDefinitionExtras {
+    pub fn new(images: EncodedImageMap) -> DesignComposeDefinitionExtras {
+        DesignComposeDefinitionExtras { images: images.into() }
+    }
+}
+
+impl fmt::Display for DesignComposeDefinitionExtras {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // NOTE: Using `write!` here instead of typical `format!`
+        // to keep newlines.
+        write!(f, "Images: {}", self.images.keys().count())
+    }
+}
+
 impl DesignComposeDefinition {
     pub fn new(
         views: HashMap<NodeQuery, View>,
-        images: EncodedImageMap,
         component_sets: HashMap<String, String>,
         variable_map: VariableMap,
     ) -> DesignComposeDefinition {
         DesignComposeDefinition {
             views: views.iter().map(|(k, v)| (k.encode(), v.to_owned())).collect(),
-            images: images.into(),
             component_sets,
             variable_map: Some(variable_map),
         }

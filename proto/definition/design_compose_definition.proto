@@ -23,6 +23,15 @@ option java_multiple_files = true;
 option java_package = "com.android.designcompose.definition";
 option optimize_for = LITE_RUNTIME;
 
+// A separate header message that quickly identifies the main DesignComposeDefinition
+message DesignComposeDefinitionHeader {
+  uint32 dc_version = 1; // DesignCompose version
+  string last_modified = 2; // Last modified timestamp
+  string name = 3; // Design name
+  string response_version = 4; // Figma response version
+  string id = 5; // Design ID
+}
+
 // A serialized Figma design document, containing views, images, component sets,
 // version, ID, and variable map. It's used for storing and loading Figma
 // designs in a DesignCompose project.
@@ -39,3 +48,4 @@ message DesignComposeDefinition {
   map<string, string> component_sets = 3;
   definition.element.VariableMap variable_map = 4;
 }
+

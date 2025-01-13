@@ -21,8 +21,9 @@
 // or
 // `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
-use crate::{load_design_def, load_design_def_header_v0};
+use crate::design_definition::load_design_def_header_v0;
 use clap::Parser;
+use dc_bundle::definition_file::load_design_def;
 use dc_bundle::legacy_definition::DesignComposeDefinitionHeaderV0;
 
 #[derive(Debug)]
@@ -43,6 +44,12 @@ impl From<std::io::Error> for ParseError {
 impl From<crate::Error> for ParseError {
     fn from(e: crate::Error) -> Self {
         ParseError(format!("Figma Import Error: {:?}", e))
+    }
+}
+impl From<dc_bundle::Error> for ParseError {
+    fn from(e: dc_bundle::Error) -> Self {
+        eprintln!("Error during deserialization: {:?}", e);
+        ParseError(format!("Error during deserialization: {:?}", e))
     }
 }
 

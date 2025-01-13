@@ -20,8 +20,8 @@ use std::{
 };
 
 use crate::error::Error;
-use crate::fetch::ProxyConfig;
 use crate::figma_schema::{Paint, Transform};
+use crate::proxy_config::ProxyConfig;
 use dc_bundle::definition::EncodedImageMap;
 use image::DynamicImage;
 use serde::{Deserialize, Serialize};

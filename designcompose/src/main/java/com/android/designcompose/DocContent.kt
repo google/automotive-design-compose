@@ -24,6 +24,8 @@ import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.GenericDocContent
 import com.android.designcompose.common.decodeDiskBaseDoc
 import com.android.designcompose.common.decodeServerBaseDoc
+import com.android.designcompose.live_update.ConvertResponse
+import com.google.protobuf.kotlin.get
 import java.io.File
 import java.io.InputStream
 
@@ -47,20 +49,20 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
     private var images: HashMap<String, Bitmap> = HashMap()
 
     init {
-        for ((imageKey, bytes) in c.document.images) {
+        for ((imageKey, bytes) in c.document.imagesMap) {
             if (bytes.isEmpty()) {
                 if (previousDoc != null && previousDoc.images[imageKey] != null) {
                     images[imageKey] = previousDoc.images[imageKey]!!
                     // Replace this record in the decoded doc.
-                    c.document.images[imageKey] = previousDoc.c.document.images[imageKey]
+                    c.document.imagesMap[imageKey] = previousDoc.c.document.imagesMap[imageKey]
                 }
             } else {
-                val byteArray = ByteArray(bytes.size) { i -> bytes[i] }
+                val byteArray = ByteArray(bytes.size()) { i -> bytes[i] }
                 val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                 images[imageKey] = bitmap
             }
         }
-        Feedback.documentDecodeImages(c.document.images.size, c.header.name, c.docId)
+        Feedback.documentDecodeImages(c.document.imagesMap.size, c.header.name, c.docId)
     }
 
     /**
@@ -103,7 +105,7 @@ fun decodeDiskDoc(
 }
 
 fun decodeServerDoc(
-    docBytes: ByteArray,
+    docResponse: ConvertResponse.Document,
     previousDoc: DocContent?,
     docId: DesignDocId,
     save: File?,
@@ -111,7 +113,7 @@ fun decodeServerDoc(
 ): DocContent? {
     // We must initialize the fully-decoded DocContent, which decodes images before
     // saving it to disk
-    val baseDoc = decodeServerBaseDoc(docBytes, docId, feedback) ?: return null
+    val baseDoc = decodeServerBaseDoc(docResponse, docId, feedback) ?: return null
     val fullDoc = DocContent(baseDoc, previousDoc)
     save?.let { fullDoc.c.save(save, Feedback) }
     return fullDoc

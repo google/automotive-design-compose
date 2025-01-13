@@ -20,15 +20,14 @@ import android.util.Log
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
-import com.android.designcompose.android_interface.LayoutChangedResponse
-import com.android.designcompose.proto.intoProto
-import com.android.designcompose.proto.intoSerde
-import com.android.designcompose.proto.layoutStyle
-import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.LayoutNode
-import com.android.designcompose.serdegen.LayoutNodeList
-import com.android.designcompose.serdegen.LayoutParentChildren
-import java.util.Optional
+import com.android.designcompose.layout_interface.Layout
+import com.android.designcompose.layout_interface.LayoutChangedResponse
+import com.android.designcompose.layout_interface.LayoutNode
+import com.android.designcompose.layout_interface.LayoutNodeList
+import com.android.designcompose.layout_interface.LayoutParentChildren
+import com.android.designcompose.layout_interface.layoutNode
+import com.android.designcompose.layout_interface.layoutNodeList
+import com.android.designcompose.layout_interface.layoutParentChildren
 
 internal class SquooshLayoutManager(val id: Int)
 
@@ -51,7 +50,7 @@ internal object SquooshLayout {
         rootLayoutId: Int,
         layoutNodeList: LayoutNodeList,
     ): Map<Int, Layout> {
-        val serializedNodes = layoutNodeList.intoProto().toByteArray()
+        val serializedNodes = layoutNodeList.toByteArray()
         val response =
             Jni.jniAddNodes(manager.id, rootLayoutId, serializedNodes) ?: return emptyMap()
         val layoutChangedResponse =
@@ -62,8 +61,6 @@ internal object SquooshLayout {
                 throw e
             }
         return layoutChangedResponse.changedLayoutsMap
-            .map { it.key to it.value.intoSerde() }
-            .toMap()
     }
 }
 
@@ -212,16 +209,16 @@ private fun updateLayoutTree(
         }
 
         layoutNodes.add(
-            LayoutNode(
-                layoutId,
-                parentLayoutId,
-                -1, // not childIdx!
-                resolvedNode.style.layoutStyle,
-                resolvedNode.view.name,
-                useMeasureFunc,
-                Optional.empty(),
-                Optional.empty(),
-            )
+            layoutNode {
+                this.layoutId = layoutId
+                this.parentLayoutId = parentLayoutId
+                this.childIndex = -1 // not childIdx!
+                this.style = resolvedNode.style.layoutStyle
+                this.name = resolvedNode.view.name
+                this.useMeasureFunc = useMeasureFunc
+                clearFixedWidth()
+                clearFixedHeight()
+            }
         )
         layoutCache[layoutId] = layoutCacheKey
     }
@@ -247,9 +244,13 @@ private fun updateLayoutTree(
         child = child.nextSibling
     }
 
-    if (updateLayoutChildren) {
-        layoutParentChildren.add(LayoutParentChildren(layoutId, layoutChildren))
-    }
+    if (updateLayoutChildren)
+        layoutParentChildren.add(
+            layoutParentChildren {
+                this.parentLayoutId = layoutId
+                this.childLayoutIds.addAll(layoutChildren)
+            }
+        )
 
     return needsLayoutUpdate
 }
@@ -295,7 +296,10 @@ internal fun layoutTree(
     val layoutNodes = arrayListOf<LayoutNode>()
     val layoutParentChildren = arrayListOf<LayoutParentChildren>()
     updateLayoutTree(manager, root, layoutCache, layoutNodes, layoutParentChildren)
-    val layoutNodeList = LayoutNodeList(layoutNodes, layoutParentChildren)
+    val layoutNodeList = layoutNodeList {
+        this.layoutNodes.addAll(layoutNodes)
+        this.parentChildren.addAll(layoutParentChildren)
+    }
 
     // Now we can give the new layoutNodeList to the Rust JNI layout implementation
     val updatedLayouts = SquooshLayout.doLayout(manager, root.layoutId, layoutNodeList)

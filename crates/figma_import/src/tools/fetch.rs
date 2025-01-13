@@ -13,13 +13,14 @@
 // limitations under the License.
 
 use std::env;
-use std::io::{Error, ErrorKind, Write};
+use std::io::{Error, ErrorKind};
 
-use crate::{Document, ProxyConfig};
+use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
+use dc_bundle::definition::DesignComposeDefinitionHeader;
 use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
-use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
+use dc_bundle::definition_file::save_design_def;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -32,6 +33,12 @@ impl From<crate::Error> for ConvertError {
 }
 impl From<bincode::Error> for ConvertError {
     fn from(e: bincode::Error) -> Self {
+        eprintln!("Error during serialization: {:?}", e);
+        ConvertError(format!("Error during serialization: {:?}", e))
+    }
+}
+impl From<dc_bundle::Error> for ConvertError {
+    fn from(e: dc_bundle::Error) -> Self {
         eprintln!("Error during serialization: {:?}", e);
         ConvertError(format!("Error during serialization: {:?}", e))
     }
@@ -157,16 +164,17 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
     println!("  Version: {}", doc.get_version());
     println!("  Name: {}", doc.get_name());
     println!("  Last Modified: {}", doc.last_modified().clone());
+
     // We don't bother with serialization of image sessions with this tool.
-    let mut output = std::fs::File::create(args.output)?;
-    let header = bincode::serialize(&DesignComposeDefinitionHeader::current(
-        doc.last_modified().clone(),
-        doc.get_name().clone(),
-        doc.get_version().clone(),
-        doc.get_document_id().clone(),
-    ))?;
-    let doc = bincode::serialize(&dc_definition)?;
-    output.write_all(header.as_slice())?;
-    output.write_all(doc.as_slice())?;
+    save_design_def(
+        args.output,
+        &DesignComposeDefinitionHeader::current(
+            doc.last_modified().clone(),
+            doc.get_name().clone(),
+            doc.get_version().clone(),
+            doc.get_document_id().clone(),
+        ),
+        &dc_definition,
+    )?;
     Ok(())
 }

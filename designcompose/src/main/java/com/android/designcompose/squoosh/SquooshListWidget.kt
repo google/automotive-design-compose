@@ -43,17 +43,13 @@ import com.android.designcompose.ListContent
 import com.android.designcompose.SpanCache
 import com.android.designcompose.calcLayoutInfo
 import com.android.designcompose.common.NodeQuery
+import com.android.designcompose.definition.layout.GridLayoutType
+import com.android.designcompose.definition.layout.GridSpan
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.getCustomComposable
 import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.itemSpacingAbs
-import com.android.designcompose.pointsAsDp
-import com.android.designcompose.proto.getDim
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.proto.type
-import com.android.designcompose.serdegen.GridLayoutType
-import com.android.designcompose.serdegen.GridSpan
-import com.android.designcompose.serdegen.ItemSpacingType
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.utils.pointsAsDp
 
 // For a list widget whose layout is set to horizontal or vertical, add the widget's children into
 // composableList so that they can be composed separately.
@@ -70,10 +66,9 @@ private fun addRowColumnContent(
     var count = content.count
 
     var overflowNodeId: String? = null
-    if (style.nodeStyle.max_children.isPresent && style.nodeStyle.max_children.get() < count) {
-        count = style.nodeStyle.max_children.get()
-        if (style.nodeStyle.overflow_node_id.isPresent)
-            overflowNodeId = style.nodeStyle.overflow_node_id.get()
+    if (style.nodeStyle.hasMaxChildren() && style.nodeStyle.maxChildren < count) {
+        count = style.nodeStyle.maxChildren
+        if (style.nodeStyle.hasOverflowNodeId()) overflowNodeId = style.nodeStyle.overflowNodeId
     }
 
     var previousReplacementChild: SquooshResolvedNode? = null
@@ -88,8 +83,8 @@ private fun addRowColumnContent(
                     if (customComposable != null) {
                         customComposable(
                             Modifier,
-                            style.nodeStyle.overflow_node_name.get(),
-                            NodeQuery.NodeId(style.nodeStyle.overflow_node_id.get()),
+                            style.nodeStyle.overflowNodeName,
+                            NodeQuery.NodeId(style.nodeStyle.overflowNodeId),
                             listOf(), // parentComponents,
                             null,
                         )
@@ -128,12 +123,12 @@ private fun getSpan(
     gridSpanContent.forEach { item ->
         // If not looking for a variant, just find a node name match
         if (nodeData.variantProperties.isEmpty()) {
-            if (nodeData.nodeName == item.node_name)
-                return LazyContentSpan(span = item.span, maxLineSpan = item.max_span)
+            if (nodeData.nodeName == item.nodeName)
+                return LazyContentSpan(span = item.span, maxLineSpan = item.maxSpan)
         } else {
             var spanFound: LazyContentSpan? = null
             var matchesLeft = nodeData.variantProperties.size
-            item.node_variant.forEach {
+            item.nodeVariantMap.forEach {
                 val property = it.key.trim()
                 val value = it.value.trim()
                 val variantPropertyValue = nodeData.variantProperties[property]
@@ -146,15 +141,15 @@ private fun getSpan(
                     // variant properties then we are done. Otherwise, this is a possible match, and
                     // save it in spanFound. If we don't have any exact matches, return spanFound
                     if (matchesLeft == 0) {
-                        if (nodeData.variantProperties.size == item.node_variant.size) {
+                        if (nodeData.variantProperties.size == item.nodeVariantCount) {
                             val span =
-                                if (item.max_span) LazyContentSpan(maxLineSpan = true)
+                                if (item.maxSpan) LazyContentSpan(maxLineSpan = true)
                                 else LazyContentSpan(span = item.span)
                             SpanCache.setSpan(nodeData, span)
                             return span
                         } else
                             spanFound =
-                                LazyContentSpan(span = item.span, maxLineSpan = item.max_span)
+                                LazyContentSpan(span = item.span, maxLineSpan = item.maxSpan)
                     }
                 }
             }
@@ -183,17 +178,16 @@ private fun calculateCellsCrossAxisSizeImpl(
 
 // Given the grid layout type and main axis size, return the number of columns/rows
 private fun calculateColumnRowCount(layoutInfo: LayoutInfoGrid, gridMainAxisSize: Int): Int {
-    val count: Int
-    if (
-        layoutInfo.layout is GridLayoutType.FixedColumns ||
-            layoutInfo.layout is GridLayoutType.FixedRows
-    ) {
-        count = layoutInfo.numColumnsRows
-    } else {
-        count =
+    val count =
+        if (
+            layoutInfo.layout == GridLayoutType.GRID_LAYOUT_TYPE_FIXED_COLUMNS ||
+                layoutInfo.layout == GridLayoutType.GRID_LAYOUT_TYPE_FIXED_ROWS
+        ) {
+            layoutInfo.numColumnsRows
+        } else {
             gridMainAxisSize /
                 (layoutInfo.minColumnRowSize + itemSpacingAbs(layoutInfo.mainAxisSpacing))
-    }
+        }
     return if (count > 0) count else 1
 }
 
@@ -226,8 +220,7 @@ private fun addGridContent(
                 // for the first frame and then in another on the second frame after the main axis
                 // size has been set.
                 val showInitContent =
-                    (gridMainAxisSize <= 0 &&
-                        layoutInfo.mainAxisSpacing.type() is ItemSpacingType.Auto)
+                    (gridMainAxisSize <= 0 && layoutInfo.mainAxisSpacing.hasAuto())
 
                 if (showInitContent)
                     items(
@@ -242,13 +235,10 @@ private fun addGridContent(
                 else {
                     var count = lContent.count
                     var overflowNodeId: String? = null
-                    if (
-                        style.nodeStyle.max_children.isPresent &&
-                            style.nodeStyle.max_children.get() < count
-                    ) {
-                        count = style.nodeStyle.max_children.get()
-                        if (style.nodeStyle.overflow_node_id.isPresent)
-                            overflowNodeId = style.nodeStyle.overflow_node_id.get()
+                    if (style.nodeStyle.hasMaxChildren() && style.nodeStyle.maxChildren < count) {
+                        count = style.nodeStyle.maxChildren
+                        if (style.nodeStyle.hasOverflowNodeId())
+                            overflowNodeId = style.nodeStyle.overflowNodeId
                     }
                     items(
                         count,
@@ -282,8 +272,8 @@ private fun addGridContent(
                                 if (customComposable != null) {
                                     customComposable(
                                         Modifier,
-                                        style.nodeStyle.overflow_node_name.get(),
-                                        NodeQuery.NodeId(style.nodeStyle.overflow_node_id.get()),
+                                        style.nodeStyle.overflowNodeName,
+                                        NodeQuery.NodeId(style.nodeStyle.overflowNodeId),
                                         listOf(), // parentComps,
                                         null,
                                     )
@@ -305,12 +295,13 @@ private fun addGridContent(
             }
 
             if (
-                layoutInfo.layout is GridLayoutType.FixedColumns ||
-                    layoutInfo.layout is GridLayoutType.AutoColumns
+                layoutInfo.layout == GridLayoutType.GRID_LAYOUT_TYPE_FIXED_COLUMNS ||
+                    layoutInfo.layout == GridLayoutType.GRID_LAYOUT_TYPE_AUTO_COLUMNS
             ) {
                 val columnCount = calculateColumnRowCount(layoutInfo, gridMainAxisSize)
                 val horizontalSpacing =
-                    (layoutInfo.mainAxisSpacing.type() as? ItemSpacingType.Fixed)?.value ?: 0
+                    if (layoutInfo.mainAxisSpacing.hasFixed()) layoutInfo.mainAxisSpacing.fixed
+                    else 0
                 val verticalSpacing = layoutInfo.crossAxisSpacing
                 LazyVerticalGrid(
                     state = lazyGridState,
@@ -331,27 +322,25 @@ private fun addGridContent(
                         },
                     horizontalArrangement =
                         Arrangement.spacedBy(
-                            (when (val spacing = layoutInfo.mainAxisSpacing.type()) {
-                                    is ItemSpacingType.Fixed -> spacing.value
-                                    is ItemSpacingType.Auto -> {
-                                        if (columnCount > 1)
-                                            (gridMainAxisSize -
-                                                (spacing.value.height * columnCount)) /
-                                                (columnCount - 1)
-                                        else spacing.value.width
-                                    }
-                                    else -> horizontalSpacing
-                                })
-                                .dp
+                            if (layoutInfo.mainAxisSpacing.hasFixed())
+                                layoutInfo.mainAxisSpacing.fixed.dp
+                            else if (layoutInfo.mainAxisSpacing.hasAuto()) {
+                                if (columnCount > 1)
+                                    ((gridMainAxisSize -
+                                            (layoutInfo.mainAxisSpacing.auto.height *
+                                                columnCount)) / (columnCount - 1))
+                                        .dp
+                                else layoutInfo.mainAxisSpacing.auto.width.dp
+                            } else horizontalSpacing.dp
                         ),
                     verticalArrangement = Arrangement.spacedBy(verticalSpacing.dp),
                     userScrollEnabled = layoutInfo.scrollingEnabled,
                     contentPadding =
                         PaddingValues(
-                            layoutInfo.padding.start.getDim().pointsAsDp(density),
-                            layoutInfo.padding.top.getDim().pointsAsDp(density),
-                            layoutInfo.padding.end.getDim().pointsAsDp(density),
-                            layoutInfo.padding.bottom.getDim().pointsAsDp(density),
+                            layoutInfo.padding.start.pointsAsDp(density),
+                            layoutInfo.padding.top.pointsAsDp(density),
+                            layoutInfo.padding.end.pointsAsDp(density),
+                            layoutInfo.padding.bottom.pointsAsDp(density),
                         ),
                 ) {
                     lazyItemContent()
@@ -360,7 +349,8 @@ private fun addGridContent(
                 val rowCount = calculateColumnRowCount(layoutInfo, gridMainAxisSize)
                 val horizontalSpacing = layoutInfo.crossAxisSpacing
                 val verticalSpacing =
-                    (layoutInfo.mainAxisSpacing.type() as? ItemSpacingType.Fixed)?.value ?: 0
+                    if (layoutInfo.mainAxisSpacing.hasFixed()) layoutInfo.mainAxisSpacing.fixed
+                    else 0
 
                 LazyHorizontalGrid(
                     state = lazyGridState,
@@ -382,17 +372,16 @@ private fun addGridContent(
                     horizontalArrangement = Arrangement.spacedBy(horizontalSpacing.dp),
                     verticalArrangement =
                         Arrangement.spacedBy(
-                            (when (val spacing = layoutInfo.mainAxisSpacing.type()) {
-                                    is ItemSpacingType.Fixed -> spacing.value
-                                    is ItemSpacingType.Auto -> {
-                                        if (rowCount > 1)
-                                            (gridMainAxisSize - (spacing.value.height * rowCount)) /
-                                                (rowCount - 1)
-                                        else spacing.value.width
-                                    }
-                                    else -> verticalSpacing
-                                })
-                                .dp
+                            if (layoutInfo.mainAxisSpacing.hasFixed())
+                                layoutInfo.mainAxisSpacing.fixed.dp
+                            else if (layoutInfo.mainAxisSpacing.hasAuto()) {
+                                if (rowCount > 1)
+                                    ((gridMainAxisSize -
+                                            (layoutInfo.mainAxisSpacing.auto.height * rowCount)) /
+                                            (rowCount - 1))
+                                        .dp
+                                else layoutInfo.mainAxisSpacing.auto.width.dp
+                            } else verticalSpacing.dp
                         ),
                     userScrollEnabled = layoutInfo.scrollingEnabled,
                 ) {

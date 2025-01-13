@@ -24,10 +24,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithCache
@@ -43,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
-import com.android.designcompose.serdegen.ComponentInfo
+import com.android.designcompose.definition.view.ComponentInfo
 import com.android.designcompose.squoosh.SquooshRoot
 import kotlin.math.min
 import kotlinx.coroutines.delay

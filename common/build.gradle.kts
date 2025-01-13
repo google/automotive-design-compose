@@ -15,7 +15,6 @@
  */
 
 import com.google.protobuf.gradle.id
-import org.gradle.process.internal.DefaultExecOperations
 
 plugins {
     id("java-library")
@@ -38,74 +37,14 @@ publishing {
     }
 }
 
-/**
- * Serde gen task
- *
- * Generates the Java files from our Rust code
- *
- * @property executor: ExecOperations class
- * @property rustSrcs The files to watch to see if we should rebuild (should be filtered to not
- *   include the target dir
- * @property generatedCodeDir Where the generated code will be output
- * @constructor Create empty Serde gen task
- */
-@CacheableTask
-abstract class SerdeGenTask @Inject constructor(private val executor: DefaultExecOperations) :
-    DefaultTask() {
-
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    @get:InputFiles
-    abstract val rustSrcs: ConfigurableFileCollection
-
-    @get:OutputDirectory abstract val generatedCodeDir: DirectoryProperty
-
-    @get:Internal abstract val cargoTargetDir: DirectoryProperty
-
-    init {
-        group = "DesignCompose Developer"
-    }
-
-    @TaskAction
-    fun run() {
-        generatedCodeDir.get().asFileTree.forEach { it.delete() }
-        executor.exec {
-            val localBinCargo =
-                project.providers
-                    .systemProperty("user.home")
-                    .map { File(it, ".cargo/bin/cargo") }
-                    .get()
-            executable = if (localBinCargo.exists()) localBinCargo.absolutePath else "cargo"
-
-            environment("CARGO_TARGET_DIR", cargoTargetDir.get().toString())
-            workingDir(rustSrcs.asPath)
-            args(
-                listOf(
-                    "run",
-                    "-q",
-                    "--release",
-                    "--features=reflection",
-                    "--bin=reflection",
-                    "--",
-                    "--out-dir",
-                    generatedCodeDir.get().toString(),
-                )
-            )
-        }
+sourceSets {
+    test {
+        resources.srcDirs(rootProject.rootDir.resolve("designcompose/src/main/assets"))
+        resources.srcDirs(
+            rootProject.rootDir.resolve("integration-tests/validation/src/main/assets")
+        )
     }
 }
-
-// Configure the task, setting the locations of the source and outputs
-val serdeGenTask =
-    tasks.register<SerdeGenTask>("generateSerdegenCode") {
-        rustSrcs.from(
-            layout.projectDirectory.files("../crates/figma_import").filterNot { name == "target" }
-        )
-        generatedCodeDir.set(layout.buildDirectory.dir("generated/serdegen/java"))
-        cargoTargetDir.set(layout.buildDirectory.dir("serdeGenCargoTarget"))
-    }
-
-// Connect the outputs to the java source set, so it'll automatically be compiled
-project.sourceSets.main { java { srcDir(serdeGenTask.flatMap { it.generatedCodeDir }) } }
 
 // Protobuf configuration
 project.sourceSets.main { proto { srcDir(rootProject.layout.projectDirectory.dir("proto")) } }

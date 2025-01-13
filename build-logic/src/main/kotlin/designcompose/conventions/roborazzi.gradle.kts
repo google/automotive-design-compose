@@ -32,6 +32,7 @@ project.pluginManager.withPlugin("com.android.base") {
                     // Run the tests in parallel
                     maxParallelForks =
                         (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+                    systemProperty("robolectric.logging", "stderr")
 
                     environment("RUST_BACKTRACE", "1")
                     failFast = true
@@ -41,7 +42,6 @@ project.pluginManager.withPlugin("com.android.base") {
                         showExceptions = true
                         showStackTraces = true
                         showCauses = true
-                        showStandardStreams = true
                         exceptionFormat = TestExceptionFormat.FULL
                     }
                 }

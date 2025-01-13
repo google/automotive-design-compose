@@ -374,7 +374,7 @@ private fun GetBranches(
 }
 
 private fun GetProjectFileCount(doc: DocContent?): String {
-    var count = doc?.c?.project_files?.size ?: 0
+    val count = doc?.c?.project_files?.size ?: 0
     return count.toString()
 }
 
@@ -545,7 +545,7 @@ internal fun DesignSwitcher(
 
     val lastModifiedString =
         if (doc != null) {
-            val lastModifiedInstant = Instant.parse(doc.c.header.last_modified)
+            val lastModifiedInstant = Instant.parse(doc.c.header.lastModified)
             val lastModifiedSeconds =
                 System.currentTimeMillis() / 1000 - lastModifiedInstant.epochSecond
             val elapsed = elapsedTimeString(lastModifiedSeconds)

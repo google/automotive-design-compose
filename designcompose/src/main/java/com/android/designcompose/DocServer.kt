@@ -37,6 +37,10 @@ import androidx.tracing.Trace.beginSection
 import androidx.tracing.Trace.endSection
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.live_update.ConvertResponse
+import com.android.designcompose.live_update.convertRequest
+import com.android.designcompose.live_update.figma.ignoredImage
+import com.android.designcompose.utils.validateFigmaDocId
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -45,7 +49,6 @@ import java.lang.ref.WeakReference
 import java.net.ConnectException
 import java.net.SocketException
 import java.time.Instant
-import java.util.Optional
 import kotlin.concurrent.thread
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -186,10 +189,10 @@ object DesignSettings {
     }
 
     internal fun fontFamily(
-        fontFamily: Optional<String>,
+        fontFamily: String?,
         fallback: FontFamily = FontFamily.Default,
     ): FontFamily {
-        val family = fontFamily.map { fam -> fontDb[fam] }.orElse(null)
+        val family = fontFamily?.let { fontDb[fontFamily] }
         if (family == null) {
             // TODO find a better to show this font error. Currently it spams too much
             // fontFamily.ifPresent { familyName -> Log.w("DesignCompose", "Unable to find font
@@ -337,12 +340,10 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
             }
         val saveFile = synchronized(subscriptions) { subscriptions[id]?.saveFile }
         try {
-            val postData = constructPostJson(figmaApiKey, previousDoc?.c, params, firstFetch)
-            val documentData: ByteArray? = LiveUpdate.fetchDocBytes(id, postData, proxyConfig)
+            val response = fetchDocument(figmaApiKey, params, previousDoc, id, proxyConfig)
 
-            if (documentData != null) {
-                Feedback.documentDecodeReadBytes(documentData.size, id)
-                val doc = decodeServerDoc(documentData, previousDoc, id, saveFile, Feedback)
+            if (response.hasDocument()) {
+                val doc = decodeServerDoc(response.document, previousDoc, id, saveFile, Feedback)
                 if (doc == null) {
                     Feedback.documentDecodeError(id)
                     Log.e(TAG, "Error decoding doc.")
@@ -358,7 +359,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     DesignSettings.fileFetchStatus[id]?.lastUpdateFromFetch = now
                 }
 
-                VariableManager.init(doc.c.docId, doc.c.document.variable_map.get())
+                VariableManager.init(doc.c.docId, doc.c.document.variableMap)
 
                 // Get the list of subscribers to this document id
                 val subs: Array<LiveDocSubscription> =
@@ -371,7 +372,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     SpanCache.clear()
                     for (subscriber in subs) {
                         subscriber.onUpdate(doc)
-                        subscriber.docUpdateCallback?.invoke(id, doc.c?.toSerializedBytes(Feedback))
+                        subscriber.docUpdateCallback?.invoke(id, doc.c.toSerializedBytes(Feedback))
                     }
                 }
                 Feedback.documentUpdated(id, subs.size)
@@ -404,6 +405,38 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
         }
     }
     return true
+}
+
+internal fun fetchDocument(
+    figmaApiKey: String,
+    params: DocumentServerParams,
+    previousDoc: DocContent?,
+    id: DesignDocId,
+    proxyConfig: ProxyConfig = ProxyConfig(),
+): ConvertResponse {
+
+    // Construct the Conversion Request
+    val request = convertRequest {
+        this.figmaApiKey = figmaApiKey
+        params.nodeQueries?.let { this.queries.addAll(it) }
+        params.ignoredImages?.map { (pNode, pImages) ->
+            this.ignoredImages.add(
+                ignoredImage {
+                    this.node = pNode
+                    this.images.addAll(pImages.asIterable())
+                }
+            )
+        }
+        previousDoc?.c?.header?.lastModified?.let { this.lastModified = it }
+        previousDoc?.c?.header?.responseVersion?.let { this.version = it }
+        previousDoc?.c?.imageSession?.let { this.imageSessionJson = it }
+            ?: this.clearImageSessionJson()
+    }
+
+    val serializedResponse: ByteArray =
+        Jni.tracedJnifetchdoc(id.id, id.versionId, request.toByteArray(), proxyConfig)
+    val response = ConvertResponse.parseFrom(serializedResponse)
+    return response
 }
 
 internal fun DocServer.subscribe(
@@ -512,7 +545,7 @@ internal fun DocServer.doc(
                 }
                 targetDoc
             }
-        targetDoc?.let { VariableManager.init(it.c.docId, it.c.document.variable_map.get()) }
+        targetDoc?.let { VariableManager.init(it.c.docId, it.c.document.variableMap) }
         docUpdateCallback?.invoke(docId, targetDoc?.c?.toSerializedBytes(Feedback))
         setLiveDoc(targetDoc)
 
@@ -528,7 +561,7 @@ internal fun DocServer.doc(
     // Don't return a doc with the wrong ID.
     if (liveDoc != null && liveDoc.c.docId == docId) return liveDoc
     if (preloadedDoc != null && preloadedDoc.c.docId == docId) {
-        VariableManager.init(preloadedDoc.c.docId, preloadedDoc.c.document.variable_map.get())
+        VariableManager.init(preloadedDoc.c.docId, preloadedDoc.c.document.variableMap)
         docUpdateCallback?.invoke(docId, preloadedDoc.c.toSerializedBytes(Feedback))
         endSection()
         return preloadedDoc
@@ -557,7 +590,7 @@ internal fun DocServer.doc(
             synchronized(DesignSettings.fileFetchStatus) {
                 DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
             }
-            VariableManager.init(decodedDoc.c.docId, decodedDoc.c.document.variable_map.get())
+            VariableManager.init(decodedDoc.c.docId, decodedDoc.c.document.variableMap)
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             endSection()
             return decodedDoc

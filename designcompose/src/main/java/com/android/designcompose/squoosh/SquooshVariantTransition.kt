@@ -23,15 +23,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.android.designcompose.asAnimationSpec
-import com.android.designcompose.serdegen.Easing
-import com.android.designcompose.serdegen.EasingType
-import com.android.designcompose.serdegen.SmartAnimate
-import com.android.designcompose.serdegen.Spring
-import com.android.designcompose.serdegen.Transition
-import com.android.designcompose.serdegen.TransitionType
-import com.android.designcompose.serdegen.View
-import java.util.Optional
+import com.android.designcompose.definition.interaction.EasingKt.spring
+import com.android.designcompose.definition.interaction.TransitionKt.smartAnimate
+import com.android.designcompose.definition.interaction.easing
+import com.android.designcompose.definition.interaction.transition
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.utils.asAnimationSpec
 
 // We want to perform an animated transition when a variant customization causes a presented
 // variant to change (but only when the component has an animation configured).
@@ -91,19 +88,17 @@ class SmartAnimateTransition(
 
 val DEFAULT_TRANSITION =
     SmartAnimateTransition(
-        Transition(
-                // Too many Optional.ofs. Will go away when we get off Serdegen.
-                Optional.of(
-                    TransitionType.SmartAnimate(
-                        SmartAnimate(
-                            Optional.of(
-                                Easing(Optional.of(EasingType.Spring(Spring(1.0f, 200.0f, 30.0f))))
-                            ),
-                            1f,
-                        )
-                    )
-                )
-            )
+        transition {
+                smartAnimate = smartAnimate {
+                    easing = easing {
+                        spring = spring {
+                            mass = 1.0f
+                            stiffness = 200.0f
+                            damping = 30.0f
+                        }
+                    }
+                }
+            }
             .asAnimationSpec()
     )
 
@@ -135,7 +130,27 @@ internal class VariantAnimationInfo(
     val transition: AnimationTransition,
 )
 
-class VariantTransitionContext(val from: View?, val to: View?) {
+class VariantTransitionContext(private val from: View?, private val to: View?) {
+    @Discouraged(
+        message =
+            "This helper function returns the name of the `from` View. This function is intended to " +
+                "temporarily help with creating custom variant transitions, but may be deprecated or " +
+                "removed in the future."
+    )
+    fun getFromViewName(): String {
+        return from?.name ?: ""
+    }
+
+    @Discouraged(
+        message =
+            "This helper function returns the name of the `to` View. This function is intended to " +
+                "temporarily help with creating custom variant transitions, but may be deprecated or " +
+                "removed in the future."
+    )
+    fun getToViewName(): String {
+        return to?.name ?: ""
+    }
+
     @Discouraged(
         message =
             "This helper function will return true if the transition is within a variant from the " +
@@ -144,14 +159,11 @@ class VariantTransitionContext(val from: View?, val to: View?) {
     )
     fun fromComponentSet(componentSetName: String): Boolean {
         if (
-            from?.component_info?.isPresent == true &&
-                from.component_info.get().component_set_name == componentSetName
+            from?.hasComponentInfo() == true &&
+                from.componentInfo.componentSetName == componentSetName
         )
             return true
-        if (
-            to?.component_info?.isPresent == true &&
-                to.component_info.get().component_set_name == componentSetName
-        )
+        if (to?.hasComponentInfo() == true && to.componentInfo.componentSetName == componentSetName)
             return true
         return false
     }
@@ -163,15 +175,9 @@ class VariantTransitionContext(val from: View?, val to: View?) {
                 "creating custom variant transitions, but may be deprecated or removed in the future."
     )
     fun hasVariantProperty(propertyName: String): Boolean {
-        if (
-            from?.component_info?.isPresent == true &&
-                from.component_info.get().name.contains("$propertyName=")
-        )
+        if (from?.hasComponentInfo() == true && from.componentInfo.name.contains("$propertyName="))
             return true
-        if (
-            to?.component_info?.isPresent == true &&
-                to.component_info.get().name.contains("$propertyName=")
-        )
+        if (to?.hasComponentInfo() == true && to.componentInfo.name.contains("$propertyName="))
             return true
         return false
     }

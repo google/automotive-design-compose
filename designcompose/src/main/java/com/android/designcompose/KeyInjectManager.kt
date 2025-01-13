@@ -17,7 +17,7 @@
 package com.android.designcompose
 
 import com.android.designcompose.annotation.DesignMetaKey
-import com.android.designcompose.serdegen.Action
+import com.android.designcompose.definition.interaction.Action
 
 // Represents a key press event with optional meta keys. A DesignKeyEvent can be created with a
 // single character representing the key and a list of meta keys. It can also be created from a
@@ -27,8 +27,8 @@ data class DesignKeyEvent(val key: Char, val metaKeys: List<DesignMetaKey>) {
     companion object {
         // Construct a DesignKeyEvent from a list of javascript key codes
         fun fromJsKeyCodes(jsKeyCodes: List<Byte>): DesignKeyEvent {
-            var metaKeys: ArrayList<DesignMetaKey> = arrayListOf()
-            var key: Char = '0'
+            val metaKeys: ArrayList<DesignMetaKey> = arrayListOf()
+            var key = '0'
             jsKeyCodes
                 .map { it.toInt() }
                 .forEach {

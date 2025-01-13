@@ -26,15 +26,13 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.android.designcompose.common.DesignDocId
-import com.android.designcompose.serdegen.ColorOrVar
-import com.android.designcompose.serdegen.ColorOrVarType
-import com.android.designcompose.serdegen.NumOrVar
-import com.android.designcompose.serdegen.NumOrVarType
-import com.android.designcompose.serdegen.Value
-import com.android.designcompose.serdegen.Variable
-import com.android.designcompose.serdegen.VariableMap
-import com.android.designcompose.serdegen.VariableValue
-import kotlin.jvm.optionals.getOrNull
+import com.android.designcompose.definition.element.ColorOrVar
+import com.android.designcompose.definition.element.NumOrVar
+import com.android.designcompose.definition.element.Variable
+import com.android.designcompose.definition.element.VariableMap
+import com.android.designcompose.definition.element.VariableValue
+import com.android.designcompose.definition.element.copy
+import com.android.designcompose.utils.toColor
 
 // A variable mode, e.g. "light" or "dark"
 typealias VariableMode = String
@@ -111,7 +109,7 @@ internal class VariableState(
         explicitModeValues.forEach { (collectionId, modeId) ->
             val collection = VariableManager.getCollection(collectionId)
             collection?.let { c ->
-                val mode = c.mode_id_hash[modeId]
+                val mode = c.modeIdHashMap[modeId]
                 mode?.let { m -> newModeValues[c.name] = m.name }
             }
         }
@@ -167,25 +165,28 @@ internal object VariableManager {
     private val docVarMap: HashMap<String, VariableMap> = HashMap()
     // A global variable map containing entries from all documents. We currently don't support
     // duplicate variable names across multiple documents.
-    private var varMap: VariableMap = VariableMap(HashMap(), HashMap(), HashMap(), HashMap())
+    private var varMap: VariableMap = VariableMap.getDefaultInstance()
+
     private lateinit var currentDocId: DesignDocId
 
     internal fun init(docId: DesignDocId, map: VariableMap) {
 
-        // Remove old entries for docId
-        val oldVarMap = docVarMap[docId.id]
-        oldVarMap?.collections?.forEach { varMap.collections.remove(it.key) }
-        oldVarMap?.collection_name_map?.forEach { varMap.collection_name_map.remove(it.key) }
-        oldVarMap?.variables?.forEach { varMap.variables.remove(it.key) }
-        oldVarMap?.variable_name_map?.forEach { varMap.variable_name_map.remove(it.key) }
+        varMap =
+            varMap.copy {
+                // Remove old entries for docId
+                val oldVarMap = docVarMap[docId.id]
+                oldVarMap?.collectionsMap?.forEach { this.collections.remove(it.key) }
+                oldVarMap?.collectionNameMapMap?.forEach { this.collectionNameMap.remove(it.key) }
+                oldVarMap?.variablesMap?.forEach { this.variables.remove(it.key) }
+                oldVarMap?.variableNameMapMap?.forEach { this.variableNameMap.remove(it.key) }
 
-        // Add new entries for docId
-        docVarMap[docId.id] = map
-        varMap.collections.putAll(map.collections)
-        varMap.collection_name_map.putAll(map.collection_name_map)
-        varMap.variables.putAll(map.variables)
-        varMap.variable_name_map.putAll(map.variable_name_map)
-
+                // Add new entries for docId
+                docVarMap[docId.id] = map
+                this.collections.putAll(map.collectionsMap)
+                this.collectionNameMap.putAll(map.collectionNameMapMap)
+                this.variables.putAll(map.variablesMap)
+                this.variableNameMap.putAll(map.variableNameMapMap)
+            }
         currentDocId = docId
     }
 
@@ -215,9 +216,9 @@ internal object VariableManager {
     ): VariableModeValues {
         val newModeValues = VariableModeValues(LocalVariableModeValuesDoc.current)
         modeValues.forEach { (collectionId, modeId) ->
-            val collection = varMap.collections[collectionId]
+            val collection = varMap.collectionsMap[collectionId]
             collection?.let { c ->
-                val mode = c.mode_id_hash[modeId]
+                val mode = c.modeIdHashMap[modeId]
                 mode?.let { m -> newModeValues[c.name] = m.name }
             }
         }
@@ -227,8 +228,8 @@ internal object VariableManager {
     // Return the collection given the collection ID
     internal fun getCollection(
         collectionId: String
-    ): com.android.designcompose.serdegen.Collection? {
-        return varMap.collections[collectionId]
+    ): com.android.designcompose.definition.element.Collection? {
+        return varMap.collectionsMap[collectionId]
     }
 
     // Given a variable ID, return the color associated with it
@@ -257,20 +258,20 @@ internal object VariableManager {
     // set, this will return a variable from that collection if one of the same name exists.
     // Otherwise, this will return the variable with the given ID.
     private fun resolveVariable(varId: String, variableState: VariableState): Variable? {
-        val variable = varMap.variables[varId]
+        val variable = varMap.variablesMap[varId]
         variable?.let { v ->
             // If using material theme, return the variable since we don't need to resolve it based
             // on an overridden collection
             if (variableState.useMaterialTheme) return v
             val collectionOverride = variableState.varCollection
             collectionOverride?.let { cName ->
-                val collectionId = varMap.collection_name_map[cName]
+                val collectionId = varMap.collectionNameMapMap[cName]
                 collectionId?.let { cId ->
-                    val nameMap = varMap.variable_name_map[cId]
+                    val nameMap = varMap.variableNameMapMap[cId]
                     nameMap?.let { nMap ->
                         val resolvedVarId = nMap.m[v.name]
                         resolvedVarId?.let { newVarId ->
-                            return varMap.variables[newVarId]
+                            return varMap.variablesMap[newVarId]
                         }
                     }
                 }
@@ -285,15 +286,15 @@ internal object VariableManager {
         variableMap: VariableMap,
         variableState: VariableState,
     ): VariableValue? {
-        val collection = variableMap.collections[variable_collection_id]
+        val collection = variableMap.collectionsMap[variableCollectionId]
         collection?.let { c ->
             val modeName = variableState.varModeValues?.get(c.name)
             val modeId =
-                modeName?.let { mName -> c.mode_name_hash[mName] }
-                    ?: c.mode_id_hash[c.default_mode_id]
+                modeName?.let { mName -> c.modeNameHashMap[mName] }
+                    ?: c.modeIdHashMap[c.defaultModeId]
                         ?.id // Fallback to default mode in collection
             modeId?.let { mId ->
-                return values_by_mode.getOrNull()?.values_by_mode?.get(mId)
+                return valuesByMode.valuesByModeMap[mId]
             }
         }
         return null
@@ -302,70 +303,50 @@ internal object VariableManager {
     // Return this variable's color given the current variable state.
     private fun Variable.getColor(variableMap: VariableMap, variableState: VariableState): Color? {
         // Use the material theme override if one exists
-        MaterialThemeValues.getColor(name, variable_collection_id, variableState)?.let {
+        MaterialThemeValues.getColor(name, variableCollectionId, variableState)?.let {
             return it
         }
         val value = getValue(variableMap, variableState)
-        value?.let { vv ->
-            return if (vv.value.isPresent) {
-                val v = vv.value.get()
-                when (v) {
-                    is Value.Color -> v.value.toColor()
-                    is Value.Alias ->
-                        resolveVariable(v.value, variableState)
-                            ?.getColor(variableMap, variableState)
-                    else -> null
-                }
-            } else {
-                null
-            }
+        return when (value?.valueCase) {
+            VariableValue.ValueCase.COLOR -> value.color.toColor()
+            VariableValue.ValueCase.ALIAS ->
+                resolveVariable(value.alias, variableState)?.getColor(variableMap, variableState)
+
+            else -> null
         }
-        return null
     }
 
     // Return this variable's number given the current variable state.
     private fun Variable.getNumber(variableMap: VariableMap, variableState: VariableState): Float? {
         val value = getValue(variableMap, variableState)
-        value?.let { vv ->
-            if (vv.value.isPresent) {
-                return when (val v = vv.value.get()) {
-                    is Value.Number -> v.value
-                    is Value.Alias ->
-                        resolveVariable(v.value, variableState)
-                            ?.getNumber(variableMap, variableState)
-                    else -> null
-                }
-            }
+        return when (value?.valueCase) {
+            VariableValue.ValueCase.NUMBER -> value.number
+            VariableValue.ValueCase.ALIAS ->
+                resolveVariable(value.alias, variableState)?.getNumber(variableMap, variableState)
+
+            else -> null
         }
-        return null
     }
 }
 
 // Return the value out of a NumOrVar enum.
-internal fun NumOrVarType.getValue(variableState: VariableState): Float {
-    return when (this) {
-        is NumOrVarType.Num -> value
-        is NumOrVarType.Var ->
-            VariableManager.getNumber(value.id, value.fallback, variableState) ?: 0F
+internal fun NumOrVar.getValue(variableState: VariableState): Float {
+    return when (this.numOrVarTypeCase) {
+        NumOrVar.NumOrVarTypeCase.NUM -> num
+        NumOrVar.NumOrVarTypeCase.VAR ->
+            VariableManager.getNumber(`var`.id, `var`.fallback, variableState) ?: 0F
         else -> 0F
     }
 }
 
-internal fun NumOrVar.getValue(variableState: VariableState): Float {
-    return num_or_var_type.get().getValue(variableState)
-}
-
 // Return the value of a ColorOrVar enum
 internal fun ColorOrVar.getValue(variableState: VariableState): Color? {
-    if (color_or_var_type.isPresent) {
-        return when (val colorOrVarType = color_or_var_type.get()) {
-            is ColorOrVarType.Color -> colorOrVarType.value.toColor()
-            is ColorOrVarType.Var -> {
-                val fallback = colorOrVarType.value.fallback.getOrNull()?.toColor()
-                VariableManager.getColor(colorOrVarType.value.id, fallback, variableState)
-            }
-            else -> null
+    return when (this.colorOrVarTypeCase) {
+        ColorOrVar.ColorOrVarTypeCase.COLOR -> color.toColor()
+        ColorOrVar.ColorOrVarTypeCase.VAR -> {
+            val fallback = `var`.fallback.toColor()
+            VariableManager.getColor(`var`.id, fallback, variableState)
         }
+        else -> null
     }
-    return null
 }

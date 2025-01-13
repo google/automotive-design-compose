@@ -79,12 +79,16 @@ import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.LocalVariableState
 import com.android.designcompose.VariableState
-import com.android.designcompose.asBuilder
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
+import com.android.designcompose.definition.element.dimensionProto
+import com.android.designcompose.definition.element.size
+import com.android.designcompose.definition.layout.copy
+import com.android.designcompose.definition.view.copy
+import com.android.designcompose.definition.view.scrollInfoOrNull
 import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
@@ -92,31 +96,21 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getOpenLinkCallback
 import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.getTapCallback
-import com.android.designcompose.proto.isPressOrClick
-import com.android.designcompose.proto.isTimeout
-import com.android.designcompose.proto.layoutStyle
-import com.android.designcompose.proto.newDimensionProtoPoints
-import com.android.designcompose.proto.overflowDirectionFromInt
+import com.android.designcompose.layout_interface.Layout
 import com.android.designcompose.registerOpenLinkCallback
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
 import com.android.designcompose.sDocRenderText
-import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.OverflowDirection
-import com.android.designcompose.serdegen.Size
-import com.android.designcompose.serdegen.TriggerType
 import com.android.designcompose.squooshAnimatedActions
 import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
 import com.android.designcompose.unregisterOpenLinkCallback
-import java.util.Optional
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -148,57 +142,49 @@ internal class SquooshAnimationRenderingInfo(
 /// Apply layout constraints to a node; this is only used for the root node and gives the DC
 /// layout system the context of what it is being embedded in.
 private fun SquooshResolvedNode.applyLayoutConstraints(constraints: Constraints, density: Float) {
-    val rootStyleBuilder = style.asBuilder()
-
     // This function mutates `this.style` in different ways depending on the constraints. Therefore,
     // we should always start with `view.style` (immutable, from the DCF) and apply constraints to
     // that. Otherwise, we end up progressively adding different style rules to the root style as we
     // get different layout queries (especially during the intrinsic width/height query process).
-    val layoutStyleBuilder = view.style.get().layoutStyle.asBuilder()
+    val layoutStyle =
+        view.style.layoutStyle.copy {
+            if (constraints.minWidth != 0)
+                minWidth = dimensionProto { points = constraints.minWidth.toFloat() / density }
 
-    if (constraints.minWidth != 0)
-        layoutStyleBuilder.min_width =
-            newDimensionProtoPoints(constraints.minWidth.toFloat() / density)
+            if (constraints.maxWidth != Constraints.Infinity)
+                maxWidth = dimensionProto { points = constraints.maxWidth.toFloat() / density }
 
-    if (constraints.maxWidth != Constraints.Infinity)
-        layoutStyleBuilder.max_width =
-            newDimensionProtoPoints(constraints.maxWidth.toFloat() / density)
+            if (constraints.hasFixedWidth) {
+                width = dimensionProto { points = constraints.minWidth.toFloat() / density }
+                // Layout implementation looks for width/height being set and then uses bounding
+                // box.
+                val h = boundingBox.height
+                boundingBox = size {
+                    width = constraints.minWidth.toFloat() / density
+                    height = h
+                }
+            }
 
-    if (constraints.hasFixedWidth) {
-        layoutStyleBuilder.width = newDimensionProtoPoints(constraints.minWidth.toFloat() / density)
-        // Layout implementation looks for width/height being set and then uses bounding box.
-        layoutStyleBuilder.bounding_box =
-            Optional.of(
-                Size(
-                    constraints.minWidth.toFloat() / density,
-                    layoutStyleBuilder.bounding_box.get().height,
-                )
-            )
-    }
+            if (constraints.minHeight != 0)
+                minHeight = dimensionProto { points = constraints.minHeight.toFloat() / density }
 
-    if (constraints.minHeight != 0)
-        layoutStyleBuilder.min_height =
-            newDimensionProtoPoints(constraints.minHeight.toFloat() / density)
+            if (constraints.maxHeight != Constraints.Infinity)
+                maxHeight = dimensionProto { points = constraints.maxHeight.toFloat() / density }
 
-    if (constraints.maxHeight != Constraints.Infinity)
-        layoutStyleBuilder.max_height =
-            newDimensionProtoPoints(constraints.maxHeight.toFloat() / density)
+            if (constraints.hasFixedHeight) {
+                height = dimensionProto { points = constraints.minHeight.toFloat() / density }
+                // Layout implementation looks for width/height being set and then uses bounding
+                // box.
+                val w = boundingBox.width
+                boundingBox = size {
+                    width = w
+                    height = constraints.minHeight.toFloat() / density
+                }
+            }
+        }
 
-    if (constraints.hasFixedHeight) {
-        layoutStyleBuilder.height =
-            newDimensionProtoPoints(constraints.minHeight.toFloat() / density)
-        // Layout implementation looks for width/height being set and then uses bounding box.
-        layoutStyleBuilder.bounding_box =
-            Optional.of(
-                Size(
-                    layoutStyleBuilder.bounding_box.get().width,
-                    constraints.minHeight.toFloat() / density,
-                )
-            )
-    }
-
-    rootStyleBuilder.layout_style = Optional.of(layoutStyleBuilder.build())
-    style = rootStyleBuilder.build()
+    val rootStyleBuilder = style.copy { this.layoutStyle = layoutStyle }
+    style = rootStyleBuilder
 }
 
 // Mutable field to remember animation information that is computed during the layout phase which
@@ -599,24 +585,22 @@ fun SquooshRoot(
     val scrollOffset = remember { mutableStateOf(Offset.Zero) }
 
     val orientation =
-        when (
-            presentationRoot.view.scroll_info.getOrNull()?.overflow?.let {
-                overflowDirectionFromInt(it)
-            }
-        ) {
-            is OverflowDirection.VerticalScrolling -> Optional.of(Orientation.Vertical)
-            is OverflowDirection.HorizontalScrolling -> Optional.of(Orientation.Horizontal)
-            else -> Optional.empty()
+        when (presentationRoot.view.scrollInfoOrNull?.overflow) {
+            com.android.designcompose.definition.layout.OverflowDirection
+                .OVERFLOW_DIRECTION_VERTICAL_SCROLLING -> Orientation.Vertical
+            com.android.designcompose.definition.layout.OverflowDirection
+                .OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING -> Orientation.Horizontal
+            else -> null
         }
 
     // If a scroll callback customization exists, call it when the scroll state changes
     val scrollStateChangedCallback =
         customizationContext.getScrollCallbacks(presentationRoot.view.name)?.scrollStateChanged
     val scrollState = rememberScrollableState { delta ->
-        when (orientation.get()) {
+        when (orientation) {
             Orientation.Vertical -> {
                 // Bound the scroll offset to the area bounded by content_height
-                val contentHeight = presentationRoot.computedLayout?.content_height ?: 0F
+                val contentHeight = presentationRoot.computedLayout?.contentHeight ?: 0F
                 val frameHeight = presentationRoot.computedLayout?.height ?: 0F
                 val maxScroll = (contentHeight - frameHeight).coerceAtLeast(0F)
                 val scrollValue = (scrollOffset.value.y + delta).coerceIn(0F, maxScroll)
@@ -627,7 +611,7 @@ fun SquooshRoot(
             }
             Orientation.Horizontal -> {
                 // Bound the scroll offset to the area bounded by content_width
-                val contentWidth = presentationRoot.computedLayout?.content_width ?: 0F
+                val contentWidth = presentationRoot.computedLayout?.contentWidth ?: 0F
                 val frameWidth = presentationRoot.computedLayout?.width ?: 0F
                 val maxScroll = (contentWidth - frameWidth).coerceAtLeast(0F)
                 val scrollValue = (scrollOffset.value.x + delta).coerceIn(0F, maxScroll)
@@ -636,13 +620,14 @@ fun SquooshRoot(
                     DesignScrollState(scrollValue, frameWidth, contentWidth, maxScroll)
                 )
             }
+            else -> {}
         }
         delta
     }
 
     // Create a Modifier to handle scroll inputs if this is a scrollable view
     val scrollModifier =
-        if (isScrollComponent && orientation.isPresent) {
+        if (isScrollComponent && orientation != null) {
             // If a callback to get the scrollable state exists, call it
             val setScrollableStateCallback =
                 customizationContext
@@ -652,7 +637,7 @@ fun SquooshRoot(
                 setScrollableStateCallback?.invoke(scrollState)
             }
             Modifier.scrollable(
-                orientation = orientation.get(),
+                orientation = orientation,
                 reverseDirection = true,
                 state = scrollState,
             )
@@ -739,22 +724,21 @@ fun SquooshRoot(
                         // If there are press or click reactions, composition is needed
                         var hasPressClick =
                             customizationContext.getTapCallback(child.node.view) != null
-                        child.node.view.reactions.forEach {
-                            if (it.trigger.isPressOrClick()) hasPressClick = true
-                            else if (it.trigger.isTimeout()) {
+                        child.node.view.reactionsList.forEach {
+                            if (it.trigger.hasPress() || it.trigger.hasClick()) hasPressClick = true
+                            else if (it.trigger.hasAfterTimeout()) {
                                 // If there is a timeout trigger, execute the reaction in a suspend
                                 // function after the timeout
-                                val timeoutTrigger =
-                                    it.trigger.get().trigger_type.get() as TriggerType.AfterTimeout
-                                val timeoutMs = timeoutTrigger.value.timeout
+                                val timeoutTrigger = it.trigger.afterTimeout
+                                val timeoutMs = timeoutTrigger.timeout
                                 LaunchedEffect(child.node.view.id, it) {
                                     delay((timeoutMs * 1000.0).toLong())
                                     interactionState.dispatch(
-                                        it.action.get(),
+                                        it.action,
                                         findTargetInstanceId(
                                             doc,
                                             child.parentComponents,
-                                            it.action.get(),
+                                            it.action,
                                         ),
                                         customizationContext.getKey(),
                                         null,

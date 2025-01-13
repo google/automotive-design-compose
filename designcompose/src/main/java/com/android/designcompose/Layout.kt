@@ -19,27 +19,20 @@ package com.android.designcompose
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.unit.Density
-import com.android.designcompose.proto.alignItemsFromInt
-import com.android.designcompose.proto.gridLayoutTypeFromInt
-import com.android.designcompose.proto.layoutStyle
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.proto.overflowDirectionFromInt
-import com.android.designcompose.proto.type
-import com.android.designcompose.serdegen.AlignItems
-import com.android.designcompose.serdegen.AlignSelf
-import com.android.designcompose.serdegen.Dimension
-import com.android.designcompose.serdegen.DimensionRect
-import com.android.designcompose.serdegen.GridLayoutType
-import com.android.designcompose.serdegen.GridSpan
-import com.android.designcompose.serdegen.ItemSpacing
-import com.android.designcompose.serdegen.ItemSpacingType
-import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.LayoutTransform
-import com.android.designcompose.serdegen.OverflowDirection
-import com.android.designcompose.serdegen.PositionType
-import com.android.designcompose.serdegen.Size
-import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.element.DimensionProto
+import com.android.designcompose.definition.element.DimensionRect
+import com.android.designcompose.definition.element.Size
+import com.android.designcompose.definition.layout.AlignItems
+import com.android.designcompose.definition.layout.AlignSelf
+import com.android.designcompose.definition.layout.GridLayoutType
+import com.android.designcompose.definition.layout.GridSpan
+import com.android.designcompose.definition.layout.ItemSpacing
+import com.android.designcompose.definition.layout.OverflowDirection
+import com.android.designcompose.definition.layout.PositionType
+import com.android.designcompose.definition.modifier.LayoutTransform
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.layout_interface.Layout
 import java.util.Optional
 import kotlin.math.roundToInt
 
@@ -80,20 +73,20 @@ internal data class TextMeasureData(
 // replaced so that the new node can use its values.
 data class ExternalLayoutData(
     val margin: DimensionRect,
-    val top: Dimension,
-    val left: Dimension,
-    val bottom: Dimension,
-    val right: Dimension,
-    val width: Dimension,
-    val height: Dimension,
-    val minWidth: Dimension,
-    val minHeight: Dimension,
-    val maxWidth: Dimension,
-    val maxHeight: Dimension,
+    val top: DimensionProto,
+    val left: DimensionProto,
+    val bottom: DimensionProto,
+    val right: DimensionProto,
+    val width: DimensionProto,
+    val height: DimensionProto,
+    val minWidth: DimensionProto,
+    val minHeight: DimensionProto,
+    val maxWidth: DimensionProto,
+    val maxHeight: DimensionProto,
     val nodeSize: Size,
     val boundingBox: Size,
     val flexGrow: Float,
-    val flexBasis: Dimension,
+    val flexBasis: DimensionProto,
     val alignSelf: AlignSelf,
     val positionType: PositionType,
     val transform: Optional<LayoutTransform>,
@@ -120,54 +113,57 @@ internal class LayoutInfoGrid(
 ) : SimplifiedLayoutInfo()
 
 internal fun itemSpacingAbs(itemSpacing: ItemSpacing): Int {
-    return when (val type = itemSpacing.type()) {
-        is ItemSpacingType.Fixed -> type.value
-        is ItemSpacingType.Auto -> type.value.width
+    return when (itemSpacing.itemSpacingTypeCase) {
+        ItemSpacing.ItemSpacingTypeCase.FIXED -> itemSpacing.fixed
+        ItemSpacing.ItemSpacingTypeCase.AUTO -> itemSpacing.auto.width
         else -> 0
     }
 }
 
 internal fun calcLayoutInfo(view: View, style: ViewStyle): SimplifiedLayoutInfo {
-    if (style.nodeStyle.grid_layout_type.isPresent) {
-        val gridLayout = gridLayoutTypeFromInt(style.nodeStyle.grid_layout_type.get())
-        val isHorizontalLayout = gridLayout is GridLayoutType.Horizontal
-        val isVerticalLayout = gridLayout is GridLayoutType.Vertical
-        if (isHorizontalLayout) {
+    if (!style.nodeStyle.hasGridLayoutType()) return LayoutInfoAbsolute()
+
+    when (val gridLayout = style.nodeStyle.gridLayoutType) {
+        GridLayoutType.GRID_LAYOUT_TYPE_HORIZONTAL -> {
             return LayoutInfoRow(
                 alignment =
-                    when (alignItemsFromInt(style.layoutStyle.align_items)) {
-                        is AlignItems.FlexStart -> Alignment.Top
-                        is AlignItems.Center -> Alignment.CenterVertically
-                        is AlignItems.FlexEnd -> Alignment.Bottom
+                    when (style.layoutStyle.alignItems) {
+                        AlignItems.ALIGN_ITEMS_FLEX_START -> Alignment.Top
+                        AlignItems.ALIGN_ITEMS_CENTER -> Alignment.CenterVertically
+                        AlignItems.ALIGN_ITEMS_FLEX_END -> Alignment.Bottom
                         else -> Alignment.Top
                     }
             )
-        } else if (isVerticalLayout) {
+        }
+
+        GridLayoutType.GRID_LAYOUT_TYPE_VERTICAL -> {
             return LayoutInfoColumn(
                 alignment =
-                    when (alignItemsFromInt(style.layoutStyle.align_items)) {
-                        is AlignItems.FlexStart -> Alignment.Start
-                        is AlignItems.Center -> Alignment.CenterHorizontally
-                        is AlignItems.FlexEnd -> Alignment.End
+                    when (style.layoutStyle.alignItems) {
+                        AlignItems.ALIGN_ITEMS_FLEX_START -> Alignment.Start
+                        AlignItems.ALIGN_ITEMS_CENTER -> Alignment.CenterHorizontally
+                        AlignItems.ALIGN_ITEMS_FLEX_END -> Alignment.End
                         else -> Alignment.End
                     }
             )
-        } else {
+        }
+
+        else -> {
             val isColumnLayout =
-                gridLayout is GridLayoutType.FixedColumns ||
-                    gridLayout is GridLayoutType.AutoColumns
+                (gridLayout == GridLayoutType.GRID_LAYOUT_TYPE_FIXED_COLUMNS ||
+                    gridLayout == GridLayoutType.GRID_LAYOUT_TYPE_AUTO_COLUMNS)
             val scrollingEnabled =
-                when (overflowDirectionFromInt(view.scroll_info.get().overflow)) {
-                    is OverflowDirection.VerticalScrolling -> isColumnLayout
-                    is OverflowDirection.HorizontalScrolling -> !isColumnLayout
-                    is OverflowDirection.HorizontalAndVerticalScrolling -> true
+                when (view.scrollInfo.overflow) {
+                    OverflowDirection.OVERFLOW_DIRECTION_VERTICAL_SCROLLING -> isColumnLayout
+                    OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING -> !isColumnLayout
+                    OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_AND_VERTICAL_SCROLLING -> true
                     else -> false
                 }
             return LayoutInfoGrid(
-                layout = gridLayoutTypeFromInt(style.nodeStyle.grid_layout_type.get()),
-                minColumnRowSize = style.nodeStyle.grid_adaptive_min_size,
-                mainAxisSpacing = style.layoutStyle.item_spacing.get(),
-                crossAxisSpacing = style.nodeStyle.cross_axis_item_spacing.toInt(),
+                layout = style.nodeStyle.gridLayoutType,
+                minColumnRowSize = style.nodeStyle.gridAdaptiveMinSize,
+                mainAxisSpacing = style.layoutStyle.itemSpacing,
+                crossAxisSpacing = style.nodeStyle.crossAxisItemSpacing.toInt(),
                 // TODO support these other alignments?
                 /*
                 mainAxisAlignment =
@@ -188,21 +184,19 @@ internal fun calcLayoutInfo(view: View, style: ViewStyle): SimplifiedLayoutInfo 
                   else -> FlowCrossAxisAlignment.Start
                 },
                 */
-                numColumnsRows = style.nodeStyle.grid_columns_rows,
-                gridSpanContent = style.nodeStyle.grid_span_contents,
+                numColumnsRows = style.nodeStyle.gridColumnsRows,
+                gridSpanContent = style.nodeStyle.gridSpanContentsList,
                 scrollingEnabled = scrollingEnabled,
-                padding = style.layoutStyle.padding.get(),
+                padding = style.layoutStyle.padding,
             )
         }
-    } else {
-        return LayoutInfoAbsolute()
     }
 }
 
-internal fun Layout.width() = this.width.roundToInt()
+fun Layout.width() = this.width.roundToInt()
 
-internal fun Layout.height() = this.height.roundToInt()
+fun Layout.height() = this.height.roundToInt()
 
-internal fun Layout.left() = this.left.roundToInt()
+fun Layout.left() = this.left.roundToInt()
 
-internal fun Layout.top() = this.top.roundToInt()
+fun Layout.top() = this.top.roundToInt()

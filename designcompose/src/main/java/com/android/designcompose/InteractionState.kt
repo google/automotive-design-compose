@@ -26,15 +26,12 @@ import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.VariantPropertyMap
 import com.android.designcompose.common.views
-import com.android.designcompose.proto.NavigationType
-import com.android.designcompose.proto.navigationTypeFromInt
-import com.android.designcompose.serdegen.Action
-import com.android.designcompose.serdegen.ActionType
-import com.android.designcompose.serdegen.Transition
-import com.android.designcompose.serdegen.View
+import com.android.designcompose.definition.interaction.Action
+import com.android.designcompose.definition.interaction.Transition
+import com.android.designcompose.definition.view.View
 import com.android.designcompose.squoosh.AnimationTransition
 import com.android.designcompose.squoosh.SmartAnimateTransition
-import kotlin.jvm.optionals.getOrNull
+import com.android.designcompose.utils.asAnimationSpec
 
 // In order to differentiate multiple instances of a component, we use a combination of the node ID
 // and an optional key to uniquely identify a component instance. This allows us to apply changes
@@ -60,34 +57,34 @@ private fun getInstanceIdWithKey(instanceId: String, key: String?): String {
 internal open class DeferredAction {
     /// Navigate back, and restore the `overlay_memory`. This is used when a "navigate"
     /// action has to be undone.
-    class NavigateBack(val overlayMemory: List<String>) : DeferredAction() {}
+    class NavigateBack(val overlayMemory: List<String>) : DeferredAction()
 
     /// The temporary action was a "swap navigation" (where the top of the navigation
     /// stack is swapped, rather than being appended to), so we need to swap back to
     /// the previous entry. We keep a NodeQuery instead of a String, because we could
     /// be swapping the first entry in the navigation stack which comes from application
     /// code and is normally a node name (and NodeQuery contains names or IDs).
-    class SwapNavigation(val nodeQuery: NodeQuery) : DeferredAction() {}
+    class SwapNavigation(val nodeQuery: NodeQuery) : DeferredAction()
 
     /// Close the top-most overlay
-    class CloseTopOverlay(val transition: Transition?) : DeferredAction() {}
+    class CloseTopOverlay(val transition: Transition?) : DeferredAction()
 
     /// The temporary action was to open an overlay, so we need to close the same overlay
-    class CloseOverlay(val overlayId: String, val transition: Transition?) : DeferredAction() {}
+    class CloseOverlay(val overlayId: String, val transition: Transition?) : DeferredAction()
 
     /// The temporary action was to close an overlay, so we need to open the overlay
     /// again to undo the action (and the ID of the overlay to open is the String).
-    class OpenOverlay(val overlayId: String, val transition: Transition?) : DeferredAction() {}
+    class OpenOverlay(val overlayId: String, val transition: Transition?) : DeferredAction()
 
     /// The temporary action was a "swap overlay", so we need to swap back to the
     /// previously displayed overlay.
-    class SwapOverlay(val overlayId: String, val transition: Transition?) : DeferredAction() {}
+    class SwapOverlay(val overlayId: String, val transition: Transition?) : DeferredAction()
 
     /// The temporary action was a "change to" on a component variant. We need to change
     /// back to the variant we were showing before, which could be the default (in which
     /// case the value is null), or could be some other specific variant (in which case
     /// the value will be the node ID).
-    class ChangeTo(val nodeId: String?) : DeferredAction() {}
+    class ChangeTo(val nodeId: String?) : DeferredAction()
 }
 
 /// Execute a DeferredAction. An optional key is used to differentiate multiple component instances
@@ -376,30 +373,31 @@ internal fun InteractionState.dispatch(
     key: String?,
     undoInstanceId: String?,
 ) {
-    val actionType = action.action_type.get()
-    when (actionType) {
-        is ActionType.Back -> this.back()
-        is ActionType.Close -> this.close(undoInstanceId)
-        is ActionType.Url -> this.openLink(actionType.value.url)
-        is ActionType.Node -> {
-            val navigationType = navigationTypeFromInt(actionType.value.navigation)
-            val destinationId = actionType.value.destination_id.getOrNull()
-            val transition = actionType.value.transition.getOrNull()
-            when (navigationType) {
-                NavigationType.Navigate -> {
+    when (action.actionTypeCase) {
+        Action.ActionTypeCase.BACK -> this.back()
+        Action.ActionTypeCase.CLOSE -> this.close(undoInstanceId)
+        Action.ActionTypeCase.URL -> this.openLink(action.url.url)
+        Action.ActionTypeCase.NODE -> {
+            val destinationId = action.node.destinationId
+            val transition = action.node.transition
+            when (action.node.navigation) {
+                Action.Node.Navigation.NAVIGATION_NAVIGATE -> {
                     if (destinationId != null) this.navigate(destinationId, undoInstanceId)
                     else Log.i(TAG, "Unable to dispatch NAVIGATE; missing destination id")
                 }
-                NavigationType.Overlay -> {
+
+                Action.Node.Navigation.NAVIGATION_OVERLAY -> {
                     if (destinationId != null)
                         this.overlay(destinationId, transition, undoInstanceId)
                     else Log.i(TAG, "Unable to dispatch OVERLAY; missing destination id")
                 }
-                NavigationType.Swap -> {
+
+                Action.Node.Navigation.NAVIGATION_SWAP -> {
                     if (destinationId != null) this.swap(destinationId, transition, undoInstanceId)
                     else Log.i(TAG, "Unable to dispatch SWAP; missing destination id")
                 }
-                NavigationType.ChangeTo -> {
+
+                Action.Node.Navigation.NAVIGATION_CHANGE_TO -> {
                     if (destinationId != null && targetInstanceId != null) {
                         // If animated transitions are supported, and there's an animation on this
                         // action, then queue up the animation and notify.

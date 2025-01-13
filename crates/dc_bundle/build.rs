@@ -36,10 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .join("proto");
 
     prost_config.compile_protos(
-        &[
-            proto_path.join("android_interface/jni_layout.proto"),
-            proto_path.join("definition/design_compose_definition.proto"),
-        ],
+        &[proto_path.join("definition/design_compose_definition.proto")],
         &[&proto_path],
     )?;
 

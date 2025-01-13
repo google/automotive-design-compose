@@ -30,7 +30,7 @@ use dc_bundle::definition::view::view_data::ViewDataType;
 use dc_bundle::definition::view::view_data::ViewDataType::{Container, Text};
 use dc_bundle::definition::view::{view_data, View};
 use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
-use figma_import::load_design_def;
+use dc_bundle::definition_file::load_design_def;
 use layout::LayoutManager;
 use std::collections::HashMap;
 

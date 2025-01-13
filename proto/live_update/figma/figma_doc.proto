@@ -22,8 +22,14 @@ option java_multiple_files = true;
 option java_package = "com.android.designcompose.live_update.figma";
 option optimize_for = LITE_RUNTIME;
 
-/// We can fetch figma documents in a project or from branches of another
-/// document. We store each as a name and ID
+// An image that is ignored when fetching a Figma Doc
+message IgnoredImage {
+  string node = 1;
+  repeated string images = 2;
+}
+
+// We can fetch figma documents in a project or from branches of another
+// document. We store each as a name and ID
 message FigmaDocInfo {
   string name = 1;
   string id = 2;

@@ -38,25 +38,22 @@ import com.android.designcompose.DesignSettings
 import com.android.designcompose.DocContent
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.VariableState
-import com.android.designcompose.asBrush
-import com.android.designcompose.blurFudgeFactor
+import com.android.designcompose.definition.element.LineHeight.LineHeightTypeCase
+import com.android.designcompose.definition.element.TextDecoration
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.fontSizeOrNull
+import com.android.designcompose.definition.view.fontWeightOrNull
+import com.android.designcompose.definition.view.styleOrNull
+import com.android.designcompose.definition.view.textColorOrNull
+import com.android.designcompose.definition.view.textShadowOrNull
 import com.android.designcompose.getText
-import com.android.designcompose.getTextContent
 import com.android.designcompose.getTextState
 import com.android.designcompose.getTextStyle
 import com.android.designcompose.getValue
-import com.android.designcompose.isAutoWidthText
-import com.android.designcompose.proto.fontStyleFromInt
-import com.android.designcompose.proto.getType
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.proto.textAlignFromInt
-import com.android.designcompose.proto.textDecorationFromInt
-import com.android.designcompose.serdegen.LineHeightType
-import com.android.designcompose.serdegen.TextDecoration
-import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewDataType
-import java.util.Optional
-import kotlin.jvm.optionals.getOrNull
+import com.android.designcompose.utils.asBrush
+import com.android.designcompose.utils.blurFudgeFactor
+import com.android.designcompose.utils.getTextContent
+import com.android.designcompose.utils.isAutoWidthText
 import kotlin.math.roundToInt
 
 val newlineRegex = Regex("\\R+")
@@ -122,7 +119,8 @@ internal fun squooshComputeTextInfo(
     val customizedText =
         customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
     val customTextStyle = customizations.getTextStyle(v.name)
-    val fontFamily = DesignSettings.fontFamily(v.style.get().nodeStyle.font_family)
+    val fontFamily =
+        DesignSettings.fontFamily(v.style.nodeStyle.takeIf { it.hasFontFamily() }?.fontFamily)
 
     val cachedText = textMeasureCache.get(layoutId)
     if (
@@ -140,157 +138,117 @@ internal fun squooshComputeTextInfo(
             val builder = AnnotatedString.Builder()
             builder.append(normalizeNewlines(customizedText))
             builder.toAnnotatedString()
-        } else
-            when (val vDatatype = v.data.getType()) {
-                is ViewDataType.Text -> {
-                    val builder = AnnotatedString.Builder()
-                    builder.append(
-                        normalizeNewlines(
-                            getTextContent(appContext, vDatatype as ViewDataType.Text)
+        } else {
+            if (v.data.hasText()) {
+                val builder = AnnotatedString.Builder()
+                builder.append(normalizeNewlines(getTextContent(appContext, v.data.text)))
+                builder.toAnnotatedString()
+            } else if (v.data.hasStyledText()) {
+                val builder = AnnotatedString.Builder()
+                for (run in getTextContent(appContext, v.data.styledText)) {
+                    val style = run.styleOrNull!!
+                    val textBrushAndOpacity =
+                        style.textColorOrNull!!.asBrush(
+                            appContext,
+                            document,
+                            density.density,
+                            variableState,
                         )
+                    val fontWeight = style.fontWeightOrNull!!.weight.getValue(variableState)
+                    builder.pushStyle(
+                        (SpanStyle(
+                            brush = textBrushAndOpacity?.first,
+                            alpha = textBrushAndOpacity?.second ?: 1.0f,
+                            fontSize = style.fontSizeOrNull!!.getValue(variableState).sp,
+                            fontWeight = FontWeight(fontWeight.roundToInt()),
+                            fontStyle =
+                                when (style.fontStyle) {
+                                    com.android.designcompose.definition.element.FontStyle
+                                        .FONT_STYLE_ITALIC -> FontStyle.Italic
+                                    else -> FontStyle.Normal
+                                },
+                            fontFamily =
+                                DesignSettings.fontFamily(
+                                    style.takeIf { it.hasFontFamily() }?.fontFamily,
+                                    fontFamily,
+                                ),
+                            fontFeatureSettings =
+                                style.fontFeaturesList.joinToString(", ") { feature ->
+                                    String(feature.tag.toByteArray())
+                                },
+                            letterSpacing = style.letterSpacing.sp,
+                            textDecoration =
+                                when (style.textDecoration) {
+                                    TextDecoration.TEXT_DECORATION_UNDERLINE ->
+                                        androidx.compose.ui.text.style.TextDecoration.Underline
+
+                                    TextDecoration.TEXT_DECORATION_STRIKETHROUGH ->
+                                        androidx.compose.ui.text.style.TextDecoration.LineThrough
+
+                                    else -> androidx.compose.ui.text.style.TextDecoration.None
+                                },
+                            // platformStyle = PlatformSpanStyle(includeFontPadding = false),
+                        ))
                     )
-                    builder.toAnnotatedString()
+                    builder.append(run.text)
+                    builder.pop()
                 }
-                is ViewDataType.StyledText -> {
-                    val builder = AnnotatedString.Builder()
-                    for (run in getTextContent(appContext, vDatatype as ViewDataType.StyledText)) {
-                        val style =
-                            run.style.orElseThrow {
-                                NoSuchFieldException("Malformed data: StyledTextRun's style unset")
-                            }
-                        val textBrushAndOpacity =
-                            style.text_color
-                                .orElseThrow {
-                                    NoSuchFieldException(
-                                        "Malformed data: ViewStyle's text_color unset"
-                                    )
-                                }
-                                .asBrush(appContext, document, density.density, variableState)
-                        val fontWeight =
-                            style.font_weight
-                                .orElseThrow {
-                                    NoSuchFieldException(
-                                        "Malformed data: ViewStyle's font_weight unset"
-                                    )
-                                }
-                                .weight
-                                .get()
-                                .getValue(variableState)
-                        builder.pushStyle(
-                            (SpanStyle(
-                                brush = textBrushAndOpacity?.first,
-                                alpha = textBrushAndOpacity?.second ?: 1.0f,
-                                fontSize =
-                                    style.font_size
-                                        .orElseThrow {
-                                            NoSuchFieldException(
-                                                "Malformed data: ViewStyle's font_size unset"
-                                            )
-                                        }
-                                        .getValue(variableState)
-                                        .sp,
-                                fontWeight = FontWeight(fontWeight.roundToInt()),
-                                fontStyle =
-                                    when (fontStyleFromInt(style.font_style)) {
-                                        is com.android.designcompose.serdegen.FontStyle.Italic ->
-                                            FontStyle.Italic
-                                        else -> FontStyle.Normal
-                                    },
-                                fontFamily =
-                                    DesignSettings.fontFamily(style.font_family, fontFamily),
-                                fontFeatureSettings =
-                                    style.font_features.joinToString(", ") { feature ->
-                                        String(feature.tag.toByteArray())
-                                    },
-                                letterSpacing = style.letter_spacing.sp,
-                                textDecoration =
-                                    when (textDecorationFromInt(style.text_decoration)) {
-                                        is TextDecoration.Underline ->
-                                            androidx.compose.ui.text.style.TextDecoration.Underline
-                                        is TextDecoration.Strikethrough ->
-                                            androidx.compose.ui.text.style.TextDecoration
-                                                .LineThrough
-                                        else -> androidx.compose.ui.text.style.TextDecoration.None
-                                    },
-                                // platformStyle = PlatformSpanStyle(includeFontPadding = false),
-                            ))
-                        )
-                        builder.append(run.text)
-                        builder.pop()
-                    }
-                    builder.toAnnotatedString()
-                }
-                else -> {
-                    return null
-                }
-            }
+                builder.toAnnotatedString()
+            } else return null
+        }
 
     val lineHeight =
         customTextStyle?.lineHeight
-            ?: when (
-                val lineHeightType =
-                    v.style.get().nodeStyle.line_height.getOrNull()?.line_height_type?.getOrNull()
-            ) {
-                is LineHeightType.Pixels -> lineHeightType.value.sp
+            ?: when (v.style.nodeStyle.lineHeight.lineHeightTypeCase) {
+                LineHeightTypeCase.PIXELS -> v.style.nodeStyle.lineHeight.pixels.sp
                 else -> TextUnit.Unspecified
             }
     val fontWeight =
         customTextStyle?.fontWeight
-            ?: FontWeight(
-                v.style
-                    .get()
-                    .nodeStyle
-                    .font_weight
-                    .get()
-                    .weight
-                    .get()
-                    .getValue(variableState)
-                    .roundToInt()
-            )
+            ?: FontWeight(v.style.nodeStyle.fontWeight.weight.getValue(variableState).roundToInt())
     val fontStyle =
         customTextStyle?.fontStyle
-            ?: when (fontStyleFromInt(v.style.get().nodeStyle.font_style)) {
-                is com.android.designcompose.serdegen.FontStyle.Italic -> FontStyle.Italic
+            ?: when (v.style.nodeStyle.fontStyle) {
+                com.android.designcompose.definition.element.FontStyle.FONT_STYLE_ITALIC ->
+                    FontStyle.Italic
                 else -> FontStyle.Normal
             }
     val textDecoration =
         customTextStyle?.textDecoration
-            ?: when (textDecorationFromInt(v.style.get().nodeStyle.text_decoration)) {
-                is TextDecoration.Underline ->
+            ?: when (v.style.nodeStyle.textDecoration) {
+                TextDecoration.TEXT_DECORATION_UNDERLINE ->
                     androidx.compose.ui.text.style.TextDecoration.Underline
-                is TextDecoration.Strikethrough ->
+                TextDecoration.TEXT_DECORATION_STRIKETHROUGH ->
                     androidx.compose.ui.text.style.TextDecoration.LineThrough
                 else -> androidx.compose.ui.text.style.TextDecoration.None
             }
     val letterSpacing =
-        customTextStyle?.letterSpacing ?: v.style.get().nodeStyle.letter_spacing.orElse(0f).sp
+        customTextStyle?.letterSpacing
+            ?: (v.style.nodeStyle.takeIf { it.hasLetterSpacing() }?.letterSpacing ?: 0f).sp
     // Compose only supports a single outset shadow on text; we must use a canvas and perform
     // manual text layout (and editing, and accessibility) to do fancier text.
     val shadow =
-        v.style.get().nodeStyle.text_shadow.flatMap { textShadow ->
-            Optional.of(
-                Shadow(
-                    // Ensure that blur radius is never zero, because Compose interprets that as no
-                    // shadow (rather than as a hard-edged shadow).
-                    blurRadius = textShadow.blur_radius * density.density * blurFudgeFactor + 0.1f,
-                    offset =
-                        Offset(
-                            textShadow.offset_x * density.density,
-                            textShadow.offset_y * density.density,
-                        ),
-                    color = textShadow.color.get().getValue(variableState) ?: Color.Transparent,
-                )
+        v.style.nodeStyle.textShadowOrNull?.let { textShadow ->
+            Shadow(
+                // Ensure that blur radius is never zero, because Compose interprets that as no
+                // shadow (rather than as a hard-edged shadow).
+                blurRadius = textShadow.blurRadius * density.density * blurFudgeFactor + 0.1f,
+                offset =
+                    Offset(
+                        textShadow.offsetX * density.density,
+                        textShadow.offsetY * density.density,
+                    ),
+                color = textShadow.color.getValue(variableState) ?: Color.Transparent,
             )
         }
     // The brush and opacity is computed later at rendering time.
     val textStyle =
         (TextStyle(
             fontSize =
-                customTextStyle?.fontSize
-                    ?: v.style.get().nodeStyle.font_size.get().getValue(variableState).sp,
+                customTextStyle?.fontSize ?: v.style.nodeStyle.fontSize.getValue(variableState).sp,
             fontFamily = fontFamily,
             fontFeatureSettings =
-                v.style.get().nodeStyle.font_features.joinToString(", ") { feature ->
+                v.style.nodeStyle.fontFeaturesList.joinToString(", ") { feature ->
                     String(feature.tag.toByteArray())
                 },
             lineHeight = lineHeight,
@@ -300,12 +258,14 @@ internal fun squooshComputeTextInfo(
             fontStyle = fontStyle,
             textAlign =
                 customTextStyle?.textAlign
-                    ?: when (textAlignFromInt(v.style.get().nodeStyle.text_align)) {
-                        is com.android.designcompose.serdegen.TextAlign.Center -> TextAlign.Center
-                        is com.android.designcompose.serdegen.TextAlign.Right -> TextAlign.Right
+                    ?: when (v.style.nodeStyle.textAlign) {
+                        com.android.designcompose.definition.modifier.TextAlign.TEXT_ALIGN_CENTER ->
+                            TextAlign.Center
+                        com.android.designcompose.definition.modifier.TextAlign.TEXT_ALIGN_RIGHT ->
+                            TextAlign.Right
                         else -> TextAlign.Left
                     },
-            shadow = shadow.orElse(null),
+            shadow = shadow,
             platformStyle = PlatformTextStyle(includeFontPadding = false),
             lineHeightStyle =
                 LineHeightStyle(
@@ -324,9 +284,7 @@ internal fun squooshComputeTextInfo(
         )
 
     val maxLines =
-        if (v.style.get().nodeStyle.line_count.isPresent)
-            v.style.get().nodeStyle.line_count.get().toInt()
-        else Int.MAX_VALUE
+        if (v.style.nodeStyle.hasLineCount()) v.style.nodeStyle.lineCount else Int.MAX_VALUE
 
     val textMeasureData =
         TextMeasureData(
@@ -334,7 +292,7 @@ internal fun squooshComputeTextInfo(
             paragraph,
             density,
             maxLines,
-            v.style.get().isAutoWidthText(),
+            v.style.isAutoWidthText(),
         )
 
     textMeasureCache.put(

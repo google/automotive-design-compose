@@ -38,8 +38,8 @@ import kotlinx.coroutines.launch
 
 // Need to rename all of this to use "Access Token" instead of "Auth Key". This will match Figma's
 // terminology: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens
-public var ACTION_SET_API_KEY = "setApiKey"
-public var EXTRA_SET_API_KEY = "ApiKey"
+var ACTION_SET_API_KEY = "setApiKey"
+var EXTRA_SET_API_KEY = "ApiKey"
 
 class ApiKeyService : Service() {
 

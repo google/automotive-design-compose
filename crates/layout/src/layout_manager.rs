@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::android_interface::Layout;
+use crate::android_interface::LayoutChangedResponse;
 use crate::into_taffy::TryIntoTaffy;
-use crate::types::Layout;
 use dc_bundle::definition::layout::LayoutStyle;
 use dc_bundle::Error;
 use log::{error, trace};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use taffy::prelude::{AvailableSpace, Size};
 use taffy::{NodeId, TaffyTree};
-
 // Customizations that can applied to a node
 struct Customizations {
     sizes: HashMap<i32, Size<u32>>,
@@ -475,19 +474,5 @@ impl LayoutManager {
             return;
         };
         crate::debug::print_tree_as_html(&self.taffy, root_node_id, print_func);
-    }
-}
-
-// The layout response sent back to client which contains a layout state ID and
-// a list of layout IDs that have changed.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct LayoutChangedResponse {
-    pub layout_state: i32,
-    pub changed_layouts: HashMap<i32, Layout>,
-}
-
-impl LayoutChangedResponse {
-    pub fn unchanged(layout_state: i32) -> Self {
-        LayoutChangedResponse { layout_state, changed_layouts: HashMap::new() }
     }
 }

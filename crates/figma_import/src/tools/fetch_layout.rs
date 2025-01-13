@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::save_design_def;
-use crate::{Document, ProxyConfig};
+use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
 use dc_bundle::definition::element::dimension_proto::Dimension;
@@ -22,8 +21,8 @@ use dc_bundle::definition::layout::LayoutSizing;
 use dc_bundle::definition::view::view_data::ViewDataType;
 use dc_bundle::definition::view::view_data::ViewDataType::{Container, Text};
 use dc_bundle::definition::view::{view_data, View};
-use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
-use dc_bundle::legacy_definition::DesignComposeDefinitionHeader;
+use dc_bundle::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader, NodeQuery};
+use dc_bundle::definition_file::save_design_def;
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;
@@ -53,6 +52,12 @@ impl From<crate::Error> for ConvertError {
 }
 impl From<bincode::Error> for ConvertError {
     fn from(e: bincode::Error) -> Self {
+        eprintln!("Error during serialization: {:?}", e);
+        ConvertError(format!("Error during serialization: {:?}", e))
+    }
+}
+impl From<dc_bundle::Error> for ConvertError {
+    fn from(e: dc_bundle::Error) -> Self {
         eprintln!("Error during serialization: {:?}", e);
         ConvertError(format!("Error during serialization: {:?}", e))
     }

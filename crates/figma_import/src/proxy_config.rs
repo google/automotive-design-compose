@@ -12,4 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod layout_node;
+// Proxy configuration.
+#[derive(Debug, Clone)]
+pub enum ProxyConfig {
+    // HTTP Proxy Config in <host>:<port> format
+    HttpProxyConfig(String),
+    None,
+}

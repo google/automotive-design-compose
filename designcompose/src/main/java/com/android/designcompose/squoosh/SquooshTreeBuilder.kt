@@ -28,10 +28,66 @@ import com.android.designcompose.InteractionState
 import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.VariableState
-import com.android.designcompose.asBuilder
 import com.android.designcompose.common.NodeQuery
-import com.android.designcompose.defaultLayoutStyle
-import com.android.designcompose.defaultNodeStyle
+import com.android.designcompose.definition.element.FontStyle
+import com.android.designcompose.definition.element.StrokeAlign
+import com.android.designcompose.definition.element.TextDecoration
+import com.android.designcompose.definition.element.ViewShapeKt.box
+import com.android.designcompose.definition.element.background
+import com.android.designcompose.definition.element.color
+import com.android.designcompose.definition.element.colorOrVar
+import com.android.designcompose.definition.element.dimensionProto
+import com.android.designcompose.definition.element.dimensionRect
+import com.android.designcompose.definition.element.fontStretch
+import com.android.designcompose.definition.element.fontWeight
+import com.android.designcompose.definition.element.lineHeight
+import com.android.designcompose.definition.element.numOrVar
+import com.android.designcompose.definition.element.size
+import com.android.designcompose.definition.element.stroke
+import com.android.designcompose.definition.element.strokeWeight
+import com.android.designcompose.definition.element.viewShape
+import com.android.designcompose.definition.interaction.PointerEvents
+import com.android.designcompose.definition.interaction.action
+import com.android.designcompose.definition.interaction.reaction
+import com.android.designcompose.definition.interaction.trigger
+import com.android.designcompose.definition.layout.AlignContent
+import com.android.designcompose.definition.layout.AlignItems
+import com.android.designcompose.definition.layout.AlignSelf
+import com.android.designcompose.definition.layout.FlexDirection
+import com.android.designcompose.definition.layout.FlexWrap
+import com.android.designcompose.definition.layout.ItemSpacingKt.auto
+import com.android.designcompose.definition.layout.JustifyContent
+import com.android.designcompose.definition.layout.LayoutSizing
+import com.android.designcompose.definition.layout.Overflow
+import com.android.designcompose.definition.layout.OverflowDirection
+import com.android.designcompose.definition.layout.PositionType
+import com.android.designcompose.definition.layout.copy
+import com.android.designcompose.definition.layout.itemSpacing
+import com.android.designcompose.definition.layout.layoutStyle
+import com.android.designcompose.definition.layout.scrollInfo
+import com.android.designcompose.definition.modifier.BlendMode
+import com.android.designcompose.definition.modifier.TextAlign
+import com.android.designcompose.definition.modifier.TextAlignVertical
+import com.android.designcompose.definition.modifier.TextOverflow
+import com.android.designcompose.definition.plugin.FrameExtras
+import com.android.designcompose.definition.plugin.OverlayBackgroundInteraction
+import com.android.designcompose.definition.plugin.OverlayPositionType
+import com.android.designcompose.definition.plugin.colorOrNull
+import com.android.designcompose.definition.plugin.overlayBackgroundOrNull
+import com.android.designcompose.definition.view.ComponentInfo
+import com.android.designcompose.definition.view.Display
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewDataKt.container
+import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.definition.view.containerOrNull
+import com.android.designcompose.definition.view.copy
+import com.android.designcompose.definition.view.frameExtrasOrNull
+import com.android.designcompose.definition.view.nodeStyle
+import com.android.designcompose.definition.view.overridesOrNull
+import com.android.designcompose.definition.view.styleOrNull
+import com.android.designcompose.definition.view.view
+import com.android.designcompose.definition.view.viewData
+import com.android.designcompose.definition.view.viewStyle
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
@@ -40,49 +96,12 @@ import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
-import com.android.designcompose.hasScrolling
-import com.android.designcompose.mergeStyles
-import com.android.designcompose.proto.OverlayBackgroundInteractionEnum
-import com.android.designcompose.proto.OverlayPositionEnum
-import com.android.designcompose.proto.getType
-import com.android.designcompose.proto.isSupportedInteraction
-import com.android.designcompose.proto.layoutStyle
-import com.android.designcompose.proto.newDimensionProtoPercent
-import com.android.designcompose.proto.newViewShapeRect
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.proto.overlayBackgroundInteractionFromInt
-import com.android.designcompose.proto.overlayPositionEnumFromInt
-import com.android.designcompose.proto.toInt
-import com.android.designcompose.proto.type
-import com.android.designcompose.serdegen.Action
-import com.android.designcompose.serdegen.ActionType
-import com.android.designcompose.serdegen.AlignItems
-import com.android.designcompose.serdegen.Background
-import com.android.designcompose.serdegen.BackgroundType
-import com.android.designcompose.serdegen.Color
-import com.android.designcompose.serdegen.ColorOrVar
-import com.android.designcompose.serdegen.ColorOrVarType
-import com.android.designcompose.serdegen.ComponentInfo
-import com.android.designcompose.serdegen.Container
-import com.android.designcompose.serdegen.FlexDirection
-import com.android.designcompose.serdegen.FrameExtras
-import com.android.designcompose.serdegen.JustifyContent
-import com.android.designcompose.serdegen.Overflow
-import com.android.designcompose.serdegen.OverflowDirection
-import com.android.designcompose.serdegen.PositionType
-import com.android.designcompose.serdegen.Reaction
-import com.android.designcompose.serdegen.RenderMethod
-import com.android.designcompose.serdegen.ScrollInfo
-import com.android.designcompose.serdegen.Trigger
-import com.android.designcompose.serdegen.TriggerType
-import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewData
-import com.android.designcompose.serdegen.ViewDataType
-import com.android.designcompose.serdegen.ViewStyle
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
-import java.util.Optional
-import kotlin.jvm.optionals.getOrNull
+import com.android.designcompose.utils.hasScrolling
+import com.android.designcompose.utils.isSupportedInteraction
+import com.android.designcompose.utils.mergeStyles
+import com.google.protobuf.empty
 
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
@@ -145,7 +164,7 @@ internal class ParentComponentData(
 /// Subsequent passes of this generated tree can set up a native layout tree, and then populate
 /// the computed layout values, and finally render the view tree.
 internal fun resolveVariantsRecursively(
-    v: View,
+    viewFromTree: View,
     document: DocContent,
     customizations: CustomizationContext,
     variantTransition: SquooshVariantTransition,
@@ -170,45 +189,41 @@ internal fun resolveVariantsRecursively(
     overlays: List<View>? = null,
     isScrollComponent: Boolean = false,
 ): SquooshResolvedNode? {
-    if (!customizations.getVisible(v.name)) return null
-    customizations.getVisibleState(v.name)?.let { if (!it.value) return null }
-    var componentLayoutId = componentLayoutId
+    if (!customizations.getVisible(viewFromTree.name)) return null
+    customizations.getVisibleState(viewFromTree.name)?.let { if (!it.value) return null }
+    var thisLayoutId = componentLayoutId
     var parentComps = parentComponents
     var overrideStyle: ViewStyle? = null
-    var view = v
+    var view = viewFromTree
 
     // If we have a component then we might need to get an override style, and we definitely
     // need to get a different layout id.
-    if (v.component_info.isPresent) {
-        val componentInfo = v.component_info.get()
-        parentComps = ParentComponentData(parentComponents, v.id, componentInfo)
+    if (viewFromTree.hasComponentInfo()) {
+        parentComps =
+            ParentComponentData(parentComponents, viewFromTree.id, viewFromTree.componentInfo)
 
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
-        componentLayoutId =
-            computeComponentLayoutId(
-                componentLayoutId,
-                layoutIdAllocator.componentLayoutId(parentComps),
-            )
+        thisLayoutId =
+            computeComponentLayoutId(thisLayoutId, layoutIdAllocator.componentLayoutId(parentComps))
 
         // Do we have an override style? This is style data which we should apply to the final style
         // even if we're swapping out our view definition for a variant.
-        if (componentInfo.overrides.isPresent) {
-            val overrides = componentInfo.overrides.get()
-            if (overrides.style.isPresent) {
-                overrideStyle = overrides.style.get()
-            }
-        }
+        overrideStyle = viewFromTree.componentInfo.overridesOrNull?.styleOrNull
 
         // See if we have a variant replacement; this only happens for component instances (for both
         // interaction-driven and customization-driven variant changes).
 
         // First ask the interaction state if there's a variant we should render instead.
-        view = interactionState.squooshNodeVariant(v.id, customizations.getKey(), document) ?: v
+        interactionState
+            .squooshNodeVariant(viewFromTree.id, customizations.getKey(), document)
+            ?.let { view = it }
 
         // If we didn't replace the component because of an interaction, we might want to replace it
         // because of a variant customization.
-        if (view.name == v.name) {
+        if (
+            view.name == viewFromTree.name
+        ) { // TODO: why we don't check if view == viewFromTree????
             // If an interaction has not changed the current variant, then check to see if this node
             // is part of a component set with variants and if any @DesignVariant annotations
             // set variant properties that match. If so, variantNodeName will be set to the
@@ -220,15 +235,16 @@ internal fun resolveVariantsRecursively(
 
             val variantNodeName =
                 variantTransition.selectVariant(
-                    v.id,
-                    customizations.getMatchingVariant(view.component_info) ?: componentInfo.name,
+                    viewFromTree.id,
+                    customizations.getMatchingVariant(view.componentInfo)
+                        ?: viewFromTree.componentInfo.name,
                 )
-            if (variantNodeName != null && variantNodeName != componentInfo.name) {
+            if (variantNodeName != null && variantNodeName != viewFromTree.componentInfo.name) {
                 // Find the view associated with the variant name
                 val variantNodeQuery =
                     NodeQuery.NodeVariant(
                         variantNodeName,
-                        variantParentName.ifEmpty { view.component_info.get().component_set_name },
+                        variantParentName.ifEmpty { view.componentInfo.componentSetName },
                     )
                 val variantView =
                     interactionState.squooshRootNode(
@@ -241,7 +257,7 @@ internal fun resolveVariantsRecursively(
                     view = variantView
                 }
             }
-            variantTransition.selectedVariant(v, view, customVariantTransition)
+            variantTransition.selectedVariant(viewFromTree, view, customVariantTransition)
         }
     }
 
@@ -249,17 +265,17 @@ internal fun resolveVariantsRecursively(
     // that on top of the view (or variant) style.
     val style =
         if (overrideStyle == null) {
-            view.style.get()
+            view.style
         } else {
             // XXX-PERF: This is not needed by Battleship, and takes over 50% of the runtime of
             //           resolveVariants (not including computeTextInfo).
-            mergeStyles(view.style.get(), overrideStyle)
+            mergeStyles(view.style, overrideStyle)
         }
 
     // Now we know the view we want to render, the style we want to use, etc. We can create
     // a record of it. After this, another pass can be done to build a layout tree. Finally,
     // layout can be performed and rendering done.
-    val layoutId = computeLayoutId(componentLayoutId, v.unique_id)
+    val layoutId = computeLayoutId(thisLayoutId, viewFromTree.uniqueId)
     layoutIdAllocator.visitLayoutId(layoutId)
 
     // XXX-PERF: computeTextInfo is *super* slow. It needs to use a cache between frames.
@@ -276,22 +292,23 @@ internal fun resolveVariantsRecursively(
             textMeasureCache,
             textHash,
         )
-    val resolvedView = SquooshResolvedNode(view, style, layoutId, textInfo, v.id, layoutNode = null)
+    val resolvedView =
+        SquooshResolvedNode(view, style, layoutId, textInfo, viewFromTree.id, layoutNode = null)
 
     // Find out if we have some supported interactions. These currently include press, click,
     // timeout, and key press.
     var hasSupportedInteraction = false
-    view.reactions.forEach { r ->
+    view.reactionsList.forEach { r ->
         hasSupportedInteraction = hasSupportedInteraction || r.trigger.isSupportedInteraction()
-        if (r.trigger.type is TriggerType.KeyDown) {
+        if (r.trigger.hasKeyDown()) {
             // Register to be a listener for key reactions on this node
-            val keyTrigger = r.trigger.type as TriggerType.KeyDown
-            val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.value.key_codes)
+            val keyTrigger = r.trigger.keyDown
+            val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.keyCodes.toList())
             val keyAction =
                 KeyAction(
                     interactionState,
-                    r.action.get(),
-                    findTargetInstanceId(document, parentComps, r.action.get()),
+                    r.action,
+                    findTargetInstanceId(document, parentComps, r.action),
                     customizations.getKey(),
                     null,
                 )
@@ -382,10 +399,10 @@ internal fun resolveVariantsRecursively(
     }
 
     if (!skipChildren) {
-        (view.data.getType() as? ViewDataType.Container)?.let { viewData ->
+        view.data.containerOrNull?.let { viewData ->
             var previousChild: SquooshResolvedNode? = null
 
-            for (child in viewData.value.children) {
+            for (child in view.data.container.childrenList) {
                 val childResolvedNode =
                     resolveVariantsRecursively(
                         child,
@@ -406,7 +423,7 @@ internal fun resolveVariantsRecursively(
                         textMeasureCache = textMeasureCache,
                         textHash = textHash,
                         customVariantTransition = customVariantTransition,
-                        componentLayoutId = componentLayoutId,
+                        componentLayoutId = thisLayoutId,
                     ) ?: continue
 
                 childResolvedNode.parent = resolvedView
@@ -422,7 +439,7 @@ internal fun resolveVariantsRecursively(
     // Roots also get overlays
     if (overlays != null) {
         for (overlay in overlays) {
-            val overlayExtras = overlay.frame_extras.getOrNull() ?: continue
+            val overlayExtras = overlay.frameExtrasOrNull ?: continue
 
             // We want to ensure that the background close interaction appears after the regular
             // content but before the child content. We can't construct a `SquooshChildComposable`
@@ -452,7 +469,7 @@ internal fun resolveVariantsRecursively(
                     textMeasureCache = textMeasureCache,
                     textHash = textHash,
                     customVariantTransition = customVariantTransition,
-                    componentLayoutId = componentLayoutId,
+                    componentLayoutId = thisLayoutId,
                 ) ?: continue
 
             // Make a synthetic parent for the overlay.
@@ -489,49 +506,117 @@ internal fun generateReplacementListChildNode(
     childIdx: Int,
     layoutIdAllocator: SquooshLayoutIdAllocator,
 ): SquooshResolvedNode {
-    val layoutStyle = defaultLayoutStyle()
-    val nodeStyle = defaultNodeStyle()
+    val listChildViewData = container { shape = viewShape { rect = box { isMask = false } } }
 
-    val itemStyle =
-        ViewStyle.Builder()
-            .apply {
-                layout_style = Optional.of(layoutStyle.build())
-                node_style = Optional.of(nodeStyle.build())
+    val listChildScrollInfo = scrollInfo {
+        pagedScrolling = false
+        overflow = OverflowDirection.OVERFLOW_DIRECTION_NONE
+    }
+
+    val listChildView = view {
+        uniqueId = 0 // This is unused.
+        id = "replacement-${node.view.id}-${childIdx}"
+        name = "Replacement List ${node.view.name} / $childIdx"
+        scrollInfo = listChildScrollInfo
+        data = viewData { container = listChildViewData }
+        renderMethod = View.RenderMethod.RENDER_METHOD_NONE
+
+        // The Rust code currently fails if any of these fields are unset so we initialize
+        // a default viewStyle. (the nodeStyle isn't needed right now)
+        style = viewStyle {
+            layoutStyle = layoutStyle {
+                positionType = PositionType.POSITION_TYPE_RELATIVE
+                flexDirection = FlexDirection.FLEX_DIRECTION_ROW
+                alignItems = AlignItems.ALIGN_ITEMS_FLEX_START
+                alignSelf = AlignSelf.ALIGN_SELF_AUTO
+                alignContent = AlignContent.ALIGN_CONTENT_FLEX_START
+                justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START
+                left = dimensionProto { undefined }
+                top = dimensionProto { undefined }
+                right = dimensionProto { undefined }
+                bottom = dimensionProto { undefined }
+                margin = dimensionRect {
+                    start = dimensionProto { undefined }
+                    end = dimensionProto { undefined }
+                    top = dimensionProto { undefined }
+                    bottom = dimensionProto { undefined }
+                }
+                padding = dimensionRect {
+                    start = dimensionProto { undefined }
+                    end = dimensionProto { undefined }
+                    top = dimensionProto { undefined }
+                    bottom = dimensionProto { undefined }
+                }
+                itemSpacing = itemSpacing { auto = auto {} }
+                flexGrow = 0f
+                flexShrink = 0f
+                flexBasis = dimensionProto { undefined }
+                boundingBox = size {
+                    width = 0f
+                    height = 0f
+                }
+                width = dimensionProto { undefined }
+                height = dimensionProto { undefined }
+                minWidth = dimensionProto { undefined }
+                minHeight = dimensionProto { undefined }
+                maxWidth = dimensionProto { undefined }
+                maxHeight = dimensionProto { undefined }
             }
-            .build()
+            nodeStyle = nodeStyle {
+                textColor = background { none }
+                fontSize = numOrVar { num = 0f }
+                fontFamily = ""
+                fontWeight = fontWeight { weight = numOrVar { 0f } }
+                fontStyle = FontStyle.FONT_STYLE_NORMAL
+                fontStretch = fontStretch { value = 0f }
+                backgrounds.clear()
+                boxShadows.clear()
+                stroke = stroke {
+                    strokeAlign = StrokeAlign.STROKE_ALIGN_CENTER
+                    strokeWeight = strokeWeight { uniform = 0f }
+                    strokes.clear()
+                }
+                clearOpacity()
+                clearTransform()
+                clearRelativeTransform()
 
-    val listChildViewData =
-        Container.Builder()
-            .apply {
-                shape = Optional.of(newViewShapeRect(false))
-                children = emptyList()
+                textDecoration = TextDecoration.TEXT_DECORATION_NONE
+                textAlign = TextAlign.TEXT_ALIGN_LEFT
+                textAlignVertical = TextAlignVertical.TEXT_ALIGN_VERTICAL_TOP
+                textOverflow = TextOverflow.TEXT_OVERFLOW_CLIP
+
+                clearTextShadow()
+                nodeSize = size {
+                    width = 0f
+                    height = 0f
+                }
+                lineHeight = lineHeight { percent = 0f }
+                clearLineCount()
+                clearLetterSpacing()
+                fontFeatures.clear()
+                filters.clear()
+                backdropFilters.clear()
+                blendMode = BlendMode.BLEND_MODE_PASS_THROUGH
+                displayType = Display.DISPLAY_FLEX
+                flexWrap = FlexWrap.FLEX_WRAP_NO_WRAP
+                clearGridLayoutType()
+                gridColumnsRows = 0
+                gridAdaptiveMinSize = 0
+                gridSpanContents.clear()
+                overflow = Overflow.OVERFLOW_VISIBLE
+                clearMaxChildren()
+                clearOverflowNodeId()
+                clearOverflowNodeName()
+                crossAxisItemSpacing = 0f
+                horizontalSizing = LayoutSizing.LAYOUT_SIZING_HUG
+                verticalSizing = LayoutSizing.LAYOUT_SIZING_HUG
+                clearAspectRatio()
+                pointerEvents = PointerEvents.POINTER_EVENTS_AUTO
+                clearMeterData()
+                clearHyperlinks()
             }
-            .build()
-
-    val listChildScrollInfo =
-        ScrollInfo.Builder()
-            .apply {
-                paged_scrolling = false
-                overflow = OverflowDirection.None().toInt()
-            }
-            .build()
-
-    val listChildView = View.Builder()
-    listChildView.unique_id = 0 // This is unused.
-    listChildView.id = "replacement-${node.view.id}-${childIdx}"
-    listChildView.name = "Replacement List ${node.view.name} / $childIdx"
-    listChildView.component_info = Optional.empty()
-    listChildView.reactions = emptyList()
-    listChildView.frame_extras = Optional.empty()
-    listChildView.shader = Optional.empty()
-    listChildView.shader_fallback_color = Optional.empty()
-    listChildView.scroll_info = Optional.of(listChildScrollInfo)
-    listChildView.style = Optional.of(itemStyle)
-    listChildView.data =
-        Optional.of(ViewData(Optional.of(ViewDataType.Container(listChildViewData))))
-    listChildView.design_absolute_bounding_box = Optional.empty()
-    listChildView.render_method = RenderMethod.None().toInt()
-    listChildView.explicit_variable_modes = emptyMap()
+        }
+    }
 
     val listLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)
     val layoutId = computeSyntheticListItemLayoutId(listLayoutId, childIdx)
@@ -539,8 +624,8 @@ internal fun generateReplacementListChildNode(
 
     val listChildNode =
         SquooshResolvedNode(
-            view = listChildView.build(),
-            style = listChildView.style.get(),
+            view = listChildView,
+            style = listChildView.style,
             layoutId = layoutId,
             textInfo = null,
             unresolvedNodeId = "list-child-${node.unresolvedNodeId}-${childIdx}",
@@ -562,121 +647,116 @@ private fun generateOverlayNode(
     layoutIdAllocator: SquooshLayoutIdAllocator,
 ): SquooshResolvedNode {
     // Make a view based on the child node which uses a synthesized style.
-    val overlayStyle = node.style.asBuilder()
-    val layoutStyle = node.style.layoutStyle.asBuilder()
-    val nodeStyle = node.style.nodeStyle.asBuilder()
-    nodeStyle.overflow = Overflow.Visible().toInt()
-    layoutStyle.position_type = PositionType.Absolute().toInt()
-    layoutStyle.top = newDimensionProtoPercent(0.0f)
-    layoutStyle.left = newDimensionProtoPercent(0.0f)
-    layoutStyle.right = newDimensionProtoPercent(0.0f)
-    layoutStyle.bottom = newDimensionProtoPercent(0.0f)
-    layoutStyle.width = newDimensionProtoPercent(1.0f)
-    layoutStyle.height = newDimensionProtoPercent(1.0f)
-    layoutStyle.flex_direction = FlexDirection.Column().toInt()
-    when (overlayPositionEnumFromInt(overlay.overlay_position_type)) {
-        OverlayPositionEnum.TOP_LEFT -> {
-            layoutStyle.justify_content = JustifyContent.FlexStart().toInt() // Y
-            layoutStyle.align_items = AlignItems.FlexStart().toInt() // X
-        }
-        OverlayPositionEnum.TOP_CENTER -> {
-            layoutStyle.justify_content = JustifyContent.FlexStart().toInt() // Y
-            layoutStyle.align_items = AlignItems.Center().toInt() // X
-        }
-        OverlayPositionEnum.TOP_RIGHT -> {
-            layoutStyle.justify_content = JustifyContent.FlexStart().toInt() // Y
-            layoutStyle.align_items = AlignItems.FlexEnd().toInt() // X
-        }
-        OverlayPositionEnum.BOTTOM_LEFT -> {
-            layoutStyle.justify_content = JustifyContent.FlexEnd().toInt() // Y
-            layoutStyle.align_items = AlignItems.FlexStart().toInt() // X
-        }
-        OverlayPositionEnum.BOTTOM_CENTER -> {
-            layoutStyle.justify_content = JustifyContent.FlexEnd().toInt() // Y
-            layoutStyle.align_items = AlignItems.Center().toInt() // X
-        }
-        OverlayPositionEnum.BOTTOM_RIGHT -> {
-            layoutStyle.justify_content = JustifyContent.FlexEnd().toInt() // Y
-            layoutStyle.align_items = AlignItems.FlexEnd().toInt() // X
-        }
-        // Center and Manual both are centered; not clear how to implement manual positioning
-        // without making a layout-dependent query.
-        else -> {
-            layoutStyle.justify_content = JustifyContent.Center().toInt()
-            layoutStyle.align_items = AlignItems.Center().toInt()
-        }
-    }
-    nodeStyle.backgrounds = listOf()
+    val layoutStyle =
+        node.style.layoutStyle.copy {
+            positionType = PositionType.POSITION_TYPE_ABSOLUTE
+            top = dimensionProto { percent = 0.0f }
+            left = dimensionProto { percent = 0.0f }
+            right = dimensionProto { percent = 0.0f }
+            bottom = dimensionProto { percent = 0.0f }
+            width = dimensionProto { percent = 1.0f }
+            height = dimensionProto { percent = 1.0f }
+            flexDirection = FlexDirection.FLEX_DIRECTION_COLUMN
+            when (overlay.overlayPositionType) {
+                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_LEFT -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_START // X
+                }
 
-    overlay.overlay_background.getOrNull()?.color?.getOrNull()?.let { color ->
-        val colorBuilder = Color.Builder()
-        colorBuilder.r = (color.r * 255.0).toInt()
-        colorBuilder.g = (color.g * 255.0).toInt()
-        colorBuilder.b = (color.b * 255.0).toInt()
-        colorBuilder.a = (color.a * 255.0).toInt()
-        nodeStyle.backgrounds =
-            listOf(
-                Background(
-                    Optional.of(
-                        BackgroundType.Solid(
-                            ColorOrVar(Optional.of(ColorOrVarType.Color(colorBuilder.build())))
-                        )
-                    )
+                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_CENTER -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_RIGHT -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_END // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_LEFT -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_START // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_CENTER -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
+                }
+
+                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_RIGHT -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_END // X
+                }
+                // Center and Manual both are centered; not clear how to implement manual
+                // positioning
+                // without making a layout-dependent query.
+                else -> {
+                    justifyContent = JustifyContent.JUSTIFY_CONTENT_CENTER // Y
+                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
+                }
+            }
+        }
+
+    val newNodeStyle =
+        node.style.nodeStyle.copy {
+            this.overflow = Overflow.OVERFLOW_VISIBLE
+            this.backgrounds.clear()
+
+            overlay.overlayBackgroundOrNull?.colorOrNull?.let {
+                this.backgrounds.add(
+                    background {
+                        solid = colorOrVar {
+                            color = color {
+                                r = (it.r * 255.0).toInt()
+                                g = (it.g * 255.0).toInt()
+                                b = (it.b * 255.0).toInt()
+                                a = (it.a * 255.0).toInt()
+                            }
+                        }
+                    }
                 )
-            )
+            }
+        }
+
+    val overlayStyle = viewStyle {
+        this.layoutStyle = layoutStyle
+        this.nodeStyle = newNodeStyle
     }
-    overlayStyle.layout_style = Optional.of(layoutStyle.build())
-    overlayStyle.node_style = Optional.of(nodeStyle.build())
-    val style = overlayStyle.build()
 
     // Now synthesize a view.
-    val overlayViewData =
-        Container.Builder()
-            .apply {
-                shape = Optional.of(newViewShapeRect(false))
-                children = listOf(node.view)
-            }
-            .build()
+    val overlayViewData = container {
+        this.shape = viewShape { rect = box { isMask = false } }
+        this.children.add(node.view)
+    }
 
-    val overlayScrollInfo =
-        ScrollInfo.Builder()
-            .apply {
-                paged_scrolling = false
-                overflow = OverflowDirection.None().toInt()
-            }
-            .build()
+    val overlayScrollInfo = scrollInfo {
+        this.pagedScrolling = false
+        this.overflow = OverflowDirection.OVERFLOW_DIRECTION_NONE
+    }
 
-    val overlayView = View.Builder()
-    if (node.view.unique_id !in 0..0xFFFF) {
+    if (node.view.uniqueId !in 0..0xFFFF) {
         throw RuntimeException("View's unique ID must be in the range 0..0xFFFF")
     }
-    overlayView.unique_id = (node.view.unique_id + 0x2000)
-    overlayView.id = "overlay-${node.view.id}"
-    overlayView.name = "Overlay ${node.view.name}"
-    overlayView.component_info = Optional.empty()
-    overlayView.reactions =
+    val overlayView = view {
+        this.uniqueId = (node.view.uniqueId + 0x2000)
+        this.id = "overlay-${node.view.id}"
+        this.name = "Overlay ${node.view.name}"
         if (
-            overlayBackgroundInteractionFromInt(overlay.overlay_background_interaction) ==
-                OverlayBackgroundInteractionEnum.CLOSE_ON_CLICK_OUTSIDE
+            overlay.overlayBackgroundInteraction ==
+                OverlayBackgroundInteraction.OVERLAY_BACKGROUND_INTERACTION_CLOSE_ON_CLICK_OUTSIDE
         ) {
-            // Synthesize a reaction that will close the overlay.
-            val r = Reaction.Builder()
-            r.trigger = Optional.of(Trigger(Optional.of(TriggerType.Click(com.novi.serde.Unit()))))
-            r.action = Optional.of(Action(Optional.of(ActionType.Close(com.novi.serde.Unit()))))
-            listOf(r.build())
-        } else {
-            emptyList()
+            this.reactions.add(
+                reaction {
+                    trigger = trigger { click = empty {} }
+                    action = action { close = empty {} }
+                }
+            )
         }
-    overlayView.frame_extras = Optional.empty()
-    overlayView.shader = Optional.empty()
-    overlayView.shader_fallback_color = Optional.empty()
-    overlayView.scroll_info = Optional.of(overlayScrollInfo)
-    overlayView.style = Optional.of(style)
-    overlayView.data = Optional.of(ViewData(Optional.of(ViewDataType.Container(overlayViewData))))
-    overlayView.design_absolute_bounding_box = Optional.empty()
-    overlayView.render_method = RenderMethod.None().toInt()
-    overlayView.explicit_variable_modes = emptyMap()
-
+        this.scrollInfo = overlayScrollInfo
+        this.style = overlayStyle
+        this.data = viewData { container = overlayViewData }
+        this.renderMethod = View.RenderMethod.RENDER_METHOD_NONE
+    }
     val overlayLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)
     val layoutId =
         computeSyntheticOverlayLayoutId(
@@ -687,8 +767,8 @@ private fun generateOverlayNode(
 
     val overlayNode =
         SquooshResolvedNode(
-            view = overlayView.build(),
-            style = style,
+            view = overlayView,
+            style = overlayStyle,
             layoutId = layoutId,
             textInfo = null,
             unresolvedNodeId = "overlay-${node.unresolvedNodeId}",

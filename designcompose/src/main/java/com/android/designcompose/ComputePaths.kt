@@ -26,23 +26,18 @@ import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asComposePath
 import androidx.core.graphics.minus
 import androidx.core.graphics.plus
-import com.android.designcompose.proto.StrokeAlignType
-import com.android.designcompose.proto.bottom
-import com.android.designcompose.proto.left
-import com.android.designcompose.proto.nodeStyle
-import com.android.designcompose.proto.right
-import com.android.designcompose.proto.strokeAlignFromInt
-import com.android.designcompose.proto.strokeCapFromInt
-import com.android.designcompose.proto.toUniform
-import com.android.designcompose.proto.top
-import com.android.designcompose.serdegen.BoxShadow
-import com.android.designcompose.serdegen.ShadowBox
-import com.android.designcompose.serdegen.Shape
-import com.android.designcompose.serdegen.StrokeCap
-import com.android.designcompose.serdegen.VectorArc
-import com.android.designcompose.serdegen.ViewShape
-import com.android.designcompose.serdegen.ViewStyle
-import kotlin.jvm.optionals.getOrNull
+import com.android.designcompose.definition.element.StrokeAlign
+import com.android.designcompose.definition.element.ViewShape
+import com.android.designcompose.definition.modifier.BoxShadow
+import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.utils.asPath
+import com.android.designcompose.utils.bottom
+import com.android.designcompose.utils.getNodeRenderSize
+import com.android.designcompose.utils.left
+import com.android.designcompose.utils.right
+import com.android.designcompose.utils.toComposeStrokeCap
+import com.android.designcompose.utils.toUniform
+import com.android.designcompose.utils.top
 
 /// ComputedPaths is a set of paths derived from a shape and style definition. These
 /// paths are based on the style information (known at document conversion time)
@@ -129,9 +124,9 @@ internal class ComputedPathCache {
 
 private fun ViewShape.extractCornerRadii(variableState: VariableState): FloatArray {
     val cornerRadius =
-        when (val shape = this.shape.getOrNull()) {
-            is Shape.RoundRect -> shape.value.corner_radii
-            is Shape.VectorRect -> shape.value.corner_radii
+        when (shapeCase) {
+            ViewShape.ShapeCase.VECTOR_RECT -> vectorRect.cornerRadiiList
+            ViewShape.ShapeCase.ROUND_RECT -> roundRect.cornerRadiiList
             else -> return floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
         }
     return cornerRadius.map { radius -> radius.getValue(variableState) }.toFloatArray()
@@ -166,8 +161,8 @@ internal fun ViewShape.computePaths(
     }
 
     fun getPaths(
-        path: List<com.android.designcompose.serdegen.Path>,
-        stroke: List<com.android.designcompose.serdegen.Path>,
+        path: List<com.android.designcompose.definition.element.Path>,
+        stroke: List<com.android.designcompose.definition.element.Path>,
     ): Pair<List<Path>, List<Path>> {
         // TODO GH-673 support vector paths with scale constraints. Use vectorScaleX, vectorScaleY
         val scaleX = 1F
@@ -183,8 +178,8 @@ internal fun ViewShape.computePaths(
     var strokeCap: androidx.compose.ui.graphics.StrokeCap? = null
     // Fill then stroke.
     val (fills: List<Path>, precomputedStrokes: List<Path>) =
-        when (val shape = this.shape.getOrNull()) {
-            is Shape.Rect -> {
+        when (shapeCase) {
+            ViewShape.ShapeCase.RECT -> {
                 return computeRoundRectPathsFast(
                     style,
                     cornerRadius,
@@ -192,7 +187,7 @@ internal fun ViewShape.computePaths(
                     getRectSize(overrideSize, style, density),
                 )
             }
-            is Shape.RoundRect -> {
+            ViewShape.ShapeCase.ROUND_RECT -> {
                 return computeRoundRectPathsFast(
                     style,
                     cornerRadius,
@@ -200,7 +195,7 @@ internal fun ViewShape.computePaths(
                     getRectSize(overrideSize, style, density),
                 )
             }
-            is Shape.VectorRect -> {
+            ViewShape.ShapeCase.VECTOR_RECT -> {
                 return computeRoundRectPathsFast(
                     style,
                     cornerRadius,
@@ -208,25 +203,24 @@ internal fun ViewShape.computePaths(
                     getRectSize(overrideSize, style, density),
                 )
             }
-            is Shape.Path -> {
-                strokeCap = strokeCapFromInt(shape.value.stroke_cap).toComposeStrokeCap()
-                getPaths(shape.value.paths, shape.value.strokes)
+            ViewShape.ShapeCase.PATH -> {
+                strokeCap = path.strokeCap.toComposeStrokeCap()
+                getPaths(path.pathsList, path.strokesList)
             }
-            is Shape.Arc -> {
+            ViewShape.ShapeCase.ARC -> {
                 if (
-                    !customArcAngle &&
-                        (shape.value.paths.isNotEmpty() || shape.value.strokes.isNotEmpty())
+                    !customArcAngle && (arc.pathsList.isNotEmpty() || arc.strokesList.isNotEmpty())
                 ) {
                     // Render normally with Figma provided fill/stroke path
-                    getPaths(shape.value.paths, shape.value.strokes)
+                    getPaths(arc.pathsList, arc.strokesList)
                 } else {
                     // We have a custom angle set by a meter customization, so we can't use
                     // the path provided by Figma. Instead, we construct our own path given
                     // the arc parameters
-                    if (shape.value.inner_radius < 1.0F) {
-                        computeArcPath(frameSize, shape.value)
+                    if (arc.innerRadius < 1.0F) {
+                        computeArcPath(frameSize, arc)
                     } else {
-                        computeArcStrokePath(frameSize, shape.value, style, density)
+                        computeArcStrokePath(frameSize, arc, style, density)
                     }
                 }
             }
@@ -242,19 +236,19 @@ internal fun ViewShape.computePaths(
     // * Center stroke -> just use the stroke width.
     // * Outer stroke -> double the stroke width, clip out the inner bit
     // * Inner stroke -> double the stroke width, clip out the outer bit.
-    val strokeAlignType = strokeAlignFromInt(style.nodeStyle.stroke.get().stroke_align)
-    val strokeWeight = style.nodeStyle.stroke.get().stroke_weight
+    val strokeAlign = style.nodeStyle.stroke.strokeAlign
+    val strokeWeight = style.nodeStyle.stroke.strokeWeight
     val rawStrokeWidth =
-        when (strokeAlignType) {
-            StrokeAlignType.Center -> strokeWeight.toUniform() * density
-            StrokeAlignType.Inside -> strokeWeight.toUniform() * 2.0f * density
-            StrokeAlignType.Outside -> strokeWeight.toUniform() * 2.0f * density
+        when (strokeAlign) {
+            StrokeAlign.STROKE_ALIGN_CENTER -> strokeWeight.toUniform() * density
+            StrokeAlign.STROKE_ALIGN_INSIDE -> strokeWeight.toUniform() * 2.0f * density
+            StrokeAlign.STROKE_ALIGN_OUTSIDE -> strokeWeight.toUniform() * 2.0f * density
             else -> strokeWeight.toUniform() * density
         }
     val shadowStrokeWidth =
-        when (strokeAlignType) {
-            StrokeAlignType.Center -> strokeWeight.toUniform() * density
-            StrokeAlignType.Outside -> strokeWeight.toUniform() * 2.0f * density
+        when (strokeAlign) {
+            StrokeAlign.STROKE_ALIGN_CENTER -> strokeWeight.toUniform() * density
+            StrokeAlign.STROKE_ALIGN_OUTSIDE -> strokeWeight.toUniform() * 2.0f * density
             else -> 0.0f
         }
     // Build a list of stroke paths, and also build a set of filled paths for shadow
@@ -274,10 +268,10 @@ internal fun ViewShape.computePaths(
             fills.map { fill ->
                 val strokePath = android.graphics.Path()
                 strokePaint.getFillPath(fill.asAndroidPath(), strokePath)
-                when (strokeAlignType) {
-                    StrokeAlignType.Outside ->
+                when (strokeAlign) {
+                    StrokeAlign.STROKE_ALIGN_OUTSIDE ->
                         strokePath.op(fill.asAndroidPath(), android.graphics.Path.Op.DIFFERENCE)
-                    StrokeAlignType.Inside ->
+                    StrokeAlign.STROKE_ALIGN_INSIDE ->
                         strokePath.op(fill.asAndroidPath(), android.graphics.Path.Op.INTERSECT)
                     else -> {}
                 }
@@ -303,15 +297,15 @@ internal fun ViewShape.computePaths(
 
     // Shadow path calculation
     val computedShadows: List<ComputedShadow> =
-        style.nodeStyle.box_shadows.mapNotNull { shadow ->
-            when (val shadowBox = shadow.shadow_box.get()) {
-                is ShadowBox.Outset -> {
+        style.nodeStyle.boxShadowsList.mapNotNull { shadow ->
+            when (shadow.shadowBoxCase) {
+                BoxShadow.ShadowBoxCase.OUTSET -> {
                     // To calculate the outset path, we must inflate our outer bounds (our fill
                     // path plus the stroke width) plus the shadow spread. Since Skia always
                     // centers strokes, we do this by adding double the spread to the shadow
                     // stroke width.
                     shadowBoundsPaint.strokeWidth =
-                        shadowStrokeWidth + shadowBox.value.spread_radius * 2.0f * density
+                        shadowStrokeWidth + shadow.outset.spreadRadius * 2.0f * density
                     val shadowOutlines =
                         fills.map { fill ->
                             val shadowPath = android.graphics.Path()
@@ -320,7 +314,7 @@ internal fun ViewShape.computePaths(
                         }
                     ComputedShadow(shadowOutlines, shadow)
                 }
-                is ShadowBox.Inset -> {
+                BoxShadow.ShadowBoxCase.INSET -> {
                     // Inset shadows are applied to the "stroke bounds", not the fill bounds. So we
                     // must inflate our fill bounds out to the stroke bounds by applying a stroke
                     // and
@@ -334,7 +328,7 @@ internal fun ViewShape.computePaths(
                     // then we stroke the excess spread and subtract it from the fill to make the
                     // path.
 
-                    val spreadWidth = shadowBox.value.spread_radius * 2.0f * density
+                    val spreadWidth = shadow.inset.spreadRadius * 2.0f * density
                     val needSpreadStroke = spreadWidth > shadowStrokeWidth
                     if (!needSpreadStroke)
                         shadowOutlinePaint.strokeWidth = shadowStrokeWidth - spreadWidth
@@ -389,7 +383,7 @@ internal fun ViewShape.computePaths(
 // width and converting it to a fill path using android.graphics.Paint.getFillPath()
 private fun computeArcStrokePath(
     frameSize: Size,
-    shape: VectorArc,
+    shape: ViewShape.VectorArc,
     style: ViewStyle,
     density: Float,
 ): Pair<List<Path>, List<Path>> {
@@ -398,17 +392,17 @@ private fun computeArcStrokePath(
     var top = 0.0f
     var width = frameSize.width
     var height = frameSize.height
-    val strokeWidth = style.nodeStyle.stroke.get().stroke_weight.toUniform() * density
+    val strokeWidth = style.nodeStyle.stroke.strokeWeight.toUniform() * density
     val halfStrokeWidth = strokeWidth * 0.5f
 
-    when (strokeAlignFromInt(style.nodeStyle.stroke.get().stroke_align)) {
-        StrokeAlignType.Inside -> {
+    when (style.nodeStyle.stroke.strokeAlign) {
+        StrokeAlign.STROKE_ALIGN_INSIDE -> {
             left += halfStrokeWidth
             top += halfStrokeWidth
             width -= halfStrokeWidth
             height -= halfStrokeWidth
         }
-        StrokeAlignType.Outside -> {
+        StrokeAlign.STROKE_ALIGN_OUTSIDE -> {
             left -= halfStrokeWidth
             top -= halfStrokeWidth
             width += halfStrokeWidth
@@ -420,17 +414,17 @@ private fun computeArcStrokePath(
         Rect(left, top, width, height),
         // Arc angles rotate in the opposite direction than node rotations. To keep them consistent,
         // negate the angles
-        -shape.start_angle_degrees,
-        -shape.sweep_angle_degrees,
+        -shape.startAngleDegrees,
+        -shape.sweepAngleDegrees,
     )
 
     val arcPaint = android.graphics.Paint()
     arcPaint.style = android.graphics.Paint.Style.STROKE
     arcPaint.strokeWidth = strokeWidth
     arcPaint.strokeCap =
-        when (strokeCapFromInt(shape.stroke_cap)) {
-            is StrokeCap.Round -> android.graphics.Paint.Cap.ROUND
-            is StrokeCap.Square -> android.graphics.Paint.Cap.SQUARE
+        when (shape.strokeCap) {
+            ViewShape.StrokeCap.STROKE_CAP_ROUND -> android.graphics.Paint.Cap.ROUND
+            ViewShape.StrokeCap.STROKE_CAP_SQUARE -> android.graphics.Paint.Cap.SQUARE
             else -> android.graphics.Paint.Cap.BUTT
         }
     val arcStrokePath = android.graphics.Path()
@@ -449,24 +443,27 @@ private fun computeArcStrokePath(
 // Draw segment joining inner arc to outer
 // Draw cubic bezier from segment to outer arc (starting point)
 // Close path
-private fun computeArcPath(frameSize: Size, shape: VectorArc): Pair<List<Path>, List<Path>> {
+private fun computeArcPath(
+    frameSize: Size,
+    shape: ViewShape.VectorArc,
+): Pair<List<Path>, List<Path>> {
     // Arc angles rotate in the opposite direction than node rotations. To keep them consistent,
     // negate the angles
-    val startAngleDegrees = -shape.start_angle_degrees
-    val sweepAngleDegrees = -shape.sweep_angle_degrees
+    val startAngleDegrees = -shape.startAngleDegrees
+    val sweepAngleDegrees = -shape.sweepAngleDegrees
     val fWidth = frameSize.width
     val fHeight = frameSize.height
     val positiveSweep = sweepAngleDegrees >= 0
     val sweepAngle = if (positiveSweep) sweepAngleDegrees else -sweepAngleDegrees
     val startAngle = if (positiveSweep) startAngleDegrees else startAngleDegrees - sweepAngle
     val endAngle = if (positiveSweep) startAngle + sweepAngle else startAngleDegrees
-    val cornerRadius = shape.corner_radius
+    val cornerRadius = shape.cornerRadius
     val angleDirection = if (endAngle > startAngle) 1.0F else -1.0F
 
     val outerRadius = PointF(fWidth / 2F, fHeight / 2F)
     val outerCircumference = outerRadius.ellipseCircumferenceFromRadius()
     val outerArcLength = sweepAngle / 360F * outerCircumference
-    val shapeInnerRadius = shape.inner_radius.coerceAtLeast(0.001F)
+    val shapeInnerRadius = shape.innerRadius.coerceAtLeast(0.001F)
     val innerSize = Size(fWidth * shapeInnerRadius, fHeight * shapeInnerRadius)
     val innerRadius = PointF(innerSize.width / 2.0F, innerSize.height / 2.0F)
     val innerCircumference = innerRadius.ellipseCircumferenceFromRadius()
@@ -668,7 +665,7 @@ private fun computeRoundRectPathsFast(
             CornerRadius(cornerRadius[3] * density, cornerRadius[3] * density),
         )
 
-    val strokeWeight = style.nodeStyle.stroke.get().stroke_weight
+    val strokeWeight = style.nodeStyle.stroke.strokeWeight
     val strokeInsets =
         Insets(
             top = strokeWeight.top() * density,
@@ -684,10 +681,10 @@ private fun computeRoundRectPathsFast(
     val fills = listOf(fill)
 
     val insetAmount =
-        when (strokeAlignFromInt(style.nodeStyle.stroke.get().stroke_align)) {
-            StrokeAlignType.Center -> -0.5f
-            StrokeAlignType.Inside -> -1.0f
-            StrokeAlignType.Outside -> 0.0f
+        when (style.nodeStyle.stroke.strokeAlign) {
+            StrokeAlign.STROKE_ALIGN_CENTER -> -0.5f
+            StrokeAlign.STROKE_ALIGN_INSIDE -> -1.0f
+            StrokeAlign.STROKE_ALIGN_OUTSIDE -> 0.0f
             else -> -0.5f
         }
     val stroke = Path()
@@ -704,10 +701,10 @@ private fun computeRoundRectPathsFast(
 
     // Generate the shadow descriptions from the style.
     val shadows =
-        style.nodeStyle.box_shadows.mapNotNull { shadow ->
-            when (val shadowbox = shadow.shadow_box.get()) {
-                is ShadowBox.Inset -> {
-                    val insetShadowInset = Insets.uniform(shadowbox.value.spread_radius * density)
+        style.nodeStyle.boxShadowsList.mapNotNull { shadow ->
+            when (shadow.shadowBoxCase) {
+                BoxShadow.ShadowBoxCase.INSET -> {
+                    val insetShadowInset = Insets.uniform(shadow.inset.spreadRadius * density)
                     val insetShadowRect = exterior.offset(insetShadowInset, -1.0f)
                     val insetShadowPath = Path()
                     insetShadowPath.addRoundRect(
@@ -718,8 +715,8 @@ private fun computeRoundRectPathsFast(
                         android.graphics.Path.FillType.INVERSE_EVEN_ODD
                     ComputedShadow(listOf(insetShadowPath), shadow)
                 }
-                is ShadowBox.Outset -> {
-                    val boxShadowOutset = Insets.uniform(shadowbox.value.spread_radius * density)
+                BoxShadow.ShadowBoxCase.OUTSET -> {
+                    val boxShadowOutset = Insets.uniform(shadow.outset.spreadRadius * density)
                     val boxShadowRect = exterior.offset(boxShadowOutset, 1.0f)
                     val boxShadowPath = Path()
                     boxShadowPath.addRoundRect(boxShadowRect)

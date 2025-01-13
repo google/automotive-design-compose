@@ -18,9 +18,9 @@ package com.android.designcompose.squoosh
 
 import android.graphics.PointF
 import com.android.designcompose.TextMeasureData
-import com.android.designcompose.serdegen.Layout
-import com.android.designcompose.serdegen.View
-import com.android.designcompose.serdegen.ViewStyle
+import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.layout_interface.Layout
 
 /// A SquooshResolvedNode represents a design element from the DesignCompose tree after variants
 /// and other customizations have been applied. The SquooshResolvedNode tree is handed to layout

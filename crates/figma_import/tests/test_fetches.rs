@@ -15,8 +15,11 @@
  */
 #![cfg(feature = "fetch")]
 
+use dc_bundle::definition::DesignComposeDefinitionHeader;
+use dc_bundle::definition_file::{load_design_def, save_design_def};
 use figma_import::tools::fetch::{build_definition, load_figma_token};
 use figma_import::{Document, ProxyConfig};
+use tempfile::NamedTempFile;
 
 // Simply fetches and serializes a doc
 fn run_test(doc_id: &str, queries: &[&str]) {
@@ -34,8 +37,17 @@ fn run_test(doc_id: &str, queries: &[&str]) {
     .unwrap();
 
     let dc_definition = build_definition(&mut doc, &queries).unwrap();
+    let header = DesignComposeDefinitionHeader::current(
+        "".to_string(),
+        "testFetch".to_string(),
+        "".to_string(),
+        doc_id.to_string(),
+    );
 
-    bincode::serialize(&dc_definition).unwrap();
+    // Check that we can encode it out to a file and read it back in again
+    let doc_file = NamedTempFile::new().unwrap();
+    save_design_def(doc_file.path(), &header, &dc_definition).expect("Failed to save doc");
+    load_design_def(doc_file.path()).expect("Failed to load the doc again");
 }
 
 #[test]
@@ -87,5 +99,5 @@ fn fetch_dials_gauges() {
 #[test]
 #[cfg_attr(not(feature = "test_fetches"), ignore)]
 fn fetch_styled_text_runs() {
-    run_test("mIYV4YsYYaMTsBMCVskA4N", &["#MainFrame"])
+    run_test("mIYV4YsYYaMTsBMCVskA4N", &["#MainFrame"]);
 }

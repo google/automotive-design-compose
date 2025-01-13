@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Google LLC
+ * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,4 +14,9 @@
  * limitations under the License.
  */
 
-include!(concat!(env!("OUT_DIR"), "/designcompose.android_interface.rs"));
+package com.android.designcompose.common
+
+// LINT.IfChange
+// Current serialized doc version
+const val FSAAS_DOC_VERSION = 25
+// LINT.ThenChange(crates/dc_bundle/src/legacy_definition.rs)

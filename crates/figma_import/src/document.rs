@@ -26,9 +26,9 @@ use crate::{
     component_context::ComponentContext,
     error::Error,
     extended_layout_schema::ExtendedAutoLayout,
-    fetch::ProxyConfig,
     figma_schema,
     image_context::{ImageContext, ImageContextSession},
+    proxy_config::ProxyConfig,
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };

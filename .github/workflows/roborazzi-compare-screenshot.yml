@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   compare-with-base-branch:
-    runs-on: "macos-latest"
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     permissions:

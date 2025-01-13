@@ -17,6 +17,7 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
@@ -26,6 +27,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils
 import com.android.designcompose.test.assertDoesNotHaveText
 import com.android.designcompose.test.assertHasText
+import com.android.designcompose.test.hasDesignText
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.test.onDCDocAnyNode
@@ -54,6 +56,7 @@ class InteractionTests {
         with(composeTestRule) { setContent { InteractionTest() } }
     }
 
+    @OptIn(ExperimentalTestApi::class)
     @Test
     fun whilePressedTimeoutTimesOut() {
         with(composeTestRule) {
@@ -66,9 +69,8 @@ class InteractionTests {
                 onNodeWithTag("idle").performTouchInput { down(Offset.Zero) }
                 assertHasText("pressed")
                 captureRootRoboImage("whilePressed-pressed")
-                mainClock.advanceTimeBy(1000)
 
-                assertDoesNotHaveText("pressed")
+                waitUntilDoesNotExist(hasDesignText("pressed"), 1000)
                 assertHasText("timeout")
                 captureRootRoboImage("whilePressed-timedOut")
 

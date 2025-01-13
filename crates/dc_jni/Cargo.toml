@@ -26,3 +26,6 @@ lazy_static.workspace = true
 prost.workspace = true
 thiserror.workspace = true
 bytes.workspace = true
+
+[build-dependencies]
+prost-build.workspace = true

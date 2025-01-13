@@ -14,4 +14,5 @@
  * limitations under the License.
  */
 
-include!(concat!(env!("OUT_DIR"), "/designcompose.android_interface.rs"));
+include!(concat!(env!("OUT_DIR"), "/designcompose.live_update.rs"));
+pub mod convert_request;

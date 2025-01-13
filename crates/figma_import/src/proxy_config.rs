@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde_reflection::{Samples, Tracer, TracerConfig};
-
-pub fn registry() -> serde_reflection::Result<serde_reflection::Registry> {
-    let mut tracer = Tracer::new(TracerConfig::default());
-    let samples = Samples::new();
-    tracer.trace_type::<crate::ConvertResponse>(&samples).expect("couldn't trace ConvertResponse");
-    tracer.registry()
+// Proxy configuration.
+#[derive(Debug, Clone)]
+pub enum ProxyConfig {
+    // HTTP Proxy Config in <host>:<port> format
+    HttpProxyConfig(String),
+    None,
 }

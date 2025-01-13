@@ -79,7 +79,6 @@ import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.LocalVariableState
 import com.android.designcompose.VariableState
-import com.android.designcompose.android_interface.LayoutChangedResponse
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
 import com.android.designcompose.common.DesignDocId
@@ -97,6 +96,7 @@ import com.android.designcompose.getKey
 import com.android.designcompose.getOpenLinkCallback
 import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.getTapCallback
+import com.android.designcompose.layout_interface.Layout
 import com.android.designcompose.registerOpenLinkCallback
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
@@ -295,7 +295,7 @@ fun SquooshRoot(
     val layoutManager = remember(docId) { SquooshLayout.newLayoutManager() }
     val layoutIdAllocator = remember(docId) { SquooshLayoutIdAllocator() }
     val layoutCache = remember(docId) { HashMap<Int, Int>() }
-    val layoutValueCache = remember(docId) { HashMap<Int, LayoutChangedResponse.Layout>() }
+    val layoutValueCache = remember(docId) { HashMap<Int, Layout>() }
     val keyEventTracker = remember(docId, rootNodeQuery) { KeyEventTracker() }
     DisposableEffect(docId, rootNodeQuery) {
         KeyInjectManager.addTracker(keyEventTracker)
@@ -833,7 +833,7 @@ private fun squooshLayoutMeasurePolicy(
     transitionRoot: SquooshResolvedNode?,
     transitionRootRemovalNodes: HashSet<Int>?,
     layoutCache: HashMap<Int, Int>,
-    layoutValueCache: HashMap<Int, LayoutChangedResponse.Layout>,
+    layoutValueCache: HashMap<Int, Layout>,
     layoutManager: SquooshLayoutManager,
     animationJob: AnimationValueHolder,
     animPlayTimeNanosState: MutableState<Map<Int, Long>>,

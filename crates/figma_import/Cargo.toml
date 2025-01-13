@@ -9,7 +9,6 @@ rust-version.workspace = true
 
 [features]
 default = []
-reflection = ["serde-reflection", "serde-generate", "clap"]
 fetch = ["clap"]
 dcf_info = ["clap"]
 fetch_layout = ["clap"]
@@ -36,9 +35,6 @@ euclid.workspace = true
 taffy.workspace = true
 lazy_static.workspace = true
 
-# reflection dependencies
-serde-reflection = { workspace = true, optional = true }
-serde-generate = { workspace = true, optional = true }
 clap = { workspace = true, optional = true }
 
 # logging
@@ -52,11 +48,6 @@ prost-build.workspace = true
 [dev-dependencies]
 testdir.workspace = true
 tempfile.workspace = true
-
-[[bin]]
-name = "reflection"
-path = "src/bin/reflection.rs"
-required-features = ["reflection"]
 
 [[bin]]
 name = "fetch"

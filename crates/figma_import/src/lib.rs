@@ -23,10 +23,10 @@ mod design_definition;
 mod document;
 mod error;
 mod extended_layout_schema;
-mod fetch;
 mod figma_schema;
 mod image_context;
 pub mod meter_schema;
+mod proxy_config;
 pub mod reaction_schema;
 pub mod tools;
 mod transform_flexbox;
@@ -36,11 +36,12 @@ mod variable_utils;
 pub use dc_bundle::definition::element::Rectangle;
 pub use dc_bundle::definition::DesignComposeDefinition;
 pub use dc_bundle::definition::DesignComposeDefinitionHeader;
+pub use design_definition::IgnoredImage;
 pub use design_definition::ServerFigmaDoc;
 pub use document::Document;
 pub use error::Error;
-pub use fetch::{fetch_doc, ConvertRequest, ConvertResponse, ProxyConfig};
 pub use image_context::ImageContextSession;
+pub use proxy_config::ProxyConfig;
 
 // Internal convenience
 pub use dc_bundle::definition::element::Color;
@@ -49,8 +50,3 @@ pub use dc_bundle::definition::NodeQuery;
 pub use dc_bundle::definition_file::load_design_def;
 pub use dc_bundle::definition_file::save_design_def;
 pub use design_definition::load_design_def_header_v0;
-
-/// Functionality related to reflection for deserializing our bincode archives in other
-/// languages
-#[cfg(feature = "reflection")]
-pub mod reflection;

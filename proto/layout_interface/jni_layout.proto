@@ -14,12 +14,11 @@
 
 syntax = "proto3";
 
-package designcompose.definition.layout;
+package designcompose.layout_interface;
 
 import "definition/layout/layout_style.proto";
-
 option java_multiple_files = true;
-option java_package = "com.android.designcompose.definition.layout";
+option java_package = "com.android.designcompose.layout_interface";
 option optimize_for = LITE_RUNTIME;
 
 // A representation of a Figma node to register for layout.
@@ -27,7 +26,7 @@ message LayoutNode {
   int32 layout_id = 1;
   int32 parent_layout_id = 2;
   int32 child_index = 3;
-  LayoutStyle style = 4;
+  definition.layout.LayoutStyle style = 4;
   string name = 5;
   bool use_measure_func = 6;
   optional int32 fixed_width = 7;
@@ -38,4 +37,33 @@ message LayoutNode {
 message LayoutParentChildren {
   int32 parent_layout_id = 1;
   repeated int32 child_layout_ids = 2;
+}
+
+// A list of Figma nodes to register for layout
+message LayoutNodeList {
+  repeated LayoutNode layout_nodes = 1;
+  repeated LayoutParentChildren parent_children = 2;
+}
+
+// A processed layout node
+message Layout {
+  // Relative ordering of the node. Render nodes with a higher order on top
+  // of nodes with lower order
+  uint32 order = 1;
+  float width = 2;
+  float height = 3;
+  float left = 4; // The top-left corner of the node
+  float top = 5;
+  float content_width = 6; // Width of child content
+  float content_height = 7; // Height of child content
+}
+
+/* The layout response sent back to client which contains a layout state ID and
+a list of layout IDs that have changed.
+*/
+message LayoutChangedResponse {
+  // The final result of a layout algorithm for a single taffy Node
+
+  int32 layout_state = 1;
+  map<int32, Layout> changed_layouts = 2;
 }

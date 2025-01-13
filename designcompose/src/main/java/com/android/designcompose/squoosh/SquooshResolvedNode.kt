@@ -18,9 +18,9 @@ package com.android.designcompose.squoosh
 
 import android.graphics.PointF
 import com.android.designcompose.TextMeasureData
-import com.android.designcompose.android_interface.LayoutChangedResponse
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.layout_interface.Layout
 
 /// A SquooshResolvedNode represents a design element from the DesignCompose tree after variants
 /// and other customizations have been applied. The SquooshResolvedNode tree is handed to layout
@@ -42,7 +42,7 @@ internal class SquooshResolvedNode(
     var firstChild: SquooshResolvedNode? = null,
     var nextSibling: SquooshResolvedNode? = null,
     var parent: SquooshResolvedNode? = null,
-    var computedLayout: LayoutChangedResponse.Layout? = null,
+    var computedLayout: Layout? = null,
     // overrideLayoutSize is set to true when we want the renderer to use the computed
     // layout size instead of any other size it might calculate.
     var overrideLayoutSize: Boolean = false,

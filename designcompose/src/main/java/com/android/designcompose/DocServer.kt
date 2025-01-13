@@ -37,6 +37,9 @@ import androidx.tracing.Trace.beginSection
 import androidx.tracing.Trace.endSection
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.live_update.ConvertResponse
+import com.android.designcompose.live_update.convertRequest
+import com.android.designcompose.live_update.figma.ignoredImage
 import com.android.designcompose.utils.validateFigmaDocId
 import java.io.BufferedInputStream
 import java.io.File
@@ -337,12 +340,10 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
             }
         val saveFile = synchronized(subscriptions) { subscriptions[id]?.saveFile }
         try {
-            val postData = constructPostJson(figmaApiKey, previousDoc?.c, params, firstFetch)
-            val documentData: ByteArray? = LiveUpdate.fetchDocBytes(id, postData, proxyConfig)
+            val response = fetchDocument(figmaApiKey, params, previousDoc, id, proxyConfig)
 
-            if (documentData != null) {
-                Feedback.documentDecodeReadBytes(documentData.size, id)
-                val doc = decodeServerDoc(documentData, previousDoc, id, saveFile, Feedback)
+            if (response.hasDocument()) {
+                val doc = decodeServerDoc(response.document, previousDoc, id, saveFile, Feedback)
                 if (doc == null) {
                     Feedback.documentDecodeError(id)
                     Log.e(TAG, "Error decoding doc.")
@@ -404,6 +405,38 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
         }
     }
     return true
+}
+
+internal fun fetchDocument(
+    figmaApiKey: String,
+    params: DocumentServerParams,
+    previousDoc: DocContent?,
+    id: DesignDocId,
+    proxyConfig: ProxyConfig = ProxyConfig(),
+): ConvertResponse {
+
+    // Construct the Conversion Request
+    val request = convertRequest {
+        this.figmaApiKey = figmaApiKey
+        params.nodeQueries?.let { this.queries.addAll(it) }
+        params.ignoredImages?.map { (pNode, pImages) ->
+            this.ignoredImages.add(
+                ignoredImage {
+                    this.node = pNode
+                    this.images.addAll(pImages.asIterable())
+                }
+            )
+        }
+        previousDoc?.c?.header?.lastModified?.let { this.lastModified = it }
+        previousDoc?.c?.header?.responseVersion?.let { this.version = it }
+        previousDoc?.c?.imageSession?.let { this.imageSessionJson = it }
+            ?: this.clearImageSessionJson()
+    }
+
+    val serializedResponse: ByteArray =
+        Jni.tracedJnifetchdoc(id.id, id.versionId, request.toByteArray(), proxyConfig)
+    val response = ConvertResponse.parseFrom(serializedResponse)
+    return response
 }
 
 internal fun DocServer.subscribe(

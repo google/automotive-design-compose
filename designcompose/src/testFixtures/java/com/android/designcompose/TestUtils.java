@@ -67,12 +67,16 @@ public class TestUtils {
         DesignSettings.INSTANCE.testOnlyClearFileFetchStatus();
         DesignSettings.INSTANCE.clearRawResources();
     }
+    private static void clearFeedback() {
+        Feedback.INSTANCE.clearMessages$common();
+    }
 
 
     public static class ClearStateTestRule implements TestRule {
 
         @Override
         public Statement apply(Statement base, Description description) {
+            clearFeedback();
             clearInteractionStates();
             clearDocServer();
             clearDesignSettings();

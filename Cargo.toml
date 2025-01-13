@@ -4,7 +4,7 @@ members = ["crates/figma_import", "crates/dc_jni", "crates/layout", "crates/dc_b
 
 [workspace.package]
 # LINT.IfChange
-version = "0.33.0"
+version = "0.34.0"
 # LINT.ThenChange(gradle/libs.versions.toml)
 edition = "2021"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]

@@ -96,6 +96,7 @@ import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
+import com.android.designcompose.isPressed
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
 import com.android.designcompose.utils.hasScrolling
@@ -188,6 +189,7 @@ internal fun resolveVariantsRecursively(
     componentLayoutId: Int = 0,
     overlays: List<View>? = null,
     isScrollComponent: Boolean = false,
+    space: String = "",
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(viewFromTree.name)) return null
     customizations.getVisibleState(viewFromTree.name)?.let { if (!it.value) return null }
@@ -195,6 +197,9 @@ internal fun resolveVariantsRecursively(
     var parentComps = parentComponents
     var overrideStyle: ViewStyle? = null
     var view = viewFromTree
+
+    if (viewFromTree.name == "#next")
+        println("")
 
     // If we have a component then we might need to get an override style, and we definitely
     // need to get a different layout id.
@@ -295,6 +300,9 @@ internal fun resolveVariantsRecursively(
     val resolvedView =
         SquooshResolvedNode(view, style, layoutId, textInfo, viewFromTree.id, layoutNode = null)
 
+    //println("${space}### SquooshTree: ${viewFromTree.name}")
+    if (viewFromTree.name == "#next")
+        println("")
     // Find out if we have some supported interactions. These currently include press, click,
     // timeout, and key press.
     var hasSupportedInteraction = false
@@ -315,8 +323,20 @@ internal fun resolveVariantsRecursively(
             keyTracker.addListener(keyEvent, keyAction)
         }
     }
-    val tapCallback = customizations.getTapCallback(view)
+    var tapCallback = customizations.getTapCallback(view)
+    if (tapCallback == null) {
+        tapCallback = customizations.getTapCallback(viewFromTree)
+        //if (tapCallback != null)
+        //    println("")
+    }
     if (tapCallback != null) hasSupportedInteraction = true
+
+    if (view.name == "State=Pressed")
+        println("")
+    if (interactionState.isPressed(viewFromTree.id)) {
+        hasSupportedInteraction = true
+        println("### Found Interaction ${viewFromTree.id} from ${view.name}")
+    }
 
     // If this node has a content customization, then we make a special record of it so that we can
     // zip through all of them after layout and render them in the right location.
@@ -398,6 +418,9 @@ internal fun resolveVariantsRecursively(
         )
     }
 
+    if (viewFromTree.name == "#next")
+        println("${space}### #next hasSupportedInteraction: $hasSupportedInteraction")
+
     if (!skipChildren) {
         view.data.containerOrNull?.let { viewData ->
             var previousChild: SquooshResolvedNode? = null
@@ -424,6 +447,7 @@ internal fun resolveVariantsRecursively(
                         textHash = textHash,
                         customVariantTransition = customVariantTransition,
                         componentLayoutId = thisLayoutId,
+                        space = "$space  "
                     ) ?: continue
 
                 childResolvedNode.parent = resolvedView

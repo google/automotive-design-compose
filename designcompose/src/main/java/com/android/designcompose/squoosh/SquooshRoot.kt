@@ -644,7 +644,12 @@ fun SquooshRoot(
         } else {
             Modifier
         }
+    val isPressed = remember { mutableStateOf(false) }
+    if (presentationRoot.view.name == "#stage")
+        println("### SquooshRoot ${presentationRoot.view.name} isPressed ${isPressed.value}")
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
+        if (presentationRoot.view.name == "#stage")
+            println("  ### SquooshRoot Layout")
         androidx.compose.ui.layout.Layout(
             modifier =
                 modifier
@@ -686,8 +691,14 @@ fun SquooshRoot(
                     variantTransitions,
                 ),
             content = {
+                if (presentationRoot.view.name == "#stage")
+                    println("  ### SquooshRoot Content ${childComposables.size}")
+                var index = 0
                 // Now render all of the children
                 for (child in childComposables) {
+                    if (presentationRoot.view.name == "#stage")
+                        println("    ### SquooshRoot Child $index ${child.node.view.name}")
+                    index += 1
                     var needsComposition = true
                     var composableChildModifier =
                         Modifier.drawWithContent {
@@ -747,15 +758,16 @@ fun SquooshRoot(
                             }
                         }
 
-                        if (hasPressClick)
-                            composableChildModifier =
-                                composableChildModifier.squooshInteraction(
-                                    doc,
-                                    interactionState,
-                                    interactionScope,
-                                    customizationContext,
-                                    child,
-                                )
+                        if (hasPressClick || isPressed.value)
+                                composableChildModifier =
+                                    composableChildModifier.squooshInteraction(
+                                        doc,
+                                        interactionState,
+                                        interactionScope,
+                                        customizationContext,
+                                        child,
+                                        isPressed
+                                    )
                         else needsComposition = false
                     }
 
@@ -778,7 +790,9 @@ fun SquooshRoot(
                         key(child.node.layoutId) {
                             SquooshChildLayout(modifier = composableChildModifier, child = child)
                         }
-                    else SquooshChildLayout(modifier = composableChildModifier, child = child)
+                    else {
+                        SquooshChildLayout(modifier = composableChildModifier, child = child)
+                    }
                 }
             },
         )

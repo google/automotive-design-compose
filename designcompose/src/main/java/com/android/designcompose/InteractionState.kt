@@ -224,6 +224,16 @@ internal class InteractionState {
     var navOverlaySubscriptions: ArrayList<() -> Unit> = ArrayList()
     var variantSubscriptions: HashMap<String, ArrayList<() -> Unit>> = HashMap()
     var animationSubscriptions: ArrayList<() -> Unit> = ArrayList()
+
+    var isPressed: HashMap<String, Boolean> = HashMap()
+}
+
+internal fun InteractionState.isPressed(nodeId: String): Boolean {
+    return isPressed[nodeId] == true
+}
+
+internal fun InteractionState.setPressed(nodeId: String, pressed: Boolean) {
+    isPressed[nodeId] = pressed
 }
 
 /// Perform the "navigate" action, by appending the given node id to
@@ -785,5 +795,19 @@ internal object InteractionStateManager {
 }
 
 internal fun InteractionStateManager.stateForDoc(docId: DesignDocId): InteractionState {
-    return states.getOrPut(docId) { InteractionState() }
+    val state = states[docId]
+    if (state != null)
+        return state
+    val newState = InteractionState()
+    states[docId] = newState
+    println("### New InteractionState for $docId: $newState, InteractionStateManager $this")
+    return newState
+
+    /*
+    return states.getOrPut(docId) {
+        val i = InteractionState()
+        println("### New InteractionState for $docId: $i, InteractionStateManager $this")
+        return i
+    }
+    */
 }

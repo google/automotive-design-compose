@@ -17,6 +17,7 @@
 package com.android.designcompose.squoosh
 
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import com.android.designcompose.CustomizationContext
@@ -26,6 +27,7 @@ import com.android.designcompose.definition.interaction.Action
 import com.android.designcompose.dispatch
 import com.android.designcompose.getKey
 import com.android.designcompose.getTapCallback
+import com.android.designcompose.setPressed
 import com.android.designcompose.undoDispatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -63,13 +65,15 @@ internal fun Modifier.squooshInteraction(
     interactionScope: CoroutineScope,
     customizations: CustomizationContext,
     childComposable: SquooshChildComposable,
+    isPressed: MutableState<Boolean>,
 ): Modifier {
     val node = childComposable.node
     val reactions = node.view.reactionsList
     val tapCallback = customizations.getTapCallback(node.view)
 
+    println("### squooshInteraction isPressed ${isPressed.value}")
     return this.then(
-        Modifier.pointerInput(reactions, tapCallback) {
+        Modifier.pointerInput(reactions, tapCallback, isPressed.value) {
             // Use the interaction scope so that we don't have our event handler removed when our
             // Modifier node is removed from the tree (allowing interactions like "close the overlay
             // while pressed" applied to an overlay to actually receive the touch release event and
@@ -77,6 +81,7 @@ internal fun Modifier.squooshInteraction(
             interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
                 detectTapGestures(
                     onPress = {
+                        //val dispatchClickEvent = tryAwaitRelease()
                         // Set the "pressed" state.
                         reactions
                             ?.filter { r -> r.trigger.hasPress() }
@@ -92,7 +97,11 @@ internal fun Modifier.squooshInteraction(
                                     node.unresolvedNodeId,
                                 )
                             }
+                        isPressed.value = true
+                        interactionState.setPressed(node.view.id, true)
+                        println("### isPressed = true")
                         val dispatchClickEvent = tryAwaitRelease()
+                        println("### dispatchClick $dispatchClickEvent")
 
                         // Clear the "pressed" state.
                         reactions
@@ -129,6 +138,8 @@ internal fun Modifier.squooshInteraction(
                             // Execute tap callback if one exists
                             tapCallback?.invoke()
                         }
+                        isPressed.value = false
+                        interactionState.setPressed(node.view.id, false)
                     }
                 )
             }

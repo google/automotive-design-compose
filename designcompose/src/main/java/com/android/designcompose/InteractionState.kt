@@ -28,6 +28,7 @@ import com.android.designcompose.common.VariantPropertyMap
 import com.android.designcompose.common.views
 import com.android.designcompose.definition.interaction.Action
 import com.android.designcompose.definition.interaction.Transition
+import com.android.designcompose.definition.interaction.transitionOrNull
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.squoosh.AnimationTransition
 import com.android.designcompose.squoosh.SmartAnimateTransition
@@ -389,7 +390,7 @@ internal fun InteractionState.dispatch(
         Action.ActionTypeCase.URL -> this.openLink(action.url.url)
         Action.ActionTypeCase.NODE -> {
             val destinationId = action.node.destinationId
-            val transition = action.node.transition
+            val transition = action.node.transitionOrNull
             when (action.node.navigation) {
                 Action.Node.Navigation.NAVIGATION_NAVIGATE -> {
                     if (destinationId != null) this.navigate(destinationId, undoInstanceId)

@@ -644,6 +644,17 @@ fun SquooshRoot(
         } else {
             Modifier
         }
+
+    // If we are currently being pressed, then we must continue to include a `pointerInput` block,
+    // even if the variant we're currently showing doesn't have any click or press interactions. If
+    // we don't do this, then when we CHANGE_TO a variant that has no interactions but is an
+    // ON_PRESS target, then Compose will think we've lost interest in the gesture and cancel it for
+    // us. Even though we re-run this block on recompose, our `onPress` closure runs with its scope
+    // for the duration of the gesture.
+    //
+    // This is covered in the interaction test document's "Combos" screen; the purple button has no
+    // interactions in its ON_PRESS variant.
+    val isPressed = remember { mutableStateOf(false) }
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
         androidx.compose.ui.layout.Layout(
             modifier =
@@ -747,7 +758,7 @@ fun SquooshRoot(
                             }
                         }
 
-                        if (hasPressClick)
+                        if (hasPressClick || isPressed.value)
                             composableChildModifier =
                                 composableChildModifier.squooshInteraction(
                                     doc,
@@ -755,6 +766,7 @@ fun SquooshRoot(
                                     interactionScope,
                                     customizationContext,
                                     child,
+                                    isPressed,
                                 )
                         else needsComposition = false
                     }

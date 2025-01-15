@@ -96,6 +96,7 @@ import com.android.designcompose.getMatchingVariant
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
+import com.android.designcompose.isPressed
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
 import com.android.designcompose.utils.hasScrolling
@@ -317,6 +318,8 @@ internal fun resolveVariantsRecursively(
     }
     val tapCallback = customizations.getTapCallback(view)
     if (tapCallback != null) hasSupportedInteraction = true
+
+    if (interactionState.isPressed(viewFromTree.id)) hasSupportedInteraction = true
 
     // If this node has a content customization, then we make a special record of it so that we can
     // zip through all of them after layout and render them in the right location.

@@ -74,11 +74,49 @@ message View {
   // this view
   map<string, string> explicit_variable_modes = 12;
 
+  // Runtime shader from the shader plugin
+  optional ShaderData shader_data = 13;
+}
+
+// Details for the runtime shader
+message ShaderData {
   // string for runtime shader code
-  optional string shader = 13;
+  string shader = 1;
 
   // fallback color when runtime shader code isn't supported
-  optional definition.element.Color shader_fallback_color = 14;
+  optional definition.element.Color shader_fallback_color = 2;
+
+  // shader uniforms, name => ShaderUniform
+  map<string, ShaderUniform> shader_uniforms = 3;
+}
+
+// Data for shader uniform, containing name, type and default value set from plugin.
+message ShaderUniform {
+  // name
+  string name = 1;
+  // type
+  string type = 2;
+  // shader uniform value
+  optional ShaderUniformValue value = 3;
+}
+
+// Shader uniform value, currently support float, FloatColor and float array.
+message ShaderUniformValue {
+
+  // Float array value for float2, float3 and float4
+  // We might use it for half2, half3 and half4 in the future.
+  message FloatVec {
+    repeated float floats = 1;
+  }
+
+  oneof value_type {
+    float float_value = 1;
+    // uniform "type" is "float2", "float3" or "float4" in the plugin data.
+    FloatVec float_vec_value = 2;
+    // uniform "type" is "color3" or "color4" in the plugin data. Alpha would be
+    // ignored for "color3" when set uniform value to the runtime shader.
+    definition.element.FloatColor float_color_value = 3;
+  }
 }
 
 // Details that are unique to each view type.

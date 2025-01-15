@@ -28,6 +28,8 @@ mod image_context;
 pub mod meter_schema;
 mod proxy_config;
 pub mod reaction_schema;
+pub mod shader_schema;
+
 pub mod tools;
 mod transform_flexbox;
 mod variable_utils;

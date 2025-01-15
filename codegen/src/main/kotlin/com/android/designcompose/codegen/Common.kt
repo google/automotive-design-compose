@@ -53,7 +53,8 @@ internal enum class CustomizationType {
     VariantProperty,
     Meter,
     MeterState,
-    ShaderUniformTimeState,
+    ShaderUniformList,
+    ShaderUniformStateList,
     ScrollCallbacks,
     Module,
     Unknown,
@@ -125,7 +126,8 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setBrushFunction\n"
     file += "import com.android.designcompose.setMeterValue\n"
     file += "import com.android.designcompose.setMeterState\n"
-    file += "import com.android.designcompose.setShaderUniformTimeState\n"
+    file += "import com.android.designcompose.setShaderUniformList\n"
+    file += "import com.android.designcompose.setShaderUniformStateList\n"
     file += "import com.android.designcompose.DesignScrollCallbacks\n"
     file += "import com.android.designcompose.setScrollCallbacks\n"
     file += "import com.android.designcompose.setModifier\n"
@@ -195,8 +197,9 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "TextStyle" -> CustomizationType.TextStyle
         "com.android.designcompose.Meter" -> CustomizationType.Meter
         "com.android.designcompose.MeterState" -> CustomizationType.MeterState
-        "com.android.designcompose.ShaderUniformTimeState" ->
-            CustomizationType.ShaderUniformTimeState
+        "com.android.designcompose.ShaderUniformList" -> CustomizationType.ShaderUniformList
+        "com.android.designcompose.ShaderUniformStateList" ->
+            CustomizationType.ShaderUniformStateList
         "com.android.designcompose.DesignScrollCallbacks" -> CustomizationType.ScrollCallbacks
         else -> CustomizationType.Unknown
     }

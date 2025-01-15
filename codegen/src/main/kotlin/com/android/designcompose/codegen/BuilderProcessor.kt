@@ -158,7 +158,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var meterCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var meterStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
-        private var shaderUniformTimeStateCustomizations:
+        private var shaderUniformListCustomizations: HashMap<String, Vector<Pair<String, String>>> =
+            HashMap()
+        private var shaderUniformStateListCustomizations:
             HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
         private var scrollCallbackCustomizations: HashMap<String, Vector<Pair<String, String>>> =
@@ -747,12 +749,19 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setMeterState(\"$node\", $value)\n")
             }
 
-            val shaderUniformTimeStateCustom =
-                shaderUniformTimeStateCustomizations[function.toString()]
+            val shaderUniformListCustom =
+                shaderUniformListCustomizations[function.toString()]
                     ?: Vector<Pair<String, String>>()
-            for ((node, value) in shaderUniformTimeStateCustom) {
+            for ((node, value) in shaderUniformListCustom) {
+                out.appendText("        customizations.setShaderUniformList(\"$node\", $value)\n")
+            }
+
+            val shaderUniformStateListCustom =
+                shaderUniformStateListCustomizations[function.toString()]
+                    ?: Vector<Pair<String, String>>()
+            for ((node, value) in shaderUniformStateListCustom) {
                 out.appendText(
-                    "        customizations.setShaderUniformTimeState(\"$node\", $value)\n"
+                    "        customizations.setShaderUniformStateList(\"$node\", $value)\n"
                 )
             }
 
@@ -882,11 +891,13 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, meterCustomizations)
                 CustomizationType.MeterState ->
                     addCustomization(valueParameter, annotation, meterStateCustomizations)
-                CustomizationType.ShaderUniformTimeState ->
+                CustomizationType.ShaderUniformList ->
+                    addCustomization(valueParameter, annotation, shaderUniformListCustomizations)
+                CustomizationType.ShaderUniformStateList ->
                     addCustomization(
                         valueParameter,
                         annotation,
-                        shaderUniformTimeStateCustomizations,
+                        shaderUniformStateListCustomizations,
                     )
                 CustomizationType.ScrollCallbacks ->
                     addCustomization(valueParameter, annotation, scrollCallbackCustomizations)

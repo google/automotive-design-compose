@@ -18,6 +18,7 @@ package com.android.designcompose.common
 
 import com.android.designcompose.definition.DesignComposeDefinition
 import com.android.designcompose.definition.DesignComposeDefinitionHeader
+import com.android.designcompose.definition.copy
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.live_update.ConvertResponse
 import com.android.designcompose.live_update.figma.FigmaDocInfo
@@ -37,8 +38,10 @@ class GenericDocContent(
     val nodeIdMap: HashMap<String, View>,
     val imageSession: ByteString,
     val branches: List<FigmaDocInfo>? = null,
-    val project_files: List<FigmaDocInfo>? = null,
+    val projectFiles: List<FigmaDocInfo>? = null,
 ) {
+    val inMemoryImagesMap: MutableMap<String, ByteString> = document.imagesMap.toMutableMap()
+
     fun save(filepath: File, feedback: FeedbackImpl) {
         feedback.documentSaveTo(filepath.absolutePath, docId)
         try {
@@ -57,7 +60,17 @@ class GenericDocContent(
         try {
             val outputStream = ByteArrayOutputStream()
             header.writeDelimitedTo(outputStream)
-            document.writeDelimitedTo(outputStream)
+            // Write cached images map to disk
+            if (inMemoryImagesMap == document.imagesMap) {
+                document.writeDelimitedTo(outputStream)
+            } else {
+                document
+                    .copy {
+                        images.clear()
+                        images.putAll(inMemoryImagesMap)
+                    }
+                    .writeDelimitedTo(outputStream)
+            }
             outputStream.write(imageSession.toByteArray())
             return outputStream.toByteArray()
         } catch (error: Throwable) {

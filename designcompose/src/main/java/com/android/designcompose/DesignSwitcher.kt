@@ -374,7 +374,7 @@ private fun GetBranches(
 }
 
 private fun GetProjectFileCount(doc: DocContent?): String {
-    val count = doc?.c?.project_files?.size ?: 0
+    val count = doc?.c?.projectFiles?.size ?: 0
     return count.toString()
 }
 
@@ -384,12 +384,12 @@ private fun GetProjectList(
     interactionState: InteractionState,
 ): ReplacementContent {
     return ReplacementContent(
-        count = doc?.c?.project_files?.size ?: 0,
+        count = doc?.c?.projectFiles?.size ?: 0,
         content = { index ->
             {
-                val docId = doc?.c?.project_files?.get(index)?.id ?: ""
+                val docId = doc?.c?.projectFiles?.get(index)?.id ?: ""
                 DesignSwitcherDoc.FigmaDoc(
-                    doc?.c?.project_files?.get(index)?.name ?: "",
+                    doc?.c?.projectFiles?.get(index)?.name ?: "",
                     docId,
                     Modifier.clickable {
                         interactionState.close(null)

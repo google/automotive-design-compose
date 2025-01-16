@@ -17,7 +17,6 @@
 package com.android.designcompose
 
 import android.os.Build
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
@@ -29,6 +28,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -83,7 +84,6 @@ private interface DesignSwitcher {
             "#Id",
             "#Text",
             "#TimeStamp",
-            "#Logout",
             "#LiveMode",
             "#TopStatusBar",
         )
@@ -161,12 +161,11 @@ private interface DesignSwitcher {
         status_message_list: ReplacementContent,
         doc_text_edit: @Composable ((ComponentReplacementContext) -> Unit)?,
         show_help_text: Boolean,
-        on_tap_go: Modifier,
+        on_tap_go: TapCallback,
         node_names_checkbox: ReplacementContent,
         mini_messages_checkbox: ReplacementContent,
         show_recomposition_checkbox: ReplacementContent,
         useLocalResCheckbox: ReplacementContent,
-        on_tap_logout: Modifier,
         live_mode: LiveMode,
         top_status_bar: TopStatusBar,
     ) {
@@ -182,12 +181,11 @@ private interface DesignSwitcher {
         customizations.setContent("#StatusMessageList", status_message_list)
         customizations.setComponent("#DocIdTextEdit", doc_text_edit)
         customizations.setVisible("#HelpText", show_help_text)
-        customizations.setModifier("#GoButton", on_tap_go)
+        customizations.setTapCallback("#GoButton", on_tap_go)
         customizations.setContent("#NodeNamesCheckbox", node_names_checkbox)
         customizations.setContent("#MiniMessagesCheckbox", mini_messages_checkbox)
         customizations.setContent("#ShowRecompositionCheckbox", show_recomposition_checkbox)
         customizations.setContent("#UseLocalResCheckbox", useLocalResCheckbox)
-        customizations.setModifier("#LogoutButton", on_tap_logout)
 
         val variantProperties = HashMap<String, String>()
         variantProperties["#LiveMode"] = live_mode.name
@@ -217,11 +215,11 @@ private interface DesignSwitcher {
     }
 
     @Composable
-    fun FigmaDoc(name: String, docId: String, modifier: Modifier) {
+    fun FigmaDoc(name: String, docId: String, tapCallback: TapCallback) {
         val customizations = CustomizationContext()
         customizations.setText("#Name", name)
         customizations.setText("#Id", docId)
-        customizations.setModifier("#GoButton", modifier)
+        customizations.setTapCallback("#GoButton", tapCallback)
 
         CompositionLocalProvider(LocalCustomizationContext provides customizations) {
             DesignDocInternal(
@@ -363,7 +361,7 @@ private fun GetBranches(
                 DesignSwitcherDoc.FigmaDoc(
                     branchList[index].second,
                     branchList[index].first,
-                    Modifier.clickable {
+                    {
                         interactionState.close(null)
                         setDocId(DesignDocId(branchList[index].first))
                     },
@@ -391,7 +389,7 @@ private fun GetProjectList(
                 DesignSwitcherDoc.FigmaDoc(
                     doc?.c?.projectFiles?.get(index)?.name ?: "",
                     docId,
-                    Modifier.clickable {
+                    {
                         interactionState.close(null)
                         setDocId(DesignDocId(docId))
                     },
@@ -578,7 +576,8 @@ internal fun DesignSwitcher(
                 BasicTextField(
                     value = docIdText,
                     onValueChange = setDocIdText,
-                    textStyle = context.textStyle ?: TextStyle.Default,
+                    textStyle = context.textStyle ?: TextStyle.Default.copy(color = Color.White),
+                    cursorBrush = SolidColor(Color.White),
                     modifier =
                         Modifier.onKeyEvent {
                             if (it.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
@@ -592,20 +591,18 @@ internal fun DesignSwitcher(
                 )
             },
             show_help_text = docIdText.isEmpty(),
-            on_tap_go =
-                Modifier.clickable {
-                    if (docIdText.isNotEmpty()) {
-                        interactionState.close(null)
-                        setDocId(DesignDocId(docIdText))
-                    }
-                },
+            on_tap_go = {
+                if (docIdText.isNotEmpty()) {
+                    interactionState.close(null)
+                    setDocId(DesignDocId(docIdText))
+                }
+            },
             node_names_checkbox = GetNodeNamesCheckbox(nodeNamesChecked, setNodeNamesChecked),
             mini_messages_checkbox =
                 GetMiniMessagesCheckbox(miniMessagesChecked, setMiniMessagesChecked),
             show_recomposition_checkbox =
                 GetShowRecompositionCheckbox(showRecompositionChecked, setShowRecompositionChecked),
             useLocalResCheckbox = GetUseLocalResCheckbox(useLocalResChecked, setUseLocalResChecked),
-            on_tap_logout = Modifier.clickable { Log.i(TAG, "TODO: Re-implement Logging out") },
             live_mode =
                 if (DesignSettings.isDocumentLive.value) DesignSwitcher.LiveMode.Live
                 else DesignSwitcher.LiveMode.Offline,

@@ -49,12 +49,16 @@ class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
     private var images: HashMap<String, Bitmap> = HashMap()
 
     init {
-        for ((imageKey, bytes) in c.document.imagesMap) {
-            if (bytes.isEmpty()) {
-                if (previousDoc != null && previousDoc.images[imageKey] != null) {
+        for ((imageKey, bytes) in c.inMemoryImagesMap) {
+            if (bytes.isEmpty) {
+                if (
+                    previousDoc != null &&
+                        previousDoc.images[imageKey] != null &&
+                        previousDoc.c.inMemoryImagesMap[imageKey] != null
+                ) {
                     images[imageKey] = previousDoc.images[imageKey]!!
-                    // Replace this record in the decoded doc.
-                    c.document.imagesMap[imageKey] = previousDoc.c.document.imagesMap[imageKey]
+                    // Replace this record and write to disk as the images of the decoded doc.
+                    c.inMemoryImagesMap[imageKey] = previousDoc.c.inMemoryImagesMap[imageKey]!!
                 }
             } else {
                 val byteArray = ByteArray(bytes.size()) { i -> bytes[i] }

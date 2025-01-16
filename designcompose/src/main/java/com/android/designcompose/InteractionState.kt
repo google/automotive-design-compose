@@ -224,6 +224,12 @@ internal class InteractionState {
     var navOverlaySubscriptions: ArrayList<() -> Unit> = ArrayList()
     var variantSubscriptions: HashMap<String, ArrayList<() -> Unit>> = HashMap()
     var animationSubscriptions: ArrayList<() -> Unit> = ArrayList()
+
+    // A set of node IDs that have been pressed due to an interaction or TapCallback. This is
+    // necessary to keep track of so that nodes that change to another variant due to an
+    // interaction can still be found to have a press/click/tap event on them and be added to
+    // SquooshRoot's list of composable children.
+    var isPressed: HashSet<String> = HashSet()
 }
 
 /// Perform the "navigate" action, by appending the given node id to
@@ -471,6 +477,8 @@ internal fun InteractionState.clonedWithAnimatedActionsApplied(): InteractionSta
     deltaInteractionState.navigationHistory = ArrayList(navigationHistory)
     deltaInteractionState.overlayMemory = ArrayList(overlayMemory)
     deltaInteractionState.undoMemory = HashMap(undoMemory)
+    deltaInteractionState.openLinkCallbacks = HashSet(openLinkCallbacks)
+    deltaInteractionState.isPressed = HashSet(isPressed)
     // Apply all of our transition actions.
     for (anim in animations) {
         deltaInteractionState.changeTo(
@@ -772,6 +780,14 @@ internal fun InteractionState.squooshRootNode(
         doc.c.nodeIdMap,
         customizations,
     )
+}
+
+internal fun InteractionState.isPressed(nodeId: String): Boolean {
+    return isPressed.contains(nodeId)
+}
+
+internal fun InteractionState.setPressed(nodeId: String, pressed: Boolean) {
+    if (pressed) isPressed.add(nodeId) else isPressed.remove(nodeId)
 }
 
 /// InteractionState is managed in a global, per document. We don't pass it down via a

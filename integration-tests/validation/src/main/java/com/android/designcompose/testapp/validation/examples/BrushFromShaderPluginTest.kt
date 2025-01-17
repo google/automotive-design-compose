@@ -52,7 +52,7 @@ fun BrushFromShaderPluginTest() {
     rootShaderUniformStates.add(iTimeState.toShaderUniformState(ShaderHelper.UNIFORM_TIME))
     // DEV BRANCH: 5oAVZxBQCLCf7spBLLFRHw. This list tests multi-doc support.
     val rootShaderUniforms = ArrayList<ShaderUniform>()
-    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("speed", 0.5f))
+    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("speed", 0.05f))
     rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("clouddark", 0.5f))
     rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("cloudcover", 0.23f))
 

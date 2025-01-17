@@ -61,7 +61,10 @@
 
     <div id="nodeSection" class="collapsible" style="margin-top: 8px;">
         <div id="cleared">No nodes selected. Select a node that can have a background to start.</div>
-        <div id="selected"></div>
+        <div id="selected" style="display: flex; gap:4px; align-items: center">
+            <div id="nodeId" style="width: 100%;"></div>
+            <button id="loadShaderButton" class="button--primary">Load Shader</button>
+        </div>
     </div>
     <div id="nodeActions" class="content">
         <div style="display: flex; align-items: center; gap:4px;">
@@ -163,6 +166,7 @@
     let nodeSection = document.getElementById("nodeSection");
     let nodeCleared = document.getElementById("cleared");
     let nodeSelected = document.getElementById("selected");
+    let loadShaderButton = document.getElementById("loadShaderButton");
     let nodeActions = document.getElementById("nodeActions");
     let setShaderButton = document.getElementById("setShaderButton");
     let useShaderFallbackColor = document.getElementById("useShaderFallbackColor");
@@ -209,6 +213,13 @@
     // "Create" button closes the dialog and creates the uniform
     createFloatUniformButton.addEventListener("click", () => {
         const uniformName = floatUniformNameInput.value;
+        createShaderFloatUniform(floatUniformNameInput.value, null, floatUniformMin.value, floatUniformMax.value);
+
+        createFloatUniformDialog.close();
+        runShader();
+    });
+
+    function createShaderFloatUniform(uniformName, floatValue, uniformMin, uniformMax) {
         if (customUniforms.includes(uniformName)) {
             alert("This uniform already exists, please use a different name.");
             return;
@@ -253,12 +264,12 @@
         uniformSlider.id = `slider_${uniformName}`;
         uniformSlider.classList.add("slider");
         uniformSlider.type = "range";
-        const minValue = floatUniformMin.value ? Number(floatUniformMin.value) : 0;
+        const minValue = uniformMin ? Number(uniformMin) : 0;
         uniformSlider.min = minValue;
-        const maxValue = Math.max(floatUniformMax.value ? Number(floatUniformMax.value) : 1, minValue + 1);
+        const maxValue = Math.max(uniformMax ? Number(uniformMax) : 1, minValue + 1);
         uniformSlider.max = maxValue;
         uniformSlider.step = "0.001";
-        uniformSlider.value = (minValue + maxValue) / 2;
+        uniformSlider.value = floatValue ? floatValue : (minValue + maxValue) / 2;
         sliderLine.appendChild(uniformSlider);
 
         const uniformValue = document.createElement("span");
@@ -269,10 +280,7 @@
         sliderLine.appendChild(uniformValue);
         newUniformEntry.appendChild(sliderLine);
         uniforms.appendChild(newUniformEntry);
-
-        createFloatUniformDialog.close();
-        runShader();
-    });
+    }
 
     closeFloatUniformButton.addEventListener("click", () => {
         createFloatUniformDialog.close();
@@ -291,6 +299,14 @@
     // "Create" button closes the dialog and creates the uniform
     createColorUniformButton.addEventListener("click", () => {
         const uniformName = colorUniformNameInput.value;
+        const type = colorUniformAlphaOption.checked ? "color4" : "color3";
+        createShaderColorUniform(uniformName, type, null);
+
+        createColorUniformDialog.close();
+        runShader();
+    });
+
+    function createShaderColorUniform(uniformName, type, colorValue) {
         if (customUniforms.includes(uniformName)) {
             alert("This uniform already exists, please use a different name.");
             return;
@@ -301,7 +317,6 @@
             return;
         }
         customUniforms.push(uniformName);
-        const type = colorUniformAlphaOption.checked ? "color4" : "color3";
         uniformTypeMap.set(uniformName, type);
 
         const newUniformEntry = document.createElement("div");
@@ -317,6 +332,9 @@
         colorInput.type = "color";
         colorInput.id = `color_${uniformName}`;
         shaderLine.appendChild(colorInput);
+        if (colorValue) {
+            colorInput.value = rgbFloatToHex(colorValue);
+        }
 
         const deleteButton = document.createElement("span");
         deleteButton.classList.add("icon-button");
@@ -335,7 +353,7 @@
         shaderLine.appendChild(deleteButton);
         newUniformEntry.appendChild(shaderLine);
 
-        if (colorUniformAlphaOption.checked) {
+        if (type == "color4") {
             const sliderLine = document.createElement("div");
             sliderLine.classList.add("center-vertically-container");
             const uniformSlider = document.createElement("input");
@@ -345,7 +363,7 @@
             uniformSlider.min = 0;
             uniformSlider.max = 1;
             uniformSlider.step = "0.001";
-            uniformSlider.value = 1;
+            uniformSlider.value = colorValue ? colorValue.a : 1.0;
             sliderLine.appendChild(uniformSlider);
 
             const uniformValue = document.createElement("span");
@@ -357,10 +375,7 @@
             newUniformEntry.appendChild(sliderLine);
         }
         uniforms.appendChild(newUniformEntry);
-
-        createColorUniformDialog.close();
-        runShader();
-    });
+    }
 
     closeColorUniformButton.addEventListener("click", () => {
         createColorUniformDialog.close();
@@ -382,13 +397,21 @@
         return { r, g, b };
     }
 
+    function rgbFloatToHex(rgbColor) {
+        function componentToHex(c) {
+            const hex = Math.round(c * 255).toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        }
+        return "#" + componentToHex(rgbColor.r) + componentToHex(rgbColor.g) + componentToHex(rgbColor.b);
+    }
+
     function clearUniforms() {
         customUniforms.length = 0;
         uniformTypeMap.clear();
         uniforms.innerHTML = "";
     }
 
-    function uniformValue(uniform) {
+    function previewUniformValue(uniform) {
         const type = uniformTypeMap.get(uniform);
         const floatArray = [];
         switch (type) {
@@ -408,6 +431,39 @@
                 }
                 return floatArray;
         }
+    }
+
+    function uniformValue(uniform) {
+        const type = uniformTypeMap.get(uniform);
+        const floatArray = [];
+        switch (type) {
+            case "float":
+                const slider = document.getElementById(`slider_${uniform}`);
+                return parseFloat(slider.value);
+            case "color3":
+            case "color4":
+                const color3 = document.getElementById(`color_${uniform}`);
+                let rgb3 = hexToRgbFloat(color3.value);
+                const alpha = document.getElementById(`alpha_${uniform}`);
+                return {
+                    r: rgb3.r,
+                    g: rgb3.g,
+                    b: rgb3.b,
+                    a: alpha ? parseFloat(alpha.value) : 1.0
+                };
+        }
+    }
+
+    function uniformExtras(uniform) {
+        const type = uniformTypeMap.get(uniform);
+        if (type == "float") {
+            const slider = document.getElementById(`slider_${uniform}`);
+            return {
+                min: parseFloat(slider.min),
+                max: parseFloat(slider.max)
+            };
+        }
+        return null;
     }
 
     function clearShaderFromFigmaNode() {
@@ -494,7 +550,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                     mouseDragX, mouseDragY, mouseClickX, mouseClickY, // iMouse(x, y, z, w)
                 ];
                 customUniforms.forEach(function (uniform) {
-                    const value = uniformValue(uniform);
+                    const value = previewUniformValue(uniform);
                     if (typeof value === "string" || typeof value === "number") {
                         uniforms.push(value);
                     } else {
@@ -543,8 +599,9 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                     customUniforms.forEach(function (uniform) {
                         let shaderUniform = {
                             uniformName: uniform,
-                            uniformType: uniformTypeMap.get(uniform).replace("color", "float"),
+                            uniformType: uniformTypeMap.get(uniform),
                             uniformValue: uniformValue(uniform),
+                            extras: uniformExtras(uniform),
                         };
                         shaderUniforms.push(shaderUniform);
                     });
@@ -588,6 +645,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
     window.onmessage = async function (event) {
         let msg = event.data.pluginMessage;
         if (msg.msg == 'shaderCode') {
+            clearUniforms();
             shaderCodeInput.value = msg.code;
             await runShader();
             return;
@@ -602,10 +660,36 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
         }
         if (msg.msg == "shader-selection") {
             nodeCleared.style.display = "none";
-            nodeSelected.innerHTML = `Node selected: ${msg.nodeId}`;
-            nodeSelected.style.display = "block";
+            nodeSelected.style.display = "flex";
             nodeSection.classList.add("active");
             nodeActions.style.display = "block";
+            document.getElementById("nodeId").innerHTML = `Node selected: ${msg.nodeId}`;
+            if (msg.shader) {
+                loadShaderButton.addEventListener("click", async () => {
+                    clearUniforms();
+                    shaderCodeInput.value = msg.shader;
+                    for (const shaderUniform of msg.shaderUniforms) {
+                        switch (shaderUniform.uniformType) {
+                            case "float":
+                                if (shaderUniform.extras) {
+                                    createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue, shaderUniform.extras.min, shaderUniform.extras.max);
+                                } else {
+                                    createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue, 0, Math.max(1, shaderUniform.uniformValue));
+                                }
+                                break;
+                            case "color3":
+                            case "color4":
+                                createShaderColorUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
+                                break;
+                        }
+                        console.log(`${shaderUniform.uniformName} ${shaderUniform.uniformType} = ${shaderUniform.uniformValue}`);
+                    }
+                    await runShader();
+                });
+                loadShaderButton.style.display = "block";
+            } else {
+                loadShaderButton.style.display = "none";
+            }
             return;
         }
     }

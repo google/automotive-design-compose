@@ -443,6 +443,7 @@ a:active {
 }
 
 .content {
+  padding: 8px;
   display: none;
   background-color: #f1f1f1;
 }

@@ -12,6 +12,7 @@ prost.workspace = true
 thiserror.workspace = true
 serde.workspace = true
 serde_bytes.workspace = true
+log.workspace = true
 
 [build-dependencies]
 prost-build.workspace = true

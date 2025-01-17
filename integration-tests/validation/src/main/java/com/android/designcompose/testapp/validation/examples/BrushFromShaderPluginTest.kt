@@ -16,37 +16,63 @@
 
 package com.android.designcompose.testapp.validation.examples
 
-import android.os.Build
-import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.asFloatState
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
-import com.android.designcompose.ShaderUniformTimeState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import com.android.designcompose.ShaderHelper
+import com.android.designcompose.ShaderHelper.toShaderUniform
+import com.android.designcompose.ShaderHelper.toShaderUniformState
+import com.android.designcompose.ShaderUniformList
+import com.android.designcompose.ShaderUniformStateList
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.definition.view.ShaderUniform
+import com.android.designcompose.testapp.validation.R
 
 @DesignDoc(id = "TkgjNl81e5joWeAivmIdzm")
 interface BrushFromShaderPluginTest {
     @DesignComponent(node = "#stage")
-    fun MainFrame(@Design(node = "#stage") backgroundShaderUniformTimeState: ShaderUniformTimeState)
+    fun MainFrame(
+        @Design(node = "#stage") rootShaderUniformStates: ShaderUniformStateList,
+        @Design(node = "#stage") rootShaderUniforms: ShaderUniformList,
+        @Design(node = "#color-custom") customColors: ShaderUniformList,
+        @Design(node = "#color-state-custom") customColorStates: ShaderUniformStateList,
+    )
 }
 
 @Composable
 fun BrushFromShaderPluginTest() {
-    val movingValue =
-        if ("robolectric" != Build.FINGERPRINT) {
-            produceState(0f) {
-                while (true) {
-                    withInfiniteAnimationFrameMillis { value = it / 1000f }
-                }
-            }
-        } else {
-            remember { mutableFloatStateOf(3.0f) }
-        }
+    // Create a animate state for iTime so the shader can animate over time.
+    val iTimeState = ShaderHelper.getShaderUniformTimeState()
+    val rootShaderUniformStates = ArrayList<State<ShaderUniform>>()
+    rootShaderUniformStates.add(iTimeState.toShaderUniformState(ShaderHelper.UNIFORM_TIME))
+    // DEV BRANCH: 5oAVZxBQCLCf7spBLLFRHw. This list tests multi-doc support.
+    val rootShaderUniforms = ArrayList<ShaderUniform>()
+    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("speed", 0.5f))
+    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("clouddark", 0.5f))
+    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("cloudcover", 0.23f))
+
+    val customColors = ArrayList<ShaderUniform>()
+    customColors.add(
+        Color(LocalContext.current.getColor(R.color.purple_200)).toShaderUniform("iColor")
+    )
+
+    val customColorStates = ArrayList<State<ShaderUniform>>()
+    val colors =
+        listOf(
+            Color(LocalContext.current.getColor(R.color.purple_200)),
+            Color(LocalContext.current.getColor(R.color.purple_700)),
+        )
+    val colorState = remember { derivedStateOf { colors[iTimeState.floatValue.toInt() % 2] } }
+    customColorStates.add(colorState.toShaderUniformState("iColor"))
     BrushFromShaderPluginTestDoc.MainFrame(
-        backgroundShaderUniformTimeState = movingValue.asFloatState()
+        rootShaderUniformStates = rootShaderUniformStates,
+        rootShaderUniforms = rootShaderUniforms,
+        customColors = customColors,
+        customColorStates = customColorStates,
     )
 }

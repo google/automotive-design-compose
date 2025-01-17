@@ -32,7 +32,7 @@ pub mod view;
 include!(concat!(env!("OUT_DIR"), "/designcompose.definition.rs"));
 
 // LINT.IfChange
-pub static CURRENT_VERSION: u32 = 25;
+pub static CURRENT_VERSION: u32 = 26;
 // Lint.ThenChange(common/src/main/java/com/android/designcompose/common/DCDVersion.kt)
 
 impl DesignComposeDefinitionHeader {

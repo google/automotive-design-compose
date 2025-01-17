@@ -20,6 +20,7 @@ import android.content.Context
 import android.graphics.BlurMaskFilter
 import android.graphics.RuntimeShader
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -52,6 +53,8 @@ import com.android.designcompose.definition.plugin.ProgressBarMeterData
 import com.android.designcompose.definition.plugin.ProgressMarkerMeterData
 import com.android.designcompose.definition.plugin.ProgressVectorMeterData
 import com.android.designcompose.definition.plugin.RotationMeterData
+import com.android.designcompose.definition.view.ShaderUniform
+import com.android.designcompose.definition.view.ShaderUniformValue.ValueTypeCase
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.shaderFallbackColorOrNull
 import com.android.designcompose.definition.view.transformOrNull
@@ -503,19 +506,51 @@ internal fun ContentDrawScope.squooshShapeRender(
         }
     if (customFillBrush == null) {
         node.view
-            .takeIf { it.hasShader() }
-            ?.shader
+            .takeIf { it.hasShaderData() }
+            ?.shaderData
             ?.let {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    val shader = RuntimeShader(it.trim().trimIndent())
+                    val shaderProg = it.shader.trim().trimIndent()
+                    val shader = RuntimeShader(shaderProg)
                     customFillBrush = SizingShaderBrush(shader)
-                    val shaderUniformTime = customizations.getShaderUniformTimeState(name)
-                    if (shaderUniformTime != null) {
-                        shader.setFloatUniform("iTime", shaderUniformTime.floatValue)
+                    it.shaderUniformsMap.forEach { (_, v) ->
+                        v.applyToShader(shader, it.shaderUniformsMap)
                     }
-                    return@let
+                    customizations.getShaderUniformList(name)?.forEach { customUniform ->
+                        // iTime is preset uniform which is not in the shader uniforms map.
+                        // We need a customization for it when the shader code animate over time.
+                        if (customUniform.name == ShaderHelper.UNIFORM_TIME) {
+                            shader.setFloatUniform(
+                                customUniform.name,
+                                customUniform.value.floatValue,
+                            )
+                            return@forEach
+                        }
+                        if (it.shaderUniformsMap.containsKey(customUniform.name)) {
+                            customUniform.applyToShader(shader, it.shaderUniformsMap)
+                        } else {
+                            Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
+                        }
+                    }
+                    customizations.getShaderUniformStateList(name)?.forEach { customUniformState ->
+                        val customUniform = customUniformState.value
+                        // iTime is preset uniform which is not in the shader uniforms map.
+                        // We need a customization for it when the shader code animate over time.
+                        if (customUniform.name == ShaderHelper.UNIFORM_TIME) {
+                            shader.setFloatUniform(
+                                customUniform.name,
+                                customUniform.value.floatValue,
+                            )
+                            return@forEach
+                        }
+                        if (it.shaderUniformsMap.containsKey(customUniform.name)) {
+                            customUniform.applyToShader(shader, it.shaderUniformsMap)
+                        } else {
+                            Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
+                        }
+                    }
                 } else {
-                    node.view.shaderFallbackColorOrNull?.let { color ->
+                    it.shaderFallbackColorOrNull?.let { color ->
                         customFillBrush = SolidColor(color.toColor())
                     }
                 }
@@ -681,6 +716,76 @@ internal fun ContentDrawScope.squooshShapeRender(
         drawContext.canvas.restore()
     }
     drawContext.canvas.restore()
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+fun ShaderUniform.applyToShader(
+    shader: RuntimeShader,
+    shaderUniformMap: Map<String, ShaderUniform>,
+) {
+    val definedType = shaderUniformMap[name]?.type
+    when (value.valueTypeCase) {
+        ValueTypeCase.FLOAT_VALUE -> {
+            if (definedType == "float") {
+                shader.setFloatUniform(name, value.floatValue)
+            }
+        }
+
+        ValueTypeCase.FLOAT_VEC_VALUE -> {
+            val floatVecValue = value.floatVecValue.floatsList
+            when (floatVecValue.size) {
+                1 -> if (definedType == "float") shader.setFloatUniform(name, floatVecValue[0])
+                2 ->
+                    if (definedType == "float2")
+                        shader.setFloatUniform(name, floatVecValue[0], floatVecValue[1])
+                3 ->
+                    if (definedType == "float3")
+                        shader.setFloatUniform(
+                            name,
+                            floatVecValue[0],
+                            floatVecValue[1],
+                            floatVecValue[2],
+                        )
+                4 ->
+                    if (definedType == "float4")
+                        shader.setFloatUniform(
+                            name,
+                            floatVecValue[0],
+                            floatVecValue[1],
+                            floatVecValue[2],
+                            floatVecValue[3],
+                        )
+                else -> Log.e(TAG, "Invalid shader uniform $name $definedType")
+            }
+        }
+
+        ValueTypeCase.FLOAT_COLOR_VALUE -> {
+            when (definedType) {
+                "float3",
+                "color3" ->
+                    shader.setFloatUniform(
+                        name,
+                        value.floatColorValue.r,
+                        value.floatColorValue.g,
+                        value.floatColorValue.b,
+                    )
+                "float4",
+                "color4" ->
+                    shader.setFloatUniform(
+                        name,
+                        value.floatColorValue.r,
+                        value.floatColorValue.g,
+                        value.floatColorValue.b,
+                        value.floatColorValue.a,
+                    )
+                else -> Log.e(TAG, "Invalid shader uniform $name $definedType")
+            }
+        }
+
+        else -> {
+            Log.w(TAG, "Invalid shader uniform $name")
+        }
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)

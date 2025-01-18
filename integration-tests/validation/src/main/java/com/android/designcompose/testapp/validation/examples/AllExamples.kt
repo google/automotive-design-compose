@@ -83,6 +83,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         // Text validations
         Triple("Text Elide", { TextElideTest() }, TextElideTestDoc.javaClass.name),
         Triple("Text Inval", { TextResizingTest() }, TextResizingTestDoc.javaClass.name),
+        Triple("Text Replace", { TextReplaceTest() }, TextReplaceDoc.javaClass.name),
         Triple("Styled Text Runs", { StyledTextRunsTest() }, StyledTextRunsDoc.javaClass.name),
         Triple("Shared Customization", { ModuleExample() }, ModuleExampleDoc.javaClass.name),
         Triple(

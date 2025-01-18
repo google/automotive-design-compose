@@ -736,13 +736,7 @@ internal fun getCustomBrush(
     customizations: CustomizationContext,
 ): Brush? {
     val nodeName = node.view.name
-    val customFillBrushFunction = customizations.getBrushFunction(nodeName)
-    var customFillBrush =
-        if (customFillBrushFunction != null) {
-            customFillBrushFunction()
-        } else {
-            customizations.getBrush(nodeName)
-        }
+    var customFillBrush = customizations.getBrush(nodeName)
     if (customFillBrush == null) {
         node.view
             .takeIf { it.hasShaderData() }

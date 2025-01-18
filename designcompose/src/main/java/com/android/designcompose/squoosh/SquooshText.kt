@@ -69,8 +69,9 @@ internal class TextMeasureCache {
     internal class Entry(
         val data: TextMeasureData,
         val text: String?,
-        val style: TextStyle?,
+        val customStyle: TextStyle?,
         val annotatedText: String,
+        val textStyle: TextStyle,
         // XXX: Do we need to use the annotated string? This impl might break localization.
     )
 
@@ -115,7 +116,7 @@ internal fun squooshComputeTextInfo(
     appContext: Context,
     textMeasureCache: TextMeasureCache,
     textHash: HashSet<String>,
-): TextMeasureData? {
+): Pair<TextMeasureData?, TextStyle>? {
     val customizedText =
         customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
     val customTextStyle = customizations.getTextStyle(v.name)
@@ -126,11 +127,11 @@ internal fun squooshComputeTextInfo(
     if (
         cachedText != null &&
             cachedText.text == customizedText &&
-            cachedText.style == customTextStyle
+            cachedText.customStyle == customTextStyle
     ) {
         textHash.add(cachedText.annotatedText)
         textMeasureCache.put(layoutId, cachedText)
-        return cachedText.data
+        return Pair(cachedText.data, cachedText.textStyle)
     }
 
     val annotatedText =
@@ -297,10 +298,16 @@ internal fun squooshComputeTextInfo(
 
     textMeasureCache.put(
         layoutId,
-        TextMeasureCache.Entry(textMeasureData, customizedText, customTextStyle, annotatedText.text),
+        TextMeasureCache.Entry(
+            textMeasureData,
+            customizedText,
+            customTextStyle,
+            annotatedText.text,
+            textStyle,
+        ),
     )
 
     textHash.add(annotatedText.text)
 
-    return textMeasureData
+    return Pair(textMeasureData, textStyle)
 }

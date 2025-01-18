@@ -25,6 +25,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
@@ -497,71 +498,13 @@ internal fun ContentDrawScope.squooshShapeRender(
         drawContext.canvas.saveLayer(Rect(Offset.Zero, size).inflate(outset * density), paint)
     }
 
-    val customFillBrushFunction = customizations.getBrushFunction(name)
-    var customFillBrush =
-        if (customFillBrushFunction != null) {
-            customFillBrushFunction()
-        } else {
-            customizations.getBrush(name)
-        }
-    if (customFillBrush == null) {
-        node.view
-            .takeIf { it.hasShaderData() }
-            ?.shaderData
-            ?.let {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    val shaderProg = it.shader.trim().trimIndent()
-                    val shader = RuntimeShader(shaderProg)
-                    customFillBrush = SizingShaderBrush(shader)
-                    it.shaderUniformsMap.forEach { (_, v) ->
-                        v.applyToShader(shader, it.shaderUniformsMap)
-                    }
-                    customizations.getShaderUniformList(name)?.forEach { customUniform ->
-                        // iTime is preset uniform which is not in the shader uniforms map.
-                        // We need a customization for it when the shader code animate over time.
-                        if (customUniform.name == ShaderHelper.UNIFORM_TIME) {
-                            shader.setFloatUniform(
-                                customUniform.name,
-                                customUniform.value.floatValue,
-                            )
-                            return@forEach
-                        }
-                        if (it.shaderUniformsMap.containsKey(customUniform.name)) {
-                            customUniform.applyToShader(shader, it.shaderUniformsMap)
-                        } else {
-                            Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
-                        }
-                    }
-                    customizations.getShaderUniformStateList(name)?.forEach { customUniformState ->
-                        val customUniform = customUniformState.value
-                        // iTime is preset uniform which is not in the shader uniforms map.
-                        // We need a customization for it when the shader code animate over time.
-                        if (customUniform.name == ShaderHelper.UNIFORM_TIME) {
-                            shader.setFloatUniform(
-                                customUniform.name,
-                                customUniform.value.floatValue,
-                            )
-                            return@forEach
-                        }
-                        if (it.shaderUniformsMap.containsKey(customUniform.name)) {
-                            customUniform.applyToShader(shader, it.shaderUniformsMap)
-                        } else {
-                            Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
-                        }
-                    }
-                } else {
-                    it.shaderFallbackColorOrNull?.let { color ->
-                        customFillBrush = SolidColor(color.toColor())
-                    }
-                }
-            }
-    }
+    val customFillBrush = getCustomBrush(node, customizations)
 
     val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
     val fillBrush: List<Paint> =
         if (customFillBrush != null) {
             val p = Paint()
-            customFillBrush!!.applyTo(brushSize, p, 1.0f)
+            customFillBrush.applyTo(brushSize, p, 1.0f)
             listOf(p)
         } else {
             style.nodeStyle.backgroundsList.mapNotNull { background ->
@@ -786,6 +729,74 @@ fun ShaderUniform.applyToShader(
             Log.w(TAG, "Invalid shader uniform $name")
         }
     }
+}
+
+internal fun getCustomBrush(
+    node: SquooshResolvedNode,
+    customizations: CustomizationContext,
+): Brush? {
+    val nodeName = node.view.name
+    val customFillBrushFunction = customizations.getBrushFunction(nodeName)
+    var customFillBrush =
+        if (customFillBrushFunction != null) {
+            customFillBrushFunction()
+        } else {
+            customizations.getBrush(nodeName)
+        }
+    if (customFillBrush == null) {
+        node.view
+            .takeIf { it.hasShaderData() }
+            ?.shaderData
+            ?.let {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val shaderProg = it.shader.trim().trimIndent()
+                    val shader = RuntimeShader(shaderProg)
+                    customFillBrush = SizingShaderBrush(shader)
+                    it.shaderUniformsMap.forEach { (_, v) ->
+                        v.applyToShader(shader, it.shaderUniformsMap)
+                    }
+                    customizations.getShaderUniformList(nodeName)?.forEach { customUniform ->
+                        // iTime is preset uniform which is not in the shader uniforms map.
+                        // We need a customization for it when the shader code animate over time.
+                        if (customUniform.name == ShaderHelper.UNIFORM_TIME) {
+                            shader.setFloatUniform(
+                                customUniform.name,
+                                customUniform.value.floatValue,
+                            )
+                            return@forEach
+                        }
+                        if (it.shaderUniformsMap.containsKey(customUniform.name)) {
+                            customUniform.applyToShader(shader, it.shaderUniformsMap)
+                        } else {
+                            Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
+                        }
+                    }
+                    customizations.getShaderUniformStateList(nodeName)?.forEach { customUniformState
+                        ->
+                        val customUniform = customUniformState.value
+                        // iTime is preset uniform which is not in the shader uniforms map.
+                        // We need a customization for it when the shader code animate over time.
+                        if (customUniform.name == ShaderHelper.UNIFORM_TIME) {
+                            shader.setFloatUniform(
+                                customUniform.name,
+                                customUniform.value.floatValue,
+                            )
+                            return@forEach
+                        }
+                        if (it.shaderUniformsMap.containsKey(customUniform.name)) {
+                            customUniform.applyToShader(shader, it.shaderUniformsMap)
+                        } else {
+                            Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
+                        }
+                    }
+                } else {
+                    it.shaderFallbackColorOrNull?.let { color ->
+                        customFillBrush = SolidColor(color.toColor())
+                    }
+                }
+            }
+    }
+    return customFillBrush
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)

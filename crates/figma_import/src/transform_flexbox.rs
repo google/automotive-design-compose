@@ -1335,6 +1335,7 @@ fn visit_node(
                 node.absolute_bounding_box.map(|r| (&r).into()),
                 RenderMethod::None,
                 node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
+                shader_data,
             ))
         } else {
             // Build some runs of custom styled text out of the style overrides. We need to be able to iterate
@@ -1502,6 +1503,7 @@ fn visit_node(
                 check_text_node_string_res(node),
                 node.absolute_bounding_box.map(|r| (&r).into()),
                 RenderMethod::None,
+                shader_data,
             ))
         };
     }

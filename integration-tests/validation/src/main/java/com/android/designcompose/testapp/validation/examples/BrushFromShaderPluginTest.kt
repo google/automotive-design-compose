@@ -40,6 +40,7 @@ interface BrushFromShaderPluginTest {
         @Design(node = "#stage") rootShaderUniformStates: ShaderUniformStateList,
         @Design(node = "#stage") rootShaderUniforms: ShaderUniformList,
         @Design(node = "#color-custom") customColors: ShaderUniformList,
+        @Design(node = "#text-color-custom") customTextColors: ShaderUniformList,
         @Design(node = "#color-state-custom") customColorStates: ShaderUniformStateList,
     )
 }
@@ -52,7 +53,7 @@ fun BrushFromShaderPluginTest() {
     rootShaderUniformStates.add(iTimeState.toShaderUniformState(ShaderHelper.UNIFORM_TIME))
     // DEV BRANCH: 5oAVZxBQCLCf7spBLLFRHw. This list tests multi-doc support.
     val rootShaderUniforms = ArrayList<ShaderUniform>()
-    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("speed", 0.5f))
+    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("speed", 0.05f))
     rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("clouddark", 0.5f))
     rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("cloudcover", 0.23f))
 
@@ -73,6 +74,7 @@ fun BrushFromShaderPluginTest() {
         rootShaderUniformStates = rootShaderUniformStates,
         rootShaderUniforms = rootShaderUniforms,
         customColors = customColors,
+        customTextColors = customColors,
         customColorStates = customColorStates,
     )
 }

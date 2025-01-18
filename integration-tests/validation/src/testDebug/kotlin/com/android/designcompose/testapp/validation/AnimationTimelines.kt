@@ -15,7 +15,6 @@
  */
 
 package com.android.designcompose.testapp.validation
-/** Temporarily disabled: GH-1945
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -109,4 +108,3 @@ class AnimationTimelines {
         composeTestRule.captureRootRoboImage("${name}Animation-End")
     }
 }
- */

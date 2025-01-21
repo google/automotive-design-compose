@@ -39,16 +39,13 @@ import androidx.compose.ui.unit.Density
 import com.android.designcompose.ComputedPathCache
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
-import com.android.designcompose.TextMeasureData
 import com.android.designcompose.VariableState
 import com.android.designcompose.definition.modifier.TextAlignVertical
 import com.android.designcompose.definition.modifier.TextOverflow
-import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.strokeOrNull
 import com.android.designcompose.definition.view.textColorOrNull
 import com.android.designcompose.definition.view.transformOrNull
-import com.android.designcompose.getBrush
-import com.android.designcompose.getBrushFunction
+import com.android.designcompose.getCustomBrush
 import com.android.designcompose.layout_interface.Layout
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.utils.asBrush
@@ -129,8 +126,7 @@ internal fun Modifier.squooshRender(
                                     document,
                                     drawContext,
                                     this,
-                                    node.textInfo,
-                                    node.style,
+                                    node,
                                     computedLayout,
                                     customizations,
                                     node.view.name,
@@ -272,14 +268,15 @@ private fun squooshTextRender(
     document: DocContent,
     drawContext: DrawContext,
     density: Density,
-    textInfo: TextMeasureData,
-    style: ViewStyle,
+    node: SquooshResolvedNode,
     computedLayout: Layout,
     customizations: CustomizationContext,
     nodeName: String,
     variableState: VariableState,
     appContext: Context,
 ) {
+    val textInfo = node.textInfo!!
+    val style = node.style
     val layoutWidth = computedLayout.width * density.density
     val paragraph =
         Paragraph(
@@ -319,13 +316,7 @@ private fun squooshTextRender(
             else -> 0.0f
         }
 
-    val customFillBrushFunction = customizations.getBrushFunction(nodeName)
-    val customFillBrush =
-        if (customFillBrushFunction != null) {
-            customFillBrushFunction()
-        } else {
-            customizations.getBrush(nodeName)
-        }
+    val customFillBrush = getCustomBrush(node, customizations)
 
     drawContext.canvas.save()
     drawContext.canvas.translate(0.0f, verticalCenterOffset)

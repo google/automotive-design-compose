@@ -353,6 +353,7 @@ impl View {
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
+        shader_data: Option<ShaderData>,
     ) -> View {
         View {
             unique_id: View::next_unique_id() as u32,
@@ -371,7 +372,7 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
-            shader_data: None,
+            shader_data,
         }
     }
     pub fn new_styled_text(
@@ -384,6 +385,7 @@ impl View {
         text_res_name: Option<String>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
+        shader_data: Option<ShaderData>,
     ) -> View {
         View {
             unique_id: View::next_unique_id() as u32,
@@ -402,7 +404,7 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes: HashMap::new(),
-            shader_data: None,
+            shader_data,
         }
     }
     pub fn add_child(&mut self, child: View) {

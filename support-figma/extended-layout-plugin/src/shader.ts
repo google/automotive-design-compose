@@ -23,9 +23,9 @@ const SHADER_UNIFORMS_PLUGIN_DATA_KEY = "shaderUniforms";
 const SHADER_IMAGE_HASH = "shaderImageHash";
 
 export interface ShaderUniform {
-  uniformName: string,
-  uniformType: string,
-  uniformValue: number|Float32Array|RGBA,
+  uniformName: string;
+  uniformType: string;
+  uniformValue: number | Float32Array | RGBA;
 }
 
 export const shaderMap: ReadonlyMap<string, string> = new Map([
@@ -37,8 +37,38 @@ export const shaderMap: ReadonlyMap<string, string> = new Map([
   ["star", __uiFiles__.star],
 ]);
 
+// Listens to the current selection size change and update the shader plugin ui.
+const broadcastSizeChangeCallback = (event: NodeChangeEvent) => {
+  let selection = figma.currentPage.selection;
+  if (!selection || selection.length != 1 || !selection[0]) {
+    return;
+  }
+  for (const nodeChange of event.nodeChanges) {
+    if (
+      nodeChange.node == selection[0] &&
+      nodeChange.type == "PROPERTY_CHANGE"
+    ) {
+      for (const property of nodeChange.properties) {
+        if (property == "width" || property == "height") {
+          figma.ui.postMessage({
+            msg: "shader-selection",
+            nodeId: selection[0].id,
+            size: {
+              width: selection[0].width,
+              height: selection[0].height,
+            },
+          });
+          return;
+        }
+      }
+    }
+  }
+};
+
 export function onSelectionChanged() {
   let selection = figma.currentPage.selection;
+
+  figma.currentPage.off("nodechange", broadcastSizeChangeCallback);
 
   // We don't support multiple selections.
   if (!selection || selection.length != 1 || !selection[0]) {
@@ -53,6 +83,7 @@ export function onSelectionChanged() {
       nodeId: selection[0].id,
       size: { width: selection[0].width, height: selection[0].height },
     });
+    figma.currentPage.on("nodechange", broadcastSizeChangeCallback);
   }
 }
 
@@ -88,7 +119,11 @@ export async function insertImage(imageBytes: Uint8Array) {
   }
 }
 
-export async function setShader(shader: string, shaderFallbackColor: string, shaderUniforms: Array<ShaderUniform>) {
+export async function setShader(
+  shader: string,
+  shaderFallbackColor: string,
+  shaderUniforms: Array<ShaderUniform>
+) {
   await figma.loadAllPagesAsync();
   let selection = figma.currentPage.selection;
 
@@ -104,9 +139,9 @@ export async function setShader(shader: string, shaderFallbackColor: string, sha
 
 function setShaderToNode(
   node: SceneNode,
-  shader: string|undefined|null,
-  shaderFallbackColor: string|undefined|null,
-  shaderUniforms: Array<ShaderUniform>|undefined|null,
+  shader: string | undefined | null,
+  shaderFallbackColor: string | undefined | null,
+  shaderUniforms: Array<ShaderUniform> | undefined | null
 ) {
   let nodeWithFills: MinimalFillsMixin = node as MinimalFillsMixin;
 

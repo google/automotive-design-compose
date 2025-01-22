@@ -26,6 +26,12 @@ export interface ShaderUniform {
   uniformName: string;
   uniformType: string;
   uniformValue: number | Float32Array | RGBA;
+  extras: ShaderExtras | null;
+}
+
+interface ShaderExtras {
+  min: Number;
+  max: Number;
 }
 
 export const shaderMap: ReadonlyMap<string, string> = new Map([
@@ -82,6 +88,18 @@ export function onSelectionChanged() {
       msg: "shader-selection",
       nodeId: selection[0].id,
       size: { width: selection[0].width, height: selection[0].height },
+      shader: parse(
+        selection[0].getSharedPluginData(
+          Utils.SHARED_PLUGIN_NAMESPACE,
+          SHADER_PLUGIN_DATA_KEY
+        )
+      ),
+      shaderUniforms: getShaderUniforms(
+        selection[0].getSharedPluginData(
+          Utils.SHARED_PLUGIN_NAMESPACE,
+          SHADER_UNIFORMS_PLUGIN_DATA_KEY
+        )
+      ),
     });
     figma.currentPage.on("nodechange", broadcastSizeChangeCallback);
   }
@@ -135,6 +153,9 @@ export async function setShader(
     return;
   }
   setShaderToNode(selection[0], shader, shaderFallbackColor, shaderUniforms);
+
+  // Shader has updated. Using the selection callback to notify the html UI about the change.
+  onSelectionChanged();
 }
 
 function setShaderToNode(
@@ -223,6 +244,8 @@ export async function clearShader() {
   }
 
   clearShaderFromNode(selection[0]);
+  // Shader has been cleared. Using the selection callback to notify the html UI about the change.
+  onSelectionChanged();
 
   figma.notify("Shader has been removed from the current node.");
 }
@@ -283,4 +306,28 @@ async function clearNodeRecursivelyAsync(node: SceneNode) {
       await clearNodeRecursivelyAsync(child);
     }
   }
+}
+
+function parse(shader: string): string {
+  if (!shader) {
+    return "";
+  }
+
+  let extraUniformsEnd = "////// End of user supplied inputs ////// \n";
+  let endIndex = shader.indexOf(extraUniformsEnd);
+
+  return shader.substring(endIndex + extraUniformsEnd.length);
+}
+
+function getShaderUniforms(shaderUniforms: string): ShaderUniform[] | null {
+  if (!shaderUniforms) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(shaderUniforms);
+  } catch (e) {
+    console.log("Error parsing shader uniforms JSON: " + e);
+  }
+  return null;
 }

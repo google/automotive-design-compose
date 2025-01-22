@@ -20,6 +20,7 @@ import android.content.Context
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.PlatformTextStyle
@@ -46,6 +47,7 @@ import com.android.designcompose.definition.view.fontWeightOrNull
 import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.definition.view.textColorOrNull
 import com.android.designcompose.definition.view.textShadowOrNull
+import com.android.designcompose.getBrush
 import com.android.designcompose.getText
 import com.android.designcompose.getTextState
 import com.android.designcompose.getTextStyle
@@ -69,8 +71,9 @@ internal class TextMeasureCache {
     internal class Entry(
         val data: TextMeasureData,
         val text: String?,
-        val style: TextStyle?,
+        val customStyle: TextStyle?,
         val annotatedText: String,
+        val textStyle: TextStyle,
         // XXX: Do we need to use the annotated string? This impl might break localization.
     )
 
@@ -115,7 +118,7 @@ internal fun squooshComputeTextInfo(
     appContext: Context,
     textMeasureCache: TextMeasureCache,
     textHash: HashSet<String>,
-): TextMeasureData? {
+): Pair<TextMeasureData?, TextStyle>? {
     val customizedText =
         customizations.getText(v.name) ?: customizations.getTextState(v.name)?.value
     val customTextStyle = customizations.getTextStyle(v.name)
@@ -126,11 +129,11 @@ internal fun squooshComputeTextInfo(
     if (
         cachedText != null &&
             cachedText.text == customizedText &&
-            cachedText.style == customTextStyle
+            cachedText.customStyle == customTextStyle
     ) {
         textHash.add(cachedText.annotatedText)
         textMeasureCache.put(layoutId, cachedText)
-        return cachedText.data
+        return Pair(cachedText.data, cachedText.textStyle)
     }
 
     val annotatedText =
@@ -241,9 +244,20 @@ internal fun squooshComputeTextInfo(
                 color = textShadow.color.getValue(variableState) ?: Color.Transparent,
             )
         }
-    // The brush and opacity is computed later at rendering time.
+    val customBrush = customizations.getBrush(v.name)
+    val textBrushAndOpacity =
+        v.style.nodeStyle.textColorOrNull?.asBrush(
+            appContext,
+            document,
+            density.density,
+            variableState,
+        )
+    // The brush and opacity is stored here for use with ComponentReplacementContext. They are
+    // retrieved again later at rendering time since we need to pass the brush, opacity and draw
+    // style explicitly.
     val textStyle =
         (TextStyle(
+            brush = customBrush ?: textBrushAndOpacity?.first ?: SolidColor(Color.Transparent),
             fontSize =
                 customTextStyle?.fontSize ?: v.style.nodeStyle.fontSize.getValue(variableState).sp,
             fontFamily = fontFamily,
@@ -297,10 +311,16 @@ internal fun squooshComputeTextInfo(
 
     textMeasureCache.put(
         layoutId,
-        TextMeasureCache.Entry(textMeasureData, customizedText, customTextStyle, annotatedText.text),
+        TextMeasureCache.Entry(
+            textMeasureData,
+            customizedText,
+            customTextStyle,
+            annotatedText.text,
+            textStyle,
+        ),
     )
 
     textHash.add(annotatedText.text)
 
-    return textMeasureData
+    return Pair(textMeasureData, textStyle)
 }

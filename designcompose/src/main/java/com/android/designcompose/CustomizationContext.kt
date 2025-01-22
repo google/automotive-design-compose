@@ -377,11 +377,9 @@ fun CustomizationContext.getImageWithContext(
 }
 
 fun CustomizationContext.getBrush(nodeName: String): Brush? {
-    return cs[nodeName]?.brush?.getOrNull()
-}
-
-fun CustomizationContext.getBrushFunction(nodeName: String): (() -> Brush)? {
-    return cs[nodeName]?.brushFunction?.getOrNull()
+    val customFillBrushFunction = cs[nodeName]?.brushFunction?.getOrNull()
+    return if (customFillBrushFunction != null) customFillBrushFunction()
+    else cs[nodeName]?.brush?.getOrNull()
 }
 
 fun CustomizationContext.getText(nodeName: String): String? {

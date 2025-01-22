@@ -18,6 +18,7 @@ package com.android.designcompose.squoosh
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.Density
 import com.android.designcompose.ComponentReplacementContext
@@ -120,6 +121,9 @@ internal class SquooshChildComposable(
 
     // We use this to look up the transform and layout translation.
     val node: SquooshResolvedNode,
+
+    // TextStyle to be used in ComponentReplacementContext if replacing a text node
+    val textStyle: TextStyle? = null,
 )
 
 /// Record parent component info with a singly linked list; each child sees a straight path
@@ -280,7 +284,7 @@ internal fun resolveVariantsRecursively(
     layoutIdAllocator.visitLayoutId(layoutId)
 
     // XXX-PERF: computeTextInfo is *super* slow. It needs to use a cache between frames.
-    val textInfo =
+    val textData =
         squooshComputeTextInfo(
             view,
             layoutId,
@@ -293,8 +297,8 @@ internal fun resolveVariantsRecursively(
             textMeasureCache,
             textHash,
         )
-    val resolvedView =
-        SquooshResolvedNode(view, style, layoutId, textInfo, viewFromTree.id, layoutNode = null)
+    val textInfo = textData?.first
+    val textStyle = textData?.second
 
     // Find out if we have some supported interactions. These currently include press, click,
     // timeout, and key press.
@@ -326,6 +330,11 @@ internal fun resolveVariantsRecursively(
     val replacementContent = customizations.getContent(view.name)
     val replacementComponent = customizations.getComponent(view.name)
     val listWidgetContent = customizations.getListContent(view.name)
+
+    // If this is a text node being replaced, don't store textInfo into resolvedView
+    val resolvedTextInfo = if (replacementComponent != null) null else textInfo
+    val resolvedView = SquooshResolvedNode(view, style, layoutId, resolvedTextInfo, viewFromTree.id)
+
     var skipChildren = false // Set to true for customizations that replace children
     if (replacementComponent != null) {
         composableList.add(
@@ -333,6 +342,7 @@ internal fun resolveVariantsRecursively(
                 component = replacementComponent,
                 node = resolvedView,
                 parentComponents = parentComps,
+                textStyle = textStyle,
             )
         )
         // Make sure that the renderer knows that it needs to do an external render for this

@@ -577,7 +577,7 @@ internal fun DesignSwitcher(
                     value = docIdText,
                     onValueChange = setDocIdText,
                     textStyle = context.textStyle ?: TextStyle.Default.copy(color = Color.White),
-                    cursorBrush = SolidColor(Color.White),
+                    cursorBrush = SolidColor(context.textStyle?.color ?: (Color.White)),
                     modifier =
                         Modifier.onKeyEvent {
                             if (it.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {

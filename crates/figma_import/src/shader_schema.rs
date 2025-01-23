@@ -16,7 +16,7 @@
 use crate::figma_schema::FigmaColor;
 use dc_bundle::definition::view::shader_uniform_value::FloatVec;
 use dc_bundle::definition::view::shader_uniform_value::ValueType::{
-    FloatColorValue, FloatValue, FloatVecValue,
+    FloatColorValue, FloatValue, FloatVecValue, IntValue,
 };
 use dc_bundle::definition::view::{ShaderUniform, ShaderUniformValue};
 use log::error;
@@ -73,6 +73,14 @@ impl Into<(String, ShaderUniform)> for ShaderUniformJson {
                     .map(|parsed_color| ShaderUniformValue {
                         value_type: Some(FloatColorValue(parsed_color)),
                     })
+            }
+            "int" => {
+                if let Some(int_val) = self.uniform_value.as_i64() {
+                    Some(ShaderUniformValue { value_type: Some(IntValue(int_val as i32)) })
+                } else {
+                    error!("Error parsing integer for shader int uniform {}", self.uniform_name);
+                    None
+                }
             }
             _ => None,
         };

@@ -114,6 +114,8 @@
             <label><input type="radio" name="uniformType" value="floatArray">Float Array</label>
             <br>
             <label><input type="radio" name="uniformType" value="color">Color</label>
+            <br>
+            <label><input type="radio" name="uniformType" value="int">Int</label>
         </p>
         <div style="display: flex; gap: 4px;">
             <button id="continueButton" class="button--primary" style="flex-grow: 1;"
@@ -177,6 +179,20 @@
         </div>
     </dialog>
 
+    <dialog id="createIntUniformDialog">
+        <div><b>Create int uniform</b></div>
+        <p>
+        <div style="display: flex; gap: 8px;">
+            <label for="intUniformName" style="flex-grow: 1;">Name:</label>
+            <input type="text" id="intUniformName" placeholder="iCase" autofocus></input>
+        </div>
+        </p>
+        <div style="display: flex; gap: 4px;">
+            <button id="createIntUniformButton" class="button--primary" style="flex-grow: 1;">Create</button>
+            <button id="closeIntUniformButton" class="button--primary" style="flex-grow: 1;">Close</button>
+        </div>
+    </dialog>
+
 </div>
 <!-- END OF SHADER PLUGIN UI -->
 
@@ -217,6 +233,7 @@
     const createFloatUniformDialog = document.getElementById("createFloatUniformDialog");
     const createFloatArrayUniformDialog = document.getElementById("createFloatArrayUniformDialog");
     const createColorUniformDialog = document.getElementById("createColorUniformDialog");
+    const createIntUniformDialog = document.getElementById("createIntUniformDialog");
 
     function createUniform() {
         createUniformDialog.showModal();
@@ -234,6 +251,9 @@
                     break;
                 case "color":
                     createColorUniformDialog.showModal();
+                    break;
+                case "int":
+                    createIntUniformDialog.showModal();
                     break;
             }
             createUniformDialog.close();
@@ -390,6 +410,42 @@
         createColorUniformDialog.close();
     };
 
+    const createIntUniformButton = document.getElementById("createIntUniformButton");
+    const closeIntUniformButton = document.getElementById("closeIntUniformButton");
+    const intUniformNameInput = document.getElementById("intUniformName");
+
+    // "Create" button closes the dialog and creates the uniform
+    createIntUniformButton.onclick = async () => {
+        const uniformName = intUniformNameInput.value;
+        createShaderIntUniform(intUniformNameInput.value, null);
+        await runShader();
+    };
+
+    function createShaderIntUniform(uniformName, intValue) {
+        let newUniformEntry = createShaderUniform(uniformName, "int");
+        if (!newUniformEntry) {
+            return;
+        }
+
+        // Uniform is created successfully. Close the creation dialog.
+        createIntUniformDialog.close();
+
+        // Create inputs fields
+        const inputsLine = document.createElement("div");
+        let input = document.createElement("input");
+        input.id = `input_${uniformName}`;
+        input.type = "number";
+        input.value = intValue ? intValue : 0;
+        inputsLine.appendChild(input);
+        newUniformEntry.appendChild(inputsLine);
+
+        uniforms.appendChild(newUniformEntry);
+    }
+
+    closeIntUniformButton.onclick = () => {
+        createIntUniformDialog.close();
+    };
+
     function createShaderUniform(uniformName, uniformType) {
         if (presetUniforms.includes(uniformName) || customUniforms.includes(uniformName)) {
             alert("This uniform already exists, please use a different name.");
@@ -494,6 +550,9 @@
                     floatArray.push(parseFloat(alpha.value));
                 }
                 return floatArray;
+            case "int":
+                const input = document.getElementById(`input_${uniform}`);
+                return parseInt(input.value);
         }
     }
 
@@ -504,6 +563,7 @@
             case "float2":
             case "float3":
             case "float4":
+            case "int":
                 return previewUniformValue(uniform);
             case "color3":
             case "color4":
@@ -666,6 +726,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                         };
                         shaderUniforms.push(shaderUniform);
                     });
+
                     const color = useShaderFallbackColor.checked ? "#FF46A2" : undefined;
                     parent.postMessage({
                         pluginMessage: {
@@ -731,6 +792,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             nodeActions.style.display = "block";
             document.getElementById("nodeId").innerHTML = `Node selected: ${msg.nodeId}`;
             if (msg.shader) {
+                loadShaderButton.style.display = "block";
                 loadShaderButton.onclick = async () => {
                     clearUniforms();
                     shaderCodeInput.value = msg.shader;
@@ -754,12 +816,14 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                             case "color4":
                                 createShaderColorUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
                                 break;
+                            case "int":
+                                createShaderIntUniform(shaderUniform.uniformName, shaderUniform.uniformValue);
+                                break;
                         }
                         console.log(`${shaderUniform.uniformName} ${shaderUniform.uniformType} = ${shaderUniform.uniformValue}`);
                     }
                     await runShader();
                 };
-                loadShaderButton.style.display = "block";
             } else {
                 loadShaderButton.style.display = "none";
             }

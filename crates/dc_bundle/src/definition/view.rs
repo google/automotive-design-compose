@@ -77,6 +77,7 @@ impl NodeStyle {
             meter_data: None,
             hyperlinks: None,
             shader_data: None,
+            scalable_data: None,
         }
     }
 }

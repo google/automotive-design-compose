@@ -22,8 +22,19 @@ import androidx.tracing.trace
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.GenericDocContent
+import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.decodeDiskBaseDoc
 import com.android.designcompose.common.decodeServerBaseDoc
+import com.android.designcompose.common.views
+import com.android.designcompose.definition.element.Bounds
+import com.android.designcompose.definition.element.ScalableUiVariant
+import com.android.designcompose.definition.element.bounds
+import com.android.designcompose.definition.element.scalableDimension
+import com.android.designcompose.definition.element.scalableUiVariant
+import com.android.designcompose.definition.element.setOrNull
+import com.android.designcompose.definition.view.nodeStyleOrNull
+import com.android.designcompose.definition.view.scalableDataOrNull
+import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.live_update.ConvertResponse
 import com.google.protobuf.kotlin.get
 import java.io.File
@@ -121,4 +132,77 @@ fun decodeServerDoc(
     val fullDoc = DocContent(baseDoc, previousDoc)
     save?.let { fullDoc.c.save(save, Feedback) }
     return fullDoc
+}
+
+class ScalableUiDoc(doc: DocContent) {
+    // variant name -> scalable ui data
+    val variantMap: HashMap<String, ScalableUiVariant> = HashMap()
+    // component set name -> { event name -> variant name }
+    val setEventMap: HashMap<String, HashMap<String, String>> = HashMap()
+
+    init {
+        val allViews = doc.c.document.views()
+        doc.c.variantViewMap.forEach { setMap ->
+            val componentSetQuery = NodeQuery.NodeComponentSet(setMap.key)
+            val componentSetView = allViews[componentSetQuery]
+            componentSetView?.styleOrNull?.nodeStyleOrNull?.scalableDataOrNull?.setOrNull?.let { setData ->
+                val setName = setData.name
+                val eventHash: HashMap<String, String> = HashMap()
+                setData.eventListList.forEach {
+                    eventHash[it.eventName] = it.variantName
+                }
+                setEventMap[setName] = eventHash
+            }
+
+            setMap.value.forEach { variantMap ->
+                if (variantMap.value.data.hasContainer()) {
+                    val variant = variantMap.value
+                    variant.componentInfo.componentSetName
+                    if (variantMap.value.data.container.childrenCount > 0) {
+                        val child = variantMap.value.data.container.getChildren(0)
+                        if (child.name == "main") {
+                            val layout = child.style.layoutStyle
+                            this.variantMap[variantMap.key] = scalableUiVariant {
+                                bounds = bounds {
+                                    left = scalableDimension {
+                                        points = layout.margin.start.points
+                                    }
+                                    top = scalableDimension {
+                                        points = layout.margin.top.points
+                                    }
+                                    right = scalableDimension {
+                                        points = layout.margin.end.points
+                                        //points = 1280f - layout.width.points // layout.margin.end.points
+                                    }
+                                    bottom = scalableDimension {
+                                        points = layout.margin.bottom.points
+                                        //points = 800f - layout.height.points //.margin.bottom.points
+                                    }
+                                    width = scalableDimension {
+                                        points = layout.width.points
+                                    }
+                                    height = scalableDimension {
+                                        points = layout.height.points
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun getBounds(variantName: String): Bounds? {
+        val variant = variantMap[variantName]
+        return variant?.bounds
+    }
+
+    fun getTransitions(componentSetName: String, result: HashMap<String, String>) {
+        println("### getTransitions $componentSetName")
+        val eventHash = setEventMap[componentSetName]
+        eventHash?.forEach {
+            result[it.key] = it.value
+        }
+    }
 }

@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -110,6 +111,25 @@ object DesignSettings {
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyFigmaFetchStatus(fileId: DesignDocId) = fileFetchStatus[fileId]
+
+    fun subscribeLiveUpdates(
+        activity: ComponentActivity,
+        docId: String,
+        resourceName: String,
+        serverParams: DocumentServerParams,
+        onUpdate: (ScalableUiDoc?) -> Unit,
+    ) {
+        val designDocId = DesignDocId(docId)
+        val id = "${resourceName}_${docId}"
+        val saveFile = activity.applicationContext.getFileStreamPath("$id.dcf")
+
+        val onNewDocContent = { doc: DocContent? ->
+            onUpdate(doc?.let { ScalableUiDoc(it) })
+        }
+        val subscription = LiveDocSubscription(id, designDocId, onNewDocContent, null)
+        DocServer.subscribe(subscription, serverParams, saveFile)
+        enableLiveUpdates(activity)
+    }
 
     fun enableLiveUpdates(activity: ComponentActivity) {
         liveUpdatesEnabled = true
@@ -235,7 +255,7 @@ internal object SpanCache {
     }
 }
 
-internal object DocServer {
+object DocServer {
     internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
     internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
     internal val documents: HashMap<DesignDocId, DocContent> = HashMap()
@@ -266,6 +286,29 @@ internal object DocServer {
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyClearDocuments() = documents.clear()
+
+    fun loadDoc(resourceName: String, docId: DesignDocId, serverParams: DocumentServerParams, context: Context): ScalableUiDoc? {
+        println("### loadDoc $resourceName ${docId.id} queries ${serverParams.nodeQueries} context $context")
+        // Check that the document ID is valid
+        if (!validateFigmaDocId(docId.id)) {
+            Log.w(TAG, "Invalid Figma document ID: $docId")
+            return null
+        }
+
+        val id = "${resourceName}_${docId}"
+        val fileName = "figma/$id.dcf"
+        val assetDoc: InputStream = context.assets.open(fileName)
+        Log.i(TAG, "### Loaded design doc from assets/$fileName")
+
+        try {
+            val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
+            decodedDoc?.let { return ScalableUiDoc(it) }
+        }
+        catch (error: Throwable) {
+            Log.e(TAG, "Failed to load from disk: $fileName")
+        }
+        return null
+    }
 }
 
 internal fun DocServer.initializeLiveUpdate() {
@@ -349,6 +392,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     Log.e(TAG, "Error decoding doc.")
                     break
                 }
+                val uiDoc = ScalableUiDoc(doc)
                 updateBranches(id, doc)
 
                 // Remember the new document
@@ -548,6 +592,9 @@ internal fun DocServer.doc(
         targetDoc?.let { VariableManager.init(it.c.docId, it.c.document.variableMap) }
         docUpdateCallback?.invoke(docId, targetDoc?.c?.toSerializedBytes(Feedback))
         setLiveDoc(targetDoc)
+        targetDoc?.let {
+            val uiDoc = ScalableUiDoc(it)
+        }
 
         // Subscribe to live updates, if we have an access token.
         var subscription: LiveDocSubscription? = null

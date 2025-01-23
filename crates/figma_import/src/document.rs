@@ -530,7 +530,8 @@ impl Document {
             name_index: &mut HashMap<String, &'a figma_schema::Node>,
             id_index: &mut HashMap<String, &'a figma_schema::Node>,
             variant_index: &mut HashMap<(String, String), &'a figma_schema::Node>,
-            component_set_index: &mut HashMap<String, &'a figma_schema::Node>,
+            component_set_name_index: &mut HashMap<String, &'a figma_schema::Node>,
+            component_id_index: &mut HashMap<String, &'a figma_schema::Node>,
         ) {
             // Ignore hidden nodes
             if !node.visible {
@@ -565,12 +566,14 @@ impl Document {
                     name_index,
                     id_index,
                     variant_index,
-                    component_set_index,
+                    component_set_name_index,
+                    component_id_index,
                 );
             }
             if let figma_schema::NodeData::ComponentSet { .. } = node.data {
+                component_set_name_index.insert(node.name.clone(), node);
                 for child in &node.children {
-                    component_set_index.insert(child.id.clone(), node);
+                    component_id_index.insert(child.id.clone(), node);
                 }
             }
         }
@@ -681,6 +684,7 @@ impl Document {
         let mut name_index = HashMap::new();
         let mut id_index = HashMap::new();
         let mut variant_index = HashMap::new();
+        let mut component_set_name_index = HashMap::new();
         // If a component belongs to a component set (there are "variants" in the Figma UI)
         // then we want to know which component set it belongs to so that if the component
         // set has bindings then we can use them for the instance.
@@ -695,14 +699,15 @@ impl Document {
         //
         // This map goes from "component id" -> "component set node", so there will be one
         // entry for each component in a component set.
-        let mut component_set_index = HashMap::new();
+        let mut component_id_index = HashMap::new();
         index_node(
             &self.document_root.document,
             None,
             &mut name_index,
             &mut id_index,
             &mut variant_index,
-            &mut component_set_index,
+            &mut component_set_name_index,
+            &mut component_id_index,
         );
 
         // Fetch component variant nodes
@@ -732,7 +737,8 @@ impl Document {
                 &mut name_index,
                 &mut id_index,
                 &mut variant_index,
-                &mut component_set_index,
+                &mut component_set_name_index,
+                &mut component_id_index,
             );
         }
 
@@ -761,7 +767,7 @@ impl Document {
             .filter(|maybe_node| maybe_node.is_some())
             .map(|node| *node.unwrap()) // safe to unwrap
             .collect();
-        find_component_sets(&query_nodes, &component_set_index, &mut node_name_hash);
+        find_component_sets(&query_nodes, &component_id_index, &mut node_name_hash);
         let mut component_set_hash: HashMap<String, Vec<String>> = HashMap::new();
         add_variant_node_names(
             &self.document_root.document,
@@ -781,7 +787,7 @@ impl Document {
                 let maybe_node = match &name {
                     NodeQuery::NodeId(id) => id_index.get(id),
                     NodeQuery::NodeName(node_name) => name_index.get(node_name),
-                    NodeQuery::NodeComponentSet(node_name) => name_index.get(node_name),
+                    NodeQuery::NodeComponentSet(node_name) => component_set_name_index.get(node_name),
                     NodeQuery::NodeVariant(node_name, parent_name) => {
                         variant_index.get(&(node_name.clone(), parent_name.clone()))
                     }
@@ -858,7 +864,7 @@ impl Document {
         self.compute_component_overrides(&mut views);
 
         // Update our mapping from instance to component set.
-        self.component_sets = component_set_index
+        self.component_sets = component_id_index
             .iter()
             .map(|(component_id, component_set_node)| {
                 (component_id.clone(), component_set_node.id.clone())

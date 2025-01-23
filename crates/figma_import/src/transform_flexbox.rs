@@ -32,8 +32,9 @@ use dc_bundle::definition::element::{
     view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
     FontWeight, LineHeight, NumOrVar, Path, Size, ViewShape,
 };
+use dc_bundle::definition::interaction::action::Node;
 
-use crate::figma_schema::LayoutPositioning;
+use crate::figma_schema::{ComponentSet, LayoutPositioning};
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
 use dc_bundle::definition;
 use dc_bundle::definition::element::dimension_proto::Dimension;
@@ -60,9 +61,13 @@ use dc_bundle::definition::plugin::meter_data::MeterDataType;
 use log::error;
 
 use crate::shader_schema::ShaderDataJson;
+use crate::scalableui_schema::{ScalableUiDataJson, VariantDataJson};
+use dc_bundle::definition::element::ScalableUiVariant;
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
-use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle};
+use dc_bundle::definition::view::{
+    ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle,
+};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -831,6 +836,23 @@ fn visit_node(
         }
     }
 
+    // TODO REMOVE DEBUGGING ONLY
+        let node_type = match &node.data {
+            crate::figma_schema::NodeData::ComponentSet { frame } => "SET",
+            crate::figma_schema::NodeData::Component { frame } => "COMPONENT",
+            crate::figma_schema::NodeData::Instance { frame, .. } => "INSTANCE",
+            _ => "NONE",
+        };
+
+        if let Some(vsw_data) = plugin_data {
+            let scalable_json = vsw_data.get("scalableui");
+            if let Some(sjson) = scalable_json {
+                println!("### {}, data {}", node.name, node_type);
+                println!("### {} json {}", node.name, sjson);
+                println!("");
+            }
+        }
+
     // First determine our layout style, then accumulate our visual style.
     let mut style = compute_layout(node, parent)?;
 
@@ -959,6 +981,17 @@ fn visit_node(
             None
         }
     };
+
+    style.node_style_mut().scalable_data = plugin_data
+        .and_then(|vsw_data| vsw_data.get("scalableui"))
+        .and_then(|scalable_json| {
+            let parse_result = serde_json::from_str::<ScalableUiDataJson>(scalable_json.as_str());
+            if parse_result.is_err() {
+                //println!("### Parsing {} json {}: -> {:?}", node.name, scalable_json, parse_result);
+            }
+            parse_result.ok()
+        })
+        .and_then(|x| x.into());
 
     // We have shader that can be used to draw the background.
     style.node_style_mut().shader_data = plugin_data

@@ -121,10 +121,11 @@ class VariantPropertyMap {
                     possibleValues.contains("*") -> resolvedNameProperties.add("$propertyName=*")
                     else -> return null
                 }
-            } else {
-                return null
             }
         }
+
+        // If no properties matched at all, there is no variant that matches so return null
+        if (resolvedNameProperties.isEmpty()) return null
 
         var view = getViewFromPropertyList(resolvedNameProperties, variantViewMap)
         if (view != null) return view

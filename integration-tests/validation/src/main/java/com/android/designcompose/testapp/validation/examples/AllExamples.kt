@@ -104,6 +104,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             { VariantPropertiesTest() },
             VariantPropertiesTestDoc.javaClass.name,
         ),
+        Triple("Variant Nesting", { VariantNesting() }, VariantNestingDoc.javaClass.name),
         Triple("Variable Borders", { VariableBorderTest() }, VariableBorderTestDoc.javaClass.name),
         Triple("Variable Modes", { VariableModesTest() }, VariablesTestDoc.javaClass.name),
         Triple(

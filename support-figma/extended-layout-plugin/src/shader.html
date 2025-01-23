@@ -23,15 +23,13 @@
 <!-- BEGIN OF SHADER PLUGIN UI -->
 <div class="page-padding-large">
     <div style="align-items: flex-start; gap: 16px; display: flex;">
-        <div class="container" style="border: 1px black solid; max-width: 256px; max-height: 256px; overflow: hidden;">
+        <div class="container" style="border: 1px black solid; width: auto; flex-shrink: 0; max-width: 256px; max-height: 256px; overflow: hidden;">
             <canvas id="shaderPreview" width="256px" height="256px" />
         </div>
         <div style="width: auto; flex-grow: 1; max-height: 256px; overflow-y: scroll;">
             <div style="border: 2px black solid;">
                 <div>
                     <div style="height: 32px;" class="center-vertically-container">uniform float3 iResolution;</div>
-                    <div style="border-top: 1px black solid; height: 32px;" class="center-vertically-container">uniform
-                        float iTime;</div>
                 </div>
                 <div id="uniforms"></div>
             </div>
@@ -44,12 +42,12 @@
         </div>
     </div>
     <div style="display:flex; flex-wrap: wrap; overflow-y: auto; gap: 4px; margin-top: 8px;">
-        <button class="button--primary" onclick="loadShaderCode('julia')">Julia</button>
-        <button class="button--primary" onclick="loadShaderCode('cloudy_sky')">CloudySky</button>
-        <button class="button--primary" onclick="loadShaderCode('discrete_ocean')">DiscreteOcean</button>
-        <button class="button--primary" onclick="loadShaderCode('fibonacci_sphere')">FibonacciSphere</button>
-        <button class="button--primary" onclick="loadShaderCode('gradient')">Gradient</button>
-        <button class="button--primary" onclick="loadShaderCode('star')">Star</button>
+        <button class="button--primary" onclick="loadPresetShaderCode('julia')">Julia</button>
+        <button class="button--primary" onclick="loadPresetShaderCode('cloudy_sky')">CloudySky</button>
+        <button class="button--primary" onclick="loadPresetShaderCode('discrete_ocean')">DiscreteOcean</button>
+        <button class="button--primary" onclick="loadPresetShaderCode('fibonacci_sphere')">FibonacciSphere</button>
+        <button class="button--primary" onclick="loadPresetShaderCode('gradient')">Gradient</button>
+        <button class="button--primary" onclick="loadPresetShaderCode('star')">Star</button>
         <button class="button--primary" onclick="clearShaderCode()">CUSTOM</button>
     </div>
 
@@ -109,7 +107,9 @@
     <dialog id="createUniformDialog">
         <div><b>Choose which uniform to create</b></div>
         <p>
-            <label><input type="radio" name="uniformType" value="float" checked="true">Float</label>
+            <label><input type="radio" name="uniformType" value="iTime" checked="true">iTime</label>
+            <br>
+            <label><input type="radio" name="uniformType" value="float">Float</label>
             <br>
             <label><input type="radio" name="uniformType" value="floatArray">Float Array</label>
             <br>
@@ -197,8 +197,9 @@
 <!-- END OF SHADER PLUGIN UI -->
 
 <script>
-    let presetUniforms = ["iResolution", "iMouse", "iTime"];
+    let presetUniforms = ["iResolution", "iMouse"];
     let shaderUniformTypeMap = {
+        "iTime": "float",
         "color3": "float3",
         "color4": "float4",
     };
@@ -239,7 +240,7 @@
         createUniformDialog.showModal();
     }
 
-    function continueUniformCreation() {
+    async function continueUniformCreation() {
         let selectedUniformType = document.querySelector('input[name="uniformType"]:checked');
         if (selectedUniformType) {
             switch (selectedUniformType.value) {
@@ -254,6 +255,10 @@
                     break;
                 case "int":
                     createIntUniformDialog.showModal();
+                    break;
+                case "iTime":
+                    createShaderTimeUniform();
+                    await runShader();
                     break;
             }
             createUniformDialog.close();
@@ -446,6 +451,14 @@
         createIntUniformDialog.close();
     };
 
+    function createShaderTimeUniform() {
+        const newUniformEntry = createShaderUniform("iTime", "iTime");
+        if (!newUniformEntry) {
+            return;
+        }
+        uniforms.appendChild(newUniformEntry);
+    }
+
     function createShaderUniform(uniformName, uniformType) {
         if (presetUniforms.includes(uniformName) || customUniforms.includes(uniformName)) {
             alert("This uniform already exists, please use a different name.");
@@ -523,6 +536,7 @@
     function previewUniformValue(uniform) {
         const type = uniformTypeMap.get(uniform);
         const floatArray = [];
+        // iTime is handled separately when the uniforms push the iTime value.
         switch (type) {
             case "float":
                 const slider = document.getElementById(`slider_${uniform}`);
@@ -576,6 +590,9 @@
                     b: rgb3.b,
                     a: alpha ? parseFloat(alpha.value) : 1.0
                 };
+            case "iTime":
+                // DesignCompose should simulate the time change.
+                return 0;
         }
     }
 
@@ -609,8 +626,8 @@ vec4 main(float2 fragCoord) {
         await runShader();
     }
 
-    function loadShaderCode(shader) {
-        clearUniforms();
+    function loadPresetShaderCode(shader) {
+        // The shader code will run when it receives a 'shaderCode' message.
         parent.postMessage({
             pluginMessage: {
                 msg: 'loadShaderCode',
@@ -636,18 +653,14 @@ vec4 main(float2 fragCoord) {
             let extraUniforms = "////// User supplied inputs ////// \n";
             customUniforms.forEach(function (uniform) {
                 const type = uniformTypeMap.get(uniform);
-                if (type == "color3" || type == "color4") {
-                    extraUniforms += `uniform ${type.replace("color", "float")} ${uniform};\n`;
-                } else {
-                    extraUniforms += `uniform ${type} ${uniform};\n`;
-                }
+                const declarationType = getUniformDeclarationType(type);
+                extraUniforms += `uniform ${declarationType} ${uniform};\n`;
             });
             extraUniforms += "////// End of user supplied inputs ////// \n";
 
             const prog = `
 // Inputs supplied by shaders.skia.org:
 uniform float3 iResolution;      // Viewport resolution (pixels)
-uniform float  iTime;            // Shader playback time (s)
 uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
 ` + extraUniforms + shaderCodeInput.value;
 
@@ -664,18 +677,21 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             const skcanvas = surface.getCanvas();
 
             function drawFrame(canvas) {
-                const iTime = (Date.now() - startTimeMs) / 1000;
                 const uniforms = [
                     shaderWidth, shaderHeight, 1, // vec3 iResolution(x, y, z);
-                    iTime, // iTime
                     mouseDragX, mouseDragY, mouseClickX, mouseClickY, // iMouse(x, y, z, w)
                 ];
                 customUniforms.forEach(function (uniform) {
-                    const value = previewUniformValue(uniform);
-                    if (typeof value === "string" || typeof value === "number") {
-                        uniforms.push(value);
+                    if (uniform == "iTime") {
+                        const iTime = (Date.now() - startTimeMs) / 1000;
+                        uniforms.push(iTime);
                     } else {
-                        uniforms.push(...value);
+                        const value = previewUniformValue(uniform);
+                        if (typeof value === "string" || typeof value === "number") {
+                            uniforms.push(value);
+                        } else {
+                            uniforms.push(...value);
+                        }
                     }
                 });
 
@@ -757,7 +773,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
         }); ////// END OF CANVAS KIT //////
     }
 
-    loadShaderCode('julia');
+    loadPresetShaderCode('julia');
 
     function showModal() {
         var modal = document.getElementById("shaderInfo");
@@ -767,8 +783,10 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
     window.onmessage = async function (event) {
         let msg = event.data.pluginMessage;
         if (msg.msg == 'shaderCode') {
+            // Run the preset shader code.
             clearUniforms();
             shaderCodeInput.value = msg.code;
+            createShaderTimeUniform();
             await runShader();
             return;
         }
@@ -818,6 +836,9 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                                 break;
                             case "int":
                                 createShaderIntUniform(shaderUniform.uniformName, shaderUniform.uniformValue);
+                                break;
+                            case "iTime":
+                                createShaderTimeUniform();
                                 break;
                         }
                         console.log(`${shaderUniform.uniformName} ${shaderUniform.uniformType} = ${shaderUniform.uniformValue}`);

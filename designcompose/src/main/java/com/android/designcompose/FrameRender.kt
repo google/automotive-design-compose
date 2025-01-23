@@ -669,7 +669,7 @@ fun ShaderUniform.applyToShader(
     val definedType = shaderUniformMap[name]?.type
     when (value.valueTypeCase) {
         ValueTypeCase.FLOAT_VALUE -> {
-            if (definedType == "float") {
+            if (definedType == "float" || definedType == "iTime") {
                 shader.setFloatUniform(name, value.floatValue)
             }
         }
@@ -755,15 +755,6 @@ internal fun getCustomBrush(
                         v.applyToShader(shader, it.shaderUniformsMap)
                     }
                     customizations.getShaderUniformList(nodeName)?.forEach { customUniform ->
-                        // iTime is preset uniform which is not in the shader uniforms map.
-                        // We need a customization for it when the shader code animate over time.
-                        if (customUniform.name == ShaderHelper.UNIFORM_TIME) {
-                            shader.setFloatUniform(
-                                customUniform.name,
-                                customUniform.value.floatValue,
-                            )
-                            return@forEach
-                        }
                         if (it.shaderUniformsMap.containsKey(customUniform.name)) {
                             customUniform.applyToShader(shader, it.shaderUniformsMap)
                         } else {
@@ -773,15 +764,6 @@ internal fun getCustomBrush(
                     customizations.getShaderUniformStateList(nodeName)?.forEach { customUniformState
                         ->
                         val customUniform = customUniformState.value
-                        // iTime is preset uniform which is not in the shader uniforms map.
-                        // We need a customization for it when the shader code animate over time.
-                        if (customUniform.name == ShaderHelper.UNIFORM_TIME) {
-                            shader.setFloatUniform(
-                                customUniform.name,
-                                customUniform.value.floatValue,
-                            )
-                            return@forEach
-                        }
                         if (it.shaderUniformsMap.containsKey(customUniform.name)) {
                             customUniform.applyToShader(shader, it.shaderUniformsMap)
                         } else {

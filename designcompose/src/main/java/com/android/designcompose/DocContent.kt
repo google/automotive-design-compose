@@ -24,6 +24,9 @@ import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.GenericDocContent
 import com.android.designcompose.common.decodeDiskBaseDoc
 import com.android.designcompose.common.decodeServerBaseDoc
+import com.android.designcompose.definition.element.Bounds
+import com.android.designcompose.definition.element.ScalableUiVariant
+import com.android.designcompose.definition.view.scalableVariantOrNull
 import com.android.designcompose.live_update.ConvertResponse
 import com.google.protobuf.kotlin.get
 import java.io.File
@@ -121,4 +124,24 @@ fun decodeServerDoc(
     val fullDoc = DocContent(baseDoc, previousDoc)
     save?.let { fullDoc.c.save(save, Feedback) }
     return fullDoc
+}
+
+class ScalableUiDoc(doc: DocContent) {
+    // variant name -> scalable ui data
+    val variantMap: HashMap<String, ScalableUiVariant> = HashMap()
+
+    init {
+        doc.c.variantViewMap.forEach { setMap ->
+            setMap.value.forEach { variantView ->
+                variantView.value.style.nodeStyle.scalableVariantOrNull?.let {
+                    variantMap[variantView.key] = it
+                }
+            }
+        }
+    }
+
+    fun getBounds(variantName: String): Bounds? {
+        val variant = variantMap[variantName]
+        return variant?.bounds
+    }
 }

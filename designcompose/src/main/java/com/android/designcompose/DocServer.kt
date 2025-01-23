@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -37,9 +38,11 @@ import androidx.tracing.Trace.beginSection
 import androidx.tracing.Trace.endSection
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
+import com.android.designcompose.definition.view.scalableVariantOrNull
 import com.android.designcompose.live_update.ConvertResponse
 import com.android.designcompose.live_update.convertRequest
 import com.android.designcompose.live_update.figma.ignoredImage
+import com.android.designcompose.utils.str
 import com.android.designcompose.utils.validateFigmaDocId
 import java.io.BufferedInputStream
 import java.io.File
@@ -235,7 +238,7 @@ internal object SpanCache {
     }
 }
 
-internal object DocServer {
+object DocServer {
     internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
     internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
     internal val documents: HashMap<DesignDocId, DocContent> = HashMap()
@@ -266,6 +269,39 @@ internal object DocServer {
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyClearDocuments() = documents.clear()
+
+    fun loadDoc(resourceName: String, docId: DesignDocId, serverParams: DocumentServerParams, context: Context): ScalableUiDoc? {
+        println("### loadDoc $resourceName ${docId.id} queries ${serverParams.nodeQueries} context $context")
+        // Check that the document ID is valid
+        if (!validateFigmaDocId(docId.id)) {
+            Log.w(TAG, "Invalid Figma document ID: $docId")
+            return null
+        }
+
+        val id = "${resourceName}_${docId}"
+        val fileName = "figma/$id.dcf"
+        val assetDoc: InputStream = context.assets.open(fileName)
+        Log.i(TAG, "### Loaded design doc from assets/$fileName")
+
+        try {
+            val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
+            decodedDoc?.c?.variantViewMap?.forEach { viewKey ->
+                println("  ### Variant ${viewKey.key}")
+                viewKey.value.forEach {
+                    println("    ### key ${it.key} bounds:")
+                    println("      ### Left ${it.value.style.nodeStyle.scalableVariantOrNull?.bounds?.left?.str()}")
+                    println("      ### Top ${it.value.style.nodeStyle.scalableVariantOrNull?.bounds?.top?.str()}")
+                    println("      ### Right ${it.value.style.nodeStyle.scalableVariantOrNull?.bounds?.right?.str()}")
+                    println("      ### Bottom ${it.value.style.nodeStyle.scalableVariantOrNull?.bounds?.bottom?.str()}")
+                }
+            }
+            decodedDoc?.let { return ScalableUiDoc(it) }
+        }
+        catch (error: Throwable) {
+            Log.e(TAG, "Failed to load from disk: $fileName")
+        }
+        return null
+    }
 }
 
 internal fun DocServer.initializeLiveUpdate() {

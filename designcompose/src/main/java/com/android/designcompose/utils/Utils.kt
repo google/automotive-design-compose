@@ -27,9 +27,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.isIdentity
 import com.android.designcompose.DebugNodeManager
+import com.android.designcompose.DocContent
 import com.android.designcompose.TAG
+import com.android.designcompose.definition.element.Bounds
 import com.android.designcompose.definition.element.Color
 import com.android.designcompose.definition.element.Path
+import com.android.designcompose.definition.element.ScalableDimension
+import com.android.designcompose.definition.element.ScalableUiVariant
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.interaction.Easing.EasingTypeCase
 import com.android.designcompose.definition.interaction.Transition
@@ -41,6 +45,7 @@ import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewData
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.dataOrNull
+import com.android.designcompose.definition.view.scalableVariantOrNull
 import com.android.designcompose.definition.view.scrollInfoOrNull
 import com.android.designcompose.definition.view.shapeOrNull
 import com.android.designcompose.definition.view.styledTextRun
@@ -387,4 +392,11 @@ internal fun getTextContent(
         }
     }
     return styledTextData.styledTextsList
+}
+
+fun ScalableDimension.str(): String {
+    return if (hasPoints())
+        "$points.dp"
+    else
+        "$percent %"
 }

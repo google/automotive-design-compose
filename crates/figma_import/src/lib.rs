@@ -29,6 +29,7 @@ pub mod meter_schema;
 mod proxy_config;
 pub mod reaction_schema;
 pub mod shader_schema;
+pub mod scalableui_schema;
 
 pub mod tools;
 mod transform_flexbox;

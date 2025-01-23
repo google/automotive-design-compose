@@ -60,9 +60,13 @@ use dc_bundle::definition::plugin::meter_data::MeterDataType;
 use log::error;
 
 use crate::shader_schema::ShaderDataJson;
+use crate::scalableui_schema::VariantDataJson;
+use dc_bundle::definition::element::ScalableUiVariant;
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
-use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle};
+use dc_bundle::definition::view::{
+    ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle,
+};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -959,6 +963,20 @@ fn visit_node(
             None
         }
     };
+
+    style.node_style_mut().scalable_variant = plugin_data
+        .and_then(|vsw_data| vsw_data.get("scalableui"))
+        .and_then(|scalable_json| {
+            let parse_result = serde_json::from_str::<VariantDataJson>(scalable_json.as_str());
+            if parse_result.is_err() {
+                println!("### Parsing {} json {}: -> {:?}", node.name, scalable_json, parse_result);
+            }
+            parse_result.ok()
+        })
+        .and_then(|x| x.into());
+    if let Some(sv) = &style.node_style().scalable_variant {
+        //println!("### Node {} scalable variant: {:?}", node.name, sv);
+    }
 
     // We have shader that can be used to draw the background.
     style.node_style_mut().shader_data = plugin_data

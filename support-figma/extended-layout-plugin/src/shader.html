@@ -111,6 +111,8 @@
         <p>
             <label><input type="radio" name="uniformType" value="float" checked="true">Float</label>
             <br>
+            <label><input type="radio" name="uniformType" value="floatArray">Float Array</label>
+            <br>
             <label><input type="radio" name="uniformType" value="color">Color</label>
         </p>
         <div style="display: flex; gap: 4px;">
@@ -148,7 +150,7 @@
             <label for="colorUniformName" style="flex-grow: 1;">Name:</label>
             <input type="text" id="colorUniformName" placeholder="iColor" autofocus></input>
         </div>
-        <input type="checkbox" id="colorUniformAlphaOption" checked="false">Create alpha slider</input>
+        <input type="checkbox" id="colorUniformAlphaOption">Create alpha slider</input>
         </p>
         <div style="display: flex; gap: 4px;">
             <button id="createColorUniformButton" class="button--primary" style="flex-grow: 1;">Create</button>
@@ -156,10 +158,39 @@
         </div>
     </dialog>
 
+    <dialog id="createFloatArrayUniformDialog">
+        <div><b>Create float array uniform</b></div>
+        <p>
+        <div style="display: flex; gap: 8px;">
+            <label for="floatArrayUniformName" style="flex-grow: 1;">Name:</label>
+            <input type="text" id="floatArrayUniformName" placeholder="iFloats" autofocus></input>
+        </div>
+        <label><input type="radio" name="floatArrayUniformType" value="float2" checked="true">float2</label>
+        <br>
+        <label><input type="radio" name="floatArrayUniformType" value="float3">float3</label>
+        <br>
+        <label><input type="radio" name="floatArrayUniformType" value="float4">float4</label>
+        </p>
+        <div style="display: flex; gap: 4px;">
+            <button id="createFloatArrayUniformButton" class="button--primary" style="flex-grow: 1;">Create</button>
+            <button id="closeFloatArrayUniformButton" class="button--primary" style="flex-grow: 1;">Close</button>
+        </div>
+    </dialog>
+
 </div>
 <!-- END OF SHADER PLUGIN UI -->
 
 <script>
+    let presetUniforms = ["iResolution", "iMouse", "iTime"];
+    let shaderUniformTypeMap = {
+        "color3": "float3",
+        "color4": "float4",
+    };
+    function getUniformDeclarationType(uniformType) {
+        let declarationType = shaderUniformTypeMap[uniformType];
+        return declarationType ? declarationType : uniformType;
+    }
+
     let canvas = document.getElementById("shaderPreview");
     let shaderWidth = 256;
     let shaderHeight = 256;
@@ -183,6 +214,9 @@
     const uniforms = document.getElementById("uniforms");
 
     const createUniformDialog = document.getElementById("createUniformDialog");
+    const createFloatUniformDialog = document.getElementById("createFloatUniformDialog");
+    const createFloatArrayUniformDialog = document.getElementById("createFloatArrayUniformDialog");
+    const createColorUniformDialog = document.getElementById("createColorUniformDialog");
 
     function createUniform() {
         createUniformDialog.showModal();
@@ -193,10 +227,13 @@
         if (selectedUniformType) {
             switch (selectedUniformType.value) {
                 case "float":
-                    createFloatUniform();
+                    createFloatUniformDialog.showModal();
+                    break;
+                case "floatArray":
+                    createFloatArrayUniformDialog.showModal();
                     break;
                 case "color":
-                    createColorUniform();
+                    createColorUniformDialog.showModal();
                     break;
             }
             createUniformDialog.close();
@@ -205,7 +242,6 @@
         }
     }
 
-    const createFloatUniformDialog = document.getElementById("createFloatUniformDialog");
     const createFloatUniformButton = document.getElementById("createFloatUniformButton");
     const closeFloatUniformButton = document.getElementById("closeFloatUniformButton");
     const floatUniformNameInput = document.getElementById("floatUniformName");
@@ -216,49 +252,16 @@
     createFloatUniformButton.onclick = async () => {
         const uniformName = floatUniformNameInput.value;
         createShaderFloatUniform(floatUniformNameInput.value, null, floatUniformMin.value, floatUniformMax.value);
-
-        createFloatUniformDialog.close();
         await runShader();
     };
 
     function createShaderFloatUniform(uniformName, floatValue, uniformMin, uniformMax) {
-        if (customUniforms.includes(uniformName)) {
-            alert("This uniform already exists, please use a different name.");
+        let newUniformEntry = createShaderUniform(uniformName, "float");
+        if (!newUniformEntry) {
             return;
         }
-        const regex = /^[a-zA-Z_].*$/;
-        if (uniformName.length == 0 || !uniformName.match(regex)) {
-            alert("Invalid uniform name, please use a different name");
-            return;
-        }
-        customUniforms.push(uniformName);
-        uniformTypeMap.set(uniformName, "float");
-
-        const newUniformEntry = document.createElement("div");
-        newUniformEntry.style.borderTop = "1px solid black";
-
-        const shaderLine = document.createElement("div");
-        shaderLine.classList.add("center-vertically-container");
-        const shaderCode = document.createElement("span");
-        shaderCode.textContent = `uniform float ${uniformName};`;
-        shaderLine.appendChild(shaderCode);
-
-        const deleteButton = document.createElement("span");
-        deleteButton.classList.add("icon-button");
-        const deleteIcon = document.createElement("span");
-        deleteIcon.classList.add("icon");
-        deleteIcon.classList.add("icon--close");
-        deleteButton.appendChild(deleteIcon);
-        deleteButton.onclick = async e => {
-            const index = customUniforms.indexOf(uniformName);
-            customUniforms.splice(index, 1);
-            uniformTypeMap.delete(uniformName);
-            uniforms.removeChild(newUniformEntry);
-
-            await runShader();
-        };
-        shaderLine.appendChild(deleteButton);
-        newUniformEntry.appendChild(shaderLine);
+        // Uniform is created successfully. Close the creation dialog.
+        createFloatUniformDialog.close();
 
         const sliderLine = document.createElement("div");
         sliderLine.classList.add("center-vertically-container");
@@ -288,11 +291,46 @@
         createFloatUniformDialog.close();
     };
 
-    function createFloatUniform() {
-        createFloatUniformDialog.showModal();
+    const createFloatArrayUniformButton = document.getElementById("createFloatArrayUniformButton");
+    const closeFloatArrayUniformButton = document.getElementById("closeFloatArrayUniformButton");
+    const floatArrayUniformNameInput = document.getElementById("floatArrayUniformName");
+
+    // "Create" button closes the dialog and creates the uniform
+    createFloatArrayUniformButton.onclick = async () => {
+        const uniformName = floatArrayUniformNameInput.value;
+        let selectedUniformType = document.querySelector('input[name="floatArrayUniformType"]:checked');
+        createShaderFloatArrayUniform(floatArrayUniformNameInput.value, selectedUniformType.value, null);
+        await runShader();
+    };
+
+    function createShaderFloatArrayUniform(uniformName, uniformType, uniformValue) {
+        let newUniformEntry = createShaderUniform(uniformName, uniformType);
+        if (!newUniformEntry) {
+            return;
+        }
+
+        // Uniform is created successfully. Close the creation dialog.
+        createFloatArrayUniformDialog.close();
+
+        // Create inputs fields
+        const inputsLine = document.createElement("div");
+        let sizeMap = { "float2": 2, "float3": 3, "float4": 4 };
+        let arraySize = sizeMap[uniformType];
+        for (let i = 0; i < arraySize; i++) {
+            let input = document.createElement("input");
+            input.type = "number";
+            input.value = uniformValue ? uniformValue[i] : 0;
+            input.id = `input_${uniformName}_${i}`;
+            inputsLine.appendChild(input);
+        }
+        newUniformEntry.appendChild(inputsLine);
+        uniforms.appendChild(newUniformEntry);
     }
 
-    const createColorUniformDialog = document.getElementById("createColorUniformDialog");
+    closeFloatArrayUniformButton.onclick = () => {
+        createFloatArrayUniformDialog.close();
+    };
+
     const createColorUniformButton = document.getElementById("createColorUniformButton");
     const closeColorUniformButton = document.getElementById("closeColorUniformButton");
     const colorUniformNameInput = document.getElementById("colorUniformName");
@@ -301,61 +339,30 @@
     // "Create" button closes the dialog and creates the uniform
     createColorUniformButton.onclick = async () => {
         const uniformName = colorUniformNameInput.value;
-        const type = colorUniformAlphaOption.checked ? "color4" : "color3";
-        createShaderColorUniform(uniformName, type, null);
-
-        createColorUniformDialog.close();
+        const uniformType = colorUniformAlphaOption.checked ? "color4" : "color3";
+        createShaderColorUniform(uniformName, uniformType, null);
         await runShader();
     };
 
-    function createShaderColorUniform(uniformName, type, colorValue) {
-        if (customUniforms.includes(uniformName)) {
-            alert("This uniform already exists, please use a different name.");
+    function createShaderColorUniform(uniformName, uniformType, colorValue) {
+        let newUniformEntry = createShaderUniform(uniformName, uniformType);
+        if (!newUniformEntry) {
             return;
         }
-        const regex = /^[a-zA-Z_].*$/;
-        if (uniformName.length == 0 || !uniformName.match(regex)) {
-            alert("Invalid uniform name, please use a different name");
-            return;
-        }
-        customUniforms.push(uniformName);
-        uniformTypeMap.set(uniformName, type);
 
-        const newUniformEntry = document.createElement("div");
-        newUniformEntry.style.borderTop = "1px solid black";
+        // Uniform is created successfully. Close the creation dialog.
+        createColorUniformDialog.close();
 
-        const shaderLine = document.createElement("div");
-        shaderLine.classList.add("center-vertically-container");
-        const shaderCode = document.createElement("span");
-        shaderCode.textContent = `uniform ${type.replace("color", "float")} ${uniformName};`;
-        shaderLine.appendChild(shaderCode);
-
+        const deleteButton = newUniformEntry.querySelector('span.icon-button');
         const colorInput = document.createElement("input");
         colorInput.type = "color";
         colorInput.id = `color_${uniformName}`;
-        shaderLine.appendChild(colorInput);
+        deleteButton.insertAdjacentElement('beforebegin', colorInput);
         if (colorValue) {
             colorInput.value = rgbFloatToHex(colorValue);
         }
 
-        const deleteButton = document.createElement("span");
-        deleteButton.classList.add("icon-button");
-        const deleteIcon = document.createElement("span");
-        deleteIcon.classList.add("icon");
-        deleteIcon.classList.add("icon--close");
-        deleteButton.appendChild(deleteIcon);
-        deleteButton.onclick = async e => {
-            const index = customUniforms.indexOf(uniformName);
-            customUniforms.splice(index, 1);
-            uniformTypeMap.delete(uniformName);
-            uniforms.removeChild(newUniformEntry);
-
-            await runShader();
-        };
-        shaderLine.appendChild(deleteButton);
-        newUniformEntry.appendChild(shaderLine);
-
-        if (type == "color4") {
+        if (uniformType == "color4") {
             const sliderLine = document.createElement("div");
             sliderLine.classList.add("center-vertically-container");
             const uniformSlider = document.createElement("input");
@@ -383,8 +390,52 @@
         createColorUniformDialog.close();
     };
 
-    function createColorUniform() {
-        createColorUniformDialog.showModal();
+    function createShaderUniform(uniformName, uniformType) {
+        if (presetUniforms.includes(uniformName) || customUniforms.includes(uniformName)) {
+            alert("This uniform already exists, please use a different name.");
+            return null;
+        }
+        const regex = /^[a-zA-Z_].*$/;
+        if (uniformName.length == 0 || !uniformName.match(regex)) {
+            alert("Invalid uniform name, please use a different name");
+            return null;
+        }
+        customUniforms.push(uniformName);
+        uniformTypeMap.set(uniformName, uniformType);
+
+        const newUniformEntry = document.createElement("div");
+        newUniformEntry.style.borderTop = "1px solid black";
+
+        const shaderLine = document.createElement("div");
+        shaderLine.classList.add("center-vertically-container");
+        const shaderCode = document.createElement("span");
+        const declarationType = getUniformDeclarationType(uniformType);
+        shaderCode.textContent = `uniform ${declarationType} ${uniformName};`;
+        shaderLine.appendChild(shaderCode);
+
+        const deleteButton = createDeleteButton(uniformName, newUniformEntry);
+        shaderLine.appendChild(deleteButton);
+        newUniformEntry.appendChild(shaderLine);
+        return newUniformEntry;
+    }
+
+    function createDeleteButton(uniformName, uniformEntry) {
+        // Update the selector in creating color uniform flow if changes the delete button type.
+        const deleteButton = document.createElement("span");
+        deleteButton.classList.add("icon-button");
+        const deleteIcon = document.createElement("span");
+        deleteIcon.classList.add("icon");
+        deleteIcon.classList.add("icon--close");
+        deleteButton.appendChild(deleteIcon);
+        deleteButton.onclick = async e => {
+            const index = customUniforms.indexOf(uniformName);
+            customUniforms.splice(index, 1);
+            uniformTypeMap.delete(uniformName);
+            uniforms.removeChild(uniformEntry);
+
+            await runShader();
+        };
+        return deleteButton;
     }
 
     function hexToRgbFloat(hex) {
@@ -420,6 +471,17 @@
             case "float":
                 const slider = document.getElementById(`slider_${uniform}`);
                 return parseFloat(slider.value);
+            case "float2":
+            case "float3":
+            case "float4":
+                for (let i = 0; i < 4; i++) {
+                    const input = document.getElementById(`input_${uniform}_${i}`);
+                    if (input) {
+                        floatArray.push(parseFloat(input.value));
+                    }
+                }
+                return floatArray;
+                break;
             case "color3":
             case "color4":
                 const color3 = document.getElementById(`color_${uniform}`);
@@ -437,11 +499,12 @@
 
     function uniformValue(uniform) {
         const type = uniformTypeMap.get(uniform);
-        const floatArray = [];
         switch (type) {
             case "float":
-                const slider = document.getElementById(`slider_${uniform}`);
-                return parseFloat(slider.value);
+            case "float2":
+            case "float3":
+            case "float4":
+                return previewUniformValue(uniform);
             case "color3":
             case "color4":
                 const color3 = document.getElementById(`color_${uniform}`);
@@ -527,8 +590,6 @@ uniform float3 iResolution;      // Viewport resolution (pixels)
 uniform float  iTime;            // Shader playback time (s)
 uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
 ` + extraUniforms + shaderCodeInput.value;
-
-            console.log(prog);
 
             const effect = CanvasKit.RuntimeEffect.Make(prog);
             if (!effect) {
@@ -683,6 +744,11 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                                     createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue,
                                         Math.min(0, shaderUniform.uniformValue), Math.max(1, shaderUniform.uniformValue));
                                 }
+                                break;
+                            case "float2":
+                            case "float3":
+                            case "float4":
+                                createShaderFloatArrayUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
                                 break;
                             case "color3":
                             case "color4":

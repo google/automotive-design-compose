@@ -60,7 +60,7 @@ private fun addRowColumnContent(
     customizations: CustomizationContext,
     layoutIdAllocator: SquooshLayoutIdAllocator,
     parentComps: ParentComponentData?,
-    composableList: ArrayList<SquooshChildComposable>,
+    composableList: ComposableList,
 ) {
     val content = listWidgetContent { LazyContentSpan() }
     var count = content.count
@@ -100,7 +100,7 @@ private fun addRowColumnContent(
         else resolvedView.firstChild = replacementChild
         previousReplacementChild = replacementChild
 
-        composableList.add(
+        composableList.addChild(
             SquooshChildComposable(
                 component = @Composable { childComponent() },
                 node = replacementChild,
@@ -201,7 +201,7 @@ private fun addGridContent(
     style: ViewStyle,
     customizations: CustomizationContext,
     parentComps: ParentComponentData?,
-    composableList: ArrayList<SquooshChildComposable>,
+    composableList: ComposableList,
 ) {
     val gridComposable =
         @Composable {
@@ -389,7 +389,7 @@ private fun addGridContent(
                 }
             }
         }
-    composableList.add(
+    composableList.addChild(
         SquooshChildComposable(
             component = { ctx -> gridComposable() },
             node = resolvedView,
@@ -406,7 +406,7 @@ internal fun addListWidget(
     customizations: CustomizationContext,
     layoutIdAllocator: SquooshLayoutIdAllocator,
     parentComps: ParentComponentData?,
-    composableList: ArrayList<SquooshChildComposable>,
+    composableList: ComposableList,
 ) {
     val layoutInfo = calcLayoutInfo(resolvedView.view, resolvedView.style)
     when (layoutInfo) {

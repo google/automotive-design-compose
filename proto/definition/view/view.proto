@@ -116,6 +116,8 @@ message ShaderUniformValue {
     // uniform "type" is "color3" or "color4" in the plugin data. Alpha would be
     // ignored for "color3" when set uniform value to the runtime shader.
     definition.element.FloatColor float_color_value = 3;
+
+    int32 int_value = 4;
   }
 }
 

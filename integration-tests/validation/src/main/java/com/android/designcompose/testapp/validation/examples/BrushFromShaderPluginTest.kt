@@ -18,6 +18,7 @@ package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.asIntState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
@@ -42,6 +43,7 @@ interface BrushFromShaderPluginTest {
         @Design(node = "#color-custom") customColors: ShaderUniformList,
         @Design(node = "#text-color-custom") customTextColors: ShaderUniformList,
         @Design(node = "#color-state-custom") customColorStates: ShaderUniformStateList,
+        @Design(node = "#int-state-custom") customIntStates: ShaderUniformStateList,
     )
 }
 
@@ -70,11 +72,16 @@ fun BrushFromShaderPluginTest() {
         )
     val colorState = remember { derivedStateOf { colors[iTimeState.floatValue.toInt() % 2] } }
     customColorStates.add(colorState.toShaderUniformState("iColor"))
+
+    val customIntStates = ArrayList<State<ShaderUniform>>()
+    val intState = remember { derivedStateOf { iTimeState.floatValue.toInt() % 5 }.asIntState() }
+    customIntStates.add(intState.toShaderUniformState("iCase"))
     BrushFromShaderPluginTestDoc.MainFrame(
         rootShaderUniformStates = rootShaderUniformStates,
         rootShaderUniforms = rootShaderUniforms,
         customColors = customColors,
         customTextColors = customColors,
         customColorStates = customColorStates,
+        customIntStates = customIntStates,
     )
 }

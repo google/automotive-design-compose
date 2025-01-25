@@ -20,6 +20,7 @@ import android.os.Build
 import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
+import androidx.compose.runtime.IntState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.asFloatState
 import androidx.compose.runtime.derivedStateOf
@@ -90,5 +91,19 @@ object ShaderHelper {
         name: String
     ): State<ShaderUniform> {
         return remember { derivedStateOf { value.toShaderUniform(name) } }
+    }
+
+    /** Creates a shader uniform from an int value. */
+    fun createShaderIntUniform(name: String, value: Int): ShaderUniform {
+        return shaderUniform {
+            this.name = name
+            this.value = shaderUniformValue { intValue = value }
+        }
+    }
+
+    /** Creates a state of shader uniform from an int state. */
+    @Composable
+    fun IntState.toShaderUniformState(name: String): State<ShaderUniform> {
+        return remember { derivedStateOf { createShaderIntUniform(name, intValue) } }
     }
 }

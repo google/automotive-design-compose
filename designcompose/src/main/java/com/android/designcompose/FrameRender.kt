@@ -724,6 +724,11 @@ fun ShaderUniform.applyToShader(
                 else -> Log.e(TAG, "Invalid shader uniform $name $definedType")
             }
         }
+        ValueTypeCase.INT_VALUE -> {
+            if (definedType == "int") {
+                shader.setIntUniform(name, value.intValue)
+            }
+        }
 
         else -> {
             Log.w(TAG, "Invalid shader uniform $name")

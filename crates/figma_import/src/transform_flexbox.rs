@@ -30,7 +30,7 @@ use crate::{
 };
 use dc_bundle::definition::element::{
     view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
-    FontWeight, LineHeight, NumOrVar, Path, Size, ViewShape,
+    FontWeight, LineHeight, NumOrVar, Path, ShaderData, ShaderUniform, Size, ViewShape,
 };
 
 use crate::figma_schema::{FigmaColor, LayoutPositioning};
@@ -62,9 +62,7 @@ use log::error;
 use crate::shader_schema::ShaderUniformJson;
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
-use dc_bundle::definition::view::{
-    ComponentInfo, ShaderData, ShaderUniform, StyledTextRun, TextStyle, View, ViewStyle,
-};
+use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this

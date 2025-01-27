@@ -27,10 +27,10 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.definition.element.floatColor
-import com.android.designcompose.definition.view.ShaderUniform
-import com.android.designcompose.definition.view.shaderUniform
-import com.android.designcompose.definition.view.shaderUniformValue
+import com.android.designcompose.definition.element.shaderUniform
+import com.android.designcompose.definition.element.shaderUniformValue
 
 /** Helper functions to create shader uniforms from float or color objects. */
 object ShaderHelper {

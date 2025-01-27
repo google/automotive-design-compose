@@ -1,0 +1,66 @@
+// Copyright 2025 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package designcompose.definition.element;
+
+import "definition/element/color.proto";
+
+option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.element";
+option optimize_for = LITE_RUNTIME;
+
+// Details for the runtime shader
+message ShaderData {
+  // string for runtime shader code
+  string shader = 1;
+
+  // fallback color when runtime shader code isn't supported
+  optional definition.element.Color shader_fallback_color = 2;
+
+  // shader uniforms, name => ShaderUniform
+  map<string, ShaderUniform> shader_uniforms = 3;
+}
+
+// Data for shader uniform, containing name, type and default value set from plugin.
+message ShaderUniform {
+  // name
+  string name = 1;
+  // type
+  string type = 2;
+  // shader uniform value
+  optional ShaderUniformValue value = 3;
+}
+
+// Shader uniform value, currently support float, FloatColor and float array.
+message ShaderUniformValue {
+
+  // Float array value for float2, float3 and float4
+  // We might use it for half2, half3 and half4 in the future.
+  message FloatVec {
+    repeated float floats = 1;
+  }
+
+  oneof value_type {
+    float float_value = 1;
+    // uniform "type" is "float2", "float3" or "float4" in the plugin data.
+    FloatVec float_vec_value = 2;
+    // uniform "type" is "color3" or "color4" in the plugin data. Alpha would be
+    // ignored for "color3" when set uniform value to the runtime shader.
+    FloatColor float_color_value = 3;
+
+    int32 int_value = 4;
+  }
+}

@@ -29,8 +29,8 @@ import com.android.designcompose.common.nodeNameToPropertyValueList
 import com.android.designcompose.definition.element.Background
 import com.android.designcompose.definition.element.ColorOrVar.ColorOrVarTypeCase
 import com.android.designcompose.definition.element.DimensionProto
+import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.definition.view.ComponentInfo
-import com.android.designcompose.definition.view.ShaderUniform
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.componentInfoOrNull
 import java.util.Optional

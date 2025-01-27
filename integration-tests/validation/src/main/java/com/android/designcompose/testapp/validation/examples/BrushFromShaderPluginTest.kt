@@ -31,7 +31,7 @@ import com.android.designcompose.ShaderUniformStateList
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
-import com.android.designcompose.definition.view.ShaderUniform
+import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.testapp.validation.R
 
 @DesignDoc(id = "TkgjNl81e5joWeAivmIdzm")

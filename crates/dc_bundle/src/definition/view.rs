@@ -16,7 +16,7 @@
 use crate::definition::element::line_height::LineHeightType;
 use crate::definition::element::{
     background, Background, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar, Rectangle,
-    Size, Stroke, TextDecoration, ViewShape,
+    ShaderData, Size, Stroke, TextDecoration, ViewShape,
 };
 use crate::definition::interaction::{PointerEvents, Reaction};
 use crate::definition::layout::{

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 use crate::figma_schema::FigmaColor;
-use dc_bundle::definition::view::shader_uniform_value::FloatVec;
-use dc_bundle::definition::view::shader_uniform_value::ValueType::{
+use dc_bundle::definition::element::shader_uniform_value::FloatVec;
+use dc_bundle::definition::element::shader_uniform_value::ValueType::{
     FloatColorValue, FloatValue, FloatVecValue, IntValue,
 };
-use dc_bundle::definition::view::{ShaderUniform, ShaderUniformValue};
+use dc_bundle::definition::element::{ShaderUniform, ShaderUniformValue};
 use log::error;
 use serde::{Deserialize, Serialize};
 

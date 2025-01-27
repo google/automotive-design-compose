@@ -42,9 +42,12 @@ import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
+import com.android.designcompose.definition.element.ShaderUniform
+import com.android.designcompose.definition.element.ShaderUniformValue.ValueTypeCase
 import com.android.designcompose.definition.element.StrokeAlign
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
+import com.android.designcompose.definition.element.shaderFallbackColorOrNull
 import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.layout.Overflow
 import com.android.designcompose.definition.modifier.outsetOrNull
@@ -54,10 +57,7 @@ import com.android.designcompose.definition.plugin.ProgressBarMeterData
 import com.android.designcompose.definition.plugin.ProgressMarkerMeterData
 import com.android.designcompose.definition.plugin.ProgressVectorMeterData
 import com.android.designcompose.definition.plugin.RotationMeterData
-import com.android.designcompose.definition.view.ShaderUniform
-import com.android.designcompose.definition.view.ShaderUniformValue.ValueTypeCase
 import com.android.designcompose.definition.view.ViewStyle
-import com.android.designcompose.definition.view.shaderFallbackColorOrNull
 import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.squoosh.SquooshResolvedNode
 import com.android.designcompose.utils.asBrush

@@ -735,6 +735,79 @@ class MainActivity : ComponentActivity() {
 }
 ```
 
+## Scrolling
+
+DesignCompose supports scrollable autolayout frames by turning on Vertical or Horizontal scrolling under the "Prototype" tab in Figma. To get or set the scroll position of the frame, use the `DesignScrollCallbacks` customization. This customization provides two callbacks:
+* The `setScrollableState` callback provides a `ScrollableState` object that can be used to set the scroll position.
+* The `scrollStateChanged` callback provides a `DesignScrollState` object that can be used to retrieve the scroll position, max scroll position, container size and content size.
+
+In the example below, we log whenever the scroll state changes, and we save the `ScrollableState` and use it to change the scroll position when a button is tapped.
+
+```kotlin
+interface ScrollingTest {
+    @DesignComponent(node = "#stage")
+    fun Main(
+        @Design(node = "#scrollFrame") scrollCallbacks: DesignScrollCallbacks,
+    )
+}
+
+val myScrollableState = remember { mutableStateOf<ScrollableState?>(null) }
+val scope = rememberCoroutineScope()
+ScrollingTestDoc.Main(
+    scrollCallbacks =
+        DesignScrollCallbacks(
+            setScrollableState = { scrollableState ->
+                myScrollableState.value = scrollableState
+            },
+            scrollStateChanged = { scrollState ->
+                Log.i(
+                    "DesignCompose",
+                    "Scroll state changed: ${scrollState.value} max ${scrollState.maxValue} size ${scrollState.containerSize} contentSize ${scrollState.contentSize}",
+                )
+            },
+        ),
+)
+
+Button("Up", "ScrollUp", true) {
+    myScrollableState.value?.let { scope.launch { it.scrollBy(-10F) } }
+}
+```
+
+If the scrollable frame is a grid layout from the [Auto Content Preview Widget](#grid-layout), DesignCompose uses Jetpack Compose's [LazyVerticalGrid](https://developer.android.com/reference/kotlin/androidx/compose/foundation/lazy/grid/package-summary#LazyVerticalGrid(androidx.compose.foundation.lazy.grid.GridCells,androidx.compose.ui.Modifier,androidx.compose.foundation.lazy.grid.LazyGridState,androidx.compose.foundation.layout.PaddingValues,kotlin.Boolean,androidx.compose.foundation.layout.Arrangement.Vertical,androidx.compose.foundation.layout.Arrangement.Horizontal,androidx.compose.foundation.gestures.FlingBehavior,kotlin.Boolean,androidx.compose.foundation.OverscrollEffect,kotlin.Function1)) or [LazyHorizontalGrid](https://developer.android.com/reference/kotlin/androidx/compose/foundation/lazy/grid/package-summary#LazyHorizontalGrid(androidx.compose.foundation.lazy.grid.GridCells,androidx.compose.ui.Modifier,androidx.compose.foundation.lazy.grid.LazyGridState,androidx.compose.foundation.layout.PaddingValues,kotlin.Boolean,androidx.compose.foundation.layout.Arrangement.Horizontal,androidx.compose.foundation.layout.Arrangement.Vertical,androidx.compose.foundation.gestures.FlingBehavior,kotlin.Boolean,androidx.compose.foundation.OverscrollEffect,kotlin.Function1)) in its implementation. In this scenario, the `ScrollableState` passed in the `setScrollableState` callback can be cast into a `LazyGridState` and used to get or set the grid layout's scroll state. The `scrollStateChanged` callback is not called for grid layouts.
+
+
+```kotlin
+val myScrollableState = remember { mutableStateOf<LazyGridState?>(null) }
+val scope = rememberCoroutineScope()
+
+LaunchedEffect(
+    myScrollableState.value?.firstVisibleItemIndex,
+    myScrollableState.value?.firstVisibleItemScrollOffset,
+) {
+    Log.i(
+        "DesignCompose",
+        "Scroll state changed: offset ${myScrollableState.value?.firstVisibleItemScrollOffset}, index ${myScrollableState.value?.firstVisibleItemIndex}",
+    )
+}
+
+ScrollingTestDoc.Main(
+    scrollCallbacks =
+        DesignScrollCallbacks(
+            setScrollableState = { scrollableState ->
+                if (scrollableState is LazyGridState) {
+                    myScrollableState.value = scrollableState
+                }
+            },
+        ),
+)
+
+Button("Up", "ScrollUp", true) {
+    myScrollableState.value?.let { scope.launch { it.scrollBy(-10F) } }
+}
+
+```
+
+
 ## Dials, gauges and progress bars {#dials,-gauges}
 
 A designer can use the Dials and Gauges plugin to configure a node to behave as

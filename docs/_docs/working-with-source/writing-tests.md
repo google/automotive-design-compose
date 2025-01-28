@@ -71,6 +71,23 @@ to be run locally.
 The tests can be run with `./gradlew test`, and will be run as part of `./gradlew check`
 and `./gradlew build`
 
+## Text Validation
+
+Traditionally, testing that a composable has a particular string rendered in it would use the `onNodeWithText()` function like this:
+``` 
+onNodeWithText("Testers!").assertExists()
+```
+
+However, because DesignCompose does its own text rendering, this method is not able to validate text. Instead, use the `assertHasText()` function on the document that contains the root view:
+```
+onDCDoc(HelloWorldDoc).assertHasText("Testers!")
+```
+
+To test that a string does not exist, use the analagous `assertDoesNotHaveText()` function:
+```
+onDCDoc(HelloWorldDoc).assertDoesNotHaveText("This text should not be here")
+```
+
 ## Screenshot tests
 
 [Roborazzi](https://github.com/takahirom/roborazzi) is used to support screenshot testing. It uses
@@ -150,7 +167,7 @@ Touch input such as taps and drags can be simulated in tests using functions suc
 onNodeWithTag("MyTag").performClick()
 ```
 
-When working with the squoosh code branch, nodes are harder to find since the entire view tree is rendered together. To find a node using `onNodeWithTag`, a replacement component or replacement content customization must be used in order to tag the data with `Modifier.testTag()`. Here is an example where a node named `#replace-node` is replaced with a node `#BlueNode` and tagged with a test tag.
+Because DesignCompose does not render each node with a composable and instead renders the whole tree at once, nodes are harder to find with test code. To find a node using `onNodeWithTag`, a replacement component or replacement content customization must be used in order to tag the data with `Modifier.testTag()`. Here is an example where a node named `#replace-node` is replaced with a node `#BlueNode` and tagged with a test tag.
 ```kotlin
 interface ComponentReplace {
     @DesignComponent(node = "#stage")
@@ -164,11 +181,9 @@ interface ComponentReplace {
 
 @Composable
 fun ComponentReplaceTest() {
-    CompositionLocalProvider(LocalDesignDocSettings provides DesignDocSettings(useSquoosh = true)) {
-        ComponentReplaceDoc.Main(
-            replaceNode = { ComponentReplaceDoc.BlueNode(modifier = Modifier.testTag("Blue")) }
-        )
-    }
+    ComponentReplaceDoc.Main(
+        replaceNode = { ComponentReplaceDoc.BlueNode(modifier = Modifier.testTag("Blue")) }
+    )
 }
 ```
 Now the `#BlueNode` node is tagged and can be found with the test framework:

@@ -588,6 +588,7 @@ internal fun generateReplacementListChildNode(
                     strokeAlign = StrokeAlign.STROKE_ALIGN_CENTER
                     strokeWeight = strokeWeight { uniform = 0f }
                     strokes.clear()
+                    clearShaderData()
                 }
                 clearOpacity()
                 clearTransform()
@@ -627,6 +628,7 @@ internal fun generateReplacementListChildNode(
                 pointerEvents = PointerEvents.POINTER_EVENTS_AUTO
                 clearMeterData()
                 clearHyperlinks()
+                clearShaderData()
             }
         }
     }

@@ -46,6 +46,8 @@ import com.android.designcompose.definition.view.strokeOrNull
 import com.android.designcompose.definition.view.textColorOrNull
 import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.getCustomBrush
+import com.android.designcompose.getShaderBrush
+import com.android.designcompose.getShaderUniformCustomizations
 import com.android.designcompose.layout_interface.Layout
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.utils.asBrush
@@ -366,23 +368,37 @@ private fun squooshTextRender(
         )
     }
 
-    style.nodeStyle.strokeOrNull?.strokesList?.forEach {
-        val strokeBrushAndOpacity =
-            it.asBrush(
-                appContext = appContext,
-                document = document,
-                variableState = variableState,
-                density = density.density,
+    if (style.nodeStyle.stroke.hasShaderData()) {
+        val strokeShaderBrush =
+            getShaderBrush(
+                style.nodeStyle.stroke.shaderData,
+                customizations.getShaderUniformCustomizations(nodeName),
+                asBackground = false,
             )
-        strokeBrushAndOpacity?.first?.let { brush ->
-            paragraph.paint(
-                drawContext.canvas,
-                brush = brush,
-                alpha = strokeBrushAndOpacity.second,
-                drawStyle = Stroke(width = strokeWidth),
-            )
+        paragraph.paint(
+            drawContext.canvas,
+            brush = strokeShaderBrush,
+            alpha = 1.0f,
+            drawStyle = Stroke(width = strokeWidth),
+        )
+    } else
+        style.nodeStyle.strokeOrNull?.strokesList?.forEach {
+            val strokeBrushAndOpacity =
+                it.asBrush(
+                    appContext = appContext,
+                    document = document,
+                    variableState = variableState,
+                    density = density.density,
+                )
+            strokeBrushAndOpacity?.first?.let { brush ->
+                paragraph.paint(
+                    drawContext.canvas,
+                    brush = brush,
+                    alpha = strokeBrushAndOpacity.second,
+                    drawStyle = Stroke(width = strokeWidth),
+                )
+            }
         }
-    }
 
     drawContext.canvas.restore()
     if (useBlendModeLayer || opacity < 1.0f || transform != null) drawContext.canvas.restore()

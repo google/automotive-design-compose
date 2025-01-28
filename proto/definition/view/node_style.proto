@@ -20,6 +20,7 @@ import "definition/element/background.proto";
 import "definition/element/font.proto";
 import "definition/element/geometry.proto";
 import "definition/element/path.proto";
+import "definition/element/shader.proto";
 import "definition/element/variable.proto";
 import "definition/interaction/pointer.proto";
 import "definition/layout/grid.proto";
@@ -98,4 +99,8 @@ message NodeStyle {
   interaction.PointerEvents pointer_events = 38;
   plugin.MeterData meter_data = 39;
   element.Hyperlink hyperlinks = 42;
+
+  // Runtime shader from the shader plugin as background.
+  // When shader is present, background will not be drawn.
+  optional element.ShaderData shader_data = 43;
 }

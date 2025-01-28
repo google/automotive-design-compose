@@ -16,7 +16,7 @@
 use crate::definition::element::line_height::LineHeightType;
 use crate::definition::element::{
     background, Background, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar, Rectangle,
-    ShaderData, Size, Stroke, TextDecoration, ViewShape,
+    Size, Stroke, TextDecoration, ViewShape,
 };
 use crate::definition::interaction::{PointerEvents, Reaction};
 use crate::definition::layout::{
@@ -76,6 +76,7 @@ impl NodeStyle {
             pointer_events: PointerEvents::Inherit.into(),
             meter_data: None,
             hyperlinks: None,
+            shader_data: None,
         }
     }
 }
@@ -223,6 +224,9 @@ impl ViewStyle {
             delta.node_style_mut().overflow_node_name =
                 other.node_style().overflow_node_name.clone();
         }
+        if self.node_style().shader_data != other.node_style().shader_data {
+            delta.node_style_mut().shader_data = other.node_style().shader_data.clone();
+        }
         if self.layout_style().align_items != other.layout_style().align_items {
             delta.layout_style_mut().align_items = other.layout_style().align_items;
         }
@@ -317,7 +321,6 @@ impl View {
         reactions: Option<Vec<Reaction>>,
         scroll_info: ScrollInfo,
         frame_extras: Option<FrameExtras>,
-        shader_data: Option<ShaderData>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
@@ -339,7 +342,6 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
-            shader_data,
         }
     }
     pub fn new_text(
@@ -353,7 +355,6 @@ impl View {
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
-        shader_data: Option<ShaderData>,
     ) -> View {
         View {
             unique_id: View::next_unique_id() as u32,
@@ -372,7 +373,6 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes,
-            shader_data,
         }
     }
     pub fn new_styled_text(
@@ -385,7 +385,6 @@ impl View {
         text_res_name: Option<String>,
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
-        shader_data: Option<ShaderData>,
     ) -> View {
         View {
             unique_id: View::next_unique_id() as u32,
@@ -404,7 +403,6 @@ impl View {
             design_absolute_bounding_box,
             render_method: i32::from(render_method),
             explicit_variable_modes: HashMap::new(),
-            shader_data,
         }
     }
     pub fn add_child(&mut self, child: View) {

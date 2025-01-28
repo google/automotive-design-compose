@@ -30,17 +30,17 @@ use crate::{
 };
 use dc_bundle::definition::element::{
     view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
-    FontWeight, LineHeight, NumOrVar, Path, ShaderData, ShaderUniform, Size, ViewShape,
+    FontWeight, LineHeight, NumOrVar, Path, Size, ViewShape,
 };
 
-use crate::figma_schema::{FigmaColor, LayoutPositioning};
+use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
 use dc_bundle::definition;
 use dc_bundle::definition::element::dimension_proto::Dimension;
 use dc_bundle::definition::element::num_or_var::NumOrVarType;
 use dc_bundle::definition::element::view_shape::RoundRect;
 use dc_bundle::definition::element::{
-    background, stroke_weight, Background, Color, StrokeAlign, StrokeWeight,
+    background, stroke_weight, Background, StrokeAlign, StrokeWeight,
 };
 use dc_bundle::definition::interaction::Reaction;
 use dc_bundle::definition::layout::{
@@ -59,7 +59,7 @@ use dc_bundle::definition::plugin::{
 use dc_bundle::definition::plugin::meter_data::MeterDataType;
 use log::error;
 
-use crate::shader_schema::ShaderUniformJson;
+use crate::shader_schema::ShaderDataJson;
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
 use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle};
@@ -960,30 +960,11 @@ fn visit_node(
         }
     };
 
-    // We have shader which is a string that can be used to draw the background.
-    let shader: Option<String> =
-        plugin_data.and_then(|vsw_data| vsw_data.get("shader")).map(|extras| extras.to_owned());
-    // Shader fallback color is the color used when shader isn't supported on lower sdks.
-    let shader_fallback_color: Option<Color> = plugin_data
-        .and_then(|vsw_data| vsw_data.get("shaderFallbackColor"))
-        .and_then(|extras| serde_json::from_str::<FigmaColor>(extras).ok())
-        .map(|figma_color| (&figma_color).into());
-    // Shader uniforms: float, float array, color and color with alpha
-    let shader_uniforms: HashMap<String, ShaderUniform> = plugin_data
-        .and_then(|vsw_data| vsw_data.get("shaderUniforms"))
-        .and_then(|shader_uniforms| {
-            serde_json::from_str::<Vec<ShaderUniformJson>>(shader_uniforms.as_str()).ok()
-        })
-        .unwrap_or_default()
-        .into_iter()
-        .map(ShaderUniformJson::into)
-        .collect();
-
-    let shader_data = if let Some(shader_code) = shader {
-        Some(ShaderData { shader: shader_code, shader_fallback_color, shader_uniforms })
-    } else {
-        None
-    };
+    // We have shader that can be used to draw the background.
+    style.node_style_mut().shader_data = plugin_data
+        .and_then(|vsw_data| vsw_data.get("shader"))
+        .and_then(|extras| serde_json::from_str::<ShaderDataJson>(extras).ok())
+        .and_then(|shader_data_json| shader_data_json.into());
 
     let mut scroll_info = ScrollInfo::new_default();
 
@@ -1175,6 +1156,12 @@ fn visit_node(
             Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center as i32,
             Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside as i32,
         };
+
+        // We have shader that can be used to draw the stroke.
+        stroke.shader_data = plugin_data
+            .and_then(|vsw_data| vsw_data.get("strokeShader"))
+            .and_then(|extras| serde_json::from_str::<ShaderDataJson>(extras).ok())
+            .and_then(|shader_data_json| shader_data_json.into());
     });
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {
@@ -1333,7 +1320,6 @@ fn visit_node(
                 node.absolute_bounding_box.map(|r| (&r).into()),
                 RenderMethod::None,
                 node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
-                shader_data,
             ))
         } else {
             // Build some runs of custom styled text out of the style overrides. We need to be able to iterate
@@ -1501,7 +1487,6 @@ fn visit_node(
                 check_text_node_string_res(node),
                 node.absolute_bounding_box.map(|r| (&r).into()),
                 RenderMethod::None,
-                shader_data,
             ))
         };
     }
@@ -1794,7 +1779,6 @@ fn visit_node(
         reactions,
         scroll_info,
         frame_extras,
-        shader_data,
         node.absolute_bounding_box.map(|r| (&r).into()),
         RenderMethod::None,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),

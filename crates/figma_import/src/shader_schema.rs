@@ -35,7 +35,7 @@ pub struct ShaderUniformJson {
 impl Into<(String, ShaderUniform)> for ShaderUniformJson {
     fn into(self) -> (String, ShaderUniform) {
         let uniform_value = match self.uniform_type.as_str() {
-            "float" => {
+            "float" | "iTime" => {
                 if let Some(float_val) = self.uniform_value.as_f64() {
                     Some(ShaderUniformValue { value_type: Some(FloatValue(float_val as f32)) })
                 } else {

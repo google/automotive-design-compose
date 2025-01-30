@@ -21,12 +21,16 @@ updates:
       - "/.github/actions/build-figma-resource"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "dependapool"
+    target-branch: "main"
     groups:
       non-breaking-github-workflow:
         update-types:
         - "minor"
-    open-pull-requests-limit: 5
+        - "patch"
+      major-github-workflow:
+        update-types:
+        - "major"
+    open-pull-requests-limit: 2
     schedule:
       interval: weekly
       day: friday
@@ -35,12 +39,16 @@ updates:
     directory: /docs
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "dependapool"
+    target-branch: "main"
     groups:
       non-breaking-bundler:
         update-types:
         - "minor"
-    open-pull-requests-limit: 5
+        - "patch"
+      major-bundler:
+        update-types:
+        - "major"
+    open-pull-requests-limit: 2
     schedule:
       interval: weekly
       day: friday
@@ -51,12 +59,16 @@ updates:
       - "/support-figma/extended-layout-plugin"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "dependapool"
+    target-branch: "main"
     groups:
       non-breaking-figma-widget:
         update-types:
         - "minor"
-    open-pull-requests-limit: 5
+        - "patch"
+      major-figma-widget:
+        update-types:
+        - "major"
+    open-pull-requests-limit: 2
     schedule:
       interval: weekly
       day: friday
@@ -65,12 +77,16 @@ updates:
     directory: "/"
     assignees: [timothyfroehlich]
     reviewers: [timothyfroehlich]
-    target-branch: "dependapool"
+    target-branch: "main"
     groups:
       non-breaking-gradle:
         update-types:
         - "minor"
-    open-pull-requests-limit: 5
+        - "patch"
+      major-gradle:
+        update-types:
+        - "major"
+    open-pull-requests-limit: 2
     schedule:
       interval: weekly
       day: friday

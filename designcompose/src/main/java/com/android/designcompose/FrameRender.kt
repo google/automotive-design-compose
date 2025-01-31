@@ -22,6 +22,7 @@ import android.graphics.RuntimeShader
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.State
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -530,6 +531,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                 getShaderBrush(
                     style.nodeStyle.stroke.shaderData,
                     customizations.getShaderUniformCustomizations(node.view.name),
+                    customizations.getShaderTimeUniformState(),
                     asBackground = false,
                 )
             b.applyTo(brushSize, p, 1.0f)
@@ -763,7 +765,11 @@ internal fun getCustomBrush(
             ?.shaderData
             ?.let {
                 customFillBrush =
-                    getShaderBrush(it, customizations.getShaderUniformCustomizations(nodeName))
+                    getShaderBrush(
+                        it,
+                        customizations.getShaderUniformCustomizations(nodeName),
+                        customizations.getShaderTimeUniformState(),
+                    )
             }
     }
     return customFillBrush
@@ -772,6 +778,7 @@ internal fun getCustomBrush(
 internal fun getShaderBrush(
     shaderData: ShaderData,
     shaderUniformCustomizations: ShaderUniformCustomizations?,
+    shaderTimeUniformState: State<ShaderUniform>?,
     asBackground: Boolean = true,
 ): Brush {
     lateinit var shaderBrush: Brush
@@ -788,8 +795,6 @@ internal fun getShaderBrush(
         shaderUniformList?.forEach { customUniform ->
             if (shaderData.shaderUniformsMap.containsKey(customUniform.name)) {
                 customUniform.applyToShader(shader, shaderData.shaderUniformsMap)
-            } else {
-                Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
             }
         }
         val shaderUniformStateList =
@@ -799,8 +804,11 @@ internal fun getShaderBrush(
             val customUniform = customUniformState.value
             if (shaderData.shaderUniformsMap.containsKey(customUniform.name)) {
                 customUniform.applyToShader(shader, shaderData.shaderUniformsMap)
-            } else {
-                Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
+            }
+        }
+        shaderTimeUniformState?.value?.let {
+            if (shaderData.shaderUniformsMap.containsKey(it.name)) {
+                it.applyToShader(shader, shaderData.shaderUniformsMap)
             }
         }
     } else {

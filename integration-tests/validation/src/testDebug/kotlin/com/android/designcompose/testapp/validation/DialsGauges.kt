@@ -28,6 +28,7 @@ import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.DialsGaugesTest
 import com.android.designcompose.testapp.validation.examples.ProgressConstraintsTest
 import com.android.designcompose.testapp.validation.examples.ProgressVectorTest
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,12 +37,17 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav")
+@Config(qualifiers = "w1920dp-h1500dp-xlarge-long-notround-any-xhdpi-keyshidden-nonav", sdk = [35])
 class DialsGauges {
     @get:Rule val clearStateTestRule = TestUtils.ClearStateTestRule()
     @get:Rule val composeTestRule = createComposeRule()
     @get:Rule val roborazziRule = designComposeRoborazziRule(javaClass.simpleName)
     @get:Rule val interFontRule = InterFontTestRule()
+
+    @Before
+    fun setUp() {
+        System.setProperty("robolectric.pixelCopyRenderMode", "hardware")
+    }
 
     @Test
     fun progressTests() {

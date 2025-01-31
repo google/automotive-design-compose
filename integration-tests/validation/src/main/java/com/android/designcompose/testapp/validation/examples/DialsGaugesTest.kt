@@ -28,10 +28,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.designcompose.LocalCustomizationContext
 import com.android.designcompose.Meter
+import com.android.designcompose.ShaderHelper
+import com.android.designcompose.ShaderHelper.toShaderUniformState
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.setShaderTimeUniformState
 
 // TEST dials and gauges
 @DesignDoc(id = "lZj6E9GtIQQE4HNLpzgETw")
@@ -56,6 +60,11 @@ interface DialsGaugesTest {
 
 @Composable
 fun DialsGaugesTest() {
+    LocalCustomizationContext.current.setShaderTimeUniformState(
+        ShaderHelper.getShaderUniformTimeFloatState()
+            .toShaderUniformState(ShaderHelper.UNIFORM_TIME)
+    )
+
     val angle = remember { mutableStateOf(50f) }
     val rotation = remember { mutableStateOf(50f) }
     val progress = remember { mutableStateOf(50f) }
@@ -103,6 +112,11 @@ fun DialsGaugesTest() {
 
 @Composable
 fun ProgressVectorTest() {
+
+    LocalCustomizationContext.current.setShaderTimeUniformState(
+        ShaderHelper.getShaderUniformTimeFloatState()
+            .toShaderUniformState(ShaderHelper.UNIFORM_TIME)
+    )
     val progress = remember { mutableStateOf(50f) }
     DialsGaugesTestDoc.VectorProgressMain(progressBar = progress.value)
     Row(
@@ -117,6 +131,10 @@ fun ProgressVectorTest() {
 
 @Composable
 fun ProgressConstraintsTest() {
+    LocalCustomizationContext.current.setShaderTimeUniformState(
+        ShaderHelper.getShaderUniformTimeFloatState()
+            .toShaderUniformState(ShaderHelper.UNIFORM_TIME)
+    )
     val progress = remember { mutableStateOf(50f) }
     val progressIndicator = remember { mutableStateOf(50f) }
     val stageWidth = remember { mutableStateOf(600f) }

@@ -80,7 +80,7 @@ object ShaderHelper {
      * shader uniform customization for the `iTime` uniform.
      */
     @Composable
-    fun getShaderUniformTimeState(): FloatState {
+    fun getShaderUniformTimeFloatState(): FloatState {
         return if ("robolectric" != Build.FINGERPRINT)
             produceState(0f) {
                     while (true) {

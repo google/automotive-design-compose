@@ -17,6 +17,7 @@ syntax = "proto3";
 package designcompose.definition.element;
 
 import "definition/element/background.proto";
+import "definition/element/shader.proto";
 
 option java_package = "com.android.designcompose.definition.element";
 option java_multiple_files = true;
@@ -90,4 +91,8 @@ message Stroke {
   StrokeAlign stroke_align = 1;
   StrokeWeight stroke_weight = 2;
   repeated Background strokes = 3;
+
+  // Runtime shader from the shader plugin as stroke.
+  // When shader is present, strokes will not be drawn.
+  optional element.ShaderData shader_data = 4;
 }

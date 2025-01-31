@@ -573,14 +573,14 @@ if (figma.command === "sync") {
         code: Shader.shaderMap.get(msg.shader),
       });
     } else if (msg.msg === "insertImage") {
-      Shader.insertImage(msg.imageBytes);
+      Shader.insertImage(msg.imageBytes, msg.asBackground);
     } else if (msg.msg === "setShader") {
-      Shader.setShader(msg.shader, msg.shaderFallbackColor, msg.shaderUniforms);
+      Shader.setShader(msg.shader, msg.shaderFallbackColor, msg.shaderUniforms, msg.asBackground);
     } else if (msg.msg === "clearShader") {
-      Shader.clearShader();
+      Shader.clearShader(msg.asBackground);
     }
   };
-  figma.showUI(__uiFiles__.shader, { width: 600, height: 720 });
+  figma.showUI(__uiFiles__.shader, { width: 800, height: 720 });
   // Notify current selection on showing UI.
   Shader.onSelectionChanged();
   figma.on("selectionchange", Shader.onSelectionChanged);

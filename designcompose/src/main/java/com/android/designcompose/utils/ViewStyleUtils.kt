@@ -19,6 +19,7 @@ package com.android.designcompose.utils
 import com.android.designcompose.definition.element.DimensionRect
 import com.android.designcompose.definition.element.FontStyle
 import com.android.designcompose.definition.element.TextDecoration
+import com.android.designcompose.definition.element.shaderDataOrNull
 import com.android.designcompose.definition.interaction.PointerEvents
 import com.android.designcompose.definition.layout.AlignContent
 import com.android.designcompose.definition.layout.AlignItems
@@ -91,7 +92,10 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
                 boxShadows.addAll(override.nodeStyle.boxShadowsList)
             }
 
-            if ((override.nodeStyle.strokeOrNull?.strokesCount ?: 0) > 0)
+            if (
+                override.nodeStyle.strokeOrNull?.shaderDataOrNull != null ||
+                    (override.nodeStyle.strokeOrNull?.strokesCount ?: 0) > 0
+            )
                 stroke = override.nodeStyle.stroke
 
             if (override.nodeStyle.hasOpacity()) opacity = override.nodeStyle.opacity
@@ -221,6 +225,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
                 pointerEvents = override.nodeStyle.pointerEvents
 
             if (override.nodeStyle.hasMeterData()) meterData = override.nodeStyle.meterData
+            if (override.nodeStyle.hasShaderData()) shaderData = override.nodeStyle.shaderData
         }
 
     val mergedLayoutStyle =

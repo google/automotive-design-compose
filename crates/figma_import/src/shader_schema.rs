@@ -14,13 +14,38 @@
  * limitations under the License.
  */
 use crate::figma_schema::FigmaColor;
-use dc_bundle::definition::view::shader_uniform_value::FloatVec;
-use dc_bundle::definition::view::shader_uniform_value::ValueType::{
+use dc_bundle::definition::element::shader_uniform_value::FloatVec;
+use dc_bundle::definition::element::shader_uniform_value::ValueType::{
     FloatColorValue, FloatValue, FloatVecValue, IntValue,
 };
-use dc_bundle::definition::view::{ShaderUniform, ShaderUniformValue};
+use dc_bundle::definition::element::{Color, ShaderData, ShaderUniform, ShaderUniformValue};
 use log::error;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+pub struct ShaderDataJson {
+    pub shader: Option<String>,
+    #[serde(rename = "shaderFallbackColor")]
+    pub shader_fallback_color: Option<FigmaColor>,
+    #[serde(rename = "shaderUniforms")]
+    pub shader_uniforms: Vec<ShaderUniformJson>,
+}
+
+impl Into<Option<ShaderData>> for ShaderDataJson {
+    fn into(self) -> Option<ShaderData> {
+        return if let Some(shader) = self.shader {
+            // Shader fallback color is the color used when shader isn't supported on lower sdks.
+            let shader_fallback_color: Option<Color> =
+                self.shader_fallback_color.as_ref().map(|figma_color| figma_color.into());
+            // Shader uniforms: float, float array, color and color with alpha
+            let shader_uniforms: HashMap<String, ShaderUniform> =
+                self.shader_uniforms.into_iter().map(ShaderUniformJson::into).collect();
+            Some(ShaderData { shader, shader_fallback_color, shader_uniforms })
+        } else {
+            None
+        };
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct ShaderUniformJson {

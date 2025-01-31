@@ -17,7 +17,6 @@
 package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.asIntState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
@@ -26,24 +25,26 @@ import androidx.compose.ui.platform.LocalContext
 import com.android.designcompose.ShaderHelper
 import com.android.designcompose.ShaderHelper.toShaderUniform
 import com.android.designcompose.ShaderHelper.toShaderUniformState
-import com.android.designcompose.ShaderUniformList
-import com.android.designcompose.ShaderUniformStateList
+import com.android.designcompose.ShaderUniformCustomizations
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
-import com.android.designcompose.definition.view.ShaderUniform
+import com.android.designcompose.customBackgroundShaderUniformStates
+import com.android.designcompose.customBackgroundShaderUniforms
+import com.android.designcompose.customStrokeShaderUniformStates
 import com.android.designcompose.testapp.validation.R
 
 @DesignDoc(id = "TkgjNl81e5joWeAivmIdzm")
 interface BrushFromShaderPluginTest {
     @DesignComponent(node = "#stage")
     fun MainFrame(
-        @Design(node = "#stage") rootShaderUniformStates: ShaderUniformStateList,
-        @Design(node = "#stage") rootShaderUniforms: ShaderUniformList,
-        @Design(node = "#color-custom") customColors: ShaderUniformList,
-        @Design(node = "#text-color-custom") customTextColors: ShaderUniformList,
-        @Design(node = "#color-state-custom") customColorStates: ShaderUniformStateList,
-        @Design(node = "#int-state-custom") customIntStates: ShaderUniformStateList,
+        @Design(node = "#stage") rootShaderUniformCustomizations: ShaderUniformCustomizations,
+        @Design(node = "#color-custom") customColors: ShaderUniformCustomizations,
+        @Design(node = "#text-color-custom") customTextColors: ShaderUniformCustomizations,
+        @Design(node = "#color-state-custom") customColorStates: ShaderUniformCustomizations,
+        @Design(node = "#int-state-custom") customIntStates: ShaderUniformCustomizations,
+        @Design(node = "#stroke") customStrokeStates: ShaderUniformCustomizations,
+        @Design(node = "#text-stroke") customTextStrokeStates: ShaderUniformCustomizations,
     )
 }
 
@@ -51,37 +52,44 @@ interface BrushFromShaderPluginTest {
 fun BrushFromShaderPluginTest() {
     // Create a animate state for iTime so the shader can animate over time.
     val iTimeState = ShaderHelper.getShaderUniformTimeState()
-    val rootShaderUniformStates = ArrayList<State<ShaderUniform>>()
-    rootShaderUniformStates.add(iTimeState.toShaderUniformState(ShaderHelper.UNIFORM_TIME))
-    // DEV BRANCH: 5oAVZxBQCLCf7spBLLFRHw. This list tests multi-doc support.
-    val rootShaderUniforms = ArrayList<ShaderUniform>()
-    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("speed", 0.05f))
-    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("clouddark", 0.5f))
-    rootShaderUniforms.add(ShaderHelper.createShaderFloatUniform("cloudcover", 0.23f))
+    val iTimeShaderUniformState = iTimeState.toShaderUniformState(ShaderHelper.UNIFORM_TIME)
 
-    val customColors = ArrayList<ShaderUniform>()
-    customColors.add(
+    // DEV BRANCH: 5oAVZxBQCLCf7spBLLFRHw. This list tests multi-doc support.
+    val rootShaderUniformCustomizations = ShaderUniformCustomizations()
+    rootShaderUniformCustomizations
+        .customBackgroundShaderUniforms(
+            ShaderHelper.createShaderFloatUniform("speed", 0.05f),
+            ShaderHelper.createShaderFloatUniform("clouddark", 0.5f),
+            ShaderHelper.createShaderFloatUniform("cloudcover", 0.23f),
+        )
+        .customBackgroundShaderUniformStates(iTimeShaderUniformState)
+
+    val customColors = ShaderUniformCustomizations()
+    customColors.customBackgroundShaderUniforms(
         Color(LocalContext.current.getColor(R.color.purple_200)).toShaderUniform("iColor")
     )
 
-    val customColorStates = ArrayList<State<ShaderUniform>>()
     val colors =
         listOf(
             Color(LocalContext.current.getColor(R.color.purple_200)),
             Color(LocalContext.current.getColor(R.color.purple_700)),
         )
     val colorState = remember { derivedStateOf { colors[iTimeState.floatValue.toInt() % 2] } }
-    customColorStates.add(colorState.toShaderUniformState("iColor"))
+    val customColorStates = ShaderUniformCustomizations()
+    customColorStates.customBackgroundShaderUniformStates(colorState.toShaderUniformState("iColor"))
 
-    val customIntStates = ArrayList<State<ShaderUniform>>()
     val intState = remember { derivedStateOf { iTimeState.floatValue.toInt() % 5 }.asIntState() }
-    customIntStates.add(intState.toShaderUniformState("iCase"))
+    val customIntStates = ShaderUniformCustomizations()
+    customIntStates.customBackgroundShaderUniformStates(intState.toShaderUniformState("iCase"))
     BrushFromShaderPluginTestDoc.MainFrame(
-        rootShaderUniformStates = rootShaderUniformStates,
-        rootShaderUniforms = rootShaderUniforms,
+        rootShaderUniformCustomizations = rootShaderUniformCustomizations,
         customColors = customColors,
         customTextColors = customColors,
         customColorStates = customColorStates,
         customIntStates = customIntStates,
+        customStrokeStates =
+            ShaderUniformCustomizations().customStrokeShaderUniformStates(iTimeShaderUniformState),
+        customTextStrokeStates =
+            ShaderUniformCustomizations().customStrokeShaderUniformStates(iTimeShaderUniformState),
     )
 }

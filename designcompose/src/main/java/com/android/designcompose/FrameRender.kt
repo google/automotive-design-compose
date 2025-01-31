@@ -42,9 +42,13 @@ import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
+import com.android.designcompose.definition.element.ShaderData
+import com.android.designcompose.definition.element.ShaderUniform
+import com.android.designcompose.definition.element.ShaderUniformValue.ValueTypeCase
 import com.android.designcompose.definition.element.StrokeAlign
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
+import com.android.designcompose.definition.element.shaderFallbackColorOrNull
 import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.layout.Overflow
 import com.android.designcompose.definition.modifier.outsetOrNull
@@ -54,10 +58,7 @@ import com.android.designcompose.definition.plugin.ProgressBarMeterData
 import com.android.designcompose.definition.plugin.ProgressMarkerMeterData
 import com.android.designcompose.definition.plugin.ProgressVectorMeterData
 import com.android.designcompose.definition.plugin.RotationMeterData
-import com.android.designcompose.definition.view.ShaderUniform
-import com.android.designcompose.definition.view.ShaderUniformValue.ValueTypeCase
 import com.android.designcompose.definition.view.ViewStyle
-import com.android.designcompose.definition.view.shaderFallbackColorOrNull
 import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.squoosh.SquooshResolvedNode
 import com.android.designcompose.utils.asBrush
@@ -520,20 +521,34 @@ internal fun ContentDrawScope.squooshShapeRender(
             }
         }
     val strokeBrush =
-        style.nodeStyle.stroke.strokesList.mapNotNull { background ->
+        if (style.nodeStyle.stroke.hasShaderData()) {
             val p = Paint()
             progressVectorMeterData?.let {
                 calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
             }
-            val b = background.asBrush(appContext, document, density, variableState)
-            if (b != null) {
-                val (brush, strokeOpacity) = b
-                brush.applyTo(brushSize, p, strokeOpacity)
-                p
-            } else {
-                null
+            val b =
+                getShaderBrush(
+                    style.nodeStyle.stroke.shaderData,
+                    customizations.getShaderUniformCustomizations(node.view.name),
+                    asBackground = false,
+                )
+            b.applyTo(brushSize, p, 1.0f)
+            listOf(p)
+        } else
+            style.nodeStyle.stroke.strokesList.mapNotNull { background ->
+                val p = Paint()
+                progressVectorMeterData?.let {
+                    calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
+                }
+                val b = background.asBrush(appContext, document, density, variableState)
+                if (b != null) {
+                    val (brush, strokeOpacity) = b
+                    brush.applyTo(brushSize, p, strokeOpacity)
+                    p
+                } else {
+                    null
+                }
             }
-        }
 
     // Outset shadows
     // XXX: only do this if there are shadows.
@@ -743,41 +758,57 @@ internal fun getCustomBrush(
     val nodeName = node.view.name
     var customFillBrush = customizations.getBrush(nodeName)
     if (customFillBrush == null) {
-        node.view
+        node.view.style.nodeStyle
             .takeIf { it.hasShaderData() }
             ?.shaderData
             ?.let {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    val shaderProg = it.shader.trim().trimIndent()
-                    val shader = RuntimeShader(shaderProg)
-                    customFillBrush = SizingShaderBrush(shader)
-                    it.shaderUniformsMap.forEach { (_, v) ->
-                        v.applyToShader(shader, it.shaderUniformsMap)
-                    }
-                    customizations.getShaderUniformList(nodeName)?.forEach { customUniform ->
-                        if (it.shaderUniformsMap.containsKey(customUniform.name)) {
-                            customUniform.applyToShader(shader, it.shaderUniformsMap)
-                        } else {
-                            Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
-                        }
-                    }
-                    customizations.getShaderUniformStateList(nodeName)?.forEach { customUniformState
-                        ->
-                        val customUniform = customUniformState.value
-                        if (it.shaderUniformsMap.containsKey(customUniform.name)) {
-                            customUniform.applyToShader(shader, it.shaderUniformsMap)
-                        } else {
-                            Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
-                        }
-                    }
-                } else {
-                    it.shaderFallbackColorOrNull?.let { color ->
-                        customFillBrush = SolidColor(color.toColor())
-                    }
-                }
+                customFillBrush =
+                    getShaderBrush(it, customizations.getShaderUniformCustomizations(nodeName))
             }
     }
     return customFillBrush
+}
+
+internal fun getShaderBrush(
+    shaderData: ShaderData,
+    shaderUniformCustomizations: ShaderUniformCustomizations?,
+    asBackground: Boolean = true,
+): Brush {
+    lateinit var shaderBrush: Brush
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val shaderProg = shaderData.shader.trim().trimIndent()
+        val shader = RuntimeShader(shaderProg)
+        shaderBrush = SizingShaderBrush(shader)
+        shaderData.shaderUniformsMap.forEach { (_, v) ->
+            v.applyToShader(shader, shaderData.shaderUniformsMap)
+        }
+        val shaderUniformList =
+            if (asBackground) shaderUniformCustomizations?.backgroundShaderUniforms
+            else shaderUniformCustomizations?.strokeShaderUniforms
+        shaderUniformList?.forEach { customUniform ->
+            if (shaderData.shaderUniformsMap.containsKey(customUniform.name)) {
+                customUniform.applyToShader(shader, shaderData.shaderUniformsMap)
+            } else {
+                Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
+            }
+        }
+        val shaderUniformStateList =
+            if (asBackground) shaderUniformCustomizations?.backgroundShaderUniformStates
+            else shaderUniformCustomizations?.strokeShaderUniformStates
+        shaderUniformStateList?.forEach { customUniformState ->
+            val customUniform = customUniformState.value
+            if (shaderData.shaderUniformsMap.containsKey(customUniform.name)) {
+                customUniform.applyToShader(shader, shaderData.shaderUniformsMap)
+            } else {
+                Log.d(TAG, "Shader uniform ${customUniform.name} not declared in code")
+            }
+        }
+    } else {
+        shaderData.shaderFallbackColorOrNull?.let { color ->
+            shaderBrush = SolidColor(color.toColor())
+        }
+    }
+    return shaderBrush
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)

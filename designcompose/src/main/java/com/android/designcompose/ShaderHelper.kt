@@ -27,10 +27,45 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.definition.element.floatColor
-import com.android.designcompose.definition.view.ShaderUniform
-import com.android.designcompose.definition.view.shaderUniform
-import com.android.designcompose.definition.view.shaderUniformValue
+import com.android.designcompose.definition.element.shaderUniform
+import com.android.designcompose.definition.element.shaderUniformValue
+
+data class ShaderUniformCustomizations(
+    val backgroundShaderUniforms: MutableList<ShaderUniform> = mutableListOf(),
+    val backgroundShaderUniformStates: MutableList<State<ShaderUniform>> = mutableListOf(),
+    val strokeShaderUniforms: MutableList<ShaderUniform> = mutableListOf(),
+    val strokeShaderUniformStates: MutableList<State<ShaderUniform>> = mutableListOf(),
+)
+
+fun ShaderUniformCustomizations.customBackgroundShaderUniforms(
+    vararg shaderUniforms: ShaderUniform
+): ShaderUniformCustomizations {
+    backgroundShaderUniforms.addAll(shaderUniforms)
+    return this
+}
+
+fun ShaderUniformCustomizations.customStrokeShaderUniforms(
+    vararg shaderUniforms: ShaderUniform
+): ShaderUniformCustomizations {
+    strokeShaderUniforms.addAll(shaderUniforms)
+    return this
+}
+
+fun ShaderUniformCustomizations.customBackgroundShaderUniformStates(
+    vararg shaderUniformStates: State<ShaderUniform>
+): ShaderUniformCustomizations {
+    backgroundShaderUniformStates.addAll(shaderUniformStates)
+    return this
+}
+
+fun ShaderUniformCustomizations.customStrokeShaderUniformStates(
+    vararg shaderUniformStates: State<ShaderUniform>
+): ShaderUniformCustomizations {
+    strokeShaderUniformStates.addAll(shaderUniformStates)
+    return this
+}
 
 /** Helper functions to create shader uniforms from float or color objects. */
 object ShaderHelper {

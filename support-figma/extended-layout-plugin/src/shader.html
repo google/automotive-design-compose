@@ -23,7 +23,8 @@
 <!-- BEGIN OF SHADER PLUGIN UI -->
 <div class="page-padding-large">
     <div style="align-items: flex-start; gap: 16px; display: flex;">
-        <div class="container" style="border: 1px black solid; width: auto; flex-shrink: 0; max-width: 256px; max-height: 256px; overflow: hidden;">
+        <div class="container"
+            style="border: 1px black solid; width: auto; flex-shrink: 0; max-width: 256px; max-height: 256px; overflow: hidden;">
             <canvas id="shaderPreview" width="256px" height="256px" />
         </div>
         <div style="width: auto; flex-grow: 1; max-height: 256px; overflow-y: scroll;">
@@ -58,10 +59,12 @@
     </div>
 
     <div id="nodeSection" class="collapsible" style="margin-top: 8px;">
-        <div id="cleared">No nodes selected. Select a node that can have a background to start.</div>
-        <div id="selected" style="display: flex; gap:4px; align-items: center">
+        <div id="cleared">No nodes selected. Select a node that can have a background or stroke to start.</div>
+        <div id="selected" style="display: flex; gap:4px; align-items: center;">
             <div id="nodeId" style="width: 100%;"></div>
-            <button id="loadShaderButton" class="button--primary">Load Shader</button>
+            <button id="loadShaderButton" class="button--primary" style="width: 180px;">Load Background Shader</button>
+            <button id="loadStrokeShaderButton" class="button--primary" style="width: 180px;">Load Stroke
+                Shader</button>
         </div>
     </div>
     <div id="nodeActions" class="content">
@@ -70,25 +73,36 @@
                 <input id="useShaderFallbackColor" type="checkbox" checked="true"></input>
                 <span class="tooltip">
                     <img src="images/dials/info-blue.svg">
-                    <span class="tooltiptext left-20">When unchecked, DesignCompose will draw the background image from
-                        the figma node.</span>
+                    <span class="tooltiptext left-20">When unchecked, DesignCompose will draw the background/stroke
+                        image from the figma node.</span>
                 </span>
-                Use the solid color <span style="background-color: #FF46A2;">#FF46A2</span> as background when shader is
-                not supported on lower sdks.
+                Use the solid color <span style="background-color: #FF46A2;">#FF46A2</span> as background/stroke when
+                shader is not supported on lower sdks.
             </div>
-            <button id="setShaderButton" class="button--primary tooltip">Apply Shader
-                <span class="tooltiptext left-80">Use the runtime shader to render the background. It only works on
-                    Android 13+.</span></button>
+            <button id="setShaderButton" class="button--primary tooltip" style="width: 180px;">Apply Shader As
+                Background
+                <span class="tooltiptext">Use the runtime shader to render the background. It only works on
+                    Android 13+.</span>
+            </button>
+            <button id="setStrokeShaderButton" class="button--primary tooltip" style="width: 180px;">Apply Shader As
+                Stroke
+                <span class="tooltiptext left-80">Use the runtime shader to render the stroke. It only works on
+                    Android 13+.</span>
+            </button>
         </div>
         <hr />
         <div style="margin-top: 4px; display: flex; gap:4px; align-items: center;">
             <div style="width: 100%;">
-                When clear shader, shader preview image will be removed. If a text has no background after shader
-                preview image gets removed, we will set the text color to the solid color <span
-                    style="background-color: #FF46A2;">#FF46A2</span>.
+                When clear shader, shader preview image will be removed from backgrounds or strokes.
             </div>
-            <button id="clearShaderButton" class="button--primary" onclick="clearShaderFromFigmaNode()">Clear
-                Shader</button>
+            <button id="clearShaderButton" class="button--primary tooltip" style="width: 180px;"
+                onclick="clearShaderFromFigmaNode(true)">Clear Background Shader
+                <span class="tooltiptext">If a text has no background after shader preview image gets removed, we will
+                    set the text color to the solid color <span style="background-color: #FF46A2;">#FF46A2</span>.
+                </span>
+            </button>
+            <button id="clearStrokeShaderButton" class="button--primary" style="width: 180px;"
+                onclick="clearShaderFromFigmaNode(false)">Clear Stroke Shader</button>
         </div>
     </div>
 
@@ -217,8 +231,10 @@
     let nodeCleared = document.getElementById("cleared");
     let nodeSelected = document.getElementById("selected");
     let loadShaderButton = document.getElementById("loadShaderButton");
+    let loadStrokeShaderButton = document.getElementById("loadStrokeShaderButton");
     let nodeActions = document.getElementById("nodeActions");
     let setShaderButton = document.getElementById("setShaderButton");
+    let setStrokeShaderButton = document.getElementById("setStrokeShaderButton");
     let useShaderFallbackColor = document.getElementById("useShaderFallbackColor");
     let clearShaderButton = document.getElementById("clearShaderButton");
 
@@ -608,10 +624,11 @@
         return null;
     }
 
-    function clearShaderFromFigmaNode() {
+    function clearShaderFromFigmaNode(asBackground) {
         parent.postMessage({
             pluginMessage: {
                 msg: 'clearShader',
+                asBackground: asBackground,
             }
         }, '*');
     }
@@ -730,55 +747,56 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 mouseDragY = e.offsetY;
             });
 
-            setShaderButton.onclick = e => {
-                if (currentShader != null) {
-                    const shaderUniforms = [];
-                    customUniforms.forEach(function (uniform) {
-                        let shaderUniform = {
-                            uniformName: uniform,
-                            uniformType: uniformTypeMap.get(uniform),
-                            uniformValue: uniformValue(uniform),
-                            extras: uniformExtras(uniform),
-                        };
-                        shaderUniforms.push(shaderUniform);
-                    });
+            function buildApplyAction(asBackground) {
+                return e => {
+                    if (currentShader != null) {
+                        const shaderUniforms = [];
+                        customUniforms.forEach(function (uniform) {
+                            let shaderUniform = {
+                                uniformName: uniform,
+                                uniformType: uniformTypeMap.get(uniform),
+                                uniformValue: uniformValue(uniform),
+                                extras: uniformExtras(uniform),
+                            };
+                            shaderUniforms.push(shaderUniform);
+                        });
 
-                    const color = useShaderFallbackColor.checked ? "#FF46A2" : undefined;
-                    parent.postMessage({
-                        pluginMessage: {
-                            msg: 'setShader',
-                            shader: currentShader,
-                            shaderFallbackColor: color,
-                            shaderUniforms: shaderUniforms,
-                        }
-                    }, '*');
-                } else {
-                    console.error("There is no shader running....");
-                }
+                        const color = useShaderFallbackColor.checked ? "#FF46A2" : undefined;
+                        parent.postMessage({
+                            pluginMessage: {
+                                msg: 'setShader',
+                                shader: currentShader,
+                                shaderFallbackColor: color,
+                                shaderUniforms: shaderUniforms,
+                                asBackground: asBackground,
+                            }
+                        }, '*');
+                    } else {
+                        console.error("There is no shader running....");
+                    }
 
-                const skImage = surface.makeImageSnapshot();
-                if (skImage != null) {
-                    parent.postMessage({
-                        pluginMessage: {
-                            msg: 'insertImage',
-                            imageBytes: skImage.encodeToBytes(),
-                        }
-                    }, '*');
-                    skImage.delete();
-                } else {
-                    console.error("There is no image captured...");
-                }
+                    const skImage = surface.makeImageSnapshot();
+                    if (skImage != null) {
+                        parent.postMessage({
+                            pluginMessage: {
+                                msg: 'insertImage',
+                                imageBytes: skImage.encodeToBytes(),
+                                asBackground: asBackground,
+                            }
+                        }, '*');
+                        skImage.delete();
+                    } else {
+                        console.error("There is no image captured...");
+                    }
 
-            };
+                };
+            }
+            setShaderButton.onclick = buildApplyAction(true);
+            setStrokeShaderButton.onclick = buildApplyAction(false);
         }); ////// END OF CANVAS KIT //////
     }
 
     loadPresetShaderCode('julia');
-
-    function showModal() {
-        var modal = document.getElementById("shaderInfo");
-        modal.style.display = "block";
-    }
 
     window.onmessage = async function (event) {
         let msg = event.data.pluginMessage;
@@ -809,45 +827,8 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             nodeSection.classList.add("active");
             nodeActions.style.display = "block";
             document.getElementById("nodeId").innerHTML = `Node selected: ${msg.nodeId}`;
-            if (msg.shader) {
-                loadShaderButton.style.display = "block";
-                loadShaderButton.onclick = async () => {
-                    clearUniforms();
-                    shaderCodeInput.value = msg.shader;
-                    for (const shaderUniform of msg.shaderUniforms) {
-                        switch (shaderUniform.uniformType) {
-                            case "float":
-                                if (shaderUniform.extras) {
-                                    createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue,
-                                        shaderUniform.extras.min, shaderUniform.extras.max);
-                                } else {
-                                    createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue,
-                                        Math.min(0, shaderUniform.uniformValue), Math.max(1, shaderUniform.uniformValue));
-                                }
-                                break;
-                            case "float2":
-                            case "float3":
-                            case "float4":
-                                createShaderFloatArrayUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
-                                break;
-                            case "color3":
-                            case "color4":
-                                createShaderColorUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
-                                break;
-                            case "int":
-                                createShaderIntUniform(shaderUniform.uniformName, shaderUniform.uniformValue);
-                                break;
-                            case "iTime":
-                                createShaderTimeUniform();
-                                break;
-                        }
-                        console.log(`${shaderUniform.uniformName} ${shaderUniform.uniformType} = ${shaderUniform.uniformValue}`);
-                    }
-                    await runShader();
-                };
-            } else {
-                loadShaderButton.style.display = "none";
-            }
+            updateLoadShaderButton(msg.shader, msg.shaderUniforms, loadShaderButton, clearShaderButton);
+            updateLoadShaderButton(msg.strokeShader, msg.strokeShaderUniforms, loadStrokeShaderButton, clearStrokeShaderButton);
 
             shaderWidth = msg.size.width;
             shaderHeight = msg.size.height;
@@ -855,6 +836,50 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             canvas.height = shaderHeight;
             await runShader();
             return;
+        }
+    }
+
+    function updateLoadShaderButton(shader, shaderUniforms, loadButton, clearButton) {
+        if (shader) {
+            loadButton.disabled = false;
+            clearButton.disabled = false;
+            loadButton.onclick = async () => {
+                clearUniforms();
+                shaderCodeInput.value = shader;
+                for (const shaderUniform of shaderUniforms) {
+                    switch (shaderUniform.uniformType) {
+                        case "float":
+                            if (shaderUniform.extras) {
+                                createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue,
+                                    shaderUniform.extras.min, shaderUniform.extras.max);
+                            } else {
+                                createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue,
+                                    Math.min(0, shaderUniform.uniformValue), Math.max(1, shaderUniform.uniformValue));
+                            }
+                            break;
+                        case "float2":
+                        case "float3":
+                        case "float4":
+                            createShaderFloatArrayUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
+                            break;
+                        case "color3":
+                        case "color4":
+                            createShaderColorUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
+                            break;
+                        case "int":
+                            createShaderIntUniform(shaderUniform.uniformName, shaderUniform.uniformValue);
+                            break;
+                        case "iTime":
+                            createShaderTimeUniform();
+                            break;
+                    }
+                    console.log(`${shaderUniform.uniformName} ${shaderUniform.uniformType} = ${shaderUniform.uniformValue}`);
+                }
+                await runShader();
+            };
+        } else {
+            loadButton.disabled = true;
+            clearButton.disabled = true;
         }
     }
 </script>

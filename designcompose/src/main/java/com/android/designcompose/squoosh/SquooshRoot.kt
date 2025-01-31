@@ -21,6 +21,8 @@ import android.util.SizeF
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
@@ -41,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Measurable
@@ -81,12 +84,17 @@ import com.android.designcompose.LocalVariableState
 import com.android.designcompose.VariableState
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
+import com.android.designcompose.close
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.definition.element.dimensionProto
 import com.android.designcompose.definition.element.size
 import com.android.designcompose.definition.layout.copy
+import com.android.designcompose.definition.plugin.OverlayBackgroundInteraction
+import com.android.designcompose.definition.plugin.OverlayPositionType
+import com.android.designcompose.definition.plugin.colorOrNull
+import com.android.designcompose.definition.plugin.overlayBackgroundOrNull
 import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.scrollInfoOrNull
 import com.android.designcompose.dispatch
@@ -197,6 +205,18 @@ internal data class SquooshIsRoot(val isRoot: Boolean)
 
 internal val LocalSquooshIsRootContext = compositionLocalOf { SquooshIsRoot(true) }
 
+class RootRecurseParams(
+    // true if SquooshRoot() called from a scrollable child
+    val isScrollComponent: Boolean = false,
+
+    // Hash of text nodes seen in entire tree of nodes, for testing purposes
+    val textHash: HashSet<String> = HashSet(),
+) {
+    fun withScrolling(): RootRecurseParams {
+        return RootRecurseParams(true, textHash)
+    }
+}
+
 // Experiment -- minimal DesignCompose root node; no switcher, no interactions, etc.
 @Composable
 fun SquooshRoot(
@@ -210,7 +230,7 @@ fun SquooshRoot(
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
-    isScrollComponent: Boolean = false, // true if SquooshRoot() called from a scrollable child
+    rootRecurseParams: RootRecurseParams = RootRecurseParams(),
 ) {
     // Basic init and doc loading.
     val isRoot = LocalSquooshIsRootContext.current.isRoot
@@ -333,10 +353,9 @@ fun SquooshRoot(
     // Ok, now we have done the dull stuff, we need to build a tree applying
     // the correct variants etc and then build/update the tree. How do we know
     // what's different from last time? Does the Rust side track
-    val childComposables: ArrayList<SquooshChildComposable> = arrayListOf()
+    val composableList = ComposableList()
     keyEventTracker.clearListeners()
     val variableState = VariableState.create()
-    val textHash = HashSet<String>()
     val root =
         resolveVariantsRecursively(
             startFrame,
@@ -348,17 +367,17 @@ fun SquooshRoot(
             null,
             density,
             fontLoader,
-            childComposables,
+            composableList,
             layoutIdAllocator,
             variantParentName,
             isRoot,
             variableState,
-            appContext = LocalContext.current,
-            textMeasureCache = textMeasureCache,
-            textHash = textHash,
-            customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
-            overlays = overlays,
-            isScrollComponent = isScrollComponent,
+            LocalContext.current,
+            LocalDesignDocSettings.current.customVariantTransition,
+            textMeasureCache,
+            rootRecurseParams.textHash,
+            overlays,
+            rootRecurseParams.isScrollComponent,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -389,7 +408,8 @@ fun SquooshRoot(
 
         // We need to make a new root with this interaction state applied, and then compute the
         // animation control between the trees.
-        childComposables.clear()
+        composableList.clearChildren()
+
         transitionRoot =
             resolveVariantsRecursively(
                 startFrame,
@@ -401,17 +421,17 @@ fun SquooshRoot(
                 null,
                 density,
                 fontLoader,
-                childComposables,
+                composableList,
                 layoutIdAllocator,
                 variantParentName,
                 isRoot,
                 VariableState.create(),
-                appContext = LocalContext.current,
-                textMeasureCache = textMeasureCache,
-                textHash = textHash,
-                customVariantTransition = LocalDesignDocSettings.current.customVariantTransition,
-                overlays = overlays,
-                isScrollComponent = isScrollComponent,
+                LocalContext.current,
+                LocalDesignDocSettings.current.customVariantTransition,
+                textMeasureCache,
+                rootRecurseParams.textHash,
+                overlays,
+                rootRecurseParams.isScrollComponent,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }
@@ -627,7 +647,7 @@ fun SquooshRoot(
 
     // Create a Modifier to handle scroll inputs if this is a scrollable view
     val scrollModifier =
-        if (isScrollComponent && orientation != null) {
+        if (rootRecurseParams.isScrollComponent && orientation != null) {
             // If a callback to get the scrollable state exists, call it
             val setScrollableStateCallback =
                 customizationContext
@@ -676,7 +696,7 @@ fun SquooshRoot(
                     )
                     .semantics {
                         sDocRenderStatus = DocRenderStatus.Rendered
-                        sDocRenderText = textHash
+                        sDocRenderText = rootRecurseParams.textHash
                     }
                     .then(scrollModifier),
             measurePolicy =
@@ -698,7 +718,7 @@ fun SquooshRoot(
                 ),
             content = {
                 // Now render all of the children
-                for (child in childComposables) {
+                for (child in composableList.childComposables) {
                     var needsComposition = true
                     var composableChildModifier =
                         Modifier.drawWithContent {
@@ -728,7 +748,7 @@ fun SquooshRoot(
                                 designSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
                                 liveUpdateMode,
                                 designComposeCallbacks,
-                                true, // Is scroll component
+                                rootRecurseParams.withScrolling(), // Is scroll component
                             )
                         }
                     } else if (child.component == null) {
@@ -795,6 +815,51 @@ fun SquooshRoot(
             },
         )
         designSwitcher()
+
+        for (overlay in composableList.overlayNodes) {
+            val contentAlignment: Alignment =
+                when (overlay.extras.overlayPositionType) {
+                    OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_LEFT -> Alignment.TopStart
+                    OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_CENTER -> Alignment.TopCenter
+                    OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_RIGHT -> Alignment.TopEnd
+                    OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_LEFT -> Alignment.BottomStart
+                    OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_CENTER ->
+                        Alignment.BottomCenter
+                    OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_RIGHT -> Alignment.BottomEnd
+                    else -> Alignment.Center
+                }
+            val backgroundMod =
+                overlay.extras.overlayBackgroundOrNull?.colorOrNull?.let {
+                    Modifier.background(Color(it.r, it.g, it.b, it.a))
+                } ?: Modifier
+            val closeMod =
+                if (
+                    overlay.extras.overlayBackgroundInteraction ==
+                        OverlayBackgroundInteraction
+                            .OVERLAY_BACKGROUND_INTERACTION_CLOSE_ON_CLICK_OUTSIDE
+                ) {
+                    Modifier.clickable { interactionState.close(null) }
+                } else Modifier
+            Box(
+                modifier = Modifier.fillMaxSize().then(backgroundMod).then(closeMod),
+                contentAlignment = contentAlignment,
+            ) {
+                val overlayNodeQuery = NodeQuery.NodeId(overlay.nodeId)
+                SquooshRoot(
+                    docName,
+                    incomingDocId,
+                    overlayNodeQuery,
+                    Modifier,
+                    customizationContext,
+                    serverParams,
+                    setDocId,
+                    DesignSwitcherPolicy.HIDE,
+                    liveUpdateMode,
+                    designComposeCallbacks,
+                    RootRecurseParams(textHash = rootRecurseParams.textHash),
+                )
+            }
+        }
     }
 }
 

@@ -35,8 +35,6 @@ import com.android.designcompose.definition.element.StrokeAlign
 import com.android.designcompose.definition.element.TextDecoration
 import com.android.designcompose.definition.element.ViewShapeKt.box
 import com.android.designcompose.definition.element.background
-import com.android.designcompose.definition.element.color
-import com.android.designcompose.definition.element.colorOrVar
 import com.android.designcompose.definition.element.dimensionProto
 import com.android.designcompose.definition.element.dimensionRect
 import com.android.designcompose.definition.element.fontStretch
@@ -49,7 +47,6 @@ import com.android.designcompose.definition.element.strokeWeight
 import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.interaction.PointerEvents
 import com.android.designcompose.definition.interaction.action
-import com.android.designcompose.definition.interaction.reaction
 import com.android.designcompose.definition.interaction.trigger
 import com.android.designcompose.definition.layout.AlignContent
 import com.android.designcompose.definition.layout.AlignItems
@@ -62,7 +59,6 @@ import com.android.designcompose.definition.layout.LayoutSizing
 import com.android.designcompose.definition.layout.Overflow
 import com.android.designcompose.definition.layout.OverflowDirection
 import com.android.designcompose.definition.layout.PositionType
-import com.android.designcompose.definition.layout.copy
 import com.android.designcompose.definition.layout.itemSpacing
 import com.android.designcompose.definition.layout.layoutStyle
 import com.android.designcompose.definition.layout.scrollInfo
@@ -71,17 +67,12 @@ import com.android.designcompose.definition.modifier.TextAlign
 import com.android.designcompose.definition.modifier.TextAlignVertical
 import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.definition.plugin.FrameExtras
-import com.android.designcompose.definition.plugin.OverlayBackgroundInteraction
-import com.android.designcompose.definition.plugin.OverlayPositionType
-import com.android.designcompose.definition.plugin.colorOrNull
-import com.android.designcompose.definition.plugin.overlayBackgroundOrNull
 import com.android.designcompose.definition.view.ComponentInfo
 import com.android.designcompose.definition.view.Display
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewDataKt.container
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
-import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.frameExtrasOrNull
 import com.android.designcompose.definition.view.nodeStyle
 import com.android.designcompose.definition.view.overridesOrNull
@@ -103,7 +94,25 @@ import com.android.designcompose.squooshRootNode
 import com.android.designcompose.utils.hasScrolling
 import com.android.designcompose.utils.isSupportedInteraction
 import com.android.designcompose.utils.mergeStyles
-import com.google.protobuf.empty
+
+// Helper class to hold the list of child composables and overlays that need to be composed
+// separately.
+internal class ComposableList(
+    val childComposables: ArrayList<SquooshChildComposable> = arrayListOf(),
+    val overlayNodes: ArrayList<SquooshOverlayComposable> = arrayListOf(),
+) {
+    fun addChild(child: SquooshChildComposable) {
+        childComposables.add(child)
+    }
+
+    fun clearChildren() {
+        childComposables.clear()
+    }
+
+    fun addOverlay(nodeId: String, extras: FrameExtras) {
+        overlayNodes.add(SquooshOverlayComposable(nodeId, extras))
+    }
+}
 
 // Remember if there's a child composable for a given node, and also we return an ordered
 // list of all the child composables we need to render, along with transforms etc.
@@ -125,6 +134,8 @@ internal class SquooshChildComposable(
     // TextStyle to be used in ComponentReplacementContext if replacing a text node
     val textStyle: TextStyle? = null,
 )
+
+internal class SquooshOverlayComposable(val nodeId: String, val extras: FrameExtras)
 
 /// Record parent component info with a singly linked list; each child sees a straight path
 /// up through the tree. This saves on allocating a new array for each node with a parent, and
@@ -181,7 +192,7 @@ internal fun resolveVariantsRecursively(
     // XXX: This probably won't show up in any profile, but I used linked lists everywhere
     //      else to reduce the number of objects we make (especially since we run this code
     //      every recompose.
-    composableList: ArrayList<SquooshChildComposable>,
+    composableList: ComposableList,
     layoutIdAllocator: SquooshLayoutIdAllocator,
     variantParentName: String = "",
     isRoot: Boolean,
@@ -190,9 +201,9 @@ internal fun resolveVariantsRecursively(
     customVariantTransition: CustomVariantTransition?,
     textMeasureCache: TextMeasureCache,
     textHash: HashSet<String>,
-    componentLayoutId: Int = 0,
     overlays: List<View>? = null,
     isScrollComponent: Boolean = false,
+    componentLayoutId: Int = 0,
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(viewFromTree.name)) return null
     customizations.getVisibleState(viewFromTree.name)?.let { if (!it.value) return null }
@@ -337,7 +348,7 @@ internal fun resolveVariantsRecursively(
 
     var skipChildren = false // Set to true for customizations that replace children
     if (replacementComponent != null) {
-        composableList.add(
+        composableList.addChild(
             SquooshChildComposable(
                 component = replacementComponent,
                 node = resolvedView,
@@ -353,7 +364,7 @@ internal fun resolveVariantsRecursively(
         // If the view has scrolling, is not the root, and isScrollComponent is false (to prevent
         // infinite recursion), add the view to the list so it can be composed separately in order
         // to support scrolling.
-        composableList.add(
+        composableList.addChild(
             SquooshChildComposable(
                 scrollView = view,
                 node = resolvedView,
@@ -380,7 +391,7 @@ internal fun resolveVariantsRecursively(
             else resolvedView.firstChild = replacementChild
             previousReplacementChild = replacementChild
 
-            composableList.add(
+            composableList.addChild(
                 SquooshChildComposable(
                     component = @Composable { childComponent() },
                     node = replacementChild,
@@ -402,7 +413,7 @@ internal fun resolveVariantsRecursively(
         skipChildren = true
     } else if (hasSupportedInteraction) {
         // Add a SquooshChildComposable to handle the interaction.
-        composableList.add(
+        composableList.addChild(
             SquooshChildComposable(
                 component = null,
                 node = resolvedView,
@@ -432,10 +443,10 @@ internal fun resolveVariantsRecursively(
                         "",
                         false,
                         variableState,
-                        appContext = appContext,
-                        textMeasureCache = textMeasureCache,
-                        textHash = textHash,
-                        customVariantTransition = customVariantTransition,
+                        appContext,
+                        customVariantTransition,
+                        textMeasureCache,
+                        textHash,
                         componentLayoutId = thisLayoutId,
                     ) ?: continue
 
@@ -453,58 +464,7 @@ internal fun resolveVariantsRecursively(
     if (overlays != null) {
         for (overlay in overlays) {
             val overlayExtras = overlay.frameExtrasOrNull ?: continue
-
-            // We want to ensure that the background close interaction appears after the regular
-            // content but before the child content. We can't construct a `SquooshChildComposable`
-            // without the background node, which we use the style of the overlay itself to
-            // construct (although perhaps we should construct the overlay background from entirely
-            // whole cloth).
-            val interactionInsertionPoint = composableList.size
-
-            // Resolve the tree for the overlay content.
-            val overlayContent =
-                resolveVariantsRecursively(
-                    overlay,
-                    document,
-                    customizations,
-                    variantTransition,
-                    interactionState,
-                    keyTracker,
-                    null,
-                    density,
-                    fontResourceLoader,
-                    composableList,
-                    layoutIdAllocator,
-                    "",
-                    false,
-                    variableState,
-                    appContext = appContext,
-                    textMeasureCache = textMeasureCache,
-                    textHash = textHash,
-                    customVariantTransition = customVariantTransition,
-                    componentLayoutId = thisLayoutId,
-                ) ?: continue
-
-            // Make a synthetic parent for the overlay.
-            val overlayContainer =
-                generateOverlayNode(overlayExtras, overlayContent, layoutIdAllocator)
-            // Append to the root
-            var lastSibling = resolvedView.firstChild
-            while (lastSibling?.nextSibling != null) lastSibling = lastSibling.nextSibling
-            if (lastSibling != null) lastSibling.nextSibling = overlayContainer
-            else resolvedView.firstChild = overlayContainer
-
-            // Add a SquooshChildComposable to handle the click. An overlay either takes the
-            // click and closes, or takes the click and does nothing, so either way this is
-            // the correct thing to do.
-            composableList.add(
-                interactionInsertionPoint,
-                SquooshChildComposable(
-                    component = null,
-                    node = overlayContainer,
-                    parentComponents = parentComps,
-                ),
-            )
+            composableList.addOverlay(overlay.id, overlayExtras)
         }
     }
 
@@ -651,147 +611,4 @@ internal fun generateReplacementListChildNode(
         )
 
     return listChildNode
-}
-
-/// Create a SquooshResolvedNode for an overlay, with the appropriate layout style set up.
-private fun generateOverlayNode(
-    overlay: FrameExtras,
-    node: SquooshResolvedNode,
-    layoutIdAllocator: SquooshLayoutIdAllocator,
-): SquooshResolvedNode {
-    // Make a view based on the child node which uses a synthesized style.
-    val layoutStyle =
-        node.style.layoutStyle.copy {
-            positionType = PositionType.POSITION_TYPE_ABSOLUTE
-            top = dimensionProto { percent = 0.0f }
-            left = dimensionProto { percent = 0.0f }
-            right = dimensionProto { percent = 0.0f }
-            bottom = dimensionProto { percent = 0.0f }
-            width = dimensionProto { percent = 1.0f }
-            height = dimensionProto { percent = 1.0f }
-            flexDirection = FlexDirection.FLEX_DIRECTION_COLUMN
-            when (overlay.overlayPositionType) {
-                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_LEFT -> {
-                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
-                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_START // X
-                }
-
-                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_CENTER -> {
-                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
-                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
-                }
-
-                OverlayPositionType.OVERLAY_POSITION_TYPE_TOP_RIGHT -> {
-                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_START // Y
-                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_END // X
-                }
-
-                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_LEFT -> {
-                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
-                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_START // X
-                }
-
-                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_CENTER -> {
-                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
-                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
-                }
-
-                OverlayPositionType.OVERLAY_POSITION_TYPE_BOTTOM_RIGHT -> {
-                    justifyContent = JustifyContent.JUSTIFY_CONTENT_FLEX_END // Y
-                    alignItems = AlignItems.ALIGN_ITEMS_FLEX_END // X
-                }
-                // Center and Manual both are centered; not clear how to implement manual
-                // positioning
-                // without making a layout-dependent query.
-                else -> {
-                    justifyContent = JustifyContent.JUSTIFY_CONTENT_CENTER // Y
-                    alignItems = AlignItems.ALIGN_ITEMS_CENTER // X
-                }
-            }
-        }
-
-    val newNodeStyle =
-        node.style.nodeStyle.copy {
-            this.overflow = Overflow.OVERFLOW_VISIBLE
-            this.backgrounds.clear()
-
-            overlay.overlayBackgroundOrNull?.colorOrNull?.let {
-                this.backgrounds.add(
-                    background {
-                        solid = colorOrVar {
-                            color = color {
-                                r = (it.r * 255.0).toInt()
-                                g = (it.g * 255.0).toInt()
-                                b = (it.b * 255.0).toInt()
-                                a = (it.a * 255.0).toInt()
-                            }
-                        }
-                    }
-                )
-            }
-        }
-
-    val overlayStyle = viewStyle {
-        this.layoutStyle = layoutStyle
-        this.nodeStyle = newNodeStyle
-    }
-
-    // Now synthesize a view.
-    val overlayViewData = container {
-        this.shape = viewShape { rect = box { isMask = false } }
-        this.children.add(node.view)
-    }
-
-    val overlayScrollInfo = scrollInfo {
-        this.pagedScrolling = false
-        this.overflow = OverflowDirection.OVERFLOW_DIRECTION_NONE
-    }
-
-    if (node.view.uniqueId !in 0..0xFFFF) {
-        throw RuntimeException("View's unique ID must be in the range 0..0xFFFF")
-    }
-    val overlayView = view {
-        this.uniqueId = (node.view.uniqueId + 0x2000)
-        this.id = "overlay-${node.view.id}"
-        this.name = "Overlay ${node.view.name}"
-        if (
-            overlay.overlayBackgroundInteraction ==
-                OverlayBackgroundInteraction.OVERLAY_BACKGROUND_INTERACTION_CLOSE_ON_CLICK_OUTSIDE
-        ) {
-            this.reactions.add(
-                reaction {
-                    trigger = trigger { click = empty {} }
-                    action = action { close = empty {} }
-                }
-            )
-        }
-        this.scrollInfo = overlayScrollInfo
-        this.style = overlayStyle
-        this.data = viewData { container = overlayViewData }
-        this.renderMethod = View.RenderMethod.RENDER_METHOD_NONE
-    }
-    val overlayLayoutId = layoutIdAllocator.listLayoutId(node.layoutId)
-    val layoutId =
-        computeSyntheticOverlayLayoutId(
-            overlayLayoutId,
-            0,
-        ) // XXX: What about multiple overlays of the same content?
-    layoutIdAllocator.visitLayoutId(layoutId)
-
-    val overlayNode =
-        SquooshResolvedNode(
-            view = overlayView,
-            style = overlayStyle,
-            layoutId = layoutId,
-            textInfo = null,
-            unresolvedNodeId = "overlay-${node.unresolvedNodeId}",
-            firstChild = node,
-            nextSibling = null,
-            parent = node.parent,
-            computedLayout = null,
-            needsChildRender = false,
-        )
-    node.parent = overlayNode
-
-    return overlayNode
 }

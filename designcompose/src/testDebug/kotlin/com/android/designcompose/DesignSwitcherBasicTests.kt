@@ -16,21 +16,17 @@
 
 package com.android.designcompose
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.TestUtils.ClearStateTestRule
 import com.android.designcompose.common.DesignDocId
@@ -52,11 +48,7 @@ import org.robolectric.annotation.GraphicsMode
 @Composable
 fun DesignSwitcherTest(testName: TestName) {
     val idState = remember { mutableStateOf(testName.methodName) }
-    Row(
-        modifier = Modifier.size(360.dp, 640.dp).background(Color.Gray),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.End,
-    ) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
         DesignSwitcher(
             doc = null,
             currentDocId = DesignDocId(idState.value),
@@ -69,7 +61,7 @@ fun DesignSwitcherTest(testName: TestName) {
 @Category(Fetchable::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = RobolectricDeviceQualifiers.SmallPhone, sdk = [34])
+@Config(qualifiers = RobolectricDeviceQualifiers.MediumPhone, sdk = [34])
 class DesignSwitcherBasicTests {
     // Must reset the interaction state so that the DesignSwitcher starts off closed.
     @get:Rule val clearStateTestRule = ClearStateTestRule()
@@ -105,7 +97,7 @@ class DesignSwitcherBasicTests {
         with(composeTestRule) {
             onDCDoc(DesignSwitcherDoc).performClick()
             with(onDCDoc(DesignSwitcherDoc)) {
-                onNodeWithTag("#ChangeButton").performClick()
+                onNodeWithTag("#ChangeButton", useUnmergedTree = true).performClick()
                 assertHasText("Load")
             }
             captureRootRoboImage("ChangeFileScreen")
@@ -120,7 +112,7 @@ class DesignSwitcherBasicTests {
             onDCDoc(DesignSwitcherDoc).performClick()
             onNodeWithTag("#Options", useUnmergedTree = true).performClick()
             captureRootRoboImage("OptionsScreenBeforeCheckingBox")
-            onAllNodes(hasClickAction())[0].performClick() // Currently the only way to find it
+            onAllNodes(hasClickAction())[1].performClick() // Currently the only way to find it
             captureRootRoboImage("OptionsScreenAfterCheckingBox")
         }
     }

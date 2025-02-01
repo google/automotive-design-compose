@@ -22,6 +22,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.android.designcompose.LocalCustomizationContext
 import com.android.designcompose.ShaderHelper
 import com.android.designcompose.ShaderHelper.toShaderUniform
 import com.android.designcompose.ShaderHelper.toShaderUniformState
@@ -31,7 +32,7 @@ import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.customBackgroundShaderUniformStates
 import com.android.designcompose.customBackgroundShaderUniforms
-import com.android.designcompose.customStrokeShaderUniformStates
+import com.android.designcompose.setShaderTimeUniformState
 import com.android.designcompose.testapp.validation.R
 
 @DesignDoc(id = "TkgjNl81e5joWeAivmIdzm")
@@ -43,26 +44,24 @@ interface BrushFromShaderPluginTest {
         @Design(node = "#text-color-custom") customTextColors: ShaderUniformCustomizations,
         @Design(node = "#color-state-custom") customColorStates: ShaderUniformCustomizations,
         @Design(node = "#int-state-custom") customIntStates: ShaderUniformCustomizations,
-        @Design(node = "#stroke") customStrokeStates: ShaderUniformCustomizations,
-        @Design(node = "#text-stroke") customTextStrokeStates: ShaderUniformCustomizations,
     )
 }
 
 @Composable
 fun BrushFromShaderPluginTest() {
     // Create a animate state for iTime so the shader can animate over time.
-    val iTimeState = ShaderHelper.getShaderUniformTimeState()
-    val iTimeShaderUniformState = iTimeState.toShaderUniformState(ShaderHelper.UNIFORM_TIME)
+    val iTimeFloatState = ShaderHelper.getShaderUniformTimeFloatState()
+    LocalCustomizationContext.current.setShaderTimeUniformState(
+        iTimeFloatState.toShaderUniformState(ShaderHelper.UNIFORM_TIME)
+    )
 
     // DEV BRANCH: 5oAVZxBQCLCf7spBLLFRHw. This list tests multi-doc support.
     val rootShaderUniformCustomizations = ShaderUniformCustomizations()
-    rootShaderUniformCustomizations
-        .customBackgroundShaderUniforms(
-            ShaderHelper.createShaderFloatUniform("speed", 0.05f),
-            ShaderHelper.createShaderFloatUniform("clouddark", 0.5f),
-            ShaderHelper.createShaderFloatUniform("cloudcover", 0.23f),
-        )
-        .customBackgroundShaderUniformStates(iTimeShaderUniformState)
+    rootShaderUniformCustomizations.customBackgroundShaderUniforms(
+        ShaderHelper.createShaderFloatUniform("speed", 0.05f),
+        ShaderHelper.createShaderFloatUniform("clouddark", 0.5f),
+        ShaderHelper.createShaderFloatUniform("cloudcover", 0.23f),
+    )
 
     val customColors = ShaderUniformCustomizations()
     customColors.customBackgroundShaderUniforms(
@@ -74,11 +73,13 @@ fun BrushFromShaderPluginTest() {
             Color(LocalContext.current.getColor(R.color.purple_200)),
             Color(LocalContext.current.getColor(R.color.purple_700)),
         )
-    val colorState = remember { derivedStateOf { colors[iTimeState.floatValue.toInt() % 2] } }
+    val colorState = remember { derivedStateOf { colors[iTimeFloatState.floatValue.toInt() % 2] } }
     val customColorStates = ShaderUniformCustomizations()
     customColorStates.customBackgroundShaderUniformStates(colorState.toShaderUniformState("iColor"))
 
-    val intState = remember { derivedStateOf { iTimeState.floatValue.toInt() % 5 }.asIntState() }
+    val intState = remember {
+        derivedStateOf { iTimeFloatState.floatValue.toInt() % 5 }.asIntState()
+    }
     val customIntStates = ShaderUniformCustomizations()
     customIntStates.customBackgroundShaderUniformStates(intState.toShaderUniformState("iCase"))
     BrushFromShaderPluginTestDoc.MainFrame(
@@ -87,9 +88,5 @@ fun BrushFromShaderPluginTest() {
         customTextColors = customColors,
         customColorStates = customColorStates,
         customIntStates = customIntStates,
-        customStrokeStates =
-            ShaderUniformCustomizations().customStrokeShaderUniformStates(iTimeShaderUniformState),
-        customTextStrokeStates =
-            ShaderUniformCustomizations().customStrokeShaderUniformStates(iTimeShaderUniformState),
     )
 }

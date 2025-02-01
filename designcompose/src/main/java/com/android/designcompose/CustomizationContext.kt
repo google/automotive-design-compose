@@ -29,6 +29,7 @@ import com.android.designcompose.common.nodeNameToPropertyValueList
 import com.android.designcompose.definition.element.Background
 import com.android.designcompose.definition.element.ColorOrVar.ColorOrVarTypeCase
 import com.android.designcompose.definition.element.DimensionProto
+import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.definition.view.ComponentInfo
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.componentInfoOrNull
@@ -176,6 +177,7 @@ data class CustomizationContext(
         > =
         Optional.empty(),
     var key: String? = null,
+    var shaderTimeUniformState: Optional<State<ShaderUniform>> = Optional.empty(),
 )
 
 private fun CustomizationContext.customize(nodeName: String, evolver: (Customization) -> Unit) {
@@ -337,6 +339,10 @@ fun CustomizationContext.setShaderUniformCustomizations(
     customize(nodeName) { c -> c.shaderUniformCustomizations = Optional.ofNullable(value) }
 }
 
+fun CustomizationContext.setShaderTimeUniformState(value: State<ShaderUniform>) {
+    shaderTimeUniformState = Optional.ofNullable(value)
+}
+
 fun CustomizationContext.setScrollCallbacks(nodeName: String, value: DesignScrollCallbacks) {
     customize(nodeName) { c -> c.scrollCallbacks = Optional.ofNullable(value) }
 }
@@ -490,6 +496,10 @@ fun CustomizationContext.getShaderUniformCustomizations(
     return cs[nodeName]?.shaderUniformCustomizations?.getOrNull()
 }
 
+fun CustomizationContext.getShaderTimeUniformState(): State<ShaderUniform>? {
+    return shaderTimeUniformState.getOrNull()
+}
+
 fun CustomizationContext.getScrollCallbacks(nodeName: String): DesignScrollCallbacks? {
     return cs[nodeName]?.scrollCallbacks?.getOrNull()
 }
@@ -510,4 +520,5 @@ fun CustomizationContext.mergeFrom(other: CustomizationContext) {
     }
     other.variantProperties.forEach { variantProperties[it.key] = it.value }
     customComposable = other.customComposable
+    shaderTimeUniformState = other.shaderTimeUniformState
 }

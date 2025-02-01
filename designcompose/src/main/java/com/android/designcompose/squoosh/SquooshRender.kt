@@ -47,6 +47,7 @@ import com.android.designcompose.definition.view.textColorOrNull
 import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.getCustomBrush
 import com.android.designcompose.getShaderBrush
+import com.android.designcompose.getShaderTimeUniformState
 import com.android.designcompose.getShaderUniformCustomizations
 import com.android.designcompose.layout_interface.Layout
 import com.android.designcompose.squooshShapeRender
@@ -373,6 +374,7 @@ private fun squooshTextRender(
             getShaderBrush(
                 style.nodeStyle.stroke.shaderData,
                 customizations.getShaderUniformCustomizations(nodeName),
+                customizations.getShaderTimeUniformState(),
                 asBackground = false,
             )
         paragraph.paint(

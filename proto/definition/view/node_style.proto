@@ -45,7 +45,7 @@ enum Display {
 
 // Contains all of the styleable parameters accepted by the Rect and Text
 // components.
-// Next id = 43
+// Next id = 44
 message NodeStyle {
   // Text properties
   element.Background text_color = 1;

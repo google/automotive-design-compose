@@ -17,7 +17,6 @@
 package com.android.designcompose.squoosh
 
 import android.util.Log
-import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.android.designcompose.Jni
 import com.android.designcompose.LayoutManager
 import com.android.designcompose.layout_interface.Layout
@@ -28,6 +27,7 @@ import com.android.designcompose.layout_interface.LayoutParentChildren
 import com.android.designcompose.layout_interface.layoutNode
 import com.android.designcompose.layout_interface.layoutNodeList
 import com.android.designcompose.layout_interface.layoutParentChildren
+import com.google.protobuf.InvalidProtocolBufferException
 
 internal class SquooshLayoutManager(val id: Int)
 

@@ -42,6 +42,7 @@ internal data class TextMeasureData(
     val density: Density,
     val maxLines: Int,
     val autoWidth: Boolean,
+    val hyperlinkOffsetMap: HashMap<Int, String?>,
 ) {
     override fun hashCode(): Int {
         // Don't hash all of TextLayoutData because it's derived from style, which is
@@ -50,6 +51,7 @@ internal data class TextMeasureData(
         result = 31 * result + textHash
         result = 31 * result + maxLines.hashCode()
         result = 31 * result + autoWidth.hashCode()
+        result = 31 * result + hyperlinkOffsetMap.hashCode()
         return result
     }
 
@@ -63,6 +65,7 @@ internal data class TextMeasureData(
         if (textHash != other.textHash) return false
         if (maxLines != other.maxLines) return false
         if (autoWidth != other.autoWidth) return false
+        if (hyperlinkOffsetMap != other.hyperlinkOffsetMap) return false
 
         return true
     }

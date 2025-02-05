@@ -19,11 +19,18 @@ package com.android.designcompose.squoosh
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.Paragraph
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.InteractionState
 import com.android.designcompose.definition.interaction.Action
+import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.dispatch
 import com.android.designcompose.getKey
 import com.android.designcompose.getTapCallback
@@ -57,6 +64,62 @@ internal fun findTargetInstanceId(
     }
 
     return null
+}
+
+internal fun Modifier.hyperlinkHandler(
+    node: SquooshResolvedNode,
+    uriHandler: UriHandler,
+): Modifier {
+    return this.then(
+            Modifier.pointerInput(node.textInfo, node.computedLayout) {
+                if (node.textInfo == null) return@pointerInput
+                if (node.computedLayout == null) return@pointerInput
+                val paragraph =
+                    Paragraph(
+                        paragraphIntrinsics = node.textInfo.paragraph,
+                        width = node.computedLayout!!.width * density,
+                        maxLines = node.textInfo.maxLines,
+                        ellipsis =
+                            node.view.style.nodeStyle.textOverflow ==
+                                TextOverflow.TEXT_OVERFLOW_ELLIPSIS,
+                    )
+                detectTapGestures(
+                    onPress = {
+                        val offset = paragraph.getOffsetForPosition(Offset(it.x, it.y))
+                        val sortedMap = node.textInfo.hyperlinkOffsetMap
+                        val iterator = sortedMap.iterator()
+                        var lastKey = iterator.next().key
+                        var key: Int? = null
+                        while (iterator.hasNext()) {
+                            key = iterator.next().key
+                            if (offset in lastKey..<key && sortedMap[lastKey] != null) {
+                                val dispatchClickEvent = tryAwaitRelease()
+                                if (dispatchClickEvent) {
+                                    uriHandler.openUri(sortedMap[lastKey]!!)
+                                    return@detectTapGestures
+                                }
+                            }
+                            lastKey = key
+                        }
+                        if (key == null && sortedMap[lastKey] != null) {
+                            val dispatchClickEvent = tryAwaitRelease()
+                            if (dispatchClickEvent) {
+                                uriHandler.openUri(sortedMap[lastKey]!!)
+                            }
+                        }
+                    }
+                )
+            }
+        )
+        .semantics {
+            this.contentDescription =
+                if (node.view.data.hasText()) node.view.data.text.content
+                else {
+                    node.view.data.styledText.styledTextsList.joinToString(separator = "") {
+                        it.text
+                    }
+                }
+        }
 }
 
 internal fun Modifier.squooshInteraction(

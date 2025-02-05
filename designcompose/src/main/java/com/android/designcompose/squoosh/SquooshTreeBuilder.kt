@@ -333,6 +333,7 @@ internal fun resolveVariantsRecursively(
     }
     val tapCallback = customizations.getTapCallback(view)
     if (tapCallback != null) hasSupportedInteraction = true
+    if (textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) hasSupportedInteraction = true
 
     if (interactionState.isPressed(viewFromTree.id)) hasSupportedInteraction = true
 

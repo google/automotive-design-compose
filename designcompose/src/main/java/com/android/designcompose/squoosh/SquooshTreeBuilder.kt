@@ -17,6 +17,7 @@
 package com.android.designcompose.squoosh
 
 import android.content.Context
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -46,8 +47,6 @@ import com.android.designcompose.definition.element.stroke
 import com.android.designcompose.definition.element.strokeWeight
 import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.interaction.PointerEvents
-import com.android.designcompose.definition.interaction.action
-import com.android.designcompose.definition.interaction.trigger
 import com.android.designcompose.definition.layout.AlignContent
 import com.android.designcompose.definition.layout.AlignItems
 import com.android.designcompose.definition.layout.AlignSelf
@@ -347,7 +346,23 @@ internal fun resolveVariantsRecursively(
     val resolvedView = SquooshResolvedNode(view, style, layoutId, resolvedTextInfo, viewFromTree.id)
 
     var skipChildren = false // Set to true for customizations that replace children
-    if (replacementComponent != null) {
+    if (textInfo?.hasHyperlink == true) {
+        composableList.addChild(
+            SquooshChildComposable(
+                component = { _ ->
+                    Text(
+                        text = textMeasureCache.get(layoutId)!!.annotatedText,
+                        style = textStyle ?: TextStyle.Default,
+                    )
+                },
+                node = resolvedView,
+                parentComponents = parentComps,
+                textStyle = textStyle,
+            )
+        )
+        resolvedView.needsChildRender = true
+        skipChildren = true
+    } else if (replacementComponent != null) {
         composableList.addChild(
             SquooshChildComposable(
                 component = replacementComponent,

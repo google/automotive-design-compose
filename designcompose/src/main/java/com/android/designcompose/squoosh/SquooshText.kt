@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
@@ -72,7 +74,7 @@ internal class TextMeasureCache {
         val data: TextMeasureData,
         val text: String?,
         val customStyle: TextStyle?,
-        val annotatedText: String,
+        val annotatedText: AnnotatedString,
         val textStyle: TextStyle,
         // XXX: Do we need to use the annotated string? This impl might break localization.
     )
@@ -107,6 +109,7 @@ internal class TextMeasureCache {
 /// Internally, this function creates a Compose ParagraphIntrinsics, which does some work
 /// on the text in order to quickly answer layout queries. Creating a ParagraphIntrinsics
 /// is heavyweight, so we should avoid doing it frequently.
+@OptIn(ExperimentalTextApi::class)
 internal fun squooshComputeTextInfo(
     v: View,
     layoutId: Int,
@@ -131,7 +134,7 @@ internal fun squooshComputeTextInfo(
             cachedText.text == customizedText &&
             cachedText.customStyle == customTextStyle
     ) {
-        textHash.add(cachedText.annotatedText)
+        textHash.add(cachedText.annotatedText.text)
         textMeasureCache.put(layoutId, cachedText)
         return Pair(cachedText.data, cachedText.textStyle)
     }
@@ -144,10 +147,16 @@ internal fun squooshComputeTextInfo(
         } else {
             if (v.data.hasText()) {
                 val builder = AnnotatedString.Builder()
-                builder.append(normalizeNewlines(getTextContent(appContext, v.data.text)))
+                val text = normalizeNewlines(getTextContent(appContext, v.data.text))
+                builder.append(text)
+                if (v.style.nodeStyle.hasHyperlinks()) {
+                    val link = v.style.nodeStyle.hyperlinks.value
+                    builder.addLink(LinkAnnotation.Url(link), 0, text.length)
+                }
                 builder.toAnnotatedString()
             } else if (v.data.hasStyledText()) {
                 val builder = AnnotatedString.Builder()
+                var startIndex = 0
                 for (run in getTextContent(appContext, v.data.styledText)) {
                     val style = run.styleOrNull!!
                     val textBrushAndOpacity =
@@ -193,6 +202,15 @@ internal fun squooshComputeTextInfo(
                             // platformStyle = PlatformSpanStyle(includeFontPadding = false),
                         ))
                     )
+                    if (run.style.hasHyperlink()) {
+                        val link = run.style.hyperlink.value
+                        builder.addLink(
+                            LinkAnnotation.Url(link),
+                            startIndex,
+                            startIndex + run.text.length,
+                        )
+                    }
+                    startIndex += run.text.length
                     builder.append(run.text)
                     builder.pop()
                 }
@@ -307,6 +325,7 @@ internal fun squooshComputeTextInfo(
             density,
             maxLines,
             v.style.isAutoWidthText(),
+            annotatedText.hasLinkAnnotations(0, annotatedText.text.length),
         )
 
     textMeasureCache.put(
@@ -315,7 +334,7 @@ internal fun squooshComputeTextInfo(
             textMeasureData,
             customizedText,
             customTextStyle,
-            annotatedText.text,
+            annotatedText,
             textStyle,
         ),
     )

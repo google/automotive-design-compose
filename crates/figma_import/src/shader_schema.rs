@@ -60,7 +60,7 @@ pub struct ShaderUniformJson {
 impl Into<(String, ShaderUniform)> for ShaderUniformJson {
     fn into(self) -> (String, ShaderUniform) {
         let uniform_value = match self.uniform_type.as_str() {
-            "float" | "iTime" => {
+            "float" | "half" | "iTime" => {
                 if let Some(float_val) = self.uniform_value.as_f64() {
                     Some(ShaderUniformValue { value_type: Some(FloatValue(float_val as f32)) })
                 } else {
@@ -68,16 +68,22 @@ impl Into<(String, ShaderUniform)> for ShaderUniformJson {
                     None
                 }
             }
-            "float2" | "float3" | "float4" => {
+            "float2" | "float3" | "float4" | "half2" | "half3" | "half4" => {
                 if let Some(uniform_array) = self.uniform_value.as_array() {
                     let float_array: Vec<f32> = uniform_array
                         .iter()
                         .filter_map(|value| value.as_f64().map(|v| v as f32))
                         .collect();
                     match float_array.len() {
-                        2 if self.uniform_type == "float2" => Some(float_array),
-                        3 if self.uniform_type == "float3" => Some(float_array),
-                        4 if self.uniform_type == "float4" => Some(float_array),
+                        2 if self.uniform_type == "float2" || self.uniform_type == "half2" => {
+                            Some(float_array)
+                        }
+                        3 if self.uniform_type == "float3" || self.uniform_type == "half3" => {
+                            Some(float_array)
+                        }
+                        4 if self.uniform_type == "float4" || self.uniform_type == "half4" => {
+                            Some(float_array)
+                        }
                         _ => None,
                     }
                     .map(|float_vec| ShaderUniformValue {

@@ -152,6 +152,7 @@
             <label for="floatUniformMax" style="flex-grow: 1;">Max:</label>
             <input type="number" id="floatUniformMax" placeholder="1" step="0.1"></input>
         </div>
+        <input type="checkbox" id="isMediumP">Create a medium float</input>
         </p>
         <div style="display: flex; gap: 4px;">
             <button id="createFloatUniformButton" class="button--primary" style="flex-grow: 1;">Create</button>
@@ -186,6 +187,12 @@
         <label><input type="radio" name="floatArrayUniformType" value="float3">float3</label>
         <br>
         <label><input type="radio" name="floatArrayUniformType" value="float4">float4</label>
+        <br>
+        <label><input type="radio" name="floatArrayUniformType" value="half2">half2</label>
+        <br>
+        <label><input type="radio" name="floatArrayUniformType" value="half3">half3</label>
+        <br>
+        <label><input type="radio" name="floatArrayUniformType" value="half4">half4</label>
         </p>
         <div style="display: flex; gap: 4px;">
             <button id="createFloatArrayUniformButton" class="button--primary" style="flex-grow: 1;">Create</button>
@@ -288,16 +295,18 @@
     const floatUniformNameInput = document.getElementById("floatUniformName");
     const floatUniformMin = document.getElementById("floatUniformMin");
     const floatUniformMax = document.getElementById("floatUniformMax");
+    const isMediumP = document.getElementById("isMediumP");
 
     // "Create" button closes the dialog and creates the uniform
     createFloatUniformButton.onclick = async () => {
         const uniformName = floatUniformNameInput.value;
-        createShaderFloatUniform(floatUniformNameInput.value, null, floatUniformMin.value, floatUniformMax.value);
+        const uniformType = isMediumP.checked ? "half" : "float";
+        createShaderFloatUniform(floatUniformNameInput.value, uniformType, null, floatUniformMin.value, floatUniformMax.value);
         await runShader();
     };
 
-    function createShaderFloatUniform(uniformName, floatValue, uniformMin, uniformMax) {
-        let newUniformEntry = createShaderUniform(uniformName, "float");
+    function createShaderFloatUniform(uniformName, uniformType, floatValue, uniformMin, uniformMax) {
+        let newUniformEntry = createShaderUniform(uniformName, uniformType ? uniformType : "float");
         if (!newUniformEntry) {
             return;
         }
@@ -355,7 +364,7 @@
 
         // Create inputs fields
         const inputsLine = document.createElement("div");
-        let sizeMap = { "float2": 2, "float3": 3, "float4": 4 };
+        let sizeMap = { "float2": 2, "float3": 3, "float4": 4, "half2": 2, "half3": 3, "half4": 4 };
         let arraySize = sizeMap[uniformType];
         for (let i = 0; i < arraySize; i++) {
             let input = document.createElement("input");
@@ -555,11 +564,15 @@
         // iTime is handled separately when the uniforms push the iTime value.
         switch (type) {
             case "float":
+            case "half":
                 const slider = document.getElementById(`slider_${uniform}`);
                 return parseFloat(slider.value);
             case "float2":
             case "float3":
             case "float4":
+            case "half2":
+            case "half3":
+            case "half4":
                 for (let i = 0; i < 4; i++) {
                     const input = document.getElementById(`input_${uniform}_${i}`);
                     if (input) {
@@ -590,9 +603,13 @@
         const type = uniformTypeMap.get(uniform);
         switch (type) {
             case "float":
+            case "half":
             case "float2":
             case "float3":
             case "float4":
+            case "half2":
+            case "half3":
+            case "half4":
             case "int":
                 return previewUniformValue(uniform);
             case "color3":
@@ -849,17 +866,21 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 for (const shaderUniform of shaderUniforms) {
                     switch (shaderUniform.uniformType) {
                         case "float":
+                        case "half":
                             if (shaderUniform.extras) {
-                                createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue,
+                                createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue,
                                     shaderUniform.extras.min, shaderUniform.extras.max);
                             } else {
-                                createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformValue,
+                                createShaderFloatUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue,
                                     Math.min(0, shaderUniform.uniformValue), Math.max(1, shaderUniform.uniformValue));
                             }
                             break;
                         case "float2":
                         case "float3":
                         case "float4":
+                        case "half2":
+                        case "half3":
+                        case "half4":
                             createShaderFloatArrayUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
                             break;
                         case "color3":

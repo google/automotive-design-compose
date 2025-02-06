@@ -47,20 +47,28 @@ message ShaderUniform {
 // Shader uniform value, currently support float, FloatColor and float array.
 message ShaderUniformValue {
 
-  // Float array value for float2, float3 and float4
-  // We might use it for half2, half3 and half4 in the future.
+  // Float array value for float2, float3, float4, half2, half3 and half4.
   message FloatVec {
     repeated float floats = 1;
   }
 
+  // Int array value for int2, int3 and int4.
+  message IntVec {
+    repeated int32 ints = 1;
+  }
+
   oneof value_type {
+    // uniform "type" is "float", "half" or "iTime".
     float float_value = 1;
-    // uniform "type" is "float2", "float3" or "float4" in the plugin data.
+    // uniform "type" is "float2", "float3", "float4", "half2", "half3" or "half4"
+    // in the plugin data.
     FloatVec float_vec_value = 2;
     // uniform "type" is "color3" or "color4" in the plugin data. Alpha would be
     // ignored for "color3" when set uniform value to the runtime shader.
     FloatColor float_color_value = 3;
 
     int32 int_value = 4;
+    // uniform "type" is "int2", "int3" or "int4" in the plugin data.
+    IntVec int_vec_value = 5;
   }
 }

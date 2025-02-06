@@ -129,6 +129,8 @@
             <label><input type="radio" name="uniformType" value="color">Color</label>
             <br>
             <label><input type="radio" name="uniformType" value="int">Int</label>
+            <br>
+            <label><input type="radio" name="uniformType" value="intArray">Int Array</label>
         </p>
         <div style="display: flex; gap: 4px;">
             <button id="continueButton" class="button--primary" style="flex-grow: 1;"
@@ -213,6 +215,25 @@
         </div>
     </dialog>
 
+    <dialog id="createIntArrayUniformDialog">
+        <div><b>Create int array uniform</b></div>
+        <p>
+        <div style="display: flex; gap: 8px;">
+            <label for="intArrayUniformName" style="flex-grow: 1;">Name:</label>
+            <input type="text" id="intArrayUniformName" placeholder="iVec" autofocus></input>
+        </div>
+        <label><input type="radio" name="intArrayUniformType" value="int2" checked="true">int2</label>
+        <br>
+        <label><input type="radio" name="intArrayUniformType" value="int3">int3</label>
+        <br>
+        <label><input type="radio" name="intArrayUniformType" value="int4">int4</label>
+        </p>
+        <div style="display: flex; gap: 4px;">
+            <button id="createIntArrayUniformButton" class="button--primary" style="flex-grow: 1;">Create</button>
+            <button id="closeIntArrayUniformButton" class="button--primary" style="flex-grow: 1;">Close</button>
+        </div>
+    </dialog>
+
 </div>
 <!-- END OF SHADER PLUGIN UI -->
 
@@ -257,6 +278,7 @@
     const createFloatArrayUniformDialog = document.getElementById("createFloatArrayUniformDialog");
     const createColorUniformDialog = document.getElementById("createColorUniformDialog");
     const createIntUniformDialog = document.getElementById("createIntUniformDialog");
+    const createIntArrayUniformDialog = document.getElementById("createIntArrayUniformDialog");
 
     function createUniform() {
         createUniformDialog.showModal();
@@ -277,6 +299,9 @@
                     break;
                 case "int":
                     createIntUniformDialog.showModal();
+                    break;
+                case "intArray":
+                    createIntArrayUniformDialog.showModal();
                     break;
                 case "iTime":
                     createShaderTimeUniform();
@@ -475,6 +500,47 @@
         createIntUniformDialog.close();
     };
 
+    const createIntArrayUniformButton = document.getElementById("createIntArrayUniformButton");
+    const closeIntArrayUniformButton = document.getElementById("closeIntArrayUniformButton");
+    const intArrayUniformNameInput = document.getElementById("intArrayUniformName");
+
+    // "Create" button closes the dialog and creates the uniform
+    createIntArrayUniformButton.onclick = async () => {
+        const uniformName = intArrayUniformNameInput.value;
+        let selectedUniformType = document.querySelector('input[name="intArrayUniformType"]:checked');
+        createShaderIntArrayUniform(intArrayUniformNameInput.value, selectedUniformType.value, null);
+        await runShader();
+    };
+
+    function createShaderIntArrayUniform(uniformName, uniformType, uniformValue) {
+        let newUniformEntry = createShaderUniform(uniformName, uniformType);
+        if (!newUniformEntry) {
+            return;
+        }
+
+        // Uniform is created successfully. Close the creation dialog.
+        createIntArrayUniformDialog.close();
+
+        // Create inputs fields
+        const inputsLine = document.createElement("div");
+        let sizeMap = { "int2": 2, "int3": 3, "int4": 4 };
+        let arraySize = sizeMap[uniformType];
+        for (let i = 0; i < arraySize; i++) {
+            let input = document.createElement("input");
+            input.type = "number";
+            input.value = uniformValue ? uniformValue[i] : 0;
+            input.id = `input_${uniformName}_${i}`;
+            input.step = 1;
+            inputsLine.appendChild(input);
+        }
+        newUniformEntry.appendChild(inputsLine);
+        uniforms.appendChild(newUniformEntry);
+    }
+
+    closeIntArrayUniformButton.onclick = () => {
+        createIntArrayUniformDialog.close();
+    };
+
     function createShaderTimeUniform() {
         const newUniformEntry = createShaderUniform("iTime", "iTime");
         if (!newUniformEntry) {
@@ -559,7 +625,7 @@
 
     function previewUniformValue(uniform) {
         const type = uniformTypeMap.get(uniform);
-        const floatArray = [];
+        const numberArray = [];
         // iTime is handled separately when the uniforms push the iTime value.
         switch (type) {
             case "float":
@@ -575,42 +641,41 @@
                 for (let i = 0; i < 4; i++) {
                     const input = document.getElementById(`input_${uniform}_${i}`);
                     if (input) {
-                        floatArray.push(parseFloat(input.value));
+                        numberArray.push(parseFloat(input.value));
                     }
                 }
-                return floatArray;
-                break;
+                return numberArray;
             case "color3":
             case "color4":
                 const color3 = document.getElementById(`color_${uniform}`);
                 let rgb3 = hexToRgbFloat(color3.value);
-                floatArray.push(rgb3.r);
-                floatArray.push(rgb3.g);
-                floatArray.push(rgb3.b);
+                numberArray.push(rgb3.r);
+                numberArray.push(rgb3.g);
+                numberArray.push(rgb3.b);
                 const alpha = document.getElementById(`alpha_${uniform}`);
                 if (alpha) {
-                    floatArray.push(parseFloat(alpha.value));
+                    numberArray.push(parseFloat(alpha.value));
                 }
-                return floatArray;
+                return numberArray;
             case "int":
                 const input = document.getElementById(`input_${uniform}`);
                 return parseInt(input.value);
+            case "int2":
+            case "int3":
+            case "int4":
+                for (let i = 0; i < 4; i++) {
+                    const input = document.getElementById(`input_${uniform}_${i}`);
+                    if (input) {
+                        numberArray.push(parseInt(input.value));
+                    }
+                }
+                return numberArray;
         }
     }
 
     function uniformValue(uniform) {
         const type = uniformTypeMap.get(uniform);
         switch (type) {
-            case "float":
-            case "half":
-            case "float2":
-            case "float3":
-            case "float4":
-            case "half2":
-            case "half3":
-            case "half4":
-            case "int":
-                return previewUniformValue(uniform);
             case "color3":
             case "color4":
                 const color3 = document.getElementById(`color_${uniform}`);
@@ -625,6 +690,8 @@
             case "iTime":
                 // DesignCompose should simulate the time change.
                 return 0;
+            default:
+                return previewUniformValue(uniform);
         }
     }
 
@@ -893,6 +960,11 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                             break;
                         case "int":
                             createShaderIntUniform(shaderUniform.uniformName, shaderUniform.uniformValue);
+                            break;
+                        case "int2":
+                        case "int3":
+                        case "int4":
+                            createShaderIntArrayUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
                             break;
                         case "iTime":
                             createShaderTimeUniform();

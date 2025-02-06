@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 use crate::figma_schema::FigmaColor;
-use dc_bundle::definition::element::shader_uniform_value::FloatVec;
 use dc_bundle::definition::element::shader_uniform_value::ValueType::{
-    FloatColorValue, FloatValue, FloatVecValue, IntValue,
+    FloatColorValue, FloatValue, FloatVecValue, IntValue, IntVecValue,
 };
+use dc_bundle::definition::element::shader_uniform_value::{FloatVec, IntVec};
 use dc_bundle::definition::element::{Color, ShaderData, ShaderUniform, ShaderUniformValue};
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -110,6 +110,29 @@ impl Into<(String, ShaderUniform)> for ShaderUniformJson {
                     Some(ShaderUniformValue { value_type: Some(IntValue(int_val as i32)) })
                 } else {
                     error!("Error parsing integer for shader int uniform {}", self.uniform_name);
+                    None
+                }
+            }
+            "int2" | "int3" | "int4" => {
+                if let Some(uniform_array) = self.uniform_value.as_array() {
+                    let int_array: Vec<i32> = uniform_array
+                        .iter()
+                        .filter_map(|value| value.as_i64().map(|v| v as i32))
+                        .collect();
+                    match int_array.len() {
+                        2 if self.uniform_type == "int2" => Some(int_array),
+                        3 if self.uniform_type == "int3" => Some(int_array),
+                        4 if self.uniform_type == "int4" => Some(int_array),
+                        _ => None,
+                    }
+                    .map(|int_vec| ShaderUniformValue {
+                        value_type: Some(IntVecValue(IntVec { ints: int_vec })),
+                    })
+                } else {
+                    error!(
+                        "Error parsing int array for shader {} uniform {}",
+                        self.uniform_type, self.uniform_name
+                    );
                     None
                 }
             }

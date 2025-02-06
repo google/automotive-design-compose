@@ -749,6 +749,29 @@ fun ShaderUniform.applyToShader(
             }
         }
 
+        ValueTypeCase.INT_VEC_VALUE -> {
+            val intVecValue = value.intVecValue.intsList
+            when (intVecValue.size) {
+                1 -> if (definedType == "int") shader.setIntUniform(name, intVecValue[0])
+                2 ->
+                    if (definedType == "int2")
+                        shader.setIntUniform(name, intVecValue[0], intVecValue[1])
+                3 ->
+                    if (definedType == "int3")
+                        shader.setIntUniform(name, intVecValue[0], intVecValue[1], intVecValue[2])
+                4 ->
+                    if (definedType == "int4")
+                        shader.setIntUniform(
+                            name,
+                            intVecValue[0],
+                            intVecValue[1],
+                            intVecValue[2],
+                            intVecValue[3],
+                        )
+                else -> Log.e(TAG, "Invalid shader uniform $name $definedType")
+            }
+        }
+
         else -> {
             Log.w(TAG, "Invalid shader uniform $name")
         }

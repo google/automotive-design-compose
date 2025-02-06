@@ -16,17 +16,28 @@
 
 package com.android.designcompose.testapp.validation
 
+import android.app.Activity
+import android.app.Instrumentation
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.test.espresso.intent.Intents.intended
+import androidx.test.espresso.intent.Intents.intending
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.intent.rule.IntentsRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.testapp.common.InterFontTestRule
+import com.android.designcompose.testapp.validation.examples.HyperlinkTest
+import kotlin.test.Ignore
+import kotlin.test.Test
 import org.junit.Rule
 import org.junit.runner.RunWith
 
@@ -37,16 +48,23 @@ class HyperlinkTests {
     @get:Rule val interFontRule = InterFontTestRule()
     @get:Rule var intentsRule: IntentsRule = IntentsRule()
 
-    // These are disabled because squoosh does not support clickable hyperlink text
-    /*
     @Test
     fun testClickSingleNodeLink() {
+        val result = Instrumentation.ActivityResult(Activity.RESULT_OK, null)
         val url = "https://github.com/google/automotive-design-compose"
+        // When the intent with the given url is sent, respond with the given result so it
+        // won't start the url in the browser in the test. Otherwise, this test takes longer
+        // to execute.
+        intending(hasData(url)).respondWith(result)
+
         composeTestRule.setContent { HyperlinkTest() }
-        composeTestRule.onNodeWithText(url).performClick()
+        composeTestRule.onNodeWithContentDescription(url).performClick()
+        // Verify that the intent with the given url was sent.
         intended(hasData(url))
     }
 
+    /** Disabled due to Squoosh's implementation not using the TextLayout */
+    @Ignore
     @Test
     fun testClickEmbeddedLink() {
         val result = Instrumentation.ActivityResult(Activity.RESULT_OK, null)
@@ -68,7 +86,6 @@ class HyperlinkTests {
 
         intended(hasData(url))
     }
-    */
 
     /** Use BoundsAssertions.getPartialBoundsOfLinks when it is available */
     @OptIn(ExperimentalTextApi::class)

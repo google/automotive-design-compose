@@ -55,6 +55,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontLoader
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -788,7 +789,15 @@ fun SquooshRoot(
                                     child,
                                     isPressed,
                                 )
-                        else needsComposition = false
+                        else if (child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) {
+                            composableChildModifier =
+                                composableChildModifier.hyperlinkHandler(
+                                    child.node,
+                                    LocalUriHandler.current,
+                                )
+                        } else {
+                            needsComposition = false
+                        }
                     }
 
                     // If composition is not needed, continue to the next child

@@ -140,7 +140,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             { VariantAnimationTimelineTest() },
             VariantAnimationTimelineTestDoc.javaClass.name,
         ),
-        // No support for hyperlinks in squoosh.
+        // Hyperlink
         Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)

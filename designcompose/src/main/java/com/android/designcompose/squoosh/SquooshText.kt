@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
@@ -136,6 +137,8 @@ internal fun squooshComputeTextInfo(
         return Pair(cachedText.data, cachedText.textStyle)
     }
 
+    val hyperlinkOffsetMap = LinkedHashMap<Int, String?>()
+
     val annotatedText =
         if (customizedText != null) {
             val builder = AnnotatedString.Builder()
@@ -144,10 +147,17 @@ internal fun squooshComputeTextInfo(
         } else {
             if (v.data.hasText()) {
                 val builder = AnnotatedString.Builder()
-                builder.append(normalizeNewlines(getTextContent(appContext, v.data.text)))
+                val text = normalizeNewlines(getTextContent(appContext, v.data.text))
+                builder.append(text)
+                if (v.style.nodeStyle.hasHyperlinks()) {
+                    val link = v.style.nodeStyle.hyperlinks.value
+                    builder.addLink(LinkAnnotation.Url(link), 0, text.length)
+                    hyperlinkOffsetMap[0] = link
+                }
                 builder.toAnnotatedString()
             } else if (v.data.hasStyledText()) {
                 val builder = AnnotatedString.Builder()
+                var startIndex = 0
                 for (run in getTextContent(appContext, v.data.styledText)) {
                     val style = run.styleOrNull!!
                     val textBrushAndOpacity =
@@ -193,6 +203,17 @@ internal fun squooshComputeTextInfo(
                             // platformStyle = PlatformSpanStyle(includeFontPadding = false),
                         ))
                     )
+                    if (run.style.hasHyperlink()) {
+                        val link = run.style.hyperlink.value
+                        builder.addLink(
+                            LinkAnnotation.Url(link),
+                            startIndex,
+                            startIndex + run.text.length,
+                        )
+                        hyperlinkOffsetMap[startIndex] = link
+                        hyperlinkOffsetMap[startIndex + run.text.length] = null
+                    }
+                    startIndex += run.text.length
                     builder.append(run.text)
                     builder.pop()
                 }
@@ -307,6 +328,7 @@ internal fun squooshComputeTextInfo(
             density,
             maxLines,
             v.style.isAutoWidthText(),
+            hyperlinkOffsetMap,
         )
 
     textMeasureCache.put(

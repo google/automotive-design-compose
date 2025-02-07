@@ -23,9 +23,8 @@
 <!-- BEGIN OF SHADER PLUGIN UI -->
 <div class="page-padding-large">
     <div style="align-items: flex-start; gap: 16px; display: flex;">
-        <div class="container"
-            style="border: 1px black solid; width: auto; flex-shrink: 0; max-width: 256px; max-height: 256px; overflow: hidden;">
-            <canvas id="shaderPreview" width="256px" height="256px" />
+        <div class="container" style="border: 1px black solid; width: auto; flex-shrink: 0;">
+            <canvas id="shaderPreview" width="256" height="256" style="width: 256px; height: 256px;" />
         </div>
         <div style="width: auto; flex-grow: 1; max-height: 256px; overflow-y: scroll;">
             <div style="border: 2px black solid;">
@@ -835,6 +834,8 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             shaderHeight = 256;
             canvas.width = shaderWidth;
             canvas.height = shaderHeight;
+            canvas.style.width = "256px";
+            canvas.style.height = "256px";
             await runShader();
             return;
         }
@@ -851,6 +852,9 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             shaderHeight = msg.size.height;
             canvas.width = shaderWidth;
             canvas.height = shaderHeight;
+            let scaleFactor = (shaderWidth > 256 || shaderHeight > 256) ? Math.min(256 / shaderWidth, 256 / shaderHeight) : 1;
+            canvas.style.width = `${shaderWidth * scaleFactor}px`;
+            canvas.style.height = `${shaderHeight * scaleFactor}px`;
             await runShader();
             return;
         }

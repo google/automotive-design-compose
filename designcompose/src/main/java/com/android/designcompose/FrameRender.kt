@@ -686,7 +686,7 @@ fun ShaderUniform.applyToShader(
     val definedType = shaderUniformMap[name]?.type
     when (value.valueTypeCase) {
         ValueTypeCase.FLOAT_VALUE -> {
-            if (definedType == "float" || definedType == "iTime") {
+            if (definedType == "float" || definedType == "iTime" || definedType == "half") {
                 shader.setFloatUniform(name, value.floatValue)
             }
         }
@@ -694,12 +694,14 @@ fun ShaderUniform.applyToShader(
         ValueTypeCase.FLOAT_VEC_VALUE -> {
             val floatVecValue = value.floatVecValue.floatsList
             when (floatVecValue.size) {
-                1 -> if (definedType == "float") shader.setFloatUniform(name, floatVecValue[0])
+                1 ->
+                    if (definedType == "float" || definedType == "half")
+                        shader.setFloatUniform(name, floatVecValue[0])
                 2 ->
-                    if (definedType == "float2")
+                    if (definedType == "float2" || definedType == "half2")
                         shader.setFloatUniform(name, floatVecValue[0], floatVecValue[1])
                 3 ->
-                    if (definedType == "float3")
+                    if (definedType == "float3" || definedType == "half3")
                         shader.setFloatUniform(
                             name,
                             floatVecValue[0],
@@ -707,7 +709,7 @@ fun ShaderUniform.applyToShader(
                             floatVecValue[2],
                         )
                 4 ->
-                    if (definedType == "float4")
+                    if (definedType == "float4" || definedType == "half4")
                         shader.setFloatUniform(
                             name,
                             floatVecValue[0],

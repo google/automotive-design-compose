@@ -34,6 +34,9 @@ import com.android.designcompose.customBackgroundShaderUniformStates
 import com.android.designcompose.customBackgroundShaderUniforms
 import com.android.designcompose.setShaderTimeUniformState
 import com.android.designcompose.testapp.validation.R
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 @DesignDoc(id = "TkgjNl81e5joWeAivmIdzm")
 interface BrushFromShaderPluginTest {
@@ -44,6 +47,7 @@ interface BrushFromShaderPluginTest {
         @Design(node = "#text-color-custom") customTextColors: ShaderUniformCustomizations,
         @Design(node = "#color-state-custom") customColorStates: ShaderUniformCustomizations,
         @Design(node = "#int-state-custom") customIntStates: ShaderUniformCustomizations,
+        @Design(node = "#matrix2-custom") customMatrixState: ShaderUniformCustomizations,
     )
 }
 
@@ -82,11 +86,26 @@ fun BrushFromShaderPluginTest() {
     }
     val customIntStates = ShaderUniformCustomizations()
     customIntStates.customBackgroundShaderUniformStates(intState.toShaderUniformState("iCase"))
+
+    val angleState = remember {
+        derivedStateOf {
+            val angle = iTimeFloatState.floatValue % (2 * PI)
+            val cos = cos(angle).toFloat()
+            val sin = sin(angle).toFloat()
+            arrayOf(cos, -sin, sin, cos).toFloatArray()
+        }
+    }
+    val customMatrixState = ShaderUniformCustomizations()
+    customMatrixState.customBackgroundShaderUniformStates(
+        ShaderHelper.createShaderFloatArrayUniformState("iMatrix", angleState)
+    )
+
     BrushFromShaderPluginTestDoc.MainFrame(
         rootShaderUniformCustomizations = rootShaderUniformCustomizations,
         customColors = customColors,
         customTextColors = customColors,
         customColorStates = customColorStates,
         customIntStates = customIntStates,
+        customMatrixState = customMatrixState,
     )
 }

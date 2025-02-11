@@ -28,6 +28,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import com.android.designcompose.definition.element.ShaderUniform
+import com.android.designcompose.definition.element.ShaderUniformValueKt.floatVec
 import com.android.designcompose.definition.element.floatColor
 import com.android.designcompose.definition.element.shaderUniform
 import com.android.designcompose.definition.element.shaderUniformValue
@@ -140,5 +141,23 @@ object ShaderHelper {
     @Composable
     fun IntState.toShaderUniformState(name: String): State<ShaderUniform> {
         return remember { derivedStateOf { createShaderIntUniform(name, intValue) } }
+    }
+
+    /** Create a shader uniform from float array. */
+    fun createShaderFloatArrayUniform(name: String, value: FloatArray): ShaderUniform {
+        return shaderUniform {
+            this.name = name
+            this.value = shaderUniformValue {
+                floatVecValue = floatVec { floats.addAll(value.toList()) }
+            }
+        }
+    }
+
+    @Composable
+    fun createShaderFloatArrayUniformState(
+        name: String,
+        state: State<FloatArray>,
+    ): State<ShaderUniform> {
+        return remember { derivedStateOf { createShaderFloatArrayUniform(name, state.value) } }
     }
 }

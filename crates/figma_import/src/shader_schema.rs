@@ -68,7 +68,8 @@ impl Into<(String, ShaderUniform)> for ShaderUniformJson {
                     None
                 }
             }
-            "float2" | "float3" | "float4" | "half2" | "half3" | "half4" => {
+            "float2" | "float3" | "float4" | "half2" | "half3" | "half4" | "mat2" | "mat3"
+            | "mat4" | "half2x2" | "half3x3" | "half4x4" => {
                 if let Some(uniform_array) = self.uniform_value.as_array() {
                     let float_array: Vec<f32> = uniform_array
                         .iter()
@@ -81,7 +82,17 @@ impl Into<(String, ShaderUniform)> for ShaderUniformJson {
                         3 if self.uniform_type == "float3" || self.uniform_type == "half3" => {
                             Some(float_array)
                         }
-                        4 if self.uniform_type == "float4" || self.uniform_type == "half4" => {
+                        4 if self.uniform_type == "float4"
+                            || self.uniform_type == "half4"
+                            || self.uniform_type == "mat2"
+                            || self.uniform_type == "half2x2" =>
+                        {
+                            Some(float_array)
+                        }
+                        9 if self.uniform_type == "mat3" || self.uniform_type == "half3x3" => {
+                            Some(float_array)
+                        }
+                        16 if self.uniform_type == "mat4" || self.uniform_type == "half4x4" => {
                             Some(float_array)
                         }
                         _ => None,

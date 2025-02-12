@@ -686,7 +686,7 @@ fun ShaderUniform.applyToShader(
     val definedType = shaderUniformMap[name]?.type
     when (value.valueTypeCase) {
         ValueTypeCase.FLOAT_VALUE -> {
-            if (definedType == "float" || definedType == "iTime" || definedType == "half") {
+            if (definedType in listOf("float", "half", "iTime")) {
                 shader.setFloatUniform(name, value.floatValue)
             }
         }
@@ -695,13 +695,13 @@ fun ShaderUniform.applyToShader(
             val floatVecValue = value.floatVecValue.floatsList
             when (floatVecValue.size) {
                 1 ->
-                    if (definedType == "float" || definedType == "half")
+                    if (definedType in listOf("float", "half"))
                         shader.setFloatUniform(name, floatVecValue[0])
                 2 ->
-                    if (definedType == "float2" || definedType == "half2")
+                    if (definedType in listOf("float2", "half2"))
                         shader.setFloatUniform(name, floatVecValue[0], floatVecValue[1])
                 3 ->
-                    if (definedType == "float3" || definedType == "half3")
+                    if (definedType in listOf("float3", "half3"))
                         shader.setFloatUniform(
                             name,
                             floatVecValue[0],
@@ -709,7 +709,7 @@ fun ShaderUniform.applyToShader(
                             floatVecValue[2],
                         )
                 4 ->
-                    if (definedType == "float4" || definedType == "half4")
+                    if (definedType in listOf("float4", "half4", "mat2", "half2x2"))
                         shader.setFloatUniform(
                             name,
                             floatVecValue[0],
@@ -717,6 +717,11 @@ fun ShaderUniform.applyToShader(
                             floatVecValue[2],
                             floatVecValue[3],
                         )
+                9,
+                16 ->
+                    if (definedType in listOf("mat3", "mat4", "half3x3", "half4x4")) {
+                        shader.setFloatUniform(name, floatVecValue.toFloatArray())
+                    }
                 else -> Log.e(TAG, "Invalid shader uniform $name $definedType")
             }
         }

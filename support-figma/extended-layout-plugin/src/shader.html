@@ -131,6 +131,8 @@
             <label><input type="radio" name="uniformType" value="int">Int</label>
             <br>
             <label><input type="radio" name="uniformType" value="intArray">Int Array</label>
+            <br>
+            <label><input type="radio" name="uniformType" value="matrix">Matrix</label>
         </p>
         <div style="display: flex; gap: 4px;">
             <button id="continueButton" class="button--primary" style="flex-grow: 1;"
@@ -234,6 +236,31 @@
         </div>
     </dialog>
 
+    <dialog id="createMatrixUniformDialog">
+        <div><b>Create matrix uniform</b></div>
+        <p>
+        <div style="display: flex; gap: 8px;">
+            <label for="matrixUniformName" style="flex-grow: 1;">Name:</label>
+            <input type="text" id="matrixUniformName" placeholder="iMatrix" autofocus></input>
+        </div>
+        <label><input type="radio" name="matrixUniformType" value="mat2" checked="true">mat2</label>
+        <br>
+        <label><input type="radio" name="matrixUniformType" value="mat3">mat3</label>
+        <br>
+        <label><input type="radio" name="matrixUniformType" value="mat4">mat4</label>
+        <br>
+        <label><input type="radio" name="matrixUniformType" value="half2x2">half2x2</label>
+        <br>
+        <label><input type="radio" name="matrixUniformType" value="half3x3">half3x3</label>
+        <br>
+        <label><input type="radio" name="matrixUniformType" value="half4x4">half4x4</label>
+        </p>
+        <div style="display: flex; gap: 4px;">
+            <button id="createMatrixUniformButton" class="button--primary" style="flex-grow: 1;">Create</button>
+            <button id="closeMatrixUniformButton" class="button--primary" style="flex-grow: 1;">Close</button>
+        </div>
+    </dialog>
+
 </div>
 <!-- END OF SHADER PLUGIN UI -->
 
@@ -279,6 +306,7 @@
     const createColorUniformDialog = document.getElementById("createColorUniformDialog");
     const createIntUniformDialog = document.getElementById("createIntUniformDialog");
     const createIntArrayUniformDialog = document.getElementById("createIntArrayUniformDialog");
+    const createMatrixUniformDialog = document.getElementById("createMatrixUniformDialog");
 
     function createUniform() {
         createUniformDialog.showModal();
@@ -303,6 +331,9 @@
                 case "intArray":
                     createIntArrayUniformDialog.showModal();
                     break;
+                case "matrix":
+                    createMatrixUniformDialog.showModal();
+                    break;
                 case "iTime":
                     createShaderTimeUniform();
                     await runShader();
@@ -325,7 +356,7 @@
     createFloatUniformButton.onclick = async () => {
         const uniformName = floatUniformNameInput.value;
         const uniformType = isMediumP.checked ? "half" : "float";
-        createShaderFloatUniform(floatUniformNameInput.value, uniformType, null, floatUniformMin.value, floatUniformMax.value);
+        createShaderFloatUniform(uniformName, uniformType, null, floatUniformMin.value, floatUniformMax.value);
         await runShader();
     };
 
@@ -373,7 +404,7 @@
     createFloatArrayUniformButton.onclick = async () => {
         const uniformName = floatArrayUniformNameInput.value;
         let selectedUniformType = document.querySelector('input[name="floatArrayUniformType"]:checked');
-        createShaderFloatArrayUniform(floatArrayUniformNameInput.value, selectedUniformType.value, null);
+        createShaderFloatArrayUniform(uniformName, selectedUniformType.value, null);
         await runShader();
     };
 
@@ -393,6 +424,7 @@
         for (let i = 0; i < arraySize; i++) {
             let input = document.createElement("input");
             input.type = "number";
+            input.step = 0.01;
             input.value = uniformValue ? uniformValue[i] : 0;
             input.id = `input_${uniformName}_${i}`;
             inputsLine.appendChild(input);
@@ -471,7 +503,7 @@
     // "Create" button closes the dialog and creates the uniform
     createIntUniformButton.onclick = async () => {
         const uniformName = intUniformNameInput.value;
-        createShaderIntUniform(intUniformNameInput.value, null);
+        createShaderIntUniform(uniformName, null);
         await runShader();
     };
 
@@ -490,6 +522,7 @@
         input.id = `input_${uniformName}`;
         input.type = "number";
         input.value = intValue ? intValue : 0;
+        input.step = 1;
         inputsLine.appendChild(input);
         newUniformEntry.appendChild(inputsLine);
 
@@ -508,7 +541,7 @@
     createIntArrayUniformButton.onclick = async () => {
         const uniformName = intArrayUniformNameInput.value;
         let selectedUniformType = document.querySelector('input[name="intArrayUniformType"]:checked');
-        createShaderIntArrayUniform(intArrayUniformNameInput.value, selectedUniformType.value, null);
+        createShaderIntArrayUniform(uniformName, selectedUniformType.value, null);
         await runShader();
     };
 
@@ -539,6 +572,57 @@
 
     closeIntArrayUniformButton.onclick = () => {
         createIntArrayUniformDialog.close();
+    };
+
+    const createMatrixUniformButton = document.getElementById("createMatrixUniformButton");
+    const closeMatrixUniformButton = document.getElementById("closeMatrixUniformButton");
+    const matrixUniformNameInput = document.getElementById("matrixUniformName");
+
+    // "Create" button closes the dialog and creates the uniform
+    createMatrixUniformButton.onclick = async () => {
+        const uniformName = matrixUniformNameInput.value;
+        let selectedUniformType = document.querySelector('input[name="matrixUniformType"]:checked');
+        createShaderMatrixUniform(uniformName, selectedUniformType.value, null);
+        await runShader();
+    };
+
+    function createShaderMatrixUniform(uniformName, uniformType, uniformValue) {
+        let newUniformEntry = createShaderUniform(uniformName, uniformType);
+        if (!newUniformEntry) {
+            return;
+        }
+
+        // Uniform is created successfully. Close the creation dialog.
+        createMatrixUniformDialog.close();
+
+        // Create inputs fields
+        let columnMap = {
+            "mat2": "minmax(100px, 1fr) minmax(100px, 1fr)",
+            "mat3": "minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)",
+            "mat4": "minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)",
+            "half2x2": "minmax(100px, 1fr) minmax(100px, 1fr)",
+            "half3x3": "minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)",
+            "half4x4": "minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)"
+        };
+        const inputsLine = document.createElement("div");
+        inputsLine.style.display = "grid";
+        inputsLine.style.gridTemplateColumns = columnMap[uniformType];
+        let sizeMap = { "mat2": 4, "mat3": 9, "mat4": 16, "half2x2": 4, "half3x3": 9, "half4x4": 16 };
+        let arraySize = sizeMap[uniformType];
+        for (let i = 0; i < arraySize; i++) {
+            let input = document.createElement("input");
+            input.type = "number";
+            input.step = 0.01;
+            input.value = uniformValue ? uniformValue[i] : 0;
+            input.id = `input_${uniformName}_${i}`;
+            inputsLine.appendChild(input);
+        }
+        newUniformEntry.appendChild(inputsLine);
+        uniforms.appendChild(newUniformEntry);
+    }
+
+    closeMatrixUniformButton.onclick = () => {
+        createMatrixUniformDialog.close();
     };
 
     function createShaderTimeUniform() {
@@ -667,6 +751,19 @@
                     const input = document.getElementById(`input_${uniform}_${i}`);
                     if (input) {
                         numberArray.push(parseInt(input.value));
+                    }
+                }
+                return numberArray;
+            case "mat2":
+            case "mat3":
+            case "mat4":
+            case "half2x2":
+            case "half3x3":
+            case "half4x4":
+                for (let i = 0; i < 16; i++) {
+                    const input = document.getElementById(`input_${uniform}_${i}`);
+                    if (input) {
+                        numberArray.push(parseFloat(input.value));
                     }
                 }
                 return numberArray;
@@ -965,6 +1062,14 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                         case "int3":
                         case "int4":
                             createShaderIntArrayUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
+                            break;
+                        case "mat2":
+                        case "mat3":
+                        case "mat4":
+                        case "half2x2":
+                        case "half3x3":
+                        case "half4x4":
+                            createShaderMatrixUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
                             break;
                         case "iTime":
                             createShaderTimeUniform();

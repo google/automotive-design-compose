@@ -16,9 +16,14 @@
 
 package com.android.designcompose
 
+import android.content.Context
+import android.database.ContentObserver
 import android.os.Build
+import android.provider.Settings
+import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.IntState
 import androidx.compose.runtime.State
@@ -27,11 +32,13 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.definition.element.ShaderUniformValueKt.floatVec
 import com.android.designcompose.definition.element.floatColor
 import com.android.designcompose.definition.element.shaderUniform
 import com.android.designcompose.definition.element.shaderUniformValue
+import kotlinx.coroutines.delay
 
 data class ShaderUniformCustomizations(
     val backgroundShaderUniforms: MutableList<ShaderUniform> = mutableListOf(),
@@ -82,14 +89,46 @@ object ShaderHelper {
      */
     @Composable
     fun getShaderUniformTimeFloatState(): FloatState {
-        return if ("robolectric" != Build.FINGERPRINT)
-            produceState(0f) {
+        val context = LocalContext.current
+        val frameInterval =
+            context.resources.getInteger(R.integer.config_shader_frame_interval_ms).toLong()
+        val animationDurationScale = remember {
+            mutableFloatStateOf(getAnimatorDurationScale(context))
+        }
+
+        DisposableEffect(context) {
+            val observer =
+                object : ContentObserver(null) {
+                    override fun onChange(selfChange: Boolean) {
+                        // Update the setting value
+                        animationDurationScale.floatValue = getAnimatorDurationScale(context)
+                    }
+                }
+
+            context.contentResolver.registerContentObserver(
+                Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE),
+                true,
+                observer,
+            )
+
+            // Cleanup when the composable leaves the composition
+            onDispose { context.contentResolver.unregisterContentObserver(observer) }
+        }
+        if ("robolectric" != Build.FINGERPRINT) {
+            return produceState(0f, animationDurationScale.floatValue) {
+                    if (animationDurationScale.floatValue == 0f) {
+                        return@produceState
+                    }
+                    val startTime = withInfiniteAnimationFrameMillis { it }
                     while (true) {
-                        withInfiniteAnimationFrameMillis { value = it / 1000f }
+                        val currentTime = withInfiniteAnimationFrameMillis { it }
+                        value =
+                            (currentTime - startTime) / 1000f / animationDurationScale.floatValue
+                        delay(frameInterval * animationDurationScale.floatValue.toLong())
                     }
                 }
                 .asFloatState()
-        else remember { mutableFloatStateOf(3.0f) }
+        } else return remember { mutableFloatStateOf(3.0f) }
     }
 
     /** Creates a shader uniform from a float value. */
@@ -159,5 +198,23 @@ object ShaderHelper {
         state: State<FloatArray>,
     ): State<ShaderUniform> {
         return remember { derivedStateOf { createShaderFloatArrayUniform(name, state.value) } }
+    }
+
+    /**
+     * Returns animator duration scale on the device. Applying the duration scale to the animation
+     * to keep the shader behavior consistent across the BrushTest which uses a [InfiniteTransition]
+     * and the BrushFromShaderPluginTest which simulates iTime using
+     * [withInfiniteAnimationFrameMillis].
+     */
+    private fun getAnimatorDurationScale(context: Context): Float {
+        return try {
+            Settings.Global.getFloat(
+                context.contentResolver,
+                Settings.Global.ANIMATOR_DURATION_SCALE,
+            )
+        } catch (e: Settings.SettingNotFoundException) {
+            // If the setting is not found, return default value of 1.0f.
+            1f
+        }
     }
 }

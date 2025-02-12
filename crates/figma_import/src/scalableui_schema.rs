@@ -16,6 +16,7 @@
 
 use dc_bundle::definition::element::{self, ScalableUiComponentSet};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 //
 // Schema data for component sets
@@ -29,14 +30,6 @@ struct Event {
     variant_name: String,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct ComponentSetDataJson {
-    id: String,
-    name: String,
-    event_list: Vec<Event>,
-}
-
 impl Into<element::Event> for &Event {
     fn into(self) -> element::Event {
         element::Event {
@@ -47,12 +40,64 @@ impl Into<element::Event> for &Event {
     }
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+struct Keyframe {
+    frame: i32,
+    variant_name: String,
+}
+
+impl Into<element::Keyframe> for &Keyframe {
+    fn into(self) -> element::Keyframe {
+        element::Keyframe {
+            frame: self.frame,
+            variant_name: self.variant_name.clone(),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+struct KeyframeVariant {
+    name: String,
+    keyframes: Vec<Keyframe>
+}
+
+impl Into<element::KeyframeVariant> for &KeyframeVariant {
+    fn into(self) -> element::KeyframeVariant {
+        element::KeyframeVariant {
+            name: self.name.clone(),
+            keyframes: self.keyframes.iter().map(|kf| kf.into()).collect(),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ComponentSetDataJson {
+    id: String,
+    name: String,
+    role: String,
+    default_variant_id: String,
+    event_list: Vec<Event>,
+    keyframe_variants: Vec<KeyframeVariant>,
+}
+
 impl Into<ScalableUiComponentSet> for ComponentSetDataJson {
     fn into(self) -> ScalableUiComponentSet {
+        let mut event_map: HashMap<String, element::Event> = HashMap::new();
+        for e in &self.event_list {
+            event_map.insert(e.event_name.clone(), e.into());
+        }
+        //let aa: Option<Vec<element::KeyframeVariant>> = self.keyframe_variants.and_then(|list| list.iter().map(|kfv| kfv.into())).collect();
         ScalableUiComponentSet {
             id: self.id,
             name: self.name,
-            event_list: self.event_list.iter().map(|i| i.into()).collect(),
+            role: self.role,
+            default_variant_id: self.default_variant_id,
+            event_map: event_map,
+            keyframe_variants: self.keyframe_variants.iter().map(|kfv| kfv.into()).collect(),
+            variant_ids: vec![],
         }
     }
 }
@@ -84,10 +129,11 @@ struct Bounds {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct VariantDataJson {
-    #[serde(rename = "isDefault")]
+    id: String,
+    name: String,
     is_default: bool,
-    bounds: Bounds,
 }
 
 impl Into<element::ScalableDimension> for Dimension {
@@ -117,8 +163,12 @@ impl Into<dc_bundle::definition::element::Bounds> for Bounds {
 impl Into<element::ScalableUiVariant> for VariantDataJson {
     fn into(self) -> element::ScalableUiVariant {
         element::ScalableUiVariant {
+            id: self.id,
+            name: self.name,
             is_default: self.is_default,
-            bounds: Some(self.bounds.into()),
+            is_visible: true,
+            bounds: None,
+            alpha: 1.0,
         }
     }
 }

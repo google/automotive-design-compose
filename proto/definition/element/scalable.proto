@@ -26,10 +26,24 @@ message Event {
     string variant_name = 3;
 }
 
+message Keyframe {
+    int32 frame = 1;
+    string variant_name = 2;
+}
+
+message KeyframeVariant {
+    string name = 1;
+    repeated Keyframe keyframes = 2;
+}
+
 message ScalableUIComponentSet {
     string id = 1;
     string name = 2;
-    repeated Event event_list = 3;
+    string role = 3;
+    string default_variant_id = 4;
+    map<string, Event> event_map = 5;
+    repeated KeyframeVariant keyframe_variants = 6;
+    repeated string variant_ids = 7;
 }
 
 message ScalableDimension {
@@ -49,8 +63,12 @@ message Bounds {
 }
 
 message ScalableUiVariant {
-    bool is_default = 1;
-    Bounds bounds = 2;
+    string id = 1;
+    string name = 2;
+    bool is_default = 3;
+    bool is_visible = 4;
+    Bounds bounds = 5;
+    float alpha = 6;
 }
 
 message ScalableUIData {

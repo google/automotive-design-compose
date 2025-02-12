@@ -29,8 +29,7 @@ use crate::{
     variable_utils::{bound_variables_color, FromFigmaVar},
 };
 use dc_bundle::definition::element::{
-    view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
-    FontWeight, LineHeight, NumOrVar, Path, Size, ViewShape,
+    view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle, FontWeight, LineHeight, NumOrVar, Path, ScalableUiComponentSet, Size, ViewShape, scalable_ui_data,
 };
 use dc_bundle::definition::interaction::action::Node;
 
@@ -58,7 +57,7 @@ use dc_bundle::definition::plugin::{
 };
 
 use dc_bundle::definition::plugin::meter_data::MeterDataType;
-use log::error;
+use log::{error, warn};
 
 use crate::shader_schema::ShaderDataJson;
 use crate::scalableui_schema::{ScalableUiDataJson, VariantDataJson};
@@ -66,7 +65,7 @@ use dc_bundle::definition::element::ScalableUiVariant;
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
 use dc_bundle::definition::view::{
-    ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle,
+    ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle, Display,
 };
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -108,6 +107,7 @@ fn compute_layout(
     parent: Option<&figma_schema::Node>,
 ) -> Result<ViewStyle, Error> {
     let mut style = ViewStyle::new_default();
+    style.node_style_mut().display_type = if node.visible { Display::Flex.into() } else { Display::None.into() };
 
     // Determine if the parent is using Auto Layout (and thus is a Flexbox parent) or if it isn't.
     let parent_frame = parent.and_then(|p| p.frame());
@@ -821,6 +821,7 @@ fn visit_node(
     component_context: &mut ComponentContext,
     images: &mut ImageContext,
     parent_plugin_data: Option<&HashMap<String, String>>,
+    skip_hidden: bool,
 ) -> Result<View, Error> {
     // See if we have any plugin data. If we have plugin data passed in, it came from a parent
     // widget, so use it. Otherwise look for it in the shared plugin data.
@@ -837,10 +838,11 @@ fn visit_node(
     }
 
     // TODO REMOVE DEBUGGING ONLY
+    /*
         let node_type = match &node.data {
-            crate::figma_schema::NodeData::ComponentSet { frame } => "SET",
-            crate::figma_schema::NodeData::Component { frame } => "COMPONENT",
-            crate::figma_schema::NodeData::Instance { frame, .. } => "INSTANCE",
+            crate::figma_schema::NodeData::ComponentSet { frame: _ } => "SET",
+            crate::figma_schema::NodeData::Component { frame: _ } => "COMPONENT",
+            crate::figma_schema::NodeData::Instance { frame: _, .. } => "INSTANCE",
             _ => "NONE",
         };
 
@@ -852,6 +854,7 @@ fn visit_node(
                 println!("");
             }
         }
+    */
 
     // First determine our layout style, then accumulate our visual style.
     let mut style = compute_layout(node, parent)?;
@@ -987,11 +990,54 @@ fn visit_node(
         .and_then(|scalable_json| {
             let parse_result = serde_json::from_str::<ScalableUiDataJson>(scalable_json.as_str());
             if parse_result.is_err() {
-                //println!("### Parsing {} json {}: -> {:?}", node.name, scalable_json, parse_result);
+                println!("### ERROR {} json {}: -> {:?}", node.name, scalable_json, parse_result);
+            } else {
+                //println!("### SUCCESS {}", node.name);
             }
             parse_result.ok()
         })
         .and_then(|x| x.into());
+    if let Some(scalable_data) = &mut style.node_style_mut().scalable_data {
+        if let Some(data) = &mut scalable_data.data {
+            match data {
+                scalable_ui_data::Data::Set(set) => {
+                    // Add component ids of the children of a component set
+                    if node.vector().is_none() {
+                        for child in node.children.iter() {
+                            set.variant_ids.push(child.id.clone());
+                            /*
+                            child.shared_plugin_data.get("designcompose")
+                                .and_then(|vsw_data| vsw_data.get("scalableui"))
+                                .and_then(|scalable_json| serde_json::from_str::<ScalableUiDataJson>(scalable_json.as_str()).ok())
+                                .and_then(|data| {
+                                    match data {
+                                        ScalableUiDataJson::Variant(v) => {
+                                            if v.is_default {
+
+                                            }
+                                        }
+                                        _ => {},
+                                    }
+                                    None::<ScalableUiDataJson>
+                                });
+                            */
+                        }
+                    }
+                },
+                _ => {},
+                /*
+                scalable_ui_data::Data::Variant(variant) => {
+                    // If default, set parent scalable data default ID
+                    if variant.is_default {
+                        if let Some(parent) = parent {
+
+                        }
+                    }
+                }
+                */
+            }
+        }
+    }
 
     // We have shader that can be used to draw the background.
     style.node_style_mut().shader_data = plugin_data
@@ -1822,7 +1868,7 @@ fn visit_node(
     // of their children).
     if node.vector().is_none() {
         for child in node.children.iter() {
-            if child.visible {
+            if child.visible || !skip_hidden {
                 view.add_child(visit_node(
                     child,
                     Some(node),
@@ -1831,6 +1877,7 @@ fn visit_node(
                     component_context,
                     images,
                     child_plugin_data,
+                    skip_hidden,
                 )?);
             }
         }
@@ -1852,6 +1899,7 @@ pub fn create_component_flexbox(
     component_set_map: &HashMap<String, figma_schema::ComponentSet>,
     component_context: &mut ComponentContext,
     image_context: &mut ImageContext,
+    skip_hidden: bool,
 ) -> core::result::Result<View, Error> {
     visit_node(
         component,
@@ -1861,6 +1909,7 @@ pub fn create_component_flexbox(
         component_context,
         image_context,
         None,
+        skip_hidden,
     )
 }
 

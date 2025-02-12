@@ -19,42 +19,27 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 
-<div class="page-padding-large" style="display: none">
-    <div id="testSliderSection" style="display: none">
-        <input id="testSlider" type="range" min="0" max="100" value="50" class="slider" style="margin-left: 8; margin-top: -3;" oninput="sliderChanged();"" onmouseup="sliderReleased();">
+<div>
+    <div id="componentSetAddButton" class="page-padding-small">
+      <button id="addSetButton" class="button--primary" style="flex-grow: 1;" onclick="addSet();">Add ScalableUI Data</button>
     </div>
-</div>
-
-<div id="validNodeSection">
-    <div id="scalableUIEmptySection" class="page-padding-small">
-      <button id="addNodeButton" class="button--primary" style="flex-grow: 1;" onclick="addNode();">Add ScalableUI Data</button>
-    </div>
-
-    <div id="scalableUiNodeSection" style="display: none">
-        <div class="page-padding-small">
-            <label class="boldlabel">Node Type:</label>
-            <label id="nodeType" class="normallabel"></label><br>
-            <label class="boldlabel">Node Name:</label>
-            <label id="nodeName" class="normallabel">Variant Name Here</label>
-        </div>
-
-        <div class="page-padding-small">
-            <button id="removeNodeButton" class="button--primary" style="flex-grow: 1;" onclick="removeNode();">Remove ScalableUI Data</button>
-        </div>
+    <div id="componentSetRemoveButton" class="page-padding-small">
+      <button id="removeSetButton" class="button--primary" style="flex-grow: 1;" onclick="removeSet();">Remove ScalableUI Data</button>
     </div>
 </div>
 
 <div id="componentSetSection" style="display: none">
-    <!--
-    <div id="scalableUIEmptySection" class="page-padding-small">
-      <button id="addSetButton" class="button--primary" style="flex-grow: 1;" onclick="addSet();">Add ScalableUI Data</button>
-    </div>
-    -->
     <div class="page-padding-small">
         <label class="boldlabel">COMPONENT SET:</label>
         <label id="componentSetName" class="normallabel"></label>
     </div>
 
+    <div id="roleSection" style="display: flex; align-items: center;">
+        <div class="page-padding-small">
+            <label class="boldlabel">ROLE:</label>
+        </div>
+        <input id="roleInput" type="text" style="height: 24" value="@my/role" onchange="onRoleChanged();"></input>
+    </div>
 
     <div id="eventSection">
         <div class="page-padding-small">
@@ -62,26 +47,41 @@
         </div>
         <div id="componentSetEventsSection" style="margin-left: 16"></div>
         <div id="addEventSection" class="page-padding-small">
-        <button id="addEventButton" class="button--primary" style="flex-grow: 1;" onclick="addEventDialog();">Add event</button>
+            <button id="addEventButton" class="button--primary" style="flex-grow: 1;" onclick="addEventDialog();">Add event</button>
         </div>
     </div>
 
-    <div class="page-padding-small">
-        <label class="boldlabel">VARIANTS:</label>
+    <div id="componentSetVariantsSection">
+        <div class="page-padding-small">
+            <label class="boldlabel">VARIANTS:</label>
+        </div>
+        <div id="componentSetVariantsList" class="page-padding-small" style="margin-top: -10">
+        </div>
     </div>
-    <div id="componentSetVariantsSection" class="page-padding-small">
+
+    <div id="componentSetKeyframeVariantsSection">
+        <div class="page-padding-small">
+            <label class="boldlabel">KEYFRAME VARIANTS:</label>
+        </div>
+        <div id="keyframeVariantsList" class="page-padding-small" style="margin-top: -10">
+        </div>
+    </div>
+
+    <div id="addKeyframeVariantSection" class="page-padding-small">
+        <button id="addKeyframeButton" class="button--primary" style="flex-grow: 1;" onclick="addKeyframeDialog();">Add Keyframe Variant</button>
     </div>
 </div>
 
-<div id="invalidNodeSection" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%">
-Invalid Node Selected
+<div id="invalidNodeSection" style="display: block; justify-content: center; align-items: center; text-align: center; width: 100%; height: 100%">
+    Invalid Node Selected.<br>
+    Please select a COMPONENT SET
 </div>
 
 <dialog id="createEventDialog">
     <p>
         <div style="display: flex; gap: 8px;">
             <label for="createEventNameInput" style="flex-grow: 1;">On Event:</label>
-            <input id="createEventNameInput" type="text" id="createEventName" autofocus></input>
+            <input id="createEventNameInput" type="text" autofocus></input>
         </div>
         <div style="display: flex; gap: 8px; margin-top: 6">
             <label for="createEventSelect" style="flex-grow: 1;">Switch to Variant:</label>
@@ -91,6 +91,26 @@ Invalid Node Selected
     <div style="display: flex; gap: 4px;">
         <button class="button--primary" onclick="createNewEvent();">Create</button>
         <button class="button--primary" onclick="createEventDialog.close()">Cancel</button>
+    </div>
+</dialog>
+
+<dialog id="createKeyframeDialog">
+    <p>
+        <div style="display: flex; gap: 8px;">
+            <label for="keyframeName" style="flex-grow: 1;">Name:</label>
+            <input id="keyframeName" type="text" autofocus></input>
+        </div>
+        <div id="keyframeList"></div>
+    </p>
+    <div style="display: flex; gap: 8px; align-items: center; margin-top: 6">
+        <span class="icon-button" onclick="createKeyframe()">
+            <span class="icon icon--plus"></span>
+        </span>
+        <span>Add Keyframe</span>
+    </div>
+    <div style="display: flex; gap: 4px; margin-top: 10">
+        <button class="button--primary" onclick="createNewKeyframe();">Create</button>
+        <button class="button--primary" onclick="createKeyframeDialog.close()">Cancel</button>
     </div>
 </dialog>
 
@@ -115,6 +135,122 @@ Invalid Node Selected
         }, '*');
     }
 
+    function addKeyframeDialog() {
+        while (keyframeList.firstChild) {
+            keyframeList.removeChild(keyframeList.lastChild);
+        }
+
+        createKeyframeDialog.showModal();
+    }
+
+    function createKeyframe() {
+        const keyframeSection = document.createElement("div");
+        keyframeSection.style.border = "1px solid black";
+        keyframeSection.style.marginTop = 6;
+        keyframeSection.style.padding = 6;
+
+        const frameNumSection = document.createElement("div");
+        frameNumSection.style.display = "flex";
+        frameNumSection.style.gap = "8px";
+        frameNumSection.marginTop = 6;
+        
+        const frameLabel = document.createElement("label");
+        frameLabel.classList.add("normallabel");
+        frameLabel.style.flexGrow = 1;
+        frameLabel.textContent = "Frame:";
+        frameNumSection.appendChild(frameLabel);
+
+        const textInput = document.createElement("input");
+        textInput.id = "keyframeFrameInput" + keyframeList.childElementCount;
+        textInput.type = "number";
+        textInput.placeholder = "0";
+        textInput.min = "0";
+        textInput.max = "100";
+        frameNumSection.appendChild(textInput);
+        keyframeSection.appendChild(frameNumSection);
+
+        const variantSection = document.createElement("div");
+        variantSection.style.display = "flex";
+        variantSection.style.gap = "8px";
+        variantSection.style.marginTop = 6;
+        variantSection.marginTop = 6;
+
+        const varLabel = document.createElement("label");
+        varLabel.classList.add("normallabel");
+        varLabel.style.flexGrow = 1;
+        varLabel.textContent = "Variant:";
+        variantSection.appendChild(varLabel);
+
+        const varSelect = document.createElement("select");
+        varSelect.id = "keyframeVariantSelect" + keyframeList.childElementCount;
+        addVariantsToSelect(varSelect);
+        variantSection.appendChild(varSelect);
+        keyframeSection.appendChild(variantSection);
+        keyframeList.appendChild(keyframeSection);
+    }
+
+    function addVariantsToSelect(select) {
+        const allLabels = document.querySelectorAll('label');
+        const variantLabels = Array.from(allLabels).filter(label => {
+            return label.textContent == "VARIANT: "
+        });
+
+        for (const vl of variantLabels) {
+            const id = vl.id;
+            const name = document.getElementById(id + "-name").textContent;
+
+            const variantOption = document.createElement("option");
+            variantOption.text = name;
+            variantOption.value = id;
+            select.appendChild(variantOption);
+        }
+    }
+
+    function createNewKeyframe() {
+        const name = keyframeName.value;
+        console.log("### Keyframe " + name);
+        let keyframes = [];
+        for (let i = 0; i < keyframeList.childElementCount; ++i) {
+            const keyframeInputId = "keyframeFrameInput" + i;
+            const keyframeInput = document.getElementById(keyframeInputId);
+            const frameValue = toNumber(keyframeInput.value, 0);
+
+            const keyframeSelectId = "keyframeVariantSelect" + i;
+            const keyframeSelect = document.getElementById(keyframeSelectId);
+            const selectValue = keyframeSelect.options[keyframeSelect.selectedIndex].text;
+            console.log("  ### Frame " + i + " value: " + frameValue + " select " + selectValue);
+
+            keyframes.push({
+                frame: frameValue,
+                variant: selectValue,
+            });
+        }
+
+        createKeyframeDialog.close();
+
+        if (keyframes.length > 0) {
+            parent.postMessage({
+                pluginMessage: {
+                    msg: 'createKeyframeVariant',
+                    name: name,
+                    keyframes: keyframes,
+                }
+            }, '*');
+        }
+    }
+
+    function onRoleChanged() {
+        const roleName = roleInput.value;
+        console.log("### Role changed " + roleName);
+
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'roleChanged',
+                role: roleName,
+            }
+        }, '*');
+    }
+
     function toNumber(str, def) {
         let num = parseInt(str, 10);
         if (isNaN(num)) {
@@ -124,18 +260,14 @@ Invalid Node Selected
     }
 
     function addSet() {
-        console.log("TODO");
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'addNode',
+            }
+        }, '*');
     }
 
-    function addNode() {
-        scalableUIEmptySection.style.display = "none";
-        scalableUiNodeSection.style.display = "block";
-    }
-
-    function removeNode() {
-        scalableUIEmptySection.style.display = "block";
-        scalableUiNodeSection.style.display = "none";
-        resetvalues();
+    function removeSet() {
         parent.postMessage({
             pluginMessage: {
                 msg: 'removeNode',
@@ -152,8 +284,17 @@ Invalid Node Selected
         }, '*');
     }
 
+    function onRemoveKeyframeVariant(name) {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'removeKeyframeVariant',
+                keyframeVariant: name,
+            }
+        }, '*');
+    }
+
     function onDefaultChecked(checkbox) {
-        const checkedDefaults = document.querySelectorAll('input[type="checkbox"]:checked');
+        const checkedDefaults = document.querySelectorAll('input[type="checkbox"][class="defaultCheckbox"]:checked');
         for (const cb of checkedDefaults) {
             if (cb != checkbox)
                 cb.checked = false;
@@ -173,28 +314,11 @@ Invalid Node Selected
             const id = vl.id;
             const name = document.getElementById(id + "-name").textContent;
             const isDefault = document.getElementById(id + "-default").checked;
-            const leftValue = document.getElementById(id + "-left-value").value;
-            const leftDim = document.getElementById(id + "-left-dim").value;
-            const topValue = document.getElementById(id + "-top-value").value;
-            const topDim = document.getElementById(id + "-top-dim").value;
-            const rightValue = document.getElementById(id + "-right-value").value;
-            const rightDim = document.getElementById(id + "-right-dim").value;
-            const bottomValue = document.getElementById(id + "-bottom-value").value;
-            const bottomDim = document.getElementById(id + "-bottom-dim").value;
             variantList.push({
-                isDefault: isDefault,
+                isDefault,
                 id,
                 name,
-                leftValue,
-                leftDim,
-                topValue,
-                topDim,
-                rightValue,
-                rightDim,
-                bottomValue,
-                bottomDim,
             });
-            console.log("  ### Var " + id + " default " + isDefault + " left " + leftValue + " " + leftDim);
         }
 
         parent.postMessage({
@@ -205,53 +329,21 @@ Invalid Node Selected
         }, '*');
     }
 
-    function sliderChanged() {
-        parent.postMessage({
-            pluginMessage: {
-                msg: 'sliderChanged',
-                nodeId: "7:20",
-                value: testSlider.value,
-            }
-        }, '*');
-    }
-
-    function sliderReleased() {
-        parent.postMessage({
-            pluginMessage: {
-                msg: 'sliderReleased',
-                nodeId: "7:20",
-                value: testSlider.value,
-            }
-        }, '*');
-    }
-
-    function selectComponent(name, type, nodeData) {
-        eventSection.style.display = "none";
-        validNodeSection.style.display = "block";
-        invalidNodeSection.style.display = "none";
-        componentSetSection.style.display = "none";
-        /*
-        nodeType.textContent = type;
-        nodeName.textContent = name;
-
-        if (nodeData) {
-            scalableUIEmptySection.style.display = "none";
-            scalableUiNodeSection.style.display = "block";
-            positionX.value = nodeData.x;
-            positionY.value = nodeData.y;
-        } else {
-            scalableUIEmptySection.style.display = "block";
-            scalableUiNodeSection.style.display = "none";
-            resetvalues();
-        }
-        */
-    }
-
     function selectComponentSet(name, type, setData, variantList) {
-        eventSection.style.display = "block";
-        validNodeSection.style.display = "none";
         invalidNodeSection.style.display = "none";
-        componentSetSection.style.display = "block";
+
+        const hasData = setData != null;
+        componentSetAddButton.style.display = hasData ? "none" : "block";
+        componentSetRemoveButton.style.display = hasData ? "block" : "none";
+        componentSetSection.style.display = hasData ? "block" : "none";
+
+        if (!hasData)
+            return;
+
+        if (setData.role)
+            roleInput.value = setData.role;
+        else
+            roleInput.value = "";
 
         while (componentSetEventsSection.firstChild) {
             componentSetEventsSection.removeChild(componentSetEventsSection.lastChild);
@@ -261,25 +353,32 @@ Invalid Node Selected
                 addEvent(event);
         }
 
-        while (componentSetVariantsSection.firstChild) {
-          componentSetVariantsSection.removeChild(componentSetVariantsSection.lastChild);
+        while (componentSetVariantsList.firstChild) {
+          componentSetVariantsList.removeChild(componentSetVariantsList.lastChild);
         }
         while (createEventSelect.firstChild) {
             createEventSelect.removeChild(createEventSelect.lastChild);
         }
 
+        // Add variants to select dropdown for event dialog and to main UI
         componentSetName.textContent = name;
         for (let child of variantList) {
-            addEventSelectOption(child.name, child.id);
+            addVariantToEventSelect(child.name, child.id);
             addVariantSection(child.name, child);
         }
+
+        // Add keyframe variants to select dropdown for event dialog
+        for (const kfv of setData.keyframeVariants) {
+            addVariantToEventSelect(kfv.name, kfv.name);
+        }
+
+        addKeyframeVariants(setData.keyframeVariants);
     }
 
     function addEvent(event) {
         const name = event.eventName;
         const variantId = event.variantId;
         const variantName = event.variantName;
-        console.log("### Add Event " + name + ", " + variantId + ", " + variantName);
         const eventDiv = document.createElement("div");
 
         const eventLabel = document.createElement("label");
@@ -349,7 +448,7 @@ Invalid Node Selected
         parent.appendChild(dimensionDiv);
     }
 
-    function addEventSelectOption(name, id) {
+    function addVariantToEventSelect(name, id) {
         const variantOption = document.createElement("option");
         variantOption.text = name;
         variantOption.value = id;
@@ -381,67 +480,106 @@ Invalid Node Selected
         defaultSection.style.alignItems = "center";
         const defaultLabel = document.createElement("label");
         defaultLabel.classList.add("boldlabel");
-        defaultLabel.textContent = "DEFAULT:";
+        defaultLabel.textContent = "Default:";
         defaultSection.appendChild(defaultLabel);
         const defaultCheckbox = document.createElement("input");
         defaultCheckbox.id = id + "-default";
+        defaultCheckbox.classList.add("defaultCheckbox");
         defaultCheckbox.type = "checkbox";
         defaultCheckbox.onclick = () => { onDefaultChecked(defaultCheckbox); }
         defaultCheckbox.checked = variantData?.isDefault;
         defaultSection.appendChild(defaultCheckbox);
         sectionDiv.appendChild(defaultSection);
 
-        // Variant position data
-        const positionSection = document.createElement("div");
-        const positionLabel = document.createElement("label");
-        positionLabel.classList.add("boldlabel");
-        positionLabel.textContent = "POSITION:";
-        positionLabel.style.marginRight = 10;
-        positionSection.appendChild(positionLabel);
-        positionSection.appendChild(document.createElement("div"));
+        componentSetVariantsList.appendChild(sectionDiv);
+    }
 
-        addDimensionInput("Left", id + "-left", variantData?.bounds?.left, positionSection);
-        addDimensionInput("Top", id + "-top", variantData?.bounds?.top, positionSection);
-        addDimensionInput("Right", id + "-right", variantData?.bounds?.right, positionSection);
-        addDimensionInput("Bottom", id + "-bottom", variantData?.bounds?.bottom, positionSection);
-    
-        sectionDiv.appendChild(positionSection);
+    function addKeyframeVariants(keyframeVariantList) {
+        while (keyframeVariantsList.firstChild) {
+            keyframeVariantsList.removeChild(keyframeVariantsList.lastChild);
+        }
 
-        componentSetVariantsSection.appendChild(sectionDiv);
+        for (const kfv of keyframeVariantList) {
+            console.log("### KFV " + kfv.name);
+            addKeyframeVariant(kfv);
+        }
+    }
+
+    function addKeyframeVariant(kfv) {
+        const sectionDiv = document.createElement("div");
+        sectionDiv.classList.add("page-padding-small");
+
+        // Keyframe name section
+        const nameSection = document.createElement("div");
+        const nodeTypeLabel = document.createElement("label");
+        nodeTypeLabel.classList.add("boldlabel");
+        nodeTypeLabel.textContent = "Keyframe Variant: ";
+        const nodeTypeName = document.createElement("label");
+        nodeTypeName.classList.add("normallabel");
+        nodeTypeName.textContent = kfv.name;
+        nameSection.appendChild(nodeTypeLabel);
+        nameSection.appendChild(nodeTypeName);
+
+        const removeButton = document.createElement("button");
+        removeButton.classList.add("button--secondary");
+        removeButton.style.flexGrow = 1;
+        removeButton.style.marginLeft = 10;
+        removeButton.onclick = () => { onRemoveKeyframeVariant(kfv.name); }
+        removeButton.textContent = "Remove Keyframe Variant";
+        nameSection.appendChild(removeButton);
+
+        sectionDiv.appendChild(nameSection);
+        keyframeVariantsList.appendChild(sectionDiv);
+
+        for (const kf of kfv.keyframes) {
+            console.log("  ### kf " + kf.frame + " -> " + kf.variantName);
+            addKeyframe(kf, sectionDiv);
+        }
+    }
+
+    function addKeyframe(kf, parentSection) {
+        const sectionDiv = document.createElement("div");
+        sectionDiv.style.marginLeft = 10;
+        const keyframeSection = document.createElement("div");
+
+        const keyframeLabel = document.createElement("label");
+        keyframeLabel.classList.add("normallabel");
+        keyframeLabel.textContent = "Keyframe ";
+        keyframeSection.appendChild(keyframeLabel);
+
+        const frameNumber = document.createElement("label");
+        frameNumber.classList.add("normallabel");
+        frameNumber.textContent = kf.frame;
+        keyframeSection.appendChild(frameNumber);
+
+        const arrowLabel = document.createElement("label");
+        arrowLabel.classList.add("boldlabel");
+        arrowLabel.textContent = "  ->  ";
+        keyframeSection.appendChild(arrowLabel);
+
+        const variantName = document.createElement("label");
+        variantName.classList.add("normallabel");
+        variantName.textContent = kf.variantName;
+        keyframeSection.appendChild(variantName);
+
+        sectionDiv.appendChild(keyframeSection);
+        parentSection.appendChild(sectionDiv);
     }
 
     function deselectComponent() {
         console.log("### CLEAR");
-        eventSection.style.display = "none";
-        validNodeSection.style.display = "none";
         componentSetSection.style.display = "none";
+        componentSetAddButton.style.display = "none";
+        componentSetRemoveButton.style.display = "none";
         invalidNodeSection.style.display = "flex";
-    }
-
-    function resetvalues() {
-        positionX.value = 0;
-        positionY.value = 0;
     }
 
     window.onmessage = async function (event) {
         let msg = event.data.pluginMessage;
-        if (msg.msg == "scalable-select-component") {
-            selectComponent(msg.nodeName, msg.nodeType, msg.nodeData);
-        } else if (msg.msg == "scalable-select-component-set") {
+        if (msg.msg == "scalable-select-component-set") {
             selectComponentSet(msg.nodeName, msg.nodeType, msg.setData, msg.variantList);
         } else if (msg.msg == "scalable-deselect") {
             deselectComponent();
-        }
-        else if (msg.msg == 'scalable-selection') {
-            console.log("### Select: " + msg.nodeId);
-            if (msg.nodeId == "7:20") { // Slider bar
-                testSliderSection.style.display = "block";
-            }
-            else {
-                testSliderSection.style.display = "none";
-            }
-
-            return;
         } else {
             console.log("### Msg " + msg.msg);
         }

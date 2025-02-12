@@ -595,15 +595,18 @@ if (figma.command === "sync") {
       Scalable.createNewEvent(msg);
     else if (msg.msg == "removeEvent")
       Scalable.removeEvent(msg);
-    else if (msg.msg == "nodeChanged") {
+    else if (msg.msg == "roleChanged")
+      Scalable.roleChanged(msg);
+    else if (msg.msg == "nodeChanged")
       Scalable.nodeChanged(msg);
-    } else if (msg.msg == "removeNode") {
+    else if (msg.msg == "addNode")
+      Scalable.addNode();
+    else if (msg.msg == "removeNode")
       Scalable.removeNode();
-    } else if (msg.msg === "sliderChanged") {
+    else if (msg.msg === "sliderChanged")
       Scalable.sliderChanged(msg);
-    } else if (msg.msg === "sliderReleased") {
+    else if (msg.msg === "sliderReleased")
       Scalable.sliderReleased(msg);
-    }
   };
   figma.on("selectionchange", Scalable.onSelectionChanged);
   Scalable.onSelectionChanged();

@@ -43,11 +43,19 @@ interface Bounds {
   bottom: Dimension,
 }
 
+interface Bounds2 {
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+}
+
 interface VariantData {
   id: string,
   name: string | null,
   isDefault: boolean,
   bounds: Bounds,
+  bounds2: Bounds2 | null,
 }
 
 interface Event {
@@ -56,10 +64,22 @@ interface Event {
   variantName: string,
 }
 
+interface Keyframe {
+  frame: number,
+  variantName: string,
+}
+
+interface KeyframeVariant {
+  name: string,
+  keyframes: Keyframe[],
+}
+
 interface ComponentSetData {
   id: string,
   name: string,
+  role: string,
   eventList: Event[],
+  keyframeVariants: KeyframeVariant[],
 }
 
 function dimToStr(dim: Dimension) {
@@ -106,6 +126,15 @@ export function onSelectionChanged() {
   }
 
   let node = selection[0];
+  if (node.type == "COMPONENT_SET") {
+    Utils.dcLog("### Component Set " + node.name);
+    sendComponentSetData(node);
+  }
+  else {
+    deselectNode();
+  }
+
+  /*
   if (node.type == "COMPONENT") {
     Utils.dcLog("### Variant " + node.name);
     //let nodeData = loadNodeData(node);
@@ -121,13 +150,7 @@ export function onSelectionChanged() {
       //nodeData: nodeData,
     });
   }
-  else if (node.type == "COMPONENT_SET") {
-    Utils.dcLog("### Component Set " + node.name);
-    sendComponentSetData(node);
-  }
-  else {
-    deselectNode();
-  }
+  */
 }
 
 function sendComponentSetData(node: ComponentSetNode) {
@@ -156,7 +179,9 @@ export async function createNewEvent(msg: any) {
     setData = {
       id: node.id,
       name: node.name,
+      role: "",
       eventList: [],
+      keyframeVariants: [],
     } as ComponentSetData;
   const event = {
     eventName: msg.event,
@@ -187,13 +212,77 @@ export function removeEvent(msg: any) {
   sendComponentSetData(node);
 }
 
+export function roleChanged(msg: any) {
+  Utils.dcLog("### Set role " + msg.role);
+
+  const node = figma.currentPage.selection[0] as ComponentSetNode;
+  let setData = loadComponentSetData(node);
+  if (setData != null)
+    setData.role = msg.role;
+  node.setSharedPluginData(
+    Utils.SHARED_PLUGIN_NAMESPACE,
+    SCALABLE_PLUGIN_DATA_KEY,
+    JSON.stringify(setData)
+  );
+  sendComponentSetData(node);
+}
+
+export function addNode() {
+  console.log("### Adding node");
+  let node = figma.currentPage.selection[0] as ComponentSetNode;
+  const setData = {
+    id: node.id,
+    name: node.name,
+    role: "",
+    eventList: [],
+    keyframeVariants: [],
+  } as ComponentSetData;
+  node.setSharedPluginData(
+    Utils.SHARED_PLUGIN_NAMESPACE,
+    SCALABLE_PLUGIN_DATA_KEY,
+    JSON.stringify(setData)
+  );
+
+  let first = true;
+  for (const child of node.children) {
+    const variantData = newVariantData(child.id, child.name, first);
+    first = false;
+    child.setSharedPluginData(
+      Utils.SHARED_PLUGIN_NAMESPACE,
+      SCALABLE_PLUGIN_DATA_KEY,
+      JSON.stringify(variantData)
+    );
+  }
+  sendComponentSetData(node);
+}
+
+function newVariantData(id: string, name: string, isDefault: boolean) {
+  return {
+    id: id,
+    name: name,
+    isDefault: isDefault,
+  } as VariantData;
+}
+
 export function removeNode() {
   console.log("### Removing node");
-  let node = figma.currentPage.selection[0];
+  const node = figma.currentPage.selection[0];
   node.setSharedPluginData(
     Utils.SHARED_PLUGIN_NAMESPACE,
     SCALABLE_PLUGIN_DATA_KEY, ""
   );
+
+  const setNode = node as ComponentSetNode;
+  if (setNode != null) {
+    for (const child of setNode.children) {
+      child.setSharedPluginData(
+        Utils.SHARED_PLUGIN_NAMESPACE,
+        SCALABLE_PLUGIN_DATA_KEY, ""
+      );
+    }
+  }
+
+  sendComponentSetData(node as ComponentSetNode);
 }
 
 function replaceNum(key: string, value: any) {
@@ -230,11 +319,13 @@ function loadComponentSetData(node: ComponentSetNode) {
     setData.id = node.id;
     setData.name = node.name;
   } else {
+    /*
     setData = {
       id: node.id,
       name: node.name,
       eventList: [],
     } as ComponentSetData;
+    */
   }
   return setData;
 }

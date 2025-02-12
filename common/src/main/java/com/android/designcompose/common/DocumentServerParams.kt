@@ -19,4 +19,5 @@ package com.android.designcompose.common
 data class DocumentServerParams(
     val nodeQueries: ArrayList<String>? = null,
     val ignoredImages: HashMap<String, Array<String>>? = null,
+    var skipHidden: Boolean = true,
 )

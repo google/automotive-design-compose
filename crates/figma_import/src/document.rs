@@ -294,9 +294,10 @@ impl Document {
         parent_tree: &mut Vec<String>,
         error_list: &mut Vec<String>,
         error_hash: &mut HashSet<String>,
+        skip_hidden: bool,
     ) -> Result<(), Error> {
         // Ignore hidden nodes
-        if !node.visible {
+        if !node.visible && skip_hidden {
             return Ok(());
         }
         fn add_node_doc_hash(
@@ -399,6 +400,7 @@ impl Document {
                                                 parent_tree,
                                                 error_list,
                                                 error_hash,
+                                                skip_hidden,
                                             )?;
                                             parent_tree.pop();
                                         }
@@ -431,6 +433,7 @@ impl Document {
                 parent_tree,
                 error_list,
                 error_hash,
+                skip_hidden,
             )?;
             parent_tree.pop();
         }
@@ -520,6 +523,7 @@ impl Document {
         node_names: &Vec<NodeQuery>,
         ignored_images: &Vec<(NodeQuery, Vec<String>)>,
         error_list: &mut Vec<String>,
+        skip_hidden: bool,
     ) -> Result<HashMap<NodeQuery, View>, Error> {
         // First we gather all of nodes that we're going to convert and find all of the
         // child nodes that can't be rendered. Then we ask Figma to do a batch render on
@@ -532,9 +536,10 @@ impl Document {
             variant_index: &mut HashMap<(String, String), &'a figma_schema::Node>,
             component_set_name_index: &mut HashMap<String, &'a figma_schema::Node>,
             component_id_index: &mut HashMap<String, &'a figma_schema::Node>,
+            skip_hidden: bool,
         ) {
             // Ignore hidden nodes
-            if !node.visible {
+            if !node.visible && skip_hidden {
                 return;
             }
 
@@ -568,6 +573,7 @@ impl Document {
                     variant_index,
                     component_set_name_index,
                     component_id_index,
+                    skip_hidden,
                 );
             }
             if let figma_schema::NodeData::ComponentSet { .. } = node.data {
@@ -708,6 +714,7 @@ impl Document {
             &mut variant_index,
             &mut component_set_name_index,
             &mut component_id_index,
+            skip_hidden,
         );
 
         // Fetch component variant nodes
@@ -726,6 +733,7 @@ impl Document {
             &mut parent_tree,
             error_list,
             &mut error_hash,
+            skip_hidden,
         )?;
         self.variant_nodes = variant_nodes;
 
@@ -739,6 +747,7 @@ impl Document {
                 &mut variant_index,
                 &mut component_set_name_index,
                 &mut component_id_index,
+                skip_hidden,
             );
         }
 
@@ -846,6 +855,7 @@ impl Document {
                         &self.document_root.component_sets,
                         &mut component_context,
                         &mut self.image_context,
+                        skip_hidden,
                     )?,
                 );
             }

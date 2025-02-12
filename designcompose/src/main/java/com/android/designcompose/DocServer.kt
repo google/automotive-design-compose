@@ -112,11 +112,11 @@ object DesignSettings {
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyFigmaFetchStatus(fileId: DesignDocId) = fileFetchStatus[fileId]
 
-    fun subscribeLiveUpdates(
+    fun subscribeScalableUiLiveUpdates(
         activity: ComponentActivity,
         docId: String,
         resourceName: String,
-        serverParams: DocumentServerParams,
+        nodeQueries: ArrayList<String>,
         onUpdate: (ScalableUiDoc?) -> Unit,
     ) {
         val designDocId = DesignDocId(docId)
@@ -127,6 +127,8 @@ object DesignSettings {
             onUpdate(doc?.let { ScalableUiDoc(it) })
         }
         val subscription = LiveDocSubscription(id, designDocId, onNewDocContent, null)
+        // False parameter means that we need hidden nodes for scalable ui
+        val serverParams = DocumentServerParams(nodeQueries, null, false)
         DocServer.subscribe(subscription, serverParams, saveFile)
         enableLiveUpdates(activity)
     }
@@ -383,7 +385,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
             }
         val saveFile = synchronized(subscriptions) { subscriptions[id]?.saveFile }
         try {
-            val response = fetchDocument(figmaApiKey, params, previousDoc, id, proxyConfig)
+            val response = fetchDocument(figmaApiKey, params, previousDoc, id, params.skipHidden, proxyConfig)
 
             if (response.hasDocument()) {
                 val doc = decodeServerDoc(response.document, previousDoc, id, saveFile, Feedback)
@@ -456,6 +458,7 @@ internal fun fetchDocument(
     params: DocumentServerParams,
     previousDoc: DocContent?,
     id: DesignDocId,
+    skipHidden: Boolean = true,
     proxyConfig: ProxyConfig = ProxyConfig(),
 ): ConvertResponse {
 
@@ -475,6 +478,7 @@ internal fun fetchDocument(
         previousDoc?.c?.header?.responseVersion?.let { this.version = it }
         previousDoc?.c?.imageSession?.let { this.imageSessionJson = it }
             ?: this.clearImageSessionJson()
+        this.skipHidden = skipHidden
     }
 
     val serializedResponse: ByteArray =

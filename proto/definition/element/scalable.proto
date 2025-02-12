@@ -29,7 +29,8 @@ message Event {
 message ScalableUIComponentSet {
     string id = 1;
     string name = 2;
-    repeated Event event_list = 3;
+    string role = 3;
+    map<string, Event> event_map = 4;
 }
 
 message ScalableDimension {
@@ -50,7 +51,8 @@ message Bounds {
 
 message ScalableUiVariant {
     bool is_default = 1;
-    Bounds bounds = 2;
+    bool is_visible = 2;
+    Bounds bounds = 3;
 }
 
 message ScalableUIData {

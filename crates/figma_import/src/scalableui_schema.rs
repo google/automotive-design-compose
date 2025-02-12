@@ -16,6 +16,7 @@
 
 use dc_bundle::definition::element::{self, ScalableUiComponentSet};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 //
 // Schema data for component sets
@@ -34,6 +35,7 @@ struct Event {
 pub(crate) struct ComponentSetDataJson {
     id: String,
     name: String,
+    role: String,
     event_list: Vec<Event>,
 }
 
@@ -49,10 +51,16 @@ impl Into<element::Event> for &Event {
 
 impl Into<ScalableUiComponentSet> for ComponentSetDataJson {
     fn into(self) -> ScalableUiComponentSet {
+        let mut event_map: HashMap<String, element::Event> = HashMap::new();
+        for e in &self.event_list {
+            event_map.insert(e.event_name.clone(), e.into());
+        }
         ScalableUiComponentSet {
             id: self.id,
             name: self.name,
-            event_list: self.event_list.iter().map(|i| i.into()).collect(),
+            role: self.role,
+            //event_list: self.event_list.iter().map(|i| i.into()).collect(),
+            event_map: event_map,
         }
     }
 }
@@ -118,6 +126,7 @@ impl Into<element::ScalableUiVariant> for VariantDataJson {
     fn into(self) -> element::ScalableUiVariant {
         element::ScalableUiVariant {
             is_default: self.is_default,
+            is_visible: true,
             bounds: Some(self.bounds.into()),
         }
     }

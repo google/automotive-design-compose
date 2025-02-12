@@ -27,9 +27,11 @@ import com.android.designcompose.common.decodeDiskBaseDoc
 import com.android.designcompose.common.decodeServerBaseDoc
 import com.android.designcompose.common.views
 import com.android.designcompose.definition.element.Bounds
+import com.android.designcompose.definition.element.ScalableUIComponentSet
 import com.android.designcompose.definition.element.ScalableUiVariant
 import com.android.designcompose.definition.element.bounds
 import com.android.designcompose.definition.element.scalableDimension
+import com.android.designcompose.definition.element.scalableUIComponentSet
 import com.android.designcompose.definition.element.scalableUiVariant
 import com.android.designcompose.definition.element.setOrNull
 import com.android.designcompose.definition.view.nodeStyleOrNull
@@ -138,7 +140,7 @@ class ScalableUiDoc(doc: DocContent) {
     // variant name -> scalable ui data
     val variantMap: HashMap<String, ScalableUiVariant> = HashMap()
     // component set name -> { event name -> variant name }
-    val setEventMap: HashMap<String, HashMap<String, String>> = HashMap()
+    val setEventMap: HashMap<String, ScalableUIComponentSet> = HashMap() // HashMap<String, String>> = HashMap()
 
     init {
         val allViews = doc.c.document.views()
@@ -147,11 +149,7 @@ class ScalableUiDoc(doc: DocContent) {
             val componentSetView = allViews[componentSetQuery]
             componentSetView?.styleOrNull?.nodeStyleOrNull?.scalableDataOrNull?.setOrNull?.let { setData ->
                 val setName = setData.name
-                val eventHash: HashMap<String, String> = HashMap()
-                setData.eventListList.forEach {
-                    eventHash[it.eventName] = it.variantName
-                }
-                setEventMap[setName] = eventHash
+                setEventMap[setName] = setData
             }
 
             setMap.value.forEach { variantMap ->
@@ -163,6 +161,10 @@ class ScalableUiDoc(doc: DocContent) {
                         if (child.name == "main") {
                             val layout = child.style.layoutStyle
                             this.variantMap[variantMap.key] = scalableUiVariant {
+                                isVisible = when (child.style.nodeStyle.displayType) {
+                                    com.android.designcompose.definition.view.Display.DISPLAY_NONE -> false
+                                    else -> true
+                                }
                                 bounds = bounds {
                                     left = scalableDimension {
                                         points = layout.margin.start.points
@@ -193,16 +195,22 @@ class ScalableUiDoc(doc: DocContent) {
         }
     }
 
+    fun hasVisible(variantName: String): Boolean {
+        return variantMap.containsKey(variantName)
+    }
+
+    fun getVisible(variantName: String): Boolean {
+        return variantMap[variantName]?.isVisible == true
+    }
+
     fun getBounds(variantName: String): Bounds? {
-        val variant = variantMap[variantName]
-        return variant?.bounds
+        return variantMap[variantName]?.bounds
     }
 
     fun getTransitions(componentSetName: String, result: HashMap<String, String>) {
-        println("### getTransitions $componentSetName")
-        val eventHash = setEventMap[componentSetName]
+        val eventHash = setEventMap[componentSetName]?.eventMapMap
         eventHash?.forEach {
-            result[it.key] = it.value
+            result[it.key] = it.value.variantName
         }
     }
 }

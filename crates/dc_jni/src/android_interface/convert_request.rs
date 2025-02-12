@@ -18,6 +18,7 @@ use crate::error::Error;
 use dc_bundle::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader, NodeQuery};
 use figma_import::ProxyConfig;
 use figma_import::{ImageContextSession, ServerFigmaDoc};
+use log::warn;
 
 pub fn fetch_doc(
     id: &str,
@@ -46,6 +47,7 @@ pub fn fetch_doc(
     )? {
         // The document has changed since the version the client has, so we should fetch
         // a new copy.
+        warn!("### NODES skip_hidden = {}", rq.skip_hidden);
         let mut error_list: Vec<String> = vec![];
         let views = doc.nodes(
             &rq.queries.iter().map(NodeQuery::name).collect(),
@@ -54,6 +56,7 @@ pub fn fetch_doc(
                 .map(|imgref| (NodeQuery::name(imgref.node.clone()), imgref.images.clone()))
                 .collect(),
             &mut error_list,
+            rq.skip_hidden,
         )?;
 
         let variable_map = doc.build_variable_map();

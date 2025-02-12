@@ -66,7 +66,7 @@ use dc_bundle::definition::element::ScalableUiVariant;
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
 use dc_bundle::definition::view::{
-    ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle,
+    ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle, Display,
 };
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -108,6 +108,7 @@ fn compute_layout(
     parent: Option<&figma_schema::Node>,
 ) -> Result<ViewStyle, Error> {
     let mut style = ViewStyle::new_default();
+    style.node_style_mut().display_type = if node.visible { Display::Flex.into() } else { Display::None.into() };
 
     // Determine if the parent is using Auto Layout (and thus is a Flexbox parent) or if it isn't.
     let parent_frame = parent.and_then(|p| p.frame());
@@ -821,6 +822,7 @@ fn visit_node(
     component_context: &mut ComponentContext,
     images: &mut ImageContext,
     parent_plugin_data: Option<&HashMap<String, String>>,
+    skip_hidden: bool,
 ) -> Result<View, Error> {
     // See if we have any plugin data. If we have plugin data passed in, it came from a parent
     // widget, so use it. Otherwise look for it in the shared plugin data.
@@ -838,9 +840,9 @@ fn visit_node(
 
     // TODO REMOVE DEBUGGING ONLY
         let node_type = match &node.data {
-            crate::figma_schema::NodeData::ComponentSet { frame } => "SET",
-            crate::figma_schema::NodeData::Component { frame } => "COMPONENT",
-            crate::figma_schema::NodeData::Instance { frame, .. } => "INSTANCE",
+            crate::figma_schema::NodeData::ComponentSet { frame: _ } => "SET",
+            crate::figma_schema::NodeData::Component { frame: _ } => "COMPONENT",
+            crate::figma_schema::NodeData::Instance { frame: _, .. } => "INSTANCE",
             _ => "NONE",
         };
 
@@ -1822,7 +1824,7 @@ fn visit_node(
     // of their children).
     if node.vector().is_none() {
         for child in node.children.iter() {
-            if child.visible {
+            if child.visible || !skip_hidden {
                 view.add_child(visit_node(
                     child,
                     Some(node),
@@ -1831,6 +1833,7 @@ fn visit_node(
                     component_context,
                     images,
                     child_plugin_data,
+                    skip_hidden,
                 )?);
             }
         }
@@ -1852,6 +1855,7 @@ pub fn create_component_flexbox(
     component_set_map: &HashMap<String, figma_schema::ComponentSet>,
     component_context: &mut ComponentContext,
     image_context: &mut ImageContext,
+    skip_hidden: bool,
 ) -> core::result::Result<View, Error> {
     visit_node(
         component,
@@ -1861,6 +1865,7 @@ pub fn create_component_flexbox(
         component_context,
         image_context,
         None,
+        skip_hidden,
     )
 }
 

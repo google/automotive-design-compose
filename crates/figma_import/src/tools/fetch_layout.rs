@@ -245,6 +245,7 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
         &args.nodes.iter().map(|name| NodeQuery::name(name)).collect(),
         &Vec::new(),
         &mut error_list,
+        true,
     )?;
     for error in error_list {
         eprintln!("Warning: {error}");

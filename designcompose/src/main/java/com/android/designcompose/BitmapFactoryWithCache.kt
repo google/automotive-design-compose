@@ -31,9 +31,9 @@ object BitmapFactoryWithCache {
         bitmapCache =
             object : LruCache<String, Bitmap>(cacheSize) {
 
-                override fun sizeOf(key: String, bitmap: Bitmap): Int {
+                override fun sizeOf(key: String, value: Bitmap): Int {
                     // The cache size will be measured in kilobytes rather than number of items.
-                    return (bitmap.byteCount / 1024).coerceAtLeast(1)
+                    return (value.byteCount / 1024).coerceAtLeast(1)
                 }
             }
     }

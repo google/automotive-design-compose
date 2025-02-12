@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.Density
 import com.android.designcompose.ComputedPathCache
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
+import com.android.designcompose.ShaderBrushCache
 import com.android.designcompose.VariableState
 import com.android.designcompose.definition.modifier.TextAlignVertical
 import com.android.designcompose.definition.modifier.TextOverflow
@@ -77,6 +78,7 @@ internal fun Modifier.squooshRender(
     variableState: VariableState,
     hasModeOverride: Boolean,
     computedPathCache: ComputedPathCache,
+    shaderBrushCache: ShaderBrushCache,
     appContext: Context,
     scrollOffset: State<Offset>,
 ): Modifier =
@@ -156,6 +158,7 @@ internal fun Modifier.squooshRender(
                                         customizations,
                                         node.view.name,
                                         newVariableState,
+                                        shaderBrushCache,
                                         appContext = appContext,
                                     )
                                     nodeRenderCount++
@@ -182,6 +185,7 @@ internal fun Modifier.squooshRender(
                             customizations,
                             newVariableState,
                             computedPathCache,
+                            shaderBrushCache,
                             appContext,
                         ) {
                             var child = node.firstChild
@@ -275,6 +279,7 @@ private fun squooshTextRender(
     customizations: CustomizationContext,
     nodeName: String,
     variableState: VariableState,
+    shaderBrushCache: ShaderBrushCache,
     appContext: Context,
 ) {
     val textInfo = node.textInfo!!
@@ -318,7 +323,7 @@ private fun squooshTextRender(
             else -> 0.0f
         }
 
-    val customFillBrush = getCustomBrush(node, customizations)
+    val customFillBrush = getCustomBrush(node, customizations, shaderBrushCache, node.layoutId)
 
     drawContext.canvas.save()
     drawContext.canvas.translate(0.0f, verticalCenterOffset)
@@ -375,6 +380,8 @@ private fun squooshTextRender(
                 style.nodeStyle.stroke.shaderData,
                 customizations.getShaderUniformCustomizations(nodeName),
                 customizations.getShaderTimeUniformState(),
+                shaderBrushCache,
+                node.layoutId,
                 asBackground = false,
             )
         paragraph.paint(

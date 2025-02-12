@@ -33,8 +33,6 @@ import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PathMeasure
-import androidx.compose.ui.graphics.Shader
-import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asImageBitmap
@@ -347,6 +345,7 @@ internal fun ContentDrawScope.squooshShapeRender(
     customizations: CustomizationContext,
     variableState: VariableState,
     computedPathCache: ComputedPathCache,
+    shaderBrushCache: ShaderBrushCache,
     appContext: Context,
     drawContent: () -> Unit,
 ) {
@@ -500,7 +499,7 @@ internal fun ContentDrawScope.squooshShapeRender(
         drawContext.canvas.saveLayer(Rect(Offset.Zero, size).inflate(outset * density), paint)
     }
 
-    val customFillBrush = getCustomBrush(node, customizations)
+    val customFillBrush = getCustomBrush(node, customizations, shaderBrushCache, node.layoutId)
 
     val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
     val fillBrush: List<Paint> =
@@ -532,6 +531,8 @@ internal fun ContentDrawScope.squooshShapeRender(
                     style.nodeStyle.stroke.shaderData,
                     customizations.getShaderUniformCustomizations(node.view.name),
                     customizations.getShaderTimeUniformState(),
+                    shaderBrushCache,
+                    layoutId = node.layoutId,
                     asBackground = false,
                 )
             b.applyTo(brushSize, p, 1.0f)
@@ -786,6 +787,8 @@ fun ShaderUniform.applyToShader(
 internal fun getCustomBrush(
     node: SquooshResolvedNode,
     customizations: CustomizationContext,
+    shaderBrushCache: ShaderBrushCache,
+    layoutId: Int?,
 ): Brush? {
     val nodeName = node.view.name
     var customFillBrush = customizations.getBrush(nodeName)
@@ -799,6 +802,8 @@ internal fun getCustomBrush(
                         it,
                         customizations.getShaderUniformCustomizations(nodeName),
                         customizations.getShaderTimeUniformState(),
+                        shaderBrushCache,
+                        layoutId,
                     )
             }
     }
@@ -809,22 +814,42 @@ internal fun getShaderBrush(
     shaderData: ShaderData,
     shaderUniformCustomizations: ShaderUniformCustomizations?,
     shaderTimeUniformState: State<ShaderUniform>?,
+    shaderBrushCache: ShaderBrushCache,
+    layoutId: Int?,
     asBackground: Boolean = true,
 ): Brush {
+    val cachedBrush: Brush? = shaderBrushCache.get(layoutId)
     lateinit var shaderBrush: Brush
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val shaderProg = shaderData.shader.trim().trimIndent()
-        val shader = RuntimeShader(shaderProg)
-        shaderBrush = SizingShaderBrush(shader)
-        shaderData.shaderUniformsMap.forEach { (_, v) ->
-            v.applyToShader(shader, shaderData.shaderUniformsMap)
+    if (cachedBrush == null) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val shaderProg = shaderData.shader.trim().trimIndent()
+            val shader = RuntimeShader(shaderProg)
+            shaderBrush = SizingShaderBrush(shader)
+            shaderData.shaderUniformsMap.forEach { (_, v) ->
+                v.applyToShader(shader, shaderData.shaderUniformsMap)
+            }
+        } else {
+            shaderData.shaderFallbackColorOrNull?.let { color ->
+                shaderBrush = SolidColor(color.toColor())
+            }
         }
+        if (layoutId != null) {
+            shaderBrushCache.put(layoutId, shaderBrush)
+        }
+    } else {
+        shaderBrush = cachedBrush
+    }
+
+    if (shaderBrush is SizingShaderBrush && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val shaderUniformList =
             if (asBackground) shaderUniformCustomizations?.backgroundShaderUniforms
             else shaderUniformCustomizations?.strokeShaderUniforms
         shaderUniformList?.forEach { customUniform ->
             if (shaderData.shaderUniformsMap.containsKey(customUniform.name)) {
-                customUniform.applyToShader(shader, shaderData.shaderUniformsMap)
+                customUniform.applyToShader(
+                    (shaderBrush as SizingShaderBrush).shader,
+                    shaderData.shaderUniformsMap,
+                )
             }
         }
         val shaderUniformStateList =
@@ -833,26 +858,20 @@ internal fun getShaderBrush(
         shaderUniformStateList?.forEach { customUniformState ->
             val customUniform = customUniformState.value
             if (shaderData.shaderUniformsMap.containsKey(customUniform.name)) {
-                customUniform.applyToShader(shader, shaderData.shaderUniformsMap)
+                customUniform.applyToShader(
+                    (shaderBrush as SizingShaderBrush).shader,
+                    shaderData.shaderUniformsMap,
+                )
             }
         }
         shaderTimeUniformState?.value?.let {
             if (shaderData.shaderUniformsMap.containsKey(it.name)) {
-                it.applyToShader(shader, shaderData.shaderUniformsMap)
+                it.applyToShader(
+                    (shaderBrush as SizingShaderBrush).shader,
+                    shaderData.shaderUniformsMap,
+                )
             }
-        }
-    } else {
-        shaderData.shaderFallbackColorOrNull?.let { color ->
-            shaderBrush = SolidColor(color.toColor())
         }
     }
     return shaderBrush
-}
-
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-class SizingShaderBrush(private val shader: RuntimeShader) : ShaderBrush() {
-    override fun createShader(size: Size): Shader {
-        shader.setFloatUniform("iResolution", size.width, size.height, 0.0f)
-        return shader
-    }
 }

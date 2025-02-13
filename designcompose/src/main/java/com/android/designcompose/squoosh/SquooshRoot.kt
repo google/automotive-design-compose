@@ -82,6 +82,7 @@ import com.android.designcompose.LayoutManager
 import com.android.designcompose.LiveUpdateMode
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.LocalVariableState
+import com.android.designcompose.ShaderBrushCache
 import com.android.designcompose.VariableState
 import com.android.designcompose.branches
 import com.android.designcompose.clonedWithAnimatedActionsApplied
@@ -341,6 +342,7 @@ fun SquooshRoot(
             TextMeasureCache()
         }
     val computedPathCache = remember(docId) { ComputedPathCache() }
+    val shaderBrushCache = remember(docId, doc.c.header.lastModified) { ShaderBrushCache() }
 
     // We need to remember the previous set of variant properties that we rendered
     // with so we can see if there are any transitions caused by changing variant props.
@@ -692,6 +694,7 @@ fun SquooshRoot(
                         VariableState.create(),
                         LocalVariableState.hasOverrideModeValues(),
                         computedPathCache,
+                        shaderBrushCache,
                         appContext = LocalContext.current,
                         scrollOffset,
                     )

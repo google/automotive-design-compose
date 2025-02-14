@@ -16,22 +16,31 @@
 
 package com.android.designcompose
 
+import android.content.Context
+import android.database.ContentObserver
 import android.os.Build
+import android.os.Handler
+import android.provider.Settings
+import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.IntState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.asFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.definition.element.ShaderUniformValueKt.floatVec
 import com.android.designcompose.definition.element.floatColor
 import com.android.designcompose.definition.element.shaderUniform
 import com.android.designcompose.definition.element.shaderUniformValue
+import kotlinx.coroutines.delay
 
 data class ShaderUniformCustomizations(
     val backgroundShaderUniforms: MutableList<ShaderUniform> = mutableListOf(),
@@ -82,14 +91,41 @@ object ShaderHelper {
      */
     @Composable
     fun getShaderUniformTimeFloatState(): FloatState {
-        return if ("robolectric" != Build.FINGERPRINT)
+        val context = LocalContext.current
+        val frameInterval =
+            context.resources.getInteger(R.integer.config_shader_frame_interval_ms).toLong()
+        val isAnimationEnabled = remember { mutableStateOf(isMotionEnabled(context)) }
+
+        DisposableEffect(context) {
+            val observer =
+                object : ContentObserver(Handler(context.mainLooper)) {
+                    override fun onChange(selfChange: Boolean) {
+                        isAnimationEnabled.value = isMotionEnabled(context)
+                    }
+                }
+
+            context.contentResolver.registerContentObserver(
+                Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE),
+                true,
+                observer,
+            )
+
+            // Cleanup when the composable leaves the composition
+            onDispose { context.contentResolver.unregisterContentObserver(observer) }
+        }
+        return if ("robolectric" != Build.FINGERPRINT) {
             produceState(0f) {
+                    val startTime = withInfiniteAnimationFrameMillis { it }
                     while (true) {
-                        withInfiniteAnimationFrameMillis { value = it / 1000f }
+                        val currentTime = withInfiniteAnimationFrameMillis { it }
+                        if (isAnimationEnabled.value) {
+                            value = (currentTime - startTime) / 1000f
+                        }
+                        delay(frameInterval)
                     }
                 }
                 .asFloatState()
-        else remember { mutableFloatStateOf(3.0f) }
+        } else remember { mutableFloatStateOf(3.0f) }
     }
 
     /** Creates a shader uniform from a float value. */
@@ -159,5 +195,22 @@ object ShaderHelper {
         state: State<FloatArray>,
     ): State<ShaderUniform> {
         return remember { derivedStateOf { createShaderFloatArrayUniform(name, state.value) } }
+    }
+
+    /**
+     * Returns true if animations are enabled on the device. Using this check keep the shader
+     * behavior consistent across the BrushTest which uses a [InfiniteTransition] and the
+     * BrushFromShaderPluginTest which simulates iTime using [withInfiniteAnimationFrameMillis].
+     */
+    private fun isMotionEnabled(context: Context): Boolean {
+        return try {
+            Settings.Global.getFloat(
+                context.contentResolver,
+                Settings.Global.ANIMATOR_DURATION_SCALE,
+            ) != 0f
+        } catch (e: Settings.SettingNotFoundException) {
+            // If the setting is not found, assume animations are enabled
+            true
+        }
     }
 }

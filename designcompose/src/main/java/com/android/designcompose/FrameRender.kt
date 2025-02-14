@@ -499,7 +499,8 @@ internal fun ContentDrawScope.squooshShapeRender(
         drawContext.canvas.saveLayer(Rect(Offset.Zero, size).inflate(outset * density), paint)
     }
 
-    val customFillBrush = getCustomBrush(node, customizations, shaderBrushCache, node.layoutId)
+    val customFillBrush =
+        getCustomBrush(node, customizations, shaderBrushCache, node.layoutId, node.view.id)
 
     val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
     val fillBrush: List<Paint> =
@@ -533,6 +534,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                     customizations.getShaderTimeUniformState(),
                     shaderBrushCache,
                     layoutId = node.layoutId,
+                    viewId = node.view.id,
                     asBackground = false,
                 )
             b.applyTo(brushSize, p, 1.0f)
@@ -789,6 +791,7 @@ internal fun getCustomBrush(
     customizations: CustomizationContext,
     shaderBrushCache: ShaderBrushCache,
     layoutId: Int?,
+    viewId: String,
 ): Brush? {
     val nodeName = node.view.name
     var customFillBrush = customizations.getBrush(nodeName)
@@ -804,6 +807,7 @@ internal fun getCustomBrush(
                         customizations.getShaderTimeUniformState(),
                         shaderBrushCache,
                         layoutId,
+                        viewId,
                     )
             }
     }
@@ -816,9 +820,10 @@ internal fun getShaderBrush(
     shaderTimeUniformState: State<ShaderUniform>?,
     shaderBrushCache: ShaderBrushCache,
     layoutId: Int?,
+    viewId: String,
     asBackground: Boolean = true,
 ): Brush {
-    val cachedBrush: Brush? = shaderBrushCache.get(layoutId)
+    val cachedBrush: Brush? = shaderBrushCache.get(layoutId, viewId)
     lateinit var shaderBrush: Brush
     if (cachedBrush == null) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -834,7 +839,7 @@ internal fun getShaderBrush(
             }
         }
         if (layoutId != null) {
-            shaderBrushCache.put(layoutId, shaderBrush)
+            shaderBrushCache.put(layoutId, viewId, shaderBrush)
         }
     } else {
         shaderBrush = cachedBrush

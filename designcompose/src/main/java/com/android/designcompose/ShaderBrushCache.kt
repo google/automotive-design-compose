@@ -26,15 +26,15 @@ import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 
 class ShaderBrushCache {
-    private val cache = LruCache<Int, Brush>(64)
+    private val cache = LruCache<String, Brush>(64)
 
-    fun get(layoutId: Int?): Brush? {
+    fun get(layoutId: Int?, viewId: String): Brush? {
         if (layoutId == null) return null
-        return cache[layoutId]
+        return cache["$layoutId:$viewId"]
     }
 
-    fun put(layoutId: Int, shaderBrush: Brush) {
-        cache.put(layoutId, shaderBrush)
+    fun put(layoutId: Int, viewId: String, shaderBrush: Brush) {
+        cache.put("$layoutId:$viewId", shaderBrush)
     }
 }
 

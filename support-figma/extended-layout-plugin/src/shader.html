@@ -295,6 +295,7 @@
     let currentShader = null;
 
     let currentImageSnapshot = null;
+    let currentSurface = null;
 
     const customUniforms = [];
     const uniformTypeMap = new Map();
@@ -701,10 +702,12 @@
         return "#" + componentToHex(rgbColor.r) + componentToHex(rgbColor.g) + componentToHex(rgbColor.b);
     }
 
-    function clearUniforms() {
+    function resetShader() {
         customUniforms.length = 0;
         uniformTypeMap.clear();
         uniforms.innerHTML = "";
+        currentShader = null;
+        currentSurface = null;
     }
 
     function previewUniformValue(uniform) {
@@ -814,12 +817,11 @@
     }
 
     async function clearShaderCode() {
-        clearUniforms();
+        resetShader();
         shaderCodeInput.value = `
 vec4 main(float2 fragCoord) {
     return vec4(0, 0, 0, 1);
 }`;
-        currentShader = null;
         await runShader();
     }
 
@@ -871,9 +873,17 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             if (!surface) {
                 throw "Could not make surface";
             }
-            const skcanvas = surface.getCanvas();
+            currentSurface = surface;
 
-            function drawFrame(canvas) {
+            function drawFrame(skcanvas) {
+                if (currentSurface != surface) {
+                    console.log("The surface has changed, stop animation and clean up surface...");
+                    setTimeout(() => {
+                        surface.dispose();
+                    }, 0);
+                    return;
+                }
+
                 const uniforms = [
                     shaderWidth, shaderHeight, 1, // vec3 iResolution(x, y, z);
                     mouseDragX, mouseDragY, mouseClickX, mouseClickY, // iMouse(x, y, z, w)
@@ -911,10 +921,11 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 currentImageSnapshot = surface.makeImageSnapshot();
 
                 surface.requestAnimationFrame(drawFrame);
+
             }
             surface.requestAnimationFrame(drawFrame);
 
-            canvas.addEventListener("pointermove", (e) => {
+            canvas.onpointermove = (e) => {
                 if (e.pressure && !lastMousePressure) {
                     mouseClickX = e.offsetX;
                     mouseClickY = e.offsetY;
@@ -925,7 +936,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 }
                 mouseDragX = e.offsetX;
                 mouseDragY = e.offsetY;
-            });
+            };
 
             function buildApplyAction(asBackground) {
                 return e => {
@@ -982,7 +993,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
         let msg = event.data.pluginMessage;
         if (msg.msg == 'shaderCode') {
             // Run the preset shader code.
-            clearUniforms();
+            resetShader();
             shaderCodeInput.value = msg.code;
             createShaderTimeUniform();
             await runShader();
@@ -1029,7 +1040,7 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
             loadButton.disabled = false;
             clearButton.disabled = false;
             loadButton.onclick = async () => {
-                clearUniforms();
+                resetShader();
                 shaderCodeInput.value = shader;
                 for (const shaderUniform of shaderUniforms) {
                     switch (shaderUniform.uniformType) {

@@ -92,7 +92,7 @@ fun BrushFromShaderPluginTest() {
             val angle = iTimeFloatState.floatValue % (2 * PI)
             val cos = cos(angle).toFloat()
             val sin = sin(angle).toFloat()
-            arrayOf(cos, -sin, sin, cos).toFloatArray()
+            floatArrayOf(cos, -sin, sin, cos)
         }
     }
     val customMatrixState = ShaderUniformCustomizations()

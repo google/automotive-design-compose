@@ -17,8 +17,10 @@
 package com.android.designcompose
 
 import android.content.Context
+import android.graphics.BitmapShader
 import android.graphics.BlurMaskFilter
 import android.graphics.RuntimeShader
+import android.graphics.Shader
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -500,7 +502,14 @@ internal fun ContentDrawScope.squooshShapeRender(
     }
 
     val customFillBrush =
-        getCustomBrush(node, customizations, shaderBrushCache, node.layoutId, node.view.id)
+        getCustomBrush(
+            node,
+            customizations,
+            shaderBrushCache,
+            node.layoutId,
+            node.view.id,
+            document,
+        )
 
     val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
     val fillBrush: List<Paint> =
@@ -535,6 +544,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                     shaderBrushCache,
                     layoutId = node.layoutId,
                     viewId = node.view.id,
+                    document = document,
                     asBackground = false,
                 )
             b.applyTo(brushSize, p, 1.0f)
@@ -685,6 +695,7 @@ internal fun ContentDrawScope.squooshShapeRender(
 fun ShaderUniform.applyToShader(
     shader: RuntimeShader,
     shaderUniformMap: Map<String, ShaderUniform>,
+    document: DocContent,
 ) {
     val definedType = shaderUniformMap[name]?.type
     when (value.valueTypeCase) {
@@ -780,6 +791,18 @@ fun ShaderUniform.applyToShader(
             }
         }
 
+        ValueTypeCase.IMAGE_REF_VALUE -> {
+            val imageRef = value.imageRefValue.key
+            val bitmap = document.image(imageRef, 1.0f)
+            if (bitmap != null) {
+                val bitmapShader =
+                    BitmapShader(bitmap.first, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+                shader.setInputBuffer(name, bitmapShader)
+            } else {
+                Log.e(TAG, "Failed to find image $imageRef for shader $name")
+            }
+        }
+
         else -> {
             Log.w(TAG, "Invalid shader uniform $name")
         }
@@ -792,6 +815,7 @@ internal fun getCustomBrush(
     shaderBrushCache: ShaderBrushCache,
     layoutId: Int?,
     viewId: String,
+    document: DocContent,
 ): Brush? {
     val nodeName = node.view.name
     var customFillBrush = customizations.getBrush(nodeName)
@@ -808,6 +832,7 @@ internal fun getCustomBrush(
                         shaderBrushCache,
                         layoutId,
                         viewId,
+                        document,
                     )
             }
     }
@@ -821,6 +846,7 @@ internal fun getShaderBrush(
     shaderBrushCache: ShaderBrushCache,
     layoutId: Int?,
     viewId: String,
+    document: DocContent,
     asBackground: Boolean = true,
 ): Brush {
     val cachedBrush: Brush? = shaderBrushCache.get(layoutId, viewId)
@@ -831,7 +857,7 @@ internal fun getShaderBrush(
             val shader = RuntimeShader(shaderProg)
             shaderBrush = SizingShaderBrush(shader)
             shaderData.shaderUniformsMap.forEach { (_, v) ->
-                v.applyToShader(shader, shaderData.shaderUniformsMap)
+                v.applyToShader(shader, shaderData.shaderUniformsMap, document)
             }
         } else {
             shaderData.shaderFallbackColorOrNull?.let { color ->
@@ -854,6 +880,7 @@ internal fun getShaderBrush(
                 customUniform.applyToShader(
                     (shaderBrush as SizingShaderBrush).shader,
                     shaderData.shaderUniformsMap,
+                    document,
                 )
             }
         }
@@ -866,6 +893,7 @@ internal fun getShaderBrush(
                 customUniform.applyToShader(
                     (shaderBrush as SizingShaderBrush).shader,
                     shaderData.shaderUniformsMap,
+                    document,
                 )
             }
         }
@@ -874,6 +902,7 @@ internal fun getShaderBrush(
                 it.applyToShader(
                     (shaderBrush as SizingShaderBrush).shader,
                     shaderData.shaderUniformsMap,
+                    document,
                 )
             }
         }

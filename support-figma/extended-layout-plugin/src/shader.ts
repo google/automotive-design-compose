@@ -31,13 +31,20 @@ interface ShaderData {
 interface ShaderUniform {
   uniformName: string;
   uniformType: string;
-  uniformValue: number | Float32Array | RGBA;
+  uniformValue:
+    | number
+    | Float32Array
+    | RGBA
+    | Uint8Array
+    | ArrayBuffer
+    | string;
   extras: ShaderExtras | null;
 }
 
 interface ShaderExtras {
   min: Number;
   max: Number;
+  ignore: boolean; // Ignore creating this uniform on loading from node.
 }
 
 export const shaderMap: ReadonlyMap<string, string> = new Map([
@@ -77,7 +84,7 @@ const broadcastSizeChangeCallback = (event: NodeChangeEvent) => {
   }
 };
 
-export function onSelectionChanged() {
+export async function onSelectionChanged() {
   let selection = figma.currentPage.selection;
 
   figma.currentPage.off("nodechange", broadcastSizeChangeCallback);
@@ -94,12 +101,14 @@ export function onSelectionChanged() {
       SHADER_PLUGIN_DATA_KEY
     )
   );
+  await loadShaderData(shaderData);
   let strokeShaderData = getShaderData(
     selection[0].getSharedPluginData(
       Utils.SHARED_PLUGIN_NAMESPACE,
       STROKE_SHADER_PLUGIN_DATA_KEY
     )
   );
+  await loadShaderData(strokeShaderData);
   figma.ui.postMessage({
     msg: "shader-selection",
     nodeId: selection[0].id,
@@ -114,40 +123,43 @@ export function onSelectionChanged() {
   figma.currentPage.on("nodechange", broadcastSizeChangeCallback);
 }
 
-export async function insertImage(
-  imageBytes: Uint8Array,
-  asBackground: boolean
-) {
-  await figma.loadAllPagesAsync();
-
-  let selection = figma.currentPage.selection;
-
-  // We don't support multiple selections.
-  if (!selection || selection.length != 1 || !selection[0]) {
-    figma.notify(
-      "No selections or multiple selections. Please select 1 node which can have background or strokes"
-    );
-    return;
-  }
-  if (asBackground) {
-    await insertBackgroundImage(selection[0], imageBytes);
-  } else {
-    await insertStrokeImage(selection[0], imageBytes);
+async function loadShaderData(shaderData: ShaderData | null | undefined) {
+  const shaderUniforms = shaderData ? shaderData.shaderUniforms : null;
+  if (shaderUniforms) {
+    for (const shaderUniform of shaderUniforms) {
+      if (shaderUniform.uniformType == "shader") {
+        const imageHash = shaderUniform.uniformValue;
+        if (typeof imageHash == "string") {
+          const imageBytes = await figma
+            .getImageByHash(imageHash)
+            ?.getBytesAsync();
+          if (imageBytes) {
+            shaderUniform.uniformValue = imageBytes;
+          } else {
+            figma.notify(
+              `Not able to load image for shader ${shaderUniform.uniformName}`
+            );
+          }
+        }
+      }
+    }
   }
 }
 
-async function insertBackgroundImage(node: SceneNode, imageBytes: Uint8Array) {
+function insertBackgroundImage(
+  node: SceneNode,
+  imageBytes: Uint8Array | undefined | null,
+  paintArray: Array<Paint>
+) {
   let nodeWithFills: MinimalFillsMixin = node as MinimalFillsMixin;
-  if (nodeWithFills) {
-    // Set the image as the only fill for the node.
+  if (nodeWithFills && imageBytes) {
     const imageHash = figma.createImage(imageBytes).hash;
-    nodeWithFills.fills = [
-      {
-        type: "IMAGE",
-        imageHash: imageHash,
-        scaleMode: "FILL",
-      },
-    ];
+    paintArray.push({
+      type: "IMAGE",
+      imageHash: imageHash,
+      scaleMode: "FILL",
+    });
+
     node.setPluginData(SHADER_IMAGE_HASH, imageHash);
   } else {
     figma.notify(
@@ -156,18 +168,19 @@ async function insertBackgroundImage(node: SceneNode, imageBytes: Uint8Array) {
   }
 }
 
-async function insertStrokeImage(node: SceneNode, imageBytes: Uint8Array) {
+function insertStrokeImage(
+  node: SceneNode,
+  imageBytes: Uint8Array | undefined | null,
+  paintArray: Array<Paint>
+) {
   let nodeWithStrokes: MinimalStrokesMixin = node as MinimalStrokesMixin;
-  if (nodeWithStrokes) {
-    // Set the image as the only fill for the node.
+  if (nodeWithStrokes && imageBytes) {
     const imageHash = figma.createImage(imageBytes).hash;
-    nodeWithStrokes.strokes = [
-      {
-        type: "IMAGE",
-        imageHash: imageHash,
-        scaleMode: "FILL",
-      },
-    ];
+    paintArray.push({
+      type: "IMAGE",
+      imageHash: imageHash,
+      scaleMode: "FILL",
+    });
     node.setPluginData(STROKE_SHADER_IMAGE_HASH, imageHash);
   } else {
     figma.notify(
@@ -177,9 +190,10 @@ async function insertStrokeImage(node: SceneNode, imageBytes: Uint8Array) {
 }
 
 export async function setShader(
-  shader: string,
-  shaderFallbackColor: string,
-  shaderUniforms: Array<ShaderUniform>,
+  shader: string | undefined | null,
+  shaderFallbackColor: string | undefined | null,
+  shaderUniforms: Array<ShaderUniform> | undefined | null,
+  imageBytes: Uint8Array | undefined | null,
   asBackground: boolean
 ) {
   await figma.loadAllPagesAsync();
@@ -197,6 +211,7 @@ export async function setShader(
     shader,
     shaderFallbackColor,
     shaderUniforms,
+    imageBytes,
     asBackground
   );
 
@@ -204,11 +219,12 @@ export async function setShader(
   onSelectionChanged();
 }
 
-function setShaderToNode(
+async function setShaderToNode(
   node: SceneNode,
   shader: string | undefined | null,
   shaderFallbackColor: string | undefined | null,
   shaderUniforms: Array<ShaderUniform> | undefined | null,
+  imageBytes: Uint8Array | undefined | null,
   asBackground: boolean
 ) {
   const rgbaPresent = shaderFallbackColor
@@ -227,11 +243,17 @@ function setShaderToNode(
 
     if (nodeWithFills) {
       if (shaderData) {
+        let paintArray = new Array<Paint>();
+        insertBackgroundImage(node, imageBytes, paintArray);
+        processShaderData(shaderData, paintArray);
+        nodeWithFills.fills = paintArray;
+
         node.setSharedPluginData(
           Utils.SHARED_PLUGIN_NAMESPACE,
           SHADER_PLUGIN_DATA_KEY,
           JSON.stringify(shaderData)
         );
+        console.log("Saving to file:", JSON.stringify(shaderData));
       } else {
         // Clears the shader
         node.setSharedPluginData(
@@ -250,11 +272,17 @@ function setShaderToNode(
 
     if (nodeWithStrokes) {
       if (shaderData) {
+        let paintArray = new Array<Paint>();
+        insertStrokeImage(node, imageBytes, paintArray);
+        processShaderData(shaderData, paintArray);
+        nodeWithStrokes.strokes = paintArray;
+
         node.setSharedPluginData(
           Utils.SHARED_PLUGIN_NAMESPACE,
           STROKE_SHADER_PLUGIN_DATA_KEY,
           JSON.stringify(shaderData)
         );
+        console.log("Saving to file:", JSON.stringify(shaderData));
       } else {
         // Clears the shader
         node.setSharedPluginData(
@@ -267,6 +295,40 @@ function setShaderToNode(
       figma.notify(
         "Current selection doesn't support image stroke. Please select 1 node that can have strokes..."
       );
+    }
+  }
+}
+
+function processShaderData(shaderData: ShaderData, paintArray: Array<Paint>) {
+  if (shaderData.shaderUniforms) {
+    for (const shaderUniform of shaderData.shaderUniforms) {
+      if (shaderUniform.uniformType == "shader") {
+        const imageBytes = shaderUniform.uniformValue;
+        let bytes =
+          imageBytes instanceof ArrayBuffer
+            ? new Uint8Array(imageBytes)
+            : imageBytes;
+        if (bytes instanceof Uint8Array) {
+          let imageHash = figma.createImage(bytes).hash;
+          if (imageHash) {
+            paintArray.push({
+              type: "IMAGE",
+              imageHash: imageHash,
+              scaleMode: "FILL",
+              visible: false,
+            });
+            shaderUniform.uniformValue = imageHash;
+          } else {
+            figma.notify(
+              `Not able to create image for shader ${shaderUniform.uniformName}`
+            );
+          }
+        } else {
+          figma.notify(
+            `There is something wrong to save the image input to the figma file for shader uniform ${shaderUniform.uniformName}`
+          );
+        }
+      }
     }
   }
 }

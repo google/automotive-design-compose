@@ -133,6 +133,8 @@
             <label><input type="radio" name="uniformType" value="intArray">Int Array</label>
             <br>
             <label><input type="radio" name="uniformType" value="matrix">Matrix</label>
+            <br>
+            <label><input type="radio" name="uniformType" value="shader">Image</label>
         </p>
         <div style="display: flex; gap: 4px;">
             <button id="continueButton" class="button--primary" style="flex-grow: 1;"
@@ -260,6 +262,19 @@
             <button id="closeMatrixUniformButton" class="button--primary" style="flex-grow: 1;">Close</button>
         </div>
     </dialog>
+    <dialog id="createImageUniformDialog">
+        <div><b>Create image uniform</b></div>
+        <p>
+        <div style="display: flex; gap: 8px;">
+            <label for="imageUniformName" style="flex-grow: 1;">Name:</label>
+            <input type="text" id="imageUniformName" placeholder="iImage" autofocus></input>
+        </div>
+        </p>
+        <div style="display: flex; gap: 4px;">
+            <button id="createImageUniformButton" class="button--primary" style="flex-grow: 1;">Create</button>
+            <button id="closeImageUniformButton" class="button--primary" style="flex-grow: 1;">Close</button>
+        </div>
+    </dialog>
 
 </div>
 <!-- END OF SHADER PLUGIN UI -->
@@ -299,6 +314,7 @@
 
     const customUniforms = [];
     const uniformTypeMap = new Map();
+    const imageArrayBuffers = new Map();
     const uniforms = document.getElementById("uniforms");
 
     const createUniformDialog = document.getElementById("createUniformDialog");
@@ -308,6 +324,7 @@
     const createIntUniformDialog = document.getElementById("createIntUniformDialog");
     const createIntArrayUniformDialog = document.getElementById("createIntArrayUniformDialog");
     const createMatrixUniformDialog = document.getElementById("createMatrixUniformDialog");
+    const createImageUniformDialog = document.getElementById("createImageUniformDialog");
 
     function createUniform() {
         createUniformDialog.showModal();
@@ -334,6 +351,9 @@
                     break;
                 case "matrix":
                     createMatrixUniformDialog.showModal();
+                    break;
+                case "shader":
+                    createImageUniformDialog.showModal();
                     break;
                 case "iTime":
                     createShaderTimeUniform();
@@ -626,6 +646,116 @@
         createMatrixUniformDialog.close();
     };
 
+    const createImageUniformButton = document.getElementById("createImageUniformButton");
+    const closeImageUniformButton = document.getElementById("closeImageUniformButton");
+    const imageUniformNameInput = document.getElementById("imageUniformName");
+
+    // "Create" button closes the dialog and creates the uniform
+    createImageUniformButton.onclick = async () => {
+        const uniformName = imageUniformNameInput.value;
+        await createShaderImageUniform(uniformName, null);
+    };
+
+    async function displayImage(canvas, bytes, uniformName) {
+        const ctx = canvas.getContext('2d');
+        const url = URL.createObjectURL(new Blob([bytes]));
+        const image = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                resolve(img);
+            };
+            img.onerror = () => reject();
+            img.src = url;
+        });
+        canvas.width = image.width;
+        canvas.height = image.height;
+        ctx.drawImage(image, 0, 0);
+
+        const widthInput = document.getElementById(`input_${uniformName}Resolution_0`);
+        widthInput.value = canvas.width;
+        const heightInput = document.getElementById(`input_${uniformName}Resolution_1`);
+        heightInput.value = canvas.height;
+    };
+
+    async function createShaderImageUniform(uniformName, imageBytes) {
+        let newUniformEntry = createShaderUniform(uniformName, "shader");
+        if (!newUniformEntry) {
+            return;
+        }
+
+        // Uniform is created successfully. Close the creation dialog.
+        createImageUniformDialog.close();
+
+        // Create inputs fields
+        const inputsLine = document.createElement("div");
+        inputsLine.classList.add("center-vertically-container");
+        let input = document.createElement("input");
+        input.id = `input_${uniformName}`;
+        input.type = "file";
+        input.accept = "image/*";
+        input.style.flexGrow = "1";
+        input.addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const reader = new FileReader();
+                reader.onload = async function (e) {
+                    const arrayBuffer = event.target.result;
+                    imageArrayBuffers.set(uniformName, arrayBuffer);
+
+                    const canvas = document.getElementById(`canvas_${uniformName}`);
+                    await displayImage(canvas, arrayBuffer, uniformName);
+                    await runShader();
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+        inputsLine.appendChild(input);
+        const canvas = document.createElement('canvas');
+        canvas.id = `canvas_${uniformName}`;
+        canvas.style.width = "24px";
+        canvas.style.height = "24px";
+
+        inputsLine.appendChild(canvas);
+        newUniformEntry.appendChild(inputsLine);
+
+        let shaderResolutionLine = createShaderLine(`${uniformName}Resolution`, "float2");
+        if (shaderResolutionLine) {
+            newUniformEntry.appendChild(shaderResolutionLine);
+            const inputsLine = document.createElement("div");
+            for (let i = 0; i < 2; i++) {
+                let input = document.createElement("input");
+                input.type = "number";
+                input.id = `input_${uniformName}Resolution_${i}`;
+                input.disabled = true;
+                inputsLine.appendChild(input);
+            }
+            newUniformEntry.appendChild(inputsLine);
+        }
+
+        uniforms.appendChild(newUniformEntry);
+
+        const deleteButton = newUniformEntry.querySelector('span.icon-button');
+        deleteButton.addEventListener('click', async () => {
+            imageArrayBuffers.delete(uniformName);
+
+            const index = customUniforms.indexOf(`${uniformName}Resolution`);
+            customUniforms.splice(index, 1);
+            uniformTypeMap.delete(uniformName);
+            uniforms.removeChild(uniformEntry);
+
+            await runShader();
+        });
+        if (imageBytes) {
+            await displayImage(canvas, imageBytes, uniformName);
+            imageArrayBuffers.set(uniformName, imageBytes);
+        }
+    }
+
+    closeImageUniformButton.onclick = () => {
+        createImageUniformDialog.close();
+    };
+
     function createShaderTimeUniform() {
         const newUniformEntry = createShaderUniform("iTime", "iTime");
         if (!newUniformEntry) {
@@ -635,6 +765,20 @@
     }
 
     function createShaderUniform(uniformName, uniformType) {
+        const shaderLine = createShaderLine(uniformName, uniformType);
+        if (!shaderLine) {
+            return null;
+        }
+
+        const newUniformEntry = document.createElement("div");
+        newUniformEntry.style.borderTop = "1px solid black";
+        const deleteButton = createDeleteButton(uniformName, newUniformEntry);
+        shaderLine.appendChild(deleteButton);
+        newUniformEntry.appendChild(shaderLine);
+        return newUniformEntry;
+    }
+
+    function createShaderLine(uniformName, uniformType) {
         if (presetUniforms.includes(uniformName) || customUniforms.includes(uniformName)) {
             alert("This uniform already exists, please use a different name.");
             return null;
@@ -647,9 +791,6 @@
         customUniforms.push(uniformName);
         uniformTypeMap.set(uniformName, uniformType);
 
-        const newUniformEntry = document.createElement("div");
-        newUniformEntry.style.borderTop = "1px solid black";
-
         const shaderLine = document.createElement("div");
         shaderLine.classList.add("center-vertically-container");
         const shaderCode = document.createElement("span");
@@ -657,10 +798,7 @@
         shaderCode.textContent = `uniform ${declarationType} ${uniformName};`;
         shaderLine.appendChild(shaderCode);
 
-        const deleteButton = createDeleteButton(uniformName, newUniformEntry);
-        shaderLine.appendChild(deleteButton);
-        newUniformEntry.appendChild(shaderLine);
-        return newUniformEntry;
+        return shaderLine;
     }
 
     function createDeleteButton(uniformName, uniformEntry) {
@@ -705,6 +843,7 @@
     function resetShader() {
         customUniforms.length = 0;
         uniformTypeMap.clear();
+        imageArrayBuffers.clear();
         uniforms.innerHTML = "";
         currentShader = null;
         currentSurface = null;
@@ -790,6 +929,8 @@
             case "iTime":
                 // DesignCompose should simulate the time change.
                 return 0;
+            case "shader":
+                return new Uint8Array(imageArrayBuffers.get(uniform));
             default:
                 return previewUniformValue(uniform);
         }
@@ -803,6 +944,14 @@
                 min: parseFloat(slider.min),
                 max: parseFloat(slider.max)
             };
+        }
+        if (uniform.endsWith("Resolution")) {
+            // For image resolutions, ignore creation when load from node.
+            if (uniformTypeMap.get(uniform) == "float2" && uniformTypeMap.has(uniform.slice(0, -10))) {
+                return {
+                    ignore: true,
+                }
+            }
         }
         return null;
     }
@@ -888,21 +1037,32 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                     shaderWidth, shaderHeight, 1, // vec3 iResolution(x, y, z);
                     mouseDragX, mouseDragY, mouseClickX, mouseClickY, // iMouse(x, y, z, w)
                 ];
+                const children = [];
                 customUniforms.forEach(function (uniform) {
                     if (uniform == "iTime") {
                         const iTime = (Date.now() - startTimeMs) / 1000;
                         uniforms.push(iTime);
                     } else {
-                        const value = previewUniformValue(uniform);
-                        if (typeof value === "string" || typeof value === "number") {
-                            uniforms.push(value);
+                        if (uniformTypeMap.get(uniform) == "shader") {
+                            const arrayBuffer = imageArrayBuffers.get(uniform);
+                            if (arrayBuffer) {
+                                const img = CanvasKit.MakeImageFromEncoded(arrayBuffer);
+                                const imgShader = img.makeShaderCubic(
+                                    CanvasKit.TileMode.Clamp, CanvasKit.TileMode.Clamp, 1 / 3, 1 / 3);
+                                children.push(imgShader);
+                            }
                         } else {
-                            uniforms.push(...value);
+                            const value = previewUniformValue(uniform);
+                            if (typeof value === "string" || typeof value === "number") {
+                                uniforms.push(value);
+                            } else {
+                                uniforms.push(...value);
+                            }
                         }
                     }
                 });
 
-                const shader = effect.makeShader(uniforms);
+                const shader = children.length == 0 ? effect.makeShader(uniforms) : effect.makeShaderWithChildren(uniforms, children);
                 if (!shader) {
                     throw "Could not make shader";
                 }
@@ -953,33 +1113,27 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                         });
 
                         const color = useShaderFallbackColor.checked ? "#FF46A2" : undefined;
+                        const skImage = surface.makeImageSnapshot();
+                        let imageBytes = null;
+                        if (skImage != null) {
+                            imageBytes = skImage.encodeToBytes();
+                            skImage.delete();
+                        } else {
+                            console.error("There are no images captured...");
+                        }
                         parent.postMessage({
                             pluginMessage: {
                                 msg: 'setShader',
                                 shader: currentShader,
                                 shaderFallbackColor: color,
                                 shaderUniforms: shaderUniforms,
+                                imageBytes: imageBytes,
                                 asBackground: asBackground,
                             }
                         }, '*');
                     } else {
-                        console.error("There is no shader running....");
+                        console.error("There are no shaders running....");
                     }
-
-                    const skImage = surface.makeImageSnapshot();
-                    if (skImage != null) {
-                        parent.postMessage({
-                            pluginMessage: {
-                                msg: 'insertImage',
-                                imageBytes: skImage.encodeToBytes(),
-                                asBackground: asBackground,
-                            }
-                        }, '*');
-                        skImage.delete();
-                    } else {
-                        console.error("There is no image captured...");
-                    }
-
                 };
             }
             setShaderButton.onclick = buildApplyAction(true);
@@ -1043,6 +1197,11 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                 resetShader();
                 shaderCodeInput.value = shader;
                 for (const shaderUniform of shaderUniforms) {
+                    if (shaderUniform.extras && shaderUniform.extras.ignore) {
+                        console.log("Ignore uniform: ", shaderUniform);
+                        continue;
+                    }
+
                     switch (shaderUniform.uniformType) {
                         case "float":
                         case "half":
@@ -1081,6 +1240,9 @@ uniform float4 iMouse;           // Mouse drag pos=.xy Click pos=.zw (pixels)
                         case "half3x3":
                         case "half4x4":
                             createShaderMatrixUniform(shaderUniform.uniformName, shaderUniform.uniformType, shaderUniform.uniformValue);
+                            break;
+                        case "shader":
+                            await createShaderImageUniform(shaderUniform.uniformName, shaderUniform.uniformValue);
                             break;
                         case "iTime":
                             createShaderTimeUniform();

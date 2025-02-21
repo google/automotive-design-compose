@@ -572,10 +572,8 @@ if (figma.command === "sync") {
         msg: "shaderCode",
         code: Shader.shaderMap.get(msg.shader),
       });
-    } else if (msg.msg === "insertImage") {
-      Shader.insertImage(msg.imageBytes, msg.asBackground);
     } else if (msg.msg === "setShader") {
-      Shader.setShader(msg.shader, msg.shaderFallbackColor, msg.shaderUniforms, msg.asBackground);
+      Shader.setShader(msg.shader, msg.shaderFallbackColor, msg.shaderUniforms, msg.imageBytes, msg.asBackground);
     } else if (msg.msg === "clearShader") {
       Shader.clearShader(msg.asBackground);
     }

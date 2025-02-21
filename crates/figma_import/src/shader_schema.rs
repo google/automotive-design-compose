@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 use crate::figma_schema::FigmaColor;
+use crate::image_context::ImageContext;
 use dc_bundle::definition::element::shader_uniform_value::ValueType::{
-    FloatColorValue, FloatValue, FloatVecValue, IntValue, IntVecValue,
+    FloatColorValue, FloatValue, FloatVecValue, ImageRefValue, IntValue, IntVecValue,
 };
-use dc_bundle::definition::element::shader_uniform_value::{FloatVec, IntVec};
+use dc_bundle::definition::element::shader_uniform_value::{FloatVec, ImageRef, IntVec};
 use dc_bundle::definition::element::{Color, ShaderData, ShaderUniform, ShaderUniformValue};
 use log::error;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct ShaderDataJson {
     pub shader: Option<String>,
@@ -31,15 +33,18 @@ pub struct ShaderDataJson {
     pub shader_uniforms: Vec<ShaderUniformJson>,
 }
 
-impl Into<Option<ShaderData>> for ShaderDataJson {
-    fn into(self) -> Option<ShaderData> {
+impl ShaderDataJson {
+    pub fn into_shader_data(self, images: &mut ImageContext) -> Option<ShaderData> {
         return if let Some(shader) = self.shader {
             // Shader fallback color is the color used when shader isn't supported on lower sdks.
             let shader_fallback_color: Option<Color> =
                 self.shader_fallback_color.as_ref().map(|figma_color| figma_color.into());
             // Shader uniforms: float, float array, color and color with alpha
-            let shader_uniforms: HashMap<String, ShaderUniform> =
-                self.shader_uniforms.into_iter().map(ShaderUniformJson::into).collect();
+            let shader_uniforms: HashMap<String, ShaderUniform> = self
+                .shader_uniforms
+                .into_iter()
+                .map(|json| json.into_shader_uniform(images))
+                .collect();
             Some(ShaderData { shader, shader_fallback_color, shader_uniforms })
         } else {
             None
@@ -57,8 +62,8 @@ pub struct ShaderUniformJson {
     pub uniform_value: serde_json::Value,
 }
 
-impl Into<(String, ShaderUniform)> for ShaderUniformJson {
-    fn into(self) -> (String, ShaderUniform) {
+impl ShaderUniformJson {
+    pub fn into_shader_uniform(self, images: &mut ImageContext) -> (String, ShaderUniform) {
         let uniform_value = match self.uniform_type.as_str() {
             "float" | "half" | "iTime" => {
                 if let Some(float_val) = self.uniform_value.as_f64() {
@@ -144,6 +149,25 @@ impl Into<(String, ShaderUniform)> for ShaderUniformJson {
                         "Error parsing int array for shader {} uniform {}",
                         self.uniform_type, self.uniform_name
                     );
+                    None
+                }
+            }
+            "shader" => {
+                if let Some(str_val) = self.uniform_value.as_str() {
+                    // We use an empty string as the node name to skip the ignore check.
+                    if let Some(fill) = images.image_fill(str_val, &"".to_string()) {
+                        Some(ShaderUniformValue {
+                            value_type: Some(ImageRefValue(ImageRef { key: fill })),
+                        })
+                    } else {
+                        error!(
+                            "No image found for image ref {} for shader {}",
+                            str_val, self.uniform_name
+                        );
+                        None
+                    }
+                } else {
+                    error!("Error parsing integer for shader image uniform {}", self.uniform_name);
                     None
                 }
             }

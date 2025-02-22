@@ -471,6 +471,7 @@ fun SquooshRoot(
             requestedAnimations[animatedAction.instanceNodeId] =
                 SquooshAnimationRequest(
                     toNodeId = animatedAction.newVariantId,
+                    fromNodeId = animatedAction.instanceNodeId,
                     animationId = animatedAction.id,
                     interruptedId = animatedAction.interruptedId,
                     transition = animatedAction.transition,
@@ -482,6 +483,7 @@ fun SquooshRoot(
             requestedAnimations[variantTransition.fromNodeId] =
                 SquooshAnimationRequest(
                     toNodeId = variantTransition.toNodeId,
+                    fromNodeId = null,
                     animationId = variantTransition.id,
                     interruptedId = variantTransition.interruptedId,
                     transition = variantTransition.transition,

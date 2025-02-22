@@ -54,6 +54,8 @@ interface SmartAnimateTest {
         @DesignVariant(property = "#CrossFadeOpacityTestState") state: TestState
     )
 
+    @DesignComponent(node = "#OnPressAnimationStage") fun OnPressTest()
+
     @DesignComponent(node = "#OneInstance") fun OneInstance()
 }
 

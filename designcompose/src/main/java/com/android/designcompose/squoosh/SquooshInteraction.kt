@@ -167,6 +167,7 @@ internal fun Modifier.squooshInteraction(
                             ?.filter { r -> r.trigger.hasPress() }
                             ?.forEach {
                                 interactionState.undoDispatch(
+                                    it.action,
                                     findTargetInstanceId(
                                         document,
                                         childComposable.parentComponents,

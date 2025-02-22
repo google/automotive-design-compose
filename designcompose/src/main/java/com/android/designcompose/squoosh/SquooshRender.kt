@@ -324,7 +324,14 @@ private fun squooshTextRender(
         }
 
     val customFillBrush =
-        getCustomBrush(node, customizations, shaderBrushCache, node.layoutId, node.view.id)
+        getCustomBrush(
+            node,
+            customizations,
+            shaderBrushCache,
+            node.layoutId,
+            node.view.id,
+            document,
+        )
 
     drawContext.canvas.save()
     drawContext.canvas.translate(0.0f, verticalCenterOffset)
@@ -384,6 +391,7 @@ private fun squooshTextRender(
                 shaderBrushCache,
                 node.layoutId,
                 node.view.id,
+                document,
                 asBackground = false,
             )
         paragraph.paint(

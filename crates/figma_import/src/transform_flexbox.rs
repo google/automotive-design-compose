@@ -964,7 +964,7 @@ fn visit_node(
     style.node_style_mut().shader_data = plugin_data
         .and_then(|vsw_data| vsw_data.get("shader"))
         .and_then(|extras| serde_json::from_str::<ShaderDataJson>(extras).ok())
-        .and_then(|shader_data_json| shader_data_json.into());
+        .and_then(|shader_data_json| shader_data_json.into_shader_data(images));
 
     let mut scroll_info = ScrollInfo::new_default();
 
@@ -1161,7 +1161,7 @@ fn visit_node(
         stroke.shader_data = plugin_data
             .and_then(|vsw_data| vsw_data.get("strokeShader"))
             .and_then(|extras| serde_json::from_str::<ShaderDataJson>(extras).ok())
-            .and_then(|shader_data_json| shader_data_json.into());
+            .and_then(|shader_data_json| shader_data_json.into_shader_data(images));
     });
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {

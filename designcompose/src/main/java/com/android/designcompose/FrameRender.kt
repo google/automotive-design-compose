@@ -49,6 +49,7 @@ import com.android.designcompose.definition.element.ShaderUniformValue.ValueType
 import com.android.designcompose.definition.element.StrokeAlign
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
+import com.android.designcompose.definition.element.imageRefValueOrNull
 import com.android.designcompose.definition.element.shaderFallbackColorOrNull
 import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.layout.Overflow
@@ -69,6 +70,7 @@ import com.android.designcompose.utils.blurFudgeFactor
 import com.android.designcompose.utils.fixedHeight
 import com.android.designcompose.utils.fixedWidth
 import com.android.designcompose.utils.getNodeRenderSize
+import com.android.designcompose.utils.loadImage
 import com.android.designcompose.utils.max
 import com.android.designcompose.utils.pointsAsDp
 import com.android.designcompose.utils.toColor
@@ -509,6 +511,8 @@ internal fun ContentDrawScope.squooshShapeRender(
             node.layoutId,
             node.view.id,
             document,
+            appContext,
+            density,
         )
 
     val brushSize = getNodeRenderSize(rectSize, size, style, node.layoutId, density)
@@ -545,6 +549,8 @@ internal fun ContentDrawScope.squooshShapeRender(
                     layoutId = node.layoutId,
                     viewId = node.view.id,
                     document = document,
+                    appContext = appContext,
+                    density = density,
                     asBackground = false,
                 )
             b.applyTo(brushSize, p, 1.0f)
@@ -696,7 +702,10 @@ fun ShaderUniform.applyToShader(
     shader: RuntimeShader,
     shaderUniformMap: Map<String, ShaderUniform>,
     document: DocContent,
+    appContext: Context,
+    density: Float,
 ) {
+    if (ignore) return
     val definedType = shaderUniformMap[name]?.type
     when (value.valueTypeCase) {
         ValueTypeCase.FLOAT_VALUE -> {
@@ -793,11 +802,33 @@ fun ShaderUniform.applyToShader(
 
         ValueTypeCase.IMAGE_REF_VALUE -> {
             val imageRef = value.imageRefValue.key
-            val bitmap = document.image(imageRef, 1.0f)
+            val bitmap =
+                loadImage(
+                    appContext,
+                    document,
+                    density,
+                    value.imageRefValue.takeIf { it.hasResName() }?.resName,
+                    imageRef,
+                )
             if (bitmap != null) {
                 val bitmapShader =
                     BitmapShader(bitmap.first, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
                 shader.setInputBuffer(name, bitmapShader)
+                // Plugin creates a uniform of type float2 for the image resolution which has
+                // a flag `ignore` set to be true. When we set the image, we will set the image
+                // resolution to the actual image size(resource images will have different sizes due
+                //  to different screen densities).
+                val resolutionUniform = name + "Resolution"
+                if (
+                    shaderUniformMap[resolutionUniform]?.type == "float2" &&
+                        shaderUniformMap[resolutionUniform]?.ignore == true
+                ) {
+                    shader.setFloatUniform(
+                        resolutionUniform,
+                        bitmap.first.width.toFloat(),
+                        bitmap.first.height.toFloat(),
+                    )
+                }
             } else {
                 Log.e(TAG, "Failed to find image $imageRef for shader $name")
             }
@@ -816,6 +847,8 @@ internal fun getCustomBrush(
     layoutId: Int?,
     viewId: String,
     document: DocContent,
+    appContext: Context,
+    density: Float,
 ): Brush? {
     val nodeName = node.view.name
     var customFillBrush = customizations.getBrush(nodeName)
@@ -833,6 +866,8 @@ internal fun getCustomBrush(
                         layoutId,
                         viewId,
                         document,
+                        appContext,
+                        density,
                     )
             }
     }
@@ -847,6 +882,8 @@ internal fun getShaderBrush(
     layoutId: Int?,
     viewId: String,
     document: DocContent,
+    appContext: Context,
+    density: Float,
     asBackground: Boolean = true,
 ): Brush {
     val cachedBrush: Brush? = shaderBrushCache.get(layoutId, viewId)
@@ -857,7 +894,18 @@ internal fun getShaderBrush(
             val shader = RuntimeShader(shaderProg)
             shaderBrush = SizingShaderBrush(shader)
             shaderData.shaderUniformsMap.forEach { (_, v) ->
-                v.applyToShader(shader, shaderData.shaderUniformsMap, document)
+                if (v.value.imageRefValueOrNull?.hasResName() != true) {
+                    // If the shader uniform is not an image input or the image input doesn't
+                    // have a resource name for localization, we apply the shader uniform on
+                    // shader creation.
+                    v.applyToShader(
+                        shader,
+                        shaderData.shaderUniformsMap,
+                        document,
+                        appContext,
+                        density,
+                    )
+                }
             }
         } else {
             shaderData.shaderFallbackColorOrNull?.let { color ->
@@ -872,6 +920,20 @@ internal fun getShaderBrush(
     }
 
     if (shaderBrush is SizingShaderBrush && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        shaderData.shaderUniformsMap.forEach { (_, v) ->
+            if (v.value.imageRefValueOrNull?.hasResName() == true) {
+                // If the shader uniform is an image input and the image input has a resource name
+                // for localization, we apply the shader uniform on rendering which makes sure the
+                // shader image will update to a different locale when the system locale changes.
+                v.applyToShader(
+                    (shaderBrush as SizingShaderBrush).shader,
+                    shaderData.shaderUniformsMap,
+                    document,
+                    appContext,
+                    density,
+                )
+            }
+        }
         val shaderUniformList =
             if (asBackground) shaderUniformCustomizations?.backgroundShaderUniforms
             else shaderUniformCustomizations?.strokeShaderUniforms
@@ -881,6 +943,8 @@ internal fun getShaderBrush(
                     (shaderBrush as SizingShaderBrush).shader,
                     shaderData.shaderUniformsMap,
                     document,
+                    appContext,
+                    density,
                 )
             }
         }
@@ -894,6 +958,8 @@ internal fun getShaderBrush(
                     (shaderBrush as SizingShaderBrush).shader,
                     shaderData.shaderUniformsMap,
                     document,
+                    appContext,
+                    density,
                 )
             }
         }
@@ -903,6 +969,8 @@ internal fun getShaderBrush(
                     (shaderBrush as SizingShaderBrush).shader,
                     shaderData.shaderUniformsMap,
                     document,
+                    appContext,
+                    density,
                 )
             }
         }

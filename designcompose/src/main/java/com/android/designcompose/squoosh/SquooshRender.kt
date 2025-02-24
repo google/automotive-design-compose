@@ -331,6 +331,8 @@ private fun squooshTextRender(
             node.layoutId,
             node.view.id,
             document,
+            appContext,
+            density.density,
         )
 
     drawContext.canvas.save()
@@ -392,6 +394,8 @@ private fun squooshTextRender(
                 node.layoutId,
                 node.view.id,
                 document,
+                appContext,
+                density.density,
                 asBackground = false,
             )
         paragraph.paint(

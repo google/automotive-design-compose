@@ -18,6 +18,7 @@ package com.android.designcompose.utils
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Matrix
 import android.graphics.Shader
@@ -386,31 +387,14 @@ internal fun Background.asBrush(
     }
     if (hasImage()) {
         val imageTransform = image.transformOrNull?.asSkiaMatrix()
-        if (DebugNodeManager.getUseLocalRes().value && image.hasResName()) {
-            val resId =
-                appContext.resources.getIdentifier(
-                    image.resName,
-                    "drawable",
-                    appContext.packageName,
-                )
-            if (resId != Resources.ID_NULL) {
-                val bitmap = BitmapFactoryWithCache.loadResource(appContext.resources, resId)
-                return Pair(
-                    RelativeImageFill(
-                        image = bitmap,
-                        imageDensity = density,
-                        displayDensity = density,
-                        imageTransform = imageTransform,
-                        scaleMode = image.scaleMode,
-                    ),
-                    image.opacity,
-                )
-            } else {
-                Log.w(TAG, "No drawable resource ${image.resName} found")
-            }
-        }
         val imageFillAndDensity =
-            image.key.takeIf { it.isNotEmpty() }?.let { document.image(it, density) }
+            loadImage(
+                appContext,
+                document,
+                density,
+                image.takeIf { it.hasResName() }?.resName,
+                image.key,
+            )
         // val imageFilters = backgroundImage.filters;
         if (imageFillAndDensity != null) {
             val (imageFill, imageDensity) = imageFillAndDensity
@@ -522,6 +506,26 @@ internal fun Background.asBrush(
         }
     }
     return null
+}
+
+internal fun loadImage(
+    appContext: Context,
+    document: DocContent,
+    density: Float,
+    imageResName: String?,
+    imageKey: String,
+): Pair<Bitmap, Float>? {
+    if (DebugNodeManager.getUseLocalRes().value && !imageResName.isNullOrBlank()) {
+        val resId =
+            appContext.resources.getIdentifier(imageResName, "drawable", appContext.packageName)
+        if (resId != Resources.ID_NULL) {
+            val bitmap = BitmapFactoryWithCache.loadResource(appContext.resources, resId)
+            return Pair(bitmap, density)
+        } else {
+            Log.w(TAG, "No drawable resource $imageResName found")
+        }
+    }
+    return imageKey.takeIf { it.isNotEmpty() }?.let { document.image(it, density) }
 }
 
 ///////////////////////////////////

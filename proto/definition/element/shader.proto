@@ -42,6 +42,10 @@ message ShaderUniform {
   string type = 2;
   // shader uniform value
   optional ShaderUniformValue value = 3;
+  // If this shader uniform should be ignored. No action to set the uniform value.
+  // For images, we have imageResolution bundled to the image input.
+  // The uniform value will be ignored but the uniform is in list for type check.
+  bool ignore = 4;
 }
 
 // Shader uniform value, currently support float, FloatColor and float array.
@@ -60,6 +64,7 @@ message ShaderUniformValue {
   // ImageRef for image uniform(shader).
   message ImageRef {
     string key = 1;
+    optional string res_name = 2;
   }
 
   oneof value_type {

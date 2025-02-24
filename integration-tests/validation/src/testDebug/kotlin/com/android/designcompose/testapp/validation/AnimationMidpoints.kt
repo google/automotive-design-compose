@@ -20,7 +20,10 @@ import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.LocalDesignDocSettings
@@ -219,5 +222,38 @@ class AnimationMidpoints {
         composeTestRule.mainClock.advanceTimeBy(900L)
         composeTestRule.waitForIdle()
         composeTestRule.captureRootRoboImage("${name}Animation-End")
+    }
+
+    @Test
+    fun OnPressAnimation() {
+        with(composeTestRule) {
+            // Because we're testing animation, we will manually advance the animation clock.
+            mainClock.autoAdvance = false
+
+            setContent { SmartAnimateTestDoc.OnPressTest() }
+
+            waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+            // Touch red square to start onPress anim, capture screen mid anim changing to blue
+            onNodeWithTag("V1").performTouchInput { down(Offset.Zero) }
+            mainClock.advanceTimeBy(100L)
+            captureRootRoboImage("VariantOnPress-anim1")
+
+            // Capture screen after anim done (blue)
+            mainClock.advanceTimeBy(400L)
+            captureRootRoboImage("VariantOnPress-anim2")
+
+            // Click to change variant (green)
+            onNodeWithTag("#varcolor=blue").performTouchInput { up() }
+            mainClock.advanceTimeByFrame()
+            captureRootRoboImage("VariantOnPress-anim3")
+
+            // Touch purple square to start onPress anim, which changes to green while pressed.
+            // Capture this mid animation to ensure there is no layout animation from the other
+            // green square
+            onNodeWithTag("V2").performTouchInput { down(Offset.Zero) }
+            mainClock.advanceTimeBy(100L)
+            captureRootRoboImage("VariantOnPress-anim4")
+        }
     }
 }

@@ -336,6 +336,7 @@ internal class SquooshAnimationControl(
 
 internal class SquooshAnimationRequest(
     val toNodeId: String,
+    val fromNodeId: String?,
     val animationId: Int,
     val interruptedId: Int?,
     val transition: AnimationTransition,
@@ -368,7 +369,7 @@ internal fun createMergedAnimationTree(
     val (cloned: SquooshResolvedNode, alreadyBuiltChildren) =
         if (requestedAnim != null && requestedAnim.animationControl == null) {
             // Can we find it in the "to" tree?
-            val toNode = findNode(to, requestedAnim.toNodeId)
+            val toNode = findNode(to, requestedAnim.toNodeId, requestedAnim.fromNodeId)
             if (toNode != null) {
                 val animations: ArrayList<SquooshAnimatedItem> = ArrayList()
                 val mergedClonedNode =
@@ -603,12 +604,15 @@ private fun mergeRecursive(
 }
 
 // Find nodes where we want to have animation; this is typically from a component CHANGE_TO
-private fun findNode(n: SquooshResolvedNode, id: String): SquooshResolvedNode? {
-    if (n.view.id == id || n.unresolvedNodeId == id) return n
+private fun findNode(n: SquooshResolvedNode, toId: String, fromId: String?): SquooshResolvedNode? {
+    // Return the node if its view id matches toId and, if there is a fromId, the fromId matches
+    // the node's unresolvedNodeId. This ensures that if there are multiple component instances
+    // where some have changed to a different variant, we don't return the wrong component instance
+    // since all the changed variants could have the same view id.
+    if (n.view.id == toId && (fromId == null || n.unresolvedNodeId == fromId)) return n
     var child = n.firstChild
     while (child != null) {
-        if (child.view.id == id || child.unresolvedNodeId == id) return child
-        val found = findNode(child, id)
+        val found = findNode(child, toId, fromId)
         if (found != null) return found
         child = child.nextSibling
     }

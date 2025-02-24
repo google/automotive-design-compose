@@ -28,6 +28,7 @@ import com.android.designcompose.common.VariantPropertyMap
 import com.android.designcompose.common.views
 import com.android.designcompose.definition.interaction.Action
 import com.android.designcompose.definition.interaction.Transition
+import com.android.designcompose.definition.interaction.transitionOrNull
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.squoosh.AnimationTransition
 import com.android.designcompose.squoosh.SmartAnimateTransition
@@ -385,7 +386,7 @@ internal fun InteractionState.dispatch(
         Action.ActionTypeCase.URL -> this.openLink(action.url.url)
         Action.ActionTypeCase.NODE -> {
             val destinationId = action.node.destinationId
-            val transition = action.node.transition
+            val transition = action.node.transitionOrNull
             when (action.node.navigation) {
                 Action.Node.Navigation.NAVIGATION_NAVIGATE -> {
                     if (destinationId != null) this.navigate(destinationId, undoInstanceId)
@@ -458,13 +459,21 @@ internal fun InteractionState.dispatch(
 /// Undo a dispatch interaction. An optional key is used to differentiate multiple component
 /// instances that share the same undoInstanceId.
 internal fun InteractionState.undoDispatch(
-    targetNodeId: String?,
+    action: Action,
+    targetInstanceId: String?,
     undoInstanceId: String,
     key: String?,
 ) {
     val undoKey = getInstanceIdWithKey(undoInstanceId, key)
     val undoAction = undoMemory.remove(undoKey)
-    undoAction?.apply(this, targetNodeId, key)
+    undoAction?.apply(this, targetInstanceId, key)
+
+    // If we already have a transition running, stop it.
+    val transition = action.node.transitionOrNull
+    if (transition != null && supportAnimations) {
+        animations.removeIf { anim -> anim.instanceNodeId == targetInstanceId }
+        invalAnimations()
+    }
 }
 
 /// Make a clone of this InteractionState, and apply all of the transition values to it. The

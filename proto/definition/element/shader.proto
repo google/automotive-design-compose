@@ -57,6 +57,11 @@ message ShaderUniformValue {
     repeated int32 ints = 1;
   }
 
+  // ImageRef for image uniform(shader).
+  message ImageRef {
+    string key = 1;
+  }
+
   oneof value_type {
     // uniform "type" is "float", "half" or "iTime".
     float float_value = 1;
@@ -70,5 +75,8 @@ message ShaderUniformValue {
     int32 int_value = 4;
     // uniform "type" is "int2", "int3" or "int4" in the plugin data.
     IntVec int_vec_value = 5;
+
+    // uniform "shader" holds an image ref key
+    ImageRef image_ref_value = 6;
   }
 }

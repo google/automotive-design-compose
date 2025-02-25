@@ -175,17 +175,21 @@ internal object VariableManager {
             varMap.copy {
                 // Remove old entries for docId
                 val oldVarMap = docVarMap[docId.id]
-                oldVarMap?.collectionsMap?.forEach { this.collections.remove(it.key) }
-                oldVarMap?.collectionNameMapMap?.forEach { this.collectionNameMap.remove(it.key) }
-                oldVarMap?.variablesMap?.forEach { this.variables.remove(it.key) }
-                oldVarMap?.variableNameMapMap?.forEach { this.variableNameMap.remove(it.key) }
+                oldVarMap?.collectionsByIdMap?.forEach { this.collectionsById.remove(it.key) }
+                oldVarMap?.collectionIdsByNameMap?.forEach {
+                    this.collectionIdsByName.remove(it.key)
+                }
+                oldVarMap?.variablesByIdMap?.forEach { this.variablesById.remove(it.key) }
+                oldVarMap?.variableNameIdMapsByCidMap?.forEach {
+                    this.variableNameIdMapsByCid.remove(it.key)
+                }
 
                 // Add new entries for docId
                 docVarMap[docId.id] = map
-                this.collections.putAll(map.collectionsMap)
-                this.collectionNameMap.putAll(map.collectionNameMapMap)
-                this.variables.putAll(map.variablesMap)
-                this.variableNameMap.putAll(map.variableNameMapMap)
+                this.collectionsById.putAll(map.collectionsByIdMap)
+                this.collectionIdsByName.putAll(map.collectionIdsByNameMap)
+                this.variablesById.putAll(map.variablesByIdMap)
+                this.variableNameIdMapsByCid.putAll(map.variableNameIdMapsByCidMap)
             }
         currentDocId = docId
     }
@@ -216,7 +220,7 @@ internal object VariableManager {
     ): VariableModeValues {
         val newModeValues = VariableModeValues(LocalVariableModeValuesDoc.current)
         modeValues.forEach { (collectionId, modeId) ->
-            val collection = varMap.collectionsMap[collectionId]
+            val collection = varMap.collectionsByIdMap[collectionId]
             collection?.let { c ->
                 val mode = c.modeIdHashMap[modeId]
                 mode?.let { m -> newModeValues[c.name] = m.name }
@@ -229,7 +233,7 @@ internal object VariableManager {
     internal fun getCollection(
         collectionId: String
     ): com.android.designcompose.definition.element.Collection? {
-        return varMap.collectionsMap[collectionId]
+        return varMap.collectionsByIdMap[collectionId]
     }
 
     // Given a variable ID, return the color associated with it
@@ -258,20 +262,20 @@ internal object VariableManager {
     // set, this will return a variable from that collection if one of the same name exists.
     // Otherwise, this will return the variable with the given ID.
     private fun resolveVariable(varId: String, variableState: VariableState): Variable? {
-        val variable = varMap.variablesMap[varId]
+        val variable = varMap.variablesByIdMap[varId]
         variable?.let { v ->
             // If using material theme, return the variable since we don't need to resolve it based
             // on an overridden collection
             if (variableState.useMaterialTheme) return v
             val collectionOverride = variableState.varCollection
             collectionOverride?.let { cName ->
-                val collectionId = varMap.collectionNameMapMap[cName]
+                val collectionId = varMap.collectionIdsByNameMap[cName]
                 collectionId?.let { cId ->
-                    val nameMap = varMap.variableNameMapMap[cId]
+                    val nameMap = varMap.variableNameIdMapsByCidMap[cId]
                     nameMap?.let { nMap ->
                         val resolvedVarId = nMap.m[v.name]
                         resolvedVarId?.let { newVarId ->
-                            return varMap.variablesMap[newVarId]
+                            return varMap.variablesByIdMap[newVarId]
                         }
                     }
                 }
@@ -286,7 +290,7 @@ internal object VariableManager {
         variableMap: VariableMap,
         variableState: VariableState,
     ): VariableValue? {
-        val collection = variableMap.collectionsMap[variableCollectionId]
+        val collection = variableMap.collectionsByIdMap[variableCollectionId]
         collection?.let { c ->
             val modeName = variableState.varModeValues?.get(c.name)
             val modeId =

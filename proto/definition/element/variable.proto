@@ -116,13 +116,13 @@ message Collection {
 // Stores variable mappings
 message VariableMap {
   // Maps Collection names to IDs
-  message NameIDMap {
+  message NameIdMap {
     map<string, string> m = 1;
   }
 
-  map<string, Collection> collections = 1;      // ID -> Collection
-  map<string, string> collection_name_map = 2;  // Name -> ID
-  map<string, element.Variable> variables = 3;  // ID -> Variable
+  map<string, Collection> collections_by_id = 1;      // ID -> Collection
+  map<string, string> collection_ids_by_name = 2;  // Name -> ID
+  map<string, element.Variable> variables_by_id = 3;  // ID -> Variable
   // Collection ID -> [Name -> ID]
-  map<string, NameIDMap> variable_name_map = 4;
+  map<string, NameIdMap> variable_name_id_maps_by_cid = 4;
 }

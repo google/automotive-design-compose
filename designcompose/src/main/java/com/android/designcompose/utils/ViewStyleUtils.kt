@@ -159,7 +159,7 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             )
                 blendMode = override.nodeStyle.blendMode
 
-            if (override.nodeStyle.hasHyperlinks()) hyperlinks = override.nodeStyle.hyperlinks
+            if (override.nodeStyle.hasHyperlink()) hyperlink = override.nodeStyle.hyperlink
 
             if (
                 override.nodeStyle.displayType != Display.DISPLAY_UNSPECIFIED &&

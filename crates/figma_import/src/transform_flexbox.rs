@@ -1301,9 +1301,9 @@ fn visit_node(
         }
         if let Some(hl) = text_style.hyperlink.clone() {
             if hl.url.is_empty() {
-                style.node_style_mut().hyperlinks = None
+                style.node_style_mut().hyperlink = None
             } else {
-                style.node_style_mut().hyperlinks = Some(hl.into());
+                style.node_style_mut().hyperlink = Some(hl.into());
             }
         }
 

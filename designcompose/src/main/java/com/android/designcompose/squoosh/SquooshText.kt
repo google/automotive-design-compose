@@ -149,8 +149,8 @@ internal fun squooshComputeTextInfo(
                 val builder = AnnotatedString.Builder()
                 val text = normalizeNewlines(getTextContent(appContext, v.data.text))
                 builder.append(text)
-                if (v.style.nodeStyle.hasHyperlinks()) {
-                    val link = v.style.nodeStyle.hyperlinks.value
+                if (v.style.nodeStyle.hasHyperlink()) {
+                    val link = v.style.nodeStyle.hyperlink.value
                     builder.addLink(LinkAnnotation.Url(link), 0, text.length)
                     hyperlinkOffsetMap[0] = link
                 }

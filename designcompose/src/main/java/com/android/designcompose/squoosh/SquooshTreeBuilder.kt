@@ -588,7 +588,7 @@ internal fun generateReplacementListChildNode(
                 clearAspectRatio()
                 pointerEvents = PointerEvents.POINTER_EVENTS_AUTO
                 clearMeterData()
-                clearHyperlinks()
+                clearHyperlink()
                 clearShaderData()
             }
         }

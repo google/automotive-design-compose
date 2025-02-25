@@ -75,7 +75,7 @@ impl NodeStyle {
             aspect_ratio: None,
             pointer_events: PointerEvents::Inherit.into(),
             meter_data: None,
-            hyperlinks: None,
+            hyperlink: None,
             shader_data: None,
         }
     }
@@ -182,8 +182,8 @@ impl ViewStyle {
         if self.node_style().blend_mode != other.node_style().blend_mode {
             delta.node_style_mut().blend_mode = other.node_style().blend_mode;
         }
-        if self.node_style().hyperlinks != other.node_style().hyperlinks {
-            delta.node_style_mut().hyperlinks = other.node_style().hyperlinks.clone();
+        if self.node_style().hyperlink != other.node_style().hyperlink {
+            delta.node_style_mut().hyperlink = other.node_style().hyperlink.clone();
         }
         if self.node_style().display_type != other.node_style().display_type {
             delta.node_style_mut().display_type = other.node_style().display_type;

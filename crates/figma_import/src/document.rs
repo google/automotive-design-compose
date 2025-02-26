@@ -878,8 +878,8 @@ impl Document {
 
     // Parse through all the variables collected and store them into hash tables for easy access
     pub fn build_variable_map(&self) -> VariableMap {
-        let mut collections: HashMap<String, Collection> = HashMap::new();
-        let mut collection_name_map: HashMap<String, String> = HashMap::new();
+        let mut collections_by_id: HashMap<String, Collection> = HashMap::new();
+        let mut collection_ids_by_name: HashMap<String, String> = HashMap::new();
         if let Some(variables_response) = self.variables_response.clone() {
             for (_, c) in variables_response.meta.variable_collections.iter() {
                 let mut mode_name_hash: HashMap<String, String> = HashMap::new();
@@ -896,35 +896,36 @@ impl Document {
                     mode_name_hash,
                     mode_id_hash,
                 };
-                collections.insert(collection.id.clone(), collection);
-                collection_name_map.insert(c.name.clone(), c.id.clone());
+                collections_by_id.insert(collection.id.clone(), collection);
+                collection_ids_by_name.insert(c.name.clone(), c.id.clone());
             }
         }
 
-        let mut variables: HashMap<String, Variable> = HashMap::new();
-        let mut variable_name_map: HashMap<String, NameIdMap> = HashMap::new();
+        let mut variables_by_id: HashMap<String, Variable> = HashMap::new();
+        let mut variable_name_id_maps_by_cid: HashMap<String, NameIdMap> = HashMap::new();
         if let Some(variables_response) = self.variables_response.clone() {
             for (id, v) in variables_response.meta.variables.iter() {
                 let var = create_variable(v);
-                let maybe_name_map = variable_name_map.get_mut(&var.variable_collection_id);
+                let maybe_name_map =
+                    variable_name_id_maps_by_cid.get_mut(&var.variable_collection_id);
                 if let Some(name_map) = maybe_name_map {
                     name_map.m.insert(var.name.clone(), id.clone());
                 } else {
                     let mut name_to_id = HashMap::new();
                     name_to_id.insert(var.name.clone(), id.clone());
-                    variable_name_map
+                    variable_name_id_maps_by_cid
                         .insert(var.variable_collection_id.clone(), NameIdMap { m: name_to_id });
                 }
 
-                variables.insert(id.clone(), var);
+                variables_by_id.insert(id.clone(), var);
             }
         }
 
         let var_map = VariableMap {
-            collections,
-            collection_name_map,
-            variables: variables.clone(),
-            variable_name_map,
+            collections_by_id,
+            collection_ids_by_name,
+            variables_by_id,
+            variable_name_id_maps_by_cid,
         };
 
         var_map

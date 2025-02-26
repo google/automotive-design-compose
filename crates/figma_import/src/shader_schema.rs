@@ -60,6 +60,7 @@ pub struct ShaderUniformJson {
     pub uniform_type: String,
     #[serde(rename = "uniformValue")]
     pub uniform_value: serde_json::Value,
+    pub extras: Option<ShaderExtrasJson>,
 }
 
 impl ShaderUniformJson {
@@ -157,7 +158,10 @@ impl ShaderUniformJson {
                     // We use an empty string as the node name to skip the ignore check.
                     if let Some(fill) = images.image_fill(str_val, &"".to_string()) {
                         Some(ShaderUniformValue {
-                            value_type: Some(ImageRefValue(ImageRef { key: fill })),
+                            value_type: Some(ImageRefValue(ImageRef {
+                                key: fill,
+                                res_name: images.image_res(str_val),
+                            })),
                         })
                     } else {
                         error!(
@@ -167,7 +171,10 @@ impl ShaderUniformJson {
                         None
                     }
                 } else {
-                    error!("Error parsing integer for shader image uniform {}", self.uniform_name);
+                    error!(
+                        "Error parsing image key for shader image uniform {}",
+                        self.uniform_name
+                    );
                     None
                 }
             }
@@ -180,7 +187,18 @@ impl ShaderUniformJson {
                 name: self.uniform_name.clone(),
                 r#type: self.uniform_type,
                 value: uniform_value,
+                ignore: self.extras.unwrap_or_default().ignore.unwrap_or(false),
             },
         )
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+pub struct ShaderExtrasJson {
+    pub ignore: Option<bool>,
+}
+impl Default for ShaderExtrasJson {
+    fn default() -> Self {
+        ShaderExtrasJson { ignore: Some(false) }
     }
 }

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="label_mph">英里每小时</string>
+    <string name="label_maps">地图</string>
+    <string name="label_mi">英里</string>
+    <string name="label_please_check_tire_pressure">请检查胎压</string>
+    <string name="label_loading">加载中...\u0020</string>
+    <string name="label_no_media_playing">无媒体播放</string>
+    <string-array name="label_1_mi_sutter_st">
+        <item>1\u0020</item>
+        <item>英里 Sutter st</item>
+    </string-array>
+    <string name="label_mi_1">英里</string>
+    <string name="label_1_30_pm_eta">预计抵达时间下午1:30分</string>
+    <string name="label_15_min">15分钟</string>
+    <string name="label_6_mi">6英里</string>
+    <string name="label_starbucks">星巴克</string>
+    <string name="label_battery_kw">电池 千瓦</string>
+    <string name="label_f_motor_kw">前置电机 千瓦</string>
+    <string name="label_r_motor_kw">后置电机 千瓦</string>
+    <string name="label_avg">平均</string>
+    <string name="label_wh">瓦时</string>
+    <string name="label_mi_hr">英里/小时</string>
+    <string name="label_volts">伏</string>
+    <string name="label_amps">安</string>
+    <string name="label_hours_left">小时剩余</string>
+    <string name="label_wh_mi">瓦时/英里</string>
+    <string name="label_hi_margot">你好，Margot</string>
+    <string name="label_20_deliveries_today">今日有20个配送</string>
+    <string name="label_est_3_hours">预计用时3小时</string>
+    <string name="label_rain_at_4_pm">下午4时有雨</string>
+    <string name="label_good_morning">早上\u2028好</string>
+    <string name="label_windshield_wiper_fluid_low">挡风玻璃清洗液不足</string>
+    <string name="desc_notification_text">高压系统警报！请尽快靠边停车！</string>
+    <string name="label_autopilot_engaged">自动驾驶已启用</string>
+    <string name="label_parked">停车</string>
+</resources>

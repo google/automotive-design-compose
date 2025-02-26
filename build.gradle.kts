@@ -42,7 +42,7 @@ plugins {
 
 // Apply some of our convention plugins to the reference apps
 
-for (projectName in listOf("tutorial-app", "helloworld-app", "mediacompose-app")) {
+for (projectName in listOf("tutorial-app", "helloworld-app", "cluster-demo", "mediacompose-app")) {
     if (projectName in childProjects) {
         project(projectName).plugins.apply("designcompose.conventions.base")
         project(projectName).plugins.apply("designcompose.conventions.android-test-devices")

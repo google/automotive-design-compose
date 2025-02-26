@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="label_mph">MPH</string>
+    <string name="label_maps">Karten</string>
+    <string name="label_mi">MI</string>
+    <string name="label_please_check_tire_pressure">Bitte prüfen Sie den Reifendruck</string>
+    <string name="label_loading">Wird geladen...\u0020</string>
+    <string name="label_no_media_playing">Keine Medienwiedergabe</string>
+    <string-array name="label_1_mi_sutter_st">
+        <item>1\u0020</item>
+        <item>mi Sutter st</item>
+    </string-array>
+    <string name="label_mi_1">mi</string>
+    <string name="label_1_30_pm_eta">ETA 13:30 Uhr</string>
+    <string name="label_15_min">15 Min.</string>
+    <string name="label_6_mi">6 Meilen</string>
+    <string name="label_starbucks">Starbucks</string>
+    <string name="label_battery_kw">BATTERIE kW</string>
+    <string name="label_f_motor_kw">F\u002dMOTOR kW</string>
+    <string name="label_r_motor_kw">R\u002dMOTOR kW</string>
+    <string name="label_avg">DURCHSCHNITT</string>
+    <string name="label_wh">Wh</string>
+    <string name="label_mi_hr">MI/Std</string>
+    <string name="label_volts">VOLT</string>
+    <string name="label_amps">AMPERE</string>
+    <string name="label_hours_left">STUNDEN ÜBRIG</string>
+    <string name="label_wh_mi">WH/MI</string>
+    <string name="label_hi_margot">Hallo Margot</string>
+    <string name="label_20_deliveries_today">20 Lieferungen heute</string>
+    <string name="label_est_3_hours">Ca. 3 Stunden</string>
+    <string name="label_rain_at_4_pm">Regen um 16 Uhr</string>
+    <string name="label_good_morning">Guten\u2028Morgen</string>
+    <string name="label_windshield_wiper_fluid_low">Scheibenwaschflüssigkeit niedrig</string>
+    <string name="desc_notification_text">Hochspannungssystemwarnung! Sofort anhalten!</string>
+    <string name="label_autopilot_engaged">Autopilot aktiviert</string>
+    <string name="label_parked">GEPARKED</string>
+</resources>

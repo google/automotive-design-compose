@@ -98,7 +98,7 @@ message NodeStyle {
   optional float aspect_ratio = 37;
   interaction.PointerEvents pointer_events = 38;
   plugin.MeterData meter_data = 39;
-  element.Hyperlink hyperlinks = 42;
+  element.Hyperlink hyperlink = 42;
 
   // Runtime shader from the shader plugin as background.
   // When shader is present, background will not be drawn.

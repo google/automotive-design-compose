@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
+import com.android.designcompose.definition.element.ShaderUniformValue
 
 class ShaderBrushCache {
     private val cache = LruCache<String, Brush>(64)
@@ -44,4 +45,6 @@ class SizingShaderBrush(val shader: RuntimeShader) : ShaderBrush() {
         shader.setFloatUniform("iResolution", size.width, size.height, 0.0f)
         return shader
     }
+
+    internal val appliedShaderUniforms = HashMap<String, ShaderUniformValue>()
 }

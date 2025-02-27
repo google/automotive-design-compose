@@ -16,24 +16,38 @@
 
 package com.android.designcompose.squoosh
 
+import android.os.Build
 import android.util.Log
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.ui.geometry.Size
 import com.android.designcompose.AnimatedAction
+import com.android.designcompose.ShaderHelper
 import com.android.designcompose.VariableState
 import com.android.designcompose.decompose
+import com.android.designcompose.definition.element.ShaderData
+import com.android.designcompose.definition.element.ShaderUniformValue.ValueTypeCase
+import com.android.designcompose.definition.element.ShaderUniformValueKt.floatVec
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
 import com.android.designcompose.definition.element.arcOrNull
+import com.android.designcompose.definition.element.copy
+import com.android.designcompose.definition.element.floatColor
+import com.android.designcompose.definition.element.floatVecValueOrNull
+import com.android.designcompose.definition.element.shaderData
+import com.android.designcompose.definition.element.shaderDataOrNull
+import com.android.designcompose.definition.element.shaderUniform
+import com.android.designcompose.definition.element.shaderUniformValue
 import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.view.NodeStyle
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.copy
+import com.android.designcompose.definition.view.shaderDataOrNull
 import com.android.designcompose.definition.view.shapeOrNull
+import com.android.designcompose.definition.view.strokeOrNull
 import com.android.designcompose.definition.view.textOrNull
 import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.definition.view.viewData
@@ -298,6 +312,152 @@ internal class SquooshAnimatedArc(
             target.view.data.container.copy { shape = viewShape { arc = interpolatedArc } }
 
         target.view = target.view.copy { data = viewData { container = viewDataValue } }
+    }
+}
+
+/**
+ * Only apply:
+ * 1. on api level 33 and above where runtime shader is supported.
+ * 2. uniform type matches but have different value.
+ * 3. only animate float, float vectors and float colors.
+ */
+internal abstract class SquooshAnimatedShader(
+    target: SquooshResolvedNode,
+    private val from: ShaderData,
+    private val to: ShaderData,
+    transition: AnimationTransition,
+) : SquooshAnimatedItem(target, transition) {
+    private fun calculate(
+        from: Float?,
+        to: Float?,
+        progress: Float,
+        fromDefault: Float = 0f,
+        toDefault: Float = 0f,
+    ): Float {
+        val fromValue = from ?: fromDefault
+        val toValue = to ?: toDefault
+        return if (fromValue == toValue) fromValue
+        else fromValue * (1.0f - progress) + toValue * progress
+    }
+
+    override fun apply(value: Float) {
+        val shaderData = shaderData {
+            shader = to.shader
+            for (entry in to.shaderUniformsMap) {
+                val fromUniformValue = from.shaderUniformsMap[entry.key]?.value
+                val toUniformValue = to.shaderUniformsMap[entry.key]?.value
+                when (entry.value.value.valueTypeCase) {
+                    ValueTypeCase.FLOAT_VALUE ->
+                        shaderUniforms.put(
+                            entry.key,
+                            shaderUniform {
+                                this.name = entry.value.name
+                                this.type = entry.value.type
+                                this.value = shaderUniformValue {
+                                    floatValue =
+                                        calculate(
+                                            fromUniformValue?.floatValue,
+                                            toUniformValue?.floatValue,
+                                            value,
+                                        )
+                                }
+                            },
+                        )
+                    ValueTypeCase.FLOAT_VEC_VALUE ->
+                        // isShaderTweenable checked if the vector lengths match.
+                        shaderUniforms.put(
+                            entry.key,
+                            shaderUniform {
+                                this.name = entry.value.name
+                                this.type = entry.value.type
+                                this.value = shaderUniformValue {
+                                    floatVecValue = floatVec {
+                                        for (index in
+                                            0..<entry.value.value.floatVecValue.floatsCount) {
+                                            floats.add(
+                                                calculate(
+                                                    fromUniformValue
+                                                        ?.floatVecValue
+                                                        ?.getFloats(index),
+                                                    toUniformValue?.floatVecValue?.getFloats(index),
+                                                    value,
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                        )
+                    ValueTypeCase.FLOAT_COLOR_VALUE ->
+                        shaderUniforms.put(
+                            entry.key,
+                            shaderUniform {
+                                this.name = entry.value.name
+                                this.type = entry.value.type
+                                this.value = shaderUniformValue {
+                                    floatColorValue = floatColor {
+                                        r =
+                                            calculate(
+                                                fromUniformValue?.floatColorValue?.r,
+                                                toUniformValue?.floatColorValue?.r,
+                                                value,
+                                            )
+                                        g =
+                                            calculate(
+                                                fromUniformValue?.floatColorValue?.g,
+                                                toUniformValue?.floatColorValue?.g,
+                                                value,
+                                            )
+                                        b =
+                                            calculate(
+                                                fromUniformValue?.floatColorValue?.b,
+                                                toUniformValue?.floatColorValue?.b,
+                                                value,
+                                            )
+                                        a =
+                                            calculate(
+                                                fromUniformValue?.floatColorValue?.a,
+                                                toUniformValue?.floatColorValue?.a,
+                                                value,
+                                                fromDefault = 1f,
+                                                toDefault = 1f,
+                                            )
+                                    }
+                                }
+                            },
+                        )
+                    else -> shaderUniforms.put(entry.key, entry.value)
+                }
+            }
+        }
+
+        target.style = mergeShaderData(target, shaderData)
+    }
+
+    abstract fun mergeShaderData(target: SquooshResolvedNode, shaderData: ShaderData): ViewStyle
+}
+
+internal class SquooshAnimatedBackgroundShader(
+    target: SquooshResolvedNode,
+    from: ShaderData,
+    to: ShaderData,
+    transition: AnimationTransition,
+) : SquooshAnimatedShader(target, from, to, transition) {
+    override fun mergeShaderData(target: SquooshResolvedNode, shaderData: ShaderData): ViewStyle {
+        return target.style.withNodeStyle { s -> s.shaderData = shaderData }
+    }
+}
+
+internal class SquooshAnimatedStrokeShader(
+    target: SquooshResolvedNode,
+    from: ShaderData,
+    to: ShaderData,
+    transition: AnimationTransition,
+) : SquooshAnimatedShader(target, from, to, transition) {
+    override fun mergeShaderData(target: SquooshResolvedNode, shaderData: ShaderData): ViewStyle {
+        return target.style.withNodeStyle { s ->
+            s.stroke = target.style.nodeStyle.stroke.copy { this.shaderData = shaderData }
+        }
     }
 }
 
@@ -576,9 +736,23 @@ private fun mergeRecursive(
         // XXX: Refactor this so we don't inspect every type right here.
 
         val fromArc = from.view.data.containerOrNull?.shapeOrNull?.arcOrNull
-        val toArc = from.view.data.containerOrNull?.shapeOrNull?.arcOrNull
+        val toArc = to.view.data.containerOrNull?.shapeOrNull?.arcOrNull
         if (fromArc != null && toArc != null && fromArc != toArc) {
             anims.add(SquooshAnimatedArc(n, fromArc, toArc, transition))
+        }
+
+        val fromShader = from.style.nodeStyle.shaderDataOrNull
+        val toShader = to.style.nodeStyle.shaderDataOrNull
+        if (isShaderTweenable(fromShader, toShader)) {
+            anims.add(SquooshAnimatedBackgroundShader(n, fromShader!!, toShader!!, transition))
+        }
+
+        val fromStrokeShader = from.style.nodeStyle.strokeOrNull?.shaderDataOrNull
+        val toStrokeShader = to.style.nodeStyle.strokeOrNull?.shaderDataOrNull
+        if (isShaderTweenable(fromStrokeShader, toStrokeShader)) {
+            anims.add(
+                SquooshAnimatedStrokeShader(n, fromStrokeShader!!, toStrokeShader!!, transition)
+            )
         }
 
         return n
@@ -633,9 +807,21 @@ private fun findChildNamed(
 }
 
 // We can tween between two views (and thus don't need one of them in the tree) if:
+//  - They have the same shader but with different uniform values.
 //  - They are both Containers
 //  - They both have a Rect or RoundRect shape (for now we need the shapes to be the same).
 private fun isTweenable(a: View, b: View): Boolean {
+    if (isShaderTweenable(a.style.nodeStyle.shaderDataOrNull, b.style.nodeStyle.shaderDataOrNull)) {
+        return true
+    }
+    if (
+        isShaderTweenable(
+            a.style.nodeStyle.strokeOrNull?.shaderDataOrNull,
+            b.style.nodeStyle.strokeOrNull?.shaderDataOrNull,
+        )
+    ) {
+        return true
+    }
     if (needsStyleTween(a.style, b.style)) return false
 
     val aShape = a.data.containerOrNull?.shapeOrNull
@@ -650,6 +836,49 @@ private fun needsStyleTween(a: ViewStyle, b: ViewStyle): Boolean {
     // Compare some style things and decide if we need to tween the styles.
     if (a.nodeStyle.backgroundsList != b.nodeStyle.backgroundsList) return true
     if (a.nodeStyle.stroke != b.nodeStyle.stroke) return true
+    return false
+}
+
+private fun isShaderTweenable(a: ShaderData?, b: ShaderData?): Boolean {
+    // Runtime shader is not supported below T
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        return false
+    }
+    if (a == null || b == null) {
+        return false
+    }
+
+    // Only tweenable when they are not animating shaders
+    if (a.shaderUniformsMap.containsKey(ShaderHelper.UNIFORM_TIME)) return false
+    // Only tweenable when they have the same uniforms
+    if (a.shaderUniformsMap.keys != b.shaderUniformsMap.keys) return false
+    // Only tweenable when they have the same shader. The shader code might be a long string,
+    // we do a hashcode comparison for improved efficiency. If we run into the rare case where
+    // the hashes are the same but the shaders are different in the future, we may consider doing
+    // md5 or sha256 on the string.
+    if (a.shader.hashCode() != b.shader.hashCode()) return false
+
+    a.shaderUniformsMap
+        .filterValues {
+            it.value.valueTypeCase in
+                arrayOf(
+                    ValueTypeCase.FLOAT_VALUE,
+                    ValueTypeCase.FLOAT_VEC_VALUE,
+                    ValueTypeCase.FLOAT_COLOR_VALUE,
+                )
+        }
+        .forEach { (key, value) ->
+            if (
+                b.shaderUniformsMap[key]?.value?.floatVecValueOrNull?.floatsCount !=
+                    value.value.floatVecValueOrNull?.floatsCount
+            ) {
+                // When this happens, it means one of the float vec uniform value is corrupted.
+                return false
+            }
+            if (b.shaderUniformsMap[key]?.value != value.value) {
+                return true
+            }
+        }
     return false
 }
 

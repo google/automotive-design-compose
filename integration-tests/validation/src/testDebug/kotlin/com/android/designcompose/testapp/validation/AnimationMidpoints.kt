@@ -205,6 +205,25 @@ class AnimationMidpoints {
         recordAnimation("CrossFadeOpacityTest")
     }
 
+    @Test
+    @Config(sdk = [35])
+    fun shaderAnimation() {
+        System.setProperty("robolectric.pixelCopyRenderMode", "hardware")
+
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(TestState.A)
+
+        composeTestRule.setContent { SmartAnimateTestDoc.ShaderTest(state = state.value) }
+
+        composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+        state.value = TestState.B
+
+        recordAnimation("Shader")
+    }
+
     private fun recordAnimation(name: String) {
         // We need to both "advanceTimeByFrame" and then "waitForIdle" to capture the output after
         // recomposition.

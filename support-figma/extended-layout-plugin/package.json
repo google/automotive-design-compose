@@ -13,7 +13,7 @@
     "@eslint/js": "^9.13.0",
     "@figma/plugin-typings": "*",
     "@types/node": "^22.13.4",
-    "copy-webpack-plugin": "^12.0.2",
+    "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^7.1.2",
     "eslint": "^9.20.1",
     "html-inline-css-webpack-plugin": "^1.11.2",

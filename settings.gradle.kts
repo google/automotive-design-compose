@@ -82,6 +82,10 @@ include("helloworld-app")
 
 project(":helloworld-app").projectDir = File("reference-apps/helloworld/helloworld-app")
 
+include("cluster-demo")
+
+project(":cluster-demo").projectDir = File("reference-apps/cluster-demo/app")
+
 include("tutorial-app")
 
 project(":tutorial-app").projectDir = File("reference-apps/tutorial/app")

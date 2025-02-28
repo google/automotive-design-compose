@@ -42,37 +42,45 @@ import com.android.designcompose.definition.element.shaderUniformValue
 import kotlinx.coroutines.delay
 
 data class ShaderUniformCustomizations(
-    val backgroundShaderUniforms: MutableList<ShaderUniform> = mutableListOf(),
-    val backgroundShaderUniformStates: MutableList<State<ShaderUniform>> = mutableListOf(),
-    val strokeShaderUniforms: MutableList<ShaderUniform> = mutableListOf(),
-    val strokeShaderUniformStates: MutableList<State<ShaderUniform>> = mutableListOf(),
+    val backgroundShaderUniforms: HashMap<String, ShaderUniform> = HashMap(),
+    val backgroundShaderUniformStates: HashMap<String, State<ShaderUniform>> = HashMap(),
+    val strokeShaderUniforms: HashMap<String, ShaderUniform> = HashMap(),
+    val strokeShaderUniformStates: HashMap<String, State<ShaderUniform>> = HashMap(),
 )
 
 fun ShaderUniformCustomizations.customBackgroundShaderUniforms(
     vararg shaderUniforms: ShaderUniform
 ): ShaderUniformCustomizations {
-    backgroundShaderUniforms.addAll(shaderUniforms)
+    for (shaderUniform in shaderUniforms) {
+        backgroundShaderUniforms[shaderUniform.name] = shaderUniform
+    }
     return this
 }
 
 fun ShaderUniformCustomizations.customStrokeShaderUniforms(
     vararg shaderUniforms: ShaderUniform
 ): ShaderUniformCustomizations {
-    strokeShaderUniforms.addAll(shaderUniforms)
+    for (shaderUniform in shaderUniforms) {
+        strokeShaderUniforms[shaderUniform.name] = shaderUniform
+    }
     return this
 }
 
 fun ShaderUniformCustomizations.customBackgroundShaderUniformStates(
     vararg shaderUniformStates: State<ShaderUniform>
 ): ShaderUniformCustomizations {
-    backgroundShaderUniformStates.addAll(shaderUniformStates)
+    for (shaderUniformState in shaderUniformStates) {
+        backgroundShaderUniformStates[shaderUniformState.value.name] = shaderUniformState
+    }
     return this
 }
 
 fun ShaderUniformCustomizations.customStrokeShaderUniformStates(
     vararg shaderUniformStates: State<ShaderUniform>
 ): ShaderUniformCustomizations {
-    strokeShaderUniformStates.addAll(shaderUniformStates)
+    for (shaderUniformState in shaderUniformStates) {
+        strokeShaderUniformStates[shaderUniformState.value.name] = shaderUniformState
+    }
     return this
 }
 

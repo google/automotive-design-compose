@@ -699,145 +699,201 @@ internal fun ContentDrawScope.squooshShapeRender(
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun ShaderUniform.applyToShader(
-    shader: RuntimeShader,
+    shaderBrush: SizingShaderBrush,
     shaderUniformMap: Map<String, ShaderUniform>,
     document: DocContent,
     appContext: Context,
     density: Float,
-) {
-    if (ignore) return
-    val definedType = shaderUniformMap[name]?.type
-    when (value.valueTypeCase) {
-        ValueTypeCase.FLOAT_VALUE -> {
-            if (definedType in listOf("float", "half", "iTime")) {
-                shader.setFloatUniform(name, value.floatValue)
-            }
-        }
-
-        ValueTypeCase.FLOAT_VEC_VALUE -> {
-            val floatVecValue = value.floatVecValue.floatsList
-            when (floatVecValue.size) {
-                1 ->
-                    if (definedType in listOf("float", "half"))
-                        shader.setFloatUniform(name, floatVecValue[0])
-                2 ->
-                    if (definedType in listOf("float2", "half2"))
-                        shader.setFloatUniform(name, floatVecValue[0], floatVecValue[1])
-                3 ->
-                    if (definedType in listOf("float3", "half3"))
-                        shader.setFloatUniform(
-                            name,
-                            floatVecValue[0],
-                            floatVecValue[1],
-                            floatVecValue[2],
-                        )
-                4 ->
-                    if (definedType in listOf("float4", "half4", "mat2", "half2x2"))
-                        shader.setFloatUniform(
-                            name,
-                            floatVecValue[0],
-                            floatVecValue[1],
-                            floatVecValue[2],
-                            floatVecValue[3],
-                        )
-                9,
-                16 ->
-                    if (definedType in listOf("mat3", "mat4", "half3x3", "half4x4")) {
-                        shader.setFloatUniform(name, floatVecValue.toFloatArray())
-                    }
-                else -> Log.e(TAG, "Invalid shader uniform $name $definedType")
-            }
-        }
-
-        ValueTypeCase.FLOAT_COLOR_VALUE -> {
-            when (definedType) {
-                "float3",
-                "color3" ->
-                    shader.setFloatUniform(
-                        name,
-                        value.floatColorValue.r,
-                        value.floatColorValue.g,
-                        value.floatColorValue.b,
-                    )
-                "float4",
-                "color4" ->
-                    shader.setFloatUniform(
-                        name,
-                        value.floatColorValue.r,
-                        value.floatColorValue.g,
-                        value.floatColorValue.b,
-                        value.floatColorValue.a,
-                    )
-                else -> Log.e(TAG, "Invalid shader uniform $name $definedType")
-            }
-        }
-        ValueTypeCase.INT_VALUE -> {
-            if (definedType == "int") {
-                shader.setIntUniform(name, value.intValue)
-            }
-        }
-
-        ValueTypeCase.INT_VEC_VALUE -> {
-            val intVecValue = value.intVecValue.intsList
-            when (intVecValue.size) {
-                1 -> if (definedType == "int") shader.setIntUniform(name, intVecValue[0])
-                2 ->
-                    if (definedType == "int2")
-                        shader.setIntUniform(name, intVecValue[0], intVecValue[1])
-                3 ->
-                    if (definedType == "int3")
-                        shader.setIntUniform(name, intVecValue[0], intVecValue[1], intVecValue[2])
-                4 ->
-                    if (definedType == "int4")
-                        shader.setIntUniform(
-                            name,
-                            intVecValue[0],
-                            intVecValue[1],
-                            intVecValue[2],
-                            intVecValue[3],
-                        )
-                else -> Log.e(TAG, "Invalid shader uniform $name $definedType")
-            }
-        }
-
-        ValueTypeCase.IMAGE_REF_VALUE -> {
-            val imageRef = value.imageRefValue.key
-            val bitmap =
-                loadImage(
-                    appContext,
-                    document,
-                    density,
-                    value.imageRefValue.takeIf { it.hasResName() }?.resName,
-                    imageRef,
-                )
-            if (bitmap != null) {
-                val bitmapShader =
-                    BitmapShader(bitmap.first, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-                shader.setInputBuffer(name, bitmapShader)
-                // Plugin creates a uniform of type float2 for the image resolution which has
-                // a flag `ignore` set to be true. When we set the image, we will set the image
-                // resolution to the actual image size(resource images will have different sizes due
-                //  to different screen densities).
-                val resolutionUniform = name + "Resolution"
-                if (
-                    shaderUniformMap[resolutionUniform]?.type == "float2" &&
-                        shaderUniformMap[resolutionUniform]?.ignore == true
-                ) {
-                    shader.setFloatUniform(
-                        resolutionUniform,
-                        bitmap.first.width.toFloat(),
-                        bitmap.first.height.toFloat(),
-                    )
-                }
-            } else {
-                Log.e(TAG, "Failed to find image $imageRef for shader $name")
-            }
-        }
-
-        else -> {
-            Log.w(TAG, "Invalid shader uniform $name")
-        }
+): Boolean {
+    if (ignore) return false
+    if (
+        value.imageRefValueOrNull?.hasResName() != true &&
+            shaderBrush.appliedShaderUniforms[name] == value
+    ) {
+        return true
     }
+
+    val shader = shaderBrush.shader
+    val definedType = shaderUniformMap[name]?.type
+    val set: Boolean =
+        when (value.valueTypeCase) {
+            ValueTypeCase.FLOAT_VALUE -> {
+                if (definedType in listOf("float", "half", "iTime")) {
+                    shader.setFloatUniform(name, value.floatValue)
+                    true
+                } else false
+            }
+
+            ValueTypeCase.FLOAT_VEC_VALUE -> {
+                val floatVecValue = value.floatVecValue.floatsList
+                when (floatVecValue.size) {
+                    1 ->
+                        if (definedType in listOf("float", "half")) {
+                            shader.setFloatUniform(name, floatVecValue[0])
+                            true
+                        } else false
+                    2 ->
+                        if (definedType in listOf("float2", "half2")) {
+                            shader.setFloatUniform(name, floatVecValue[0], floatVecValue[1])
+                            true
+                        } else false
+                    3 ->
+                        if (definedType in listOf("float3", "half3")) {
+                            shader.setFloatUniform(
+                                name,
+                                floatVecValue[0],
+                                floatVecValue[1],
+                                floatVecValue[2],
+                            )
+                            true
+                        } else false
+                    4 ->
+                        if (definedType in listOf("float4", "half4", "mat2", "half2x2")) {
+                            shader.setFloatUniform(
+                                name,
+                                floatVecValue[0],
+                                floatVecValue[1],
+                                floatVecValue[2],
+                                floatVecValue[3],
+                            )
+                            true
+                        } else false
+                    9,
+                    16 ->
+                        if (definedType in listOf("mat3", "mat4", "half3x3", "half4x4")) {
+                            shader.setFloatUniform(name, floatVecValue.toFloatArray())
+                            true
+                        } else false
+                    else -> {
+                        Log.e(TAG, "Invalid shader uniform $name $definedType")
+                        false
+                    }
+                }
+            }
+
+            ValueTypeCase.FLOAT_COLOR_VALUE -> {
+                when (definedType) {
+                    "float3",
+                    "color3" -> {
+                        shader.setFloatUniform(
+                            name,
+                            value.floatColorValue.r,
+                            value.floatColorValue.g,
+                            value.floatColorValue.b,
+                        )
+                        true
+                    }
+                    "float4",
+                    "color4" -> {
+                        shader.setFloatUniform(
+                            name,
+                            value.floatColorValue.r,
+                            value.floatColorValue.g,
+                            value.floatColorValue.b,
+                            value.floatColorValue.a,
+                        )
+                        true
+                    }
+                    else -> {
+                        Log.e(TAG, "Invalid shader uniform $name $definedType")
+                        false
+                    }
+                }
+            }
+            ValueTypeCase.INT_VALUE -> {
+                if (definedType == "int") {
+                    shader.setIntUniform(name, value.intValue)
+                    true
+                } else false
+            }
+
+            ValueTypeCase.INT_VEC_VALUE -> {
+                val intVecValue = value.intVecValue.intsList
+                when (intVecValue.size) {
+                    1 ->
+                        if (definedType == "int") {
+                            shader.setIntUniform(name, intVecValue[0])
+                            true
+                        } else false
+                    2 ->
+                        if (definedType == "int2") {
+                            shader.setIntUniform(name, intVecValue[0], intVecValue[1])
+                            true
+                        } else false
+                    3 ->
+                        if (definedType == "int3") {
+                            shader.setIntUniform(
+                                name,
+                                intVecValue[0],
+                                intVecValue[1],
+                                intVecValue[2],
+                            )
+                            true
+                        } else false
+                    4 ->
+                        if (definedType == "int4") {
+                            shader.setIntUniform(
+                                name,
+                                intVecValue[0],
+                                intVecValue[1],
+                                intVecValue[2],
+                                intVecValue[3],
+                            )
+                            true
+                        } else false
+                    else -> {
+                        Log.e(TAG, "Invalid shader uniform $name $definedType")
+                        false
+                    }
+                }
+            }
+
+            ValueTypeCase.IMAGE_REF_VALUE -> {
+                val imageRef = value.imageRefValue.key
+                val bitmap =
+                    loadImage(
+                        appContext,
+                        document,
+                        density,
+                        value.imageRefValue.takeIf { it.hasResName() }?.resName,
+                        imageRef,
+                    )
+                if (bitmap != null) {
+                    val bitmapShader =
+                        BitmapShader(bitmap.first, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+                    shader.setInputBuffer(name, bitmapShader)
+                    // Plugin creates a uniform of type float2 for the image resolution which has
+                    // a flag `ignore` set to be true. When we set the image, we will set the image
+                    // resolution to the actual image size(resource images will have different sizes
+                    // due
+                    //  to different screen densities).
+                    val resolutionUniform = name + "Resolution"
+                    if (
+                        shaderUniformMap[resolutionUniform]?.type == "float2" &&
+                            shaderUniformMap[resolutionUniform]?.ignore == true
+                    ) {
+                        shader.setFloatUniform(
+                            resolutionUniform,
+                            bitmap.first.width.toFloat(),
+                            bitmap.first.height.toFloat(),
+                        )
+                    }
+                    true
+                } else {
+                    Log.e(TAG, "Failed to find image $imageRef for shader $name")
+                    false
+                }
+            }
+
+            else -> {
+                Log.w(TAG, "Invalid shader uniform $name")
+                false
+            }
+        }
+    if (set) {
+        shaderBrush.appliedShaderUniforms[name] = value
+    }
+    return set
 }
 
 internal fun getCustomBrush(
@@ -853,7 +909,7 @@ internal fun getCustomBrush(
     val nodeName = node.view.name
     var customFillBrush = customizations.getBrush(nodeName)
     if (customFillBrush == null) {
-        node.view.style.nodeStyle
+        node.style.nodeStyle
             .takeIf { it.hasShaderData() }
             ?.shaderData
             ?.let {
@@ -893,20 +949,6 @@ internal fun getShaderBrush(
             val shaderProg = shaderData.shader.trim().trimIndent()
             val shader = RuntimeShader(shaderProg)
             shaderBrush = SizingShaderBrush(shader)
-            shaderData.shaderUniformsMap.forEach { (_, v) ->
-                if (v.value.imageRefValueOrNull?.hasResName() != true) {
-                    // If the shader uniform is not an image input or the image input doesn't
-                    // have a resource name for localization, we apply the shader uniform on
-                    // shader creation.
-                    v.applyToShader(
-                        shader,
-                        shaderData.shaderUniformsMap,
-                        document,
-                        appContext,
-                        density,
-                    )
-                }
-            }
         } else {
             shaderData.shaderFallbackColorOrNull?.let { color ->
                 shaderBrush = SolidColor(color.toColor())
@@ -920,59 +962,62 @@ internal fun getShaderBrush(
     }
 
     if (shaderBrush is SizingShaderBrush && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        shaderData.shaderUniformsMap.forEach { (_, v) ->
-            if (v.value.imageRefValueOrNull?.hasResName() == true) {
-                // If the shader uniform is an image input and the image input has a resource name
-                // for localization, we apply the shader uniform on rendering which makes sure the
-                // shader image will update to a different locale when the system locale changes.
-                v.applyToShader(
-                    (shaderBrush as SizingShaderBrush).shader,
-                    shaderData.shaderUniformsMap,
-                    document,
-                    appContext,
-                    density,
-                )
-            }
-        }
-        val shaderUniformList =
+        val customShaderUniforms =
             if (asBackground) shaderUniformCustomizations?.backgroundShaderUniforms
             else shaderUniformCustomizations?.strokeShaderUniforms
-        shaderUniformList?.forEach { customUniform ->
-            if (shaderData.shaderUniformsMap.containsKey(customUniform.name)) {
-                customUniform.applyToShader(
-                    (shaderBrush as SizingShaderBrush).shader,
-                    shaderData.shaderUniformsMap,
-                    document,
-                    appContext,
-                    density,
-                )
-            }
-        }
-        val shaderUniformStateList =
+        val customShaderUniformStates =
             if (asBackground) shaderUniformCustomizations?.backgroundShaderUniformStates
             else shaderUniformCustomizations?.strokeShaderUniformStates
-        shaderUniformStateList?.forEach { customUniformState ->
-            val customUniform = customUniformState.value
-            if (shaderData.shaderUniformsMap.containsKey(customUniform.name)) {
-                customUniform.applyToShader(
-                    (shaderBrush as SizingShaderBrush).shader,
-                    shaderData.shaderUniformsMap,
-                    document,
-                    appContext,
-                    density,
-                )
+        shaderData.shaderUniformsMap.forEach { (k, v) ->
+            val customized =
+                customShaderUniforms
+                    ?.get(k)
+                    ?.applyToShader(
+                        shaderBrush as SizingShaderBrush,
+                        shaderData.shaderUniformsMap,
+                        document,
+                        appContext,
+                        density,
+                    )
+            if (customized == true) {
+                return@forEach
             }
+            val customizedState =
+                customShaderUniformStates
+                    ?.get(k)
+                    ?.value
+                    ?.applyToShader(
+                        shaderBrush as SizingShaderBrush,
+                        shaderData.shaderUniformsMap,
+                        document,
+                        appContext,
+                        density,
+                    )
+            if (customizedState == true) {
+                return@forEach
+            }
+            if (v.name == "iTime") {
+                return@forEach
+            }
+            v.applyToShader(
+                shaderBrush as SizingShaderBrush,
+                shaderData.shaderUniformsMap,
+                document,
+                appContext,
+                density,
+            )
         }
-        shaderTimeUniformState?.value?.let {
-            if (shaderData.shaderUniformsMap.containsKey(it.name)) {
-                it.applyToShader(
-                    (shaderBrush as SizingShaderBrush).shader,
+
+        if (shaderData.shaderUniformsMap.containsKey("iTime")) {
+            shaderTimeUniformState
+                ?.value
+                ?.applyToShader(
+                    shaderBrush as SizingShaderBrush,
                     shaderData.shaderUniformsMap,
                     document,
                     appContext,
                     density,
                 )
-            }
         }
     }
     return shaderBrush

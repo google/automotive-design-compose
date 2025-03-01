@@ -12,10 +12,10 @@
   "devDependencies": {
     "@figma/plugin-typings": "*",
     "@figma/widget-typings": "*",
-    "@typescript-eslint/eslint-plugin": "^8.24.1",
-    "@typescript-eslint/parser": "^8.24.1",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
     "css-loader": "^7.1.2",
-    "eslint": "^9.20.1",
+    "eslint": "^9.21.0",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-loader": "^5.1.0",
     "html-webpack-plugin": "^5.6.3",

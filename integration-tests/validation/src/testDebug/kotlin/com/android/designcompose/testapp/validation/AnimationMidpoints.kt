@@ -206,6 +206,22 @@ class AnimationMidpoints {
     }
 
     @Test
+    fun arcAnimation() {
+        // Because we're testing animation, we will manually advance the animation clock.
+        composeTestRule.mainClock.autoAdvance = false
+
+        val state = mutableStateOf(TestState.A)
+
+        composeTestRule.setContent { SmartAnimateTestDoc.ArcTest(state = state.value) }
+
+        composeTestRule.waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+        state.value = TestState.B
+
+        recordAnimation("Arc")
+    }
+
+    @Test
     @Config(sdk = [35])
     fun shaderAnimation() {
         System.setProperty("robolectric.pixelCopyRenderMode", "hardware")

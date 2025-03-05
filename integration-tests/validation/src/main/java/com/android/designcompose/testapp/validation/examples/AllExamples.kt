@@ -23,6 +23,7 @@ import java.time.Clock
 
 val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
     arrayListOf(
+        Triple("Scrolling", { ScrollingTest() }, ScrollingTestDoc.javaClass.name),
         // First comes the "HelloWorld" examples.
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
         Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
@@ -123,7 +124,6 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         ),
         Triple("OpenLink", { OpenLinkTest() }, OpenLinkTestDoc.javaClass.name),
         Triple("Color Tint", { ColorTintTest() }, ColorTintTestDoc.javaClass.name),
-        Triple("Scrolling", { ScrollingTest() }, ScrollingTestDoc.javaClass.name),
         // List widget grid layout
         Triple("Grid Layout", { GridLayoutTest() }, GridLayoutTestDoc.javaClass.name),
         Triple("Grid Widget", { GridWidgetTest() }, GridWidgetTestDoc.javaClass.name),

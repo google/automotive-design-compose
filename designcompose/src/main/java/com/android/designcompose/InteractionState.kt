@@ -27,6 +27,7 @@ import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.VariantPropertyMap
 import com.android.designcompose.common.views
 import com.android.designcompose.definition.interaction.Action
+import com.android.designcompose.definition.interaction.Reaction
 import com.android.designcompose.definition.interaction.Transition
 import com.android.designcompose.definition.interaction.transitionOrNull
 import com.android.designcompose.definition.view.View
@@ -226,11 +227,13 @@ internal class InteractionState {
     var variantSubscriptions: HashMap<String, ArrayList<() -> Unit>> = HashMap()
     var animationSubscriptions: ArrayList<() -> Unit> = ArrayList()
 
-    // A set of node IDs that have been pressed due to an interaction or TapCallback. This is
+    // A hash of node IDs that have been pressed due to an interaction or TapCallback. This is
     // necessary to keep track of so that nodes that change to another variant due to an
     // interaction can still be found to have a press/click/tap event on them and be added to
-    // SquooshRoot's list of composable children.
-    var isPressed: HashSet<String> = HashSet()
+    // SquooshRoot's list of composable children. These nodes also use this map to find the
+    // reactions of the original node so actions can be performed on touch up or click.
+    // node id -> reaction list
+    var isPressed: HashMap<String, List<Reaction>> = HashMap()
 }
 
 /// Perform the "navigate" action, by appending the given node id to
@@ -487,7 +490,7 @@ internal fun InteractionState.clonedWithAnimatedActionsApplied(): InteractionSta
     deltaInteractionState.overlayMemory = ArrayList(overlayMemory)
     deltaInteractionState.undoMemory = HashMap(undoMemory)
     deltaInteractionState.openLinkCallbacks = HashSet(openLinkCallbacks)
-    deltaInteractionState.isPressed = HashSet(isPressed)
+    deltaInteractionState.isPressed = HashMap(isPressed)
     // Apply all of our transition actions.
     for (anim in animations) {
         deltaInteractionState.changeTo(
@@ -795,8 +798,16 @@ internal fun InteractionState.isPressed(nodeId: String): Boolean {
     return isPressed.contains(nodeId)
 }
 
-internal fun InteractionState.setPressed(nodeId: String, pressed: Boolean) {
-    if (pressed) isPressed.add(nodeId) else isPressed.remove(nodeId)
+internal fun InteractionState.setPressed(nodeId: String, reactionList: List<Reaction>) {
+    isPressed[nodeId] = reactionList
+}
+
+internal fun InteractionState.removePressed(nodeId: String) {
+    isPressed.remove(nodeId)
+}
+
+internal fun InteractionState.getPressedReactionList(nodeId: String): List<Reaction> {
+    return isPressed[nodeId] ?: listOf()
 }
 
 /// InteractionState is managed in a global, per document. We don't pass it down via a

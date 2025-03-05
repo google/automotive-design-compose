@@ -21,6 +21,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
@@ -65,6 +66,27 @@ class Scrolling {
             onNodeWithTag("DragHorizontal").performTouchInput { moveTo(Offset(-200f, 0F)) }
             onNodeWithTag("DragHorizontal").performTouchInput { cancel() }
             captureRootRoboImage("scroll-horizontal")
+        }
+    }
+
+    @Test
+    fun dragScrollClickables() {
+        with(composeTestRule) {
+            setContent { ScrollingTest() }
+            // Check that onPress interaction works when in a scrollable view
+            onNodeWithTag("clickable1").performTouchInput { down(Offset.Zero) }
+            captureRootRoboImage("scroll-clickable-onpress")
+            onNodeWithTag("clickable1=pressed").performTouchInput { up() }
+
+            // Check that clicking a node with a click interaction works when in a scrollable view
+            onNodeWithTag("clickable2").performTouchInput { click() }
+            captureRootRoboImage("scroll-clickable-click")
+
+            // Check that scrolling by dragging a clickable node works
+            onNodeWithTag("clickable2=pressed").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("clickable2=pressed").performTouchInput { moveTo(Offset(-200f, -0F)) }
+            captureRootRoboImage("scroll-clickable-scrolled")
+            onNodeWithTag("clickable2=pressed").performTouchInput { up() }
         }
     }
 

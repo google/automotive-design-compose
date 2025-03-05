@@ -192,7 +192,7 @@ internal fun resolveVariantsRecursively(
     // XXX: This probably won't show up in any profile, but I used linked lists everywhere
     //      else to reduce the number of objects we make (especially since we run this code
     //      every recompose.
-    composableList: ComposableList,
+    composableList: ComposableList?,
     layoutIdAllocator: SquooshLayoutIdAllocator,
     variantParentName: String = "",
     isRoot: Boolean,
@@ -348,8 +348,10 @@ internal fun resolveVariantsRecursively(
     val resolvedView = SquooshResolvedNode(view, style, layoutId, resolvedTextInfo, viewFromTree.id)
 
     var skipChildren = false // Set to true for customizations that replace children
+    var skipComposableList =
+        false // Set to true for scrolling view because it has its own SquooshRoot()
     if (replacementComponent != null) {
-        composableList.addChild(
+        composableList?.addChild(
             SquooshChildComposable(
                 component = replacementComponent,
                 node = resolvedView,
@@ -365,7 +367,7 @@ internal fun resolveVariantsRecursively(
         // If the view has scrolling, is not the root, and isScrollComponent is false (to prevent
         // infinite recursion), add the view to the list so it can be composed separately in order
         // to support scrolling.
-        composableList.addChild(
+        composableList?.addChild(
             SquooshChildComposable(
                 scrollView = view,
                 node = resolvedView,
@@ -373,6 +375,7 @@ internal fun resolveVariantsRecursively(
             )
         )
         resolvedView.needsChildRender = true
+        skipComposableList = true
     } else if (replacementContent != null) {
         // Replacement Content represents a (short, non-virtualized) list of child composables.
         // We want these child composables to be laid out inside of this container using the
@@ -392,7 +395,7 @@ internal fun resolveVariantsRecursively(
             else resolvedView.firstChild = replacementChild
             previousReplacementChild = replacementChild
 
-            composableList.addChild(
+            composableList?.addChild(
                 SquooshChildComposable(
                     component = @Composable { childComponent() },
                     node = replacementChild,
@@ -414,7 +417,7 @@ internal fun resolveVariantsRecursively(
         skipChildren = true
     } else if (hasSupportedInteraction) {
         // Add a SquooshChildComposable to handle the interaction.
-        composableList.addChild(
+        composableList?.addChild(
             SquooshChildComposable(
                 component = null,
                 node = resolvedView,
@@ -439,7 +442,7 @@ internal fun resolveVariantsRecursively(
                         parentComps,
                         density,
                         fontResourceLoader,
-                        composableList,
+                        if (skipComposableList) null else composableList,
                         layoutIdAllocator,
                         "",
                         false,
@@ -465,7 +468,7 @@ internal fun resolveVariantsRecursively(
     if (overlays != null) {
         for (overlay in overlays) {
             val overlayExtras = overlay.frameExtrasOrNull ?: continue
-            composableList.addOverlay(overlay.id, overlayExtras)
+            composableList?.addOverlay(overlay.id, overlayExtras)
         }
     }
 

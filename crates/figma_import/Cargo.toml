@@ -25,6 +25,7 @@ serde_bytes.workspace = true
 bincode.workspace = true
 thiserror.workspace = true
 prost.workspace = true
+protobuf.workspace = true
 svgtypes.workspace = true
 
 unicode-segmentation.workspace = true

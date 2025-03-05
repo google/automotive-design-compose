@@ -34,6 +34,8 @@ log = "0.4"
 phf = { version = "0.11", features = ["macros"] }
 prost = "0.12.6"
 prost-build = "0.12.4"
+protobuf = "3.7.1"
+protobuf-codegen = "3.7.1"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_bytes = "0.11"
 serde-generate = { version = "0.25.1" }

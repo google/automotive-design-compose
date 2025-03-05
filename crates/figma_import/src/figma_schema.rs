@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::collections::HashMap;
-
 use dc_bundle::definition::element::Color;
 use dc_bundle::definition::element::FloatColor;
+use dc_bundle::definition::view::OverriddenFields;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // We use serde to decode Figma's JSON documents into Rust structures.
 // These structures were derived from Figma's public API documentation, which has more information
@@ -1000,7 +1000,22 @@ pub enum NodeData {
         frame: FrameCommon,
         #[serde(rename = "componentId")]
         component_id: String,
+        overrides: Option<Vec<FigmaOverriddenFields>>,
     },
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FigmaOverriddenFields {
+    pub id: String,
+    #[serde(rename = "overriddenFields")]
+    pub overridden_fields: Vec<String>,
+}
+
+impl Into<(String, OverriddenFields)> for &FigmaOverriddenFields {
+    fn into(self) -> (String, OverriddenFields) {
+        return (self.id.clone(), OverriddenFields { fields: self.overridden_fields.clone() });
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

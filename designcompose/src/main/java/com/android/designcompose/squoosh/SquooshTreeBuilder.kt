@@ -70,15 +70,17 @@ import com.android.designcompose.definition.plugin.FrameExtras
 import com.android.designcompose.definition.view.ComponentInfo
 import com.android.designcompose.definition.view.Display
 import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewData
 import com.android.designcompose.definition.view.ViewDataKt.container
 import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.definition.view.componentOverridesOrNull
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.frameExtrasOrNull
 import com.android.designcompose.definition.view.nodeStyle
-import com.android.designcompose.definition.view.overridesOrNull
 import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.definition.view.view
 import com.android.designcompose.definition.view.viewData
+import com.android.designcompose.definition.view.viewDataOrNull
 import com.android.designcompose.definition.view.viewStyle
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
@@ -225,7 +227,7 @@ internal fun resolveVariantsRecursively(
 
         // Do we have an override style? This is style data which we should apply to the final style
         // even if we're swapping out our view definition for a variant.
-        overrideStyle = viewFromTree.componentInfo.overridesOrNull?.styleOrNull
+        overrideStyle = viewFromTree.componentOverridesOrNull?.styleOrNull
 
         // See if we have a variant replacement; this only happens for component instances (for both
         // interaction-driven and customization-driven variant changes).
@@ -276,6 +278,8 @@ internal fun resolveVariantsRecursively(
             variantTransition.selectedVariant(viewFromTree, view, customVariantTransition)
         }
     }
+    val overrideViewData: ViewData? =
+        parentComps?.componentInfo?.overridesTableMap?.get(viewFromTree.name)?.viewDataOrNull
 
     // Calculate the style we're going to use. If we have an override style then we have to apply
     // that on top of the view (or variant) style.
@@ -298,6 +302,7 @@ internal fun resolveVariantsRecursively(
     val textData =
         squooshComputeTextInfo(
             view,
+            overrideViewData,
             layoutId,
             density,
             document,

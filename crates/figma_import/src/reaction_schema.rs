@@ -14,10 +14,10 @@
 
 use dc_bundle::{
     color::FloatColor,
-    frame_extras::{FrameExtras, OverlayBackgroundInteraction, OverlayPositionType},
+    frame_extras::{FrameExtras, OverlayBackground, OverlayBackgroundInteraction, OverlayPositionType},
     geometry::Vector,
     reaction::{
-        action::{self, ActionUrl, Action_type},
+        action::{self, ActionUrl, Action_type, node::Navigation},
         trigger::{KeyDown, MouseDown, MouseEnter, MouseLeave, MouseUp, Timeout, Trigger_type},
         Action, Reaction, Trigger,
     },
@@ -30,6 +30,7 @@ use dc_bundle::{
         Easing, Transition,
     },
 };
+use crate::figma_schema::FigmaColor;
 
 use serde::{Deserialize, Serialize};
 
@@ -44,6 +45,44 @@ use serde::{Deserialize, Serialize};
 //
 // The Figma documentation that these definitions correspond to is here:
 //  https://www.figma.com/plugin-docs/api/Reaction/
+
+
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+pub struct BezierJson {
+    pub x1: f32,
+    pub y1: f32,
+    pub x2: f32,
+    pub y2: f32,
+}
+
+impl Into<Bezier> for BezierJson {
+    fn into(self) -> Bezier {
+        Bezier {
+            x1: self.x1,
+            y1: self.y1,
+            x2: self.x2,
+            y2: self.y2,
+            ..Default::default()
+        }
+    }
+}
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+pub struct SpringJson {
+    pub mass: f32,
+    pub stiffness: f32,
+    pub damping: f32,
+}
+
+impl Into<Spring> for SpringJson {
+    fn into(self) -> Spring {
+        Spring {
+            mass: self.mass,
+            stiffness: self.stiffness,
+            damping: self.damping,
+            ..Default::default()
+        }
+    }
+}
 
 /// The type of easing to perform in a transition.
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -61,7 +100,7 @@ pub enum EasingJson {
     // Manually specified cubic bezier
     CustomCubicBezier {
         #[serde(rename = "easingFunctionCubicBezier")]
-        bezier: Bezier,
+        bezier: BezierJson,
     },
 
     // Springs
@@ -73,7 +112,7 @@ pub enum EasingJson {
     // Manually specified spring
     CustomSpring {
         #[serde(rename = "easingFunctionSpring")]
-        spring: Spring,
+        spring: SpringJson,
     },
 }
 
@@ -131,7 +170,7 @@ impl Into<Easing_type> for EasingJson {
                 y2: 1.6,
                 ..Default::default()
             }),
-            EasingJson::CustomCubicBezier { bezier } => Easing_type::Bezier(bezier),
+            EasingJson::CustomCubicBezier { bezier } => Easing_type::Bezier(bezier.into()),
             EasingJson::Gentle => Easing_type::Spring(Spring {
                 mass: 1.0,
                 damping: 15.0,
@@ -156,7 +195,7 @@ impl Into<Easing_type> for EasingJson {
                 stiffness: 80.0,
                 ..Default::default()
             }),
-            EasingJson::CustomSpring { spring } => Easing_type::Spring(spring),
+            EasingJson::CustomSpring { spring } => Easing_type::Spring(spring.into()),
         }
     }
 }
@@ -283,7 +322,7 @@ impl Into<Transition_type> for TransitionJson {
                 Transition_type::MoveIn(MoveIn {
                     easing: Some(easing.into()).into(),
                     duration,
-                    direction: Some(TransitionDirection::from(direction)).into(),
+                    direction: TransitionDirection::from(direction.into()).into(),
                     match_layers,
                     ..Default::default()
                 })
@@ -292,25 +331,25 @@ impl Into<Transition_type> for TransitionJson {
                 Transition_type::MoveOut(MoveOut {
                     easing: Some(easing.into()).into(),
                     duration,
-                    direction: Some(direction.into()).into(),
+                    direction: TransitionDirection::from(direction.into()).into(),
                     match_layers,
                     ..Default::default()
                 })
             }
             TransitionJson::Push { easing, duration, direction, match_layers } => {
                 Transition_type::Push(Push {
-                    easing: Some(easing.into()),
+                    easing: Some(easing.into()).into(),
                     duration,
-                    direction: Some(direction.into()).into(),
+                    direction: TransitionDirection::from(direction.into()).into(),
                     match_layers,
                     ..Default::default()
                 })
             }
             TransitionJson::SlideIn { easing, duration, direction, match_layers } => {
                 Transition_type::SlideIn(SlideIn {
-                    easing: Some(easing.into()),
+                    easing: Some(easing.into()).into(),
                     duration,
-                    direction: Some(direction.into()).into(),
+                    direction: TransitionDirection::from(direction.into()).into(),
                     match_layers,
                     ..Default::default()
                 })
@@ -319,11 +358,52 @@ impl Into<Transition_type> for TransitionJson {
                 Transition_type::SlideOut(SlideOut {
                     easing: Some(easing.into()).into(),
                     duration,
-                    direction: Some(direction.into()).into(),
+                    direction: TransitionDirection::from(direction.into()).into(),
                     match_layers,
                     ..Default::default()
                 })
             }
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum NavigationJson {
+    NavigationUnspecified,
+    NavigationNavigate,
+    NavigationSwap,
+    NavigationOverlay,
+    NavigationScrollTo,
+    NavigationChangeTo,
+}
+
+impl Into<Navigation> for NavigationJson {
+    fn into(self) -> Navigation {
+        match self {
+            NavigationJson::NavigationUnspecified => Navigation::NAVIGATION_UNSPECIFIED,
+            NavigationJson::NavigationNavigate => Navigation::NAVIGATION_NAVIGATE,
+            NavigationJson::NavigationSwap => Navigation::NAVIGATION_SWAP,
+            NavigationJson::NavigationOverlay => Navigation::NAVIGATION_OVERLAY,
+            NavigationJson::NavigationScrollTo => Navigation::NAVIGATION_SCROLL_TO,
+            NavigationJson::NavigationChangeTo => Navigation::NAVIGATION_CHANGE_TO,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub struct VectorJson {
+    pub x: f32,
+    pub y: f32,
+}
+
+impl Into<Vector> for VectorJson {
+    fn into(self) -> Vector {
+        Vector {
+            x: self.x,
+            y: self.y,
+            ..Default::default()
         }
     }
 }
@@ -346,7 +426,7 @@ pub enum ActionJson {
 
         /// The kind of navigation (really the kind of action) to perform with the destination
         /// node (if it's not null).
-        navigation: Navigation,
+        navigation: NavigationJson,
 
         /// The transition to perform for this animation, if any.
         transition: Option<TransitionJson>,
@@ -357,7 +437,7 @@ pub enum ActionJson {
 
         /// For overlays that have been manually positioned.
         #[serde(rename = "overlayRelativePosition", default)]
-        overlay_relative_position: Option<Vector>,
+        overlay_relative_position: Option<VectorJson>,
     },
 }
 
@@ -373,16 +453,20 @@ impl Into<Action_type> for ActionJson {
                 transition,
                 preserve_scroll_position,
                 overlay_relative_position,
-            } => Action_type::Node(action::Node {
-                destination_id,
-                navigation: navigation as i32,
-                transition: transition
-                    .map(|t| Transition { transition_type: Some(t.into()), ..Default::default() })
-                    .into(),
-                preserve_scroll_position,
-                overlay_relative_position: overlay_relative_position.into(),
-                ..Default::default()
-            }),
+            } => {
+                let nav: Navigation = navigation.into();
+                let pos: Option<Vector> = overlay_relative_position.map(|v| v.into());
+                Action_type::Node(action::Node {
+                    destination_id,
+                    navigation: nav.into(),
+                    transition: transition
+                        .map(|t| Transition { transition_type: Some(t.into()), ..Default::default() })
+                        .into(),
+                    preserve_scroll_position,
+                    overlay_relative_position: pos.into(),
+                    ..Default::default()
+                })
+            },
         }
     }
 }
@@ -462,11 +546,12 @@ impl Into<Option<Reaction>> for ReactionJson {
     fn into(self) -> Option<Reaction> {
         if let Some(action) = self.action {
             Some(Reaction {
-                action: Some(Action { action_type: Some(action.into()), ..Default::default() }),
+                action: Some(Action { action_type: Some(action.into()), ..Default::default() }).into(),
                 trigger: Some(Trigger {
                     trigger_type: Some(self.trigger.into()),
                     ..Default::default()
-                }),
+                }).into(),
+                ..Default::default()
             })
         } else {
             None
@@ -510,12 +595,13 @@ impl Into<OverlayPositionType> for OverlayPositionJson {
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct OverlayBackgroundJson {
-    pub color: Option<FloatColor>,
+    pub color: Option<FigmaColor>,
 }
 
-impl Into<Option<OverlayBackground>> for OverlayBackgroundJson {
-    fn into(self) -> Option<OverlayBackground> {
-        self.color.map(|c| OverlayBackground { color: Some(c) })
+impl Into<OverlayBackground> for OverlayBackgroundJson {
+    fn into(self) -> OverlayBackground {
+        let float_color: Option<FloatColor> = self.color.map(|c| (&c).into());
+        OverlayBackground { color: float_color.into(), ..Default::default() }
     }
 }
 
@@ -552,11 +638,12 @@ pub struct FrameExtrasJson {
 
 impl Into<FrameExtras> for FrameExtrasJson {
     fn into(self) -> FrameExtras {
+        let bg: OverlayBackground = self.overlay_background.into();
         FrameExtras {
             fixed_children: self.number_of_fixed_children as u32,
             overlay_position_type: OverlayPositionType::from(self.overlay_position_type.into())
                 .into(), //It's confusing but it works? Need to convert one
-            overlay_background: Some(self.overlay_background.into()).into(),
+            overlay_background: Some(bg).into(),
             overlay_background_interaction: OverlayBackgroundInteraction::from(
                 self.overlay_background_interaction.into(),
             )
@@ -585,18 +672,18 @@ fn parse_reactions() {
 
     // We should check that `into` did what we expected it to do here.
 
-    let multiple: Vec<Reaction> =
-        multiple_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
-    let scroll: Vec<Reaction> =
-        scroll_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
-    let overlay: Vec<Reaction> =
-        overlay_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
+    let multiple: Vec<ReactionJson> =
+        multiple_json.drain(..).map(|json| Into::<Option<ReactionJson>>::into(json).unwrap()).collect();
+    let scroll: Vec<ReactionJson> =
+        scroll_json.drain(..).map(|json| Into::<Option<ReactionJson>>::into(json).unwrap()).collect();
+    let overlay: Vec<ReactionJson> =
+        overlay_json.drain(..).map(|json| Into::<Option<ReactionJson>>::into(json).unwrap()).collect();
 
-    let bincoded_multiple: Vec<Reaction> =
+    let bincoded_multiple: Vec<ReactionJson> =
         bincode::deserialize(bincode::serialize(&multiple).unwrap().as_slice()).unwrap();
-    let bincoded_scroll: Vec<Reaction> =
+    let bincoded_scroll: Vec<ReactionJson> =
         bincode::deserialize(bincode::serialize(&scroll).unwrap().as_slice()).unwrap();
-    let bincoded_overlay: Vec<Reaction> =
+    let bincoded_overlay: Vec<ReactionJson> =
         bincode::deserialize(bincode::serialize(&overlay).unwrap().as_slice()).unwrap();
 
     // Check that bincode didn't encounter any problems with the serialization & deserialization.
@@ -647,7 +734,7 @@ fn parse_frame_extras() {
     assert_eq!(click_to_close.overlay_position_type, OverlayPositionJson::BottomCenter);
     assert_eq!(
         click_to_close.overlay_background,
-        OverlayBackgroundJson { color: Some(FloatColor { r: 0.0, g: 0.0, b: 0.0, a: 0.25 }) }
+        OverlayBackgroundJson { color: Some(FigmaColor { r: 0.0, g: 0.0, b: 0.0, a: 0.25 }) }
     );
     assert_eq!(
         click_to_close.overlay_background_interaction,

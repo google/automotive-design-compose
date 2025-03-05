@@ -29,6 +29,7 @@ import com.android.designcompose.test.onDCDocAnyNode
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.ComponentTapCallbackDoc
 import com.android.designcompose.testapp.validation.examples.ComponentTapCallbackTest
+import com.android.designcompose.testapp.validation.examples.LayoutReplacementTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,6 +55,18 @@ class TapCallbackTest {
                 assertHasText("Reverse")
                 captureRootRoboImage("ComponentTapCallbackTest-tapped")
             }
+        }
+    }
+
+    @Test
+    fun layoutReplacementTapCallbackTest() {
+        with(composeTestRule) {
+            setContent { LayoutReplacementTest() }
+            captureRootRoboImage("LayoutReplacement-1")
+            onNodeWithTag("#next").performClick()
+            captureRootRoboImage("LayoutReplacement-2")
+            onNodeWithTag("#next").performClick()
+            captureRootRoboImage("LayoutReplacement-3")
         }
     }
 }

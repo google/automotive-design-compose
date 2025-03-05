@@ -33,6 +33,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -625,8 +626,9 @@ fun SquooshRoot(
         when (orientation) {
             Orientation.Vertical -> {
                 // Bound the scroll offset to the area bounded by content_height
-                val contentHeight = presentationRoot.computedLayout?.contentHeight ?: 0F
-                val frameHeight = presentationRoot.computedLayout?.height ?: 0F
+                val contentHeight =
+                    (presentationRoot.computedLayout?.contentHeight ?: 0F) * density.density
+                val frameHeight = (presentationRoot.computedLayout?.height ?: 0F) * density.density
                 val maxScroll = (contentHeight - frameHeight).coerceAtLeast(0F)
                 val scrollValue = (scrollOffset.value.y + delta).coerceIn(0F, maxScroll)
                 scrollOffset.value = Offset(0F, scrollValue)
@@ -636,8 +638,9 @@ fun SquooshRoot(
             }
             Orientation.Horizontal -> {
                 // Bound the scroll offset to the area bounded by content_width
-                val contentWidth = presentationRoot.computedLayout?.contentWidth ?: 0F
-                val frameWidth = presentationRoot.computedLayout?.width ?: 0F
+                val contentWidth =
+                    (presentationRoot.computedLayout?.contentWidth ?: 0F) * density.density
+                val frameWidth = (presentationRoot.computedLayout?.width ?: 0F) * density.density
                 val maxScroll = (contentWidth - frameWidth).coerceAtLeast(0F)
                 val scrollValue = (scrollOffset.value.x + delta).coerceIn(0F, maxScroll)
                 scrollOffset.value = Offset(scrollValue, 0F)
@@ -721,6 +724,7 @@ fun SquooshRoot(
                     interactionState,
                     interactionScope,
                     variantTransitions,
+                    scrollOffset,
                 ),
             content = {
                 // Now render all of the children
@@ -932,6 +936,7 @@ private fun squooshLayoutMeasurePolicy(
     interactionState: InteractionState,
     interactionScope: CoroutineScope,
     variantTransitions: SquooshVariantTransition,
+    scrollOffset: State<Offset>,
 ): MeasurePolicy =
     object : MeasurePolicy {
         private fun subscribeIntrinsicMeasurables(measurables: List<IntrinsicMeasurable>) {
@@ -1009,7 +1014,7 @@ private fun squooshLayoutMeasurePolicy(
             // how Composable child nodes (used for input and hosting
             // external Composables) get placed.
             val placeables = squooshMeasure(measurables, constraints)
-            return squooshLayout(root, density, placeables)
+            return squooshLayout(root, density, placeables, scrollOffset)
         }
 
         // These intrinsic calculations could be optimized to only copy out
@@ -1169,6 +1174,7 @@ private fun MeasureScope.squooshLayout(
     root: SquooshResolvedNode,
     density: Float,
     placeables: List<Placeable>,
+    scrollOffset: State<Offset>,
 ): MeasureResult {
     return layout(
         (root.computedLayout!!.width * density).roundToInt(),
@@ -1193,10 +1199,13 @@ private fun MeasureScope.squooshLayout(
                 // XXX XXX: Create ticket to implement transformed input.
                 val offsetFromRoot = node.offsetFromAncestor()
 
-                placeable.placeRelative(
-                    x = (offsetFromRoot.x * density).roundToInt(),
-                    y = (offsetFromRoot.y * density).roundToInt(),
-                )
+                var x = (offsetFromRoot.x * density).roundToInt()
+                var y = (offsetFromRoot.y * density).roundToInt()
+                if (!squooshData.node.skipLayoutScroll) {
+                    x -= scrollOffset.value.x.roundToInt()
+                    y -= scrollOffset.value.y.roundToInt()
+                }
+                placeable.placeRelative(x, y)
             }
         }
     }

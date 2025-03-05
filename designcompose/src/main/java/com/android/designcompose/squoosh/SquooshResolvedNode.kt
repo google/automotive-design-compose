@@ -49,6 +49,11 @@ internal class SquooshResolvedNode(
     var needsChildRender: Boolean = false,
     // Should we ask for the intrinsic layout size of the external Composable
     var needsChildLayout: Boolean = false,
+    // Normally we offset layout with the amount scrolled, but with some nodes such as replacement
+    // content nodes, this needs to be skipped. This is because replacement content nodes are added
+    // to the composable child list, causing the layout to be offset by scroll twice if this
+    // check were not here.
+    var skipLayoutScroll: Boolean = false,
 ) {
     fun offsetFromAncestor(ancestor: SquooshResolvedNode? = null): PointF {
         var n: SquooshResolvedNode? = this

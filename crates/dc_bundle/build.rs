@@ -13,33 +13,57 @@
 // limitations under the License.
 
 use std::error::Error;
-use std::path::Path;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut prost_config = prost_build::Config::new();
-    // Derive Copy for Dimension. Must derive it for both the enum and
-    // for the proto message that holds the enum.
-    prost_config.message_attribute("DimensionProto", "#[derive(Copy)]");
-    prost_config.message_attribute("DimensionProto.Auto", "#[derive(Copy)]");
-    prost_config.message_attribute("DimensionProto.Undefined", "#[derive(Copy)]");
-    prost_config.message_attribute("LayoutTransform", "#[derive(Copy)]");
-    prost_config.enum_attribute("Dimension", "#[derive(Copy)]");
-    prost_config.enum_attribute("Navigation", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
-    prost_config
-        .enum_attribute("TransitionDirection", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
-    prost_config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+    let out_dir_str = std::env::var_os("OUT_DIR").unwrap();
+    let out_dir = PathBuf::from(out_dir_str);
+    let config = protobuf_codegen::Customize::default();
 
+    // Define the directory where .proto files are located.
     let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(Path::parent)
         .unwrap()
         .join("proto");
 
-    prost_config.compile_protos(
-        &[proto_path.join("definition/design_compose_definition.proto")],
-        &[&proto_path],
-    )?;
+    // Collect the .proto files to compile.
+    let proto_files = collect_proto_files(&proto_path)?;
+
+    // Create input files as str
+    let proto_files_str: Vec<String> =
+        proto_files.iter().map(|p| p.to_str().unwrap().to_string()).collect();
+
+    let mut codegen = protobuf_codegen::Codegen::new();
+
+    codegen
+        .customize(config)
+        .out_dir(&out_dir)
+        .include(&proto_path)
+        .inputs(&proto_files_str)
+        .cargo_out_dir("protos")
+        .run()?;
 
     println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
     Ok(())
+}
+
+fn collect_proto_files(proto_path: &Path) -> Result<Vec<PathBuf>, Box<dyn Error>> {
+    let mut proto_files = Vec::new();
+    if proto_path.is_dir() {
+        for entry in fs::read_dir(proto_path)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                // Recursively search in subfolders.
+                proto_files.extend(collect_proto_files(&path)?);
+            } else if let Some(ext) = path.extension() {
+                if ext == "proto" {
+                    proto_files.push(path);
+                }
+            }
+        }
+    }
+    Ok(proto_files)
 }

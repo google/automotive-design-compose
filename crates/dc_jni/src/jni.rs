@@ -16,22 +16,22 @@ use std::ffi::c_void;
 
 use std::sync::{Arc, Mutex};
 
-use crate::android_interface::{convert_request::fetch_doc, ConvertRequest, ConvertResponse};
+use crate::android_interface::convert_request::fetch_doc;
 use crate::error::{throw_basic_exception, Error};
 use crate::error_map::map_err_to_exception;
 use crate::layout_manager::{
     jni_add_nodes, jni_create_layout_manager, jni_mark_dirty, jni_remove_node, jni_set_node_size,
 };
 use android_logger::Config;
-use bytes::Bytes;
 use figma_import::ProxyConfig;
 use jni::objects::{JByteArray, JClass, JObject, JString};
 use jni::sys::{jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 
+use dc_bundle::android_interface::{ConvertRequest, ConvertResponse};
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
-use prost::Message;
+use protobuf::Message;
 
 lazy_static! {
     static ref JAVA_VM: Mutex<Option<Arc<JavaVM>>> = Mutex::new(None);
@@ -89,7 +89,7 @@ fn jni_fetch_doc<'local>(
         }
     };
 
-    let request_bytes: Bytes = match env.convert_byte_array(&jrequest) {
+    let request_bytes: Vec<u8> = match env.convert_byte_array(&jrequest) {
         Ok(it) => it.into(),
         Err(err) => {
             throw_basic_exception(&mut env, &err);
@@ -97,12 +97,12 @@ fn jni_fetch_doc<'local>(
         }
     };
 
-    let request: ConvertRequest = match ConvertRequest::decode(request_bytes).map_err(Error::from) {
-        Ok(it) => it,
+    let mut request: ConvertRequest = ConvertRequest::new();
+    match request.merge_from_bytes(&request_bytes).map_err(Error::from) {
         Err(err) => {
             throw_basic_exception(&mut env, &err);
-            return JObject::null().into();
         }
+        _ => {}
     };
 
     let proxy_config: ProxyConfig = match get_proxy_config(&mut env, &jproxy_config) {
@@ -153,7 +153,7 @@ fn jni_fetch_doc_impl(
             }
         };
 
-    Ok(convert_result.encode_to_vec())
+    Ok(convert_result.write_length_delimited_to_bytes().unwrap())
 }
 
 #[allow(non_snake_case)]

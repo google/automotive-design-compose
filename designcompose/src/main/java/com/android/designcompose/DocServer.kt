@@ -435,7 +435,7 @@ internal fun fetchDocument(
 
     val serializedResponse: ByteArray =
         Jni.tracedJnifetchdoc(id.id, id.versionId, request.toByteArray(), proxyConfig)
-    val response = ConvertResponse.parseFrom(serializedResponse)
+    val response = ConvertResponse.parseDelimitedFrom(serializedResponse.inputStream())
     return response
 }
 

@@ -21,20 +21,16 @@
 // or
 // `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
-use crate::design_definition::load_design_def_header_v0;
 use clap::Parser;
 use dc_bundle::definition_file::load_design_def;
-use dc_bundle::legacy_definition::DesignComposeDefinitionHeaderV0;
+use std::fs::File;
+use std::io::Read;
+use std::mem;
 
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct ParseError(String);
-impl From<bincode::Error> for ParseError {
-    fn from(e: bincode::Error) -> Self {
-        eprintln!("Error during deserialization: {:?}", e);
-        ParseError(format!("Error during deserialization: {:?}", e))
-    }
-}
+
 impl From<std::io::Error> for ParseError {
     fn from(e: std::io::Error) -> Self {
         eprintln!("Error opening file: {:?}", e);
@@ -66,35 +62,37 @@ pub fn dcf_info(args: Args) -> Result<(), ParseError> {
     let file_path = &args.dcf_file;
     let node = args.node;
 
-    // First attempt to load the old dcf format. If too old, print truncated info.
-    let header_v0 = load_design_def_header_v0(file_path)?;
-    if header_v0.version <= DesignComposeDefinitionHeaderV0::max_version() {
+    let load_result = load_design_def(file_path);
+    if let Ok((header, doc)) = load_result {
         println!("Deserialized file");
-        println!("  DC Version: {}", header_v0.version);
-        println!(
-            "DCF files with versions <= {} do not have additional header info",
-            DesignComposeDefinitionHeaderV0::max_version()
-        );
-        return Ok(());
-    }
+        println!("  DC Version: {}", header.dc_version);
+        println!("  Doc ID: {}", header.id);
+        println!("  Figma Version: {}", header.response_version);
+        println!("  Name: {}", header.name);
+        println!("  Last Modified: {}", header.last_modified);
 
-    let (header, doc) = load_design_def(file_path)?;
+        if let Some(node) = node {
+            println!("Dumping file from node: {}:", node);
+            if let Some(view) = doc.views.get(&crate::NodeQuery::name(&node).encode()) {
+                // NOTE: uses format and Debug implementation to pretty print the node and all children.
+                // See: https://doc.rust-lang.org/std/fmt/#usage
+                println!("{:#?}", view);
+            } else {
+                return Err(ParseError(format!("Node: {} not found in document.", node)));
+            }
+        }
+    } else {
+        // If loading failed, try to read just the first byte to determine the DC version
+        let mut document_file = File::open(&file_path)?;
+        let mut buffer = [0; mem::size_of::<u32>()]; // Create a byte buffer to fit an integer
+        document_file.read_exact(&mut buffer)?; // Read exactly the number of bytes for an integer into the buffer
 
-    println!("Deserialized file");
-    println!("  DC Version: {}", header.dc_version);
-    println!("  Doc ID: {}", header.id);
-    println!("  Figma Version: {}", header.response_version);
-    println!("  Name: {}", header.name);
-    println!("  Last Modified: {}", header.last_modified);
-
-    if let Some(node) = node {
-        println!("Dumping file from node: {}:", node);
-        if let Some(view) = doc.views.get(&crate::NodeQuery::name(&node).encode()) {
-            // NOTE: uses format and Debug implementation to pretty print the node and all children.
-            // See: https://doc.rust-lang.org/std/fmt/#usage
-            println!("{:#?}", view);
+        let version = u32::from_le_bytes(buffer);
+        if version < 27 {
+            println!("DC Version: {}", version);
+            println!("DCF files version < 27 do not have additional information to parse.");
         } else {
-            return Err(ParseError(format!("Node: {} not found in document.", node)));
+            println!("Failed to load file {:?}", file_path);
         }
     }
 

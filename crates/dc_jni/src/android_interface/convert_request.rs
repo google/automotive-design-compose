@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::android_interface::convert_response;
-use crate::android_interface::{ConvertRequest, ConvertResponse};
+use dc_bundle::android_interface::{convert_response, ConvertRequest, ConvertResponse};
 use crate::error::Error;
-use dc_bundle::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader, NodeQuery};
+use dc_bundle::definition::NodeQuery;
 use figma_import::ProxyConfig;
-use figma_import::{ImageContextSession, ServerFigmaDoc};
+use figma_import::ImageContextSession;
+use dc_bundle::figma_doc::ServerFigmaDoc;
+use dc_bundle::design_compose_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 
 pub fn fetch_doc(
     id: &str,
@@ -58,7 +59,7 @@ pub fn fetch_doc(
 
         let variable_map = doc.build_variable_map();
 
-        let figma_doc = DesignComposeDefinition::new(
+        let figma_doc = DesignComposeDefinition::new_with_details(
             views,
             doc.encoded_image_map(),
             doc.component_sets().clone(),
@@ -72,28 +73,32 @@ pub fn fetch_doc(
             doc.get_document_id(),
         );
         let server_doc = ServerFigmaDoc {
-            figma_doc: Some(figma_doc),
+            figma_doc: Some(figma_doc).into(),
             errors: error_list,
             branches: doc.branches.clone(),
             project_files: vec![],
+            ..Default::default()
         };
 
         Ok(ConvertResponse {
-            convert_response_type: Some(convert_response::ConvertResponseType::Document(
+            convert_response_type: Some(convert_response::Convert_response_type::Document(
                 convert_response::Document {
-                    header: Some(header),
-                    server_doc: Some(server_doc),
+                    header: Some(header).into(),
+                    server_doc: Some(server_doc).into(),
                     // Return the image session as a JSON blob; we might want to encode this differently so we
                     // can be more robust if there's corruption.
                     image_session_json: serde_json::to_vec(&doc.image_session())?,
+                    ..Default::default()
                 },
             )),
+            ..Default::default()
         })
     } else {
         Ok(ConvertResponse {
-            convert_response_type: Some(convert_response::ConvertResponseType::Unmodified(
+            convert_response_type: Some(convert_response::Convert_response_type::Unmodified(
                 "x".into(),
             )),
+            ..Default::default()
         })
     }
 }

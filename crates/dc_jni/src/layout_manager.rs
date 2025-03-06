@@ -16,18 +16,18 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use bytes::Bytes;
 use jni::objects::{JByteArray, JClass, JObject, JValue, JValueGen};
 use jni::sys::{jboolean, jint};
 use jni::JNIEnv;
-use layout::android_interface::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
+use dc_bundle::jni_layout::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
 use layout::LayoutManager;
 use lazy_static::lazy_static;
 use log::{error, info};
-use prost::Message;
 
 use crate::error::{throw_basic_exception, Error, Error::GenericError};
 use crate::jni::javavm;
+
+use protobuf::Message;
 
 lazy_static! {
     static ref LAYOUT_MANAGERS: Mutex<HashMap<i32, Arc<Mutex<LayoutManager>>>> =
@@ -55,12 +55,21 @@ fn layout_response_to_bytearray(
     mut env: JNIEnv,
     layout_response: LayoutChangedResponse,
 ) -> JByteArray {
-    let bytes = layout_response.encode_to_vec();
-    match env.byte_array_from_slice(bytes.as_slice()) {
-        Ok(it) => it,
+    let mut bytes: Vec<u8> = vec![];
+    let result = layout_response.write_length_delimited_to_vec(&mut bytes);
+    match result {
         Err(err) => {
             throw_basic_exception(&mut env, &err);
             JObject::null().into()
+        },
+        _ => {
+            match env.byte_array_from_slice(bytes.as_slice()) {
+                Ok(it) => it,
+                Err(err) => {
+                    throw_basic_exception(&mut env, &err);
+                    JObject::null().into()
+                }
+            }
         }
     }
 }
@@ -117,8 +126,8 @@ pub(crate) fn jni_add_nodes<'local>(
         env: &mut JNIEnv,
         serialized_views: JByteArray,
     ) -> Result<LayoutNodeList, Error> {
-        let bytes_views: Bytes = env.convert_byte_array(serialized_views)?.into();
-        LayoutNodeList::decode(bytes_views).map_err(Error::from)
+        let bytes_views: Vec<u8> = env.convert_byte_array(serialized_views)?;
+        LayoutNodeList::parse_from_bytes(bytes_views.as_slice()).map_err(Error::from)
     }
 
     match deprotolize_layout_node_list(&mut env, serialized_views) {
@@ -149,14 +158,14 @@ fn handle_layout_node_list(
             node.layout_id,
             node.parent_layout_id,
             node.child_index,
-            node.style.expect("Malformed Data, style is required"),
+            node.style.into_option().expect("Malformed Data, style is required"),
             node.name,
             node.use_measure_func,
             if node.use_measure_func { None } else { node.fixed_width },
             if node.use_measure_func { None } else { node.fixed_height },
         )?;
     }
-    for LayoutParentChildren { parent_layout_id, child_layout_ids } in &node_list.parent_children {
+    for LayoutParentChildren { parent_layout_id, child_layout_ids, .. } in &node_list.parent_children {
         manager.update_children(*parent_layout_id, child_layout_ids)
     }
     Ok(())

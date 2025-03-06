@@ -59,7 +59,6 @@ use dc_bundle::matrix_transform::LayoutTransform;
 use dc_bundle::meter_data::{ArcMeterData, MeterData, ProgressBarMeterData, ProgressMarkerMeterData, ProgressVectorMeterData, RotationMeterData, meter_data::Meter_data_type};
 use dc_bundle::frame_extras::FrameExtras;
 
-use dc_bundle::meter_data::meter_data::Meter_data_type;
 use log::error;
 
 use crate::shader_schema::ShaderDataJson;

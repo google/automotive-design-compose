@@ -226,19 +226,23 @@ impl Into<Color> for &FloatColor {
 
 impl DimensionProto {
     pub fn new_auto() -> MessageField<Self> {
-        Some(DimensionProto { Dimension: Some(Dimension::Auto(().into())), ..Default::default() }).into()
+        Some(DimensionProto { Dimension: Some(Dimension::Auto(().into())), ..Default::default() })
+            .into()
     }
     pub fn new_points(value: f32) -> MessageField<Self> {
-        Some(DimensionProto { Dimension: Some(Dimension::Points(value)), ..Default::default() }).into()
+        Some(DimensionProto { Dimension: Some(Dimension::Points(value)), ..Default::default() })
+            .into()
     }
     pub fn new_percent(value: f32) -> MessageField<Self> {
-        Some(DimensionProto { Dimension: Some(Dimension::Percent(value)), ..Default::default() }).into()
+        Some(DimensionProto { Dimension: Some(Dimension::Percent(value)), ..Default::default() })
+            .into()
     }
     pub fn new_undefined() -> MessageField<Self> {
         Some(DimensionProto {
             Dimension: Some(Dimension::Undefined(().into())),
             ..Default::default()
-        }).into()
+        })
+        .into()
     }
 }
 
@@ -407,7 +411,10 @@ impl Background {
         Background { background_type: Some(bg_type), ..Default::default() }
     }
     pub fn new_none() -> Self {
-        Background { background_type: Some(background::Background_type::None(Empty::new())), ..Default::default() }
+        Background {
+            background_type: Some(background::Background_type::None(Empty::new())),
+            ..Default::default()
+        }
     }
     pub fn is_some(&self) -> bool {
         if let Some(bg) = &self.background_type {

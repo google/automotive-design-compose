@@ -118,8 +118,10 @@ mod tests {
 
     #[test]
     fn test_try_into_taffy_length_percentage_auto() {
-        let dimension_proto =
-            Some(DimensionProto { Dimension: Some(Dimension::Auto((Empty::new()))), ..Default::default() });
+        let dimension_proto = Some(DimensionProto {
+            Dimension: Some(Dimension::Auto(Empty::new())),
+            ..Default::default()
+        });
         let result: Result<taffy::prelude::LengthPercentageAuto, dc_bundle::Error> =
             (&dimension_proto).try_into_taffy();
         assert!(result.is_ok());

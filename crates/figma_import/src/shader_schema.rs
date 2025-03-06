@@ -15,11 +15,11 @@
  */
 use crate::figma_schema::FigmaColor;
 use crate::image_context::ImageContext;
+use dc_bundle::color::Color;
 use dc_bundle::shader::shader_uniform_value::Value_type::{
     FloatColorValue, FloatValue, FloatVecValue, ImageRefValue, IntValue, IntVecValue,
 };
 use dc_bundle::shader::shader_uniform_value::{FloatVec, ImageRef, IntVec};
-use dc_bundle::color::Color;
 use dc_bundle::shader::{ShaderData, ShaderUniform, ShaderUniformValue};
 use log::error;
 use protobuf::MessageField;
@@ -76,7 +76,10 @@ impl ShaderUniformJson {
         let uniform_value = match self.uniform_type.as_str() {
             "float" | "half" | "iTime" => {
                 if let Some(float_val) = self.uniform_value.as_f64() {
-                    Some(ShaderUniformValue { value_type: Some(FloatValue(float_val as f32)), ..Default::default() })
+                    Some(ShaderUniformValue {
+                        value_type: Some(FloatValue(float_val as f32)),
+                        ..Default::default()
+                    })
                 } else {
                     error!("Error parsing float for shader float uniform {}", self.uniform_name);
                     None
@@ -112,7 +115,10 @@ impl ShaderUniformJson {
                         _ => None,
                     }
                     .map(|float_vec| ShaderUniformValue {
-                        value_type: Some(FloatVecValue(FloatVec { floats: float_vec, ..Default::default() })),
+                        value_type: Some(FloatVecValue(FloatVec {
+                            floats: float_vec,
+                            ..Default::default()
+                        })),
                         ..Default::default()
                     })
                 } else {
@@ -156,7 +162,10 @@ impl ShaderUniformJson {
                         _ => None,
                     }
                     .map(|int_vec| ShaderUniformValue {
-                        value_type: Some(IntVecValue(IntVec { ints: int_vec, ..Default::default() })),
+                        value_type: Some(IntVecValue(IntVec {
+                            ints: int_vec,
+                            ..Default::default()
+                        })),
                         ..Default::default()
                     })
                 } else {

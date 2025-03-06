@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::figma_schema::FigmaColor;
 use dc_bundle::{
     color::FloatColor,
-    frame_extras::{FrameExtras, OverlayBackground, OverlayBackgroundInteraction, OverlayPositionType},
+    frame_extras::{
+        FrameExtras, OverlayBackground, OverlayBackgroundInteraction, OverlayPositionType,
+    },
     geometry::Vector,
     reaction::{
-        action::{self, ActionUrl, Action_type, node::Navigation},
+        action::{self, node::Navigation, ActionUrl, Action_type},
         trigger::{KeyDown, MouseDown, MouseEnter, MouseLeave, MouseUp, Timeout, Trigger_type},
         Action, Reaction, Trigger,
     },
@@ -30,7 +33,6 @@ use dc_bundle::{
         Easing, Transition,
     },
 };
-use crate::figma_schema::FigmaColor;
 
 use serde::{Deserialize, Serialize};
 
@@ -46,7 +48,6 @@ use serde::{Deserialize, Serialize};
 // The Figma documentation that these definitions correspond to is here:
 //  https://www.figma.com/plugin-docs/api/Reaction/
 
-
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct BezierJson {
     pub x1: f32,
@@ -57,13 +58,7 @@ pub struct BezierJson {
 
 impl Into<Bezier> for BezierJson {
     fn into(self) -> Bezier {
-        Bezier {
-            x1: self.x1,
-            y1: self.y1,
-            x2: self.x2,
-            y2: self.y2,
-            ..Default::default()
-        }
+        Bezier { x1: self.x1, y1: self.y1, x2: self.x2, y2: self.y2, ..Default::default() }
     }
 }
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -400,11 +395,7 @@ pub struct VectorJson {
 
 impl Into<Vector> for VectorJson {
     fn into(self) -> Vector {
-        Vector {
-            x: self.x,
-            y: self.y,
-            ..Default::default()
-        }
+        Vector { x: self.x, y: self.y, ..Default::default() }
     }
 }
 
@@ -460,13 +451,16 @@ impl Into<Action_type> for ActionJson {
                     destination_id,
                     navigation: nav.into(),
                     transition: transition
-                        .map(|t| Transition { transition_type: Some(t.into()), ..Default::default() })
+                        .map(|t| Transition {
+                            transition_type: Some(t.into()),
+                            ..Default::default()
+                        })
                         .into(),
                     preserve_scroll_position,
                     overlay_relative_position: pos.into(),
                     ..Default::default()
                 })
-            },
+            }
         }
     }
 }
@@ -546,11 +540,13 @@ impl Into<Option<Reaction>> for ReactionJson {
     fn into(self) -> Option<Reaction> {
         if let Some(action) = self.action {
             Some(Reaction {
-                action: Some(Action { action_type: Some(action.into()), ..Default::default() }).into(),
+                action: Some(Action { action_type: Some(action.into()), ..Default::default() })
+                    .into(),
                 trigger: Some(Trigger {
                     trigger_type: Some(self.trigger.into()),
                     ..Default::default()
-                }).into(),
+                })
+                .into(),
                 ..Default::default()
             })
         } else {
@@ -661,7 +657,6 @@ fn parse_reactions() {
     let multiple_json_text = r#"[{"action":{"type":"NODE","destinationId":"13:1","navigation":"NAVIGATE","transition":{"type":"SMART_ANIMATE","easing":{"type":"EASE_IN_AND_OUT"},"duration":0.6000000238418579},"preserveScrollPosition":false},"trigger":{"type":"ON_CLICK"}},{"action":{"type":"NODE","destinationId":"13:1","navigation":"OVERLAY","transition":{"type":"MOVE_IN","direction":"RIGHT","matchLayers":false,"easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_DRAG"}},{"action":{"type":"NODE","destinationId":"13:1","navigation":"SWAP","transition":{"type":"SMART_ANIMATE","easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_KEY_DOWN","keyCodes":[60]}}]"#;
     let scroll_json_text = r#"[{"action":{"type":"NODE","destinationId":"241:2","navigation":"SCROLL_TO","transition":{"type":"SCROLL_ANIMATE","easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_HOVER"}}]"#;
     let overlay_json_text = r#"[{"action":{"type":"NODE","destinationId":"222:27","navigation":"OVERLAY","transition":{"type":"MOVE_IN","direction":"TOP","matchLayers":false,"easing":{"type":"EASE_IN_AND_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_CLICK","keyCodes":[]}}]"#;
-
     let maybe_multiple: Result<Vec<ReactionJson>> = serde_json::from_str(multiple_json_text);
     let maybe_scroll: Result<Vec<ReactionJson>> = serde_json::from_str(scroll_json_text);
     let maybe_overlay: Result<Vec<ReactionJson>> = serde_json::from_str(overlay_json_text);
@@ -672,12 +667,18 @@ fn parse_reactions() {
 
     // We should check that `into` did what we expected it to do here.
 
-    let multiple: Vec<ReactionJson> =
-        multiple_json.drain(..).map(|json| Into::<Option<ReactionJson>>::into(json).unwrap()).collect();
-    let scroll: Vec<ReactionJson> =
-        scroll_json.drain(..).map(|json| Into::<Option<ReactionJson>>::into(json).unwrap()).collect();
-    let overlay: Vec<ReactionJson> =
-        overlay_json.drain(..).map(|json| Into::<Option<ReactionJson>>::into(json).unwrap()).collect();
+    let multiple: Vec<ReactionJson> = multiple_json
+        .drain(..)
+        .map(|json| Into::<Option<ReactionJson>>::into(json).unwrap())
+        .collect();
+    let scroll: Vec<ReactionJson> = scroll_json
+        .drain(..)
+        .map(|json| Into::<Option<ReactionJson>>::into(json).unwrap())
+        .collect();
+    let overlay: Vec<ReactionJson> = overlay_json
+        .drain(..)
+        .map(|json| Into::<Option<ReactionJson>>::into(json).unwrap())
+        .collect();
 
     let bincoded_multiple: Vec<ReactionJson> =
         bincode::deserialize(bincode::serialize(&multiple).unwrap().as_slice()).unwrap();

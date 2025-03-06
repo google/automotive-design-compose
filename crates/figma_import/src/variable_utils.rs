@@ -15,10 +15,12 @@
  */
 
 use crate::figma_schema;
+use dc_bundle::color::FloatColor;
 use dc_bundle::variable::num_or_var::{NumOrVarType, NumVar};
 use dc_bundle::variable::variable::{VariableType, VariableValueMap};
-use dc_bundle::color::FloatColor;
-use dc_bundle::variable::{color_or_var, variable_value, ColorOrVar, NumOrVar, Variable, VariableValue};
+use dc_bundle::variable::{
+    color_or_var, variable_value, ColorOrVar, NumOrVar, Variable, VariableValue,
+};
 use std::collections::HashMap;
 
 // Trait to create a XOrVar from Figma data
@@ -122,21 +124,26 @@ impl FromFigmaVar<&FloatColor> for ColorOrVar {
 // Create a VariableValue from figma_schema::VariableValue
 fn create_variable_value(v: &figma_schema::VariableValue) -> VariableValue {
     match v {
-        figma_schema::VariableValue::Boolean(b) => {
-            VariableValue { Value: Some(variable_value::Value::Bool(b.clone())), ..Default::default() }
-        }
-        figma_schema::VariableValue::Float(f) => {
-            VariableValue { Value: Some(variable_value::Value::Number(f.clone())), ..Default::default() }
-        }
-        figma_schema::VariableValue::String(s) => {
-            VariableValue { Value: Some(variable_value::Value::Text(s.clone())), ..Default::default() }
-        }
-        figma_schema::VariableValue::Color(c) => {
-            VariableValue { Value: Some(variable_value::Value::Color(c.into())), ..Default::default() }
-        }
-        figma_schema::VariableValue::Alias(a) => {
-            VariableValue { Value: Some(variable_value::Value::Alias(a.id.clone())), ..Default::default() }
-        }
+        figma_schema::VariableValue::Boolean(b) => VariableValue {
+            Value: Some(variable_value::Value::Bool(b.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Float(f) => VariableValue {
+            Value: Some(variable_value::Value::Number(f.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::String(s) => VariableValue {
+            Value: Some(variable_value::Value::Text(s.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Color(c) => VariableValue {
+            Value: Some(variable_value::Value::Color(c.into())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Alias(a) => VariableValue {
+            Value: Some(variable_value::Value::Alias(a.id.clone())),
+            ..Default::default()
+        },
     }
 }
 

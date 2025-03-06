@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::android_interface::{convert_response, ConvertRequest, ConvertResponse};
 use crate::error::Error;
+use dc_bundle::android_interface::{convert_response, ConvertRequest, ConvertResponse};
 use dc_bundle::definition::NodeQuery;
-use figma_import::ProxyConfig;
-use figma_import::ImageContextSession;
+use dc_bundle::design_compose_definition::{
+    DesignComposeDefinition, DesignComposeDefinitionHeader,
+};
 use dc_bundle::figma_doc::ServerFigmaDoc;
-use dc_bundle::design_compose_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use figma_import::ImageContextSession;
+use figma_import::ProxyConfig;
 
 pub fn fetch_doc(
     id: &str,

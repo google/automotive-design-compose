@@ -32,12 +32,11 @@ use dc_bundle::component::component_overrides::Component_content_override;
 use dc_bundle::component::ComponentOverrides;
 use dc_bundle::definition::EncodedImageMap;
 use dc_bundle::definition::NodeQuery;
-use dc_bundle::figma_doc;
 use dc_bundle::figma_doc::FigmaDocInfo;
 use dc_bundle::variable::variable_map::NameIdMap;
 use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
-use dc_bundle::view::view_data::{self, Container, View_data_type};
-use dc_bundle::view::{View, ViewData};
+use dc_bundle::view::view_data::{Container, View_data_type};
+use dc_bundle::view::View;
 use log::error;
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";

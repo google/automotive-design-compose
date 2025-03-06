@@ -16,10 +16,10 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use dc_bundle::jni_layout::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
 use jni::objects::{JByteArray, JClass, JObject, JValue, JValueGen};
 use jni::sys::{jboolean, jint};
 use jni::JNIEnv;
-use dc_bundle::jni_layout::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
 use layout::LayoutManager;
 use lazy_static::lazy_static;
 use log::{error, info};
@@ -61,16 +61,14 @@ fn layout_response_to_bytearray(
         Err(err) => {
             throw_basic_exception(&mut env, &err);
             JObject::null().into()
-        },
-        _ => {
-            match env.byte_array_from_slice(bytes.as_slice()) {
-                Ok(it) => it,
-                Err(err) => {
-                    throw_basic_exception(&mut env, &err);
-                    JObject::null().into()
-                }
-            }
         }
+        _ => match env.byte_array_from_slice(bytes.as_slice()) {
+            Ok(it) => it,
+            Err(err) => {
+                throw_basic_exception(&mut env, &err);
+                JObject::null().into()
+            }
+        },
     }
 }
 
@@ -165,7 +163,9 @@ fn handle_layout_node_list(
             if node.use_measure_func { None } else { node.fixed_height },
         )?;
     }
-    for LayoutParentChildren { parent_layout_id, child_layout_ids, .. } in &node_list.parent_children {
+    for LayoutParentChildren { parent_layout_id, child_layout_ids, .. } in
+        &node_list.parent_children
+    {
         manager.update_children(*parent_layout_id, child_layout_ids)
     }
     Ok(())

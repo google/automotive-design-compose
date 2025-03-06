@@ -23,15 +23,19 @@
 // parameter list.
 //
 
-use dc_bundle::definition::element::dimension_proto::Dimension;
-use dc_bundle::definition::element::DimensionProto;
-use dc_bundle::definition::layout::LayoutSizing;
-use dc_bundle::definition::view::view_data::ViewDataType;
-use dc_bundle::definition::view::view_data::ViewDataType::{Container, Text};
-use dc_bundle::definition::view::{view_data, View};
-use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
+use dc_bundle::definition::NodeQuery;
 use dc_bundle::definition_file::load_design_def;
+use dc_bundle::design_compose_definition::DesignComposeDefinition;
+use dc_bundle::geometry::dimension_proto::Dimension;
+use dc_bundle::geometry::DimensionProto;
+use dc_bundle::positioning::LayoutSizing;
+use dc_bundle::view::view_data;
+use dc_bundle::view::view_data::View_data_type;
+use dc_bundle::view::view_data::View_data_type::Container;
+use dc_bundle::view::view_data::View_data_type::Text;
+use dc_bundle::view::View;
 use layout::LayoutManager;
+use protobuf::Enum;
 use std::collections::HashMap;
 
 fn measure_func(
@@ -71,15 +75,15 @@ fn add_view_to_layout(
     //println!("add_view_to_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
     let my_id: i32 = id.clone();
     *id = *id + 1;
-    let data: &ViewDataType = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
+    let data: &View_data_type = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
 
     if let Text { .. } = data {
         let mut use_measure_func = false;
-        if let Dimension::Auto(()) = view.style().layout_style().width.unwrap().dimension.unwrap() {
-            if let Dimension::Auto(()) =
-                view.style().layout_style().height.unwrap().dimension.unwrap()
-            {
-                if view.style().node_style().horizontal_sizing == i32::from(LayoutSizing::Fill) {
+        if let Some(Dimension::Auto(_)) = view.style().layout_style().width.Dimension {
+            if let Some(Dimension::Auto(_)) = view.style().layout_style().height.Dimension {
+                if view.style().node_style().horizontal_sizing.value()
+                    == LayoutSizing::LAYOUT_SIZING_FILL.value()
+                {
                     use_measure_func = true;
                 }
             }
@@ -118,7 +122,9 @@ fn add_view_to_layout(
                 )
                 .unwrap();
         }
-    } else if let Container { 0: view_data::Container { shape: _, children } } = data {
+    } else if let Container { 0: view_data::Container { shape: _, children, special_fields: _ } } =
+        data
+    {
         manager
             .add_style(
                 my_id,

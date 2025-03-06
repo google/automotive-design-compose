@@ -43,10 +43,13 @@ import com.android.designcompose.VariableState
 import com.android.designcompose.definition.element.LineHeight.LineHeightTypeCase
 import com.android.designcompose.definition.element.TextDecoration
 import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewData
 import com.android.designcompose.definition.view.fontSizeOrNull
 import com.android.designcompose.definition.view.fontWeightOrNull
 import com.android.designcompose.definition.view.styleOrNull
+import com.android.designcompose.definition.view.styledTextOrNull
 import com.android.designcompose.definition.view.textColorOrNull
+import com.android.designcompose.definition.view.textOrNull
 import com.android.designcompose.definition.view.textShadowOrNull
 import com.android.designcompose.getBrush
 import com.android.designcompose.getText
@@ -110,6 +113,7 @@ internal class TextMeasureCache {
 /// is heavyweight, so we should avoid doing it frequently.
 internal fun squooshComputeTextInfo(
     v: View,
+    overrideViewData: ViewData?,
     layoutId: Int,
     density: Density,
     document: DocContent,
@@ -145,9 +149,11 @@ internal fun squooshComputeTextInfo(
             builder.append(normalizeNewlines(customizedText))
             builder.toAnnotatedString()
         } else {
-            if (v.data.hasText()) {
+            val viewText = overrideViewData?.textOrNull ?: v.data.textOrNull
+            val viewStyledText = overrideViewData?.styledTextOrNull ?: v.data.styledTextOrNull
+            if (viewText != null) {
                 val builder = AnnotatedString.Builder()
-                val text = normalizeNewlines(getTextContent(appContext, v.data.text))
+                val text = normalizeNewlines(getTextContent(appContext, viewText))
                 builder.append(text)
                 if (v.style.nodeStyle.hasHyperlink()) {
                     val link = v.style.nodeStyle.hyperlink.value
@@ -155,10 +161,10 @@ internal fun squooshComputeTextInfo(
                     hyperlinkOffsetMap[0] = link
                 }
                 builder.toAnnotatedString()
-            } else if (v.data.hasStyledText()) {
+            } else if (viewStyledText != null) {
                 val builder = AnnotatedString.Builder()
                 var startIndex = 0
-                for (run in getTextContent(appContext, v.data.styledText)) {
+                for (run in getTextContent(appContext, viewStyledText)) {
                     val style = run.styleOrNull!!
                     val textBrushAndOpacity =
                         style.textColorOrNull!!.asBrush(

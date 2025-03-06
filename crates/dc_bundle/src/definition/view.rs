@@ -25,7 +25,9 @@ use crate::definition::layout::{
 use crate::definition::modifier::{BlendMode, TextAlign, TextAlignVertical, TextOverflow};
 use crate::definition::plugin::FrameExtras;
 use crate::definition::view::view::RenderMethod;
+use crate::definition::view::view_data::ViewDataType::{StyledText, Text};
 use crate::definition::view::view_data::{Container, ViewDataType};
+use log::error;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU16;
 
@@ -330,6 +332,7 @@ impl View {
             id: id.clone(),
             name: name.clone(),
             component_info,
+            component_overrides: None,
             reactions: reactions.unwrap_or_default(),
             style: Some(style),
             frame_extras,
@@ -361,6 +364,7 @@ impl View {
             id: id.clone(),
             name: name.clone(),
             component_info,
+            component_overrides: None,
             reactions: reactions.unwrap_or_default(),
             style: Some(style),
             frame_extras: None,
@@ -392,6 +396,7 @@ impl View {
             name: name.clone(),
             style: Some(style),
             component_info,
+            component_overrides: None,
             reactions: reactions.unwrap_or_default(),
             frame_extras: None,
             scroll_info: Some(ScrollInfo::new_default()),
@@ -420,5 +425,13 @@ impl View {
     }
     pub fn style_mut(&mut self) -> &mut ViewStyle {
         self.style.as_mut().expect("ViewStyle is required.")
+    }
+
+    pub fn data(&self) -> &ViewData {
+        self.data.as_ref().expect("ViewData is required.")
+    }
+
+    pub fn data_mut(&mut self) -> &mut ViewData {
+        self.data.as_mut().expect("ViewData is required.")
     }
 }

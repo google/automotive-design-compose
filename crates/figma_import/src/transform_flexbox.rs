@@ -62,7 +62,9 @@ use log::error;
 use crate::shader_schema::ShaderDataJson;
 use dc_bundle::definition::element::line_height::LineHeightType;
 use dc_bundle::definition::view::view::RenderMethod;
-use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle};
+use dc_bundle::definition::view::{
+    ComponentInfo, OverriddenFields, StyledTextRun, TextStyle, View, ViewStyle,
+};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -838,8 +840,17 @@ fn visit_node(
     // If this is an instance of a component, then link to the original component so that we can substitute
     // Figma components for alternative implementations when the toolkit_schema tree gets mapped to actual
     // views.
-    if let figma_schema::NodeData::Instance { component_id, .. } = &node.data {
+    if let figma_schema::NodeData::Instance { component_id, overrides, .. } = &node.data {
         if let Some(component_metadata) = component_map.get(component_id) {
+            let overridden_fields_by_id = overrides.as_ref().map(|vec| {
+                vec.iter()
+                    .map(|item| {
+                        // Adapt this key extraction to your OverriddenFields
+                        let (key, value) = (&item.clone()).into();
+                        (key, value)
+                    })
+                    .collect::<HashMap<String, OverriddenFields>>()
+            });
             component_info = Some(ComponentInfo {
                 name: component_metadata.name.clone(),
                 id: component_id.clone(),
@@ -848,8 +859,10 @@ fn visit_node(
                     .unwrap_or(&figma_schema::ComponentSet::default())
                     .name
                     .clone(),
-                overrides: None,
+                overridden_fields_by_id: overridden_fields_by_id.unwrap_or(HashMap::new()),
+                overrides_table: HashMap::new(),
             });
+            error!("component_info for instance: {:?}", component_info);
             // Make sure we convert this component node so that we can compute any variant style delta
             // later on.
             component_context.add_component_info(component_id);
@@ -867,7 +880,8 @@ fn visit_node(
                     .unwrap_or(&figma_schema::ComponentSet::default())
                     .name
                     .clone(),
-                overrides: None,
+                overridden_fields_by_id: HashMap::new(),
+                overrides_table: HashMap::new(),
             });
         }
     }

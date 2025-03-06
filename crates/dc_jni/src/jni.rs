@@ -16,7 +16,7 @@ use std::ffi::c_void;
 
 use std::sync::{Arc, Mutex};
 
-use crate::android_interface::{convert_request::fetch_doc, ConvertRequest, ConvertResponse};
+use crate::android_interface::{convert_request::fetch_doc};
 use crate::error::{throw_basic_exception, Error};
 use crate::error_map::map_err_to_exception;
 use crate::layout_manager::{
@@ -31,7 +31,8 @@ use jni::{JNIEnv, JavaVM};
 
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
-use prost::Message;
+use protobuf::Message;
+use dc_bundle::android_interface::{ConvertRequest, ConvertResponse};
 
 lazy_static! {
     static ref JAVA_VM: Mutex<Option<Arc<JavaVM>>> = Mutex::new(None);
@@ -153,7 +154,7 @@ fn jni_fetch_doc_impl(
             }
         };
 
-    Ok(convert_result.encode_to_vec())
+    Ok(convert_result.write_length_delimited_to_bytes().unwrap())
 }
 
 #[allow(non_snake_case)]

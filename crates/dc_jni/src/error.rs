@@ -19,10 +19,8 @@ use thiserror::Error;
 pub enum Error {
     #[error("Error: {0}")]
     GenericError(String),
-    #[error("Protobuf Decode Error: {0:#?}")]
-    ProtobufDecodeError(#[from] prost::DecodeError),
-    #[error("Protobuf Encode Error")]
-    ProtobufEncodeError(#[from] prost::EncodeError),
+    #[error("Protobuf Error: {0:#?}")]
+    ProtobufDecodeError(#[from] protobuf::Error),
     #[error("Protobuf ConversionError: {0}")]
     MissingFieldError(#[from] dc_bundle::Error),
     #[error("Json Serialization Error")]

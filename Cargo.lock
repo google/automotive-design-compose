@@ -421,8 +421,6 @@ dependencies = [
  "layout",
  "lazy_static",
  "log",
- "prost",
- "prost-build",
  "protobuf",
  "serde",
  "serde_bytes",

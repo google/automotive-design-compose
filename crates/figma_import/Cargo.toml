@@ -24,7 +24,6 @@ serde_json.workspace = true
 serde_bytes.workspace = true
 bincode.workspace = true
 thiserror.workspace = true
-prost.workspace = true
 protobuf.workspace = true
 svgtypes.workspace = true
 
@@ -44,7 +43,6 @@ log.workspace = true
 [build-dependencies]
 vergen.workspace = true
 anyhow.workspace = true
-prost-build.workspace = true
 
 [dev-dependencies]
 testdir.workspace = true

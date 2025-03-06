@@ -17,14 +17,6 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-include!(concat!(env!("OUT_DIR"), "/designcompose.live_update.figma.rs"));
-
-impl FigmaDocInfo {
-    pub fn new(name: String, id: String, version_id: String) -> FigmaDocInfo {
-        FigmaDocInfo { name, id, version_id }
-    }
-}
-
 /// A helper method to load the old DesignCompose Definition header format from a dcf file
 pub fn load_design_def_header_v0<P>(
     load_path: P,

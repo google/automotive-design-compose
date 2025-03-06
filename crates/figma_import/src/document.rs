@@ -18,7 +18,6 @@ use std::{
     iter::FromIterator,
 };
 
-use crate::design_definition::FigmaDocInfo;
 use crate::{
     component_context::ComponentContext,
     error::Error,
@@ -33,6 +32,8 @@ use dc_bundle::component::component_overrides::Component_content_override;
 use dc_bundle::component::ComponentOverrides;
 use dc_bundle::definition::EncodedImageMap;
 use dc_bundle::definition::NodeQuery;
+use dc_bundle::figma_doc;
+use dc_bundle::figma_doc::FigmaDocInfo;
 use dc_bundle::variable::variable_map::NameIdMap;
 use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
 use dc_bundle::view::view_data::{self, Container, View_data_type};
@@ -80,7 +81,9 @@ fn get_branches(document_root: &figma_schema::FileResponse) -> Vec<FigmaDocInfo>
     if let Some(doc_branches) = &document_root.branches {
         for hash in doc_branches {
             if let (Some(Some(id)), Some(Some(name))) = (hash.get("key"), hash.get("name")) {
-                branches.push(FigmaDocInfo::new(name.clone(), id.clone(), String::new()));
+                let figma_doc =
+                    FigmaDocInfo { name: name.clone(), id: id.clone(), ..Default::default() };
+                branches.push(figma_doc);
             }
         }
     }
@@ -975,8 +978,13 @@ impl Document {
         for file_hash in &project_files.files {
             if let Some(doc_id) = file_hash.get("key") {
                 if let Some(name) = file_hash.get("name") {
+                    let figma_doc = FigmaDocInfo {
+                        name: name.clone(),
+                        id: doc_id.clone(),
+                        ..Default::default()
+                    };
                     // Getting project files return head version of the files.
-                    figma_docs.push(FigmaDocInfo::new(name.clone(), doc_id.clone(), String::new()));
+                    figma_docs.push(figma_doc);
                 }
             }
         }

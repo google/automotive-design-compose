@@ -28,41 +28,47 @@ use crate::{
     image_context::ImageContext,
     variable_utils::{bound_variables_color, FromFigmaVar},
 };
-use dc_bundle::definition::element::{
-    view_shape, DimensionProto, DimensionRect, DimensionRectExt, FontFeature, FontStyle,
-    FontWeight, LineHeight, NumOrVar, Path, Size, ViewShape,
-};
+use dc_bundle::view_shape;
+use dc_bundle::geometry::{DimensionProto, DimensionRect, Size};
+use dc_bundle::geometry::dimension_proto::Dimension;
+use dc_bundle::font::{FontFeature, FontStyle, FontWeight, TextDecoration, Hyperlink};
+use dc_bundle::path::{LineHeight};
+use dc_bundle::variable::{NumOrVar};
+use dc_bundle::variable::num_or_var::NumOrVarType;
+use dc_bundle::view::view_data::{StyledTextRuns, Container, Text};
+use dc_bundle::view_shape::ViewShape;
+use dc_bundle::path::Path;
+use dc_bundle::definition::element::{DimensionRectExt};
+use protobuf::well_known_types::empty::Empty;
 
 use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
 use dc_bundle::definition;
-use dc_bundle::definition::element::dimension_proto::Dimension;
-use dc_bundle::definition::element::num_or_var::NumOrVarType;
-use dc_bundle::definition::element::view_shape::RoundRect;
-use dc_bundle::definition::element::{
-    background, stroke_weight, Background, StrokeAlign, StrokeWeight,
-};
-use dc_bundle::definition::interaction::Reaction;
-use dc_bundle::definition::layout::{
-    AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, GridLayoutType, GridSpan,
-    ItemSpacing, JustifyContent, Overflow, OverflowDirection, PositionType, ScrollInfo,
-};
-use dc_bundle::definition::modifier::{
-    filter_op, BoxShadow, FilterOp, TextAlign, TextAlignVertical, TextOverflow, TextShadow,
-};
-use dc_bundle::definition::modifier::{BlendMode, LayoutTransform};
-use dc_bundle::definition::plugin::{
-    ArcMeterData, FrameExtras, MeterData, ProgressBarMeterData, ProgressMarkerMeterData,
-    ProgressVectorMeterData, RotationMeterData,
-};
+use dc_bundle::view_shape::view_shape::RoundRect;
+use dc_bundle::path::{StrokeAlign, StrokeWeight, stroke_weight};
+use dc_bundle::background::background;
+use dc_bundle::background::{Background, background::Background_type};
+use dc_bundle::reaction::Reaction;
+use dc_bundle::positioning::{AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, ItemSpacing, item_spacing, JustifyContent, Overflow, OverflowDirection, PositionType, ScrollInfo};
+use dc_bundle::grid::{GridLayoutType, GridSpan};
+use dc_bundle::filter::{FilterOp, filter_op};
+use dc_bundle::shadow::{BoxShadow, TextShadow};
+use dc_bundle::text::{TextAlign, TextAlignVertical, TextOverflow};
+use dc_bundle::blend::BlendMode;
+use dc_bundle::matrix_transform::LayoutTransform;
+use dc_bundle::meter_data::{ArcMeterData, MeterData, ProgressBarMeterData, ProgressMarkerMeterData, ProgressVectorMeterData, RotationMeterData, meter_data::Meter_data_type};
+use dc_bundle::frame_extras::FrameExtras;
 
-use dc_bundle::definition::plugin::meter_data::MeterDataType;
+use dc_bundle::meter_data::meter_data::Meter_data_type;
 use log::error;
 
 use crate::shader_schema::ShaderDataJson;
-use dc_bundle::definition::element::line_height::LineHeightType;
-use dc_bundle::definition::view::view::RenderMethod;
-use dc_bundle::definition::view::{ComponentInfo, StyledTextRun, TextStyle, View, ViewStyle};
+use dc_bundle::path::line_height::Line_height_type;
+use dc_bundle::component::ComponentInfo;
+use dc_bundle::text_style::{StyledTextRun, TextStyle};
+use dc_bundle::view::View;
+use dc_bundle::view::view::RenderMethod;
+use dc_bundle::view_style::ViewStyle;
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -120,7 +126,7 @@ fn compute_layout(
 
     if let Some(bounds) = node.absolute_bounding_box {
         style.layout_style_mut().bounding_box =
-            Some(Size { width: bounds.width(), height: bounds.height() })
+            Some(Size { width: bounds.width(), height: bounds.height(), ..Default::default() }).into()
     }
 
     if let Some(max_width) = node.max_width {
@@ -140,8 +146,8 @@ fn compute_layout(
     // Frames can implement Auto Layout on their children.
     if let Some(frame) = node.frame() {
         style.layout_style_mut().position_type = match frame.layout_positioning {
-            LayoutPositioning::Absolute => PositionType::Absolute.into(),
-            LayoutPositioning::Auto => PositionType::Relative.into(),
+            LayoutPositioning::Absolute => PositionType::POSITION_TYPE_ABSOLUTE.into(),
+            LayoutPositioning::Auto => PositionType::POSITION_TYPE_RELATIVE.into(),
         };
         style.layout_style_mut().width = DimensionProto::new_auto();
         style.layout_style_mut().height = DimensionProto::new_auto();
@@ -162,15 +168,15 @@ fn compute_layout(
         let flex_direction_override = check_child_size_override(node);
         if let Some(dir) = flex_direction_override {
             style.layout_style_mut().flex_direction = match dir {
-                LayoutType::Horizontal => FlexDirection::Row.into(),
-                LayoutType::Vertical => FlexDirection::Column.into(),
-                _ => FlexDirection::None.into(),
+                LayoutType::Horizontal => FlexDirection::FLEX_DIRECTION_ROW.into(),
+                LayoutType::Vertical => FlexDirection::FLEX_DIRECTION_COLUMN.into(),
+                _ => FlexDirection::FLEX_DIRECTION_NONE.into(),
             };
         } else {
             style.layout_style_mut().flex_direction = match frame.layout_mode {
-                figma_schema::LayoutMode::Horizontal => FlexDirection::Row.into(),
-                figma_schema::LayoutMode::Vertical => FlexDirection::Column.into(),
-                figma_schema::LayoutMode::None => FlexDirection::None.into(),
+                figma_schema::LayoutMode::Horizontal => FlexDirection::FLEX_DIRECTION_ROW.into(),
+                figma_schema::LayoutMode::Vertical => FlexDirection::FLEX_DIRECTION_COLUMN.into(),
+                figma_schema::LayoutMode::None => FlexDirection::FLEX_DIRECTION_NONE.into(),
             };
         }
         style.layout_style_mut().padding = Some(DimensionRect {
@@ -178,35 +184,36 @@ fn compute_layout(
             end: DimensionProto::new_points(frame.padding_right),
             top: DimensionProto::new_points(frame.padding_top),
             bottom: DimensionProto::new_points(frame.padding_bottom),
-        });
+            ..Default::default()
+        }).into();
 
-        style.layout_style_mut().item_spacing = Some(ItemSpacing::fixed(frame.item_spacing as i32));
+        style.layout_style_mut().item_spacing = Some(ItemSpacing { ItemSpacingType: Some(item_spacing::ItemSpacingType::Fixed(frame.item_spacing as i32)), ..Default::default() }).into();
         match frame.layout_align {
             // Counter axis stretch
             Some(figma_schema::LayoutAlign::Stretch) => {
-                style.layout_style_mut().align_self = AlignSelf::Stretch.into();
+                style.layout_style_mut().align_self = AlignSelf::ALIGN_SELF_STRETCH.into();
             }
             _ => (),
         };
         style.layout_style_mut().align_items = match frame.counter_axis_align_items {
-            figma_schema::LayoutAlignItems::Center => AlignItems::Center.into(),
-            figma_schema::LayoutAlignItems::Max => AlignItems::FlexEnd.into(),
-            figma_schema::LayoutAlignItems::Min => AlignItems::FlexStart.into(),
-            figma_schema::LayoutAlignItems::SpaceBetween => AlignItems::FlexStart.into(), // XXX
-            figma_schema::LayoutAlignItems::Baseline => AlignItems::FlexStart.into(),
+            figma_schema::LayoutAlignItems::Center => AlignItems::ALIGN_ITEMS_CENTER.into(),
+            figma_schema::LayoutAlignItems::Max => AlignItems::ALIGN_ITEMS_FLEX_END.into(),
+            figma_schema::LayoutAlignItems::Min => AlignItems::ALIGN_ITEMS_FLEX_START.into(),
+            figma_schema::LayoutAlignItems::SpaceBetween => AlignItems::ALIGN_ITEMS_FLEX_START.into(), // XXX
+            figma_schema::LayoutAlignItems::Baseline => AlignItems::ALIGN_ITEMS_FLEX_START.into(),
         };
         style.layout_style_mut().justify_content = match frame.primary_axis_align_items {
-            figma_schema::LayoutAlignItems::Center => JustifyContent::Center.into(),
-            figma_schema::LayoutAlignItems::Max => JustifyContent::FlexEnd.into(),
-            figma_schema::LayoutAlignItems::Min => JustifyContent::FlexStart.into(),
-            figma_schema::LayoutAlignItems::SpaceBetween => JustifyContent::SpaceBetween.into(),
-            figma_schema::LayoutAlignItems::Baseline => JustifyContent::FlexStart.into(),
+            figma_schema::LayoutAlignItems::Center => JustifyContent::JUSTIFY_CONTENT_CENTER.into(),
+            figma_schema::LayoutAlignItems::Max => JustifyContent::JUSTIFY_CONTENT_FLEX_END.into(),
+            figma_schema::LayoutAlignItems::Min => JustifyContent::JUSTIFY_CONTENT_FLEX_START.into(),
+            figma_schema::LayoutAlignItems::SpaceBetween => JustifyContent::JUSTIFY_CONTENT_SPACE_BETWEEN.into(),
+            figma_schema::LayoutAlignItems::Baseline => JustifyContent::JUSTIFY_CONTENT_FLEX_START.into(),
         };
         // The toolkit picks "Stretch" as a sensible default, but we don't
         // want that for Figma elements.
-        style.layout_style_mut().align_content = AlignContent::FlexStart.into();
+        style.layout_style_mut().align_content = AlignContent::ALIGN_CONTENT_FLEX_START.into();
 
-        let align_self_stretch = style.layout_style_mut().align_self() == AlignSelf::Stretch;
+        let align_self_stretch = style.layout_style_mut().align_self == AlignSelf::ALIGN_SELF_STRETCH.into();
         if let Some(bounds) = node.absolute_bounding_box {
             // If align_self is set to stretch, we want width/height to be Auto, even if the
             // frame's primary or counter axis sizing mode is set to Fixed.
@@ -226,13 +233,13 @@ fn compute_layout(
                         frame.counter_axis_sizing_mode == figma_schema::LayoutSizingMode::Auto;
                     style.layout_style_mut().width = match frame.primary_axis_sizing_mode {
                         figma_schema::LayoutSizingMode::Fixed => {
-                            dim_points_or_auto(bounds.width().ceil())
+                            dim_points_or_auto(bounds.width().ceil()).into()
                         }
                         figma_schema::LayoutSizingMode::Auto => DimensionProto::new_auto(),
                     };
                     style.layout_style_mut().height = match frame.counter_axis_sizing_mode {
                         figma_schema::LayoutSizingMode::Fixed => {
-                            dim_points_or_auto(bounds.height().ceil())
+                            dim_points_or_auto(bounds.height().ceil()).into()
                         }
                         figma_schema::LayoutSizingMode::Auto => DimensionProto::new_auto(),
                     };
@@ -247,13 +254,13 @@ fn compute_layout(
                         frame.primary_axis_sizing_mode == figma_schema::LayoutSizingMode::Auto;
                     style.layout_style_mut().width = match frame.counter_axis_sizing_mode {
                         figma_schema::LayoutSizingMode::Fixed => {
-                            dim_points_or_auto(bounds.width().ceil())
+                            dim_points_or_auto(bounds.width().ceil()).into()
                         }
                         figma_schema::LayoutSizingMode::Auto => DimensionProto::new_auto(),
                     };
                     style.layout_style_mut().height = match frame.primary_axis_sizing_mode {
                         figma_schema::LayoutSizingMode::Fixed => {
-                            dim_points_or_auto(bounds.height().ceil())
+                            dim_points_or_auto(bounds.height().ceil()).into()
                         }
                         figma_schema::LayoutSizingMode::Auto => DimensionProto::new_auto(),
                     };
@@ -311,7 +318,7 @@ fn compute_layout(
         }
     }
     if is_widget_or_parent_widget {
-        style.layout_style_mut().position_type = PositionType::Absolute.into();
+        style.layout_style_mut().position_type = PositionType::POSITION_TYPE_ABSOLUTE.into();
         style.layout_style_mut().width = DimensionProto::new_auto();
         style.layout_style_mut().height = DimensionProto::new_auto();
         style.layout_style_mut().left = DimensionProto::new_points(0.0);
@@ -325,13 +332,13 @@ fn compute_layout(
         match vector.layout_align {
             // Counter axis stretch
             Some(figma_schema::LayoutAlign::Stretch) => {
-                style.layout_style_mut().align_self = AlignSelf::Stretch.into();
+                style.layout_style_mut().align_self = AlignSelf::ALIGN_SELF_STRETCH.into();
             }
             _ => (),
         };
         style.layout_style_mut().position_type = match vector.layout_positioning {
-            LayoutPositioning::Absolute => PositionType::Absolute.into(),
-            LayoutPositioning::Auto => PositionType::Relative.into(),
+            LayoutPositioning::Absolute => PositionType::POSITION_TYPE_ABSOLUTE.into(),
+            LayoutPositioning::Auto => PositionType::POSITION_TYPE_RELATIVE.into(),
         };
         style.layout_style_mut().width = DimensionProto::new_auto();
         style.layout_style_mut().height = DimensionProto::new_auto();
@@ -388,7 +395,7 @@ fn compute_layout(
                 if vector.layout_sizing_horizontal == figma_schema::LayoutSizing::Fill {
                     style.layout_style_mut().width = DimensionProto::new_auto();
                 } else {
-                    style.layout_style_mut().width = style.layout_style().min_width;
+                    style.layout_style_mut().width = style.layout_style().min_width.clone();
                 }
                 style.layout_style_mut().height = DimensionProto::new_auto();
             }
@@ -402,16 +409,16 @@ fn compute_layout(
             // TextAutoResize::Truncate is deprecated
             // Use fixed width and height
             _ => {
-                style.layout_style_mut().width = style.layout_style().min_width;
-                style.layout_style_mut().height = style.layout_style().min_height;
+                style.layout_style_mut().width = style.layout_style().min_width.clone();
+                style.layout_style_mut().height = style.layout_style().min_height.clone();
             }
         }
     }
 
-    if !parent_is_flexbox || style.layout_style_mut().position_type() == PositionType::Absolute {
+    if !parent_is_flexbox || style.layout_style_mut().position_type == PositionType::POSITION_TYPE_ABSOLUTE.into() {
         match (node.absolute_bounding_box, parent_bounding_box) {
             (Some(bounds), Some(parent_bounds)) => {
-                style.layout_style_mut().position_type = PositionType::Absolute.into();
+                style.layout_style_mut().position_type = PositionType::POSITION_TYPE_ABSOLUTE.into();
 
                 // Figure out all the values we might need when calculating the layout constraints.
                 let (width, height) = if let Some(size) = &node.size {
@@ -428,7 +435,7 @@ fn compute_layout(
                     Some(figma_schema::HorizontalLayoutConstraintValue::Left) | None => {
                         style.layout_style_mut().left = DimensionProto::new_percent(0.0);
                         style.layout_style_mut().right = DimensionProto::new_auto();
-                        style.layout_style_mut().margin.set_start(Dimension::Points(left))?;
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_start(Dimension::Points(left)));
 
                         if !hug_width && !node.is_text() {
                             style.layout_style_mut().width = DimensionProto::new_points(width);
@@ -437,7 +444,7 @@ fn compute_layout(
                     Some(figma_schema::HorizontalLayoutConstraintValue::Right) => {
                         style.layout_style_mut().left = DimensionProto::new_auto();
                         style.layout_style_mut().right = DimensionProto::new_percent(0.0);
-                        style.layout_style_mut().margin.set_end(Dimension::Points(right))?;
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_end(Dimension::Points(right)));
                         if !hug_width && !node.is_text() {
                             style.layout_style_mut().width = DimensionProto::new_points(width);
                         }
@@ -445,8 +452,8 @@ fn compute_layout(
                     Some(figma_schema::HorizontalLayoutConstraintValue::LeftRight) => {
                         style.layout_style_mut().left = DimensionProto::new_percent(0.0);
                         style.layout_style_mut().right = DimensionProto::new_percent(0.0);
-                        style.layout_style_mut().margin.set_start(Dimension::Points(left))?;
-                        style.layout_style_mut().margin.set_end(Dimension::Points(right))?;
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_start(Dimension::Points(left)));
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_end(Dimension::Points(right)));
                         style.layout_style_mut().width = DimensionProto::new_auto();
                     }
                     Some(figma_schema::HorizontalLayoutConstraintValue::Center) => {
@@ -458,9 +465,9 @@ fn compute_layout(
                         // centerpoint.
                         style.layout_style_mut().left = DimensionProto::new_percent(0.5);
                         style.layout_style_mut().right = DimensionProto::new_auto();
-                        style.layout_style_mut().margin.set_start(Dimension::Points(
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_start(Dimension::Points(
                             left - parent_bounds.width().ceil() / 2.0,
-                        ))?;
+                        )));
                         if !hug_width && !node.is_text() {
                             style.layout_style_mut().width = DimensionProto::new_points(width);
                         }
@@ -488,7 +495,7 @@ fn compute_layout(
                     Some(figma_schema::VerticalLayoutConstraintValue::Top) | None => {
                         style.layout_style_mut().top = DimensionProto::new_percent(0.0);
                         style.layout_style_mut().bottom = DimensionProto::new_auto();
-                        style.layout_style_mut().margin.set_top(Dimension::Points(top))?;
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_top(Dimension::Points(top)));
                         if !hug_height && !node.is_text() {
                             style.layout_style_mut().height = DimensionProto::new_points(height);
                         }
@@ -496,7 +503,7 @@ fn compute_layout(
                     Some(figma_schema::VerticalLayoutConstraintValue::Bottom) => {
                         style.layout_style_mut().top = DimensionProto::new_auto();
                         style.layout_style_mut().bottom = DimensionProto::new_percent(0.0);
-                        style.layout_style_mut().margin.set_bottom(Dimension::Points(bottom))?;
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_bottom(Dimension::Points(bottom)));
                         if !hug_height && !node.is_text() {
                             style.layout_style_mut().height = DimensionProto::new_points(height);
                         }
@@ -504,16 +511,16 @@ fn compute_layout(
                     Some(figma_schema::VerticalLayoutConstraintValue::TopBottom) => {
                         style.layout_style_mut().top = DimensionProto::new_percent(0.0);
                         style.layout_style_mut().bottom = DimensionProto::new_percent(0.0);
-                        style.layout_style_mut().margin.set_top(Dimension::Points(top))?;
-                        style.layout_style_mut().margin.set_bottom(Dimension::Points(bottom))?;
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_top(Dimension::Points(top)));
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_bottom(Dimension::Points(bottom)));
                         style.layout_style_mut().height = DimensionProto::new_auto();
                     }
                     Some(figma_schema::VerticalLayoutConstraintValue::Center) => {
                         style.layout_style_mut().top = DimensionProto::new_percent(0.5);
                         style.layout_style_mut().bottom = DimensionProto::new_auto();
-                        style.layout_style_mut().margin.set_top(Dimension::Points(
+                        style.layout_style_mut().margin.as_mut().map(|m| m.set_top(Dimension::Points(
                             top - parent_bounds.height().ceil() / 2.0,
-                        ))?;
+                        )));
                         if !hug_height && !node.is_text() {
                             style.layout_style_mut().height = DimensionProto::new_points(height);
                         }
@@ -552,25 +559,25 @@ fn convert_transform(transform: &figma_schema::Transform) -> LayoutTransform {
 
 fn convert_blend_mode(blend_mode: Option<figma_schema::BlendMode>) -> BlendMode {
     match blend_mode {
-        Some(figma_schema::BlendMode::PassThrough) | None => BlendMode::PassThrough,
-        Some(figma_schema::BlendMode::Normal) => BlendMode::Normal,
-        Some(figma_schema::BlendMode::Darken) => BlendMode::Darken,
-        Some(figma_schema::BlendMode::Multiply) => BlendMode::Multiply,
-        Some(figma_schema::BlendMode::LinearBurn) => BlendMode::LinearBurn,
-        Some(figma_schema::BlendMode::ColorBurn) => BlendMode::ColorBurn,
-        Some(figma_schema::BlendMode::Lighten) => BlendMode::Lighten,
-        Some(figma_schema::BlendMode::Screen) => BlendMode::Screen,
-        Some(figma_schema::BlendMode::LinearDodge) => BlendMode::LinearDodge,
-        Some(figma_schema::BlendMode::ColorDodge) => BlendMode::ColorDodge,
-        Some(figma_schema::BlendMode::Overlay) => BlendMode::Overlay,
-        Some(figma_schema::BlendMode::SoftLight) => BlendMode::SoftLight,
-        Some(figma_schema::BlendMode::HardLight) => BlendMode::HardLight,
-        Some(figma_schema::BlendMode::Difference) => BlendMode::Difference,
-        Some(figma_schema::BlendMode::Exclusion) => BlendMode::Exclusion,
-        Some(figma_schema::BlendMode::Hue) => BlendMode::Hue,
-        Some(figma_schema::BlendMode::Saturation) => BlendMode::Saturation,
-        Some(figma_schema::BlendMode::Color) => BlendMode::Color,
-        Some(figma_schema::BlendMode::Luminosity) => BlendMode::Luminosity,
+        Some(figma_schema::BlendMode::PassThrough) | None => BlendMode::BLEND_MODE_PASS_THROUGH,
+        Some(figma_schema::BlendMode::Normal) => BlendMode::BLEND_MODE_NORMAL,
+        Some(figma_schema::BlendMode::Darken) => BlendMode::BLEND_MODE_DARKEN,
+        Some(figma_schema::BlendMode::Multiply) => BlendMode::BLEND_MODE_MULTIPLY,
+        Some(figma_schema::BlendMode::LinearBurn) => BlendMode::BLEND_MODE_LINEAR_BURN,
+        Some(figma_schema::BlendMode::ColorBurn) => BlendMode::BLEND_MODE_COLOR_BURN,
+        Some(figma_schema::BlendMode::Lighten) => BlendMode::BLEND_MODE_LIGHTEN,
+        Some(figma_schema::BlendMode::Screen) => BlendMode::BLEND_MODE_SCREEN,
+        Some(figma_schema::BlendMode::LinearDodge) => BlendMode::BLEND_MODE_LINEAR_DODGE,
+        Some(figma_schema::BlendMode::ColorDodge) => BlendMode::BLEND_MODE_COLOR_DODGE,
+        Some(figma_schema::BlendMode::Overlay) => BlendMode::BLEND_MODE_OVERLAY,
+        Some(figma_schema::BlendMode::SoftLight) => BlendMode::BLEND_MODE_SOFT_LIGHT,
+        Some(figma_schema::BlendMode::HardLight) => BlendMode::BLEND_MODE_HARD_LIGHT,
+        Some(figma_schema::BlendMode::Difference) => BlendMode::BLEND_MODE_DIFFERENCE,
+        Some(figma_schema::BlendMode::Exclusion) => BlendMode::BLEND_MODE_EXCLUSION,
+        Some(figma_schema::BlendMode::Hue) => BlendMode::BLEND_MODE_HUE,
+        Some(figma_schema::BlendMode::Saturation) => BlendMode::BLEND_MODE_SATURATION,
+        Some(figma_schema::BlendMode::Color) => BlendMode::BLEND_MODE_COLOR,
+        Some(figma_schema::BlendMode::Luminosity) => BlendMode::BLEND_MODE_LUMINOSITY,
     }
 }
 
@@ -581,7 +588,7 @@ fn compute_background(
 ) -> Background {
     if let figma_schema::PaintData::Solid { color, bound_variables } = &last_paint.data {
         let solid_bg = bound_variables_color(bound_variables, color, last_paint.opacity);
-        Background::new(background::BackgroundType::Solid(solid_bg))
+        Background::new_with_background(Background_type::Solid(solid_bg))
     } else if let figma_schema::PaintData::Image {
         image_ref: Some(image_ref),
         filters,
@@ -597,12 +604,12 @@ fn compute_background(
         if let Some(image_filters) = filters {
             if let Some(sat) = image_filters.saturation {
                 image_filter_list
-                    .push(FilterOp::new(filter_op::FilterOpType::Grayscale(sat * -1.0)));
+                    .push(FilterOp { FilterOpType: Some(filter_op::FilterOpType::Grayscale(sat * -1.0)), ..Default::default() });
             }
 
             if let Some(contrast) = image_filters.contrast {
                 image_filter_list
-                    .push(FilterOp::new(filter_op::FilterOpType::Contrast(contrast + 1.0)));
+                    .push(FilterOp { FilterOpType: Some(filter_op::FilterOpType::Contrast(contrast + 1.0)), ..Default::default() });
             }
 
             if let Some(exposure) = image_filters.exposure {
@@ -615,7 +622,7 @@ fn compute_background(
                     exp_adj = 0.1 + (1.0 + exposure);
                 }
 
-                image_filter_list.push(FilterOp::new(filter_op::FilterOpType::Brightness(exp_adj)));
+                image_filter_list.push(FilterOp { FilterOpType: Some(filter_op::FilterOpType::Brightness(exp_adj)), ..Default::default() });
             }
         }
 
@@ -636,34 +643,40 @@ fn compute_background(
         }
 
         let bg_scale_mode = match scale_mode {
-            figma_schema::ScaleMode::Tile => background::ScaleMode::Tile,
-            figma_schema::ScaleMode::Fill => background::ScaleMode::Fill,
-            figma_schema::ScaleMode::Fit => background::ScaleMode::Fit,
-            figma_schema::ScaleMode::Stretch => background::ScaleMode::Stretch,
+            figma_schema::ScaleMode::Tile => background::ScaleMode::SCALE_MODE_TILE,
+            figma_schema::ScaleMode::Fill => background::ScaleMode::SCALE_MODE_FILL,
+            figma_schema::ScaleMode::Fit => background::ScaleMode::SCALE_MODE_FIT,
+            figma_schema::ScaleMode::Stretch => background::ScaleMode::SCALE_MODE_STRETCH,
         };
 
         if let Some(fill) = images.image_fill(image_ref, node_name) {
-            Background::new(background::BackgroundType::Image(background::Image {
-                key: fill,
-                filters: image_filter_list,
-                transform: Some(transform.to_2d()),
-                scale_mode: bg_scale_mode as i32,
-                opacity: last_paint.opacity,
-                res_name: images.image_res(image_ref),
-            }))
+            Background::new_with_background(
+                background::Background_type::Image(background::Image {
+                    key: fill,
+                    filters: image_filter_list,
+                    transform: Some(transform.to_2d()).into(),
+                    scale_mode: bg_scale_mode.into(),
+                    opacity: last_paint.opacity,
+                    res_name: images.image_res(image_ref),
+                    ..Default::default()
+                })
+            )
         } else if !image_filter_list.is_empty() {
             // There's no image but we have filters, so store those with no image in case there's
             // a runtime customization that specifies an image source.
-            Background::new(background::BackgroundType::Image(background::Image {
-                key: String::new(),
-                filters: image_filter_list,
-                transform: Some(transform.to_2d()),
-                scale_mode: bg_scale_mode as i32,
-                opacity: last_paint.opacity,
-                res_name: None,
-            }))
+            Background::new_with_background(
+                background::Background_type::Image(background::Image {
+                    key: String::new(),
+                    filters: image_filter_list,
+                    transform: Some(transform.to_2d()).into(),
+                    scale_mode: bg_scale_mode.into(),
+                    opacity: last_paint.opacity,
+                    res_name: None,
+                    ..Default::default()
+                })
+            )
         } else {
-            Background::new(background::BackgroundType::None(()))
+            Background::new_none()
         }
     } else if let figma_schema::PaintData::GradientLinear { gradient } = &last_paint.data {
         let start_x = gradient.gradient_handle_positions[0].x();
@@ -677,17 +690,19 @@ fn compute_background(
 
         if stops.is_empty() {
             error!("No stops found for linear gradient {:?}", gradient);
-            Background::new(background::BackgroundType::None(()))
+            Background::new_none()
         } else {
             for s in stops {
                 let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
-                let g = background::ColorStop { position: s.position, color: Some(c) };
+                let g = background::ColorStop { position: s.position, color: Some(c).into(), ..Default::default() };
                 g_stops.push(g);
             }
 
-            Background::new(background::BackgroundType::LinearGradient(
-                background::LinearGradient { start_x, start_y, end_x, end_y, color_stops: g_stops },
-            ))
+            Background::new_with_background(
+                background::Background_type::LinearGradient(
+                    background::LinearGradient { start_x, start_y, end_x, end_y, color_stops: g_stops, ..Default::default() },
+                )
+            )
         }
     } else if let figma_schema::PaintData::GradientAngular { gradient } = &last_paint.data {
         let center_x = gradient.gradient_handle_positions[0].x();
@@ -707,21 +722,22 @@ fn compute_background(
 
         if stops.is_empty() {
             error!("No stops found for angular gradient {:?}", gradient);
-            Background::new(background::BackgroundType::None(()))
+            Background::new_none()
         } else {
             for s in stops {
                 let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
-                let g = background::ColorStop { position: s.position, color: Some(c) };
+                let g = background::ColorStop { position: s.position, color: Some(c).into(), ..Default::default() };
                 g_stops.push(g);
             }
 
-            Background::new(background::BackgroundType::AngularGradient(
+            Background::new_with_background(background::Background_type::AngularGradient(
                 background::AngularGradient {
                     center_x: center_x,
                     center_y: center_y,
                     angle: angle,
                     scale: scale,
                     color_stops: g_stops,
+                    ..Default::default()
                 },
             ))
         }
@@ -745,15 +761,15 @@ fn compute_background(
 
         if stops.is_empty() {
             error!("No stops found for radial gradient {:?}", gradient);
-            Background::new(background::BackgroundType::None(()))
+            Background::new_none()
         } else {
             for s in stops {
                 let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
-                let g = background::ColorStop { position: s.position, color: Some(c) };
+                let g = background::ColorStop { position: s.position, color: Some(c).into(), ..Default::default() };
                 g_stops.push(g);
             }
 
-            Background::new(background::BackgroundType::RadialGradient(
+            Background::new_with_background(background::Background_type::RadialGradient(
                 background::RadialGradient {
                     center_x: center_x,
                     center_y: center_y,
@@ -761,6 +777,7 @@ fn compute_background(
                     radius_x: radius.0,
                     radius_y: radius.1,
                     color_stops: g_stops,
+                    ..Default::default()
                 },
             ))
         }
@@ -783,15 +800,15 @@ fn compute_background(
         let stops = &gradient.gradient_stops;
         if stops.is_empty() {
             error!("No stops found for diamond gradient {:?}", gradient);
-            Background::new(background::BackgroundType::None(()))
+            Background::new_none()
         } else {
             for s in stops {
                 let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
-                let g = background::ColorStop { position: s.position, color: Some(c) };
+                let g = background::ColorStop { position: s.position, color: Some(c).into(), ..Default::default() };
                 g_stops.push(g);
             }
 
-            Background::new(background::BackgroundType::RadialGradient(
+            Background::new_with_background(background::Background_type::RadialGradient(
                 background::RadialGradient {
                     center_x: center_x,
                     center_y: center_y,
@@ -799,11 +816,12 @@ fn compute_background(
                     radius_x: radius.0,
                     radius_y: radius.1,
                     color_stops: g_stops,
+                    ..Default::default()
                 },
             ))
         }
     } else {
-        Background::new(background::BackgroundType::None(()))
+        Background::new_none()
     }
 }
 
@@ -848,7 +866,8 @@ fn visit_node(
                     .unwrap_or(&figma_schema::ComponentSet::default())
                     .name
                     .clone(),
-                overrides: None,
+                overrides: None.into(),
+                ..Default::default()
             });
             // Make sure we convert this component node so that we can compute any variant style delta
             // later on.
@@ -867,7 +886,8 @@ fn visit_node(
                     .unwrap_or(&figma_schema::ComponentSet::default())
                     .name
                     .clone(),
-                overrides: None,
+                overrides: None.into(),
+                ..Default::default()
             });
         }
     }
@@ -894,14 +914,14 @@ fn visit_node(
             );
 
             // Provide an unaltered transform from the last relevant parent.
-            style.node_style_mut().relative_transform = Some(r.clone());
+            style.node_style_mut().relative_transform = Some(r.clone()).into();
             // And an additional transform with translation removed.
             let r = r.post_translate(
                 -(bounds.x() - parent_bounds.x()),
                 -(bounds.y() - parent_bounds.y()),
                 0.0,
             );
-            style.node_style_mut().transform = Some(r);
+            style.node_style_mut().transform = Some(r).into();
         }
     }
 
@@ -964,7 +984,7 @@ fn visit_node(
     style.node_style_mut().shader_data = plugin_data
         .and_then(|vsw_data| vsw_data.get("shader"))
         .and_then(|extras| serde_json::from_str::<ShaderDataJson>(extras).ok())
-        .and_then(|shader_data_json| shader_data_json.into_shader_data(images));
+        .and_then(|shader_data_json| shader_data_json.into_shader_data(images)).into();
 
     let mut scroll_info = ScrollInfo::new_default();
 
@@ -992,15 +1012,15 @@ fn visit_node(
         // or our old extended layout plugin.
         has_extended_auto_layout = layout != LayoutType::None;
         style.node_style_mut().flex_wrap =
-            if extended_auto_layout.wrap { FlexWrap::Wrap.into() } else { FlexWrap::NoWrap.into() };
+            if extended_auto_layout.wrap { FlexWrap::FLEX_WRAP_WRAP.into() } else { FlexWrap::FLEX_WRAP_NO_WRAP.into() };
 
         style.node_style_mut().grid_layout_type = match layout {
-            LayoutType::AutoColumns => Some(GridLayoutType::AutoColumns.into()),
-            LayoutType::FixedColumns => Some(GridLayoutType::FixedColumns.into()),
-            LayoutType::FixedRows => Some(GridLayoutType::FixedRows.into()),
-            LayoutType::AutoRows => Some(GridLayoutType::AutoRows.into()),
-            LayoutType::Horizontal => Some(GridLayoutType::Horizontal.into()),
-            LayoutType::Vertical => Some(GridLayoutType::Vertical.into()),
+            LayoutType::AutoColumns => Some(GridLayoutType::GRID_LAYOUT_TYPE_AUTO_COLUMNS.into()),
+            LayoutType::FixedColumns => Some(GridLayoutType::GRID_LAYOUT_TYPE_FIXED_COLUMNS.into()),
+            LayoutType::FixedRows => Some(GridLayoutType::GRID_LAYOUT_TYPE_FIXED_ROWS.into()),
+            LayoutType::AutoRows => Some(GridLayoutType::GRID_LAYOUT_TYPE_AUTO_ROWS.into()),
+            LayoutType::Horizontal => Some(GridLayoutType::GRID_LAYOUT_TYPE_HORIZONTAL.into()),
+            LayoutType::Vertical => Some(GridLayoutType::GRID_LAYOUT_TYPE_VERTICAL.into()),
             _ => None,
         };
 
@@ -1023,14 +1043,14 @@ fn visit_node(
 
             style.layout_style_mut().item_spacing = if gld.auto_spacing {
                 if horizontal {
-                    Some(ItemSpacing::auto(gld.horizontal_spacing, gld.auto_spacing_item_size))
+                    Some(ItemSpacing::new_auto(gld.horizontal_spacing, gld.auto_spacing_item_size)).into()
                 } else {
-                    Some(ItemSpacing::auto(gld.vertical_spacing, gld.auto_spacing_item_size))
+                    Some(ItemSpacing::new_auto(gld.vertical_spacing, gld.auto_spacing_item_size)).into()
                 }
             } else if horizontal {
-                Some(ItemSpacing::fixed(gld.horizontal_spacing))
+                Some(ItemSpacing::new_fixed(gld.horizontal_spacing)).into()
             } else {
-                Some(ItemSpacing::fixed(gld.vertical_spacing))
+                Some(ItemSpacing::new_fixed(gld.vertical_spacing)).into()
             };
             style.node_style_mut().cross_axis_item_spacing = if horizontal {
                 gld.vertical_spacing as f32
@@ -1040,9 +1060,9 @@ fn visit_node(
 
             if cld.scrolling {
                 scroll_info.overflow = if horizontal {
-                    i32::from(OverflowDirection::VerticalScrolling)
+                    OverflowDirection::OVERFLOW_DIRECTION_VERTICAL_SCROLLING.into()
                 } else {
-                    i32::from(OverflowDirection::HorizontalScrolling)
+                    OverflowDirection::OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING.into()
                 };
             }
 
@@ -1066,6 +1086,7 @@ fn visit_node(
                     node_variant: variant_hash,
                     span: grid_span.span,
                     max_span: grid_span.max_span,
+                    ..Default::default()
                 })
             }
         } else if layout.is_row_or_column() {
@@ -1075,13 +1096,13 @@ fn visit_node(
             // space between boolean.
             if extended_auto_layout.common_data.scrolling {
                 scroll_info.overflow = if layout == LayoutType::Vertical {
-                    i32::from(OverflowDirection::VerticalScrolling)
+                    OverflowDirection::OVERFLOW_DIRECTION_VERTICAL_SCROLLING.into()
                 } else {
-                    i32::from(OverflowDirection::HorizontalScrolling)
+                    OverflowDirection::OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING.into()
                 };
             }
             if extended_auto_layout.auto_layout_data.space_between {
-                style.layout_style_mut().justify_content = JustifyContent::SpaceBetween.into();
+                style.layout_style_mut().justify_content = JustifyContent::JUSTIFY_CONTENT_SPACE_BETWEEN.into();
             }
             is_widget_list = true;
             size_policy = extended_auto_layout.auto_layout_data.size_policy;
@@ -1116,11 +1137,11 @@ fn visit_node(
     // we need to set our size depending on whether the size policy is hug or fixed.
     if is_widget_list {
         if size_policy == SizePolicy::Hug {
-            style.layout_style_mut().position_type = PositionType::Relative.into();
+            style.layout_style_mut().position_type = PositionType::POSITION_TYPE_RELATIVE.into();
             style.layout_style_mut().width = DimensionProto::new_auto();
             style.layout_style_mut().height = DimensionProto::new_auto();
         } else {
-            style.layout_style_mut().position_type = PositionType::Absolute.into();
+            style.layout_style_mut().position_type = PositionType::POSITION_TYPE_ABSOLUTE.into();
         }
     }
 
@@ -1137,41 +1158,44 @@ fn visit_node(
         // Copy out the common styles from frames and supported content.
         if let Some(individual_stroke_weights) = node.individual_stroke_weights {
             stroke.stroke_weight = Some(StrokeWeight {
-                stroke_weight_type: Some(stroke_weight::StrokeWeightType::Individual(
+                stroke_weight_type: Some(stroke_weight::Stroke_weight_type::Individual(
                     stroke_weight::Individual {
                         top: individual_stroke_weights.top,
                         right: individual_stroke_weights.right,
                         bottom: individual_stroke_weights.bottom,
                         left: individual_stroke_weights.left,
+                        ..Default::default()
                     },
                 )),
-            });
+                ..Default::default()
+            }).into();
         } else if let Some(stroke_weight) = node.stroke_weight {
             stroke.stroke_weight = Some(StrokeWeight {
-                stroke_weight_type: Some(stroke_weight::StrokeWeightType::Uniform(stroke_weight)),
-            });
+                stroke_weight_type: Some(stroke_weight::Stroke_weight_type::Uniform(stroke_weight)),
+                ..Default::default()
+            }).into();
         }
         stroke.stroke_align = match node.stroke_align {
-            Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::Inside as i32,
-            Some(figma_schema::StrokeAlign::Center) => StrokeAlign::Center as i32,
-            Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::Outside as i32,
+            Some(figma_schema::StrokeAlign::Inside) => StrokeAlign::STROKE_ALIGN_INSIDE.into(),
+            Some(figma_schema::StrokeAlign::Center) => StrokeAlign::STROKE_ALIGN_CENTER.into(),
+            Some(figma_schema::StrokeAlign::Outside) | None => StrokeAlign::STROKE_ALIGN_OUTSIDE.into()
         };
 
         // We have shader that can be used to draw the stroke.
         stroke.shader_data = plugin_data
             .and_then(|vsw_data| vsw_data.get("strokeShader"))
             .and_then(|extras| serde_json::from_str::<ShaderDataJson>(extras).ok())
-            .and_then(|shader_data_json| shader_data_json.into_shader_data(images));
+            .and_then(|shader_data_json| shader_data_json.into_shader_data(images)).into();
     });
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {
         style.node_style_mut().overflow =
-            if frame.clips_content { Overflow::Hidden.into() } else { Overflow::Visible.into() };
+            if frame.clips_content { Overflow::OVERFLOW_HIDDEN.into() } else { Overflow::OVERFLOW_VISIBLE.into() };
         // Don't overwrite scroll behavior if it was already set from grid layout
-        if scroll_info.overflow == i32::from(OverflowDirection::None) {
+        if scroll_info.overflow == OverflowDirection::OVERFLOW_DIRECTION_NONE.into() {
             scroll_info.overflow = {
-                let p: OverflowDirection = frame.overflow_direction.into();
-                p.into()
+                let dir: OverflowDirection = frame.overflow_direction.into();
+                dir.into()
             }
         }
     } else if let figma_schema::NodeData::Text {
@@ -1184,75 +1208,78 @@ fn visit_node(
     {
         if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
             style.node_style_mut().text_color =
-                Some(compute_background(text_fill, images, &node.name));
+                Some(compute_background(text_fill, images, &node.name)).into();
         }
         style.node_style_mut().font_size = if let Some(vars) = &node.bound_variables {
-            Some(NumOrVar::from_var(vars, "fontSize", text_style.font_size))
+            Some(NumOrVar::from_var(vars, "fontSize", text_style.font_size)).into()
         } else {
-            Some(NumOrVar::from_num(text_style.font_size))
+            Some(NumOrVar::from_num(text_style.font_size)).into()
         };
 
         style.node_style_mut().font_weight = if let Some(vars) = &node.bound_variables {
-            Some(FontWeight::new(NumOrVarType::from_var(
+            Some(FontWeight::new_with_num_or_var_type(NumOrVarType::from_var(
                 vars,
                 "fontWeight",
                 text_style.font_weight,
-            )))
+            ))).into()
         } else {
-            Some(FontWeight::from_num(text_style.font_weight))
+            Some(FontWeight::from_num(text_style.font_weight)).into()
         };
         if text_style.italic {
-            style.node_style_mut().font_style = FontStyle::Italic.into();
+            style.node_style_mut().font_style = FontStyle::FONT_STYLE_ITALIC.into();
         }
         style.node_style_mut().text_decoration = match text_style.text_decoration {
             figma_schema::TextDecoration::None => {
-                dc_bundle::definition::element::TextDecoration::None.into()
+                TextDecoration::TEXT_DECORATION_NONE.into()
             }
             figma_schema::TextDecoration::Underline => {
-                dc_bundle::definition::element::TextDecoration::Underline.into()
+                TextDecoration::TEXT_DECORATION_UNDERLINE.into()
             }
             figma_schema::TextDecoration::Strikethrough => {
-                dc_bundle::definition::element::TextDecoration::Strikethrough.into()
+                TextDecoration::TEXT_DECORATION_STRIKETHROUGH.into()
             }
         };
         style.node_style_mut().letter_spacing = Some(text_style.letter_spacing.clone());
         style.node_style_mut().font_family = text_style.font_family.clone();
         match text_style.text_align_horizontal {
             figma_schema::TextAlignHorizontal::Center => {
-                style.node_style_mut().text_align = TextAlign::Center.into()
+                style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_CENTER.into()
             }
             figma_schema::TextAlignHorizontal::Left => {
-                style.node_style_mut().text_align = TextAlign::Left.into()
+                style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_LEFT.into()
             }
             figma_schema::TextAlignHorizontal::Right => {
-                style.node_style_mut().text_align = TextAlign::Right.into()
+                style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_RIGHT.into()
             }
             figma_schema::TextAlignHorizontal::Justified => {
-                style.node_style_mut().text_align = TextAlign::Center.into()
+                style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_CENTER.into()
             } // XXX
         }
         style.node_style_mut().text_align_vertical = match text_style.text_align_vertical {
-            figma_schema::TextAlignVertical::Center => TextAlignVertical::Center.into(),
-            figma_schema::TextAlignVertical::Top => TextAlignVertical::Top.into(),
-            figma_schema::TextAlignVertical::Bottom => TextAlignVertical::Bottom.into(),
+            figma_schema::TextAlignVertical::Center => TextAlignVertical::TEXT_ALIGN_VERTICAL_CENTER.into(),
+            figma_schema::TextAlignVertical::Top => TextAlignVertical::TEXT_ALIGN_VERTICAL_TOP.into(),
+            figma_schema::TextAlignVertical::Bottom => TextAlignVertical::TEXT_ALIGN_VERTICAL_BOTTOM.into(),
         };
         style.node_style_mut().line_height = match text_style.line_height_unit {
             // It's a percentage of the font size.
             figma_schema::LineHeightUnit::FontSizePercentage => Some(LineHeight {
-                line_height_type: Some(LineHeightType::Pixels(
+                line_height_type: Some(Line_height_type::Pixels(
                     text_style.font_size * text_style.line_height_percent_font_size / 100.0,
                 )),
-            }),
+                ..Default::default()
+            }).into(),
             // It's a percentage of the intrinsic line height of the font itself.
             figma_schema::LineHeightUnit::IntrinsicPercentage => Some(LineHeight {
-                line_height_type: Some(LineHeightType::Percent(
+                line_height_type: Some(Line_height_type::Percent(
                     text_style.line_height_percent_font_size / 100.0,
                 )),
-            }),
+                ..Default::default()
+            }).into(),
             // It's an absolute value in pixels.
             figma_schema::LineHeightUnit::Pixels => Some(LineHeight {
-                line_height_type: Some(LineHeightType::Pixels(text_style.line_height_px)),
-            }),
+                line_height_type: Some(Line_height_type::Pixels(text_style.line_height_px)),
+                ..Default::default()
+            }).into(),
         };
         style.node_style_mut().opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
         let convert_opentype_flags = |flags: &HashMap<String, u32>| -> Vec<FontFeature> {
@@ -1261,7 +1288,7 @@ fn visit_node(
                 let flag_ascii = flag.to_ascii_lowercase();
                 if flag_ascii.len() == 4 {
                     // Smoke check to see if the flag is valid
-                    font_features.push(FontFeature { tag: flag_ascii, enabled: *value == 1 });
+                    font_features.push(FontFeature { tag: flag_ascii, enabled: *value == 1, ..Default::default() });
                 } else {
                     println!("Unsupported OpenType flag: {}", flag)
                 }
@@ -1283,17 +1310,18 @@ fn visit_node(
                         bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
                     style.node_style_mut().text_shadow = Some(TextShadow {
                         blur_radius: effect.radius,
-                        color: Some(shadow_color),
+                        color: Some(shadow_color).into(),
                         offset_x: effect.offset.x(),
                         offset_y: effect.offset.y(),
-                    });
+                        ..Default::default()
+                    }).into();
                 }
                 _ => {}
             }
         }
 
         if text_style.text_truncation == figma_schema::TextTruncation::Ending {
-            style.node_style_mut().text_overflow = TextOverflow::Ellipsis.into();
+            style.node_style_mut().text_overflow = TextOverflow::TEXT_OVERFLOW_ELLIPSIS.into();
         }
 
         if text_style.max_lines > 0 {
@@ -1301,9 +1329,9 @@ fn visit_node(
         }
         if let Some(hl) = text_style.hyperlink.clone() {
             if hl.url.is_empty() {
-                style.node_style_mut().hyperlink = None
+                style.node_style_mut().hyperlink = None.into()
             } else {
-                style.node_style_mut().hyperlink = Some(hl.into());
+                style.node_style_mut().hyperlink = Some(hl.into()).into();
             }
         }
 
@@ -1318,7 +1346,7 @@ fn visit_node(
                 characters,
                 check_text_node_string_res(node),
                 node.absolute_bounding_box.map(|r| (&r).into()),
-                RenderMethod::None,
+                RenderMethod::RENDER_METHOD_NONE,
                 node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
             ))
         } else {
@@ -1363,7 +1391,7 @@ fn visit_node(
                         .font_size
                         .clone()
                         .unwrap_or_default()
-                        .num_or_var_type
+                        .NumOrVarType
                         .unwrap_or(NumOrVarType::Num(0.0))
                 };
                 let font_family = if sub_style.font_family.is_some() {
@@ -1377,23 +1405,23 @@ fn visit_node(
                     style.node_style().font_weight.clone().unwrap_or_default()
                 };
                 let font_style = if let Some(true) = sub_style.italic {
-                    FontStyle::Italic
+                    FontStyle::FONT_STYLE_ITALIC.into()
                 } else {
-                    style.node_style().font_style().clone()
+                    style.node_style().font_style.clone()
                 };
                 let text_decoration = match sub_style.text_decoration {
                     Some(figma_schema::TextDecoration::Strikethrough) => {
-                        dc_bundle::definition::element::TextDecoration::Strikethrough
+                        TextDecoration::TEXT_DECORATION_STRIKETHROUGH.into()
                     }
                     Some(figma_schema::TextDecoration::Underline) => {
-                        dc_bundle::definition::element::TextDecoration::Underline
+                        TextDecoration::TEXT_DECORATION_UNDERLINE.into()
                     }
                     Some(figma_schema::TextDecoration::None) => {
-                        style.node_style().text_decoration()
+                        style.node_style().text_decoration
                     }
-                    None => style.node_style().text_decoration(),
+                    None => style.node_style().text_decoration,
                 };
-                let hyperlink = if let Some(hl) = sub_style.hyperlink.clone() {
+                let hyperlink: Option<Hyperlink> = if let Some(hl) = sub_style.hyperlink.clone() {
                     if hl.url.is_empty() {
                         None
                     } else {
@@ -1403,11 +1431,11 @@ fn visit_node(
                     None
                 };
                 let style = TextStyle {
-                    text_color: Some(text_color),
-                    font_size: Some(NumOrVar { num_or_var_type: Some(font_size) }),
+                    text_color: Some(text_color).into(),
+                    font_size: Some(NumOrVar { NumOrVarType: Some(font_size), ..Default::default() }).into(),
                     font_family,
-                    font_weight: Some(font_weight),
-                    font_style: font_style.into(), // Italic or Normal
+                    font_weight: Some(font_weight).into(),
+                    font_style: font_style, // Italic or Normal
                     font_stretch: style.node_style().font_stretch.clone(), // Not in SubTypeStyle.
                     letter_spacing: sub_style
                         .letter_spacing
@@ -1421,13 +1449,14 @@ fn visit_node(
                             .clone()
                             .unwrap_or(text_style.opentype_flags.clone()),
                     ),
-                    hyperlink,
+                    hyperlink: hyperlink.into(),
+                    ..Default::default()
                 };
                 let mut has_handled = false;
                 if runs.len() > 0 {
                     let last_run = runs.get(runs.len() - 1);
                     if let Some(lr) = last_run {
-                        if let Some(last_run_style) = lr.style.clone() {
+                        if let Some(last_run_style) = lr.style.clone().into_option() {
                             if last_run_style == style {
                                 error!(
                                     "The two styles are the same. This might fail to match the
@@ -1441,7 +1470,8 @@ fn visit_node(
                                     new_run.push_str(current_run);
                                     runs.push(StyledTextRun {
                                         text: new_run,
-                                        style: Some(style.clone()),
+                                        style: Some(style.clone()).into(),
+                                        ..Default::default()
                                     });
                                     has_handled = true;
                                 }
@@ -1452,7 +1482,8 @@ fn visit_node(
                 if !has_handled {
                     runs.push(StyledTextRun {
                         text: current_run.clone(),
-                        style: Some(style.clone()),
+                        style: Some(style.clone()).into(),
+                        ..Default::default()
                     });
                 }
                 *current_run = String::new();
@@ -1486,7 +1517,7 @@ fn visit_node(
                 runs,
                 check_text_node_string_res(node),
                 node.absolute_bounding_box.map(|r| (&r).into()),
-                RenderMethod::None,
+                RenderMethod::RENDER_METHOD_NONE,
             ))
         };
     }
@@ -1587,10 +1618,10 @@ fn visit_node(
         ]
     };
 
-    let to_vector = |array: &[NumOrVarType; 4]| -> Vec<definition::element::NumOrVar> {
+    let to_vector = |array: &[NumOrVarType; 4]| -> Vec<NumOrVar> {
         array
             .clone()
-            .map(|i| definition::element::NumOrVar { num_or_var_type: Some(i) })
+            .map(|i| NumOrVar { NumOrVarType: Some(i), ..Default::default() })
             .into_iter()
             .collect()
     };
@@ -1601,9 +1632,10 @@ fn visit_node(
                 corner_radii: to_vector(&corner_radius),
                 corner_smoothing: 0.0, // Not in Figma REST API
                 is_mask,
+                ..Default::default()
             })
         } else {
-            ViewShape::new_rect(view_shape::Box { is_mask })
+            ViewShape::new_rect(view_shape::view_shape::Box { is_mask, ..Default::default() })
         }
     };
 
@@ -1615,35 +1647,38 @@ fn visit_node(
             match meter_data {
                 Ok(meter_data) => {
                     let proto_data = match meter_data {
-                        MeterJson::ArcData(data) => MeterDataType::ArcData(ArcMeterData {
+                        MeterJson::ArcData(data) => Meter_data_type::ArcData(ArcMeterData {
                             enabled: data.enabled,
                             start: data.start,
                             end: data.end,
                             discrete: data.discrete,
                             discrete_value: data.discrete_value,
                             corner_radius: data.corner_radius,
+                            ..Default::default()
                         }),
                         MeterJson::RotationData(data) => {
-                            MeterDataType::RotationData(RotationMeterData {
+                            Meter_data_type::RotationData(RotationMeterData {
                                 enabled: data.enabled,
                                 start: data.start,
                                 end: data.end,
                                 discrete: data.discrete,
                                 discrete_value: data.discrete_value,
+                                ..Default::default()
                             })
                         }
                         MeterJson::ProgressBarData(data) => {
-                            MeterDataType::ProgressBarData(ProgressBarMeterData {
+                            Meter_data_type::ProgressBarData(ProgressBarMeterData {
                                 enabled: data.enabled,
                                 discrete: data.discrete,
                                 discrete_value: data.discrete_value,
                                 vertical: data.vertical,
                                 end_x: data.end_x,
                                 end_y: data.end_y,
+                                ..Default::default()
                             })
                         }
                         MeterJson::ProgressMarkerData(data) => {
-                            MeterDataType::ProgressMarkerData(ProgressMarkerMeterData {
+                            Meter_data_type::ProgressMarkerData(ProgressMarkerMeterData {
                                 enabled: data.enabled,
                                 discrete: data.discrete,
                                 discrete_value: data.discrete_value,
@@ -1652,6 +1687,7 @@ fn visit_node(
                                 end_x: data.end_x,
                                 start_y: data.start_y,
                                 end_y: data.end_y,
+                                ..Default::default()
                             })
                         }
                         MeterJson::ProgressVectorData(data) => {
@@ -1661,15 +1697,16 @@ fn visit_node(
                             if data.enabled {
                                 stroke_paths = data.paths.iter().filter_map(parse_path).collect();
                             }
-                            MeterDataType::ProgressVectorData(ProgressVectorMeterData {
+                            Meter_data_type::ProgressVectorData(ProgressVectorMeterData {
                                 enabled: data.enabled,
                                 discrete: data.discrete,
                                 discrete_value: data.discrete_value,
+                                ..Default::default()
                             })
                         }
                     };
                     style.node_style_mut().meter_data =
-                        Some(MeterData { meter_data_type: Some(proto_data) });
+                        Some(MeterData { meter_data_type: Some(proto_data), ..Default::default() }).into();
                 }
                 Err(e) => {
                     error!("Failed to parse meter data: {}", e);
@@ -1685,11 +1722,12 @@ fn visit_node(
         | figma_schema::NodeData::RegularPolygon { vector }
         | figma_schema::NodeData::Star { vector }
         | figma_schema::NodeData::Vector { vector } => {
-            ViewShape::new_path(view_shape::VectorPath {
+            ViewShape::new_path(view_shape::view_shape::VectorPath {
                 paths: fill_paths,
                 strokes: stroke_paths,
-                stroke_cap: node.stroke_cap.to_proto(),
+                stroke_cap: node.stroke_cap.to_proto().into(),
                 is_mask: vector.is_mask,
+                ..Default::default()
             })
         }
         // Rectangles get turned into a VectorRect instead of a Rect, RoundedRect or Path in order
@@ -1697,11 +1735,12 @@ fn visit_node(
         // construct the rectangle, modified by progress bar parameters. Otherwise, it will be
         // rendered as a ViewShape::Path.
         figma_schema::NodeData::Rectangle { vector } => {
-            ViewShape::new_vector_rect(view_shape::VectorRect {
+            ViewShape::new_vector_rect(view_shape::view_shape::VectorRect {
                 paths: fill_paths.into(),
                 strokes: stroke_paths.into(),
                 corner_radii: to_vector(&corner_radius),
                 is_mask: vector.is_mask,
+                ..Default::default()
             })
         }
         // Ellipses get turned into an Arc in order to support dials/gauges with an arc type
@@ -1709,16 +1748,17 @@ fn visit_node(
         // construct the ellipse, modified by the arc parameters. Otherwise it will be rendered
         // as a ViewShape::Path.
         figma_schema::NodeData::Ellipse { vector, arc_data, .. } => {
-            ViewShape::new_arc(view_shape::VectorArc {
+            ViewShape::new_arc(view_shape::view_shape::VectorArc {
                 paths: fill_paths.into(),
                 strokes: stroke_paths.into(),
-                stroke_cap: node.stroke_cap.to_proto(),
+                stroke_cap: node.stroke_cap.to_proto().into(),
                 start_angle_degrees: euclid::Angle::radians(arc_data.starting_angle).to_degrees(),
                 sweep_angle_degrees: euclid::Angle::radians(arc_data.ending_angle).to_degrees(),
                 inner_radius: arc_data.inner_radius,
                 // corner radius for arcs in dials & gauges does not support variables yet
                 corner_radius: 0.0,
                 is_mask: vector.is_mask,
+                ..Default::default()
             })
         }
         figma_schema::NodeData::Frame { frame }
@@ -1737,7 +1777,7 @@ fn visit_node(
             figma_schema::EffectType::DropShadow => {
                 let shadow_color =
                     bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
-                style.node_style_mut().box_shadows.push(BoxShadow::outset(
+                style.node_style_mut().box_shadows.push(BoxShadow::new_with_outset(
                     effect.radius,
                     effect.spread,
                     shadow_color,
@@ -1747,7 +1787,7 @@ fn visit_node(
             figma_schema::EffectType::InnerShadow => {
                 let shadow_color =
                     bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
-                style.node_style_mut().box_shadows.push(BoxShadow::inset(
+                style.node_style_mut().box_shadows.push(BoxShadow::new_with_inset(
                     effect.radius,
                     effect.spread,
                     shadow_color,
@@ -1758,13 +1798,13 @@ fn visit_node(
                 style
                     .node_style_mut()
                     .filters
-                    .push(FilterOp::new(filter_op::FilterOpType::Blur(effect.radius / 2.0)));
+                    .push(FilterOp::new_with_op(filter_op::FilterOpType::Blur(effect.radius / 2.0)));
             }
             figma_schema::EffectType::BackgroundBlur => {
                 style
                     .node_style_mut()
                     .backdrop_filters
-                    .push(FilterOp::new(filter_op::FilterOpType::Blur(effect.radius / 2.0)));
+                    .push(FilterOp::new_with_op(filter_op::FilterOpType::Blur(effect.radius / 2.0)));
             }
         }
     }
@@ -1780,7 +1820,7 @@ fn visit_node(
         scroll_info,
         frame_extras,
         node.absolute_bounding_box.map(|r| (&r).into()),
-        RenderMethod::None,
+        RenderMethod::RENDER_METHOD_NONE,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
     );
 

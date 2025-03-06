@@ -15,6 +15,7 @@
 use std::collections::HashMap;
 
 use dc_bundle::color::{Color, FloatColor};
+use protobuf::EnumOrUnknown;
 use serde::{Deserialize, Serialize};
 
 // We use serde to decode Figma's JSON documents into Rust structures.
@@ -770,9 +771,10 @@ impl Into<dc_bundle::positioning::LayoutSizing> for LayoutSizing {
     }
 }
 impl LayoutSizing {
-    pub fn into_proto_val(self) -> i32 {
+    pub fn into_proto_val(self) -> EnumOrUnknown<dc_bundle::positioning::LayoutSizing> {
         let proto_type: dc_bundle::positioning::LayoutSizing = self.into();
-        protobuf::Enum::value(&proto_type)
+        proto_type.into()
+        //protobuf::Enum::value(&proto_type)
     }
 }
 
@@ -907,10 +909,9 @@ impl Into<dc_bundle::view_shape::view_shape::StrokeCap> for StrokeCap {
 }
 
 impl StrokeCap {
-    pub fn to_proto(&self) -> i32 {
-        //Need to do in two steps because we need to convert to the proto-genned type and then to i32
+    pub fn to_proto(&self) -> dc_bundle::view_shape::view_shape::StrokeCap {
         let a: dc_bundle::view_shape::view_shape::StrokeCap = self.clone().into();
-        protobuf::Enum::value(&a)
+        a
     }
 }
 

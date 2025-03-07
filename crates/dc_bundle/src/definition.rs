@@ -1,3 +1,4 @@
+use crate::variable::VariableMap;
 /*
  * Copyright 2024 Google LLC
  *
@@ -13,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use crate::definition::element::VariableMap;
-use crate::definition::view::View;
+use crate::design_compose_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use crate::view::View;
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -23,13 +24,9 @@ use std::hash::Hash;
 use std::sync::Arc;
 
 pub mod element;
-pub mod interaction;
 pub mod layout;
 pub mod modifier;
-pub mod plugin;
 pub mod view;
-
-include!(concat!(env!("OUT_DIR"), "/designcompose.definition.rs"));
 
 // LINT.IfChange
 pub static CURRENT_VERSION: u32 = 26;
@@ -48,6 +45,7 @@ impl DesignComposeDefinitionHeader {
             name,
             response_version,
             id,
+            ..Default::default()
         }
     }
     pub fn current_version() -> u32 {
@@ -68,7 +66,7 @@ impl fmt::Display for DesignComposeDefinitionHeader {
 }
 
 impl DesignComposeDefinition {
-    pub fn new(
+    pub fn new_with_details(
         views: HashMap<NodeQuery, View>,
         images: EncodedImageMap,
         component_sets: HashMap<String, String>,
@@ -78,7 +76,8 @@ impl DesignComposeDefinition {
             views: views.iter().map(|(k, v)| (k.encode(), v.to_owned())).collect(),
             images: images.into(),
             component_sets,
-            variable_map: Some(variable_map),
+            variable_map: Some(variable_map).into(),
+            ..Default::default()
         }
     }
     pub fn views(&self) -> Result<HashMap<NodeQuery, View>, Error> {

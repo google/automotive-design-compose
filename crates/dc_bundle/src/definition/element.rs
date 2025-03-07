@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-use crate::definition::element::dimension_proto::Dimension;
-use crate::definition::element::dimension_proto::Dimension::Points;
-use crate::definition::element::num_or_var::NumOrVarType;
-use crate::definition::element::path::WindingRule;
+use crate::background::{background, Background};
+use crate::color::{Color, FloatColor};
+use crate::font::{FontFeature, FontStretch, FontStyle, FontWeight, TextDecoration};
+use crate::geometry::dimension_proto::Dimension;
+use crate::geometry::{DimensionProto, DimensionRect};
+use crate::path::path::WindingRule;
+use crate::path::Path;
+use crate::variable::num_or_var::NumOrVarType;
+use crate::variable::{color_or_var, ColorOrVar, NumOrVar};
+use crate::view_shape::{view_shape, ViewShape};
 use crate::Error;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-
-include!(concat!(env!("OUT_DIR"), "/designcompose.definition.element.rs"));
 
 impl Display for FontStyle {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
@@ -31,8 +35,8 @@ impl Display for FontStyle {
     }
 }
 impl FontFeature {
-    pub fn new(tag: String) -> Self {
-        FontFeature { tag, enabled: true }
+    pub fn new_with_tag(tag: String) -> Self {
+        FontFeature { tag, enabled: true, ..Default::default() }
     }
 }
 
@@ -53,14 +57,20 @@ fn f32_eq(a: &f32, b: &f32) -> bool {
 
 impl Color {
     pub fn from_u8s(r: u8, g: u8, b: u8, a: u8) -> Color {
-        Color { r: r as u32, g: g as u32, b: b as u32, a: a as u32 }
+        Color { r: r as u32, g: g as u32, b: b as u32, a: a as u32, ..Default::default() }
     }
     pub fn from_u8_tuple(color: (u8, u8, u8, u8)) -> Color {
-        Color { r: color.0 as u32, g: color.1 as u32, b: color.2 as u32, a: color.3 as u32 }
+        Color {
+            r: color.0 as u32,
+            g: color.1 as u32,
+            b: color.2 as u32,
+            a: color.3 as u32,
+            ..Default::default()
+        }
     }
     pub fn from_f32s(r: f32, g: f32, b: f32, a: f32) -> Color {
         let tou32 = |c| (c * 255.0) as u32;
-        Color { r: tou32(r), g: tou32(g), b: tou32(b), a: tou32(a) }
+        Color { r: tou32(r), g: tou32(g), b: tou32(b), a: tou32(a), ..Default::default() }
     }
     /// 0xAARRGGBB
     pub fn from_u32(c: u32) -> Color {
@@ -69,6 +79,7 @@ impl Color {
             g: ((c & 0x0000_FF00u32) >> 8) as u32,
             b: (c & 0x0000_00FFu32) as u32,
             a: ((c & 0xFF00_0000u32) >> 24) as u32,
+            ..Default::default()
         }
     }
     pub fn from_f32_tuple(color: (f32, f32, f32, f32)) -> Color {
@@ -172,16 +183,36 @@ impl Color {
         self.a as u8
     }
 
-    pub const WHITE: Color = Color { r: 255, g: 255, b: 255, a: 255 };
-    pub const BLACK: Color = Color { r: 0, g: 0, b: 0, a: 255 };
-    pub const RED: Color = Color { r: 255, g: 0, b: 0, a: 255 };
-    pub const GREEN: Color = Color { r: 0, g: 255, b: 0, a: 255 };
-    pub const BLUE: Color = Color { r: 0, g: 0, b: 255, a: 255 };
-    pub const YELLOW: Color = Color { r: 255, g: 255, b: 0, a: 255 };
-    pub const MAGENTA: Color = Color { r: 255, g: 0, b: 255, a: 255 };
-    pub const CYAN: Color = Color { r: 0, g: 255, b: 255, a: 255 };
-    pub const GRAY: Color = Color { r: 128, g: 128, b: 128, a: 255 };
-    pub const HOT_PINK: Color = Color { r: 255, g: 105, b: 180, a: 255 };
+    pub fn white() -> Color {
+        Color { r: 255, g: 255, b: 255, a: 255, ..Default::default() }
+    }
+    pub fn black() -> Color {
+        Color { r: 0, g: 0, b: 0, a: 255, ..Default::default() }
+    }
+    pub fn red() -> Color {
+        Color { r: 255, g: 0, b: 0, a: 255, ..Default::default() }
+    }
+    pub fn green() -> Color {
+        Color { r: 0, g: 255, b: 0, a: 255, ..Default::default() }
+    }
+    pub fn blue() -> Color {
+        Color { r: 0, g: 0, b: 255, a: 255, ..Default::default() }
+    }
+    pub fn yellow() -> Color {
+        Color { r: 255, g: 255, b: 0, a: 255, ..Default::default() }
+    }
+    pub fn magenta() -> Color {
+        Color { r: 255, g: 0, b: 255, a: 255, ..Default::default() }
+    }
+    pub fn cyan() -> Color {
+        Color { r: 0, g: 255, b: 255, a: 255, ..Default::default() }
+    }
+    pub fn gray() -> Color {
+        Color { r: 128, g: 128, b: 128, a: 255, ..Default::default() }
+    }
+    pub fn hot_pink() -> Color {
+        Color { r: 255, g: 105, b: 180, a: 255, ..Default::default() }
+    }
 }
 
 impl Into<Color> for &FloatColor {
@@ -192,16 +223,19 @@ impl Into<Color> for &FloatColor {
 
 impl DimensionProto {
     pub fn new_auto() -> Option<Self> {
-        Some(DimensionProto { dimension: Some(Dimension::Auto(())) })
+        Some(DimensionProto { Dimension: Some(Dimension::Auto(().into())), ..Default::default() })
     }
     pub fn new_points(value: f32) -> Option<Self> {
-        Some(DimensionProto { dimension: Some(Points(value)) })
+        Some(DimensionProto { Dimension: Some(Dimension::Points(value)), ..Default::default() })
     }
     pub fn new_percent(value: f32) -> Option<Self> {
-        Some(DimensionProto { dimension: Some(Dimension::Percent(value)) })
+        Some(DimensionProto { Dimension: Some(Dimension::Percent(value)), ..Default::default() })
     }
     pub fn new_undefined() -> Option<Self> {
-        Some(DimensionProto { dimension: Some(Dimension::Undefined(())) })
+        Some(DimensionProto {
+            Dimension: Some(Dimension::Undefined(().into())),
+            ..Default::default()
+        })
     }
 }
 
@@ -211,7 +245,7 @@ pub trait DimensionExt {
 impl DimensionExt for Option<DimensionProto> {
     fn is_points(&self) -> Result<bool, Error> {
         match self {
-            Some(DimensionProto { dimension: Some(Points(_)) }) => Ok(true),
+            Some(DimensionProto { Dimension: Some(Dimension::Points(_)), .. }) => Ok(true),
             Some(_) => Ok(false), // Other Dimension variants are not Points
             None => Err(Error::MissingFieldError { field: "DimensionProto".to_string() }),
         }
@@ -219,30 +253,21 @@ impl DimensionExt for Option<DimensionProto> {
 }
 
 impl DimensionRect {
-    pub fn new() -> Option<Self> {
-        Some(DimensionRect {
-            start: DimensionProto::new_undefined(),
-            end: DimensionProto::new_undefined(),
-            top: DimensionProto::new_undefined(),
-            bottom: DimensionProto::new_undefined(),
-        })
-    }
-
     // Sets the value of start to the given DimensionView value
     pub fn set_start(&mut self, start: Dimension) {
-        self.start = Some(DimensionProto { dimension: Some(start) });
+        self.start = Some(DimensionProto { Dimension: Some(start), ..Default::default() }).into();
     }
     // Sets the value of end to the given DimensionView value
     pub fn set_end(&mut self, end: Dimension) {
-        self.end = Some(DimensionProto { dimension: Some(end) });
+        self.end = Some(DimensionProto { Dimension: Some(end), ..Default::default() }).into();
     }
     // Sets the value of top to the given DimensionView value
     pub fn set_top(&mut self, top: Dimension) {
-        self.top = Some(DimensionProto { dimension: Some(top) });
+        self.top = Some(DimensionProto { Dimension: Some(top), ..Default::default() }).into();
     }
     // Sets the value of bottom to the given DimensionView value
     pub fn set_bottom(&mut self, bottom: Dimension) {
-        self.bottom = Some(DimensionProto { dimension: Some(bottom) });
+        self.bottom = Some(DimensionProto { Dimension: Some(bottom), ..Default::default() }).into();
     }
 }
 
@@ -318,8 +343,13 @@ impl TryFrom<u8> for PathCommand {
 }
 
 impl Path {
-    pub fn new() -> Path {
-        Path { commands: Vec::new(), data: Vec::new(), winding_rule: WindingRule::NonZero.into() }
+    pub fn new_default() -> Path {
+        Path {
+            commands: Vec::new(),
+            data: Vec::new(),
+            winding_rule: WindingRule::WINDING_RULE_NON_ZERO.into(),
+            ..Default::default()
+        }
     }
     pub fn with_winding_rule(&mut self, winding_rule: WindingRule) -> &mut Path {
         self.winding_rule = winding_rule.into();
@@ -370,13 +400,13 @@ impl Path {
 }
 
 impl Background {
-    pub fn new(bg_type: background::BackgroundType) -> Self {
-        Background { background_type: Some(bg_type) }
+    pub fn new_with_background(bg_type: background::Background_type) -> Self {
+        Background { background_type: Some(bg_type), ..Default::default() }
     }
     pub fn is_some(&self) -> bool {
         if let Some(bg) = &self.background_type {
             match bg {
-                background::BackgroundType::None(_) => false,
+                background::Background_type::None(_) => false,
                 _ => true,
             }
         } else {
@@ -387,59 +417,82 @@ impl Background {
 
 impl ColorOrVar {
     pub fn new_color(color: Color) -> Self {
-        ColorOrVar { color_or_var_type: Some(color_or_var::ColorOrVarType::Color(color)) }
+        ColorOrVar {
+            ColorOrVarType: Some(color_or_var::ColorOrVarType::Color(color)),
+            ..Default::default()
+        }
     }
     pub fn new_var(id: String, fallback: Option<Color>) -> Self {
         ColorOrVar {
-            color_or_var_type: Some(color_or_var::ColorOrVarType::Var(color_or_var::ColorVar {
+            ColorOrVarType: Some(color_or_var::ColorOrVarType::Var(color_or_var::ColorVar {
                 id,
-                fallback,
+                fallback: fallback.into(),
+                ..Default::default()
             })),
+            ..Default::default()
         }
     }
 }
 
 impl ViewShape {
     pub fn new_rect(bx: view_shape::Box) -> Self {
-        ViewShape { shape: Some(view_shape::Shape::Rect(bx)) }
+        ViewShape { shape: Some(view_shape::Shape::Rect(bx)), ..Default::default() }
     }
 
     pub fn new_round_rect(rect: view_shape::RoundRect) -> Self {
-        ViewShape { shape: Some(view_shape::Shape::RoundRect(rect)) }
+        ViewShape { shape: Some(view_shape::Shape::RoundRect(rect)), ..Default::default() }
     }
 
     pub fn new_path(path: view_shape::VectorPath) -> Self {
-        ViewShape { shape: Some(view_shape::Shape::Path(path)) }
+        ViewShape { shape: Some(view_shape::Shape::Path(path)), ..Default::default() }
     }
 
     pub fn new_arc(arc: view_shape::VectorArc) -> Self {
-        ViewShape { shape: Some(view_shape::Shape::Arc(arc)) }
+        ViewShape { shape: Some(view_shape::Shape::Arc(arc)), ..Default::default() }
     }
 
     pub fn new_vector_rect(rect: view_shape::VectorRect) -> Self {
-        ViewShape { shape: Some(view_shape::Shape::VectorRect(rect)) }
+        ViewShape { shape: Some(view_shape::Shape::VectorRect(rect)), ..Default::default() }
     }
 }
 
 impl FontStretch {
     /// Ultra-condensed width (50%), the narrowest possible.
-    pub const ULTRA_CONDENSED: FontStretch = FontStretch { value: 0.5 };
+    pub fn ultra_condensed() -> Self {
+        FontStretch { value: 0.5, ..Default::default() }
+    }
     /// Extra-condensed width (62.5%).
-    pub const EXTRA_CONDENSED: FontStretch = FontStretch { value: 0.625 };
+    pub fn extra_condensed() -> Self {
+        FontStretch { value: 0.625, ..Default::default() }
+    }
     /// Condensed width (75%).
-    pub const CONDENSED: FontStretch = FontStretch { value: 0.75 };
+    pub fn condensed() -> Self {
+        FontStretch { value: 0.75, ..Default::default() }
+    }
     /// Semi-condensed width (87.5%).
-    pub const SEMI_CONDENSED: FontStretch = FontStretch { value: 0.875 };
+    pub fn semi_condensed() -> Self {
+        FontStretch { value: 0.875, ..Default::default() }
+    }
     /// Normal width (100%).
-    pub const NORMAL: FontStretch = FontStretch { value: 1.0 };
+    pub fn normal() -> Self {
+        FontStretch { value: 1.0, ..Default::default() }
+    }
     /// Semi-expanded width (112.5%).
-    pub const SEMI_EXPANDED: FontStretch = FontStretch { value: 1.125 };
+    pub fn semi_expanded() -> Self {
+        FontStretch { value: 1.125, ..Default::default() }
+    }
     /// Expanded width (125%).
-    pub const EXPANDED: FontStretch = FontStretch { value: 1.25 };
+    pub fn expanded() -> Self {
+        FontStretch { value: 1.25, ..Default::default() }
+    }
     /// Extra-expanded width (150%).
-    pub const EXTRA_EXPANDED: FontStretch = FontStretch { value: 1.5 };
+    pub fn extra_expanded() -> Self {
+        FontStretch { value: 1.5, ..Default::default() }
+    }
     /// Ultra-expanded width (200%), the widest possible.
-    pub const ULTRA_EXPANDED: FontStretch = FontStretch { value: 2.0 };
+    pub fn ultra_expanded() -> Self {
+        FontStretch { value: 2.0, ..Default::default() }
+    }
 }
 
 impl Hash for FontStretch {
@@ -450,36 +503,58 @@ impl Hash for FontStretch {
 }
 
 impl NumOrVar {
-    pub const fn from_num(num: f32) -> Self {
-        NumOrVar { num_or_var_type: Some(NumOrVarType::Num(num)) }
+    pub fn from_num(num: f32) -> Self {
+        NumOrVar { NumOrVarType: Some(NumOrVarType::Num(num)), ..Default::default() }
     }
 }
 
 impl FontWeight {
-    pub fn new(num_or_var_type: NumOrVarType) -> Self {
-        FontWeight { weight: Some(NumOrVar { num_or_var_type: Some(num_or_var_type) }) }
+    pub fn new_with_num_or_var_type(num_or_var_type: NumOrVarType) -> Self {
+        FontWeight {
+            weight: Some(NumOrVar { NumOrVarType: Some(num_or_var_type), ..Default::default() })
+                .into(),
+            ..Default::default()
+        }
     }
 
-    pub const fn from_num(weight: f32) -> Self {
-        FontWeight { weight: Some(NumOrVar::from_num(weight)) }
+    pub fn from_num(weight: f32) -> Self {
+        FontWeight { weight: Some(NumOrVar::from_num(weight)).into(), ..Default::default() }
     }
 
     /// Thin weight (100), the thinnest value.
-    pub const THIN: FontWeight = FontWeight::from_num(100.0);
+    pub fn thin() -> Self {
+        FontWeight::from_num(100.0)
+    }
     /// Extra light weight (200).
-    pub const EXTRA_LIGHT: FontWeight = FontWeight::from_num(200.0);
+    pub fn extra_light() -> Self {
+        FontWeight::from_num(200.0)
+    }
     /// Light weight (300).
-    pub const LIGHT: FontWeight = FontWeight::from_num(300.0);
+    pub fn light() -> Self {
+        FontWeight::from_num(300.0)
+    }
     /// Normal (400).
-    pub const NORMAL: FontWeight = FontWeight::from_num(400.0);
+    pub fn normal() -> Self {
+        FontWeight::from_num(400.0)
+    }
     /// Medium weight (500, higher than normal).
-    pub const MEDIUM: FontWeight = FontWeight::from_num(500.0);
+    pub fn medium() -> Self {
+        FontWeight::from_num(500.0)
+    }
     /// Semibold weight (600).
-    pub const SEMIBOLD: FontWeight = FontWeight::from_num(600.0);
+    pub fn semibold() -> Self {
+        FontWeight::from_num(600.0)
+    }
     /// Bold weight (700).
-    pub const BOLD: FontWeight = FontWeight::from_num(700.0);
+    pub fn bold() -> Self {
+        FontWeight::from_num(700.0)
+    }
     /// Extra-bold weight (800).
-    pub const EXTRA_BOLD: FontWeight = FontWeight::from_num(800.0);
+    pub fn extra_bold() -> Self {
+        FontWeight::from_num(800.0)
+    }
     /// Black weight (900), the thickest value.
-    pub const BLACK: FontWeight = FontWeight::from_num(900.0);
+    pub fn black() -> Self {
+        FontWeight::from_num(900.0)
+    }
 }

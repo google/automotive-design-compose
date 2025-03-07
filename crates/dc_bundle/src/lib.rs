@@ -18,6 +18,9 @@ pub mod definition;
 pub mod definition_file;
 pub mod legacy_definition;
 
+// Include the generated proto module.
+include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
+
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Missing field {field}")]
@@ -28,8 +31,8 @@ pub enum Error {
     InvalidNodeQuery { query: String },
     #[error("IO Error")]
     IoError(#[from] std::io::Error),
-    #[error("Prost Decode error")]
-    DecodeError(#[from] prost::DecodeError),
+    #[error("Proto Decode error")]
+    DecodeError(),
     #[error("DesignComposeDefinition Load Error")]
     DCDLoadError(String),
 }

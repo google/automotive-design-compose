@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use crate::into_taffy::TryIntoTaffy;
-use dc_bundle::definition::element::DimensionRect;
+
+use dc_bundle::geometry::DimensionRect;
 use taffy::prelude::LengthPercentage;
 use taffy::prelude::{Dimension as TaffyDimension, LengthPercentageAuto};
 
@@ -24,10 +25,10 @@ impl TryIntoTaffy<taffy::prelude::Rect<TaffyDimension>> for &Option<DimensionRec
             .as_ref()
             .ok_or(dc_bundle::Error::MissingFieldError { field: "DimensionRect".to_string() })?;
         Ok(taffy::prelude::Rect {
-            left: (&rect.start).try_into_taffy()?,
-            right: (&rect.end).try_into_taffy()?,
-            top: (&rect.top).try_into_taffy()?,
-            bottom: (&rect.bottom).try_into_taffy()?,
+            left: (&rect.start.as_ref().cloned()).try_into_taffy()?,
+            right: (&rect.end.as_ref().cloned()).try_into_taffy()?,
+            top: (&rect.top.as_ref().cloned()).try_into_taffy()?,
+            bottom: (&rect.bottom.as_ref().cloned()).try_into_taffy()?,
         })
     }
 }
@@ -40,10 +41,10 @@ impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentage>> for &Option<DimensionR
             .ok_or(dc_bundle::Error::MissingFieldError { field: "DimensionRect".to_string() })?;
 
         Ok(taffy::prelude::Rect {
-            left: (&rect.start).try_into_taffy()?,
-            right: (&rect.end).try_into_taffy()?,
-            top: (&rect.top).try_into_taffy()?,
-            bottom: (&rect.bottom).try_into_taffy()?,
+            left: (&rect.start.as_ref().cloned()).try_into_taffy()?,
+            right: (&rect.end.as_ref().cloned()).try_into_taffy()?,
+            top: (&rect.top.as_ref().cloned()).try_into_taffy()?,
+            bottom: (&rect.bottom.as_ref().cloned()).try_into_taffy()?,
         })
     }
 }
@@ -56,10 +57,10 @@ impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentageAuto>> for &Option<Dimens
             .ok_or(dc_bundle::Error::MissingFieldError { field: "DimensionRect".to_string() })?;
 
         Ok(taffy::prelude::Rect {
-            left: (&rect.start).try_into_taffy()?,
-            right: (&rect.end).try_into_taffy()?,
-            top: (&rect.top).try_into_taffy()?,
-            bottom: (&rect.bottom).try_into_taffy()?,
+            left: (&rect.start.as_ref().cloned()).try_into_taffy()?,
+            right: (&rect.end.as_ref().cloned()).try_into_taffy()?,
+            top: (&rect.top.as_ref().cloned()).try_into_taffy()?,
+            bottom: (&rect.bottom.as_ref().cloned()).try_into_taffy()?,
         })
     }
 }

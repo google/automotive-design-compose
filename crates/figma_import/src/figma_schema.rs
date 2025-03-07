@@ -14,8 +14,7 @@
 
 use std::collections::HashMap;
 
-use dc_bundle::definition::element::Color;
-use dc_bundle::definition::element::FloatColor;
+use dc_bundle::color::{Color, FloatColor};
 use serde::{Deserialize, Serialize};
 
 // We use serde to decode Figma's JSON documents into Rust structures.
@@ -41,7 +40,7 @@ impl Into<Color> for &FigmaColor {
 
 impl Into<FloatColor> for &FigmaColor {
     fn into(self) -> FloatColor {
-        FloatColor { r: self.r, g: self.g, b: self.b, a: self.a }
+        FloatColor { r: self.r, g: self.g, b: self.b, a: self.a, ..Default::default() }
     }
 }
 
@@ -98,13 +97,14 @@ impl Rectangle {
 }
 
 // Generate an implementation of Into that converts this Rectangle to the one in dc_bundle
-impl Into<dc_bundle::definition::element::Rectangle> for &Rectangle {
-    fn into(self) -> dc_bundle::definition::element::Rectangle {
-        dc_bundle::definition::element::Rectangle {
+impl Into<dc_bundle::geometry::Rectangle> for &Rectangle {
+    fn into(self) -> dc_bundle::geometry::Rectangle {
+        dc_bundle::geometry::Rectangle {
             x: Some(self.x()),
             y: Some(self.y()),
             width: Some(self.width()),
             height: Some(self.height()),
+            ..Default::default()
         }
     }
 }
@@ -241,9 +241,9 @@ pub struct Hyperlink {
     pub node_id: String, // XXX: This is "nodeID" in Figma; we might not be deserializing ok...
 }
 
-impl Into<dc_bundle::definition::element::Hyperlink> for Hyperlink {
-    fn into(self) -> dc_bundle::definition::element::Hyperlink {
-        dc_bundle::definition::element::Hyperlink { value: self.url }
+impl Into<dc_bundle::font::Hyperlink> for Hyperlink {
+    fn into(self) -> dc_bundle::font::Hyperlink {
+        dc_bundle::font::Hyperlink { value: self.url, ..Default::default() }
     }
 }
 
@@ -265,9 +265,9 @@ impl Vector {
     }
 }
 
-impl Into<dc_bundle::definition::element::Vector> for Vector {
-    fn into(self) -> dc_bundle::definition::element::Vector {
-        dc_bundle::definition::element::Vector { x: self.x(), y: self.y() }
+impl Into<dc_bundle::geometry::Vector> for Vector {
+    fn into(self) -> dc_bundle::geometry::Vector {
+        dc_bundle::geometry::Vector { x: self.x(), y: self.y(), ..Default::default() }
     }
 }
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -289,12 +289,12 @@ pub enum WindingRule {
     None,
 }
 
-impl Into<dc_bundle::definition::element::path::WindingRule> for WindingRule {
-    fn into(self) -> dc_bundle::definition::element::path::WindingRule {
+impl Into<dc_bundle::path::path::WindingRule> for WindingRule {
+    fn into(self) -> dc_bundle::path::path::WindingRule {
         match self {
-            WindingRule::NonZero => dc_bundle::definition::element::path::WindingRule::NonZero,
-            WindingRule::EvenOdd => dc_bundle::definition::element::path::WindingRule::EvenOdd,
-            WindingRule::None => dc_bundle::definition::element::path::WindingRule::None,
+            WindingRule::NonZero => dc_bundle::path::path::WindingRule::WINDING_RULE_NON_ZERO,
+            WindingRule::EvenOdd => dc_bundle::path::path::WindingRule::WINDING_RULE_EVEN_ODD,
+            WindingRule::None => dc_bundle::path::path::WindingRule::WINDING_RULE_NONE,
         }
     }
 }
@@ -716,18 +716,18 @@ impl OverflowDirection {
     }
 }
 
-impl Into<dc_bundle::definition::layout::OverflowDirection> for OverflowDirection {
-    fn into(self) -> dc_bundle::definition::layout::OverflowDirection {
+impl Into<dc_bundle::positioning::OverflowDirection> for OverflowDirection {
+    fn into(self) -> dc_bundle::positioning::OverflowDirection {
         match self {
-            OverflowDirection::None => dc_bundle::definition::layout::OverflowDirection::None,
+            OverflowDirection::None => dc_bundle::positioning::OverflowDirection::OVERFLOW_DIRECTION_NONE,
             OverflowDirection::HorizontalScrolling => {
-                dc_bundle::definition::layout::OverflowDirection::HorizontalScrolling
+                dc_bundle::positioning::OverflowDirection::OVERFLOW_DIRECTION_HORIZONTAL_SCROLLING
             }
             OverflowDirection::VerticalScrolling => {
-                dc_bundle::definition::layout::OverflowDirection::VerticalScrolling
+                dc_bundle::positioning::OverflowDirection::OVERFLOW_DIRECTION_VERTICAL_SCROLLING
             }
             OverflowDirection::HorizontalAndVerticalScrolling => {
-                dc_bundle::definition::layout::OverflowDirection::HorizontalAndVerticalScrolling
+                dc_bundle::positioning::OverflowDirection::OVERFLOW_DIRECTION_HORIZONTAL_AND_VERTICAL_SCROLLING
             }
         }
     }
@@ -760,19 +760,19 @@ pub enum LayoutSizing {
     Hug,
     Fill,
 }
-impl Into<dc_bundle::definition::layout::LayoutSizing> for LayoutSizing {
-    fn into(self) -> dc_bundle::definition::layout::LayoutSizing {
+impl Into<dc_bundle::positioning::LayoutSizing> for LayoutSizing {
+    fn into(self) -> dc_bundle::positioning::LayoutSizing {
         match self {
-            LayoutSizing::Fixed => dc_bundle::definition::layout::LayoutSizing::Fixed,
-            LayoutSizing::Hug => dc_bundle::definition::layout::LayoutSizing::Hug,
-            LayoutSizing::Fill => dc_bundle::definition::layout::LayoutSizing::Fill,
+            LayoutSizing::Fixed => dc_bundle::positioning::LayoutSizing::LAYOUT_SIZING_FIXED,
+            LayoutSizing::Hug => dc_bundle::positioning::LayoutSizing::LAYOUT_SIZING_HUG,
+            LayoutSizing::Fill => dc_bundle::positioning::LayoutSizing::LAYOUT_SIZING_FILL,
         }
     }
 }
 impl LayoutSizing {
     pub fn into_proto_val(self) -> i32 {
-        let proto_type: dc_bundle::definition::layout::LayoutSizing = self.into();
-        proto_type.into()
+        let proto_type: dc_bundle::positioning::LayoutSizing = self.into();
+        protobuf::Enum::value(&proto_type)
     }
 }
 
@@ -884,23 +884,23 @@ fn default_stroke_cap() -> StrokeCap {
     StrokeCap::None
 }
 
-impl Into<dc_bundle::definition::element::view_shape::StrokeCap> for StrokeCap {
-    fn into(self) -> dc_bundle::definition::element::view_shape::StrokeCap {
+impl Into<dc_bundle::view_shape::view_shape::StrokeCap> for StrokeCap {
+    fn into(self) -> dc_bundle::view_shape::view_shape::StrokeCap {
         match self {
-            StrokeCap::None => dc_bundle::definition::element::view_shape::StrokeCap::None,
-            StrokeCap::Round => dc_bundle::definition::element::view_shape::StrokeCap::Round,
-            StrokeCap::Square => dc_bundle::definition::element::view_shape::StrokeCap::Square,
+            StrokeCap::None => dc_bundle::view_shape::view_shape::StrokeCap::STROKE_CAP_NONE,
+            StrokeCap::Round => dc_bundle::view_shape::view_shape::StrokeCap::STROKE_CAP_ROUND,
+            StrokeCap::Square => dc_bundle::view_shape::view_shape::StrokeCap::STROKE_CAP_SQUARE,
             StrokeCap::LineArrow => {
-                dc_bundle::definition::element::view_shape::StrokeCap::LineArrow
+                dc_bundle::view_shape::view_shape::StrokeCap::STROKE_CAP_LINE_ARROW
             }
             StrokeCap::TriangleArrow => {
-                dc_bundle::definition::element::view_shape::StrokeCap::TriangleArrow
+                dc_bundle::view_shape::view_shape::StrokeCap::STROKE_CAP_TRIANGLE_ARROW
             }
             StrokeCap::CircleFilled => {
-                dc_bundle::definition::element::view_shape::StrokeCap::CircleFilled
+                dc_bundle::view_shape::view_shape::StrokeCap::STROKE_CAP_CIRCLE_FILLED
             }
             StrokeCap::DiamondFilled => {
-                dc_bundle::definition::element::view_shape::StrokeCap::DiamondFilled
+                dc_bundle::view_shape::view_shape::StrokeCap::STROKE_CAP_DIAMOND_FILLED
             }
         }
     }
@@ -909,8 +909,8 @@ impl Into<dc_bundle::definition::element::view_shape::StrokeCap> for StrokeCap {
 impl StrokeCap {
     pub fn to_proto(&self) -> i32 {
         //Need to do in two steps because we need to convert to the proto-genned type and then to i32
-        let a: dc_bundle::definition::element::view_shape::StrokeCap = self.clone().into();
-        a.into()
+        let a: dc_bundle::view_shape::view_shape::StrokeCap = self.clone().into();
+        protobuf::Enum::value(&a)
     }
 }
 

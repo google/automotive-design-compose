@@ -12,29 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::error::Error;
-use std::path::Path;
+// use std::error::Error;
+// use std::path::Path;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let mut prost_config = prost_build::Config::new();
-    prost_config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+fn main() -> Result<(), ()> {
+    //     let mut prost_config = prost_build::Config::new();
+    //     prost_config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
 
-    // Some of the messages used here are compiled by another crate. This line configures the compiler
-    // to use the message from there, rather than compiling it's own copy of the message
-    prost_config.extern_path(
-        ".designcompose.definition.layout.LayoutStyle",
-        "dc_bundle::definition::layout::LayoutStyle",
-    );
+    //     // Some of the messages used here are compiled by another crate. This line configures the compiler
+    //     // to use the message from there, rather than compiling it's own copy of the message
+    //     prost_config.extern_path(
+    //         ".designcompose.definition.layout.LayoutStyle",
+    //         "dc_bundle::definition::layout::LayoutStyle",
+    //     );
 
-    let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .and_then(Path::parent)
-        .unwrap()
-        .join("proto");
+    //     let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+    //         .parent()
+    //         .and_then(Path::parent)
+    //         .unwrap()
+    //         .join("proto");
 
-    prost_config
-        .compile_protos(&[proto_path.join("layout_interface/jni_layout.proto")], &[&proto_path])?;
+    //     prost_config
+    //         .compile_protos(&[proto_path.join("layout_interface/jni_layout.proto")], &[&proto_path])?;
 
-    println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
+    //     println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
     Ok(())
 }

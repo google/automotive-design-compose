@@ -55,7 +55,7 @@ internal object SquooshLayout {
             Jni.jniAddNodes(manager.id, rootLayoutId, serializedNodes) ?: return emptyMap()
         val layoutChangedResponse =
             try {
-                LayoutChangedResponse.parseFrom(response)
+                LayoutChangedResponse.parseDelimitedFrom(response.inputStream())
             } catch (e: InvalidProtocolBufferException) {
                 Log.e("SquooshLayout", "Failed to parse layout changed response", e)
                 throw e

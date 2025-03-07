@@ -684,3 +684,212 @@ fn parse_frame_extras() {
         OverlayBackgroundInteractionJson::CloseOnClickOutside
     );
 }
+
+#[test]
+fn parse_reactions() {
+    use serde_json;
+    use serde_json::Result;
+
+    let multiple_json_text = r#"[{"action":{"type":"NODE","destinationId":"13:1","navigation":"NAVIGATE","transition":{"type":"SMART_ANIMATE","easing":{"type":"EASE_IN_AND_OUT"},"duration":0.6000000238418579},"preserveScrollPosition":false},"trigger":{"type":"ON_CLICK"}},{"action":{"type":"NODE","destinationId":"13:1","navigation":"OVERLAY","transition":{"type":"MOVE_IN","direction":"RIGHT","matchLayers":false,"easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_DRAG"}},{"action":{"type":"NODE","destinationId":"13:1","navigation":"SWAP","transition":{"type":"SMART_ANIMATE","easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_KEY_DOWN","keyCodes":[60]}}]"#;
+    let scroll_json_text = r#"[{"action":{"type":"NODE","destinationId":"241:2","navigation":"SCROLL_TO","transition":{"type":"SCROLL_ANIMATE","easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_HOVER"}}]"#;
+    let overlay_json_text = r#"[{"action":{"type":"NODE","destinationId":"222:27","navigation":"OVERLAY","transition":{"type":"MOVE_IN","direction":"TOP","matchLayers":false,"easing":{"type":"EASE_IN_AND_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_CLICK","keyCodes":[]}}]"#;
+
+    let maybe_multiple: Result<Vec<ReactionJson>> = serde_json::from_str(multiple_json_text);
+    let maybe_scroll: Result<Vec<ReactionJson>> = serde_json::from_str(scroll_json_text);
+    let maybe_overlay: Result<Vec<ReactionJson>> = serde_json::from_str(overlay_json_text);
+
+    let mut multiple_json = maybe_multiple.unwrap();
+    let mut scroll_json = maybe_scroll.unwrap();
+    let mut overlay_json = maybe_overlay.unwrap();
+
+    // We should check that `into` did what we expected it to do here.
+
+    let multiple: Vec<Reaction> =
+        multiple_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
+    let scroll: Vec<Reaction> =
+        scroll_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
+    let overlay: Vec<Reaction> =
+        overlay_json.drain(..).map(|json| Into::<Option<Reaction>>::into(json).unwrap()).collect();
+
+    // assert if the parsed objects have the correct properties
+    assert_eq!(multiple.len(), 3);
+    assert_eq!(scroll.len(), 1);
+    assert_eq!(overlay.len(), 1);
+
+    // Multiple assertions
+    assert_eq!(
+        multiple[0].action.as_ref().unwrap().action_type.as_ref().unwrap(),
+        &Action_type::Node(action::Node {
+            destination_id: Some("13:1".to_string()),
+            navigation: Navigation::NAVIGATION_NAVIGATE.into(),
+            transition: Some(Transition {
+                transition_type: Some(Transition_type::SmartAnimate(SmartAnimate {
+                    easing: Some(Easing {
+                        easing_type: Some(Easing_type::Bezier(Bezier {
+                            x1: 0.37,
+                            y1: 0.0,
+                            x2: 0.63,
+                            y2: 1.0,
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    })
+                    .into(),
+                    duration: 0.6000000238418579,
+                    ..Default::default()
+                })),
+                ..Default::default()
+            })
+            .into(),
+            preserve_scroll_position: false,
+            overlay_relative_position: None.into(),
+            ..Default::default()
+        })
+    );
+    assert_eq!(
+        multiple[0].trigger.as_ref().unwrap().trigger_type.as_ref().unwrap(),
+        &Trigger_type::Click(().into())
+    );
+
+    assert_eq!(
+        multiple[1].action.as_ref().unwrap().action_type.as_ref().unwrap(),
+        &Action_type::Node(action::Node {
+            destination_id: Some("13:1".to_string()),
+            navigation: Navigation::NAVIGATION_OVERLAY.into(),
+            transition: Some(Transition {
+                transition_type: Some(Transition_type::MoveIn(MoveIn {
+                    easing: Some(Easing {
+                        easing_type: Some(Easing_type::Bezier(Bezier {
+                            x1: 0.61,
+                            y1: 1.0,
+                            x2: 0.88,
+                            y2: 1.0,
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    })
+                    .into(),
+                    duration: 0.30000001192092896,
+                    direction: TransitionDirection::TRANSITION_DIRECTION_RIGHT.into(),
+                    match_layers: false,
+                    ..Default::default()
+                })),
+                ..Default::default()
+            })
+            .into(),
+            preserve_scroll_position: false,
+            overlay_relative_position: None.into(),
+            ..Default::default()
+        })
+    );
+    assert_eq!(
+        multiple[1].trigger.as_ref().unwrap().trigger_type.as_ref().unwrap(),
+        &Trigger_type::Drag(().into())
+    );
+
+    assert_eq!(
+        multiple[2].action.as_ref().unwrap().action_type.as_ref().unwrap(),
+        &Action_type::Node(action::Node {
+            destination_id: Some("13:1".to_string()),
+            navigation: Navigation::NAVIGATION_SWAP.into(),
+            transition: Some(Transition {
+                transition_type: Some(Transition_type::SmartAnimate(SmartAnimate {
+                    easing: Some(Easing {
+                        easing_type: Some(Easing_type::Bezier(Bezier {
+                            x1: 0.61,
+                            y1: 1.0,
+                            x2: 0.88,
+                            y2: 1.0,
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    })
+                    .into(),
+                    duration: 0.30000001192092896,
+                    ..Default::default()
+                })),
+                ..Default::default()
+            })
+            .into(),
+            preserve_scroll_position: false,
+            overlay_relative_position: None.into(),
+            ..Default::default()
+        })
+    );
+    assert_eq!(
+        multiple[2].trigger.as_ref().unwrap().trigger_type.as_ref().unwrap(),
+        &Trigger_type::KeyDown(KeyDown { key_codes: vec![60], ..Default::default() })
+    );
+
+    // Scroll assertions
+    assert_eq!(
+        scroll[0].action.as_ref().unwrap().action_type.as_ref().unwrap(),
+        &Action_type::Node(action::Node {
+            destination_id: Some("241:2".to_string()),
+            navigation: Navigation::NAVIGATION_SCROLL_TO.into(),
+            transition: Some(Transition {
+                transition_type: Some(Transition_type::ScrollAnimate(ScrollAnimate {
+                    easing: Some(Easing {
+                        easing_type: Some(Easing_type::Bezier(Bezier {
+                            x1: 0.61,
+                            y1: 1.0,
+                            x2: 0.88,
+                            y2: 1.0,
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    })
+                    .into(),
+                    duration: 0.30000001192092896,
+                    ..Default::default()
+                })),
+                ..Default::default()
+            })
+            .into(),
+            preserve_scroll_position: false,
+            overlay_relative_position: None.into(),
+            ..Default::default()
+        })
+    );
+    assert_eq!(
+        scroll[0].trigger.as_ref().unwrap().trigger_type.as_ref().unwrap(),
+        &Trigger_type::Hover(().into())
+    );
+
+    // Overlay assertions
+    assert_eq!(
+        overlay[0].action.as_ref().unwrap().action_type.as_ref().unwrap(),
+        &Action_type::Node(action::Node {
+            destination_id: Some("222:27".to_string()),
+            navigation: Navigation::NAVIGATION_OVERLAY.into(),
+            transition: Some(Transition {
+                transition_type: Some(Transition_type::MoveIn(MoveIn {
+                    easing: Some(Easing {
+                        easing_type: Some(Easing_type::Bezier(Bezier {
+                            x1: 0.37,
+                            y1: 0.0,
+                            x2: 0.63,
+                            y2: 1.0,
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    })
+                    .into(),
+                    duration: 0.30000001192092896,
+                    direction: TransitionDirection::TRANSITION_DIRECTION_TOP.into(),
+                    match_layers: false,
+                    ..Default::default()
+                })),
+                ..Default::default()
+            })
+            .into(),
+            preserve_scroll_position: false,
+            overlay_relative_position: None.into(),
+            ..Default::default()
+        })
+    );
+    assert_eq!(
+        overlay[0].trigger.as_ref().unwrap().trigger_type.as_ref().unwrap(),
+        &Trigger_type::Click(().into())
+    );
+}

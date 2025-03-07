@@ -32,12 +32,6 @@ impl From<crate::Error> for ConvertError {
         ConvertError(format!("Internal Server Error during Figma conversion: {:?}", e))
     }
 }
-impl From<bincode::Error> for ConvertError {
-    fn from(e: bincode::Error) -> Self {
-        eprintln!("Error during serialization: {:?}", e);
-        ConvertError(format!("Error during serialization: {:?}", e))
-    }
-}
 impl From<dc_bundle::Error> for ConvertError {
     fn from(e: dc_bundle::Error) -> Self {
         eprintln!("Error during serialization: {:?}", e);

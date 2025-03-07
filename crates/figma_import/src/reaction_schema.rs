@@ -216,18 +216,10 @@ impl Into<TransitionDirection> for TransitionDirectionJson {
             TransitionDirectionJson::Unspecified => {
                 TransitionDirection::TRANSITION_DIRECTION_UNSPECIFIED
             }
-            TransitionDirectionJson::Left => {
-                TransitionDirection::TRANSITION_DIRECTION_LEFT
-            }
-            TransitionDirectionJson::Right => {
-                TransitionDirection::TRANSITION_DIRECTION_RIGHT
-            }
-            TransitionDirectionJson::Top => {
-                TransitionDirection::TRANSITION_DIRECTION_TOP
-            }
-            TransitionDirectionJson::Bottom => {
-                TransitionDirection::TRANSITION_DIRECTION_BOTTOM
-            }
+            TransitionDirectionJson::Left => TransitionDirection::TRANSITION_DIRECTION_LEFT,
+            TransitionDirectionJson::Right => TransitionDirection::TRANSITION_DIRECTION_RIGHT,
+            TransitionDirectionJson::Top => TransitionDirection::TRANSITION_DIRECTION_TOP,
+            TransitionDirectionJson::Bottom => TransitionDirection::TRANSITION_DIRECTION_BOTTOM,
         }
     }
 }
@@ -644,54 +636,6 @@ impl Into<FrameExtras> for FrameExtrasJson {
 }
 
 #[test]
-fn parse_reactions() {
-    use serde_json;
-    use serde_json::Result;
-
-    let multiple_json_text = r#"[{"action":{"type":"NODE","destinationId":"13:1","navigation":"NAVIGATE","transition":{"type":"SMART_ANIMATE","easing":{"type":"EASE_IN_AND_OUT"},"duration":0.6000000238418579},"preserveScrollPosition":false},"trigger":{"type":"ON_CLICK"}},{"action":{"type":"NODE","destinationId":"13:1","navigation":"OVERLAY","transition":{"type":"MOVE_IN","direction":"RIGHT","matchLayers":false,"easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_DRAG"}},{"action":{"type":"NODE","destinationId":"13:1","navigation":"SWAP","transition":{"type":"SMART_ANIMATE","easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_KEY_DOWN","keyCodes":[60]}}]"#;
-    let scroll_json_text = r#"[{"action":{"type":"NODE","destinationId":"241:2","navigation":"SCROLL_TO","transition":{"type":"SCROLL_ANIMATE","easing":{"type":"EASE_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_HOVER"}}]"#;
-    let overlay_json_text = r#"[{"action":{"type":"NODE","destinationId":"222:27","navigation":"OVERLAY","transition":{"type":"MOVE_IN","direction":"TOP","matchLayers":false,"easing":{"type":"EASE_IN_AND_OUT"},"duration":0.30000001192092896},"preserveScrollPosition":false},"trigger":{"type":"ON_CLICK","keyCodes":[]}}]"#;
-    let maybe_multiple: Result<Vec<ReactionJson>> = serde_json::from_str(multiple_json_text);
-    let maybe_scroll: Result<Vec<ReactionJson>> = serde_json::from_str(scroll_json_text);
-    let maybe_overlay: Result<Vec<ReactionJson>> = serde_json::from_str(overlay_json_text);
-
-    let mut multiple_json = maybe_multiple.unwrap();
-    let mut scroll_json = maybe_scroll.unwrap();
-    let mut overlay_json = maybe_overlay.unwrap();
-
-    // We should check that `into` did what we expected it to do here.
-
-    let multiple: Vec<ReactionJson> = multiple_json
-        .drain(..)
-        .map(|json| Into::<Option<ReactionJson>>::into(json).unwrap())
-        .collect();
-    let scroll: Vec<ReactionJson> = scroll_json
-        .drain(..)
-        .map(|json| Into::<Option<ReactionJson>>::into(json).unwrap())
-        .collect();
-    let overlay: Vec<ReactionJson> = overlay_json
-        .drain(..)
-        .map(|json| Into::<Option<ReactionJson>>::into(json).unwrap())
-        .collect();
-
-    let aaa = bincode::serialize(&multiple).unwrap();
-    println!("### Serialized to {}", aaa.len());
-    let bbb: Vec<ReactionJson> = bincode::deserialize(aaa.as_slice()).unwrap();
-
-    let bincoded_multiple: Vec<ReactionJson> =
-        bincode::deserialize(bincode::serialize(&multiple).unwrap().as_slice()).unwrap();
-    let bincoded_scroll: Vec<ReactionJson> =
-        bincode::deserialize(bincode::serialize(&scroll).unwrap().as_slice()).unwrap();
-    let bincoded_overlay: Vec<ReactionJson> =
-        bincode::deserialize(bincode::serialize(&overlay).unwrap().as_slice()).unwrap();
-
-    // Check that bincode didn't encounter any problems with the serialization & deserialization.
-    assert_eq!(multiple, bincoded_multiple);
-    assert_eq!(scroll, bincoded_scroll);
-    assert_eq!(overlay, bincoded_overlay);
-}
-
-#[test]
 fn parse_frame_extras() {
     use serde_json;
 
@@ -738,11 +682,5 @@ fn parse_frame_extras() {
     assert_eq!(
         click_to_close.overlay_background_interaction,
         OverlayBackgroundInteractionJson::CloseOnClickOutside
-    );
-
-    assert_eq!(def, bincode::deserialize(bincode::serialize(&def).unwrap().as_slice()).unwrap());
-    assert_eq!(
-        click_to_close,
-        bincode::deserialize(bincode::serialize(&click_to_close).unwrap().as_slice()).unwrap()
     );
 }

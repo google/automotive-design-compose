@@ -31,7 +31,6 @@ use crate::Error;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use crate::geometry::dimension_proto::Dimension::{Auto, Points, Undefined};
 
 impl Display for FontStyle {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {

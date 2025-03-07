@@ -51,4 +51,3 @@ pub use dc_bundle::definition::NodeQuery;
 pub use dc_bundle::definition_file::load_design_def;
 pub use dc_bundle::definition_file::save_design_def;
 pub use dc_bundle::view::{View, ViewData};
-pub use design_definition::load_design_def_header_v0;

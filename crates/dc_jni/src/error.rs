@@ -25,8 +25,6 @@ pub enum Error {
     MissingFieldError(#[from] dc_bundle::Error),
     #[error("Json Serialization Error")]
     JsonError(#[from] serde_json::Error),
-    #[error("Serialization Error")]
-    BincodeError(#[from] bincode::Error),
     #[error("Figma_import Error")]
     FigmaImportError(#[from] figma_import::Error),
     #[error("JNI Error")]

@@ -21,20 +21,10 @@
 // or
 // `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
-use crate::design_definition::load_design_def_header_v0;
 use clap::Parser;
 use dc_bundle::definition_file::load_design_def;
 use dc_bundle::legacy_definition::DesignComposeDefinitionHeaderV0;
 
-#[derive(Debug)]
-#[allow(dead_code)]
-pub struct ParseError(String);
-impl From<bincode::Error> for ParseError {
-    fn from(e: bincode::Error) -> Self {
-        eprintln!("Error during deserialization: {:?}", e);
-        ParseError(format!("Error during deserialization: {:?}", e))
-    }
-}
 impl From<std::io::Error> for ParseError {
     fn from(e: std::io::Error) -> Self {
         eprintln!("Error opening file: {:?}", e);
@@ -65,18 +55,6 @@ pub struct Args {
 pub fn dcf_info(args: Args) -> Result<(), ParseError> {
     let file_path = &args.dcf_file;
     let node = args.node;
-
-    // First attempt to load the old dcf format. If too old, print truncated info.
-    let header_v0 = load_design_def_header_v0(file_path)?;
-    if header_v0.version <= DesignComposeDefinitionHeaderV0::max_version() {
-        println!("Deserialized file");
-        println!("  DC Version: {}", header_v0.version);
-        println!(
-            "DCF files with versions <= {} do not have additional header info",
-            DesignComposeDefinitionHeaderV0::max_version()
-        );
-        return Ok(());
-    }
 
     let (header, doc) = load_design_def(file_path)?;
 

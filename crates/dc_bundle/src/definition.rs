@@ -29,7 +29,7 @@ pub mod modifier;
 pub mod view;
 
 // LINT.IfChange
-pub static CURRENT_VERSION: u32 = 26;
+pub static CURRENT_VERSION: u32 = 27;
 // Lint.ThenChange(common/src/main/java/com/android/designcompose/common/DCDVersion.kt)
 
 impl DesignComposeDefinitionHeader {

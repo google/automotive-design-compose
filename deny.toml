@@ -124,7 +124,7 @@ exceptions = [
     # Each entry is the crate and version constraint, and its specific allow
     # list
     #{ allow = ["Zlib"], name = "adler32", version = "*" },
-    { name = "protobuf", version = "3.7.1", reason = "Required for Rust code generation, but currently there is a security issue https://rustsec.org/advisories/RUSTSEC-2024-0437" }
+    { allow = ["MIT"], name = "protobuf", version = "3.7.1", reason = "Required for Rust code generation, but currently there is a security issue https://rustsec.org/advisories/RUSTSEC-2024-0437" }
 ]
 
 # Some crates don't have (easily) machine readable licensing information,

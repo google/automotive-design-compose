@@ -31,6 +31,7 @@ use crate::Error;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use crate::geometry::dimension_proto::Dimension::{Auto, Points, Undefined};
 
 impl Display for FontStyle {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
@@ -260,6 +261,15 @@ impl DimensionExt for Option<DimensionProto> {
 }
 
 impl DimensionRect {
+    pub fn new_with_default_value() -> Self {
+        DimensionRect {
+            start: DimensionProto::new_undefined(),
+            end: DimensionProto::new_undefined(),
+            top: DimensionProto::new_undefined(),
+            bottom: DimensionProto::new_undefined(),
+            ..Default::default()
+        }
+    }
     // Sets the value of start to the given DimensionView value
     pub fn set_start(&mut self, start: Dimension) {
         self.start = Some(DimensionProto { Dimension: Some(start), ..Default::default() }).into();

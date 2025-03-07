@@ -36,8 +36,8 @@ impl LayoutStyle {
 
     pub(crate) fn new_default() -> LayoutStyle {
         LayoutStyle {
-            margin: Some(DimensionRect::new()).into(),
-            padding: Some(DimensionRect::new()).into(),
+            margin: Some(DimensionRect::new_with_default_value()).into(),
+            padding: Some(DimensionRect::new_with_default_value()).into(),
             item_spacing: ItemSpacing::new_default().into(),
             top: DimensionProto::new_undefined(),
             left: DimensionProto::new_undefined(),

@@ -25,6 +25,7 @@ use clap::Parser;
 use dc_bundle::definition_file::load_design_def;
 use std::fs::File;
 use std::io::Read;
+use std::mem;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -83,10 +84,10 @@ pub fn dcf_info(args: Args) -> Result<(), ParseError> {
     } else {
         // If loading failed, try to read just the first byte to determine the DC version
         let mut document_file = File::open(&file_path)?;
-        let mut buffer = [0; 1]; // Create a 1-byte buffer to fit an integer
-        document_file.read_exact(&mut buffer)?; // Read exactly 1 byte into the buffer
+        let mut buffer = [0; mem::size_of::<u32>()]; // Create a byte buffer to fit an integer
+        document_file.read_exact(&mut buffer)?; // Read exactly the number of bytes for an integer into the buffer
 
-        let version = buffer[0];
+        let version = u32::from_le_bytes(buffer);
         if version < 27 {
             println!("DC Version: {}", version);
             println!("DCF files version < 27 do not have additional information to parse.");

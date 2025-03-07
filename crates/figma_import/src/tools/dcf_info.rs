@@ -23,7 +23,12 @@
 
 use clap::Parser;
 use dc_bundle::definition_file::load_design_def;
-use dc_bundle::legacy_definition::DesignComposeDefinitionHeaderV0;
+use std::fs::File;
+use std::io::Read;
+
+#[derive(Debug)]
+#[allow(dead_code)]
+pub struct ParseError(String);
 
 impl From<std::io::Error> for ParseError {
     fn from(e: std::io::Error) -> Self {
@@ -56,23 +61,37 @@ pub fn dcf_info(args: Args) -> Result<(), ParseError> {
     let file_path = &args.dcf_file;
     let node = args.node;
 
-    let (header, doc) = load_design_def(file_path)?;
+    let load_result = load_design_def(file_path);
+    if let Ok((header, doc)) = load_result {
+        println!("Deserialized file");
+        println!("  DC Version: {}", header.dc_version);
+        println!("  Doc ID: {}", header.id);
+        println!("  Figma Version: {}", header.response_version);
+        println!("  Name: {}", header.name);
+        println!("  Last Modified: {}", header.last_modified);
 
-    println!("Deserialized file");
-    println!("  DC Version: {}", header.dc_version);
-    println!("  Doc ID: {}", header.id);
-    println!("  Figma Version: {}", header.response_version);
-    println!("  Name: {}", header.name);
-    println!("  Last Modified: {}", header.last_modified);
+        if let Some(node) = node {
+            println!("Dumping file from node: {}:", node);
+            if let Some(view) = doc.views.get(&crate::NodeQuery::name(&node).encode()) {
+                // NOTE: uses format and Debug implementation to pretty print the node and all children.
+                // See: https://doc.rust-lang.org/std/fmt/#usage
+                println!("{:#?}", view);
+            } else {
+                return Err(ParseError(format!("Node: {} not found in document.", node)));
+            }
+        }
+    } else {
+        // If loading failed, try to read just the first byte to determine the DC version
+        let mut document_file = File::open(&file_path)?;
+        let mut buffer = [0; 1]; // Create a 1-byte buffer to fit an integer
+        document_file.read_exact(&mut buffer)?; // Read exactly 1 byte into the buffer
 
-    if let Some(node) = node {
-        println!("Dumping file from node: {}:", node);
-        if let Some(view) = doc.views.get(&crate::NodeQuery::name(&node).encode()) {
-            // NOTE: uses format and Debug implementation to pretty print the node and all children.
-            // See: https://doc.rust-lang.org/std/fmt/#usage
-            println!("{:#?}", view);
+        let version = buffer[0];
+        if version < 27 {
+            println!("DC Version: {}", version);
+            println!("DCF files version < 27 do not have additional information to parse.");
         } else {
-            return Err(ParseError(format!("Node: {} not found in document.", node)));
+            println!("Failed to load file {:?}", file_path);
         }
     }
 

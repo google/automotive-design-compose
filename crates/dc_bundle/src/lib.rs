@@ -16,7 +16,6 @@ use thiserror::Error;
 
 pub mod definition;
 pub mod definition_file;
-pub mod legacy_definition;
 
 // Include the generated proto module.
 include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));

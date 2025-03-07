@@ -15,13 +15,13 @@
 use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use dc_bundle::definition::element::dimension_proto::Dimension;
-use dc_bundle::definition::element::DimensionProto;
-use dc_bundle::definition::layout::LayoutSizing;
-use dc_bundle::definition::view::view_data::ViewDataType;
-use dc_bundle::definition::view::view_data::ViewDataType::{Container, Text};
-use dc_bundle::definition::view::{view_data, View};
-use dc_bundle::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader, NodeQuery};
+use dc_bundle::geometry::dimension_proto::Dimension;
+use dc_bundle::geometry::DimensionProto;
+use dc_bundle::positioning::LayoutSizing;
+use dc_bundle::view::view_data::View_data_type;
+use dc_bundle::view::{View, view_data};
+use dc_bundle::design_compose_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+use dc_bundle::definition::NodeQuery;
 use dc_bundle::definition_file::save_design_def;
 use layout::LayoutManager;
 use std::collections::HashMap;
@@ -132,14 +132,14 @@ fn test_layout(
     println!("test_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
     let my_id: i32 = id.clone();
     *id = *id + 1;
-    let data: &ViewDataType = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
-    if let Text { .. } = data {
+    let data: &View_data_type = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
+    if let View_data_type::Text { .. } = data {
         let mut use_measure_func = false;
-        if let Dimension::Auto(()) = view.style().layout_style().width.unwrap().dimension.unwrap() {
-            if let Dimension::Auto(()) =
-                view.style().layout_style().height.unwrap().dimension.unwrap()
+        if let Dimension::Auto(_) = view.style().layout_style().width.clone().unwrap().Dimension.unwrap() {
+            if let Dimension::Auto(_) =
+                view.style().layout_style().height.clone().unwrap().Dimension.unwrap()
             {
-                if view.style().node_style().horizontal_sizing == i32::from(LayoutSizing::Fill) {
+                if view.style().node_style().horizontal_sizing == LayoutSizing::LAYOUT_SIZING_FILL.into() {
                     use_measure_func = true;
                 }
             }
@@ -178,7 +178,7 @@ fn test_layout(
                 )
                 .expect("Failed to add style");
         }
-    } else if let Container { 0: view_data::Container { shape: _, children } } = data {
+    } else if let View_data_type::Container { 0: view_data::Container { shape: _, children, .. } } = data {
         if view.name.starts_with("#Replacement") {
             let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
             if let Some(square) = square {
@@ -278,7 +278,7 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
     let variable_map = doc.build_variable_map();
 
     // Build the serializable doc structure
-    let definition = DesignComposeDefinition::new(
+    let definition = DesignComposeDefinition::new_with_details(
         views,
         doc.encoded_image_map(),
         doc.component_sets().clone(),

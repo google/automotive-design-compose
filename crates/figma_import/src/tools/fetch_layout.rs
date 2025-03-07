@@ -15,14 +15,16 @@
 use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
+use dc_bundle::definition::NodeQuery;
+use dc_bundle::definition_file::save_design_def;
+use dc_bundle::design_compose_definition::{
+    DesignComposeDefinition, DesignComposeDefinitionHeader,
+};
 use dc_bundle::geometry::dimension_proto::Dimension;
 use dc_bundle::geometry::DimensionProto;
 use dc_bundle::positioning::LayoutSizing;
 use dc_bundle::view::view_data::View_data_type;
-use dc_bundle::view::{View, view_data};
-use dc_bundle::design_compose_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
-use dc_bundle::definition::NodeQuery;
-use dc_bundle::definition_file::save_design_def;
+use dc_bundle::view::{view_data, View};
 use layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;
@@ -135,11 +137,15 @@ fn test_layout(
     let data: &View_data_type = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
     if let View_data_type::Text { .. } = data {
         let mut use_measure_func = false;
-        if let Dimension::Auto(_) = view.style().layout_style().width.clone().unwrap().Dimension.unwrap() {
+        if let Dimension::Auto(_) =
+            view.style().layout_style().width.clone().unwrap().Dimension.unwrap()
+        {
             if let Dimension::Auto(_) =
                 view.style().layout_style().height.clone().unwrap().Dimension.unwrap()
             {
-                if view.style().node_style().horizontal_sizing == LayoutSizing::LAYOUT_SIZING_FILL.into() {
+                if view.style().node_style().horizontal_sizing
+                    == LayoutSizing::LAYOUT_SIZING_FILL.into()
+                {
                     use_measure_func = true;
                 }
             }
@@ -178,7 +184,9 @@ fn test_layout(
                 )
                 .expect("Failed to add style");
         }
-    } else if let View_data_type::Container { 0: view_data::Container { shape: _, children, .. } } = data {
+    } else if let View_data_type::Container { 0: view_data::Container { shape: _, children, .. } } =
+        data
+    {
         if view.name.starts_with("#Replacement") {
             let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
             if let Some(square) = square {

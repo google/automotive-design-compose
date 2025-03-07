@@ -201,36 +201,31 @@ impl Into<Easing> for EasingJson {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, Serialize, Deserialize)]
-// @@protoc_insertion_point(enum:designcompose.definition.interaction.Transition.TransitionDirection)
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum TransitionDirectionJson {
-    // @@protoc_insertion_point(enum_value:designcompose.definition.interaction.Transition.TransitionDirection.TRANSITION_DIRECTION_UNSPECIFIED)
-    TRANSITION_DIRECTION_UNSPECIFIED = 0,
-    // @@protoc_insertion_point(enum_value:designcompose.definition.interaction.Transition.TransitionDirection.TRANSITION_DIRECTION_LEFT)
-    TRANSITION_DIRECTION_LEFT = 1,
-    // @@protoc_insertion_point(enum_value:designcompose.definition.interaction.Transition.TransitionDirection.TRANSITION_DIRECTION_RIGHT)
-    TRANSITION_DIRECTION_RIGHT = 2,
-    // @@protoc_insertion_point(enum_value:designcompose.definition.interaction.Transition.TransitionDirection.TRANSITION_DIRECTION_TOP)
-    TRANSITION_DIRECTION_TOP = 3,
-    // @@protoc_insertion_point(enum_value:designcompose.definition.interaction.Transition.TransitionDirection.TRANSITION_DIRECTION_BOTTOM)
-    TRANSITION_DIRECTION_BOTTOM = 4,
+    Unspecified = 0,
+    Left = 1,
+    Right = 2,
+    Top = 3,
+    Bottom = 4,
 }
 
 impl Into<TransitionDirection> for TransitionDirectionJson {
     fn into(self) -> TransitionDirection {
         match self {
-            TransitionDirectionJson::TRANSITION_DIRECTION_UNSPECIFIED => {
+            TransitionDirectionJson::Unspecified => {
                 TransitionDirection::TRANSITION_DIRECTION_UNSPECIFIED
             }
-            TransitionDirectionJson::TRANSITION_DIRECTION_LEFT => {
+            TransitionDirectionJson::Left => {
                 TransitionDirection::TRANSITION_DIRECTION_LEFT
             }
-            TransitionDirectionJson::TRANSITION_DIRECTION_RIGHT => {
+            TransitionDirectionJson::Right => {
                 TransitionDirection::TRANSITION_DIRECTION_RIGHT
             }
-            TransitionDirectionJson::TRANSITION_DIRECTION_TOP => {
+            TransitionDirectionJson::Top => {
                 TransitionDirection::TRANSITION_DIRECTION_TOP
             }
-            TransitionDirectionJson::TRANSITION_DIRECTION_BOTTOM => {
+            TransitionDirectionJson::Bottom => {
                 TransitionDirection::TRANSITION_DIRECTION_BOTTOM
             }
         }
@@ -365,29 +360,28 @@ impl Into<Transition_type> for TransitionJson {
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum NavigationJson {
-    NavigationUnspecified,
-    NavigationNavigate,
-    NavigationSwap,
-    NavigationOverlay,
-    NavigationScrollTo,
-    NavigationChangeTo,
+    Unspecified,
+    Navigate,
+    Swap,
+    Overlay,
+    ScrollTo,
+    ChangeTo,
 }
 
 impl Into<Navigation> for NavigationJson {
     fn into(self) -> Navigation {
         match self {
-            NavigationJson::NavigationUnspecified => Navigation::NAVIGATION_UNSPECIFIED,
-            NavigationJson::NavigationNavigate => Navigation::NAVIGATION_NAVIGATE,
-            NavigationJson::NavigationSwap => Navigation::NAVIGATION_SWAP,
-            NavigationJson::NavigationOverlay => Navigation::NAVIGATION_OVERLAY,
-            NavigationJson::NavigationScrollTo => Navigation::NAVIGATION_SCROLL_TO,
-            NavigationJson::NavigationChangeTo => Navigation::NAVIGATION_CHANGE_TO,
+            NavigationJson::Unspecified => Navigation::NAVIGATION_UNSPECIFIED,
+            NavigationJson::Navigate => Navigation::NAVIGATION_NAVIGATE,
+            NavigationJson::Swap => Navigation::NAVIGATION_SWAP,
+            NavigationJson::Overlay => Navigation::NAVIGATION_OVERLAY,
+            NavigationJson::ScrollTo => Navigation::NAVIGATION_SCROLL_TO,
+            NavigationJson::ChangeTo => Navigation::NAVIGATION_CHANGE_TO,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct VectorJson {
     pub x: f32,
     pub y: f32,
@@ -679,6 +673,10 @@ fn parse_reactions() {
         .drain(..)
         .map(|json| Into::<Option<ReactionJson>>::into(json).unwrap())
         .collect();
+
+    let aaa = bincode::serialize(&multiple).unwrap();
+    println!("### Serialized to {}", aaa.len());
+    let bbb: Vec<ReactionJson> = bincode::deserialize(aaa.as_slice()).unwrap();
 
     let bincoded_multiple: Vec<ReactionJson> =
         bincode::deserialize(bincode::serialize(&multiple).unwrap().as_slice()).unwrap();

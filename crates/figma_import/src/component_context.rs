@@ -13,9 +13,10 @@
 // limitations under the License.
 
 use crate::figma_schema;
-use dc_bundle::definition::interaction::action::ActionType;
-use dc_bundle::definition::interaction::Reaction;
-use dc_bundle::definition::NodeQuery;
+use dc_bundle::{
+    definition::NodeQuery,
+    reaction::{action::Action_type, Reaction},
+};
 use std::collections::{HashMap, HashSet};
 
 /// ComponentContext is created by Document, and is used to ensure that all dependent nodes and
@@ -54,7 +55,7 @@ impl ComponentContext {
         for reaction in reactions {
             // Some actions (like Back and Close) don't have a destination ID, so we don't do
             // anything with those.
-            if let Some(ActionType::Node(node)) =
+            if let Some(Action_type::Node(node)) =
                 reaction.action.as_ref().and_then(|a| a.action_type.as_ref())
             {
                 if let Some(destination_node_id) = &node.destination_id {

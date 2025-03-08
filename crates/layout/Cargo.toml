@@ -16,8 +16,5 @@ log.workspace = true
 android_logger.workspace = true
 serde.workspace = true
 taffy.workspace = true
-prost.workspace = true
+protobuf.workspace = true
 thiserror.workspace = true
-
-[build-dependencies]
-prost-build.workspace = true

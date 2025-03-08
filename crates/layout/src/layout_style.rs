@@ -12,57 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use dc_bundle::layout_style::LayoutStyle;
+
 use crate::into_taffy::TryIntoTaffy;
-use dc_bundle::definition::element::DimensionExt;
-use dc_bundle::definition::layout::LayoutStyle;
 
 impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
     type Error = dc_bundle::Error;
     fn try_into_taffy(self) -> Result<taffy::prelude::Style, Self::Error> {
         let mut tstyle = taffy::prelude::Style::default();
 
-        tstyle.padding = (&self.padding).try_into_taffy()?;
+        tstyle.padding = (&self.padding.as_ref().cloned()).try_into_taffy()?;
 
         tstyle.flex_grow = self.flex_grow;
         tstyle.flex_shrink = self.flex_shrink;
-        tstyle.flex_basis = (&self.flex_basis).try_into_taffy()?;
-        tstyle.gap.width = (&self.item_spacing).try_into_taffy()?;
-        tstyle.gap.height = (&self.item_spacing).try_into_taffy()?;
+        tstyle.flex_basis = (&self.flex_basis.as_ref().cloned()).try_into_taffy()?;
+        tstyle.gap.width = (&self.item_spacing.as_ref().cloned()).try_into_taffy()?;
+        tstyle.gap.height = (&self.item_spacing.as_ref().cloned()).try_into_taffy()?;
 
-        tstyle.align_content = Some(self.align_content().try_into_taffy()?);
-        tstyle.justify_content = Some(self.justify_content().try_into_taffy()?);
-        tstyle.align_items = Some(self.align_items().try_into_taffy()?);
-        tstyle.flex_direction = self.flex_direction().try_into_taffy()?;
-        tstyle.align_self = self.align_self().try_into_taffy()?;
+        tstyle.align_content = Some(self.align_content.enum_value_or_default().try_into_taffy()?);
+        tstyle.justify_content =
+            Some(self.justify_content.enum_value_or_default().try_into_taffy()?);
+        tstyle.align_items = Some(self.align_items.enum_value_or_default().try_into_taffy()?);
+        tstyle.flex_direction = self.flex_direction.enum_value_or_default().try_into_taffy()?;
+        tstyle.align_self = self.align_self.enum_value_or_default().try_into_taffy()?;
 
-        tstyle.size.width = (&self.width).try_into_taffy()?;
-        tstyle.size.height = (&self.height).try_into_taffy()?;
-        tstyle.min_size.width = (&self.min_width).try_into_taffy()?;
-        tstyle.min_size.height = (&self.min_height).try_into_taffy()?;
-        tstyle.max_size.width = (&self.max_width).try_into_taffy()?;
-        tstyle.max_size.height = (&self.max_height).try_into_taffy()?;
+        tstyle.size.width = (&self.width.as_ref().cloned()).try_into_taffy()?;
+        tstyle.size.height = (&self.height.as_ref().cloned()).try_into_taffy()?;
+        tstyle.min_size.width = (&self.min_width.as_ref().cloned()).try_into_taffy()?;
+        tstyle.min_size.height = (&self.min_height.as_ref().cloned()).try_into_taffy()?;
+        tstyle.max_size.width = (&self.max_width.as_ref().cloned()).try_into_taffy()?;
+        tstyle.max_size.height = (&self.max_height.as_ref().cloned()).try_into_taffy()?;
 
         // If we have a fixed size, use the bounding box since that takes into
         // account scale and rotation, and disregard min/max sizes.
         // TODO support this with non-fixed sizes also!
-        if self.width.is_points()? {
+        if self.width.has_points() {
             tstyle.size.width = taffy::prelude::Dimension::Length(self.bounding_box()?.width);
             tstyle.min_size.width = taffy::prelude::Dimension::Auto;
             tstyle.max_size.width = taffy::prelude::Dimension::Auto;
         }
-        if self.height.is_points()? {
+        if self.height.has_points() {
             tstyle.size.height = taffy::prelude::Dimension::Length(self.bounding_box()?.height);
             tstyle.min_size.height = taffy::prelude::Dimension::Auto;
             tstyle.max_size.height = taffy::prelude::Dimension::Auto;
         }
 
-        tstyle.position = self.position_type().try_into_taffy()?;
-        tstyle.inset.left = (&self.left).try_into_taffy()?;
-        tstyle.inset.right = (&self.right).try_into_taffy()?;
-        tstyle.inset.top = (&self.top).try_into_taffy()?;
-        tstyle.inset.bottom = (&self.bottom).try_into_taffy()?;
+        tstyle.position = self.position_type.enum_value_or_default().try_into_taffy()?;
+        tstyle.inset.left = (&self.left.as_ref().cloned()).try_into_taffy()?;
+        tstyle.inset.right = (&self.right.as_ref().cloned()).try_into_taffy()?;
+        tstyle.inset.top = (&self.top.as_ref().cloned()).try_into_taffy()?;
+        tstyle.inset.bottom = (&self.bottom.as_ref().cloned()).try_into_taffy()?;
 
-        tstyle.margin = (&self.margin).try_into_taffy()?;
+        tstyle.margin = (&self.margin.as_ref().cloned()).try_into_taffy()?;
 
         tstyle.display = taffy::prelude::Display::Flex;
 

@@ -15,12 +15,14 @@
  */
 use crate::figma_schema::FigmaColor;
 use crate::image_context::ImageContext;
-use dc_bundle::definition::element::shader_uniform_value::ValueType::{
+use dc_bundle::color::Color;
+use dc_bundle::shader::shader_uniform_value::Value_type::{
     FloatColorValue, FloatValue, FloatVecValue, ImageRefValue, IntValue, IntVecValue,
 };
-use dc_bundle::definition::element::shader_uniform_value::{FloatVec, ImageRef, IntVec};
-use dc_bundle::definition::element::{Color, ShaderData, ShaderUniform, ShaderUniformValue};
+use dc_bundle::shader::shader_uniform_value::{FloatVec, ImageRef, IntVec};
+use dc_bundle::shader::{ShaderData, ShaderUniform, ShaderUniformValue};
 use log::error;
+use protobuf::MessageField;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -37,15 +39,21 @@ impl ShaderDataJson {
     pub fn into_shader_data(self, images: &mut ImageContext) -> Option<ShaderData> {
         return if let Some(shader) = self.shader {
             // Shader fallback color is the color used when shader isn't supported on lower sdks.
-            let shader_fallback_color: Option<Color> =
-                self.shader_fallback_color.as_ref().map(|figma_color| figma_color.into());
+            let shader_fallback_color: MessageField<Color> =
+                self.shader_fallback_color.as_ref().map(|figma_color| figma_color.into()).into();
+            //let aaa: MessageField<Color> = MessageField::<Color>::from_option(shader_fallback_color);
             // Shader uniforms: float, float array, color and color with alpha
             let shader_uniforms: HashMap<String, ShaderUniform> = self
                 .shader_uniforms
                 .into_iter()
                 .map(|json| json.into_shader_uniform(images))
                 .collect();
-            Some(ShaderData { shader, shader_fallback_color, shader_uniforms })
+            Some(ShaderData {
+                shader,
+                shader_fallback_color,
+                shader_uniforms,
+                ..Default::default()
+            })
         } else {
             None
         };
@@ -68,7 +76,10 @@ impl ShaderUniformJson {
         let uniform_value = match self.uniform_type.as_str() {
             "float" | "half" | "iTime" => {
                 if let Some(float_val) = self.uniform_value.as_f64() {
-                    Some(ShaderUniformValue { value_type: Some(FloatValue(float_val as f32)) })
+                    Some(ShaderUniformValue {
+                        value_type: Some(FloatValue(float_val as f32)),
+                        ..Default::default()
+                    })
                 } else {
                     error!("Error parsing float for shader float uniform {}", self.uniform_name);
                     None
@@ -104,7 +115,11 @@ impl ShaderUniformJson {
                         _ => None,
                     }
                     .map(|float_vec| ShaderUniformValue {
-                        value_type: Some(FloatVecValue(FloatVec { floats: float_vec })),
+                        value_type: Some(FloatVecValue(FloatVec {
+                            floats: float_vec,
+                            ..Default::default()
+                        })),
+                        ..Default::default()
                     })
                 } else {
                     error!(
@@ -120,11 +135,15 @@ impl ShaderUniformJson {
                     .map(|figma_color| (&figma_color).into())
                     .map(|parsed_color| ShaderUniformValue {
                         value_type: Some(FloatColorValue(parsed_color)),
+                        ..Default::default()
                     })
             }
             "int" => {
                 if let Some(int_val) = self.uniform_value.as_i64() {
-                    Some(ShaderUniformValue { value_type: Some(IntValue(int_val as i32)) })
+                    Some(ShaderUniformValue {
+                        value_type: Some(IntValue(int_val as i32)),
+                        ..Default::default()
+                    })
                 } else {
                     error!("Error parsing integer for shader int uniform {}", self.uniform_name);
                     None
@@ -143,7 +162,11 @@ impl ShaderUniformJson {
                         _ => None,
                     }
                     .map(|int_vec| ShaderUniformValue {
-                        value_type: Some(IntVecValue(IntVec { ints: int_vec })),
+                        value_type: Some(IntVecValue(IntVec {
+                            ints: int_vec,
+                            ..Default::default()
+                        })),
+                        ..Default::default()
                     })
                 } else {
                     error!(
@@ -161,7 +184,9 @@ impl ShaderUniformJson {
                             value_type: Some(ImageRefValue(ImageRef {
                                 key: fill,
                                 res_name: images.image_res(str_val),
+                                ..Default::default()
                             })),
+                            ..Default::default()
                         })
                     } else {
                         error!(
@@ -185,9 +210,10 @@ impl ShaderUniformJson {
             self.uniform_name.clone(),
             ShaderUniform {
                 name: self.uniform_name.clone(),
-                r#type: self.uniform_type,
-                value: uniform_value,
+                type_: self.uniform_type,
+                value: uniform_value.into(),
                 ignore: self.extras.unwrap_or_default().ignore.unwrap_or(false),
+                ..Default::default()
             },
         )
     }

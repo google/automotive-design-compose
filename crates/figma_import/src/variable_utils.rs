@@ -15,13 +15,12 @@
  */
 
 use crate::figma_schema;
-use dc_bundle::definition::element::num_or_var::{NumOrVarType, NumVar};
-use dc_bundle::definition::element::variable::{VariableType, VariableValueMap};
-use dc_bundle::definition::element::variable_value;
-use dc_bundle::definition::element::ColorOrVar;
-use dc_bundle::definition::element::FloatColor;
-use dc_bundle::definition::element::{color_or_var, NumOrVar};
-use dc_bundle::definition::element::{Variable, VariableValue};
+use dc_bundle::color::FloatColor;
+use dc_bundle::variable::num_or_var::{NumOrVarType, NumVar};
+use dc_bundle::variable::variable::{VariableType, VariableValueMap};
+use dc_bundle::variable::{
+    color_or_var, variable_value, ColorOrVar, NumOrVar, Variable, VariableValue,
+};
 use std::collections::HashMap;
 
 // Trait to create a XOrVar from Figma data
@@ -48,7 +47,7 @@ impl FromFigmaVar<f32> for NumOrVarType {
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
-            NumOrVarType::Var(NumVar { id: var, fallback: var_value })
+            NumOrVarType::Var(NumVar { id: var, fallback: var_value, ..Default::default() })
         } else {
             NumOrVarType::Num(var_value)
         }
@@ -61,7 +60,7 @@ impl FromFigmaVar<f32> for NumOrVarType {
     ) -> Self {
         let var = bound_variables.get_var_from_hash(hash_name, var_name);
         if let Some(var) = var {
-            NumOrVarType::Var(NumVar { id: var, fallback: var_value })
+            NumOrVarType::Var(NumVar { id: var, fallback: var_value, ..Default::default() })
         } else {
             NumOrVarType::Num(var_value)
         }
@@ -75,7 +74,8 @@ impl FromFigmaVar<f32> for NumOrVar {
         var_value: f32,
     ) -> NumOrVar {
         NumOrVar {
-            num_or_var_type: Some(NumOrVarType::from_var(bound_variables, var_name, var_value)),
+            NumOrVarType: Some(NumOrVarType::from_var(bound_variables, var_name, var_value)),
+            ..Default::default()
         }
     }
     fn from_var_hash(
@@ -85,12 +85,13 @@ impl FromFigmaVar<f32> for NumOrVar {
         var_value: f32,
     ) -> NumOrVar {
         NumOrVar {
-            num_or_var_type: Some(NumOrVarType::from_var_hash(
+            NumOrVarType: Some(NumOrVarType::from_var_hash(
                 bound_variables,
                 hash_name,
                 var_name,
                 var_value,
             )),
+            ..Default::default()
         }
     }
 }
@@ -123,21 +124,26 @@ impl FromFigmaVar<&FloatColor> for ColorOrVar {
 // Create a VariableValue from figma_schema::VariableValue
 fn create_variable_value(v: &figma_schema::VariableValue) -> VariableValue {
     match v {
-        figma_schema::VariableValue::Boolean(b) => {
-            VariableValue { value: Some(variable_value::Value::Bool(b.clone())) }
-        }
-        figma_schema::VariableValue::Float(f) => {
-            VariableValue { value: Some(variable_value::Value::Number(f.clone())) }
-        }
-        figma_schema::VariableValue::String(s) => {
-            VariableValue { value: Some(variable_value::Value::Text(s.clone())) }
-        }
-        figma_schema::VariableValue::Color(c) => {
-            VariableValue { value: Some(variable_value::Value::Color(c.into())) }
-        }
-        figma_schema::VariableValue::Alias(a) => {
-            VariableValue { value: Some(variable_value::Value::Alias(a.id.clone())) }
-        }
+        figma_schema::VariableValue::Boolean(b) => VariableValue {
+            Value: Some(variable_value::Value::Bool(b.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Float(f) => VariableValue {
+            Value: Some(variable_value::Value::Number(f.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::String(s) => VariableValue {
+            Value: Some(variable_value::Value::Text(s.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Color(c) => VariableValue {
+            Value: Some(variable_value::Value::Color(c.into())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Alias(a) => VariableValue {
+            Value: Some(variable_value::Value::Alias(a.id.clone())),
+            ..Default::default()
+        },
     }
 }
 
@@ -149,7 +155,7 @@ fn create_variable_value_map(
     for (mode_id, value) in map.iter() {
         values_by_mode.insert(mode_id.clone(), create_variable_value(value));
     }
-    Some(VariableValueMap { values_by_mode })
+    Some(VariableValueMap { values_by_mode, ..Default::default() })
 }
 
 // Helper function to create a Variable
@@ -164,8 +170,9 @@ fn create_variable_helper(
         remote: common.remote,
         key: common.key.clone(),
         variable_collection_id: common.variable_collection_id.clone(),
-        var_type: var_type as i32,
-        values_by_mode: create_variable_value_map(values_by_mode),
+        var_type: var_type.into(),
+        values_by_mode: create_variable_value_map(values_by_mode).into(),
+        ..Default::default()
     }
 }
 
@@ -173,16 +180,16 @@ fn create_variable_helper(
 pub(crate) fn create_variable(v: &figma_schema::Variable) -> Variable {
     match v {
         figma_schema::Variable::Boolean { common, values_by_mode } => {
-            create_variable_helper(VariableType::Bool, common, values_by_mode)
+            create_variable_helper(VariableType::VARIABLE_TYPE_BOOL, common, values_by_mode)
         }
         figma_schema::Variable::Float { common, values_by_mode } => {
-            create_variable_helper(VariableType::Number, common, values_by_mode)
+            create_variable_helper(VariableType::VARIABLE_TYPE_NUMBER, common, values_by_mode)
         }
         figma_schema::Variable::String { common, values_by_mode } => {
-            create_variable_helper(VariableType::Text, common, values_by_mode)
+            create_variable_helper(VariableType::VARIABLE_TYPE_TEXT, common, values_by_mode)
         }
         figma_schema::Variable::Color { common, values_by_mode } => {
-            create_variable_helper(VariableType::Color, common, values_by_mode)
+            create_variable_helper(VariableType::VARIABLE_TYPE_COLOR, common, values_by_mode)
         }
     }
 }
@@ -198,12 +205,13 @@ pub(crate) fn bound_variables_color(
         ColorOrVar::from_var(vars, "color", &default_color.into())
     } else {
         ColorOrVar {
-            color_or_var_type: Some(color_or_var::ColorOrVarType::Color(crate::Color::from_f32s(
+            ColorOrVarType: Some(color_or_var::ColorOrVarType::Color(crate::Color::from_f32s(
                 default_color.r,
                 default_color.g,
                 default_color.b,
                 default_color.a * last_opacity,
             ))),
+            ..Default::default()
         }
     }
 }

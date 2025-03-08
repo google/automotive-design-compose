@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use crate::definition::element::{DimensionProto, DimensionRect, Size};
-use crate::definition::layout::item_spacing::ItemSpacingType;
+
+use crate::geometry::{DimensionProto, DimensionRect, Size};
+use crate::layout_style::LayoutStyle;
+use crate::positioning::item_spacing::{self, ItemSpacingType};
+use crate::positioning::{
+    AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent, PositionType,
+};
 use crate::Error;
 use crate::Error::MissingFieldError;
 
-include!(concat!(env!("OUT_DIR"), "/designcompose.definition.layout.rs"));
-
 impl ItemSpacing {
     pub fn new_default() -> Option<Self> {
-        Some(Self { item_spacing_type: Some(ItemSpacingType::Fixed(0)) })
+        Some(Self { ItemSpacingType: Some(ItemSpacingType::Fixed(0)), ..Default::default() })
     }
 }
 
@@ -33,9 +36,9 @@ impl LayoutStyle {
 
     pub(crate) fn new_default() -> LayoutStyle {
         LayoutStyle {
-            margin: DimensionRect::new(),
-            padding: DimensionRect::new(),
-            item_spacing: ItemSpacing::new_default(),
+            margin: Some(DimensionRect::new_with_default_value()).into(),
+            padding: Some(DimensionRect::new_with_default_value()).into(),
+            item_spacing: ItemSpacing::new_default().into(),
             top: DimensionProto::new_undefined(),
             left: DimensionProto::new_undefined(),
             bottom: DimensionProto::new_undefined(),
@@ -46,30 +49,36 @@ impl LayoutStyle {
             max_width: DimensionProto::new_undefined(),
             min_height: DimensionProto::new_undefined(),
             max_height: DimensionProto::new_undefined(),
-            bounding_box: Some(Size::default()),
+            bounding_box: Some(Size::default()).into(),
             flex_grow: 0.0,
             flex_shrink: 0.0,
             flex_basis: DimensionProto::new_undefined(),
-            align_self: AlignSelf::Auto.into(),
-            align_content: AlignContent::Stretch.into(),
-            align_items: AlignItems::Stretch.into(),
-            flex_direction: FlexDirection::Row.into(),
-            justify_content: JustifyContent::FlexStart.into(),
-            position_type: PositionType::Relative.into(),
+            align_self: AlignSelf::ALIGN_SELF_AUTO.into(),
+            align_content: AlignContent::ALIGN_CONTENT_STRETCH.into(),
+            align_items: AlignItems::ALIGN_ITEMS_STRETCH.into(),
+            flex_direction: FlexDirection::FLEX_DIRECTION_ROW.into(),
+            justify_content: JustifyContent::JUSTIFY_CONTENT_FLEX_START.into(),
+            position_type: PositionType::POSITION_TYPE_RELATIVE.into(),
+            ..Default::default()
         }
     }
 }
 
 impl ItemSpacing {
-    pub fn fixed(value: i32) -> Self {
-        Self { item_spacing_type: Some(item_spacing::ItemSpacingType::Fixed(value)) }
-    }
-    pub fn auto(width: i32, height: i32) -> Self {
+    pub fn new_fixed(value: i32) -> Self {
         Self {
-            item_spacing_type: Some(item_spacing::ItemSpacingType::Auto(item_spacing::Auto {
+            ItemSpacingType: Some(item_spacing::ItemSpacingType::Fixed(value)),
+            ..Default::default()
+        }
+    }
+    pub fn new_auto(width: i32, height: i32) -> Self {
+        Self {
+            ItemSpacingType: Some(item_spacing::ItemSpacingType::Auto(item_spacing::Auto {
                 width,
                 height,
+                ..Default::default()
             })),
+            ..Default::default()
         }
     }
 }

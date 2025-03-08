@@ -25,8 +25,6 @@ pub enum Error {
     ImageError(#[from] image::ImageError),
     #[error("Json Serialization Error")]
     JsonError(#[from] serde_json::Error),
-    #[error("Serialization Error")]
-    BincodeError(#[from] bincode::Error),
     #[error("Layout Error")]
     LayoutError(#[from] taffy::TaffyError),
     #[error("String translation Error")]

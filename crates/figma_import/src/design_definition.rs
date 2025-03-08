@@ -12,35 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::legacy_definition::DesignComposeDefinitionHeaderV0;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
-
-include!(concat!(env!("OUT_DIR"), "/designcompose.live_update.figma.rs"));
-
-impl FigmaDocInfo {
-    pub fn new(name: String, id: String, version_id: String) -> FigmaDocInfo {
-        FigmaDocInfo { name, id, version_id }
-    }
-}
-
-/// A helper method to load the old DesignCompose Definition header format from a dcf file
-pub fn load_design_def_header_v0<P>(
-    load_path: P,
-) -> Result<DesignComposeDefinitionHeaderV0, crate::Error>
-where
-    P: AsRef<Path>,
-{
-    let mut document_file = File::open(&load_path)?;
-
-    let mut buf: Vec<u8> = vec![];
-    let _bytes = document_file.read_to_end(&mut buf)?;
-
-    let header: DesignComposeDefinitionHeaderV0 = bincode::deserialize(buf.as_slice())?;
-    Ok(header)
-}
-
 #[cfg(test)]
 mod serialized_document_tests {
 

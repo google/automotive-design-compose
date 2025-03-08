@@ -18,9 +18,10 @@ use std::io::{Error, ErrorKind};
 use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
-use dc_bundle::definition::DesignComposeDefinitionHeader;
-use dc_bundle::definition::{DesignComposeDefinition, NodeQuery};
+use dc_bundle::definition::NodeQuery;
 use dc_bundle::definition_file::save_design_def;
+use dc_bundle::design_compose_definition::DesignComposeDefinition;
+use dc_bundle::design_compose_definition::DesignComposeDefinitionHeader;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -29,12 +30,6 @@ impl From<crate::Error> for ConvertError {
     fn from(e: crate::Error) -> Self {
         eprintln!("Error during Figma conversion: {:?}", e);
         ConvertError(format!("Internal Server Error during Figma conversion: {:?}", e))
-    }
-}
-impl From<bincode::Error> for ConvertError {
-    fn from(e: bincode::Error) -> Self {
-        eprintln!("Error during serialization: {:?}", e);
-        ConvertError(format!("Error during serialization: {:?}", e))
     }
 }
 impl From<dc_bundle::Error> for ConvertError {
@@ -128,7 +123,7 @@ pub fn build_definition(
     let variable_map = doc.build_variable_map();
 
     // Build the serializable doc structure
-    Ok(DesignComposeDefinition::new(
+    Ok(DesignComposeDefinition::new_with_details(
         views,
         doc.encoded_image_map(),
         doc.component_sets().clone(),

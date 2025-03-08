@@ -14,10 +14,14 @@
 
 use std::collections::HashMap;
 
-include!(concat!(env!("OUT_DIR"), "/designcompose.layout_interface.rs"));
+use dc_bundle::jni_layout::{self, Layout, LayoutChangedResponse};
 
-impl Layout {
-    pub fn from_taffy_layout(l: &taffy::prelude::Layout) -> Layout {
+pub trait FromTaffyLayout {
+    fn from_taffy_layout(l: &taffy::prelude::Layout) -> jni_layout::Layout;
+}
+
+impl FromTaffyLayout for Layout {
+    fn from_taffy_layout(l: &taffy::prelude::Layout) -> jni_layout::Layout {
         Layout {
             order: l.order,
             width: l.size.width,
@@ -26,12 +30,21 @@ impl Layout {
             top: l.location.y,
             content_width: l.content_size.width,
             content_height: l.content_size.height,
+            ..Default::default()
         }
     }
 }
 
-impl LayoutChangedResponse {
-    pub fn unchanged(layout_state: i32) -> Self {
-        LayoutChangedResponse { layout_state, changed_layouts: HashMap::new() }
+pub trait LayoutChangedResponseUnchangedWithState {
+    fn unchanged_with_state(layout_state: i32) -> jni_layout::LayoutChangedResponse;
+}
+
+impl LayoutChangedResponseUnchangedWithState for LayoutChangedResponse {
+    fn unchanged_with_state(layout_state: i32) -> jni_layout::LayoutChangedResponse {
+        LayoutChangedResponse {
+            layout_state,
+            changed_layouts: HashMap::new(),
+            ..Default::default()
+        }
     }
 }

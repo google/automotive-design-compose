@@ -35,20 +35,19 @@ mod transform_flexbox;
 mod variable_utils;
 
 // Exports for library users
-pub use dc_bundle::definition::element::Rectangle;
-pub use dc_bundle::definition::DesignComposeDefinition;
-pub use dc_bundle::definition::DesignComposeDefinitionHeader;
-pub use design_definition::IgnoredImage;
-pub use design_definition::ServerFigmaDoc;
+pub use dc_bundle::design_compose_definition::DesignComposeDefinition;
+pub use dc_bundle::design_compose_definition::DesignComposeDefinitionHeader;
+pub use dc_bundle::geometry::Rectangle;
+//pub use design_definition::IgnoredImage;
+//pub use design_definition::ServerFigmaDoc;
 pub use document::Document;
 pub use error::Error;
 pub use image_context::ImageContextSession;
 pub use proxy_config::ProxyConfig;
 
 // Internal convenience
-pub use dc_bundle::definition::element::Color;
-pub use dc_bundle::definition::view::{View, ViewData};
+pub use dc_bundle::color::Color;
 pub use dc_bundle::definition::NodeQuery;
 pub use dc_bundle::definition_file::load_design_def;
 pub use dc_bundle::definition_file::save_design_def;
-pub use design_definition::load_design_def_header_v0;
+pub use dc_bundle::view::{View, ViewData};

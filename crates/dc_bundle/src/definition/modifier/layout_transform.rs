@@ -7,8 +7,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::definition::modifier::AffineTransform;
-use crate::definition::modifier::LayoutTransform;
+use crate::matrix_transform::{AffineTransform, LayoutTransform};
 
 /// Implementations are forked from euclid Transform3D.
 impl LayoutTransform {
@@ -20,7 +19,7 @@ impl LayoutTransform {
     /// Beware: This library is written with the assumption that row vectors
     /// are being used. If your matrices use column vectors (i.e. transforming a vector
     /// is `T * v`), then please use `column_major`
-    pub const fn row_major(
+    pub fn row_major(
         m11: f32,
         m12: f32,
         m13: f32,
@@ -55,6 +54,7 @@ impl LayoutTransform {
             m42,
             m43,
             m44,
+            ..Default::default()
         }
     }
 

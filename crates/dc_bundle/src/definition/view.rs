@@ -13,70 +13,86 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use crate::definition::element::line_height::LineHeightType;
-use crate::definition::element::{
-    background, Background, FontStretch, FontStyle, FontWeight, LineHeight, NumOrVar, Rectangle,
-    Size, Stroke, TextDecoration, ViewShape,
-};
-use crate::definition::interaction::{PointerEvents, Reaction};
-use crate::definition::layout::{
-    FlexWrap, LayoutSizing, LayoutStyle, Overflow, OverflowDirection, ScrollInfo,
-};
-use crate::definition::modifier::{BlendMode, TextAlign, TextAlignVertical, TextOverflow};
-use crate::definition::plugin::FrameExtras;
-use crate::definition::view::view::RenderMethod;
-use crate::definition::view::view_data::{Container, ViewDataType};
+
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU16;
 
-include!(concat!(env!("OUT_DIR"), "/designcompose.definition.view.rs"));
+use crate::background::{background, Background};
+use crate::blend::BlendMode;
+use crate::component::ComponentInfo;
+use crate::font::{FontStretch, FontStyle, FontWeight, TextDecoration};
+use crate::frame_extras::FrameExtras;
+use crate::geometry::{Rectangle, Size};
+use crate::layout_style::LayoutStyle;
+use crate::node_style::{Display, NodeStyle};
+use crate::path::line_height::Line_height_type;
+use crate::path::{LineHeight, Stroke};
+use crate::pointer::PointerEvents;
+use crate::positioning::{FlexWrap, LayoutSizing, Overflow, OverflowDirection, ScrollInfo};
+use crate::reaction::Reaction;
+use crate::text::{TextAlign, TextAlignVertical, TextOverflow};
+use crate::text_style::StyledTextRun;
+use crate::variable::NumOrVar;
+use crate::view::view::RenderMethod;
+use crate::view::view_data::{Container, StyledTextRuns, Text, View_data_type};
+use crate::view::{View, ViewData};
+use crate::view_shape::ViewShape;
+use crate::view_style::ViewStyle;
 
 impl NodeStyle {
     pub(crate) fn new_default() -> NodeStyle {
         NodeStyle {
-            text_color: Some(Background::new(background::BackgroundType::None(()))),
-            font_size: Some(NumOrVar::from_num(18.0)),
+            text_color: Some(Background::new_with_background(background::Background_type::None(
+                ().into(),
+            )))
+            .into(),
+            font_size: Some(NumOrVar::from_num(18.0)).into(),
             font_family: None,
-            font_weight: FontWeight::NORMAL.into(),
-            font_style: FontStyle::Normal.into(),
-            text_decoration: TextDecoration::None.into(),
+            font_weight: Some(FontWeight::normal()).into(),
+            font_style: FontStyle::FONT_STYLE_NORMAL.into(),
+            text_decoration: TextDecoration::TEXT_DECORATION_NONE.into(),
             letter_spacing: None,
-            font_stretch: Some(FontStretch::NORMAL),
+            font_stretch: Some(FontStretch::normal()).into(),
             backgrounds: Vec::new(),
             box_shadows: Vec::new(),
-            stroke: Some(Stroke::default()),
+            stroke: Some(Stroke::default()).into(),
             opacity: None,
-            transform: None,
-            relative_transform: None,
-            text_align: TextAlign::Left.into(),
-            text_align_vertical: TextAlignVertical::Top.into(),
-            text_overflow: TextOverflow::Clip.into(),
-            text_shadow: None,
-            node_size: Some(Size { width: 0.0, height: 0.0 }),
-            line_height: Some(LineHeight { line_height_type: Some(LineHeightType::Percent(1.0)) }),
+            transform: None.into(),
+            relative_transform: None.into(),
+            text_align: TextAlign::TEXT_ALIGN_LEFT.into(),
+            text_align_vertical: TextAlignVertical::TEXT_ALIGN_VERTICAL_TOP.into(),
+            text_overflow: TextOverflow::TEXT_OVERFLOW_CLIP.into(),
+            text_shadow: None.into(),
+            node_size: Some(Size { width: 0.0, height: 0.0, ..Default::default() }).into(),
+            line_height: Some(LineHeight {
+                line_height_type: Some(Line_height_type::Percent(1.0)),
+                ..Default::default()
+            })
+            .into(),
             line_count: None,
             font_features: Vec::new(),
             filters: Vec::new(),
             backdrop_filters: Vec::new(),
-            blend_mode: BlendMode::PassThrough.into(),
-            display_type: Display::Flex.into(),
-            flex_wrap: FlexWrap::NoWrap.into(),
+            blend_mode: BlendMode::BLEND_MODE_PASS_THROUGH.into(),
+            display_type: Display::DISPLAY_FLEX.into(),
+            flex_wrap: FlexWrap::FLEX_WRAP_NO_WRAP.into(),
             grid_layout_type: None,
             grid_columns_rows: 0,
             grid_adaptive_min_size: 1,
             grid_span_contents: vec![],
-            overflow: Overflow::Visible.into(),
+            overflow: Overflow::OVERFLOW_VISIBLE.into(),
             max_children: None,
             overflow_node_id: None,
             overflow_node_name: None,
             cross_axis_item_spacing: 0.0,
-            horizontal_sizing: LayoutSizing::Fixed.into(),
-            vertical_sizing: LayoutSizing::Fixed.into(),
+            horizontal_sizing: LayoutSizing::LAYOUT_SIZING_FIXED.into(),
+            vertical_sizing: LayoutSizing::LAYOUT_SIZING_FIXED.into(),
             aspect_ratio: None,
-            pointer_events: PointerEvents::Inherit.into(),
-            meter_data: None,
-            hyperlink: None,
-            shader_data: None,
+            pointer_events: PointerEvents::POINTER_EVENTS_INHERIT.into(),
+            meter_data: None.into(),
+            hyperlink: None.into(),
+            shader_data: None.into(),
+            ..Default::default()
         }
     }
 }
@@ -84,8 +100,9 @@ impl NodeStyle {
 impl ViewStyle {
     pub fn new_default() -> Self {
         Self {
-            layout_style: Some(LayoutStyle::new_default()),
-            node_style: Some(NodeStyle::new_default()),
+            layout_style: Some(LayoutStyle::new_default()).into(),
+            node_style: Some(NodeStyle::new_default()).into(),
+            ..Default::default()
         }
     }
     pub fn node_style(&self) -> &NodeStyle {
@@ -144,10 +161,11 @@ impl ViewStyle {
             delta.node_style_mut().opacity = other.node_style().opacity;
         }
         if self.node_style().transform != other.node_style().transform {
-            delta.node_style_mut().transform = other.node_style().transform;
+            delta.node_style_mut().transform = other.node_style().transform.clone();
         }
         if self.node_style().relative_transform != other.node_style().relative_transform {
-            delta.node_style_mut().relative_transform = other.node_style().relative_transform;
+            delta.node_style_mut().relative_transform =
+                other.node_style().relative_transform.clone();
         }
         if self.node_style().text_align != other.node_style().text_align {
             delta.node_style_mut().text_align = other.node_style().text_align;
@@ -237,16 +255,16 @@ impl ViewStyle {
             delta.layout_style_mut().justify_content = other.layout_style().justify_content;
         }
         if self.layout_style().top != other.layout_style().top {
-            delta.layout_style_mut().top = other.layout_style().top;
+            delta.layout_style_mut().top = other.layout_style().top.clone();
         }
         if self.layout_style().left != other.layout_style().left {
-            delta.layout_style_mut().left = other.layout_style().left;
+            delta.layout_style_mut().left = other.layout_style().left.clone();
         }
         if self.layout_style().bottom != other.layout_style().bottom {
-            delta.layout_style_mut().bottom = other.layout_style().bottom;
+            delta.layout_style_mut().bottom = other.layout_style().bottom.clone();
         }
         if self.layout_style().right != other.layout_style().right {
-            delta.layout_style_mut().right = other.layout_style().right;
+            delta.layout_style_mut().right = other.layout_style().right.clone();
         }
         if self.layout_style().margin != other.layout_style().margin {
             delta.layout_style_mut().margin = other.layout_style().margin.clone();
@@ -268,25 +286,25 @@ impl ViewStyle {
             delta.layout_style_mut().flex_shrink = other.layout_style().flex_shrink;
         }
         if self.layout_style().flex_basis != other.layout_style().flex_basis {
-            delta.layout_style_mut().flex_basis = other.layout_style().flex_basis;
+            delta.layout_style_mut().flex_basis = other.layout_style().flex_basis.clone();
         }
         if self.layout_style().width != other.layout_style().width {
-            delta.layout_style_mut().width = other.layout_style().width;
+            delta.layout_style_mut().width = other.layout_style().width.clone();
         }
         if self.layout_style().height != other.layout_style().height {
-            delta.layout_style_mut().height = other.layout_style().height;
+            delta.layout_style_mut().height = other.layout_style().height.clone();
         }
         if self.layout_style().max_width != other.layout_style().max_width {
-            delta.layout_style_mut().max_width = other.layout_style().max_width;
+            delta.layout_style_mut().max_width = other.layout_style().max_width.clone();
         }
         if self.layout_style().max_height != other.layout_style().max_height {
-            delta.layout_style_mut().max_height = other.layout_style().max_height;
+            delta.layout_style_mut().max_height = other.layout_style().max_height.clone();
         }
         if self.layout_style().min_width != other.layout_style().min_width {
-            delta.layout_style_mut().min_width = other.layout_style().min_width;
+            delta.layout_style_mut().min_width = other.layout_style().min_width.clone();
         }
         if self.layout_style().min_height != other.layout_style().min_height {
-            delta.layout_style_mut().min_height = other.layout_style().min_height;
+            delta.layout_style_mut().min_height = other.layout_style().min_height.clone();
         }
         if self.node_style().aspect_ratio != other.node_style().aspect_ratio {
             delta.node_style_mut().aspect_ratio = other.node_style().aspect_ratio;
@@ -303,7 +321,11 @@ impl ViewStyle {
 
 impl ScrollInfo {
     pub fn new_default() -> Self {
-        ScrollInfo { overflow: i32::from(OverflowDirection::None), paged_scrolling: false }
+        ScrollInfo {
+            overflow: OverflowDirection::OVERFLOW_DIRECTION_NONE.into(),
+            paged_scrolling: false,
+            ..Default::default()
+        }
     }
 }
 
@@ -329,19 +351,26 @@ impl View {
             unique_id: View::next_unique_id() as u32,
             id: id.clone(),
             name: name.clone(),
-            component_info,
+            component_info: component_info.into(),
             reactions: reactions.unwrap_or_default(),
-            style: Some(style),
-            frame_extras,
-            scroll_info: Some(scroll_info),
+            style: Some(style).into(),
+            frame_extras: frame_extras.into(),
+            scroll_info: Some(scroll_info).into(),
             data: Some(ViewData {
-                view_data_type: Some(ViewDataType::Container {
-                    0: Container { shape: Some(shape), children: vec![] },
+                view_data_type: Some(View_data_type::Container {
+                    0: Container {
+                        shape: Some(shape).into(),
+                        children: vec![],
+                        ..Default::default()
+                    },
                 }),
-            }),
-            design_absolute_bounding_box,
-            render_method: i32::from(render_method),
+                ..Default::default()
+            })
+            .into(),
+            design_absolute_bounding_box: design_absolute_bounding_box.into(),
+            render_method: render_method.into(),
             explicit_variable_modes,
+            ..Default::default()
         }
     }
     pub fn new_text(
@@ -360,19 +389,22 @@ impl View {
             unique_id: View::next_unique_id() as u32,
             id: id.clone(),
             name: name.clone(),
-            component_info,
+            component_info: component_info.into(),
             reactions: reactions.unwrap_or_default(),
-            style: Some(style),
-            frame_extras: None,
-            scroll_info: Some(ScrollInfo::new_default()),
+            style: Some(style).into(),
+            frame_extras: None.into(),
+            scroll_info: Some(ScrollInfo::new_default()).into(),
             data: Some(ViewData {
-                view_data_type: Some(ViewDataType::Text {
-                    0: view_data::Text { content: text.into(), res_name: text_res_name },
+                view_data_type: Some(View_data_type::Text {
+                    0: Text { content: text.into(), res_name: text_res_name, ..Default::default() },
                 }),
-            }),
-            design_absolute_bounding_box,
-            render_method: i32::from(render_method),
+                ..Default::default()
+            })
+            .into(),
+            design_absolute_bounding_box: design_absolute_bounding_box.into(),
+            render_method: render_method.into(),
             explicit_variable_modes,
+            ..Default::default()
         }
     }
     pub fn new_styled_text(
@@ -390,24 +422,31 @@ impl View {
             unique_id: View::next_unique_id() as u32,
             id: id.clone(),
             name: name.clone(),
-            style: Some(style),
-            component_info,
+            style: Some(style).into(),
+            component_info: component_info.into(),
             reactions: reactions.unwrap_or_default(),
-            frame_extras: None,
-            scroll_info: Some(ScrollInfo::new_default()),
+            frame_extras: None.into(),
+            scroll_info: Some(ScrollInfo::new_default()).into(),
             data: Some(ViewData {
-                view_data_type: Some(ViewDataType::StyledText {
-                    0: view_data::StyledTextRuns { styled_texts: text, res_name: text_res_name },
+                view_data_type: Some(View_data_type::StyledText {
+                    0: StyledTextRuns {
+                        styled_texts: text,
+                        res_name: text_res_name,
+                        ..Default::default()
+                    },
                 }),
-            }),
-            design_absolute_bounding_box,
-            render_method: i32::from(render_method),
+                ..Default::default()
+            })
+            .into(),
+            design_absolute_bounding_box: design_absolute_bounding_box.into(),
+            render_method: render_method.into(),
             explicit_variable_modes: HashMap::new(),
+            ..Default::default()
         }
     }
     pub fn add_child(&mut self, child: View) {
         if let Some(data) = self.data.as_mut() {
-            if let Some(ViewDataType::Container { 0: Container { children, .. } }) =
+            if let Some(View_data_type::Container { 0: Container { children, .. } }) =
                 data.view_data_type.as_mut()
             {
                 children.push(child);

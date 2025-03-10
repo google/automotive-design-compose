@@ -22,11 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = protobuf_codegen::Customize::default();
 
     // Define the directory where .proto files are located.
-    let proto_path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .and_then(Path::parent)
-        .unwrap()
-        .join("proto");
+    let proto_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src").join("proto");
 
     // Collect the .proto files to compile.
     let proto_files = collect_proto_files(&proto_path)?;

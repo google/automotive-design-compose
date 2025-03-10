@@ -47,7 +47,9 @@ sourceSets {
 }
 
 // Protobuf configuration
-project.sourceSets.main { proto { srcDir(rootProject.layout.projectDirectory.dir("proto")) } }
+project.sourceSets.main {
+    proto { srcDir(rootProject.layout.projectDirectory.dir("crates/dc_bundle/src/proto")) }
+}
 
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}" }

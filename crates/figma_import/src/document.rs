@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use dc_bundle::definition::element::{
-    variable_map::NameIdMap, Collection, Mode, Variable, VariableMap,
-};
 use std::time::Duration;
 use std::{
     collections::{HashMap, HashSet},
@@ -32,11 +29,14 @@ use crate::{
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };
-use dc_bundle::definition::view::component_overrides::ComponentContentOverride;
-use dc_bundle::definition::view::view_data::ViewDataType::Container;
-use dc_bundle::definition::view::{view_data, ComponentOverrides, View};
+use dc_bundle::component::component_overrides::Component_content_override;
+use dc_bundle::component::ComponentOverrides;
 use dc_bundle::definition::EncodedImageMap;
 use dc_bundle::definition::NodeQuery;
+use dc_bundle::variable::variable_map::NameIdMap;
+use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
+use dc_bundle::view::view_data::{self, Container, View_data_type};
+use dc_bundle::view::{View, ViewData};
 use log::error;
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
@@ -463,7 +463,7 @@ impl Document {
             view: &mut View,
             action: &impl Fn(&mut View, &View),
         ) {
-            if let Some(info) = &view.component_info {
+            if let Some(info) = view.component_info.as_ref() {
                 // See if we can find the target component. If not then don't look up
                 // references. Try searching by id, name, and variant
                 if let Some(reference_component) =
@@ -480,8 +480,9 @@ impl Document {
                     action(view, reference_component);
                 }
             }
+
             if let Some(data) = view.data.as_mut() {
-                if let Some(Container { 0: view_data::Container { children, .. } }) =
+                if let Some(View_data_type::Container(Container { children, .. })) =
                     data.view_data_type.as_mut()
                 {
                     for child in children {
@@ -502,13 +503,22 @@ impl Document {
                 if view.style == component.style {
                     return;
                 }
-                view.component_info = view.component_info.take().map(|mut info| {
-                    info.overrides = Some(ComponentOverrides {
-                        style: Some(component.style().difference(&view.style())),
-                        component_content_override: Some(ComponentContentOverride::None(())),
-                    });
-                    info
-                });
+                view.component_info = view
+                    .component_info
+                    .take()
+                    .map(|mut info| {
+                        info.overrides = Some(ComponentOverrides {
+                            style: Some(component.style().difference(&view.style())).into(),
+                            component_content_override: Some(Component_content_override::None(
+                                ().into(),
+                            ))
+                            .into(),
+                            ..Default::default()
+                        })
+                        .into();
+                        info
+                    })
+                    .into();
             });
         }
     }
@@ -885,7 +895,8 @@ impl Document {
                 let mut mode_name_hash: HashMap<String, String> = HashMap::new();
                 let mut mode_id_hash: HashMap<String, Mode> = HashMap::new();
                 for m in &c.modes {
-                    let mode = Mode { id: m.mode_id.clone(), name: m.name.clone() };
+                    let mode =
+                        Mode { id: m.mode_id.clone(), name: m.name.clone(), ..Default::default() };
                     mode_name_hash.insert(mode.name.clone(), mode.id.clone());
                     mode_id_hash.insert(mode.id.clone(), mode);
                 }
@@ -895,6 +906,7 @@ impl Document {
                     default_mode_id: c.default_mode_id.clone(),
                     mode_name_hash,
                     mode_id_hash,
+                    ..Default::default()
                 };
                 collections_by_id.insert(collection.id.clone(), collection);
                 collection_ids_by_name.insert(c.name.clone(), c.id.clone());
@@ -913,8 +925,10 @@ impl Document {
                 } else {
                     let mut name_to_id = HashMap::new();
                     name_to_id.insert(var.name.clone(), id.clone());
-                    variable_name_id_maps_by_cid
-                        .insert(var.variable_collection_id.clone(), NameIdMap { m: name_to_id });
+                    variable_name_id_maps_by_cid.insert(
+                        var.variable_collection_id.clone(),
+                        NameIdMap { m: name_to_id, ..Default::default() },
+                    );
                 }
 
                 variables_by_id.insert(id.clone(), var);
@@ -926,6 +940,7 @@ impl Document {
             collection_ids_by_name,
             variables_by_id,
             variable_name_id_maps_by_cid,
+            ..Default::default()
         };
 
         var_map

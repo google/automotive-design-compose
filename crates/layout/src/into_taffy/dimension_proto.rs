@@ -13,8 +13,9 @@
 // limitations under the License.
 
 use crate::into_taffy::TryIntoTaffy;
-use dc_bundle::definition::element::dimension_proto::Dimension;
-use dc_bundle::definition::element::DimensionProto;
+
+use dc_bundle::geometry::dimension_proto::Dimension;
+use dc_bundle::geometry::DimensionProto;
 use dc_bundle::Error;
 use taffy::prelude::Dimension as TaffyDimension;
 use taffy::style_helpers::TaffyZero;
@@ -23,13 +24,13 @@ impl TryIntoTaffy<TaffyDimension> for &Option<DimensionProto> {
     type Error = Error;
     fn try_into_taffy(self) -> Result<TaffyDimension, Self::Error> {
         match self {
-            Some(DimensionProto { dimension: Some(Dimension::Percent(p)) }) => {
+            Some(DimensionProto { Dimension: Some(Dimension::Percent(p)), .. }) => {
                 Ok(TaffyDimension::Percent(*p))
             }
-            Some(DimensionProto { dimension: Some(Dimension::Points(p)) }) => {
+            Some(DimensionProto { Dimension: Some(Dimension::Points(p)), .. }) => {
                 Ok(TaffyDimension::Length(*p))
             }
-            Some(DimensionProto { dimension: Some(Dimension::Auto(_)) }) => {
+            Some(DimensionProto { Dimension: Some(Dimension::Auto(_)), .. }) => {
                 Ok(TaffyDimension::Auto)
             }
             Some(_) => Ok(TaffyDimension::Auto),
@@ -42,10 +43,10 @@ impl TryIntoTaffy<taffy::prelude::LengthPercentage> for &Option<DimensionProto> 
     type Error = Error;
     fn try_into_taffy(self) -> Result<taffy::prelude::LengthPercentage, Self::Error> {
         match self {
-            Some(DimensionProto { dimension: Some(Dimension::Percent(p)) }) => {
+            Some(DimensionProto { Dimension: Some(Dimension::Percent(p)), .. }) => {
                 Ok(taffy::prelude::LengthPercentage::Percent(*p))
             }
-            Some(DimensionProto { dimension: Some(Dimension::Points(p)) }) => {
+            Some(DimensionProto { Dimension: Some(Dimension::Points(p)), .. }) => {
                 Ok(taffy::prelude::LengthPercentage::Length(*p))
             }
             Some(_) => Ok(taffy::prelude::LengthPercentage::ZERO),
@@ -59,13 +60,13 @@ impl TryIntoTaffy<taffy::prelude::LengthPercentageAuto> for &Option<DimensionPro
     type Error = Error;
     fn try_into_taffy(self) -> Result<taffy::prelude::LengthPercentageAuto, Self::Error> {
         match self {
-            Some(DimensionProto { dimension: Some(Dimension::Percent(p)) }) => {
+            Some(DimensionProto { Dimension: Some(Dimension::Percent(p)), .. }) => {
                 Ok(taffy::prelude::LengthPercentageAuto::Percent(*p))
             }
-            Some(DimensionProto { dimension: Some(Dimension::Points(p)) }) => {
+            Some(DimensionProto { Dimension: Some(Dimension::Points(p)), .. }) => {
                 Ok(taffy::prelude::LengthPercentageAuto::Length(*p))
             }
-            Some(DimensionProto { dimension: Some(Dimension::Auto(_)) }) => {
+            Some(DimensionProto { Dimension: Some(Dimension::Auto(_)), .. }) => {
                 Ok(taffy::prelude::LengthPercentageAuto::Auto)
             }
             Some(_) => Ok(taffy::prelude::LengthPercentageAuto::ZERO),
@@ -76,13 +77,14 @@ impl TryIntoTaffy<taffy::prelude::LengthPercentageAuto> for &Option<DimensionPro
 
 #[cfg(test)]
 mod tests {
+    use dc_bundle::geometry::dimension_proto::Dimension;
+
     use super::*;
-    use dc_bundle::definition::element::dimension_proto::Dimension;
-    use dc_bundle::definition::element::DimensionProto;
 
     #[test]
     fn test_try_into_taffy_dimension() {
-        let dimension_proto = Some(DimensionProto { dimension: Some(Dimension::Points(10.0)) });
+        let dimension_proto =
+            Some(DimensionProto { Dimension: Some(Dimension::Points(10.0)), ..Default::default() });
         let result: Result<TaffyDimension, dc_bundle::Error> = (&dimension_proto).try_into_taffy();
         assert!(result.is_ok());
     }
@@ -96,7 +98,10 @@ mod tests {
 
     #[test]
     fn test_try_into_taffy_length_percentage() {
-        let dimension_proto = Some(DimensionProto { dimension: Some(Dimension::Percent(10.0)) });
+        let dimension_proto = Some(DimensionProto {
+            Dimension: Some(Dimension::Percent(10.0)),
+            ..Default::default()
+        });
         let result: Result<taffy::prelude::LengthPercentage, dc_bundle::Error> =
             (&dimension_proto).try_into_taffy();
         assert!(result.is_ok());
@@ -112,7 +117,8 @@ mod tests {
 
     #[test]
     fn test_try_into_taffy_length_percentage_auto() {
-        let dimension_proto = Some(DimensionProto { dimension: Some(Dimension::Auto(())) });
+        let dimension_proto =
+            Some(DimensionProto { Dimension: Some(Dimension::Auto(())), ..Default::default() });
         let result: Result<taffy::prelude::LengthPercentageAuto, dc_bundle::Error> =
             (&dimension_proto).try_into_taffy();
         assert!(result.is_ok());

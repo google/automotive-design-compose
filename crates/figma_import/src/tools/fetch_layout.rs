@@ -25,7 +25,7 @@ use dc_bundle::geometry::DimensionProto;
 use dc_bundle::positioning::LayoutSizing;
 use dc_bundle::view::view_data::View_data_type;
 use dc_bundle::view::{view_data, View};
-use layout::LayoutManager;
+use dc_layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;
 use std::io::prelude::*;

@@ -13,7 +13,7 @@ crate-type = ["rlib", "cdylib"]
 [dependencies]
 dc_bundle = { path = "../dc_bundle" }
 figma_import = { path = "../figma_import" }
-layout = { path = "../layout" }
+dc_layout = { path = "../dc_layout" }
 log.workspace = true
 jni.workspace = true
 android_logger.workspace = true

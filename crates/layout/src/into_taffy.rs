@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod dimension_proto;
-mod dimension_rect;
+pub mod dimension_proto;
+pub mod dimension_rect;
 
 pub trait IntoTaffy<T> {
     fn into_taffy(self) -> T;

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::android_interface::Layout;
-use crate::android_interface::LayoutChangedResponse;
+use crate::android_interface::{FromTaffyLayout as _, LayoutChangedResponseUnchangedWithState};
 use crate::into_taffy::TryIntoTaffy;
-use dc_bundle::definition::layout::LayoutStyle;
+use dc_bundle::jni_layout::{Layout, LayoutChangedResponse};
+use dc_bundle::layout_style::LayoutStyle;
 use dc_bundle::Error;
 use log::{error, trace};
 use std::collections::{HashMap, HashSet};
@@ -329,7 +329,7 @@ impl LayoutManager {
         if compute_layout {
             self.compute_node_layout(root_layout_id)
         } else {
-            LayoutChangedResponse::unchanged(self.layout_state)
+            LayoutChangedResponse::unchanged_with_state(self.layout_state)
         }
     }
 
@@ -429,7 +429,11 @@ impl LayoutManager {
         let changed_layouts = self.update_layout(layout_id);
         self.layout_state = self.layout_state + 1;
 
-        LayoutChangedResponse { layout_state: self.layout_state, changed_layouts }
+        LayoutChangedResponse {
+            layout_state: self.layout_state,
+            changed_layouts,
+            ..Default::default()
+        }
     }
 
     pub fn print_layout(self, layout_id: i32, print_func: fn(String) -> ()) {

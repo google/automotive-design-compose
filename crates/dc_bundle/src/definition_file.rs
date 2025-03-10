@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use crate::definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
+
+use crate::design_compose_definition::{DesignComposeDefinition, DesignComposeDefinitionHeader};
 use crate::Error;
-use prost::bytes::{Buf, Bytes};
-use prost::Message;
+use protobuf::{CodedInputStream, Message};
+
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -25,18 +26,20 @@ pub fn encode_dcd_with_header(
     header: &DesignComposeDefinitionHeader,
     doc: &DesignComposeDefinition,
 ) -> Vec<u8> {
-    let mut encoded = header.encode_length_delimited_to_vec();
-    encoded.append(&mut doc.encode_length_delimited_to_vec());
+    let mut encoded = header.write_length_delimited_to_bytes().unwrap();
+    encoded.append(&mut doc.write_length_delimited_to_bytes().unwrap());
     encoded
 }
 
-pub fn decode_dcd_with_header<B>(
-    mut msg: B,
-) -> Result<(DesignComposeDefinitionHeader, DesignComposeDefinition), Error>
-where
-    B: Buf,
-{
-    let header = DesignComposeDefinitionHeader::decode_length_delimited(&mut msg)?;
+pub fn decode_dcd_with_header(
+    data: &[u8],
+) -> Result<(DesignComposeDefinitionHeader, DesignComposeDefinition), Error> {
+    let mut cis = CodedInputStream::from_bytes(data);
+    let header_len = cis.read_raw_varint32().map_err(|_| Error::DecodeError())?;
+    let header_limit = cis.push_limit(header_len as u64).map_err(|_| Error::DecodeError())?;
+    let header = DesignComposeDefinitionHeader::parse_from(&mut cis)
+        .map_err(|e| Error::DCDLoadError(format!("Failed to parse header: {}", e)))?;
+    cis.pop_limit(header_limit);
 
     // Ensure the version of the document matches this version of automotive design compose.
     if header.dc_version != DesignComposeDefinitionHeader::current_version() {
@@ -47,7 +50,11 @@ where
         )));
     }
 
-    let dcd = DesignComposeDefinition::decode_length_delimited(msg)?;
+    let dcd_length = cis.read_raw_varint32().map_err(|_| Error::DecodeError())?;
+    println!("DCD length = {:?}", dcd_length);
+    let dcd = DesignComposeDefinition::parse_from(&mut cis)
+        .map_err(|e| Error::DCDLoadError(format!("Failed to parse DCD: {}", e)))?;
+
     Ok((header, dcd))
 }
 
@@ -76,7 +83,7 @@ where
     let mut document_file = File::open(&load_path)?;
     let _bytes = document_file.read_to_end(&mut buf)?;
 
-    let (header, doc) = decode_dcd_with_header(Bytes::from(buf))?;
+    let (header, doc) = decode_dcd_with_header(&buf)?;
 
     Ok((header, doc))
 }

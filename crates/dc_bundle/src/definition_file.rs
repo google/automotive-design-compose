@@ -25,10 +25,16 @@ use std::path::Path;
 pub fn encode_dcd_with_header(
     header: &DesignComposeDefinitionHeader,
     doc: &DesignComposeDefinition,
-) -> Vec<u8> {
-    let mut encoded = header.write_length_delimited_to_bytes().unwrap();
-    encoded.append(&mut doc.write_length_delimited_to_bytes().unwrap());
-    encoded
+) -> Result<Vec<u8>, Error> {
+    let mut encoded = header
+        .write_length_delimited_to_bytes()
+        .map_err(|e| Error::ProtobufWriteError(format!("Failed to write header: {}", e)))?;
+    encoded.append(
+        &mut doc
+            .write_length_delimited_to_bytes()
+            .map_err(|e| Error::ProtobufWriteError(format!("Failed to write definition: {}", e)))?,
+    );
+    Ok(encoded)
 }
 
 pub fn decode_dcd_with_header(
@@ -68,7 +74,7 @@ where
     P: AsRef<Path>,
 {
     let mut output = File::create(save_path)?;
-    output.write_all(encode_dcd_with_header(header, doc).as_slice())?;
+    output.write_all(encode_dcd_with_header(header, doc)?.as_slice())?;
     Ok(())
 }
 

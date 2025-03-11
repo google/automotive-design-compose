@@ -34,6 +34,8 @@ pub enum Error {
     DecodeError(),
     #[error("DesignComposeDefinition Load Error")]
     DCDLoadError(String),
+    #[error("Protobuf Write Error")]
+    ProtobufWriteError(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

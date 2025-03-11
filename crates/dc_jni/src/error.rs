@@ -29,6 +29,8 @@ pub enum Error {
     FigmaImportError(#[from] figma_import::Error),
     #[error("JNI Error")]
     JNIError(#[from] jni::errors::Error),
+    #[error("Protobuf Write Error")]
+    ProtobufWriteError(String),
 }
 
 #[allow(unused_qualifications)] // Linter thinks `std:` isn't needed but removing it fails the build

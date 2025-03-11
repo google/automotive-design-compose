@@ -153,7 +153,9 @@ fn jni_fetch_doc_impl(
             }
         };
 
-    Ok(convert_result.write_length_delimited_to_bytes().unwrap())
+    Ok(convert_result
+        .write_length_delimited_to_bytes()
+        .map_err(|e| Error::ProtobufWriteError(format!("Failed to write convert_result: {}", e)))?)
 }
 
 #[allow(non_snake_case)]

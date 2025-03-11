@@ -15,25 +15,26 @@
 use crate::into_taffy::TryIntoTaffy;
 
 use dc_bundle::geometry::DimensionRect;
+use protobuf::MessageField;
 use taffy::prelude::LengthPercentage;
 use taffy::prelude::{Dimension as TaffyDimension, LengthPercentageAuto};
 
-impl TryIntoTaffy<taffy::prelude::Rect<TaffyDimension>> for &Option<DimensionRect> {
+impl TryIntoTaffy<taffy::prelude::Rect<TaffyDimension>> for &MessageField<DimensionRect> {
     type Error = dc_bundle::Error;
     fn try_into_taffy(self) -> Result<taffy::prelude::Rect<TaffyDimension>, Self::Error> {
         let rect = self
             .as_ref()
             .ok_or(dc_bundle::Error::MissingFieldError { field: "DimensionRect".to_string() })?;
         Ok(taffy::prelude::Rect {
-            left: (&rect.start.as_ref().cloned()).try_into_taffy()?,
-            right: (&rect.end.as_ref().cloned()).try_into_taffy()?,
-            top: (&rect.top.as_ref().cloned()).try_into_taffy()?,
-            bottom: (&rect.bottom.as_ref().cloned()).try_into_taffy()?,
+            left: rect.start.try_into_taffy()?,
+            right: rect.end.try_into_taffy()?,
+            top: rect.top.try_into_taffy()?,
+            bottom: rect.bottom.try_into_taffy()?,
         })
     }
 }
 
-impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentage>> for &Option<DimensionRect> {
+impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentage>> for &MessageField<DimensionRect> {
     type Error = dc_bundle::Error;
     fn try_into_taffy(self) -> Result<taffy::prelude::Rect<LengthPercentage>, Self::Error> {
         let rect = self
@@ -41,15 +42,15 @@ impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentage>> for &Option<DimensionR
             .ok_or(dc_bundle::Error::MissingFieldError { field: "DimensionRect".to_string() })?;
 
         Ok(taffy::prelude::Rect {
-            left: (&rect.start.as_ref().cloned()).try_into_taffy()?,
-            right: (&rect.end.as_ref().cloned()).try_into_taffy()?,
-            top: (&rect.top.as_ref().cloned()).try_into_taffy()?,
-            bottom: (&rect.bottom.as_ref().cloned()).try_into_taffy()?,
+            left: rect.start.try_into_taffy()?,
+            right: rect.end.try_into_taffy()?,
+            top: rect.top.try_into_taffy()?,
+            bottom: rect.bottom.try_into_taffy()?,
         })
     }
 }
 
-impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentageAuto>> for &Option<DimensionRect> {
+impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentageAuto>> for &MessageField<DimensionRect> {
     type Error = dc_bundle::Error;
     fn try_into_taffy(self) -> Result<taffy::prelude::Rect<LengthPercentageAuto>, Self::Error> {
         let rect = self
@@ -57,10 +58,10 @@ impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentageAuto>> for &Option<Dimens
             .ok_or(dc_bundle::Error::MissingFieldError { field: "DimensionRect".to_string() })?;
 
         Ok(taffy::prelude::Rect {
-            left: (&rect.start.as_ref().cloned()).try_into_taffy()?,
-            right: (&rect.end.as_ref().cloned()).try_into_taffy()?,
-            top: (&rect.top.as_ref().cloned()).try_into_taffy()?,
-            bottom: (&rect.bottom.as_ref().cloned()).try_into_taffy()?,
+            left: rect.start.try_into_taffy()?,
+            right: rect.end.try_into_taffy()?,
+            top: rect.top.try_into_taffy()?,
+            bottom: rect.bottom.try_into_taffy()?,
         })
     }
 }

@@ -85,7 +85,7 @@ Figma Documents. You'll need the following to build it and the rest of the SDK.
 
 ### Android Studio
 
-Currently testing with Android Studio Flamingo | 2022.2.1
+Currently testing with [Android Studio Meerkat | 2024.3.1](https://developer.android.com/studio/releases)
 
 ### Android NDK
 

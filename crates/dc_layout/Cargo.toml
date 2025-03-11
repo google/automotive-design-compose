@@ -1,5 +1,5 @@
 [package]
-name = "layout"
+name = "dc_layout"
 description = "Figma node layout library for Android"
 version.workspace = true
 edition.workspace = true

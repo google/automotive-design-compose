@@ -16,7 +16,7 @@ test_fetches = ["fetch"]
 
 
 [dependencies]
-layout = { path = "../layout" }
+dc_layout = { path = "../dc_layout" }
 dc_bundle = { path = "../dc_bundle"}
 ureq.workspace = true
 serde.workspace = true

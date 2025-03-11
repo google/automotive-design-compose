@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/figma_import", "crates/dc_jni", "crates/layout", "crates/dc_bundle"]
+members = ["crates/figma_import", "crates/dc_jni", "crates/dc_layout", "crates/dc_bundle"]
 
 [workspace.package]
 # LINT.IfChange

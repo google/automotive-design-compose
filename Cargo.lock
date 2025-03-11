@@ -320,9 +320,9 @@ dependencies = [
  "bincode",
  "bytes",
  "dc_bundle",
+ "dc_layout",
  "figma_import",
  "jni",
- "layout",
  "lazy_static",
  "log",
  "protobuf",
@@ -331,6 +331,19 @@ dependencies = [
  "serde_json",
  "thiserror",
  "ureq",
+]
+
+[[package]]
+name = "dc_layout"
+version = "0.34.0"
+dependencies = [
+ "android_logger",
+ "dc_bundle",
+ "log",
+ "protobuf",
+ "serde",
+ "taffy",
+ "thiserror",
 ]
 
 [[package]]
@@ -418,9 +431,9 @@ dependencies = [
  "bincode",
  "clap",
  "dc_bundle",
+ "dc_layout",
  "euclid",
  "image",
- "layout",
  "lazy_static",
  "log",
  "protobuf",
@@ -714,19 +727,6 @@ checksum = "6e5aa9f0f96a938266bdb12928a67169e8d22c6a786fda8ed984b85e6ba93c3c"
 dependencies = [
  "arrayvec",
  "smallvec",
-]
-
-[[package]]
-name = "layout"
-version = "0.34.0"
-dependencies = [
- "android_logger",
- "dc_bundle",
- "log",
- "protobuf",
- "serde",
- "taffy",
- "thiserror",
 ]
 
 [[package]]

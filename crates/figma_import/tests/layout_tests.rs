@@ -34,7 +34,7 @@ use dc_bundle::view::view_data::View_data_type;
 use dc_bundle::view::view_data::View_data_type::Container;
 use dc_bundle::view::view_data::View_data_type::Text;
 use dc_bundle::view::View;
-use layout::LayoutManager;
+use dc_layout::LayoutManager;
 use protobuf::Enum;
 use std::collections::HashMap;
 

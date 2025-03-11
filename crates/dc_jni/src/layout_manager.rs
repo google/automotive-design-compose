@@ -17,10 +17,10 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use dc_bundle::jni_layout::{LayoutChangedResponse, LayoutNodeList, LayoutParentChildren};
+use dc_layout::LayoutManager;
 use jni::objects::{JByteArray, JClass, JObject, JValue, JValueGen};
 use jni::sys::{jboolean, jint};
 use jni::JNIEnv;
-use layout::LayoutManager;
 use lazy_static::lazy_static;
 use log::{error, info};
 

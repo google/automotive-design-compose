@@ -21,6 +21,7 @@ use dc_bundle::{
     },
     Error,
 };
+use protobuf::MessageField;
 use taffy::prelude as taffy;
 
 impl TryIntoTaffy<taffy::AlignItems> for AlignItems {
@@ -120,10 +121,10 @@ impl TryIntoTaffy<taffy::Position> for PositionType {
         }
     }
 }
-impl TryIntoTaffy<taffy::LengthPercentage> for &Option<ItemSpacing> {
+impl TryIntoTaffy<taffy::LengthPercentage> for &MessageField<ItemSpacing> {
     type Error = dc_bundle::Error;
     fn try_into_taffy(self) -> Result<taffy::LengthPercentage, Self::Error> {
-        match self {
+        match self.as_ref() {
             Some(spacing) => match spacing.ItemSpacingType {
                 Some(item_spacing::ItemSpacingType::Fixed(s)) => {
                     Ok(taffy::LengthPercentage::Length(s as f32))

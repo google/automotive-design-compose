@@ -38,8 +38,6 @@ mod variable_utils;
 pub use dc_bundle::design_compose_definition::DesignComposeDefinition;
 pub use dc_bundle::design_compose_definition::DesignComposeDefinitionHeader;
 pub use dc_bundle::geometry::Rectangle;
-//pub use design_definition::IgnoredImage;
-//pub use design_definition::ServerFigmaDoc;
 pub use document::Document;
 pub use error::Error;
 pub use image_context::ImageContextSession;

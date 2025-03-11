@@ -41,7 +41,6 @@ impl ShaderDataJson {
             // Shader fallback color is the color used when shader isn't supported on lower sdks.
             let shader_fallback_color: MessageField<Color> =
                 self.shader_fallback_color.as_ref().map(|figma_color| figma_color.into()).into();
-            //let aaa: MessageField<Color> = MessageField::<Color>::from_option(shader_fallback_color);
             // Shader uniforms: float, float array, color and color with alpha
             let shader_uniforms: HashMap<String, ShaderUniform> = self
                 .shader_uniforms

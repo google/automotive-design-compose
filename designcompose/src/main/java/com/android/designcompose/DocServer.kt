@@ -16,6 +16,7 @@
 
 package com.android.designcompose
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -110,6 +111,25 @@ object DesignSettings {
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyFigmaFetchStatus(fileId: DesignDocId) = fileFetchStatus[fileId]
+
+    fun subscribeScalableUiLiveUpdates(
+        activity: ComponentActivity,
+        docId: String,
+        resourceName: String,
+        nodeQueries: ArrayList<String>,
+        onUpdate: (ScalableUiDoc?) -> Unit,
+    ) {
+        val designDocId = DesignDocId(docId)
+        val id = "${resourceName}_${docId}"
+        val saveFile = activity.applicationContext.getFileStreamPath("$id.dcf")
+
+        val onNewDocContent = { doc: DocContent? -> onUpdate(doc?.let { ScalableUiDoc(it) }) }
+        val subscription = LiveDocSubscription(id, designDocId, onNewDocContent, null)
+        // False parameter means that we need hidden nodes for scalable ui
+        val serverParams = DocumentServerParams(nodeQueries, null, false)
+        DocServer.subscribe(subscription, serverParams, saveFile)
+        enableLiveUpdates(activity)
+    }
 
     fun enableLiveUpdates(activity: ComponentActivity) {
         liveUpdatesEnabled = true
@@ -235,7 +255,7 @@ internal object SpanCache {
     }
 }
 
-internal object DocServer {
+object DocServer {
     internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
     internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
     internal val documents: HashMap<DesignDocId, DocContent> = HashMap()
@@ -266,6 +286,37 @@ internal object DocServer {
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyClearDocuments() = documents.clear()
+
+    fun loadDoc(
+        resourceName: String,
+        docId: DesignDocId,
+        serverParams: DocumentServerParams,
+        context: Context,
+    ): ScalableUiDoc? {
+        println(
+            "### loadDoc $resourceName ${docId.id} queries ${serverParams.nodeQueries} context $context"
+        )
+        // Check that the document ID is valid
+        if (!validateFigmaDocId(docId.id)) {
+            Log.w(TAG, "Invalid Figma document ID: $docId")
+            return null
+        }
+
+        val id = "${resourceName}_${docId}"
+        val fileName = "figma/$id.dcf"
+        val assetDoc: InputStream = context.assets.open(fileName)
+        Log.i(TAG, "### Loaded design doc from assets/$fileName")
+
+        try {
+            val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
+            decodedDoc?.let {
+                return ScalableUiDoc(it)
+            }
+        } catch (error: Throwable) {
+            Log.e(TAG, "Failed to load from disk: $fileName")
+        }
+        return null
+    }
 }
 
 internal fun DocServer.initializeLiveUpdate() {
@@ -340,7 +391,8 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
             }
         val saveFile = synchronized(subscriptions) { subscriptions[id]?.saveFile }
         try {
-            val response = fetchDocument(figmaApiKey, params, previousDoc, id, proxyConfig)
+            val response =
+                fetchDocument(figmaApiKey, params, previousDoc, id, params.skipHidden, proxyConfig)
 
             if (response.hasDocument()) {
                 val doc = decodeServerDoc(response.document, previousDoc, id, saveFile, Feedback)
@@ -349,6 +401,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     Log.e(TAG, "Error decoding doc.")
                     break
                 }
+                val uiDoc = ScalableUiDoc(doc)
                 updateBranches(id, doc)
 
                 // Remember the new document
@@ -412,6 +465,7 @@ internal fun fetchDocument(
     params: DocumentServerParams,
     previousDoc: DocContent?,
     id: DesignDocId,
+    skipHidden: Boolean = true,
     proxyConfig: ProxyConfig = ProxyConfig(),
 ): ConvertResponse {
 
@@ -431,6 +485,8 @@ internal fun fetchDocument(
         previousDoc?.c?.header?.responseVersion?.let { this.version = it }
         previousDoc?.c?.imageSession?.let { this.imageSessionJson = it }
             ?: this.clearImageSessionJson()
+        // TODO revert to skipHidden
+        this.skipHidden = false // skipHidden
     }
 
     val serializedResponse: ByteArray =
@@ -548,6 +604,9 @@ internal fun DocServer.doc(
         targetDoc?.let { VariableManager.init(it.c.docId, it.c.document.variableMap) }
         docUpdateCallback?.invoke(docId, targetDoc?.c?.toSerializedBytes(Feedback))
         setLiveDoc(targetDoc)
+        targetDoc?.let {
+            val uiDoc = ScalableUiDoc(it)
+        }
 
         // Subscribe to live updates, if we have an access token.
         var subscription: LiveDocSubscription? = null

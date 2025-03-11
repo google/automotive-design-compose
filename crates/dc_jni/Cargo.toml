@@ -6,14 +6,17 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 rust-version.workspace = true
+homepage = "https://google.github.io/automotive-design-compose"
+repository = "https://github.com/google/automotive-design-compose"
+readme = "README.md"
 
 [lib]
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-dc_bundle = { path = "../dc_bundle" }
-figma_import = { path = "../figma_import" }
-dc_layout = { path = "../dc_layout" }
+dc_bundle.workspace = true
+figma_import.workspace = true
+dc_layout.workspace = true
 log.workspace = true
 jni.workspace = true
 android_logger.workspace = true

@@ -10,6 +10,8 @@ edition = "2021"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]
 license = "Apache-2.0"
 rust-version = "1.68"
+homepage = "https://google.github.io/automotive-design-compose"
+repository = "https://github.com/google/automotive-design-compose"
 
 [profile.release] # https://github.com/johnthagen/min-sized-rust
 opt-level = 'z'
@@ -18,6 +20,10 @@ codegen-units = 1
 panic = 'abort'
 
 [workspace.dependencies]
+# dc_bundle needs a version because it is a dependency published on crates.io
+dc_bundle = { version = "0.34.0", path = "crates/dc_bundle" }
+dc_layout = { path = "crates/dc_layout" }
+figma_import = { path = "crates/figma_import" }
 android_logger = "0.13.1"
 anyhow = "1.0"
 bincode = "1.3"

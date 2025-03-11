@@ -1,6 +1,6 @@
-# dc-bundle
+# dc_bundle
 
-`dc-bundle` is a crate that provides the core data structures for DesignCompose.
+`dc_bundle` is a crate that provides the core data structures for DesignCompose.
 
 ## Purpose
 

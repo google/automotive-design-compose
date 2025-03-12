@@ -40,14 +40,47 @@ publishing {
         // See `dev-scripts/test-standalone-projects.sh` for an example.
         val DesignComposeMavenRepo: String? by project
 
-        // This will create the `publish*ToLocalDirRepository` tasks
-        maven {
-            name = "localDir"
-            url =
-                uri(
-                    DesignComposeMavenRepo
-                        ?: project.layout.buildDirectory.dir("designcompose_m2repo")
-                )
+        // Check if this project is an includedBuild (i.e., it has a parent project).
+        if (project.gradle.parent == null) {
+            // This block will execute if the current project is part of the root project (it has no
+            // parent).
+            // Configure a Maven repository named "localDir" for the root project.
+            maven {
+                name = "localDir"
+                // Set the URL of the repository.
+                // It prioritizes the 'DesignComposeMavenRepo' property if it's set.
+                // If not set, it defaults to a directory named 'designcompose_m2repo' within the
+                // root project's settings directory.
+                // Using `project.layout.settingsDirectory` here ensures the path is relative to the
+                // settings file location for the root project.
+                url =
+                    uri(
+                        DesignComposeMavenRepo
+                            ?: rootProject.layout.buildDirectory.dir("build/designcompose_m2repo")
+                    )
+            }
+        } else {
+            // It's an includedBuild, so place the repo inside the parent project's build dir
+            val parent = project.gradle.parent!!
+            // An included build is being configured before it's parent's settings has finished
+            // being evaluated. Therefore we need to use the `parent.settingsEvaluated` callback to
+            // only configure maven block after the root project's properties are available.
+            parent.settingsEvaluated {
+                // Configure a Maven repository named "localDir" for this subproject.
+                maven {
+                    name = "localDir"
+                    // Set the URL of the repository.
+                    // It prioritizes the 'DesignComposeMavenRepo' property if it's set.
+                    // If not set, it defaults to a directory named 'designcompose_m2repo' within
+                    // the root project's build directory.
+                    url =
+                        uri(DesignComposeMavenRepo ?: rootDir.resolve("build/designcompose_m2repo"))
+                }
+            }
         }
+        // The 'maven' repository configuration will automatically create Gradle tasks
+        // like `publishAllPublicationsToLocalDirRepository`
+        // These tasks will publish the project's artifacts to the configured local Maven
+        // repository.
     }
 }

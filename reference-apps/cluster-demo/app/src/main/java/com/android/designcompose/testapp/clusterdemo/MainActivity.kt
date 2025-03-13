@@ -17,9 +17,7 @@
 package com.android.designcompose.testapp.clusterdemo
 
 import android.content.Context
-import android.graphics.RuntimeShader
 import android.hardware.Camera
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.SurfaceHolder
@@ -29,15 +27,10 @@ import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseInOutSine
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
@@ -64,12 +57,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shader
-import androidx.compose.ui.graphics.ShaderBrush
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -85,20 +73,23 @@ import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DesignVariableCollection
 import com.android.designcompose.DesignVariableModeValues
+import com.android.designcompose.LocalCustomizationContext
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.Meter
 import com.android.designcompose.MeterState
+import com.android.designcompose.ShaderHelper
+import com.android.designcompose.ShaderHelper.toShaderUniformState
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignVariant
 import com.android.designcompose.common.DesignDocId
+import com.android.designcompose.setShaderTimeUniformState
 import com.android.designcompose.squoosh.SmartAnimateTransition
 import java.io.IOException
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
-import org.intellij.lang.annotations.Language
 
 enum class SpeedoDisplayState {
     park,
@@ -148,6 +139,11 @@ enum class ChargeDemoState {
 }
 
 enum class AndroidState {
+    on,
+    off,
+}
+
+enum class HarState {
     on,
     off,
 }
@@ -205,35 +201,6 @@ const val speedMax = 120F
 
 const val layoutWidthMin = 300F
 const val layoutWidthMax = 1500F
-
-// From: https://shaders.skia.org/
-@Language("AGSL")
-val CUSTOM_SHADER =
-    """
-    // inspired from FabriceNeyret2 https://www.shadertoy.com/view/lsKXRG
-    uniform float3 iResolution;      // Viewport resolution (pixels)
-    uniform float  iTime;            // Shader playback time (s)
-
-    half4 main( vec2 u )
-    {
-        u *= mat2(1,-1./1.73, 0,2./1.73) *5./ iResolution.y;  // conversion to
-      //vec3 g = vec3(u,1.-u.x-u.y);                          // hexagonal coordinates
-        vec3 g = vec3(u,fract(iTime/3.+u.x*.1)-u.x-u.y);
-        g = abs(fract(g)-.5);
-        float o = max(max(g.x, max(g.y,g.z)), min(g.x, min(g.y,g.z))*2.);
-        o = 1.0 - (.5+.5*sin(20.*o)) * 0.05 * (1.0 - u.y/8.0);
-        return half4(o, o, o, 1.0);
-    }
-"""
-        .trimIndent()
-
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-class SizingShaderBrush(private val shader: RuntimeShader) : ShaderBrush() {
-    override fun createShader(size: Size): Shader {
-        shader.setFloatUniform("iResolution", size.width, size.height, 0.0f)
-        return shader
-    }
-}
 
 class CameraPreview(context: Context, private val camera: Camera) :
     SurfaceView(context), SurfaceHolder.Callback {
@@ -343,12 +310,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Future Demo Branch od2Xm016aH1SvThcqFp0hE
 // Galaxy V2 E82Od5Wfu2xuqVLyOjQV7Z
 // Shiny V2 cJKbU0Kl8tBuU1bkIemt2I
-// Future V2 SB6ME0eT2ku8rFT7Y3eBX8
+// Circular 4C3C3GlbQfJk1acq8YjoJe
 // Responsive Ac6itRStVMTTnJBuNsiDv7
-// Tasman 2024 2inolTjQk9hiJElXcxUprJ
-@DesignDoc(id = "2inolTjQk9hiJElXcxUprJ")
+@DesignDoc(id = "od2Xm016aH1SvThcqFp0hE")
 interface Cluster {
     @DesignComponent(node = "#HAR-stage")
     fun HarMain(
@@ -418,9 +385,6 @@ interface Cluster {
 
     @DesignComponent(node = "#android-stage")
     fun AndroidMain(
-        // Background shader
-        // @Design(node = "#background") backgroundBrush: () -> Brush,
-
         // The current view mode
         @DesignVariant(property = "#view-mode") viewMode: ViewMode,
 
@@ -490,8 +454,8 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
     var parkBrake by remember { mutableStateOf(true) }
 
     // Car states
-    val shaderBg = remember { mutableStateOf(false) }
     val androidState = remember { mutableStateOf(AndroidState.on) }
+    val harState = remember { mutableStateOf(HarState.on) }
     val panel1 = remember { mutableStateOf(Panel1.welcome) }
     val panel2 = remember { mutableStateOf(Panel2.startroute) }
     val panel3 = remember { mutableStateOf(Panel3.compass) }
@@ -649,39 +613,6 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
 
     val rpmGauge = rpm.value / rpmMax * 100F
 
-    val infiniteTransition = rememberInfiniteTransition(label = "animate shader")
-    val movingValue =
-        infiniteTransition.animateFloat(
-            label = "moving value for shader",
-            initialValue = 0.0f,
-            targetValue = 6.0f,
-            animationSpec =
-                infiniteRepeatable(
-                    animation = tween(6 * 1000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart,
-                ),
-        )
-    val backgroundBrush: () -> Brush =
-        if (
-            shaderBg.value &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                "robolectric" != Build.FINGERPRINT
-        ) {
-            val shader = RuntimeShader(CUSTOM_SHADER)
-            val shaderBrush = SizingShaderBrush(shader)
-            // The kotlin compiler seems to get confused without semicolons on these statements.
-            shader.setFloatUniform("iTime", 0.0f);
-
-            {
-                // Only sample the state in the generator function; this means that we avoid
-                // recomposition and only do the redraw phase.
-                shader.setFloatUniform("iTime", movingValue.value)
-                shaderBrush
-            }
-        } else {
-            { SolidColor(Color(0xFA, 0xFA, 0xFA)) }
-        }
-
     val layoutWidth = remember { mutableStateOf(layoutWidthMin) }
 
     val context = LocalContext.current
@@ -704,7 +635,12 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
             hashMapOf(themeName to mode.value.name)
         else null
 
-    val docId = remember { mutableStateOf("2inolTjQk9hiJElXcxUprJ") }
+    val iTimeFloatState = ShaderHelper.getShaderUniformTimeFloatState()
+    LocalCustomizationContext.current.setShaderTimeUniformState(
+        iTimeFloatState.toShaderUniformState(ShaderHelper.UNIFORM_TIME)
+    )
+
+    val docId = remember { mutableStateOf("od2Xm016aH1SvThcqFp0hE") }
     CompositionLocalProvider(
         LocalDesignDocSettings provides
             DesignDocSettings(
@@ -775,64 +711,65 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
                         if (docId.value == "Ac6itRStVMTTnJBuNsiDv7")
                             Modifier.width(layoutWidth.value.dp)
                         else Modifier
-                    ClusterDoc.HarMain(
-                        modifier = mod,
-                        androidState = androidState.value,
-                        viewMode = viewMode.value,
-                        panel1 = panel1.value,
-                        panel2 = panel2.value,
-                        panel3 = panel3.value,
-                        carView = carView.value,
-                        notification = notification.value,
-                        shiftState = shiftState.value,
-                        phoneState = phoneState.value,
-                        tempValue = tempDegreesStringState,
-                        speedoDisplayState = speedoDisplayState.value,
-                        speedMph = speedValueState,
-                        rangeMiles = rangeValueState,
-                        batteryPercent = batteryGaugeStringState,
-                        powerWhMi = powerWhMiStringState,
-                        batteryTemp = batteryTempStringState,
-                        showPowerIcon = showPowerIcon,
-                        showRegenIcon = showRegenIcon,
-                        speedoGauge = speedGauge,
-                        batteryGauge = batteryGauge,
-                        batteryTempGauge = batteryTempGauge,
-                        regenGauge = regenGauge,
-                        powerGauge = powerGauge,
-                        rpmGauge = rpmGauge,
-                        rpm = rpmState,
-                        camera = {
-                            if (cameraPreview != null) {
-                                AndroidView(modifier = Modifier, factory = { cameraPreview })
-                            }
-                        },
-                        // Telltales
-                        telltaleNoSeatbelt = seatbelt,
-                        telltaleLowTirePressure = tpmsWarning,
-                        telltaleAirbag = driverAirbag,
-                        telltaleAbs = brakesABS,
-                        telltaleBrake = brakesFailure,
-                        telltaleTraction = stabilityFailure,
-                        telltaleFogLights = lightsFog,
-                        telltaleParkLights = brakesParking,
-                        telltaleHibeam = lightsHighBeam,
-                        telltaleLowbeam = lightsLowBeam,
-                        parkBrake = parkBrake,
-                        telltaleLeftBlinker = lightsSideLights,
-                        telltaleRightBlinker = lightsSideLights,
-                        designComposeCallbacks =
-                            DesignComposeCallbacks(
-                                docReadyCallback = { docId ->
-                                    Log.i(TAG, "MainClusterActivity Ready!")
-                                },
-                                newDocDataCallback = { docId, content ->
-                                    if (content != null) {
-                                        Log.i(TAG, "$docId updated. size: ${content.size}")
-                                    }
-                                },
-                            ),
-                    )
+                    if (harState.value == HarState.on)
+                        ClusterDoc.HarMain(
+                            modifier = mod,
+                            androidState = androidState.value,
+                            viewMode = viewMode.value,
+                            panel1 = panel1.value,
+                            panel2 = panel2.value,
+                            panel3 = panel3.value,
+                            carView = carView.value,
+                            notification = notification.value,
+                            shiftState = shiftState.value,
+                            phoneState = phoneState.value,
+                            tempValue = tempDegreesStringState,
+                            speedoDisplayState = speedoDisplayState.value,
+                            speedMph = speedValueState,
+                            rangeMiles = rangeValueState,
+                            batteryPercent = batteryGaugeStringState,
+                            powerWhMi = powerWhMiStringState,
+                            batteryTemp = batteryTempStringState,
+                            showPowerIcon = showPowerIcon,
+                            showRegenIcon = showRegenIcon,
+                            speedoGauge = speedGauge,
+                            batteryGauge = batteryGauge,
+                            batteryTempGauge = batteryTempGauge,
+                            regenGauge = regenGauge,
+                            powerGauge = powerGauge,
+                            rpmGauge = rpmGauge,
+                            rpm = rpmState,
+                            camera = {
+                                if (cameraPreview != null) {
+                                    AndroidView(modifier = Modifier, factory = { cameraPreview })
+                                }
+                            },
+                            // Telltales
+                            telltaleNoSeatbelt = seatbelt,
+                            telltaleLowTirePressure = tpmsWarning,
+                            telltaleAirbag = driverAirbag,
+                            telltaleAbs = brakesABS,
+                            telltaleBrake = brakesFailure,
+                            telltaleTraction = stabilityFailure,
+                            telltaleFogLights = lightsFog,
+                            telltaleParkLights = brakesParking,
+                            telltaleHibeam = lightsHighBeam,
+                            telltaleLowbeam = lightsLowBeam,
+                            parkBrake = parkBrake,
+                            telltaleLeftBlinker = lightsSideLights,
+                            telltaleRightBlinker = lightsSideLights,
+                            designComposeCallbacks =
+                                DesignComposeCallbacks(
+                                    docReadyCallback = { docId ->
+                                        Log.i(TAG, "MainClusterActivity Ready!")
+                                    },
+                                    newDocDataCallback = { docId, content ->
+                                        if (content != null) {
+                                            Log.i(TAG, "$docId updated. size: ${content.size}")
+                                        }
+                                    },
+                                ),
+                        )
                 }
             }
         }
@@ -978,7 +915,9 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
             LabelledToggle("Android On", androidState.value == AndroidState.on) {
                 androidState.value = if (it) AndroidState.on else AndroidState.off
             }
-            LabelledToggle("Shader BG", shaderBg.value) { shaderBg.value = it }
+            LabelledToggle("Har On", harState.value == HarState.on) {
+                harState.value = if (it) HarState.on else HarState.off
+            }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             LabelledDropDown("ViewMode:", viewMode.value, onStateChange = { viewMode.value = it })
@@ -1087,11 +1026,11 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
             Button(onClick = { theme.value = Theme.Custom }) { Text("Custom") }
 
             Text("DESIGNS")
-            Button(onClick = { docId.value = "2inolTjQk9hiJElXcxUprJ" }) { Text("Future") }
+            Button(onClick = { docId.value = "od2Xm016aH1SvThcqFp0hE" }) { Text("Future") }
             Button(onClick = { docId.value = "E82Od5Wfu2xuqVLyOjQV7Z" }) { Text("Galaxy") }
             Button(onClick = { docId.value = "cJKbU0Kl8tBuU1bkIemt2I" }) { Text("Shiny") }
-            Button(onClick = { docId.value = "Ac6itRStVMTTnJBuNsiDv7" }) { Text("Responsive") }
             Button(onClick = { docId.value = "4C3C3GlbQfJk1acq8YjoJe" }) { Text("Circular") }
+            Button(onClick = { docId.value = "Ac6itRStVMTTnJBuNsiDv7" }) { Text("Responsive") }
         }
     }
 }

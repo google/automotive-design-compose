@@ -132,6 +132,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
         private var docName: String = ""
         private var docId: String = ""
         private var designVersion: String = ""
+        private var designFeatures: ArrayList<String> = ArrayList<String>()
         private var currentFunc = ""
         private var textCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var textStateCustomizations: HashMap<String, Vector<Pair<String, String>>> =
@@ -219,6 +220,10 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             val designVersionArg: KSValueArgument =
                 annotation.arguments.first { arg -> arg.name?.asString() == "designVersion" }
             designVersion = designVersionArg.value as String
+
+            val designFeaturesArg: KSValueArgument =
+                annotation.arguments.first { arg -> arg.name?.asString() == "designFeatures" }
+            designFeatures = designFeaturesArg.value as ArrayList<String>
 
             // Declare a global document ID that can be changed by the Design Switcher
             val docIdVarName = className + "GenId"
@@ -570,6 +575,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             // Add optional callbacks to be called on certain document events
             args.add(Pair("designComposeCallbacks", "DesignComposeCallbacks? = null"))
 
+            // Add optional shader iTime float state
+            args.add(Pair("shaderTimeFloatState", "FloatState? = null"))
+
             // Add optional key that can be used to uniquely identify this particular instance
             args.add(Pair("key", "String? = null"))
 
@@ -753,6 +761,18 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText(
                     "        customizations.setShaderUniformCustomizations(\"$node\", $value)\n"
                 )
+            }
+            if (
+                designFeatures.contains("shader") || shaderUniformCustomizationsCustom.isNotEmpty()
+            ) {
+                out.appendText(
+                    "        val shaderTimeState = shaderTimeFloatState ?: ShaderHelper.getShaderUniformTimeFloatState() \n"
+                )
+                out.appendText("        customizations.setShaderTimeUniformState(\n")
+                out.appendText(
+                    "            shaderTimeState.toShaderUniformState(ShaderHelper.UNIFORM_TIME)\n"
+                )
+                out.appendText("        )\n")
             }
 
             val scrollCallbackCustom =

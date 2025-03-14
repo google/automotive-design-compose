@@ -67,6 +67,16 @@ message ShaderUniformValue {
     optional string res_name = 2;
   }
 
+  // Image bytes for image uniform(shader).
+  message ImageBytes {
+    bytes data = 1;
+  }
+
+  // Image resource for image uniform(shader).
+  message ImageResource {
+    uint32 resource_id = 1;
+  }
+
   oneof value_type {
     // uniform "type" is "float", "half" or "iTime".
     float float_value = 1;
@@ -83,5 +93,11 @@ message ShaderUniformValue {
 
     // uniform "shader" holds an image ref key
     ImageRef image_ref_value = 6;
+
+    // uniform "shader" holds an image bytes data. It is created for uniform value customization.
+    ImageBytes image_bytes_value = 7;
+
+    // uniform "shader" holds an image resource id. It is created for uniform value customization.
+    ImageResource image_resource_value = 8;
   }
 }

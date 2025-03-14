@@ -28,7 +28,7 @@ enum class TestState {
     B,
 }
 
-@DesignDoc(id = "RW3lFurXCoVDeqY2Y7bf4v")
+@DesignDoc(id = "RW3lFurXCoVDeqY2Y7bf4v", designFeatures = ["shader"])
 interface SmartAnimateTest {
     @DesignComponent(node = "#MainFrame")
     fun MainFrame(

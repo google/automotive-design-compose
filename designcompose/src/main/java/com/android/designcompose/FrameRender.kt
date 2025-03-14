@@ -17,6 +17,7 @@
 package com.android.designcompose
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
 import android.graphics.BlurMaskFilter
 import android.graphics.RuntimeShader
@@ -50,6 +51,7 @@ import com.android.designcompose.definition.element.StrokeAlign
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.element.ViewShapeKt.vectorArc
 import com.android.designcompose.definition.element.imageRefValueOrNull
+import com.android.designcompose.definition.element.shaderDataOrNull
 import com.android.designcompose.definition.element.shaderFallbackColorOrNull
 import com.android.designcompose.definition.element.viewShape
 import com.android.designcompose.definition.layout.Overflow
@@ -535,14 +537,9 @@ internal fun ContentDrawScope.squooshShapeRender(
             }
         }
     val strokeBrush =
-        if (style.nodeStyle.stroke.hasShaderData()) {
-            val p = Paint()
-            progressVectorMeterData?.let {
-                calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
-            }
-            val b =
-                getShaderBrush(
-                    style.nodeStyle.stroke.shaderData,
+        style.nodeStyle.stroke.shaderDataOrNull?.let { shaderData ->
+            getShaderBrush(
+                    shaderData,
                     customizations.getShaderUniformCustomizations(node.view.name),
                     customizations.getShaderTimeUniformState(),
                     shaderBrushCache,
@@ -553,10 +550,16 @@ internal fun ContentDrawScope.squooshShapeRender(
                     density = density,
                     asBackground = false,
                 )
-            b.applyTo(brushSize, p, 1.0f)
-            listOf(p)
-        } else
-            style.nodeStyle.stroke.strokesList.mapNotNull { background ->
+                ?.let { brush ->
+                    val p = Paint()
+                    progressVectorMeterData?.let {
+                        calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
+                    }
+                    brush.applyTo(brushSize, p, 1.0f)
+                    listOf(p)
+                }
+        }
+            ?: style.nodeStyle.stroke.strokesList.mapNotNull { background ->
                 val p = Paint()
                 progressVectorMeterData?.let {
                     calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
@@ -848,16 +851,29 @@ fun ShaderUniform.applyToShader(
                 }
             }
 
-            ValueTypeCase.IMAGE_REF_VALUE -> {
-                val imageRef = value.imageRefValue.key
+            ValueTypeCase.IMAGE_REF_VALUE,
+            ValueTypeCase.IMAGE_BYTES_VALUE,
+            ValueTypeCase.IMAGE_RESOURCE_VALUE -> {
                 val bitmap =
-                    loadImage(
-                        appContext,
-                        document,
-                        density,
-                        value.imageRefValue.takeIf { it.hasResName() }?.resName,
-                        imageRef,
-                    )
+                    if (value.hasImageRefValue()) {
+                        val imageRef = value.imageRefValue.key
+                        loadImage(
+                            appContext,
+                            document,
+                            density,
+                            value.imageRefValue.takeIf { it.hasResName() }?.resName,
+                            imageRef,
+                        )
+                    } else if (value.hasImageBytesValue()) {
+                        val data = value.imageBytesValue.data.toByteArray()
+                        Pair(BitmapFactory.decodeByteArray(data, 0, data.size), 1.0f)
+                    } else {
+                        val resourceId = value.imageResourceValue.resourceId
+                        val bitmap =
+                            BitmapFactoryWithCache.loadResource(appContext.resources, resourceId)
+                        Pair(bitmap, 1.0f)
+                    }
+
                 if (bitmap != null) {
                     val bitmapShader =
                         BitmapShader(bitmap.first, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
@@ -880,7 +896,7 @@ fun ShaderUniform.applyToShader(
                     }
                     true
                 } else {
-                    Log.e(TAG, "Failed to find image $imageRef for shader $name")
+                    Log.e(TAG, "Failed to find image $value for shader $name")
                     false
                 }
             }
@@ -941,27 +957,29 @@ internal fun getShaderBrush(
     appContext: Context,
     density: Float,
     asBackground: Boolean = true,
-): Brush {
+): Brush? {
     val cachedBrush: Brush? = shaderBrushCache.get(layoutId, viewId)
-    lateinit var shaderBrush: Brush
-    if (cachedBrush == null) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val shaderProg = shaderData.shader.trim().trimIndent()
-            val shader = RuntimeShader(shaderProg)
-            shaderBrush = SizingShaderBrush(shader)
-        } else {
-            shaderData.shaderFallbackColorOrNull?.let { color ->
-                shaderBrush = SolidColor(color.toColor())
+    val brush =
+        if (cachedBrush == null) {
+            val shaderBrush =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val shaderProg = shaderData.shader.trim().trimIndent()
+                    val shader = RuntimeShader(shaderProg)
+                    SizingShaderBrush(shader)
+                } else {
+                    shaderData.shaderFallbackColorOrNull?.let { color ->
+                        SolidColor(color.toColor())
+                    }
+                }
+            if (layoutId != null && shaderBrush != null) {
+                shaderBrushCache.put(layoutId, viewId, shaderBrush)
             }
+            shaderBrush
+        } else {
+            cachedBrush
         }
-        if (layoutId != null) {
-            shaderBrushCache.put(layoutId, viewId, shaderBrush)
-        }
-    } else {
-        shaderBrush = cachedBrush
-    }
 
-    if (shaderBrush is SizingShaderBrush && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    if (brush is SizingShaderBrush && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val customShaderUniforms =
             if (asBackground) shaderUniformCustomizations?.backgroundShaderUniforms
             else shaderUniformCustomizations?.strokeShaderUniforms
@@ -973,7 +991,7 @@ internal fun getShaderBrush(
                 customShaderUniforms
                     ?.get(k)
                     ?.applyToShader(
-                        shaderBrush as SizingShaderBrush,
+                        brush,
                         shaderData.shaderUniformsMap,
                         document,
                         appContext,
@@ -987,7 +1005,7 @@ internal fun getShaderBrush(
                     ?.get(k)
                     ?.value
                     ?.applyToShader(
-                        shaderBrush as SizingShaderBrush,
+                        brush,
                         shaderData.shaderUniformsMap,
                         document,
                         appContext,
@@ -999,26 +1017,14 @@ internal fun getShaderBrush(
             if (v.name == "iTime") {
                 return@forEach
             }
-            v.applyToShader(
-                shaderBrush as SizingShaderBrush,
-                shaderData.shaderUniformsMap,
-                document,
-                appContext,
-                density,
-            )
+            v.applyToShader(brush, shaderData.shaderUniformsMap, document, appContext, density)
         }
 
         if (shaderData.shaderUniformsMap.containsKey("iTime")) {
             shaderTimeUniformState
                 ?.value
-                ?.applyToShader(
-                    shaderBrush as SizingShaderBrush,
-                    shaderData.shaderUniformsMap,
-                    document,
-                    appContext,
-                    density,
-                )
+                ?.applyToShader(brush, shaderData.shaderUniformsMap, document, appContext, density)
         }
     }
-    return shaderBrush
+    return brush
 }

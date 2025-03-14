@@ -73,18 +73,14 @@ import com.android.designcompose.DesignDocSettings
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.DesignVariableCollection
 import com.android.designcompose.DesignVariableModeValues
-import com.android.designcompose.LocalCustomizationContext
 import com.android.designcompose.LocalDesignDocSettings
 import com.android.designcompose.Meter
 import com.android.designcompose.MeterState
-import com.android.designcompose.ShaderHelper
-import com.android.designcompose.ShaderHelper.toShaderUniformState
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.annotation.DesignVariant
 import com.android.designcompose.common.DesignDocId
-import com.android.designcompose.setShaderTimeUniformState
 import com.android.designcompose.squoosh.SmartAnimateTransition
 import java.io.IOException
 import kotlin.math.absoluteValue
@@ -315,7 +311,7 @@ class MainActivity : ComponentActivity() {
 // Shiny V2 cJKbU0Kl8tBuU1bkIemt2I
 // Circular 4C3C3GlbQfJk1acq8YjoJe
 // Responsive Ac6itRStVMTTnJBuNsiDv7
-@DesignDoc(id = "od2Xm016aH1SvThcqFp0hE")
+@DesignDoc(id = "od2Xm016aH1SvThcqFp0hE", designFeatures = ["shader"])
 interface Cluster {
     @DesignComponent(node = "#HAR-stage")
     fun HarMain(
@@ -634,11 +630,6 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
         if (themeName != null && mode.value != LightDarkMode.Default)
             hashMapOf(themeName to mode.value.name)
         else null
-
-    val iTimeFloatState = ShaderHelper.getShaderUniformTimeFloatState()
-    LocalCustomizationContext.current.setShaderTimeUniformState(
-        iTimeFloatState.toShaderUniformState(ShaderHelper.UNIFORM_TIME)
-    )
 
     val docId = remember { mutableStateOf("od2Xm016aH1SvThcqFp0hE") }
     CompositionLocalProvider(

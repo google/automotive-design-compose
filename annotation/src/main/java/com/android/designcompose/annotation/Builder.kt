@@ -29,6 +29,7 @@ annotation class DesignDoc(
     val id: String,
     val designVersion: String = "",
     val customizationInterfaceVersion: String = "0",
+    val designFeatures: Array<String> = [], // Allowed values: "shader"
 )
 
 /**

@@ -22,7 +22,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.android.designcompose.LocalCustomizationContext
 import com.android.designcompose.ShaderHelper
 import com.android.designcompose.ShaderHelper.toShaderUniform
 import com.android.designcompose.ShaderHelper.toShaderUniformState
@@ -32,13 +31,12 @@ import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.customBackgroundShaderUniformStates
 import com.android.designcompose.customBackgroundShaderUniforms
-import com.android.designcompose.setShaderTimeUniformState
 import com.android.designcompose.testapp.validation.R
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-@DesignDoc(id = "TkgjNl81e5joWeAivmIdzm")
+@DesignDoc(id = "TkgjNl81e5joWeAivmIdzm", designFeatures = ["shader"])
 interface BrushFromShaderPluginTest {
     @DesignComponent(node = "#stage")
     fun MainFrame(
@@ -48,6 +46,7 @@ interface BrushFromShaderPluginTest {
         @Design(node = "#color-state-custom") customColorStates: ShaderUniformCustomizations,
         @Design(node = "#int-state-custom") customIntStates: ShaderUniformCustomizations,
         @Design(node = "#matrix2-custom") customMatrixState: ShaderUniformCustomizations,
+        @Design(node = "#image-custom") customImageUniform: ShaderUniformCustomizations,
     )
 }
 
@@ -55,9 +54,6 @@ interface BrushFromShaderPluginTest {
 fun BrushFromShaderPluginTest() {
     // Create a animate state for iTime so the shader can animate over time.
     val iTimeFloatState = ShaderHelper.getShaderUniformTimeFloatState()
-    LocalCustomizationContext.current.setShaderTimeUniformState(
-        iTimeFloatState.toShaderUniformState(ShaderHelper.UNIFORM_TIME)
-    )
 
     // DEV BRANCH: 5oAVZxBQCLCf7spBLLFRHw. This list tests multi-doc support.
     val rootShaderUniformCustomizations = ShaderUniformCustomizations()
@@ -100,6 +96,11 @@ fun BrushFromShaderPluginTest() {
         ShaderHelper.createShaderFloatArrayUniformState("iMatrix", angleState)
     )
 
+    val customImageUniform = ShaderUniformCustomizations()
+    customImageUniform.customBackgroundShaderUniforms(
+        ShaderHelper.createShaderImageResourceUniform("iImage", R.drawable.ic_stop_sign)
+    )
+
     BrushFromShaderPluginTestDoc.MainFrame(
         rootShaderUniformCustomizations = rootShaderUniformCustomizations,
         customColors = customColors,
@@ -107,5 +108,7 @@ fun BrushFromShaderPluginTest() {
         customColorStates = customColorStates,
         customIntStates = customIntStates,
         customMatrixState = customMatrixState,
+        customImageUniform = customImageUniform,
+        shaderTimeFloatState = iTimeFloatState,
     )
 }

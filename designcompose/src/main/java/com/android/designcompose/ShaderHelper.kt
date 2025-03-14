@@ -20,6 +20,7 @@ import android.content.Context
 import android.database.ContentObserver
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.android.designcompose.definition.element.ShaderUniform
 import com.android.designcompose.definition.element.ShaderUniformValueKt.floatVec
+import com.android.designcompose.definition.element.ShaderUniformValueKt.imageResource
 import com.android.designcompose.definition.element.ShaderUniformValueKt.intVec
 import com.android.designcompose.definition.element.floatColor
 import com.android.designcompose.definition.element.shaderUniform
@@ -225,6 +227,27 @@ object ShaderHelper {
         state: State<IntArray>,
     ): State<ShaderUniform> {
         return remember { derivedStateOf { createShaderIntArrayUniform(name, state.value) } }
+    }
+
+    /** Creates a shader uniform from drawable resource id. */
+    fun createShaderImageResourceUniform(name: String, @DrawableRes value: Int): ShaderUniform {
+        return shaderUniform {
+            this.name = name
+            this.value = shaderUniformValue {
+                imageResourceValue = imageResource { resourceId = value }
+            }
+        }
+    }
+
+    /** Creates a shader uniform state from drawable resource id state. */
+    @Composable
+    fun createShaderImageResourceUniformState(
+        name: String,
+        resIdState: IntState,
+    ): State<ShaderUniform> {
+        return remember {
+            derivedStateOf { createShaderImageResourceUniform(name, resIdState.intValue) }
+        }
     }
 
     /**

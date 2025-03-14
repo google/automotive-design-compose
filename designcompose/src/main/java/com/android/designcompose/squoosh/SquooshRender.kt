@@ -41,6 +41,7 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.ShaderBrushCache
 import com.android.designcompose.VariableState
+import com.android.designcompose.definition.element.shaderDataOrNull
 import com.android.designcompose.definition.modifier.TextAlignVertical
 import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.definition.view.strokeOrNull
@@ -384,27 +385,31 @@ private fun squooshTextRender(
         )
     }
 
-    if (style.nodeStyle.stroke.hasShaderData()) {
-        val strokeShaderBrush =
+    val brush =
+        style.nodeStyle.stroke.shaderDataOrNull?.let { shaderData ->
             getShaderBrush(
-                style.nodeStyle.stroke.shaderData,
-                customizations.getShaderUniformCustomizations(nodeName),
-                customizations.getShaderTimeUniformState(),
-                shaderBrushCache,
-                node.layoutId,
-                node.view.id,
-                document,
-                appContext,
-                density.density,
-                asBackground = false,
-            )
-        paragraph.paint(
-            drawContext.canvas,
-            brush = strokeShaderBrush,
-            alpha = 1.0f,
-            drawStyle = Stroke(width = strokeWidth),
-        )
-    } else
+                    shaderData,
+                    customizations.getShaderUniformCustomizations(nodeName),
+                    customizations.getShaderTimeUniformState(),
+                    shaderBrushCache,
+                    node.layoutId,
+                    node.view.id,
+                    document,
+                    appContext,
+                    density.density,
+                    asBackground = false,
+                )
+                ?.let { brush ->
+                    paragraph.paint(
+                        drawContext.canvas,
+                        brush = brush,
+                        alpha = 1.0f,
+                        drawStyle = Stroke(width = strokeWidth),
+                    )
+                    brush
+                }
+        }
+    if (brush == null) {
         style.nodeStyle.strokeOrNull?.strokesList?.forEach {
             val strokeBrushAndOpacity =
                 it.asBrush(
@@ -422,6 +427,7 @@ private fun squooshTextRender(
                 )
             }
         }
+    }
 
     drawContext.canvas.restore()
     if (useBlendModeLayer || opacity < 1.0f || transform != null) drawContext.canvas.restore()

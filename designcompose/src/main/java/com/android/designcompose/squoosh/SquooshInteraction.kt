@@ -16,15 +16,18 @@
 
 package com.android.designcompose.squoosh
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.Paragraph
 import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
@@ -33,12 +36,12 @@ import com.android.designcompose.definition.interaction.Action
 import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.dispatch
 import com.android.designcompose.getKey
+import com.android.designcompose.getPressedReactionList
 import com.android.designcompose.getTapCallback
+import com.android.designcompose.removePressed
 import com.android.designcompose.setPressed
 import com.android.designcompose.undoDispatch
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.launch
 
 internal fun findTargetInstanceId(
     document: DocContent,
@@ -122,6 +125,7 @@ internal fun Modifier.hyperlinkHandler(
         }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 internal fun Modifier.squooshInteraction(
     document: DocContent,
     interactionState: InteractionState,
@@ -135,15 +139,34 @@ internal fun Modifier.squooshInteraction(
     val tapCallback = customizations.getTapCallback(node.view)
 
     return this.then(
-        Modifier.pointerInput(reactions, tapCallback, isPressed.value) {
-            // Use the interaction scope so that we don't have our event handler removed when our
-            // Modifier node is removed from the tree (allowing interactions like "close the overlay
-            // while pressed" applied to an overlay to actually receive the touch release event and
-            // dispatch the "undo" action).
-            interactionScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                detectTapGestures(
-                    onPress = {
-                        // Set the "pressed" state.
+        Modifier.pointerInput(reactions, tapCallback) {
+            awaitEachGesture {
+                var tapPosition: Offset? = null
+                if (!isPressed.value) {
+                    println("###")
+                    println("### Await ${node.view.name} isPressed ${isPressed.value}")
+                    // If not currently pressed, wait for the first press (down) event
+                    val down = awaitFirstDown(true, PointerEventPass.Initial)
+                    tapPosition = down.position
+                    println("### FIRST DOWN")
+                } else {
+                    println("###")
+                    println("### Skip ${node.view.name} awaitFirstDown()")
+                }
+
+                do {
+                    val event = awaitPointerEvent()
+                    if (event.changes.size != 1) {
+                        // Too many changes, not a tap so abort
+                        break
+                    }
+
+                    val change = event.changes[0]
+                    println("### EVENT $change")
+
+                    if (change.pressed && !change.previousPressed) {
+                        // Press event, dispatch any press events
+                        println("### PRESSED")
                         reactions
                             ?.filter { r -> r.trigger.hasPress() }
                             ?.forEach {
@@ -158,14 +181,37 @@ internal fun Modifier.squooshInteraction(
                                     node.unresolvedNodeId,
                                 )
                             }
+                        println(
+                            "### SetPressed ${node.view.id}, ${node.view.name}, ${reactions.size} unresolved ${node.unresolvedNodeId}"
+                        )
+                        // Set the isPressed state so that if this node changed, the new variant
+                        // starts out in the pressed state. Also save the original node's reactions
+                        // into the interaction state so that the new variant can access them
                         isPressed.value = true
-                        interactionState.setPressed(node.view.id, true)
-                        val dispatchClickEvent = tryAwaitRelease()
-
-                        // Clear the "pressed" state.
-                        reactions
-                            ?.filter { r -> r.trigger.hasPress() }
-                            ?.forEach {
+                        interactionState.setPressed(node.unresolvedNodeId, reactions)
+                    } else if (change.pressed) {
+                        // Drag event. If there's too much movement, abort the tap
+                        if (
+                            tapPosition != null &&
+                                (change.position - tapPosition).getDistance() >
+                                    viewConfiguration.touchSlop
+                        ) {
+                            println(
+                                "### interceptTap too much movement, dist > ${viewConfiguration.touchSlop}"
+                            )
+                            isPressed.value = false
+                            interactionState.removePressed(node.unresolvedNodeId)
+                            break
+                        }
+                    } else if (change.previousPressed) {
+                        // Touch release event.
+                        // Get the list of reactions and if any are press events, undo them.
+                        println("### UP")
+                        val unresolvedReactions =
+                            interactionState.getPressedReactionList(node.unresolvedNodeId)
+                        unresolvedReactions
+                            .filter { r -> r.trigger.hasPress() }
+                            .forEach {
                                 interactionState.undoDispatch(
                                     it.action,
                                     findTargetInstanceId(
@@ -178,31 +224,42 @@ internal fun Modifier.squooshInteraction(
                                 )
                             }
 
-                        // If the tap wasn't cancelled (turned into a drag, a window opened on top
-                        // of us, etc) then we can run the action.
-                        if (dispatchClickEvent) {
-                            reactions
-                                ?.filter { r -> r.trigger.hasClick() }
-                                ?.forEach {
-                                    interactionState.dispatch(
+                        // Dispatch any click interactions
+                        unresolvedReactions
+                            .filter { r -> r.trigger.hasClick() }
+                            .forEach {
+                                interactionState.dispatch(
+                                    it.action,
+                                    findTargetInstanceId(
+                                        document,
+                                        childComposable.parentComponents,
                                         it.action,
-                                        findTargetInstanceId(
-                                            document,
-                                            childComposable.parentComponents,
-                                            it.action,
-                                        ),
-                                        customizations.getKey(),
-                                        null, // no undo
-                                    )
-                                }
-                            // Execute tap callback if one exists
-                            tapCallback?.invoke()
-                        }
+                                    ),
+                                    customizations.getKey(),
+                                    null, // no undo
+                                )
+                            }
+
+                        // Execute tap callback if one exists
+                        tapCallback?.invoke()
+
+                        // Reset the pressed state and consume the event
                         isPressed.value = false
-                        interactionState.setPressed(node.view.id, false)
+                        interactionState.removePressed(node.unresolvedNodeId)
+                        change.consume()
                     }
-                )
+                } while (
+                    event.changes.any { it.pressed }
+                ) // event.changes.any { it.id == down.id && it.pressed })
+                println("### DONE")
             }
+            // Use the interaction scope so that we don't have our event handler removed when
+            // our
+            // Modifier node is removed from the tree (allowing interactions like "close the
+            // overlay
+            // while pressed" applied to an overlay to actually receive the touch release event
+            // and
+            // dispatch the "undo" action).
         }
     )
 }

@@ -22,8 +22,22 @@ import androidx.tracing.trace
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.FeedbackImpl
 import com.android.designcompose.common.GenericDocContent
+import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.decodeDiskBaseDoc
 import com.android.designcompose.common.decodeServerBaseDoc
+import com.android.designcompose.common.views
+import com.android.designcompose.definition.element.Bounds
+import com.android.designcompose.definition.element.KeyframeVariant
+import com.android.designcompose.definition.element.ScalableUIComponentSet
+import com.android.designcompose.definition.element.ScalableUiVariant
+import com.android.designcompose.definition.element.bounds
+import com.android.designcompose.definition.element.copy
+import com.android.designcompose.definition.element.scalableDimension
+import com.android.designcompose.definition.element.setOrNull
+import com.android.designcompose.definition.element.variantOrNull
+import com.android.designcompose.definition.view.nodeStyleOrNull
+import com.android.designcompose.definition.view.scalableDataOrNull
+import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.live_update.ConvertResponse
 import com.google.protobuf.kotlin.get
 import java.io.File
@@ -121,4 +135,121 @@ fun decodeServerDoc(
     val fullDoc = DocContent(baseDoc, previousDoc)
     save?.let { fullDoc.c.save(save, Feedback) }
     return fullDoc
+}
+
+class ScalableUiDoc(doc: DocContent) {
+    // variant name -> scalable ui data
+    val variantMap: HashMap<String, ScalableUiVariant> = HashMap()
+    // variant id -> scalable ui data
+    val variantIdMap: HashMap<String, ScalableUiVariant> = HashMap()
+    // component set name -> { event name -> variant name }
+    val componentSetMap: HashMap<String, ScalableUIComponentSet> =
+        HashMap() // HashMap<String, String>> = HashMap()
+
+    init {
+        val allViews = doc.c.document.views()
+        doc.c.variantViewMap.forEach { setMap ->
+            val componentSetQuery = NodeQuery.NodeComponentSet(setMap.key)
+            val componentSetView = allViews[componentSetQuery]
+            componentSetView?.styleOrNull?.nodeStyleOrNull?.scalableDataOrNull?.setOrNull?.let {
+                setData ->
+                val setName = setData.name
+                componentSetMap[setName] = setData
+            }
+
+            setMap.value.forEach { variantMap ->
+                val variant = variantMap.value
+                if (variant.data.hasContainer()) {
+                    if (variant.data.container.childrenCount > 0) {
+                        val child = variant.data.container.getChildren(0)
+                        if (child.name == "main") {
+                            val layout = child.style.layoutStyle
+                            val scalableUiVariant =
+                                variant.styleOrNull
+                                    ?.nodeStyleOrNull
+                                    ?.scalableDataOrNull
+                                    ?.variantOrNull
+                                    ?.copy {
+                                        isVisible =
+                                            when (child.style.nodeStyle.displayType) {
+                                                com.android.designcompose.definition.view.Display
+                                                    .DISPLAY_NONE -> false
+                                                else -> true
+                                            }
+                                        alpha =
+                                            if (child.style.nodeStyle.hasOpacity())
+                                                child.style.nodeStyle.opacity
+                                            else 1f
+                                        bounds = bounds {
+                                            left = scalableDimension {
+                                                points = layout.margin.start.points
+                                            }
+                                            top = scalableDimension {
+                                                points = layout.margin.top.points
+                                            }
+                                            right = scalableDimension {
+                                                points = layout.margin.end.points
+                                            }
+                                            bottom = scalableDimension {
+                                                points = layout.margin.bottom.points
+                                            }
+                                            width = scalableDimension {
+                                                points = layout.width.points
+                                            }
+                                            height = scalableDimension {
+                                                points = layout.height.points
+                                            }
+                                        }
+                                    }
+                            scalableUiVariant?.let {
+                                this.variantMap[variantMap.key] = it
+                                this.variantIdMap[variant.id] = it
+                            }
+                        }
+                    }
+                }
+            }
+
+            componentSetView?.styleOrNull?.nodeStyleOrNull?.scalableDataOrNull?.setOrNull?.let {
+                setData ->
+                val setName = setData.name
+                componentSetMap[setName] = setData
+                println("### Set ${setData.name}, ${setData.id}")
+                setData.variantIdsList.forEach {
+                    println(
+                        "  ### Variant $it: Default ${variantIdMap[it]?.isDefault} Visible ${variantIdMap[it]?.isVisible}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun hasVariant(variantName: String): Boolean {
+        return variantMap.containsKey(variantName)
+    }
+
+    fun getVisible(variantName: String): Boolean {
+        return variantMap[variantName]?.isVisible == true
+    }
+
+    fun getBounds(variantName: String): Bounds? {
+        return variantMap[variantName]?.bounds
+    }
+
+    fun getTransitions(componentSetName: String, result: HashMap<String, String>) {
+        val eventHash = componentSetMap[componentSetName]?.eventMapMap
+        eventHash?.forEach { result[it.key] = it.value.variantName }
+    }
+
+    fun getKeyframeVariantList(componentSetName: String): List<KeyframeVariant>? {
+        return componentSetMap[componentSetName]?.keyframeVariantsList
+    }
+
+    fun getPanels(): List<ScalableUIComponentSet> {
+        return componentSetMap.values.toList()
+    }
+
+    fun getVariantById(id: String): ScalableUiVariant? {
+        return variantIdMap[id]
+    }
 }

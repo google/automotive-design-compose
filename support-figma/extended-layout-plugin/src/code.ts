@@ -19,6 +19,7 @@ import * as Localization from "./localization-module";
 import * as DesignSpecs from "./design-spec-module";
 import * as ImageRes from "./image-res-module";
 import * as Shader from "./shader";
+import * as Scalable from "./scalable";
 
 // Warning component.
 interface ClippyWarningRun {
@@ -584,6 +585,33 @@ if (figma.command === "sync") {
   figma.on("selectionchange", Shader.onSelectionChanged);
 } else if (figma.command === "shader-clear-all") {
   Shader.clearAll();
+} else if (figma.command === "scalable") {
+  figma.showUI(__uiFiles__.scalable, { width: 600, height: 600 });
+  Scalable.onSelectionChanged();
+  figma.ui.onmessage = (msg) => {
+    if (msg.msg == "createEvent")
+      Scalable.createNewEvent(msg);
+    else if (msg.msg == "removeEvent")
+      Scalable.removeEvent(msg);
+    else if (msg.msg == "sendEvent")
+      Scalable.sendEvent(msg);
+    else if (msg.msg == "resetState")
+      Scalable.resetState(msg);
+    else if (msg.msg == "createKeyframeVariant")
+      Scalable.createKeyframeVariant(msg);
+    else if (msg.msg == "removeKeyframeVariant")
+      Scalable.removeKeyframeVariant(msg);
+    else if (msg.msg == "roleChanged")
+      Scalable.roleChanged(msg);
+    else if (msg.msg == "nodeChanged")
+      Scalable.nodeChanged(msg);
+    else if (msg.msg == "addNode")
+      Scalable.addNode();
+    else if (msg.msg == "removeNode")
+      Scalable.removeNode();
+  };
+  figma.on("selectionchange", Scalable.onSelectionChanged);
+  Scalable.onSelectionChanged();
 } else if (figma.command === "move-plugin-data") {
   function movePluginDataWithKey(node: BaseNode, key: string) {
     // Read the private plugin data, write to shared

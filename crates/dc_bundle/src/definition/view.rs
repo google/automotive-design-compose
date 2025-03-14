@@ -92,6 +92,7 @@ impl NodeStyle {
             meter_data: None.into(),
             hyperlink: None.into(),
             shader_data: None.into(),
+            scalable_data: None.into(),
             ..Default::default()
         }
     }

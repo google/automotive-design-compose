@@ -16,6 +16,8 @@ use std::collections::HashMap;
 
 use dc_bundle::color::{Color, FloatColor};
 use protobuf::EnumOrUnknown;
+
+use dc_bundle::view::OverriddenFields;
 use serde::{Deserialize, Serialize};
 
 // We use serde to decode Figma's JSON documents into Rust structures.
@@ -1001,7 +1003,25 @@ pub enum NodeData {
         frame: FrameCommon,
         #[serde(rename = "componentId")]
         component_id: String,
+        overrides: Option<Vec<FigmaOverriddenFields>>,
     },
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FigmaOverriddenFields {
+    pub id: String,
+    #[serde(rename = "overriddenFields")]
+    pub overridden_fields: Vec<String>,
+}
+
+impl Into<(String, OverriddenFields)> for &FigmaOverriddenFields {
+    fn into(self) -> (String, OverriddenFields) {
+        return (
+            self.id.clone(),
+            OverriddenFields { fields: self.overridden_fields.clone(), ..Default::default() },
+        );
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+use std::any::Any;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU16;
 
 use crate::background::{background, Background};
 use crate::blend::BlendMode;
-use crate::component::ComponentInfo;
 use crate::font::{FontStretch, FontStyle, FontWeight, TextDecoration};
 use crate::frame_extras::FrameExtras;
 use crate::geometry::{Rectangle, Size};
@@ -35,7 +34,7 @@ use crate::text_style::StyledTextRun;
 use crate::variable::NumOrVar;
 use crate::view::view::RenderMethod;
 use crate::view::view_data::{Container, StyledTextRuns, Text, View_data_type};
-use crate::view::{View, ViewData};
+use crate::view::{ComponentInfo, View, ViewData};
 use crate::view_shape::ViewShape;
 use crate::view_style::ViewStyle;
 
@@ -306,6 +305,9 @@ impl ViewStyle {
         if self.layout_style().min_height != other.layout_style().min_height {
             delta.layout_style_mut().min_height = other.layout_style().min_height.clone();
         }
+        if self.layout_style().bounding_box != other.layout_style().bounding_box {
+            delta.layout_style_mut().bounding_box = other.layout_style().bounding_box.clone();
+        }
         if self.node_style().aspect_ratio != other.node_style().aspect_ratio {
             delta.node_style_mut().aspect_ratio = other.node_style().aspect_ratio;
         }
@@ -459,5 +461,31 @@ impl View {
     }
     pub fn style_mut(&mut self) -> &mut ViewStyle {
         self.style.as_mut().expect("ViewStyle is required.")
+    }
+
+    /** This function is now only called by a view that is a COMPONENT. */
+    pub fn find_view_by_id(&self, view_id: String) -> Option<&View> {
+        if self.id == view_id {
+            return Some(&self);
+        } else if let Some(id) = view_id.split(";").last() {
+            // If this is a descendent node of an instance, the last section is the node id
+            // of the view in the component. Example: I70:17;29:15 
+            if self.id == id.to_string() {
+                return Some(&self)
+            }
+        }
+        if let Some(data) = &self.data.as_ref() {
+            if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+                &data.view_data_type
+            {
+                for child in children {
+                    let result = child.find_view_by_id(view_id.clone());
+                    if result.is_some() {
+                        return result;
+                    }
+                }
+            }
+        }
+        return None;
     }
 }

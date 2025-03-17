@@ -12,12 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::time::Duration;
-use std::{
-    collections::{HashMap, HashSet},
-    iter::FromIterator,
-};
-
 use crate::{
     component_context::ComponentContext,
     error::Error,
@@ -28,16 +22,21 @@ use crate::{
     transform_flexbox::create_component_flexbox,
     variable_utils::create_variable,
 };
-use dc_bundle::component::component_overrides::Component_content_override;
-use dc_bundle::component::ComponentOverrides;
 use dc_bundle::definition::EncodedImageMap;
 use dc_bundle::definition::NodeQuery;
 use dc_bundle::figma_doc::FigmaDocInfo;
 use dc_bundle::variable::variable_map::NameIdMap;
 use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
 use dc_bundle::view::view_data::{Container, View_data_type};
-use dc_bundle::view::View;
+use dc_bundle::view::{ComponentInfo, ComponentOverrides, View, ViewData};
+use dc_bundle::view_style::ViewStyle;
 use log::error;
+use protobuf::MessageField;
+use std::time::Duration;
+use std::{
+    collections::{HashMap, HashSet},
+    iter::FromIterator,
+};
 
 const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
 const BASE_FILE_URL: &str = "https://api.figma.com/v1/files/";
@@ -463,65 +462,171 @@ impl Document {
         fn for_each_component_instance(
             reference_components: &HashMap<NodeQuery, View>,
             view: &mut View,
-            action: &impl Fn(&mut View, &View),
+            parent_component_info: Option<&mut ComponentInfo>,
+            parent_reference_component: Option<&View>,
+            action: &impl Fn(
+                MessageField<ViewStyle>,
+                MessageField<ViewData>,
+                String,
+                String,
+                &mut ComponentInfo,
+                Option<&View>,
+                bool,
+            ),
         ) {
-            if let Some(info) = view.component_info.as_ref() {
-                // See if we can find the target component. If not then don't look up
-                // references. Try searching by id, name, and variant
-                if let Some(reference_component) =
-                    reference_components.get(&NodeQuery::NodeId(info.id.clone()))
-                {
-                    action(view, reference_component);
-                } else if let Some(reference_component) =
-                    reference_components.get(&NodeQuery::NodeName(info.name.clone()))
-                {
-                    action(view, reference_component);
-                } else if let Some(reference_component) = reference_components.get(
-                    &NodeQuery::NodeVariant(info.name.clone(), info.component_set_name.clone()),
-                ) {
-                    action(view, reference_component);
-                }
-            }
+            match (view.component_info.as_mut(), parent_component_info) {
+                (Some(info), _) => {
+                    // This is the root node of a component instance.
+                    // Compute its style and data overrides and write to its component info whose
+                    // key is the component_set_name.
 
-            if let Some(data) = view.data.as_mut() {
-                if let Some(View_data_type::Container(Container { children, .. })) =
-                    data.view_data_type.as_mut()
-                {
-                    for child in children {
-                        for_each_component_instance(reference_components, child, action);
+                    // See if we can find the target component. If not then don't look up
+                    // references. Try searching by id, name, and variant
+                    let queries = [
+                        NodeQuery::NodeId(info.id.clone()),
+                        NodeQuery::NodeName(info.name.clone()),
+                        NodeQuery::NodeVariant(info.name.clone(), info.component_set_name.clone()),
+                    ];
+
+                    let reference_component_option =
+                        queries.iter().find_map(|query| reference_components.get(query));
+
+                    if reference_component_option.is_some() {
+                        action(
+                            view.style.clone(),
+                            view.data.clone(),
+                            view.id.clone(),
+                            info.component_set_name.clone(),
+                            info,
+                            reference_component_option,
+                            true,
+                        );
+                    }
+
+                    if let Some(data) = view.data.as_mut() {
+                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+                            data.view_data_type.as_mut()
+                        {
+                            for child in children {
+                                for_each_component_instance(
+                                    reference_components,
+                                    child,
+                                    Some(info),
+                                    reference_component_option,
+                                    action,
+                                );
+                            }
+                        }
+                    }
+                }
+                (None, Some(parent_info)) => {
+                    // This matches a descendent view of a component instance.
+                    // The style and data overrides are written to hash map keyed by the view name
+                    // in the component info of the instance.
+                    action(
+                        view.style.clone(),
+                        view.data.clone(),
+                        view.id.clone(),
+                        view.name.clone(),
+                        parent_info,
+                        parent_reference_component,
+                        false,
+                    );
+                    if let Some(data) = view.data.as_mut() {
+                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+                            data.view_data_type.as_mut()
+                        {
+                            for child in children {
+                                for_each_component_instance(
+                                    reference_components,
+                                    child,
+                                    Some(parent_info),
+                                    parent_reference_component,
+                                    action,
+                                );
+                            }
+                        }
+                    }
+                }
+                (None, None) => {
+                    // This matches the nodes from the root node of the view tree until it
+                    // meets a component instance.
+                    if let Some(data) = view.data.as_mut() {
+                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+                            data.view_data_type.as_mut()
+                        {
+                            for child in children {
+                                for_each_component_instance(
+                                    reference_components,
+                                    child,
+                                    None,
+                                    None,
+                                    action,
+                                );
+                            }
+                        }
                     }
                 }
             }
         }
 
         for view in nodes.values_mut() {
-            for_each_component_instance(&reference_components, view, &|view, component| {
-                // Currently we are only computing the override style for the root of a component.
-                // We should expand this to traverse the tree, matching up nodes from each side
-                // and determining deltas.
-                //
-                // This is the same algorithm we'll have to make to do Smart Animate (including
-                // determining delta styles).
-                if view.style == component.style {
-                    return;
-                }
-                view.component_info = view
-                    .component_info
-                    .take()
-                    .map(|mut info| {
-                        info.overrides = Some(ComponentOverrides {
-                            style: Some(component.style().difference(&view.style())).into(),
-                            component_content_override: Some(Component_content_override::None(
-                                ().into(),
-                            ))
-                            .into(),
-                            ..Default::default()
-                        })
-                        .into();
-                        info
-                    })
-                    .into();
-            });
+            for_each_component_instance(
+                &reference_components,
+                view,
+                None,
+                None,
+                &|view_style,
+                  view_data,
+                  view_id,
+                  // overrides_table_key will either be the component_set_name or view_name.
+                  // This only works if the view name is identical.
+                  overrides_table_key,
+                  component_info,
+                  component,
+                  is_component_root| {
+                    if let Some(reference_component) = component {
+                        let template_view_option = if is_component_root {
+                            Some(reference_component)
+                        } else {
+                            reference_component.find_view_by_id(&view_id)
+                        };
+                        if let Some(template_view) = template_view_option {
+                            let override_view_style = if view_style == template_view.style {
+                                MessageField::none()
+                            } else if let Some(view_style_ref) = view_style.as_ref() {
+                                let diff: Option<ViewStyle> =
+                                    Some(template_view.style().difference(view_style_ref));
+                                diff.into()
+                            } else {
+                                error!("ViewStyle is required.");
+                                MessageField::none()
+                            };
+                            let override_view_data =
+                                if let Some(reference_view_data) = template_view.data.as_ref() {
+                                    if let Some(data) = view_data.as_ref() {
+                                        reference_view_data.difference(data).into()
+                                    } else {
+                                        MessageField::none()
+                                    }
+                                } else {
+                                    MessageField::none()
+                                };
+
+                            if override_view_style.is_some() || override_view_data.is_some() {
+                                component_info.overrides_table.insert(
+                                    overrides_table_key,
+                                    ComponentOverrides {
+                                        style: override_view_style,
+                                        view_data: override_view_data,
+                                        ..Default::default()
+                                    },
+                                );
+                            }
+                        }
+                    }
+                },
+            );
         }
     }
 

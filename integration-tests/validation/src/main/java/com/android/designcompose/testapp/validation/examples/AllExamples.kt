@@ -42,6 +42,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             { ComponentTapCallbackTest() },
             ComponentTapCallbackDoc.javaClass.name,
         ),
+        Triple(
+            "Component Overrides",
+            { ComponentOverridesTest() },
+            ComponentOverridesTestDoc.javaClass.name,
+        ),
         Triple("Custom Brush", { CustomBrushTest() }, CustomBrushTestDoc.javaClass.name),
         Triple(
             "Brush Shader Plugin",

@@ -24,9 +24,9 @@ import "definition/interaction/reaction.proto";
 import "definition/layout/grid.proto";
 import "definition/layout/positioning.proto";
 import "definition/plugin/frame_extras.proto";
-import "definition/view/component.proto";
 import "definition/view/text_style.proto";
 import "definition/view/view_style.proto";
+import "google/protobuf/empty.proto";
 
 option java_multiple_files = true;
 option java_package = "com.android.designcompose.definition.view";
@@ -103,3 +103,33 @@ message ViewData {
     StyledTextRuns styled_text = 3;
   }
 }
+
+// Figma component properties can be "overridden" in the UI. These overrides
+// are applied in the node tree we get back from Figma, so we don't have to
+// worry about them, unless we present a variant of a component as a result of
+// an interaction. In that case, we need to figure out what has been overridden
+// and apply it to the variant. This struct keeps track of those overrides that
+// need to be applied to variant instances.
+message ComponentOverrides {
+  // Previously defined attributes 2 to 4 but nowhere those were used.
+  reserved 2 to 4;
+  ViewStyle style = 1;
+  ViewData view_data = 5;
+}
+
+// Details on the Figma component that this view is an instance of.
+message ComponentInfo {
+  string id = 1;
+  string name = 2;
+  string component_set_name = 3;
+
+  // Previously we only figure out overrides for the root of a component
+  // This is now deprecated and will be removed soon.
+  ComponentOverrides overrides = 4[deprecated = true];
+
+  // Descendent view name -> ComponentOverrides mappings. This works only if view name
+  // is identical. For the component root view, it uses the component_set_name as the
+  // key because the component name differs per variant.
+  map<string, ComponentOverrides> overrides_table = 5;
+}
+

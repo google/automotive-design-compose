@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestUtils {
 
@@ -87,6 +89,7 @@ public class TestUtils {
     public static class LiveUpdateTestRule implements TestRule {
         private final String dcfOutPath;
         private final boolean runFigmaFetch;
+        private final HashMap<String, String> dcfFileIdOverrides = new HashMap<>();
 
         public LiveUpdateTestRule() {
             dcfOutPath = System.getProperty("designcompose.test.dcfOutPath");
@@ -102,6 +105,11 @@ public class TestUtils {
             return base;
         }
 
+        public LiveUpdateTestRule overrideDcfFileId(String originalId, String newId) {
+            dcfFileIdOverrides.put(originalId, newId);
+            return this;
+        }
+
         public void performLiveFetch() {
             if (runFigmaFetch) {
                 performLiveFetch(dcfOutPath);
@@ -115,10 +123,18 @@ public class TestUtils {
             Context context = ApplicationProvider.getApplicationContext();
             Arrays.stream(context.fileList()).filter(it -> it.endsWith(".dcf"))
                     .forEach(it -> {
+                        String dcfOutFileName = it;
+                        for (Map.Entry<String, String> overrides : dcfFileIdOverrides.entrySet()) {
+                            if (dcfOutFileName.endsWith(overrides.getKey() + ".dcf")) {
+                                dcfOutFileName = dcfOutFileName.replace(overrides.getKey(), overrides.getValue());
+                                System.err.println("dcfOutFileName: " + dcfOutFileName);
+                                break;
+                            }
+                        }
                         File filepath = new File(context.getFilesDir().getAbsolutePath(), it);
                         try {
                             Files.copy(filepath.toPath(),
-                                    new File(dcfOutPath, it).toPath(),
+                                    new File(dcfOutPath, dcfOutFileName).toPath(),
                                     StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             throw new RuntimeException(e);

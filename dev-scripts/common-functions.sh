@@ -69,6 +69,14 @@ function fetch_helloworld {
    cp $OUTPUT_FILE_REFERENCE_APP $OUTPUT_FILE_RAW_RES_TEST
 }
 
+function copy_helloworld {
+    DOC_ID=pxVlixodJqZL95zo2RzTHl
+    OUTPUT_FILE_REFERENCE_APP="$GIT_ROOT/reference-apps/helloworld/helloworld-app/src/main/assets/figma/HelloWorldDoc_$DOC_ID.dcf"
+    OUTPUT_FILE_RAW_RES_TEST="$GIT_ROOT/designcompose/src/testDebug/res/raw/raw_resource_test_hello_world_doc"
+   # Reuse Hello World doc for testing doc loading from res/raw
+   cp $OUTPUT_FILE_REFERENCE_APP $OUTPUT_FILE_RAW_RES_TEST
+}
+
 function fetch_tutorial {
     DOC_ID=3z4xExq0INrL9vxPhj9tl7
     WELCOME_BRANCH=BX9UyUa5lkuSP3dEnqBdJf

@@ -17,36 +17,36 @@
 package com.android.designcompose.tutorial
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.designcompose.DesignDocOverride
+import com.android.designcompose.TestUtils
+import com.android.designcompose.common.DesignDocId
+import com.android.designcompose.test.Fetchable
 import com.android.designcompose.test.assertHasText
 import com.android.designcompose.test.onDCDoc
+import com.android.designcompose.test.waitForContent
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.RoborazziRule
+import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
+@Category(Fetchable::class)
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class CheckStartupPage {
     @get:Rule val composeTestRule = createComposeRule()
+    @get:Rule val liveUpdateTestRule = TestUtils.LiveUpdateTestRule()
 
     @get:Rule
     val roborazziRule =
         RoborazziRule(
-            composeRule = composeTestRule,
-            // Specify the node to capture for the last image
-            captureRoot = composeTestRule.onRoot(),
-            options =
-                RoborazziRule.Options(
-                    outputDirectoryPath = "src/testDebug/roborazzi",
-                    // Always capture the last image of the test
-                    captureType = RoborazziRule.CaptureType.LastImage(),
-                ),
+            options = RoborazziRule.Options(outputDirectoryPath = "src/testDebug/roborazzi")
         )
 
     @Test
@@ -59,6 +59,29 @@ class CheckStartupPage {
                     substring = true,
                 )
             }
+            waitForContent(TutorialDoc.javaClass.name)
+                .captureRoboImage(
+                    "com.android.designcompose.tutorial.CheckStartupPage.testStartupPage.png"
+                )
+        }
+    }
+
+    /**
+     * This test performs live update only because there is no design docs for
+     * BX9UyUa5lkuSP3dEnqBdJf.
+     */
+    @Test
+    fun testLiveUpdate() {
+        with(composeTestRule) {
+            setContent {
+                DesignDocOverride(DesignDocId("BX9UyUa5lkuSP3dEnqBdJf")) { TutorialMain() }
+            }
+
+            liveUpdateTestRule
+                .overrideDcfFileId("BX9UyUa5lkuSP3dEnqBdJf", "3z4xExq0INrL9vxPhj9tl7")
+                .performLiveFetch()
+            // There is no verification in the test. Because BX9UyUa5lkuSP3dEnqBdJf.dcf file is
+            // missing. It will not render when it is not running live update.
         }
     }
 }

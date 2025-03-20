@@ -58,8 +58,10 @@ pub fn decode_dcd_with_header(
 
     let dcd_length = cis.read_raw_varint32().map_err(|_| Error::DecodeError())?;
     println!("DCD length = {:?}", dcd_length);
+    let dcd_limit = cis.push_limit(dcd_length as u64).map_err(|_| Error::DecodeError())?;
     let dcd = DesignComposeDefinition::parse_from(&mut cis)
         .map_err(|e| Error::DCDLoadError(format!("Failed to parse DCD: {}", e)))?;
+    cis.pop_limit(dcd_limit);
 
     Ok((header, dcd))
 }

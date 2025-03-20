@@ -14,11 +14,11 @@ has_children: false
 This document provides a guide how to use the Shader Plugin in Figma. This plugin allows designers to
 apply custom shaders to their designs, enhancing visual effects and interactivity.
 
-The plugin is built using Skia's CanvasKit and have a few pre-built shader examples from the
+The plugin is built using Skia's CanvasKit and has a few pre-built shader examples from the
 [skia shader playground][1] and <https://godotshaders.com/>. The [skia shader playground][1] is also
 the recommended place to compile and debug your shader code before entering them into our shader plugin.
 
-This document also provides instructions how to customize shader uniforms' values, allowing developers
+This document also provides instructions how to customize shader uniform values, allowing developers
 to achieve different visual effects using the same shader code but with different uniform values.
 
 ## Plugin Features
@@ -26,9 +26,9 @@ to achieve different visual effects using the same shader code but with differen
 The Shader Plugin offers a variety of features:
 
 - **Apply Shaders:** Users can apply shaders to the background or strokes of any compatible node in
-  Figma. It also generates a preview image to insert as the background or stoke.
+  Figma. It also generates a preview image to insert as the background or stroke.
 - **Pre-built Shaders:** The plugin provides a selection of pre-built shaders.
-- **Custom Shader:** The plugin allows user to modify the pre-built shaders or write their own shader.
+- **Custom Shader:** The plugin allows a user to modify the pre-built shaders or write their own shader.
 - **Uniforms:** Create uniforms and set uniform values for shaders.
 - **Load Saved Shaders**: Load the applied shader from a figma node to the plugin.
 - **Clear Shaders:** Easily remove applied shaders and preview images from a selected node.
@@ -46,7 +46,7 @@ The Shader Plugin offers a variety of features:
 4. **Uniform Adjustment:** Create shader uniforms as needed.
 5. **Apply:** Apply the shader to the node's background or stroke.
 
-When apply shader as background or stroke, we provide an option to use a fallback color on
+When applying the shader as background or stroke, we provide an option to use a fallback color on
 lower sdks where Android doesn't support RuntimeShader.
 
 ![alt text](ApplyOption.png)
@@ -76,7 +76,7 @@ need to be created using our `+ Uniform` button.
 Here are the supported types:
 
 - float: A single floating-point number.
-  - iTime: A special float uniform that simulates time. We ask user to only create it when it is used
+  - iTime: A special float uniform that simulates time. We ask users to only create it when it is used
     in the shader code so when DesignCompose renders it, we only set the iTime uniform when it is
     used to avoid unnecessary redraw.
 - half: Similar to float, but with reduced precision.
@@ -88,11 +88,11 @@ Here are the supported types:
 - half2x2, half3x3, half4x4: Similar to mat, but with reduced precision.
 - int: A single integer number.
 - int2, int3, int4: Vectors of 2, 3, or 4 integer numbers.
-- shader: Refers to another shader, used to create nested shaders. Right now it supports to load
+- shader: Refers to another shader, used to create nested shaders. Right now it supports loading
   an image as input and apply effects on the image using shader code.
 
 For image uniform, an image resolution uniform with type `float2` will be created together. The image
-uniform now only supports to upload from the disk and when the image is loaded, it will set the image
+uniform now only supports uploading from the disk and when the image is loaded, it will set the image
 size to the image resolution uniform and rerun the shader to preview with the image input. Supported
 image types are JPG, PNG and GIF(which only renders the first frame). Other image formats may upload
 successfully but will fail to apply as the shader uniform value to the figma node.
@@ -100,7 +100,7 @@ successfully but will fail to apply as the shader uniform value to the figma nod
 ![alt text](CreateImageUniform.png)
 
 Please be aware that the image input is not written to the plugin data. It is added to the background
-fills or strokes as an invisible layer and please don't remove it so DesignCompose can download the image
+fills or strokes as an invisible layer. Please do not remove it so DesignCompose can download the image
 along with the figma file and apply it to the shader code.
 
 ![alt text](ImageUniformValue.png)
@@ -114,7 +114,7 @@ along with the figma file and apply it to the shader code.
 
 DesignCompose reads the plugin data from the figma node and transforms the shader data to a RuntimeShader
 and a list of shader uniform values to set to the shader. The shader takes priority over the background
-fills or strokes. We will only render shader if a shader is set.
+fills or strokes. We will only render the shader if a shader is set.
 
 Same as other view attributes, we added support to customize the shader uniform values so developer
 can achieve customized visual effects in the app. There are two types of customizations, uniform
@@ -134,7 +134,7 @@ which provides a time source for display frames. See [ShaderHelper.kt][3]. Our i
   integer. It will result in roughly the minimum of the display frame rate and `1000/interval`. This
   interval determines the frequency at which the time value is updated, influencing the smoothness of
   the animation. A shorter interval will result in a higher frequency of updates, while a larger
-  interval results in fewer updates. This interval can be override to ensure optimal performance on lower-end
+  interval results in fewer updates. This interval can be overriden to ensure optimal performance on lower-end
   Android devices.
 
 - Multiplies the global `ANIMATOR_DURATION_SCALE` setting with the frame interval and can disable
@@ -151,9 +151,9 @@ LocalCustomizationContext.current.setShaderTimeUniformState(
 ```
 
 In `0.35.0`, it is more flexible that by default, the build processor will create the iTime states
-and set it to the `CustomizationContext` using `ShaderHelper`'s default implementation. At the meanwhile,
+and set it to the `CustomizationContext` using `ShaderHelper`'s default implementation. Meanwhile,
 developer can also set their own implementation of the iTime float state to their design component. The
-only thing that developers need to do is declaring `designFeatures = ["shader"]` in their `DesignDoc`
+only thing that developers need to do is declare `designFeatures = ["shader"]` in their `DesignDoc`
 annotation:
 
 ```kotlin
@@ -169,9 +169,9 @@ methods for backgrounds and strokes respectively:
 - `customStrokeShaderUniforms`
 
 We also have helper functions to create a shader float uniform, an int uniform, a float array
-uniform, an int array uniform and a float color uniform, which are the types supported by a [ShaderUnfiormValue][5].
+uniform, an int array uniform and a float color uniform, which are the types supported by a [ShaderUniformValue][5].
 
-Below is an example how to apply uniform customizations to background shader:
+Below is an example of how to apply uniform customizations to background shader:
 
 ```kotlin
 val shaderUniformCustomizations = ShaderUniformCustomizations()
@@ -185,8 +185,8 @@ shaderUniformCustomizations.customBackgroundShaderUniforms(
 )
 ```
 
-With `0.34.0`, image(child shader) uniform value can be customized using a drawable resource but it
-is discouraged because it has unexpected behavior when toggle the `Use local resources` option in
+With `0.34.0`, image(child shader) uniform values can be customized using a drawable resource but it
+is discouraged because it has unexpected behavior when toggling the `Use local resources` option in
 the design switcher:
 
 ```kotlin
@@ -251,7 +251,7 @@ customStates.customBackgroundShaderUniformStates(
 ### Apply Customization to Design
 
 After creating the shader uniform customizations, they can be applied similarly to other types of
-customizations as following:
+customizations:
 
 ```kotlin
 interface BrushFromShaderPluginTest {
@@ -265,15 +265,15 @@ interface BrushFromShaderPluginTest {
 
 ## Multi-doc support
 
-We support different versions of design. If the same node from different design docs use different
-shaders or different set of shader uniforms, the customizations can include the joint set of customized
+We support different versions of designs. If the same node from different design docs use different
+shaders or a different set of shader uniforms, the customizations can include the joint set of customized
 shader uniforms where undeclared uniforms will be ignored.
 
 ## Troubleshooting
 
 If you encounter any issues while using the Shader Plugin, try the following:
 
-- **Comiple and Debug using Skia Playground:** Skia playground provides a powerful debug tool and
+- **Compile and Debug using Skia Playground:** Skia playground provides a powerful debug tool and
   the UI is more user friendly to see the compilation errors.
 - **Check the Figma Console:** Ensure no errors are present in the Figma console.
 - **Reload:** Reload the plugin or restart Figma.

@@ -41,7 +41,7 @@ layout: page
 - Prototyping & Interactive Components
   - Actions: Navigate, Back, Close, Swap, Overlay, Change To
   - Triggers: Click, Press, KeyDown, After Timeout ~~Mouse support: Mouse Enter, Mouse Leave, Hover~~
-  - ~~Animations~~
+  - Animations
 
 ## DesignCompose Extensions {#Extensions}
 
@@ -61,3 +61,5 @@ layout: page
     Create dials & gauges of different kinds by applying values to arcs, rects, and performing translations.
 - Localization Tool \
     Pull the string out of the figma design and generates a strings xml file.
+- Shader \
+    Apply shader code as a background or stroke to a figma node.

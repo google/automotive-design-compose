@@ -57,6 +57,7 @@ pub fn fetch_doc(
                 .map(|imgref| (NodeQuery::name(imgref.node.clone()), imgref.images.clone()))
                 .collect(),
             &mut error_list,
+            rq.skip_hidden,
         )?;
 
         let variable_map = doc.build_variable_map();

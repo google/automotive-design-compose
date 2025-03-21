@@ -64,11 +64,10 @@ use dc_bundle::view_shape::view_shape::RoundRect;
 use log::error;
 
 use crate::shader_schema::ShaderDataJson;
-use dc_bundle::component::ComponentInfo;
 use dc_bundle::path::line_height::Line_height_type;
 use dc_bundle::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::view::view::RenderMethod;
-use dc_bundle::view::View;
+use dc_bundle::view::{ComponentInfo, View};
 use dc_bundle::view_style::ViewStyle;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -943,7 +942,7 @@ fn visit_node(
                     .unwrap_or(&figma_schema::ComponentSet::default())
                     .name
                     .clone(),
-                overrides: None.into(),
+                overrides_table: HashMap::new(),
                 ..Default::default()
             });
             // Make sure we convert this component node so that we can compute any variant style delta
@@ -963,7 +962,7 @@ fn visit_node(
                     .unwrap_or(&figma_schema::ComponentSet::default())
                     .name
                     .clone(),
-                overrides: None.into(),
+                overrides_table: HashMap::new(),
                 ..Default::default()
             });
         }

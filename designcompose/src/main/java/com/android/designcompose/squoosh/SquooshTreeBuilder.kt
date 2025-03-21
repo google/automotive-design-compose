@@ -70,15 +70,16 @@ import com.android.designcompose.definition.plugin.FrameExtras
 import com.android.designcompose.definition.view.ComponentInfo
 import com.android.designcompose.definition.view.Display
 import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewData
 import com.android.designcompose.definition.view.ViewDataKt.container
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.frameExtrasOrNull
 import com.android.designcompose.definition.view.nodeStyle
-import com.android.designcompose.definition.view.overridesOrNull
 import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.definition.view.view
 import com.android.designcompose.definition.view.viewData
+import com.android.designcompose.definition.view.viewDataOrNull
 import com.android.designcompose.definition.view.viewStyle
 import com.android.designcompose.getComponent
 import com.android.designcompose.getContent
@@ -210,6 +211,7 @@ internal fun resolveVariantsRecursively(
     var thisLayoutId = componentLayoutId
     var parentComps = parentComponents
     var overrideStyle: ViewStyle? = null
+    var overrideViewData: ViewData? = null
     var view = viewFromTree
 
     // If we have a component then we might need to get an override style, and we definitely
@@ -218,14 +220,19 @@ internal fun resolveVariantsRecursively(
         parentComps =
             ParentComponentData(parentComponents, viewFromTree.id, viewFromTree.componentInfo)
 
+        overrideStyle =
+            viewFromTree.componentInfo.overridesTableMap[
+                    viewFromTree.componentInfo.componentSetName]
+                ?.styleOrNull
+        overrideViewData =
+            viewFromTree.componentInfo.overridesTableMap[
+                    viewFromTree.componentInfo.componentSetName]
+                ?.viewDataOrNull
+
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
         thisLayoutId =
             computeComponentLayoutId(thisLayoutId, layoutIdAllocator.componentLayoutId(parentComps))
-
-        // Do we have an override style? This is style data which we should apply to the final style
-        // even if we're swapping out our view definition for a variant.
-        overrideStyle = viewFromTree.componentInfo.overridesOrNull?.styleOrNull
 
         // See if we have a variant replacement; this only happens for component instances (for both
         // interaction-driven and customization-driven variant changes).
@@ -275,6 +282,11 @@ internal fun resolveVariantsRecursively(
             }
             variantTransition.selectedVariant(viewFromTree, view, customVariantTransition)
         }
+    } else {
+        overrideViewData =
+            parentComps?.componentInfo?.overridesTableMap?.get(viewFromTree.name)?.viewDataOrNull
+        overrideStyle =
+            parentComps?.componentInfo?.overridesTableMap?.get(viewFromTree.name)?.styleOrNull
     }
 
     // Calculate the style we're going to use. If we have an override style then we have to apply
@@ -298,6 +310,7 @@ internal fun resolveVariantsRecursively(
     val textData =
         squooshComputeTextInfo(
             view,
+            overrideViewData,
             layoutId,
             density,
             document,

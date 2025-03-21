@@ -267,11 +267,11 @@ interface BrushFromShaderPluginTest {
 
 ## Shader and Animations on Components
 
-When a component transite from variant A to variant B via either Figma interaction or programmatically
+When a component transitions from variant A to variant B via either Figma interaction or programmatically
 changing variants, it can perform an [animation][7]. The animation animates layout size, background and
-opacity etc. When apply shader to the component or its descendent views, we are now also able to animate
-the shader background or stroke by interpolating its uniform values. However, the animation will only
-be performed when:
+opacity etc. When applying a shader to the component or its descendent views, we are now also able to
+animate the shader background or stroke by interpolating its uniform values. However, the animation will
+only be performed when:
 
 - The shader itself doesn't animate over time.
 - The variants are using the same shader code but with different uniform values.
@@ -284,7 +284,7 @@ values. So only the following uniform types are supported:
   - including color3, color4 which are presented using float3 and float4.
 - mat2, mat3, mat4, half2x2, half3x3, half4x4
 
-Besides, the current support doesn't count the customization values in the animation due to the complexity.
+The current animation support doesn't count the customization values in the animation due to the complexity.
 It will only animate the uniform value set by the figma plugin. If there is a customization, the customized
 value will be set to the shader instead of the animated value.
 

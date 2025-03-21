@@ -49,7 +49,7 @@ androidx-tracing = "1.2.0"
 androidx-tracing-perfetto = "1.0.0"
 dokka = "2.0.0"
 gson = "2.12.1"
-guavaAndroid = "33.4.0-android"
+guavaAndroid = "33.4.5-android"
 javax-annotation = "1.3.2"
 junit = "4.13.2"
 # Keep in sync with build-logic/src/main/kotlin/designcompose/conventions/base.gradle.kts

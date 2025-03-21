@@ -20,6 +20,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.designcompose.DocRenderStatus
+import com.android.designcompose.TestUtils
+import com.android.designcompose.test.Fetchable
 import com.android.designcompose.test.assertHasText
 import com.android.designcompose.test.assertRenderStatus
 import com.android.designcompose.test.onDCDoc
@@ -27,6 +29,7 @@ import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.RoborazziRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -41,8 +44,10 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = RobolectricDeviceQualifiers.MediumTablet, sdk = [34])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Category(Fetchable::class)
 class RenderHelloWorld {
     @get:Rule val composeTestRule = createComposeRule()
+    @get:Rule val liveUpdateTestRule = TestUtils.LiveUpdateTestRule()
 
     @get:Rule
     val roborazziRule =
@@ -62,6 +67,8 @@ class RenderHelloWorld {
     fun testHello() {
         with(composeTestRule) {
             setContent { HelloWorldDoc.mainFrame(name = "Testers!") }
+            liveUpdateTestRule.performLiveFetch()
+
             onDCDoc(HelloWorldDoc).assertRenderStatus(DocRenderStatus.Rendered)
             onDCDoc(HelloWorldDoc).assertHasText("Testers!", substring = true)
         }

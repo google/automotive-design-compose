@@ -92,6 +92,7 @@ dependencies {
     testImplementation(libs.roborazzi.junit)
     testImplementation(libs.androidx.test.espresso.core)
     testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(testFixtures(project(":designcompose")))
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.junit)

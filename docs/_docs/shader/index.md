@@ -109,6 +109,8 @@ along with the figma file and apply it to the shader code.
 
 - **Single Node Selection:** The plugin currently supports applying shaders to only one node at a time.
 - **API Level:** [Android Graphics Shading Language (AGSL)][2] only works on Android 13 and above.
+- **Device Density:** Shaders render differently on varying screen densities. Developers need to implement
+  density-aware logic within their shader code to ensure consistent appearance across devices.
 
 ## DesignCompose Customization
 
@@ -134,8 +136,8 @@ which provides a time source for display frames. See [ShaderHelper.kt][3]. Our i
   integer. It will result in roughly the minimum of the display frame rate and `1000/interval`. This
   interval determines the frequency at which the time value is updated, influencing the smoothness of
   the animation. A shorter interval will result in a higher frequency of updates, while a larger
-  interval results in fewer updates. This interval can be overriden to ensure optimal performance on lower-end
-  Android devices.
+  interval results in fewer updates. This interval can be overridden to ensure optimal performance on
+  lower-end Android devices.
 
 - Multiplies the global `ANIMATOR_DURATION_SCALE` setting with the frame interval and can disable
   the shader animation if the user sets the animator duration scale Developer Option to 0.
@@ -263,6 +265,29 @@ interface BrushFromShaderPluginTest {
 }
 ```
 
+## Shader and Animations on Components
+
+When a component transite from variant A to variant B via either Figma interaction or programmatically
+changing variants, it can perform an [animation][7]. The animation animates layout size, background and
+opacity etc. When apply shader to the component or its descendent views, we are now also able to animate
+the shader background or stroke by interpolating its uniform values. However, the animation will only
+be performed when:
+
+- The shader itself doesn't animate over time.
+- The variants are using the same shader code but with different uniform values.
+
+And the animation only animates a float, a float vector or a matrix which can produce continuous intermediate
+values. So only the following uniform types are supported:
+
+- float, half
+- float2, float3, float4, half2, half3, half4
+  - including color3, color4 which are presented using float3 and float4.
+- mat2, mat3, mat4, half2x2, half3x3, half4x4
+
+Besides, the current support doesn't count the customization values in the animation due to the complexity.
+It will only animate the uniform value set by the figma plugin. If there is a customization, the customized
+value will be set to the shader instead of the animated value.
+
 ## Multi-doc support
 
 We support different versions of designs. If the same node from different design docs use different
@@ -277,7 +302,7 @@ If you encounter any issues while using the Shader Plugin, try the following:
   the UI is more user friendly to see the compilation errors.
 - **Check the Figma Console:** Ensure no errors are present in the Figma console.
 - **Reload:** Reload the plugin or restart Figma.
-- **Contact Support:** If problems persist, [get in touch][7] with our team for support.
+- **Contact Support:** If problems persist, [get in touch][8] with our team for support.
 
 Any suggestions will be welcomed.
 
@@ -287,4 +312,6 @@ Any suggestions will be welcomed.
 [4]: https://github.com/google/automotive-design-compose/blob/f4b69860e40f0876d1acbd66b295c4b52409e8fa/designcompose/src/main/res/values/values.xml#L21
 [5]: https://github.com/google/automotive-design-compose/blob/472042de65b59531c9091a61b226f45ca70f0722/crates/dc_bundle/src/proto/definition/element/shader.proto#L70
 [6]: https://github.com/google/automotive-design-compose/blob/509f16e0a92b596f4a52e14c7c3fd9c4c43c15bb/crates/dc_bundle/src/proto/definition/element/shader.proto#L71
-[7]: https://github.com/google/automotive-design-compose?tab=readme-ov-file#get-in-touch
+
+[7]: {%link _docs/animations.md %}
+[8]: <https://github.com/google/automotive-design-compose?tab=readme-ov-file#get-in-touch>

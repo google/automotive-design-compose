@@ -19,8 +19,6 @@ updates:
     directories:
       - /
       - "/.github/actions/build-figma-resource"
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
       non-breaking-github-workflow:
@@ -37,8 +35,6 @@ updates:
 
   - package-ecosystem: bundler
     directory: /docs
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
       non-breaking-bundler:
@@ -57,8 +53,6 @@ updates:
     directories:
       - "/support-figma/auto-content-preview-widget"
       - "/support-figma/extended-layout-plugin"
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
       non-breaking-figma-widget:
@@ -75,8 +69,6 @@ updates:
 
   - package-ecosystem: gradle
     directory: "/"
-    assignees: [timothyfroehlich]
-    reviewers: [timothyfroehlich]
     target-branch: "main"
     groups:
       non-breaking-gradle:

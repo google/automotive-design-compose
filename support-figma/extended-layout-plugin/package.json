@@ -12,10 +12,10 @@
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "@figma/plugin-typings": "*",
-    "@types/node": "^22.13.10",
+    "@types/node": "^22.13.13",
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^7.1.2",
-    "eslint": "^9.22.0",
+    "eslint": "^9.23.0",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-loader": "^5.1.0",
     "html-webpack-plugin": "^5.6.3",

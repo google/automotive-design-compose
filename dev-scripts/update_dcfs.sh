@@ -71,11 +71,9 @@ fi
 fetch_design_switcher
 
 # Run the below fetches in parallel
-fetch_helloworld &
-fetch_tutorial &
 fetch_layout_tests &
 
-"$GIT_ROOT/gradlew" fetchAndUpdateFigmaFiles
+"$GIT_ROOT/gradlew" fetchAndUpdateFigmaFiles && copy_helloworld
 
 if [[ "$RECORD_SCREENSHOTS" == "true" ]]; then
     "$GIT_ROOT/gradlew" recordRoborazziDebug

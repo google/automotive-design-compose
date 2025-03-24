@@ -22,7 +22,6 @@ plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.android-test-devices")
     id("designcompose.conventions.roborazzi")
-    id("com.android.designcompose.internal")
 }
 
 var applicationID = "com.android.designcompose.testapp.validation"

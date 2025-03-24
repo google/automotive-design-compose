@@ -18,6 +18,7 @@ package com.android.designcompose.testapp.clusterdemo
 
 import android.content.Context
 import android.hardware.Camera
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.SurfaceHolder
@@ -433,7 +434,7 @@ interface Cluster {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MainFrame(cameraPreview: CameraPreview?) {
+internal fun MainFrame(cameraPreview: CameraPreview?) {
     // Telltales
     var allTelltales by remember { mutableStateOf(true) }
     var tpmsWarning by remember { mutableStateOf(true) }
@@ -613,14 +614,16 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
 
     val context = LocalContext.current
     val player = remember {
-        val exoPlayer = ExoPlayer.Builder(context).build()
-        val mediaItem = MediaItem.fromUri("file:///android_asset/maps/maps.mp4")
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
-        exoPlayer.prepare()
-        exoPlayer.play()
+        if ("robolectric" != Build.FINGERPRINT) {
+            val exoPlayer = ExoPlayer.Builder(context).build()
+            val mediaItem = MediaItem.fromUri("file:///android_asset/maps/maps.mp4")
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
+            exoPlayer.prepare()
+            exoPlayer.play()
 
-        exoPlayer
+            exoPlayer
+        } else null
     }
 
     val theme = remember { mutableStateOf(Theme.Main) }

@@ -28,7 +28,7 @@ const SCALABLE_PLUGIN_DATA_KEY = "scalableui";
 
 interface VariantData {
   id: string,
-  name: string | null,
+  name: string,
   isDefault: boolean,
   layer: number,
 }
@@ -54,6 +54,7 @@ interface ComponentSetData {
   name: string,
   role: string,
   defaultVariantId: string,
+  defaultVariantName: string,
   eventList: Event[],
   keyframeVariants: KeyframeVariant[],
 }
@@ -64,6 +65,7 @@ function newComponentSetData(id: string, name: string) {
     name: name,
     role: "",
     defaultVariantId: "",
+    defaultVariantName: "",
     eventList: [],
     keyframeVariants: [],
   } as ComponentSetData;
@@ -424,8 +426,10 @@ export function addNode() {
   let first = true;
   for (const child of node.children) {
     const variantData = newVariantData(child.id, child.name, first);
-    if (first)
+    if (first) {
       setData.defaultVariantId = child.id;
+      setData.defaultVariantName = child.name;
+    }
     first = false;
     child.setSharedPluginData(
       Utils.SHARED_PLUGIN_NAMESPACE,
@@ -484,8 +488,10 @@ export async function nodeChanged(msg: any) {
     if (variant.isDefault) {
       const setNode = figma.currentPage.selection[0] as ComponentSetNode;
       let setData = loadComponentSetData(setNode);
-      if (setData != null)
+      if (setData != null) {
         setData.defaultVariantId = id;
+        setData.defaultVariantName = variant.name;
+      }
       setNode.setSharedPluginData(
         Utils.SHARED_PLUGIN_NAMESPACE,
         SCALABLE_PLUGIN_DATA_KEY,

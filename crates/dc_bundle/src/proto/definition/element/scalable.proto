@@ -41,9 +41,10 @@ message ScalableUIComponentSet {
     string name = 2;
     string role = 3;
     string default_variant_id = 4;
-    map<string, Event> event_map = 5;
-    repeated KeyframeVariant keyframe_variants = 6;
-    repeated string variant_ids = 7;
+    string default_variant_name = 5;
+    map<string, Event> event_map = 6;
+    repeated KeyframeVariant keyframe_variants = 7;
+    repeated string variant_ids = 8;
 }
 
 message ScalableDimension {

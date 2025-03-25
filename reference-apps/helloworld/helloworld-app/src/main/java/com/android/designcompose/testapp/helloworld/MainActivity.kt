@@ -16,7 +16,9 @@
 
 package com.android.designcompose.testapp.helloworld
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
@@ -26,6 +28,7 @@ import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.testapp.helloworld.ui.theme.helloworldTheme
+import java.io.IOException
 
 const val helloWorldDocId = "pxVlixodJqZL95zo2RzTHl"
 
@@ -37,6 +40,23 @@ interface HelloWorld {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val TAG = "DCF"
+
+        val filePath = "ScalableUiTest_1OqNt1MCCc4E8KXS0OVcxS.dcf"
+        try {
+            val context = applicationContext
+            val stream = context.assets.open(filePath)
+
+            val available = stream?.available()
+            Log.i(TAG, "### Available $available")
+
+            val loader = PanelStateDocLoader(context)
+            val docId = "1OqNt1MCCc4E8KXS0OVcxS"
+            val states = loader.loadPanelStates(stream, docId)
+        } catch(e: IOException) {
+            Log.d(TAG, "### Error with available(): $e")
+        }
 
         DesignSettings.enableLiveUpdates(this)
         setContent { HelloWorldDoc.mainFrame(name = "World!") }

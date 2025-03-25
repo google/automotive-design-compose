@@ -76,11 +76,6 @@ message View {
   map<string, string> explicit_variable_modes = 12;
 }
 
-message ScalableUiData {
-  float position_x = 1;
-  float position_y = 2;
-}
-
 // Details that are unique to each view type.
 message ViewData {
   // Container is used to represent views that act as containers for other

@@ -1066,9 +1066,7 @@ fn visit_node(
         .and_then(|scalable_json| {
             let parse_result = serde_json::from_str::<ScalableUiDataJson>(scalable_json.as_str());
             if parse_result.is_err() {
-                println!("### ERROR {} json {}: -> {:?}", node.name, scalable_json, parse_result);
-            } else {
-                //println!("### SUCCESS {}", node.name);
+                println!("Error prasing scalable ui data: node {} json {}: -> {:?}", node.name, scalable_json, parse_result);
             }
             parse_result.ok()
         })

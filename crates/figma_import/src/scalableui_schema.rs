@@ -83,6 +83,7 @@ pub(crate) struct ComponentSetDataJson {
     name: String,
     role: String,
     default_variant_id: String,
+    default_variant_name: String,
     event_list: Vec<Event>,
     keyframe_variants: Vec<KeyframeVariant>,
 }
@@ -99,6 +100,7 @@ impl Into<ScalableUIComponentSet> for ComponentSetDataJson {
             name: self.name,
             role: self.role,
             default_variant_id: self.default_variant_id,
+            default_variant_name: self.default_variant_name,
             event_map: event_map,
             keyframe_variants: self.keyframe_variants.iter().map(|kfv| kfv.into()).collect(),
             variant_ids: vec![],

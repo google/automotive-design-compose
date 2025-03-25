@@ -286,37 +286,6 @@ object DocServer {
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyClearDocuments() = documents.clear()
-
-    fun loadDoc(
-        resourceName: String,
-        docId: DesignDocId,
-        serverParams: DocumentServerParams,
-        context: Context,
-    ): ScalableUiDoc? {
-        println(
-            "### loadDoc $resourceName ${docId.id} queries ${serverParams.nodeQueries} context $context"
-        )
-        // Check that the document ID is valid
-        if (!validateFigmaDocId(docId.id)) {
-            Log.w(TAG, "Invalid Figma document ID: $docId")
-            return null
-        }
-
-        val id = "${resourceName}_${docId}"
-        val fileName = "figma/$id.dcf"
-        val assetDoc: InputStream = context.assets.open(fileName)
-        Log.i(TAG, "### Loaded design doc from assets/$fileName")
-
-        try {
-            val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
-            decodedDoc?.let {
-                return ScalableUiDoc(it)
-            }
-        } catch (error: Throwable) {
-            Log.e(TAG, "Failed to load from disk: $fileName")
-        }
-        return null
-    }
 }
 
 internal fun DocServer.initializeLiveUpdate() {
@@ -401,7 +370,6 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     Log.e(TAG, "Error decoding doc.")
                     break
                 }
-                val uiDoc = ScalableUiDoc(doc)
                 updateBranches(id, doc)
 
                 // Remember the new document
@@ -485,8 +453,7 @@ internal fun fetchDocument(
         previousDoc?.c?.header?.responseVersion?.let { this.version = it }
         previousDoc?.c?.imageSession?.let { this.imageSessionJson = it }
             ?: this.clearImageSessionJson()
-        // TODO revert to skipHidden
-        this.skipHidden = false // skipHidden
+        this.skipHidden = skipHidden
     }
 
     val serializedResponse: ByteArray =

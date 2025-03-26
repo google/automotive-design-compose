@@ -72,7 +72,7 @@ class InteractionTests {
                 assertHasText("timeout")
                 captureRootRoboImage("whilePressed-timedOut")
 
-                onRoot().performTouchInput { cancel() }
+                onRoot().performTouchInput { up() }
                 assertHasText("idle")
                 captureRootRoboImage("whilePressed-final")
             }

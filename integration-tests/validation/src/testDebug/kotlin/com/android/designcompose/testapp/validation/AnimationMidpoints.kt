@@ -21,6 +21,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
@@ -282,6 +283,21 @@ class AnimationMidpoints {
             onNodeWithTag("#varcolor=blue").performTouchInput { up() }
             mainClock.advanceTimeByFrame()
             captureRootRoboImage("VariantOnPress-anim3")
+        }
+    }
+
+    @Test
+    fun OnPressAnimationDoubleGreen() {
+        with(composeTestRule) {
+            // Because we're testing animation, we will manually advance the animation clock.
+            mainClock.autoAdvance = false
+
+            setContent { SmartAnimateTestDoc.OnPressTest() }
+
+            waitForContent(SmartAnimateTestDoc.javaClass.name)
+
+            // Tap red square to switch it to green
+            onNodeWithTag("V1").performTouchInput { click(Offset.Zero) }
 
             // Touch purple square to start onPress anim, which changes to green while pressed.
             // Capture this mid animation to ensure there is no layout animation from the other

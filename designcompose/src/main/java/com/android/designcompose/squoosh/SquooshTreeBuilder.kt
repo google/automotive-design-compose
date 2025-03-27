@@ -30,6 +30,7 @@ import com.android.designcompose.KeyAction
 import com.android.designcompose.KeyEventTracker
 import com.android.designcompose.VariableState
 import com.android.designcompose.common.NodeQuery
+import com.android.designcompose.common.views
 import com.android.designcompose.definition.element.FontStyle
 import com.android.designcompose.definition.element.StrokeAlign
 import com.android.designcompose.definition.element.TextDecoration
@@ -88,6 +89,7 @@ import com.android.designcompose.getTapCallback
 import com.android.designcompose.getVisible
 import com.android.designcompose.getVisibleState
 import com.android.designcompose.isPressed
+import com.android.designcompose.searchNodes
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
 import com.android.designcompose.utils.hasScrolling
@@ -143,14 +145,17 @@ internal class SquooshOverlayComposable(val nodeId: String, val extras: FrameExt
 internal class ParentComponentData(
     val parent: ParentComponentData?,
     val instanceId: String,
+    private val instanceName: String,
     val componentInfo: ComponentInfo,
 ) {
     private val preComputedHashCode: Int =
         if (parent != null) {
-            (parent.preComputedHashCode * 31 + instanceId.hashCode()) * 31 +
-                componentInfo.id.hashCode()
+            ((parent.preComputedHashCode * 31 + instanceId.hashCode()) * 31 +
+                instanceName.hashCode()) * 31
+            componentInfo.id.hashCode()
         } else {
-            instanceId.hashCode() * 31 + componentInfo.id.hashCode()
+            (instanceId.hashCode() * 31 + instanceName.hashCode()) * 31 +
+                componentInfo.id.hashCode()
         }
 
     override fun hashCode(): Int {
@@ -166,9 +171,39 @@ internal class ParentComponentData(
         if (preComputedHashCode != other.preComputedHashCode) return false
         if (parent != other.parent) return false
         if (instanceId != other.instanceId) return false
+        if (instanceName != other.instanceName) return false
         if (componentInfo != other.componentInfo) return false
 
         return true
+    }
+
+    fun getOverrideStyle(viewName: String, isComponentRoot: Boolean = false): ViewStyle? {
+        if (isComponentRoot && parent == null) {
+            return componentInfo.overridesTableMap[componentInfo.componentSetName]?.styleOrNull
+        }
+        val overrideStyle = componentInfo.overridesTableMap[viewName]?.styleOrNull
+        val parentOverride = parent?.getOverrideStyle("$instanceName:$viewName")
+        return parentOverride ?: overrideStyle
+    }
+
+    fun getOverrideData(viewName: String, isComponentRoot: Boolean = false): ViewData? {
+        if (isComponentRoot && parent == null) {
+            return componentInfo.overridesTableMap[componentInfo.componentSetName]?.viewDataOrNull
+        }
+        val overrideData = componentInfo.overridesTableMap[viewName]?.viewDataOrNull
+        val parentOverride = parent?.getOverrideData("$instanceName:$viewName")
+        return parentOverride ?: overrideData
+    }
+
+    fun getOverrideVariant(viewName: String, isComponentRoot: Boolean = false): String? {
+        if (isComponentRoot) {
+            return parent?.getOverrideVariant(instanceName)
+        } else {
+            val overrideVariant =
+                componentInfo.overridesTableMap[viewName]?.takeIf { it.hasVariantId() }?.variantId
+            val parentOverride = parent?.getOverrideVariant("$instanceName:$viewName")
+            return parentOverride ?: overrideVariant
+        }
     }
 }
 
@@ -216,16 +251,15 @@ internal fun resolveVariantsRecursively(
     // need to get a different layout id.
     if (viewFromTree.hasComponentInfo()) {
         parentComps =
-            ParentComponentData(parentComponents, viewFromTree.id, viewFromTree.componentInfo)
+            ParentComponentData(
+                parentComponents,
+                viewFromTree.id,
+                viewFromTree.name,
+                viewFromTree.componentInfo,
+            )
 
-        overrideStyle =
-            viewFromTree.componentInfo.overridesTableMap[
-                    viewFromTree.componentInfo.componentSetName]
-                ?.styleOrNull
-        overrideViewData =
-            viewFromTree.componentInfo.overridesTableMap[
-                    viewFromTree.componentInfo.componentSetName]
-                ?.viewDataOrNull
+        overrideStyle = parentComps.getOverrideStyle(viewFromTree.name, isComponentRoot = true)
+        overrideViewData = parentComps.getOverrideData(viewFromTree.name, isComponentRoot = true)
 
         // Ensure that the children of this component get unique layout ids, even though there
         // may be multiple instances of the same component in one tree.
@@ -242,9 +276,7 @@ internal fun resolveVariantsRecursively(
 
         // If we didn't replace the component because of an interaction, we might want to replace it
         // because of a variant customization.
-        if (
-            view.name == viewFromTree.name
-        ) { // TODO: why we don't check if view == viewFromTree????
+        if (view.name == viewFromTree.name) {
             // If an interaction has not changed the current variant, then check to see if this node
             // is part of a component set with variants and if any @DesignVariant annotations
             // set variant properties that match. If so, variantNodeName will be set to the
@@ -277,14 +309,24 @@ internal fun resolveVariantsRecursively(
                 if (variantView != null) {
                     view = variantView
                 }
+            } else {
+                // If there is a variant override when there is no customization, replace it.
+                parentComps.getOverrideVariant(viewFromTree.name, isComponentRoot = true)?.let {
+                    searchNodes(
+                            NodeQuery.NodeId(it),
+                            document.c.document.views(),
+                            document.c.variantViewMap,
+                            document.c.variantPropertyMap,
+                            document.c.nodeIdMap,
+                        )
+                        ?.let { v -> view = v }
+                }
             }
             variantTransition.selectedVariant(viewFromTree, view, customVariantTransition)
         }
     } else {
-        overrideViewData =
-            parentComps?.componentInfo?.overridesTableMap?.get(viewFromTree.name)?.viewDataOrNull
-        overrideStyle =
-            parentComps?.componentInfo?.overridesTableMap?.get(viewFromTree.name)?.styleOrNull
+        overrideViewData = parentComps?.getOverrideData(viewFromTree.name)
+        overrideStyle = parentComps?.getOverrideStyle(viewFromTree.name)
     }
 
     // Calculate the style we're going to use. If we have an override style then we have to apply
@@ -356,7 +398,15 @@ internal fun resolveVariantsRecursively(
 
     // If this is a text node being replaced, don't store textInfo into resolvedView
     val resolvedTextInfo = if (replacementComponent != null) null else textInfo
-    val resolvedView = SquooshResolvedNode(view, style, layoutId, resolvedTextInfo, viewFromTree.id)
+    val resolvedView =
+        SquooshResolvedNode(
+            view,
+            style,
+            layoutId,
+            resolvedTextInfo,
+            viewFromTree.id,
+            overrideViewData,
+        )
 
     var skipChildren = false // Set to true for customizations that replace children
     var skipComposableList =
@@ -619,6 +669,7 @@ internal fun generateReplacementListChildNode(
             layoutId = layoutId,
             textInfo = null,
             unresolvedNodeId = "list-child-${node.unresolvedNodeId}-${childIdx}",
+            overrideViewData = null,
             firstChild = null,
             nextSibling = null,
             parent = node,

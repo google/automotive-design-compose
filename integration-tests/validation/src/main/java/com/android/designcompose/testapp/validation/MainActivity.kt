@@ -57,7 +57,6 @@ const val TAG = "DesignCompose"
 class MainActivity : ComponentActivity() {
     private lateinit var currentDisplay:
         MutableState<Triple<String, @Composable () -> Unit, String?>>
-    private lateinit var enableRendererToggle: MutableState<Boolean>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

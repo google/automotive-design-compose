@@ -19,6 +19,7 @@ package com.android.designcompose.squoosh
 import android.graphics.PointF
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.definition.view.View
+import com.android.designcompose.definition.view.ViewData
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.layout_interface.Layout
 
@@ -38,6 +39,7 @@ internal class SquooshResolvedNode(
     // The node we look at for layout info, if we're in a tree that was derived
     // from other trees (i.e.: the tree that combines the base and transition
     // trees).
+    val overrideViewData: ViewData?,
     val layoutNode: SquooshResolvedNode? = null,
     var firstChild: SquooshResolvedNode? = null,
     var nextSibling: SquooshResolvedNode? = null,

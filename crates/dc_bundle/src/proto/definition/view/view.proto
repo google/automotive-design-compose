@@ -115,6 +115,8 @@ message ComponentOverrides {
   reserved 2 to 4;
   ViewStyle style = 1;
   ViewData view_data = 5;
+  // This applys to the case when a nested instance was changed to another variant.
+  optional string variant_id = 6;
 }
 
 // Details on the Figma component that this view is an instance of.

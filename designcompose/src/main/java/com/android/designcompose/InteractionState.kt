@@ -532,7 +532,7 @@ internal fun InteractionState.invalAnimations() {
 /// using the query, it may still be present but indexed using the variant map if the node is a
 /// variant, or by ID (if queried by name) or name (if queried by ID). So we do a linear search if
 /// the hash lookup and variant lookup fails.
-private fun searchNodes(
+internal fun searchNodes(
     q: NodeQuery,
     nodes: Map<NodeQuery, View>,
     parentViewMap: HashMap<String, HashMap<String, View>>,

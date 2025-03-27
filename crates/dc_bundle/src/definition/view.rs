@@ -32,7 +32,7 @@ use crate::text::{TextAlign, TextAlignVertical, TextOverflow};
 use crate::text_style::StyledTextRun;
 use crate::variable::NumOrVar;
 use crate::view::view::RenderMethod;
-use crate::view::view_data::{Container, StyledTextRuns, Text, View_data_type};
+use crate::view::view_data::{Container, StyledTextRuns, Text};
 use crate::view::{ComponentInfo, View, ViewData};
 use crate::view_shape::ViewShape;
 use crate::view_style::ViewStyle;
@@ -322,16 +322,21 @@ impl ViewStyle {
 
 impl ViewData {
     /// Compute the difference between this view data and the given view data.
-    /// Right now only computes the text overrides.
     pub fn difference(&self, other: &ViewData) -> Option<ViewData> {
-        if let Some(View_data_type::Text { .. }) = self.view_data_type {
+        if (self.has_text() || self.has_styled_text())
+            && (other.has_text() || other.has_styled_text())
+        {
             if self != other {
                 return Some(other.clone());
             }
         }
-        if let Some(View_data_type::StyledText { .. }) = self.view_data_type {
-            if self != other {
-                return Some(other.clone());
+        if other.has_container() && self.has_container() {
+            let shape = &self.container().shape;
+            let other_shape = &other.container().shape;
+            if other_shape != shape {
+                let mut data = ViewData::new();
+                data.set_container(Container { shape: other_shape.clone(), ..Default::default() });
+                return Some(data);
             }
         }
         return None;
@@ -366,6 +371,12 @@ impl View {
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
     ) -> View {
+        let mut data = ViewData::new();
+        data.set_container(Container {
+            shape: Some(shape).into(),
+            children: vec![],
+            ..Default::default()
+        });
         View {
             unique_id: View::next_unique_id() as u32,
             id: id.clone(),
@@ -375,17 +386,7 @@ impl View {
             style: Some(style).into(),
             frame_extras: frame_extras.into(),
             scroll_info: Some(scroll_info).into(),
-            data: Some(ViewData {
-                view_data_type: Some(View_data_type::Container {
-                    0: Container {
-                        shape: Some(shape).into(),
-                        children: vec![],
-                        ..Default::default()
-                    },
-                }),
-                ..Default::default()
-            })
-            .into(),
+            data: Some(data).into(),
             design_absolute_bounding_box: design_absolute_bounding_box.into(),
             render_method: render_method.into(),
             explicit_variable_modes,
@@ -404,6 +405,8 @@ impl View {
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
     ) -> View {
+        let mut data = ViewData::new();
+        data.set_text(Text { content: text.into(), res_name: text_res_name, ..Default::default() });
         View {
             unique_id: View::next_unique_id() as u32,
             id: id.clone(),
@@ -413,13 +416,7 @@ impl View {
             style: Some(style).into(),
             frame_extras: None.into(),
             scroll_info: Some(ScrollInfo::new_default()).into(),
-            data: Some(ViewData {
-                view_data_type: Some(View_data_type::Text {
-                    0: Text { content: text.into(), res_name: text_res_name, ..Default::default() },
-                }),
-                ..Default::default()
-            })
-            .into(),
+            data: Some(data).into(),
             design_absolute_bounding_box: design_absolute_bounding_box.into(),
             render_method: render_method.into(),
             explicit_variable_modes,
@@ -437,6 +434,12 @@ impl View {
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
     ) -> View {
+        let mut data = ViewData::new();
+        data.set_styled_text(StyledTextRuns {
+            styled_texts: text,
+            res_name: text_res_name,
+            ..Default::default()
+        });
         View {
             unique_id: View::next_unique_id() as u32,
             id: id.clone(),
@@ -446,17 +449,7 @@ impl View {
             reactions: reactions.unwrap_or_default(),
             frame_extras: None.into(),
             scroll_info: Some(ScrollInfo::new_default()).into(),
-            data: Some(ViewData {
-                view_data_type: Some(View_data_type::StyledText {
-                    0: StyledTextRuns {
-                        styled_texts: text,
-                        res_name: text_res_name,
-                        ..Default::default()
-                    },
-                }),
-                ..Default::default()
-            })
-            .into(),
+            data: Some(data).into(),
             design_absolute_bounding_box: design_absolute_bounding_box.into(),
             render_method: render_method.into(),
             explicit_variable_modes: HashMap::new(),
@@ -465,9 +458,8 @@ impl View {
     }
     pub fn add_child(&mut self, child: View) {
         if let Some(data) = self.data.as_mut() {
-            if let Some(View_data_type::Container { 0: Container { children, .. } }) =
-                data.view_data_type.as_mut()
-            {
+            if data.has_container() {
+                let children: &mut Vec<View> = data.mut_container().children.as_mut();
                 children.push(child);
             }
         }
@@ -484,6 +476,12 @@ impl View {
     pub fn find_view_by_id(&self, view_id: &String) -> Option<&View> {
         if view_id.as_str() == self.id {
             return Some(&self);
+        } else if self.id.starts_with("I") {
+            // If this id starts with I, meaning it is a neseted instance in this component.
+            let stripped_id = &self.id[1..];
+            if view_id.ends_with(stripped_id) {
+                return Some(&self);
+            }
         } else if let Some(id) = view_id.split(";").last() {
             // If this is a descendent node of an instance, the last section is the node id
             // of the view in the component. Example: I70:17;29:15
@@ -492,10 +490,8 @@ impl View {
             }
         }
         if let Some(data) = &self.data.as_ref() {
-            if let Some(View_data_type::Container { 0: Container { children, .. } }) =
-                &data.view_data_type
-            {
-                for child in children {
+            if data.has_container() {
+                for child in &data.container().children {
                     let result = child.find_view_by_id(&view_id);
                     if result.is_some() {
                         return result;

@@ -145,7 +145,9 @@ internal fun Modifier.squooshRender(
                         childRenderSelector.selectedRenderChild = null
                     } else {
                         val shape =
-                            if (node.view.data.hasContainer()) {
+                            if (node.overrideViewData?.hasContainer() == true) {
+                                node.overrideViewData!!.container.shape
+                            } else if (node.view.data.hasContainer()) {
                                 node.view.data.container.shape
                             } else {
                                 // If this is text, just render the text and return

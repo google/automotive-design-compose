@@ -27,7 +27,6 @@ use dc_bundle::definition::NodeQuery;
 use dc_bundle::figma_doc::FigmaDocInfo;
 use dc_bundle::variable::variable_map::NameIdMap;
 use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
-use dc_bundle::view::view_data::{Container, View_data_type};
 use dc_bundle::view::{ComponentInfo, ComponentOverrides, View, ViewData};
 use dc_bundle::view_style::ViewStyle;
 use log::error;
@@ -464,9 +463,11 @@ impl Document {
             view: &mut View,
             parent_component_info: Option<&mut ComponentInfo>,
             parent_reference_component: Option<&View>,
+            nested_instance_name_delimited: String,
             action: &impl Fn(
                 MessageField<ViewStyle>,
                 MessageField<ViewData>,
+                String,
                 String,
                 String,
                 &mut ComponentInfo,
@@ -474,96 +475,101 @@ impl Document {
                 bool,
             ),
         ) {
-            match (view.component_info.as_mut(), parent_component_info) {
-                (Some(info), _) => {
-                    // This is the root node of a component instance.
-                    // Compute its style and data overrides and write to its component info whose
-                    // key is the component_set_name.
+            let mut instance_name_delimited = String::new();
+            let mut component_id = String::new();
+            if let Some(info) = view.component_info.as_mut() {
+                // This is the root node of a component instance.
+                // Compute its style and data overrides and write to its component info whose
+                // key is the component_set_name.
 
-                    // See if we can find the target component. If not then don't look up
-                    // references. Try searching by id, name, and variant
-                    let queries = [
-                        NodeQuery::NodeId(info.id.clone()),
-                        NodeQuery::NodeName(info.name.clone()),
-                        NodeQuery::NodeVariant(info.name.clone(), info.component_set_name.clone()),
-                    ];
+                // See if we can find the target component. If not then don't look up
+                // references. Try searching by id, name, and variant
+                let queries = [
+                    NodeQuery::NodeId(info.id.clone()),
+                    NodeQuery::NodeName(info.name.clone()),
+                    NodeQuery::NodeVariant(info.name.clone(), info.component_set_name.clone()),
+                ];
 
-                    let reference_component_option =
-                        queries.iter().find_map(|query| reference_components.get(query));
+                let reference_component_option =
+                    queries.iter().find_map(|query| reference_components.get(query));
 
-                    if reference_component_option.is_some() {
-                        action(
-                            view.style.clone(),
-                            view.data.clone(),
-                            view.id.clone(),
-                            info.component_set_name.clone(),
-                            info,
-                            reference_component_option,
-                            true,
-                        );
-                    }
-
-                    if let Some(data) = view.data.as_mut() {
-                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
-                            data.view_data_type.as_mut()
-                        {
-                            for child in children {
-                                for_each_component_instance(
-                                    reference_components,
-                                    child,
-                                    Some(info),
-                                    reference_component_option,
-                                    action,
-                                );
-                            }
-                        }
-                    }
-                }
-                (None, Some(parent_info)) => {
-                    // This matches a descendent view of a component instance.
-                    // The style and data overrides are written to hash map keyed by the view name
-                    // in the component info of the instance.
+                if let Some(reference_component) = reference_component_option {
+                    component_id = reference_component.id.clone();
                     action(
                         view.style.clone(),
                         view.data.clone(),
+                        component_id.clone(),
                         view.id.clone(),
-                        view.name.clone(),
-                        parent_info,
-                        parent_reference_component,
-                        false,
+                        info.component_set_name.clone(),
+                        info,
+                        reference_component_option,
+                        true,
                     );
-                    if let Some(data) = view.data.as_mut() {
-                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
-                            data.view_data_type.as_mut()
-                        {
-                            for child in children {
-                                for_each_component_instance(
-                                    reference_components,
-                                    child,
-                                    Some(parent_info),
-                                    parent_reference_component,
-                                    action,
-                                );
-                            }
+                }
+
+                if let Some(data) = view.data.as_mut() {
+                    if data.has_container() {
+                        let children: &mut Vec<View> = data.mut_container().children.as_mut();
+                        for child in children {
+                            for_each_component_instance(
+                                reference_components,
+                                child,
+                                Some(info),
+                                reference_component_option,
+                                String::new(),
+                                action,
+                            );
                         }
                     }
                 }
-                (None, None) => {
-                    // This matches the nodes from the root node of the view tree until it
-                    // meets a component instance.
-                    if let Some(data) = view.data.as_mut() {
-                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
-                            data.view_data_type.as_mut()
-                        {
-                            for child in children {
-                                for_each_component_instance(
-                                    reference_components,
-                                    child,
-                                    None,
-                                    None,
-                                    action,
-                                );
-                            }
+
+                instance_name_delimited = view.name.clone() + ":";
+            }
+
+            if let Some(parent_info) = parent_component_info {
+                // This matches a descendent view of a component instance.
+                // The style and data overrides are written to hash map keyed by the view name
+                // in the component info of the instance.
+                action(
+                    view.style.clone(),
+                    view.data.clone(),
+                    component_id.clone(),
+                    view.id.clone(),
+                    nested_instance_name_delimited.clone() + &view.name.clone(),
+                    parent_info,
+                    parent_reference_component,
+                    false,
+                );
+                if let Some(data) = view.data.as_mut() {
+                    if data.has_container() {
+                        let children: &mut Vec<View> = data.mut_container().children.as_mut();
+                        for child in children {
+                            for_each_component_instance(
+                                reference_components,
+                                child,
+                                Some(parent_info),
+                                parent_reference_component,
+                                nested_instance_name_delimited.clone() + &instance_name_delimited,
+                                action,
+                            );
+                        }
+                    }
+                }
+            } else {
+                // This matches the nodes from the root node of the view tree until it
+                // meets a component instance.
+                if let Some(data) = view.data.as_mut() {
+                    if data.has_container() {
+                        let children: &mut Vec<View> = data.mut_container().children.as_mut();
+                        for child in children {
+                            for_each_component_instance(
+                                reference_components,
+                                child,
+                                None,
+                                None,
+                                String::new(),
+                                action,
+                            );
                         }
                     }
                 }
@@ -576,8 +582,10 @@ impl Document {
                 view,
                 None,
                 None,
+                String::new(),
                 &|view_style,
                   view_data,
+                  component_id,
                   view_id,
                   // overrides_table_key will either be the component_set_name or view_name.
                   // This only works if the view name is identical.
@@ -613,12 +621,30 @@ impl Document {
                                     MessageField::none()
                                 };
 
-                            if override_view_style.is_some() || override_view_data.is_some() {
+                            let override_component_id = if let Some(template_component_info) =
+                                template_view.component_info.as_ref()
+                            {
+                                if !component_id.is_empty()
+                                    && component_id != template_component_info.id
+                                {
+                                    Some(component_id.clone())
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            };
+
+                            if override_view_style.is_some()
+                                || override_view_data.is_some()
+                                || override_component_id.is_some()
+                            {
                                 component_info.overrides_table.insert(
                                     overrides_table_key,
                                     ComponentOverrides {
                                         style: override_view_style,
                                         view_data: override_view_data,
+                                        variant_id: override_component_id,
                                         ..Default::default()
                                     },
                                 );

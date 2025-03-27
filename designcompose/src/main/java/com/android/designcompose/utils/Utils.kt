@@ -30,6 +30,7 @@ import com.android.designcompose.DebugNodeManager
 import com.android.designcompose.TAG
 import com.android.designcompose.definition.element.Color
 import com.android.designcompose.definition.element.Path
+import com.android.designcompose.definition.element.ScalableDimension
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.interaction.Easing.EasingTypeCase
 import com.android.designcompose.definition.interaction.Transition
@@ -387,4 +388,8 @@ internal fun getTextContent(
         }
     }
     return styledTextData.styledTextsList
+}
+
+fun ScalableDimension.str(): String {
+    return if (hasPoints()) "$points.dp" else "$percent %"
 }

@@ -15,7 +15,7 @@
 self-hosted-runner:
   # Labels of self-hosted runner in array of strings.
   labels:
-    - ubuntu-22.04-32core
+    - ubuntu-24.04-32core
 
 # Configuration variables in array of strings defined in your repository or
 # organization. `null` means disabling configuration variables check.

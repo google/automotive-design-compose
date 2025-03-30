@@ -116,6 +116,7 @@ pub fn build_definition(
         &nodes.iter().map(|name| NodeQuery::name(name)).collect(),
         &Vec::new(),
         &mut error_list,
+        false,
     )?;
     for error in error_list {
         eprintln!("Warning: {error}");

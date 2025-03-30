@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,30 @@
  */
 
 package com.android.designcompose
+/*
+ * Copyright (C) 2025 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.tracing.trace
+import android.util.Log
+import com.android.designcompose.DocContent
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.FeedbackImpl
+import com.android.designcompose.common.FeedbackLevel
 import com.android.designcompose.common.GenericDocContent
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.common.decodeDiskBaseDoc
@@ -39,129 +57,90 @@ import com.android.designcompose.definition.view.nodeStyleOrNull
 import com.android.designcompose.definition.view.scalableDataOrNull
 import com.android.designcompose.definition.view.styleOrNull
 import com.android.designcompose.live_update.ConvertResponse
-import com.google.protobuf.kotlin.get
+import com.android.designcompose.decodeDiskDoc
 import java.io.File
 import java.io.InputStream
 
-// Essentially a wrapper class for the GenericDocContent. The initializer
-// will decode the saved images into Bitmap objects (Android specific) for display
-
-class DocContent(var c: GenericDocContent, previousDoc: DocContent?) {
-
-    // Replace this record in the decoded doc.// Build upon the previously decoded images, because
-    // if
-    // we had previous content then we will
-    // have told the server about the images we've already downloaded (and it will have skipped
-    // sending them).
-    //
-    // We don't know if we should retire images from the previous run, so if we go for a long
-    // time on a doc, then we could end up with a lot of unused images in memory.
-    //
-    // We also want to build a complete set of images for the doc we save to disk (if we're saving);
-    // since we can't write to our just decoded doc, so any zero length byte arrays get updated to
-    // point to the actual bytes we already have in heap.
-    private var images: HashMap<String, Bitmap> = HashMap()
-
-    init {
-        for ((imageKey, bytes) in c.inMemoryImagesMap) {
-            if (bytes.isEmpty) {
-                if (
-                    previousDoc != null &&
-                        previousDoc.images[imageKey] != null &&
-                        previousDoc.c.inMemoryImagesMap[imageKey] != null
-                ) {
-                    images[imageKey] = previousDoc.images[imageKey]!!
-                    // Replace this record and write to disk as the images of the decoded doc.
-                    c.inMemoryImagesMap[imageKey] = previousDoc.c.inMemoryImagesMap[imageKey]!!
-                }
-            } else {
-                val byteArray = ByteArray(bytes.size()) { i -> bytes[i] }
-                val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-                images[imageKey] = bitmap
-            }
+object Feedback2 : FeedbackImpl() {
+    override fun logMessage(str: String, level: FeedbackLevel) {
+        when (level) {
+            FeedbackLevel.Debug -> Log.d(TAG, str)
+            FeedbackLevel.Info -> Log.i(TAG, str)
+            FeedbackLevel.Warn -> Log.w(TAG, str)
+            FeedbackLevel.Error -> Log.e(TAG, str)
         }
-        Feedback.documentDecodeImages(c.document.imagesMap.size, c.header.name, c.docId)
     }
+}
 
-    /**
-     * Look up an image resource from the document. The backend service pre-rasterizes complex
-     * vector content at a variety of pixel densities. This function selects the appropriate
-     * pre-rasterized image and also returns the density of the image.
-     *
-     * @return Pair<Image, Density>, or null if no match was found.
-     */
-    internal fun image(key: String, density: Float): Pair<Bitmap, Float>? {
-        // We know that the service only encodes 1x (baseline), @2x and @3x.
-        if (density < 1.2) {
-            val img = this.images[key]
-            if (img != null) return Pair(img, 1.0f)
-        } else if (density < 2.2 && this.images.containsKey("$key@2x")) {
-            val img = this.images["$key@2x"]
-            if (img != null) return Pair(img, 2.0f)
-        } else if (this.images.containsKey("$key@3x")) {
-            val img = this.images["$key@3x"]
-            if (img != null) return Pair(img, 3.0f)
-        }
-        val img = this.images[key]
-        if (img != null) return Pair(img, 1.0f)
+private fun removeFileExtension(filename: String): String {
+    val file = File(filename)
+    return file.nameWithoutExtension
+}
+
+fun loadScalableUiDoc(dcfFilePath: String, context: Context): ScalableUiDoc? {
+    Log.i(TAG, "loadScalableUiDoc path $dcfFilePath")
+
+    val baseFilename = removeFileExtension(dcfFilePath)
+    val parts = baseFilename.split("_")
+    if (parts.size != 2) {
+        Log.e(TAG, "Invalid file name. Must be in the format name_DOCID.dcf")
         return null
     }
+    val docId = parts[0]
+    val resourceName = parts[1]
+    return loadScalableUiDoc(resourceName, docId, context)
 }
 
-fun decodeDiskDoc(
-    docStream: InputStream,
-    previousDoc: DocContent?,
-    docId: DesignDocId,
-    feedback: FeedbackImpl,
-): DocContent? {
-    var docContent: DocContent? = null
-    trace(DCTraces.DECODEDISKDOC) {
-        val baseDoc = decodeDiskBaseDoc(docStream, docId, feedback) ?: return@trace
-        docContent = DocContent(baseDoc, previousDoc)
+fun loadScalableUiDoc(
+    resourceName: String,
+    docId: String,
+    context: Context,
+): ScalableUiDoc? {
+    val fileName = "${resourceName}_${docId}.dcf"
+    val fileStream: InputStream = context.assets.open(fileName)
+    Log.i(TAG, "loadScalableUiDoc $resourceName ${docId} file assets/$fileName")
+    return loadScalableUiDoc(fileStream, docId)
+}
+
+fun loadScalableUiDoc(fileStream: InputStream, docId: String): ScalableUiDoc? {
+    try {
+        val decodedDoc = decodeDiskDoc(fileStream, null, DesignDocId(docId), Feedback2)
+        decodedDoc?.let {
+            return ScalableUiDoc(it)
+        }
+    } catch (error: Throwable) {
+        Log.e(TAG, "### Failed to load $docId disk: $error")
     }
-    return docContent
+    Log.e(TAG, "### Unknown Failure");
+    return null
 }
 
-fun decodeServerDoc(
-    docResponse: ConvertResponse.Document,
-    previousDoc: DocContent?,
-    docId: DesignDocId,
-    save: File?,
-    feedback: FeedbackImpl,
-): DocContent? {
-    // We must initialize the fully-decoded DocContent, which decodes images before
-    // saving it to disk
-    val baseDoc = decodeServerBaseDoc(docResponse, docId, feedback) ?: return null
-    val fullDoc = DocContent(baseDoc, previousDoc)
-    save?.let { fullDoc.c.save(save, Feedback) }
-    return fullDoc
-}
-
-/*
-class ScalableUiDoc(doc: DocContent) {
+class ScalableUiDoc(doc: DocContent)  {
     // variant name -> scalable ui data
     val variantMap: HashMap<String, ScalableUiVariant> = HashMap()
     // variant id -> scalable ui data
     val variantIdMap: HashMap<String, ScalableUiVariant> = HashMap()
     // component set name -> { event name -> variant name }
-    val componentSetMap: HashMap<String, ScalableUIComponentSet> =
-        HashMap() // HashMap<String, String>> = HashMap()
+    val componentSetMap: HashMap<String, ScalableUIComponentSet> = HashMap()
 
     init {
         val allViews = doc.c.document.views()
         doc.c.variantViewMap.forEach { setMap ->
+            // Create a mapping of component set names to the scalable ui data for that set
             val componentSetQuery = NodeQuery.NodeComponentSet(setMap.key)
             val componentSetView = allViews[componentSetQuery]
-            componentSetView?.styleOrNull?.nodeStyleOrNull?.scalableDataOrNull?.setOrNull?.let {
-                setData ->
+            componentSetView?.styleOrNull?.nodeStyleOrNull?.scalableDataOrNull?.setOrNull?.let { setData ->
                 val setName = setData.name
                 componentSetMap[setName] = setData
             }
 
+            // Iterate through the components of each component set
             setMap.value.forEach { variantMap ->
                 val variant = variantMap.value
                 if (variant.data.hasContainer()) {
                     if (variant.data.container.childrenCount > 0) {
+                        // If the first child of this component is a child named "main", copy its
+                        // visibility, alpha, and bounds to create a ScalableUiVariant.
                         val child = variant.data.container.getChildren(0)
                         if (child.name == "main") {
                             val layout = child.style.layoutStyle
@@ -202,6 +181,7 @@ class ScalableUiDoc(doc: DocContent) {
                                             }
                                         }
                                     }
+                            // Opulate the variant maps by name and id
                             scalableUiVariant?.let {
                                 this.variantMap[variantMap.key] = it
                                 this.variantIdMap[variant.id] = it
@@ -211,14 +191,14 @@ class ScalableUiDoc(doc: DocContent) {
                 }
             }
 
-            componentSetView?.styleOrNull?.nodeStyleOrNull?.scalableDataOrNull?.setOrNull?.let {
-                setData ->
+            // Print out debugging data of what we parsed
+            componentSetView?.styleOrNull?.nodeStyleOrNull?.scalableDataOrNull?.setOrNull?.let { setData ->
                 val setName = setData.name
                 componentSetMap[setName] = setData
-                println("### Set ${setData.name}, ${setData.id}")
+                Log.i(TAG, "Set ${setData.name}, ${setData.id}")
                 setData.variantIdsList.forEach {
-                    println(
-                        "  ### Variant $it: Default ${variantIdMap[it]?.isDefault} Visible ${variantIdMap[it]?.isVisible}"
+                    Log.i(TAG,
+                        "  Variant $it: Default ${variantIdMap[it]?.isDefault} Visible ${variantIdMap[it]?.isVisible}"
                     )
                 }
             }
@@ -254,4 +234,3 @@ class ScalableUiDoc(doc: DocContent) {
         return variantIdMap[id]
     }
 }
-*/

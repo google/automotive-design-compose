@@ -213,7 +213,8 @@ private fun calculateProgressBarData(
                 endY = parentRenderSize.height
             }
         }
-        val barHeight = lerp(0F, endY, discretizedMeterValue, density)
+        val minHeight = style.layoutStyle.minHeight.points
+        val barHeight = lerp(minHeight, endY, discretizedMeterValue, density)
         val moveY = (endY * density - barHeight)
         val topOffset = style.layoutStyle.margin.top.pointsAsDp(density).value
         val overrideTransform = style.getTransform(density)
@@ -236,7 +237,8 @@ private fun calculateProgressBarData(
                 endX = parentRenderSize.width
             }
         }
-        val barWidth = lerp(0F, endX, discretizedMeterValue, density)
+        val minWidth = style.layoutStyle.minWidth.points
+        val barWidth = lerp(minWidth, endX, discretizedMeterValue, density)
         return Pair(Size(barWidth, height), null)
     }
 }

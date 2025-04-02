@@ -61,6 +61,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         // H and V constraints
         Triple("H Constraints", { HConstraintsTest() }, ConstraintsDoc.javaClass.name),
         Triple("V Constraints", { VConstraintsTest() }, ConstraintsDoc.javaClass.name),
+        Triple("HvacTest", { HvacPanel() }, HvacComponentsDoc.javaClass.name),
         Triple("Image Update", { ImageUpdateTest() }, ImageUpdateTestDoc.javaClass.name),
         Triple("Interaction", { InteractionTest() }, InteractionTestDoc.javaClass.name),
         // Layout related tests

@@ -1001,15 +1001,17 @@ if (figma.command === "sync") {
       // Normal progress bar mode means we resize the progress bar between a width of 0.01
       // and a max size based on the parent width if horizontal or height if vertical
       if (msg.vertical) {
-        const height = percentToValue(value, 0.01, parent.height);
-        node.resize(parent.width, height);
-        node.y = parent.height - height;
+        barData.startY = node.minHeight ?? 0;
         barData.endY = parent.height;
+        const height = percentToValue(value, 0.01, barData.endY - barData.startY);
+        node.resize(parent.width, height + barData.startY);
+        node.y = parent.height - height;
       } else {
-        const width = percentToValue(value, 0.01, parent.width);
-        node.resize(width, parent.height);
-        node.y = 0;
+        barData.startX = node.minWidth ?? 0;
         barData.endX = parent.width;
+        const width = percentToValue(value, 0.01, barData.endX - barData.startX);
+        node.resize(width + barData.startX, parent.height);
+        node.y = 0;
       }
 
       meterData.progressBarData = barData;

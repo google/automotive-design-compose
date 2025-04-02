@@ -16,6 +16,8 @@
 
 package com.android.designcompose.testapp.validation.examples
 
+import android.content.Context
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absoluteOffset
@@ -26,6 +28,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignVariableCollection
@@ -39,18 +42,14 @@ import com.android.designcompose.annotation.DesignVariant
 import kotlin.math.roundToInt
 
 object HvacVariant {
+    const val MATERIAL_THEME_NAME = "material-theme"
+
     enum class DayNightMode {
-        Default,
-        light,
-        dark,
+        Light,
+        Dark,
     }
 
-    enum class EnabledState {
-        True,
-        False,
-    }
-
-    enum class OnOffState {
+    enum class BooleanState {
         True,
         False,
     }
@@ -66,6 +65,7 @@ object HvacVariant {
         windshield_defrost_rear,
         fan_defrost_low,
         fan_low,
+        fan_mid_low,
         fan_mid,
         dot,
         sync_alt,
@@ -112,27 +112,23 @@ interface HvacComponents {
 
     @DesignComponent(node = "#ToggleButton")
     fun toggleButton(
-        @DesignVariant(property = "#icon-on") iconOn: HvacVariant.OnOffState,
-        @DesignVariant(property = "#icon-enabled") iconEnabled: HvacVariant.EnabledState,
+        @DesignVariant(property = "#icon-on") iconOn: HvacVariant.BooleanState,
+        @DesignVariant(property = "#icon-enabled") iconEnabled: HvacVariant.BooleanState,
         @DesignVariant(property = "#icon") icon: HvacVariant.Icon,
-        @DesignVariant(property = "#toggle-button-on") buttonOn: HvacVariant.OnOffState,
-        @DesignVariant(property = "#toggle-button-enabled") buttonEnabled: HvacVariant.EnabledState,
+        @DesignVariant(property = "#toggle-button-on") buttonOn: HvacVariant.BooleanState,
+        @DesignVariant(property = "#toggle-button-enabled") buttonEnabled: HvacVariant.BooleanState,
+        @DesignVariant(property = "#toggle-button-pressed") buttonPressed: HvacVariant.BooleanState,
         @Design(node = "#ToggleButton") tapCallback: TapCallback,
-    )
-
-    @DesignComponent(node = "#TextToggleButton")
-    fun toggleTextButton(
-        @DesignVariant(property = "#text-toggle-button-on") buttonOn: HvacVariant.OnOffState,
-        @DesignVariant(property = "#text-toggle-button-enabled")
-        buttonEnabled: HvacVariant.EnabledState,
-        @Design(node = "#TextToggleButton") tapCallback: TapCallback,
-        @Design(node = "#text") text: String,
+        @Design(node = "#text") text: String?,
+        @Design(node = "#text") textVisible: Boolean,
+        @Design(node = "#ToggleButtonIcon") iconVisible: Boolean,
     )
 
     @DesignComponent(node = "#LevelButton")
     fun levelButton(
         @DesignVariant(property = "#level") level: HvacVariant.Level,
-        @DesignVariant(property = "#level-button-enabled") buttonEnabled: HvacVariant.EnabledState,
+        @DesignVariant(property = "#level-button-enabled") buttonEnabled: HvacVariant.BooleanState,
+        @DesignVariant(property = "#level-button-pressed") buttonPressed: HvacVariant.BooleanState,
         @Design(node = "#LevelButtonIcon")
         icon: @Composable ((ComponentReplacementContext) -> Unit),
         @Design(node = "#LevelButton") tapCallback: TapCallback,
@@ -140,18 +136,24 @@ interface HvacComponents {
 
     @DesignComponent(node = "#IconWithState")
     fun iconWithState(
-        @DesignVariant(property = "#icon-on") iconOn: HvacVariant.OnOffState,
-        @DesignVariant(property = "#icon-enabled") iconEnabled: HvacVariant.EnabledState,
+        @DesignVariant(property = "#icon-on") iconOn: HvacVariant.BooleanState,
+        @DesignVariant(property = "#icon-enabled") iconEnabled: HvacVariant.BooleanState,
         @DesignVariant(property = "#icon") icon: HvacVariant.Icon,
     )
 
     @DesignComponent(node = "#FanSpeedControl")
     fun fanSpeedControl(
-        @DesignVariant(property = "#fan-speed-control-enabled") enabled: HvacVariant.EnabledState,
+        @DesignVariant(property = "#fan-speed-control-enabled") enabled: HvacVariant.BooleanState,
         @Design(node = "#speed") speed: String,
         @Design(node = "#progress") progress: Meter,
         @Design(node = "#indicator") progressIndicator: Meter,
     )
+}
+
+fun isSystemInDarkMode(context: Context): Boolean {
+    val currentNightMode =
+        context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    return currentNightMode == Configuration.UI_MODE_NIGHT_YES
 }
 
 @Composable
@@ -168,21 +170,28 @@ fun HvacPanel() {
     val seatHeaterPassengerState = remember { mutableIntStateOf(0) }
     val fanSpeedState = remember { mutableFloatStateOf(100f) }
 
-    val dayNightMode = remember { mutableStateOf(HvacVariant.DayNightMode.Default) }
-    val modeValues = hashMapOf(Pair(Theme.Material.themeName, dayNightMode.value.name))
-    DesignVariableCollection("material-theme") {
+    val isSystemInDarkMode = isSystemInDarkMode(LocalContext.current)
+    val dayNightMode =
+        if (isSystemInDarkMode) HvacVariant.DayNightMode.Dark else HvacVariant.DayNightMode.Light
+
+    val modeValues = hashMapOf(Pair(HvacVariant.MATERIAL_THEME_NAME, dayNightMode.name))
+    DesignVariableCollection(HvacVariant.MATERIAL_THEME_NAME) {
         DesignVariableModeValues(modeValues) {
             HvacComponentsDoc.hvacPanel(
                 hvacOnOff = {
                     val on =
-                        if (hvacOnState.value) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
-                    val enabled = HvacVariant.EnabledState.True
+                        if (hvacOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
+                    val enabled = HvacVariant.BooleanState.True
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.power,
                         tapCallback = { hvacOnState.value = !hvacOnState.value },
                         key = "#hvac_on_off",
@@ -190,17 +199,23 @@ fun HvacPanel() {
                 },
                 autoOnOff = {
                     val on =
-                        if (autoOnState.value) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
+                        if (autoOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     val enabled =
-                        if (hvacOnState.value) HvacVariant.EnabledState.True
-                        else HvacVariant.EnabledState.False
-                    HvacComponentsDoc.toggleTextButton(
+                        if (hvacOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
+                    HvacComponentsDoc.toggleButton(
+                        iconOn = on,
+                        iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
                         text = "AUTO",
+                        textVisible = true,
+                        iconVisible = false,
+                        icon = HvacVariant.Icon.ac_unit, // Could be anything
                         tapCallback = {
-                            if (enabled == HvacVariant.EnabledState.True)
+                            if (enabled == HvacVariant.BooleanState.True)
                                 autoOnState.value = !autoOnState.value
                         },
                         key = "#auto_on_off",
@@ -208,19 +223,23 @@ fun HvacPanel() {
                 },
                 coolingOnOff = {
                     val on =
-                        if (coolingOnState.value) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
+                        if (coolingOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     val enabled =
-                        if (hvacOnState.value && !autoOnState.value) HvacVariant.EnabledState.True
-                        else HvacVariant.EnabledState.False
+                        if (hvacOnState.value && !autoOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.ac_unit,
                         tapCallback = {
-                            if (enabled == HvacVariant.EnabledState.True)
+                            if (enabled == HvacVariant.BooleanState.True)
                                 coolingOnState.value = !coolingOnState.value
                         },
                         key = "#cooling_on_off",
@@ -228,76 +247,92 @@ fun HvacPanel() {
                 },
                 directionFace = {
                     val on =
-                        if (fanDirection.intValue == 0) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
+                        if (fanDirection.intValue == 0) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     val enabled =
-                        if (hvacOnState.value && !autoOnState.value) HvacVariant.EnabledState.True
-                        else HvacVariant.EnabledState.False
+                        if (hvacOnState.value && !autoOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.fan_mid,
                         tapCallback = {
-                            if (enabled == HvacVariant.EnabledState.True) fanDirection.intValue = 0
+                            if (enabled == HvacVariant.BooleanState.True) fanDirection.intValue = 0
                         },
                         key = "#direction_face",
                     )
                 },
                 directionFloor = {
                     val on =
-                        if (fanDirection.intValue == 1) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
+                        if (fanDirection.intValue == 1) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     val enabled =
-                        if (hvacOnState.value && !autoOnState.value) HvacVariant.EnabledState.True
-                        else HvacVariant.EnabledState.False
+                        if (hvacOnState.value && !autoOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.fan_low,
                         tapCallback = {
-                            if (enabled == HvacVariant.EnabledState.True) fanDirection.intValue = 1
+                            if (enabled == HvacVariant.BooleanState.True) fanDirection.intValue = 1
                         },
                         key = "#direction_floor",
                     )
                 },
                 directionDefrostFrontFloor = {
                     val on =
-                        if (fanDirection.intValue == 2) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
+                        if (fanDirection.intValue == 2) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     val enabled =
-                        if (hvacOnState.value && !autoOnState.value) HvacVariant.EnabledState.True
-                        else HvacVariant.EnabledState.False
+                        if (hvacOnState.value && !autoOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.fan_defrost_low,
                         tapCallback = {
-                            if (enabled == HvacVariant.EnabledState.True) fanDirection.intValue = 2
+                            if (enabled == HvacVariant.BooleanState.True) fanDirection.intValue = 2
                         },
                         key = "#direction_defrost_front_and_floor",
                     )
                 },
                 recycleAir = {
                     val on =
-                        if (recycleAirState.value) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
+                        if (recycleAirState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     val enabled =
-                        if (hvacOnState.value && !autoOnState.value) HvacVariant.EnabledState.True
-                        else HvacVariant.EnabledState.False
+                        if (hvacOnState.value && !autoOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.recirculate,
                         tapCallback = {
-                            if (enabled == HvacVariant.EnabledState.True)
+                            if (enabled == HvacVariant.BooleanState.True)
                                 recycleAirState.value = !recycleAirState.value
                         },
                         key = "#recycle_air_on_off",
@@ -305,14 +340,18 @@ fun HvacPanel() {
                 },
                 defrostFront = {
                     val on =
-                        if (defrostFrontState.value) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
-                    val enabled = HvacVariant.EnabledState.True
+                        if (defrostFrontState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
+                    val enabled = HvacVariant.BooleanState.True
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.windshield_defrost_front,
                         tapCallback = { defrostFrontState.value = !defrostFrontState.value },
                         key = "#direction_defrost_front",
@@ -320,30 +359,35 @@ fun HvacPanel() {
                 },
                 defrostRear = {
                     val on =
-                        if (defrostRearState.value) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
-                    val enabled = HvacVariant.EnabledState.True
+                        if (defrostRearState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
+                    val enabled = HvacVariant.BooleanState.True
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.windshield_defrost_rear,
                         tapCallback = { defrostRearState.value = !defrostRearState.value },
                         key = "#direction_defrost_rear",
                     )
                 },
                 seatHeaterDriver = {
-                    val enabled = HvacVariant.EnabledState.True
+                    val enabled = HvacVariant.BooleanState.True
                     HvacComponentsDoc.levelButton(
                         level = HvacVariant.Level.entries[seatHeaterDriverState.intValue % 3],
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
                         icon = {
                             HvacComponentsDoc.iconWithState(
                                 iconOn =
                                     if (seatHeaterDriverState.intValue == 0)
-                                        HvacVariant.OnOffState.False
-                                    else HvacVariant.OnOffState.True,
+                                        HvacVariant.BooleanState.False
+                                    else HvacVariant.BooleanState.True,
                                 iconEnabled = enabled,
                                 icon = HvacVariant.Icon.seat_heat_left,
                             )
@@ -356,16 +400,17 @@ fun HvacPanel() {
                     )
                 },
                 seatHeaterPassenger = {
-                    val enabled = HvacVariant.EnabledState.True
+                    val enabled = HvacVariant.BooleanState.True
                     HvacComponentsDoc.levelButton(
                         level = HvacVariant.Level.entries[seatHeaterPassengerState.intValue % 3],
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
                         icon = {
                             HvacComponentsDoc.iconWithState(
                                 iconOn =
                                     if (seatHeaterPassengerState.intValue == 0)
-                                        HvacVariant.OnOffState.False
-                                    else HvacVariant.OnOffState.True,
+                                        HvacVariant.BooleanState.False
+                                    else HvacVariant.BooleanState.True,
                                 iconEnabled = enabled,
                                 icon = HvacVariant.Icon.seat_heat_right,
                             )
@@ -379,28 +424,32 @@ fun HvacPanel() {
                 },
                 driverPassengerSync = {
                     val on =
-                        if (driverPassengerSyncState.value) HvacVariant.OnOffState.True
-                        else HvacVariant.OnOffState.False
+                        if (driverPassengerSyncState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     val enabled =
-                        if (hvacOnState.value) HvacVariant.EnabledState.True
-                        else HvacVariant.EnabledState.False
+                        if (hvacOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     HvacComponentsDoc.toggleButton(
                         iconOn = on,
                         iconEnabled = enabled,
                         buttonOn = on,
                         buttonEnabled = enabled,
+                        buttonPressed = HvacVariant.BooleanState.False,
+                        text = null,
+                        textVisible = false,
+                        iconVisible = true,
                         icon = HvacVariant.Icon.sync_alt,
                         tapCallback = {
-                            if (enabled == HvacVariant.EnabledState.True)
+                            if (enabled == HvacVariant.BooleanState.True)
                                 driverPassengerSyncState.value = !driverPassengerSyncState.value
                         },
-                        key = "#direction_defrost_front",
+                        key = "#hvac_driver_passenger_sync",
                     )
                 },
                 fanSpeedControl = {
                     val enabled =
-                        if (hvacOnState.value && !autoOnState.value) HvacVariant.EnabledState.True
-                        else HvacVariant.EnabledState.False
+                        if (hvacOnState.value && !autoOnState.value) HvacVariant.BooleanState.True
+                        else HvacVariant.BooleanState.False
                     val step = 100f / 6f
                     val speed = (fanSpeedState.floatValue / step).roundToInt()
                     val progress = speed * step
@@ -409,7 +458,7 @@ fun HvacPanel() {
                         speed = (speed + 1).toString(),
                         progress = progress,
                         progressIndicator = progress,
-                        key = "#fan-speed-control",
+                        key = "#fan_speed_control",
                     )
                 },
             )

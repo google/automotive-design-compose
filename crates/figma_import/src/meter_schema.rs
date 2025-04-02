@@ -52,6 +52,10 @@ pub struct ProgressBarMeterJson {
     pub end_x: f32,
     #[serde(default)]
     pub end_y: f32,
+    #[serde(default)]
+    pub start_x: f32,
+    #[serde(default)]
+    pub start_y: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]

@@ -16,6 +16,8 @@
 
 package com.android.designcompose.testapp.validation.examples
 
+import android.content.Context
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absoluteOffset
@@ -26,6 +28,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignVariableCollection
@@ -39,10 +42,11 @@ import com.android.designcompose.annotation.DesignVariant
 import kotlin.math.roundToInt
 
 object HvacVariant {
+    const val MATERIAL_THEME_NAME = "material-theme"
+
     enum class DayNightMode {
-        Default,
-        light,
-        dark,
+        Light,
+        Dark,
     }
 
     enum class EnabledState {
@@ -154,6 +158,12 @@ interface HvacComponents {
     )
 }
 
+fun isSystemInDarkMode(context: Context): Boolean {
+    val currentNightMode =
+        context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    return currentNightMode == Configuration.UI_MODE_NIGHT_YES
+}
+
 @Composable
 fun HvacPanel() {
     val hvacOnState = remember { mutableStateOf(false) }
@@ -168,9 +178,16 @@ fun HvacPanel() {
     val seatHeaterPassengerState = remember { mutableIntStateOf(0) }
     val fanSpeedState = remember { mutableFloatStateOf(100f) }
 
-    val dayNightMode = remember { mutableStateOf(HvacVariant.DayNightMode.Default) }
-    val modeValues = hashMapOf(Pair(Theme.Material.themeName, dayNightMode.value.name))
-    DesignVariableCollection("material-theme") {
+    val isSystemInDarkMode = isSystemInDarkMode(LocalContext.current)
+    val dayNightMode = remember {
+        mutableStateOf(
+            if (isSystemInDarkMode) HvacVariant.DayNightMode.Dark
+            else HvacVariant.DayNightMode.Light
+        )
+    }
+
+    val modeValues = hashMapOf(Pair(HvacVariant.MATERIAL_THEME_NAME, dayNightMode.value.name))
+    DesignVariableCollection(HvacVariant.MATERIAL_THEME_NAME) {
         DesignVariableModeValues(modeValues) {
             HvacComponentsDoc.hvacPanel(
                 hvacOnOff = {
@@ -409,7 +426,7 @@ fun HvacPanel() {
                         speed = (speed + 1).toString(),
                         progress = progress,
                         progressIndicator = progress,
-                        key = "#fan-speed-control",
+                        key = "#fan_speed_control",
                     )
                 },
             )

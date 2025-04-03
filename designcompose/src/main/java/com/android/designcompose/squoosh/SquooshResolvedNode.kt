@@ -20,6 +20,8 @@ import android.graphics.PointF
 import com.android.designcompose.TextMeasureData
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewStyle
+import com.android.designcompose.definition.view.meterDataOrNull
+import com.android.designcompose.definition.view.nodeStyleOrNull
 import com.android.designcompose.layout_interface.Layout
 
 /// A SquooshResolvedNode represents a design element from the DesignCompose tree after variants
@@ -68,5 +70,31 @@ internal class SquooshResolvedNode(
             n = n.parent
         }
         return PointF(x, y)
+    }
+
+    fun findProgressBarChild(): SquooshResolvedNode? {
+        var child = firstChild
+        while (child != null) {
+            if (child.style.nodeStyleOrNull?.meterDataOrNull?.hasProgressBarData() == true) {
+                return child
+            }
+            child = child.nextSibling
+        }
+        return null
+    }
+
+    fun findProgressMarkerDescendant(): SquooshResolvedNode? {
+        var child = firstChild
+        while (child != null) {
+            if (child.style.nodeStyleOrNull?.meterDataOrNull?.hasProgressMarkerData() == true) {
+                return child
+            }
+            val childProgressMarkerDescendant = child.findProgressMarkerDescendant()
+            if (childProgressMarkerDescendant != null) {
+                return child
+            }
+            child = child.nextSibling
+        }
+        return null
     }
 }

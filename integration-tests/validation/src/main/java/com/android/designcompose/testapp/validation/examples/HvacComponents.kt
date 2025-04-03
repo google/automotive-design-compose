@@ -31,6 +31,7 @@ import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.DesignVariableCollection
 import com.android.designcompose.DesignVariableModeValues
 import com.android.designcompose.Meter
+import com.android.designcompose.OnProgressChangedCallback
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -150,6 +151,7 @@ interface HvacComponents {
         @DesignVariant(property = "#fan-speed-control-enabled") enabled: HvacVariant.EnabledState,
         @Design(node = "#speed") speed: String,
         @Design(node = "#progress") progress: Meter,
+        @Design(node = "#progress") onProgressChangedCallback: OnProgressChangedCallback,
         @Design(node = "#indicator") progressIndicator: Meter,
     )
 }
@@ -409,6 +411,12 @@ fun HvacPanel() {
                         speed = (speed + 1).toString(),
                         progress = progress,
                         progressIndicator = progress,
+                        onProgressChangedCallback =
+                            object : OnProgressChangedCallback {
+                                override fun onProgressChanged(progress: Float) {
+                                    fanSpeedState.floatValue = progress
+                                }
+                            },
                         key = "#fan-speed-control",
                     )
                 },

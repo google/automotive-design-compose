@@ -26,8 +26,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -730,13 +733,15 @@ fun SquooshRoot(
                 // Now render all of the children
                 for (child in composableList.childComposables) {
                     var needsComposition = true
+
                     var composableChildModifier =
                         Modifier.drawWithContent {
                                 if (
                                     child.node.layoutId ==
                                         childRenderSelector.selectedRenderChild?.layoutId
-                                )
+                                ) {
                                     drawContent()
+                                }
                             }
                             .then(SquooshParentData(node = child.node))
                             .then(Modifier.testTag(child.node.view.name))
@@ -788,22 +793,43 @@ fun SquooshRoot(
                             }
                         }
 
-                        if (hasPressClick || isPressed.value)
+                        if (hasPressClick || isPressed.value) {
+                            val interactionSource = remember { MutableInteractionSource() }
                             composableChildModifier =
-                                composableChildModifier.squooshInteraction(
-                                    doc,
-                                    interactionState,
-                                    interactionScope,
-                                    customizationContext,
-                                    child,
-                                    isPressed,
-                                )
-                        else if (child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) {
+                                Modifier.indication(
+                                        interactionSource = interactionSource,
+                                        indication = ripple(),
+                                    )
+                                    .squooshInteraction(
+                                        doc,
+                                        interactionState,
+                                        interactionScope,
+                                        customizationContext,
+                                        child,
+                                        isPressed,
+                                        interactionSource,
+                                    )
+                                    .then(composableChildModifier)
+                        } else if (child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) {
                             composableChildModifier =
                                 composableChildModifier.hyperlinkHandler(
                                     child.node,
                                     LocalUriHandler.current,
                                 )
+                        } else if (child.node.findProgressBarChild() != null) {
+                            val interactionSource = remember { MutableInteractionSource() }
+                            composableChildModifier =
+                                composableChildModifier
+                                    .progressBarSlider(
+                                        child.node,
+                                        interactionScope,
+                                        interactionSource,
+                                        customizationContext,
+                                    )
+                                    .indication(
+                                        interactionSource = interactionSource,
+                                        indication = ripple(),
+                                    )
                         } else {
                             needsComposition = false
                         }

@@ -100,6 +100,10 @@ data class DesignScrollCallbacks(
     val scrollStateChanged: ((DesignScrollState) -> Unit)? = null,
 )
 
+interface OnProgressChangedCallback {
+    fun onProgressChanged(progress: Float)
+}
+
 // A Customization changes the way a node is presented, or changes the content of a node.
 data class Customization(
     // Text content customization
@@ -118,6 +122,8 @@ data class Customization(
     var modifier: Optional<Modifier> = Optional.empty(),
     // Tap callback customization
     var tapCallback: Optional<TapCallback> = Optional.empty(),
+    // On progress changed callback customization
+    var onProgressChangedCallback: Optional<OnProgressChangedCallback> = Optional.empty(),
     // Child content customization V2
     var content: Optional<ReplacementContent> = Optional.empty(),
     var listContent: Optional<ListContent> = Optional.empty(),
@@ -269,6 +275,13 @@ fun CustomizationContext.setTapCallback(nodeName: String, tapCallback: TapCallba
     customize(nodeName) { c -> c.tapCallback = Optional.ofNullable(tapCallback) }
 }
 
+fun CustomizationContext.setOnProgressChangedCallback(
+    nodeName: String,
+    callback: OnProgressChangedCallback,
+) {
+    customize(nodeName) { c -> c.onProgressChangedCallback = Optional.ofNullable(callback) }
+}
+
 fun CustomizationContext.setContent(nodeName: String, content: ReplacementContent?) {
     customize(nodeName) { c -> c.content = Optional.ofNullable(content) }
 }
@@ -393,6 +406,12 @@ fun CustomizationContext.getModifier(nodeName: String): Modifier? {
 
 fun CustomizationContext.getTapCallback(nodeName: String): TapCallback? {
     return cs[nodeName]?.tapCallback?.getOrNull()
+}
+
+fun CustomizationContext.getOnProgressChangedCallback(
+    nodeName: String
+): OnProgressChangedCallback? {
+    return cs[nodeName]?.onProgressChangedCallback?.getOrNull()
 }
 
 fun CustomizationContext.getTapCallback(view: View): TapCallback? {

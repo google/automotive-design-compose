@@ -145,6 +145,9 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
             HashMap()
         private var tapCallbackCustomizations: HashMap<String, Vector<Pair<String, String>>> =
             HashMap()
+        private var onProgressChangedCallbackCustomizations:
+            HashMap<String, Vector<Pair<String, String>>> =
+            HashMap()
         private var contentCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var listCustomizations: HashMap<String, Vector<Pair<String, String>>> = HashMap()
         private var replacementCustomizations: HashMap<String, Vector<Pair<String, String>>> =
@@ -700,6 +703,15 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 out.appendText("        customizations.setTapCallback(\"$node\", $value)\n")
             }
 
+            val onProgressChangedCallbackCustom =
+                onProgressChangedCallbackCustomizations[function.toString()]
+                    ?: Vector<Pair<String, String>>()
+            for ((node, value) in onProgressChangedCallbackCustom) {
+                out.appendText(
+                    "        customizations.setOnProgressChangedCallback(\"$node\", $value)\n"
+                )
+            }
+
             val contentCustom =
                 contentCustomizations[function.toString()] ?: Vector<Pair<String, String>>()
             for ((node, value) in contentCustom) {
@@ -883,6 +895,12 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                     addCustomization(valueParameter, annotation, modifierCustomizations)
                 CustomizationType.TapCallback ->
                     addCustomization(valueParameter, annotation, tapCallbackCustomizations)
+                CustomizationType.OnProgressChangedCallback ->
+                    addCustomization(
+                        valueParameter,
+                        annotation,
+                        onProgressChangedCallbackCustomizations,
+                    )
                 CustomizationType.ContentReplacement ->
                     addCustomization(valueParameter, annotation, contentCustomizations)
                 CustomizationType.ComponentReplacement ->

@@ -36,11 +36,16 @@ import com.android.designcompose.definition.interaction.Transition
 import com.android.designcompose.definition.layout.OverflowDirection
 import com.android.designcompose.definition.modifier.BlendMode
 import com.android.designcompose.definition.modifier.LayoutTransform
+import com.android.designcompose.definition.plugin.ProgressBarMeterData
+import com.android.designcompose.definition.plugin.progressBarDataOrNull
 import com.android.designcompose.definition.view.StyledTextRun
 import com.android.designcompose.definition.view.View
 import com.android.designcompose.definition.view.ViewData
+import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.definition.view.containerOrNull
 import com.android.designcompose.definition.view.dataOrNull
+import com.android.designcompose.definition.view.meterDataOrNull
+import com.android.designcompose.definition.view.nodeStyleOrNull
 import com.android.designcompose.definition.view.scrollInfoOrNull
 import com.android.designcompose.definition.view.shapeOrNull
 import com.android.designcompose.definition.view.styledTextRun
@@ -96,6 +101,12 @@ internal fun View.hasScrolling(): Boolean {
         OverflowDirection.OVERFLOW_DIRECTION_VERTICAL_SCROLLING -> true
         OverflowDirection.OVERFLOW_DIRECTION_HORIZONTAL_AND_VERTICAL_SCROLLING -> true
         else -> false
+    }
+}
+
+internal fun ViewStyle.getProgressBarData(): ProgressBarMeterData? {
+    return with(nodeStyleOrNull?.meterDataOrNull?.progressBarDataOrNull) {
+        if (this?.enabled == true) this else null
     }
 }
 

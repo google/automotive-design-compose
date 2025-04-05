@@ -133,7 +133,7 @@ class ComponentOverrides {
     fun testComponent_overrideTextProperty() {
         with(composeTestRule) {
             with(onDCDocAnyNode(ComponentOverridesTestDoc)) {
-                onNodeWithTag("#button").performTouchInput { down(center) }
+                onNodeWithTag("#ok_button").performTouchInput { down(center) }
                 captureRootRoboImage("button_overrideTextProperty")
             }
         }

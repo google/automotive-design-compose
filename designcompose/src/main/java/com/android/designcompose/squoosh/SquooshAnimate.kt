@@ -606,6 +606,7 @@ private fun SquooshResolvedNode.cloneSelf(parent: SquooshResolvedNode?): Squoosh
         layoutId = this.layoutId,
         textInfo = this.textInfo,
         unresolvedNodeId = this.unresolvedNodeId,
+        overrideViewData = this.overrideViewData,
         layoutNode = this,
         parent = parent,
         computedLayout = this.computedLayout,

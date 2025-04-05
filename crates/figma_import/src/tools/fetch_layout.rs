@@ -23,8 +23,7 @@ use dc_bundle::design_compose_definition::{
 use dc_bundle::geometry::dimension_proto::Dimension;
 use dc_bundle::geometry::DimensionProto;
 use dc_bundle::positioning::LayoutSizing;
-use dc_bundle::view::view_data::View_data_type;
-use dc_bundle::view::{view_data, View};
+use dc_bundle::view::View;
 use dc_layout::LayoutManager;
 use std::collections::HashMap;
 use std::io;
@@ -134,8 +133,7 @@ fn test_layout(
     println!("test_layout {}, {}, {}, {}", view.name, id, parent_layout_id, child_index);
     let my_id: i32 = id.clone();
     *id = *id + 1;
-    let data: &View_data_type = view.data.as_ref().unwrap().view_data_type.as_ref().unwrap();
-    if let View_data_type::Text { .. } = data {
+    if view.data.has_text() {
         let mut use_measure_func = false;
         if let Dimension::Auto(_) =
             view.style().layout_style().width.clone().unwrap().Dimension.unwrap()
@@ -184,9 +182,7 @@ fn test_layout(
                 )
                 .expect("Failed to add style");
         }
-    } else if let View_data_type::Container { 0: view_data::Container { shape: _, children, .. } } =
-        data
-    {
+    } else if view.data.has_container() {
         if view.name.starts_with("#Replacement") {
             let square = views.get(&NodeQuery::NodeName("#BlueSquare".to_string()));
             if let Some(square) = square {
@@ -218,6 +214,7 @@ fn test_layout(
                 .expect("Failed to add style");
         }
         let mut index = 0;
+        let children = &view.data.container().children;
         for child in children {
             test_layout(layout_manager, child, id, my_id, index, views);
             index = index + 1;

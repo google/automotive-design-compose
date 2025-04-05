@@ -1778,7 +1778,9 @@ fn visit_node(
                                 discrete: data.discrete,
                                 discrete_value: data.discrete_value,
                                 vertical: data.vertical,
+                                start_x: data.start_x,
                                 end_x: data.end_x,
+                                start_y: data.start_y,
                                 end_y: data.end_y,
                                 ..Default::default()
                             })

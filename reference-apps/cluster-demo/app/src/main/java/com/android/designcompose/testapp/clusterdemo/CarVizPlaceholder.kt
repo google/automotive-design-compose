@@ -23,18 +23,21 @@ import android.graphics.PixelFormat
 import android.view.Choreographer
 import android.view.SurfaceView
 import android.view.View
+import androidx.compose.animation.core.AnimationVector3D
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.TwoWayConverter
+import androidx.compose.animation.core.animateValue
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.google.android.filament.gltfio.FilamentAsset
-import com.google.android.filament.utils.KTX1Loader
-import com.google.android.filament.utils.Utils
+import com.google.android.filament.utils.*
 import java.nio.ByteBuffer
 import kotlin.math.sin
 
@@ -61,10 +64,7 @@ internal class FilamentModelView(context: Context) : SurfaceView(context), Lifec
     var firstFrameNanos: Long = -1
     val choreographer = Choreographer.getInstance()
     val modelViewer = CarVizViewer(this)
-    val cameraAnimator: CameraAnimator
     var otherCar: FilamentAsset? = null
-    var egoCar: FilamentAsset? = null
-
     private val frameCallback: Choreographer.FrameCallback =
         object : Choreographer.FrameCallback {
             override fun doFrame(frameTimeNanos: Long) {
@@ -73,7 +73,6 @@ internal class FilamentModelView(context: Context) : SurfaceView(context), Lifec
                 }
                 val deltaNanos = frameTimeNanos - firstFrameNanos
                 val deltaSeconds = deltaNanos / 1000000000f
-
                 val otherCar = otherCar
                 if (otherCar != null) {
                     modelViewer.positionAsset(
@@ -84,25 +83,6 @@ internal class FilamentModelView(context: Context) : SurfaceView(context), Lifec
                         (sin(deltaSeconds) + 1.0f) * 1.5f + 3.0f,
                     )
                 }
-
-                val egoCar = egoCar
-                if (egoCar != null) {
-                    val animCount = egoCar.instance.animator.animationCount
-                    for (i in 0..<animCount) {
-
-                        val duration = egoCar.instance.animator.getAnimationDuration(i)
-                        val progress = deltaSeconds % (duration * 2.0f)
-                        egoCar.instance.animator.applyAnimation(
-                            i,
-                            if (progress < duration) {
-                                progress
-                            } else {
-                                duration - (progress - duration)
-                            },
-                        )
-                    }
-                }
-
                 choreographer.postFrameCallback(this)
                 modelViewer.render(frameTimeNanos)
             }
@@ -110,33 +90,21 @@ internal class FilamentModelView(context: Context) : SurfaceView(context), Lifec
 
     init {
         setOnTouchListener(modelViewer)
-
         // This is wrong -- I want the SurfaceView underneath, but I can't figure out how to
         // make it clear to white if I make it opaque. The other alternative is to use a
         // TextureView, but then I see some new performance issues.
         setZOrderOnTop(true)
         setBackgroundColor(Color.TRANSPARENT)
         holder.setFormat(PixelFormat.TRANSLUCENT)
-
         modelViewer.view.blendMode = com.google.android.filament.View.BlendMode.TRANSLUCENT
         modelViewer.scene.skybox = null
-
         val clearOptions = modelViewer.renderer.clearOptions
         clearOptions.clear = true
         modelViewer.renderer.clearOptions = clearOptions
-
         val egoModel = context.assets.readToByteBuffer("carviz/google_car.glb")
-        egoCar = modelViewer.loadEgoCarGlb(egoModel)
-
-        val egoCar = egoCar
-        if (egoCar != null && false) {
-            val duration = egoCar.instance.animator.getAnimationDuration(2)
-            val progress = 2.0f % duration
-            egoCar.instance.animator.applyAnimation(2, progress)
-        }
-
-        modelViewer.positionAsset(egoCar, 2.2f, 0.0f, 0.0f, 0.0f)
-
+        val egoAsset = modelViewer.loadEgoCarGlb(egoModel)
+        modelViewer.positionAsset(egoAsset, 2.2f, 0.0f, 0.0f, 0.0f)
+        otherCar = modelViewer.loadGlb(context.assets.readToByteBuffer("carviz/generic-car.glb"))
         modelViewer.lookAt(
             // eyePosition
             0.0,
@@ -151,12 +119,6 @@ internal class FilamentModelView(context: Context) : SurfaceView(context), Lifec
             1.0,
             0.0,
         )
-
-        cameraAnimator = CameraAnimator(egoCar!!, modelViewer.camera)
-        modelViewer.cameraAnimator = cameraAnimator
-
-        otherCar = modelViewer.loadGlb(context.assets.readToByteBuffer("carviz/generic-car.glb"))
-
         val lighting = context.assets.readToByteBuffer("carviz/default_env_ibl.ktx")
         KTX1Loader.createIndirectLight(modelViewer.engine, lighting).apply {
             intensity = 50_000f
@@ -175,14 +137,47 @@ internal class FilamentModelView(context: Context) : SurfaceView(context), Lifec
     }
 }
 
+private val Float3VectorConverter: TwoWayConverter<Float3, AnimationVector3D> =
+    TwoWayConverter(
+        convertToVector = { AnimationVector3D(it.x, it.y, it.z) },
+        convertFromVector = { Float3(it.v1, it.v2, it.v3) },
+    )
+
 // Need drive rail state, too, not just gear. Parked with drive rail off is different from
 // parked with drive rail on.
 @Composable
-fun CarVizPlaceholder(modifier: Modifier, shiftState: ShiftState, widthScale: Float) {
+fun CarVizPlaceholder(shiftState: ShiftState) {
     val lifecycleOwner = LocalLifecycleOwner.current
-
+    val transitionShiftState =
+        updateTransition(targetState = shiftState, label = "CarViz Shift State")
+    // Need to get this stuff into a plugin.
+    val cameraEye by
+        transitionShiftState.animateValue(
+            typeConverter = Float3VectorConverter,
+            label = "CarViz Eye Position",
+            transitionSpec = { tween(durationMillis = 4000, easing = EaseInOutSine) },
+        ) { targetShiftState ->
+            when (targetShiftState) {
+                ShiftState.P -> Float3(1.52f, 0.34f, 4.87f)
+                ShiftState.R -> Float3(0.0f, 5.0f, 0.0f)
+                ShiftState.N -> Float3(0.0f, 3.0f, 2.36f)
+                ShiftState.D -> Float3(0.0f, 0.5f, 0.0f)
+            }
+        }
+    val cameraTarget by
+        transitionShiftState.animateValue(
+            typeConverter = Float3VectorConverter,
+            label = "CarViz Camera Target",
+            transitionSpec = { tween(durationMillis = 4000, easing = EaseInOutSine) },
+        ) { targetShiftState ->
+            when (targetShiftState) {
+                ShiftState.P -> Float3(-2.25f, -0.94f, 0.0f)
+                ShiftState.R -> Float3(0.0f, -1.56f, 3.0f)
+                ShiftState.N -> Float3(0.0f, -1.56f, 3.0f)
+                ShiftState.D -> Float3(0.0f, -0.5f, 5.0f)
+            }
+        }
     AndroidView(
-        modifier = modifier.onGloballyPositioned {},
         factory = { context ->
             val filamentModelView = FilamentModelView(context)
             lifecycleOwner.lifecycle.addObserver(filamentModelView)
@@ -191,6 +186,18 @@ fun CarVizPlaceholder(modifier: Modifier, shiftState: ShiftState, widthScale: Fl
         onRelease = { filamentModelView ->
             lifecycleOwner.lifecycle.removeObserver(filamentModelView)
         },
-        update = { filamentModelView -> filamentModelView.cameraAnimator.setShiftState(shiftState) },
+        update = { filamentModelView ->
+            filamentModelView.modelViewer.lookAt(
+                cameraEye.x.toDouble(),
+                cameraEye.y.toDouble(),
+                cameraEye.z.toDouble(),
+                cameraTarget.x.toDouble(),
+                cameraTarget.y.toDouble(),
+                cameraTarget.z.toDouble(),
+                0.0,
+                1.0,
+                0.0,
+            )
+        },
     )
 }

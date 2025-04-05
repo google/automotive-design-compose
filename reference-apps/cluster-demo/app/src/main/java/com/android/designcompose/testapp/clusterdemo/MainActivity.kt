@@ -758,13 +758,7 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
                             parkBrake = parkBrake,
                             telltaleLeftBlinker = lightsSideLights,
                             telltaleRightBlinker = lightsSideLights,
-                            carviz = {
-                                CarVizPlaceholder(
-                                    modifier = Modifier.fillMaxSize(),
-                                    shiftState = shiftState.value,
-                                    widthScale = 1.0f,
-                                )
-                            },
+                            carviz = { CarVizPlaceholder(shiftState = shiftState.value) },
                             showFakeAdas = false,
                             designComposeCallbacks =
                                 DesignComposeCallbacks(

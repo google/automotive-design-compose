@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.designcompose.testapp.clusterdemo
 
 import android.view.MotionEvent
@@ -54,7 +53,6 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
         get() = resourceLoader.asyncGetLoadProgress()
 
     var normalizeSkinningWeights = true
-
     var cameraFocalLength = 45f
         set(value) {
             field = value
@@ -73,34 +71,23 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
             updateCameraProjection()
         }
 
-    var cameraAnimator: CameraAnimator? = null
-        set(value) {
-            field = value
-            updateCameraProjection()
-        }
-
     val scene: Scene
     val view: View
     val camera: Camera
     val renderer: Renderer
     @Entity val light: Int
-
     private lateinit var displayHelper: DisplayHelper
     private lateinit var cameraManipulator: Manipulator
     private lateinit var gestureDetector: GestureDetector
     private var surfaceView: SurfaceView? = null
     private var textureView: TextureView? = null
-
     private var fetchResourcesJob: Job? = null
-
     private var swapChain: SwapChain? = null
     private var assetLoader: AssetLoader
     private var materialProvider: MaterialProvider
     private var resourceLoader: ResourceLoader
     private val readyRenderables = IntArray(128) // add up to 128 entities at a time
-
     private val otherAssets: ArrayList<FilamentAsset> = arrayListOf()
-
     private val eyePos = DoubleArray(3)
     private val target = DoubleArray(3)
     private val upward = DoubleArray(3)
@@ -115,16 +102,12 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
         view = engine.createView()
         view.scene = scene
         view.camera = camera
-
         materialProvider = UbershaderProvider(engine)
         assetLoader = AssetLoader(engine, materialProvider, EntityManager.get())
         resourceLoader = ResourceLoader(engine, normalizeSkinningWeights)
-
         // Always add a direct light source since it is required for shadowing.
         // We highly recommend adding an indirect light as well.
-
         light = EntityManager.get().create()
-
         val (r, g, b) = Colors.cct(6_500.0f)
         LightManager.Builder(LightManager.Type.DIRECTIONAL)
             .color(r, g, b)
@@ -132,9 +115,7 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
             .direction(0.0f, -1.0f, 0.0f)
             .castShadows(true)
             .build(engine, light)
-
         scene.addEntity(light)
-
         eyePos[0] = 0.0
         eyePos[1] = 5.0
         eyePos[2] = 2.5
@@ -162,7 +143,6 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
                     )
                     .viewport(surfaceView.width, surfaceView.height)
                     .build(Manipulator.Mode.ORBIT)
-
         this.surfaceView = surfaceView
         gestureDetector = GestureDetector(surfaceView, cameraManipulator)
         displayHelper = DisplayHelper(surfaceView.context)
@@ -188,7 +168,6 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
                     )
                     .viewport(textureView.width, textureView.height)
                     .build(Manipulator.Mode.ORBIT)
-
         this.textureView = textureView
         gestureDetector = GestureDetector(textureView, cameraManipulator)
         displayHelper = DisplayHelper(textureView.context)
@@ -232,7 +211,6 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
         val tm = engine.transformManager
         val modelHalfExtent = asset.boundingBox.halfExtent
         val modelCenter = asset.boundingBox.center
-
         val modelWidth = modelHalfExtent[0] * 2.0f
         val centerX = modelCenter[0]
         val translation =
@@ -242,13 +220,11 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
                 2.0f * (modelCenter[2] + modelHalfExtent[2]),
             )
         val scale = desiredWidth / modelWidth
-
         val transform =
             translation(Float3(lateralOffset, groundOffset, longitudinalOffset)) *
                 scale(Float3(scale)) *
                 translation(translation) *
                 rotation(Float3(0.0f, 1.0f, 0.0f), 0.0f)
-
         tm.setTransform(tm.getInstance(asset.root), transpose(transform).toFloatArray())
     }
 
@@ -302,36 +278,27 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
         if (!uiHelper.isReadyToRender) {
             return
         }
-
         // Allow the resource loader to finalize textures that have become ready.
         resourceLoader.asyncUpdateLoad()
-
         // Add renderable entities to the scene as they become ready.
         egoCarAsset?.let { populateScene(it) }
         for (otherAsset in otherAssets) {
             populateScene(otherAsset)
         }
-
-        val camAnimator = cameraAnimator
-        if (camAnimator != null) {
-            camera.setModelMatrix(camAnimator.getModelView(frameTimeNanos).toFloatArray())
-        } else {
-            camera.lookAt(
-                // eyePosition
-                eyePos[0],
-                eyePos[1],
-                eyePos[2],
-                // eyeTarget
-                target[0],
-                target[1],
-                target[2],
-                // camera up
-                upward[0],
-                upward[1],
-                upward[2],
-            )
-        }
-
+        camera.lookAt(
+            // eyePosition
+            eyePos[0],
+            eyePos[1],
+            eyePos[2],
+            // eyeTarget
+            target[0],
+            target[1],
+            target[2],
+            // camera up
+            upward[0],
+            upward[1],
+            upward[2],
+        )
         // Render the scene, unless the renderer wants to skip the frame.
         if (renderer.beginFrame(swapChain!!, frameTimeNanos)) {
             renderer.render(view)
@@ -374,22 +341,18 @@ class CarVizViewer(val engine: Engine, private val uiHelper: UiHelper) :
 
                 override fun onViewDetachedFromWindow(v: android.view.View) {
                     uiHelper.detach()
-
                     destroyModel()
                     assetLoader.destroy()
                     materialProvider.destroyMaterials()
                     materialProvider.destroy()
                     resourceLoader.destroy()
-
                     engine.destroyEntity(light)
                     engine.destroyRenderer(renderer)
                     engine.destroyView(this@CarVizViewer.view)
                     engine.destroyScene(scene)
                     engine.destroyCameraComponent(camera.entity)
                     EntityManager.get().destroy(camera.entity)
-
                     EntityManager.get().destroy(light)
-
                     engine.destroy()
                 }
             }

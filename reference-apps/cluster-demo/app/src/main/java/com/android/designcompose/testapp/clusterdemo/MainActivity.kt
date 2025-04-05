@@ -311,7 +311,7 @@ class MainActivity : ComponentActivity() {
 // Shiny V2 cJKbU0Kl8tBuU1bkIemt2I
 // Circular 4C3C3GlbQfJk1acq8YjoJe
 // Responsive Ac6itRStVMTTnJBuNsiDv7
-@DesignDoc(id = "od2Xm016aH1SvThcqFp0hE", designFeatures = ["shader"])
+@DesignDoc(id = "Ac6itRStVMTTnJBuNsiDv7", designFeatures = ["shader"])
 interface Cluster {
     @DesignComponent(node = "#HAR-stage")
     fun HarMain(
@@ -377,6 +377,8 @@ interface Cluster {
         @Design(node = "#telltale/park") parkBrake: Boolean,
         @Design(node = "#telltale/left-blinker") telltaleLeftBlinker: Boolean,
         @Design(node = "#telltale/right-blinker") telltaleRightBlinker: Boolean,
+        @Design(node = "#carviz") carviz: @Composable (ComponentReplacementContext) -> Unit,
+        @Design(node = "#FakeAdas") showFakeAdas: Boolean,
     )
 
     @DesignComponent(node = "#android-stage")
@@ -623,6 +625,13 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
         exoPlayer
     }
 
+    val eyeX = remember { mutableStateOf(0.0) }
+    val eyeY = remember { mutableStateOf(0.0) }
+    val eyeZ = remember { mutableStateOf(0.0) }
+    val targetX = remember { mutableStateOf(0.0) }
+    val targetY = remember { mutableStateOf(0.0) }
+    val targetZ = remember { mutableStateOf(0.0) }
+
     val theme = remember { mutableStateOf(Theme.Main) }
     val mode = remember { mutableStateOf(LightDarkMode.Default) }
     val themeName = theme.value?.themeName
@@ -631,7 +640,7 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
             hashMapOf(themeName to mode.value.name)
         else null
 
-    val docId = remember { mutableStateOf("od2Xm016aH1SvThcqFp0hE") }
+    val docId = remember { mutableStateOf("Ac6itRStVMTTnJBuNsiDv7") }
     CompositionLocalProvider(
         LocalDesignDocSettings provides
             DesignDocSettings(
@@ -749,6 +758,14 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
                             parkBrake = parkBrake,
                             telltaleLeftBlinker = lightsSideLights,
                             telltaleRightBlinker = lightsSideLights,
+                            carviz = {
+                                CarVizPlaceholder(
+                                    modifier = Modifier.fillMaxSize(),
+                                    shiftState = shiftState.value,
+                                    widthScale = 1.0f,
+                                )
+                            },
+                            showFakeAdas = false,
                             designComposeCallbacks =
                                 DesignComposeCallbacks(
                                     docReadyCallback = { docId ->
@@ -976,6 +993,62 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
                 layoutWidthMax,
                 layoutWidthMin,
             )
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SliderControl(
+                "Eye X: ${eyeX.value}",
+                eyeX.value.toFloat(),
+                onValueChange = { eyeX.value = it.toDouble() },
+                5.0f,
+                -5.0f,
+            )
+            SliderControl(
+                "Y: ${eyeY.value}",
+                eyeY.value.toFloat(),
+                onValueChange = { eyeY.value = it.toDouble() },
+                5.0f,
+                -5.0f,
+            )
+            SliderControl(
+                "Z: ${eyeZ.value}",
+                eyeZ.value.toFloat(),
+                onValueChange = { eyeZ.value = it.toDouble() },
+                5.0f,
+                -5.0f,
+            )
+            SliderControl(
+                "Target X: ${targetX.value}",
+                targetX.value.toFloat(),
+                onValueChange = { targetX.value = it.toDouble() },
+                5.0f,
+                -5.0f,
+            )
+            SliderControl(
+                "Y: ${targetY.value}",
+                targetY.value.toFloat(),
+                onValueChange = { targetY.value = it.toDouble() },
+                5.0f,
+                -5.0f,
+            )
+            SliderControl(
+                "Z: ${targetZ.value}",
+                targetZ.value.toFloat(),
+                onValueChange = { targetZ.value = it.toDouble() },
+                5.0f,
+                -5.0f,
+            )
+            Button(
+                onClick = {
+                    eyeX.value = 0.0
+                    eyeY.value = 0.0
+                    eyeZ.value = 0.0
+                    targetX.value = 0.0
+                    targetY.value = 0.0
+                    targetZ.value = 0.0
+                }
+            ) {
+                Text("Reset")
+            }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(Modifier.background(Color.LightGray)) {

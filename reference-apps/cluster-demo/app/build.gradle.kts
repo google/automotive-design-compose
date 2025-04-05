@@ -94,4 +94,9 @@ dependencies {
     testImplementation(libs.roborazzi.junit)
     testImplementation(libs.androidx.test.espresso.core)
     testImplementation(libs.androidx.compose.ui.test.junit4)
+
+    // Filament -- what's the correct way to do this?
+    implementation(libs.filament.android)
+    implementation(libs.filament.gltfio.android)
+    implementation(libs.filament.utils.android)
 }

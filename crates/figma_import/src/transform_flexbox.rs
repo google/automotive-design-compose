@@ -51,6 +51,7 @@ use dc_bundle::meter_data::{
     meter_data::Meter_data_type, ArcMeterData, MeterData, ProgressBarMeterData,
     ProgressMarkerMeterData, ProgressVectorMeterData, RotationMeterData,
 };
+use dc_bundle::node_style::Display;
 use dc_bundle::path::{stroke_weight, StrokeAlign, StrokeWeight};
 use dc_bundle::positioning::{
     item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, ItemSpacing,
@@ -60,11 +61,12 @@ use dc_bundle::reaction::Reaction;
 use dc_bundle::shadow::{BoxShadow, TextShadow};
 use dc_bundle::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::view_shape::view_shape::RoundRect;
-
 use log::error;
 
+use crate::scalableui_schema::ScalableUiDataJson;
 use crate::shader_schema::ShaderDataJson;
 use dc_bundle::path::line_height::Line_height_type;
+use dc_bundle::scalable::scalable_uidata;
 use dc_bundle::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::view::view::RenderMethod;
 use dc_bundle::view::{ComponentInfo, View};
@@ -109,6 +111,8 @@ fn compute_layout(
     parent: Option<&figma_schema::Node>,
 ) -> Result<ViewStyle, Error> {
     let mut style = ViewStyle::new_default();
+    style.node_style_mut().display_type =
+        if node.visible { Display::DISPLAY_FLEX.into() } else { Display::DISPLAY_NONE.into() };
 
     // Determine if the parent is using Auto Layout (and thus is a Flexbox parent) or if it isn't.
     let parent_frame = parent.and_then(|p| p.frame());
@@ -910,6 +914,7 @@ fn visit_node(
     component_context: &mut ComponentContext,
     images: &mut ImageContext,
     parent_plugin_data: Option<&HashMap<String, String>>,
+    skip_hidden: bool,
 ) -> Result<View, Error> {
     // See if we have any plugin data. If we have plugin data passed in, it came from a parent
     // widget, so use it. Otherwise look for it in the shared plugin data.
@@ -1055,6 +1060,34 @@ fn visit_node(
             None
         }
     };
+
+    style.node_style_mut().scalable_data = plugin_data
+        .and_then(|vsw_data| vsw_data.get("scalableui"))
+        .and_then(|scalable_json| {
+            let parse_result = serde_json::from_str::<ScalableUiDataJson>(scalable_json.as_str());
+            if parse_result.is_err() {
+                println!("Error prasing scalable ui data: node {} json {}: -> {:?}", node.name, scalable_json, parse_result);
+            }
+            parse_result.ok()
+        })
+        .and_then(|x| Some(x.into()))
+        .into();
+
+    if let Some(scalable_data) = &mut style.node_style_mut().scalable_data.as_mut() {
+        if let Some(data) = &mut scalable_data.data {
+            match data {
+                scalable_uidata::Data::Set(set) => {
+                    // Add component ids of the children of a component set
+                    if node.vector().is_none() {
+                        for child in node.children.iter() {
+                            set.variant_ids.push(child.id.clone());
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
 
     // We have shader that can be used to draw the background.
     style.node_style_mut().shader_data = plugin_data
@@ -1934,7 +1967,7 @@ fn visit_node(
     // of their children).
     if node.vector().is_none() {
         for child in node.children.iter() {
-            if child.visible {
+            if child.visible || !skip_hidden {
                 view.add_child(visit_node(
                     child,
                     Some(node),
@@ -1943,6 +1976,7 @@ fn visit_node(
                     component_context,
                     images,
                     child_plugin_data,
+                    skip_hidden,
                 )?);
             }
         }
@@ -1964,6 +1998,7 @@ pub fn create_component_flexbox(
     component_set_map: &HashMap<String, figma_schema::ComponentSet>,
     component_context: &mut ComponentContext,
     image_context: &mut ImageContext,
+    skip_hidden: bool,
 ) -> core::result::Result<View, Error> {
     visit_node(
         component,
@@ -1973,6 +2008,7 @@ pub fn create_component_flexbox(
         component_context,
         image_context,
         None,
+        skip_hidden,
     )
 }
 

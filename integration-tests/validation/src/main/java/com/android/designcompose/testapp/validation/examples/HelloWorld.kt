@@ -26,9 +26,9 @@ import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.testapp.validation.R
 
 // TEST Basic Hello World example
-@DesignDoc(id = "pxVlixodJqZL95zo2RzTHl")
+@DesignDoc(id = "1OqNt1MCCc4E8KXS0OVcxS")
 interface HelloWorld {
-    @DesignComponent(node = "#MainFrame") fun Main(@Design(node = "#Name") name: String)
+    @DesignComponent(node = "#stage-test") fun Main(@Design(node = "#Name") name: String)
 }
 
 @Composable

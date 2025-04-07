@@ -21,7 +21,7 @@ plugins {
     alias(libs.plugins.designcompose)
 }
 
-java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(21)) } }
 
 var applicationID = "com.android.designcompose.testapp.helloworld"
 
@@ -43,8 +43,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     buildTypes {
@@ -76,11 +76,15 @@ dependencies {
     implementation(libs.designcompose)
     ksp(libs.designcompose.codegen)
 
+    //implementation(files("car-scalable-ui-lib.jar"))
+    implementation(fileTree("src/main/libs") { include("*.jar") })
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.material)
+    implementation(libs.protobuf.kotlin.lite)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

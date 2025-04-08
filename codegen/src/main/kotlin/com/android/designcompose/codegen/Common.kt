@@ -184,12 +184,14 @@ internal fun KSTypeReference.typeString(): String {
 internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
     return when (strType) {
         "String" -> CustomizationType.Text
+        "String?" -> CustomizationType.Text
         "State<String>" -> CustomizationType.TextState
         "Brush" -> CustomizationType.Brush
         "() -> Brush" -> CustomizationType.BrushFunction
         "Bitmap?" -> CustomizationType.Image
         "Modifier" -> CustomizationType.Modifier
         "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
+        "com.android.designcompose.TapCallback?" -> CustomizationType.TapCallback
         "com.android.designcompose.ReplacementContent" -> CustomizationType.ContentReplacement
         "@Composable (ComponentReplacementContext) -> Unit" ->
             CustomizationType.ComponentReplacement

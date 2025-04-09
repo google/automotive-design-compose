@@ -119,7 +119,7 @@ pub struct Document {
     document_root: figma_schema::FileResponse,
     variables_response: Option<figma_schema::VariablesResponse>,
     image_context: ImageContext,
-    variant_nodes: Vec<figma_schema::Node>,
+    variant_nodes: HashMap<String, figma_schema::Node>,
     component_sets: HashMap<String, String>,
     pub branches: Vec<FigmaDocInfo>,
 }
@@ -178,7 +178,7 @@ impl Document {
             document_root,
             variables_response,
             image_context,
-            variant_nodes: vec![],
+            variant_nodes: HashMap::new(),
             component_sets: HashMap::new(),
             branches,
         })
@@ -289,12 +289,13 @@ impl Document {
         &self,
         node: &figma_schema::Node,
         node_doc_hash: &mut HashMap<String, String>,
-        variant_nodes: &mut Vec<figma_schema::Node>,
+        variant_nodes: &mut HashMap<String, figma_schema::Node>,
         id_index: &HashMap<String, &figma_schema::Node>,
         component_hash: &HashMap<String, figma_schema::Component>,
         parent_tree: &mut Vec<String>,
         error_list: &mut Vec<String>,
         error_hash: &mut HashSet<String>,
+        completed_hash: &mut HashSet<String>,
     ) -> Result<(), Error> {
         // Ignore hidden nodes
         if !node.visible {
@@ -326,13 +327,20 @@ impl Document {
                     if error_hash.contains(&file_key) {
                         return Ok(());
                     }
+                    // If we already completed this node, skip
+                    if completed_hash.contains(&file_key) {
+                        return Ok(());
+                    }
                     let component_url = format!("{}{}", BASE_COMPONENT_URL, file_key);
                     let component_http_response = match http_fetch(
                         self.api_key.as_str(),
                         component_url.clone(),
                         &self.proxy_config,
                     ) {
-                        Ok(str) => str,
+                        Ok(str) => {
+                            completed_hash.insert(file_key);
+                            str
+                        }
                         Err(e) => {
                             let fetch_error = if let Error::NetworkError(ureq_error) = &e {
                                 if let ureq::Error::Status(code, _response) = ureq_error {
@@ -400,10 +408,11 @@ impl Document {
                                                 parent_tree,
                                                 error_list,
                                                 error_hash,
+                                                completed_hash,
                                             )?;
                                             parent_tree.pop();
                                         }
-                                        variant_nodes.push(node);
+                                        variant_nodes.insert(node.id.clone(), node);
                                     }
                                 }
                             }
@@ -432,6 +441,7 @@ impl Document {
                 parent_tree,
                 error_list,
                 error_hash,
+                completed_hash,
             )?;
             parent_tree.pop();
         }
@@ -826,9 +836,10 @@ impl Document {
         // doc_nodes is a hash that that hashes document_id -> list of node IDs from that
         // document that we need, so that we can retrieve images from the correct document
         let mut node_doc_hash: HashMap<String, String> = HashMap::new();
-        let mut variant_nodes: Vec<figma_schema::Node> = vec![];
+        let mut variant_nodes: HashMap<String, figma_schema::Node> = HashMap::new();
         let mut parent_tree: Vec<String> = vec![];
         let mut error_hash: HashSet<String> = HashSet::new();
+        let mut completed_hash: HashSet<String> = HashSet::new();
         self.fetch_component_variants(
             &self.document_root.document,
             &mut node_doc_hash,
@@ -838,11 +849,12 @@ impl Document {
             &mut parent_tree,
             error_list,
             &mut error_hash,
+            &mut completed_hash,
         )?;
         self.variant_nodes = variant_nodes;
 
         // Index the variant nodes that we pulled from other documents
-        for node in &self.variant_nodes {
+        for (_, node) in &self.variant_nodes {
             index_node(
                 node,
                 None, // TODO this is untested -- we may need to get the parent of node and pass it in here

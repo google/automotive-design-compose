@@ -51,6 +51,7 @@ pub enum ExportFormat {
     Jpg,
     Png,
     Svg,
+    Pdf,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

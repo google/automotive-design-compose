@@ -52,6 +52,8 @@ message ProgressBarMeterData {
   bool vertical = 4;
   float end_x = 5;
   float end_y = 6;
+  float start_x = 7;
+  float start_y = 8;
 }
 
 // Represents data for a progress marker meter, including whether it's enabled,

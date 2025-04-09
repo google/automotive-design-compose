@@ -18,6 +18,7 @@ package com.android.designcompose.testapp.validation.examples
 
 import androidx.compose.runtime.Composable
 import com.android.designcompose.ComponentReplacementContext
+import com.android.designcompose.Meter
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -61,6 +62,12 @@ interface SmartAnimateTest {
     fun ShaderTest(@DesignVariant(property = "#ShaderTestState") state: TestState)
 
     @DesignComponent(node = "#OnPressAnimationStage") fun OnPressTest()
+
+    @DesignComponent(node = "#ProgressBarAnimationStage")
+    fun ProgressBarTest(
+        @Design(node = "#progress-bar") progress: Meter,
+        @Design(node = "#progress-indicator") progressIndicator: Meter,
+    )
 
     @DesignComponent(node = "#OneInstance") fun OneInstance()
 }

@@ -307,4 +307,34 @@ class AnimationMidpoints {
             captureRootRoboImage("VariantOnPress-anim4")
         }
     }
+
+    @Test
+    fun HProgressAnimation() {
+        with(composeTestRule) {
+            // Because we're testing animation, we will manually advance the animation clock.
+            mainClock.autoAdvance = false
+
+            setContent {
+                SmartAnimateTestDoc.ProgressBarTest(progress = 30f, progressIndicator = 30f)
+            }
+
+            onNodeWithTag("#HBar").performTouchInput { click(Offset.Zero) }
+            recordAnimation("HProgress")
+        }
+    }
+
+    @Test
+    fun VProgressAnimation() {
+        with(composeTestRule) {
+            // Because we're testing animation, we will manually advance the animation clock.
+            mainClock.autoAdvance = false
+
+            setContent {
+                SmartAnimateTestDoc.ProgressBarTest(progress = 80f, progressIndicator = 80f)
+            }
+
+            onNodeWithTag("#VBar").performTouchInput { click(Offset.Zero) }
+            recordAnimation("VProgress")
+        }
+    }
 }

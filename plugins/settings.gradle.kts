@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+// LINT.IfChange
 rootProject.name = "DesignCompose Plugins"
-
+// LINT.ThenChange(build-logic/src/main/kotlin/designcompose/conventions/publish/common.gradle.kts)
 pluginManagement {
     repositories {
         google {

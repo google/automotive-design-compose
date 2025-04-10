@@ -43,7 +43,10 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.9.0"
 }
 
+// LINT.IfChange
 rootProject.name = "DesignCompose"
+
+// LINT.ThenChange(build-logic/src/main/kotlin/designcompose/conventions/publish/common.gradle.kts)
 
 // Published modules
 include("designcompose")

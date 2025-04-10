@@ -16,15 +16,22 @@
 
 package com.android.designcompose.squoosh
 
+import androidx.compose.foundation.gestures.awaitDragOrCancellation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.Interaction
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -36,13 +43,16 @@ import com.android.designcompose.definition.interaction.Action
 import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.dispatch
 import com.android.designcompose.getKey
+import com.android.designcompose.getOnProgressChangedCallback
 import com.android.designcompose.getPressedReactionList
 import com.android.designcompose.getPressedTapCallback
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.removePressed
 import com.android.designcompose.setPressed
 import com.android.designcompose.undoDispatch
+import com.android.designcompose.utils.getProgressBarData
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 internal fun findTargetInstanceId(
     document: DocContent,
@@ -70,51 +80,168 @@ internal fun findTargetInstanceId(
     return null
 }
 
+internal fun Modifier.progressBarSlider(
+    node: SquooshResolvedNode,
+    interactionScope: CoroutineScope,
+    interactionSource: MutableInteractionSource,
+    customizations: CustomizationContext,
+): Modifier {
+    return this.pointerInput(interactionSource) {
+        fun onOffsetChange(offset: Offset) {
+            val progressBarNode = node.findProgressBarChild()
+            val progressMarkerNode = node.findProgressMarkerDescendant()
+            val progressBarMeterData = progressBarNode?.style?.getProgressBarData()
+            val progressBarName = progressBarNode?.view?.name
+            if (progressBarMeterData != null) {
+                if (progressBarMeterData.vertical) {
+                    val startY = progressBarMeterData.startY * density
+                    val progress = ((size.height - offset.y + startY / 2).coerceAtLeast(0f) / (size.height - startY) * 100f)
+                    customizations
+                        .getOnProgressChangedCallback(progressBarName!!)
+                        ?.onProgressChanged(progress)
+                    progressMarkerNode?.let {
+                        customizations
+                            .getOnProgressChangedCallback(it.view.name)
+                            ?.onProgressChanged(progress)
+                    }
+
+                } else {
+                    val startX = progressBarMeterData.startX * density
+                    val progress =
+                        ((offset.x - startX / 2).coerceAtLeast(0f) / (size.width - startX) * 100f)
+                            .coerceAtMost(100f)
+                    customizations
+                        .getOnProgressChangedCallback(progressBarName!!)
+                        ?.onProgressChanged(progress)
+                    progressMarkerNode?.let {
+                        customizations
+                            .getOnProgressChangedCallback(it.view.name)
+                            ?.onProgressChanged(progress)
+                    }
+                }
+            }
+        }
+
+        var offset: Offset
+        var interaction: Interaction? = null
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = true)
+            offset = down.position
+            interactionScope.launch {
+                interaction = PressInteraction.Press(down.position)
+                interactionSource.emit(interaction as PressInteraction.Press)
+            }
+            onOffsetChange(offset)
+            var change =
+                awaitTouchSlopOrCancellation(down.id) { change, overSlop ->
+                    val original = offset
+                    val summed = original + overSlop
+                    val newValue =
+                        Offset(
+                            x = summed.x.coerceIn(0f, size.width.toFloat()),
+                            y = summed.y.coerceIn(0f, size.height.toFloat()),
+                        )
+                    change.consume()
+                    offset = Offset(newValue.x, newValue.y)
+                    onOffsetChange(offset)
+
+                    interactionScope.launch {
+                        interaction = DragInteraction.Start()
+                        interactionSource.emit(interaction as DragInteraction.Start)
+                    }
+                }
+            while (change != null && change.pressed) {
+                change = awaitDragOrCancellation(change.id)
+                if (change != null && change.pressed) {
+                    val original = offset
+                    val summed = original + change.positionChange()
+                    val newValue =
+                        Offset(
+                            x = summed.x.coerceIn(0f, size.width.toFloat()),
+                            y = summed.y.coerceIn(0f, size.height.toFloat()),
+                        )
+                    change.consume()
+                    offset = Offset(newValue.x, newValue.y)
+                    onOffsetChange(offset)
+                }
+            }
+
+            if (change == null) {
+                if (interaction is PressInteraction.Press) {
+                    interactionScope.launch {
+                        interactionSource.emit(
+                            PressInteraction.Cancel(interaction as PressInteraction.Press)
+                        )
+                    }
+                } else if (interaction is DragInteraction.Start) {
+                    interactionScope.launch {
+                        interactionSource.emit(
+                            DragInteraction.Cancel(interaction as DragInteraction.Start)
+                        )
+                    }
+                }
+            } else {
+                if (interaction is PressInteraction.Press) {
+                    interactionScope.launch {
+                        interactionSource.emit(
+                            PressInteraction.Release(interaction as PressInteraction.Press)
+                        )
+                    }
+                } else if (interaction is DragInteraction.Start) {
+                    interactionScope.launch {
+                        interactionSource.emit(
+                            DragInteraction.Stop(interaction as DragInteraction.Start)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 internal fun Modifier.hyperlinkHandler(
     node: SquooshResolvedNode,
     uriHandler: UriHandler,
 ): Modifier {
-    return this.then(
-            Modifier.pointerInput(node.textInfo, node.computedLayout) {
-                if (node.textInfo == null) return@pointerInput
-                if (node.computedLayout == null) return@pointerInput
-                val paragraph =
-                    Paragraph(
-                        paragraphIntrinsics = node.textInfo.paragraph,
-                        width = node.computedLayout!!.width * density,
-                        maxLines = node.textInfo.maxLines,
-                        ellipsis =
-                            node.view.style.nodeStyle.textOverflow ==
-                                TextOverflow.TEXT_OVERFLOW_ELLIPSIS,
-                    )
-                detectTapGestures(
-                    onPress = {
-                        val offset = paragraph.getOffsetForPosition(Offset(it.x, it.y))
-                        val sortedMap = node.textInfo.hyperlinkOffsetMap
-                        val iterator = sortedMap.iterator()
-                        var lastKey = iterator.next().key
-                        var key: Int? = null
-                        while (iterator.hasNext()) {
-                            key = iterator.next().key
-                            if (offset in lastKey..<key && sortedMap[lastKey] != null) {
-                                val dispatchClickEvent = tryAwaitRelease()
-                                if (dispatchClickEvent) {
-                                    uriHandler.openUri(sortedMap[lastKey]!!)
-                                    return@detectTapGestures
-                                }
-                            }
-                            lastKey = key
-                        }
-                        if (key == null && sortedMap[lastKey] != null) {
+    return this.pointerInput(node.textInfo, node.computedLayout) {
+            if (node.textInfo == null) return@pointerInput
+            if (node.computedLayout == null) return@pointerInput
+            val paragraph =
+                Paragraph(
+                    paragraphIntrinsics = node.textInfo.paragraph,
+                    width = node.computedLayout!!.width * density,
+                    maxLines = node.textInfo.maxLines,
+                    ellipsis =
+                        node.view.style.nodeStyle.textOverflow ==
+                            TextOverflow.TEXT_OVERFLOW_ELLIPSIS,
+                )
+            detectTapGestures(
+                onPress = {
+                    val offset = paragraph.getOffsetForPosition(Offset(it.x, it.y))
+                    val sortedMap = node.textInfo.hyperlinkOffsetMap
+                    val iterator = sortedMap.iterator()
+                    var lastKey = iterator.next().key
+                    var key: Int? = null
+                    while (iterator.hasNext()) {
+                        key = iterator.next().key
+                        if (offset in lastKey..<key && sortedMap[lastKey] != null) {
                             val dispatchClickEvent = tryAwaitRelease()
                             if (dispatchClickEvent) {
                                 uriHandler.openUri(sortedMap[lastKey]!!)
+                                return@detectTapGestures
                             }
                         }
+                        lastKey = key
                     }
-                )
-            }
-        )
+                    if (key == null && sortedMap[lastKey] != null) {
+                        val dispatchClickEvent = tryAwaitRelease()
+                        if (dispatchClickEvent) {
+                            uriHandler.openUri(sortedMap[lastKey]!!)
+                        }
+                    }
+                }
+            )
+        }
         .semantics {
             this.contentDescription =
                 if (node.view.data.hasText()) node.view.data.text.content
@@ -134,6 +261,7 @@ internal fun Modifier.squooshInteraction(
     customizations: CustomizationContext,
     childComposable: SquooshChildComposable,
     isPressed: MutableState<Boolean>,
+    interactionSource: MutableInteractionSource,
 ): Modifier {
     val node = childComposable.node
     val reactions = node.view.reactionsList
@@ -148,6 +276,8 @@ internal fun Modifier.squooshInteraction(
                     val down = awaitFirstDown(true, PointerEventPass.Initial)
                     tapPosition = down.position
                 }
+
+                var pressInteraction: Interaction? = null
 
                 do {
                     val event = awaitPointerEvent()
@@ -178,6 +308,11 @@ internal fun Modifier.squooshInteraction(
                         // into the interaction state so that the new variant can access them
                         isPressed.value = true
                         interactionState.setPressed(node.unresolvedNodeId, reactions, tapCallback)
+                        interactionScope.launch {
+                            pressInteraction =
+                                PressInteraction.Press(tapPosition ?: change.position)
+                            interactionSource.emit(pressInteraction!!)
+                        }
                     } else if (change.pressed) {
                         // Drag event. If there's too much movement, abort the tap
                         if (
@@ -190,6 +325,15 @@ internal fun Modifier.squooshInteraction(
                             break
                         }
                     } else if (change.previousPressed) {
+                        interactionScope.launch {
+                            if (pressInteraction is PressInteraction.Press) {
+                                interactionSource.emit(
+                                    PressInteraction.Release(
+                                        pressInteraction as PressInteraction.Press
+                                    )
+                                )
+                            }
+                        }
                         // Touch release event.
                         // Get the list of reactions and if any are press events, undo them.
                         val unresolvedReactions =

@@ -26,6 +26,14 @@ group = "com.android.designcompose"
 // aren't available inside a pre-built plugin
 val libs = the<LibrariesForLibs>()
 
+// LINT.IfChange
+val dcRootProjName = "DesignCompose"
+// LINT.ThenChange(settings.gradle.kts)
+
+// LINT.IfChange
+val dcPluginsRootProjName = "DesignCompose Plugins"
+// LINT.ThenChange(plugins/settings.gradle.kts)
+
 version =
     (project.findProperty("designComposeReleaseVersion") ?: libs.versions.designcompose.get())
         .toString()
@@ -41,7 +49,7 @@ publishing {
         val DesignComposeMavenRepo: String? by project
 
         // Check if this project is an includedBuild (i.e., it has a parent project).
-        if (project.gradle.parent == null) {
+        if (rootProject.name == dcRootProjName) {
             // This block will execute if the current project is part of the root project (it has no
             // parent).
             // Configure a Maven repository named "localDir" for the root project.
@@ -59,7 +67,7 @@ publishing {
                             ?: rootProject.layout.buildDirectory.dir("build/designcompose_m2repo")
                     )
             }
-        } else {
+        } else if (rootProject.name == dcPluginsRootProjName && project.gradle.parent != null) {
             // It's an includedBuild, so place the repo inside the parent project's build dir
             val parent = project.gradle.parent!!
             // An included build is being configured before it's parent's settings has finished

@@ -1,0 +1,92 @@
+// Copyright 2025 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package designcompose.definition.element;
+
+option java_multiple_files = true;
+option java_package = "com.android.designcompose.definition.element";
+option optimize_for = LITE_RUNTIME;
+
+// An event that causes one or more variants to change
+message Event {
+  string event_name = 1;
+  string event_tokens = 2;
+  string from_variant_id = 3;
+  string from_variant_name = 4;
+  string to_variant_id = 5;
+  string to_variant_name = 6;
+}
+
+// A key frame that shows the given variant at the given frame
+message Keyframe {
+  int32 frame = 1;
+  string variant_name = 2;
+}
+
+// A key frame variant that blends two or more variants
+message KeyframeVariant {
+  string name = 1;
+  repeated Keyframe keyframes = 2;
+}
+
+// Data for the parent of a set of variants
+message ScalableUIComponentSet {
+  string id = 1;
+  string name = 2;
+  string role = 3;
+  string default_variant_id = 4;
+  string default_variant_name = 5;
+  repeated Event events = 6;
+  repeated KeyframeVariant keyframe_variants = 7;
+  repeated string variant_ids = 8;
+}
+
+// Represents a dimension in pixels or percentage
+message ScalableDimension {
+  oneof Dimension {
+    float points = 1;
+    float percent = 2;
+  }
+}
+
+// Bounds of a rectangle
+message Bounds {
+  ScalableDimension left = 1;
+  ScalableDimension top = 2;
+  ScalableDimension right = 3;
+  ScalableDimension bottom = 4;
+  ScalableDimension width = 5;
+  ScalableDimension height = 6;
+}
+
+// Data for a single variant of a component set
+message ScalableUiVariant {
+  string id = 1;
+  string name = 2;
+  bool is_default = 3;
+  bool is_visible = 4;
+  Bounds bounds = 5;
+  float alpha = 6;
+  int32 layer = 7;
+}
+
+// A generic data structure for scalable ui to represent a component set or variant
+message ScalableUIData {
+  oneof data {
+    ScalableUIComponentSet set = 1;
+    ScalableUiVariant variant = 2;
+  }
+}

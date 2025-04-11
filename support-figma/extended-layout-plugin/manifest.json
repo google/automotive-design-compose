@@ -6,6 +6,7 @@
   "ui": {
     "main": "dist/ui.html",
     "shader": "dist/shader.html",
+    "scalable": "dist/scalable.html",
     "cloudy_sky": "dist/data/shader/cloudy_sky.txt",
     "discrete_ocean": "dist/data/shader/discrete_ocean.txt",
     "fibonacci_sphere": "dist/data/shader/fibonacci_sphere.txt",
@@ -39,8 +40,9 @@
     {
       "name": "Clear All Shaders",
       "command": "shader-clear-all"
-    }
-
+    },
+    { "separator": true },
+    { "name": "ScalableUI", "command": "scalable" }
   ],
   "networkAccess": {
     "allowedDomains": [

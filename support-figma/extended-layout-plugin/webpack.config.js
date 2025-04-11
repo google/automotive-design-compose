@@ -82,6 +82,11 @@ module.exports = (env, argv) => ({
       filename: "shader.html",
       inject: false,
     }),
+    new HtmlWebpackPlugin({
+      template: "src/scalable.html",
+      filename: "scalable.html",
+      inject: false,
+    }),
     new CopyPlugin({
       patterns: [
         { from: "src/data/shader/", to: "data/shader/" }, // Copy to the dist folder

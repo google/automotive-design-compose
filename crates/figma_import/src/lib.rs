@@ -28,6 +28,7 @@ mod image_context;
 pub mod meter_schema;
 mod proxy_config;
 pub mod reaction_schema;
+pub mod scalableui_schema;
 pub mod shader_schema;
 
 pub mod tools;
@@ -39,6 +40,7 @@ pub use dc_bundle::design_compose_definition::DesignComposeDefinition;
 pub use dc_bundle::design_compose_definition::DesignComposeDefinitionHeader;
 pub use dc_bundle::geometry::Rectangle;
 pub use document::Document;
+pub use document::HiddenNodePolicy;
 pub use error::Error;
 pub use image_context::ImageContextSession;
 pub use proxy_config::ProxyConfig;

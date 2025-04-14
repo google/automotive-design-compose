@@ -19,7 +19,7 @@ package com.android.designcompose.squoosh
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
 import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.CustomizationContext
@@ -187,7 +187,7 @@ internal fun resolveVariantsRecursively(
     keyTracker: KeyEventTracker,
     parentComponents: ParentComponentData?,
     density: Density,
-    fontResourceLoader: Font.ResourceLoader,
+    fontResolver: FontFamily.Resolver,
     // XXX: This probably won't show up in any profile, but I used linked lists everywhere
     //      else to reduce the number of objects we make (especially since we run this code
     //      every recompose.
@@ -313,7 +313,7 @@ internal fun resolveVariantsRecursively(
             density,
             document,
             customizations,
-            fontResourceLoader,
+            fontResolver,
             variableState,
             appContext,
             textMeasureCache,
@@ -452,7 +452,7 @@ internal fun resolveVariantsRecursively(
                         keyTracker,
                         parentComps,
                         density,
-                        fontResourceLoader,
+                        fontResolver,
                         if (skipComposableList) null else composableList,
                         layoutIdAllocator,
                         "",

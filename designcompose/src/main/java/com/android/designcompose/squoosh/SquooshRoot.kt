@@ -55,7 +55,7 @@ import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFontLoader
+import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
@@ -307,7 +307,7 @@ fun SquooshRoot(
         }
 
     val density = LocalDensity.current
-    val fontLoader = LocalFontLoader.current
+    val fontResolver = LocalFontFamilyResolver.current
 
     val variantParentName =
         when (rootNodeQuery) {
@@ -370,7 +370,7 @@ fun SquooshRoot(
             keyEventTracker,
             null,
             density,
-            fontLoader,
+            fontResolver,
             composableList,
             layoutIdAllocator,
             variantParentName,
@@ -424,7 +424,7 @@ fun SquooshRoot(
                 keyEventTracker,
                 null,
                 density,
-                fontLoader,
+                fontResolver,
                 composableList,
                 layoutIdAllocator,
                 variantParentName,

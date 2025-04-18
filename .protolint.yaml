@@ -29,4 +29,6 @@ lint:
     field_names_exclude_prepositions:
       excludes:
         - by
+        - from
+        - to
 

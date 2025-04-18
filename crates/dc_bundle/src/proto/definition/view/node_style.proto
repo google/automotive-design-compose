@@ -20,6 +20,7 @@ import "definition/element/background.proto";
 import "definition/element/font.proto";
 import "definition/element/geometry.proto";
 import "definition/element/path.proto";
+import "definition/element/scalable.proto";
 import "definition/element/shader.proto";
 import "definition/element/variable.proto";
 import "definition/interaction/pointer.proto";
@@ -45,7 +46,7 @@ enum Display {
 
 // Contains all of the styleable parameters accepted by the Rect and Text
 // components.
-// Next id = 44
+// Next id = 45
 message NodeStyle {
   // Text properties
   element.Background text_color = 1;
@@ -80,7 +81,7 @@ message NodeStyle {
   repeated modifier.FilterOp filters = 21;
   repeated modifier.FilterOp backdrop_filters = 22;
   modifier.BlendMode blend_mode = 23;
-  
+
   // Layout properties
   Display display_type = 24;
   layout.FlexWrap flex_wrap = 25;
@@ -103,4 +104,6 @@ message NodeStyle {
   // Runtime shader from the shader plugin as background.
   // When shader is present, background will not be drawn.
   optional element.ShaderData shader_data = 43;
+
+  optional element.ScalableUIData scalable_data = 44;
 }

@@ -68,3 +68,7 @@ workflows. The following are some example workflows and use cases.
 1.  When creating new designs for additional brands and display configurations,
     designers can create new designs in Figma, using the `#keywords` already
     defined.
+
+## DesignCompose Architecture
+Below is an architectural diagram of DesignCompose. Click the image to access a PDF of the diagram with links to the code.
+[![Architecture Diagram](./DesignComposeArchitecture.png)](./DesignComposeArchitecture.pdf)

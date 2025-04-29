@@ -54,6 +54,7 @@ message ProgressBarMeterData {
   float end_y = 6;
   float start_x = 7;
   float start_y = 8;
+  bool draggable = 9;
 }
 
 // Represents data for a progress marker meter, including whether it's enabled,
@@ -68,6 +69,7 @@ message ProgressMarkerMeterData {
   float end_x = 6;
   float start_y = 7;
   float end_y = 8;
+  bool draggable = 9;
 }
 
 // Schema for progress vector data that we write to serialized data

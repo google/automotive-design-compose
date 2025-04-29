@@ -971,6 +971,7 @@ if (figma.command === "sync") {
       enabled: msg.enabled,
       discrete: msg.discrete,
       discreteValue: msg.discreteValue,
+      draggable: msg.draggable,
       vertical: msg.vertical,
     };
 
@@ -984,16 +985,16 @@ if (figma.command === "sync") {
         const moveY = percentToValue(value, startY, endY);
         node.y = moveY;
 
-        barData.startY = startY;
-        barData.endY = endY;
+        barData.startY = node.minHeight ?? 0;
+        barData.endY = parent.height;
       } else {
         const startX = -node.width / 2;
         const endX = parent.width - node.width / 2;
         const moveX = percentToValue(value, startX, endX);
         node.x = moveX;
 
-        barData.startX = startX;
-        barData.endX = endX;
+        barData.startX = node.minWidth ?? 0;
+        barData.endX = parent.width;
       }
 
       meterData.progressMarkerData = barData;

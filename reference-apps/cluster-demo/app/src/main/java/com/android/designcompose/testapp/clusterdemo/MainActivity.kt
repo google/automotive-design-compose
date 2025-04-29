@@ -474,7 +474,7 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
     val tempDegreesStringState = remember { derivedStateOf { "${tempDegrees.value.toInt()}F" } }
     val rpm = remember { mutableStateOf(5F) }
     val rpmState = remember { derivedStateOf { rpm.value.roundToInt().toString() } }
-    val mediaProgress = remember { mutableFloatStateOf(100F) }
+    val mediaProgress = remember { mutableStateOf<Float?>(100F) }
 
     // Demo animations
     var driveDemoState by remember { mutableStateOf(DriveDemoState.Parked) }
@@ -964,7 +964,7 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
             )
             SliderControl(
                 "Media:",
-                mediaProgress.value,
+                mediaProgress.value!!,
                 onValueChange = { mediaProgress.value = it },
                 100F,
                 0F,

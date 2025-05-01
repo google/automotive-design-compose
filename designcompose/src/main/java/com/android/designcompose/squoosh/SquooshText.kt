@@ -27,7 +27,7 @@ import androidx.compose.ui.text.ParagraphIntrinsics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -118,7 +118,7 @@ internal fun squooshComputeTextInfo(
     density: Density,
     document: DocContent,
     customizations: CustomizationContext,
-    fontResourceLoader: Font.ResourceLoader,
+    fontResolver: FontFamily.Resolver,
     variableState: VariableState,
     appContext: Context,
     textMeasureCache: TextMeasureCache,
@@ -317,11 +317,12 @@ internal fun squooshComputeTextInfo(
 
     val paragraph =
         ParagraphIntrinsics(
-            text = annotatedText.text,
-            style = textStyle,
-            spanStyles = annotatedText.spanStyles,
-            density = density,
-            resourceLoader = fontResourceLoader,
+            annotatedText.text,
+            textStyle,
+            annotatedText.spanStyles,
+            listOf(),
+            density,
+            fontResolver,
         )
 
     val maxLines =

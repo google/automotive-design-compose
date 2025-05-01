@@ -27,6 +27,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Hello", { HelloWorld() }, HelloWorldDoc.javaClass.name),
         Triple("HelloBye", { HelloBye() }, HelloByeDoc.javaClass.name),
         Triple("HelloVersion", { HelloVersion() }, HelloVersionDoc.javaClass.name),
+        Triple("HelloCursive", { HelloCursive() }, HelloCursiveDoc.javaClass.name),
         // Alphabetically ordered and trying to put similar tests together...
         Triple("Alignment", { AlignmentTest() }, AlignmentTestDoc.javaClass.name),
         Triple(

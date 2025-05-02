@@ -163,4 +163,21 @@ class Scrolling {
             captureRootRoboImage("scroll-manual-grid-horizontal")
         }
     }
+
+    @Test
+    fun scrollInitCallback() = runTest {
+        with(composeTestRule) {
+            val initCalled = mutableStateOf(false)
+            setContent {
+                ScrollingTestDoc.Main(
+                    verticalContents = ReplacementContent(content = { {} }),
+                    horizontalContents = ReplacementContent(content = { {} }),
+                    verticalScrollCallbacks = DesignScrollCallbacks(),
+                    horizontalScrollCallbacks =
+                        DesignScrollCallbacks(scrollStateChanged = { initCalled.value = true }),
+                )
+            }
+            assert(initCalled.value)
+        }
+    }
 }

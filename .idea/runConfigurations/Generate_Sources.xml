@@ -27,7 +27,6 @@
       <option name="taskNames">
         <list>
           <option value="kspDebugKotlin" />
-          <option value="common:generateSerdegenCode" />
         </list>
       </option>
       <option name="vmOptions" />

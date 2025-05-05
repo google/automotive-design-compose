@@ -45,10 +45,11 @@ enum Display {
 
 // Contains all of the styleable parameters accepted by the Rect and Text
 // components.
-// Next id = 44
+// Next id = 45
 message NodeStyle {
   // Text properties
-  element.Background text_color = 1;
+  element.Background text_color = 1[deprecated = true];
+  element.Background font_color = 44;
   element.NumOrVar font_size = 2;
   optional string font_family = 3;
   element.FontWeight font_weight = 4;
@@ -80,7 +81,7 @@ message NodeStyle {
   repeated modifier.FilterOp filters = 21;
   repeated modifier.FilterOp backdrop_filters = 22;
   modifier.BlendMode blend_mode = 23;
-  
+
   // Layout properties
   Display display_type = 24;
   layout.FlexWrap flex_wrap = 25;

@@ -49,7 +49,8 @@ import com.android.designcompose.definition.view.viewStyle
 internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
     var mergedNodeStyle =
         base.nodeStyle.copy {
-            if (!override.nodeStyle.textColor.hasNone()) textColor = override.nodeStyle.textColor
+            if (override.nodeStyle.hasFontColor() && !override.nodeStyle.fontColor.hasNone())
+                fontColor = override.nodeStyle.fontColor
 
             if (!override.nodeStyle.fontSize.hasNum() || override.nodeStyle.fontSize.num != 18.0f)
                 fontSize = override.nodeStyle.fontSize
@@ -227,6 +228,9 @@ internal fun mergeStyles(base: ViewStyle, override: ViewStyle): ViewStyle {
             if (override.nodeStyle.hasMeterData()) meterData = override.nodeStyle.meterData
             if (override.nodeStyle.hasShaderData()) shaderData = override.nodeStyle.shaderData
         }
+
+    // Merge any deprecated protobuf values
+    mergedNodeStyle = protoVersionsMergeStyles(override, mergedNodeStyle)
 
     val mergedLayoutStyle =
         base.layoutStyle.copy {

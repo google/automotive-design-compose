@@ -60,6 +60,7 @@ import com.android.designcompose.utils.asBrush
 import com.android.designcompose.utils.blurFudgeFactor
 import com.android.designcompose.utils.getTextContent
 import com.android.designcompose.utils.isAutoWidthText
+import com.android.designcompose.utils.protoVersionsFontColor
 import kotlin.math.roundToInt
 
 val newlineRegex = Regex("\\R+")
@@ -272,13 +273,10 @@ internal fun squooshComputeTextInfo(
             )
         }
     val customBrush = customizations.getBrush(v.name)
+    // Call this helper to get the font color since the proto field has changed over time
+    val fontColor = protoVersionsFontColor(v.style)
     val textBrushAndOpacity =
-        v.style.nodeStyle.textColorOrNull?.asBrush(
-            appContext,
-            document,
-            density.density,
-            variableState,
-        )
+        fontColor?.asBrush(appContext, document, density.density, variableState)
     // The brush and opacity is stored here for use with ComponentReplacementContext. They are
     // retrieved again later at rendering time since we need to pass the brush, opacity and draw
     // style explicitly.

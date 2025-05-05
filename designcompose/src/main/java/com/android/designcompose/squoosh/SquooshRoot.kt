@@ -622,7 +622,7 @@ fun SquooshRoot(
     // If a scroll callback customization exists, call it when the scroll state changes
     val scrollStateChangedCallback =
         customizationContext.getScrollCallbacks(presentationRoot.view.name)?.scrollStateChanged
-    val scrollState = rememberScrollableState { delta ->
+    val setScrollState = { delta: Float ->
         when (orientation) {
             Orientation.Vertical -> {
                 // Bound the scroll offset to the area bounded by content_height
@@ -650,6 +650,9 @@ fun SquooshRoot(
             }
             else -> {}
         }
+    }
+    val scrollState = rememberScrollableState { delta ->
+        setScrollState(delta)
         delta
     }
 
@@ -663,6 +666,7 @@ fun SquooshRoot(
                     ?.setScrollableState
             LaunchedEffect(scrollState, setScrollableStateCallback) {
                 setScrollableStateCallback?.invoke(scrollState)
+                setScrollState(0F)
             }
             Modifier.scrollable(
                 orientation = orientation,

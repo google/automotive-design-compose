@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.Meter
+import com.android.designcompose.OnProgressChangedCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -41,7 +42,9 @@ interface DialsGaugesTest {
         @Design(node = "#arc-angle") arcAngle: Meter,
         @Design(node = "#needle-rotation") needleRotation: Meter,
         @Design(node = "#progress-bar") progressBar: Meter,
+        @Design(node = "#progress-bar") onProgressChanged: OnProgressChangedCallback,
         @Design(node = "#progress-indicator") progressIndicator: Meter,
+        @Design(node = "#progress-indicator") onProgressIndicatorChanged: OnProgressChangedCallback,
     )
 
     @DesignComponent(node = "#stage-vector-progress")
@@ -65,6 +68,18 @@ fun DialsGaugesTest() {
         needleRotation = rotation.value,
         progressBar = progress.value,
         progressIndicator = progressIndicator.value,
+        onProgressChanged =
+            object : OnProgressChangedCallback {
+                override fun onProgressChanged(p: Float) {
+                    progress.value = p
+                }
+            },
+        onProgressIndicatorChanged =
+            object : OnProgressChangedCallback {
+                override fun onProgressChanged(p: Float) {
+                    progressIndicator.value = p
+                }
+            },
     )
 
     Row(

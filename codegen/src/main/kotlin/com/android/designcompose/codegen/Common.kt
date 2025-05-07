@@ -44,6 +44,7 @@ internal enum class CustomizationType {
     BrushFunction,
     Modifier,
     TapCallback,
+    OnProgressChangedCallback,
     ContentReplacement,
     ComponentReplacement,
     ListContent,
@@ -135,6 +136,7 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setScrollCallbacks\n"
     file += "import com.android.designcompose.setModifier\n"
     file += "import com.android.designcompose.setTapCallback\n"
+    file += "import com.android.designcompose.setOnProgressChangedCallback\n"
     file += "import com.android.designcompose.setOpenLinkCallback\n"
     file += "import com.android.designcompose.setText\n"
     file += "import com.android.designcompose.setTextState\n"
@@ -142,6 +144,7 @@ internal fun createNewFile(
     file += "import com.android.designcompose.setVisible\n"
     file += "import com.android.designcompose.setVisibleState\n"
     file += "import com.android.designcompose.TapCallback\n"
+    file += "import com.android.designcompose.OnProgressChangedCallback\n"
     file += "import com.android.designcompose.ParentComponentInfo\n"
     file += "import com.android.designcompose.sDocClass\n"
     file += "import com.android.designcompose.LocalCustomizationContext\n\n"
@@ -191,6 +194,8 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "Bitmap?" -> CustomizationType.Image
         "Modifier" -> CustomizationType.Modifier
         "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
+        "com.android.designcompose.OnProgressChangedCallback" ->
+            CustomizationType.OnProgressChangedCallback
         "com.android.designcompose.ReplacementContent" -> CustomizationType.ContentReplacement
         "@Composable (ComponentReplacementContext) -> Unit" ->
             CustomizationType.ComponentReplacement

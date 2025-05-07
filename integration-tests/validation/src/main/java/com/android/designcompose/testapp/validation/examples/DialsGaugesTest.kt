@@ -56,6 +56,8 @@ interface DialsGaugesTest {
         @Design(node = "#progress-bar") progressBar: Meter,
         @Design(node = "#progress-indicator") progressIndicator: Meter,
     )
+
+    @DesignComponent(node = "#stage-draggable") fun DraggableProgress()
 }
 
 @Composable
@@ -174,4 +176,9 @@ fun ProgressConstraintsTest() {
         Slider(stageHeight, 100f, 1000f, "main-height")
         Text(stageHeight.value.toString(), fontSize = 20.sp)
     }
+}
+
+@Composable
+fun DraggableProgressTest() {
+    DialsGaugesTestDoc.DraggableProgress()
 }

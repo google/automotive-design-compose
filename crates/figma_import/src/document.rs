@@ -43,6 +43,12 @@ const BASE_FILE_URL: &str = "https://api.figma.com/v1/files/";
 const BASE_COMPONENT_URL: &str = "https://api.figma.com/v1/components/";
 const BASE_PROJECT_URL: &str = "https://api.figma.com/v1/projects/";
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum HiddenNodePolicy {
+    Skip,
+    Keep,
+}
+
 fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<String, Error> {
     let mut agent_builder = ureq::AgentBuilder::new();
     let mut buffer = Vec::new();
@@ -296,9 +302,10 @@ impl Document {
         error_list: &mut Vec<String>,
         error_hash: &mut HashSet<String>,
         completed_hash: &mut HashSet<String>,
+        hidden_node_policy: HiddenNodePolicy,
     ) -> Result<(), Error> {
         // Ignore hidden nodes
-        if !node.visible {
+        if !node.visible && hidden_node_policy == HiddenNodePolicy::Skip {
             return Ok(());
         }
         fn add_node_doc_hash(
@@ -409,6 +416,7 @@ impl Document {
                                                 error_list,
                                                 error_hash,
                                                 completed_hash,
+                                                hidden_node_policy,
                                             )?;
                                             parent_tree.pop();
                                         }
@@ -442,6 +450,7 @@ impl Document {
                 error_list,
                 error_hash,
                 completed_hash,
+                hidden_node_policy,
             )?;
             parent_tree.pop();
         }
@@ -647,6 +656,7 @@ impl Document {
         node_names: &Vec<NodeQuery>,
         ignored_images: &Vec<(NodeQuery, Vec<String>)>,
         error_list: &mut Vec<String>,
+        hidden_node_policy: HiddenNodePolicy,
     ) -> Result<HashMap<NodeQuery, View>, Error> {
         // First we gather all of nodes that we're going to convert and find all of the
         // child nodes that can't be rendered. Then we ask Figma to do a batch render on
@@ -657,10 +667,12 @@ impl Document {
             name_index: &mut HashMap<String, &'a figma_schema::Node>,
             id_index: &mut HashMap<String, &'a figma_schema::Node>,
             variant_index: &mut HashMap<(String, String), &'a figma_schema::Node>,
-            component_set_index: &mut HashMap<String, &'a figma_schema::Node>,
+            component_set_name_index: &mut HashMap<String, &'a figma_schema::Node>,
+            component_id_index: &mut HashMap<String, &'a figma_schema::Node>,
+            hidden_node_policy: HiddenNodePolicy,
         ) {
             // Ignore hidden nodes
-            if !node.visible {
+            if !node.visible && hidden_node_policy == HiddenNodePolicy::Skip {
                 return;
             }
 
@@ -692,12 +704,15 @@ impl Document {
                     name_index,
                     id_index,
                     variant_index,
-                    component_set_index,
+                    component_set_name_index,
+                    component_id_index,
+                    hidden_node_policy,
                 );
             }
             if let figma_schema::NodeData::ComponentSet { .. } = node.data {
+                component_set_name_index.insert(node.name.clone(), node);
                 for child in &node.children {
-                    component_set_index.insert(child.id.clone(), node);
+                    component_id_index.insert(child.id.clone(), node);
                 }
             }
         }
@@ -808,6 +823,7 @@ impl Document {
         let mut name_index = HashMap::new();
         let mut id_index = HashMap::new();
         let mut variant_index = HashMap::new();
+        let mut component_set_name_index = HashMap::new();
         // If a component belongs to a component set (there are "variants" in the Figma UI)
         // then we want to know which component set it belongs to so that if the component
         // set has bindings then we can use them for the instance.
@@ -822,14 +838,16 @@ impl Document {
         //
         // This map goes from "component id" -> "component set node", so there will be one
         // entry for each component in a component set.
-        let mut component_set_index = HashMap::new();
+        let mut component_id_index = HashMap::new();
         index_node(
             &self.document_root.document,
             None,
             &mut name_index,
             &mut id_index,
             &mut variant_index,
-            &mut component_set_index,
+            &mut component_set_name_index,
+            &mut component_id_index,
+            hidden_node_policy,
         );
 
         // Fetch component variant nodes
@@ -850,6 +868,7 @@ impl Document {
             error_list,
             &mut error_hash,
             &mut completed_hash,
+            hidden_node_policy,
         )?;
         self.variant_nodes = variant_nodes;
 
@@ -861,7 +880,9 @@ impl Document {
                 &mut name_index,
                 &mut id_index,
                 &mut variant_index,
-                &mut component_set_index,
+                &mut component_set_name_index,
+                &mut component_id_index,
+                hidden_node_policy,
             );
         }
 
@@ -890,7 +911,7 @@ impl Document {
             .filter(|maybe_node| maybe_node.is_some())
             .map(|node| *node.unwrap()) // safe to unwrap
             .collect();
-        find_component_sets(&query_nodes, &component_set_index, &mut node_name_hash);
+        find_component_sets(&query_nodes, &component_id_index, &mut node_name_hash);
         let mut component_set_hash: HashMap<String, Vec<String>> = HashMap::new();
         add_variant_node_names(
             &self.document_root.document,
@@ -910,7 +931,9 @@ impl Document {
                 let maybe_node = match &name {
                     NodeQuery::NodeId(id) => id_index.get(id),
                     NodeQuery::NodeName(node_name) => name_index.get(node_name),
-                    NodeQuery::NodeComponentSet(node_name) => name_index.get(node_name),
+                    NodeQuery::NodeComponentSet(node_name) => {
+                        component_set_name_index.get(node_name)
+                    }
                     NodeQuery::NodeVariant(node_name, parent_name) => {
                         variant_index.get(&(node_name.clone(), parent_name.clone()))
                     }
@@ -969,6 +992,7 @@ impl Document {
                         &self.document_root.component_sets,
                         &mut component_context,
                         &mut self.image_context,
+                        hidden_node_policy,
                     )?,
                 );
             }
@@ -987,7 +1011,7 @@ impl Document {
         self.compute_component_overrides(&mut views);
 
         // Update our mapping from instance to component set.
-        self.component_sets = component_set_index
+        self.component_sets = component_id_index
             .iter()
             .map(|(component_id, component_set_node)| {
                 (component_id.clone(), component_set_node.id.clone())

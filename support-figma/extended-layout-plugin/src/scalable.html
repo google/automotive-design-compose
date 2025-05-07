@@ -1,0 +1,664 @@
+<!--
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<div>
+    <div id="componentSetAddButton" class="page-padding-small">
+      <button id="addSetButton" class="button--primary" style="flex-grow: 1;" onclick="addSet();">Add ScalableUI Data</button>
+    </div>
+    <div id="componentSetRemoveButton" class="page-padding-small">
+      <button id="removeSetButton" class="button--primary" style="flex-grow: 1;" onclick="removeSet();">Remove ScalableUI Data</button>
+    </div>
+</div>
+
+<div id="componentSetSection" style="display: none">
+    <div class="page-padding-small">
+        <label class="boldlabel">COMPONENT SET:</label>
+        <label id="componentSetName" class="normallabel"></label>
+    </div>
+
+    <div id="roleSection" style="display: flex; align-items: center;">
+        <div class="page-padding-small">
+            <label class="boldlabel">ROLE:</label>
+        </div>
+        <input id="roleInput" type="text" style="height: 24" value="@my/role" onchange="onRoleChanged();"></input>
+    </div>
+
+    <div id="eventSection">
+        <div class="page-padding-small">
+            <label class="boldlabel">EVENTS:</label>
+        </div>
+        <div id="componentSetEventsSection" style="margin-left: 16"></div>
+        <div id="addEventSection" class="page-padding-small">
+            <button id="addEventButton" class="button--primary" style="flex-grow: 1;" onclick="addEventDialog();">Add event</button>
+        </div>
+    </div>
+
+    <div id="componentSetVariantsSection">
+        <div class="page-padding-small">
+            <label class="boldlabel">VARIANTS:</label>
+        </div>
+        <div id="componentSetVariantsList" class="page-padding-small" style="margin-top: -10">
+        </div>
+    </div>
+
+    <div id="componentSetKeyframeVariantsSection">
+        <div class="page-padding-small">
+            <label class="boldlabel">KEYFRAME VARIANTS:</label>
+        </div>
+        <div id="keyframeVariantsList" class="page-padding-small" style="margin-top: -10">
+        </div>
+    </div>
+
+    <div id="addKeyframeVariantSection" class="page-padding-small">
+        <button id="addKeyframeButton" class="button--primary" style="flex-grow: 1;" onclick="addKeyframeDialog();">Add Keyframe Variant</button>
+    </div>
+</div>
+
+<div id="invalidNodeSection" style="display: block; justify-content: center; align-items: center; text-align: center; width: 100%; height: 100%">
+    Invalid Node Selected.<br>
+    Please select a COMPONENT SET
+</div>
+
+<div id="stageSection">
+    <div class="page-padding-small">
+        <label class="boldlabel">Simulate an event:</label><br>
+        <select id="sendEventSelect" style="margin-top: 8"></select><br>
+        <select id="sendTokensSelect" style="margin-top: 8"></select><br>
+        <button id="sendEventButton" class="button--primary" style="flex-grow: 1; margin-top: 8" onclick="sendEvent();">Send Event</button>
+    </div>
+    <div class="page-padding-large" style="display: flex; justify-content: center; width: 100%">
+        <button id="resetStateButton" class="button--primary" onclick="resetState();">Reset State</button>
+    </div>
+</div>
+
+<dialog id="createEventDialog">
+    <p>
+        <div style="display: flex; gap: 8px;">
+            <label for="createEventNameInput" style="flex-grow: 1;">On Event:</label>
+            <input id="createEventNameInput" type="text" autofocus></input>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 10">
+            <label for="createEventTokenInput" style="flex-grow: 1;">Event Tokens:</label>
+            <input id="createEventTokenInput" type="text"></input>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 10">
+            <label for="createEventFromVariant" style="flex-grow: 1;">From Variant:</label>
+            <select id="createEventFromVariant"></select>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 10">
+            <label for="createEventToVariant" style="flex-grow: 1;">To Variant:</label>
+            <select id="createEventToVariant"></select>
+        </div>
+    </p>
+    <div style="display: flex; gap: 4px;">
+        <button class="button--primary" onclick="createNewEvent();">Create</button>
+        <button class="button--primary" onclick="createEventDialog.close()">Cancel</button>
+    </div>
+</dialog>
+
+<dialog id="createKeyframeDialog">
+    <p>
+        <div style="display: flex; gap: 8px;">
+            <label for="keyframeName" style="flex-grow: 1;">Name:</label>
+            <input id="keyframeName" type="text" autofocus></input>
+        </div>
+        <div id="keyframeList"></div>
+    </p>
+    <div style="display: flex; gap: 8px; align-items: center; margin-top: 6">
+        <span class="icon-button" onclick="createKeyframe()">
+            <span class="icon icon--plus"></span>
+        </span>
+        <span>Add Keyframe</span>
+    </div>
+    <div style="display: flex; gap: 4px; margin-top: 10">
+        <button class="button--primary" onclick="createNewKeyframe();">Create</button>
+        <button class="button--primary" onclick="createKeyframeDialog.close()">Cancel</button>
+    </div>
+</dialog>
+
+<script>
+    function addEventDialog() {
+        createEventDialog.showModal();
+    }
+
+    function createNewEvent() {
+        const eventName = createEventNameInput.value;
+        const eventTokens = createEventTokenInput.value;
+        const fromVariantId = createEventFromVariant.value;
+        const fromVariantName = createEventFromVariant.options[createEventFromVariant.selectedIndex].text;
+        const toVariantId = createEventToVariant.value;
+        const toVariantName = createEventToVariant.options[createEventToVariant.selectedIndex].text;
+        createEventDialog.close();
+
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'createEvent',
+                event: eventName,
+                eventTokens: eventTokens,
+                fromVariantId: fromVariantId,
+                fromVariantName: fromVariantName,
+                toVariantId: toVariantId,
+                toVariantName: toVariantName,
+            }
+        }, '*');
+    }
+
+    function addKeyframeDialog() {
+        while (keyframeList.firstChild) {
+            keyframeList.removeChild(keyframeList.lastChild);
+        }
+
+        createKeyframeDialog.showModal();
+    }
+
+    function createKeyframe() {
+        const keyframeSection = document.createElement("div");
+        keyframeSection.style.border = "1px solid black";
+        keyframeSection.style.marginTop = 6;
+        keyframeSection.style.padding = 6;
+
+        const frameNumSection = document.createElement("div");
+        frameNumSection.style.display = "flex";
+        frameNumSection.style.gap = "8px";
+        frameNumSection.marginTop = 6;
+        
+        const frameLabel = document.createElement("label");
+        frameLabel.classList.add("normallabel");
+        frameLabel.style.flexGrow = 1;
+        frameLabel.textContent = "Frame:";
+        frameNumSection.appendChild(frameLabel);
+
+        const textInput = document.createElement("input");
+        textInput.id = "keyframeFrameInput" + keyframeList.childElementCount;
+        textInput.type = "number";
+        textInput.placeholder = "0";
+        textInput.min = "0";
+        textInput.max = "100";
+        frameNumSection.appendChild(textInput);
+        keyframeSection.appendChild(frameNumSection);
+
+        const variantSection = document.createElement("div");
+        variantSection.style.display = "flex";
+        variantSection.style.gap = "8px";
+        variantSection.style.marginTop = 6;
+        variantSection.marginTop = 6;
+
+        const varLabel = document.createElement("label");
+        varLabel.classList.add("normallabel");
+        varLabel.style.flexGrow = 1;
+        varLabel.textContent = "Variant:";
+        variantSection.appendChild(varLabel);
+
+        const varSelect = document.createElement("select");
+        varSelect.id = "keyframeVariantSelect" + keyframeList.childElementCount;
+        addVariantsToSelect(varSelect);
+        variantSection.appendChild(varSelect);
+        keyframeSection.appendChild(variantSection);
+        keyframeList.appendChild(keyframeSection);
+    }
+
+    function sendEvent() {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'sendEvent',
+                event: sendEventSelect.value,
+            }
+        }, '*');
+    }
+
+    function resetState() {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'resetState',
+            }
+        }, '*');
+    }
+
+    function addVariantsToSelect(select) {
+        const allLabels = document.querySelectorAll('label');
+        const variantLabels = Array.from(allLabels).filter(label => {
+            return label.textContent == "VARIANT: "
+        });
+
+        for (const vl of variantLabels) {
+            const id = vl.id;
+            const name = document.getElementById(id + "-name").textContent;
+
+            const variantOption = document.createElement("option");
+            variantOption.text = name;
+            variantOption.value = id;
+            select.appendChild(variantOption);
+        }
+    }
+
+    function createNewKeyframe() {
+        const name = keyframeName.value;
+        let keyframes = [];
+        for (let i = 0; i < keyframeList.childElementCount; ++i) {
+            const keyframeInputId = "keyframeFrameInput" + i;
+            const keyframeInput = document.getElementById(keyframeInputId);
+            const frameValue = toNumber(keyframeInput.value, 0);
+
+            const keyframeSelectId = "keyframeVariantSelect" + i;
+            const keyframeSelect = document.getElementById(keyframeSelectId);
+            const selectValue = keyframeSelect.options[keyframeSelect.selectedIndex].text;
+
+            keyframes.push({
+                frame: frameValue,
+                variant: selectValue,
+            });
+        }
+
+        createKeyframeDialog.close();
+
+        if (keyframes.length > 0) {
+            parent.postMessage({
+                pluginMessage: {
+                    msg: 'createKeyframeVariant',
+                    name: name,
+                    keyframes: keyframes,
+                }
+            }, '*');
+        }
+    }
+
+    function onRoleChanged() {
+        const roleName = roleInput.value;
+
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'roleChanged',
+                role: roleName,
+            }
+        }, '*');
+    }
+
+    function toNumber(str, def) {
+        let num = parseInt(str, 10);
+        if (isNaN(num)) {
+            return def;
+        }
+        return num;
+    }
+
+    function addSet() {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'addNode',
+            }
+        }, '*');
+    }
+
+    function removeSet() {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'removeNode',
+            }
+        }, '*');
+    }
+    
+    function onRemoveEvent(name) {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'removeEvent',
+                event: name,
+            }
+        }, '*');
+    }
+
+    function onRemoveKeyframeVariant(name) {
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'removeKeyframeVariant',
+                keyframeVariant: name,
+            }
+        }, '*');
+    }
+
+    function onDefaultChecked(checkbox) {
+        const checkedDefaults = document.querySelectorAll('input[type="checkbox"][class="defaultCheckbox"]:checked');
+        for (const cb of checkedDefaults) {
+            if (cb != checkbox)
+                cb.checked = false;
+        }
+        onVariantChanged();
+    }
+
+    function onVariantChanged() {
+        const allLabels = document.querySelectorAll('label');
+        const variantLabels = Array.from(allLabels).filter(label => {
+            return label.textContent == "VARIANT: "
+        });
+
+        const variantList = [];
+        for (const vl of variantLabels) {
+            const id = vl.id;
+            const name = document.getElementById(id + "-name").textContent;
+            const isDefault = document.getElementById(id + "-default").checked;
+            const layer = document.getElementById(id + "-layer").value;
+            variantList.push({
+                isDefault,
+                id,
+                name,
+                layer: toNumber(layer),
+            });
+        }
+
+        parent.postMessage({
+            pluginMessage: {
+                msg: 'nodeChanged',
+                variantList: variantList,
+            }
+        }, '*');
+    }
+
+    function selectComponentSet(name, type, setData, variantList) {
+        invalidNodeSection.style.display = "none";
+        stageSection.style.display = "none";
+
+        const hasData = setData != null;
+        componentSetAddButton.style.display = hasData ? "none" : "block";
+        componentSetRemoveButton.style.display = hasData ? "block" : "none";
+        componentSetSection.style.display = hasData ? "block" : "none";
+
+        if (!hasData)
+            return;
+
+        if (setData.role)
+            roleInput.value = setData.role;
+        else
+            roleInput.value = "";
+
+        while (componentSetEventsSection.firstChild) {
+            componentSetEventsSection.removeChild(componentSetEventsSection.lastChild);
+        }
+        if (setData.eventList) {
+            for (const event of setData.eventList)
+                addEvent(event);
+        }
+
+        while (componentSetVariantsList.firstChild) {
+          componentSetVariantsList.removeChild(componentSetVariantsList.lastChild);
+        }
+        while (createEventFromVariant.firstChild) {
+            createEventFromVariant.removeChild(createEventFromVariant.lastChild);
+        }
+        while (createEventToVariant.firstChild) {
+            createEventToVariant.removeChild(createEventToVariant.lastChild);
+        }
+
+        // Add empty default option for FROM variant
+        const variantOptionFromEmpty = document.createElement("option");
+        variantOptionFromEmpty.text = "";
+        variantOptionFromEmpty.value = "";
+        createEventFromVariant.appendChild(variantOptionFromEmpty);
+
+        // Add variants to select dropdown for event dialog and to main UI
+        componentSetName.textContent = name;
+        for (let child of variantList) {
+            addVariantToEventSelect(child.name, child.id);
+            addVariantSection(child.name, child);
+        }
+
+        // Add keyframe variants to select dropdown for event dialog
+        for (const kfv of setData.keyframeVariants) {
+            addVariantToEventSelect(kfv.name, kfv.name);
+        }
+
+        addKeyframeVariants(setData.keyframeVariants);
+    }
+
+    function addEvent(event) {
+        const name = event.eventName;
+        const eventTokens = event.eventTokens;
+        const fromVariantName = event.fromVariantName;
+        const toVariantName = event.toVariantName;
+        const hasFromVariant = fromVariantName != null && fromVariantName.length > 0;
+        const eventDiv = document.createElement("div");
+
+        const eventLabel = document.createElement("label");
+        eventLabel.classList.add("normallabel");
+        eventLabel.textContent = name;
+        eventDiv.appendChild(eventLabel);
+
+        if (eventTokens != null && eventTokens.length > 0) {
+            const tokensLabel = document.createElement("label");
+            tokensLabel.classList.add("normallabel");
+            tokensLabel.textContent = ", " + eventTokens;
+            eventDiv.appendChild(tokensLabel);
+        }
+
+        const arrowLabel = document.createElement("label");
+        arrowLabel.classList.add("boldlabel");
+        arrowLabel.textContent = "  ->  ";
+        eventDiv.appendChild(arrowLabel);
+
+        const variantLabel = document.createElement("label");
+        variantLabel.classList.add("normallabel");
+        if (hasFromVariant) {
+            variantLabel.textContent = "(" + fromVariantName + " -> " + toVariantName + ")";
+        } else {
+            variantLabel.textContent = toVariantName;
+        }
+        eventDiv.appendChild(variantLabel);
+
+        const removeButton = document.createElement("button");
+        removeButton.classList.add("button--secondary");
+        removeButton.style.flexGrow = 1;
+        removeButton.style.marginLeft = 10;
+        removeButton.onclick = () => { onRemoveEvent(name); }
+        removeButton.textContent = "Remove Event";
+        eventDiv.appendChild(removeButton);
+
+        componentSetEventsSection.appendChild(eventDiv);
+    }
+
+    function addVariantToEventSelect(name, id) {
+        const variantOptionFrom = document.createElement("option");
+        variantOptionFrom.text = name;
+        variantOptionFrom.value = id;
+        createEventFromVariant.appendChild(variantOptionFrom);
+        const variantOptionTo = document.createElement("option");
+        variantOptionTo.text = name;
+        variantOptionTo.value = id;
+        createEventToVariant.appendChild(variantOptionTo);
+    }
+
+    function addVariantSection(name, variantData) {
+        const id = variantData.id;
+        const sectionDiv = document.createElement("div");
+        sectionDiv.classList.add("page-padding-small");
+
+        // Variant name section
+        const nameSection = document.createElement("div");
+        const nodeTypeLabel = document.createElement("label");
+        nodeTypeLabel.classList.add("boldlabel");
+        nodeTypeLabel.textContent = "VARIANT: ";
+        nodeTypeLabel.id = id;
+        const nodeTypeName = document.createElement("label");
+        nodeTypeName.classList.add("normallabel");
+        nodeTypeName.textContent = name;
+        nodeTypeName.id = id + "-name";
+        nameSection.appendChild(nodeTypeLabel);
+        nameSection.appendChild(nodeTypeName);
+        sectionDiv.appendChild(nameSection);
+
+        // Default option
+        const defaultSection = document.createElement("div");
+        defaultSection.style.display = "flex";
+        defaultSection.style.alignItems = "center";
+        const defaultLabel = document.createElement("label");
+        defaultLabel.classList.add("boldlabel");
+        defaultLabel.textContent = "Default:";
+        defaultSection.appendChild(defaultLabel);
+        const defaultCheckbox = document.createElement("input");
+        defaultCheckbox.id = id + "-default";
+        defaultCheckbox.classList.add("defaultCheckbox");
+        defaultCheckbox.type = "checkbox";
+        defaultCheckbox.onclick = () => { onDefaultChecked(defaultCheckbox); }
+        defaultCheckbox.checked = variantData?.isDefault;
+        defaultSection.appendChild(defaultCheckbox);
+        sectionDiv.appendChild(defaultSection);
+        
+        // Layer override option
+        const layerSection = document.createElement("layer");
+        layerSection.style.display = "flex";
+        layerSection.style.alignItems = "center";
+        const layerLabel = document.createElement("label");
+        layerLabel.classList.add("boldlabel");
+        layerLabel.textContent = "Layer:";
+        layerSection.appendChild(layerLabel);
+        const layerInput = document.createElement("input");
+        layerInput.id = id + "-layer";
+        layerInput.style.marginLeft = "10";
+        layerInput.style.width = "50";
+        layerInput.type = "number";
+        layerInput.defaultValue = 0;
+        layerInput.placeholder = 0;
+        if (variantData?.layer != null)
+            layerInput.value = variantData.layer;
+        layerInput.oninput = () => { onVariantChanged(); }
+        layerSection.appendChild(layerInput);
+        sectionDiv.appendChild(layerSection);
+
+
+        componentSetVariantsList.appendChild(sectionDiv);
+    }
+
+    function addKeyframeVariants(keyframeVariantList) {
+        while (keyframeVariantsList.firstChild) {
+            keyframeVariantsList.removeChild(keyframeVariantsList.lastChild);
+        }
+
+        for (const kfv of keyframeVariantList) {
+            addKeyframeVariant(kfv);
+        }
+    }
+
+    function addKeyframeVariant(kfv) {
+        const sectionDiv = document.createElement("div");
+        sectionDiv.classList.add("page-padding-small");
+
+        // Keyframe name section
+        const nameSection = document.createElement("div");
+        const nodeTypeLabel = document.createElement("label");
+        nodeTypeLabel.classList.add("boldlabel");
+        nodeTypeLabel.textContent = "Keyframe Variant: ";
+        const nodeTypeName = document.createElement("label");
+        nodeTypeName.classList.add("normallabel");
+        nodeTypeName.textContent = kfv.name;
+        nameSection.appendChild(nodeTypeLabel);
+        nameSection.appendChild(nodeTypeName);
+
+        const removeButton = document.createElement("button");
+        removeButton.classList.add("button--secondary");
+        removeButton.style.flexGrow = 1;
+        removeButton.style.marginLeft = 10;
+        removeButton.onclick = () => { onRemoveKeyframeVariant(kfv.name); }
+        removeButton.textContent = "Remove Keyframe Variant";
+        nameSection.appendChild(removeButton);
+
+        sectionDiv.appendChild(nameSection);
+        keyframeVariantsList.appendChild(sectionDiv);
+
+        for (const kf of kfv.keyframes) {
+            addKeyframe(kf, sectionDiv);
+        }
+    }
+
+    function addKeyframe(kf, parentSection) {
+        const sectionDiv = document.createElement("div");
+        sectionDiv.style.marginLeft = 10;
+        const keyframeSection = document.createElement("div");
+
+        const keyframeLabel = document.createElement("label");
+        keyframeLabel.classList.add("normallabel");
+        keyframeLabel.textContent = "Keyframe ";
+        keyframeSection.appendChild(keyframeLabel);
+
+        const frameNumber = document.createElement("label");
+        frameNumber.classList.add("normallabel");
+        frameNumber.textContent = kf.frame;
+        keyframeSection.appendChild(frameNumber);
+
+        const arrowLabel = document.createElement("label");
+        arrowLabel.classList.add("boldlabel");
+        arrowLabel.textContent = "  ->  ";
+        keyframeSection.appendChild(arrowLabel);
+
+        const variantName = document.createElement("label");
+        variantName.classList.add("normallabel");
+        variantName.textContent = kf.variantName;
+        keyframeSection.appendChild(variantName);
+
+        sectionDiv.appendChild(keyframeSection);
+        parentSection.appendChild(sectionDiv);
+    }
+
+    function selectStage(eventList, tokenList) {
+        invalidNodeSection.style.display = "none";
+        componentSetAddButton.style.display = "none";
+        componentSetRemoveButton.style.display = "none";
+        componentSetSection.style.display = "none";
+        stageSection.style.display = "block";
+
+        while (sendEventSelect.firstChild) {
+            sendEventSelect.removeChild(sendEventSelect.lastChild);
+        }
+        for (const event of eventList) {
+            const eventOption = document.createElement("option");
+            eventOption.text = event;
+            eventOption.value = event;
+            sendEventSelect.appendChild(eventOption);
+        }
+
+        while (sendTokensSelect.firstChild) {
+            sendTokensSelect.removeChild(sendTokensSelect.lastChild);
+        }
+        for (const token of tokenList) {
+            const tokenOption = document.createElement("option");
+            tokenOption.text = token;
+            tokenOption.value = token;
+            sendTokensSelect.appendChild(tokenOption);
+        }
+    }
+
+    function deselectComponent() {
+        componentSetSection.style.display = "none";
+        componentSetAddButton.style.display = "none";
+        componentSetRemoveButton.style.display = "none";
+        invalidNodeSection.style.display = "flex";
+        stageSection.style.display = "none";
+    }
+
+    window.onmessage = async function (event) {
+        let msg = event.data.pluginMessage;
+        if (msg.msg == "scalable-select-component-set") {
+            selectComponentSet(msg.nodeName, msg.nodeType, msg.setData, msg.variantList);
+        } else if (msg.msg == "scalable-select-stage") {
+            selectStage(msg.eventList, msg.tokenList);
+        } else if (msg.msg == "scalable-deselect") {
+            deselectComponent();
+        } else {
+            console.log("Unknown message: " + msg.msg);
+        }
+    }
+</script>

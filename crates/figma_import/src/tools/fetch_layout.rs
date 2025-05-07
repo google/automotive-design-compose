@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::HiddenNodePolicy;
 use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
@@ -247,6 +248,7 @@ pub fn fetch_layout(args: Args) -> Result<(), ConvertError> {
         &args.nodes.iter().map(|name| NodeQuery::name(name)).collect(),
         &Vec::new(),
         &mut error_list,
+        HiddenNodePolicy::Skip, // skip hidden nodes
     )?;
     for error in error_list {
         eprintln!("Warning: {error}");

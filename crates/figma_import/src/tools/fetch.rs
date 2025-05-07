@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::collections::HashMap;
 use std::env;
 use std::io::{Error, ErrorKind};
 
+use crate::HiddenNodePolicy;
 use crate::{proxy_config::ProxyConfig, Document};
 /// Utility program to fetch a doc and serialize it to file
 use clap::Parser;
@@ -22,6 +24,8 @@ use dc_bundle::definition::NodeQuery;
 use dc_bundle::definition_file::save_design_def;
 use dc_bundle::design_compose_definition::DesignComposeDefinition;
 use dc_bundle::design_compose_definition::DesignComposeDefinitionHeader;
+use dc_bundle::scalable::scalable_uidata;
+use dc_bundle::view::View;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -70,6 +74,9 @@ pub struct Args {
     /// Output file to write serialized doc into
     #[arg(short, long)]
     pub output: std::path::PathBuf,
+    /// Set for fetching a Scalable UI file so that hidden nodes are not skipped
+    #[arg(short, long)]
+    pub scalableui: bool,
 }
 
 //Loads a Figma access token from either the FIGMA_ACCESS_TOKEN environment variable or a file located at ~/.config/figma_access_token.
@@ -109,6 +116,7 @@ pub fn load_figma_token() -> Result<String, Error> {
 pub fn build_definition(
     doc: &mut Document,
     nodes: &Vec<String>,
+    skip_hidden: bool,
 ) -> Result<DesignComposeDefinition, ConvertError> {
     let mut error_list = Vec::new();
     // Convert the requested nodes from the Figma doc.
@@ -116,6 +124,7 @@ pub fn build_definition(
         &nodes.iter().map(|name| NodeQuery::name(name)).collect(),
         &Vec::new(),
         &mut error_list,
+        if skip_hidden { HiddenNodePolicy::Skip } else { HiddenNodePolicy::Keep },
     )?;
     for error in error_list {
         eprintln!("Warning: {error}");
@@ -151,7 +160,7 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
         None,
     )?;
 
-    let dc_definition = build_definition(&mut doc, &args.nodes)?;
+    let dc_definition = build_definition(&mut doc, &args.nodes, !args.scalableui)?;
 
     println!("Fetched document");
     println!("  DC Version: {}", DesignComposeDefinitionHeader::current_version());
@@ -159,6 +168,10 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
     println!("  Version: {}", doc.get_version());
     println!("  Name: {}", doc.get_name());
     println!("  Last Modified: {}", doc.last_modified().clone());
+
+    if args.scalableui {
+        print_scalableui_data(&dc_definition);
+    }
 
     // We don't bother with serialization of image sessions with this tool.
     save_design_def(
@@ -172,4 +185,63 @@ pub fn fetch(args: Args) -> Result<(), ConvertError> {
         &dc_definition,
     )?;
     Ok(())
+}
+
+fn print_scalableui_data(dc_definition: &DesignComposeDefinition) {
+    let views = dc_definition.views();
+    if let Ok(views) = views {
+        let mut view_id_hash: HashMap<String, &View> = HashMap::new();
+        for (_query, view) in &views {
+            view_id_hash.insert(view.id.clone(), view);
+        }
+        for (query, view) in &views {
+            if let NodeQuery::NodeComponentSet(set_name) = query {
+                println!("SET {}: {}", set_name, view.id);
+                if let Some(scalable_data) = view.style.node_style().scalable_data.clone().into() {
+                    if let Some(scalable_uidata::Data::Set(set)) = &scalable_data.data {
+                        println!("  Scalable Data:");
+                        println!("    Id: {}", set.id);
+                        println!("    Name: {}", set.name);
+                        println!("    Role: {}", set.role);
+                        println!("    Default Variant: {}", set.default_variant_name);
+                        println!("    Variants: {:?}", set.variant_ids);
+                        for variant_id in &set.variant_ids {
+                            let v = view_id_hash.get(variant_id);
+                            if let Some(variant) = v {
+                                println!("      Variant {}", variant.name);
+                                if let Some(scalable_data_v) =
+                                    variant.style.node_style().scalable_data.clone().into()
+                                {
+                                    if let Some(scalable_uidata::Data::Variant(v)) =
+                                        &scalable_data_v.data
+                                    {
+                                        println!("        Default: {}", v.is_default);
+                                        println!("        Layer: {}", v.layer);
+                                    }
+                                }
+                            }
+                        }
+                        println!("    Keyframe Variants:");
+                        for kfv in &set.keyframe_variants {
+                            println!("      Kfv {}", kfv.name);
+                            for kf in &kfv.keyframes {
+                                println!("        Kf {}, {}", kf.frame, kf.variant_name);
+                            }
+                        }
+                        println!("    Events:");
+                        for event in &set.events {
+                            println!("      Event {}", event.event_name);
+                            if !event.event_tokens.is_empty() {
+                                println!("        Tokens {}", event.event_tokens);
+                            }
+                            if !event.from_variant_name.is_empty() {
+                                println!("        From Variant {}", event.from_variant_name);
+                            }
+                            println!("        To Variant {}", event.to_variant_name);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

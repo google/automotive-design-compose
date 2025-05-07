@@ -36,7 +36,7 @@ fn run_test(doc_id: &str, queries: &[&str]) {
     )
     .unwrap();
 
-    let dc_definition = build_definition(&mut doc, &queries).unwrap();
+    let dc_definition = build_definition(&mut doc, &queries, true).unwrap();
     let header = DesignComposeDefinitionHeader::current(
         "".to_string(),
         "testFetch".to_string(),

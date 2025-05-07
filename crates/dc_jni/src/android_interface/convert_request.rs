@@ -19,6 +19,7 @@ use dc_bundle::design_compose_definition::{
     DesignComposeDefinition, DesignComposeDefinitionHeader,
 };
 use dc_bundle::figma_doc::ServerFigmaDoc;
+use figma_import::HiddenNodePolicy;
 use figma_import::ImageContextSession;
 use figma_import::ProxyConfig;
 
@@ -57,6 +58,7 @@ pub fn fetch_doc(
                 .map(|imgref| (NodeQuery::name(imgref.node.clone()), imgref.images.clone()))
                 .collect(),
             &mut error_list,
+            HiddenNodePolicy::Skip, // skip hidden nodes
         )?;
 
         let variable_map = doc.build_variable_map();

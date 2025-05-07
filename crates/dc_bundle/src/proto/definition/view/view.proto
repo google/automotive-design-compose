@@ -46,8 +46,8 @@ message View {
   // unique numeric id (not replicated within one DesignCompose file), which is
   // used by the renderer when building a layout tree, or when mapping from an
   // integer to a View.
-  // IMPORTANT: This is a u16, but proto doesn't do short types. Convert back to 
-  // u16 after deserializing 
+  // IMPORTANT: This is a u16, but proto doesn't do short types. Convert back to
+  // u16 after deserializing
   uint32 unique_id = 1;
   // id doesn't exist in vsw toolkit, but is useful for tracing from Figma node
   // to output

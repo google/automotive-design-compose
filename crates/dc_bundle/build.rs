@@ -39,7 +39,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         .out_dir(&out_dir)
         .include(&proto_path)
         .inputs(&proto_files_str)
-        .cargo_out_dir("protos")
         .run_from_script();
 
     println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());

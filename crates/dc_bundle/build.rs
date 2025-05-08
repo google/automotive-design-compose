@@ -34,12 +34,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut codegen = protobuf_codegen::Codegen::new();
 
     codegen
+        .pure()
         .customize(config)
         .out_dir(&out_dir)
         .include(&proto_path)
         .inputs(&proto_files_str)
-        .cargo_out_dir("protos")
-        .run()?;
+        .run_from_script();
 
     println!("cargo:rerun-if-changed={}", proto_path.to_str().unwrap());
     Ok(())

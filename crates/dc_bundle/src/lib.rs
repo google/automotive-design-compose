@@ -18,7 +18,7 @@ pub mod definition;
 pub mod definition_file;
 
 // Include the generated proto module.
-include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
+include!(concat!(env!("OUT_DIR"), "/mod.rs"));
 
 #[derive(Error, Debug)]
 pub enum Error {

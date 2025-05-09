@@ -302,7 +302,7 @@ dependencies = [
 
 [[package]]
 name = "dc_bundle"
-version = "0.34.1"
+version = "0.34.2"
 dependencies = [
  "log",
  "protobuf",
@@ -314,7 +314,7 @@ dependencies = [
 
 [[package]]
 name = "dc_jni"
-version = "0.34.1"
+version = "0.34.2"
 dependencies = [
  "android_logger",
  "bincode",
@@ -335,7 +335,7 @@ dependencies = [
 
 [[package]]
 name = "dc_layout"
-version = "0.34.1"
+version = "0.34.2"
 dependencies = [
  "android_logger",
  "dc_bundle",
@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "figma_import"
-version = "0.34.1"
+version = "0.34.2"
 dependencies = [
  "anyhow",
  "bincode",

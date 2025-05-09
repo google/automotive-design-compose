@@ -49,7 +49,8 @@ enum Display {
 // Next id = 45
 message NodeStyle {
   // Text properties
-  element.Background text_color = 1;
+  element.Background text_color = 1[deprecated = true];
+  element.Background font_color = 44;
   element.NumOrVar font_size = 2;
   optional string font_family = 3;
   element.FontWeight font_weight = 4;

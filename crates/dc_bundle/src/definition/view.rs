@@ -40,7 +40,7 @@ use crate::view_style::ViewStyle;
 impl NodeStyle {
     pub(crate) fn new_default() -> NodeStyle {
         NodeStyle {
-            text_color: Some(Background::new_with_background(background::Background_type::None(
+            font_color: Some(Background::new_with_background(background::Background_type::None(
                 ().into(),
             )))
             .into(),
@@ -123,8 +123,8 @@ impl ViewStyle {
     /// that can be applied to this style to make it equal the given style using apply_non_default.
     pub fn difference(&self, other: &ViewStyle) -> ViewStyle {
         let mut delta = ViewStyle::new_default();
-        if self.node_style().text_color != other.node_style().text_color {
-            delta.node_style_mut().text_color = other.node_style().text_color.clone();
+        if self.node_style().font_color != other.node_style().font_color {
+            delta.node_style_mut().font_color = other.node_style().font_color.clone();
         }
         if self.node_style().font_size != other.node_style().font_size {
             delta.node_style_mut().font_size = other.node_style().font_size.clone();

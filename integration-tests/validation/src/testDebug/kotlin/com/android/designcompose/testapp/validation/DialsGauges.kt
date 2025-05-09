@@ -17,6 +17,7 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
@@ -26,6 +27,7 @@ import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.DialsGaugesTest
+import com.android.designcompose.testapp.validation.examples.DraggableProgressTest
 import com.android.designcompose.testapp.validation.examples.ProgressConstraintsTest
 import com.android.designcompose.testapp.validation.examples.ProgressVectorTest
 import org.junit.Before
@@ -149,6 +151,39 @@ class DialsGauges {
             onNodeWithTag("progress-indicator").performTouchInput { moveTo(Offset(-400f, 0f)) }
             onNodeWithTag("progress-indicator").performTouchInput { cancel() }
             captureRootRoboImage("progress-constraints-low-big")
+        }
+    }
+
+    @Test
+    fun draggableProgressTests() {
+        with(composeTestRule) {
+            setContent { DraggableProgressTest() }
+
+            // Test clicking to move the progress low
+            onNodeWithTag("HorizontalBar").performTouchInput { click(Offset(50F, 0F)) }
+            onNodeWithTag("HorizontalIndicator").performTouchInput { click(Offset(50F, 0F)) }
+            onNodeWithTag("VerticalBar").performTouchInput { click(Offset(0F, 120F)) }
+            onNodeWithTag("VerticalIndicator").performTouchInput { click(Offset(0F, 120F)) }
+            onNodeWithTag("SkewedVerticalBar").performTouchInput { click(Offset(0F, 300F)) }
+            captureRootRoboImage("draggable-progress-low")
+
+            // Test dragging to move the progress high
+            onNodeWithTag("HorizontalBar").performTouchInput { down(Offset(50F, 0F)) }
+            onNodeWithTag("HorizontalBar").performTouchInput { moveTo(Offset(900F, 0F)) }
+            onNodeWithTag("HorizontalBar").performTouchInput { up() }
+            onNodeWithTag("HorizontalIndicator").performTouchInput { down(Offset(50F, 0F)) }
+            onNodeWithTag("HorizontalIndicator").performTouchInput { moveTo(Offset(900F, 0F)) }
+            onNodeWithTag("HorizontalIndicator").performTouchInput { up() }
+            onNodeWithTag("VerticalBar").performTouchInput { down(Offset(0F, 120F)) }
+            onNodeWithTag("VerticalBar").performTouchInput { moveTo(Offset(0F, 10F)) }
+            onNodeWithTag("VerticalBar").performTouchInput { up() }
+            onNodeWithTag("VerticalIndicator").performTouchInput { down(Offset(0F, 120F)) }
+            onNodeWithTag("VerticalIndicator").performTouchInput { moveTo(Offset(0F, 10F)) }
+            onNodeWithTag("VerticalIndicator").performTouchInput { up() }
+            onNodeWithTag("SkewedVerticalBar").performTouchInput { down(Offset(0F, 300F)) }
+            onNodeWithTag("SkewedVerticalBar").performTouchInput { moveTo(Offset(0F, 20F)) }
+            onNodeWithTag("SkewedVerticalBar").performTouchInput { up() }
+            captureRootRoboImage("draggable-progress-high")
         }
     }
 }

@@ -90,6 +90,7 @@ import com.android.designcompose.getVisibleState
 import com.android.designcompose.isPressed
 import com.android.designcompose.squooshNodeVariant
 import com.android.designcompose.squooshRootNode
+import com.android.designcompose.utils.getProgressChildWithTouch
 import com.android.designcompose.utils.hasScrolling
 import com.android.designcompose.utils.isSupportedInteraction
 import com.android.designcompose.utils.mergeStyles
@@ -345,6 +346,8 @@ internal fun resolveVariantsRecursively(
     val tapCallback = customizations.getTapCallback(view)
     if (tapCallback != null) hasSupportedInteraction = true
     if (textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) hasSupportedInteraction = true
+    val progressChildTouch = view.getProgressChildWithTouch(customizations)
+    if (progressChildTouch != null) hasSupportedInteraction = true
 
     if (interactionState.isPressed(viewFromTree.id)) hasSupportedInteraction = true
 
@@ -428,6 +431,7 @@ internal fun resolveVariantsRecursively(
         skipChildren = true
     } else if (hasSupportedInteraction) {
         // Add a SquooshChildComposable to handle the interaction.
+        System.err.println("childComposable is ${resolvedView.view.name}")
         composableList?.addChild(
             SquooshChildComposable(
                 component = null,

@@ -42,7 +42,7 @@ jobs:
         with:
           submodules: 'recursive'
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@ce3cf9537a52e8119d91fd484ab5b8a807627bf8 # v4.6.0
+        uses: actions/dependency-review-action@38ecb5b593bf0eb19e335c03f97670f792489a8b # v4.7.0
         with:
           # This will cause the dependency graph workflow to re-run if new dependencies are uploaded
           # by a job that finishes after this one. Specifically needed for the Gradle dependency snapshot upload

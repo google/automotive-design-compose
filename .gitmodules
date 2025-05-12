@@ -1,0 +1,3 @@
+[submodule "crates/dc_bundle/src/proto"]
+	path = crates/dc_bundle/src/proto
+	url = git@github.com:google/automotive-design-compose-protos.git

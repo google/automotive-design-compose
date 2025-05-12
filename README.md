@@ -78,6 +78,36 @@ to `reference-apps/helloworld` for an an example of a basic app.
 
 # Working with the Source
 
+## Proto Submodule
+
+DesignCompose's proto files are hosted in a separate Git repository:
+[automotive-design-compose-protos](https://github.com/google/automotive-design-compose-protos)
+and are included here as a Git submodule located at `crates/dc_bundle/src/proto`.
+
+When you first clone this repository, or when the submodule reference is updated
+(e.g., after a `git pull` in this main repository),
+you'll need to ensure the submodule content is downloaded and at the correct version.
+
+### 1. Cloning the Repository for the First Time (Recommended)
+
+The easiest way to ensure submodules are handled correctly from the start is to use
+the `--recurse-submodules` flag when cloning:
+
+```bash
+git clone --recurse-submodules git@github.com:google/automotive-design-compose.git
+
+## 2. Initializing or Updating Submodules in an Already Cloned Repository
+If you have already cloned the repository without the --recurse-submodules flag,
+or if you've pulled changes that updated the submodule reference
+(i.e., this main repository now points to a different commit of the submodule),
+the proto submodule directory (crates/dc_bundle/src/proto) might be empty or outdated.
+
+To initialize and/or update the submodule to the version specified by this repository,
+run the following command from the root directory of this repository:
+
+```bash
+git submodule update --init --recursive
+
 ## SDK build dependencies
 
 DesignCompose's Live Update system uses a native library built in Rust to fetch and serialize your

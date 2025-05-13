@@ -45,7 +45,6 @@ import com.android.designcompose.definition.element.shaderDataOrNull
 import com.android.designcompose.definition.modifier.TextAlignVertical
 import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.definition.view.strokeOrNull
-import com.android.designcompose.definition.view.textColorOrNull
 import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.getCustomBrush
 import com.android.designcompose.getShaderBrush
@@ -57,6 +56,7 @@ import com.android.designcompose.utils.asBrush
 import com.android.designcompose.utils.asComposeBlendMode
 import com.android.designcompose.utils.asComposeTransform
 import com.android.designcompose.utils.isMask
+import com.android.designcompose.utils.protoVersionsFontColor
 import com.android.designcompose.utils.toUniform
 import com.android.designcompose.utils.useLayer
 import kotlin.system.measureTimeMillis
@@ -370,8 +370,10 @@ private fun squooshTextRender(
     if (customFillBrush != null) {
         paragraph.paint(drawContext.canvas, brush = customFillBrush, alpha = 1.0f, drawStyle = Fill)
     } else {
+        // Call this helper to get the font color since the proto field has changed over time
+        val fontColor = protoVersionsFontColor(style)
         val textBrushAndOpacity =
-            style.nodeStyle.textColorOrNull?.asBrush(
+            fontColor?.asBrush(
                 appContext = appContext,
                 document = document,
                 density = density.density,

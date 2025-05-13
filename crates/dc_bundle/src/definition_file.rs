@@ -49,11 +49,11 @@ pub fn decode_dcd_with_header(
 
     // Ensure the version of the document matches this version of automotive design compose.
     if header.dc_version != DesignComposeDefinitionHeader::current_version() {
-        return Err(Error::DCDLoadError(format!(
-            "DesignComposeDefinition incorrect version. Expected {} Found: {}",
+        println!(
+            "DesignComposeDefinition old version found. Expected {} Found: {}",
             DesignComposeDefinitionHeader::current_version(),
             header.dc_version
-        )));
+        );
     }
 
     let dcd_length = cis.read_raw_varint32().map_err(|_| Error::DecodeError())?;

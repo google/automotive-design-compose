@@ -1335,7 +1335,7 @@ fn visit_node(
     } = &node.data
     {
         if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
-            style.node_style_mut().text_color =
+            style.node_style_mut().font_color =
                 Some(compute_background(text_fill, images, &node.name)).into();
         }
         style.node_style_mut().font_size = if let Some(vars) = &node.bound_variables {
@@ -1519,10 +1519,10 @@ fn visit_node(
                     if substyle_fill.is_some() {
                         substyle_fill
                     } else {
-                        style.node_style().text_color.clone().unwrap_or_default()
+                        style.node_style().font_color.clone().unwrap_or_default()
                     }
                 } else {
-                    style.node_style().text_color.clone().unwrap_or_default()
+                    style.node_style().font_color.clone().unwrap_or_default()
                 };
                 let font_size = if let Some(fs) = sub_style.font_size {
                     NumOrVarType::Num(fs)

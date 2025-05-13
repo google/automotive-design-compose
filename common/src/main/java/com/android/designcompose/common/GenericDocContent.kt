@@ -208,9 +208,14 @@ private fun decodeHeader(
 ): DesignComposeDefinitionHeader? {
     // Now attempt to deserialize the doc)
     val header = DesignComposeDefinitionHeader.parseDelimitedFrom(docStream)
-    if (header.dcVersion != FSAAS_DOC_VERSION) {
+    // Warn for a version mismatch, but don't fail since we support backward compatibility with old
+    // protobuf versions
+    if (header.dcVersion != FSAAS_DOC_VERSION)
         feedback.documentDecodeVersionMismatch(FSAAS_DOC_VERSION, header.dcVersion, docId)
-        return null
-    }
     return header
+}
+
+fun headerVersion(docStream: InputStream): Int {
+    val header = DesignComposeDefinitionHeader.parseDelimitedFrom(docStream)
+    return header.dcVersion
 }

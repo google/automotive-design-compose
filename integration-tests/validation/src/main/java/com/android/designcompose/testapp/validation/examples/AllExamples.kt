@@ -149,6 +149,8 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         ),
         // Hyperlink
         Triple("Hyperlink", { HyperlinkTest() }, HyperlinkValidationDoc.javaClass.name),
+        // Testing protobuf backward compatibility
+        Triple("ProtoChange", { ProtoChangeTest() }, ProtoChangeDoc.javaClass.name),
         // GH-636: Test takes too long to execute.
         // Triple("Very large File", { VeryLargeFile() }, VeryLargeFileDoc.javaClass.name)
     )

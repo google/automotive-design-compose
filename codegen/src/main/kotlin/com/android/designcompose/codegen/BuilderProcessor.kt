@@ -583,6 +583,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
 
             // Add optional key that can be used to uniquely identify this particular instance
             args.add(Pair("key", "String? = null"))
+            args.add(Pair("dcfInputStream", "InputStream? = null"))
 
             // Add an optional replacement index that should be populated if the composable is
             // replacing children of a node through a content replacement customization
@@ -837,6 +838,7 @@ class BuilderProcessor(private val codeGenerator: CodeGenerator, val logger: KSP
                 "                serverParams = DocumentServerParams(queries, ignoredImages()),\n"
             )
             out.appendText("                setDocId = setDocId,\n")
+            out.appendText("                dcfInputStream = dcfInputStream,\n")
             val switchPolicy =
                 if (hideDesignSwitcher) "DesignSwitcherPolicy.HIDE"
                 else "DesignSwitcherPolicy.SHOW_IF_ROOT"

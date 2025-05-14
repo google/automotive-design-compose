@@ -47,6 +47,8 @@ pub struct ProgressBarMeterJson {
     pub discrete: bool,
     pub discrete_value: f32,
     #[serde(default)]
+    pub draggable: bool,
+    #[serde(default)]
     pub vertical: bool,
     #[serde(default)]
     pub end_x: f32,
@@ -64,6 +66,8 @@ pub struct ProgressMarkerMeterJson {
     pub enabled: bool,
     pub discrete: bool,
     pub discrete_value: f32,
+    #[serde(default)]
+    pub draggable: bool,
     #[serde(default)]
     pub vertical: bool,
     #[serde(default)]

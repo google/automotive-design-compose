@@ -206,6 +206,10 @@
         </div>
         <input id="barDiscreteValue" type="input" style="width: 40;" class="input__field" value="20"
           onkeydown="inputKeyDown(this, 1, NaN, barChanged)">
+        <div class="checkbox" style="margin-left: -3">
+          <input id="barDraggableSwitch" type="checkbox" class="checkbox">
+          <label class="normallabel" style="margin-left: 6">Enable drag</label>
+        </div>
       </div>
       <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10">
         <span class="sublabel">Preview</span>
@@ -304,6 +308,10 @@
         </div>
         <input id="markerDiscreteValue" type="input" style="width: 40;" class="input__field" value="20"
           onkeydown="inputKeyDown(this, 1, NaN, markerChanged)">
+        <div class="checkbox" style="margin-left: -3">
+          <input id="markerDraggableSwitch" type="checkbox" class="checkbox">
+          <label class="normallabel" style="margin-left: 6">Enable drag</label>
+        </div>
       </div>
       <div class="slidecontainer" style="display: flex; margin-top: 10; margin-bottom: -10">
         <span class="sublabel">Preview</span>
@@ -658,6 +666,7 @@
         value: toNumber(barValue.value, 0),
         discrete: barDiscreteSwitch.checked,
         discreteValue: toNumber(barDiscreteValue.value, 20),
+        draggable: barDraggableSwitch.checked,
         vertical: vertical,
       }
     }, '*');
@@ -720,6 +729,7 @@
         value: toNumber(markerValue.value, 0),
         discrete: markerDiscreteSwitch.checked,
         discreteValue: toNumber(markerDiscreteValue.value, 20),
+        draggable: markerDraggableSwitch.checked,
         vertical: vertical,
       }
     }, '*');
@@ -783,6 +793,7 @@
     barDiscreteSwitch.checked = bd && bd.discrete;
     barDiscreteValue.value = bd ? bd.discreteValue : 20;
     barDiscreteValue.style.display = (bd && bd.discrete) ? 'block' : 'none';
+    barDraggableSwitch.checked = bd && bd.draggable;
     setBarLayout(bd && bd.vertical);
     barInputFormat();
 
@@ -804,6 +815,7 @@
     markerDiscreteSwitch.checked = md && md.discrete;
     markerDiscreteValue.value = md ? md.discreteValue : 20;
     markerDiscreteValue.style.display = (md && md.discrete) ? 'block' : 'none';
+    markerDraggableSwitch.checked = md && md.draggable;
     setMarkerLayout(md && md.vertical);
     markerInputFormat();
 

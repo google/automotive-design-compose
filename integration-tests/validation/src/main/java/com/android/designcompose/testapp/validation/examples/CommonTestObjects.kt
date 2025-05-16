@@ -42,6 +42,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -83,7 +84,7 @@ fun AdaptiveButton(setAdaptive: (Boolean) -> Unit) {
 internal fun Slider(value: MutableState<Float>, min: Float, max: Float, testTag: String? = null) {
     val density = LocalDensity.current.density
     val sliderMax = 400f * density
-    val v = remember { mutableStateOf(sliderMax * (value.value - min) / (max - min)) }
+    val v = remember { derivedStateOf { sliderMax * (value.value - min) / (max - min) } }
     val testTagModifier = testTag?.let { Modifier.testTag(it) } ?: Modifier
     Box(
         modifier =
@@ -103,12 +104,12 @@ internal fun Slider(value: MutableState<Float>, min: Float, max: Float, testTag:
                         orientation = Orientation.Horizontal,
                         state =
                             rememberDraggableState { delta ->
-                                v.value =
+                                val newOffset =
                                     java.lang.Float.max(
                                         java.lang.Float.min(v.value + delta, sliderMax),
                                         0f,
                                     )
-                                value.value = min + (max - min) * v.value / sliderMax
+                                value.value = min + (max - min) * newOffset / sliderMax
                             },
                     )
                     .size(30.dp)

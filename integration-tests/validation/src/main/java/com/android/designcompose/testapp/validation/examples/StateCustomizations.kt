@@ -19,7 +19,6 @@ package com.android.designcompose.testapp.validation.examples
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.android.designcompose.MeterState
@@ -43,8 +42,8 @@ interface StateCustomizations {
 @Composable
 fun StateCustomizationsTest(clock: Clock) {
     val time = remember { mutableStateOf("00:00:00") }
-    val firstHand = remember { mutableFloatStateOf(0F) }
-    val secondHand = remember { mutableFloatStateOf(0F) }
+    val firstHand = remember { mutableStateOf<Float?>(0F) }
+    val secondHand = remember { mutableStateOf<Float?>(0F) }
 
     val handler = Handler(Looper.getMainLooper())
     val runnable =
@@ -54,9 +53,8 @@ fun StateCustomizationsTest(clock: Clock) {
                 val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
                 val formattedTime = currentTime.format(formatter)
                 time.value = formattedTime
-                firstHand.floatValue =
-                    (currentTime.hour % 12 + currentTime.minute / 60F) * 100 / 12F
-                secondHand.floatValue = currentTime.minute * 100 / 60F
+                firstHand.value = (currentTime.hour % 12 + currentTime.minute / 60F) * 100 / 12F
+                secondHand.value = currentTime.minute * 100 / 60F
                 handler.postDelayed(this, 1000) // Update every second
             }
         }

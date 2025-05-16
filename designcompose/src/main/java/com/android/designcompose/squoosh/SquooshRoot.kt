@@ -26,6 +26,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -113,6 +114,7 @@ import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
 import com.android.designcompose.sDocRenderText
+import com.android.designcompose.setMeterState
 import com.android.designcompose.squooshAnimatedActions
 import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
@@ -734,13 +736,15 @@ fun SquooshRoot(
                 // Now render all of the children
                 for (child in composableList.childComposables) {
                     var needsComposition = true
+
                     var composableChildModifier =
                         Modifier.drawWithContent {
                                 if (
                                     child.node.layoutId ==
                                         childRenderSelector.selectedRenderChild?.layoutId
-                                )
+                                ) {
                                     drawContent()
+                                }
                             }
                             .then(SquooshParentData(node = child.node))
                             .then(Modifier.testTag(child.node.view.name))
@@ -792,7 +796,8 @@ fun SquooshRoot(
                             }
                         }
 
-                        if (hasPressClick || isPressed.value)
+                        if (hasPressClick || isPressed.value) {
+                            val interactionSource = remember { MutableInteractionSource() }
                             composableChildModifier =
                                 composableChildModifier.squooshInteraction(
                                     doc,
@@ -801,12 +806,34 @@ fun SquooshRoot(
                                     customizationContext,
                                     child,
                                     isPressed,
+                                    interactionSource,
                                 )
-                        else if (child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) {
+                        } else if (child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) {
                             composableChildModifier =
                                 composableChildModifier.hyperlinkHandler(
                                     child.node,
                                     LocalUriHandler.current,
+                                )
+                        } else if (
+                            child.node.findProgressBarChild() != null ||
+                                child.node.findProgressMarkerDescendant() != null
+                        ) {
+                            // Get the progress bar or marker node and set a meter state on the node
+                            // so that it can be set whenever it is dragged.
+                            val pbChild = child.node.findProgressBarChild()
+                            val pmChild = child.node.findProgressMarkerDescendant()
+                            val interactionSource = remember { MutableInteractionSource() }
+                            val meter = remember { mutableStateOf<Float?>(null) }
+                            pbChild?.let { customizationContext.setMeterState(it.view.name, meter) }
+                            pmChild?.let { customizationContext.setMeterState(it.view.name, meter) }
+                            // Give this node a Modifier that tracks tap/drag
+                            composableChildModifier =
+                                composableChildModifier.progressBarSlider(
+                                    child.node,
+                                    interactionScope,
+                                    interactionSource,
+                                    customizationContext,
+                                    meter,
                                 )
                         } else {
                             needsComposition = false

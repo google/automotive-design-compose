@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.Meter
+import com.android.designcompose.OnProgressChangedCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -42,6 +43,9 @@ interface DialsGaugesTest {
         @Design(node = "#needle-rotation") needleRotation: Meter,
         @Design(node = "#progress-bar") progressBar: Meter,
         @Design(node = "#progress-indicator") progressIndicator: Meter,
+        @Design(node = "#progress-bar-tap") onProgressBarChanged: OnProgressChangedCallback,
+        @Design(node = "#progress-indicator-tap")
+        onProgressIndicatorChanged: OnProgressChangedCallback,
     )
 
     @DesignComponent(node = "#stage-vector-progress")
@@ -52,6 +56,8 @@ interface DialsGaugesTest {
         @Design(node = "#progress-bar") progressBar: Meter,
         @Design(node = "#progress-indicator") progressIndicator: Meter,
     )
+
+    @DesignComponent(node = "#stage-draggable") fun DraggableProgress()
 }
 
 @Composable
@@ -65,6 +71,18 @@ fun DialsGaugesTest() {
         needleRotation = rotation.value,
         progressBar = progress.value,
         progressIndicator = progressIndicator.value,
+        onProgressBarChanged =
+            object : OnProgressChangedCallback {
+                override fun onProgressChanged(p: Float) {
+                    println("Progress bar changed: $p")
+                }
+            },
+        onProgressIndicatorChanged =
+            object : OnProgressChangedCallback {
+                override fun onProgressChanged(p: Float) {
+                    println("Progress marker changed: $p")
+                }
+            },
     )
 
     Row(
@@ -158,4 +176,9 @@ fun ProgressConstraintsTest() {
         Slider(stageHeight, 100f, 1000f, "main-height")
         Text(stageHeight.value.toString(), fontSize = 20.sp)
     }
+}
+
+@Composable
+fun DraggableProgressTest() {
+    DialsGaugesTestDoc.DraggableProgress()
 }

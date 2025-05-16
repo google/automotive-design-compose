@@ -389,8 +389,7 @@ internal fun ContentDrawScope.squooshShapeRender(
     var customArcAngle = false
     var progressVectorMeterData: ProgressVectorMeterData? = null
 
-    val meterValue =
-        customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.floatValue
+    val meterValue = customizations.getMeterValue(name) ?: customizations.getMeterState(name)?.value
     // Check if there is meter data for a dial/gauge/progress bar
     if (meterValue != null && style.nodeStyle.hasMeterData()) {
         with(style.nodeStyle.meterData) {

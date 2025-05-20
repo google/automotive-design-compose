@@ -25,7 +25,6 @@ plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.publish.android")
     id("designcompose.conventions.roborazzi")
-    id("designcompose.conventions.android-test-devices")
     id("com.android.designcompose.internal")
 }
 

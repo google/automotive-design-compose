@@ -31,6 +31,7 @@ import com.android.designcompose.ReplacementContent
 import com.android.designcompose.TestUtils
 import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
+import com.android.designcompose.test.onDCDocRoot
 import com.android.designcompose.testapp.common.InterFontTestRule
 import com.android.designcompose.testapp.validation.examples.GridWidgetTest
 import com.android.designcompose.testapp.validation.examples.GridWidgetTestContent
@@ -56,7 +57,7 @@ class Scrolling {
     @Test
     fun dragScroll() {
         with(composeTestRule) {
-            setContent { ScrollingTest() }
+            setContent { ScrollingTest(onTap = { println(" ### Hello") }) }
             onNodeWithTag("DragVertical").performTouchInput { down(Offset.Zero) }
             onNodeWithTag("DragVertical").performTouchInput { moveTo(Offset(0f, -200F)) }
             onNodeWithTag("DragVertical").performTouchInput { cancel() }
@@ -66,6 +67,22 @@ class Scrolling {
             onNodeWithTag("DragHorizontal").performTouchInput { moveTo(Offset(-200f, 0F)) }
             onNodeWithTag("DragHorizontal").performTouchInput { cancel() }
             captureRootRoboImage("scroll-horizontal")
+        }
+    }
+
+    @Test
+    fun dragScrollTap() {
+        with(composeTestRule) {
+            val tapped = mutableStateOf(false)
+            setContent { ScrollingTest(onTap = { tapped.value = true }) }
+            onNodeWithTag("DragHorizontal").performTouchInput { down(Offset.Zero) }
+            onNodeWithTag("DragHorizontal").performTouchInput { moveTo(Offset(-500f, 0F)) }
+            onNodeWithTag("DragHorizontal").performTouchInput { cancel() }
+            captureRootRoboImage("scroll-then-tap")
+            // Scrolling should put the clickable green square at the coordinates below, so
+            // clicking it should set tapped to true
+            onDCDocRoot(ScrollingTestDoc).performTouchInput { click(Offset(1100f, 775f)) }
+            assert(tapped.value)
         }
     }
 

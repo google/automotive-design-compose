@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.designcompose.DesignScrollCallbacks
 import com.android.designcompose.ReplacementContent
+import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
@@ -59,10 +60,13 @@ interface ScrollingTest {
     @DesignComponent(node = "#square-drag-vertical") fun SquareDragVertical()
 
     @DesignComponent(node = "#square-drag-horizontal") fun SquareDragHorizontal()
+
+    @DesignComponent(node = "#square-tap")
+    fun SquareTap(@Design(node = "#square-tap") tap: TapCallback)
 }
 
 @Composable
-fun ScrollingTest() {
+fun ScrollingTest(onTap: TapCallback? = null) {
     val verticalScrollableState = remember { mutableStateOf<ScrollableState?>(null) }
     val horizontalScrollableState = remember { mutableStateOf<ScrollableState?>(null) }
     val scope = rememberCoroutineScope()
@@ -90,6 +94,7 @@ fun ScrollingTest() {
                             ScrollingTestDoc.SquareDragHorizontal(
                                 modifier = Modifier.testTag("DragHorizontal")
                             )
+                        else if (idx == 4) ScrollingTestDoc.SquareTap(tap = onTap ?: {})
                         else if (idx % 2 == 0) ScrollingTestDoc.Square2()
                         else ScrollingTestDoc.Square1()
                     }

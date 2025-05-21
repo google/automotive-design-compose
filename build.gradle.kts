@@ -29,7 +29,6 @@ buildscript {
 
 plugins {
     id("designcompose.conventions.base")
-    id("designcompose.conventions.android-test-devices") apply false
     id("designcompose.conventions.roborazzi") apply false
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
@@ -45,7 +44,6 @@ plugins {
 for (projectName in listOf("tutorial-app", "helloworld-app", "cluster-demo", "mediacompose-app")) {
     if (projectName in childProjects) {
         project(projectName).plugins.apply("designcompose.conventions.base")
-        project(projectName).plugins.apply("designcompose.conventions.android-test-devices")
         project(projectName).plugins.apply("designcompose.conventions.roborazzi")
     }
 }

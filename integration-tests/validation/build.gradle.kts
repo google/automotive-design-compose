@@ -20,7 +20,6 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
     id("designcompose.conventions.base")
-    id("designcompose.conventions.android-test-devices")
     id("designcompose.conventions.roborazzi")
     id("com.android.designcompose.internal")
 }

@@ -242,7 +242,7 @@ internal object VariableManager {
         // a variable of the same name from the override collection.
         val variable = resolveVariable(varId, variableState)
         variable?.let { v ->
-            return v.getColor(varMap, variableState)
+            return v.getColor(varMap, fallback, variableState)
         }
         Feedback.documentVariableMissingWarning(currentDocId, varId)
         return fallback
@@ -252,7 +252,7 @@ internal object VariableManager {
     internal fun getNumber(varId: String, fallback: Float?, variableState: VariableState): Float? {
         val variable = resolveVariable(varId, variableState)
         variable?.let { v ->
-            return v.getNumber(varMap, variableState)
+            return v.getNumber(varMap, fallback, variableState)
         }
         Feedback.documentVariableMissingWarning(currentDocId, varId)
         return fallback
@@ -305,7 +305,11 @@ internal object VariableManager {
     }
 
     // Return this variable's color given the current variable state.
-    private fun Variable.getColor(variableMap: VariableMap, variableState: VariableState): Color? {
+    private fun Variable.getColor(
+        variableMap: VariableMap,
+        fallback: Color?,
+        variableState: VariableState,
+    ): Color? {
         // Use the material theme override if one exists
         MaterialThemeValues.getColor(name, variableCollectionId, variableState)?.let {
             return it
@@ -313,20 +317,22 @@ internal object VariableManager {
         val value = getValue(variableMap, variableState)
         return when (value?.valueCase) {
             VariableValue.ValueCase.COLOR -> value.color.toColor()
-            VariableValue.ValueCase.ALIAS ->
-                resolveVariable(value.alias, variableState)?.getColor(variableMap, variableState)
+            VariableValue.ValueCase.ALIAS -> getColor(value.alias, fallback, variableState)
 
             else -> null
         }
     }
 
     // Return this variable's number given the current variable state.
-    private fun Variable.getNumber(variableMap: VariableMap, variableState: VariableState): Float? {
+    private fun Variable.getNumber(
+        variableMap: VariableMap,
+        fallback: Float?,
+        variableState: VariableState,
+    ): Float? {
         val value = getValue(variableMap, variableState)
         return when (value?.valueCase) {
             VariableValue.ValueCase.NUMBER -> value.number
-            VariableValue.ValueCase.ALIAS ->
-                resolveVariable(value.alias, variableState)?.getNumber(variableMap, variableState)
+            VariableValue.ValueCase.ALIAS -> getNumber(value.alias, fallback, variableState)
 
             else -> null
         }

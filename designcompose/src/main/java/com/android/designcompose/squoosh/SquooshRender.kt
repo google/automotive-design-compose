@@ -46,7 +46,9 @@ import com.android.designcompose.definition.modifier.TextAlignVertical
 import com.android.designcompose.definition.modifier.TextOverflow
 import com.android.designcompose.definition.view.strokeOrNull
 import com.android.designcompose.definition.view.transformOrNull
+import com.android.designcompose.getContent
 import com.android.designcompose.getCustomBrush
+import com.android.designcompose.getListContent
 import com.android.designcompose.getShaderBrush
 import com.android.designcompose.getShaderTimeUniformState
 import com.android.designcompose.getShaderUniformCustomizations
@@ -118,7 +120,14 @@ internal fun Modifier.squooshRender(
                     // Call drawContext.canvas.restore() if scrolling is enabled in order to restore
                     // the canvas matrix/clip state. This is a good candidate for RAII but this is
                     // not supported by Kotlin.
-                    val scroll = node.parent?.view == parentNode
+                    var scroll = false
+                    node.parent?.let {
+                        // Don't scroll for custom list content since it scrolled in layout
+                        val customContent =
+                            customizations.getContent(it.view.name) != null ||
+                                customizations.getListContent(it.view.name) != null
+                        scroll = !customContent && it.view == parentNode
+                    }
                     if (scroll) {
                         drawContext.canvas.save()
                         drawContext.canvas.translate(-scrollOffset.value.x, -scrollOffset.value.y)

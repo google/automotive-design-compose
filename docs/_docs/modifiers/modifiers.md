@@ -808,7 +808,7 @@ Button("Up", "ScrollUp", true) {
 ```
 
 
-## Dials, gauges and progress bars {#dials,-gauges}
+## Dials, gauges and progress bars
 
 A designer can use the Dials and Gauges plugin to configure a node to behave as
 a dial, gauge, or progress bar. To support this, you need to use a `Meter` type
@@ -843,6 +843,33 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+```
+
+### Draggable progress bars
+
+A designer can specify that a progress bar or progress bar marker is draggable within the plugin UI:
+![Draggable Progress](./draggable-progress.png)
+
+A draggable progress bar or marker does not need a `Meter` customization since the user controls its position. The `OnProgressChangedCallback` can be added to the draggable node in order to receive progress updates when the progress changes:
+
+```kotlin
+@DesignDoc(id = "<your figma doc id>")
+interface HelloWorld {
+    @DesignComponent(node = "#MainFrame")
+    fun MainFrame(
+        @Design(node = "#progress-bar-tap") onProgressBarChanged: OnProgressChangedCallback,
+    )
+}
+
+HelloWorldDoc.MainFrame(
+    onProgressBarChanged =
+        object : OnProgressChangedCallback {
+            override fun onProgressChanged(p: Float) {
+                println("Progress bar changed: $p")
+            }
+        },
+)
 
 ```
 

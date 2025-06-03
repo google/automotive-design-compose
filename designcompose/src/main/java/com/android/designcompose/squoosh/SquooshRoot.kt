@@ -857,9 +857,18 @@ fun SquooshRoot(
                     // https://github.com/google/automotive-design-compose/issues/1605
                     if (isListItem)
                         key(child.node.layoutId) {
-                            SquooshChildLayout(modifier = composableChildModifier, child = child)
+                            SquooshChildLayout(
+                                modifier = composableChildModifier,
+                                child = child,
+                                scrollOffset,
+                            )
                         }
-                    else SquooshChildLayout(modifier = composableChildModifier, child = child)
+                    else
+                        SquooshChildLayout(
+                            modifier = composableChildModifier,
+                            child = child,
+                            scrollOffset,
+                        )
                 }
             },
         )
@@ -1243,7 +1252,11 @@ private fun MeasureScope.squooshLayout(
 }
 
 @Composable
-private fun SquooshChildLayout(modifier: Modifier, child: SquooshChildComposable) {
+private fun SquooshChildLayout(
+    modifier: Modifier,
+    child: SquooshChildComposable,
+    scrollOffset: State<Offset>,
+) {
     androidx.compose.ui.layout.Layout(
         modifier = modifier,
         content = {
@@ -1264,7 +1277,9 @@ private fun SquooshChildLayout(modifier: Modifier, child: SquooshChildComposable
             // Place all children at the origin (with the same size constraints that
             // we were given).
             layout(layoutWidth, layoutHeight) {
-                placeables.forEach { child -> child.placeRelative(0, 0) }
+                val x = -scrollOffset.value.x.roundToInt()
+                val y = -scrollOffset.value.y.roundToInt()
+                placeables.forEach { child -> child.placeRelative(x, y) }
             }
         },
     )

@@ -26,6 +26,8 @@ import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 import com.android.designcompose.testapp.helloworld.ui.theme.helloworldTheme
+import java.io.File
+import java.io.InputStream
 
 const val helloWorldDocId = "pxVlixodJqZL95zo2RzTHl"
 
@@ -37,9 +39,14 @@ interface HelloWorld {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        val dir = filesDir.path
+        val inputStream: InputStream? = try {
+            File(dir, "HelloWorldDoc_pxVlixodJqZL95zo2RzTHl.dcf").inputStream()
+        } catch (e: Exception) {
+          null
+        }
         DesignSettings.enableLiveUpdates(this)
-        setContent { HelloWorldDoc.mainFrame(name = "World!") }
+        setContent { HelloWorldDoc.mainFrame(name = "World!", dcfInputStream = inputStream) }
     }
 }
 

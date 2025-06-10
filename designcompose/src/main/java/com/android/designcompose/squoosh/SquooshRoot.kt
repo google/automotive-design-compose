@@ -130,6 +130,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.InputStream
 
 const val TAG: String = "DC_SQUOOSH"
 
@@ -236,6 +237,7 @@ fun SquooshRoot(
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
     rootRecurseParams: RootRecurseParams = RootRecurseParams(),
+    dcfInputStream: InputStream? = null,
 ) {
     // Basic init and doc loading.
     val isRoot = LocalSquooshIsRootContext.current.isRoot
@@ -247,6 +249,7 @@ fun SquooshRoot(
             serverParams,
             designComposeCallbacks?.newDocDataCallback,
             liveUpdateMode == LiveUpdateMode.OFFLINE,
+            dcfInputStream,
         )
 
     LaunchedEffect(docName) { Log.i(TAG, "Squooshing $docName") }

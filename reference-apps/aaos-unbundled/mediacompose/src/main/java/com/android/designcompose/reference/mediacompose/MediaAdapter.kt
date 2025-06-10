@@ -638,7 +638,7 @@ class MediaAdapter(
     class MediaNowPlayingProgress {
         var currentTimeText: MutableState<String> = mutableStateOf("")
         var maxTimeText: MutableState<String> = mutableStateOf("")
-        var progressWidth: MutableState<Float?> = mutableStateOf<Float?>(0F)
+        var progressWidth: MutableFloatState = mutableFloatStateOf(0F)
     }
 
     @Composable
@@ -647,7 +647,7 @@ class MediaAdapter(
         // Observe the current track progress
         val progress: PlaybackProgress? by nowPlayingPlaybackViewModel.progress.observeAsState()
         val maxProgress = progress?.maxProgress?.toFloat() ?: 0F
-        nowPlaying.progressWidth.value =
+        nowPlaying.progressWidth.floatValue =
             if (maxProgress == 0F) 0F
             else (progress?.progress?.toFloat() ?: 0F) * 100F / maxProgress
         nowPlaying.currentTimeText.value = progress?.currentTimeText as String? ?: ""

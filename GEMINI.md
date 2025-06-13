@@ -1,6 +1,6 @@
-# Gemini Code Assistant Project Overview
+# Gemini Agent Project Overview
 
-This document provides a high-level overview of the Automotive Design for Compose (DesignCompose) project, intended to be used by the Gemini code assistant.
+This document provides a high-level overview of the Automotive Design for Compose (DesignCompose) project, intended for use by the Gemini agent.
 
 ## Project Description
 
@@ -109,3 +109,10 @@ The project is built using Gradle. The build process involves compiling the Kotl
     *   Run `./dev-scripts/test-all.sh` to run all tests.
 4.  **Submitting Changes:**
     *   Create a pull request.
+
+## Task Continuation and Notes
+
+To ensure that work can be continued across sessions, the agent will use a notes system.
+
+*   **Creating Notes:** For any task that will require large amounts of planning or file changes, the agent will create a markdown file in the `.gemini/` directory (e.g., `.gemini/task-name-notes.md`). This file will contain a summary of the work completed, the plan for what is left to do, and any other relevant context.
+*   **Continuing Tasks:** At the beginning of a new session, the agent will look for any files in the `.gemini/` directory (ignoring the `.gitignore` file, so it is important to use the correct tool parameter to see all files). If the agent finds any, it will read them and ask the user if they want to continue the tasks described in them.

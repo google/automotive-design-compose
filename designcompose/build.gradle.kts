@@ -20,6 +20,7 @@ plugins {
     id("com.android.designcompose.rust-in-android")
     alias(libs.plugins.ksp) // For testing a fetch of HelloWorld
     alias(libs.plugins.designcompose) // Allows us to get the Figma Token
+    alias(libs.plugins.jetbrains.compose)
 
     // Plugins from our buildSrc
     id("designcompose.conventions.base")
@@ -60,11 +61,6 @@ android {
         }
     }
 
-    buildFeatures { compose = true }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
-    }
     packaging {
         resources.excludes.apply {
             add("META-INF/LICENSE*")

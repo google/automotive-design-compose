@@ -19,6 +19,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
+    alias(libs.plugins.jetbrains.compose)
     id("designcompose.conventions.base")
     id("designcompose.conventions.roborazzi")
     id("com.android.designcompose.internal")
@@ -65,12 +66,6 @@ android {
                 "proguard-rules.pro",
             )
         }
-    }
-
-    buildFeatures { compose = true }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
     packaging { resources { excludes.add("/META-INF/{AL2.0,LGPL2.1}") } }

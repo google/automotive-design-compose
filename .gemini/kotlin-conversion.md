@@ -61,3 +61,17 @@ This is the execution phase, where I will apply the changes and iteratively fix 
 *I will keep a log of my actions and findings here to track progress and facilitate recovery from any issues.*
 
 **Note:** After completing each major milestone in this plan, I will commit the changes to the current branch to save our progress.
+
+### Phase 1: Research and Version Selection (Completed)
+
+*   **Kotlin:** `2.1.21`
+*   **KSP:** `2.1.21-2.0.1`
+*   **JetBrains Compose Gradle Plugin:** `org.jetbrains.kotlin.plugin.compose` version `2.1.21`
+
+### Phase 2: Build System & Dependency Updates (Completed)
+
+*   Updated `gradle/libs.versions.toml` with the new versions.
+*   Added the `org.jetbrains.kotlin.plugin.compose` plugin to the relevant modules.
+*   Removed the `composeOptions` and `buildFeatures` blocks from the relevant modules.
+
+**Note:** After completing each major milestone in this plan, I will commit the changes to the current branch to save our progress.

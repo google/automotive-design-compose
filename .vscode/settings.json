@@ -43,5 +43,6 @@
         "**/_site": true
     },
     "shellcheck.useWorkspaceRootAsCwd": true,
-    "bashIde.includeAllWorkspaceSymbols": true
+    "bashIde.includeAllWorkspaceSymbols": true,
+    "java.compile.nullAnalysis.mode": "disabled"
 }

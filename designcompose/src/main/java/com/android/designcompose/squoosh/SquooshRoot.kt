@@ -121,6 +121,7 @@ import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
 import com.android.designcompose.stateForDoc
 import com.android.designcompose.unregisterOpenLinkCallback
+import java.io.InputStream
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
@@ -236,6 +237,7 @@ fun SquooshRoot(
     liveUpdateMode: LiveUpdateMode = LiveUpdateMode.LIVE,
     designComposeCallbacks: DesignComposeCallbacks? = null,
     rootRecurseParams: RootRecurseParams = RootRecurseParams(),
+    dcfInputStream: InputStream? = null,
 ) {
     // Basic init and doc loading.
     val isRoot = LocalSquooshIsRootContext.current.isRoot
@@ -247,6 +249,7 @@ fun SquooshRoot(
             serverParams,
             designComposeCallbacks?.newDocDataCallback,
             liveUpdateMode == LiveUpdateMode.OFFLINE,
+            dcfInputStream,
         )
 
     LaunchedEffect(docName) { Log.i(TAG, "Squooshing $docName") }

@@ -43,6 +43,7 @@ import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
 import com.android.designcompose.definition.view.ComponentInfo
 import com.android.designcompose.squoosh.SquooshRoot
+import java.io.InputStream
 import kotlin.math.min
 import kotlinx.coroutines.delay
 
@@ -232,11 +233,13 @@ fun DesignDoc(
     designSwitcherPolicy: DesignSwitcherPolicy = DesignSwitcherPolicy.SHOW_IF_ROOT,
     designComposeCallbacks: DesignComposeCallbacks? = null,
     parentComponents: List<ParentComponentInfo> = listOf(),
+    dcfInputStream: InputStream? = null,
 ) {
     beginSection(DCTraces.DESIGNDOCINTERNAL)
     DesignDocInternal(
         docName,
         docId,
+        dcfInputStream,
         rootNodeQuery,
         modifier = modifier,
         customizations = customizations,
@@ -253,6 +256,7 @@ fun DesignDoc(
 internal fun DesignDocInternal(
     docName: String,
     incomingDocId: DesignDocId,
+    dcfInputStream: InputStream? = null,
     rootNodeQuery: NodeQuery,
     modifier: Modifier = Modifier,
     customizations: CustomizationContext = CustomizationContext(),
@@ -269,6 +273,7 @@ internal fun DesignDocInternal(
     SquooshRoot(
         docName = docName,
         incomingDocId = currentDocId,
+        dcfInputStream = dcfInputStream,
         rootNodeQuery = rootNodeQuery,
         modifier = modifier,
         customizationContext = customizations,

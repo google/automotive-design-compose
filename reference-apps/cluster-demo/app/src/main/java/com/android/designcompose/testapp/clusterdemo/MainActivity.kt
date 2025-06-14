@@ -79,6 +79,9 @@ import com.android.designcompose.MeterState
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
+import com.android.designcompose.annotation.DesignModule
+import com.android.designcompose.annotation.DesignModuleClass
+import com.android.designcompose.annotation.DesignProperty
 import com.android.designcompose.annotation.DesignVariant
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.squoosh.SmartAnimateTransition
@@ -306,6 +309,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@DesignModuleClass
+class NewDialsGauges(
+    @DesignProperty(node = "#driving/speedo-gauge") val speedoGauge: Meter,
+    @DesignProperty(node = "#driving/battery-gauge") val batteryGauge: Meter,
+    @DesignProperty(node = "#driving/battery-temp-gauge") val batteryTempGauge: Meter,
+    @DesignProperty(node = "#driving/regen-gauge") val regenGauge: Meter,
+    @DesignProperty(node = "#driving/power-gauge") val powerGauge: Meter,
+    @DesignProperty(node = "#driving/rpm-gauge") val rpmGauge: Meter,
+    @DesignProperty(node = "#driving/rpm") val rpm: State<String>,
+)
+
 // Future Demo Branch od2Xm016aH1SvThcqFp0hE
 // Galaxy V2 E82Od5Wfu2xuqVLyOjQV7Z
 // Shiny V2 cJKbU0Kl8tBuU1bkIemt2I
@@ -352,13 +366,7 @@ interface Cluster {
         @Design(node = "#driving/icon-power-plus") showRegenIcon: Boolean,
 
         // New dials gauges
-        @Design(node = "#driving/speedo-gauge") speedoGauge: Meter,
-        @Design(node = "#driving/battery-gauge") batteryGauge: Meter,
-        @Design(node = "#driving/battery-temp-gauge") batteryTempGauge: Meter,
-        @Design(node = "#driving/regen-gauge") regenGauge: Meter,
-        @Design(node = "#driving/power-gauge") powerGauge: Meter,
-        @Design(node = "#driving/rpm-gauge") rpmGauge: Meter,
-        @Design(node = "#driving/rpm") rpm: State<String>,
+        @DesignModule newDialsGaugesCustomizations: NewDialsGauges,
 
         // Camera
         @Design(node = "#driving/camera") camera: @Composable (ComponentReplacementContext) -> Unit,
@@ -418,13 +426,7 @@ interface Cluster {
         @Design(node = "#driving/icon-power-plus") showRegenIcon: Boolean,
 
         // New dials gauges
-        @Design(node = "#driving/speedo-gauge") speedoGauge: Meter,
-        @Design(node = "#driving/battery-gauge") batteryGauge: Meter,
-        @Design(node = "#driving/battery-temp-gauge") batteryTempGauge: Meter,
-        @Design(node = "#driving/regen-gauge") regenGauge: Meter,
-        @Design(node = "#driving/power-gauge") powerGauge: Meter,
-        @Design(node = "#driving/rpm-gauge") rpmGauge: Meter,
-        @Design(node = "#driving/rpm") rpm: State<String>,
+        @DesignModule newDialsGaugesCustomizations: NewDialsGauges,
 
         // Maps
         @Design(node = "#driving/map-view") maps: @Composable (ComponentReplacementContext) -> Unit,
@@ -609,6 +611,17 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
 
     val rpmGauge = rpm.value / rpmMax * 100F
 
+    val newDialsGaugesCustomizations =
+        NewDialsGauges(
+            speedoGauge = speedGauge,
+            batteryGauge = batteryGauge,
+            batteryTempGauge = batteryTempGauge,
+            regenGauge = regenGauge,
+            powerGauge = powerGauge,
+            rpm = rpmState,
+            rpmGauge = rpmGauge,
+        )
+
     val layoutWidth = remember { mutableStateOf(layoutWidthMin) }
 
     val context = LocalContext.current
@@ -669,13 +682,7 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
                             batteryTemp = batteryTempStringState,
                             showPowerIcon = showPowerIcon,
                             showRegenIcon = showRegenIcon,
-                            speedoGauge = speedGauge,
-                            batteryGauge = batteryGauge,
-                            batteryTempGauge = batteryTempGauge,
-                            regenGauge = regenGauge,
-                            powerGauge = powerGauge,
-                            rpmGauge = rpmGauge,
-                            rpm = rpmState,
+                            newDialsGaugesCustomizations = newDialsGaugesCustomizations,
                             maps = {
                                 AndroidView(
                                     factory = { cx ->
@@ -723,13 +730,7 @@ private fun MainFrame(cameraPreview: CameraPreview?) {
                             batteryTemp = batteryTempStringState,
                             showPowerIcon = showPowerIcon,
                             showRegenIcon = showRegenIcon,
-                            speedoGauge = speedGauge,
-                            batteryGauge = batteryGauge,
-                            batteryTempGauge = batteryTempGauge,
-                            regenGauge = regenGauge,
-                            powerGauge = powerGauge,
-                            rpmGauge = rpmGauge,
-                            rpm = rpmState,
+                            newDialsGaugesCustomizations = newDialsGaugesCustomizations,
                             camera = {
                                 if (cameraPreview != null) {
                                     AndroidView(modifier = Modifier, factory = { cameraPreview })

@@ -135,7 +135,7 @@ private interface DesignSwitcher {
             DesignDocInternal(
                 designSwitcherDocName(),
                 docId,
-                rootNodeQuery,
+                rootNodeQuery = rootNodeQuery,
                 customizations = customizations,
                 modifier = modifier,
                 serverParams = DocumentServerParams(queries, ignoredImages()),
@@ -204,7 +204,7 @@ private interface DesignSwitcher {
             DesignDocInternal(
                 designSwitcherDocName(),
                 designSwitcherDocId(),
-                NodeQuery.NodeName("#SettingsView"),
+                rootNodeQuery = NodeQuery.NodeName("#SettingsView"),
                 customizations = customizations,
                 modifier = modifier.semantics { sDocClass = DesignSwitcherDoc.javaClass.name },
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
@@ -225,7 +225,7 @@ private interface DesignSwitcher {
             DesignDocInternal(
                 designSwitcherDocName(),
                 designSwitcherDocId(),
-                NodeQuery.NodeName("#FigmaDoc"),
+                rootNodeQuery = NodeQuery.NodeName("#FigmaDoc"),
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
@@ -243,7 +243,7 @@ private interface DesignSwitcher {
             DesignDocInternal(
                 designSwitcherDocName(),
                 designSwitcherDocId(),
-                NodeQuery.NodeName("#Message"),
+                rootNodeQuery = NodeQuery.NodeName("#Message"),
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
@@ -261,7 +261,7 @@ private interface DesignSwitcher {
             DesignDocInternal(
                 designSwitcherDocName(),
                 designSwitcherDocId(),
-                NodeQuery.NodeName("#MessageFailed"),
+                rootNodeQuery = NodeQuery.NodeName("#MessageFailed"),
                 customizations = customizations,
                 serverParams = DocumentServerParams(queries(), ignoredImages()),
                 liveUpdateMode = getLiveMode(),
@@ -277,7 +277,7 @@ private interface DesignSwitcher {
         DesignDocInternal(
             designSwitcherDocName(),
             designSwitcherDocId(),
-            NodeQuery.NodeVariant(nodeName, "#Checkbox"),
+            rootNodeQuery = NodeQuery.NodeVariant(nodeName, "#Checkbox"),
             customizations = CustomizationContext(),
             modifier = modifier,
             serverParams = DocumentServerParams(queries, ignoredImages()),

@@ -100,6 +100,7 @@ internal fun createNewFile(
     file += "import android.view.ViewGroup\n"
     file += "import android.os.Build\n"
     file += "import androidx.compose.runtime.FloatState\n"
+    file += "import java.io.InputStream\n"
     file += "\n"
 
     file += "import com.android.designcompose.annotation.DesignMetaKey\n"

@@ -484,6 +484,7 @@ internal fun DocServer.doc(
     serverParams: DocumentServerParams,
     docUpdateCallback: ((DesignDocId, ByteArray?) -> Unit)?,
     disableLiveMode: Boolean,
+    dcfInputStream: InputStream? = null,
 ): DocContent? {
     // Check that the document ID is valid
     if (!validateFigmaDocId(docId.id)) {
@@ -570,21 +571,25 @@ internal fun DocServer.doc(
     // Use the LocalContext to locate this doc in the precompiled DesignComposeDefinitionuments
     try {
         val rawResource = DesignSettings.rawResourceId[docId]
-        val assetDoc: InputStream =
-            if (rawResource != null) {
-                Log.i(
-                    TAG,
-                    "Loaded design doc from R.raw." +
-                        context.resources.getResourceEntryName(rawResource),
-                )
-                context.resources.openRawResource(rawResource)
-            } else {
-                val fileName = "figma/$id.dcf"
-                Log.i(TAG, "Loaded design doc from assets/$fileName")
-                context.assets.open(fileName)
+        val sourceDoc: InputStream =
+            dcfInputStream?.let {
+                Log.i(TAG, "Loaded design doc from file system $docId")
+                it
             }
+                ?: if (rawResource != null) {
+                    Log.i(
+                        TAG,
+                        "Loaded design doc from R.raw." +
+                            context.resources.getResourceEntryName(rawResource),
+                    )
+                    context.resources.openRawResource(rawResource)
+                } else {
+                    val fileName = "figma/$id.dcf"
+                    Log.i(TAG, "Loaded design doc from assets/$fileName")
+                    context.assets.open(fileName)
+                }
 
-        val decodedDoc = decodeDiskDoc(assetDoc, null, docId, Feedback)
+        val decodedDoc = decodeDiskDoc(sourceDoc, null, docId, Feedback)
         if (decodedDoc != null) {
             synchronized(documents) { documents[docId] = decodedDoc }
             synchronized(DesignSettings.fileFetchStatus) {

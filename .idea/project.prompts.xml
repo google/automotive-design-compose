@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PromptTemplates">
+    <option name="builtInPromptOverrides">
+      <list>
+        <BuiltInPromptOverride>
+          <option name="groupId" value="rules" />
+          <option name="promptId" value="project" />
+          <option name="text" value="Read and use the GEMINI.md file in the root of the repository to gain initial context of the project, what it is intended for and how the code is laid out." />
+        </BuiltInPromptOverride>
+      </list>
+    </option>
+  </component>
+</project>

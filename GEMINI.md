@@ -48,8 +48,13 @@ The `reference-apps/` directory contains several example applications that demon
 ### Testing and Validation
 
 *   `integration-tests/`: Contains various integration tests.
+*   `integration-tests/benchmarks/`: Contains benchmarking applications.
 *   `test/`: Contains unit tests.
 *   `validation/`: Contains a visual validation app.
+
+### Benchmarking
+
+The `designcompose` library has a `benchmark` variant that is used by the benchmark apps in `integration-tests/benchmarks/`. These apps are used for performance testing of various DesignCompose features.
 
 ### Build System
 

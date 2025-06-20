@@ -20,6 +20,7 @@ plugins {
     @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
+    alias(libs.plugins.jetbrains.compose)
 }
 
 java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
@@ -55,12 +56,6 @@ android {
                 "proguard-rules.pro",
             )
         }
-    }
-
-    buildFeatures { compose = true }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
     }
 
     // Deprecated in AGP 8+, replaced by `packaging`

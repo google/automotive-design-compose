@@ -19,6 +19,7 @@ plugins {
     id("com.android.application")
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
+    alias(libs.plugins.jetbrains.compose)
 }
 
 java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
@@ -72,10 +73,6 @@ android {
     }
 
     buildFeatures { compose = true }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
-    }
 
     // Deprecated in AGP 8+, replaced by `packaging`
     @Suppress("DEPRECATION")

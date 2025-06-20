@@ -18,6 +18,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.jetbrains.compose)
 
     id("designcompose.conventions.base")
 }
@@ -41,9 +42,6 @@ android {
         }
     }
     buildFeatures { compose = true }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
-    }
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
 

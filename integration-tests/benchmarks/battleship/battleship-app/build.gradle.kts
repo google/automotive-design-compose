@@ -20,6 +20,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
     id("designcompose.conventions.base")
+    alias(libs.plugins.jetbrains.compose)
 }
 
 var applicationID = "com.android.designcompose.benchmarks.battleship"
@@ -57,9 +58,6 @@ android {
     }
 
     buildFeatures { compose = true }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
-    }
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
 

@@ -16,13 +16,8 @@
 
 package com.android.designcompose.gradle
 
-import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.file.RegularFile
-import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
-import org.gradle.configurationcache.extensions.capitalized
 
 /**
  * Figma token plugin
@@ -47,41 +42,16 @@ import org.gradle.configurationcache.extensions.capitalized
  */
 class Plugin : Plugin<Project> {
 
-    private lateinit var pluginExtension: PluginExtension
-
     override fun apply(project: Project) {
-        pluginExtension = project.extensions.create("designcompose", PluginExtension::class.java)
+        val pluginExtension =
+            project.extensions.create("designcompose", PluginExtension::class.java)
         project.initializeExtension(pluginExtension)
 
-        project.pluginManager.withPlugin("com.android.application") {
-            project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java).let {
-                ace ->
-                @Suppress("UnstableApiUsage") val adb = ace.sdkComponents.adb
-                // Create one task per variant of the app
-                ace.onVariants { variant ->
-                    project.createSetFigmaTokenTask(variant.name, variant.applicationId, adb)
-                }
-            }
-        }
-    }
-
-    /**
-     * Create a setFigmaToken task for the given [variant][variantId]
-     *
-     * @param variantName The AGP-generated name for the application variant
-     * @param variantId The Application ID for the variant
-     * @param adb Provided by AGP, the path to adb on the system
-     */
-    private fun Project.createSetFigmaTokenTask(
-        variantName: String,
-        variantId: Property<String>,
-        adb: Provider<RegularFile>,
-    ) {
-        tasks.register("setFigmaToken${variantName.capitalized()}", SetFigmaTokenTask::class.java) {
-            it.adbPath.set(adb)
-            it.appID.set(variantId)
-            it.figmaToken.set(pluginExtension.figmaToken.also { token -> token.finalizeValue() })
-            it.group = "DesignCompose"
+        // We put all the logic that depends on the Android Gradle Plugin in a separate file, so
+        // that this plugin can be applied to non-Android projects without crashing. This is useful
+        // for testing.
+        project.plugins.withId("com.android.application") {
+            configureAndroidPlugin(project, pluginExtension)
         }
     }
 }

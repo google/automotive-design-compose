@@ -101,13 +101,15 @@ The project is built using Gradle. The build process involves compiling the Kotl
     *   Install the required dependencies (Android Studio, NDK, Rust, Protobuf compiler).
     .
     *   Run `./install-rust-toolchains.sh` to install the necessary Rust toolchains.
-2.  **Making Changes:**
+2.  **Branching:**
+    *   Create a new branch from `main` using the format `wb/<user>/<branch-name>`.
+3.  **Making Changes:**
     *   Modify the code in the appropriate module.
     *   If changing the Figma serialization format, update the serialized files.
-3.  **Testing:**
+4.  **Testing:**
     *   Run `./dev-scripts/format-all.sh` to format the code.
     *   Run `./dev-scripts/test-all.sh` to run all tests.
-4.  **Submitting Changes:**
+5.  **Submitting Changes:**
     *   Create a pull request.
 
 ## Task Continuation and Notes

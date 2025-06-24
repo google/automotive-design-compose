@@ -431,49 +431,81 @@ following:
   ./dev-scripts/test-all.sh
   ```
 
-## Release process
+## Release Process
 
-1. Create a new release in GitHub, set the tag to "v\<version>" (see previous releases for
-   examples). This will trigger a release build action. \
-   You can watch it's
-   progress [here](https://github.com/google/automotive-design-compose/actions/workflows/release.yml).
-2. Once complete the release artifacts will be uploaded to the GitHub release automatically
-3. Stage the SDK
-    1. On a Google workstation, download the designcompose_m2repo.zip from the release and copy it
-       to `/x20/teams/designcompose/release_staging/`
-    2. Run gmaven_publisher to stage it:
+### Release Strategy
 
+Our release strategy is based on a `main` branch that always contains the latest-and-greatest,
+and `stable/` branches for releases.
+
+1.  **Branching:** When it's time to release, a `stable/` branch is created from `main`. For
+    example, for a `v0.38.0` release, a `stable/0.38.x` branch is created. The `x` is a
+    literal, not a placeholder.
+2.  **Automatic Version Bumping:** Creating a `stable/` branch triggers a GitHub Action that
+    automatically creates a pull request to bump the version on the `main` branch to the next
+    development version (e.g., `0.39.0-SNAPSHOT`). This PR must be reviewed and merged
+    manually.
+3.  **Cherry-picking:** If a bug fix is needed on a stable branch, it should be cherry-picked
+    from `main`. Since the stable branch is protected, you must create a new branch from the
+    stable branch, cherry-pick the commit(s), and then open a pull request to merge your
+    cherry-pick branch into the stable branch.
+
+    ```bash
+    # Example of cherry-picking a commit from main to a stable branch
+    git checkout stable/0.38.x
+    git pull
+    git checkout -b cherry-pick-my-fix
+    git cherry-pick <commit-hash-from-main>
+    git push --set-upstream origin cherry-pick-my-fix
+    # Then open a PR in GitHub
+    ```
+
+### Publishing a Release
+
+1.  **Release Candidate (RC):** The first release from a stable branch must be an RC.
+    1.  Create a new **pre-release** in GitHub from the `stable/` branch.
+    2.  The tag should be in the format `v<version>-rc0<number>` (e.g., `v0.38.0-rc01`).
+    3.  This triggers a release build. You can monitor its progress
+        [here](https://github.com/google/automotive-design-compose/actions/workflows/release.yml).
+    4.  Once the build is complete, the artifacts are uploaded to the GitHub pre-release.
+    5.  Publish the RC using the `dev-scripts/publish_designcompose.sh` script:
         ```bash
-        /google/bin/releases/android-devtools/gmaven/publisher/gmaven-publisher stage
-        --gfile /x20/teams/designcompose/release_staging/<the m2repo.zip>
+        ./dev-scripts/publish_designcompose.sh 0.38.0-rc01
         ```
-
-    3. The staged release will be available for additional testing (see go/gmaven for more info).
-       You will receive an email explaining how the release can be submitted for publishing and then
-       approval. The release will be published publicly immediately after approval
-4. Update the widget and plugin
-    1. Download the widget and plugin artifacts from the GitHub release onto a system with the Figma
-       Desktop app and unzip them
-    2. Open the Desktop app and open any doc
-    3. Update the Plugin
-        1. Open the **Resources** menu(right of the `T` text menu) and switch to the **Plugins** tab
-        2. Change the dropdown under the search bar to **Development**
-        3. If you already have an entry for the plugin then hover over it, click the `...` menu and
-           click **Remove local version**
-        4. The plugin will now have a **Locate local version** option, click it, then navigate to
-           the `manifest.json` of the plugin artifact you downloaded from GitHub
-        5. Click the `...` menu again and click Publish. Add any release notes and click **Publish
-           new version**
-    4. Do the same as above for the widget (except use the widget menu)
-5. Update the Tutorial
-    1. Open the Tutorial Figma File and create a new branch
-    2. Find each instance of the widget and replace it with the newly published version, matching
-       the settings to the current one
-    3. Merge the Tutorial branch into the main branch.
-    4. Create a new branch of the Tutorial file named after version you're releasing
-    5. From the original file, click the **Share** button in the upper right, switch to the *
-       *Publish** tab of the window that pops up and **Publish update**
-    6. Make any changes necessary, then click **Save**
+2.  **Stable Release:** After the RC is validated, create the stable release.
+    1.  Create a new **stable release** in GitHub from the *same commit* as the RC.
+    2.  The tag should be `v<version>` (e.g., `v0.38.0`).
+    3.  This triggers another release build.
+    4.  Once complete, publish the final release with the script:
+        ```bash
+        ./dev-scripts/publish_designcompose.sh 0.38.0
+        ```
+3.  **Update Figma Artifacts:**
+    1.  Download the widget and plugin artifacts from the final GitHub release onto a system
+        with the Figma Desktop app and unzip them.
+    2.  Open the Figma Desktop app and open any document.
+    3.  Update the Plugin:
+        1.  Open the **Resources** menu (right of the `T` text menu) and switch to the
+            **Plugins** tab.
+        2.  Change the dropdown under the search bar to **Development**.
+        3.  If you already have an entry for the plugin, hover over it, click the `...` menu,
+            and click **Remove local version**.
+        4.  The plugin will now have a **Locate local version** option. Click it, then
+            navigate to the `manifest.json` of the plugin artifact you downloaded from
+            GitHub.
+        5.  Click the `...` menu again and click **Publish**. Add any release notes and click
+            **Publish new version**.
+    4.  Do the same for the widget (using the widget menu).
+    5.  Update the Tutorial Figma file:
+        1.  Open the [Tutorial Figma File](https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose)
+            and create a new branch.
+        2.  Find each instance of the widget and replace it with the newly published version,
+            matching the settings to the current one.
+        3.  Merge the Tutorial branch into the main branch.
+        4.  Create a new branch of the Tutorial file named after the version you're releasing.
+        5.  From the original file, click the **Share** button in the upper right, switch to the
+            **Publish** tab of the window that pops up, and **Publish update**.
+        6.  Make any changes necessary, then click **Save**.
 
 # Get in touch
 

@@ -38,8 +38,7 @@ import com.android.designcompose.annotation.DesignDoc
 interface LayoutReplacementSurfaceViewTest {
     @DesignComponent(node = "#stage")
     fun MainFrame(
-        @Design(node = "#surfaceview_place_holder")
-        surfaceViewPlaceHolder: ReplacementContent,
+        @Design(node = "#surfaceview_place_holder") surfaceViewPlaceHolder: ReplacementContent,
         @Design(node = "#surfaceview_place_holder_with_size")
         surfaceViewPlaceHolderWithSize: ReplacementContent,
     )
@@ -54,17 +53,21 @@ fun LayoutReplacementSurfaceViewTest() {
         LayoutReplacementSurfaceViewTestDoc.MainFrame(
             modifier = Modifier.fillMaxSize(0.8f),
             // SurfaceView Inside the DesignCompose tree with ReplacementContent.
-            surfaceViewPlaceHolder = ReplacementContent(
-                count = 1,
-                // SurfaceView should take the full size of replacing node.
-                // This is not happening in DC 0.33 onwards, SurfaceView is not visible.
-                content = { { CircleDrawingWithSurfaceView(modifier = Modifier.fillMaxSize()) } }
-            ),
-            surfaceViewPlaceHolderWithSize = ReplacementContent(
-                count = 1,
-                // Defining specific size(eg 100.dp) is showing the SurfaceView.
-                content = { { CircleDrawingWithSurfaceView(modifier = Modifier.size(100.dp)) } }
-            ),
+            surfaceViewPlaceHolder =
+                ReplacementContent(
+                    count = 1,
+                    // SurfaceView should take the full size of replacing node.
+                    // This is not happening in DC 0.33 onwards, SurfaceView is not visible.
+                    content = {
+                        { CircleDrawingWithSurfaceView(modifier = Modifier.fillMaxSize()) }
+                    },
+                ),
+            surfaceViewPlaceHolderWithSize =
+                ReplacementContent(
+                    count = 1,
+                    // Defining specific size(eg 100.dp) is showing the SurfaceView.
+                    content = { { CircleDrawingWithSurfaceView(modifier = Modifier.size(100.dp)) } },
+                ),
         )
     }
 }
@@ -75,39 +78,45 @@ fun CircleDrawingWithSurfaceView(modifier: Modifier = Modifier) {
         factory = { context ->
             SurfaceView(context).apply {
                 // Add a callback to know when the surface is ready
-                holder.addCallback(object : SurfaceHolder.Callback {
-                    override fun surfaceCreated(holder: SurfaceHolder) {
-                        // It's now safe to draw
-                        val canvas: Canvas? = holder.lockCanvas()
-                        canvas?.let {
-                            // Clear canvas
-                            it.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR)
+                holder.addCallback(
+                    object : SurfaceHolder.Callback {
+                        override fun surfaceCreated(holder: SurfaceHolder) {
+                            // It's now safe to draw
+                            val canvas: Canvas? = holder.lockCanvas()
+                            canvas?.let {
+                                // Clear canvas
+                                it.drawColor(
+                                    Color.TRANSPARENT,
+                                    android.graphics.PorterDuff.Mode.CLEAR,
+                                )
 
-                            // Draw a red circle
-                            val paint = Paint().apply {
-                                color = Color.RED
-                                isAntiAlias = true
+                                // Draw a red circle
+                                val paint =
+                                    Paint().apply {
+                                        color = Color.RED
+                                        isAntiAlias = true
+                                    }
+                                val centerX = it.width / 2f
+                                val centerY = it.height / 2f
+                                val radius = it.width.coerceAtMost(it.height) / 4f
+                                it.drawCircle(centerX, centerY, radius, paint)
+
+                                holder.unlockCanvasAndPost(it)
                             }
-                            val centerX = it.width / 2f
-                            val centerY = it.height / 2f
-                            val radius = it.width.coerceAtMost(it.height) / 4f
-                            it.drawCircle(centerX, centerY, radius, paint)
-
-                            holder.unlockCanvasAndPost(it)
                         }
-                    }
 
-                    override fun surfaceChanged(
-                        holder: SurfaceHolder,
-                        format: Int,
-                        width: Int,
-                        height: Int
-                    ) {}
-                    override fun surfaceDestroyed(holder: SurfaceHolder) {}
-                })
+                        override fun surfaceChanged(
+                            holder: SurfaceHolder,
+                            format: Int,
+                            width: Int,
+                            height: Int,
+                        ) {}
+
+                        override fun surfaceDestroyed(holder: SurfaceHolder) {}
+                    }
+                )
             }
         },
-        modifier = modifier
+        modifier = modifier,
     )
 }
-

@@ -25,17 +25,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.android.designcompose.ReplacementContent
-import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignDoc
 
+// Test SurfaceView inside DesignCompose ReplacementContent.
 @DesignDoc(id = "33jtmtH0zokPgbKpf0b9Xb")
 interface LayoutReplacementSurfaceViewTest {
     @DesignComponent(node = "#stage")
@@ -99,7 +97,12 @@ fun CircleDrawingWithSurfaceView(modifier: Modifier = Modifier) {
                         }
                     }
 
-                    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
+                    override fun surfaceChanged(
+                        holder: SurfaceHolder,
+                        format: Int,
+                        width: Int,
+                        height: Int
+                    ) {}
                     override fun surfaceDestroyed(holder: SurfaceHolder) {}
                 })
             }

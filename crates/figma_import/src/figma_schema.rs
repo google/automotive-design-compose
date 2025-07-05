@@ -1003,6 +1003,7 @@ pub enum NodeData {
         #[serde(rename = "componentId")]
         component_id: String,
     },
+    Section {},
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

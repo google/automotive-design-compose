@@ -404,6 +404,7 @@ impl View {
         design_absolute_bounding_box: Option<Rectangle>,
         render_method: RenderMethod,
         explicit_variable_modes: HashMap<String, String>,
+        shape: Option<ViewShape>,
     ) -> View {
         View {
             unique_id: View::next_unique_id() as u32,
@@ -416,7 +417,7 @@ impl View {
             scroll_info: Some(ScrollInfo::new_default()).into(),
             data: Some(ViewData {
                 view_data_type: Some(View_data_type::Text {
-                    0: Text { content: text.into(), res_name: text_res_name, ..Default::default() },
+                    0: Text { content: text.into(), res_name: text_res_name, shape: shape.into(), ..Default::default() },
                 }),
                 ..Default::default()
             })

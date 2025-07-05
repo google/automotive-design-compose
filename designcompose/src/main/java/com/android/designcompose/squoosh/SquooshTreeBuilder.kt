@@ -431,7 +431,6 @@ internal fun resolveVariantsRecursively(
         skipChildren = true
     } else if (hasSupportedInteraction) {
         // Add a SquooshChildComposable to handle the interaction.
-        System.err.println("childComposable is ${resolvedView.view.name}")
         composableList?.addChild(
             SquooshChildComposable(
                 component = null,

@@ -91,6 +91,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
         Triple("Text Elide", { TextElideTest() }, TextElideTestDoc.javaClass.name),
         Triple("Text Inval", { TextResizingTest() }, TextResizingTestDoc.javaClass.name),
         Triple("Text Replace", { TextReplaceTest() }, TextReplaceDoc.javaClass.name),
+        Triple("Text Path", { TextPathTest() }, TextPathDoc.javaClass.name),
         Triple("Styled Text Runs", { StyledTextRunsTest() }, StyledTextRunsDoc.javaClass.name),
         Triple("Shared Customization", { ModuleExample() }, ModuleExampleDoc.javaClass.name),
         Triple(

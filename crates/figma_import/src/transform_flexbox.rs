@@ -906,6 +906,339 @@ fn compute_background(
     }
 }
 
+fn compute_text_view(
+    node: &figma_schema::Node,
+    mut style: ViewStyle,
+    component_info: Option<ComponentInfo>,
+    reactions: Option<Vec<Reaction>>,
+    images: &mut ImageContext,
+    characters: &String,
+    text_style: &figma_schema::TypeStyle,
+    character_style_overrides: &Vec<usize>,
+    style_override_table: &HashMap<String, figma_schema::SubTypeStyle>,
+    shape: Option<ViewShape>,
+) -> Result<View, Error> {
+    if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
+        style.node_style_mut().font_color =
+            Some(compute_background(text_fill, images, &node.name)).into();
+    }
+    style.node_style_mut().font_size = if let Some(vars) = &node.bound_variables {
+        Some(NumOrVar::from_var(vars, "fontSize", text_style.font_size)).into()
+    } else {
+        Some(NumOrVar::from_num(text_style.font_size)).into()
+    };
+
+    style.node_style_mut().font_weight = if let Some(vars) = &node.bound_variables {
+        Some(FontWeight::new_with_num_or_var_type(NumOrVarType::from_var(
+            vars,
+            "fontWeight",
+            text_style.font_weight,
+        )))
+        .into()
+    } else {
+        Some(FontWeight::from_num(text_style.font_weight)).into()
+    };
+    if text_style.italic {
+        style.node_style_mut().font_style = FontStyle::FONT_STYLE_ITALIC.into();
+    }
+    style.node_style_mut().text_decoration = match text_style.text_decoration {
+        figma_schema::TextDecoration::None => TextDecoration::TEXT_DECORATION_NONE.into(),
+        figma_schema::TextDecoration::Underline => TextDecoration::TEXT_DECORATION_UNDERLINE.into(),
+        figma_schema::TextDecoration::Strikethrough => {
+            TextDecoration::TEXT_DECORATION_STRIKETHROUGH.into()
+        }
+    };
+    style.node_style_mut().letter_spacing = Some(text_style.letter_spacing.clone());
+    style.node_style_mut().font_family = text_style.font_family.clone();
+    match text_style.text_align_horizontal {
+        figma_schema::TextAlignHorizontal::Center => {
+            style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_CENTER.into()
+        }
+        figma_schema::TextAlignHorizontal::Left => {
+            style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_LEFT.into()
+        }
+        figma_schema::TextAlignHorizontal::Right => {
+            style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_RIGHT.into()
+        }
+        figma_schema::TextAlignHorizontal::Justified => {
+            style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_CENTER.into()
+        } // XXX
+    }
+    style.node_style_mut().text_align_vertical = match text_style.text_align_vertical {
+        figma_schema::TextAlignVertical::Center => {
+            TextAlignVertical::TEXT_ALIGN_VERTICAL_CENTER.into()
+        }
+        figma_schema::TextAlignVertical::Top => TextAlignVertical::TEXT_ALIGN_VERTICAL_TOP.into(),
+        figma_schema::TextAlignVertical::Bottom => {
+            TextAlignVertical::TEXT_ALIGN_VERTICAL_BOTTOM.into()
+        }
+    };
+    style.node_style_mut().line_height = match text_style.line_height_unit {
+        // It's a percentage of the font size.
+        figma_schema::LineHeightUnit::FontSizePercentage => Some(LineHeight {
+            line_height_type: Some(Line_height_type::Pixels(
+                text_style.font_size * text_style.line_height_percent_font_size / 100.0,
+            )),
+            ..Default::default()
+        })
+        .into(),
+        // It's a percentage of the intrinsic line height of the font itself.
+        figma_schema::LineHeightUnit::IntrinsicPercentage => Some(LineHeight {
+            line_height_type: Some(Line_height_type::Percent(
+                text_style.line_height_percent_font_size / 100.0,
+            )),
+            ..Default::default()
+        })
+        .into(),
+        // It's an absolute value in pixels.
+        figma_schema::LineHeightUnit::Pixels => Some(LineHeight {
+            line_height_type: Some(Line_height_type::Pixels(text_style.line_height_px)),
+            ..Default::default()
+        })
+        .into(),
+    };
+    style.node_style_mut().opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
+    let convert_opentype_flags = |flags: &HashMap<String, u32>| -> Vec<FontFeature> {
+        let mut font_features = Vec::new();
+        for (flag, value) in flags {
+            let flag_ascii = flag.to_ascii_lowercase();
+            if flag_ascii.len() == 4 {
+                // Smoke check to see if the flag is valid
+                font_features.push(FontFeature {
+                    tag: flag_ascii,
+                    enabled: *value == 1,
+                    ..Default::default()
+                });
+            } else {
+                println!("Unsupported OpenType flag: {}", flag)
+            }
+        }
+        font_features
+    };
+    style.node_style_mut().font_features = convert_opentype_flags(&text_style.opentype_flags);
+
+    // We can map the "drop shadow" effect to our text shadow functionality, but we can't
+    // map the other effects. (We either implement them on Rects, or we don't implement in
+    // a compatible way).
+    for effect in &node.effects {
+        if !effect.visible {
+            continue;
+        }
+        match effect.effect_type {
+            figma_schema::EffectType::DropShadow => {
+                let shadow_color =
+                    bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
+                style.node_style_mut().text_shadow = Some(TextShadow {
+                    blur_radius: effect.radius,
+                    color: Some(shadow_color).into(),
+                    offset_x: effect.offset.x(),
+                    offset_y: effect.offset.y(),
+                    ..Default::default()
+                })
+                .into();
+            }
+            _ => {}
+        }
+    }
+
+    if text_style.text_truncation == figma_schema::TextTruncation::Ending {
+        style.node_style_mut().text_overflow = TextOverflow::TEXT_OVERFLOW_ELLIPSIS.into();
+    }
+
+    if text_style.max_lines > 0 {
+        style.node_style_mut().line_count = Some(text_style.max_lines as _);
+    }
+    if let Some(hl) = text_style.hyperlink.clone() {
+        if hl.url.is_empty() {
+            style.node_style_mut().hyperlink = None.into()
+        } else {
+            style.node_style_mut().hyperlink = Some(hl.into()).into();
+        }
+    }
+
+    if character_style_overrides.is_empty() {
+        // No character customization, so this is just a plain styled text object
+        Ok(View::new_text(
+            &node.id,
+            &node.name,
+            style,
+            component_info,
+            reactions,
+            characters,
+            check_text_node_string_res(node),
+            node.absolute_bounding_box.map(|r| (&r).into()),
+            RenderMethod::RENDER_METHOD_NONE,
+            node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
+            shape,
+        ))
+    } else {
+        // Build some runs of custom styled text out of the style overrides. We need to be able to iterate
+        // over unicode graphemes.
+        //
+        // XXX: This current method doesn't handle zero width joiners in compound emojis correctly; the modifier
+        //      and zwj and emoji are treated as separate characters
+        let graphemes: Vec<&str> = characters.graphemes(true).collect();
+        let mut last_style: Option<usize> = None;
+        let mut current_run = String::new();
+        let mut runs: Vec<StyledTextRun> = Vec::new();
+        let sub_style = text_style.to_sub_type_style();
+
+        let mut flush = |current_run: &mut String, last_style: &mut Option<usize>| {
+            if current_run.is_empty() {
+                return;
+            }
+
+            let sub_style = last_style
+                .map_or(&sub_style, |id| style_override_table.get(&id.to_string()).unwrap_or(&sub_style));
+
+            // Use the color from the substyle fills, or fall back to the style color. This is pretty clunky.
+            let text_color =
+                if let Some(text_fill) = sub_style.fills.iter().filter(|paint| paint.visible).last()
+                {
+                    let substyle_fill = compute_background(text_fill, images, &node.name);
+                    if substyle_fill.is_some() {
+                        substyle_fill
+                    } else {
+                        style.node_style().font_color.clone().unwrap_or_default()
+                    }
+                } else {
+                    style.node_style().font_color.clone().unwrap_or_default()
+                };
+            let font_size = if let Some(fs) = sub_style.font_size {
+                NumOrVarType::Num(fs)
+            } else {
+                style
+                    .node_style_mut()
+                    .font_size
+                    .clone()
+                    .unwrap_or_default()
+                    .NumOrVarType
+                    .unwrap_or(NumOrVarType::Num(0.0))
+            };
+            let font_family = if sub_style.font_family.is_some() {
+                sub_style.font_family.clone()
+            } else {
+                style.node_style().font_family.clone()
+            };
+            let font_weight = if let Some(fw) = sub_style.font_weight {
+                FontWeight::from_num(fw)
+            } else {
+                style.node_style().font_weight.clone().unwrap_or_default()
+            };
+            let font_style = if let Some(true) = sub_style.italic {
+                FontStyle::FONT_STYLE_ITALIC.into()
+            } else {
+                style.node_style().font_style.clone()
+            };
+            let text_decoration = match sub_style.text_decoration {
+                Some(figma_schema::TextDecoration::Strikethrough) => {
+                    TextDecoration::TEXT_DECORATION_STRIKETHROUGH.into()
+                }
+                Some(figma_schema::TextDecoration::Underline) => {
+                    TextDecoration::TEXT_DECORATION_UNDERLINE.into()
+                }
+                Some(figma_schema::TextDecoration::None) => style.node_style().text_decoration,
+                None => style.node_style().text_decoration,
+            };
+            let hyperlink: Option<Hyperlink> = if let Some(hl) = sub_style.hyperlink.clone() {
+                if hl.url.is_empty() {
+                    None
+                } else {
+                    Some(hl.into())
+                }
+            } else {
+                None
+            };
+            let style = TextStyle {
+                text_color: Some(text_color).into(),
+                font_size: Some(NumOrVar {
+                    NumOrVarType: Some(font_size),
+                    ..Default::default()
+                })
+                .into(),
+                font_family,
+                font_weight: Some(font_weight).into(),
+                font_style: font_style, // Italic or Normal
+                font_stretch: style.node_style().font_stretch.clone(), // Not in SubTypeStyle.
+                letter_spacing: sub_style
+                    .letter_spacing
+                    .unwrap_or(style.node_style().letter_spacing.unwrap_or(0.0)),
+                text_decoration: text_decoration.into(),
+                line_height: style.node_style().line_height.clone(),
+
+                font_features: convert_opentype_flags(
+                    &sub_style.opentype_flags.clone().unwrap_or(text_style.opentype_flags.clone()),
+                ),
+                hyperlink: hyperlink.into(),
+                ..Default::default()
+            };
+            let mut has_handled = false;
+            if runs.len() > 0 {
+                let last_run = runs.get(runs.len() - 1);
+                if let Some(lr) = last_run {
+                    if let Some(last_run_style) = lr.style.clone().into_option() {
+                        if last_run_style == style {
+                            error!(
+                                "The two styles are the same. This might fail to match the
+                                localization plugin generated string resource. We will merge
+                                them together."
+                            );
+                            let to_be_merged = runs.pop();
+                            let mut new_run = String::new();
+                            if let Some(tbm) = to_be_merged {
+                                new_run.push_str(&tbm.text);
+                                new_run.push_str(current_run);
+                                runs.push(StyledTextRun {
+                                    text: new_run,
+                                    style: Some(style.clone()).into(),
+                                    ..Default::default()
+                                });
+                                has_handled = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if !has_handled {
+                runs.push(StyledTextRun {
+                    text: current_run.clone(),
+                    style: Some(style.clone()).into(),
+                    ..Default::default()
+                });
+            }
+            *current_run = String::new();
+            *last_style = None;
+        };
+
+        for (idx, g) in graphemes.iter().enumerate() {
+            let style_id =
+                if character_style_overrides.len() > idx { Some(character_style_overrides[idx]) } else { None };
+            // Do we need to flush the current run?
+            if style_id != last_style && !current_run.is_empty() {
+                // Flush!
+                flush(&mut current_run, &mut last_style);
+                current_run = g.to_string();
+            } else {
+                current_run = current_run + g;
+            }
+            last_style = style_id;
+        }
+        flush(&mut current_run, &mut last_style);
+
+        Ok(View::new_styled_text(
+            &node.id,
+            &node.name,
+            style,
+            component_info,
+            reactions,
+            runs,
+            check_text_node_string_res(node),
+            node.absolute_bounding_box.map(|r| (&r).into()),
+            RenderMethod::RENDER_METHOD_NONE,
+        ))
+    }
+}
+
 // We have a 1:1 correspondence between Nodes and Views which is super nice.
 fn visit_node(
     node: &figma_schema::Node,
@@ -1312,6 +1645,24 @@ fn visit_node(
             .and_then(|shader_data_json| shader_data_json.into_shader_data(images))
             .into();
     });
+
+    // Convert any path data we have; we'll use it for non-frame types.
+    let fill_paths = if let Some(fills) = &node.fill_geometry {
+        fills.iter().filter_map(parse_path).collect()
+    } else {
+        Vec::new()
+    };
+
+    // Normally the client will compute stroke paths itself, because Figma returns incorrect
+    // stroke geometry for shapes with an area (e.g.: not lines) with Outside or Inside
+    // stroke treatment. However, when a shape has no area (e.g.: it is a line), then the
+    // fill geometry will be empty so we *have* to use the stroke geometry.
+    let mut stroke_paths = if let Some(strokes) = &node.stroke_geometry {
+        strokes.iter().filter_map(parse_path).collect()
+    } else {
+        Vec::new()
+    };
+
     // Pull out the visual style for "frame-ish" nodes.
     if let Some(frame) = node.frame() {
         style.node_style_mut().overflow = if frame.clips_content {
@@ -1334,357 +1685,50 @@ fn visit_node(
         ..
     } = &node.data
     {
-        if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
-            style.node_style_mut().font_color =
-                Some(compute_background(text_fill, images, &node.name)).into();
-        }
-        style.node_style_mut().font_size = if let Some(vars) = &node.bound_variables {
-            Some(NumOrVar::from_var(vars, "fontSize", text_style.font_size)).into()
-        } else {
-            Some(NumOrVar::from_num(text_style.font_size)).into()
-        };
-
-        style.node_style_mut().font_weight = if let Some(vars) = &node.bound_variables {
-            Some(FontWeight::new_with_num_or_var_type(NumOrVarType::from_var(
-                vars,
-                "fontWeight",
-                text_style.font_weight,
-            )))
-            .into()
-        } else {
-            Some(FontWeight::from_num(text_style.font_weight)).into()
-        };
-        if text_style.italic {
-            style.node_style_mut().font_style = FontStyle::FONT_STYLE_ITALIC.into();
-        }
-        style.node_style_mut().text_decoration = match text_style.text_decoration {
-            figma_schema::TextDecoration::None => TextDecoration::TEXT_DECORATION_NONE.into(),
-            figma_schema::TextDecoration::Underline => {
-                TextDecoration::TEXT_DECORATION_UNDERLINE.into()
-            }
-            figma_schema::TextDecoration::Strikethrough => {
-                TextDecoration::TEXT_DECORATION_STRIKETHROUGH.into()
-            }
-        };
-        style.node_style_mut().letter_spacing = Some(text_style.letter_spacing.clone());
-        style.node_style_mut().font_family = text_style.font_family.clone();
-        match text_style.text_align_horizontal {
-            figma_schema::TextAlignHorizontal::Center => {
-                style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_CENTER.into()
-            }
-            figma_schema::TextAlignHorizontal::Left => {
-                style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_LEFT.into()
-            }
-            figma_schema::TextAlignHorizontal::Right => {
-                style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_RIGHT.into()
-            }
-            figma_schema::TextAlignHorizontal::Justified => {
-                style.node_style_mut().text_align = TextAlign::TEXT_ALIGN_CENTER.into()
-            } // XXX
-        }
-        style.node_style_mut().text_align_vertical = match text_style.text_align_vertical {
-            figma_schema::TextAlignVertical::Center => {
-                TextAlignVertical::TEXT_ALIGN_VERTICAL_CENTER.into()
-            }
-            figma_schema::TextAlignVertical::Top => {
-                TextAlignVertical::TEXT_ALIGN_VERTICAL_TOP.into()
-            }
-            figma_schema::TextAlignVertical::Bottom => {
-                TextAlignVertical::TEXT_ALIGN_VERTICAL_BOTTOM.into()
-            }
-        };
-        style.node_style_mut().line_height = match text_style.line_height_unit {
-            // It's a percentage of the font size.
-            figma_schema::LineHeightUnit::FontSizePercentage => Some(LineHeight {
-                line_height_type: Some(Line_height_type::Pixels(
-                    text_style.font_size * text_style.line_height_percent_font_size / 100.0,
-                )),
+        return compute_text_view(
+            node,
+            style,
+            component_info,
+            reactions,
+            images,
+            characters,
+            text_style,
+            character_style_overrides,
+            style_override_table,
+            None,
+        );
+    } else if let figma_schema::NodeData::TextPath {
+        vector,
+        characters,
+        style: text_style,
+        character_style_overrides,
+        style_override_table,
+        ..
+    } = &node.data
+    {
+        return compute_text_view(
+            node,
+            style,
+            component_info,
+            reactions,
+            images,
+            characters,
+            text_style,
+            character_style_overrides,
+            style_override_table,
+            Some(ViewShape::new_path(view_shape::view_shape::VectorPath {
+                paths: fill_paths,
+                strokes: stroke_paths,
+                stroke_cap: node.stroke_cap.to_proto().into(),
+                is_mask: vector.is_mask,
                 ..Default::default()
-            })
-            .into(),
-            // It's a percentage of the intrinsic line height of the font itself.
-            figma_schema::LineHeightUnit::IntrinsicPercentage => Some(LineHeight {
-                line_height_type: Some(Line_height_type::Percent(
-                    text_style.line_height_percent_font_size / 100.0,
-                )),
-                ..Default::default()
-            })
-            .into(),
-            // It's an absolute value in pixels.
-            figma_schema::LineHeightUnit::Pixels => Some(LineHeight {
-                line_height_type: Some(Line_height_type::Pixels(text_style.line_height_px)),
-                ..Default::default()
-            })
-            .into(),
-        };
-        style.node_style_mut().opacity = if node.opacity < 1.0 { Some(node.opacity) } else { None };
-        let convert_opentype_flags = |flags: &HashMap<String, u32>| -> Vec<FontFeature> {
-            let mut font_features = Vec::new();
-            for (flag, value) in flags {
-                let flag_ascii = flag.to_ascii_lowercase();
-                if flag_ascii.len() == 4 {
-                    // Smoke check to see if the flag is valid
-                    font_features.push(FontFeature {
-                        tag: flag_ascii,
-                        enabled: *value == 1,
-                        ..Default::default()
-                    });
-                } else {
-                    println!("Unsupported OpenType flag: {}", flag)
-                }
-            }
-            font_features
-        };
-        style.node_style_mut().font_features = convert_opentype_flags(&text_style.opentype_flags);
-
-        // We can map the "drop shadow" effect to our text shadow functionality, but we can't
-        // map the other effects. (We either implement them on Rects, or we don't implement in
-        // a compatible way).
-        for effect in &node.effects {
-            if !effect.visible {
-                continue;
-            }
-            match effect.effect_type {
-                figma_schema::EffectType::DropShadow => {
-                    let shadow_color =
-                        bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
-                    style.node_style_mut().text_shadow = Some(TextShadow {
-                        blur_radius: effect.radius,
-                        color: Some(shadow_color).into(),
-                        offset_x: effect.offset.x(),
-                        offset_y: effect.offset.y(),
-                        ..Default::default()
-                    })
-                    .into();
-                }
-                _ => {}
-            }
-        }
-
-        if text_style.text_truncation == figma_schema::TextTruncation::Ending {
-            style.node_style_mut().text_overflow = TextOverflow::TEXT_OVERFLOW_ELLIPSIS.into();
-        }
-
-        if text_style.max_lines > 0 {
-            style.node_style_mut().line_count = Some(text_style.max_lines as _);
-        }
-        if let Some(hl) = text_style.hyperlink.clone() {
-            if hl.url.is_empty() {
-                style.node_style_mut().hyperlink = None.into()
-            } else {
-                style.node_style_mut().hyperlink = Some(hl.into()).into();
-            }
-        }
-
-        return if character_style_overrides.is_empty() {
-            // No character customization, so this is just a plain styled text object
-            Ok(View::new_text(
-                &node.id,
-                &node.name,
-                style,
-                component_info,
-                reactions,
-                characters,
-                check_text_node_string_res(node),
-                node.absolute_bounding_box.map(|r| (&r).into()),
-                RenderMethod::RENDER_METHOD_NONE,
-                node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
-            ))
-        } else {
-            // Build some runs of custom styled text out of the style overrides. We need to be able to iterate
-            // over unicode graphemes.
-            //
-            // XXX: This current method doesn't handle zero width joiners in compound emojis correctly; the modifier
-            //      and zwj and emoji are treated as separate characters
-            let graphemes: Vec<&str> = characters.graphemes(true).collect();
-            let mut last_style: Option<usize> = None;
-            let mut current_run = String::new();
-            let mut runs: Vec<StyledTextRun> = Vec::new();
-            let sub_style = text_style.to_sub_type_style();
-
-            let mut flush = |current_run: &mut String, last_style: &mut Option<usize>| {
-                if current_run.is_empty() {
-                    return;
-                }
-
-                let sub_style = last_style.map_or(&sub_style, |id| {
-                    style_override_table.get(&id.to_string()).unwrap_or(&sub_style)
-                });
-
-                // Use the color from the substyle fills, or fall back to the style color. This is pretty clunky.
-                let text_color = if let Some(text_fill) =
-                    sub_style.fills.iter().filter(|paint| paint.visible).last()
-                {
-                    let substyle_fill = compute_background(text_fill, images, &node.name);
-                    if substyle_fill.is_some() {
-                        substyle_fill
-                    } else {
-                        style.node_style().font_color.clone().unwrap_or_default()
-                    }
-                } else {
-                    style.node_style().font_color.clone().unwrap_or_default()
-                };
-                let font_size = if let Some(fs) = sub_style.font_size {
-                    NumOrVarType::Num(fs)
-                } else {
-                    style
-                        .node_style_mut()
-                        .font_size
-                        .clone()
-                        .unwrap_or_default()
-                        .NumOrVarType
-                        .unwrap_or(NumOrVarType::Num(0.0))
-                };
-                let font_family = if sub_style.font_family.is_some() {
-                    sub_style.font_family.clone()
-                } else {
-                    style.node_style().font_family.clone()
-                };
-                let font_weight = if let Some(fw) = sub_style.font_weight {
-                    FontWeight::from_num(fw)
-                } else {
-                    style.node_style().font_weight.clone().unwrap_or_default()
-                };
-                let font_style = if let Some(true) = sub_style.italic {
-                    FontStyle::FONT_STYLE_ITALIC.into()
-                } else {
-                    style.node_style().font_style.clone()
-                };
-                let text_decoration = match sub_style.text_decoration {
-                    Some(figma_schema::TextDecoration::Strikethrough) => {
-                        TextDecoration::TEXT_DECORATION_STRIKETHROUGH.into()
-                    }
-                    Some(figma_schema::TextDecoration::Underline) => {
-                        TextDecoration::TEXT_DECORATION_UNDERLINE.into()
-                    }
-                    Some(figma_schema::TextDecoration::None) => style.node_style().text_decoration,
-                    None => style.node_style().text_decoration,
-                };
-                let hyperlink: Option<Hyperlink> = if let Some(hl) = sub_style.hyperlink.clone() {
-                    if hl.url.is_empty() {
-                        None
-                    } else {
-                        Some(hl.into())
-                    }
-                } else {
-                    None
-                };
-                let style = TextStyle {
-                    text_color: Some(text_color).into(),
-                    font_size: Some(NumOrVar {
-                        NumOrVarType: Some(font_size),
-                        ..Default::default()
-                    })
-                    .into(),
-                    font_family,
-                    font_weight: Some(font_weight).into(),
-                    font_style: font_style, // Italic or Normal
-                    font_stretch: style.node_style().font_stretch.clone(), // Not in SubTypeStyle.
-                    letter_spacing: sub_style
-                        .letter_spacing
-                        .unwrap_or(style.node_style().letter_spacing.unwrap_or(0.0)),
-                    text_decoration: text_decoration.into(),
-                    line_height: style.node_style().line_height.clone(),
-
-                    font_features: convert_opentype_flags(
-                        &sub_style
-                            .opentype_flags
-                            .clone()
-                            .unwrap_or(text_style.opentype_flags.clone()),
-                    ),
-                    hyperlink: hyperlink.into(),
-                    ..Default::default()
-                };
-                let mut has_handled = false;
-                if runs.len() > 0 {
-                    let last_run = runs.get(runs.len() - 1);
-                    if let Some(lr) = last_run {
-                        if let Some(last_run_style) = lr.style.clone().into_option() {
-                            if last_run_style == style {
-                                error!(
-                                    "The two styles are the same. This might fail to match the
-                                localization plugin generated string resource. We will merge
-                                them together."
-                                );
-                                let to_be_merged = runs.pop();
-                                let mut new_run = String::new();
-                                if let Some(tbm) = to_be_merged {
-                                    new_run.push_str(&tbm.text);
-                                    new_run.push_str(current_run);
-                                    runs.push(StyledTextRun {
-                                        text: new_run,
-                                        style: Some(style.clone()).into(),
-                                        ..Default::default()
-                                    });
-                                    has_handled = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                if !has_handled {
-                    runs.push(StyledTextRun {
-                        text: current_run.clone(),
-                        style: Some(style.clone()).into(),
-                        ..Default::default()
-                    });
-                }
-                *current_run = String::new();
-                *last_style = None;
-            };
-
-            for (idx, g) in graphemes.iter().enumerate() {
-                let style_id = if character_style_overrides.len() > idx {
-                    Some(character_style_overrides[idx])
-                } else {
-                    None
-                };
-                // Do we need to flush the current run?
-                if style_id != last_style && !current_run.is_empty() {
-                    // Flush!
-                    flush(&mut current_run, &mut last_style);
-                    current_run = g.to_string();
-                } else {
-                    current_run = current_run + g;
-                }
-                last_style = style_id;
-            }
-            flush(&mut current_run, &mut last_style);
-
-            Ok(View::new_styled_text(
-                &node.id,
-                &node.name,
-                style,
-                component_info,
-                reactions,
-                runs,
-                check_text_node_string_res(node),
-                node.absolute_bounding_box.map(|r| (&r).into()),
-                RenderMethod::RENDER_METHOD_NONE,
-            ))
-        };
+            })),
+        );
     }
 
     for fill in node.fills.iter().filter(|paint| paint.visible) {
         style.node_style_mut().backgrounds.push(compute_background(fill, images, &node.name));
     }
-
-    // Convert any path data we have; we'll use it for non-frame types.
-    let fill_paths = if let Some(fills) = &node.fill_geometry {
-        fills.iter().filter_map(parse_path).collect()
-    } else {
-        Vec::new()
-    };
-
-    // Normally the client will compute stroke paths itself, because Figma returns incorrect
-    // stroke geometry for shapes with an area (e.g.: not lines) with Outside or Inside
-    // stroke treatment. However, when a shape has no area (e.g.: it is a line), then the
-    // fill geometry will be empty so we *have* to use the stroke geometry.
-    let mut stroke_paths = if let Some(strokes) = &node.stroke_geometry {
-        strokes.iter().filter_map(parse_path).collect()
-    } else {
-        Vec::new()
-    };
 
     // Get the raw number values for the corner radii. If any are non-zero, set the boolean
     // has_corner_radius to true.

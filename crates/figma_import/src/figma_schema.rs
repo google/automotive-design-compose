@@ -407,13 +407,20 @@ fn default_paragraph_spacing() -> f32 {
 fn default_paragraph_indent() -> f32 {
     0.0
 }
+fn default_list_spacing() -> f32 {
+    0.0
+}
 fn default_max_lines() -> i32 {
     -1
 }
+fn default_line_height_px() -> f32 {
+    0.0
+}
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LineHeightUnit {
+    #[default] // To handle TextPathTypeStyle without making a separate TypeStyle.
     Pixels,
     #[serde(rename = "FONT_SIZE_%")]
     FontSizePercentage,
@@ -430,6 +437,8 @@ pub struct TypeStyle {
     pub paragraph_spacing: f32,
     #[serde(default = "default_paragraph_indent")]
     pub paragraph_indent: f32,
+    #[serde(default = "default_list_spacing")]
+    pub list_spacing: f32,
     #[serde(default)]
     pub italic: bool,
     pub font_weight: f32,
@@ -454,11 +463,13 @@ pub struct TypeStyle {
     pub hyperlink: Option<Hyperlink>,
     #[serde(default)]
     pub opentype_flags: HashMap<String, u32>,
+    #[serde(default = "default_line_height_px")]
     pub line_height_px: f32,
     #[serde(default = "default_line_height_percent")]
     pub line_height_percent: f32,
     #[serde(default = "default_line_height_percent")]
     pub line_height_percent_font_size: f32,
+    #[serde(default)]
     pub line_height_unit: LineHeightUnit,
 }
 
@@ -952,6 +963,16 @@ pub enum NodeData {
         #[serde(rename = "styleOverrideTable")]
         style_override_table: HashMap<String, SubTypeStyle>, // Figma docs says this is a number, but it is quoted as a string.
     },
+    TextPath {
+        #[serde(flatten)]
+        vector: VectorCommon,
+        characters: String,
+        style: TypeStyle,
+        #[serde(rename = "characterStyleOverrides")]
+        character_style_overrides: Vec<usize>,
+        #[serde(rename = "styleOverrideTable")]
+        style_override_table: HashMap<String, SubTypeStyle>,
+    },
     Vector {
         #[serde(flatten)]
         vector: VectorCommon,
@@ -1071,6 +1092,7 @@ impl Node {
             NodeData::Star { vector, .. } => Some(vector),
             NodeData::BooleanOperation { vector, .. } => Some(vector),
             NodeData::Rectangle { vector, .. } => Some(vector),
+            NodeData::TextPath { vector, .. } => Some(vector),
             _ => None,
             // Text inherits all of the properties of a vector node, but we treat
             // it differently because we treat text differently from other kinds
@@ -1087,6 +1109,7 @@ impl Node {
     pub fn is_text(&self) -> bool {
         match &self.data {
             NodeData::Text { .. } => true,
+            NodeData::TextPath { .. } => true,
             _ => false,
         }
     }
@@ -1096,6 +1119,8 @@ impl Node {
         } else if let Some(vector) = self.vector() {
             Some(&vector.constraints)
         } else if let NodeData::Text { vector, .. } = &self.data {
+            Some(&vector.constraints)
+        } else if let NodeData::TextPath { vector, .. } = &self.data {
             Some(&vector.constraints)
         } else {
             None

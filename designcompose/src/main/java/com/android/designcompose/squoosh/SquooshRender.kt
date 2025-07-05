@@ -28,11 +28,14 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.DrawContext
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.Paragraph
 import androidx.compose.ui.unit.Density
@@ -41,10 +44,14 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DocContent
 import com.android.designcompose.ShaderBrushCache
 import com.android.designcompose.VariableState
+import com.android.designcompose.computePaths
 import com.android.designcompose.definition.element.shaderDataOrNull
 import com.android.designcompose.definition.modifier.TextAlignVertical
 import com.android.designcompose.definition.modifier.TextOverflow
+import com.android.designcompose.definition.view.dataOrNull
+import com.android.designcompose.definition.view.shapeOrNull
 import com.android.designcompose.definition.view.strokeOrNull
+import com.android.designcompose.definition.view.textOrNull
 import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.getContent
 import com.android.designcompose.getCustomBrush
@@ -52,6 +59,7 @@ import com.android.designcompose.getListContent
 import com.android.designcompose.getShaderBrush
 import com.android.designcompose.getShaderTimeUniformState
 import com.android.designcompose.getShaderUniformCustomizations
+import com.android.designcompose.getValue
 import com.android.designcompose.layout_interface.Layout
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.utils.asBrush
@@ -159,18 +167,36 @@ internal fun Modifier.squooshRender(
                             } else {
                                 // If this is text, just render the text and return
                                 if (node.textInfo != null) {
-                                    squooshTextRender(
-                                        document,
-                                        drawContext,
-                                        this,
-                                        node,
-                                        computedLayout,
-                                        customizations,
-                                        node.view.name,
-                                        newVariableState,
-                                        shaderBrushCache,
-                                        appContext = appContext,
-                                    )
+                                    // Special case rendering text along a path.
+                                    if (node.view.dataOrNull?.textOrNull?.shapeOrNull != null) {
+                                        squooshTextPathRender(
+                                            document,
+                                            drawContext,
+                                            this,
+                                            node,
+                                            computedLayout,
+                                            customizations,
+                                            node.view.name,
+                                            newVariableState,
+                                            computedPathCache,
+                                            shaderBrushCache,
+                                            appContext = appContext,
+                                        )
+                                    } else {
+                                        squooshTextRender(
+                                            document,
+                                            drawContext,
+                                            this,
+                                            node,
+                                            computedLayout,
+                                            customizations,
+                                            node.view.name,
+                                            newVariableState,
+                                            computedPathCache,
+                                            shaderBrushCache,
+                                            appContext = appContext,
+                                        )
+                                    }
                                     nodeRenderCount++
                                 }
                                 if (scroll) drawContext.canvas.restore()
@@ -289,6 +315,7 @@ private fun squooshTextRender(
     customizations: CustomizationContext,
     nodeName: String,
     variableState: VariableState,
+    computedPathCache: ComputedPathCache,
     shaderBrushCache: ShaderBrushCache,
     appContext: Context,
 ) {
@@ -442,4 +469,54 @@ private fun squooshTextRender(
 
     drawContext.canvas.restore()
     if (useBlendModeLayer || opacity < 1.0f || transform != null) drawContext.canvas.restore()
+}
+
+@OptIn(ExperimentalTextApi::class)
+private fun squooshTextPathRender(
+    document: DocContent,
+    drawContext: DrawContext,
+    density: Density,
+    node: SquooshResolvedNode,
+    computedLayout: Layout,
+    customizations: CustomizationContext,
+    nodeName: String,
+    variableState: VariableState,
+    computedPathCache: ComputedPathCache,
+    shaderBrushCache: ShaderBrushCache,
+    appContext: Context,
+) {
+    val shape = node.view.dataOrNull?.textOrNull?.shape ?: return
+    val style = node.style
+    val textInfo = node.textInfo!!
+
+    val paths = shape.computePaths(
+        style,
+        density.density,
+        Size(computedLayout.width * density.density, computedLayout.height * density.density),
+        null,
+        false,
+        node.layoutId,
+        variableState,
+        computedPathCache)
+
+    // We get the text path as a fill, and ignore any strokes.
+    paths.fills.forEach { path ->
+        val pathPaint = Paint()
+        pathPaint.style = PaintingStyle.Fill
+        pathPaint.color = Color.Black
+        pathPaint.alpha = 0.5f
+        //drawContext.canvas.drawPath(path, pathPaint)
+
+        val textPaint = pathPaint.asFrameworkPaint()
+        textPaint.textSize = style.nodeStyle.fontSize.getValue(variableState) * density.density
+        drawContext.canvas.nativeCanvas.drawTextOnPath(
+            node.view.data.text.content,
+            path.asAndroidPath(),
+            0.0f, 0.0f,
+            textPaint
+            )
+    }
+
+
+    Log.e(TAG, "TextPath not supported! Using regular text rendering. $nodeName $shape")
 }

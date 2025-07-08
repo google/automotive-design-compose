@@ -21,13 +21,13 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.android.designcompose.ComponentReplacementContext
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
@@ -41,35 +41,33 @@ interface LayoutReplacementSurfaceViewTest {
         @Design(node = "#surfaceview_place_holder") surfaceViewPlaceHolder: ReplacementContent,
         @Design(node = "#surfaceview_place_holder_with_size")
         surfaceViewPlaceHolderWithSize: ReplacementContent,
+        @Design(node = "#surfaceview_component_replacement_context")
+        surfaceViewComponentReplacement: @Composable (ComponentReplacementContext) -> Unit,
     )
 }
 
 @Composable
 fun LayoutReplacementSurfaceViewTest() {
-    Row {
-        // SurfaceView Outside the DesignCompose tree
-        CircleDrawingWithSurfaceView(modifier = Modifier.fillMaxSize(0.2f))
-
-        LayoutReplacementSurfaceViewTestDoc.MainFrame(
-            modifier = Modifier.fillMaxSize(0.8f),
-            // SurfaceView Inside the DesignCompose tree with ReplacementContent.
-            surfaceViewPlaceHolder =
-                ReplacementContent(
-                    count = 1,
-                    // SurfaceView should take the full size of replacing node.
-                    // This is not happening in DC 0.33 onwards, SurfaceView is not visible.
-                    content = {
-                        { CircleDrawingWithSurfaceView(modifier = Modifier.fillMaxSize()) }
-                    },
-                ),
-            surfaceViewPlaceHolderWithSize =
-                ReplacementContent(
-                    count = 1,
-                    // Defining specific size(eg 100.dp) is showing the SurfaceView.
-                    content = { { CircleDrawingWithSurfaceView(modifier = Modifier.size(100.dp)) } },
-                ),
-        )
-    }
+    LayoutReplacementSurfaceViewTestDoc.MainFrame(
+        modifier = Modifier.fillMaxSize(0.8f),
+        // SurfaceView Inside the DesignCompose tree with ReplacementContent.
+        surfaceViewPlaceHolder =
+            ReplacementContent(
+                count = 1,
+                // SurfaceView should take the full size of replacing node.
+                // This is not happening in DC 0.33 onwards, SurfaceView is not visible.
+                content = { { CircleDrawingWithSurfaceView(modifier = Modifier.fillMaxSize()) } },
+            ),
+        surfaceViewPlaceHolderWithSize =
+            ReplacementContent(
+                count = 1,
+                // Defining specific size(eg 100.dp) is showing the SurfaceView.
+                content = { { CircleDrawingWithSurfaceView(modifier = Modifier.size(100.dp)) } },
+            ),
+        surfaceViewComponentReplacement = {
+            CircleDrawingWithSurfaceView(modifier = Modifier.fillMaxSize())
+        },
+    )
 }
 
 @Composable

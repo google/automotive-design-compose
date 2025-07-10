@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; padding: 10px; }
+  .row { margin-bottom: 10px; }
+  label { display: inline-block; width: 120px; }
+  input, select { width: 200px; }
+  #keyframes-container { margin-top: 10px; }
+  .keyframe { margin-bottom: 5px; display: flex; align-items: center; }
+  .keyframe input { width: 100px; }
+  .delete-keyframe { margin-left: 10px; cursor: pointer; }
+  #warning { color: #d93025; background-color: #fce8e6; border: 1px solid #f5c6cb; padding: 8px; border-radius: 4px; margin-bottom: 10px; display: none; }
+</style>
+</head>
+<div id="multi-node-view" style="display: none;">
+    <h2>Multiple Nodes Selected</h2>
+    <div id="node-list"></div>
+</div>
+
+<div id="single-node-view">
+    <h2>Animation Properties</h2>
+
+    <div id="warning"></div>
+
+    <div class="row">
+        <label for="animation-override-type">Animation:</label>
+        <select id="animation-override-type">
+            <option value="Default">No override / Default</option>
+            <option value="None">None</option>
+            <option value="Custom">Custom</option>
+        </select>
+    </div>
+
+    <div id="custom-animation-fields" style="display: none;">
+        <div class="row">
+            <label for="initial-delay">Initial Delay (ms):</label>
+            <input type="number" id="initial-delay" value="0">
+        </div>
+
+        <div class="row">
+            <label for="animation-type">Animation Type:</label>
+            <select id="animation-type">
+                <option value="Smooth">Smooth</option>
+                <option value="KeyFrame">KeyFrame</option>
+            </select>
+        </div>
+
+        <div id="smooth-animation-fields">
+            <div class="row">
+                <label for="duration">Duration (ms):</label>
+                <input type="number" id="duration" value="1000">
+            </div>
+            <div class="row">
+                <label for="easing">Easing:</label>
+                <select id="easing">
+                    <option value="Linear">Linear</option>
+                    <option value="EaseInOut">Ease In Out</option>
+                    <option value="EaseIn">Ease In</option>
+                    <option value="EaseOut">Ease Out</option>
+                    <option value="Bezier">Custom Bezier</option>
+                </select>
+            </div>
+            <div id="bezier-fields" style="display: none;">
+                <div class="row"><label for="p1">P1:</label><input type="number" id="p1" value="0.0" step="0.1"></div>
+                <div class="row"><label for="p2">P2:</label><input type="number" id="p2" value="1.0" step="0.1"></div>
+            </div>
+        </div>
+
+        <div id="keyframe-animation-fields" style="display: none;">
+            <div id="keyframes-container"></div>
+            <button id="add-keyframe">Add Keyframe</button>
+        </div>
+
+        <div class="row">
+            <label for="repeat-type">Repeat Type:</label>
+            <select id="repeat-type">
+                <option value="NoRepeat">No Repeat</option>
+                <option value="Repeat">Repeat N Times</option>
+                <option value="LoopForever">Loop Forever</option>
+            </select>
+        </div>
+        <div id="repeat-count-fields" style="display: none;">
+            <div class="row">
+                <label for="repeat-count">Repeat Count:</label>
+                <input type="number" id="repeat-count" value="1">
+            </div>
+        </div>
+
+        <div class="row">
+            <label for="interrupt-type">Interrupt Type:</label>
+            <select id="interrupt-type">
+                <option value="None">None</option>
+                <option value="ResetToStart">Reset To Start</option>
+                <option value="Complete">Complete</option>
+                <option value="Stop">Stop</option>
+            </select>
+        </div>
+    </div>
+
+    <button id="save">Save</button>
+    <button id="save-and-close">Save and Close</button>
+</div>
+<script>
+  const singleNodeView = document.getElementById('single-node-view');
+  const multiNodeView = document.getElementById('multi-node-view');
+  const nodeList = document.getElementById('node-list');
+  const overrideType = document.getElementById('animation-override-type');
+  const customFields = document.getElementById('custom-animation-fields');
+  const animationType = document.getElementById('animation-type');
+  const smoothFields = document.getElementById('smooth-animation-fields');
+  const keyframeFields = document.getElementById('keyframe-animation-fields');
+  const easing = document.getElementById('easing');
+  const bezierFields = document.getElementById('bezier-fields');
+  const repeatType = document.getElementById('repeat-type');
+  const repeatCountFields = document.getElementById('repeat-count-fields');
+  const keyframesContainer = document.getElementById('keyframes-container');
+  const addKeyframeButton = document.getElementById('add-keyframe');
+  const warningDiv = document.getElementById('warning');
+
+  window.onmessage = async (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg.type === 'load-data') {
+          singleNodeView.style.display = 'block';
+          multiNodeView.style.display = 'none';
+          const data = msg.data;
+          if (data === null || data.override === 'Default') {
+              overrideType.value = 'Default';
+          } else if (data && data.override === 'Custom') {
+              overrideType.value = 'Custom';
+              document.getElementById('initial-delay').value = data.spec.initial_delay.nanos / 1000000;
+              
+              if (data.spec.animation.Smooth) {
+                  animationType.value = 'Smooth';
+                  const smooth = data.spec.animation.Smooth;
+                  document.getElementById('interrupt-type').value = smooth.interrupt_type || 'None';
+                  document.getElementById('duration').value = smooth.duration.nanos / 1000000;
+                  if (typeof smooth.repeat_type === 'object' && smooth.repeat_type.Repeat) {
+                      repeatType.value = 'Repeat';
+                      document.getElementById('repeat-count').value = smooth.repeat_type.Repeat;
+                  } else {
+                      repeatType.value = smooth.repeat_type;
+                  }
+                  if (typeof smooth.easing === 'object' && smooth.easing.Bezier) {
+                      easing.value = 'Bezier';
+                      document.getElementById('p1').value = smooth.easing.Bezier.p1;
+                      document.getElementById('p2').value = smooth.easing.Bezier.p2;
+                  } else {
+                      easing.value = smooth.easing;
+                  }
+              } else if (data.spec.animation.KeyFrame) {
+                  animationType.value = 'KeyFrame';
+                  const keyframe = data.spec.animation.KeyFrame;
+                  document.getElementById('interrupt-type').value = keyframe.interrupt_type || 'None';
+                  if (typeof keyframe.repeat_type === 'object' && keyframe.repeat_type.Repeat) {
+                      repeatType.value = 'Repeat';
+                      document.getElementById('repeat-count').value = keyframe.repeat_type.Repeat;
+                  } else {
+                      repeatType.value = keyframe.repeat_type;
+                  }
+                  keyframesContainer.innerHTML = ''; // Clear existing keyframes
+                  keyframe.steps.forEach(step => {
+                      addKeyframe(step.value, step.duration.nanos / 1000000);
+                  });
+              }
+          } else if (data && data.override === 'None') {
+              overrideType.value = `None`;
+          } else {
+              overrideType.value = 'Default';
+          }
+          toggleOverrideFields();
+          toggleAnimationTypeFields();
+          toggleBezierFields();
+          toggleRepeatCountFields();
+      } else if (msg.type === 'load-multiple-data') {
+          singleNodeView.style.display = 'none';
+          multiNodeView.style.display = 'block';
+          nodeList.innerHTML = ''; // Clear previous list
+          msg.data.forEach(nodeSummary => {
+              const nodeDiv = document.createElement('div');
+              nodeDiv.className = 'node-summary';
+              nodeDiv.innerHTML = `<b>${nodeSummary.name}</b>: ${nodeSummary.summary}`;
+              nodeList.appendChild(nodeDiv);
+          });
+      } else if (msg.type === 'show-warning') {
+          warningDiv.textContent = msg.message;
+          warningDiv.style.display = 'block';
+      } else if (msg.type === 'hide-warning') {
+          warningDiv.style.display = 'none';
+      } else if (msg.type === 'hide-selection') {
+            singleNodeView.style.display = 'block';
+            multiNodeView.style.display = 'none';
+            warningDiv.style.display = 'none';
+      }
+  };
+
+  function toggleOverrideFields() {
+    customFields.style.display = overrideType.value === 'Custom' ? 'block' : 'none';
+  }
+
+  function toggleAnimationTypeFields() {
+    if (animationType.value === 'Smooth') {
+      smoothFields.style.display = 'block';
+      keyframeFields.style.display = 'none';
+    } else {
+      smoothFields.style.display = 'none';
+      keyframeFields.style.display = 'block';
+    }
+  }
+
+  function toggleBezierFields() {
+      bezierFields.style.display = easing.value === 'Bezier' ? 'block' : 'none';
+  }
+
+  function toggleRepeatCountFields() {
+      repeatCountFields.style.display = repeatType.value === 'Repeat' ? 'block' : 'none';
+  }
+  
+  function addKeyframe(value = 0.0, duration = 100) {
+      const keyframeDiv = document.createElement('div');
+      keyframeDiv.className = 'keyframe';
+      keyframeDiv.innerHTML = `
+          <label>Value:</label><input type="number" class="keyframe-value" value="${value}" step="0.1">
+          <label>Duration (ms):</label><input type="number" class="keyframe-duration" value="${duration}">
+          <span class="delete-keyframe">❌</span>
+      `;
+      keyframesContainer.appendChild(keyframeDiv);
+      keyframeDiv.querySelector('.delete-keyframe').onclick = () => {
+          keyframeDiv.remove();
+      };
+  }
+
+  overrideType.addEventListener('change', toggleOverrideFields);
+  animationType.addEventListener('change', toggleAnimationTypeFields);
+  easing.addEventListener('change', toggleBezierFields);
+  repeatType.addEventListener('change', toggleRepeatCountFields);
+  addKeyframeButton.addEventListener('click', addKeyframe);
+
+  toggleOverrideFields();
+  toggleAnimationTypeFields();
+  toggleBezierFields();
+  toggleRepeatCountFields();
+  addKeyframe();
+
+  function getSpec() {
+    const override = overrideType.value;
+
+    if (override === 'Default') {
+        return {
+          override: override,
+          default: true
+        };
+    }
+
+    if (override === 'None') {
+        return {
+          override: override,
+          disable: true
+        };
+    }
+
+    const spec = {
+      initial_delay: { secs: 0, nanos: parseInt(document.getElementById('initial-delay').value) * 1000000 },
+      animation: {},
+    };
+
+    if (animationType.value === 'Smooth') {
+        let easingValue;
+        if (easing.value === 'Bezier') {
+            easingValue = { Bezier: { p0: 0.0, p1: parseFloat(document.getElementById('p1').value), p2: parseFloat(document.getElementById('p2').value), p3: 1.0 } };
+        } else {
+            easingValue = easing.value;
+        }
+
+        spec.animation.Smooth = {
+            duration: { secs: 0, nanos: parseInt(document.getElementById('duration').value) * 1000000 },
+            repeat_type: repeatType.value === 'Repeat' ? { Repeat: parseInt(document.getElementById('repeat-count').value) } : repeatType.value,
+            easing: easingValue,
+            interrupt_type: document.getElementById('interrupt-type').value,
+        };
+    } else {
+        const keyframes = [];
+        const keyframeElements = document.getElementsByClassName('keyframe');
+        for (let i = 0; i < keyframeElements.length; i++) {
+            const value = parseFloat(keyframeElements[i].getElementsByClassName('keyframe-value')[0].value);
+            const duration = parseInt(keyframeElements[i].getElementsByClassName('keyframe-duration')[0].value);
+            keyframes.push({ value: value, duration: { secs: 0, nanos: duration * 1000000 } });
+        }
+        spec.animation.KeyFrame = {
+            steps: keyframes,
+            repeat_type: repeatType.value === 'Repeat' ? { Repeat: parseInt(document.getElementById('repeat-count').value) } : repeatType.value,
+            interrupt_type: document.getElementById('interrupt-type').value,
+        };
+    }
+    
+    if (spec.animation.Smooth && spec.animation.Smooth.interrupt_type === 'None') {
+        spec.animation.Smooth.interrupt_type = null;
+    }
+    if (spec.animation.KeyFrame && spec.animation.KeyFrame.interrupt_type === 'None') {
+        spec.animation.KeyFrame.interrupt_type = null;
+    }
+    return { override: override, spec: spec };
+  }
+
+  document.getElementById('save').onclick = () => {
+      const data = getSpec();
+      if (data.default) {
+          parent.postMessage({ pluginMessage: { type: 'clear-animation', close: false } }, '*');
+      } else {
+          parent.postMessage({ pluginMessage: { type: 'save-animation', spec: data, close: false } }, '*');
+      }
+  };
+
+  document.getElementById('save-and-close').onclick = () => {
+      const data = getSpec();
+      if (data.default) {
+          parent.postMessage({ pluginMessage: { type: 'clear-animation', close: true } }, '*');
+      } else {
+          parent.postMessage({ pluginMessage: { type: 'save-animation', spec: data, close: true } }, '*');
+      }
+  };
+</script>
+</body>
+</html>

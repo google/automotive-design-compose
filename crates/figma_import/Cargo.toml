@@ -42,6 +42,7 @@ clap = { workspace = true, optional = true }
 
 # logging
 log.workspace = true
+simple-log = "2.3.0"
 
 [build-dependencies]
 vergen.workspace = true

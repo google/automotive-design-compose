@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::animation_spec_schema::AnimationOverrideJson;
 use crate::{
     component_context::ComponentContext,
     error::Error,
@@ -810,6 +811,29 @@ impl Document {
                                 node_name_hash.insert(NodeQuery::NodeId(lcd.overflow_node_id));
                             }
                         }
+                    }
+
+                    if let Some(data) = vsw_data.get("squoosh") {
+                        log::info!("Decoded squoosh animation!! {:?}", data);
+                        let animation_spec_json =
+                            serde_json::from_str::<AnimationOverrideJson>(data.as_str());
+                        match animation_spec_json {
+                            Ok(animation_spec_json) => {
+                                eprintln!(
+                                    "Successfully {:?} got json data: {animation_spec_json:?}. from {}",
+                                    node.name, data
+                                );
+                            }
+                            Err(err) => {
+                                eprintln!(
+                                    "Error getting animation spec json: {:?} for {:?}",
+                                    err,
+                                    data.as_str()
+                                );
+                            }
+                        }
+                    } else {
+                        log::warn!("No designcomposeSquoosh plugin data: {:?}", vsw_data.keys());
                     }
                 }
             }

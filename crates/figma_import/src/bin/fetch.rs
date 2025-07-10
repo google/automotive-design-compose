@@ -20,6 +20,7 @@ use figma_import::tools::fetch::Args;
 fn main() {
     let args = Args::parse();
     if let Err(e) = fetch(args) {
+        simple_log::quick!("info");
         eprintln!("Fetch failed: {:?}", e);
         std::process::exit(1);
     }

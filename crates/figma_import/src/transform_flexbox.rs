@@ -39,8 +39,12 @@ use dc_bundle::variable::NumOrVar;
 use dc_bundle::view_shape;
 use dc_bundle::view_shape::ViewShape;
 
+use crate::animation_override::AnimationOverride;
+use crate::animation_spec_schema::AnimationOverrideJson;
 use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
+use crate::scalableui_schema::ScalableUiDataJson;
+use crate::shader_schema::ShaderDataJson;
 use dc_bundle::background::background;
 use dc_bundle::background::{background::Background_type, Background};
 use dc_bundle::blend::BlendMode;
@@ -53,25 +57,22 @@ use dc_bundle::meter_data::{
     ProgressMarkerMeterData, ProgressVectorMeterData, RotationMeterData,
 };
 use dc_bundle::node_style::Display;
+use dc_bundle::path::line_height::Line_height_type;
 use dc_bundle::path::{stroke_weight, StrokeAlign, StrokeWeight};
 use dc_bundle::positioning::{
     item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, ItemSpacing,
     JustifyContent, Overflow, OverflowDirection, PositionType, ScrollInfo,
 };
 use dc_bundle::reaction::Reaction;
+use dc_bundle::scalable::scalable_uidata;
 use dc_bundle::shadow::{BoxShadow, TextShadow};
 use dc_bundle::text::{TextAlign, TextAlignVertical, TextOverflow};
-use dc_bundle::view_shape::view_shape::RoundRect;
-use log::error;
-
-use crate::scalableui_schema::ScalableUiDataJson;
-use crate::shader_schema::ShaderDataJson;
-use dc_bundle::path::line_height::Line_height_type;
-use dc_bundle::scalable::scalable_uidata;
 use dc_bundle::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::view::view::RenderMethod;
 use dc_bundle::view::{ComponentInfo, View};
+use dc_bundle::view_shape::view_shape::RoundRect;
 use dc_bundle::view_style::ViewStyle;
+use log::error;
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -1782,6 +1783,24 @@ fn visit_node(
         }
     };
 
+    if let Some(vsw_data) = node.shared_plugin_data.get("designcomposeSquoosh") {
+        if let Some(data) = vsw_data.get("designcomposeSquoosh") {
+            let animation_spec_json = serde_json::from_str::<AnimationOverrideJson>(data.as_str());
+            match animation_spec_json {
+                Ok(animation_spec_json) => {
+                    log::info!("Successfully got json data: {animation_spec_json:?}");
+                }
+                Err(err) => {
+                    log::error!("Error getting animation spec json: {:?}", err);
+                }
+            }
+        } else {
+            log::warn!("No designcomposeSquoosh plugin data");
+        }
+    } else {
+        log::warn!("No plugin data");
+    }
+
     // Check to see if there is additional plugin data to set this node up as
     // a type of meter (dials/gauges/progress bars)
     if let Some(vsw_data) = plugin_data {
@@ -1969,6 +1988,10 @@ fn visit_node(
         RenderMethod::RENDER_METHOD_NONE,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
     );
+    if let Some(animation_override) = &node.animation_override {
+        view.style_mut().node_style_mut().animation_override =
+            Some(AnimationOverride::from(animation_override).into()).into();
+    }
 
     // Iterate over our visible children, but not vectors because they always
     // present their children's content themselves (e.g.: they are boolean products

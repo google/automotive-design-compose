@@ -1036,6 +1036,8 @@ pub struct Node {
     pub absolute_render_bounds: Option<Rectangle>,
     #[serde(default)]
     pub shared_plugin_data: HashMap<String, HashMap<String, String>>,
+    #[serde(skip)]
+    pub animation_override: Option<crate::animation_spec_schema::AnimationOverrideJson>,
     #[serde(flatten)]
     pub data: NodeData,
     pub relative_transform: Option<Transform>,

@@ -120,3 +120,39 @@ To ensure that work can be continued across sessions, the agent will use a notes
 *   **Creating Notes:** For any task that will require large amounts of planning or file changes, the agent will create a markdown file in the `.gemini/` directory (e.g., `.gemini/task-name-notes.md`). This file will contain a summary of the work completed, the plan for what is left to do, and any other relevant context.
 *   **Continuing Tasks:** At the beginning of a new session, the agent will look for any files in the `.gemini/` directory (ignoring the `.gitignore` file, so it is important to use the correct tool parameter to see all files). If the agent finds any, it will read them and ask the user if they want to continue the tasks described in them.
 
+## Figma Tools
+
+This section describes the command-line tools available for interacting with Figma.
+
+### fetch
+
+The `fetch` tool downloads a Figma document, extracts specified nodes, and saves the output to a `.dcf` file. This tool requires a Figma access token, which can be provided via the `FIGMA_ACCESS_TOKEN` environment variable or a file at `~/.config/figma_access_token`.
+
+**Usage:**
+
+```bash
+cargo run --features="fetch" --bin fetch -- --doc-id <DOCUMENT_ID> --nodes <NODE_NAME> --output <OUTPUT_FILE.dcf>
+```
+
+**Example:**
+
+```bash
+cargo run --features="fetch" --bin fetch -- --doc-id 2aM4SczJzWg1rov2qqBMpe --nodes "#MainFrame" --output output.dcf
+```
+
+### dcf_info
+
+The `dcf_info` tool inspects a `.dcf` file and prints its contents, including header information and variable data.
+
+**Usage:**
+
+```bash
+cargo run --features="dcf_info" --bin dcf_info -- <INPUT_FILE.dcf> --varinfo
+```
+
+**Example:**
+
+```bash
+cargo run --features="dcf_info" --bin dcf_info -- output.dcf --varinfo
+```
+

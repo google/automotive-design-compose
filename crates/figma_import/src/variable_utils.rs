@@ -29,6 +29,7 @@ pub(crate) trait FromFigmaVar<VarType> {
         bound_variables: &figma_schema::BoundVariables,
         var_name: &str,
         var_value: VarType,
+        key_to_global_id_map: &mut HashMap<String, String>,
     ) -> Self;
 
     fn from_var_hash(
@@ -36,6 +37,7 @@ pub(crate) trait FromFigmaVar<VarType> {
         hash_name: &str,
         var_name: &str,
         var_value: VarType,
+        key_to_global_id_map: &mut HashMap<String, String>,
     ) -> Self;
 }
 // Create a NumOrVar from Figma variable name and number value
@@ -44,9 +46,13 @@ impl FromFigmaVar<f32> for NumOrVarType {
         bound_variables: &figma_schema::BoundVariables,
         var_name: &str,
         var_value: f32,
+        key_to_global_id_map: &mut HashMap<String, String>,
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
+            let key_part = var.strip_prefix("VariableID:").unwrap_or(&var);
+            let key = key_part.split('/').next().unwrap_or(key_part);
+            key_to_global_id_map.insert(key.to_string(), var.clone());
             NumOrVarType::Var(NumVar { id: var, fallback: var_value, ..Default::default() })
         } else {
             NumOrVarType::Num(var_value)
@@ -57,9 +63,13 @@ impl FromFigmaVar<f32> for NumOrVarType {
         hash_name: &str,
         var_name: &str,
         var_value: f32,
+        key_to_global_id_map: &mut HashMap<String, String>,
     ) -> Self {
         let var = bound_variables.get_var_from_hash(hash_name, var_name);
         if let Some(var) = var {
+            let key_part = var.strip_prefix("VariableID:").unwrap_or(&var);
+            let key = key_part.split('/').next().unwrap_or(key_part);
+            key_to_global_id_map.insert(key.to_string(), var.clone());
             NumOrVarType::Var(NumVar { id: var, fallback: var_value, ..Default::default() })
         } else {
             NumOrVarType::Num(var_value)
@@ -72,9 +82,15 @@ impl FromFigmaVar<f32> for NumOrVar {
         bound_variables: &figma_schema::BoundVariables,
         var_name: &str,
         var_value: f32,
+        key_to_global_id_map: &mut HashMap<String, String>,
     ) -> NumOrVar {
         NumOrVar {
-            NumOrVarType: Some(NumOrVarType::from_var(bound_variables, var_name, var_value)),
+            NumOrVarType: Some(NumOrVarType::from_var(
+                bound_variables,
+                var_name,
+                var_value,
+                key_to_global_id_map,
+            )),
             ..Default::default()
         }
     }
@@ -83,6 +99,7 @@ impl FromFigmaVar<f32> for NumOrVar {
         hash_name: &str,
         var_name: &str,
         var_value: f32,
+        key_to_global_id_map: &mut HashMap<String, String>,
     ) -> NumOrVar {
         NumOrVar {
             NumOrVarType: Some(NumOrVarType::from_var_hash(
@@ -90,6 +107,7 @@ impl FromFigmaVar<f32> for NumOrVar {
                 hash_name,
                 var_name,
                 var_value,
+                key_to_global_id_map,
             )),
             ..Default::default()
         }
@@ -102,9 +120,13 @@ impl FromFigmaVar<&FloatColor> for ColorOrVar {
         bound_variables: &figma_schema::BoundVariables,
         var_name: &str,
         color: &FloatColor,
+        key_to_global_id_map: &mut HashMap<String, String>,
     ) -> Self {
         let var = bound_variables.get_variable(var_name);
         if let Some(var) = var {
+            let key_part = var.strip_prefix("VariableID:").unwrap_or(&var);
+            let key = key_part.split('/').next().unwrap_or(key_part);
+            key_to_global_id_map.insert(key.to_string(), var.clone());
             ColorOrVar::new_var(var, Some(color.into()))
         } else {
             ColorOrVar::new_color(color.into())
@@ -115,6 +137,7 @@ impl FromFigmaVar<&FloatColor> for ColorOrVar {
         _hash_name: &str,
         _var_name: &str,
         color: &FloatColor,
+        _key_to_global_id_map: &mut HashMap<String, String>,
     ) -> Self {
         // Currently, no color variables from a hash are yet supported
         ColorOrVar::new_color(color.into())
@@ -200,9 +223,10 @@ pub(crate) fn bound_variables_color(
     bound_variables: &Option<figma_schema::BoundVariables>,
     default_color: &figma_schema::FigmaColor,
     last_opacity: f32,
+    key_to_global_id_map: &mut HashMap<String, String>,
 ) -> ColorOrVar {
     if let Some(vars) = bound_variables {
-        ColorOrVar::from_var(vars, "color", &default_color.into())
+        ColorOrVar::from_var(vars, "color", &default_color.into(), key_to_global_id_map)
     } else {
         ColorOrVar {
             ColorOrVarType: Some(color_or_var::ColorOrVarType::Color(crate::Color::from_f32s(

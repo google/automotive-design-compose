@@ -29,7 +29,7 @@ permissions: {}
 
 jobs:
   record-current-screenshots:
-    runs-on: "ubuntu-latest"
+    runs-on: "macos-latest"
     timeout-minutes: 20
 
     permissions:

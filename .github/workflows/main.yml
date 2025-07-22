@@ -104,9 +104,9 @@ jobs:
           name: designcompose_m2repo
           path: designcompose_m2repo/
   # These tests run on the local JVM and don't need the rust code,
-  # so it makes sense to put them in a separate job
+  # so it makes sense to put them in a seperate job
   verify-roborazzi:
-    runs-on: "ubuntu-latest"
+    runs-on: "macos-latest"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1

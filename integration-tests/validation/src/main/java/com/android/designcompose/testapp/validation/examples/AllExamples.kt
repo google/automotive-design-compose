@@ -124,6 +124,7 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             { VectorRenderingTest() },
             VectorRenderingTestDoc.javaClass.name,
         ),
+        Triple("Remote Variable", { RemoteVariablesTest() }, RemoteVariablesTestDoc.javaClass.name),
         Triple("1px Separator", { OnePxSeparatorTest() }, OnePxSeparatorDoc.javaClass.name),
         // Don't run in CI, need an annotation.
         // Triple("Compositing", { CompositingViewsTest() },

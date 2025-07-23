@@ -642,9 +642,11 @@ fn compute_background(
     last_paint: &figma_schema::Paint,
     images: &mut ImageContext,
     node_name: &String,
+    key_to_global_id_map: &mut HashMap<String, String>,
 ) -> Background {
     if let figma_schema::PaintData::Solid { color, bound_variables } = &last_paint.data {
-        let solid_bg = bound_variables_color(bound_variables, color, last_paint.opacity);
+        let solid_bg =
+            bound_variables_color(bound_variables, color, last_paint.opacity, key_to_global_id_map);
         Background::new_with_background(Background_type::Solid(solid_bg))
     } else if let figma_schema::PaintData::Image {
         image_ref: Some(image_ref),
@@ -753,7 +755,12 @@ fn compute_background(
             Background::new_none()
         } else {
             for s in stops {
-                let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
+                let c = bound_variables_color(
+                    &s.bound_variables,
+                    &s.color,
+                    last_paint.opacity,
+                    key_to_global_id_map,
+                );
                 let g = background::ColorStop {
                     position: s.position,
                     color: Some(c).into(),
@@ -794,7 +801,12 @@ fn compute_background(
             Background::new_none()
         } else {
             for s in stops {
-                let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
+                let c = bound_variables_color(
+                    &s.bound_variables,
+                    &s.color,
+                    last_paint.opacity,
+                    key_to_global_id_map,
+                );
                 let g = background::ColorStop {
                     position: s.position,
                     color: Some(c).into(),
@@ -837,7 +849,12 @@ fn compute_background(
             Background::new_none()
         } else {
             for s in stops {
-                let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
+                let c = bound_variables_color(
+                    &s.bound_variables,
+                    &s.color,
+                    last_paint.opacity,
+                    key_to_global_id_map,
+                );
                 let g = background::ColorStop {
                     position: s.position,
                     color: Some(c).into(),
@@ -880,7 +897,12 @@ fn compute_background(
             Background::new_none()
         } else {
             for s in stops {
-                let c = bound_variables_color(&s.bound_variables, &s.color, last_paint.opacity);
+                let c = bound_variables_color(
+                    &s.bound_variables,
+                    &s.color,
+                    last_paint.opacity,
+                    key_to_global_id_map,
+                );
                 let g = background::ColorStop {
                     position: s.position,
                     color: Some(c).into(),
@@ -916,6 +938,7 @@ fn visit_node(
     images: &mut ImageContext,
     parent_plugin_data: Option<&HashMap<String, String>>,
     hidden_node_policy: HiddenNodePolicy,
+    key_to_global_id_map: &mut HashMap<String, String>,
 ) -> Result<View, Error> {
     // See if we have any plugin data. If we have plugin data passed in, it came from a parent
     // widget, so use it. Otherwise look for it in the shared plugin data.
@@ -1272,7 +1295,12 @@ fn visit_node(
 
     style.node_style_mut().stroke.as_mut().map(|stroke| {
         for visible_stroke in node.strokes.iter().filter(|paint| paint.visible) {
-            stroke.strokes.push(compute_background(visible_stroke, images, &node.name));
+            stroke.strokes.push(compute_background(
+                visible_stroke,
+                images,
+                &node.name,
+                key_to_global_id_map,
+            ));
         }
 
         // Copy out the common styles from frames and supported content.
@@ -1336,19 +1364,30 @@ fn visit_node(
     {
         if let Some(text_fill) = node.fills.iter().filter(|paint| paint.visible).last() {
             style.node_style_mut().font_color =
-                Some(compute_background(text_fill, images, &node.name)).into();
+                Some(compute_background(text_fill, images, &node.name, key_to_global_id_map))
+                    .into();
         }
         style.node_style_mut().font_size = if let Some(vars) = &node.bound_variables {
-            Some(NumOrVar::from_var(vars, "fontSize", text_style.font_size)).into()
+            Some(NumOrVar::from_var(vars, "fontSize", text_style.font_size, key_to_global_id_map))
         } else {
-            Some(NumOrVar::from_num(text_style.font_size)).into()
-        };
+            Some(NumOrVar::from_num(text_style.font_size))
+        }
+        .into();
+
+        if let Some(vars) = &node.bound_variables {
+            if let Some(var_id) = vars.get_variable("characters") {
+                let key_part = var_id.strip_prefix("VariableID:").unwrap_or(&var_id);
+                let key = key_part.split('/').next().unwrap_or(key_part);
+                key_to_global_id_map.insert(key.to_string(), var_id.clone());
+            }
+        }
 
         style.node_style_mut().font_weight = if let Some(vars) = &node.bound_variables {
             Some(FontWeight::new_with_num_or_var_type(NumOrVarType::from_var(
                 vars,
                 "fontWeight",
                 text_style.font_weight,
+                key_to_global_id_map,
             )))
             .into()
         } else {
@@ -1446,8 +1485,12 @@ fn visit_node(
             }
             match effect.effect_type {
                 figma_schema::EffectType::DropShadow => {
-                    let shadow_color =
-                        bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
+                    let shadow_color = bound_variables_color(
+                        &effect.bound_variables,
+                        &effect.color,
+                        1.0,
+                        key_to_global_id_map,
+                    );
                     style.node_style_mut().text_shadow = Some(TextShadow {
                         blur_radius: effect.radius,
                         color: Some(shadow_color).into(),
@@ -1515,7 +1558,8 @@ fn visit_node(
                 let text_color = if let Some(text_fill) =
                     sub_style.fills.iter().filter(|paint| paint.visible).last()
                 {
-                    let substyle_fill = compute_background(text_fill, images, &node.name);
+                    let substyle_fill =
+                        compute_background(text_fill, images, &node.name, key_to_global_id_map);
                     if substyle_fill.is_some() {
                         substyle_fill
                     } else {
@@ -1666,7 +1710,12 @@ fn visit_node(
     }
 
     for fill in node.fills.iter().filter(|paint| paint.visible) {
-        style.node_style_mut().backgrounds.push(compute_background(fill, images, &node.name));
+        style.node_style_mut().backgrounds.push(compute_background(
+            fill,
+            images,
+            &node.name,
+            key_to_global_id_map,
+        ));
     }
 
     // Convert any path data we have; we'll use it for non-frame types.
@@ -1715,32 +1764,56 @@ fn visit_node(
                     "rectangleCornerRadii",
                     "RECTANGLE_TOP_LEFT_CORNER_RADIUS",
                     corner_radius_values[0],
+                    key_to_global_id_map,
                 ),
                 NumOrVarType::from_var_hash(
                     vars,
                     "rectangleCornerRadii",
                     "RECTANGLE_TOP_RIGHT_CORNER_RADIUS",
                     corner_radius_values[1],
+                    key_to_global_id_map,
                 ),
                 NumOrVarType::from_var_hash(
                     vars,
                     "rectangleCornerRadii",
                     "RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS",
                     corner_radius_values[2],
+                    key_to_global_id_map,
                 ),
                 NumOrVarType::from_var_hash(
                     vars,
                     "rectangleCornerRadii",
                     "RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS",
                     corner_radius_values[3],
+                    key_to_global_id_map,
                 ),
             )
         } else {
             (
-                NumOrVarType::from_var(vars, "topLeftRadius", corner_radius_values[0]),
-                NumOrVarType::from_var(vars, "topRightRadius", corner_radius_values[1]),
-                NumOrVarType::from_var(vars, "bottomRightRadius", corner_radius_values[2]),
-                NumOrVarType::from_var(vars, "bottomLeftRadius", corner_radius_values[3]),
+                NumOrVarType::from_var(
+                    vars,
+                    "topLeftRadius",
+                    corner_radius_values[0],
+                    key_to_global_id_map,
+                ),
+                NumOrVarType::from_var(
+                    vars,
+                    "topRightRadius",
+                    corner_radius_values[1],
+                    key_to_global_id_map,
+                ),
+                NumOrVarType::from_var(
+                    vars,
+                    "bottomRightRadius",
+                    corner_radius_values[2],
+                    key_to_global_id_map,
+                ),
+                NumOrVarType::from_var(
+                    vars,
+                    "bottomLeftRadius",
+                    corner_radius_values[3],
+                    key_to_global_id_map,
+                ),
             )
         };
         if vars.has_var("topLeftRadius")
@@ -1923,8 +1996,12 @@ fn visit_node(
         }
         match effect.effect_type {
             figma_schema::EffectType::DropShadow => {
-                let shadow_color =
-                    bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
+                let shadow_color = bound_variables_color(
+                    &effect.bound_variables,
+                    &effect.color,
+                    1.0,
+                    key_to_global_id_map,
+                );
                 style.node_style_mut().box_shadows.push(BoxShadow::new_with_outset(
                     effect.radius,
                     effect.spread,
@@ -1933,8 +2010,12 @@ fn visit_node(
                 ))
             }
             figma_schema::EffectType::InnerShadow => {
-                let shadow_color =
-                    bound_variables_color(&effect.bound_variables, &effect.color, 1.0);
+                let shadow_color = bound_variables_color(
+                    &effect.bound_variables,
+                    &effect.color,
+                    1.0,
+                    key_to_global_id_map,
+                );
                 style.node_style_mut().box_shadows.push(BoxShadow::new_with_inset(
                     effect.radius,
                     effect.spread,
@@ -1985,6 +2066,7 @@ fn visit_node(
                     images,
                     child_plugin_data,
                     hidden_node_policy,
+                    key_to_global_id_map,
                 )?);
             }
         }
@@ -1996,20 +2078,23 @@ fn visit_node(
 /// real toolkit View can be created, or the tree can be serialized and read in by
 /// another process.
 ///
-///  * `component`: The Figma node to start at.
+/// # Arguments
+///
+///  * `node`: The Figma node to transform.
 ///  * `component_map`: The map of Component ID to Component metadata from the document.
 ///  * `images`: ImageManager used for fetching image data referenced by the component.
 ///
-pub fn create_component_flexbox(
-    component: &figma_schema::Node,
-    component_map: &HashMap<String, figma_schema::Component>,
-    component_set_map: &HashMap<String, figma_schema::ComponentSet>,
+pub fn create_component_flexbox<'a>(
+    node: &figma_schema::Node,
+    component_map: &'a HashMap<String, figma_schema::Component>,
+    component_set_map: &'a HashMap<String, figma_schema::ComponentSet>,
     component_context: &mut ComponentContext,
     image_context: &mut ImageContext,
     hidden_node_policy: HiddenNodePolicy,
-) -> core::result::Result<View, Error> {
+    key_to_global_id_map: &mut HashMap<String, String>,
+) -> Result<View, Error> {
     visit_node(
-        component,
+        node,
         None,
         component_map,
         component_set_map,
@@ -2017,6 +2102,7 @@ pub fn create_component_flexbox(
         image_context,
         None,
         hidden_node_policy,
+        key_to_global_id_map,
     )
 }
 

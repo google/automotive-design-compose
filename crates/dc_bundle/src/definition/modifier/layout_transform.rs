@@ -467,23 +467,12 @@ mod tests {
         let transform = LayoutTransform::create_rotation(0.0, 0.0, 1.0, angle);
         let c = (angle / 2.0).cos();
         let s = (angle / 2.0).sin();
+        #[rustfmt::skip]
         let expected = LayoutTransform::row_major(
-            c * c - s * s,
-            -2.0 * c * s,
-            0.0,
-            0.0, //
-            2.0 * c * s,
-            c * c - s * s,
-            0.0,
-            0.0, //
-            0.0,
-            0.0,
-            1.0,
-            0.0, //
-            0.0,
-            0.0,
-            0.0,
-            1.0,
+            c * c - s * s, -2.0 * c * s, 0.0, 0.0, //
+            2.0 * c * s, c * c - s * s, 0.0, 0.0, //
+            0.0, 0.0, 1.0, 0.0, //
+            0.0, 0.0, 0.0, 1.0,
         );
         assert_matrix_eq(&transform, &expected);
     }
@@ -495,23 +484,12 @@ mod tests {
         let result = t.pre_rotate(0.0, 0.0, 1.0, angle);
         let c = (angle / 2.0).cos();
         let s = (angle / 2.0).sin();
+        #[rustfmt::skip]
         let r = LayoutTransform::row_major(
-            c * c - s * s,
-            -2.0 * c * s,
-            0.0,
-            0.0, //
-            2.0 * c * s,
-            c * c - s * s,
-            0.0,
-            0.0, //
-            0.0,
-            0.0,
-            1.0,
-            0.0, //
-            0.0,
-            0.0,
-            0.0,
-            1.0,
+            c * c - s * s, -2.0 * c * s, 0.0, 0.0, //
+            2.0 * c * s, c * c - s * s, 0.0, 0.0, //
+            0.0, 0.0, 1.0, 0.0, //
+            0.0, 0.0, 0.0, 1.0,
         );
         let expected = r.post_transform(&t);
         assert_matrix_eq(&result, &expected);

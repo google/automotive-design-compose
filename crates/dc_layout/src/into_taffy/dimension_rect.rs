@@ -65,3 +65,81 @@ impl TryIntoTaffy<taffy::prelude::Rect<LengthPercentageAuto>> for &MessageField<
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dc_bundle::geometry::DimensionProto;
+
+    fn create_test_dimension_rect() -> DimensionRect {
+        let mut rect = DimensionRect::default();
+        rect.start = DimensionProto::new_points(10.0);
+        rect.end = DimensionProto::new_points(20.0);
+        rect.top = DimensionProto::new_points(30.0);
+        rect.bottom = DimensionProto::new_points(40.0);
+        rect
+    }
+
+    #[test]
+    fn test_try_into_taffy_dimension_rect() {
+        let rect: MessageField<DimensionRect> = Some(create_test_dimension_rect()).into();
+        let result: Result<taffy::prelude::Rect<TaffyDimension>, dc_bundle::Error> =
+            (&rect).try_into_taffy();
+        assert!(result.is_ok());
+        let taffy_rect = result.unwrap();
+        assert_eq!(taffy_rect.left, TaffyDimension::Length(10.0));
+        assert_eq!(taffy_rect.right, TaffyDimension::Length(20.0));
+        assert_eq!(taffy_rect.top, TaffyDimension::Length(30.0));
+        assert_eq!(taffy_rect.bottom, TaffyDimension::Length(40.0));
+    }
+
+    #[test]
+    fn test_try_into_taffy_dimension_rect_none() {
+        let rect: MessageField<DimensionRect> = None.into();
+        let result: Result<taffy::prelude::Rect<TaffyDimension>, dc_bundle::Error> =
+            (&rect).try_into_taffy();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_try_into_taffy_length_percentage_rect() {
+        let rect: MessageField<DimensionRect> = Some(create_test_dimension_rect()).into();
+        let result: Result<taffy::prelude::Rect<LengthPercentage>, dc_bundle::Error> =
+            (&rect).try_into_taffy();
+        assert!(result.is_ok());
+        let taffy_rect = result.unwrap();
+        assert_eq!(taffy_rect.left, LengthPercentage::Length(10.0));
+        assert_eq!(taffy_rect.right, LengthPercentage::Length(20.0));
+        assert_eq!(taffy_rect.top, LengthPercentage::Length(30.0));
+        assert_eq!(taffy_rect.bottom, LengthPercentage::Length(40.0));
+    }
+
+    #[test]
+    fn test_try_into_taffy_length_percentage_rect_none() {
+        let rect: MessageField<DimensionRect> = None.into();
+        let result: Result<taffy::prelude::Rect<LengthPercentage>, dc_bundle::Error> =
+            (&rect).try_into_taffy();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_try_into_taffy_length_percentage_auto_rect() {
+        let rect: MessageField<DimensionRect> = Some(create_test_dimension_rect()).into();
+        let result: Result<taffy::prelude::Rect<LengthPercentageAuto>, dc_bundle::Error> =
+            (&rect).try_into_taffy();
+        assert!(result.is_ok());
+        let taffy_rect = result.unwrap();
+        assert_eq!(taffy_rect.left, LengthPercentageAuto::Length(10.0));
+        assert_eq!(taffy_rect.right, LengthPercentageAuto::Length(20.0));
+        assert_eq!(taffy_rect.top, LengthPercentageAuto::Length(30.0));
+        assert_eq!(taffy_rect.bottom, LengthPercentageAuto::Length(40.0));
+    }
+
+    #[test]
+    fn test_try_into_taffy_length_percentage_auto_rect_none() {
+        let rect: MessageField<DimensionRect> = None.into();
+        let result: Result<taffy::prelude::Rect<LengthPercentageAuto>, dc_bundle::Error> =
+            (&rect).try_into_taffy();
+        assert!(result.is_err());
+    }
+}

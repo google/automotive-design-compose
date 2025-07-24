@@ -203,3 +203,37 @@ pub(crate) fn print_tree_as_html<T>(
     print_func(dump_node_as_html(tree, root_node_id, String::new()).unwrap());
     print_func("</body></html>".to_string());
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dump_as_css() {
+        assert_eq!(LengthPercentageAuto::Auto.to_css_value(), "auto");
+        assert_eq!(LengthPercentageAuto::Length(10.0).to_css_value(), "10px");
+        assert_eq!(LengthPercentageAuto::Percent(0.5).to_css_value(), "0.5%");
+        assert_eq!(LengthPercentage::Length(10.0).to_css_value(), "10px");
+        assert_eq!(LengthPercentage::Percent(0.5).to_css_value(), "0.5%");
+        assert_eq!(Dimension::Auto.to_css_value(), "auto");
+        assert_eq!(Dimension::Length(10.0).to_css_value(), "10px");
+        assert_eq!(Dimension::Percent(0.5).to_css_value(), "0.5%");
+        assert_eq!(Some(AlignItems::Center).to_css_value(), "center");
+        assert_eq!(Some(AlignContent::Center).to_css_value(), "center");
+        assert_eq!(FlexDirection::Column.to_css_value(), "column");
+        assert_eq!(FlexWrap::Wrap.to_css_value(), "wrap");
+        assert_eq!(Display::Flex.to_css_value(), "flex");
+        assert_eq!(taffy::Overflow::Hidden.to_css_value(), "hidden");
+        assert_eq!(Position::Absolute.to_css_value(), "absolute");
+    }
+
+    #[test]
+    fn test_dump_node_as_html() {
+        let mut taffy: TaffyTree<()> = TaffyTree::new();
+        let style = Style { ..Default::default() };
+        let node = taffy.new_leaf(style).unwrap();
+        let html = dump_node_as_html(&taffy, node, "".to_string()).unwrap();
+        assert!(html.starts_with("<div style="));
+        assert!(html.ends_with("</div>"));
+    }
+}

@@ -73,3 +73,71 @@ impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
         Ok(tstyle)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dc_bundle::geometry::{dimension_proto, DimensionProto, DimensionRect, Size};
+    use dc_bundle::positioning::{
+        AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing, JustifyContent,
+        PositionType,
+    };
+
+    #[test]
+    fn test_layout_style_try_into_taffy() {
+        let mut layout_style = LayoutStyle {
+            padding: Some(DimensionRect {
+                start: DimensionProto::new_points(0.0),
+                end: DimensionProto::new_points(0.0),
+                top: DimensionProto::new_points(0.0),
+                bottom: DimensionProto::new_points(0.0),
+                ..Default::default()
+            })
+            .into(),
+            margin: Some(DimensionRect {
+                start: DimensionProto::new_points(0.0),
+                end: DimensionProto::new_points(0.0),
+                top: DimensionProto::new_points(0.0),
+                bottom: DimensionProto::new_points(0.0),
+                ..Default::default()
+            })
+            .into(),
+            align_content: AlignContent::ALIGN_CONTENT_FLEX_START.into(),
+            justify_content: JustifyContent::JUSTIFY_CONTENT_FLEX_START.into(),
+            align_items: AlignItems::ALIGN_ITEMS_FLEX_START.into(),
+            align_self: AlignSelf::ALIGN_SELF_AUTO.into(),
+            position_type: PositionType::POSITION_TYPE_RELATIVE.into(),
+            bounding_box: Some(Size { width: 100.0, height: 200.0, ..Default::default() }).into(),
+            ..Default::default()
+        };
+        layout_style.flex_grow = 2.0;
+        layout_style.flex_shrink = 0.5;
+        layout_style.flex_direction = FlexDirection::FLEX_DIRECTION_COLUMN.into();
+        layout_style.align_items = AlignItems::ALIGN_ITEMS_CENTER.into();
+        if let Some(padding) = layout_style.padding.as_mut() {
+            padding.set_start(dimension_proto::Dimension::Points(10.0));
+        }
+        layout_style.width = DimensionProto::new_points(100.0);
+        layout_style.height = DimensionProto::new_points(200.0);
+        layout_style.min_width = DimensionProto::new_points(50.0);
+        layout_style.min_height = DimensionProto::new_points(100.0);
+        layout_style.max_width = DimensionProto::new_points(200.0);
+        layout_style.max_height = DimensionProto::new_points(400.0);
+        layout_style.left = DimensionProto::new_points(10.0);
+        layout_style.right = DimensionProto::new_points(10.0);
+        layout_style.top = DimensionProto::new_points(10.0);
+        layout_style.bottom = DimensionProto::new_points(10.0);
+        layout_style.flex_basis = DimensionProto::new_points(100.0);
+        layout_style.item_spacing = Some(ItemSpacing::new_fixed(10)).into();
+
+        let taffy_style: taffy::prelude::Style = (&layout_style).try_into_taffy().unwrap();
+
+        assert_eq!(taffy_style.flex_grow, 2.0);
+        assert_eq!(taffy_style.flex_shrink, 0.5);
+        assert_eq!(taffy_style.flex_direction, taffy::prelude::FlexDirection::Column);
+        assert_eq!(taffy_style.align_items, Some(taffy::prelude::AlignItems::Center));
+        assert_eq!(taffy_style.padding.left, taffy::prelude::LengthPercentage::Length(10.0));
+        assert_eq!(taffy_style.size.width, taffy::prelude::Dimension::Length(100.0));
+        assert_eq!(taffy_style.size.height, taffy::prelude::Dimension::Length(200.0));
+    }
+}

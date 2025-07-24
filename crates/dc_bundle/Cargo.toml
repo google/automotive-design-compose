@@ -19,3 +19,6 @@ log.workspace = true
 
 [build-dependencies]
 protobuf-codegen.workspace = true
+
+[dev-dependencies]
+tempfile = "3.3.0"

@@ -580,3 +580,257 @@ impl FontWeight {
         FontWeight::from_num(900.0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::background::background::Background_type::Solid;
+
+    #[test]
+    fn test_font_feature_new_with_tag() {
+        let feature = FontFeature::new_with_tag("test".to_string());
+        assert_eq!(feature.tag, "test");
+        assert!(feature.enabled);
+    }
+
+    #[test]
+    fn test_color_from() {
+        let c1 = Color::from_u8s(10, 20, 30, 40);
+        assert_eq!(c1.r, 10);
+        assert_eq!(c1.g, 20);
+        assert_eq!(c1.b, 30);
+        assert_eq!(c1.a, 40);
+
+        let c2 = Color::from_u8_tuple((10, 20, 30, 40));
+        assert_eq!(c1, c2);
+
+        let c3 = Color::from_f32s(0.5, 0.5, 0.5, 0.5);
+        assert_eq!(c3.r, 127);
+        assert_eq!(c3.g, 127);
+        assert_eq!(c3.b, 127);
+        assert_eq!(c3.a, 127);
+
+        let c4 = Color::from_f32_tuple((0.5, 0.5, 0.5, 0.5));
+        assert_eq!(c3, c4);
+
+        let c5 = Color::from_u32(0x40102030);
+        assert_eq!(c5.r, 0x10);
+        assert_eq!(c5.g, 0x20);
+        assert_eq!(c5.b, 0x30);
+        assert_eq!(c5.a, 0x40);
+    }
+
+    #[test]
+    fn test_color_setters() {
+        let mut c = Color::black();
+        c.set_red(10);
+        c.set_green(20);
+        c.set_blue(30);
+        c.set_alpha(40);
+        assert_eq!(c.r(), 10);
+        assert_eq!(c.g(), 20);
+        assert_eq!(c.b(), 30);
+        assert_eq!(c.a(), 40);
+    }
+
+    #[test]
+    fn test_color_static_colors() {
+        assert_eq!(Color::white(), Color::from_u8s(255, 255, 255, 255));
+        assert_eq!(Color::black(), Color::from_u8s(0, 0, 0, 255));
+        assert_eq!(Color::red(), Color::from_u8s(255, 0, 0, 255));
+    }
+
+    #[test]
+    fn test_color_as() {
+        let c = Color::from_u8s(10, 20, 30, 40);
+        assert_eq!(c.as_u8_tuple(), (10, 20, 30, 40));
+        let f = c.as_f32_tuple();
+        assert!((f.0 - 10.0 / 255.0).abs() < f32::EPSILON);
+        assert!((f.1 - 20.0 / 255.0).abs() < f32::EPSILON);
+        assert!((f.2 - 30.0 / 255.0).abs() < f32::EPSILON);
+        assert!((f.3 - 40.0 / 255.0).abs() < f32::EPSILON);
+        let a = c.as_f32_array();
+        assert_eq!(a[0], f.0);
+        assert_eq!(a[1], f.1);
+        assert_eq!(a[2], f.2);
+        assert_eq!(a[3], f.3);
+        assert_eq!(c.as_u32(), (10 << 24) | (20 << 16) | (30 << 8) | 40);
+    }
+
+    #[test]
+    fn test_color_hsv() {
+        let c = Color::from_u8s(255, 0, 0, 255);
+        let (h, s, v) = c.as_hsv();
+        assert!((h - 0.0).abs() < f32::EPSILON);
+        assert!((s - 1.0).abs() < f32::EPSILON);
+        assert!((v - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_float_color_into() {
+        let float_color = FloatColor { r: 0.5, g: 0.5, b: 0.5, a: 0.5, ..Default::default() };
+        let color: Color = (&float_color).into();
+        assert_eq!(color, Color::from_f32s(0.5, 0.5, 0.5, 0.5));
+    }
+
+    #[test]
+    fn test_dimension_proto() {
+        let auto = DimensionProto::new_auto();
+        assert!(matches!(auto.unwrap().Dimension, Some(Dimension::Auto(_))));
+        let points = DimensionProto::new_points(10.0);
+        assert!(matches!(points.unwrap().Dimension, Some(Dimension::Points(v)) if v == 10.0));
+        let percent = DimensionProto::new_percent(50.0);
+        assert!(matches!(percent.unwrap().Dimension, Some(Dimension::Percent(v)) if v == 50.0));
+        let undefined = DimensionProto::new_undefined();
+        assert!(matches!(undefined.unwrap().Dimension, Some(Dimension::Undefined(_))));
+    }
+
+    #[test]
+    fn test_dimension_ext() {
+        let points = DimensionProto::new_points(10.0);
+        assert!(points.as_ref().cloned().is_points().unwrap());
+        let auto = DimensionProto::new_auto();
+        assert!(!auto.as_ref().cloned().is_points().unwrap());
+        let none: Option<DimensionProto> = None;
+        assert!(none.as_ref().cloned().is_points().is_err());
+    }
+
+    #[test]
+    fn test_dimension_rect() {
+        let mut rect = DimensionRect::new_with_default_value();
+        rect.set_start(Dimension::Points(10.0));
+        assert!(matches!(rect.start.unwrap().Dimension, Some(Dimension::Points(v)) if v == 10.0));
+    }
+
+    #[test]
+    fn test_dimension_rect_ext() {
+        let mut rect = Some(DimensionRect::new_with_default_value());
+        assert!(rect.set_start(Dimension::Points(10.0)).is_ok());
+        assert!(rect.set_end(Dimension::Points(20.0)).is_ok());
+        assert!(rect.set_top(Dimension::Points(30.0)).is_ok());
+        assert!(rect.set_bottom(Dimension::Points(40.0)).is_ok());
+
+        let mut none_rect: Option<DimensionRect> = None;
+        assert!(none_rect.set_start(Dimension::Points(10.0)).is_err());
+    }
+
+    #[test]
+    fn test_path_command_try_from() {
+        assert_eq!(PathCommand::try_from(0).unwrap(), PathCommand::MoveTo);
+        assert_eq!(PathCommand::try_from(1).unwrap(), PathCommand::LineTo);
+        assert_eq!(PathCommand::try_from(2).unwrap(), PathCommand::CubicTo);
+        assert_eq!(PathCommand::try_from(3).unwrap(), PathCommand::QuadTo);
+        assert_eq!(PathCommand::try_from(4).unwrap(), PathCommand::Close);
+        assert!(PathCommand::try_from(5).is_err());
+    }
+
+    #[test]
+    fn test_path() {
+        let mut path = Path::new_default();
+        path.move_to(1.0, 2.0).line_to(3.0, 4.0).close();
+        assert_eq!(
+            path.commands,
+            vec![PathCommand::MoveTo as u8, PathCommand::LineTo as u8, PathCommand::Close as u8]
+        );
+        assert_eq!(path.data, vec![1.0, 2.0, 3.0, 4.0]);
+    }
+
+    #[test]
+    fn test_background() {
+        let solid_bg = Solid(ColorOrVar::new_color(Color::red()));
+        let bg = Background::new_with_background(solid_bg);
+        assert!(bg.is_some());
+        let none_bg = Background::new_none();
+        assert!(!none_bg.is_some());
+    }
+
+    #[test]
+    fn test_color_or_var() {
+        let color = Color::red();
+        let color_or_var = ColorOrVar::new_color(color.clone());
+        if let Some(color_or_var::ColorOrVarType::Color(c)) = color_or_var.ColorOrVarType {
+            assert_eq!(c, color);
+        } else {
+            panic!("Wrong type");
+        }
+
+        let color_or_var_var = ColorOrVar::new_var("my_var".to_string(), Some(Color::blue()));
+        if let Some(color_or_var::ColorOrVarType::Var(v)) = color_or_var_var.ColorOrVarType {
+            assert_eq!(v.id, "my_var");
+            assert_eq!(v.fallback.unwrap(), Color::blue());
+        } else {
+            panic!("Wrong type");
+        }
+    }
+
+    #[test]
+    fn test_view_shape() {
+        let rect = ViewShape::new_rect(view_shape::Box::default());
+        assert!(matches!(rect.shape, Some(view_shape::Shape::Rect(_))));
+        let round_rect = ViewShape::new_round_rect(view_shape::RoundRect::default());
+        assert!(matches!(round_rect.shape, Some(view_shape::Shape::RoundRect(_))));
+    }
+
+    #[test]
+    fn test_font_stretch() {
+        assert_eq!(FontStretch::normal().value, 1.0);
+        assert_eq!(FontStretch::condensed().value, 0.75);
+    }
+
+    #[test]
+    fn test_font_weight() {
+        assert!(
+            matches!(FontWeight::bold().weight.unwrap().NumOrVarType, Some(NumOrVarType::Num(v)) if v == 700.0)
+        );
+        assert!(
+            matches!(FontWeight::normal().weight.unwrap().NumOrVarType, Some(NumOrVarType::Num(v)) if v == 400.0)
+        );
+    }
+
+    #[test]
+    fn test_path_cubic_to() {
+        let mut path = Path::new_default();
+        path.cubic_to(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        assert_eq!(path.commands, vec![PathCommand::CubicTo as u8]);
+        assert_eq!(path.data, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    }
+
+    #[test]
+    fn test_path_quad_to() {
+        let mut path = Path::new_default();
+        path.quad_to(1.0, 2.0, 3.0, 4.0);
+        assert_eq!(path.commands, vec![PathCommand::QuadTo as u8]);
+        assert_eq!(path.data, vec![1.0, 2.0, 3.0, 4.0]);
+    }
+
+    #[test]
+    fn test_font_weight_new_with_num_or_var_type() {
+        use crate::variable::num_or_var::NumVar;
+
+        let num_or_var_type = NumOrVarType::Num(700.0);
+        let font_weight = FontWeight::new_with_num_or_var_type(num_or_var_type);
+        if let Some(num_or_var) = font_weight.weight.as_ref() {
+            if let Some(NumOrVarType::Num(v)) = num_or_var.NumOrVarType {
+                assert!((v - 700.0).abs() < f32::EPSILON);
+            } else {
+                panic!("Wrong type");
+            }
+        } else {
+            panic!("Weight not set");
+        }
+
+        let num_var = NumVar { id: "my_var".to_string(), fallback: 400.0, ..Default::default() };
+        let num_or_var_type_var = NumOrVarType::Var(num_var);
+        let font_weight_var = FontWeight::new_with_num_or_var_type(num_or_var_type_var);
+        if let Some(num_or_var) = font_weight_var.weight.as_ref() {
+            if let Some(NumOrVarType::Var(v)) = &num_or_var.NumOrVarType {
+                assert_eq!(v.id, "my_var");
+                assert!((v.fallback - 400.0).abs() < f32::EPSILON);
+            } else {
+                panic!("Wrong type");
+            }
+        } else {
+            panic!("Weight not set");
+        }
+    }
+}

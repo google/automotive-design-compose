@@ -374,3 +374,198 @@ impl LayoutTransform {
         AffineTransform::row_major(self.m11, self.m12, self.m21, self.m22, self.m41, self.m42)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::matrix_transform::AffineTransform;
+    use std::f32::consts::FRAC_PI_2;
+
+    const EPSILON: f32 = 1e-6;
+
+    fn assert_matrix_eq(a: &LayoutTransform, b: &LayoutTransform) {
+        assert!((a.m11 - b.m11).abs() < EPSILON);
+        assert!((a.m12 - b.m12).abs() < EPSILON);
+        assert!((a.m13 - b.m13).abs() < EPSILON);
+        assert!((a.m14 - b.m14).abs() < EPSILON);
+        assert!((a.m21 - b.m21).abs() < EPSILON);
+        assert!((a.m22 - b.m22).abs() < EPSILON);
+        assert!((a.m23 - b.m23).abs() < EPSILON);
+        assert!((a.m24 - b.m24).abs() < EPSILON);
+        assert!((a.m31 - b.m31).abs() < EPSILON);
+        assert!((a.m32 - b.m32).abs() < EPSILON);
+        assert!((a.m33 - b.m33).abs() < EPSILON);
+        assert!((a.m34 - b.m34).abs() < EPSILON);
+        assert!((a.m41 - b.m41).abs() < EPSILON);
+        assert!((a.m42 - b.m42).abs() < EPSILON);
+        assert!((a.m43 - b.m43).abs() < EPSILON);
+        assert!((a.m44 - b.m44).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_row_major() {
+        let transform = LayoutTransform::row_major(
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
+        );
+        assert_eq!(transform.m11, 1.0);
+        assert_eq!(transform.m12, 2.0);
+        assert_eq!(transform.m13, 3.0);
+        assert_eq!(transform.m14, 4.0);
+        assert_eq!(transform.m21, 5.0);
+        assert_eq!(transform.m22, 6.0);
+        assert_eq!(transform.m23, 7.0);
+        assert_eq!(transform.m24, 8.0);
+        assert_eq!(transform.m31, 9.0);
+        assert_eq!(transform.m32, 10.0);
+        assert_eq!(transform.m33, 11.0);
+        assert_eq!(transform.m34, 12.0);
+        assert_eq!(transform.m41, 13.0);
+        assert_eq!(transform.m42, 14.0);
+        assert_eq!(transform.m43, 15.0);
+        assert_eq!(transform.m44, 16.0);
+    }
+
+    #[test]
+    fn test_row_major_2d() {
+        let transform = LayoutTransform::row_major_2d(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        let expected = LayoutTransform::row_major(
+            1.0, 2.0, 0.0, 0.0, //
+            3.0, 4.0, 0.0, 0.0, //
+            0.0, 0.0, 1.0, 0.0, //
+            5.0, 6.0, 0.0, 1.0,
+        );
+        assert_matrix_eq(&transform, &expected);
+    }
+
+    #[test]
+    fn test_create_translation() {
+        let transform = LayoutTransform::create_translation(1.0, 2.0, 3.0);
+        let expected = LayoutTransform::row_major(
+            1.0, 0.0, 0.0, 0.0, //
+            0.0, 1.0, 0.0, 0.0, //
+            0.0, 0.0, 1.0, 0.0, //
+            1.0, 2.0, 3.0, 1.0,
+        );
+        assert_matrix_eq(&transform, &expected);
+    }
+
+    #[test]
+    fn test_identity() {
+        let transform = LayoutTransform::identity();
+        let expected = LayoutTransform::row_major(
+            1.0, 0.0, 0.0, 0.0, //
+            0.0, 1.0, 0.0, 0.0, //
+            0.0, 0.0, 1.0, 0.0, //
+            0.0, 0.0, 0.0, 1.0,
+        );
+        assert_matrix_eq(&transform, &expected);
+    }
+
+    #[test]
+    fn test_create_rotation() {
+        let angle = FRAC_PI_2;
+        let transform = LayoutTransform::create_rotation(0.0, 0.0, 1.0, angle);
+        let c = (angle / 2.0).cos();
+        let s = (angle / 2.0).sin();
+        let expected = LayoutTransform::row_major(
+            c * c - s * s,
+            -2.0 * c * s,
+            0.0,
+            0.0, //
+            2.0 * c * s,
+            c * c - s * s,
+            0.0,
+            0.0, //
+            0.0,
+            0.0,
+            1.0,
+            0.0, //
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        );
+        assert_matrix_eq(&transform, &expected);
+    }
+
+    #[test]
+    fn test_pre_rotate() {
+        let t = LayoutTransform::create_translation(10.0, 0.0, 0.0);
+        let angle = FRAC_PI_2;
+        let result = t.pre_rotate(0.0, 0.0, 1.0, angle);
+        let c = (angle / 2.0).cos();
+        let s = (angle / 2.0).sin();
+        let r = LayoutTransform::row_major(
+            c * c - s * s,
+            -2.0 * c * s,
+            0.0,
+            0.0, //
+            2.0 * c * s,
+            c * c - s * s,
+            0.0,
+            0.0, //
+            0.0,
+            0.0,
+            1.0,
+            0.0, //
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        );
+        let expected = r.post_transform(&t);
+        assert_matrix_eq(&result, &expected);
+    }
+
+    #[test]
+    fn test_pre_transform() {
+        let t = LayoutTransform::create_translation(10.0, 20.0, 30.0);
+        let s = LayoutTransform::create_scale(2.0, 3.0, 4.0);
+        let result = t.pre_transform(&s);
+        let expected = s.post_transform(&t);
+        assert_matrix_eq(&result, &expected);
+    }
+
+    #[test]
+    fn test_post_translate() {
+        let t = LayoutTransform::create_scale(2.0, 3.0, 4.0);
+        let result = t.post_translate(10.0, 20.0, 30.0);
+        let trans = LayoutTransform::create_translation(10.0, 20.0, 30.0);
+        let expected = t.post_transform(&trans);
+        assert_matrix_eq(&result, &expected);
+    }
+
+    #[test]
+    fn test_post_transform() {
+        let t = LayoutTransform::create_translation(10.0, 20.0, 30.0);
+        let s = LayoutTransform::create_scale(2.0, 3.0, 4.0);
+        let result = t.post_transform(&s);
+        let result_of_mult = t.post_transform(&s);
+        assert_matrix_eq(&result_of_mult, &result);
+    }
+
+    #[test]
+    fn test_inverse() {
+        let transform =
+            LayoutTransform::create_translation(10.0, 20.0, 30.0).post_scale(2.0, 3.0, 1.0);
+        let inverse = transform.inverse().unwrap();
+        let identity = transform.post_transform(&inverse);
+        assert_matrix_eq(&identity, &LayoutTransform::identity());
+
+        let singular = LayoutTransform::create_scale(1.0, 1.0, 0.0);
+        assert!(singular.inverse().is_none());
+    }
+
+    #[test]
+    fn test_to_2d() {
+        let transform_3d = LayoutTransform::row_major_2d(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        let transform_2d = transform_3d.to_2d();
+        let expected = AffineTransform::row_major(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        assert_eq!(transform_2d.m11, expected.m11);
+        assert_eq!(transform_2d.m12, expected.m12);
+        assert_eq!(transform_2d.m21, expected.m21);
+        assert_eq!(transform_2d.m22, expected.m22);
+        assert_eq!(transform_2d.m31, expected.m31);
+        assert_eq!(transform_2d.m32, expected.m32);
+    }
+}

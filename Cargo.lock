@@ -309,6 +309,7 @@ dependencies = [
  "protobuf-codegen",
  "serde",
  "serde_bytes",
+ "tempfile",
  "thiserror 2.0.12",
 ]
 

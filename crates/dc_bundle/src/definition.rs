@@ -174,6 +174,34 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_header_current() {
+        let header = DesignComposeDefinitionHeader::current(
+            "2024-01-01".to_string(),
+            "Test".to_string(),
+            "v1".to_string(),
+            "doc1".to_string(),
+        );
+        assert_eq!(header.dc_version, CURRENT_VERSION);
+        assert_eq!(header.last_modified, "2024-01-01");
+        assert_eq!(header.name, "Test");
+        assert_eq!(header.response_version, "v1");
+        assert_eq!(header.id, "doc1");
+    }
+
+    #[test]
+    fn test_definition_new() {
+        let mut views = HashMap::new();
+        views
+            .insert(NodeQuery::id("view1"), View { id: "view1".to_string(), ..Default::default() });
+        let images = EncodedImageMap(HashMap::new());
+        let component_sets = HashMap::new();
+        let variable_map = VariableMap::new();
+        let def =
+            DesignComposeDefinition::new_with_details(views, images, component_sets, variable_map);
+        assert_eq!(def.views.len(), 1);
+    }
+
+    #[test]
     fn test_node_query_id() {
         let query = NodeQuery::id("test_id");
         assert_eq!(query, NodeQuery::NodeId("test_id".to_string()));
@@ -232,6 +260,40 @@ mod tests {
         let parent = "parent";
         let query = NodeQuery::variant(name_with_separator, parent);
         query.encode();
+    }
+
+    #[test]
+    fn test_definition_views() {
+        let mut views_map = HashMap::new();
+        let query = NodeQuery::id("view1");
+        let view = View { id: "view1".to_string(), ..Default::default() };
+        views_map.insert(query.clone(), view.clone());
+
+        let images = EncodedImageMap(HashMap::new());
+        let component_sets = HashMap::new();
+        let variable_map = VariableMap::new();
+        let def = DesignComposeDefinition::new_with_details(
+            views_map,
+            images,
+            component_sets,
+            variable_map,
+        );
+
+        let decoded_views = def.views().unwrap();
+        assert_eq!(decoded_views.len(), 1);
+        assert_eq!(decoded_views.get(&query), Some(&view));
+    }
+
+    #[test]
+    fn test_encoded_image_map_map() {
+        let mut image_data = HashMap::new();
+        let image_bytes = serde_bytes::ByteBuf::from(vec![1, 2, 3]);
+        image_data.insert("image1".to_string(), Arc::new(image_bytes));
+
+        let encoded_map = EncodedImageMap(image_data.clone());
+        let mapped_data = encoded_map.map();
+
+        assert_eq!(image_data, mapped_data);
     }
 }
 

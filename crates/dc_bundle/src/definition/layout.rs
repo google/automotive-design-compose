@@ -82,3 +82,52 @@ impl ItemSpacing {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::geometry::dimension_proto::Dimension;
+
+    #[test]
+    fn test_item_spacing_new_default() {
+        let default_spacing = ItemSpacing::new_default().unwrap();
+        assert!(
+            matches!(default_spacing.ItemSpacingType, Some(ItemSpacingType::Fixed(v)) if v == 0)
+        );
+    }
+
+    #[test]
+    fn test_item_spacing_constructors() {
+        let fixed_spacing = ItemSpacing::new_fixed(10);
+        assert!(
+            matches!(fixed_spacing.ItemSpacingType, Some(ItemSpacingType::Fixed(v)) if v == 10)
+        );
+
+        let auto_spacing = ItemSpacing::new_auto(20, 30);
+        assert!(
+            matches!(auto_spacing.ItemSpacingType, Some(ItemSpacingType::Auto(a)) if a.width == 20 && a.height == 30)
+        );
+    }
+
+    #[test]
+    fn test_layout_style_new_default() {
+        let style = LayoutStyle::new_default();
+        assert!(style.margin.is_some());
+        assert!(style.padding.is_some());
+        assert!(style.item_spacing.is_some());
+        assert!(matches!(style.width.unwrap().Dimension, Some(Dimension::Undefined(_))));
+        assert!(matches!(style.height.unwrap().Dimension, Some(Dimension::Undefined(_))));
+        assert_eq!(style.flex_grow, 0.0);
+        assert_eq!(style.flex_shrink, 0.0);
+        assert_eq!(style.align_self.enum_value().unwrap(), AlignSelf::ALIGN_SELF_AUTO);
+    }
+
+    #[test]
+    fn test_layout_style_bounding_box() {
+        let mut style = LayoutStyle::new_default();
+        assert!(style.bounding_box().is_ok());
+
+        style.bounding_box = None.into();
+        assert!(style.bounding_box().is_err());
+    }
+}

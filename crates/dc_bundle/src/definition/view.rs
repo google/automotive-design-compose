@@ -507,3 +507,328 @@ impl View {
         return None;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::path::stroke_weight;
+    use crate::path::StrokeWeight;
+    use crate::variable::num_or_var::NumOrVarType;
+
+    #[test]
+    fn test_node_style_new_default() {
+        let style = NodeStyle::new_default();
+        assert!(style.font_color.is_some());
+        assert_eq!(style.font_size.unwrap().NumOrVarType, Some(NumOrVarType::Num(18.0)));
+        assert_eq!(style.font_weight.unwrap(), FontWeight::normal());
+        assert_eq!(style.font_style.enum_value().unwrap(), FontStyle::FONT_STYLE_NORMAL);
+    }
+
+    #[test]
+    fn test_view_style_new_default() {
+        let style = ViewStyle::new_default();
+        assert!(style.layout_style.is_some());
+        assert!(style.node_style.is_some());
+    }
+
+    #[test]
+    fn test_view_style_difference() {
+        let mut style1 = ViewStyle::new_default();
+        let mut style2 = ViewStyle::new_default();
+
+        // Test a few properties
+        style2.node_style_mut().opacity = Some(0.5);
+        style2.node_style_mut().letter_spacing = Some(1.2);
+        style2.layout_style_mut().flex_grow = 1.0;
+
+        let diff = style1.difference(&style2);
+        assert_eq!(diff.node_style().opacity, Some(0.5));
+        assert_eq!(diff.node_style().letter_spacing, Some(1.2));
+        assert_eq!(diff.layout_style().flex_grow, 1.0);
+
+        // Test no difference
+        style1.node_style_mut().opacity = Some(0.5);
+        style1.node_style_mut().letter_spacing = Some(1.2);
+        style1.layout_style_mut().flex_grow = 1.0;
+        let diff2 = style1.difference(&style2);
+        assert_eq!(diff2.node_style().opacity, None);
+        assert_eq!(diff2.node_style().letter_spacing, None);
+        assert_eq!(diff2.layout_style().flex_grow, 0.0);
+
+        // Test all properties
+        let mut style3 = ViewStyle::new_default();
+        let mut style4 = ViewStyle::new_default();
+        style4.node_style_mut().font_color =
+            Some(Background::new_with_background(background::Background_type::Solid(
+                crate::variable::ColorOrVar::new_color(crate::color::Color::red()),
+            )))
+            .into();
+        style4.node_style_mut().font_size = Some(NumOrVar::from_num(24.0)).into();
+        style4.node_style_mut().font_family = Some("Roboto".to_string());
+        style4.node_style_mut().font_weight = Some(FontWeight::bold()).into();
+        style4.node_style_mut().font_style = FontStyle::FONT_STYLE_ITALIC.into();
+        style4.node_style_mut().text_decoration = TextDecoration::TEXT_DECORATION_UNDERLINE.into();
+        style4.node_style_mut().letter_spacing = Some(2.0);
+        style4.node_style_mut().font_stretch = Some(FontStretch::expanded()).into();
+        style4.node_style_mut().backgrounds.push(Background::new_with_background(
+            background::Background_type::Solid(crate::variable::ColorOrVar::new_color(
+                crate::color::Color::blue(),
+            )),
+        ));
+        style4.node_style_mut().stroke = Some(Stroke {
+            stroke_weight: Some(StrokeWeight {
+                stroke_weight_type: Some(stroke_weight::Stroke_weight_type::Uniform(1.0)),
+                ..Default::default()
+            })
+            .into(),
+            ..Default::default()
+        })
+        .into();
+        style4.layout_style_mut().flex_direction =
+            crate::positioning::FlexDirection::FLEX_DIRECTION_COLUMN.into();
+        style4.layout_style_mut().align_items =
+            crate::positioning::AlignItems::ALIGN_ITEMS_CENTER.into();
+        style4.layout_style_mut().margin = Some(crate::geometry::DimensionRect {
+            start: crate::geometry::DimensionProto::new_points(10.0),
+            ..Default::default()
+        })
+        .into();
+
+        let diff3 = style3.difference(&style4);
+        assert_eq!(diff3.node_style().font_color, style4.node_style().font_color.clone());
+        assert_eq!(diff3.node_style().font_size, style4.node_style().font_size.clone());
+        assert_eq!(diff3.node_style().font_family, style4.node_style().font_family.clone());
+        assert_eq!(diff3.node_style().font_weight, style4.node_style().font_weight.clone());
+        assert_eq!(diff3.node_style().font_style, style4.node_style().font_style);
+        assert_eq!(diff3.node_style().text_decoration, style4.node_style().text_decoration);
+        assert_eq!(diff3.node_style().letter_spacing, style4.node_style().letter_spacing);
+        assert_eq!(diff3.node_style().font_stretch, style4.node_style().font_stretch.clone());
+        assert_eq!(diff3.node_style().backgrounds, style4.node_style().backgrounds.clone());
+        assert_eq!(diff3.node_style().stroke, style4.node_style().stroke.clone());
+        assert_eq!(diff3.layout_style().flex_direction, style4.layout_style().flex_direction);
+        assert_eq!(diff3.layout_style().align_items, style4.layout_style().align_items);
+        assert_eq!(diff3.layout_style().margin, style4.layout_style().margin.clone());
+
+        // Test no difference with all properties set
+        style3 = style4.clone();
+        let diff4 = style3.difference(&style4);
+        assert_eq!(diff4.node_style().font_color, ViewStyle::new_default().node_style().font_color);
+        assert_eq!(diff4.node_style().font_size, ViewStyle::new_default().node_style().font_size);
+        assert!(diff4.node_style().font_family.is_none());
+        assert_eq!(
+            diff4.node_style().font_weight,
+            ViewStyle::new_default().node_style().font_weight
+        );
+        assert_eq!(
+            diff4.node_style().font_style.enum_value().unwrap(),
+            FontStyle::FONT_STYLE_NORMAL
+        );
+        assert_eq!(
+            diff4.node_style().text_decoration.enum_value().unwrap(),
+            TextDecoration::TEXT_DECORATION_NONE
+        );
+        assert!(diff4.node_style().letter_spacing.is_none());
+        assert_eq!(
+            diff4.node_style().font_stretch,
+            ViewStyle::new_default().node_style().font_stretch
+        );
+        assert!(diff4.node_style().backgrounds.is_empty());
+        assert_eq!(diff4.node_style().stroke, ViewStyle::new_default().node_style().stroke);
+        assert_eq!(
+            diff4.layout_style().flex_direction.enum_value().unwrap(),
+            crate::positioning::FlexDirection::FLEX_DIRECTION_ROW
+        );
+        assert_eq!(
+            diff4.layout_style().align_items.enum_value().unwrap(),
+            crate::positioning::AlignItems::ALIGN_ITEMS_STRETCH
+        );
+        assert_eq!(diff4.layout_style().margin, ViewStyle::new_default().layout_style().margin);
+    }
+
+    #[test]
+    fn test_view_new_rect() {
+        let view = View::new_rect(
+            &"rect1".to_string(),
+            &"Rect View".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        assert_eq!(view.id, "rect1");
+        assert_eq!(view.name, "Rect View");
+        assert!(matches!(
+            view.data.unwrap().view_data_type,
+            Some(View_data_type::Container { .. })
+        ));
+    }
+
+    #[test]
+    fn test_view_new_text() {
+        let view = View::new_text(
+            &"text1".to_string(),
+            &"Text View".to_string(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            "Hello",
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        assert_eq!(view.id, "text1");
+        assert_eq!(view.name, "Text View");
+        assert!(matches!(view.data.unwrap().view_data_type, Some(View_data_type::Text { .. })));
+    }
+
+    #[test]
+    fn test_view_add_child() {
+        let mut parent = View::new_rect(
+            &"parent".to_string(),
+            &"Parent".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        let child = View::new_rect(
+            &"child".to_string(),
+            &"Child".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        parent.add_child(child);
+        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+            parent.data.unwrap().view_data_type
+        {
+            assert_eq!(children.len(), 1);
+            assert_eq!(children[0].id, "child");
+        } else {
+            panic!("Wrong data type");
+        }
+    }
+
+    #[test]
+    fn test_find_view_by_id() {
+        let child = View::new_rect(
+            &"child".to_string(),
+            &"Child".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        let mut parent = View::new_rect(
+            &"parent".to_string(),
+            &"Parent".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        parent.add_child(child);
+        assert!(parent.find_view_by_id(&"child".to_string()).is_some());
+        assert!(parent.find_view_by_id(&"parent".to_string()).is_some());
+        assert!(parent.find_view_by_id(&"I1;child".to_string()).is_some());
+        assert!(parent.find_view_by_id(&"nonexistent".to_string()).is_none());
+    }
+
+    #[test]
+    fn test_view_data_difference() {
+        // Test different text
+        let view_data1 = ViewData {
+            view_data_type: Some(View_data_type::Text(Text {
+                content: "hello".to_string(),
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        let view_data2 = ViewData {
+            view_data_type: Some(View_data_type::Text(Text {
+                content: "world".to_string(),
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        assert_eq!(view_data1.difference(&view_data2), Some(view_data2.clone()));
+
+        // Test same text
+        let view_data3 = ViewData {
+            view_data_type: Some(View_data_type::Text(Text {
+                content: "hello".to_string(),
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        assert_eq!(view_data1.difference(&view_data3), None);
+
+        // Test different styled text
+        let view_data4 = ViewData {
+            view_data_type: Some(View_data_type::StyledText(StyledTextRuns {
+                styled_texts: vec![],
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        let view_data5 = ViewData {
+            view_data_type: Some(View_data_type::StyledText(StyledTextRuns {
+                styled_texts: vec![StyledTextRun::default()],
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        assert_eq!(view_data4.difference(&view_data5), Some(view_data5.clone()));
+
+        // Test same styled text
+        let view_data6 = ViewData {
+            view_data_type: Some(View_data_type::StyledText(StyledTextRuns {
+                styled_texts: vec![],
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        assert_eq!(view_data4.difference(&view_data6), None);
+
+        // Test container type
+        let view_data7 = ViewData {
+            view_data_type: Some(View_data_type::Container(Container::default())),
+            ..Default::default()
+        };
+        let view_data8 = ViewData {
+            view_data_type: Some(View_data_type::Container(Container {
+                children: vec![View::default()],
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        assert_eq!(view_data7.difference(&view_data8), None);
+    }
+}

@@ -480,3 +480,372 @@ impl LayoutManager {
         crate::debug::print_tree_as_html(&self.taffy, root_node_id, print_func);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dc_bundle::geometry::{DimensionProto, DimensionRect};
+    use dc_bundle::positioning::{
+        item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing,
+        JustifyContent, PositionType,
+    };
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    use std::sync::Mutex;
+
+    fn create_valid_layout_style() -> LayoutStyle {
+        let mut style = LayoutStyle::default();
+        let rect = DimensionRect {
+            start: DimensionProto::new_points(0.0),
+            end: DimensionProto::new_points(0.0),
+            top: DimensionProto::new_points(0.0),
+            bottom: DimensionProto::new_points(0.0),
+            ..Default::default()
+        };
+        style.padding = Some(rect.clone()).into();
+        style.margin = Some(rect).into();
+
+        style.width = DimensionProto::new_auto();
+        style.height = DimensionProto::new_auto();
+        style.min_width = DimensionProto::new_auto();
+        style.min_height = DimensionProto::new_auto();
+        style.max_width = DimensionProto::new_auto();
+        style.max_height = DimensionProto::new_auto();
+
+        style.left = DimensionProto::new_auto();
+        style.right = DimensionProto::new_auto();
+        style.top = DimensionProto::new_auto();
+        style.bottom = DimensionProto::new_auto();
+
+        style.flex_basis = DimensionProto::new_auto();
+        style.item_spacing = Some(ItemSpacing {
+            ItemSpacingType: Some(item_spacing::ItemSpacingType::Fixed(0)),
+            ..Default::default()
+        })
+        .into();
+
+        style.align_content = AlignContent::ALIGN_CONTENT_FLEX_START.into();
+        style.justify_content = JustifyContent::JUSTIFY_CONTENT_FLEX_START.into();
+        style.align_items = AlignItems::ALIGN_ITEMS_FLEX_START.into();
+        style.align_self = AlignSelf::ALIGN_SELF_AUTO.into();
+        style.flex_direction = FlexDirection::FLEX_DIRECTION_ROW.into();
+        style.position_type = PositionType::POSITION_TYPE_RELATIVE.into();
+
+        style
+    }
+
+    #[test]
+    fn test_customizations() {
+        let mut customizations = Customizations::new();
+        let layout_id = 1;
+        let width = 100;
+        let height = 200;
+
+        // Test add_size and get_size
+        customizations.add_size(layout_id, width, height);
+        let size = customizations.get_size(layout_id);
+        assert_eq!(size, Some(&Size { width, height }));
+
+        // Test remove
+        customizations.remove(&layout_id);
+        let size = customizations.get_size(layout_id);
+        assert_eq!(size, None);
+    }
+
+    fn create_layout_manager() -> LayoutManager {
+        LayoutManager::new(|_, _, _, _, _| (0.0, 0.0))
+    }
+
+    #[test]
+    fn test_measure_func_called() {
+        let called = Arc::new(AtomicBool::new(false));
+        let called_clone = called.clone();
+        let mut layout_manager = LayoutManager::new(move |_, _, _, _, _| {
+            called_clone.store(true, Ordering::SeqCst);
+            (0.0, 0.0)
+        });
+
+        let layout_id = 1;
+        // Add a style with use_measure_func = true
+        layout_manager
+            .add_style(
+                layout_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "node".to_string(),
+                true,
+                None,
+                None,
+            )
+            .unwrap();
+        layout_manager.compute_node_layout(layout_id);
+
+        assert!(called.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_add_style_and_get_layout() {
+        let mut layout_manager = create_layout_manager();
+        let layout_id = 1;
+        let style = create_valid_layout_style();
+        let name = "test_node".to_string();
+
+        layout_manager.add_style(layout_id, -1, 0, style, name, false, None, None).unwrap();
+        layout_manager.compute_node_layout(layout_id);
+
+        let layout = layout_manager.get_node_layout(layout_id);
+        assert!(layout.is_some());
+    }
+
+    #[test]
+    fn test_add_child_node() {
+        let mut layout_manager = create_layout_manager();
+        let parent_id = 1;
+        let child_id = 2;
+
+        layout_manager
+            .add_style(
+                parent_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "parent".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+        layout_manager
+            .add_style(
+                child_id,
+                parent_id,
+                0,
+                create_valid_layout_style(),
+                "child".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let parent_node = layout_manager.layout_id_to_taffy_node.get(&parent_id).unwrap();
+        let children = layout_manager.taffy.children(*parent_node).unwrap();
+        assert_eq!(children.len(), 1);
+
+        let child_node = layout_manager.layout_id_to_taffy_node.get(&child_id).unwrap();
+        assert_eq!(children[0], *child_node);
+    }
+
+    #[test]
+    fn test_remove_view() {
+        let mut layout_manager = create_layout_manager();
+        let parent_id = 1;
+        let child_id = 2;
+
+        layout_manager
+            .add_style(
+                parent_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "parent".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+        layout_manager
+            .add_style(
+                child_id,
+                parent_id,
+                0,
+                create_valid_layout_style(),
+                "child".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+
+        // Check child exists
+        let parent_node = layout_manager.layout_id_to_taffy_node.get(&parent_id).unwrap();
+        let children_before_remove = layout_manager.taffy.children(*parent_node).unwrap();
+        assert_eq!(children_before_remove.len(), 1);
+
+        layout_manager.remove_view(child_id, parent_id, true);
+
+        // Check child is removed
+        let parent_node_after_remove =
+            layout_manager.layout_id_to_taffy_node.get(&parent_id).unwrap();
+        let children_after_remove =
+            layout_manager.taffy.children(*parent_node_after_remove).unwrap();
+        assert_eq!(children_after_remove.len(), 0);
+
+        assert!(layout_manager.layout_id_to_taffy_node.get(&child_id).is_none());
+    }
+
+    #[test]
+    fn test_set_node_size() {
+        let mut layout_manager = create_layout_manager();
+        let layout_id = 1;
+        let width = 200;
+        let height = 300;
+
+        layout_manager
+            .add_style(
+                layout_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "node".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+        layout_manager.set_node_size(layout_id, layout_id, width, height);
+
+        let layout = layout_manager.get_node_layout(layout_id).unwrap();
+        assert_eq!(layout.width, width as f32);
+        assert_eq!(layout.height, height as f32);
+
+        // Also check customization is saved
+        let custom_size = layout_manager.customizations.get_size(layout_id);
+        assert_eq!(custom_size, Some(&Size { width, height }));
+    }
+
+    #[test]
+    fn test_update_children() {
+        let mut layout_manager = create_layout_manager();
+        let parent_id = 1;
+        let child1_id = 2;
+        let child2_id = 3;
+
+        layout_manager
+            .add_style(
+                parent_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "parent".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+        layout_manager
+            .add_style(
+                child1_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "child1".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+        layout_manager
+            .add_style(
+                child2_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "child2".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let parent_node = layout_manager.layout_id_to_taffy_node.get(&parent_id).unwrap();
+        let children_before = layout_manager.taffy.children(*parent_node).unwrap();
+        assert_eq!(children_before.len(), 0);
+
+        layout_manager.update_children(parent_id, &vec![child1_id, child2_id]);
+
+        let parent_node_after = layout_manager.layout_id_to_taffy_node.get(&parent_id).unwrap();
+        let children_after = layout_manager.taffy.children(*parent_node_after).unwrap();
+        assert_eq!(children_after.len(), 2);
+
+        let child1_node = layout_manager.layout_id_to_taffy_node.get(&child1_id).unwrap();
+        let child2_node = layout_manager.layout_id_to_taffy_node.get(&child2_id).unwrap();
+        assert_eq!(children_after[0], *child1_node);
+        assert_eq!(children_after[1], *child2_node);
+    }
+
+    #[test]
+    fn test_mark_dirty() {
+        let mut layout_manager = create_layout_manager();
+        let layout_id = 1;
+        layout_manager
+            .add_style(
+                layout_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "node".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+
+        // Just check that it doesn't crash
+        layout_manager.mark_dirty(layout_id);
+        layout_manager.mark_dirty(999); // non-existent id
+    }
+
+    lazy_static::lazy_static! {
+        static ref PRINT_OUTPUT: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    }
+
+    fn test_print_callback(s: String) {
+        PRINT_OUTPUT.lock().unwrap().push(s);
+    }
+
+    #[test]
+    fn test_print_layout() {
+        let mut layout_manager = create_layout_manager();
+        let parent_id = 1;
+        let child_id = 2;
+
+        layout_manager
+            .add_style(
+                parent_id,
+                -1,
+                0,
+                create_valid_layout_style(),
+                "parent".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+        layout_manager
+            .add_style(
+                child_id,
+                parent_id,
+                0,
+                create_valid_layout_style(),
+                "child".to_string(),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+
+        layout_manager.compute_node_layout(parent_id);
+
+        PRINT_OUTPUT.lock().unwrap().clear();
+        layout_manager.print_layout(parent_id, test_print_callback);
+
+        let output = PRINT_OUTPUT.lock().unwrap();
+        assert_eq!(output.len(), 4);
+        assert_eq!(output[0], "Node parent 1:");
+        assert!(output[1].starts_with("  Layout {"));
+        assert_eq!(output[2], "  Node child 2:");
+        assert!(output[3].starts_with("    Layout {"));
+    }
+}

@@ -340,6 +340,7 @@ version = "0.38.0"
 dependencies = [
  "android_logger",
  "dc_bundle",
+ "lazy_static",
  "log",
  "protobuf",
  "serde",

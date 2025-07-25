@@ -71,3 +71,45 @@ impl BoxShadow {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::color::Color;
+
+    #[test]
+    fn test_filter_op_new_with_op() {
+        let op = FilterOp::new_with_op(filter_op::FilterOpType::Blur(10.0));
+        assert!(matches!(op.FilterOpType, Some(filter_op::FilterOpType::Blur(v)) if v == 10.0));
+    }
+
+    #[test]
+    fn test_box_shadow_new_with_outset() {
+        let color = ColorOrVar::new_color(Color::red());
+        let shadow = BoxShadow::new_with_outset(5.0, 2.0, color.clone(), (1.0, 1.0));
+        if let Some(box_shadow::Shadow_box::Outset(s)) = shadow.shadow_box {
+            assert_eq!(s.blur_radius, 5.0);
+            assert_eq!(s.spread_radius, 2.0);
+            assert_eq!(s.color.unwrap(), color);
+            assert_eq!(s.offset_x, 1.0);
+            assert_eq!(s.offset_y, 1.0);
+        } else {
+            panic!("Wrong shadow type");
+        }
+    }
+
+    #[test]
+    fn test_box_shadow_new_with_inset() {
+        let color = ColorOrVar::new_color(Color::blue());
+        let shadow = BoxShadow::new_with_inset(10.0, 4.0, color.clone(), (2.0, 2.0));
+        if let Some(box_shadow::Shadow_box::Inset(s)) = shadow.shadow_box {
+            assert_eq!(s.blur_radius, 10.0);
+            assert_eq!(s.spread_radius, 4.0);
+            assert_eq!(s.color.unwrap(), color);
+            assert_eq!(s.offset_x, 2.0);
+            assert_eq!(s.offset_y, 2.0);
+        } else {
+            panic!("Wrong shadow type");
+        }
+    }
+}

@@ -20,3 +20,19 @@ impl AffineTransform {
         AffineTransform { m11, m12, m21, m22, m31, m32, ..Default::default() }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_row_major() {
+        let transform = AffineTransform::row_major(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        assert_eq!(transform.m11, 1.0);
+        assert_eq!(transform.m12, 2.0);
+        assert_eq!(transform.m21, 3.0);
+        assert_eq!(transform.m22, 4.0);
+        assert_eq!(transform.m31, 5.0);
+        assert_eq!(transform.m32, 6.0);
+    }
+}

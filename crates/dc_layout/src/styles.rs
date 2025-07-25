@@ -141,3 +141,174 @@ impl TryIntoTaffy<taffy::LengthPercentage> for &MessageField<ItemSpacing> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_align_items_try_into_taffy() {
+        assert_eq!(
+            AlignItems::ALIGN_ITEMS_FLEX_START.try_into_taffy().unwrap(),
+            taffy::AlignItems::FlexStart
+        );
+        assert_eq!(
+            AlignItems::ALIGN_ITEMS_FLEX_END.try_into_taffy().unwrap(),
+            taffy::AlignItems::FlexEnd
+        );
+        assert_eq!(
+            AlignItems::ALIGN_ITEMS_CENTER.try_into_taffy().unwrap(),
+            taffy::AlignItems::Center
+        );
+        assert_eq!(
+            AlignItems::ALIGN_ITEMS_BASELINE.try_into_taffy().unwrap(),
+            taffy::AlignItems::Baseline
+        );
+        assert_eq!(
+            AlignItems::ALIGN_ITEMS_STRETCH.try_into_taffy().unwrap(),
+            taffy::AlignItems::Stretch
+        );
+        assert!(AlignItems::ALIGN_ITEMS_UNSPECIFIED.try_into_taffy().is_err());
+    }
+
+    #[test]
+    fn test_align_self_try_into_taffy() {
+        assert_eq!(AlignSelf::ALIGN_SELF_AUTO.try_into_taffy().unwrap(), None);
+        assert_eq!(
+            AlignSelf::ALIGN_SELF_FLEX_START.try_into_taffy().unwrap(),
+            Some(taffy::AlignItems::FlexStart)
+        );
+        assert_eq!(
+            AlignSelf::ALIGN_SELF_FLEX_END.try_into_taffy().unwrap(),
+            Some(taffy::AlignItems::FlexEnd)
+        );
+        assert_eq!(
+            AlignSelf::ALIGN_SELF_CENTER.try_into_taffy().unwrap(),
+            Some(taffy::AlignItems::Center)
+        );
+        assert_eq!(
+            AlignSelf::ALIGN_SELF_BASELINE.try_into_taffy().unwrap(),
+            Some(taffy::AlignItems::Baseline)
+        );
+        assert_eq!(
+            AlignSelf::ALIGN_SELF_STRETCH.try_into_taffy().unwrap(),
+            Some(taffy::AlignItems::Stretch)
+        );
+        assert!(AlignSelf::ALIGN_SELF_UNSPECIFIED.try_into_taffy().is_err());
+    }
+
+    #[test]
+    fn test_align_content_try_into_taffy() {
+        assert_eq!(
+            AlignContent::ALIGN_CONTENT_FLEX_START.try_into_taffy().unwrap(),
+            taffy::AlignContent::FlexStart
+        );
+        assert_eq!(
+            AlignContent::ALIGN_CONTENT_FLEX_END.try_into_taffy().unwrap(),
+            taffy::AlignContent::FlexEnd
+        );
+        assert_eq!(
+            AlignContent::ALIGN_CONTENT_CENTER.try_into_taffy().unwrap(),
+            taffy::AlignContent::Center
+        );
+        assert_eq!(
+            AlignContent::ALIGN_CONTENT_STRETCH.try_into_taffy().unwrap(),
+            taffy::AlignContent::Stretch
+        );
+        assert_eq!(
+            AlignContent::ALIGN_CONTENT_SPACE_BETWEEN.try_into_taffy().unwrap(),
+            taffy::AlignContent::SpaceBetween
+        );
+        assert_eq!(
+            AlignContent::ALIGN_CONTENT_SPACE_AROUND.try_into_taffy().unwrap(),
+            taffy::AlignContent::SpaceAround
+        );
+        assert!(AlignContent::ALIGN_CONTENT_UNSPECIFIED.try_into_taffy().is_err());
+    }
+
+    #[test]
+    fn test_flex_direction_try_into_taffy() {
+        assert_eq!(
+            FlexDirection::FLEX_DIRECTION_ROW.try_into_taffy().unwrap(),
+            taffy::FlexDirection::Row
+        );
+        assert_eq!(
+            FlexDirection::FLEX_DIRECTION_COLUMN.try_into_taffy().unwrap(),
+            taffy::FlexDirection::Column
+        );
+        assert_eq!(
+            FlexDirection::FLEX_DIRECTION_ROW_REVERSE.try_into_taffy().unwrap(),
+            taffy::FlexDirection::RowReverse
+        );
+        assert_eq!(
+            FlexDirection::FLEX_DIRECTION_COLUMN_REVERSE.try_into_taffy().unwrap(),
+            taffy::FlexDirection::ColumnReverse
+        );
+        assert!(FlexDirection::FLEX_DIRECTION_UNSPECIFIED.try_into_taffy().is_err());
+    }
+
+    #[test]
+    fn test_justify_content_try_into_taffy() {
+        assert_eq!(
+            JustifyContent::JUSTIFY_CONTENT_FLEX_START.try_into_taffy().unwrap(),
+            taffy::JustifyContent::FlexStart
+        );
+        assert_eq!(
+            JustifyContent::JUSTIFY_CONTENT_FLEX_END.try_into_taffy().unwrap(),
+            taffy::JustifyContent::FlexEnd
+        );
+        assert_eq!(
+            JustifyContent::JUSTIFY_CONTENT_CENTER.try_into_taffy().unwrap(),
+            taffy::JustifyContent::Center
+        );
+        assert_eq!(
+            JustifyContent::JUSTIFY_CONTENT_SPACE_BETWEEN.try_into_taffy().unwrap(),
+            taffy::JustifyContent::SpaceBetween
+        );
+        assert_eq!(
+            JustifyContent::JUSTIFY_CONTENT_SPACE_AROUND.try_into_taffy().unwrap(),
+            taffy::JustifyContent::SpaceAround
+        );
+        assert_eq!(
+            JustifyContent::JUSTIFY_CONTENT_SPACE_EVENLY.try_into_taffy().unwrap(),
+            taffy::JustifyContent::SpaceEvenly
+        );
+        assert!(JustifyContent::JUSTIFY_CONTENT_UNSPECIFIED.try_into_taffy().is_err());
+    }
+
+    #[test]
+    fn test_position_type_try_into_taffy() {
+        assert_eq!(
+            PositionType::POSITION_TYPE_RELATIVE.try_into_taffy().unwrap(),
+            taffy::Position::Relative
+        );
+        assert_eq!(
+            PositionType::POSITION_TYPE_ABSOLUTE.try_into_taffy().unwrap(),
+            taffy::Position::Absolute
+        );
+        assert!(PositionType::POSITION_TYPE_UNSPECIFIED.try_into_taffy().is_err());
+    }
+
+    #[test]
+    fn test_item_spacing_try_into_taffy() {
+        let fixed_spacing = ItemSpacing {
+            ItemSpacingType: Some(item_spacing::ItemSpacingType::Fixed(10)),
+            ..Default::default()
+        };
+        let fixed_spacing_field: MessageField<ItemSpacing> = Some(fixed_spacing).into();
+        assert_eq!(
+            (&fixed_spacing_field).try_into_taffy().unwrap(),
+            taffy::LengthPercentage::Length(10.0)
+        );
+
+        let auto_spacing = ItemSpacing {
+            ItemSpacingType: Some(item_spacing::ItemSpacingType::Auto(item_spacing::Auto::new())),
+            ..Default::default()
+        };
+        let auto_spacing_field: MessageField<ItemSpacing> = Some(auto_spacing).into();
+        assert_eq!((&auto_spacing_field).try_into_taffy().unwrap(), taffy::LengthPercentage::ZERO);
+
+        let none_spacing: MessageField<ItemSpacing> = None.into();
+        assert!((&none_spacing).try_into_taffy().is_err());
+    }
+}

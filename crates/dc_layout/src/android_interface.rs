@@ -48,3 +48,36 @@ impl LayoutChangedResponseUnchangedWithState for LayoutChangedResponse {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use taffy::geometry::Point;
+    use taffy::prelude::{Layout as TaffyLayout, Size};
+
+    #[test]
+    fn test_from_taffy_layout() {
+        let taffy_layout = TaffyLayout {
+            order: 1,
+            size: Size { width: 100.0, height: 200.0 },
+            location: Point { x: 10.0, y: 20.0 },
+            content_size: Size { width: 90.0, height: 190.0 },
+            ..Default::default()
+        };
+        let layout = Layout::from_taffy_layout(&taffy_layout);
+        assert_eq!(layout.order, 1);
+        assert_eq!(layout.width, 100.0);
+        assert_eq!(layout.height, 200.0);
+        assert_eq!(layout.left, 10.0);
+        assert_eq!(layout.top, 20.0);
+        assert_eq!(layout.content_width, 90.0);
+        assert_eq!(layout.content_height, 190.0);
+    }
+
+    #[test]
+    fn test_layout_changed_response_unchanged_with_state() {
+        let response = LayoutChangedResponse::unchanged_with_state(123);
+        assert_eq!(response.layout_state, 123);
+        assert!(response.changed_layouts.is_empty());
+    }
+}

@@ -29,12 +29,7 @@ internal fun configureAndroidPlugin(project: Project, pluginExtension: PluginExt
     @Suppress("UnstableApiUsage") val adb = ace.sdkComponents.adb
     // Create one task per variant of the app
     ace.onVariants { variant ->
-        project.createSetFigmaTokenTask(
-            variant.name,
-            variant.applicationId,
-            adb,
-            pluginExtension
-        )
+        project.createSetFigmaTokenTask(variant.name, variant.applicationId, adb, pluginExtension)
     }
 }
 
@@ -61,4 +56,3 @@ private fun Project.createSetFigmaTokenTask(
         it.group = "DesignCompose"
     }
 }
-

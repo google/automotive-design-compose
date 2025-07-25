@@ -279,7 +279,7 @@ jobs:
       - name: Install Tarpaulin
         run: cargo install cargo-tarpaulin
       - name: Test all and generate coverage
-        run: cargo tarpaulin --out Xml --out Html
+        run: cargo tarpaulin --workspace --out Xml --out Html
       - name: Upload Tarpaulin Report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

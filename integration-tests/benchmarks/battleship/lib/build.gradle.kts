@@ -21,6 +21,7 @@ plugins {
     alias(libs.plugins.jetbrains.compose)
 
     id("designcompose.conventions.base")
+    jacoco
 }
 
 android {

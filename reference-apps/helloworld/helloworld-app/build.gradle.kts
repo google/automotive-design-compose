@@ -20,6 +20,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.designcompose)
     alias(libs.plugins.jetbrains.compose)
+    jacoco
 }
 
 java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }

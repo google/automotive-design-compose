@@ -27,6 +27,7 @@ plugins {
     id("designcompose.conventions.publish.android")
     id("designcompose.conventions.roborazzi")
     id("com.android.designcompose.internal")
+    jacoco
 }
 
 @Suppress("UnstableApiUsage")

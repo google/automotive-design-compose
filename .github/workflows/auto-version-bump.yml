@@ -70,15 +70,12 @@ jobs:
 
           # Update Gradle version file
           # This assumes the version is on a line starting with "designcompose = "
-          sed -i -E "s/^(designcompose = \").*(\")
-$/\1${new_version_snapshot}\2/" gradle/libs.versions.toml
+          sed -i -E "s/^(designcompose = \").*(\")$/\1${new_version_snapshot}\2/" gradle/libs.versions.toml
 
           # Update Cargo version files
           # This assumes the versions are on lines starting with "version = " or "dc_bundle = { version = "
-          sed -i -E "s/^(version = \").*(\")
-$/\1${new_version}\2/" Cargo.toml
-          sed -i -E "s/(dc_bundle = \{ version = \").*(\", path.*)
-$/\1${new_version}\2/" Cargo.toml
+          sed -i -E "s/^(version = \").*(\")$/\1${new_version}\2/" Cargo.toml
+          sed -i -E "s/(dc_bundle = \{ version = \").*(\", path.*)$/\1${new_version}\2/" Cargo.toml
 
           # Commit and push the changes
           git config user.name "github-actions[bot]"

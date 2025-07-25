@@ -61,6 +61,7 @@ jobs:
           new_branch_name="wb/bot/update-version-to-${new_version_snapshot}"
           commit_message="chore: Update version to ${new_version_snapshot}"
           pr_title="chore: Update version to ${new_version_snapshot}"
+          # shellcheck disable=SC2006
           pr_body="This is an automated PR to update the project version to `${new_version_snapshot}` following the creation of the `${{ github.ref_name }}` branch."
 
           # Create and switch to the new branch based on the latest main

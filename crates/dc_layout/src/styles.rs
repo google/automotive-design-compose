@@ -80,8 +80,7 @@ impl TryIntoTaffy<taffy::FlexDirection> for FlexDirection {
         match self {
             FlexDirection::FLEX_DIRECTION_ROW => Ok(taffy::FlexDirection::Row),
             FlexDirection::FLEX_DIRECTION_COLUMN => Ok(taffy::FlexDirection::Column),
-            // FIXME: Should be RowReverse.
-            FlexDirection::FLEX_DIRECTION_ROW_REVERSE => Ok(taffy::FlexDirection::ColumnReverse),
+            FlexDirection::FLEX_DIRECTION_ROW_REVERSE => Ok(taffy::FlexDirection::RowReverse),
             FlexDirection::FLEX_DIRECTION_COLUMN_REVERSE => Ok(taffy::FlexDirection::ColumnReverse),
             FlexDirection::FLEX_DIRECTION_NONE => Ok(taffy::FlexDirection::Row),
             FlexDirection::FLEX_DIRECTION_UNSPECIFIED => {
@@ -237,10 +236,9 @@ mod tests {
             FlexDirection::FLEX_DIRECTION_COLUMN.try_into_taffy().unwrap(),
             taffy::FlexDirection::Column
         );
-        // FIXME: Should be RowReverse.
         assert_eq!(
             FlexDirection::FLEX_DIRECTION_ROW_REVERSE.try_into_taffy().unwrap(),
-            taffy::FlexDirection::ColumnReverse
+            taffy::FlexDirection::RowReverse
         );
         assert_eq!(
             FlexDirection::FLEX_DIRECTION_COLUMN_REVERSE.try_into_taffy().unwrap(),

@@ -74,6 +74,14 @@ jobs:
           setup-rust: true
       - name: Full Gradle Test
         run: ./gradlew assembleDebug assembleAndroidTest assembleUnitTest test
+      - name: Generate JaCoCo Report
+        run: ./gradlew jacocoTestReport
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          flags: kotlin
   build-maven-repo:
     runs-on: "ubuntu-latest"
     steps:
@@ -263,10 +271,16 @@ jobs:
         with:
           setup-protoc: true
           setup-rust: true
-      - name: Build all
-        run: cargo build --all-targets --all-features
-      - name: Test all
-        run: cargo test --all-targets --features=fetch,dcf_info
+      - name: Install Tarpaulin
+        run: cargo install cargo-tarpaulin
+      - name: Test all and generate coverage
+        run: cargo tarpaulin --out Xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: cobertura.xml
+          flags: rust
         ############ Figma resources
   figma-resources:
     runs-on: ubuntu-latest

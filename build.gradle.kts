@@ -38,6 +38,7 @@ plugins {
     alias(libs.plugins.jetbrains.compose) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.roborazzi) apply false
+    jacoco
 }
 
 // Apply some of our convention plugins to the reference apps
@@ -46,5 +47,39 @@ for (projectName in listOf("tutorial-app", "helloworld-app", "cluster-demo", "me
     if (projectName in childProjects) {
         project(projectName).plugins.apply("designcompose.conventions.base")
         project(projectName).plugins.apply("designcompose.conventions.roborazzi")
+    }
+}
+
+subprojects { apply(plugin = "jacoco") }
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn(subprojects.map { it.tasks.withType<Test>() })
+    dependsOn(project(":common").tasks.withType<JacocoReport>())
+
+    val coreModules = listOf("annotation", "common", "designcompose")
+    val source =
+        files(
+            subprojects
+                .filter { it.name in coreModules }
+                .map {
+                    val sourceSets = it.extensions.findByType(SourceSetContainer::class.java)
+                    sourceSets?.findByName("main")?.allSource
+                }
+        )
+    sourceDirectories.setFrom(source)
+    classDirectories.setFrom(
+        files(
+            subprojects
+                .filter { it.name in coreModules }
+                .map {
+                    val sourceSets = it.extensions.findByType(SourceSetContainer::class.java)
+                    sourceSets?.findByName("main")?.output
+                }
+        )
+    )
+    executionData.setFrom(fileTree(project.rootDir) { include("**/build/jacoco/test.exec") })
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
     }
 }

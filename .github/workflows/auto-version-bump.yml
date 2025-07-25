@@ -1,0 +1,89 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This GitHub Action automatically updates the project version after a new stable branch is created.
+# For example, when the `stable/0.38.x` branch is created, this action will:
+# 1. Create a new branch named `wb/bot/update-version-to-0.39.0-SNAPSHOT` from `main`.
+# 2. Update the version in `gradle/libs.versions.toml` to `0.39.0-SNAPSHOT`.
+# 3. Update the version in `Cargo.toml` to `0.39.0`.
+# 4. Create a pull request with these changes.
+
+name: Auto Version Bump
+
+on:
+  create:
+
+jobs:
+  version-bumper:
+    if: startsWith(github.ref, 'refs/heads/stable/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags
+
+      - name: Calculate next version and create PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Extract the version from the branch name, e.g., "stable/0.38.x" -> "0.38"
+          stable_version=$(echo "${{ github.ref_name }}" | sed -n 's/^stable\/\([0-9]\+\.[0-9]\+\)\.x$/\1/p')
+          if [ -z "$stable_version" ]; then
+            echo "Branch name '${{ github.ref_name }}' does not match expected 'stable/X.Y.x' format."
+            exit 1
+          fi
+
+          major=$(echo "$stable_version" | cut -d'.' -f1)
+          minor=$(echo "$stable_version" | cut -d'.' -f2)
+
+          # Calculate the next version
+          next_minor=$((minor + 1))
+          new_version="$major.$next_minor.0"
+          new_version_snapshot="${new_version}-SNAPSHOT"
+
+          # Define new branch name, commit message, and PR title
+          new_branch_name="wb/bot/update-version-to-${new_version_snapshot}"
+          commit_message="chore: Update version to ${new_version_snapshot}"
+          pr_title="chore: Update version to ${new_version_snapshot}"
+          # shellcheck disable=SC2006
+          pr_body="This is an automated PR to update the project version to `${new_version_snapshot}` following the creation of the `${{ github.ref_name }}` branch."
+
+          # Create and switch to the new branch based on the latest main
+          git checkout main
+          git pull origin main
+          git checkout -b "$new_branch_name"
+
+          # Update Gradle version file
+          # This assumes the version is on a line starting with "designcompose = "
+          sed -i -E "s/^(designcompose = \").*(\")$/\1${new_version_snapshot}\2/" gradle/libs.versions.toml
+
+          # Update Cargo version files
+          # This assumes the versions are on lines starting with "version = " or "dc_bundle = { version = "
+          sed -i -E "s/^(version = \").*(\")$/\1${new_version}\2/" Cargo.toml
+          sed -i -E "s/(dc_bundle = \{ version = \").*(\", path.*)$/\1${new_version}\2/" Cargo.toml
+
+          # Commit and push the changes
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle/libs.versions.toml Cargo.toml
+          git commit -m "$commit_message"
+          git push --set-upstream origin "$new_branch_name"
+
+          # Create a pull request
+          gh pr create --base main --head "$new_branch_name" --title "$pr_title" --body "$pr_body"

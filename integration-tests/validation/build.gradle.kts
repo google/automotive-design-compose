@@ -23,6 +23,7 @@ plugins {
     id("designcompose.conventions.base")
     id("designcompose.conventions.roborazzi")
     id("com.android.designcompose.internal")
+    jacoco
 }
 
 var applicationID = "com.android.designcompose.testapp.validation"

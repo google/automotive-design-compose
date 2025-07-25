@@ -102,6 +102,7 @@ The project is built using Gradle. The build process involves compiling the Kotl
     .
     *   Run `./install-rust-toolchains.sh` to install the necessary Rust toolchains.
 2.  **Branching:**
+
     *   Create a new branch from `main` using the format `wb/<user>/<branch-name>`.
 3.  **Making Changes:**
     *   Modify the code in the appropriate module.

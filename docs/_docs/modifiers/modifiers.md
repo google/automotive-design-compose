@@ -398,6 +398,44 @@ HelloWorldDoc.MainFrame(
 )
 ```
 
+## ComponentReplacementContext for Custom Android/Compose Views
+
+You can replace a placeholder node in your Figma design with a custom `View`. This is useful for rendering graphics, videos, or camera previews using views like `SurfaceView`. The `ComponentReplacementContext` provides the necessary layout modifiers to ensure your `View` is correctly sized and positioned.
+
+Here's an example of how to replace a placeholder with a `SurfaceView`:
+
+```kotlin
+// Design-time definition for a component that takes a custom view.
+@DesignComponent(node = "#stage")
+fun MainFrame(
+    @Design(node = "#surfaceview_component_replacement_context")
+    customView: @Composable (ComponentReplacementContext) -> Unit,
+)
+
+// Runtime implementation that provides a SurfaceView.
+@Composable
+fun LayoutReplacementViewTest() {
+    MainFrame(
+        customView = { context ->
+            DummySurfaceView()
+        },
+    )
+}
+
+// The custom Composable that wraps the SurfaceView.
+@Composable
+fun DummySurfaceView(modifier: Modifier = Modifier) {
+    AndroidView(
+        factory = { context ->
+            SurfaceView(context).apply {
+                // In a real app, you would initialize the SurfaceView here.
+            }
+        },
+        modifier = modifier,
+    )
+}
+```
+
 The next section on [text input](#text-input) explains how to use the `textStyle` field to retain
 the designer's style for text input.
 
@@ -698,6 +736,40 @@ The live view appears below after replacing the data with live content.
 ![Grid Live](./grid-live.png)
 
 **Figure 5.** Grid view in Android
+
+## Lists with `ReplacementContent`
+
+Here's how you can use `ReplacementContent` to populate a list with custom items:
+
+```kotlin
+// Design-time definition for a component with a list.
+@DesignComponent(node = "#Main")
+fun MainFrame(
+    @Design(node = "#row-content")
+    rowItems: ReplacementContent,
+)
+
+// Design-time definition for a list item.
+@DesignComponent(node = "#Item")
+fun Item(
+    @Design(node = "#Title") title: String,
+)
+
+// Runtime implementation that provides list data.
+@Composable
+fun ListWidgetTest() {
+    val data = listOf("Item 1", "Item 2", "Item 3")
+    MainFrame(
+        rowItems =
+            ReplacementContent(
+                count = data.size,
+                content = { index -> { Item(title = data[index]) } }
+            ),
+    )
+}
+```
+
+In this example, the `#row-content` node in Figma is expected to be a list. The `rowItems` parameter of the `MainFrame` function is of type `ReplacementContent`. The `ReplacementContent` specifies the number of items in the list and a composable function to render each item.
 
 ## Callback customizations {#callback-customizations}
 

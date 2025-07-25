@@ -79,6 +79,11 @@ val EXAMPLES: ArrayList<Triple<String, @Composable () -> Unit, String?>> =
             LayoutReplacementTestDoc.javaClass.name,
         ),
         Triple(
+            "Layout Replacement SurfaceView",
+            { LayoutReplacementSurfaceViewTest() },
+            LayoutReplacementSurfaceViewTestDoc.javaClass.name,
+        ),
+        Triple(
             "Recurse Customization",
             { RecursiveCustomizations() },
             RecursiveCustomizationsDoc.javaClass.name,

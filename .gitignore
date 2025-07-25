@@ -143,3 +143,5 @@ fabric.properties
 .gemini/
 test/test-native/bin/
 **/.kotlin/
+cobertura.xml
+tarpaulin-report.html

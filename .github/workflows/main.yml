@@ -76,6 +76,11 @@ jobs:
         run: ./gradlew assembleDebug assembleAndroidTest assembleUnitTest test
       - name: Generate JaCoCo Report
         run: ./gradlew jacocoTestReport
+      - name: Upload JaCoCo Report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco/jacocoTestReport/html
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -274,7 +279,12 @@ jobs:
       - name: Install Tarpaulin
         run: cargo install cargo-tarpaulin
       - name: Test all and generate coverage
-        run: cargo tarpaulin --out Xml
+        run: cargo tarpaulin --out Xml --out Html
+      - name: Upload Tarpaulin Report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tarpaulin-report
+          path: tarpaulin-report.html
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:

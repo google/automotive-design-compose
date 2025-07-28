@@ -85,57 +85,102 @@ mod tests {
 
     #[test]
     fn test_try_into_taffy_dimension() {
-        let dimension_proto: MessageField<DimensionProto> =
+        let points: MessageField<DimensionProto> =
             Some(DimensionProto { Dimension: Some(Dimension::Points(10.0)), ..Default::default() })
                 .into();
-        let result: Result<TaffyDimension, dc_bundle::Error> = (&dimension_proto).try_into_taffy();
-        assert!(result.is_ok());
+        assert_eq!(
+            TryIntoTaffy::<TaffyDimension>::try_into_taffy(&points).unwrap(),
+            TaffyDimension::Length(10.0)
+        );
+
+        let percent: MessageField<DimensionProto> =
+            Some(DimensionProto { Dimension: Some(Dimension::Percent(0.5)), ..Default::default() })
+                .into();
+        assert_eq!(
+            TryIntoTaffy::<TaffyDimension>::try_into_taffy(&percent).unwrap(),
+            TaffyDimension::Percent(0.5)
+        );
+
+        let auto: MessageField<DimensionProto> = Some(DimensionProto {
+            Dimension: Some(Dimension::Auto(Empty::new())),
+            ..Default::default()
+        })
+        .into();
+        assert_eq!(
+            TryIntoTaffy::<TaffyDimension>::try_into_taffy(&auto).unwrap(),
+            TaffyDimension::Auto
+        );
     }
 
     #[test]
     fn test_try_into_taffy_dimension_none() {
         let dimension_proto: MessageField<DimensionProto> = None.into();
-        let result: Result<TaffyDimension, dc_bundle::Error> = (&dimension_proto).try_into_taffy();
+        let result: Result<TaffyDimension, dc_bundle::Error> =
+            TryIntoTaffy::<TaffyDimension>::try_into_taffy(&dimension_proto);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_try_into_taffy_length_percentage() {
-        let dimension_proto: MessageField<DimensionProto> = Some(DimensionProto {
-            Dimension: Some(Dimension::Percent(10.0)),
-            ..Default::default()
-        })
-        .into();
-        let result: Result<taffy::prelude::LengthPercentage, dc_bundle::Error> =
-            (&dimension_proto).try_into_taffy();
-        assert!(result.is_ok());
+        let points: MessageField<DimensionProto> =
+            Some(DimensionProto { Dimension: Some(Dimension::Points(10.0)), ..Default::default() })
+                .into();
+        assert_eq!(
+            TryIntoTaffy::<taffy::prelude::LengthPercentage>::try_into_taffy(&points).unwrap(),
+            taffy::prelude::LengthPercentage::Length(10.0)
+        );
+
+        let percent: MessageField<DimensionProto> =
+            Some(DimensionProto { Dimension: Some(Dimension::Percent(0.5)), ..Default::default() })
+                .into();
+        assert_eq!(
+            TryIntoTaffy::<taffy::prelude::LengthPercentage>::try_into_taffy(&percent).unwrap(),
+            taffy::prelude::LengthPercentage::Percent(0.5)
+        );
     }
 
     #[test]
     fn test_try_into_taffy_length_percentage_none() {
         let dimension_proto: MessageField<DimensionProto> = None.into();
         let result: Result<taffy::prelude::LengthPercentage, dc_bundle::Error> =
-            (&dimension_proto).try_into_taffy();
+            TryIntoTaffy::<taffy::prelude::LengthPercentage>::try_into_taffy(&dimension_proto);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_try_into_taffy_length_percentage_auto() {
-        let dimension_proto: MessageField<DimensionProto> = Some(DimensionProto {
+        let points: MessageField<DimensionProto> =
+            Some(DimensionProto { Dimension: Some(Dimension::Points(10.0)), ..Default::default() })
+                .into();
+        assert_eq!(
+            TryIntoTaffy::<taffy::prelude::LengthPercentageAuto>::try_into_taffy(&points).unwrap(),
+            taffy::prelude::LengthPercentageAuto::Length(10.0)
+        );
+
+        let percent: MessageField<DimensionProto> =
+            Some(DimensionProto { Dimension: Some(Dimension::Percent(0.5)), ..Default::default() })
+                .into();
+        assert_eq!(
+            TryIntoTaffy::<taffy::prelude::LengthPercentageAuto>::try_into_taffy(&percent).unwrap(),
+            taffy::prelude::LengthPercentageAuto::Percent(0.5)
+        );
+
+        let auto: MessageField<DimensionProto> = Some(DimensionProto {
             Dimension: Some(Dimension::Auto(Empty::new())),
             ..Default::default()
         })
         .into();
-        let result: Result<taffy::prelude::LengthPercentageAuto, dc_bundle::Error> =
-            (&dimension_proto).try_into_taffy();
-        assert!(result.is_ok());
+        assert_eq!(
+            TryIntoTaffy::<taffy::prelude::LengthPercentageAuto>::try_into_taffy(&auto).unwrap(),
+            taffy::prelude::LengthPercentageAuto::Auto
+        );
     }
 
     #[test]
     fn test_try_into_taffy_length_percentage_auto_none() {
         let dimension_proto: MessageField<DimensionProto> = None.into();
         let result: Result<taffy::prelude::LengthPercentageAuto, dc_bundle::Error> =
-            (&dimension_proto).try_into_taffy();
+            TryIntoTaffy::<taffy::prelude::LengthPercentageAuto>::try_into_taffy(&dimension_proto);
         assert!(result.is_err());
     }
 }

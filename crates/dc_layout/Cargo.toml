@@ -21,3 +21,6 @@ serde.workspace = true
 taffy.workspace = true
 protobuf.workspace = true
 thiserror.workspace = true
+
+[dev-dependencies]
+lazy_static = "1.4.0"

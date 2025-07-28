@@ -95,3 +95,59 @@ where
 
     Ok((header, doc))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::background::{background, Background};
+    use crate::color::Color;
+    use crate::positioning::ScrollInfo;
+    use crate::variable::ColorOrVar;
+    use crate::view::view::RenderMethod;
+    use crate::view::View;
+    use crate::view_shape::ViewShape;
+    use crate::view_style::ViewStyle;
+    use std::collections::HashMap;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_save_load_design_def() {
+        let mut header = DesignComposeDefinitionHeader::new();
+        header.dc_version = 123;
+        header.id = "doc_id".to_string();
+        header.name = "doc_name".to_string();
+        header.last_modified = "yesterday".to_string();
+        header.response_version = "v1".to_string();
+
+        let mut doc = DesignComposeDefinition::new();
+        let mut style = ViewStyle::new_default();
+        let color = Color::red();
+        let solid_bg = background::Background_type::Solid(ColorOrVar::new_color(color));
+        style.node_style_mut().backgrounds.push(Background::new_with_background(solid_bg));
+
+        let view_name = "test_view".to_string();
+        let view = View::new_rect(
+            &"test_id".to_string(),
+            &view_name,
+            ViewShape::default(),
+            style,
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        doc.views.insert(view_name, view);
+
+        let temp_file = NamedTempFile::new().unwrap();
+        let temp_path = temp_file.path();
+
+        save_design_def(temp_path, &header, &doc).unwrap();
+        let (loaded_header, loaded_doc) = load_design_def(temp_path).unwrap();
+
+        assert_eq!(header, loaded_header);
+        assert_eq!(doc, loaded_doc);
+    }
+}

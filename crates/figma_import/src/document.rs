@@ -123,11 +123,13 @@ pub struct Document {
     version_id: String,
     proxy_config: ProxyConfig,
     document_root: figma_schema::FileResponse,
-    variables_response: Option<figma_schema::VariablesResponse>,
+    variables_responses: HashMap<String, figma_schema::VariablesResponse>,
     image_context: ImageContext,
     variant_nodes: HashMap<String, figma_schema::Node>,
     component_sets: HashMap<String, String>,
     pub branches: Vec<FigmaDocInfo>,
+    key_to_global_id_map: HashMap<String, String>,
+    remote_node_responses: HashMap<(String, String), figma_schema::NodesResponse>,
 }
 impl Document {
     pub fn root_node(&self) -> &figma_schema::Node {
@@ -167,14 +169,15 @@ impl Document {
         }
 
         let branches = get_branches(&document_root);
-        let variables_response =
-            match Self::fetch_variables(api_key, &document_id, proxy_config).map_err(Error::from) {
-                Ok(it) => Some(it),
-                Err(err) => {
-                    error!("Failed to fetch variables {:?}", err);
-                    None
-                }
-            };
+        let mut variables_responses = HashMap::new();
+        match Self::fetch_variables(api_key, &document_id, proxy_config).map_err(Error::from) {
+            Ok(it) => {
+                variables_responses.insert(document_id.clone(), it);
+            }
+            Err(err) => {
+                error!("Failed to fetch variables for doc {} {:?}", document_id, err);
+            }
+        };
 
         Ok(Document {
             api_key: api_key.to_string(),
@@ -182,11 +185,13 @@ impl Document {
             version_id,
             proxy_config: proxy_config.clone(),
             document_root,
-            variables_response,
+            variables_responses,
             image_context,
             variant_nodes: HashMap::new(),
             component_sets: HashMap::new(),
             branches,
+            key_to_global_id_map: HashMap::new(),
+            remote_node_responses: HashMap::new(),
         })
     }
 
@@ -292,7 +297,7 @@ impl Document {
     /// then add all of its children to self.variant_nodes. Also fill out node_doc_hash,
     /// which hashes node ids to the document id they come from.
     fn fetch_component_variants(
-        &self,
+        &mut self,
         node: &figma_schema::Node,
         node_doc_hash: &mut HashMap<String, String>,
         variant_nodes: &mut HashMap<String, figma_schema::Node>,
@@ -378,14 +383,59 @@ impl Document {
                     if let Some(parent_node_id) = maybe_parent_node_id {
                         let variant_document_id = component_key_response.meta.file_key;
                         if variant_document_id != self.document_id {
-                            let nodes_url = format!(
-                                "{}{}/nodes?ids={}",
-                                BASE_FILE_URL, variant_document_id, parent_node_id
-                            );
-                            let http_str =
-                                http_fetch(self.api_key.as_str(), nodes_url, &self.proxy_config)?;
-                            let nodes_response: figma_schema::NodesResponse =
-                                serde_json::from_str(http_str.as_str())?;
+                            if let Err(e) = Self::fetch_variables(
+                                &self.api_key,
+                                &variant_document_id,
+                                &self.proxy_config,
+                            ) {
+                                error!(
+                                    "Failed to fetch variables for remote document {}: {:?}",
+                                    variant_document_id, e
+                                );
+                            }
+                            if !self.variables_responses.contains_key(&variant_document_id) {
+                                match Self::fetch_variables(
+                                    self.api_key.as_str(),
+                                    &variant_document_id,
+                                    &self.proxy_config,
+                                ) {
+                                    Ok(vars) => {
+                                        self.variables_responses
+                                            .insert(variant_document_id.clone(), vars);
+                                    }
+                                    Err(e) => {
+                                        error!(
+                                            "Failed to fetch variables for doc {}: {:?}",
+                                            variant_document_id, e
+                                        );
+                                    }
+                                }
+                            }
+
+                            let nodes_response = if let Some(response) = self
+                                .remote_node_responses
+                                .get(&(variant_document_id.clone(), parent_node_id.clone()))
+                            {
+                                response.clone()
+                            } else {
+                                let nodes_url = format!(
+                                    "{}{}/nodes?ids={}",
+                                    BASE_FILE_URL, variant_document_id, parent_node_id
+                                );
+                                let http_str = http_fetch(
+                                    self.api_key.as_str(),
+                                    nodes_url,
+                                    &self.proxy_config,
+                                )?;
+                                let response: figma_schema::NodesResponse =
+                                    serde_json::from_str(http_str.as_str())?;
+                                self.remote_node_responses.insert(
+                                    (variant_document_id.clone(), parent_node_id.clone()),
+                                    response.clone(),
+                                );
+                                response
+                            };
+
                             // The response is a list of nodes, but we only requested one so this loop
                             // should only go through one time
                             for (node_id, node_response_data) in nodes_response.nodes {
@@ -839,8 +889,9 @@ impl Document {
         // This map goes from "component id" -> "component set node", so there will be one
         // entry for each component in a component set.
         let mut component_id_index = HashMap::new();
+        let root_node = self.document_root.document.clone();
         index_node(
-            &self.document_root.document,
+            &root_node,
             None,
             &mut name_index,
             &mut id_index,
@@ -858,12 +909,13 @@ impl Document {
         let mut parent_tree: Vec<String> = vec![];
         let mut error_hash: HashSet<String> = HashSet::new();
         let mut completed_hash: HashSet<String> = HashSet::new();
+        let components = self.document_root.components.clone();
         self.fetch_component_variants(
-            &self.document_root.document,
+            &root_node,
             &mut node_doc_hash,
             &mut variant_nodes,
             &id_index,
-            &self.document_root.components,
+            &components,
             &mut parent_tree,
             error_list,
             &mut error_hash,
@@ -993,6 +1045,7 @@ impl Document {
                         &mut component_context,
                         &mut self.image_context,
                         hidden_node_policy,
+                        &mut self.key_to_global_id_map,
                     )?,
                 );
             }
@@ -1033,7 +1086,10 @@ impl Document {
     pub fn build_variable_map(&self) -> VariableMap {
         let mut collections_by_id: HashMap<String, Collection> = HashMap::new();
         let mut collection_ids_by_name: HashMap<String, String> = HashMap::new();
-        if let Some(variables_response) = self.variables_response.clone() {
+        let mut variables_by_id: HashMap<String, Variable> = HashMap::new();
+        let mut variable_name_id_maps_by_cid: HashMap<String, NameIdMap> = HashMap::new();
+
+        for variables_response in self.variables_responses.values() {
             for (_, c) in variables_response.meta.variable_collections.iter() {
                 let mut mode_name_hash: HashMap<String, String> = HashMap::new();
                 let mut mode_id_hash: HashMap<String, Mode> = HashMap::new();
@@ -1054,27 +1110,26 @@ impl Document {
                 collections_by_id.insert(collection.id.clone(), collection);
                 collection_ids_by_name.insert(c.name.clone(), c.id.clone());
             }
-        }
 
-        let mut variables_by_id: HashMap<String, Variable> = HashMap::new();
-        let mut variable_name_id_maps_by_cid: HashMap<String, NameIdMap> = HashMap::new();
-        if let Some(variables_response) = self.variables_response.clone() {
             for (id, v) in variables_response.meta.variables.iter() {
                 let var = create_variable(v);
+                // If we have a global ID for this variable's key, use it. Otherwise, use the local ID.
+                let map_key =
+                    self.key_to_global_id_map.get(&var.key).cloned().unwrap_or_else(|| id.clone());
+
                 let maybe_name_map =
                     variable_name_id_maps_by_cid.get_mut(&var.variable_collection_id);
                 if let Some(name_map) = maybe_name_map {
-                    name_map.m.insert(var.name.clone(), id.clone());
+                    name_map.m.insert(var.name.clone(), map_key.clone());
                 } else {
                     let mut name_to_id = HashMap::new();
-                    name_to_id.insert(var.name.clone(), id.clone());
+                    name_to_id.insert(var.name.clone(), map_key.clone());
                     variable_name_id_maps_by_cid.insert(
                         var.variable_collection_id.clone(),
                         NameIdMap { m: name_to_id, ..Default::default() },
                     );
                 }
-
-                variables_by_id.insert(id.clone(), var);
+                variables_by_id.insert(map_key, var);
             }
         }
 

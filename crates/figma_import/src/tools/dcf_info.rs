@@ -56,6 +56,8 @@ pub struct Args {
     // Optional string argument to dump file structure from a given node root.
     #[clap(long, short)]
     pub node: Option<String>,
+    #[clap(long)]
+    pub varinfo: bool,
 }
 
 pub fn dcf_info(args: Args) -> Result<(), ParseError> {
@@ -70,6 +72,12 @@ pub fn dcf_info(args: Args) -> Result<(), ParseError> {
         println!("  Figma Version: {}", header.response_version);
         println!("  Name: {}", header.name);
         println!("  Last Modified: {}", header.last_modified);
+
+        if args.varinfo {
+            if let Some(variable_map) = doc.variable_map.as_ref() {
+                println!("Variables: {:#?}", variable_map);
+            }
+        }
 
         if let Some(node) = node {
             println!("Dumping file from node: {}:", node);

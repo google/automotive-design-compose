@@ -1143,11 +1143,11 @@ pub struct ComponentKeyResponse {
 }
 impl ComponentKeyResponse {
     pub fn parent_id(&self) -> Option<String> {
-        self.meta
-            .containing_frame
-            .containing_state_group
-            .as_ref()
-            .map(|key_state_group| key_state_group.node_id.clone())
+        if let Some(state_group) = &self.meta.containing_frame.containing_state_group {
+            Some(state_group.node_id.clone())
+        } else {
+            self.meta.containing_frame.node_id.clone()
+        }
     }
 }
 

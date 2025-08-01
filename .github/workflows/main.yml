@@ -82,7 +82,7 @@ jobs:
           name: jacoco-report
           path: build/reports/jacoco/jacocoTestReport/html
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
@@ -286,7 +286,7 @@ jobs:
           name: tarpaulin-report
           path: tarpaulin-report.html
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: cobertura.xml

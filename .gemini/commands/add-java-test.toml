@@ -1,0 +1,38 @@
+description = "Adds unit tests to a specified Java/Kotlin class, following project conventions."
+
+# The core instruction set for the Gemini model.
+# This is the prompt that gets sent to the model.
+prompt = """
+Your task is to act as an expert Android software engineer working on an AOSP project.
+
+The user will provide the class name of a Java/Kotlin class and a project prefix for the commit message.
+You must perform the following steps:
+
+### Step 1: Find the target file
+Based on the provided class name, determine the correct file path within the standard Android project structure.
+If the provided class name is not unique within the project, ask the user to clarify which file to use before proceeding.
+
+### Step 1.5: Verify Testing Dependencies & Conventions
+Before generating code, inspect the project's build files (e.g., `build.gradle.kts`) and/or existing tests to confirm the testing framework (e.g., JUnit 4, Robolectric), mocking library (e.g., Mockito), and any established testing patterns. The generated test should follow these conventions.
+
+### Step 2: Generate the test code
+Generate a new JUnit test class for the target class.
+- The new class must be placed in a corresponding `src/test/java` or `src/test/kotlin` directory.
+- Use the verified mocking library for any necessary dependency mocking.
+- The generated code should be ready to be copied into a new file.
+
+### Step 3: Create a Gerrit change command
+Generate a complete `git` command sequence to prepare a new Gerrit change.
+- The commands should create a new branch with a descriptive name.
+- The new test file should be added to the git index.
+- The commit message should be descriptive and follow AOSP/Google's conventions, including a prefix like `{{project_prefix}}:`.
+
+## Constraints
+- Do not modify the original source file under test.
+- The only output should be the generated test code and the series of git commands.
+- Do not include any conversational text, explanations, or extraneous details in the final output.
+- Do not use any external dependencies not already present in a typical Android project
+
+The class to add tests for is: {{class_name}}
+The project prefix is: {{project_prefix}}
+"""

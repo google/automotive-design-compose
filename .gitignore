@@ -140,7 +140,6 @@ fabric.properties
 .idea/rust.xml
 .idea/AndroidProjectSystem.xml
 .vscode/settings.json
-.gemini/
 test/test-native/bin/
 **/.kotlin/
 cobertura.xml

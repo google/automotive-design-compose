@@ -319,7 +319,7 @@ private fun getLiveMode(): LiveUpdateMode {
     }
 }
 
-private fun elapsedTimeString(elapsedSeconds: Long): String {
+internal fun elapsedTimeString(elapsedSeconds: Long): String {
     val elapsedSecondsNonNeg: Long = maxOf(elapsedSeconds, 0)
     when {
         elapsedSecondsNonNeg > 60 * 60 * 24 * 30 -> {
@@ -371,7 +371,7 @@ private fun GetBranches(
     )
 }
 
-private fun GetProjectFileCount(doc: DocContent?): String {
+internal fun GetProjectFileCount(doc: DocContent?): String {
     val count = doc?.c?.projectFiles?.size ?: 0
     return count.toString()
 }

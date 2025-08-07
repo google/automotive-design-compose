@@ -49,7 +49,7 @@ fun nodeNameToPropertyValueList(nodeName: String): ArrayList<Pair<String, String
 class VariantPropertyMap {
     // HashMap of a single property name to a set of parent components that use that property name
     // property_name -> Set<parent_node_name>
-    private val propertyToParentNodes: HashMap<String, HashSet<String>> = HashMap()
+    internal val propertyToParentNodes: HashMap<String, HashSet<String>> = HashMap()
 
     // HashMap of variant properties in the format of:
     // parent_node_name -> [ property_name -> { set of property_name values } ] ]
@@ -57,7 +57,7 @@ class VariantPropertyMap {
     //   [#cluster/center-area] ->
     //     [#cluster/prnd] -> {P, *},
     //     [#cluster/charging] -> {off, on}
-    private val propertyMap: HashMap<String, HashMap<String, HashSet<String>>> = HashMap()
+    internal val propertyMap: HashMap<String, HashMap<String, HashSet<String>>> = HashMap()
 
     fun addProperty(parentNodeName: String, propertyName: String, variantName: String) {
         // Map the property name to a set of all parent component nodes that use the property

@@ -56,6 +56,7 @@ junit = "4.13.2"
 ktfmt = "0.52"
 material = "1.12.0"
 mockk = "1.13.17"
+mockito = "5.12.0"
 junit5 = "5.11.4"
 truth = "1.4.4"
 spotless = "7.0.2"
@@ -135,6 +136,7 @@ ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-
 material = { module = "com.google.android.material:material", version.ref = "material" }
 mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockk" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 google-truth = { module = "com.google.truth:truth", version.ref = "truth" }
 junit-jupiter = {module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
 

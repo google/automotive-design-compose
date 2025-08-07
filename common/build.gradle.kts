@@ -68,5 +68,6 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.protobuf.kotlin.lite)
     testImplementation(libs.junit.junit)
+    testImplementation(libs.google.truth)
     testImplementation(kotlin("test"))
 }

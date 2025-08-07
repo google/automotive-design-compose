@@ -69,7 +69,10 @@ android {
             add("META-INF/LGPL2.1")
         }
     }
+    testOptions { unitTests { isIncludeAndroidResources = true } }
 }
+
+tasks.withType<Test> { jacoco { isEnabled = true } }
 
 // To simplify publishing of the entire SDK, make the DesignCompose publish tasks depend on the
 // Gradle Plugin's publish tasks
@@ -124,7 +127,10 @@ dependencies {
     testImplementation(project(":test"))
     testImplementation(project(":test:internal"))
     testImplementation(kotlin("test"))
+    testImplementation(libs.mockk.agent)
+    testImplementation(libs.mockk.android)
     testImplementation(libs.google.truth)
+    testImplementation(libs.mockito.core)
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
@@ -142,4 +148,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
     testFixturesImplementation(libs.androidx.test.ext.junit)
+
+    testImplementation(project(":designcompose"))
+    testImplementation(testFixtures(project(":designcompose")))
+    testImplementation(project(":test"))
+    testImplementation(project(":test:internal"))
+    testImplementation(kotlin("test"))
 }

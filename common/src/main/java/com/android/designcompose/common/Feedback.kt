@@ -207,7 +207,7 @@ abstract class FeedbackImpl {
         ++messagesListId
     }
 
-    protected fun shortDocId(docId: DesignDocId): String {
+    fun shortDocId(docId: DesignDocId): String {
         val id = if (docId.id.length > 7) docId.id.substring(0, 7) else docId.id
         val versionId =
             if (docId.versionId.length > 4) docId.versionId.substring(docId.versionId.length - 4)

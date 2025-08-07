@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,21 @@
  * limitations under the License.
  */
 
-plugins {
-    kotlin("jvm")
-    `java-library`
-    id("designcompose.conventions.base")
-    id("designcompose.conventions.publish.jvm")
-}
+package com.android.designcompose
 
-publishing {
-    publications.named<MavenPublication>("release") {
-        pom {
-            name.set("Automotive Design for Compose Annotations")
-            description.set(
-                "Annotations for describing how a generated Composable maps data to design elements"
-            )
-        }
+import com.google.common.truth.Truth.assertThat
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
+class DesignDocSettingsTest {
+
+    @Test
+    fun testDesignDocSettings() {
+        val settings = DesignDocSettings()
+        assertThat(settings.customVariantTransition).isNull()
     }
-}
-
-dependencies {
-    testImplementation(libs.junit)
-    testImplementation(libs.google.truth)
 }

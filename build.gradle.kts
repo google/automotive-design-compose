@@ -54,7 +54,7 @@ subprojects { apply(plugin = "jacoco") }
 
 tasks.register<JacocoReport>("jacocoTestReport") {
     dependsOn(subprojects.map { it.tasks.withType<Test>() })
-    dependsOn(project(":common").tasks.withType<JacocoReport>())
+    dependsOn(subprojects.map { it.tasks.withType<JacocoReport>() })
 
     val coreModules = listOf("annotation", "common", "designcompose")
     val source =

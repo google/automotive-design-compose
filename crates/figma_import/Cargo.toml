@@ -48,7 +48,6 @@ vergen.workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]
-testdir.workspace = true
 tempfile.workspace = true
 
 [[bin]]

@@ -75,17 +75,17 @@ jobs:
       - name: Full Gradle Test
         run: ./gradlew assembleDebug assembleAndroidTest assembleUnitTest test
       - name: Generate JaCoCo Report
-        run: ./gradlew jacocoTestReport
+        run: ./gradlew designcompose:jacocoDebugUnitTestReport
       - name: Upload JaCoCo Report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: jacoco-report
-          path: build/reports/jacoco/jacocoTestReport/html
+          path: designcompose/build/reports/jacoco/jacocoDebugUnitTestReport/html
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          files: designcompose/build/reports/jacoco/jacocoTestReport/jacocoDebugUnitTestReport.xml
           flags: kotlin
   build-maven-repo:
     runs-on: "ubuntu-latest"

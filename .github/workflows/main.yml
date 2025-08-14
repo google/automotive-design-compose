@@ -96,7 +96,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: jacoco-report
-          path: designcompose/build/reports/jacoco/jacocoDebugUnitTestReport/html
+          path: designcompose/build/reports/jacoco/jacocoDebugUnitTestReport
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:

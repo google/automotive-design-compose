@@ -120,6 +120,10 @@ tasks.register<JacocoReport>("jacocoDebugUnitTestReport") {
         html.outputLocation.set(
             project.layout.buildDirectory.dir("reports/jacoco/jacocoDebugUnitTestReport")
         )
+        xml.required.set(true)
+        xml.outputLocation.set(
+            project.layout.buildDirectory.file("reports/jacoco/jacocoDebugUnitTestReport.xml")
+        )
     }
 }
 

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,26 +24,13 @@ import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-
-// To set a key:
-// adb shell am startservice -a setFigmaKey -n \
-// <YOUR_PACKAGE_NAME/com.android.designcompose.ApiKeyService -e ApiKey \
-// $FIGMA_ACCESS_TOKEN
-
-// Example for HelloWorld:
-// adb shell am startservice -a setFigmaKey -n
-// com.android.designcompose.testapp.helloworld/com.android.designcompose.ApiKeyService -e ApiKey
-// $FIGMA_ACCESS_TOKEN
-
-// Need to rename all of this to use "Access Token" instead of "Auth Key". This will match Figma's
-// terminology: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens
-var ACTION_SET_API_KEY = "setApiKey"
-var EXTRA_SET_API_KEY = "ApiKey"
 
 class ApiKeyService : Service() {
 
     private val job = SupervisorJob()
+    private val scope by lazy { CoroutineScope(dispatcher + job) }
 
     @VisibleForTesting var dispatcher = Dispatchers.IO
 
@@ -53,9 +40,13 @@ class ApiKeyService : Service() {
 
     private val binder = ApiKeyBinder()
 
+    @VisibleForTesting
+    internal var liveUpdateSettings: LiveUpdateSettingsRepository? =
+        DesignSettings.liveUpdateSettings
+
     override fun onBind(intent: Intent): IBinder {
-        if (intent.action == "setFigmaKey") {
-            setApiKey(intent.getStringExtra("ApiKey"))
+        if (intent.action == ACTION_SET_API_KEY) {
+            setApiKey(intent.getStringExtra(EXTRA_SET_API_KEY))
         }
         return binder
     }
@@ -68,11 +59,26 @@ class ApiKeyService : Service() {
         return START_NOT_STICKY
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    }
+
+    // This remains the public entry point that launches the coroutine
     fun setApiKey(key: String?) {
         if (key != null) {
-            CoroutineScope(dispatcher).launch {
-                DesignSettings.liveUpdateSettings?.setFigmaApiKey(key)
-            }
+            scope.launch { setFigmaApiKeySuspend(key) }
         }
+    }
+
+    // This new suspend function contains the core logic and is easy to test directly
+    @VisibleForTesting
+    internal suspend fun setFigmaApiKeySuspend(key: String) {
+        liveUpdateSettings?.setFigmaApiKey(key)
+    }
+
+    companion object {
+        const val ACTION_SET_API_KEY = "com.android.designcompose.ACTION_SET_API_KEY"
+        const val EXTRA_SET_API_KEY = "com.android.designcompose.EXTRA_SET_API_KEY"
     }
 }

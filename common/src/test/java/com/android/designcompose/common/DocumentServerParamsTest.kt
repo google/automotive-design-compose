@@ -17,27 +17,27 @@
 package com.android.designcompose.common
 
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class DocumentServerParamsTest {
-    @Test
-    fun testDocumentServerParams() {
-        val nodeQueries = arrayListOf("query1", "query2")
-        val ignoredImages = hashMapOf("image1" to arrayOf("url1", "url2"))
-        val params = DocumentServerParams(nodeQueries, ignoredImages)
 
-        assertEquals(nodeQueries, params.nodeQueries)
-        assertEquals(ignoredImages, params.ignoredImages)
+    @Test
+    fun testDefaultValues() {
+        val params = DocumentServerParams()
+        assertNull(params.nodeQueries)
+        assertNull(params.ignoredImages)
     }
 
     @Test
-    fun testDocumentServerParamsNull() {
-        val params = DocumentServerParams(null, null)
-
-        assertEquals(null, params.nodeQueries)
-        assertEquals(null, params.ignoredImages)
+    fun testWithValues() {
+        val nodeQueries = arrayListOf("query1", "query2")
+        val ignoredImages = hashMapOf("image1" to arrayOf("frame1", "frame2"))
+        val params = DocumentServerParams(nodeQueries, ignoredImages)
+        assertEquals(nodeQueries, params.nodeQueries)
+        assertEquals(ignoredImages, params.ignoredImages)
     }
 }

@@ -53,6 +53,10 @@ object Feedback : FeedbackImpl() {
         subscribers.remove(id)
     }
 
+    internal fun clear() {
+        messagesListId = 0
+    }
+
     // Message functions
     fun addSubscriber(docId: DesignDocId) {
         val truncatedId = shortDocId(docId)

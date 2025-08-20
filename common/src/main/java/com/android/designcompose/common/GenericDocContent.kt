@@ -148,7 +148,7 @@ fun decodeDiskBaseDoc(
 // Given all the nodes, create a mapping of all components with variants. The HashMap maps the
 // component set name to a second map of the component set's child node name, with the properties
 // rearranged to be sorted, to their corresponding Views
-private fun createVariantViewMap(
+internal fun createVariantViewMap(
     nodes: Map<NodeQuery, View>?
 ): HashMap<String, HashMap<String, View>> {
     val variantMap: HashMap<String, HashMap<String, View>> = HashMap()
@@ -168,7 +168,7 @@ private fun createVariantViewMap(
     return variantMap
 }
 
-private fun createVariantPropertyMap(nodes: Map<NodeQuery, View>?): VariantPropertyMap {
+internal fun createVariantPropertyMap(nodes: Map<NodeQuery, View>?): VariantPropertyMap {
     // To support wildcard * variant nodes, we make a variant property map that lets us figure out
     // all the possible variant names for a given property name.
     // Then when matching node names, such as "#cluster/prnd=R, #cluster/charging=off", we first
@@ -189,7 +189,7 @@ private fun createVariantPropertyMap(nodes: Map<NodeQuery, View>?): VariantPrope
 
 // Recursively add all views to a map indexed by the node id so that we can look up any view that
 // we already have in our hash of views.
-private fun createNodeIdMap(nodes: Map<NodeQuery, View>?): HashMap<String, View> {
+internal fun createNodeIdMap(nodes: Map<NodeQuery, View>?): HashMap<String, View> {
     val nodeIdMap = HashMap<String, View>()
     fun addViewToMap(view: View) {
         nodeIdMap[view.id] = view
@@ -206,12 +206,16 @@ private fun decodeHeader(
     docId: DesignDocId,
     feedback: FeedbackImpl,
 ): DesignComposeDefinitionHeader? {
-    // Now attempt to deserialize the doc)
+    // Attempt to deserialize the doc. This will be null if the stream is empty.
     val header = DesignComposeDefinitionHeader.parseDelimitedFrom(docStream)
-    // Warn for a version mismatch, but don't fail since we support backward compatibility with old
-    // protobuf versions
+
+    // Return null immediately if the header couldn't be parsed.
+    if (header == null) return null
+
+    // Warn for a version mismatch, but don't fail.
     if (header.dcVersion != FSAAS_DOC_VERSION)
         feedback.documentDecodeVersionMismatch(FSAAS_DOC_VERSION, header.dcVersion, docId)
+
     return header
 }
 

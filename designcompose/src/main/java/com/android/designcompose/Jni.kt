@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package com.android.designcompose
 
 import android.os.Build
 import androidx.annotation.Keep
-import androidx.annotation.VisibleForTesting
 import androidx.tracing.trace
 import java.io.File
 import java.io.FileNotFoundException
@@ -39,7 +38,8 @@ internal class ProxyConfig {
 @Keep
 internal object Jni {
 
-    fun tracedJnifetchdoc(
+    // Wrapper for fetching a doc, with tracing.
+    internal fun tracedFetchDoc(
         docId: String,
         versionId: String,
         request: ByteArray,
@@ -50,27 +50,24 @@ internal object Jni {
         return result
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniFetchDoc(
-        docId: String,
-        versionId: String,
-        request: ByteArray,
-        proxyConfig: ProxyConfig,
-    ): ByteArray
+    // Wrapper for creating a layout manager.
+    internal fun createLayoutManager(): Int {
+        return jniCreateLayoutManager()
+    }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniCreateLayoutManager(): Int
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniSetNodeSize(
+    // Wrapper for setting a node's size.
+    internal fun setNodeSize(
         managerId: Int,
         layoutId: Int,
         rootLayoutId: Int,
         width: Int,
         height: Int,
-    ): ByteArray?
+    ): ByteArray? {
+        return jniSetNodeSize(managerId, layoutId, rootLayoutId, width, height)
+    }
 
-    fun tracedJniAddNodes(
+    // Wrapper for adding nodes, with tracing.
+    internal fun addNodes(
         managerId: Int,
         rootLayoutId: Int,
         serializedNodes: ByteArray,
@@ -82,23 +79,58 @@ internal object Jni {
         return result
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniAddNodes(
+    // Wrapper for removing a node.
+    internal fun removeNode(
+        managerId: Int,
+        layoutId: Int,
+        rootLayoutId: Int,
+        computeLayout: Boolean,
+    ): ByteArray? {
+        return jniRemoveNode(managerId, layoutId, rootLayoutId, computeLayout)
+    }
+
+    // Wrapper for marking a node as dirty.
+    internal fun markDirty(managerId: Int, layoutId: Int) {
+        jniMarkDirty(managerId, layoutId)
+    }
+
+    // --- Private Native Implementations ---
+
+    @JvmSynthetic // Hide from Java callers
+    private external fun jniFetchDoc(
+        docId: String,
+        versionId: String,
+        request: ByteArray,
+        proxyConfig: ProxyConfig,
+    ): ByteArray
+
+    @JvmSynthetic private external fun jniCreateLayoutManager(): Int
+
+    @JvmSynthetic
+    private external fun jniSetNodeSize(
+        managerId: Int,
+        layoutId: Int,
+        rootLayoutId: Int,
+        width: Int,
+        height: Int,
+    ): ByteArray?
+
+    @JvmSynthetic
+    private external fun jniAddNodes(
         managerId: Int,
         rootLayoutId: Int,
         serializedNodes: ByteArray,
     ): ByteArray?
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniRemoveNode(
+    @JvmSynthetic
+    private external fun jniRemoveNode(
         managerId: Int,
         layoutId: Int,
         rootLayoutId: Int,
         computeLayout: Boolean,
     ): ByteArray?
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    external fun jniMarkDirty(managerId: Int, layoutId: Int)
+    @JvmSynthetic private external fun jniMarkDirty(managerId: Int, layoutId: Int)
 
     init {
         // XXX This is a not great workaround for loading the library when running robolectric
@@ -121,7 +153,6 @@ internal object Jni {
             @Suppress("UnsafeDynamicallyLoadedCode") // Loading the library from module's resources
             System.load(tempFile.absolutePath)
         } else {
-
             System.loadLibrary("dc_jni")
         }
     }

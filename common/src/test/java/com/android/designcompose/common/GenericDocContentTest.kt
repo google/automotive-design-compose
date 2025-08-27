@@ -1,0 +1,69 @@
+/*
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.designcompose.common
+
+import com.android.designcompose.definition.DesignComposeDefinition
+import com.android.designcompose.definition.DesignComposeDefinitionHeader
+import com.google.protobuf.ByteString
+import java.io.ByteArrayInputStream
+import kotlin.test.assertEquals
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
+
+@RunWith(JUnit4::class)
+class GenericDocContentTest {
+    private lateinit var feedback: FeedbackImpl
+
+    @Before
+    fun setup() {
+        feedback =
+            object : FeedbackImpl() {
+                override fun logMessage(str: String, level: FeedbackLevel) {
+                    // No-op for testing
+                }
+            }
+    }
+
+    @Test
+    fun testSerialization() {
+        val docId = DesignDocId("doc1")
+        val header =
+            DesignComposeDefinitionHeader.newBuilder().setDcVersion(FSAAS_DOC_VERSION).build()
+        val definition = DesignComposeDefinition.getDefaultInstance()
+        val content =
+            GenericDocContent(
+                docId,
+                header,
+                definition,
+                HashMap(),
+                VariantPropertyMap(),
+                HashMap(),
+                ByteString.EMPTY,
+            )
+
+        val serialized = content.toSerializedBytes(feedback)
+        assert(serialized != null)
+
+        val inputStream = ByteArrayInputStream(serialized)
+        val decoded = decodeDiskBaseDoc(inputStream, docId, feedback)
+        assert(decoded != null)
+        assertEquals(docId, decoded!!.docId)
+        assertEquals(header, decoded.header)
+    }
+}

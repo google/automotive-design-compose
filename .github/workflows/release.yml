@@ -41,7 +41,8 @@ jobs:
       - name: Set version for Widget
         working-directory: support-figma/auto-content-preview-widget
         run: |
-          sed -i -e 's/\("name":.*\)",/\1 ${{ github.ref_name }}",/' manifest.json
+          BRANCH_NAME=$(echo "${{ github.ref_name }}" | sed 's_/_\\/_g')
+          sed -i -e "s/\(\"name\":.*\)\",/\1 ${BRANCH_NAME}\",/" manifest.json
 
       - uses: ./.github/actions/build-figma-resource
         with:

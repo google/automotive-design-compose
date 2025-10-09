@@ -16,9 +16,8 @@
 
 package com.android.designcompose
 
-import com.android.designcompose.squoosh.AnimationTransition
-import com.android.designcompose.squoosh.CustomVariantTransition
-import com.android.designcompose.squoosh.VariantTransitionContext
+import android.graphics.RuntimeShader
+import androidx.compose.ui.graphics.Brush
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,23 +26,19 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
-class DesignDocSettingsTest {
-
+class ShaderBrushCacheTest {
     @Test
-    fun testDesignDocSettings() {
-        val settings = DesignDocSettings()
-        assertThat(settings.customVariantTransition).isNull()
+    fun testGetAndPut() {
+        val cache = ShaderBrushCache()
+        val brush = Brush.horizontalGradient()
+        cache.put(1, "view1", brush)
+        assertThat(cache.get(1, "view1")).isEqualTo(brush)
     }
 
     @Test
-    fun testDesignDocSettingsWithTransition() {
-        val transition =
-            object : CustomVariantTransition {
-                override fun invoke(p1: VariantTransitionContext): AnimationTransition? {
-                    return null
-                }
-            }
-        val settings = DesignDocSettings(customVariantTransition = transition)
-        assertThat(settings.customVariantTransition).isEqualTo(transition)
+    fun testSizingShaderBrush() {
+        val shader = RuntimeShader("void main() {}")
+        val brush = SizingShaderBrush(shader)
+        assertThat(brush.shader).isEqualTo(shader)
     }
 }

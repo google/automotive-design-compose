@@ -30,6 +30,7 @@ import com.android.designcompose.CustomizationContext
 import com.android.designcompose.DebugNodeManager
 import com.android.designcompose.TAG
 import com.android.designcompose.definition.element.Color
+import com.android.designcompose.definition.element.FloatColor
 import com.android.designcompose.definition.element.Path
 import com.android.designcompose.definition.element.ViewShape
 import com.android.designcompose.definition.interaction.Easing.EasingTypeCase
@@ -316,6 +317,22 @@ internal fun Transition.asAnimationSpec(): AnimationSpec<Float> {
 }
 
 /**
+ * Checks if all elements of a {@link androidx.compose.ui.graphics.Matrix} are 0.0f.
+ *
+ * @return `true` if all elements are zero, `false` otherwise.
+ */
+internal fun androidx.compose.ui.graphics.Matrix.isZero(): Boolean {
+    for (row in 0..3) {
+        for (col in 0..3) {
+            if (this[row, col] != 0.0f) {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+/**
  * Convert a LayoutTransform to a Compose transformation matrix, adjusted to operate on pixels at
  * the given display density.
  *
@@ -346,7 +363,7 @@ internal fun LayoutTransform?.asComposeTransform(
                 m44,
             )
         )
-    if (transform.isIdentity()) {
+    if (transform.isZero() || transform.isIdentity()) {
         return null
     } else {
         val adjust = androidx.compose.ui.graphics.Matrix()
@@ -361,6 +378,11 @@ internal fun LayoutTransform?.asComposeTransform(
 
 /** Convert a serialized color to a Compose color */
 internal fun Color.toColor(): androidx.compose.ui.graphics.Color {
+    return androidx.compose.ui.graphics.Color(r, g, b, a)
+}
+
+/** Convert a serialized color to a Compose color */
+internal fun FloatColor.toColor(): androidx.compose.ui.graphics.Color {
     return androidx.compose.ui.graphics.Color(r, g, b, a)
 }
 

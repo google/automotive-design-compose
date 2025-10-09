@@ -37,6 +37,7 @@ import com.android.designcompose.testapp.validation.examples.GridWidgetTest
 import com.android.designcompose.testapp.validation.examples.GridWidgetTestContent
 import com.android.designcompose.testapp.validation.examples.ScrollingTest
 import com.android.designcompose.testapp.validation.examples.ScrollingTestDoc
+import com.android.designcompose.testapp.validation.examples.TapHoldDrag
 import kotlin.test.assertNotNull
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -195,6 +196,41 @@ class Scrolling {
                 )
             }
             assert(initCalled.value)
+        }
+    }
+
+    @Test
+    fun tapHoldDragScrollTest() {
+        with(composeTestRule) {
+            setContent { TapHoldDrag() }
+            waitForIdle()
+
+            // -- Test plain tap on Item0 --
+            onNodeWithTag("Item0").performTouchInput { down(Offset.Zero) }
+            waitForIdle()
+            // Assert Item0 is now in the tapped state
+            onNodeWithTag("state=pressed").assertExists()
+            onNodeWithTag("Item0").assertDoesNotExist()
+
+            // Click again to reset Item0 state
+            onNodeWithTag("state=pressed").performTouchInput { up() }
+            waitForIdle()
+            onNodeWithTag("Item0").assertExists()
+            onNodeWithTag("state=pressed").assertDoesNotExist()
+
+            // -- Test Tap, Hold, Drag on Item0 --
+            onNodeWithTag("Item0").performTouchInput {
+                down(Offset.Zero)
+                mainClock.advanceTimeBy(500) // Hold
+                moveTo(Offset(0f, -200f)) // Drag
+            }
+            waitForIdle()
+            // Assert Item0 did NOT change to the tapped state
+            onNodeWithTag("Item0").assertExists()
+            onNodeWithTag("state=pressed").assertDoesNotExist()
+
+            onNodeWithTag("Item0").performTouchInput { up() }
+            waitForIdle()
         }
     }
 }

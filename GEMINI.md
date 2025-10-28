@@ -139,15 +139,29 @@ The `fetch` tool downloads a Figma document, extracts specified nodes, and saves
 
 **Usage:**
 
+To fetch a single node:
 ```bash
 cargo run --features="fetch" --bin fetch -- --doc-id <DOCUMENT_ID> --nodes <NODE_NAME> --output <OUTPUT_FILE.dcf>
 ```
 
+To fetch multiple nodes, repeat the `--nodes` argument for each node ID:
+```bash
+cargo run --features="fetch" --bin fetch -- --doc-id <DOCUMENT_ID> --nodes <NODE_NAME_1> --nodes <NODE_NAME_2> --nodes <NODE_NAME_3> --output <OUTPUT_FILE.dcf>
+```
+
 **Example:**
 
+Fetching a single node:
 ```bash
 cargo run --features="fetch" --bin fetch -- --doc-id 2aM4SczJzWg1rov2qqBMpe --nodes "#MainFrame" --output output.dcf
 ```
+
+Fetching multiple nodes:
+```bash
+cargo run --features="fetch" --bin fetch -- --doc-id dGS6HEmsfv8QSHgAGBwEH7 --nodes "#root" --nodes "#DynamicRoot" --nodes "#Item" --output ListPaginationTestDoc_dGS6HEmsfv8QSHgAGBwEH7.dcf
+```
+
+**Important:** Do NOT pass multiple node IDs as a comma-separated string to a single `--nodes` argument. Use a separate `--nodes` argument for each node ID.
 
 ### dcf_info
 

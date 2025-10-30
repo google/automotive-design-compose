@@ -287,7 +287,7 @@ class AnimationMidpoints {
     }
 
     @Test
-    fun OnPressAnimationDoubleGreen() {
+    fun OnClickAnimation() {
         with(composeTestRule) {
             // Because we're testing animation, we will manually advance the animation clock.
             mainClock.autoAdvance = false
@@ -296,7 +296,7 @@ class AnimationMidpoints {
 
             waitForContent(SmartAnimateTestDoc.javaClass.name)
 
-            // Tap red square to switch it to green
+            // Tap red square to switch it to red
             onNodeWithTag("V1").performTouchInput { click(Offset.Zero) }
 
             // Touch purple square to start onPress anim, which changes to green while pressed.

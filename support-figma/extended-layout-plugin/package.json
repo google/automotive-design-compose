@@ -12,7 +12,7 @@
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "@figma/plugin-typings": "*",
-    "@types/node": "^24.9.1",
+    "@types/node": "^24.9.2",
     "copy-webpack-plugin": "^13.0.1",
     "css-loader": "^7.1.2",
     "eslint": "^9.38.0",

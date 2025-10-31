@@ -77,7 +77,7 @@ jobs:
       - name: Generate JaCoCo Report
         run: ./gradlew jacocoTestReport
       - name: Upload JaCoCo Report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: jacoco-report
           path: build/reports/jacoco/jacocoTestReport/html
@@ -112,7 +112,7 @@ jobs:
       - name: Full Gradle Test and publish
         run: ./gradlew publishAllPublicationsToLocalDirRepository
       - name: Upload maven repo
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo/
@@ -135,7 +135,7 @@ jobs:
       - name: Generate full comparison
         run: ./gradlew compareRoborazziDebug
       - name: Upload diff report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: screenshot-diff-report
           path: |
@@ -165,7 +165,7 @@ jobs:
         uses: ./.github/actions/setup-build
         with:
           setup-gradle: true
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo
@@ -214,12 +214,12 @@ jobs:
         working-directory: unbundled-aaos/packages/apps/Car/libs/aaos-apps-gradle-project/
         run: ./gradlew publishAllPublicationsToLocalRepository
       - name: Upload maven repo
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: unbundled_m2repo
           path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
       - name: Upload aaos prebuilts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: unbundled_prebuilts
           path: unbundled-aaos/prebuilts/sdk/34/system/
@@ -239,15 +239,15 @@ jobs:
         uses: ./.github/actions/setup-build
         with:
           setup-gradle: true
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: unbundled_m2repo
           path: unbundled-aaos/out/aaos-apps-gradle-build/unbundled_m2repo/
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: unbundled_prebuilts
           path: unbundled-aaos/prebuilts/sdk/34/system/
@@ -281,7 +281,7 @@ jobs:
       - name: Test all and generate coverage
         run: cargo tarpaulin --workspace --out Xml --out Html
       - name: Upload Tarpaulin Report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: tarpaulin-report
           path: tarpaulin-report.html

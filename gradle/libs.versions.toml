@@ -4,7 +4,6 @@
 designcompose = "0.38.0-SNAPSHOT"
 # LINT.ThenChange(Cargo.toml)
 
-
 jvmToolchain = "17"
 ndk = "27.0.12077973"
 #Android Gradle Plugin
@@ -38,6 +37,7 @@ androidx-legacy-support-v4 = "1.0.0"
 androidx-lifecycle = "2.7.0"
 androidx-media = "1.7.0"
 androidx-media3 = "1.6.0"
+androidx-test-core = "1.6.1" # New version reference added
 androidx-test-espresso = "3.6.1"
 androidx-test-ext-junit = "1.2.1"
 androidx-datastore = "1.1.4"
@@ -47,6 +47,7 @@ androidx-uiautomator = "2.3.0"
 androidx-benchmarkMacroJunit4 = "1.3.4"
 androidx-tracing = "1.2.0"
 androidx-tracing-perfetto = "1.0.0"
+androidx-arch-core = "2.2.0"
 dokka = "2.0.0"
 gson = "2.12.1"
 guavaAndroid = "33.4.6-android"
@@ -95,6 +96,7 @@ androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-da
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "androidx-media3" }
 androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidx-profileinstaller"}
 androidx-rules = { module = "androidx.test:rules", version.ref = "androidx-rules" }
+androidx-test-core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "androidx-test-core" } # New library definition added
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 androidx-test-espresso-intents = { module = "androidx.test.espresso:espresso-intents", version.ref = "androidx-test-espresso" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
@@ -103,6 +105,7 @@ androidx-tracing-perfetto = { module = "androidx.tracing:tracing-perfetto", vers
 androidx-tracing-perfettoBinary = { module = "androidx.tracing:tracing-perfetto-binary", version.ref = "androidx-tracing-perfetto"}
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidx-uiautomator" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "androidx-arch-core" }
 
 # Compose
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidx-compose-bom" }

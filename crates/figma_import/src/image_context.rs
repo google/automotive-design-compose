@@ -14,9 +14,8 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    io::{Cursor, Read},
+    io::Cursor,
     sync::Arc,
-    time::Duration,
 };
 
 use crate::error::Error;
@@ -35,21 +34,37 @@ pub struct VectorImageId {
     paints: Vec<Paint>,
 }
 
-fn http_fetch_image(
+use hyper::{body, client, Body, Request};
+use tokio::runtime::Runtime;
+
+use hyper_proxy::{Intercept, Proxy, ProxyConnector};
+
+async fn http_fetch_image(
     url: impl ToString,
     proxy_config: &ProxyConfig,
 ) -> Result<(DynamicImage, Vec<u8>), Error> {
     let url = url.to_string();
+    let https = hyper_tls::HttpsConnector::new();
+    let mut proxy_connector = ProxyConnector::new(https)?;
 
-    let mut agent_builder = ureq::AgentBuilder::new();
-    // Only HttpProxyConfig is supported.
     if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
-        agent_builder = agent_builder.proxy(ureq::Proxy::new(spec)?);
+        let proxy_uri = spec.parse().expect("Failed to parse proxy from configuration");
+        let proxy = Proxy::new(Intercept::All, proxy_uri);
+        proxy_connector.add_proxy(proxy);
     }
-    let body = agent_builder.build().get(url.as_str()).timeout(Duration::from_secs(90)).call()?;
 
-    let mut response_bytes: Vec<u8> = Vec::new();
-    body.into_reader().read_to_end(&mut response_bytes)?;
+    let client = client::Client::builder().build::<_, hyper::Body>(proxy_connector);
+
+    let req = Request::builder().uri(url).body(Body::empty())?;
+
+    let resp = client.request(req).await?;
+    let status = resp.status();
+    let body_bytes = body::to_bytes(resp.into_body()).await?;
+    let response_bytes = body_bytes.to_vec();
+
+    if !status.is_success() {
+        return Err(Error::FigmaApiError(status, String::from_utf8(response_bytes)?));
+    }
 
     let img = image::ImageReader::new(Cursor::new(response_bytes.as_slice()))
         .with_guessed_format()?
@@ -58,7 +73,7 @@ fn http_fetch_image(
     Ok((img, response_bytes))
 }
 
-fn lookup_or_fetch(
+async fn lookup_or_fetch(
     client_images: &HashSet<String>,
     client_used_images: &mut HashSet<String>,
     referenced_images: &mut HashSet<String>,
@@ -79,7 +94,7 @@ fn lookup_or_fetch(
         if network_bytes.contains_key(url) {
             return true;
         } else {
-            match http_fetch_image(url, proxy_config) {
+            match http_fetch_image(url, proxy_config).await {
                 Ok((dynamic_image, fetched_bytes)) => {
                     decoded_image_sizes
                         .insert(url.clone(), (dynamic_image.width(), dynamic_image.height()));
@@ -168,7 +183,8 @@ impl ImageContext {
             None
         } else {
             let url = self.images.get(&image_ref.to_string());
-            if lookup_or_fetch(
+            let rt = Runtime::new().unwrap();
+            if rt.block_on(lookup_or_fetch(
                 &self.client_images,
                 &mut self.client_used_images,
                 &mut self.referenced_images,
@@ -176,7 +192,7 @@ impl ImageContext {
                 &mut self.network_bytes,
                 url,
                 &self.proxy_config,
-            ) {
+            )) {
                 url.unwrap_or(&None).as_ref().map(|url_string| url_string.clone())
             } else {
                 None

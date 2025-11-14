@@ -14,13 +14,19 @@
 
 use thiserror::Error;
 
+use hyper::StatusCode;
+
 /// Combined error type for all errors that can occur working with Figma documents.
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("IO Error")]
     IoError(#[from] std::io::Error),
     #[error("HTTP Error")]
-    NetworkError(#[from] ureq::Error),
+    NetworkError(#[from] hyper::Error),
+    #[error("HTTP Error")]
+    HttpError(#[from] hyper::http::Error),
+    #[error("Figma API Error: {1} ({0})")]
+    FigmaApiError(StatusCode, String),
     #[error("Image Error")]
     ImageError(#[from] image::ImageError),
     #[error("Json Serialization Error")]

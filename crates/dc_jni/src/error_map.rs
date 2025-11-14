@@ -16,8 +16,8 @@ use figma_import::Error::NetworkError;
 use jni::JNIEnv;
 use log::error;
 use std::error::Error;
-use ureq::Error::{Status, Transport};
-use ureq::ErrorKind;
+
+use figma_import::Error::FigmaApiError;
 
 pub fn map_err_to_exception(
     env: &mut JNIEnv,
@@ -25,44 +25,61 @@ pub fn map_err_to_exception(
     doc_id: String,
 ) -> Result<(), jni::errors::Error> {
     match err {
+        crate::error::Error::FigmaImportError(FigmaApiError(status, message)) => {
+            error!("Figma API Error: {} {}", status, message);
+            match status.as_u16() {
+                400 => {
+                    return env.throw_new(
+                        "com/android/designcompose/FetchException",
+                        format!("Bad request: {}", message),
+                    )
+                }
+                403 => {
+                    return env.throw_new(
+                        "com/android/designcompose/AccessDeniedException",
+                        "Invalid Authentication Token",
+                    )
+                }
+                404 => {
+                    return env
+                        .throw_new("com/android/designcompose/FigmaFileNotFoundException", doc_id)
+                }
+                429 => {
+                    return env.throw_new(
+                        "com/android/designcompose/RateLimitedException",
+                        "Figma Rate Limit Exceeded",
+                    )
+                }
+                500 => {
+                    return env.throw_new(
+                        "com/android/designcompose/InternalFigmaErrorException",
+                        "Figma.com internal error",
+                    )
+                }
+                code => {
+                    return env.throw_new(
+                        "com/android/designcompose/FetchException",
+                        format!("Unhandled response from server: {}: {}", code, message),
+                    )
+                }
+            }
+        }
         crate::error::Error::FigmaImportError(NetworkError(network_error)) => {
             error!("Network Error: {}, {}", err, err.source().unwrap().to_string());
 
-            match network_error {
-                Status(400, response) => env.throw_new(
-                    "com/android/designcompose/FetchException",
-                    format!("Bad request: {}", response.status_text()),
-                )?,
-                Status(403, _) => env.throw_new(
-                    "com/android/designcompose/AccessDeniedException",
-                    "Invalid Authentication Token",
-                )?,
-                Status(404, _) => {
-                    env.throw_new("com/android/designcompose/FigmaFileNotFoundException", doc_id)?
-                }
-                Status(429, _) => env.throw_new(
-                    "com/android/designcompose/RateLimitedException",
-                    "Figma Rate Limit Exceeded",
-                )?,
-                Status(500, _) => env.throw_new(
-                    "com/android/designcompose/InternalFigmaErrorException",
-                    "Figma.com internal error",
-                )?,
-                Status(code, response) => env.throw_new(
-                    "com/android/designcompose/FetchException",
-                    format!("Unhandled response from server: {}: {}", code, response.status_text()),
-                )?,
-                Transport(transport_error) => match transport_error.kind() {
-                    ErrorKind::ConnectionFailed => env.throw_new(
-                        "java/net/ConnectException",
-                        transport_error.message().unwrap_or("No further details"),
-                    )?,
-                    kind => env.throw_new(
-                        "java/net/SocketException",
-                        format!("Network error: {}", kind),
-                    )?,
-                },
+            if network_error.is_timeout() {
+                return env.throw_new(
+                    "java/net/SocketTimeoutException",
+                    "Timeout connecting to Figma.com",
+                );
             }
+            if network_error.is_connect() {
+                return env.throw_new(
+                    "java/net/ConnectException",
+                    format!("Failed to connect to Figma.com: {}", network_error),
+                );
+            }
+            env.throw_new("java/net/SocketException", format!("Network error: {}", network_error))?
         }
         _ => {
             error!("Unhandled: {}, {}", err, err.source().unwrap().to_string());

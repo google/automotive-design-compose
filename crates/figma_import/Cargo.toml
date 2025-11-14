@@ -17,11 +17,15 @@ dcf_info = ["clap"]
 fetch_layout = ["clap"]
 test_fetches = ["fetch"]
 
-
 [dependencies]
 dc_layout.workspace = true
 dc_bundle.workspace = true
-ureq.workspace = true
+hyper.workspace = true
+hyper-tls.workspace = true
+tokio.workspace = true
+bytes.workspace = true
+hyper-proxy.workspace = true
+futures.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_bytes.workspace = true
@@ -29,7 +33,6 @@ bincode.workspace = true
 thiserror.workspace = true
 protobuf.workspace = true
 svgtypes.workspace = true
-
 unicode-segmentation.workspace = true
 image.workspace = true
 euclid.workspace = true

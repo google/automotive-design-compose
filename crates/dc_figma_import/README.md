@@ -1,8 +1,7 @@
-# figma_import
+# dc_figma_import
 
 =======
-
-This library (figma_import) and binaries perform conversion from a Figma document to a self-contained serialized doc that can be interpreted and rendered by the DesignCompose library.
+This library (dc_figma_import) and binaries perform conversion from a Figma document to a self-contained serialized doc that can be interpreted and rendered by the DesignCompose library.
 
 The Figma API provides access to documents, images, vectors, and interactions through a variety of access points, in a format that is specific to Figma. Additionally, one Figma document can refer to resources in other Figma documents (this is how Figma's "Component Library" or "Design System" features are implemented). This library will perform all of the neccessary fetches, will render complex vectors to rasters, and will package all of these resources up into a single document. The library can also fetch incremental changes to a document, avoiding refetching and reprocessing assets that the DesignCompose client already has.
 
@@ -16,7 +15,7 @@ The Figma API provides access to documents, images, vectors, and interactions th
 
 ### Generating data for a UI toolkit
 
-Currently `figma_import` uses the Rust `bincode` serialization format to encode processed documents for the client. In the future we plan to migrate to protobuf because protobuf is better supported within Google.
+Currently `dc_figma_import` uses the Rust `bincode` serialization format to encode processed documents for the client. In the future we plan to migrate to protobuf because protobuf is better supported within Google.
 
 * `toolkit_schema` includes the core structures that make up a serialized document.
 * `toolkit_style` includes the structures relating to style.

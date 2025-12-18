@@ -108,8 +108,8 @@ jobs:
 
       - name: Build binaries
         run: |
-          cross build --release --target ${{ matrix.target }} --package figma_import --bin fetch --features="fetch"
-          cross build --release --target ${{ matrix.target }} --package figma_import --bin dcf_info --features="dcf_info"
+          cross build --release --target ${{ matrix.target }} --package dc_figma_import --bin fetch --features="fetch"
+          cross build --release --target ${{ matrix.target }} --package dc_figma_import --bin dcf_info --features="dcf_info"
 
       - name: Package binaries
         shell: bash

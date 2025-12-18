@@ -23,7 +23,7 @@ use crate::layout_manager::{
     jni_add_nodes, jni_create_layout_manager, jni_mark_dirty, jni_remove_node, jni_set_node_size,
 };
 use android_logger::Config;
-use figma_import::ProxyConfig;
+use dc_figma_import::ProxyConfig;
 use jni::objects::{JByteArray, JClass, JObject, JString};
 use jni::sys::{jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};

@@ -294,7 +294,7 @@ Automotive Design for Compose consists of several components:
       renders them using Jetpack Compose. It also contains the code that uses the Figma Import JNI
       library to fetch documents from the Figma webservice.
 
-- Figma Import, in `crates/figma_import`, is a library implemented in Rust that fetches documents
+- Figma Import, in `crates/dc_figma_import`, is a library implemented in Rust that fetches documents
   and resources from the Figma API and generates a serialized document containing only the
   information that Automotive Design for Compose needs. The JNI interface used by the Android
   runtime is in `crates/live_update`.
@@ -347,7 +347,7 @@ Manifest** and select the `manifest.json` file to import.
 ## Updating serialized Figma files
 
 Any changes that include an update to the Figma serialized file version (set in
-crates/figma_import/src/serialized_document.rs) will require the committed serialized files to be
+crates/dc_figma_import/src/serialized_document.rs) will require the committed serialized files to be
 updated with new versions that have been fetched with the updated version. At a minimum this
 includes any files that are being tested with AndroidIntegratedTests, and most especially the Design
 Switcher and the Tutorial's welcome screen, which are special cases.

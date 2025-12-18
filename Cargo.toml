@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/figma_import", "crates/dc_jni", "crates/dc_layout", "crates/dc_bundle"]
+members = ["crates/dc_figma_import", "crates/dc_jni", "crates/dc_layout", "crates/dc_bundle"]
 
 [workspace.package]
 # LINT.IfChange
@@ -23,7 +23,7 @@ panic = 'abort'
 # dc_bundle needs a version because it is a dependency published on crates.io
 dc_bundle = { version = "0.38.0", path = "crates/dc_bundle" }
 dc_layout = { path = "crates/dc_layout" }
-figma_import = { path = "crates/figma_import" }
+dc_figma_import = { path = "crates/dc_figma_import" }
 android_logger = "0.13.1"
 anyhow = "1.0"
 bincode = "1.3"

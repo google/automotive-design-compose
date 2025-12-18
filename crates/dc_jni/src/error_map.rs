@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use figma_import::Error::NetworkError;
+use dc_figma_import::Error::NetworkError;
 use jni::JNIEnv;
 use log::error;
 use std::error::Error;

@@ -1,5 +1,5 @@
 [package]
-name = "figma_import"
+name = "dc_figma_import"
 description = "Figma document serialization toolkit"
 version.workspace = true
 edition.workspace = true

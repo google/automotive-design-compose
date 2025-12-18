@@ -15,7 +15,7 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 dc_bundle.workspace = true
-figma_import.workspace = true
+dc_figma_import.workspace = true
 dc_layout.workspace = true
 log.workspace = true
 jni.workspace = true

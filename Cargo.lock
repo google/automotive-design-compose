@@ -277,6 +277,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "dc_figma_import"
+version = "0.38.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "clap",
+ "dc_bundle",
+ "dc_layout",
+ "euclid 0.20.14",
+ "image",
+ "lazy_static",
+ "log",
+ "protobuf",
+ "reqwest",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "svgtypes",
+ "taffy",
+ "tempfile",
+ "thiserror 2.0.17",
+ "unicode-segmentation",
+ "vergen",
+]
+
+[[package]]
 name = "dc_jni"
 version = "0.38.0"
 dependencies = [
@@ -284,8 +310,8 @@ dependencies = [
  "bincode",
  "bytes",
  "dc_bundle",
+ "dc_figma_import",
  "dc_layout",
- "figma_import",
  "jni",
  "lazy_static",
  "log",
@@ -395,32 +421,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e6853b52649d4ac5c0bd02320cddc5ba956bdb407c4b75a2c6b75bf51500f8c"
 dependencies = [
  "simd-adler32",
-]
-
-[[package]]
-name = "figma_import"
-version = "0.38.0"
-dependencies = [
- "anyhow",
- "bincode",
- "clap",
- "dc_bundle",
- "dc_layout",
- "euclid 0.20.14",
- "image",
- "lazy_static",
- "log",
- "protobuf",
- "reqwest",
- "serde",
- "serde_bytes",
- "serde_json",
- "svgtypes",
- "taffy",
- "tempfile",
- "thiserror 2.0.17",
- "unicode-segmentation",
- "vergen",
 ]
 
 [[package]]

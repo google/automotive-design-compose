@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Fetch HelloWorld" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="buildProfileId" value="test" />
-    <option name="command" value="run --package figma_import --bin fetch -- --doc-id=pxVlixodJqZL95zo2RzTHl --nodes=#MainFrame --output=/tmp/out.dcf" />
+    <option name="command" value="run --package dc_figma_import --bin fetch -- --doc-id=pxVlixodJqZL95zo2RzTHl --nodes=#MainFrame --output=/tmp/out.dcf" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <envs />
     <option name="emulateTerminal" value="true" />

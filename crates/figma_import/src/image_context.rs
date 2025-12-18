@@ -41,15 +41,20 @@ fn http_fetch_image(
 ) -> Result<(DynamicImage, Vec<u8>), Error> {
     let url = url.to_string();
 
-    let mut agent_builder = ureq::AgentBuilder::new();
+    let mut client_builder = reqwest::blocking::Client::builder();
     // Only HttpProxyConfig is supported.
     if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
-        agent_builder = agent_builder.proxy(ureq::Proxy::new(spec)?);
+        client_builder = client_builder.proxy(reqwest::Proxy::all(spec)?);
     }
-    let body = agent_builder.build().get(url.as_str()).timeout(Duration::from_secs(90)).call()?;
+    let mut response = client_builder
+        .build()?
+        .get(url.as_str())
+        .timeout(Duration::from_secs(90))
+        .send()?
+        .error_for_status()?;
 
     let mut response_bytes: Vec<u8> = Vec::new();
-    body.into_reader().read_to_end(&mut response_bytes)?;
+    response.read_to_end(&mut response_bytes)?;
 
     let img = image::ImageReader::new(Cursor::new(response_bytes.as_slice()))
         .with_guessed_format()?

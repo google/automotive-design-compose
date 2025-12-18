@@ -50,23 +50,20 @@ pub enum HiddenNodePolicy {
 }
 
 fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<String, Error> {
-    let mut agent_builder = ureq::AgentBuilder::new();
-    let mut buffer = Vec::new();
+    let mut client_builder = reqwest::blocking::Client::builder();
     // Only HttpProxyConfig is supported.
     if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
-        agent_builder = agent_builder.proxy(ureq::Proxy::new(spec)?);
+        client_builder = client_builder.proxy(reqwest::Proxy::all(spec)?);
     }
 
-    agent_builder
-        .build()
-        .get(url.as_str())
-        .set(FIGMA_TOKEN_HEADER, api_key)
+    let body = client_builder
         .timeout(Duration::from_secs(90))
-        .call()?
-        .into_reader()
-        .read_to_end(&mut buffer)?;
-
-    let body = String::from_utf8(buffer)?;
+        .build()?
+        .get(url.as_str())
+        .header(FIGMA_TOKEN_HEADER, api_key)
+        .send()?
+        .error_for_status()?
+        .text()?;
 
     Ok(body)
 }
@@ -354,11 +351,11 @@ impl Document {
                             str
                         }
                         Err(e) => {
-                            let fetch_error = if let Error::NetworkError(ureq_error) = &e {
-                                if let ureq::Error::Status(code, _response) = ureq_error {
+                            let fetch_error = if let Error::NetworkError(reqwest_error) = &e {
+                                if let Some(code) = reqwest_error.status() {
                                     format!("HTTP {} at {}", code, component_url)
                                 } else {
-                                    ureq_error.to_string()
+                                    reqwest_error.to_string()
                                 }
                             } else {
                                 e.to_string()

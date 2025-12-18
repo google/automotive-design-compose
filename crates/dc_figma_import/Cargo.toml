@@ -32,7 +32,6 @@ svgtypes.workspace = true
 
 unicode-segmentation.workspace = true
 image.workspace = true
-euclid.workspace = true
 
 # layout dependencies
 taffy.workspace = true

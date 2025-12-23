@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use figma_import::Error::NetworkError;
+use dc_figma_import::Error::NetworkError;
 use jni::JNIEnv;
 use log::error;
 use std::error::Error;
-use ureq::Error::{Status, Transport};
-use ureq::ErrorKind;
 
 pub fn map_err_to_exception(
     env: &mut JNIEnv,
@@ -28,40 +26,43 @@ pub fn map_err_to_exception(
         crate::error::Error::FigmaImportError(NetworkError(network_error)) => {
             error!("Network Error: {}, {}", err, err.source().unwrap().to_string());
 
-            match network_error {
-                Status(400, response) => env.throw_new(
-                    "com/android/designcompose/FetchException",
-                    format!("Bad request: {}", response.status_text()),
-                )?,
-                Status(403, _) => env.throw_new(
-                    "com/android/designcompose/AccessDeniedException",
-                    "Invalid Authentication Token",
-                )?,
-                Status(404, _) => {
-                    env.throw_new("com/android/designcompose/FigmaFileNotFoundException", doc_id)?
+            if let Some(status) = network_error.status() {
+                match status.as_u16() {
+                    400 => env.throw_new(
+                        "com/android/designcompose/FetchException",
+                        format!("Bad request: {}", status),
+                    )?,
+                    403 => env.throw_new(
+                        "com/android/designcompose/AccessDeniedException",
+                        "Invalid Authentication Token",
+                    )?,
+                    404 => env.throw_new(
+                        "com/android/designcompose/FigmaFileNotFoundException",
+                        doc_id,
+                    )?,
+                    429 => env.throw_new(
+                        "com/android/designcompose/RateLimitedException",
+                        "Figma Rate Limit Exceeded",
+                    )?,
+                    500 => env.throw_new(
+                        "com/android/designcompose/InternalFigmaErrorException",
+                        "Figma.com internal error",
+                    )?,
+                    code => env.throw_new(
+                        "com/android/designcompose/FetchException",
+                        format!("Unhandled response from server: {}", code),
+                    )?,
                 }
-                Status(429, _) => env.throw_new(
-                    "com/android/designcompose/RateLimitedException",
-                    "Figma Rate Limit Exceeded",
-                )?,
-                Status(500, _) => env.throw_new(
-                    "com/android/designcompose/InternalFigmaErrorException",
-                    "Figma.com internal error",
-                )?,
-                Status(code, response) => env.throw_new(
-                    "com/android/designcompose/FetchException",
-                    format!("Unhandled response from server: {}: {}", code, response.status_text()),
-                )?,
-                Transport(transport_error) => match transport_error.kind() {
-                    ErrorKind::ConnectionFailed => env.throw_new(
-                        "java/net/ConnectException",
-                        transport_error.message().unwrap_or("No further details"),
-                    )?,
-                    kind => env.throw_new(
-                        "java/net/SocketException",
-                        format!("Network error: {}", kind),
-                    )?,
-                },
+            } else if network_error.is_connect() || network_error.is_timeout() {
+                env.throw_new(
+                    "java/net/ConnectException",
+                    format!("Network error: {}", network_error),
+                )?
+            } else {
+                env.throw_new(
+                    "java/net/SocketException",
+                    format!("Network error: {}", network_error),
+                )?
             }
         }
         _ => {

@@ -700,8 +700,7 @@ fn compute_background(
 
         // Figma has already applied the rotation in "stretch" mode.
         if *rotation != 0.0 && *scale_mode != figma_schema::ScaleMode::Stretch {
-            transform =
-                transform.pre_rotate(0.0, 0.0, 1.0, euclid::Angle::degrees(*rotation).get());
+            transform = transform.pre_rotate(0.0, 0.0, 1.0, (*rotation).to_radians());
         }
 
         if let Some(scale_factor) = *scaling_factor {
@@ -1973,8 +1972,8 @@ fn visit_node(
                 paths: fill_paths.into(),
                 strokes: stroke_paths.into(),
                 stroke_cap: node.stroke_cap.to_proto().into(),
-                start_angle_degrees: euclid::Angle::radians(arc_data.starting_angle).to_degrees(),
-                sweep_angle_degrees: euclid::Angle::radians(arc_data.ending_angle).to_degrees(),
+                start_angle_degrees: arc_data.starting_angle.to_degrees(),
+                sweep_angle_degrees: arc_data.ending_angle.to_degrees(),
                 inner_radius: arc_data.inner_radius,
                 // corner radius for arcs in dials & gauges does not support variables yet
                 corner_radius: 0.0,

@@ -17,8 +17,8 @@
 
 use dc_bundle::definition_file::{load_design_def, save_design_def};
 use dc_bundle::design_compose_definition::DesignComposeDefinitionHeader;
-use figma_import::tools::fetch::{build_definition, load_figma_token};
-use figma_import::{Document, ProxyConfig};
+use dc_figma_import::tools::fetch::{build_definition, load_figma_token};
+use dc_figma_import::{Document, ProxyConfig};
 use tempfile::NamedTempFile;
 
 // Simply fetches and serializes a doc

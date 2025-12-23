@@ -34,7 +34,7 @@ The Rust code is located in the `crates/` directory and is responsible for inter
 * `dc_bundle`: Handles the bundling of Figma data.
 * `dc_jni`: Provides the Java Native Interface (JNI) for the Android runtime to communicate with the Rust code.
 * `dc_layout`: Manages layout information from Figma.
-* `figma_import`: Fetches and serializes Figma documents.
+* `dc_figma_import`: Fetches and serializes Figma documents.
 
 ### Reference Applications
 

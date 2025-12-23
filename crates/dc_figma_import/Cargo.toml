@@ -1,5 +1,5 @@
 [package]
-name = "figma_import"
+name = "dc_figma_import"
 description = "Figma document serialization toolkit"
 version.workspace = true
 edition.workspace = true
@@ -21,7 +21,7 @@ test_fetches = ["fetch"]
 [dependencies]
 dc_layout.workspace = true
 dc_bundle.workspace = true
-ureq.workspace = true
+reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_bytes.workspace = true
@@ -32,7 +32,6 @@ svgtypes.workspace = true
 
 unicode-segmentation.workspace = true
 image.workspace = true
-euclid.workspace = true
 
 # layout dependencies
 taffy.workspace = true

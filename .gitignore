@@ -27,8 +27,8 @@ plugins/*/bin
 local.properties
 
 #Other
-/crates/figma_import/features/*.json
-/crates/figma_import/features/*.png
+/crates/dc_figma_import/features/*.json
+/crates/dc_figma_import/features/*.png
 **/*.rs.bk
 .DS_Store
 .externalNativeBuild

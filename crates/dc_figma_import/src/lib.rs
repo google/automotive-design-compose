@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! `figma_import` fetches a document from Figma and converts nodes from the document
+//! `dc_figma_import` fetches a document from Figma and converts nodes from the document
 //! to toolkit_schema Views, which can then be further customized (changing text or style)
 //! and presented in other components that implement logic.
 //!
 //! The goal of this crate is to perform the mapping from Figma to the toolkit; it does
 //! not provide any kind of UI logic mapping.
+
 mod component_context;
 mod design_definition;
 mod document;

@@ -116,15 +116,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
-name = "bincode"
-version = "1.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "bitflags"
 version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -281,7 +272,6 @@ name = "dc_figma_import"
 version = "0.38.0"
 dependencies = [
  "anyhow",
- "bincode",
  "clap",
  "dc_bundle",
  "dc_layout",
@@ -306,7 +296,6 @@ name = "dc_jni"
 version = "0.38.0"
 dependencies = [
  "android_logger",
- "bincode",
  "bytes",
  "dc_bundle",
  "dc_figma_import",

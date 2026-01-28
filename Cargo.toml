@@ -4,7 +4,7 @@ members = ["crates/dc_figma_import", "crates/dc_jni", "crates/dc_layout", "crate
 
 [workspace.package]
 # LINT.IfChange
-version = "0.38.0"
+version = "0.38.1"
 # LINT.ThenChange(gradle/libs.versions.toml)
 edition = "2021"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]
@@ -21,9 +21,9 @@ panic = 'abort'
 
 [workspace.dependencies]
 # dc_* crates specify a version because they are dependencies published on crates.io
-dc_bundle = { version = "0.38.0", path = "crates/dc_bundle" }
-dc_layout = { version = "0.38.0", path = "crates/dc_layout" }
-dc_figma_import = { version = "0.38.0", path = "crates/dc_figma_import" }
+dc_bundle = { version = "0.38.1", path = "crates/dc_bundle" }
+dc_layout = { version = "0.38.1", path = "crates/dc_layout" }
+dc_figma_import = { version = "0.38.1", path = "crates/dc_figma_import" }
 android_logger = "0.13.1"
 anyhow = "1.0"
 bytes = "1.6.0"
@@ -43,7 +43,7 @@ serde_bytes = "0.11"
 serde-generate = { version = "0.25.1" }
 serde_json = "1.0"
 serde-reflection = { version = "0.3" }
-svgtypes = "0.15.1"
+svgtypes = "0.16.1"
 taffy = { version = "0.6", default-features = false, features = ["std", "taffy_tree", "flexbox", "content_size"] }
 tempfile = "3.11.0"
 thiserror = "2.0.11"

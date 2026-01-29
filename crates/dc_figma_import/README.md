@@ -15,7 +15,7 @@ The Figma API provides access to documents, images, vectors, and interactions th
 
 ### Generating data for a UI toolkit
 
-Currently `dc_figma_import` uses the Rust `bincode` serialization format to encode processed documents for the client. In the future we plan to migrate to protobuf because protobuf is better supported within Google.
+`dc_figma_import` uses the `protobuf` serialization format to encode processed documents for the client.
 
 * `toolkit_schema` includes the core structures that make up a serialized document.
 * `toolkit_style` includes the structures relating to style.
@@ -32,7 +32,6 @@ Currently `dc_figma_import` uses the Rust `bincode` serialization format to enco
 
 ### Application binaries
 
-* `reflection` generates Java code to deserialize the `bincode` encoded `toolkit_schema` and `serialized_document` types.
 * `dcf_info` deserializes a serialized DesignCompose file (.dcf) and prints out some basic data about the file.
   * Usage: `cargo run --bin dcf_info --features=dcf_info <path>`
 * `fetch` queries Figma for a file with specified nodes, then processes and serializes the response, and saves it into a .dcf file.

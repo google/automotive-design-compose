@@ -256,7 +256,7 @@ dependencies = [
 
 [[package]]
 name = "dc_bundle"
-version = "0.38.0"
+version = "0.38.2"
 dependencies = [
  "log",
  "protobuf",
@@ -269,7 +269,7 @@ dependencies = [
 
 [[package]]
 name = "dc_figma_import"
-version = "0.38.0"
+version = "0.38.2"
 dependencies = [
  "anyhow",
  "clap",
@@ -293,7 +293,7 @@ dependencies = [
 
 [[package]]
 name = "dc_jni"
-version = "0.38.0"
+version = "0.38.2"
 dependencies = [
  "android_logger",
  "bytes",
@@ -313,7 +313,7 @@ dependencies = [
 
 [[package]]
 name = "dc_layout"
-version = "0.38.0"
+version = "0.38.2"
 dependencies = [
  "android_logger",
  "dc_bundle",
@@ -852,9 +852,9 @@ dependencies = [
 
 [[package]]
 name = "kurbo"
-version = "0.11.3"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c62026ae44756f8a599ba21140f350303d4f08dcdcc71b5ad9c9bb8128c13c62"
+checksum = "7564e90fe3c0d5771e1f0bc95322b21baaeaa0d9213fa6a0b61c99f8b17b3bfb"
 dependencies = [
  "arrayvec",
  "euclid",
@@ -1158,7 +1158,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1556,9 +1556,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "svgtypes"
-version = "0.15.3"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68c7541fff44b35860c1a7a47a7cadf3e4a304c457b58f9870d9706ece028afc"
+checksum = "695b5790b3131dafa99b3bbfd25a216edb3d216dad9ca208d4657bfb8f2abc3d"
 dependencies = [
  "kurbo",
  "siphasher",

@@ -23,4 +23,4 @@ protobuf.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
-lazy_static = "1.4.0"
+lazy_static.workspace = true

@@ -87,8 +87,10 @@ jobs:
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
         shell: bash
       - name: Check workflow files
-        run: ${{ steps.get_actionlint.outputs.executable }} -color
+        run: ${STEPS_GET_ACTIONLINT_OUTPUTS_EXECUTABLE} -color
         shell: bash
+        env:
+          STEPS_GET_ACTIONLINT_OUTPUTS_EXECUTABLE: ${{ steps.get_actionlint.outputs.executable }}
 
   lint-rust:
     runs-on: ubuntu-latest

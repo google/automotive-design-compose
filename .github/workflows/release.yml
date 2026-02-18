@@ -37,7 +37,7 @@ jobs:
       - name: Set version for Widget
         working-directory: support-figma/auto-content-preview-widget
         run: |
-          sed -i -e 's/\("name":.*\)",/\1 ${{ github.ref_name }}",/' manifest.json
+          sed -i -e 's/\("name":.*\)",/\1 ${GITHUB_REF_NAME}",/' manifest.json
 
       - uses: ./.github/actions/build-figma-resource
         with:
@@ -113,15 +113,15 @@ jobs:
 
       - name: Zip releases
         run: |
-          zip -q -r designcompose_m2repo-${{ github.ref_name }}.zip designcompose_m2repo/
-          zip -q -r extended-layout-plugin-${{ github.ref_name }}.zip extended-layout-plugin/
-          zip -q -r auto-content-preview-widget-${{ github.ref_name }}.zip auto-content-preview-widget/
+          zip -q -r designcompose_m2repo-${GITHUB_REF_NAME}.zip designcompose_m2repo/
+          zip -q -r extended-layout-plugin-${GITHUB_REF_NAME}.zip extended-layout-plugin/
+          zip -q -r auto-content-preview-widget-${GITHUB_REF_NAME}.zip auto-content-preview-widget/
 
       - name: Upload release artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} \
-          extended-layout-plugin-${{ github.ref_name }}.zip \
-          auto-content-preview-widget-${{ github.ref_name }}.zip \
-          designcompose_m2repo-${{ github.ref_name }}.zip
+          gh release upload ${GITHUB_REF_NAME} \
+          extended-layout-plugin-${GITHUB_REF_NAME}.zip \
+          auto-content-preview-widget-${GITHUB_REF_NAME}.zip \
+          designcompose_m2repo-${GITHUB_REF_NAME}.zip

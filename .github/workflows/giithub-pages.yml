@@ -66,9 +66,10 @@ jobs:
         # Outputs to the './_site' directory by default
         run: |
           bundle exec just-the-docs rake search:init
-          bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+          bundle exec jekyll build --baseurl "${STEPS_PAGES_OUTPUTS_BASE_PATH}"
         env:
           JEKYLL_ENV: production
+          STEPS_PAGES_OUTPUTS_BASE_PATH: ${{ steps.pages.outputs.base_path }}
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0

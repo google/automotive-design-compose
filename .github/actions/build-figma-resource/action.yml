@@ -32,14 +32,16 @@ runs:
     - name: Package
       shell: bash
       run: |
-        mkdir -p ${{ inputs.resource }}/dist
+        mkdir -p ${INPUTS_RESOURCE}/dist
 
-        mv support-figma/${{ inputs.resource }}/manifest.json \
-          ${{ inputs.resource }}
+        mv support-figma/${INPUTS_RESOURCE}/manifest.json \
+          ${INPUTS_RESOURCE}
 
-        mv support-figma/${{ inputs.resource }}/dist/ui.html \
-          support-figma/${{ inputs.resource }}/dist/code.js \
-          ${{ inputs.resource }}/dist
+        mv support-figma/${INPUTS_RESOURCE}/dist/ui.html \
+          support-figma/${INPUTS_RESOURCE}/dist/code.js \
+          ${INPUTS_RESOURCE}/dist
+      env:
+        INPUTS_RESOURCE: ${{ inputs.resource }}
 
     - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:

@@ -11,7 +11,7 @@ repository = "https://github.com/google/automotive-design-compose"
 readme = "README.md"
 
 [lib]
-crate-type = ["rlib", "cdylib"]
+crate-type = ["lib"]
 
 [dependencies]
 dc_bundle.workspace = true

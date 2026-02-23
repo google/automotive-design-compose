@@ -1,0 +1,191 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Adapted from https://github.com/takahirom/roborazzi-compare-on-github-comment-sample/blob/main/.github/workflows/CompareScreenshotComment.yml
+
+name: Screenshot compare comment
+
+on:
+  workflow_run:
+    workflows:
+      - CompareScreenshot
+    types:
+      - completed
+
+permissions: { }
+
+jobs:
+  Update-Comment:
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+
+    timeout-minutes: 2
+
+    permissions:
+      actions: read # for downloading artifacts
+      contents: write # for pushing screenshot-diff to companion branch
+      pull-requests: write # for creating a comment on pull requests
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          egress-policy: audit
+
+      - uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
+        with:
+          name: pr
+          run_id: ${{ github.event.workflow_run.id }}
+
+      - id: get-pull-request-number
+        name: Get pull request number
+        shell: bash
+        run: |
+          echo "pull_request_number=$(cat NR)" >> "$GITHUB_OUTPUT"
+
+      - name: main checkout
+        id: checkout-main
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v4.2.2
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.event.pull_request.base.ref || github.event.repository.default_branch }}
+
+      - id: switch-companion-branch
+        env:
+          BRANCH_NAME: roborazzi_companion_${{ github.event.workflow_run.head_branch }}
+        run: |
+          # orphan means it will create no history branch
+          git branch -D "$BRANCH_NAME" || true
+          git checkout --orphan "$BRANCH_NAME"
+          git rm -rf .
+
+      - uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          name: diff-vs-base-branch
+          path: screenshot-diff
+
+      - id: check-if-there-are-valid-files
+        name: Check if there are valid files
+        shell: bash
+        run: |
+          # Find all the files ending with _compare.png
+          mapfile -t files_to_add < <(find . -type f -name "*_compare.png")
+
+          # Check for invalid file names and add only valid ones
+          exist_valid_files="false"
+          for file in "${files_to_add[@]}"; do
+            if [[ $file =~ ^[a-zA-Z0-9_./-]+$ ]]; then
+              exist_valid_files="true"
+              break
+            fi
+          done
+          echo "exist_valid_files=$exist_valid_files" >> "$GITHUB_OUTPUT"
+
+      - id: push-screenshot-diff
+        shell: bash
+        if: steps.check-if-there-are-valid-files.outputs.exist_valid_files == 'true'
+        env:
+          BRANCH_NAME: roborazzi_companion_${{ github.event.workflow_run.head_branch }}
+        run: |
+          # Find all the files ending with _compare.png
+          files_to_add=$(find . -type f -name "*_compare.png")
+
+          # Check for invalid file names and add only valid ones
+          for file in $files_to_add; do
+            if [[ "$file" =~ ^[a-zA-Z0-9_./-]+$ ]]; then
+              git add "$file"
+            fi
+          done
+          git config --global user.name ScreenshotBot
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "Add screenshot diff"
+          git push origin HEAD:"$BRANCH_NAME" -f
+
+      - id: generate-diff-reports
+        name: Generate diff reports
+        env:
+          BRANCH_NAME: roborazzi_companion_${{ github.event.workflow_run.head_branch }}
+          BASE_REF: ${{ github.event.workflow_run.event  == 'pull_request' && github.event.workflow_run.event.pull_request.base.ref || github.event.repository.default_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          EXIST_VALID_FILES: ${{ steps.check-if-there-are-valid-files.outputs.exist_valid_files }}
+        shell: bash
+        run: |
+          delimiter="$(openssl rand -hex 8)"
+          {
+            echo "reports<<${delimiter}"
+
+            # Create markdown table header
+            echo "Snapshot diff report vs base branch: $BASE_REF"
+            echo "Last updated: $(TZ='America/Los_Angeles' date), Sha: $HEAD_SHA"
+          } >> "$GITHUB_OUTPUT"
+
+          if [[ "$EXIST_VALID_FILES" == 'true' ]]; then
+            # Find all the files ending with _compare.png in roborazzi folder
+            files=$(find . -type f -name "*_compare.png" | grep "roborazzi/" | grep -E "^[a-zA-Z0-9_./-]+$")
+            {
+              echo "| File name | Image |"
+              echo "|-------|-------|"
+            } >> "$GITHUB_OUTPUT"
+
+            # Iterate over the files and create table rows
+            for file in $files; do
+              # Get the file name and insert newlines every 20 characters
+              fileName=$(basename "$file" | sed -r 's/(.{20})/\1<br>/g')
+              echo "| [$fileName](https://github.com/${{ github.repository }}/blob/$BRANCH_NAME/$file) | ![](https://github.com/${{ github.repository }}/blob/$BRANCH_NAME/$file?raw=true) |" >> "$GITHUB_OUTPUT"
+            done
+
+          ### Else there were no differences
+          else
+            {
+              echo "No differences detected"
+            } >> "$GITHUB_OUTPUT"
+          fi
+          echo "${delimiter}" >> "$GITHUB_OUTPUT"
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
+        id: fc
+        if: steps.generate-diff-reports.outputs.reports != ''
+        with:
+          issue-number: ${{ steps.get-pull-request-number.outputs.pull_request_number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Snapshot diff report
+
+      - name: Add or update comment on PR
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        if: steps.generate-diff-reports.outputs.reports != ''
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ steps.get-pull-request-number.outputs.pull_request_number }}
+          body: ${{ steps.generate-diff-reports.outputs.reports }}
+          edit-mode: replace
+
+      - name: Cleanup outdated companion branches
+        run: |
+          # Find outdated companion branches with last commit date
+          git branch -r --format="%(refname:lstrip=3)" | grep roborazzi_companion_ | while read -r branch; do
+            last_commit_date_timestamp=$(git log -1 --format=%ct "origin/$branch")
+            now_timestamp=$(date +%s)
+
+            # Delete branch if it's older than 1 month
+            if [ $((now_timestamp - last_commit_date_timestamp)) -gt 2592000 ]; then
+              echo "Deleting $branch"
+
+              git push origin --delete "$branch"
+            fi
+          done

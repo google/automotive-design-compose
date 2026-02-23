@@ -34,7 +34,6 @@ image.workspace = true
 
 # layout dependencies
 taffy.workspace = true
-lazy_static.workspace = true
 
 clap = { workspace = true, optional = true }
 

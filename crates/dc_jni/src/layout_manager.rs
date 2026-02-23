@@ -21,18 +21,16 @@ use dc_layout::LayoutManager;
 use jni::objects::{JByteArray, JClass, JObject, JValue, JValueGen};
 use jni::sys::{jboolean, jint};
 use jni::JNIEnv;
-use lazy_static::lazy_static;
 use log::{error, info};
+use std::sync::LazyLock;
 
 use crate::error::{throw_basic_exception, Error, Error::GenericError};
 use crate::jni::javavm;
 
 use protobuf::Message;
 
-lazy_static! {
-    static ref LAYOUT_MANAGERS: Mutex<HashMap<i32, Arc<Mutex<LayoutManager>>>> =
-        Mutex::new(HashMap::new());
-}
+static LAYOUT_MANAGERS: LazyLock<Mutex<HashMap<i32, Arc<Mutex<LayoutManager>>>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 static LAYOUT_MANAGER_ID: AtomicI32 = AtomicI32::new(0);
 

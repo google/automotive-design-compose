@@ -29,13 +29,12 @@ use jni::sys::{jint, JNI_VERSION_1_6};
 use jni::{JNIEnv, JavaVM};
 
 use dc_bundle::android_interface::{ConvertRequest, ConvertResponse};
-use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
 use protobuf::Message;
+use std::sync::LazyLock;
 
-lazy_static! {
-    static ref JAVA_VM: Mutex<Option<Arc<JavaVM>>> = Mutex::new(None);
-}
+static JAVA_VM: LazyLock<Mutex<Option<Arc<JavaVM>>>> = LazyLock::new(|| Mutex::new(None));
+
 pub fn javavm() -> Option<Arc<JavaVM>> {
     JAVA_VM.lock().unwrap().clone()
 }

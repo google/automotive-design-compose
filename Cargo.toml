@@ -9,7 +9,7 @@ version = "0.38.2"
 edition = "2021"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]
 license = "Apache-2.0"
-rust-version = "1.68"
+rust-version = "1.80"
 homepage = "https://google.github.io/automotive-design-compose"
 repository = "https://github.com/google/automotive-design-compose"
 
@@ -33,7 +33,6 @@ image = { version = "0.25", default-features = false, features = [
     "jpeg",
 ] }
 jni = "0.21.1"
-lazy_static = "1.4.0"
 log = "0.4"
 phf = { version = "0.11", features = ["macros"] }
 protobuf = "3.2.0"

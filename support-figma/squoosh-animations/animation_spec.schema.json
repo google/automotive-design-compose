@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AnimationSpec",
+  "type": "object",
+  "properties": {
+    "spec": {
+      "type": ["object", "null"],
+      "properties": {
+        "initial_delay": {
+          "type": "object",
+          "properties": {
+            "secs": { "type": "integer" },
+            "nanos": { "type": "integer" }
+          },
+          "required": ["secs", "nanos"]
+        },
+        "animation": {
+          "type": "object",
+          "oneOf": [
+            {
+              "properties": {
+                "Smooth": {
+                  "type": "object",
+                  "properties": {
+                    "duration": {
+                      "type": "object",
+                      "properties": {
+                        "secs": { "type": "integer" },
+                        "nanos": { "type": "integer" }
+                      },
+                      "required": ["secs", "nanos"]
+                    },
+                    "repeat_type": {
+                      "oneOf": [
+                        { "type": "string", "enum": ["NoRepeat", "LoopForever"] },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "Repeat": { "type": "integer" }
+                          },
+                          "required": ["Repeat"]
+                        }
+                      ]
+                    },
+                    "easing": {
+                      "oneOf": [
+                        { "type": "string", "enum": ["Linear", "EaseInOut", "EaseIn", "EaseOut"] },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "Bezier": {
+                              "type": "object",
+                              "properties": {
+                                "p0": { "type": "number" },
+                                "p1": { "type": "number" },
+                                "p2": { "type": "number" },
+                                "p3": { "type": "number" }
+                              },
+                              "required": ["p0", "p1", "p2", "p3"]
+                            }
+                          },
+                          "required": ["Bezier"]
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["duration", "repeat_type", "easing"]
+                }
+              },
+              "required": ["Smooth"]
+            },
+            {
+              "properties": {
+                "KeyFrame": {
+                  "type": "object",
+                  "properties": {
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "value": { "type": "number" },
+                          "duration": {
+                            "type": "object",
+                            "properties": {
+                              "secs": { "type": "integer" },
+                              "nanos": { "type": "integer" }
+                            },
+                            "required": ["secs", "nanos"]
+                          }
+                        },
+                        "required": ["value", "duration"]
+                      }
+                    },
+                    "repeat_type": {
+                      "oneOf": [
+                        { "type": "string", "enum": ["NoRepeat", "LoopForever"] },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "Repeat": { "type": "integer" }
+                          },
+                          "required": ["Repeat"]
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["steps", "repeat_type"]
+                }
+              },
+              "required": ["KeyFrame"]
+            }
+          ]
+        },
+        "interrupt_type": {
+          "type": ["string", "null"],
+          "enum": ["None", "ResetToStart", "Complete", "Stop", null]
+        }
+      },
+      "required": ["initial_delay", "animation", "interrupt_type"]
+    },
+    "clear": {
+      "type": "boolean"
+    }
+  },
+  "oneOf": [
+    { "required": ["spec"] },
+    { "required": ["clear"] }
+  ]
+}

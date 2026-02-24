@@ -40,7 +40,7 @@ use std::mem;
 
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ParseError(String);
+pub struct ParseError(String);
 
 impl From<std::io::Error> for ParseError {
     fn from(e: std::io::Error) -> Self {
@@ -65,30 +65,23 @@ impl From<dcf_info::DcfError> for ParseError {
 }
 
 #[derive(Parser, Debug)]
-struct Args {
+pub struct Args {
     // Path to the .dcf file to deserialize
-    dcf_file: std::path::PathBuf,
+    pub dcf_file: std::path::PathBuf,
     // Optional string argument to dump file structure from a given node root.
     #[clap(long, short)]
-    node: Option<String>,
+    pub node: Option<String>,
     #[clap(long)]
-    varinfo: bool,
+    pub varinfo: bool,
     // Output format as JSON
     #[clap(long)]
-    json: bool,
+    pub json: bool,
     // Output file path
     #[clap(long, short)]
-    output: Option<std::path::PathBuf>,
+    pub output: Option<std::path::PathBuf>,
 }
 
-fn main() -> Result<(), ParseError> {
-    let args = match Args::try_parse() {
-        Ok(args) => args,
-        Err(e) => {
-            eprintln!("Error parsing arguments: {}", e);
-            std::process::exit(1);
-        }
-    };
+pub fn dcf_info(args: Args) -> Result<(), ParseError> {
     let file_path = &args.dcf_file;
     let node = args.node;
 

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --size-4: 8px;
+      --size-6: 16px;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --resizer-size: 20px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      background-color: var(--figma-color-bg);
+      color: var(--figma-color-text);
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .resize-handle {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      width: var(--resizer-size);
+      height: var(--resizer-size);
+      cursor: se-resize;
+      z-index: 1000;
+    }
+    #timeline-container, #controls, #editor {
+      flex-shrink: 0;
+      position: relative;
+      border-bottom: 1px solid var(--figma-color-border);
+      padding: var(--size-4);
+    }
+    #controls {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    #controls > div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #controls > div button {
+      white-space: nowrap;
+    }
+    #timeline-container {
+      padding: 0;
+      overflow: hidden;
+      height: 290px;
+      display: flex;
+      flex-direction: column;
+    }
+    #timeline-resizer {
+      height: 8px;
+      cursor: ns-resize;
+      background-color: var(--figma-color-border);
+      flex-shrink: 0;
+    }
+    #timeline-resizer:hover {
+      background-color: var(--figma-color-border-strong);
+    }
+    #editor {
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 8px;
+        align-items: start;
+    }
+    label { font-weight: bold; }
+    .figma-label {
+        font-size: var(--figma-font-size-small);
+        color: var(--figma-color-text);
+        font-weight: var(--figma-font-weight-medium);
+    }
+    .figma-secondary-label {
+        font-size: var(--figma-font-size-xsmall);
+        color: var(--figma-color-text-secondary);
+        font-weight: var(--figma-font-weight-normal);
+    }
+    input, select {
+        width: 100%;
+        background-color: var(--figma-color-bg-secondary);
+        color: var(--figma-color-text);
+        border: 1px solid var(--figma-color-border);
+        border-radius: 4px;
+        padding: 4px;
+    }
+    .form-grid input[type="checkbox"] {
+        width: auto;
+        justify-self: start;
+    }
+    .clickable {
+      cursor: pointer;
+      text-decoration: underline;
+      color: var(--figma-color-text-brand);
+    }
+    .clickable:hover {
+      color: var(--figma-color-text-brand-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+      <div>
+        <button id="play-button">Play</button>
+        <button id="ping-button">Ping Main Thread</button>
+        <button id="clear-preview-button">Clear Preview</button>
+        <button id="export-button">Export</button>
+        <button id="reset-button">Reset</button>
+        <button id="select-preview-frame-button">Select Preview Frame</button>
+        <input type="checkbox" id="continue-checkbox" checked>
+        <label for="continue-checkbox" class="figma-label">Continue</label>
+        <input type="checkbox" id="throttle-updates-checkbox" checked>
+        <label for="throttle-updates-checkbox" class="figma-label">Throttle</label>
+        <button id="run-tests-button" style="background-color: var(--figma-color-bg-brand); color: white;">Run Tests</button>
+      </div>
+      <select id="keyframe-select"></select>
+  </div>
+  <div id="test-runner-container" style="display: none; padding: var(--size-4); border-bottom: 1px solid var(--figma-color-border); max-height: 150px; overflow-y: auto; background: var(--figma-color-bg-secondary);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <h4 style="margin: 0;">Test Results</h4>
+      <button id="close-tests-button">Close</button>
+    </div>
+    <div id="test-logs"></div>
+  </div>
+  <div id="timeline-container">
+  </div>
+  <div id="timeline-resizer"></div>
+  <div id="editor">
+    <div id="editor-content">
+      <div class="panel" id="animation-properties">
+        <h3>Animation Properties</h3>
+        <p style="font-size: 0.8em; color: var(--figma-color-text-secondary); margin-top: -8px; margin-bottom: 16px;">Declares the animation settings to squoosh into this state. This means the duration and easing defined here apply to the transition *leading up to* this keyframe, not after it.</p>
+        <div class="form-grid">
+            <label class="figma-label">Variant</label>
+            <span id="variant-name-display"></span>
+
+            <label for="initial-delay" class="figma-label">Initial Delay (s)</label>
+            <input type="number" id="initial-delay" step="0.1" value="0">
+
+            <label for="duration" class="figma-label">Duration (s)</label>
+            <input type="number" id="duration" step="0.1" value="0.3">
+
+            <!-- Hidden until other animation types are supported -->
+            <div style="display: none;">
+                <label for="repeat-type" class="figma-label">Repeat</label>
+                <select id="repeat-type">
+                    <option value="NoRepeat">No Repeat</option>
+                    <option value="LoopForever">Loop Forever</option>
+                </select>
+            </div>
+
+            <label for="easing" class="figma-label">Easing</label>
+            <select id="easing">
+                <option value="Linear">Linear</option>
+                <option value="EaseInOut">Ease In Out</option>
+                <option value="EaseIn">Ease In</option>
+                <option value="EaseOut">Ease Out</option>
+                <option value="EaseInCubic">Ease In Cubic</option>
+                <option value="EaseOutCubic">Ease Out Cubic</option>
+                <option value="EaseInOutCubic">Ease In Out Cubic</option>
+            </select>
+
+            <label for="interrupt-type" class="figma-label">Interrupt</label>
+            <select id="interrupt-type">
+                <option value="None">None</option>
+                <option value="ResetToStart">Reset To Start</option>
+                <option value="Complete">Complete</option>
+                <option value="Stop">Stop</option>
+            </select>
+        </div>
+        <button id="save-button" style="margin-top: 16px;">Save Properties</button>
+        <button id="discard-button" style="margin-top: 16px;">Discard Changes</button>
+      </div>
+      <div class="panel" id="keyframe-properties">
+        <h3 id="keyframe-panel-title">Keyframe Properties</h3>
+        <div id="single-keyframe-properties">
+            <div class="form-grid">
+              <label for="keyframe-node-name" class="figma-label">Node:</label>
+              <span id="keyframe-node-name" class="clickable"></span>
+              <label for="keyframe-id" class="figma-label">ID:</label>
+              <span id="keyframe-id"></span>
+              <label for="keyframe-time-input" class="figma-label">Time (s)</label>
+              <input type="number" id="keyframe-time-input" step="0.01" />
+
+              <label for="keyframe-fraction-input" class="figma-label">Fraction</label>
+              <input type="number" id="keyframe-fraction-input" step="0.001" min="0" max="1" />
+              <label for="keyframe-variant-name" class="figma-label">Variant:</label>
+              <span id="keyframe-variant-name"></span>
+              <label for="keyframe-property-name" class="figma-label">Property:</label>
+              <span id="keyframe-property-name"></span>
+
+              <label class="figma-label">Value</label>
+              <div>
+                <input type="number" id="keyframe-property-value" step="0.1" />
+                <input type="color" id="keyframe-property-color-value" style="display: none;" />
+                <div id="keyframe-property-gradient-editor" style="display: none;"></div>
+                <div id="keyframe-property-arc-editor" style="display: none;"></div>
+                <div id="keyframe-property-corner-radius-editor" style="display: none;">
+                  <div class="form-grid" style="grid-template-columns: 60px 1fr;">
+                    <label for="corner-radius-top-left">TL</label>
+                    <input type="number" id="corner-radius-top-left" step="1" />
+                    <label for="corner-radius-top-right">TR</label>
+                    <input type="number" id="corner-radius-top-right" step="1" />
+                    <label for="corner-radius-bottom-right">BR</label>
+                    <input type="number" id="corner-radius-bottom-right" step="1" />
+                    <label for="corner-radius-bottom-left">BL</label>
+                    <input type="number" id="corner-radius-bottom-left" step="1" />
+                  </div>
+                </div>
+              </div>
+
+              <label class="figma-label">Locked</label>
+              <input type="checkbox" id="keyframe-locked-status" disabled />
+            </div>
+            <button id="remove-keyframe-button" style="margin-top: 16px;">Remove Keyframe</button>
+        </div>
+        <div id="multi-keyframes-list" style="display: none;">
+            <!-- Keyframe list will be populated here -->
+        </div>
+        <button id="remove-all-keyframes-button" style="margin-top: 16px; display: none;">Remove All</button>
+      </div>
+      <div class="panel" id="animation-section-properties" style="display: none;">
+        <h3>Animation Section Properties</h3>
+        <div class="form-grid">
+            <label class="figma-label">Type</label>
+            <span id="section-type"></span>
+
+            <label class="figma-label">Time</label>
+            <div><span id="section-start-time"></span> - <span id="section-end-time"></span></div>
+
+            <label class="figma-label">Duration</label>
+            <span id="section-duration"></span>
+
+            <label class="figma-label">Value</label>
+            <div><span id="section-start-value"></span> - <span id="section-end-value"></span></div>
+
+            <label for="section-easing" class="figma-label">Easing</label>
+            <select id="section-easing">
+            <option value="Inherit">Inherit</option>
+            <option value="Linear">Linear</option>
+            <option value="Instant">Instant</option>
+            <option value="EaseIn">EaseIn</option>
+            <option value="EaseOut">EaseOut</option>
+            <option value="EaseInOut">EaseInOut</option>
+            <option value="EaseInCubic">EaseInCubic</option>
+            <option value="EaseOutCubic">EaseOutCubic</option>
+            <option value="EaseInOutCubic">EaseInOutCubic</option>
+            </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="resize-handle" id="resizeHandle" tabindex="0"></div>
+
+  <script src="ui.ts"></script>
+</body>
+</html>

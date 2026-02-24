@@ -91,6 +91,7 @@ impl NodeStyle {
             hyperlink: None.into(),
             shader_data: None.into(),
             scalable_data: None.into(),
+            animation_override: None.into(),
             ..Default::default()
         }
     }

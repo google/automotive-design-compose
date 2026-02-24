@@ -1,0 +1,394 @@
+.delay-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-color: #888;
+  opacity: 0.5;
+  z-index: 0;
+}
+
+.timeline-editor {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.node-tree-container {
+  width: 200px;
+  border-right: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.node-tree-header {
+  height: 30px;
+  border-bottom: 1px solid #ccc;
+  flex-shrink: 0;
+}
+
+.node-tree {
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-bottom: 17px; /* Compensate for horizontal scrollbar height */
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  position: relative;
+}
+
+.timeline-header {
+  height: 30px;
+  border-bottom: 1px solid #ccc;
+  position: relative;
+  flex-shrink: 0;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10+ and Edge */
+  user-select: none; /* Standard */
+}
+
+.timeline-grid {
+  overflow: auto;
+  flex-grow: 1;
+}
+
+.ruler {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ruler-track {
+  position: relative;
+  height: 100%;
+}
+
+.marker {
+  position: absolute;
+  height: 100%;
+  width: 1px;
+  background-color: #ccc;
+}
+
+.marker .label {
+  position: absolute;
+  top: 0;
+  left: 2px;
+  font-size: 10px;
+  color: #888;
+}
+
+.marker .label2 {
+  position: absolute;
+  top: 12px;
+  left: 2px;
+  font-size: 10px;
+  color: #888;
+}
+
+.node-tree ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.node-tree ul ul {
+  padding-left: 10px;
+}
+
+.node-tree li {
+  padding: 0;
+  margin: 0;
+}
+
+.node-tree li.collapsed > ul {
+  display: none;
+}
+
+.node-tree .node-name,
+.node-tree .property {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 2px 5px;
+  font-size: 12px;
+  line-height: 20px;
+  box-sizing: border-box;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.add-timeline {
+  margin-left: auto;
+  background: #eee;
+  border: 1px solid #ccc;
+  color: #555;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.add-timeline:hover {
+  background: #ddd;
+}
+
+.delete-timeline {
+  margin-left: auto;
+  background: #eee;
+  border: 1px solid #ccc;
+  color: #555;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.delete-timeline:hover {
+  background: #ddd;
+  color: #c00;
+}
+
+.timeline {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.node-name-placeholder {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 2px 5px;
+  font-weight: bold;
+  font-size: 12px;
+  line-height: 20px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-track {
+  height: 24px;
+  background-color: #eee;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  top: auto;
+  width: 100%;
+}
+
+.keyframe-container {
+  position: relative;
+  height: 100%;
+}
+
+.keyframe {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background-color: #333;
+  border: 1px solid #333;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* Standard Selected */
+.keyframe.selected {
+  background-color: #2196F3;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #000;
+  z-index: 2;
+}
+
+/* Locked Normal */
+.keyframe.locked {
+  background-color: #9E9E9E;
+  border-color: #9E9E9E;
+}
+
+/* Locked Selected */
+.keyframe.locked.selected {
+  background-color: #616161;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #000;
+}
+
+/* Missing Normal */
+.keyframe.missing {
+  background-color: #fff;
+  border: 2px solid #FF9800;
+}
+
+/* Missing Selected */
+.keyframe.missing.selected {
+  background-color: #E65100;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #000;
+}
+
+/* Missing AND Locked (Priority to Missing style generally, or Locked?
+   Usually missing implies locked in this system, so we want Missing style to prevail for visibility)
+   CSS specificity handles this via order, .missing is below .locked
+*/
+
+.selection {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-color: rgba(33, 150, 243, 0.15);
+  border: 1px solid #2196F3;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.selection.dragging {
+  background-color: rgba(33, 150, 243, 0.4);
+  border: 1px solid #2196F3;
+}
+
+.timeline-node.collapsed > .timeline,
+.timeline-node.collapsed > .timeline-node {
+  display: none;
+}
+
+.timeline.selected .timeline-track {
+  background-color: #ddd;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+  background-color: red;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.playhead-handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 10px solid red;
+  cursor: ew-resize;
+  pointer-events: all;
+  z-index: 11;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+  background-color: rgba(255, 0, 0, 0.5);
+  z-index: 2;
+  pointer-events: none;
+}
+
+#editor-content {
+  display: flex;
+  height: 100%;
+}
+
+.panel {
+  flex: 1;
+  padding: 0 8px;
+}
+
+#animation-properties {
+  border-right: 1px solid #ccc;
+}
+
+.no-select {
+  user-select: none;
+}
+
+.gradient-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gradient-stops {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gradient-stop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gradient-stop input[type="color"] {
+  width: 32px;
+  height: 24px;
+  padding: 2px;
+}
+
+.gradient-stop input[type="number"] {
+  width: 60px;
+}
+
+.arc-editor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0.25turn,
+    #f00 0,
+    #f00 0.5turn,
+    transparent 0.5turn,
+    transparent 1turn
+  );
+  position: relative;
+}
+
+.arc-editor::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #ccc;
+}

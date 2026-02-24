@@ -1,0 +1,8 @@
+{
+  "name": "Lottie Animation Player",
+  "id": "1234567890123456789",
+  "api": "1.0.0",
+  "editorType": ["figma", "figjam"],
+  "main": "code.js",
+  "ui": "ui.html"
+}

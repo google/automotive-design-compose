@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Animation Logic Tests</title>
+  <style>
+    body { font-family: sans-serif; }
+    #results { white-space: pre-wrap; font-family: monospace; }
+    .pass { color: green; }
+    .fail { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Animation Logic Tests</h1>
+  <div id="results"></div>
+
+  <!-- The functions from the plugin that we are testing -->
+  <script>
+    // Basic test runner
+    const tests = [];
+    function test(name, fn) {
+      tests.push({ name, fn });
+    }
+    function runTests() {
+      const resultsDiv = document.getElementById('results');
+      let failures = 0;
+      tests.forEach(({ name, fn }) => {
+        try {
+          fn();
+          resultsDiv.innerHTML += `<div class="pass">PASS: ${name}</div>`;
+        } catch (e) {
+          failures++;
+          resultsDiv.innerHTML += `<div class="fail">FAIL: ${name}
+  ${e.stack}</div>`;
+        }
+      });
+      resultsDiv.innerHTML += `\nTests complete: ${tests.length - failures} passed, ${failures} failed.`;
+    }
+
+    // --- Assertions ---
+    function assertEquals(expected, actual, message) {
+      if (expected !== actual) {
+        throw new Error(message || `Expected ${expected} but got ${actual}`);
+      }
+    }
+    function assert(condition, message) {
+      if (!condition) {
+        throw new Error(message || "Assertion failed");
+      }
+    }
+
+    // --- Functions to be tested (copied from ui.html) ---
+    function tagSvgNodesRecursive(svgParent, figmaParent) {
+      const svgChildren = Array.from(svgParent.children).filter(c => !['defs', 'clipPath', 'mask'].includes(c.tagName));
+      const figmaChildren = figmaParent.children || [];
+      if (svgChildren.length === 1 && svgChildren[0].tagName === 'g' && figmaChildren.length > 0) {
+          tagSvgNodesRecursive(svgChildren[0], figmaParent);
+          return;
+      }
+      for (let i = 0; i < figmaChildren.length; i++) {
+          const figmaChild = figmaChildren[i];
+          const svgChild = svgChildren[i];
+          if (svgChild && figmaChild) {
+              svgChild.setAttribute('data-stable-key', figmaChild.stableKey);
+              tagSvgNodesRecursive(svgChild, figmaChild);
+          }
+      }
+    }
+    function tagSvgNodes(svgRoot, figmaRoot) {
+        if (!svgRoot || !figmaRoot) return;
+        svgRoot.setAttribute('data-stable-key', figmaRoot.stableKey);
+        tagSvgNodesRecursive(svgRoot, figmaRoot);
+    }
+    
+    function getTransformMatrix(el) {
+        const transformAttr = el.getAttribute('transform');
+        if (transformAttr) {
+            return new DOMMatrix(transformAttr);
+        } else {
+            const x = parseFloat(el.getAttribute('x') || 0);
+            const y = parseFloat(el.getAttribute('y') || 0);
+            const matrix = new DOMMatrix();
+            return matrix.translate(x, y);
+        }
+    }
+
+    function updateSVG(targetSvg, fromSvg, toSvg, progress) {
+      const fromNodes = new Map(Array.from(fromSvg.querySelectorAll('[data-stable-key]')).map(node => [node.getAttribute('data-stable-key'), node]));
+      const toNodes = new Map(Array.from(toSvg.querySelectorAll('[data-stable-key]')).map(node => [node.getAttribute('data-stable-key'), node]));
+      const targetNodes = new Map(Array.from(targetSvg.querySelectorAll('[data-stable-key]')).map(node => [node.getAttribute('data-stable-key'), node]));
+      for (const [key, fromNode] of fromNodes.entries()) {
+        const toNode = toNodes.get(key);
+        const targetNode = targetNodes.get(key);
+        if (toNode && targetNode) {
+          const fromMatrix = getTransformMatrix(fromNode);
+          const toMatrix = getTransformMatrix(toNode);
+          targetNode.setAttribute('transform', interpolateTransform(fromMatrix, toMatrix, progress));
+
+          const fromFill = fromNode.getAttribute('fill') || '#000000';
+          const toFill = toNode.getAttribute('fill') || '#000000';
+          targetNode.setAttribute('fill', interpolateColor(fromFill, toFill, progress));
+          const fromOpacity = fromNode.getAttribute('opacity') || '1';
+          const toOpacity = toNode.getAttribute('opacity') || '1';
+          targetNode.setAttribute('opacity', interpolateNumber(parseFloat(fromOpacity), parseFloat(toOpacity), progress));
+        } else if (targetNode) {
+          const fromOpacity = fromNode.getAttribute('opacity') || '1';
+          targetNode.setAttribute('opacity', interpolateNumber(parseFloat(fromOpacity), 0, progress));
+        }
+      }
+      for (const [key, toNode] of toNodes.entries()) {
+        if (!fromNodes.has(key)) {
+          let targetNode = targetNodes.get(key);
+          if (!targetNode) {
+            const parentKey = toNode.parentElement.getAttribute('data-stable-key');
+            const targetParent = targetNodes.get(parentKey) || targetSvg;
+            targetNode = toNode.cloneNode(true);
+            targetParent.appendChild(targetNode);
+            targetNodes.set(key, targetNode);
+          }
+          const toOpacity = toNode.getAttribute('opacity') || '1';
+          targetNode.setAttribute('opacity', interpolateNumber(0, parseFloat(toOpacity), progress));
+        }
+      }
+    }
+    function decomposeMatrix(matrix) {
+      let scaleX = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
+      let scaleY = Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d);
+      let angle = Math.atan2(matrix.b, matrix.a);
+      let shear = Math.atan2(matrix.a * matrix.c + matrix.b * matrix.d, scaleX * scaleX);
+      return { translateX: matrix.e, translateY: matrix.f, scaleX, scaleY, angle, shear };
+    }
+    function recomposeMatrix(decomp) {
+      const round = (val) => parseFloat(val.toFixed(3));
+      const tx = isFinite(decomp.translateX) ? round(decomp.translateX) : 0;
+      const ty = isFinite(decomp.translateY) ? round(decomp.translateY) : 0;
+      const angle = isFinite(decomp.angle) ? round(decomp.angle * 180 / Math.PI) : 0;
+      const sx = isFinite(decomp.scaleX) ? round(decomp.scaleX) : 1;
+      const sy = isFinite(decomp.scaleY) ? round(decomp.scaleY) : 1;
+      return `translate(${tx}, ${ty}) rotate(${angle}) scale(${sx}, ${sy})`;
+    }
+    function interpolateTransform(fromMatrix, toMatrix, progress) {
+      const fromDecomp = decomposeMatrix(fromMatrix);
+      const toDecomp = decomposeMatrix(toMatrix);
+      const interpDecomp = {
+        translateX: interpolateNumber(fromDecomp.translateX, toDecomp.translateX, progress),
+        translateY: interpolateNumber(fromDecomp.translateY, toDecomp.translateY, progress),
+        scaleX: interpolateNumber(fromDecomp.scaleX, toDecomp.scaleX, progress),
+        scaleY: interpolateNumber(fromDecomp.scaleY, toDecomp.scaleY, progress),
+        angle: interpolateNumber(fromDecomp.angle, toDecomp.angle, progress),
+        shear: interpolateNumber(fromDecomp.shear, toDecomp.shear, progress),
+      };
+      return recomposeMatrix(interpDecomp);
+    }
+    function interpolateNumber(from, to, progress) { return from + (to - from) * progress; }
+    function interpolateColor(from, to, progress) {
+      const re = /rgba?(\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\))/;
+      let fromMatch = from.match(re) || hexToRgba(from);
+      let toMatch = to.match(re) || hexToRgba(to);
+      if (fromMatch && toMatch) {
+        const r = interpolateNumber(parseInt(fromMatch[2]), parseInt(toMatch[2]), progress);
+        const g = interpolateNumber(parseInt(fromMatch[3]), parseInt(toMatch[3]), progress);
+        const b = interpolateNumber(parseInt(fromMatch[4]), parseInt(toMatch[4]), progress);
+        const a = interpolateNumber(parseFloat(fromMatch[5] || 1), parseFloat(toMatch[5] || 1), progress);
+        return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${a.toFixed(2)})`;
+      }
+      return progress < 0.5 ? from : to;
+    }
+    function hexToRgba(hex) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return [null, r, g, b, 1];
+    }
+
+    // --- Test Data ---
+    const testKeyframes = [
+      {
+        "name": "Property 1=Default",
+        "svg": `<svg width=\"672\" height=\"542\" viewBox=\"0 0 672 542\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">
+<rect width=\"672\" height=\"542\" fill=\"white"/>
+<rect x=\"185\" y=\"120\" width=\"296\" height=\"175\" fill=\"#D9D9D9"/>
+</svg>
+`
+      },
+      {
+        "name": "Property 1=Variant2",
+        "svg": `<svg width=\"560\" height=\"469\" viewBox=\"0 0 560 469\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">
+<g clip-path=\"url(#clip0_16399_6089)\">
+<rect width=\"560\" height=\"469\" fill=\"white"/>
+<rect x=\"190.645\" y=\"299.855\" width=\"323\" height=\"215\" transform=\"rotate(-31.3906 190.645 299.855)\" fill=\"#D92424"/>
+</g>
+<defs>
+<clipPath id=\"clip0_16399_6089\">
+<rect width=\"560\" height=\"469\" fill=\"white"/>
+</clipPath>
+</defs>
+</svg>
+`
+      },
+      {
+        "name": "Property 1=Variant3",
+        "svg": `<svg width=\"672\" height=\"542\" viewBox=\"0 0 672 542\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">
+<rect width=\"672\" height=\"542\" fill=\"white"/>
+<rect x=\"205\" y=\"359\" width=\"81\" height=\"87\" fill=\"#D9D9D9"/>
+</svg>
+`
+      }
+    ];
+
+    // A mock of the figma node hierarchy that `code.js` would generate.
+    // This is a simplified version for testing purposes.
+    const mockNodeHierarchies = [
+        { name: 'Property 1=Default', stableKey: 'root/Property 1=Default', children: [
+            { name: 'background', stableKey: 'root/Property 1=Default/background', children: [] },
+            { name: 'rectangle', stableKey: 'root/Property 1=Default/rectangle', children: [] }
+        ]},
+        { name: 'Property 1=Variant2', stableKey: 'root/Property 1=Variant2', children: [
+            { name: 'background', stableKey: 'root/Property 1=Variant2/background', children: [] },
+            { name: 'rectangle', stableKey: 'root/Property 1=Variant2/rectangle', children: [] }
+        ]},
+        { name: 'Property 1=Variant3', stableKey: 'root/Property 1=Variant3', children: [
+            { name: 'background', stableKey: 'root/Property 1=Variant3/background', children: [] },
+            { name: 'rectangle', stableKey: 'root/Property 1=Variant3/rectangle', children: [] }
+        ]},
+    ];
+
+
+    // --- Test Cases ---
+    test('tagSvgNodes should add stable keys to SVG elements', () => {
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(testKeyframes[0].svg, "image/svg+xml");
+      const hierarchy = mockNodeHierarchies[0];
+      
+      tagSvgNodes(svgDoc.documentElement, hierarchy);
+
+      const root = svgDoc.documentElement;
+      assertEquals('root/Property 1=Default', root.getAttribute('data-stable-key'));
+      
+      const children = Array.from(root.children);
+      assertEquals('root/Property 1=Default/background', children[0].getAttribute('data-stable-key'));
+      assertEquals('root/Property 1=Default/rectangle', children[1].getAttribute('data-stable-key'));
+    });
+
+    test('updateSVG should run without errors for a basic transition', () => {
+      const parser = new DOMParser();
+      const fromDoc = parser.parseFromString(testKeyframes[0].svg, "image/svg+xml");
+      const toDoc = parser.parseFromString(testKeyframes[1].svg, "image/svg+xml");
+      const targetDoc = fromDoc.cloneNode(true);
+
+      tagSvgNodes(fromDoc.documentElement, mockNodeHierarchies[0]);
+      tagSvgNodes(toDoc.documentElement, mockNodeHierarchies[1]);
+      tagSvgNodes(targetDoc.documentElement, mockNodeHierarchies[0]);
+
+      // This will throw an error if the logic is faulty.
+      updateSVG(targetDoc.documentElement, fromDoc.documentElement, toDoc.documentElement, 0.5);
+
+      // Check if a transform was applied to the rectangle
+      const rect = targetDoc.querySelector('[data-stable-key="root/Property 1=Default/rectangle"]');
+      assert(rect.getAttribute('transform'), 'Transform attribute should be present');
+      assert(rect.getAttribute('transform').includes('rotate'), 'Transform should include rotate');
+    });
+
+    test('updateSVG should handle appearing nodes', () => {
+        const fromSvg = `<svg><rect data-stable-key="root/rect1" /></svg>`;
+        const toSvg = `<svg><rect data-stable-key="root/rect1" /><rect data-stable-key="root/rect2" opacity="1" /></svg>`;
+        const parser = new DOMParser();
+        const fromDoc = parser.parseFromString(fromSvg, "image/svg+xml");
+        const toDoc = parser.parseFromString(toSvg, "image/svg+xml");
+        const targetDoc = fromDoc.cloneNode(true);
+
+        updateSVG(targetDoc.documentElement, fromDoc.documentElement, toDoc.documentElement, 0.5);
+
+        const rect2 = targetDoc.querySelector('[data-stable-key="root/rect2"]');
+        assert(rect2, 'Appearing node should be added to the target');
+        assertEquals('0.5', rect2.getAttribute('opacity'));
+    });
+
+    test('updateSVG should handle disappearing nodes', () => {
+        const fromSvg = `<svg><rect data-stable-key="root/rect1" /><rect data-stable-key="root/rect2" opacity="1" /></svg>`;
+        const toSvg = `<svg><rect data-stable-key="root/rect1" /></svg>`;
+        const parser = new DOMParser();
+        const fromDoc = parser.parseFromString(fromSvg, "image/svg+xml");
+        const toDoc = parser.parseFromString(toSvg, "image/svg+xml");
+        const targetDoc = fromDoc.cloneNode(true);
+
+        updateSVG(targetDoc.documentElement, fromDoc.documentElement, toDoc.documentElement, 0.5);
+
+        const rect2 = targetDoc.querySelector('[data-stable-key="root/rect2"]');
+        assert(rect2, 'Disappearing node should still be in the target');
+        assertEquals('0.5', rect2.getAttribute('opacity'));
+    });
+
+
+    // Run all tests when the page loads
+    window.onload = runTests;
+  </script>
+</body>
+</html>

@@ -38,8 +38,10 @@ jobs:
 
       - name: Set version for Widget
         working-directory: support-figma/auto-content-preview-widget
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          BRANCH_NAME=$(echo "${GITHUB_REF_NAME}" | sed 's_/_\\/_g')
+          BRANCH_NAME="${REF_NAME//\//\\/}"
           sed -i -e "s/\(\"name\":.*\)\",/\1 ${BRANCH_NAME}\",/" manifest.json
 
       - uses: ./.github/actions/build-figma-resource
@@ -73,7 +75,9 @@ jobs:
           setup-rust: true
 
       - name: Build Maven repo
-        run: ./gradlew -PdesignComposeReleaseVersion=${GITHUB_REF_NAME} publishAllPublicationsToLocalDirRepository
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: ./gradlew -PdesignComposeReleaseVersion="$REF_NAME" publishAllPublicationsToLocalDirRepository
 
       - name: Upload
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -154,17 +158,20 @@ jobs:
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
 
       - name: Zip releases
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          zip -q -r designcompose_m2repo-${GITHUB_REF_NAME}.zip designcompose_m2repo/
-          zip -q -r extended-layout-plugin-${GITHUB_REF_NAME}.zip extended-layout-plugin/
-          zip -q -r auto-content-preview-widget-${GITHUB_REF_NAME}.zip auto-content-preview-widget/
+          zip -q -r "designcompose_m2repo-$REF_NAME.zip" designcompose_m2repo/
+          zip -q -r "extended-layout-plugin-$REF_NAME.zip" extended-layout-plugin/
+          zip -q -r "auto-content-preview-widget-$REF_NAME.zip" auto-content-preview-widget/
 
       - name: Upload release artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          gh release upload ${GITHUB_REF_NAME} \
-          extended-layout-plugin-${GITHUB_REF_NAME}.zip \
-          auto-content-preview-widget-${GITHUB_REF_NAME}.zip \
-          designcompose_m2repo-${GITHUB_REF_NAME}.zip \
+          gh release upload "$REF_NAME" \
+          "extended-layout-plugin-$REF_NAME.zip" \
+          "auto-content-preview-widget-$REF_NAME.zip" \
+          "designcompose_m2repo-$REF_NAME.zip" \
           figma-tools-*/*

@@ -161,8 +161,9 @@ jobs:
         name: Generate diff reports
         env:
           BRANCH_NAME: roborazzi_companion_${{ github.event.pull_request.head.ref }}
-          GITHUB_EVENT_PULL_REQUEST_BASE_REF: ${{ github.event.pull_request.base.ref }}
-          STEPS_CHECK_IF_THERE_ARE_VALID_FILES_OUTPUTS_EXIST_VALID_FILES: ${{ steps.check-if-there-are-valid-files.outputs.exist_valid_files }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EXIST_VALID_FILES: ${{ steps.check-if-there-are-valid-files.outputs.exist_valid_files }}
         shell: bash
         run: |
           delimiter="$(openssl rand -hex 8)"
@@ -170,11 +171,11 @@ jobs:
             echo "reports<<${delimiter}"
 
             # Create markdown table header
-            echo "Snapshot diff report vs base branch: ${GITHUB_EVENT_PULL_REQUEST_BASE_REF}"
-            echo "Last updated: $(TZ='America/Los_Angeles' date), Sha: ${{ github.event.pull_request.head.sha }}"
+            echo "Snapshot diff report vs base branch: $BASE_REF"
+            echo "Last updated: $(TZ='America/Los_Angeles' date), Sha: $HEAD_SHA"
           } >> "$GITHUB_OUTPUT"
 
-          if [[ ${STEPS_CHECK_IF_THERE_ARE_VALID_FILES_OUTPUTS_EXIST_VALID_FILES} == 'true' ]]; then
+          if [[ "$EXIST_VALID_FILES" == 'true' ]]; then
             # Find all the files ending with _compare.png in roborazzi folder
             files=$(find . -type f -name "*_compare.png" | grep "roborazzi/" | grep -E "^[a-zA-Z0-9_./-]+$")
             {

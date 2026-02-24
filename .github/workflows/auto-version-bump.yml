@@ -41,11 +41,12 @@ jobs:
       - name: Calculate next version and create PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           # Extract the version from the branch name, e.g., "stable/0.38.x" -> "0.38"
-          stable_version=$(echo "${GITHUB_REF_NAME}" | sed -n 's/^stable\/\([0-9]\+\.[0-9]\+\)\.x$/\1/p')
+          stable_version=$(echo "$REF_NAME" | sed -n 's/^stable\/\([0-9]\+\.[0-9]\+\)\.x$/\1/p')
           if [ -z "$stable_version" ]; then
-            echo "Branch name '${GITHUB_REF_NAME}' does not match expected 'stable/X.Y.x' format."
+            echo "Branch name '$REF_NAME' does not match expected 'stable/X.Y.x' format."
             exit 1
           fi
 
@@ -62,7 +63,7 @@ jobs:
           commit_message="chore: Update version to ${new_version_snapshot}"
           pr_title="chore: Update version to ${new_version_snapshot}"
           # shellcheck disable=SC2006
-          pr_body="This is an automated PR to update the project version to `${new_version_snapshot}` following the creation of the `${GITHUB_REF_NAME}` branch."
+          pr_body="This is an automated PR to update the project version to `${new_version_snapshot}` following the creation of the `$REF_NAME` branch."
 
           # Create and switch to the new branch based on the latest main
           git checkout main

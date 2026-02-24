@@ -829,8 +829,33 @@ internal fun InteractionState.getPressedTapCallback(nodeId: String): TapCallback
 /// of the view tree organization.
 internal object InteractionStateManager {
     val states: HashMap<DesignDocId, InteractionState> = HashMap()
+    internal val activeRoots: HashMap<DesignDocId, Int> = HashMap()
+
+    fun registerRoot(docId: DesignDocId) {
+        val current = activeRoots[docId] ?: 0
+        activeRoots[docId] = current + 1
+    }
+
+    fun unregisterRoot(docId: DesignDocId) {
+        val current = activeRoots[docId] ?: 0
+        if (current <= 1) {
+            activeRoots.remove(docId)
+            states.remove(docId)
+        } else {
+            activeRoots[docId] = current - 1
+        }
+    }
 }
 
 internal fun InteractionStateManager.stateForDoc(docId: DesignDocId): InteractionState {
     return states.getOrPut(docId) { InteractionState() }
+}
+
+@Composable
+internal fun InteractionStateManager.rememberStateForDoc(docId: DesignDocId): InteractionState {
+    DisposableEffect(docId) {
+        registerRoot(docId)
+        onDispose { unregisterRoot(docId) }
+    }
+    return stateForDoc(docId)
 }

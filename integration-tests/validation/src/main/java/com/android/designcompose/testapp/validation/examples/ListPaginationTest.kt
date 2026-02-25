@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import com.android.designcompose.ListContent
 import com.android.designcompose.ReplacementContent
 import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
@@ -26,6 +27,9 @@ interface ListPaginationTest {
     // containing a child #ListContainer to be replaced.
     @DesignComponent(node = "#DynamicRoot")
     fun DynamicRoot(@Design(node = "List") listContent: ReplacementContent)
+
+    @DesignComponent(node = "#DynamicRoot")
+    fun DynamicListRoot(@Design(node = "List") listContent: ListContent)
 
     // Shared Item Composable
     @DesignComponent(node = "#Item")
@@ -63,5 +67,25 @@ fun DynamicListPaginationTest(itemCount: Int, onTap: (Int) -> Unit = {}) {
                     }
                 },
             ),
+    )
+}
+
+// Composable for the dynamic test with ListContent
+@Composable
+fun DynamicListContentPaginationTest(itemCount: Int, onTap: (Int) -> Unit = {}) {
+    ListPaginationTestDoc.DynamicListRoot(
+        modifier = Modifier.fillMaxSize().testTag("RootList"),
+        listContent = { spanFunc ->
+            com.android.designcompose.ListContentData(
+                count = itemCount,
+                itemContent = { index ->
+                    ListPaginationTestDoc.Item(
+                        modifier = Modifier.testTag("Item$index"),
+                        title = "Item $index",
+                        onTap = { onTap(index) },
+                    )
+                },
+            )
+        },
     )
 }

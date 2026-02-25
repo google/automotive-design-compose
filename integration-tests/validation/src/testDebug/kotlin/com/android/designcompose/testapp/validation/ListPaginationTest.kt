@@ -1,8 +1,12 @@
 package com.android.designcompose.testapp.validation
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
@@ -87,6 +91,66 @@ class ListPagination {
                 waitForIdle()
             }
             captureRootRoboImage("dynamic_list_scrolled_up")
+            onNodeWithTag("Item0").assertExists()
+            onNodeWithTag("Item0").performClick()
+            assertEquals(0, clickedItem.value)
+        }
+    }
+
+    @Test
+    fun testDynamicListContentScrollAndTap() {
+        val clickedItem = mutableStateOf(-1)
+        val itemCount = 20
+        val lastIndex = itemCount - 1
+
+        with(composeTestRule) {
+            setContent {
+                com.android.designcompose.testapp.validation.examples.ListWidgetTestDoc.MainFrame(
+                    modifier = Modifier.fillMaxSize(),
+                    rowItems = { spanFunc ->
+                        com.android.designcompose.ListContentData(count = 0) {}
+                    },
+                    rowScrollItems = { spanFunc ->
+                        com.android.designcompose.ListContentData(count = 0) {}
+                    },
+                    colItems = { spanFunc ->
+                        com.android.designcompose.ListContentData(count = 0) {}
+                    },
+                    colScrollItems = { spanFunc ->
+                        com.android.designcompose.ListContentData(
+                            count = itemCount,
+                            itemContent = { index ->
+                                com.android.designcompose.testapp.validation.examples
+                                    .ListWidgetTestDoc
+                                    .Item(
+                                        modifier = Modifier.testTag("Item$index"),
+                                        type =
+                                            com.android.designcompose.testapp.validation.examples
+                                                .ItemType
+                                                .Grid,
+                                        title = "Item $index",
+                                        onTap = { clickedItem.value = index },
+                                    )
+                            },
+                        )
+                    },
+                )
+            }
+            waitForIdle()
+            captureRootRoboImage("dynamic_list_content_initial")
+
+            // Scroll to the bottom using semantic action
+            onRoot().performTouchInput { repeat(5) { swipeUp(durationMillis = 200) } }
+            waitForIdle()
+            captureRootRoboImage("dynamic_list_content_scrolled_down")
+            onNodeWithTag("Item$lastIndex").assertExists()
+            onNodeWithTag("Item$lastIndex").performClick()
+            assertEquals(lastIndex, clickedItem.value)
+
+            // Scroll to the top using semantic action
+            onRoot().performTouchInput { repeat(5) { swipeDown(durationMillis = 200) } }
+            waitForIdle()
+            captureRootRoboImage("dynamic_list_content_scrolled_up")
             onNodeWithTag("Item0").assertExists()
             onNodeWithTag("Item0").performClick()
             assertEquals(0, clickedItem.value)

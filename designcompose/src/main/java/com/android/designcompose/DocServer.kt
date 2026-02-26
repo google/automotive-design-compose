@@ -58,15 +58,13 @@ internal const val TAG = "DesignCompose"
 internal class LiveDocSubscription(
     val id: String,
     val docId: DesignDocId,
+    val serverParams: DocumentServerParams,
+    val saveFile: File?,
     val onUpdate: (DocContent?) -> Unit,
     val docUpdateCallback: ((DesignDocId, ByteArray?) -> Unit)?,
 )
 
-internal class LiveDocSubscriptions(
-    val serverParams: DocumentServerParams,
-    val saveFile: File?,
-    val subscribers: ArrayList<LiveDocSubscription> = ArrayList(),
-)
+internal class LiveDocSubscriptions(val subscribers: ArrayList<LiveDocSubscription> = ArrayList())
 
 /**
  * Design doc status
@@ -266,6 +264,19 @@ internal object DocServer {
     @VisibleForTesting
     @RestrictTo(RestrictTo.Scope.TESTS)
     fun testOnlyClearDocuments() = documents.clear()
+
+    internal fun mergeSubscriptionParams(
+        subscribers: List<LiveDocSubscription>
+    ): DocumentServerParams {
+        val mergedQueries = ArrayList<String>()
+        val mergedIgnoredImages = HashMap<String, Array<String>>()
+        for (subscriber in subscribers) {
+            val p = subscriber.serverParams
+            p.nodeQueries?.let { mergedQueries.addAll(it) }
+            p.ignoredImages?.let { mergedIgnoredImages.putAll(it) }
+        }
+        return DocumentServerParams(mergedQueries, mergedIgnoredImages)
+    }
 }
 
 internal fun DocServer.initializeLiveUpdate() {
@@ -334,16 +345,26 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
         val previousDoc = synchronized(documents) { documents[id] }
         Feedback.startLiveUpdate(id)
 
-        val params =
+        val paramsList =
             synchronized(subscriptions) {
-                subscriptions[id]?.serverParams ?: DocumentServerParams()
+                subscriptions[id]?.subscribers?.map { it.serverParams } ?: emptyList()
             }
-        val saveFile = synchronized(subscriptions) { subscriptions[id]?.saveFile }
+
+        val params =
+            mergeSubscriptionParams(
+                synchronized(subscriptions) { subscriptions[id]?.subscribers ?: emptyList() }
+            )
+
+        val saveFiles =
+            synchronized(subscriptions) {
+                subscriptions[id]?.subscribers?.mapNotNull { it.saveFile }?.toSet() ?: emptySet()
+            }
+
         try {
             val response = fetchDocument(figmaApiKey, params, previousDoc, id, proxyConfig)
 
             if (response.hasDocument()) {
-                val doc = decodeServerDoc(response.document, previousDoc, id, saveFile, Feedback)
+                val doc = decodeServerDoc(response.document, previousDoc, id, saveFiles, Feedback)
                 if (doc == null) {
                     Feedback.documentDecodeError(id)
                     Log.e(TAG, "Error decoding doc.")
@@ -439,14 +460,10 @@ internal fun fetchDocument(
     return response
 }
 
-internal fun DocServer.subscribe(
-    doc: LiveDocSubscription,
-    serverParams: DocumentServerParams,
-    saveFile: File?,
-) {
+internal fun DocServer.subscribe(doc: LiveDocSubscription) {
     Feedback.addSubscriber(doc.docId)
     synchronized(subscriptions) {
-        val subList = subscriptions[doc.docId] ?: LiveDocSubscriptions(serverParams, saveFile)
+        val subList = subscriptions[doc.docId] ?: LiveDocSubscriptions()
         subList.subscribers.add(doc)
         subscriptions[doc.docId] = subList
     }
@@ -553,8 +570,16 @@ internal fun DocServer.doc(
         // Subscribe to live updates, if we have an access token.
         var subscription: LiveDocSubscription? = null
         if (!disableLiveMode) {
-            subscription = LiveDocSubscription(id, docId, setLiveDoc, docUpdateCallback)
-            subscribe(subscription, serverParams, saveFile)
+            subscription =
+                LiveDocSubscription(
+                    id,
+                    docId,
+                    serverParams,
+                    saveFile,
+                    setLiveDoc,
+                    docUpdateCallback,
+                )
+            subscribe(subscription)
         }
         onDispose { if (subscription != null) unsubscribe(subscription) }
     }

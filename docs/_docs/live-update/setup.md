@@ -25,7 +25,7 @@ To configure access to your documents, you need to generate an access token.
 
 2. Scroll down to **Personal access tokens** and click **Generate new token**
 
-3. Automotive Design for Compose requires a token with read-only File content access and read-only Variables access if available. All other scopes can be left set to "No access". Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
+3. Automotive Design for Compose requires a token with read-only access for File content, metadata, versions, read-only access for Variables if available, and read-only access for library_assets, library_content and team_library_content. All other scopes can be left unchecked. Set the permissions appropriately, enter a name for the token and set the expiration, then click **Generate token**
     * Note: variable access is only available under the Figma Enterprise plan. If variable access
     is not available, developers can still get most of the DesignCompose functionality other than
     features related to variables. See [Variables][2] page for more details.

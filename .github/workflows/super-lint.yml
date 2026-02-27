@@ -38,7 +38,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v4.2.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4.2.2
         with:
           submodules: 'recursive'
           # super-linter needs the full git history to get the
@@ -63,7 +63,7 @@ jobs:
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v4.2.2
+      - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4.2.2
         with:
           submodules: 'recursive'
       - name: Set up Build
@@ -78,7 +78,7 @@ jobs:
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v4.2.2
+      - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4.2.2
         with:
           submodules: 'recursive'
   cargo-deny:
@@ -95,7 +95,7 @@ jobs:
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v4.2.2
+      - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4.2.2
         with:
           submodules: 'recursive'
       - uses: EmbarkStudios/cargo-deny-action@76cd80eb775d7bbbd2d80292136d74d39e1b4918 # v2.0.14

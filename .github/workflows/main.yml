@@ -74,18 +74,34 @@ jobs:
           setup-rust: true
       - name: Full Gradle Test
         run: ./gradlew assembleDebug assembleAndroidTest assembleUnitTest test
+  jacoco:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v3.5.2
+        with:
+          submodules: 'recursive'
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
+        with:
+          setup-gradle: true
+          setup-protoc: true
+          setup-rust: true
       - name: Generate JaCoCo Report
-        run: ./gradlew jacocoTestReport
+        run: ./gradlew designcompose:jacocoDebugUnitTestReport
       - name: Upload JaCoCo Report
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: jacoco-report
-          path: build/reports/jacoco/jacocoTestReport/html
+          path: designcompose/build/reports/jacoco/jacocoDebugUnitTestReport/html
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          files: designcompose/build/reports/jacoco/jacocoDebugUnitTestReport/jacocoDebugUnitTestReport.xml
           flags: kotlin
   build-maven-repo:
     runs-on: "ubuntu-latest"

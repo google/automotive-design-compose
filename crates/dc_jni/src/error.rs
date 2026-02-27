@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use jni::JNIEnv;
-use log::error;
 use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum Error {
@@ -23,13 +22,13 @@ pub enum Error {
     ProtobufDecodeError(#[from] protobuf::Error),
     #[error("Protobuf ConversionError: {0}")]
     MissingFieldError(#[from] dc_bundle::Error),
-    #[error("Json Serialization Error")]
+    #[error("Json Serialization Error: {0}")]
     JsonError(#[from] serde_json::Error),
-    #[error("DC_figma_import Error")]
+    #[error("DC_figma_import Error: {0}")]
     FigmaImportError(#[from] dc_figma_import::Error),
-    #[error("JNI Error")]
+    #[error("JNI Error: {0}")]
     JNIError(#[from] jni::errors::Error),
-    #[error("Protobuf Write Error")]
+    #[error("Protobuf Write Error: {0}")]
     ProtobufWriteError(String),
 }
 

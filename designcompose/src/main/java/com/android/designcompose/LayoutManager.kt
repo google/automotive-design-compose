@@ -25,7 +25,7 @@ internal object LayoutManager {
     private var modifiedSizes: HashSet<Int> = HashSet()
 
     init {
-        managerId = Jni.jniCreateLayoutManager()
+        managerId = Jni.createLayoutManager()
     }
 
     internal fun squooshSetTextMeasureData(layoutId: Int, textMeasureData: TextMeasureData) {

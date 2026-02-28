@@ -137,6 +137,8 @@ dependencies {
     testImplementation(libs.roborazzi.junit)
     testImplementation(libs.androidx.test.espresso.core)
     testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.androidx.arch.core.testing)
 
     androidTestImplementation(project(":test"))
     androidTestImplementation(kotlin("test"))
@@ -146,6 +148,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.core.ktx)
 
     testFixturesImplementation(libs.androidx.test.ext.junit)
 

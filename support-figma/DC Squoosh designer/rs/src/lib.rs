@@ -174,7 +174,7 @@ impl KeyframeValue {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ParsedKeyframe {
     pub fraction: f32,
     pub value: KeyframeValue,
@@ -182,7 +182,7 @@ pub struct ParsedKeyframe {
 }
 
 /// Represents a parsed timeline of custom keyframes for a single property.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ParsedTimelineData {
     pub target_easing: Easing,
     pub keyframes: Vec<ParsedKeyframe>,
@@ -390,37 +390,44 @@ pub struct Variant {
 // --- Property Lookup ---
 
 /// Efficient lookup for parsed timeline data.
+#[derive(Clone, Debug, PartialEq)]
 pub struct PropertyLookup {
     /// Map of NodeName -> (Map of PropertyPath -> TimelineData)
     pub timelines: HashMap<String, HashMap<String, ParsedTimelineData>>,
 }
 
 impl PropertyLookup {
-    /// Creates a new lookup from a parsed Variant.
-    pub fn new(variant: &Variant) -> Self {
+    /// Creates a new lookup from a raw hashmap.
+    pub fn from_map(data: &HashMap<String, String>) -> Self {
         let mut timelines = HashMap::new();
-        if let Some(anim) = &variant.animation {
-            if let Some(data) = &anim.custom_keyframe_data {
-                for (key, val) in data {
-                    // Keys can be "NodeName-propertyName" or "NodeName-propertyName-custom-id"
-                    // First, strip the "-custom-xyz" suffix if it exists.
-                    let mut clean_key = key.as_str();
-                    if let Some(custom_idx) = clean_key.find("-custom-") {
-                        clean_key = &clean_key[0..custom_idx];
-                    }
+        for (key, val) in data {
+            // Keys can be "NodeName-propertyName" or "NodeName-propertyName-custom-id"
+            // First, strip the "-custom-xyz" suffix if it exists.
+            let mut clean_key = key.as_str();
+            if let Some(custom_idx) = clean_key.find("-custom-") {
+                clean_key = &clean_key[0..custom_idx];
+            }
 
-                    if let Some((node, prop)) = clean_key.rsplit_once('-') {
-                        if let Ok(parsed) = ParsedTimelineData::parse(val) {
-                            timelines
-                                .entry(node.to_string())
-                                .or_insert_with(HashMap::new)
-                                .insert(prop.to_string(), parsed);
-                        }
-                    }
+            if let Some((node, prop)) = clean_key.rsplit_once('-') {
+                if let Ok(parsed) = ParsedTimelineData::parse(val) {
+                    timelines
+                        .entry(node.to_string())
+                        .or_insert_with(HashMap::new)
+                        .insert(prop.to_string(), parsed);
                 }
             }
         }
         PropertyLookup { timelines }
+    }
+
+    /// Creates a new lookup from a parsed Variant.
+    pub fn new(variant: &Variant) -> Self {
+        if let Some(anim) = &variant.animation {
+            if let Some(data) = &anim.custom_keyframe_data {
+                return Self::from_map(data);
+            }
+        }
+        PropertyLookup { timelines: HashMap::new() }
     }
 
     /// Retrieves the parsed timeline data for a specific node and property.
@@ -451,14 +458,14 @@ mod tests {
         let start = KeyframeValue::CornerRadii([0.0, 0.0, 0.0, 0.0]);
         let end = KeyframeValue::CornerRadii([100.0, 100.0, 100.0, 100.0]);
 
-        let val_25 = timeline.interpolate(&start, &end, 0.25);
+        let val_25 = timeline.interpolate(&start, &end, 0.25, None);
         if let KeyframeValue::CornerRadii(v) = val_25 {
             assert!((v[0] - 25.0).abs() < 0.1);
         } else {
             panic!("Wrong type");
         }
 
-        let val_75 = timeline.interpolate(&start, &end, 0.75);
+        let val_75 = timeline.interpolate(&start, &end, 0.75, None);
         if let KeyframeValue::CornerRadii(v) = val_75 {
             assert!((v[0] - 75.0).abs() < 0.1);
         } else {

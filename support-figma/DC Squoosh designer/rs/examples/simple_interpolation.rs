@@ -1,4 +1,4 @@
-use dc_squoosh_parser::{Variant, PropertyLookup, KeyframeValue};
+use dc_squoosh_parser::{KeyframeValue, PropertyLookup, Variant};
 use serde_json::from_str;
 
 fn main() {
@@ -46,12 +46,15 @@ fn main() {
         // 6. Interpolate at various time fractions
         for i in 0..=10 {
             let t = i as f32 / 10.0;
-            let result = timeline.interpolate(&start_val, &end_val, t);
-            
+            let result = timeline.interpolate(&start_val, &end_val, t, None);
+
             match result {
                 KeyframeValue::CornerRadii(radii) => {
-                    println!("t={:.1}: [{:.1}, {:.1}, {:.1}, {:.1}]", t, radii[0], radii[1], radii[2], radii[3]);
-                },
+                    println!(
+                        "t={:.1}: [{:.1}, {:.1}, {:.1}, {:.1}]",
+                        t, radii[0], radii[1], radii[2], radii[3]
+                    );
+                }
                 _ => println!("t={:.1}: Unexpected value type", t),
             }
         }

@@ -550,17 +550,19 @@ impl NodeTimelines {
     }
 }
 
+use std::sync::Arc;
+
 /// Efficient lookup for parsed timeline data.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PropertyLookup {
-    /// Map of NodeName -> NodeTimelines
-    pub timelines: HashMap<String, NodeTimelines>,
+    /// Map of NodeName -> Arc<NodeTimelines>
+    pub timelines: HashMap<String, Arc<NodeTimelines>>,
 }
 
 impl PropertyLookup {
     /// Creates a new lookup from a raw hashmap.
     pub fn from_map(data: &HashMap<String, String>) -> Self {
-        let mut timelines = HashMap::new();
+        let mut temp_timelines: HashMap<String, NodeTimelines> = HashMap::new();
         for (key, val) in data {
             // Keys can be "NodeName-propertyName" or "NodeName-propertyName-custom-id"
             // First, strip the "-custom-xyz" suffix if it exists.
@@ -572,13 +574,19 @@ impl PropertyLookup {
             if let Some((node, prop)) = clean_key.rsplit_once('-') {
                 let property = prop.parse::<AnimatableProperty>().unwrap();
                 if let Ok(parsed) = ParsedTimelineData::parse(val) {
-                    timelines
+                    temp_timelines
                         .entry(node.to_string())
                         .or_insert_with(NodeTimelines::default)
                         .insert(property, parsed);
                 }
             }
         }
+
+        let mut timelines = HashMap::new();
+        for (k, v) in temp_timelines {
+            timelines.insert(k, Arc::new(v));
+        }
+
         PropertyLookup { timelines }
     }
 
@@ -593,13 +601,15 @@ impl PropertyLookup {
     }
 
     /// Retrieves all parsed timeline data for a specific node.
-    pub fn get_for_node(&self, node: &str) -> Option<&NodeTimelines> {
-        self.timelines.get(node)
+    pub fn get_for_node(&self, node: &str) -> Option<Arc<NodeTimelines>> {
+        self.timelines.get(node).cloned()
     }
 
     /// Retrieves the parsed timeline data for a specific node and property.
     pub fn get(&self, node: &str, prop: AnimatableProperty) -> Option<&ParsedTimelineData> {
-        self.timelines.get(node)?.get(&prop)
+        // Find the node's NodeTimelines, then find the property within it.
+        // Needs a workaround since we return an Arc and want to return a reference to its contents. Wait, the old getter returned a reference. If we return a reference tied to `self`, that's fine.
+        self.timelines.get(node).and_then(|nt| nt.get(&prop))
     }
 }
 

@@ -472,7 +472,7 @@ export class PlaybackController extends EventEmitter {
       if (fromNode && toNode) {
           const spatialProps = ['x', 'y', 'width', 'height', 'rotation'];
         const hasCustomSpatialTimeline = spatialProps.some(prop =>
-          timelineNode?.timelines.some(t => t.property === prop && t.isCustom)
+          timelineNode?.timelines.some(t => t.property === prop && t.keyframes.some(kf => !kf.locked))
           );
 
           if (!hasCustomSpatialTimeline) {

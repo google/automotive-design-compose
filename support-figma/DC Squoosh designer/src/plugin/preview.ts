@@ -78,9 +78,17 @@ export async function updateFigmaPreview(
         if (
           animatedNode.nodeName !== "__ROOT__" &&
           "relativeTransform" in node &&
-          (props.x !== undefined || props.y !== undefined)
+          (props.x !== undefined || props.y !== undefined || props.rotation !== undefined)
         ) {
           const transform = node.relativeTransform;
+          
+          let angleInRadians = Math.atan2(transform[1][0], transform[0][0]);
+          if (props.rotation !== undefined) {
+             angleInRadians = -props.rotation * Math.PI / 180;
+          }
+          const cos = Math.cos(angleInRadians);
+          const sin = Math.sin(angleInRadians);
+
           const newTx = props.x !== undefined ? props.x : transform[0][2];
           const newTy = props.y !== undefined ? props.y : transform[1][2];
 
@@ -88,18 +96,10 @@ export async function updateFigmaPreview(
             [number, number, number],
             [number, number, number],
           ] = [
-              [transform[0][0], transform[0][1], newTx],
-              [transform[1][0], transform[1][1], newTy],
+              [cos, -sin, newTx],
+              [sin,  cos, newTy],
             ];
           node.relativeTransform = newTransform;
-        }
-
-        if (
-          animatedNode.nodeName !== "__ROOT__" &&
-          props.rotation !== undefined &&
-          "rotation" in node
-        ) {
-          node.rotation = -props.rotation;
         }
         if (
           props.width !== undefined &&

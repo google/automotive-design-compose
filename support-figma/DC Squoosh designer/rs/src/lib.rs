@@ -469,11 +469,92 @@ impl std::str::FromStr for AnimatableProperty {
     }
 }
 
+/// Represents all known timelines for a single node.
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct NodeTimelines {
+    pub opacity: Option<ParsedTimelineData>,
+    pub x: Option<ParsedTimelineData>,
+    pub y: Option<ParsedTimelineData>,
+    pub width: Option<ParsedTimelineData>,
+    pub height: Option<ParsedTimelineData>,
+    pub corner_radius: Option<ParsedTimelineData>,
+    pub top_left_radius: Option<ParsedTimelineData>,
+    pub top_right_radius: Option<ParsedTimelineData>,
+    pub bottom_left_radius: Option<ParsedTimelineData>,
+    pub bottom_right_radius: Option<ParsedTimelineData>,
+    pub fill_solid: HashMap<usize, ParsedTimelineData>,
+    pub fill_gradient: HashMap<usize, ParsedTimelineData>,
+    pub stroke_solid: HashMap<usize, ParsedTimelineData>,
+    pub stroke_gradient: HashMap<usize, ParsedTimelineData>,
+    pub stroke_weight: Option<ParsedTimelineData>,
+    pub arc_data: Option<ParsedTimelineData>,
+    pub rotation: Option<ParsedTimelineData>,
+    pub other: HashMap<String, ParsedTimelineData>,
+}
+
+impl NodeTimelines {
+    pub fn insert(&mut self, prop: AnimatableProperty, timeline: ParsedTimelineData) {
+        match prop {
+            AnimatableProperty::Opacity => self.opacity = Some(timeline),
+            AnimatableProperty::X => self.x = Some(timeline),
+            AnimatableProperty::Y => self.y = Some(timeline),
+            AnimatableProperty::Width => self.width = Some(timeline),
+            AnimatableProperty::Height => self.height = Some(timeline),
+            AnimatableProperty::CornerRadius => self.corner_radius = Some(timeline),
+            AnimatableProperty::TopLeftRadius => self.top_left_radius = Some(timeline),
+            AnimatableProperty::TopRightRadius => self.top_right_radius = Some(timeline),
+            AnimatableProperty::BottomLeftRadius => self.bottom_left_radius = Some(timeline),
+            AnimatableProperty::BottomRightRadius => self.bottom_right_radius = Some(timeline),
+            AnimatableProperty::FillSolid(idx) => {
+                self.fill_solid.insert(idx, timeline);
+            }
+            AnimatableProperty::FillGradient(idx) => {
+                self.fill_gradient.insert(idx, timeline);
+            }
+            AnimatableProperty::StrokeSolid(idx) => {
+                self.stroke_solid.insert(idx, timeline);
+            }
+            AnimatableProperty::StrokeGradient(idx) => {
+                self.stroke_gradient.insert(idx, timeline);
+            }
+            AnimatableProperty::StrokeWeight => self.stroke_weight = Some(timeline),
+            AnimatableProperty::ArcData => self.arc_data = Some(timeline),
+            AnimatableProperty::Rotation => self.rotation = Some(timeline),
+            AnimatableProperty::Other(name) => {
+                self.other.insert(name, timeline);
+            }
+        }
+    }
+
+    pub fn get(&self, prop: &AnimatableProperty) -> Option<&ParsedTimelineData> {
+        match prop {
+            AnimatableProperty::Opacity => self.opacity.as_ref(),
+            AnimatableProperty::X => self.x.as_ref(),
+            AnimatableProperty::Y => self.y.as_ref(),
+            AnimatableProperty::Width => self.width.as_ref(),
+            AnimatableProperty::Height => self.height.as_ref(),
+            AnimatableProperty::CornerRadius => self.corner_radius.as_ref(),
+            AnimatableProperty::TopLeftRadius => self.top_left_radius.as_ref(),
+            AnimatableProperty::TopRightRadius => self.top_right_radius.as_ref(),
+            AnimatableProperty::BottomLeftRadius => self.bottom_left_radius.as_ref(),
+            AnimatableProperty::BottomRightRadius => self.bottom_right_radius.as_ref(),
+            AnimatableProperty::FillSolid(idx) => self.fill_solid.get(idx),
+            AnimatableProperty::FillGradient(idx) => self.fill_gradient.get(idx),
+            AnimatableProperty::StrokeSolid(idx) => self.stroke_solid.get(idx),
+            AnimatableProperty::StrokeGradient(idx) => self.stroke_gradient.get(idx),
+            AnimatableProperty::StrokeWeight => self.stroke_weight.as_ref(),
+            AnimatableProperty::ArcData => self.arc_data.as_ref(),
+            AnimatableProperty::Rotation => self.rotation.as_ref(),
+            AnimatableProperty::Other(name) => self.other.get(name),
+        }
+    }
+}
+
 /// Efficient lookup for parsed timeline data.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PropertyLookup {
-    /// Map of NodeName -> (Map of AnimatableProperty -> TimelineData)
-    pub timelines: HashMap<String, HashMap<AnimatableProperty, ParsedTimelineData>>,
+    /// Map of NodeName -> NodeTimelines
+    pub timelines: HashMap<String, NodeTimelines>,
 }
 
 impl PropertyLookup {
@@ -493,7 +574,7 @@ impl PropertyLookup {
                 if let Ok(parsed) = ParsedTimelineData::parse(val) {
                     timelines
                         .entry(node.to_string())
-                        .or_insert_with(HashMap::new)
+                        .or_insert_with(NodeTimelines::default)
                         .insert(property, parsed);
                 }
             }
@@ -509,6 +590,11 @@ impl PropertyLookup {
             }
         }
         PropertyLookup { timelines: HashMap::new() }
+    }
+
+    /// Retrieves all parsed timeline data for a specific node.
+    pub fn get_for_node(&self, node: &str) -> Option<&NodeTimelines> {
+        self.timelines.get(node)
     }
 
     /// Retrieves the parsed timeline data for a specific node and property.

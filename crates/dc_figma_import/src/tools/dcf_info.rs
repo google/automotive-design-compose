@@ -30,9 +30,9 @@
 //! or
 //! dcf_info -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
+use crate::tools::libdcf_info::{parse_dcf_info, DcfError};
 use clap::Parser;
 use dc_bundle::definition_file::load_design_def;
-use dcf_info::parse_dcf_info;
 use serde::Serialize;
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -40,7 +40,7 @@ use std::mem;
 
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ParseError(String);
+pub struct ParseError(pub String);
 
 impl From<std::io::Error> for ParseError {
     fn from(e: std::io::Error) -> Self {
@@ -54,18 +54,18 @@ impl From<dc_bundle::Error> for ParseError {
         ParseError(format!("Error during deserialization: {:?}", e))
     }
 }
-impl From<dcf_info::DcfError> for ParseError {
-    fn from(e: dcf_info::DcfError) -> Self {
+impl From<DcfError> for ParseError {
+    fn from(e: DcfError) -> Self {
         match e {
-            dcf_info::DcfError::Io(e) => e.into(),
-            dcf_info::DcfError::DcBundle(e) => e.into(),
-            dcf_info::DcfError::Parse(s) => ParseError(s),
+            DcfError::Io(e) => e.into(),
+            DcfError::DcBundle(e) => e.into(),
+            DcfError::Parse(s) => ParseError(s),
         }
     }
 }
 
 #[derive(Parser, Debug)]
-struct Args {
+pub struct Args {
     // Path to the .dcf file to deserialize
     dcf_file: std::path::PathBuf,
     // Optional string argument to dump file structure from a given node root.
@@ -81,14 +81,7 @@ struct Args {
     output: Option<std::path::PathBuf>,
 }
 
-fn main() -> Result<(), ParseError> {
-    let args = match Args::try_parse() {
-        Ok(args) => args,
-        Err(e) => {
-            eprintln!("Error parsing arguments: {}", e);
-            std::process::exit(1);
-        }
-    };
+pub fn dcf_info(args: Args) -> Result<(), ParseError> {
     let file_path = &args.dcf_file;
     let node = args.node;
 
@@ -134,6 +127,10 @@ fn main() -> Result<(), ParseError> {
         }
         return Ok(());
     }
+
+    let mut file = File::open(file_path)?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)?;
 
     let load_result = load_design_def(file_path);
     if let Ok((header, doc)) = load_result {

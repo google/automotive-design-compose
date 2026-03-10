@@ -21,15 +21,9 @@ pub enum Easing {
 
 impl Easing {
     /// Applies the easing function to a linear progress value `t` (0.0 to 1.0).
-    pub fn apply(&self, t: f32, inherited_curve: Option<&dyn Fn(f32) -> f32>) -> f32 {
+    pub fn apply(&self, t: f32) -> f32 {
         match self {
-            Easing::Inherit => {
-                if let Some(curve) = inherited_curve {
-                    curve(t)
-                } else {
-                    t
-                }
-            }
+            Easing::Inherit => t,
             Easing::Linear => t,
             Easing::Instant => {
                 if t >= 1.0 {
@@ -230,20 +224,19 @@ impl ParsedTimelineData {
         Ok(ParsedTimelineData { target_easing, keyframes })
     }
 
-    /// Interpolates between a start and end value at the given fraction (0.0 to 1.0),
-    /// respecting the custom keyframes and easings defined in this timeline.
-    pub fn interpolate(
-        &self,
-        start_value: &KeyframeValue,
-        end_value: &KeyframeValue,
+    /// Finds the surrounding keyframes and the eased fraction between them.
+    /// This allows the caller to use their own interpolator on the keyframe values.
+    pub fn get_keyframe_segment<'a>(
+        &'a self,
+        start_value: &'a KeyframeValue,
+        end_value: &'a KeyframeValue,
         fraction: f32,
-        inherited_curve: Option<&dyn Fn(f32) -> f32>,
-    ) -> KeyframeValue {
+    ) -> (&'a KeyframeValue, &'a KeyframeValue, f32) {
         if fraction <= 0.0 {
-            return start_value.clone();
+            return (start_value, start_value, 0.0);
         }
         if fraction >= 1.0 {
-            return end_value.clone();
+            return (end_value, end_value, 1.0);
         }
 
         let mut kf1_fraction = 0.0;
@@ -290,18 +283,34 @@ impl ParsedTimelineData {
         }
 
         if easing == Easing::Instant {
-            return kf1_value.clone();
+            if fraction < kf2_fraction {
+                return (kf1_value, kf1_value, 0.0);
+            } else {
+                return (kf2_value, kf2_value, 1.0);
+            }
         }
 
         let duration = kf2_fraction - kf1_fraction;
         if duration <= 0.00001 {
-            return kf2_value.clone();
+            return (kf2_value, kf2_value, 1.0);
         }
 
         let t = ((fraction - kf1_fraction) / duration).clamp(0.0, 1.0);
-        let eased_t = easing.apply(t, inherited_curve);
+        let eased_t = easing.apply(t);
 
-        kf1_value.interpolate(kf2_value, eased_t)
+        (kf1_value, kf2_value, eased_t)
+    }
+
+    /// Interpolates between a start and end value at the given fraction (0.0 to 1.0),
+    /// respecting the custom keyframes and easings defined in this timeline.
+    pub fn interpolate(
+        &self,
+        start_value: &KeyframeValue,
+        end_value: &KeyframeValue,
+        fraction: f32,
+    ) -> KeyframeValue {
+        let (kf1, kf2, t) = self.get_keyframe_segment(start_value, end_value, fraction);
+        kf1.interpolate(kf2, t)
     }
 }
 
@@ -389,11 +398,82 @@ pub struct Variant {
 
 // --- Property Lookup ---
 
+/// Represents properties that can be animated via custom timelines.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum AnimatableProperty {
+    Opacity,
+    X,
+    Y,
+    Width,
+    Height,
+    CornerRadius,
+    TopLeftRadius,
+    TopRightRadius,
+    BottomLeftRadius,
+    BottomRightRadius,
+    FillSolid(usize),
+    FillGradient(usize),
+    StrokeSolid(usize),
+    StrokeGradient(usize),
+    StrokeWeight,
+    ArcData,
+    Rotation,
+    Other(String),
+}
+
+impl std::str::FromStr for AnimatableProperty {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Opacity" => Ok(AnimatableProperty::Opacity),
+            "x" => Ok(AnimatableProperty::X),
+            "y" => Ok(AnimatableProperty::Y),
+            "width" => Ok(AnimatableProperty::Width),
+            "height" => Ok(AnimatableProperty::Height),
+            "cornerRadius" => Ok(AnimatableProperty::CornerRadius),
+            "topLeftRadius" => Ok(AnimatableProperty::TopLeftRadius),
+            "topRightRadius" => Ok(AnimatableProperty::TopRightRadius),
+            "bottomLeftRadius" => Ok(AnimatableProperty::BottomLeftRadius),
+            "bottomRightRadius" => Ok(AnimatableProperty::BottomRightRadius),
+            "arcData" => Ok(AnimatableProperty::ArcData),
+            "strokeWeight" => Ok(AnimatableProperty::StrokeWeight),
+            "rotation" => Ok(AnimatableProperty::Rotation),
+            _ => {
+                if s.starts_with("fills.") {
+                    let parts: Vec<&str> = s.split('.').collect();
+                    if parts.len() == 3 {
+                        if let Ok(idx) = parts[1].parse::<usize>() {
+                            match parts[2] {
+                                "solid" => return Ok(AnimatableProperty::FillSolid(idx)),
+                                "gradient" => return Ok(AnimatableProperty::FillGradient(idx)),
+                                _ => {}
+                            }
+                        }
+                    }
+                } else if s.starts_with("strokes.") {
+                    let parts: Vec<&str> = s.split('.').collect();
+                    if parts.len() == 3 {
+                        if let Ok(idx) = parts[1].parse::<usize>() {
+                            match parts[2] {
+                                "solid" => return Ok(AnimatableProperty::StrokeSolid(idx)),
+                                "gradient" => return Ok(AnimatableProperty::StrokeGradient(idx)),
+                                _ => {}
+                            }
+                        }
+                    }
+                }
+                Ok(AnimatableProperty::Other(s.to_string()))
+            }
+        }
+    }
+}
+
 /// Efficient lookup for parsed timeline data.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PropertyLookup {
-    /// Map of NodeName -> (Map of PropertyPath -> TimelineData)
-    pub timelines: HashMap<String, HashMap<String, ParsedTimelineData>>,
+    /// Map of NodeName -> (Map of AnimatableProperty -> TimelineData)
+    pub timelines: HashMap<String, HashMap<AnimatableProperty, ParsedTimelineData>>,
 }
 
 impl PropertyLookup {
@@ -409,11 +489,12 @@ impl PropertyLookup {
             }
 
             if let Some((node, prop)) = clean_key.rsplit_once('-') {
+                let property = prop.parse::<AnimatableProperty>().unwrap();
                 if let Ok(parsed) = ParsedTimelineData::parse(val) {
                     timelines
                         .entry(node.to_string())
                         .or_insert_with(HashMap::new)
-                        .insert(prop.to_string(), parsed);
+                        .insert(property, parsed);
                 }
             }
         }
@@ -431,8 +512,8 @@ impl PropertyLookup {
     }
 
     /// Retrieves the parsed timeline data for a specific node and property.
-    pub fn get(&self, node: &str, prop: &str) -> Option<&ParsedTimelineData> {
-        self.timelines.get(node)?.get(prop)
+    pub fn get(&self, node: &str, prop: AnimatableProperty) -> Option<&ParsedTimelineData> {
+        self.timelines.get(node)?.get(&prop)
     }
 }
 
@@ -458,14 +539,14 @@ mod tests {
         let start = KeyframeValue::CornerRadii([0.0, 0.0, 0.0, 0.0]);
         let end = KeyframeValue::CornerRadii([100.0, 100.0, 100.0, 100.0]);
 
-        let val_25 = timeline.interpolate(&start, &end, 0.25, None);
+        let val_25 = timeline.interpolate(&start, &end, 0.25);
         if let KeyframeValue::CornerRadii(v) = val_25 {
             assert!((v[0] - 25.0).abs() < 0.1);
         } else {
             panic!("Wrong type");
         }
 
-        let val_75 = timeline.interpolate(&start, &end, 0.75, None);
+        let val_75 = timeline.interpolate(&start, &end, 0.75);
         if let KeyframeValue::CornerRadii(v) = val_75 {
             assert!((v[0] - 75.0).abs() < 0.1);
         } else {

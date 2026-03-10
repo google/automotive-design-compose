@@ -31,10 +31,10 @@ fn main() {
 
     // 4. Retrieve the timeline for a specific node and property
     let node_name = "Button";
-    let property = "cornerRadius";
+    let property = dc_squoosh_parser::AnimatableProperty::CornerRadius;
 
-    if let Some(timeline) = lookup.get(node_name, property) {
-        println!("Found timeline for '{}' -> '{}'", node_name, property);
+    if let Some(timeline) = lookup.get(node_name, property.clone()) {
+        println!("Found timeline for '{}' -> '{:?}'", node_name, property);
 
         // 5. Define Start and End values
         // In a real app, these come from the Scene Graph (Start Variant vs End Variant properties)
@@ -46,7 +46,7 @@ fn main() {
         // 6. Interpolate at various time fractions
         for i in 0..=10 {
             let t = i as f32 / 10.0;
-            let result = timeline.interpolate(&start_val, &end_val, t, None);
+            let result = timeline.interpolate(&start_val, &end_val, t);
 
             match result {
                 KeyframeValue::CornerRadii(radii) => {
@@ -59,6 +59,6 @@ fn main() {
             }
         }
     } else {
-        println!("Timeline for {} not found!", property);
+        println!("Timeline for {:?} not found!", property);
     }
 }

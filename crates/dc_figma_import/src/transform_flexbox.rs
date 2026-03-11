@@ -944,13 +944,28 @@ fn visit_node(
     // widget, so use it. Otherwise look for it in the shared plugin data.
     let mut plugin_data = None;
     let mut child_plugin_data = None;
-    if parent_plugin_data.is_some() {
-        plugin_data = parent_plugin_data;
-    } else if node.shared_plugin_data.contains_key("designcompose") {
+
+    if node.shared_plugin_data.contains_key("designcompose") {
         plugin_data = node.shared_plugin_data.get("designcompose");
+    } else if parent_plugin_data.is_some() {
+        plugin_data = parent_plugin_data;
+    }
+
+    let is_component_set = matches!(node.data, figma_schema::NodeData::ComponentSet { .. });
+    if node.is_widget() || is_component_set {
+        child_plugin_data = plugin_data;
         if node.is_widget() {
-            child_plugin_data = plugin_data;
             plugin_data = None;
+        }
+    }
+
+    if plugin_data.is_none() {
+        if let Some(parent_node) = parent {
+            if matches!(parent_node.data, figma_schema::NodeData::ComponentSet { .. }) {
+                if parent_node.shared_plugin_data.contains_key("designcompose") {
+                    plugin_data = parent_node.shared_plugin_data.get("designcompose");
+                }
+            }
         }
     }
 
@@ -2053,7 +2068,9 @@ fn visit_node(
     if let Some(animation_override) = &node.animation_override {
         view.style_mut().node_style_mut().animation_override =
             Some(AnimationOverride::from(animation_override).into()).into();
-    } else if let Some(plugin_data) = node.shared_plugin_data.get("designcompose") {
+    }
+
+    if let Some(plugin_data) = plugin_data {
         if let Some(anim_str) = plugin_data.get("animations") {
             if let Ok(anim) = serde_json::from_str::<AnimationOverrideJson>(anim_str) {
                 view.style_mut().node_style_mut().animation_override =
@@ -2103,9 +2120,11 @@ pub fn create_component_flexbox<'a>(
     component_set_map: &'a HashMap<String, figma_schema::ComponentSet>,
     component_context: &mut ComponentContext,
     image_context: &mut ImageContext,
+    parent_plugin_data: Option<&HashMap<String, String>>,
     hidden_node_policy: HiddenNodePolicy,
     key_to_global_id_map: &mut HashMap<String, String>,
 ) -> Result<View, Error> {
+
     visit_node(
         node,
         None,
@@ -2113,7 +2132,7 @@ pub fn create_component_flexbox<'a>(
         component_set_map,
         component_context,
         image_context,
-        None,
+        parent_plugin_data,
         hidden_node_policy,
         key_to_global_id_map,
     )

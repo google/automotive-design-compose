@@ -318,6 +318,10 @@ impl ViewStyle {
         if self.node_style().meter_data != other.node_style().meter_data {
             delta.node_style_mut().meter_data = other.node_style().meter_data.clone();
         }
+        if self.node_style().animation_override != other.node_style().animation_override {
+            delta.node_style_mut().animation_override =
+                other.node_style().animation_override.clone();
+        }
         delta
     }
 }

@@ -2,7 +2,7 @@
 name = "dc_figma_import"
 description = "Figma document serialization toolkit"
 version.workspace = true
-edition.workspace = true
+edition = "2021"
 authors.workspace = true
 license.workspace = true
 rust-version.workspace = true

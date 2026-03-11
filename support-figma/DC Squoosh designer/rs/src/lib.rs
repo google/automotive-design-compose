@@ -23,8 +23,7 @@ impl Easing {
     /// Applies the easing function to a linear progress value `t` (0.0 to 1.0).
     pub fn apply(&self, t: f32) -> f32 {
         match self {
-            Easing::Inherit => t,
-            Easing::Linear => t,
+            Easing::Linear | Easing::Inherit => t,
             Easing::Instant => {
                 if t >= 1.0 {
                     1.0
@@ -298,6 +297,7 @@ impl ParsedTimelineData {
         let t = ((fraction - kf1_fraction) / duration).clamp(0.0, 1.0);
         let eased_t = easing.apply(t);
 
+<<<<<<< HEAD
         (kf1_value, kf2_value, eased_t)
     }
 
@@ -604,7 +604,6 @@ impl PropertyLookup {
     pub fn get_for_node(&self, node: &str) -> Option<Arc<NodeTimelines>> {
         self.timelines.get(node).cloned()
     }
-
     /// Retrieves the parsed timeline data for a specific node and property.
     pub fn get(&self, node: &str, prop: AnimatableProperty) -> Option<&ParsedTimelineData> {
         // Find the node's NodeTimelines, then find the property within it.

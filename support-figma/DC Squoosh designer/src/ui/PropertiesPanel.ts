@@ -701,9 +701,6 @@ export class PropertiesPanel {
 
         if (isTheDelaySection) {
           sectionType = "Delay";
-          console.log(
-            "Section classified as Delay because it is the initial delay part.",
-          );
         } else {
           // It's an animation section. Now determine if it's a "Variant animation" or a regular "Animation".
           const startKeyframe = timelineData.keyframes.find(
@@ -726,14 +723,8 @@ export class PropertiesPanel {
             hasCustomKeyframesWithinSection
           ) {
             sectionType = "Animation";
-            console.log(
-              "Section classified as Animation because it starts/ends with an unlocked keyframe or has custom keyframes within its bounds.",
-            );
           } else {
             sectionType = "Variant animation";
-            console.log(
-              "Section classified as Variant animation because no custom keyframes define this section.",
-            );
           }
         }
       }
@@ -796,17 +787,6 @@ export class PropertiesPanel {
           isStartAVariantKeyframeBoundary &&
           isEndAVariantKeyframeBoundary &&
           !hasIntermediateUnlockedKeyframes;
-
-        console.log("updateAnimationSectionProperties", {
-          timelineId,
-          start,
-          end,
-          isStartAVariantKeyframeBoundary,
-          isEndAVariantKeyframeBoundary,
-          hasIntermediateUnlockedKeyframes,
-          canInherit,
-        });
-
         const inheritOption = this.sectionEasingSelect.querySelector(
           'option[value="Inherit"]',
         ) as HTMLOptionElement;
@@ -1509,9 +1489,6 @@ export class PropertiesPanel {
       endingVariantKeyframe.data = {};
     }
     endingVariantKeyframe.data.keyframes = serializedCustomKeyframes; // Store as string
-
-    console.log("Saving custom keyframe data", { timelineId, endingVariantName, serializedCustomKeyframes });
-
     // Send message to backend to save this data
     parent.postMessage(
       {
@@ -1537,9 +1514,6 @@ export class PropertiesPanel {
               delete variant.animation.customKeyframeData[timelineId];
           }
       });
-
-      console.log("Deleting custom timeline", timelineId);
-
       // Send message to backend
       parent.postMessage(
           {

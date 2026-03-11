@@ -50,7 +50,6 @@ async function updateSelection() {
     if (animationNodeId && selection.length > 0) {
         const selectedNode = selection[0];
         if (isDescendantOf(selectedNode, animationNodeId)) {
-            console.log("Selected node is inside preview frame. Ignoring selection change.");
             // Optionally, we could send a message to the UI to highlight the corresponding node in the timeline
             // But for now, we just prevent deselecting/changing the current component context.
 
@@ -58,7 +57,6 @@ async function updateSelection() {
             if ("getPluginData" in selectedNode) {
                 const originalNodeId = selectedNode.getPluginData("originalNodeId");
                 if (originalNodeId) {
-                     console.log("Selected preview node maps to:", originalNodeId);
                      // We can still notify the UI about which node was clicked in the preview
                      // so it can highlight the corresponding timeline track, WITHOUT resetting the whole timeline view.
                      figma.ui.postMessage({ type: "preview-node-selected", originalNodeId });
@@ -77,7 +75,6 @@ async function updateSelection() {
         if ("getPluginData" in node) {
             const originalNodeId = node.getPluginData("originalNodeId");
             if (originalNodeId) {
-                 console.log("Selected preview node (direct check):", node.name, originalNodeId);
               // If we are here, it means we probably didn't catch it with the ancestor check
                  // (maybe animationNodeId is unset but the node still has data?)
                  // In this case, we ALSO want to avoid resetting the timeline.
@@ -89,7 +86,6 @@ async function updateSelection() {
 
     if (selection.length !== 1) {
       const message = "Please select a single layer.";
-      console.log(message);
       figma.notify(message);
       figma.ui.postMessage({ type: "clear-timeline" });
       return;
@@ -117,7 +113,6 @@ async function updateSelection() {
       } else if (node.type === "COMPONENT") {
         message = `Selected component "${node.name}" is not a variant within a component set.`;
       }
-      console.log(message);
       figma.notify(message);
       figma.ui.postMessage({ type: "clear-timeline" });
       return;
@@ -197,7 +192,6 @@ async function updateSelection() {
     figma.ui.onmessage = (msg) => {
       // Log all messages except for the spammy 'update-figma-preview'
       if (msg.type !== "update-figma-preview") {
-        console.log("FIGMA MAIN THREAD RECEIVED:", msg);
       }
 
       if (msg.type === "ready") {
@@ -211,8 +205,6 @@ async function updateSelection() {
       }
 
       if (msg.type === "ping") {
-        console.log("PONG! Message received from UI thread.");
-
         (async () => {
             const selection = figma.currentPage.selection;
             if (selection.length > 0) {
@@ -234,17 +226,12 @@ async function updateSelection() {
                     // Log the first child's data for sampling
                     const firstVariant = componentSet.children[0];
                     const data = firstVariant.getSharedPluginData("designcompose", "animations");
-                    console.log("SAMPLE DATA DUMP (Variant 0):");
-                    console.log(JSON.stringify(data)); // Stringify for easier copying
-
                     // Also dump timeline data if available
                     // We don't have easy access to the 'internal' AnimationData structure here as it's built in UI
                     // But we can dump the customKeyframeData which is part of the spec.
                 } else {
-                    console.log("Select a variant/component set to dump sample data.");
                 }
             } else {
-                console.log("Select something to dump sample data.");
             }
         })();
 
@@ -300,10 +287,6 @@ async function updateSelection() {
 
           if (variant) {
             variant.setSharedPluginData("designcompose", "animations", data);
-            console.log(
-              `Saved animation data for variant "${frameName}":`,
-              data,
-            );
           }
         })();
       }
@@ -345,10 +328,6 @@ async function updateSelection() {
             variant.setSharedPluginData(
               "designcompose",
               "animations",
-              dataToSave,
-            );
-            console.log(
-              `Saved animation data string for variant "${endingVariantName}":`,
               dataToSave,
             );
           }
@@ -395,9 +374,6 @@ async function updateSelection() {
                   "animations",
                   dataToSave,
                 );
-                console.log(
-                  `Deleted custom timeline "${timelineId}" from variant "${variant.name}"`,
-                );
               }
             }
           }
@@ -414,13 +390,6 @@ async function updateSelection() {
             "rotation" in node &&
             "resize" in node
           ) {
-            console.log("Node before transform:", {
-              transform: node.relativeTransform,
-              rotation: node.rotation,
-              width: node.width,
-              height: node.height,
-            });
-
             const transform = node.relativeTransform;
             const newTransform: [
               [number, number, number],
@@ -435,12 +404,6 @@ async function updateSelection() {
 
             node.rotation += -transformDelta.dAngle;
             node.resize(newSize.width, newSize.height);
-            console.log("Node after transform:", {
-              transform: node.relativeTransform,
-              rotation: node.rotation,
-              width: node.width,
-              height: node.height,
-            });
           } else {
             console.error("Node not found or does not support transformation", {
               nodeId,
@@ -600,12 +563,7 @@ async function updateSelection() {
             );
             return;
           }
-
-          console.log(
-            `--- Debug Comparison Start: Comparing Preview with Variant "${targetVariantNode.name}" ---`,
-          );
           await compareNodes(previewFrame, targetVariantNode);
-          console.log(`--- Debug Comparison End ---`);
         })();
       }
       if (msg.type === "clear-preview") {

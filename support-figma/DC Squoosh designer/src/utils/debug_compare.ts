@@ -58,7 +58,6 @@ export function compareAndPrintChanges(
     }
 
     if (!originalNodeStruct) {
-        console.log(`Could not find original node for "${newProps.name}" (ID: ${originalNodeId || 'null'}) in current variant.`);
         return;
     }
 
@@ -102,7 +101,6 @@ export function compareAndPrintChanges(
                 if (JSON.stringify(expectedVal) !== JSON.stringify(actualVal)) {
                      // If it's color, we might have Hex vs RGB mismatch.
                      // TODO: normalize colors?
-                     console.log(`[Animated] ${timeline.property}:`, expectedVal, "->", actualVal);
                 }
             });
         }
@@ -130,10 +128,8 @@ export function compareAndPrintChanges(
         // For floating point numbers, use epsilon
         if (typeof v1 === 'number' && typeof v2 === 'number') {
             if (Math.abs(v1 - v2) > 0.001) {
-                console.log(`${key}:`, v1, "->", v2);
             }
         } else if (JSON.stringify(v1) !== JSON.stringify(v2)) {
-            console.log(`${key}:`, v1, "->", v2);
         }
     });
 

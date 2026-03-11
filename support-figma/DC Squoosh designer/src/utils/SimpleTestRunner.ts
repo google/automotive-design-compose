@@ -86,7 +86,6 @@ export class SimpleTestRunner {
 
   private log(message: string, type: 'info' | 'pass' | 'fail' | 'error-detail') {
     if (!this.logContainer) {
-        console.log(`[${type.toUpperCase()}] ${message}`);
         return;
     }
     const div = document.createElement('div');

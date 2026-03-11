@@ -11,9 +11,6 @@ export async function compareNodes(
     (node1.type === "FRAME" && node2.type === "COMPONENT") ||
     (node1.type === "COMPONENT" && node2.type === "FRAME");
   if (node1.type !== node2.type && !compatibleTypes) {
-    console.log(
-      `[${currentPath}] Type mismatch: ${node1.type} vs ${node2.type}`,
-    );
     return;
   }
 
@@ -34,16 +31,8 @@ export async function compareNodes(
         node2[prop as keyof typeof node2];
       if (typeof val1 === "number" && typeof val2 === "number") {
         if (Math.abs(val1 - val2) > EPSILON) {
-          console.log(
-            `[${currentPath}] Property "${prop}" mismatch: ${val1.toFixed(
-              2,
-            )} (preview) vs ${val2.toFixed(2)} (variant)`,
-          );
         }
       } else if (val1 !== val2) {
-        console.log(
-          `[${currentPath}] Property "${prop}" mismatch: ${val1} (preview) vs ${val2} (variant)`,
-        );
       }
     }
   }
@@ -71,13 +60,6 @@ export async function compareNodes(
 
     for (let i = 0; i < flat1.length; i++) {
       if (Math.abs(flat1[i] - flat2[i]) > EPSILON) {
-        console.log(
-          `[${currentPath}] relativeTransform mismatch on ${
-            matrixProps[i]
-          }: ${flat1[i].toFixed(2)} (preview) vs ${flat2[i].toFixed(
-            2,
-          )} (variant)`,
-        );
       }
     }
   }
@@ -87,9 +69,6 @@ export async function compareNodes(
     const children2 = node2.children;
 
     if (children1.length !== children2.length) {
-      console.log(
-        `[${currentPath}] Children count mismatch: ${children1.length} vs ${children2.length}`,
-      );
       return;
     }
 
@@ -102,9 +81,6 @@ export async function compareNodes(
       if (child2) {
         await compareNodes(child1, child2, currentPath);
       } else {
-        console.log(
-          `[${currentPath}] Child "${child1.name}" not found in variant.`,
-        );
       }
     }
   }

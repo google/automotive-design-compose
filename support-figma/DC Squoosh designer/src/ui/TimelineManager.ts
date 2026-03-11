@@ -229,7 +229,6 @@ export class TimelineManager {
     this.editor.on(
       "keyframe:saved",
       (timelineId: string, keyframeId: string) => {
-         console.log("TimelineManager received keyframe:saved", timelineId, keyframeId);
          // eslint-disable-next-line @typescript-eslint/no-explicit-any
          this.propertiesPanel?.saveCustomKeyframeData(timelineId, keyframeId);
       },

@@ -67,7 +67,6 @@ class AnimationUI {
     this.controlPanel.on("export", () => this.handleExport());
     this.controlPanel.on("reset", () => parent.postMessage({ pluginMessage: { type: "reset-data" } }, "*"));
     this.controlPanel.on("ping", () => {
-        console.log("Sending ping");
         parent.postMessage({ pluginMessage: { type: "ping" } }, "*");
     });
     this.controlPanel.on("clear-preview", () => parent.postMessage({ pluginMessage: { type: "clear-preview" } }, "*"));
@@ -251,7 +250,6 @@ class AnimationUI {
           break;
         }
         case "pong": {
-          console.log("PONG!");
           break;
         }
         case "selection-mode-started": {
@@ -333,7 +331,6 @@ class AnimationUI {
           break;
         }
         case "preview-node-selected": {
-           console.log("Preview node selected:", pluginMessage.originalNodeId);
            break;
         }
         case "preview-update-complete": {

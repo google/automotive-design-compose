@@ -19,9 +19,6 @@ export async function cloneChildren(
 export function tagOriginalNodeId(previewNode: SceneNode, originalNode: SceneNode) {
   if ("setPluginData" in previewNode) {
     previewNode.setPluginData("originalNodeId", originalNode.id);
-    console.log(
-      `Setting originalNodeId for previewNode: ${previewNode.name} (ID: ${previewNode.id}) to originalNode.id: ${originalNode.id}`,
-    );
   }
   if ("children" in previewNode && "children" in originalNode) {
     const previewChildren = previewNode.children;

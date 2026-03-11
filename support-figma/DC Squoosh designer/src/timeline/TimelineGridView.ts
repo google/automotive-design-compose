@@ -309,14 +309,6 @@ export class TimelineGridView {
     if (this.timelineRect) {
       const position =
         (event.clientX - this.timelineRect.left) / this.timelineRect.width;
-      console.log("handleTimelineMouseDown", {
-        clientX: event.clientX,
-        rectLeft: this.timelineRect.left,
-        scrollLeft: this.container.scrollLeft,
-        rectWidth: this.timelineRect.width,
-        zoom: this.zoom,
-        position: position,
-      });
       this.selectionRange = { start: position, end: position };
       const selectionDiv = this.currentTimeline.querySelector(
         ".selection",
@@ -339,8 +331,6 @@ export class TimelineGridView {
   ): void {
     const keyframeId = target.dataset.keyframeId;
     if (!keyframeId) return;
-    console.log("Keyframe selected in TimelineGridView:", keyframeId);
-
     const keyframe = this.findKeyframe(keyframeId);
     if (keyframe && !keyframe.locked) {
       this.draggedKeyframe = target;

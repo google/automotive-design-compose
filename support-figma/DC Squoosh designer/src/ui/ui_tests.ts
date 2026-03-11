@@ -46,9 +46,6 @@ export function registerUITests(
               console.warn("No nodes with missing/variant-gap states found in current data. Test cannot verify specific interpolation logic on live data.");
               return;
           }
-
-          console.log(`Found node with missing state: ${missingNode.name}, Timeline: ${missingTimeline.property}, Keyframe ID: ${missingKeyframe.id}`);
-
           // Verify properties of the missing keyframe
           if (!missingKeyframe.locked) {
               throw new Error(`Missing keyframe ${missingKeyframe.id} should be locked.`);
@@ -63,7 +60,6 @@ export function registerUITests(
               if (missingKeyframe.value === undefined) {
                   throw new Error(`Missing keyframe for ${missingTimeline.property} has undefined value. Should have been interpolated/filled.`);
               }
-              console.log(`Verified interpolated value for missing node: ${missingKeyframe.value}`);
           }
 
           // Verify Opacity Side-Effect
@@ -92,8 +88,6 @@ export function registerUITests(
                    console.warn("Opacity keyframe at missing position is NOT marked as isMissing. Ideally it should be.");
               }
           }
-
-          console.log('Missing Node Handling verification passed on real data.');
       });
   });
 
@@ -206,7 +200,6 @@ export function registerUITests(
           checkNodes(data.nodes);
           
           runner.expect(checks).toBeTruthy(); // Ensure we actually checked something
-          console.log(`Checked ${checks} keyframes.`);
       });
   });
 
@@ -264,7 +257,6 @@ export function registerUITests(
           
           checkNodes(data.nodes);
           runner.expect(checks).toBeTruthy();
-          console.log(`Checked ${checks} animation sections.`);
       });
   });
 
@@ -293,7 +285,6 @@ export function registerUITests(
           
           // If not found, try to add one to the first node
           if (!node || !timeline) {
-              console.log("No suitable timeline found, attempting to add 'test-opacity' timeline...");
               node = data.nodes[0];
               if (!node) throw new Error('No nodes available to add timeline to');
               
@@ -390,8 +381,6 @@ export function registerUITests(
           if (timelineAfterRemoval.keyframes.length !== initialKeyframeCount) {
               throw new Error(`Keyframe count mismatch after removal. Expected ${initialKeyframeCount}, got ${timelineAfterRemoval.keyframes.length}`);
           }
-
-          console.log('Keyframe addition, editing, and removal verification passed.');
       });
   });
 
@@ -447,9 +436,6 @@ export function registerUITests(
           const targetNode = node || findNodeMissingProperty(data.nodes, 'rotation');
           
           if (!targetNode) throw new Error('No suitable node found for test');
-
-          console.log(`Testing timeline addition on node: ${targetNode.name}, property: ${targetProp}`);
-
           // 2. Add Timeline
           timelineManager.editor.emit('timeline:add', targetNode.id, "New Property");
           let newData = timelineManager.editor.getData()!;
@@ -488,8 +474,6 @@ export function registerUITests(
           const deletedTimeline = updatedNode.timelines.find((t: any) => t.id === finalTimeline.id);
           
           if (deletedTimeline) throw new Error('Timeline was not removed');
-          
-          console.log('Timeline addition, population, keyframe insertion, and deletion verification passed.');
       });
   });
 

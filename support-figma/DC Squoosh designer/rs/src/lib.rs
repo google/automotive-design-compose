@@ -297,7 +297,7 @@ impl ParsedTimelineData {
         let t = ((fraction - kf1_fraction) / duration).clamp(0.0, 1.0);
         let eased_t = easing.apply(t);
 
-<<<<<<< HEAD
+
         (kf1_value, kf2_value, eased_t)
     }
 

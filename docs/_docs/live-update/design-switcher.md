@@ -16,7 +16,7 @@ you can quickly try out a lot of different ideas in-car, without making
 destructive edits to your starting file. The Design Switcher also shows the
 current synchronization status, so you can check the last time your file was
 updated, or see if there is an issue (such as poor connectivity) preventing
-updates.
+updates. It also provides advanced controls for Live Update parameters, such as the fetch interval and pause timeout.
 
 The Design Switcher is available when running in [Live Update mode][3]. The
 Design Switcher normally occupies a small area in the top right corner of the
@@ -30,7 +30,7 @@ screen:
 
 <figure style="flex: 0.5">
     <img alt="" src="./design-switcher-expanded.png" />
-    <figcaption><b>Figure 2.</b> View recent log messages in the expanded Design Switcher.</figcaption>
+    <figcaption><b>Figure 2.</b> View recent log messages and configuration settings in the expanded Design Switcher.</figcaption>
 </figure>
 </div>
 
@@ -41,13 +41,22 @@ Tap **Change** to open a list of alternative files, and a text field to enter a
 showing a file called Design Switcher Test, which has a Goodbye
 branch."){: .screenshot}
 
-**Figure 3.** The Design Switcher showing a file.
+**Figure 3.** The Design Switcher showing a file and Live Update controls.
 
 Attempting to load an invalid file ID results in a failure after a few seconds
 and the Design Switcher reverts to the original file ID.
 
 The list of branches and project files is refreshed every few seconds, letting
 you quickly try out new ideas!
+
+### Live Update Controls
+
+The expanded Design Switcher displays the current configuration for Live Update:
+*   **Live Mode Toggle:** A button indicating if Live Updates are currently "Live", "Offline", or "Paused". Tapping this button manually pauses or resumes the live connection to Figma.
+*   **Fetch Interval:** Displays the frequency (in minutes) at which DesignCompose polls Figma for updates.
+*   **Pause Timeout:** Displays the duration (in minutes) after which the Figma API token is automatically revoked if the application is not actively used.
+
+To learn how to modify these values using ADB commands, see the [Advanced Live Update Configuration](setup.md#AdvancedLiveUpdateConfiguration) section.
 
 ## Control the Design Switcher from code {#ControllingFromCode}
 

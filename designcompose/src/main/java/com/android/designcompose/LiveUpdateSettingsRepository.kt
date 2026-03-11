@@ -20,8 +20,10 @@ import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.io.IOException
@@ -36,6 +38,9 @@ val Context.liveUpdateSettings: DataStore<Preferences> by
 class LiveUpdateSettingsRepository(private val dataStore: DataStore<Preferences>) {
     private val liveUpdateTag = "LiveUpdateSettings"
     private val figmaApiPrefKey = stringPreferencesKey("FigmaApiKey")
+    private val liveUpdateEnabledPrefKey = booleanPreferencesKey("LiveUpdateEnabled")
+    private val liveUpdatePauseMillisPrefKey = longPreferencesKey("LiveUpdatePauseMillis")
+    private val liveUpdateFetchMillisPrefKey = longPreferencesKey("FetchIntervalMillis")
 
     // Flow that watches the FigmaApiKey for new updates and returns the new value
     // to watchers
@@ -54,9 +59,63 @@ class LiveUpdateSettingsRepository(private val dataStore: DataStore<Preferences>
                 if (settings[figmaApiPrefKey] == "") null else settings[figmaApiPrefKey]
             }
 
+    internal val liveUpdateEnabledFlow: Flow<Boolean> =
+        dataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    Log.e(liveUpdateTag, "Error reading LiveUpdate Settings.", exception)
+                    emit(emptyPreferences())
+                } else {
+                    Log.e(liveUpdateTag, "ERROR")
+                    throw exception
+                }
+            }
+            .map { settings -> settings[liveUpdateEnabledPrefKey] ?: true }
+
+    internal val liveUpdateTimeoutFlow: Flow<Long> =
+        dataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    Log.e(liveUpdateTag, "Error reading LiveUpdate Settings.", exception)
+                    emit(emptyPreferences())
+                } else {
+                    Log.e(liveUpdateTag, "ERROR")
+                    throw exception
+                }
+            }
+            .map { settings -> settings[liveUpdatePauseMillisPrefKey] ?: DocServer.DEFAULT_LIVE_UPDATE_PAUSE_MILLIS }
+
+    internal val liveUpdateFetchMillisFlow: Flow<Long> =
+        dataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    Log.e(liveUpdateTag, "Error reading LiveUpdate Settings.", exception)
+                    emit(emptyPreferences())
+                } else {
+                    Log.e(liveUpdateTag, "ERROR")
+                    throw exception
+                }
+            }
+            .map { settings -> settings[liveUpdateFetchMillisPrefKey] ?: DocServer.DEFAULT_LIVE_UPDATE_FETCH_MILLIS }
+
     // Expose the function to set the key
     suspend fun setFigmaApiKey(newKey: String) {
         dataStore.edit { it[figmaApiPrefKey] = newKey }
         Log.i(TAG, "Figma token set")
+    }
+
+    suspend fun setLiveUpdateEnabled(enabled: Boolean) {
+        dataStore.edit { it[liveUpdateEnabledPrefKey] = enabled }
+        Log.i(TAG, "Live update enabled set to $enabled")
+    }
+
+    suspend fun setLiveUpdateTimeout(timeoutMs: Long) {
+        dataStore.edit { it[liveUpdatePauseMillisPrefKey] = timeoutMs }
+        Log.i(TAG, "Live update pause millis set to $timeoutMs")
+    }
+
+    suspend fun setLiveUpdateFetchMillis(intervalMs: Long) {
+        dataStore.edit { it[liveUpdateFetchMillisPrefKey] = intervalMs }
+        Log.i(TAG, "Fetch interval millis set to $intervalMs")
     }
 }

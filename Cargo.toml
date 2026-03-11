@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/dc_figma_import", "crates/dc_jni", "crates/dc_layout", "crates/dc_bundle"]
+members = ["crates/dc_figma_import", "crates/dc_jni", "crates/dc_layout", "crates/dc_bundle", "support-figma/DC Squoosh designer/rs"]
 
 [workspace.package]
 # LINT.IfChange

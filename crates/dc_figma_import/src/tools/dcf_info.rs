@@ -30,10 +30,9 @@
 //! or
 //! dcf_info -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
-use crate::tools::libdcf_info::parse_dcf_info;
-use crate::tools::libdcf_info::DcfError;
 use clap::Parser;
 use dc_bundle::definition_file::load_design_def;
+use dcf_info::parse_dcf_info;
 use serde::Serialize;
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -55,12 +54,12 @@ impl From<dc_bundle::Error> for ParseError {
         ParseError(format!("Error during deserialization: {:?}", e))
     }
 }
-impl From<DcfError> for ParseError {
-    fn from(e: DcfError) -> Self {
+impl From<dcf_info::DcfError> for ParseError {
+    fn from(e: dcf_info::DcfError) -> Self {
         match e {
-            DcfError::Io(e) => e.into(),
-            DcfError::DcBundle(e) => e.into(),
-            DcfError::Parse(s) => ParseError(s),
+            dcf_info::DcfError::Io(e) => e.into(),
+            dcf_info::DcfError::DcBundle(e) => e.into(),
+            dcf_info::DcfError::Parse(s) => ParseError(s),
         }
     }
 }
@@ -141,28 +140,6 @@ pub fn dcf_info(args: Args) -> Result<(), ParseError> {
         if args.varinfo {
             if let Some(variable_map) = doc.variable_map.as_ref() {
                 writeln!(writer, "Variables: {:#?}", variable_map)?;
-            }
-        }
-
-        writeln!(writer, "--- DUMPING VIEWS ---")?;
-        for (id, view) in &doc.views {
-            if let Some(style) = view.style.as_ref() {
-                if let Some(node) = style.node_style.as_ref() {
-                    if let Some(anim) = node.animation_override.as_ref() {
-                        use dc_bundle::animationspec::animation_override::Animation_override as DcAnimOverride;
-                        if let Some(DcAnimOverride::Custom(spec)) = &anim.animation_override {
-                            writeln!(writer, "View ID: {} Name: {}", id, view.name)?;
-                            writeln!(
-                                writer,
-                                "  Custom Timeline Keys: {:?}",
-                                spec.custom_keyframe_data.keys()
-                            )?;
-                            for (k, v) in &spec.custom_keyframe_data {
-                                writeln!(writer, "    {}: {}", k, v)?;
-                            }
-                        }
-                    }
-                }
             }
         }
 

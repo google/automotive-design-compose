@@ -2,7 +2,7 @@
 name = "dc_bundle"
 description = "Provides the DesignCompose Bundle and Definition"
 version.workspace = true
-edition = "2021"
+edition.workspace = true
 authors.workspace = true
 license.workspace = true
 rust-version.workspace = true

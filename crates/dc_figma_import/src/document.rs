@@ -659,7 +659,7 @@ impl Document {
                             reference_component.find_view_by_id(&view_id)
                         };
                         if let Some(template_view) = template_view_option {
-                            let mut override_view_style = if view_style == template_view.style {
+                            let override_view_style = if view_style == template_view.style {
                                 MessageField::none()
                             } else if let Some(view_style_ref) = view_style.as_ref() {
                                 let diff: Option<ViewStyle> =
@@ -669,35 +669,6 @@ impl Document {
                                 error!("ViewStyle is required.");
                                 MessageField::none()
                             };
-
-                            let anim_over = view_style
-                                .as_ref()
-                                .and_then(|v| {
-                                    v.node_style().animation_override.clone().into_option()
-                                })
-                                .or_else(|| {
-                                    template_view
-                                        .style()
-                                        .node_style()
-                                        .animation_override
-                                        .clone()
-                                        .into_option()
-                                });
-
-                            if let Some(anim_over) = anim_over {
-                                if override_view_style.is_none() {
-                                    let mut new_style = ViewStyle::new_default();
-                                    new_style.node_style_mut().animation_override =
-                                        Some(anim_over).into();
-                                    override_view_style = Some(new_style).into();
-                                } else {
-                                    override_view_style
-                                        .mut_or_insert_default()
-                                        .node_style_mut()
-                                        .animation_override = Some(anim_over).into();
-                                }
-                            }
-
                             let override_view_data =
                                 if let Some(reference_view_data) = template_view.data.as_ref() {
                                     if let Some(data) = view_data.as_ref() {
@@ -1094,7 +1065,6 @@ impl Document {
                         &self.document_root.component_sets,
                         &mut component_context,
                         &mut self.image_context,
-                        None,
                         hidden_node_policy,
                         &mut self.key_to_global_id_map,
                     )?,

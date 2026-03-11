@@ -1396,4 +1396,3 @@ pub struct VariablesResponse {
     pub status: i32,
     pub meta: VariablesMeta,
 }
-

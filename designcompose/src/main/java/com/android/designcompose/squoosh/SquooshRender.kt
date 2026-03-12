@@ -52,6 +52,7 @@ import com.android.designcompose.getListContent
 import com.android.designcompose.getShaderBrush
 import com.android.designcompose.getShaderTimeUniformState
 import com.android.designcompose.getShaderUniformCustomizations
+import com.android.designcompose.getWindowInsets
 import com.android.designcompose.layout_interface.Layout
 import com.android.designcompose.squooshShapeRender
 import com.android.designcompose.utils.asBrush
@@ -198,6 +199,10 @@ internal fun Modifier.squooshRender(
                             shaderBrushCache,
                             appContext,
                         ) {
+                            val shapeInsets = customizations.getWindowInsets(node.view.name)
+                            val topInset = shapeInsets?.getTop(this) ?: 0
+                            val leftInset = shapeInsets?.getLeft(this, layoutDirection) ?: 0
+
                             var child = node.firstChild
                             var pendingMask: SquooshResolvedNode? = null
 
@@ -211,8 +216,8 @@ internal fun Modifier.squooshRender(
                                         // Draw the mask as DstIn
                                         drawContext.canvas.saveLayer(nodeSize.toRect(), dstInPaint)
                                         translate(
-                                            pendingMask.computedLayout!!.left * density,
-                                            pendingMask.computedLayout!!.top * density,
+                                            pendingMask.computedLayout!!.left * density + leftInset,
+                                            pendingMask.computedLayout!!.top * density + topInset,
                                         ) {
                                             renderNode(pendingMask!!, newVariableState)
                                         }
@@ -237,8 +242,8 @@ internal fun Modifier.squooshRender(
                                     val childLayout = child.computedLayout
                                     if (childLayout != null) {
                                         translate(
-                                            childLayout.left * density,
-                                            childLayout.top * density,
+                                            childLayout.left * density + leftInset,
+                                            childLayout.top * density + topInset,
                                         ) {
                                             renderNode(child!!, newVariableState)
                                         }
@@ -256,8 +261,8 @@ internal fun Modifier.squooshRender(
                                 // Draw the mask as DstIn
                                 drawContext.canvas.saveLayer(nodeSize.toRect(), dstInPaint)
                                 translate(
-                                    pendingMask.computedLayout!!.left * density,
-                                    pendingMask.computedLayout!!.top * density,
+                                    pendingMask.computedLayout!!.left * density + leftInset,
+                                    pendingMask.computedLayout!!.top * density + topInset,
                                 ) {
                                     renderNode(pendingMask, newVariableState)
                                 }

@@ -18,6 +18,7 @@ package com.android.designcompose
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -143,6 +144,7 @@ data class Customization(
     var meterState: Optional<MeterState> = Optional.empty(),
     var shaderUniformCustomizations: Optional<ShaderUniformCustomizations> = Optional.empty(),
     var scrollCallbacks: Optional<DesignScrollCallbacks> = Optional.empty(),
+    var windowInsets: Optional<WindowInsets> = Optional.empty(),
 )
 
 private fun Customization.clone(): Customization {
@@ -166,6 +168,7 @@ private fun Customization.clone(): Customization {
     c.meterState = meterState
     c.shaderUniformCustomizations = shaderUniformCustomizations
     c.scrollCallbacks = scrollCallbacks
+    c.windowInsets = windowInsets
     return c
 }
 
@@ -269,6 +272,10 @@ fun CustomizationContext.setBrushFunction(nodeName: String, brushFunction: () ->
 
 fun CustomizationContext.setModifier(nodeName: String, modifier: Modifier?) {
     customize(nodeName) { c -> c.modifier = Optional.ofNullable(modifier) }
+}
+
+fun CustomizationContext.setWindowInsets(nodeName: String, insets: WindowInsets?) {
+    customize(nodeName) { c -> c.windowInsets = Optional.ofNullable(insets) }
 }
 
 fun CustomizationContext.setTapCallback(nodeName: String, tapCallback: TapCallback) {
@@ -402,6 +409,10 @@ fun CustomizationContext.getTextState(nodeName: String): State<String>? {
 
 fun CustomizationContext.getModifier(nodeName: String): Modifier? {
     return cs[nodeName]?.modifier?.getOrNull()
+}
+
+fun CustomizationContext.getWindowInsets(nodeName: String): WindowInsets? {
+    return cs[nodeName]?.windowInsets?.getOrNull()
 }
 
 fun CustomizationContext.getTapCallback(nodeName: String): TapCallback? {

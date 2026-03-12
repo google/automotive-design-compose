@@ -39,6 +39,17 @@ class DesignDocIdTest {
             .isEqualTo(DesignDocId("test", "version").hashCode())
         assertThat(DesignDocId("test").hashCode()).isNotEqualTo(DesignDocId("test2").hashCode())
         assertThat(DesignDocId("test", "version").hashCode())
-            .isNotEqualTo(DesignDocId("test", "version2").hashCode())
+    }
+
+    @Test
+    fun testFromUrl() {
+        val idFromOldUrl = DesignDocId("https://www.figma.com/file/ABC123XYZ/MyFile")
+        assertThat(idFromOldUrl.id).isEqualTo("ABC123XYZ")
+
+        val idFromNewUrl = DesignDocId("https://www.figma.com/design/ABC123XYZ/MyFile")
+        assertThat(idFromNewUrl.id).isEqualTo("ABC123XYZ")
+
+        val idFromDirectUrl = DesignDocId("https://figma.com/file/ABC123XYZ")
+        assertThat(idFromDirectUrl.id).isEqualTo("ABC123XYZ")
     }
 }

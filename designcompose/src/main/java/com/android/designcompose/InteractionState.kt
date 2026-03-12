@@ -86,7 +86,15 @@ internal open class DeferredAction {
     /// back to the variant we were showing before, which could be the default (in which
     /// case the value is null), or could be some other specific variant (in which case
     /// the value will be the node ID).
-    class ChangeTo(val nodeId: String?) : DeferredAction()
+    ///
+    /// We also record the node value that we should restore from. It's possible that a
+    /// node value was changed while the temporary action was in place by some other action
+    /// and we shouldn't undo it. For example, a "pressed" variant might have a "click"
+    /// action which also performs a ChangeTo -- in this case we shouldn't revert the
+    /// ChangeTo of the click.
+    ///
+    /// XXX: What about the Timeout case?
+    class ChangeTo(val nodeId: String?, val changeFromNodeId: String?) : DeferredAction()
 }
 
 /// Execute a DeferredAction. An optional key is used to differentiate multiple component instances
@@ -136,10 +144,14 @@ internal fun DeferredAction.apply(
         is DeferredAction.ChangeTo -> {
             if (targetInstanceId == null) return
             val varKey = getInstanceIdWithKey(targetInstanceId, key)
-            if (this.nodeId != null) {
-                state.variantMemory[varKey] = this.nodeId
-            } else {
-                state.variantMemory.remove(varKey)
+            // Only revert the ChangeTo if the variant memory still reflects the value that was
+            // changed by the initial action.
+            if (this.changeFromNodeId == null || state.variantMemory[varKey] == this.changeFromNodeId) {
+                if (this.nodeId != null) {
+                    state.variantMemory[varKey] = this.nodeId
+                } else {
+                    state.variantMemory.remove(varKey)
+                }
             }
             state.invalVariant(targetInstanceId)
         }
@@ -356,7 +368,7 @@ internal fun InteractionState.changeTo(
     val previousVariant = this.variantMemory.put(varKey, newVariantId)
     if (undoInstanceId != null) {
         val undoKey = getInstanceIdWithKey(undoInstanceId, key)
-        this.undoMemory[undoKey] = DeferredAction.ChangeTo(previousVariant)
+        this.undoMemory[undoKey] = DeferredAction.ChangeTo(previousVariant, newVariantId)
     }
     invalVariant(instanceNodeId)
 }

@@ -480,7 +480,16 @@ internal fun InteractionState.undoDispatch(
     undoInstanceId: String,
     key: String?,
 ) {
-    val undoKey = getInstanceIdWithKey(undoInstanceId, key)
+    val undoKey =
+        if (
+            action.actionTypeCase == Action.ActionTypeCase.NODE &&
+                action.node.navigation == Action.Node.Navigation.NAVIGATION_CHANGE_TO &&
+                targetInstanceId != null
+        ) {
+            getInstanceIdWithKey(undoInstanceId, key) + ":" + targetInstanceId
+        } else {
+            getInstanceIdWithKey(undoInstanceId, key)
+        }
     val undoAction = undoMemory.remove(undoKey)
     undoAction?.apply(this, targetInstanceId, key)
 

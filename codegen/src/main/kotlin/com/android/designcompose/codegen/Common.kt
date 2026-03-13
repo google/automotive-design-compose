@@ -156,37 +156,48 @@ internal fun createNewFile(
 // Get the string representation of a KSTypeReference, for example "Bitmap?"
 internal fun KSTypeReference.typeString(): String {
     // Add any annotations specified for this type
-    var typeName = ""
-    annotations.forEach { typeName += "$it " }
+    var prefix = ""
+    annotations.forEach { prefix += "$it " }
+
     val ksType = resolve()
+    val isFunctionType = ksType.isFunctionType
     val qualifiedName = ksType.declaration.qualifiedName
     val qualifier = qualifiedName?.getQualifier()
+
     // For kotlin and android types, use just the typename without the qualifier. Otherwise,
     // use the qualifier, since the macro specified an explicit qualifier
-    typeName +=
-        if (qualifier?.startsWith("kotlin")?.or(qualifier.startsWith("android")) == true) toString()
-        else qualifiedName?.asString() ?: toString()
+    var typeName =
+        if (qualifier?.startsWith("kotlin") == true || qualifier?.startsWith("android") == true) {
+            ksType.declaration.simpleName.asString()
+        } else {
+            qualifiedName?.asString() ?: toString()
+        }
 
     // Add template parameters if there are any
-    if (!ksType.isFunctionType && ksType.arguments.isNotEmpty()) {
-        typeName += "<${ksType.arguments.joinToString(",") { arg -> arg.type.toString() }}>"
-    }
-
-    // Add nullability operator to types in typeName that are nullable
-    ksType.arguments.forEach {
-        if (it.type?.resolve()?.nullability == Nullability.NULLABLE)
-            typeName = typeName.replace(it.type.toString(), "${it.type}?")
+    if (ksType.arguments.isNotEmpty()) {
+        if (isFunctionType) {
+            val args = ksType.arguments.dropLast(1)
+            val returnType = ksType.arguments.last()
+            typeName =
+                "(${args.joinToString(", ") { arg -> arg.type!!.typeString() }}) -> ${returnType.type!!.typeString()}"
+        } else {
+            typeName +=
+                "<${ksType.arguments.joinToString(", ") { arg -> arg.type!!.typeString() }}>"
+        }
     }
 
     // Add Nullability operator if the type is nullable
     if (ksType.nullability == Nullability.NULLABLE) typeName += "?"
 
-    return typeName
+    return prefix + typeName
 }
 
 // Convert the string representation of a type to an enum in CustomizationType
 internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
-    return when (strType) {
+    val cleanType =
+        strType.replace("com.android.designcompose.", "").replace("@androidx.compose.runtime.", "@")
+
+    return when (cleanType) {
         "String" -> CustomizationType.Text
         "String?" -> CustomizationType.Text
         "State<String>" -> CustomizationType.TextState
@@ -194,22 +205,20 @@ internal fun stringTypeToCustomizationType(strType: String): CustomizationType {
         "() -> Brush" -> CustomizationType.BrushFunction
         "Bitmap?" -> CustomizationType.Image
         "Modifier" -> CustomizationType.Modifier
-        "com.android.designcompose.TapCallback" -> CustomizationType.TapCallback
-        "com.android.designcompose.OnProgressChangedCallback" ->
-            CustomizationType.OnProgressChangedCallback
-        "com.android.designcompose.ReplacementContent" -> CustomizationType.ContentReplacement
+        "TapCallback" -> CustomizationType.TapCallback
+        "OnProgressChangedCallback" -> CustomizationType.OnProgressChangedCallback
+        "ReplacementContent" -> CustomizationType.ContentReplacement
         "@Composable (ComponentReplacementContext) -> Unit" ->
             CustomizationType.ComponentReplacement
-        "com.android.designcompose.ListContent" -> CustomizationType.ListContent
+        "ListContent" -> CustomizationType.ListContent
         "(ImageReplacementContext) -> Bitmap?" -> CustomizationType.ImageWithContext
         "Boolean" -> CustomizationType.Visibility
         "State<Boolean>" -> CustomizationType.VisibilityState
         "TextStyle" -> CustomizationType.TextStyle
-        "com.android.designcompose.Meter" -> CustomizationType.Meter
-        "com.android.designcompose.MeterState" -> CustomizationType.MeterState
-        "com.android.designcompose.ShaderUniformCustomizations" ->
-            CustomizationType.ShaderUniformCustomizations
-        "com.android.designcompose.DesignScrollCallbacks" -> CustomizationType.ScrollCallbacks
+        "Meter" -> CustomizationType.Meter
+        "MeterState" -> CustomizationType.MeterState
+        "ShaderUniformCustomizations" -> CustomizationType.ShaderUniformCustomizations
+        "DesignScrollCallbacks" -> CustomizationType.ScrollCallbacks
         else -> CustomizationType.Unknown
     }
 }

@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 // This module deserializes our "vsw Extended Layout" plugin output. The plugin writes one of two
 // values: "vsw-extended-text-layout" and "vsw-extended-auto-layout". We define a struct for each
-// so we don't have to deal with serde/bincode tagged enum issues.
+// so we don't have to deal with serde tagged enum issues.
 
 /// ExtendedTextLayout is an extra set of fields set by our plugin that help us to deal with
 /// dynamic text content. We need to know if it should wrap, or be truncated or ellipsized,

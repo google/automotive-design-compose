@@ -24,9 +24,9 @@ crates/**/target
 **/local.properties
 
 #Other
-/crates/figma_import/plugin-extended-layout/code.js
-/crates/figma_import/features/*.json
-/crates/figma_import/features/*.png
+/crates/dc_figma_import/plugin-extended-layout/code.js
+/crates/dc_figma_import/features/*.json
+/crates/dc_figma_import/features/*.png
 **/*.rs.bk
 **/.DS_Store
 **/.externalNativeBuild

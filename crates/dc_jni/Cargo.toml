@@ -15,7 +15,7 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 dc_bundle.workspace = true
-figma_import.workspace = true
+dc_figma_import.workspace = true
 dc_layout.workspace = true
 log.workspace = true
 jni.workspace = true
@@ -23,9 +23,7 @@ android_logger.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_bytes.workspace = true
-bincode.workspace = true
-ureq.workspace = true
-lazy_static.workspace = true
+reqwest.workspace = true
 protobuf.workspace = true
 thiserror.workspace = true
 bytes.workspace = true

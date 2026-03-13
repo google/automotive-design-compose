@@ -12,15 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Parser;
+// Utility program to parse a .dcf file and print its contents.
+// By default prints the header and file info.
+// Provide the optional `--node` or `-n` switch to dump figma document using
+// that node as root.
+// Example:
+// `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf`
+// or
+// `cargo run --bin dcf_info --features="dcf_info" -- tests/layout-unit-tests.dcf -n HorizontalFill`
 
-use figma_import::tools::fetch::fetch;
-use figma_import::tools::fetch::Args;
+use clap::Parser;
+use dc_figma_import::tools::dcf_info::dcf_info;
+use dc_figma_import::tools::dcf_info::Args;
+use std::process;
 
 fn main() {
     let args = Args::parse();
-    if let Err(e) = fetch(args) {
-        eprintln!("Fetch failed: {:?}", e);
+    if let Err(e) = dcf_info(args) {
+        eprintln!("dcf_info failed: {:?}", e);
         std::process::exit(1);
     }
 }

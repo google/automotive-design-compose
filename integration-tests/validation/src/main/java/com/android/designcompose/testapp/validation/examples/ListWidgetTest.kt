@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import com.android.designcompose.GetDesignNodeData
 import com.android.designcompose.ListContent
 import com.android.designcompose.ListContentData
+import com.android.designcompose.TapCallback
 import com.android.designcompose.annotation.Design
 import com.android.designcompose.annotation.DesignComponent
 import com.android.designcompose.annotation.DesignContentTypes
@@ -89,12 +90,14 @@ interface ListWidgetTest {
     fun Item(
         @DesignVariant(property = "#Item") type: ItemType,
         @Design(node = "#Title") title: String,
+        @Design(node = "#Item") onTap: TapCallback = {},
     )
 
     @DesignComponent(node = "#VItem")
     fun VItem(
         @DesignVariant(property = "#VItem") type: ItemType,
         @Design(node = "#Title") title: String,
+        @Design(node = "#VItem") onTap: TapCallback = {},
     )
 }
 
@@ -125,8 +128,17 @@ fun ListWidgetTest() {
     fun itemComposable(items: ArrayList<Pair<GridItemType, String>>, index: Int) {
         when (items[index].first) {
             GridItemType.RowGrid ->
-                ListWidgetTestDoc.Item(type = ItemType.Grid, title = items[index].second)
-            else -> ListWidgetTestDoc.VItem(type = ItemType.Grid, title = items[index].second)
+                ListWidgetTestDoc.Item(
+                    type = ItemType.Grid,
+                    title = items[index].second,
+                    onTap = {},
+                )
+            else ->
+                ListWidgetTestDoc.VItem(
+                    type = ItemType.Grid,
+                    title = items[index].second,
+                    onTap = {},
+                )
         }
     }
 

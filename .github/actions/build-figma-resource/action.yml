@@ -23,7 +23,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+    - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6.3.0
     - name: Build
       working-directory: support-figma/${{ inputs.resource }}
       run: npm ci; npm run build
@@ -32,16 +32,18 @@ runs:
     - name: Package
       shell: bash
       run: |
-        mkdir -p ${{ inputs.resource }}/dist
+        mkdir -p ${INPUTS_RESOURCE}/dist
 
-        mv support-figma/${{ inputs.resource }}/manifest.json \
-          ${{ inputs.resource }}
+        mv support-figma/${INPUTS_RESOURCE}/manifest.json \
+          ${INPUTS_RESOURCE}
 
-        mv support-figma/${{ inputs.resource }}/dist/ui.html \
-          support-figma/${{ inputs.resource }}/dist/code.js \
-          ${{ inputs.resource }}/dist
+        mv support-figma/${INPUTS_RESOURCE}/dist/ui.html \
+          support-figma/${INPUTS_RESOURCE}/dist/code.js \
+          ${INPUTS_RESOURCE}/dist
+      env:
+        INPUTS_RESOURCE: ${{ inputs.resource }}
 
-    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
       with:
         name: ${{ inputs.resource }}
         path: ${{ inputs.resource }}

@@ -643,6 +643,14 @@ pub enum LayoutMode {
     Vertical,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Default, Copy)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum LayoutWrap {
+    #[default]
+    NoWrap,
+    Wrap,
+}
+
 impl LayoutMode {
     pub fn is_none(&self) -> bool {
         match self {
@@ -825,6 +833,8 @@ pub struct FrameCommon {
     pub clips_content: bool,
     #[serde(default)]
     pub layout_mode: LayoutMode,
+    #[serde(default)]
+    pub layout_wrap: LayoutWrap,
     #[serde(default)]
     pub primary_axis_sizing_mode: LayoutSizingMode, // FIXED, AUTO
     #[serde(default)]

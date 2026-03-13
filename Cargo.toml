@@ -1,15 +1,15 @@
 [workspace]
 resolver = "2"
-members = ["crates/figma_import", "crates/dc_jni", "crates/dc_layout", "crates/dc_bundle"]
+members = ["crates/dc_figma_import", "crates/dc_jni", "crates/dc_layout", "crates/dc_bundle"]
 
 [workspace.package]
 # LINT.IfChange
-version = "0.38.0"
+version = "0.38.2"
 # LINT.ThenChange(gradle/libs.versions.toml)
 edition = "2021"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]
 license = "Apache-2.0"
-rust-version = "1.68"
+rust-version = "1.80"
 homepage = "https://google.github.io/automotive-design-compose"
 repository = "https://github.com/google/automotive-design-compose"
 
@@ -20,22 +20,19 @@ codegen-units = 1
 panic = 'abort'
 
 [workspace.dependencies]
-# dc_bundle needs a version because it is a dependency published on crates.io
-dc_bundle = { version = "0.38.0", path = "crates/dc_bundle" }
-dc_layout = { path = "crates/dc_layout" }
-figma_import = { path = "crates/figma_import" }
+# dc_* crates specify a version because they are dependencies published on crates.io
+dc_bundle = { version = "0.38.2", path = "crates/dc_bundle" }
+dc_layout = { version = "0.38.2", path = "crates/dc_layout" }
+dc_figma_import = { version = "0.38.2", path = "crates/dc_figma_import" }
 android_logger = "0.13.1"
 anyhow = "1.0"
-bincode = "1.3"
 bytes = "1.6.0"
 clap = { version = "4.5", features = ["derive", "env"] }
-euclid = { version = "0.20.13", default-features = false, features = ["serde", "libm"] }
 image = { version = "0.25", default-features = false, features = [
     "png",
     "jpeg",
 ] }
 jni = "0.21.1"
-lazy_static = "1.5.0"
 log = "0.4"
 phf = { version = "0.11", features = ["macros"] }
 protobuf = "3.2.0"
@@ -45,13 +42,12 @@ serde_bytes = "0.11"
 serde-generate = { version = "0.25.1" }
 serde_json = "1.0"
 serde-reflection = { version = "0.3" }
-svgtypes = "0.15.1"
+svgtypes = "0.16.1"
 taffy = { version = "0.6", default-features = false, features = ["std", "taffy_tree", "flexbox", "content_size"] }
-testdir = "0.9.1"
 tempfile = "3.11.0"
 thiserror = "2.0.11"
 unicode-segmentation = "1"
-ureq = "2"
+reqwest = { version = "0.12.26", default-features = false, features = ["blocking", "h2", "http2", "rustls-tls-native-roots-no-provider", "rustls-tls"] }
 vergen = { version = "8.3.2", default-features = false, features = [
     "build",
     "git",

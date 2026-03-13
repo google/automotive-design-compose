@@ -61,7 +61,13 @@ class JniFetchTests {
 
         assertNotNull(response)
         val decodedDoc =
-            decodeServerDoc(response.documentOrNull!!, null, DesignDocId(docID), null, Feedback)
+            decodeServerDoc(
+                response.documentOrNull!!,
+                null,
+                DesignDocId(docID),
+                emptySet(),
+                Feedback,
+            )
         assertNotNull(decodedDoc)
         assertEquals(decodedDoc.c.docId.id, docID)
     }

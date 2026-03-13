@@ -1,5 +1,5 @@
 [package]
-name = "figma_import"
+name = "dc_figma_import"
 description = "Figma document serialization toolkit"
 version.workspace = true
 edition.workspace = true
@@ -21,34 +21,31 @@ test_fetches = ["fetch"]
 [dependencies]
 dc_layout.workspace = true
 dc_bundle.workspace = true
-ureq.workspace = true
+reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_bytes.workspace = true
-bincode.workspace = true
 thiserror.workspace = true
 protobuf.workspace = true
 svgtypes.workspace = true
 
 unicode-segmentation.workspace = true
 image.workspace = true
-euclid.workspace = true
 
 # layout dependencies
 taffy.workspace = true
-lazy_static.workspace = true
 
 clap = { workspace = true, optional = true }
 
 # logging
 log.workspace = true
+serde_path_to_error = "0.1.20"
 
 [build-dependencies]
 vergen.workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]
-testdir.workspace = true
 tempfile.workspace = true
 
 [[bin]]

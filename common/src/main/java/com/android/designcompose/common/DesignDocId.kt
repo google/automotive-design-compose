@@ -21,6 +21,14 @@ package com.android.designcompose.common
  * will load head of the figma doc.
  */
 data class DesignDocId(var id: String, var versionId: String = "") {
+    init {
+        val regex = "https?://(?:www\\.)?figma\\.com/(?:file|design)/([a-zA-Z0-9]+)".toRegex()
+        val match = regex.find(id)
+        if (match != null) {
+            id = match.groupValues[1]
+        }
+    }
+
     fun isValid(): Boolean {
         return id.isNotEmpty()
     }

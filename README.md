@@ -76,6 +76,42 @@ Zoom in on it and begin your tutorial!
 We'll be adding more documentation and guides soon! For now you can look
 to `reference-apps/helloworld` for an an example of a basic app.
 
+## Figma CLI Tools
+
+This project includes command-line tools to help interact with Figma files, built with Rust. Pre-compiled binaries for Linux (x86_64, aarch64), macOS (x86_64, aarch64), and Windows (x86_64) are available in the [GitHub Releases](https://github.com/google/automotive-design-compose/releases).
+
+### `fetch`
+
+The `fetch` tool downloads a Figma document, extracts specified nodes, and saves the output to a `.dcf` file. This tool requires a Figma access token, which can be provided via the `FIGMA_ACCESS_TOKEN` environment variable or a file at `~/.config/figma_access_token`.
+
+**Usage:**
+
+```bash
+./fetch --doc-id <DOCUMENT_ID> --nodes <NODE_NAME> --output <OUTPUT_FILE.dcf>
+```
+
+**Example:**
+
+```bash
+./fetch --doc-id 2aM4SczJzWg1rov2qqBMpe --nodes "#MainFrame" --output output.dcf
+```
+
+### `dcf_info`
+
+The `dcf_info` tool inspects a `.dcf` file and prints its contents, including header information and variable data.
+
+**Usage:**
+
+```bash
+./dcf_info <INPUT_FILE.dcf> --varinfo
+```
+
+**Example:**
+
+```bash
+./dcf_info output.dcf --varinfo
+```
+
 # Working with the Source
 
 ## Proto Submodule
@@ -258,7 +294,7 @@ Automotive Design for Compose consists of several components:
       renders them using Jetpack Compose. It also contains the code that uses the Figma Import JNI
       library to fetch documents from the Figma webservice.
 
-- Figma Import, in `crates/figma_import`, is a library implemented in Rust that fetches documents
+- Figma Import, in `crates/dc_figma_import`, is a library implemented in Rust that fetches documents
   and resources from the Figma API and generates a serialized document containing only the
   information that Automotive Design for Compose needs. The JNI interface used by the Android
   runtime is in `crates/live_update`.
@@ -311,7 +347,7 @@ Manifest** and select the `manifest.json` file to import.
 ## Updating serialized Figma files
 
 Any changes that include an update to the Figma serialized file version (set in
-crates/figma_import/src/serialized_document.rs) will require the committed serialized files to be
+crates/dc_figma_import/src/serialized_document.rs) will require the committed serialized files to be
 updated with new versions that have been fetched with the updated version. At a minimum this
 includes any files that are being tested with AndroidIntegratedTests, and most especially the Design
 Switcher and the Tutorial's welcome screen, which are special cases.

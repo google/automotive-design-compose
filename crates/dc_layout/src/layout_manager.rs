@@ -797,9 +797,8 @@ mod tests {
         layout_manager.mark_dirty(999); // non-existent id
     }
 
-    lazy_static::lazy_static! {
-        static ref PRINT_OUTPUT: Mutex<Vec<String>> = Mutex::new(Vec::new());
-    }
+    static PRINT_OUTPUT: std::sync::LazyLock<Mutex<Vec<String>>> =
+        std::sync::LazyLock::new(|| Mutex::new(Vec::new()));
 
     fn test_print_callback(s: String) {
         PRINT_OUTPUT.lock().unwrap().push(s);

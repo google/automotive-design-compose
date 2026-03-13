@@ -563,7 +563,7 @@ impl Document {
                             view.style.clone(),
                             view.data.clone(),
                             view.id.clone(),
-                            info.component_set_name.clone(),
+                            info.name.clone(),
                             info,
                             reference_component_option,
                             true,
@@ -589,6 +589,35 @@ impl Document {
                 (None, Some(parent_info)) => {
                     // This matches a descendent view of a component instance.
                     // The style and data overrides are written to hash map keyed by the view name
+                    // in the component info of the instance.
+                    action(
+                        view.style.clone(),
+                        view.data.clone(),
+                        view.id.clone(),
+                        view.name.clone(),
+                        parent_info,
+                        parent_reference_component,
+                        false,
+                    );
+                    if let Some(data) = view.data.as_mut() {
+                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+                            data.view_data_type.as_mut()
+                        {
+                            for child in children {
+                                for_each_component_instance(
+                                    reference_components,
+                                    child,
+                                    Some(parent_info),
+                                    parent_reference_component,
+                                    action,
+                                );
+                            }
+                        }
+                    }
+                }
+                (Some(parent_info), Some(_)) => {
+                    // This matches a component instance within a component instance.
+                    // The style and data overrides are written to a hash map keyed by the view name
                     // in the component info of the instance.
                     action(
                         view.style.clone(),
@@ -659,7 +688,7 @@ impl Document {
                             reference_component.find_view_by_id(&view_id)
                         };
                         if let Some(template_view) = template_view_option {
-                            let override_view_style = if view_style == template_view.style {
+                            let mut override_view_style = if view_style == template_view.style {
                                 MessageField::none()
                             } else if let Some(view_style_ref) = view_style.as_ref() {
                                 let diff: Option<ViewStyle> =
@@ -669,6 +698,35 @@ impl Document {
                                 error!("ViewStyle is required.");
                                 MessageField::none()
                             };
+
+                            let anim_over = view_style
+                                .as_ref()
+                                .and_then(|v| {
+                                    v.node_style().animation_override.clone().into_option()
+                                })
+                                .or_else(|| {
+                                    template_view
+                                        .style()
+                                        .node_style()
+                                        .animation_override
+                                        .clone()
+                                        .into_option()
+                                });
+
+                            if let Some(anim_over) = anim_over {
+                                if override_view_style.is_none() {
+                                    let mut new_style = ViewStyle::new_default();
+                                    new_style.node_style_mut().animation_override =
+                                        Some(anim_over).into();
+                                    override_view_style = Some(new_style).into();
+                                } else {
+                                    override_view_style
+                                        .mut_or_insert_default()
+                                        .node_style_mut()
+                                        .animation_override = Some(anim_over).into();
+                                }
+                            }
+
                             let override_view_data =
                                 if let Some(reference_view_data) = template_view.data.as_ref() {
                                     if let Some(data) = view_data.as_ref() {

@@ -23,7 +23,7 @@ pub struct Duration {
     /// The whole number of seconds.
     pub secs: i64,
     /// The number of nanoseconds.
-    pub nanos: i32,
+    pub nanos: f64,
 }
 
 /// Defines a cubic bezier curve for custom easing.

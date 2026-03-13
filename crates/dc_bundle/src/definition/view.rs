@@ -328,7 +328,8 @@ impl ViewStyle {
             delta.node_style_mut().scalable_data = other.node_style().scalable_data.clone();
         }
         if self.node_style().animation_override != other.node_style().animation_override {
-            delta.node_style_mut().animation_override = other.node_style().animation_override.clone();
+            delta.node_style_mut().animation_override =
+                other.node_style().animation_override.clone();
         }
         delta
     }
@@ -621,7 +622,10 @@ mod tests {
         assert_eq!(diff3.layout_style().flex_direction, style4.layout_style().flex_direction);
         assert_eq!(diff3.layout_style().align_items, style4.layout_style().align_items);
         assert_eq!(diff3.layout_style().margin, style4.layout_style().margin.clone());
-        assert_eq!(diff3.node_style().animation_override, style4.node_style().animation_override.clone());
+        assert_eq!(
+            diff3.node_style().animation_override,
+            style4.node_style().animation_override.clone()
+        );
         assert_eq!(diff3.node_style().horizontal_sizing, style4.node_style().horizontal_sizing);
 
         // Test no difference with all properties set
@@ -658,7 +662,10 @@ mod tests {
             crate::positioning::AlignItems::ALIGN_ITEMS_STRETCH
         );
         assert_eq!(diff4.layout_style().margin, ViewStyle::new_default().layout_style().margin);
-        assert_eq!(diff4.node_style().animation_override, ViewStyle::new_default().node_style().animation_override);
+        assert_eq!(
+            diff4.node_style().animation_override,
+            ViewStyle::new_default().node_style().animation_override
+        );
     }
 
     #[test]

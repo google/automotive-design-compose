@@ -2050,18 +2050,25 @@ fn visit_node(
         RenderMethod::RENDER_METHOD_NONE,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
     );
-    if let Some(animation_override) = &node.animation_override {
-        view.style_mut().node_style_mut().animation_override =
-            Some(AnimationOverride::from(animation_override).into()).into();
-    } else if let Some(plugin_data) = node.shared_plugin_data.get("designcompose") {
+    let mut parsed_plugin_override = None;
+    if let Some(plugin_data) = node.shared_plugin_data.get("designcompose") {
         if let Some(anim_str) = plugin_data.get("animations") {
             if let Ok(anim) = serde_json::from_str::<AnimationOverrideJson>(anim_str) {
-                view.style_mut().node_style_mut().animation_override =
-                    Some(AnimationOverride::from(&anim).into()).into();
+                parsed_plugin_override = Some(anim);
             } else {
                 log::error!("Failed to parse animations plugin data for node {}", node.id);
             }
+        } else {
         }
+    } else {
+    }
+
+    if let Some(anim) = parsed_plugin_override {
+        view.style_mut().node_style_mut().animation_override =
+            Some(AnimationOverride::from(&anim).into()).into();
+    } else if let Some(animation_override) = &node.animation_override {
+        view.style_mut().node_style_mut().animation_override =
+            Some(AnimationOverride::from(animation_override).into()).into();
     }
 
     // Iterate over our visible children, but not vectors because they always

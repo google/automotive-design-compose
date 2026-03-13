@@ -426,7 +426,7 @@ impl std::str::FromStr for AnimatableProperty {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Opacity" => Ok(AnimatableProperty::Opacity),
+            "opacity" => Ok(AnimatableProperty::Opacity),
             "x" => Ok(AnimatableProperty::X),
             "y" => Ok(AnimatableProperty::Y),
             "width" => Ok(AnimatableProperty::Width),

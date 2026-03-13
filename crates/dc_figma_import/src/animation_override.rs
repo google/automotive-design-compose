@@ -188,7 +188,7 @@ impl From<Duration> for ::protobuf::well_known_types::duration::Duration {
     fn from(json: Duration) -> Self {
         ::protobuf::well_known_types::duration::Duration {
             seconds: json.secs,
-            nanos: json.nanos,
+            nanos: json.nanos as i32,
             ..Default::default()
         }
     }
@@ -248,7 +248,7 @@ mod tests {
     #[test]
     fn test_animation_spec_from_json() {
         let json_spec = AnimationSpecJson {
-            initial_delay: Duration { secs: 1, nanos: 500_000_000 },
+            initial_delay: Duration { secs: 1, nanos: 500_000_000.0 },
             animation: AnimationsJson::default(),
             interrupt_type: Some(StopTypeJson::Complete),
             custom_keyframe_data: std::collections::HashMap::new(),
@@ -264,7 +264,7 @@ mod tests {
 
         // Test with no interrupt_type
         let json_spec_no_interrupt = AnimationSpecJson {
-            initial_delay: Duration { secs: 1, nanos: 500_000_000 },
+            initial_delay: Duration { secs: 1, nanos: 500_000_000.0 },
             animation: AnimationsJson::default(),
             interrupt_type: None,
             custom_keyframe_data: std::collections::HashMap::new(),
@@ -296,7 +296,7 @@ mod tests {
     #[test]
     fn test_smooth_animation_from_json() {
         let json_smooth = SmoothAnimationJson {
-            duration: Duration { secs: 2, nanos: 0 },
+            duration: Duration { secs: 2, nanos: 0.0 },
             repeat_type: RepeatTypeJson::String("LoopForever".to_string()),
             easing: EasingJson::String("Linear".to_string()),
         };
@@ -330,7 +330,7 @@ mod tests {
     #[test]
     fn test_key_frame_from_json() {
         let json_keyframe =
-            KeyFrameJson { value: 0.5, duration: Duration { secs: 0, nanos: 100_000_000 } };
+            KeyFrameJson { value: 0.5, duration: Duration { secs: 0, nanos: 100_000_000.0 } };
         let proto_keyframe: KeyFrame = json_keyframe.into();
         assert_eq!(proto_keyframe.value, 0.5);
         assert_eq!(proto_keyframe.duration.get_or_default().seconds, 0);
@@ -412,7 +412,7 @@ mod tests {
 
     #[test]
     fn test_duration_from_json() {
-        let json_duration = Duration { secs: 10, nanos: 123 };
+        let json_duration = Duration { secs: 10, nanos: 123.0 };
         let proto_duration: ::protobuf::well_known_types::duration::Duration = json_duration.into();
         assert_eq!(proto_duration.seconds, 10);
         assert_eq!(proto_duration.nanos, 123);

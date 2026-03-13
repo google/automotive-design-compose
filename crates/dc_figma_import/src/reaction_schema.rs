@@ -113,6 +113,13 @@ pub enum EasingJson {
 
 // We flatten the Easing type to a bezier for the toolkit. These values were taken from
 // https://easings.net/ and verified against Figma optically.
+//
+// These cubic bezier control points are from an old reference (Robert Penner named these
+// values, Macromedia Flash developers popularized them, and now they're in Figma, unchanged).
+// We've verified optically that they produce the same output as Figma's preview viewer.
+//
+// For the spring values, they were taken from Figma's blog post announcing the
+// spring timing function.
 impl Into<Easing_type> for EasingJson {
     fn into(self) -> Easing_type {
         match self {

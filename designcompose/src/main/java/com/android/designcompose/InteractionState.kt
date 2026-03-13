@@ -146,7 +146,10 @@ internal fun DeferredAction.apply(
             val varKey = getInstanceIdWithKey(targetInstanceId, key)
             // Only revert the ChangeTo if the variant memory still reflects the value that was
             // changed by the initial action.
-            if (this.changeFromNodeId == null || state.variantMemory[varKey] == this.changeFromNodeId) {
+            if (
+                this.changeFromNodeId == null ||
+                    state.variantMemory[varKey] == this.changeFromNodeId
+            ) {
                 if (this.nodeId != null) {
                     state.variantMemory[varKey] = this.nodeId
                 } else {

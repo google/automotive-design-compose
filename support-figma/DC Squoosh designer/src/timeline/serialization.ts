@@ -27,11 +27,10 @@ export function deserializeArc(serializedArc: string): ArcData {
 }
 
 /**
- * Serializes an array of custom keyframes into a string format suitable for storage.
- * Handles base64 encoding of values to ensure safety.
+ * Serializes an array of custom keyframes into a JSON string suitable for storage.
  * @param keyframes The array of keyframe data objects.
  * @param targetEasing The easing of the target variant keyframe.
- * @returns The serialized string.
+ * @returns The serialized JSON string.
  */
 export function serializeKeyframes(
   keyframes: {
@@ -41,17 +40,9 @@ export function serializeKeyframes(
   }[],
   targetEasing: string = "Inherit"
 ): string {
-  const kfsString = keyframes
-    .map((kf) => {
-      const valueStr =
-        typeof kf.value === "object"
-          ? JSON.stringify(kf.value)
-          : String(kf.value);
-      const encodedValue = btoa(valueStr);
-      return `${kf.fraction},${encodedValue},${kf.easing || "Linear"}`;
-    })
-    .join(";");
-  return `${targetEasing}|${kfsString}`;
+  // We use standard JSON serialization now. 
+  // Figma's API limits plugin data to strings, but native JSON parsing is highly optimized.
+  return JSON.stringify({ targetEasing, keyframes });
 }
 
 /**
@@ -67,6 +58,20 @@ export function deserializeKeyframes(
     return { keyframes: [], targetEasing: "Inherit" };
   }
 
+  // Attempt to parse NEW JSON format first
+  if (serializedData.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(serializedData);
+      if (parsed && Array.isArray(parsed.keyframes)) {
+        return parsed;
+      }
+    } catch (e) {
+      // Fall through to legacy parsing
+      console.warn("Failed to parse JSON custom keyframes, falling back to legacy format.", e);
+    }
+  }
+
+  // LEGACY parsing...
   let targetEasing = "Inherit";
   let kfsData = serializedData;
 

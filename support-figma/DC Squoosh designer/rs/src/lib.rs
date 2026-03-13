@@ -5,7 +5,7 @@ use std::collections::HashMap;
 // --- High Level Runtime Types ---
 
 /// Supported easing functions for interpolation.
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
 pub enum Easing {
     Inherit,
     Linear,
@@ -58,7 +58,7 @@ impl Easing {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
 pub struct Rgba {
     pub r: u8,
     pub g: u8,
@@ -96,27 +96,31 @@ impl Rgba {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GradientStop {
     pub position: f32,
     pub color: Rgba,
 }
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
 pub struct ArcData {
+    #[serde(rename = "startingAngle")]
     pub starting_angle: f32,
+    #[serde(rename = "endingAngle")]
     pub ending_angle: f32,
+    #[serde(rename = "innerRadius")]
     pub inner_radius: f32,
 }
 
 // Optimized Enum: Uses f32 for rendering, Fixed arrays, Pre-parsed Colors
 /// Represents the value of a property at a specific keyframe.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum KeyframeValue {
-    /// A single scalar value (e.g., x, y, width, opacity).
-    Scalar(f32),
     /// Four corner radii [TL, TR, BR, BL].
     CornerRadii([f32; 4]),
+    /// A single scalar value (e.g., x, y, width, opacity).
+    Scalar(f32),
     /// A solid color in RGBA.
     Color(Rgba),
     /// A gradient with multiple stops.
@@ -168,7 +172,7 @@ impl KeyframeValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ParsedKeyframe {
     pub fraction: f32,
     pub value: KeyframeValue,
@@ -176,8 +180,9 @@ pub struct ParsedKeyframe {
 }
 
 /// Represents a parsed timeline of custom keyframes for a single property.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ParsedTimelineData {
+    #[serde(rename = "targetEasing")]
     pub target_easing: Easing,
     pub keyframes: Vec<ParsedKeyframe>,
 }
@@ -185,8 +190,20 @@ pub struct ParsedTimelineData {
 // --- Parsing Logic ---
 
 impl ParsedTimelineData {
-    /// Parses a pipe-separated custom keyframe string.
+    /// Parses a pipe-separated custom keyframe string or a JSON payload.
     pub fn parse(encoded_data: &str) -> Result<Self, String> {
+        // Attempt new JSON parsing first
+        if encoded_data.starts_with('{') {
+            if let Ok(mut parsed) = serde_json::from_str::<ParsedTimelineData>(encoded_data) {
+                // Ensure sorted
+                parsed.keyframes.sort_by(|a, b| {
+                    a.fraction.partial_cmp(&b.fraction).unwrap_or(std::cmp::Ordering::Equal)
+                });
+                return Ok(parsed);
+            }
+        }
+
+        // LEGACY PARSING
         let parts: Vec<&str> = encoded_data.split('|').collect();
         if parts.is_empty() {
             return Err("Empty data".to_string());

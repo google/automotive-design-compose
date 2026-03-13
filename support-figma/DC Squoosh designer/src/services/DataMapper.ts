@@ -165,12 +165,18 @@ export class DataMapper {
     variants: Variant[],
     serializedVariants: SerializedNode[],
   ): AnimationData {
+    console.log("transformDataToAnimationData inputs:", {
+      variantsLength: variants ? variants.length : 0,
+      serializedVariantsLength: serializedVariants ? serializedVariants.length : 0,
+    });
+
     if (
       !variants ||
       variants.length === 0 ||
       !serializedVariants ||
       serializedVariants.length === 0
     ) {
+      console.warn("transformDataToAnimationData: variants or serializedVariants is empty.");
       return { nodes: [], duration: 1 };
     }
 
@@ -218,6 +224,7 @@ export class DataMapper {
 
     const figmaVariantRootNode = nodesMap.get("__ROOT__");
     if (!figmaVariantRootNode) {
+         console.warn("transformDataToAnimationData: __ROOT__ node not found in nodesMap.");
          return { nodes: [], duration: 1 };
     }
 

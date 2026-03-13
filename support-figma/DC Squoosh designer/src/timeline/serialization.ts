@@ -42,7 +42,28 @@ export function serializeKeyframes(
 ): string {
   // We use standard JSON serialization now. 
   // Figma's API limits plugin data to strings, but native JSON parsing is highly optimized.
-  return JSON.stringify({ targetEasing, keyframes });
+  return JSON.stringify({
+    targetEasing,
+    keyframes: keyframes.map(k => ({
+      fraction: k.fraction,
+      value: k.value,
+      easing: k.easing || "Inherit"
+    }))
+  });
+}
+
+function decodeBase64(encoded: string): string {
+  if (typeof atob !== "undefined") {
+    return atob(encoded);
+  } else if (typeof figma !== "undefined" && figma.base64Decode) {
+    const uint8Array = figma.base64Decode(encoded);
+    let str = "";
+    for (let i = 0; i < uint8Array.length; i++) {
+      str += String.fromCharCode(uint8Array[i]);
+    }
+    return str;
+  }
+  throw new Error("No base64 decoder available");
 }
 
 /**
@@ -90,7 +111,7 @@ export function deserializeKeyframes(
     const fraction = parseFloat(fractionStr);
     let value: unknown;
     try {
-      const decodedValue = atob(encodedValue);
+      const decodedValue = decodeBase64(encodedValue);
       try {
         value = JSON.parse(decodedValue);
       } catch (e) {

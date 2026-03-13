@@ -6,6 +6,8 @@
 import { hexToRgb, EPSILON } from "./utils/common";
 import { AnimatedNode, SerializedNode, Variant } from "./timeline/types";
 import { runSandboxTests } from "./timeline/sandbox_tests";
+import { serializeKeyframes, deserializeKeyframes } from "./timeline/serialization";
+
 
 // Config
 const PERSIST_WINDOW_SIZE = true; // Set to false to disable saving window size
@@ -133,6 +135,8 @@ async function updateSelection() {
         componentName = singleComponent.name;
     }
 
+    let upgradedVariantsCount = 0;
+
     for (const variantNode of variantsNodeList) {
       if (variantNode.type === "COMPONENT") {
         const variantName = variantNode.name;
@@ -140,11 +144,34 @@ async function updateSelection() {
           "designcompose",
           "animations",
         );
+        let animationData = animationDataString ? JSON.parse(animationDataString) : null;
+        let upgraded = false;
+
+        if (animationData && animationData.customKeyframeData) {
+          for (const [key, value] of Object.entries(animationData.customKeyframeData)) {
+            if (typeof value === "string" && !value.startsWith("{") && value.indexOf("|") !== -1) {
+              const deserialized = deserializeKeyframes(value);
+              animationData.customKeyframeData[key] = serializeKeyframes(
+                deserialized.keyframes,
+                deserialized.targetEasing
+              );
+              upgraded = true;
+            }
+          }
+        }
+
+        if (upgraded) {
+          variantNode.setSharedPluginData(
+            "designcompose",
+            "animations",
+            JSON.stringify(animationData)
+          );
+          upgradedVariantsCount++;
+        }
+
         variants.push({
           name: variantName,
-          animation: animationDataString
-            ? JSON.parse(animationDataString)
-            : null,
+          animation: animationData,
         });
         serializedVariants.push(serializeNode(variantNode));
       } else {
@@ -152,6 +179,10 @@ async function updateSelection() {
           `Skipping unexpected node type in component set children: ${variantNode.type}`,
         );
       }
+    }
+
+    if (upgradedVariantsCount > 0) {
+      figma.notify(`Upgraded legacy animation data to JSON format for ${upgradedVariantsCount} variant(s).`);
     }
 
     figma.ui.postMessage({

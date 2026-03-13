@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose, Engine as _};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de};
 use std::collections::HashMap;
 
 // --- High Level Runtime Types ---
@@ -16,7 +16,12 @@ pub enum Easing {
     EaseInCubic,
     EaseOutCubic,
     EaseInOutCubic,
-    // "Unknown" removed for runtime performance; fallback to Linear during parsing
+}
+
+impl Default for Easing {
+    fn default() -> Self {
+        Easing::Inherit
+    }
 }
 
 impl Easing {
@@ -58,12 +63,65 @@ impl Easing {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize)]
 pub struct Rgba {
     pub r: u8,
     pub g: u8,
     pub b: u8,
     pub a: u8,
+}
+
+impl<'de> Deserialize<'de> for Rgba {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct RgbaVisitor;
+
+        impl<'de> de::Visitor<'de> for RgbaVisitor {
+            type Value = Rgba;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a hex string or a map with r, g, b, a")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(Rgba::from_hex(value))
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::MapAccess<'de>,
+            {
+                let mut r = None;
+                let mut g = None;
+                let mut b = None;
+                let mut a = None;
+
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        "r" => r = Some(map.next_value()?),
+                        "g" => g = Some(map.next_value()?),
+                        "b" => b = Some(map.next_value()?),
+                        "a" => a = Some(map.next_value()?),
+                        _ => { let _: serde_json::Value = map.next_value()?; } // Ignore unknown
+                    }
+                }
+
+                let r = r.unwrap_or(0);
+                let g = g.unwrap_or(0);
+                let b = b.unwrap_or(0);
+                let a = a.unwrap_or(255);
+
+                Ok(Rgba { r, g, b, a })
+            }
+        }
+
+        deserializer.deserialize_any(RgbaVisitor)
+    }
 }
 
 impl Rgba {
@@ -176,6 +234,7 @@ impl KeyframeValue {
 pub struct ParsedKeyframe {
     pub fraction: f32,
     pub value: KeyframeValue,
+    #[serde(default)]
     pub easing: Easing,
 }
 
@@ -665,5 +724,15 @@ mod tests {
         } else {
             panic!("Wrong type");
         }
+    }
+
+    #[test]
+    fn test_json_parsing_string_value() {
+        let json_str = r##"{"targetEasing":"Inherit","keyframes":[{"fraction":0,"value":"#FF0000"},{"fraction":1,"value":"#00FF00"}]}"##;
+        let parsed: Result<ParsedTimelineData, _> = serde_json::from_str(json_str);
+        assert!(parsed.is_ok(), "Failed to parse JSON: {:?}", parsed.err());
+        let data = parsed.unwrap();
+        assert_eq!(data.keyframes.len(), 2);
+        assert_eq!(data.keyframes[0].value, KeyframeValue::Color(Rgba { r: 255, g: 0, b: 0, a: 255 }));
     }
 }

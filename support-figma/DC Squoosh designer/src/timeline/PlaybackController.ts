@@ -241,8 +241,8 @@ export class PlaybackController extends EventEmitter {
 
   private findNodeByName(nodes: Node[], name: string): Node | null {
     for (const node of nodes) {
-      if (node.name === name) return node;
-      if (node.children) {
+      if (node && node.name === name) return node;
+      if (node && node.children) {
         const found = this.findNodeByName(node.children, name);
         if (found) return found;
       }
@@ -286,6 +286,11 @@ export class PlaybackController extends EventEmitter {
   }
 
   private performUpdatePreviewAtTime(time: number) {
+    if (!this.animationData || !this.animationData.nodes || this.animationData.nodes.length === 0) {
+        console.warn("performUpdatePreviewAtTime: No animation data nodes available.");
+        return;
+    }
+
     let fromIndex = -1,
       toIndex = -1;
     let segmentStartTime = 0,
@@ -584,14 +589,14 @@ export class PlaybackController extends EventEmitter {
     timelineId: string,
   ): { node: Node; timeline: Timeline } | null {
     for (const node of nodes) {
-      if (node.timelines) {
+      if (node && node.timelines) {
         for (const timeline of node.timelines) {
           if (timeline.id === timelineId) {
             return { node, timeline };
           }
         }
       }
-      if (node.children && node.children.length > 0) {
+      if (node && node.children && node.children.length > 0) {
         const found = this.findKeyframeData(node.children, timelineId);
         if (found) return found;
       }

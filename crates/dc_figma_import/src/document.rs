@@ -133,6 +133,28 @@ pub struct Document {
     key_to_global_id_map: HashMap<String, String>,
     remote_node_responses: HashMap<(String, String), figma_schema::NodesResponse>,
 }
+
+fn parse_document_id(document_id: &str) -> String {
+    if document_id.starts_with("http://") || document_id.starts_with("https://") {
+        if let Some(pos) = document_id.find("/file/") {
+            let rest = &document_id[pos + 6..];
+            if let Some(end_pos) = rest.find('/') {
+                return rest[..end_pos].to_string();
+            } else {
+                return rest.to_string();
+            }
+        } else if let Some(pos) = document_id.find("/design/") {
+            let rest = &document_id[pos + 8..];
+            if let Some(end_pos) = rest.find('/') {
+                return rest[..end_pos].to_string();
+            } else {
+                return rest.to_string();
+            }
+        }
+    }
+    document_id.to_string()
+}
+
 impl Document {
     pub fn root_node(&self) -> &figma_schema::Node {
         &self.document_root.document
@@ -146,6 +168,8 @@ impl Document {
         proxy_config: &ProxyConfig,
         image_session: Option<ImageContextSession>,
     ) -> Result<Document, Error> {
+        let document_id = parse_document_id(&document_id);
+
         // Fetch the document...
         let mut document_url = format!(
             "{}{}?plugin_data=shared&geometry=paths&branch_data=true",
@@ -1213,6 +1237,15 @@ impl Document {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_document_id_formats() {
+        assert_eq!(parse_document_id("ABC"), "ABC");
+        assert_eq!(parse_document_id("https://www.figma.com/file/XYZ"), "XYZ");
+        assert_eq!(parse_document_id("https://www.figma.com/file/XYZ/node-id"), "XYZ");
+        assert_eq!(parse_document_id("https://www.figma.com/design/123"), "123");
+        assert_eq!(parse_document_id("https://www.figma.com/design/123/node-id"), "123");
+    }
 
     #[derive(serde::Deserialize, Debug)]
     struct DummyStruct {

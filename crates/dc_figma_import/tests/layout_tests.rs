@@ -15,7 +15,7 @@
 //
 // This file contains a set of unit tests to test the layout crate. It uses a
 // saved serialized file that is retrieved from the Figma file at
-// https://www.figma.com/file/OGUIhtwHL3z8wWZqnxYM9P. When modifying these
+// https://www.figma.com/design/OGUIhtwHL3z8wWZqnxYM9P. When modifying these
 // tests, any changes to the Figma file require refetching and saving the file
 // using the fetch binary from the designcompose root folder like this:
 // cargo run --bin fetch --features=fetch -- --doc-id=OGUIhtwHL3z8wWZqnxYM9P --api-key=<API_KEY> --output=crates/dc_figma_import/tests/layout-unit-tests.dcf --nodes='VerticalAutolayout'

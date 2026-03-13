@@ -1184,5 +1184,5 @@ fun Main(
 [5]: #creating-lists
 [6]: #comp-replace
 [7]: #visibility
-[8]: https://www.figma.com/file/aOb2Mm1RMQe8UJhPegPEpP/Vsw-Compose-List-Example
+[8]: https://www.figma.com/design/aOb2Mm1RMQe8UJhPegPEpP/Vsw-Compose-List-Example
 [9]: https://developer.android.com/jetpack/compose/modifiers-list

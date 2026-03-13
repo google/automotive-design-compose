@@ -19,7 +19,7 @@ package com.android.designcompose.annotation
 /**
  * Generate an interface that contains functions to render various nodes in a Figma document
  *
- * @param id the id of the Figma document. This can be found in the url, e.g. figma.com/file/<id>
+ * @param id the id of the Figma document. This can be found in the url, e.g. figma.com/design/<id>
  * @param designVersion version id of the Figma document.
  * @param customizationInterfaceVersion a version string that gets written to a generated JSON file
  *   describing the customization interface which is used for the Design Compose Figma plugin.

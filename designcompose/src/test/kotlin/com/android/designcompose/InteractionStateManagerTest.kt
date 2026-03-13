@@ -17,6 +17,7 @@
 package com.android.designcompose
 
 import com.android.designcompose.common.DesignDocId
+import com.android.designcompose.definition.interaction.Action
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -67,5 +68,56 @@ class InteractionStateManagerTest {
         // Unregister without registering
         InteractionStateManager.unregisterRoot(docId)
         assertThat(InteractionStateManager.states).doesNotContainKey(docId)
+    }
+
+    @Test
+    fun testMultipleChangeToUndo() {
+        val state = InteractionState()
+        val undoInstanceId = "pressed_node"
+        val key: String? = null
+
+        // Target A ChangeTo
+        val actionA =
+            Action.newBuilder()
+                .setNode(
+                    Action.Node.newBuilder()
+                        .setDestinationId("variant_a_new")
+                        .setNavigation(Action.Node.Navigation.NAVIGATION_CHANGE_TO)
+                        .build()
+                )
+                .build()
+
+        // Target B ChangeTo
+        val actionB =
+            Action.newBuilder()
+                .setNode(
+                    Action.Node.newBuilder()
+                        .setDestinationId("variant_b_new")
+                        .setNavigation(Action.Node.Navigation.NAVIGATION_CHANGE_TO)
+                        .build()
+                )
+                .build()
+
+        // Set initial states
+        state.variantMemory["target_a"] = "variant_a_old"
+        state.variantMemory["target_b"] = "variant_b_old"
+
+        // Dispatch A
+        state.dispatch(actionA, "target_a", key, undoInstanceId)
+        // Dispatch B
+        state.dispatch(actionB, "target_b", key, undoInstanceId)
+
+        // Verify states changed
+        assertThat(state.variantMemory["target_a"]).isEqualTo("variant_a_new")
+        assertThat(state.variantMemory["target_b"]).isEqualTo("variant_b_new")
+
+        // Undo B
+        state.undoDispatch(actionB, "target_b", undoInstanceId, key)
+        // Undo A
+        state.undoDispatch(actionA, "target_a", undoInstanceId, key)
+
+        // Verify states restored
+        assertThat(state.variantMemory["target_a"]).isEqualTo("variant_a_old")
+        assertThat(state.variantMemory["target_b"]).isEqualTo("variant_b_old")
     }
 }

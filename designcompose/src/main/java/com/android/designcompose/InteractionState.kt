@@ -355,7 +355,7 @@ internal fun InteractionState.changeTo(
     val varKey = getInstanceIdWithKey(instanceNodeId, key)
     val previousVariant = this.variantMemory.put(varKey, newVariantId)
     if (undoInstanceId != null) {
-        val undoKey = getInstanceIdWithKey(undoInstanceId, key)
+        val undoKey = getInstanceIdWithKey(undoInstanceId, key) + ":" + instanceNodeId
         this.undoMemory[undoKey] = DeferredAction.ChangeTo(previousVariant)
     }
     invalVariant(instanceNodeId)
@@ -468,7 +468,16 @@ internal fun InteractionState.undoDispatch(
     undoInstanceId: String,
     key: String?,
 ) {
-    val undoKey = getInstanceIdWithKey(undoInstanceId, key)
+    val undoKey =
+        if (
+            action.actionTypeCase == Action.ActionTypeCase.NODE &&
+                action.node.navigation == Action.Node.Navigation.NAVIGATION_CHANGE_TO &&
+                targetInstanceId != null
+        ) {
+            getInstanceIdWithKey(undoInstanceId, key) + ":" + targetInstanceId
+        } else {
+            getInstanceIdWithKey(undoInstanceId, key)
+        }
     val undoAction = undoMemory.remove(undoKey)
     undoAction?.apply(this, targetInstanceId, key)
 

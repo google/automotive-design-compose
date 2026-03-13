@@ -21,8 +21,9 @@ package com.android.designcompose.annotation
  *
  * @param id the id of the Figma document. This can be found in the url, e.g. figma.com/file/<id>
  * @param designVersion version id of the Figma document.
- * @param customizationInterfaceVersion a version string that gets written to a generated JSON file
- *   describing the customization interface which is used for the Design Compose Figma plugin.
+ * @param customizationInterfaceVersion a version string that gets written to a generated
+ *   Customization Interface file describing the customization interface which is used for the
+ *   Design Compose Figma plugin.
  */
 @Target(AnnotationTarget.CLASS)
 annotation class DesignDoc(
@@ -39,8 +40,8 @@ annotation class DesignDoc(
  * @param hideDesignSwitcher set to true if this is a root node and you do not want to show the
  *   design switcher. Defaulted to false
  * @param isRoot set to true if this is the root node. All customizations should be set in a root
- *   node to be passed down to child nodes. Defaulted to false. This is used in the generated JSON
- *   file used for the Design Compose Figma plugin
+ *   node to be passed down to child nodes. Defaulted to false. This is used in the generated
+ *   Customization Interface file used for the Design Compose Figma plugin
  */
 @Target(AnnotationTarget.FUNCTION)
 annotation class DesignComponent(
@@ -92,7 +93,7 @@ annotation class DesignComponent(
  * An optional annotation that goes with a @Design annotation of type @Composable() -> Unit, which
  * is used to replace the children of this frame with new data. Adding the @DesignContentTypes
  * annotation tells Design Compose what nodes can be used as children. This data is used in the
- * generated json file which is input for the DesignCompose Figma plugin.
+ * generated Customization Interface file which is input for the DesignCompose Figma plugin.
  *
  * @param nodes A comma delimited string of node names that can go into the associated content
  *   replacement annotation
@@ -108,7 +109,7 @@ annotation class PreviewNode(val count: Int, val node: String)
 /**
  * An optional annotation that goes with a @Design annotation of type @Composable() -> Unit, which
  * is used to provide sample content for the List Preview Widget. This data is used in the generated
- * json file which is input for the List Preview Widget.
+ * Customization Interface file which is input for the List Preview Widget.
  *
  * @param nodes A comma delimited string of node names that will be used as sample content
  */

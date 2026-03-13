@@ -303,12 +303,12 @@ Automotive Design for Compose consists of several components:
   Design for Compose:
 
   - The Extended Layout Plugin, in `support-figma/extended-layout-plugin` , provides a panel for
-      formatting text, a panel to provide a JSON file with keyword details, a panel to validate
-      keyword usages against the provided JSON file, and a command to sync Figma's prototype
+      formatting text, a panel to provide a Customization Interface file with keyword details, a panel to validate
+      keyword usages against the provided Customization Interface file, and a command to sync Figma's prototype
       settings to the main document.
 
   - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma
-      widget that uses the JSON file and allows designers to create and preview complex list
+      widget that uses the Customization Interface file and allows designers to create and preview complex list
       layouts.
 
 - A Validation app in `integration-tests/validation` is used for visually validating changes

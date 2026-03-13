@@ -520,7 +520,7 @@ developer side, you need a few things:
         `ListContent`.
 
 *   The `@DesignContentTypes` and `@DesignPreviewContent` annotations, which
-    generate a JSON file at build time. Check the output folder of your build to
+    generate a Customization Interface file at build time. Check the output folder of your build to
     find the file and use the Auto Content Preview widget to upload it, or give
     it to your designer to upload. Without this file, the widget can't be used
     to configure and preview the grid layout.

@@ -70,4 +70,5 @@ dependencies {
     testImplementation(libs.junit.junit)
     testImplementation(libs.google.truth)
     testImplementation(kotlin("test"))
+    testImplementation(libs.mockito.core)
 }

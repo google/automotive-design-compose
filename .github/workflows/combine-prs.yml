@@ -1,26 +1,96 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 name: Combine PRs
 
 on:
-  schedule:
-    - cron: '0 17 * * 5' # Friday at 17:00 (UTC)
-  workflow_dispatch: # allows you to manually trigger the workflow
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to combine PRs into'
+        required: true
+        default: 'combined-prs'
+      labels:
+        description: 'Comma-separated labels to filter PRs (currently only single label supported with script)'
+        required: false
+        default: 'combine'
 
-# The minimum permissions required to run this Action
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
-  pull-requests: write
-  checks: read
+  pull-requests: read
 
 jobs:
-  combine-prs:
+  combine:
     runs-on: ubuntu-latest
-
     steps:
-      - name: combine-prs
-        id: combine-prs
-        uses: github/combine-prs@v5.2.0
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
-          branch_prefix: dependabot
-          must_be_green: true
-          combine_branch_name: combine-prs-branch
-          labels: dependencies, engProd
+          egress-policy: audit
+
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v3.5.2
+        with:
+          submodules: 'recursive'
+
+      - name: Combine PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TARGET_BRANCH="${{ github.event.inputs.branch }}"
+          LABEL="${{ github.event.inputs.labels }}"
+          
+          echo "Target Branch: $TARGET_BRANCH"
+          echo "Label: $LABEL"
+          
+          # Configure Git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create and checkout target branch from current HEAD (main)
+          git checkout -b "$TARGET_BRANCH"
+          
+          # Fetch PRs with label using gh CLI
+          PRS=$(gh pr list --label "$LABEL" --json number,headRefName --jq '.[] | .headRefName')
+          
+          if [ -z "$PRS" ]; then
+            echo "No PRs found with label '$LABEL'"
+            exit 0
+          fi
+          
+          echo "Found PR branches to merge:"
+          echo "$PRS"
+          
+          for PR_BRANCH in $PRS; do
+            echo "----------------------------------------"
+            echo "Attempting to merge '$PR_BRANCH'..."
+            
+            # Fetch the branch
+            git fetch origin "$PR_BRANCH"
+            
+            # Attempt merge
+            if git merge origin/"$PR_BRANCH" --no-edit; then
+              echo "Successfully merged '$PR_BRANCH'"
+            else
+              echo "CONFLICT merging '$PR_BRANCH'. Skipping."
+              git merge --abort
+            fi
+          done
+          
+          echo "----------------------------------------"
+          echo "Pushing combined branch '$TARGET_BRANCH'..."
+          git push origin "$TARGET_BRANCH" --force

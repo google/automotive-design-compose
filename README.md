@@ -43,9 +43,9 @@ You'll work with your own copy of
 the [Tutorial Figma file](https://www.figma.com/community/file/1228110686419863535/Tutorial-for-Automotive-Design-for-Compose).
 Create your own by clicking **Open in Figma**, which creates a copy of the file in your account.
 Once open, identify the Figma Document ID from your new file's URL. It's the alphanumeric string
-between `file/` and the name of the document. For example:
+between `design/` and the name of the document. For example:
 
-<pre><code>figma.com/file/<b>ABCDEFG123</b>/File-name</code></pre>
+<pre><code>figma.com/design/<b>ABCDEFG123</b>/File-name</code></pre>
 
 The app's Gradle project is located in `reference-apps/tutorial`. Build and launch it on your
 device, then set your Figma Access Token on the app by running:
@@ -303,12 +303,12 @@ Automotive Design for Compose consists of several components:
   Design for Compose:
 
   - The Extended Layout Plugin, in `support-figma/extended-layout-plugin` , provides a panel for
-      formatting text, a panel to provide a JSON file with keyword details, a panel to validate
-      keyword usages against the provided JSON file, and a command to sync Figma's prototype
+      formatting text, a panel to provide a Customization Interface file with keyword details, a panel to validate
+      keyword usages against the provided Customization Interface file, and a command to sync Figma's prototype
       settings to the main document.
 
   - Auto Content Preview Widget, in `support-figma/auto-content-preview-widget` provides a Figma
-      widget that uses the JSON file and allows designers to create and preview complex list
+      widget that uses the Customization Interface file and allows designers to create and preview complex list
       layouts.
 
 - A Validation app in `integration-tests/validation` is used for visually validating changes

@@ -120,10 +120,10 @@ The following steps describe how to import the Media Center design documents:
     `reference-apps/aaos-unbundled/mediacompose/figma_files` directory.
 
 1. Open the uploaded design documents and note the **Figma Document ID** in the
-    URLs between `file/` and the name of the document.
+    URLs between `design/` and the name of the document.
 
     For example, the **ID** of the document at
-    `https://www.figma.com/file/aabbccdd/Tutorial` is `aabbccdd`.
+    `https://www.figma.com/design/aabbccdd/Tutorial` is `aabbccdd`.
 
 ## Configure the MediaCompose reference app {#ConfigureApp}
 

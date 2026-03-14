@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -67,7 +68,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             currentDisplay = remember { mutableStateOf(EXAMPLES[0]) }
-            Row {
+            Row(modifier = Modifier.systemBarsPadding()) {
                 Column(modifier = Modifier.width(110.dp)) { TestButtons() }
                 VerticalDivider(
                     color = Color.Black,

@@ -88,15 +88,20 @@ class DesignDocStatus() {
 }
 
 object DesignSettings {
+    init {
+        Log.i(TAG, "DesignCompose Version: ${BuildConfig.DESIGNCOMPOSE_VERSION}")
+    }
     internal var liveUpdatesEnabled = false
     // Toast.makeText causes a crash in AAOS on secondary displays with a
     // "display must not be null" error.  This flag is used to disable
     // Toasts in affected apps till that issue is resolved.
     internal var toastsEnabled = true
-    private var parentActivity = WeakReference<ComponentActivity>(null)
+    internal var parentActivity = WeakReference<ComponentActivity>(null)
     internal var liveUpdateSettings: LiveUpdateSettingsRepository? = null
     internal var figmaToken = mutableStateOf<String?>(null)
+    internal var liveUpdateEnabled = mutableStateOf(true)
     internal var isDocumentLive = mutableStateOf(false)
+    internal var firstSuccessTime: Long? = null
     private var fontDb: HashMap<String, FontFamily> = HashMap()
     internal var fileFetchStatus: HashMap<DesignDocId, DesignDocStatus> = HashMap()
     internal var rawResourceId: HashMap<DesignDocId, Int> = HashMap()
@@ -129,28 +134,58 @@ object DesignSettings {
             liveUpdateSettings!!.settingsUpdateFlow.collectLatest { newTokenValue ->
                 // Store the new value locally
                 figmaToken.value = newTokenValue
+                // When the token is changed, reset the timer
+                firstSuccessTime = null
 
-                if (liveUpdatesEnabled) {
-                    if (figmaToken.value != null) {
-                        // If live update's enabled and the new token isn't null then start live
-                        // updates
-                        isDocumentLive.value = true
-                        DocServer.startLiveUpdates()
-                        return@collectLatest
-                    } else {
-                        showMessageInToast(
-                            "No Figma API Key Set - LiveUpdate Disabled",
-                            Toast.LENGTH_LONG,
-                        )
-                    }
-                }
-                // Otherwise stop them
-                isDocumentLive.value = false
-                DocServer.stopLiveUpdates()
+                updateLiveUpdateStatus()
+            }
+        }
+
+        // Launch a coroutine that awaits updates to the live update enabled state
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.liveUpdateEnabledFlow.collectLatest { enabled ->
+                liveUpdateEnabled.value = enabled
+                updateLiveUpdateStatus()
+            }
+        }
+
+        // Launch a coroutine that awaits updates to the live update timeout
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.liveUpdateTimeoutFlow.collectLatest { timeout ->
+                DocServer.liveUpdatePauseTimeoutMs = timeout
+            }
+        }
+
+        // Launch a coroutine that awaits updates to the fetch interval
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.liveUpdateFetchMillisFlow.collectLatest { interval ->
+                DocServer.liveUpdateFetchMillis = interval
             }
         }
 
         DocServer.initializeLiveUpdate()
+    }
+
+    private fun updateLiveUpdateStatus() {
+        if (liveUpdatesEnabled && liveUpdateEnabled.value) {
+            if (figmaToken.value != null) {
+                // If live update's enabled and the new token isn't null then start live
+                // updates
+                isDocumentLive.value = true
+                DocServer.startLiveUpdates()
+            } else {
+                isDocumentLive.value = false
+                DocServer.stopLiveUpdates()
+                showMessageInToast(
+                    "No Figma API Key Set - LiveUpdate Disabled",
+                    Toast.LENGTH_LONG,
+                )
+            }
+        } else {
+            // Otherwise stop them
+            isDocumentLive.value = false
+            DocServer.stopLiveUpdates()
+        }
     }
 
     fun disableToasts() {
@@ -234,7 +269,10 @@ internal object SpanCache {
 }
 
 internal object DocServer {
-    internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
+    internal const val DEFAULT_LIVE_UPDATE_FETCH_MILLIS: Long = 5000L
+    internal var liveUpdateFetchMillis: Long = DEFAULT_LIVE_UPDATE_FETCH_MILLIS
+    internal const val DEFAULT_LIVE_UPDATE_PAUSE_MILLIS: Long = 30 * 60 * 1000L
+    internal var liveUpdatePauseTimeoutMs: Long = DEFAULT_LIVE_UPDATE_PAUSE_MILLIS
     internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
     internal val documents: HashMap<DesignDocId, DocContent> = HashMap()
     internal val subscriptions: HashMap<DesignDocId, LiveDocSubscriptions> = HashMap()
@@ -246,6 +284,18 @@ internal object DocServer {
     internal var periodicFetchRunnable: Runnable =
         Runnable() {
             thread {
+                // Check for Figma token timeout
+                DesignSettings.firstSuccessTime?.let {
+                    if (System.currentTimeMillis() - it > liveUpdatePauseTimeoutMs) {
+                        Log.i(TAG, "LiveUpdate paused due to timeout")
+                        DesignSettings.firstSuccessTime = null
+                        val activity = DesignSettings.parentActivity.get()
+                        activity?.lifecycleScope?.launch {
+                            DesignSettings.liveUpdateSettings?.setFigmaApiKey("")
+                        }
+                    }
+                }
+
                 beginSection(DCTraces.FETCHDOCUMENTS)
                 if (!fetchDocuments(firstFetch)) {
                     endSection()
@@ -309,7 +359,7 @@ internal fun DocServer.scheduleLiveUpdate() {
     if (DesignSettings.liveUpdatesEnabled && !pauseUpdates) {
         // Stop any live updates that have already been scheduled.
         removeScheduledPeriodicFetchRunnables()
-        mainHandler.postDelayed(periodicFetchRunnable, FETCH_INTERVAL_MILLIS)
+        mainHandler.postDelayed(periodicFetchRunnable, liveUpdateFetchMillis)
     }
 }
 
@@ -362,6 +412,12 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
 
         try {
             val response = fetchDocument(figmaApiKey, params, previousDoc, id, proxyConfig)
+
+            // A successful call to fetchDocument (no exception) means we have a valid key.
+            // If this is the first success for this key, start the timer.
+            if (DesignSettings.firstSuccessTime == null) {
+                DesignSettings.firstSuccessTime = System.currentTimeMillis()
+            }
 
             if (response.hasDocument()) {
                 val doc = decodeServerDoc(response.document, previousDoc, id, saveFiles, Feedback)

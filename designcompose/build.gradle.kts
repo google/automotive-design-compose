@@ -38,8 +38,13 @@ android {
 
     testFixtures { enable = true }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
+        buildConfigField("String", "DESIGNCOMPOSE_VERSION", "\"${libs.versions.designcompose.get()}\"")
         consumerProguardFiles("consumer-proguard-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (designcompose.figmaToken.isPresent) {

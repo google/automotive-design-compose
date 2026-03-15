@@ -233,7 +233,13 @@ pub(crate) fn bound_variables_color(
     key_to_global_id_map: &mut HashMap<String, String>,
 ) -> ColorOrVar {
     if let Some(vars) = bound_variables {
-        ColorOrVar::from_var(vars, "color", &default_color.into(), key_to_global_id_map)
+        let fallback_color = crate::Color::from_f32s(
+            default_color.r,
+            default_color.g,
+            default_color.b,
+            default_color.a * last_opacity,
+        );
+        ColorOrVar::from_var(vars, "color", &fallback_color, key_to_global_id_map)
     } else {
         ColorOrVar {
             ColorOrVarType: Some(color_or_var::ColorOrVarType::Color(crate::Color::from_f32s(

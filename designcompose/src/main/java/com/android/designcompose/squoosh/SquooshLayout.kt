@@ -34,15 +34,15 @@ internal class SquooshLayoutManager(val id: Int)
 internal object SquooshLayout {
 
     internal fun newLayoutManager(): SquooshLayoutManager {
-        return SquooshLayoutManager(Jni.jniCreateLayoutManager())
+        return SquooshLayoutManager(Jni.createLayoutManager())
     }
 
     internal fun removeNode(manager: SquooshLayoutManager, rootLayoutId: Int, layoutId: Int) {
-        Jni.jniRemoveNode(manager.id, layoutId, rootLayoutId, false)
+        Jni.removeNode(manager.id, layoutId, rootLayoutId, false)
     }
 
     internal fun markDirty(manager: SquooshLayoutManager, layoutId: Int) {
-        Jni.jniMarkDirty(manager.id, layoutId)
+        Jni.markDirty(manager.id, layoutId)
     }
 
     internal fun doLayout(
@@ -51,8 +51,7 @@ internal object SquooshLayout {
         layoutNodeList: LayoutNodeList,
     ): Map<Int, Layout> {
         val serializedNodes = layoutNodeList.toByteArray()
-        val response =
-            Jni.jniAddNodes(manager.id, rootLayoutId, serializedNodes) ?: return emptyMap()
+        val response = Jni.addNodes(manager.id, rootLayoutId, serializedNodes) ?: return emptyMap()
         val layoutChangedResponse =
             try {
                 LayoutChangedResponse.parseDelimitedFrom(response.inputStream())

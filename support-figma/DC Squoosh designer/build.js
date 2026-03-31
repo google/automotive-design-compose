@@ -1,7 +1,7 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
-const { optimize } = require('svgo');
+
 
 const uiHtmlPath = path.join(__dirname, 'src/ui.html');
 const codeJsPath = path.join(__dirname, 'src/code.ts');
@@ -28,23 +28,7 @@ manifest.ui = 'ui.html';
 fs.writeFileSync(distManifestPath, JSON.stringify(manifest, null, 2));
 console.log('- Copied and modified manifest.json to dist.');
 
-// Find all SVG files in the src directory
-const svgFiles = fs.readdirSync(path.join(__dirname, 'src')).filter(fn => fn.endsWith('.svg'));
 
-// Optimize each SVG file
-console.log('Optimizing SVG files...');
-svgFiles.forEach(svgFile => {
-    console.log(`- Optimizing ${svgFile}`);
-    const svgPath = path.join(__dirname, 'src', svgFile);
-    const svgContent = fs.readFileSync(svgPath, 'utf-8');
-    const result = optimize(svgContent, {
-        path: svgPath,
-        multipass: true,
-    });
-    const optimizedSvgContent = result.data;
-    fs.writeFileSync(path.join(distDir, svgFile), optimizedSvgContent);
-});
-console.log('SVG optimization complete.');
 
 console.log('Bundling assets with esbuild...');
 const tempUiEntryPath = path.join(__dirname, 'src/temp-ui-entry.ts');

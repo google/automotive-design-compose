@@ -53,7 +53,6 @@
     }
   },
   "dependencies": {
-    "figplug-ui-kit": "^1.0.1",
-    "svgo": "^4.0.0"
+    "figplug-ui-kit": "^1.0.1"
   }
 }

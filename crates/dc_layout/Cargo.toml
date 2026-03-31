@@ -21,5 +21,3 @@ serde.workspace = true
 taffy.workspace = true
 protobuf.workspace = true
 thiserror.workspace = true
-
-

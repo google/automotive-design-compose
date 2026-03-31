@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "target": "es5",
-    "lib": ["es6"],
-    "strict": true,
-    "esModuleInterop": true,
-    "typeRoots": ["./node_modules/@types", "./node_modules/@figma"]
-  }
-}

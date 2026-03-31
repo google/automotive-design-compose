@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose, Engine as _};
-use serde::{Deserialize, Serialize, de};
+use serde::{de, Deserialize, Serialize};
 use std::collections::HashMap;
 
 // --- High Level Runtime Types ---
@@ -107,7 +107,9 @@ impl<'de> Deserialize<'de> for Rgba {
                         "g" => g = Some(map.next_value()?),
                         "b" => b = Some(map.next_value()?),
                         "a" => a = Some(map.next_value()?),
-                        _ => { let _: serde_json::Value = map.next_value()?; } // Ignore unknown
+                        _ => {
+                            let _: serde_json::Value = map.next_value()?;
+                        } // Ignore unknown
                     }
                 }
 
@@ -733,6 +735,9 @@ mod tests {
         assert!(parsed.is_ok(), "Failed to parse JSON: {:?}", parsed.err());
         let data = parsed.unwrap();
         assert_eq!(data.keyframes.len(), 2);
-        assert_eq!(data.keyframes[0].value, KeyframeValue::Color(Rgba { r: 255, g: 0, b: 0, a: 255 }));
+        assert_eq!(
+            data.keyframes[0].value,
+            KeyframeValue::Color(Rgba { r: 255, g: 0, b: 0, a: 255 })
+        );
     }
 }

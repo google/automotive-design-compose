@@ -2289,3 +2289,44 @@ fn test_layout_wrap_override() {
 
     assert_eq!(view.style.unwrap().node_style.unwrap().flex_wrap, FlexWrap::FLEX_WRAP_WRAP.into());
 }
+
+#[test]
+fn test_animation_override_plugin_data() {
+    let json = r#"{
+            "id": "4",
+            "name": "test_anim",
+            "type": "FRAME",
+            "layoutMode": "HORIZONTAL",
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "absoluteBoundingBox": {
+                "x": 0, "y": 0, "width": 100, "height": 100
+            },
+            "sharedPluginData": {
+                "designcompose": {
+                    "animations": "{\"override\":\"Custom\",\"spec\":{\"initial_delay\":{\"secs\":0,\"nanos\":0},\"animation\":{\"Smooth\":{\"duration\":{\"secs\":0,\"nanos\":1000000000},\"repeat_type\":\"NoRepeat\",\"easing\":\"Linear\"}},\"interrupt_type\":\"Complete\"}}"
+                }
+            }
+        }"#;
+
+    let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let view = create_component_flexbox(
+        &node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        crate::document::HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+
+    assert!(view.style.unwrap().node_style.unwrap().animation_override.is_some());
+}

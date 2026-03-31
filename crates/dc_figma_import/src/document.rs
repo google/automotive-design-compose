@@ -1348,4 +1348,12 @@ mod tests {
         assert!(err_msg.contains("Json Path Serialization Error"));
         assert!(err_msg.contains("child.field"));
     }
+
+    #[test]
+    fn test_deserialize_json_with_path_success() {
+        let good_json = r#"{"child": {"field": "value"}}"#;
+        let result: Result<DummyParent, Error> = deserialize_json_with_path(good_json);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().child.field, "value");
+    }
 }

@@ -23,8 +23,8 @@ To try different designs with that app, follow these steps:
 
 To open Design Switcher, follow these steps:
 
-1.  Download the appropriate `.fig` file from the DesignCompose partner Google
-    Drive and add it to your Figma account (using the **Import file** button on
+1.  Load the appropriate `.fig` file from the `reference-apps/aaos-unbundled/mediacompose/figma_files/` directory
+    and add it to your Figma account (using the **Import file** button on
     the Figma Files view).
 
 1.  Use the Design Switcher in the top corner of the device display to pick an
@@ -55,8 +55,7 @@ Figma's **Open overlay** action.
 
 <p class="clear"></p>
 
-Find this design at `Media Designs/1 - Play & browse toggle.fig` in the
-DesignCompose partner Google Drive.
+Find this design at `Media1_V2.fig` in the `reference-apps/aaos-unbundled/mediacompose/figma_files/` directory.
 
 ### Browse Slide-Up {#BrowseSlideUp}
 
@@ -70,8 +69,7 @@ Browse content.
 
 <p class="clear"></p>
 
-Find this design at `Media Designs/2 - Play & browse slide-up.fig` in the
-DesignCompose partner Google Drive.
+Find this design at `Media2_V2.fig` in the `reference-apps/aaos-unbundled/mediacompose/figma_files/` directory.
 
 ### Now Playing Fly-Up {#NowPlayingFlyUp}
 
@@ -86,8 +84,7 @@ and form factors.
 
 <p class="clear"></p>
 
-Find this design at `Media Designs/4 - One screen with fly-up.fig` in the
-DesignCompose partner Google Drive.
+Find this design at `Media4_V2.fig` in the `reference-apps/aaos-unbundled/mediacompose/figma_files/` directory.
 
 ### Top Media Source Tabs {#TopMedia}
 
@@ -101,8 +98,7 @@ bottom, and a larger view is accessible by tapping on it.
 
 <p class="clear"></p>
 
-Find this design at `Media Designs/5 - Top media source tabs.fig` in the
-DesignCompose partner Google Drive.
+Find this design at `Media5_V2.fig` in the `reference-apps/aaos-unbundled/mediacompose/figma_files/` directory.
 
 ## Nova {#Nova}
 
@@ -130,8 +126,7 @@ larger view by tapping on the bar. Style elements are described below.
 
 <p class="clear"></p>
 
-Find this design at `Media Designs/3 - Nova Media.fig` in the DesignCompose
-partner Google Drive.
+Find this design at `MediaNova_V2.fig` in the `reference-apps/aaos-unbundled/mediacompose/figma_files/` directory.
 
 [1]: {%link _docs/tutorial/index.md %}
 [2]: {%link _docs/media-center-demo/index.md %}

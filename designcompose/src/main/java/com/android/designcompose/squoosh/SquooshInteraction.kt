@@ -30,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -264,6 +263,7 @@ internal fun Modifier.hyperlinkHandler(
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
+@androidx.compose.runtime.Composable
 internal fun Modifier.squooshInteraction(
     document: DocContent,
     interactionState: InteractionState,
@@ -274,116 +274,114 @@ internal fun Modifier.squooshInteraction(
     interactionSource: MutableInteractionSource,
 ): Modifier {
     // We wrap the logic in Modifier.composed. This gives us a @Composable context.
+    // We remember these states so they are available inside the pointerInput block.
+    val latestReactions by
+        androidx.compose.runtime.rememberUpdatedState(childComposable.node.view.reactionsList)
+    val latestTapCallback by
+        androidx.compose.runtime.rememberUpdatedState(
+            customizations.getTapCallback(childComposable.node.view)
+        )
+    val latestParentComponents by
+        androidx.compose.runtime.rememberUpdatedState(childComposable.parentComponents)
+
     return this.then(
-        Modifier.composed {
+        Modifier.pointerInput(childComposable.node.unresolvedNodeId) {
             val node = childComposable.node
             val viewName = node.view.name
+            detectTapGestures(
+                onPress = {
+                    var pressInteraction: PressInteraction.Press? = null
 
-            // Because we are now in a @Composable context, these calls are valid.
-            val latestReactions by rememberUpdatedState(node.view.reactionsList)
-            val latestTapCallback by rememberUpdatedState(customizations.getTapCallback(node.view))
-            val latestParentComponents by rememberUpdatedState(childComposable.parentComponents)
+                    try {
+                        // 1. Show the "Pressed" state immediately.
+                        pressInteraction = PressInteraction.Press(it)
+                        interactionScope.launch { interactionSource.emit(pressInteraction!!) }
+                        isPressed.value = true
+                        interactionState.setPressed(
+                            node.unresolvedNodeId,
+                            latestReactions,
+                            latestTapCallback,
+                        )
 
-            // The pointerInput modifier is now created inside this composable scope.
-            // We pass Unit as the key to ensure it doesn't restart on recomposition.
-            Modifier.pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        var pressInteraction: PressInteraction.Press? = null
-
-                        try {
-                            // 1. Show the "Pressed" state immediately.
-                            pressInteraction = PressInteraction.Press(it)
-                            interactionScope.launch { interactionSource.emit(pressInteraction!!) }
-                            isPressed.value = true
-                            interactionState.setPressed(
-                                node.unresolvedNodeId,
-                                latestReactions,
-                                latestTapCallback,
-                            )
-
-                            // Dispatch any "on press" reactions...
-                            latestReactions
-                                ?.filter { r -> r.trigger.hasPress() }
-                                ?.forEach { reaction ->
-                                    interactionState.dispatch(
+                        // Dispatch any "on press" reactions...
+                        latestReactions
+                            ?.filter { r -> r.trigger.hasPress() }
+                            ?.forEach { reaction ->
+                                interactionState.dispatch(
+                                    reaction.action,
+                                    findTargetInstanceId(
+                                        document,
+                                        latestParentComponents,
                                         reaction.action,
-                                        findTargetInstanceId(
-                                            document,
-                                            latestParentComponents,
-                                            reaction.action,
-                                        ),
-                                        customizations.getKey(),
-                                        node.unresolvedNodeId,
-                                    )
-                                }
-
-                            // 2. Wait for the press to end.
-                            val success = tryAwaitRelease()
-
-                            if (success) {
-                                // This was a tap. Do the tap actions.
-                                val currentReactions = latestReactions
-                                val clickReactions =
-                                    currentReactions?.filter { r -> r.trigger.hasClick() }
-                                        ?: emptyList()
-
-                                clickReactions.forEach { reaction ->
-                                    interactionState.dispatch(
-                                        reaction.action,
-                                        findTargetInstanceId(
-                                            document,
-                                            latestParentComponents,
-                                            reaction.action,
-                                        ),
-                                        customizations.getKey(),
-                                        null, // no undo
-                                    )
-                                }
-
-                                val finalTapCallback =
-                                    latestTapCallback
-                                        ?: interactionState.getPressedTapCallback(
-                                            node.unresolvedNodeId
-                                        )
-                                finalTapCallback?.invoke()
+                                    ),
+                                    customizations.getKey(),
+                                    node.unresolvedNodeId,
+                                )
                             }
 
-                            // 3. Clean up the "Pressed" visual state.
-                            interactionScope.launch {
-                                val endInteraction =
-                                    if (success) {
-                                        PressInteraction.Release(pressInteraction!!)
-                                    } else {
-                                        PressInteraction.Cancel(pressInteraction!!)
-                                    }
-                                interactionSource.emit(endInteraction)
+                        // 2. Wait for the press to end.
+                        val success = tryAwaitRelease()
+
+                        if (success) {
+                            // This was a tap. Do the tap actions.
+                            val currentReactions = latestReactions
+                            val clickReactions =
+                                currentReactions?.filter { r -> r.trigger.hasClick() }
+                                    ?: emptyList()
+
+                            clickReactions.forEach { reaction ->
+                                interactionState.dispatch(
+                                    reaction.action,
+                                    findTargetInstanceId(
+                                        document,
+                                        latestParentComponents,
+                                        reaction.action,
+                                    ),
+                                    customizations.getKey(),
+                                    null, // no undo
+                                )
                             }
 
-                            // Undo the "on press" reactions.
-                            interactionState
-                                .getPressedReactionList(node.unresolvedNodeId)
-                                .filter { r -> r.trigger.hasPress() }
-                                .forEach { reaction ->
-                                    interactionState.undoDispatch(
-                                        reaction.action,
-                                        findTargetInstanceId(
-                                            document,
-                                            latestParentComponents,
-                                            reaction.action,
-                                        ),
-                                        node.unresolvedNodeId,
-                                        customizations.getKey(),
-                                    )
-                                }
-                        } finally {
-                            // 4. Ensure isPressed boolean is always reset.
-                            isPressed.value = false
-                            interactionState.removePressed(node.unresolvedNodeId)
+                            val finalTapCallback =
+                                latestTapCallback
+                                    ?: interactionState.getPressedTapCallback(node.unresolvedNodeId)
+                            finalTapCallback?.invoke()
                         }
+
+                        // 3. Clean up the "Pressed" visual state.
+                        interactionScope.launch {
+                            val endInteraction =
+                                if (success) {
+                                    PressInteraction.Release(pressInteraction!!)
+                                } else {
+                                    PressInteraction.Cancel(pressInteraction!!)
+                                }
+                            interactionSource.emit(endInteraction)
+                        }
+
+                        // Undo the "on press" reactions.
+                        interactionState
+                            .getPressedReactionList(node.unresolvedNodeId)
+                            .filter { r -> r.trigger.hasPress() }
+                            .forEach { reaction ->
+                                interactionState.undoDispatch(
+                                    reaction.action,
+                                    findTargetInstanceId(
+                                        document,
+                                        latestParentComponents,
+                                        reaction.action,
+                                    ),
+                                    node.unresolvedNodeId,
+                                    customizations.getKey(),
+                                )
+                            }
+                    } finally {
+                        // 4. Ensure isPressed boolean is always reset.
+                        isPressed.value = false
+                        interactionState.removePressed(node.unresolvedNodeId)
                     }
-                )
-            }
+                }
+            )
         }
     )
 }

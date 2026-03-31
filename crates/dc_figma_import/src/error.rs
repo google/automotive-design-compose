@@ -17,20 +17,22 @@ use thiserror::Error;
 /// Combined error type for all errors that can occur working with Figma documents.
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("IO Error")]
+    #[error("IO Error: {0}")]
     IoError(#[from] std::io::Error),
-    #[error("HTTP Error")]
+    #[error("HTTP Error: {0}")]
     NetworkError(#[from] reqwest::Error),
-    #[error("Image Error")]
+    #[error("Image Error: {0}")]
     ImageError(#[from] image::ImageError),
-    #[error("Json Serialization Error")]
+    #[error("Json Serialization Error: {0}")]
     JsonError(#[from] serde_json::Error),
-    #[error("Layout Error")]
+    #[error("Json Path Serialization Error: {0}")]
+    JsonPathError(#[from] serde_path_to_error::Error<serde_json::Error>),
+    #[error("Layout Error: {0}")]
     LayoutError(#[from] taffy::TaffyError),
-    #[error("String translation Error")]
+    #[error("String translation Error: {0}")]
     Utf8Error(#[from] std::string::FromUtf8Error),
-    #[error("Figma Document Load Error")]
+    #[error("Figma Document Load Error: {0}")]
     DocumentLoadError(String),
-    #[error("Error with DC Bundle")]
+    #[error("Error with DC Bundle: {0}")]
     DCBundleError(#[from] dc_bundle::Error),
 }

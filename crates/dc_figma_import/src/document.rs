@@ -50,6 +50,11 @@ pub enum HiddenNodePolicy {
     Keep,
 }
 
+fn deserialize_json_with_path<T: serde::de::DeserializeOwned>(json: &str) -> Result<T, Error> {
+    let mut deserializer = serde_json::Deserializer::from_str(json);
+    serde_path_to_error::deserialize(&mut deserializer).map_err(Into::into)
+}
+
 fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<String, Error> {
     let mut client_builder = reqwest::blocking::Client::builder();
     // Only HttpProxyConfig is supported.
@@ -129,6 +134,28 @@ pub struct Document {
     key_to_global_id_map: HashMap<String, String>,
     remote_node_responses: HashMap<(String, String), figma_schema::NodesResponse>,
 }
+
+fn parse_document_id(document_id: &str) -> String {
+    if document_id.starts_with("http://") || document_id.starts_with("https://") {
+        if let Some(pos) = document_id.find("/file/") {
+            let rest = &document_id[pos + 6..];
+            if let Some(end_pos) = rest.find('/') {
+                return rest[..end_pos].to_string();
+            } else {
+                return rest.to_string();
+            }
+        } else if let Some(pos) = document_id.find("/design/") {
+            let rest = &document_id[pos + 8..];
+            if let Some(end_pos) = rest.find('/') {
+                return rest[..end_pos].to_string();
+            } else {
+                return rest.to_string();
+            }
+        }
+    }
+    document_id.to_string()
+}
+
 impl Document {
     pub fn root_node(&self) -> &figma_schema::Node {
         &self.document_root.document
@@ -142,6 +169,8 @@ impl Document {
         proxy_config: &ProxyConfig,
         image_session: Option<ImageContextSession>,
     ) -> Result<Document, Error> {
+        let document_id = parse_document_id(&document_id);
+
         // Fetch the document...
         let mut document_url = format!(
             "{}{}?plugin_data=shared&geometry=paths&branch_data=true",
@@ -152,12 +181,12 @@ impl Document {
             document_url.push_str(&version_id);
         }
         let document_root: figma_schema::FileResponse =
-            serde_json::from_str(http_fetch(api_key, document_url, proxy_config)?.as_str())?;
+            deserialize_json_with_path(http_fetch(api_key, document_url, proxy_config)?.as_str())?;
 
         // ...and the mapping from imageRef to URL. It returns images from all versions.
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, document_id);
         let image_refs: figma_schema::ImageFillResponse =
-            serde_json::from_str(http_fetch(api_key, image_ref_url, proxy_config)?.as_str())?;
+            deserialize_json_with_path(http_fetch(api_key, image_ref_url, proxy_config)?.as_str())?;
 
         let image_hash_to_res_map = load_image_hash_to_res_map(&document_root);
         let mut image_context =
@@ -202,7 +231,7 @@ impl Document {
         let variables_url = format!("{}{}/variables/local", BASE_FILE_URL, document_id);
         let var_fetch = http_fetch(api_key, variables_url, proxy_config)?;
         let var_response: figma_schema::VariablesResponse =
-            serde_json::from_str(var_fetch.as_str())?;
+            deserialize_json_with_path(var_fetch.as_str())?;
         Ok(var_response)
     }
 
@@ -222,8 +251,9 @@ impl Document {
             document_head_url.push_str("&version=");
             document_head_url.push_str(&requested_version_id);
         }
-        let document_head: figma_schema::FileHeadResponse =
-            serde_json::from_str(http_fetch(api_key, document_head_url, proxy_config)?.as_str())?;
+        let document_head: figma_schema::FileHeadResponse = deserialize_json_with_path(
+            http_fetch(api_key, document_head_url, proxy_config)?.as_str(),
+        )?;
 
         if document_head.last_modified == last_modified && document_head.version == last_version {
             return Ok(None);
@@ -244,7 +274,7 @@ impl Document {
             document_head_url.push_str("&version=");
             document_head_url.push_str(&self.version_id);
         }
-        let document_head: figma_schema::FileHeadResponse = serde_json::from_str(
+        let document_head: figma_schema::FileHeadResponse = deserialize_json_with_path(
             http_fetch(self.api_key.as_str(), document_head_url, &self.proxy_config)?.as_str(),
         )?;
 
@@ -267,13 +297,13 @@ impl Document {
             document_url.push_str("&version=");
             document_url.push_str(&self.version_id);
         }
-        let document_root: figma_schema::FileResponse = serde_json::from_str(
+        let document_root: figma_schema::FileResponse = deserialize_json_with_path(
             http_fetch(self.api_key.as_str(), document_url, &self.proxy_config)?.as_str(),
         )?;
 
         // ...and the mapping from imageRef to URL. It returns images from all versions.
         let image_ref_url = format!("{}{}/images", BASE_FILE_URL, self.document_id);
-        let image_refs: figma_schema::ImageFillResponse = serde_json::from_str(
+        let image_refs: figma_schema::ImageFillResponse = deserialize_json_with_path(
             http_fetch(self.api_key.as_str(), image_ref_url, &self.proxy_config)?.as_str(),
         )?;
 
@@ -1283,5 +1313,39 @@ impl Document {
 
     pub fn cache(&self) -> HashMap<String, String> {
         self.image_context.cache()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_document_id_formats() {
+        assert_eq!(parse_document_id("ABC"), "ABC");
+        assert_eq!(parse_document_id("https://www.figma.com/file/XYZ"), "XYZ");
+        assert_eq!(parse_document_id("https://www.figma.com/file/XYZ/node-id"), "XYZ");
+        assert_eq!(parse_document_id("https://www.figma.com/design/123"), "123");
+        assert_eq!(parse_document_id("https://www.figma.com/design/123/node-id"), "123");
+    }
+
+    #[derive(serde::Deserialize, Debug)]
+    struct DummyStruct {
+        field: String,
+    }
+
+    #[derive(serde::Deserialize, Debug)]
+    struct DummyParent {
+        child: DummyStruct,
+    }
+
+    #[test]
+    fn test_deserialize_json_with_path_errors() {
+        let bad_json = r#"{"child": {"field": 123}}"#;
+        let result: Result<DummyParent, Error> = deserialize_json_with_path(bad_json);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Json Path Serialization Error"));
+        assert!(err_msg.contains("child.field"));
     }
 }

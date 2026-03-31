@@ -1141,6 +1141,13 @@ fn visit_node(
     let mut is_widget_list = false;
     let mut size_policy = SizePolicy::default();
 
+    if let Some(frame) = node.frame() {
+        style.node_style_mut().flex_wrap = match frame.layout_wrap {
+            figma_schema::LayoutWrap::Wrap => FlexWrap::FLEX_WRAP_WRAP.into(),
+            figma_schema::LayoutWrap::NoWrap => FlexWrap::FLEX_WRAP_NO_WRAP.into(),
+        };
+    }
+
     // Apply the extra auto layout properties.
     if let Some(extended_auto_layout) = extended_auto_layout {
         let layout = extended_auto_layout.layout;
@@ -1148,11 +1155,11 @@ fn visit_node(
         // extended layout data that may have been written to Figma nodes using an old widget
         // or our old extended layout plugin.
         has_extended_auto_layout = layout != LayoutType::None;
-        style.node_style_mut().flex_wrap = if extended_auto_layout.wrap {
-            FlexWrap::FLEX_WRAP_WRAP.into()
-        } else {
-            FlexWrap::FLEX_WRAP_NO_WRAP.into()
-        };
+
+        // We only override the native layout_wrap behavior if the extended_auto_layout explicitly provides wrap=true.
+        if extended_auto_layout.wrap {
+            style.node_style_mut().flex_wrap = FlexWrap::FLEX_WRAP_WRAP.into();
+        }
 
         style.node_style_mut().grid_layout_type = match layout {
             LayoutType::AutoColumns => Some(GridLayoutType::GRID_LAYOUT_TYPE_AUTO_COLUMNS.into()),
@@ -2150,4 +2157,135 @@ fn parse_path(path: &figma_schema::Path) -> Option<Path> {
     }
     output.with_winding_rule(path.winding_rule.into());
     Some(output)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_layout_wrap() {
+        let json = r#"{
+            "id": "1",
+            "name": "test",
+            "type": "FRAME",
+            "layoutMode": "HORIZONTAL",
+            "layoutWrap": "WRAP",
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "absoluteBoundingBox": {
+                "x": 0, "y": 0, "width": 100, "height": 100
+            }
+        }"#;
+
+        let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+
+        let mut key_to_global_id_map = HashMap::new();
+        let mut component_context = ComponentContext::new(&vec![]);
+        let mut image_context = ImageContext::new(
+            HashMap::new(),
+            HashMap::new(),
+            &crate::proxy_config::ProxyConfig::None,
+        );
+
+        let view = create_component_flexbox(
+            &node,
+            &HashMap::new(),
+            &HashMap::new(),
+            &mut component_context,
+            &mut image_context,
+            crate::document::HiddenNodePolicy::Keep,
+            &mut key_to_global_id_map,
+        )
+        .unwrap();
+
+        assert_eq!(
+            view.style.unwrap().node_style.unwrap().flex_wrap,
+            FlexWrap::FLEX_WRAP_WRAP.into()
+        );
+    }
+}
+
+#[test]
+fn test_layout_wrap_no_wrap() {
+    let json = r#"{
+            "id": "2",
+            "name": "test_no_wrap",
+            "type": "FRAME",
+            "layoutMode": "HORIZONTAL",
+            "layoutWrap": "NO_WRAP",
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "absoluteBoundingBox": {
+                "x": 0, "y": 0, "width": 100, "height": 100
+            }
+        }"#;
+
+    let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let view = create_component_flexbox(
+        &node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        crate::document::HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+
+    assert_eq!(
+        view.style.unwrap().node_style.unwrap().flex_wrap,
+        FlexWrap::FLEX_WRAP_NO_WRAP.into()
+    );
+}
+
+#[test]
+fn test_layout_wrap_override() {
+    let json = r#"{
+            "id": "3",
+            "name": "test_override",
+            "type": "FRAME",
+            "layoutMode": "HORIZONTAL",
+            "layoutWrap": "NO_WRAP",
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "absoluteBoundingBox": {
+                "x": 0, "y": 0, "width": 100, "height": 100
+            },
+            "sharedPluginData": {
+                "designcompose": {
+                    "vsw-extended-auto-layout": "{\"layout\":\"horizontal\",\"wrap\":true}"
+                }
+            }
+        }"#;
+
+    let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let view = create_component_flexbox(
+        &node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        crate::document::HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+
+    assert_eq!(view.style.unwrap().node_style.unwrap().flex_wrap, FlexWrap::FLEX_WRAP_WRAP.into());
 }

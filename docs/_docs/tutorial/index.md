@@ -52,10 +52,10 @@ work with:
 1.  Click **Open in Figma** to create your own copy of the file.
 
 1.  Wait for your copy of the file to open, then note the **Figma Document ID**
-    in the URL between `file/` and the name of the document.
+    in the URL between `design/` and the name of the document.
 
     For example, the **ID** of the document at
-    `https://www.figma.com/file/aabbccdd/Tutorial` is `aabbccdd`.
+    `https://www.figma.com/design/aabbccdd/Tutorial` is `aabbccdd`.
 
 ## Launch and configure the tutorial {#LaunchTutorial}
 

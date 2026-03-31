@@ -112,13 +112,15 @@ fun decodeServerDoc(
     docResponse: ConvertResponse.Document,
     previousDoc: DocContent?,
     docId: DesignDocId,
-    save: File?,
+    saveFiles: Set<File>,
     feedback: FeedbackImpl,
 ): DocContent? {
     // We must initialize the fully-decoded DocContent, which decodes images before
     // saving it to disk
     val baseDoc = decodeServerBaseDoc(docResponse, docId, feedback) ?: return null
     val fullDoc = DocContent(baseDoc, previousDoc)
-    save?.let { fullDoc.c.save(save, Feedback) }
+    for (saveFile in saveFiles) {
+        fullDoc.c.save(saveFile, Feedback)
+    }
     return fullDoc
 }

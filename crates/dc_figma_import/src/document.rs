@@ -572,6 +572,35 @@ impl Document {
             ),
         ) {
             match (view.component_info.as_mut(), parent_component_info) {
+                (Some(parent_info), Some(_)) => {
+                    // This matches a component instance within a component instance.
+                    // The style and data overrides are written to a hash map keyed by the view name
+                    // in the component info of the instance.
+                    action(
+                        view.style.clone(),
+                        view.data.clone(),
+                        view.id.clone(),
+                        view.name.clone(),
+                        parent_info,
+                        parent_reference_component,
+                        false,
+                    );
+                    if let Some(data) = view.data.as_mut() {
+                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+                            data.view_data_type.as_mut()
+                        {
+                            for child in children {
+                                for_each_component_instance(
+                                    reference_components,
+                                    child,
+                                    Some(parent_info),
+                                    parent_reference_component,
+                                    action,
+                                );
+                            }
+                        }
+                    }
+                }
                 (Some(info), _) => {
                     // This is the root node of a component instance.
                     // Compute its style and data overrides and write to its component info whose
@@ -645,35 +674,7 @@ impl Document {
                         }
                     }
                 }
-                (Some(parent_info), Some(_)) => {
-                    // This matches a component instance within a component instance.
-                    // The style and data overrides are written to a hash map keyed by the view name
-                    // in the component info of the instance.
-                    action(
-                        view.style.clone(),
-                        view.data.clone(),
-                        view.id.clone(),
-                        view.name.clone(),
-                        parent_info,
-                        parent_reference_component,
-                        false,
-                    );
-                    if let Some(data) = view.data.as_mut() {
-                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
-                            data.view_data_type.as_mut()
-                        {
-                            for child in children {
-                                for_each_component_instance(
-                                    reference_components,
-                                    child,
-                                    Some(parent_info),
-                                    parent_reference_component,
-                                    action,
-                                );
-                            }
-                        }
-                    }
-                }
+
                 (None, None) => {
                     // This matches the nodes from the root node of the view tree until it
                     // meets a component instance.

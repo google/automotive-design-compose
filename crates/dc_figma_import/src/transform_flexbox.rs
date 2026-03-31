@@ -2065,9 +2065,7 @@ fn visit_node(
             } else {
                 log::error!("Failed to parse animations plugin data for node {}", node.id);
             }
-        } else {
         }
-    } else {
     }
 
     if let Some(anim) = parsed_plugin_override {

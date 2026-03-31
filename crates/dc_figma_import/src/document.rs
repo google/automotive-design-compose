@@ -50,6 +50,8 @@ pub enum HiddenNodePolicy {
     Keep,
 }
 
+/// Helper function to deserialize JSON strings while reporting errors mapped with the exact property path.
+/// This aids troubleshooting by indicating precisely which JSON node caused failure.
 fn deserialize_json_with_path<T: serde::de::DeserializeOwned>(json: &str) -> Result<T, Error> {
     let mut deserializer = serde_json::Deserializer::from_str(json);
     serde_path_to_error::deserialize(&mut deserializer).map_err(Into::into)
@@ -955,13 +957,13 @@ impl Document {
                             serde_json::from_str::<AnimationOverrideJson>(data.as_str());
                         match animation_spec_json {
                             Ok(animation_spec_json) => {
-                                eprintln!(
+                                log::info!(
                                     "Successfully {:?} got json data: {animation_spec_json:?}. from {}",
                                     node.name, data
                                 );
                             }
                             Err(err) => {
-                                eprintln!(
+                                log::error!(
                                     "Error getting animation spec json: {:?} for {:?}",
                                     err,
                                     data.as_str()

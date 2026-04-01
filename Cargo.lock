@@ -331,7 +331,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc_squoosh_designer"
+name = "dc_squoosh_parser"
 version = "0.38.2"
 dependencies = [
  "base64 0.21.7",

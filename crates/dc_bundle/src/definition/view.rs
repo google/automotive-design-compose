@@ -554,11 +554,13 @@ mod tests {
         style2.node_style_mut().opacity = Some(0.5);
         style2.node_style_mut().letter_spacing = Some(1.2);
         style2.layout_style_mut().flex_grow = 1.0;
+        style2.node_style_mut().meter_data = Some(Default::default()).into();
 
         let diff = style1.difference(&style2);
         assert_eq!(diff.node_style().opacity, Some(0.5));
         assert_eq!(diff.node_style().letter_spacing, Some(1.2));
         assert_eq!(diff.layout_style().flex_grow, 1.0);
+        assert_eq!(diff.node_style().meter_data, Some(Default::default()).into());
 
         // Test no difference
         style1.node_style_mut().opacity = Some(0.5);

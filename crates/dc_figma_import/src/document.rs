@@ -541,7 +541,7 @@ impl Document {
     /// overridden in the instance compared to the reference component. If we then render a
     /// different variant of the component (due to an interaction) we can apply these delta
     /// styles to get the correct output.
-    fn compute_component_overrides(&self, nodes: &mut HashMap<NodeQuery, View>) {
+    fn compute_component_overrides(nodes: &mut HashMap<NodeQuery, View>) {
         // XXX: Would be nice to avoid cloning here. Do we need to? We need to mutate the
         //      instance views in place. And we can't hold a ref and a mutable ref to nodes
         //      at the same time.
@@ -1173,7 +1173,7 @@ impl Document {
         }
 
         // Populate the override data for components.
-        self.compute_component_overrides(&mut views);
+        Self::compute_component_overrides(&mut views);
 
         // Update our mapping from instance to component set.
         self.component_sets = component_id_index
@@ -1358,5 +1358,102 @@ mod tests {
         let result: Result<DummyParent, Error> = deserialize_json_with_path(good_json);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().child.field, "value");
+    }
+
+    #[test]
+    fn test_compute_component_overrides_coverage() {
+        use dc_bundle::positioning::ScrollInfo;
+        use dc_bundle::view::view::RenderMethod;
+        use dc_bundle::view::view_data::View_data_type;
+        use dc_bundle::view_shape::ViewShape;
+        use std::collections::HashMap;
+
+        let mut views = HashMap::new();
+
+        // 1. Reference Component
+        let ref_id = "ref_id".to_string();
+        let ref_view = View::new_rect(
+            &ref_id,
+            &"RefComponent".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        views.insert(NodeQuery::NodeId(ref_id.clone()), ref_view.clone());
+        views.insert(NodeQuery::NodeVariant("RefComponent".to_string(), "".to_string()), ref_view);
+
+        // 2. Instance 1 (Root of instance)
+        let mut comp_info1 = ComponentInfo::default();
+        comp_info1.id = ref_id.clone();
+        comp_info1.name = "RefComponent".to_string();
+
+        let inst1_id = "inst1_id".to_string();
+        let mut inst1 = View::new_rect(
+            &inst1_id,
+            &"Instance1".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            Some(comp_info1),
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+
+        // 3. Child 1 (Descendant of instance 1)
+        let child1_id = "child1_id".to_string();
+        let child1 = View::new_rect(
+            &child1_id,
+            &"Child1".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+
+        // 4. Instance 2 (Nested Instance)
+        let mut comp_info2 = ComponentInfo::default();
+        comp_info2.id = ref_id.clone();
+        comp_info2.name = "RefComponent".to_string();
+
+        let inst2_id = "inst2_id".to_string();
+        let inst2 = View::new_rect(
+            &inst2_id,
+            &"Instance2".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            Some(comp_info2),
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+
+        // Assemble the tree: inst1 -> [child1, inst2]
+        inst1.add_child(child1);
+        inst1.add_child(inst2);
+
+        views.insert(NodeQuery::NodeId(inst1_id), inst1);
+
+        // Call the method
+        Document::compute_component_overrides(&mut views);
+
+        // Assert that we completed execution without panic
+        assert!(true);
     }
 }

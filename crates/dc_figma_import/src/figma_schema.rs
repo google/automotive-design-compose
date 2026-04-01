@@ -1044,7 +1044,7 @@ pub struct Node {
     pub absolute_bounding_box: Option<Rectangle>,
     #[serde(default)]
     pub absolute_render_bounds: Option<Rectangle>,
-    #[serde(rename = "sharedPluginData", default)]
+    #[serde(default)]
     pub shared_plugin_data: HashMap<String, HashMap<String, String>>,
     #[serde(skip)]
     pub animation_override: Option<crate::animation_spec_schema::AnimationOverrideJson>,

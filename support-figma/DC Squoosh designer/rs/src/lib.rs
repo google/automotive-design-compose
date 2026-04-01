@@ -740,4 +740,200 @@ mod tests {
             KeyframeValue::Color(Rgba { r: 255, g: 0, b: 0, a: 255 })
         );
     }
+
+    #[test]
+    fn test_easings() {
+        assert_eq!(Easing::Inherit.apply(0.5), 0.5);
+        assert_eq!(Easing::Linear.apply(0.5), 0.5);
+        assert_eq!(Easing::Instant.apply(0.5), 0.0);
+        assert_eq!(Easing::Instant.apply(1.0), 1.0);
+        assert_eq!(Easing::EaseIn.apply(0.5), 0.25);
+        assert_eq!(Easing::EaseOut.apply(0.5), 0.75);
+        assert_eq!(Easing::EaseInOut.apply(0.25), 0.125);
+        assert_eq!(Easing::EaseInOut.apply(0.75), 0.875);
+        assert_eq!(Easing::EaseInCubic.apply(0.5), 0.125);
+        assert_eq!(Easing::EaseOutCubic.apply(0.5), 0.875);
+        assert_eq!(Easing::EaseInOutCubic.apply(0.25), 0.0625);
+        assert_eq!(Easing::EaseInOutCubic.apply(0.75), 0.9375);
+    }
+
+    #[test]
+    fn test_rgba_from_hex() {
+        let r1 = Rgba::from_hex("#FF0000");
+        assert_eq!(r1, Rgba { r: 255, g: 0, b: 0, a: 255 });
+        let r2 = Rgba::from_hex("#FF0000AA");
+        assert_eq!(r2, Rgba { r: 255, g: 0, b: 0, a: 170 });
+        let r3 = Rgba::from_hex("invalid");
+        assert_eq!(r3, Rgba { r: 0, g: 0, b: 0, a: 255 });
+        let r4 = Rgba::from_hex("123456"); // No #
+        assert_eq!(r4, Rgba { r: 18, g: 52, b: 86, a: 255 });
+    }
+
+    #[test]
+    fn test_rgba_deserialize() {
+        let json_str = r##""#FF0000""##;
+        let c: Rgba = serde_json::from_str(json_str).unwrap();
+        assert_eq!(c, Rgba { r: 255, g: 0, b: 0, a: 255 });
+
+        let json_map = r##"{"r": 255, "g": 0, "b": 0, "a": 128}"##;
+        let c2: Rgba = serde_json::from_str(json_map).unwrap();
+        assert_eq!(c2, Rgba { r: 255, g: 0, b: 0, a: 128 });
+
+        let json_map_partial = r##"{"r": 255}"##;
+        let c3: Rgba = serde_json::from_str(json_map_partial).unwrap();
+        assert_eq!(c3, Rgba { r: 255, g: 0, b: 0, a: 255 });
+    }
+
+    #[test]
+    fn test_keyframe_value_interpolate() {
+        let s1 = KeyframeValue::Scalar(0.0);
+        let s2 = KeyframeValue::Scalar(10.0);
+        assert_eq!(s1.interpolate(&s2, 0.5), KeyframeValue::Scalar(5.0));
+
+        let c1 = KeyframeValue::Color(Rgba { r: 0, g: 0, b: 0, a: 255 });
+        let c2 = KeyframeValue::Color(Rgba { r: 255, g: 255, b: 255, a: 255 });
+        if let KeyframeValue::Color(c) = c1.interpolate(&c2, 0.5) {
+            assert_eq!(c.r, 127);
+        } else {
+            panic!();
+        }
+
+        let r1 = KeyframeValue::CornerRadii([0.0, 0.0, 0.0, 0.0]);
+        let r2 = KeyframeValue::CornerRadii([10.0, 20.0, 30.0, 40.0]);
+        assert_eq!(r1.interpolate(&r2, 0.5), KeyframeValue::CornerRadii([5.0, 10.0, 15.0, 20.0]));
+
+        let a1 = KeyframeValue::Arc(ArcData {
+            starting_angle: 0.0,
+            ending_angle: 0.0,
+            inner_radius: 0.0,
+        });
+        let a2 = KeyframeValue::Arc(ArcData {
+            starting_angle: 10.0,
+            ending_angle: 20.0,
+            inner_radius: 30.0,
+        });
+        assert_eq!(
+            a1.interpolate(&a2, 0.5),
+            KeyframeValue::Arc(ArcData {
+                starting_angle: 5.0,
+                ending_angle: 10.0,
+                inner_radius: 15.0
+            })
+        );
+
+        let g1 = KeyframeValue::Gradient(vec![GradientStop {
+            position: 0.0,
+            color: Rgba::from_hex("#000000"),
+        }]);
+        let g2 = KeyframeValue::Gradient(vec![GradientStop {
+            position: 1.0,
+            color: Rgba::from_hex("#ffffff"),
+        }]);
+        // They have same length (1), so they should interpolate!
+        assert_eq!(
+            g1.interpolate(&g2, 0.5),
+            KeyframeValue::Gradient(vec![GradientStop {
+                position: 0.5,
+                color: Rgba { r: 127, g: 127, b: 127, a: 255 }
+            }])
+        );
+
+        // Test length mismatch!
+        let g3 = KeyframeValue::Gradient(vec![GradientStop {
+            position: 0.0,
+            color: Rgba::from_hex("#000000"),
+        }]);
+        let g4 = KeyframeValue::Gradient(vec![
+            GradientStop { position: 0.0, color: Rgba::from_hex("#000000") },
+            GradientStop { position: 1.0, color: Rgba::from_hex("#ffffff") },
+        ]);
+        // Lengths are different (1 and 2), should return clone of g3!
+        assert_eq!(g3.interpolate(&g4, 0.5), g3);
+
+        // Test mismatched types returns clone of self!
+        let s = KeyframeValue::Scalar(1.0);
+        let c = KeyframeValue::Color(Rgba::from_hex("#000000"));
+        assert_eq!(s.interpolate(&c, 0.5), s);
+    }
+
+    #[test]
+    fn test_legacy_parse() {
+        let encoded = general_purpose::STANDARD.encode("[110.0, 10.0, 10.0, 10.0]");
+        let legacy = format!("Linear|0.5,{},Linear", encoded);
+        let parsed = ParsedTimelineData::parse(&legacy).unwrap();
+        assert_eq!(parsed.target_easing, Easing::Linear);
+        assert_eq!(parsed.keyframes.len(), 1);
+        assert_eq!(parsed.keyframes[0].fraction, 0.5);
+        if let KeyframeValue::CornerRadii(r) = parsed.keyframes[0].value {
+            assert_eq!(r[0], 110.0);
+        } else {
+            panic!();
+        }
+    }
+
+    #[test]
+    fn test_property_parsing() {
+        assert_eq!("opacity".parse::<AnimatableProperty>().unwrap(), AnimatableProperty::Opacity);
+        assert_eq!(
+            "fills.0.solid".parse::<AnimatableProperty>().unwrap(),
+            AnimatableProperty::FillSolid(0)
+        );
+        assert_eq!(
+            "strokes.1.gradient".parse::<AnimatableProperty>().unwrap(),
+            AnimatableProperty::StrokeGradient(1)
+        );
+        assert_eq!(
+            "unknown".parse::<AnimatableProperty>().unwrap(),
+            AnimatableProperty::Other("unknown".to_string())
+        );
+    }
+
+    #[test]
+    fn test_property_lookup() {
+        let mut map = HashMap::new();
+        map.insert("Node1-opacity".to_string(), "Linear|0.5,MQ==,Linear".to_string()); // 1.0 base64 is MQ==
+        let lookup = PropertyLookup::from_map(&map);
+        let nt = lookup.get_for_node("Node1").unwrap();
+        assert!(nt.opacity.is_some());
+
+        let mut map2 = HashMap::new();
+        map2.insert("Node1-opacity-custom-id".to_string(), "Linear|0.5,MQ==,Linear".to_string());
+        let lookup2 = PropertyLookup::from_map(&map2);
+        let nt2 = lookup2.get_for_node("Node1").unwrap();
+        assert!(nt2.opacity.is_some());
+    }
+
+    #[test]
+    fn test_get_keyframe_segment() {
+        let timeline = ParsedTimelineData {
+            target_easing: Easing::Linear,
+            keyframes: vec![
+                ParsedKeyframe {
+                    fraction: 0.2,
+                    value: KeyframeValue::Scalar(20.0),
+                    easing: Easing::Linear,
+                },
+                ParsedKeyframe {
+                    fraction: 0.8,
+                    value: KeyframeValue::Scalar(80.0),
+                    easing: Easing::Linear,
+                },
+            ],
+        };
+
+        let start = KeyframeValue::Scalar(0.0);
+        let end = KeyframeValue::Scalar(100.0);
+
+        let (k1, k2, _t) = timeline.get_keyframe_segment(&start, &end, 0.1);
+        assert_eq!(k1, &start);
+        assert_eq!(k2, &KeyframeValue::Scalar(20.0));
+
+        let (k1, k2, _t) = timeline.get_keyframe_segment(&start, &end, 0.5);
+        assert_eq!(k1, &KeyframeValue::Scalar(20.0));
+        assert_eq!(k2, &KeyframeValue::Scalar(80.0));
+
+        let (k1, k2, _t) = timeline.get_keyframe_segment(&start, &end, 0.9);
+        assert_eq!(k1, &KeyframeValue::Scalar(80.0));
+        assert_eq!(k2, &end);
+    }
 }

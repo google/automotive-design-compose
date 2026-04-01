@@ -1,5 +1,5 @@
 [package]
-name = "dc-squoosh-parser"
+name = "dc_squoosh_designer"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

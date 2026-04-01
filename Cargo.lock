@@ -261,15 +261,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-squoosh-parser"
-version = "0.38.2"
-dependencies = [
- "base64 0.21.7",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "dc_bundle"
 version = "0.38.2"
 dependencies = [
@@ -337,6 +328,15 @@ dependencies = [
  "serde",
  "taffy",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "dc_squoosh_designer"
+version = "0.38.2"
+dependencies = [
+ "base64 0.21.7",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

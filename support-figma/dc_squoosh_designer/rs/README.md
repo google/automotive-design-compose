@@ -7,7 +7,7 @@ A Rust library for parsing and interpolating custom animation data exported from
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-dc-squoosh-parser = { path = "path/to/rs" }
+dc_squoosh_parser = { path = "path/to/rs" }
 serde_json = "1.0"
 ```
 

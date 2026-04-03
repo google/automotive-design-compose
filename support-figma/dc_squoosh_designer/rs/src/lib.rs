@@ -1,4 +1,3 @@
-use base64::{engine::general_purpose, Engine as _};
 use serde::{de, Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -251,55 +250,18 @@ pub struct ParsedTimelineData {
 // --- Parsing Logic ---
 
 impl ParsedTimelineData {
-    /// Parses a pipe-separated custom keyframe string or a JSON payload.
+    /// Parses an escaped JSON payload describing a custom timeline.
+    /// Legacy base64 and pipe-separated payload structures are no longer supported.
     pub fn parse(encoded_data: &str) -> Result<Self, String> {
-        // Attempt new JSON parsing first
-        if encoded_data.starts_with('{') {
-            if let Ok(mut parsed) = serde_json::from_str::<ParsedTimelineData>(encoded_data) {
-                // Ensure sorted
-                parsed.keyframes.sort_by(|a, b| {
-                    a.fraction.partial_cmp(&b.fraction).unwrap_or(std::cmp::Ordering::Equal)
-                });
-                return Ok(parsed);
-            }
+        if let Ok(mut parsed) = serde_json::from_str::<ParsedTimelineData>(encoded_data) {
+            // Ensure keyframes are sorted sequentially
+            parsed.keyframes.sort_by(|a, b| {
+                a.fraction.partial_cmp(&b.fraction).unwrap_or(std::cmp::Ordering::Equal)
+            });
+            Ok(parsed)
+        } else {
+            Err("Invalid JSON payload: custom timelines must be encoded as pure JSON".to_string())
         }
-
-        // LEGACY PARSING
-        let parts: Vec<&str> = encoded_data.split('|').collect();
-        if parts.is_empty() {
-            return Err("Empty data".to_string());
-        }
-
-        let target_easing = parse_easing(parts[0]);
-        let mut keyframes = Vec::new();
-
-        if parts.len() > 1 && !parts[1].is_empty() {
-            for kf_str in parts[1].split(';') {
-                let kf_parts: Vec<&str> = kf_str.split(',').collect();
-                if kf_parts.len() != 3 {
-                    continue;
-                }
-
-                let fraction: f32 = kf_parts[0].parse().unwrap_or(0.0);
-                let easing = parse_easing(kf_parts[2]);
-
-                // Decode Value
-                let decoded_bytes =
-                    general_purpose::STANDARD.decode(kf_parts[1]).map_err(|e| e.to_string())?;
-                let json_str = String::from_utf8(decoded_bytes).map_err(|e| e.to_string())?;
-
-                let value = parse_keyframe_value(&json_str);
-
-                keyframes.push(ParsedKeyframe { fraction, value, easing });
-            }
-        }
-
-        // Ensure sorted
-        keyframes.sort_by(|a, b| {
-            a.fraction.partial_cmp(&b.fraction).unwrap_or(std::cmp::Ordering::Equal)
-        });
-
-        Ok(ParsedTimelineData { target_easing, keyframes })
     }
 
     /// Finds the surrounding keyframes and the eased fraction between them.
@@ -392,72 +354,6 @@ impl ParsedTimelineData {
     }
 }
 
-fn parse_easing(s: &str) -> Easing {
-    match s {
-        "Linear" => Easing::Linear,
-        "EaseIn" => Easing::EaseIn,
-        "EaseOut" => Easing::EaseOut,
-        "EaseInOut" => Easing::EaseInOut,
-        "EaseInCubic" => Easing::EaseInCubic,
-        "EaseOutCubic" => Easing::EaseOutCubic,
-        "EaseInOutCubic" => Easing::EaseInOutCubic,
-        "Instant" => Easing::Instant,
-        "Inherit" => Easing::Inherit,
-        _ => Easing::Inherit, // Default -> Inherit
-    }
-}
-
-fn parse_keyframe_value(json_str: &str) -> KeyframeValue {
-    if let Ok(v) = serde_json::from_str::<f32>(json_str) {
-        return KeyframeValue::Scalar(v);
-    }
-    if let Ok(v) = serde_json::from_str::<Vec<f32>>(json_str) {
-        if v.len() == 4 {
-            return KeyframeValue::CornerRadii([v[0], v[1], v[2], v[3]]);
-        }
-    }
-    // Gradients (Array of objects)
-    #[derive(Deserialize)]
-    struct RawStop {
-        position: f32,
-        color: String,
-    }
-    if let Ok(raw_stops) = serde_json::from_str::<Vec<RawStop>>(json_str) {
-        let stops = raw_stops
-            .into_iter()
-            .map(|s| GradientStop { position: s.position, color: Rgba::from_hex(&s.color) })
-            .collect();
-        return KeyframeValue::Gradient(stops);
-    }
-    // Arc
-    #[derive(Deserialize)]
-    struct RawArc {
-        #[serde(rename = "startingAngle")]
-        starting_angle: f32,
-        #[serde(rename = "endingAngle")]
-        ending_angle: f32,
-        #[serde(rename = "innerRadius")]
-        inner_radius: f32,
-    }
-    if let Ok(a) = serde_json::from_str::<RawArc>(json_str) {
-        return KeyframeValue::Arc(ArcData {
-            starting_angle: a.starting_angle,
-            ending_angle: a.ending_angle,
-            inner_radius: a.inner_radius,
-        });
-    }
-
-    // Fallback: Raw Color String
-    // Note: The primary persistence format is a pure escaped JSON string.
-    // Base64 encoding is only maintained for legacy pipe-separated payloads
-    // to prevent embedded delimiters from corrupting older exported files.
-    let clean_str = json_str.trim().trim_matches('"');
-    if clean_str.starts_with('#') {
-        return KeyframeValue::Color(Rgba::from_hex(clean_str));
-    }
-
-    KeyframeValue::None
-}
 
 // --- DTOs for reading the big JSON ---
 
@@ -701,11 +597,8 @@ mod tests {
         assert_eq!(mid.r, 127); // Approx
 
         // Test Parsing & Interpolation
-        let encoded_radii = format!(
-            "Linear|0.5,{},Linear",
-            general_purpose::STANDARD.encode("[50.0, 50.0, 50.0, 50.0]")
-        );
-        let timeline = ParsedTimelineData::parse(&encoded_radii).unwrap();
+        let json_payload = r##"{"targetEasing":"Linear","keyframes":[{"fraction":0.5,"value":[50.0,50.0,50.0,50.0],"easing":"Linear"}]}"##;
+        let timeline = ParsedTimelineData::parse(json_payload).unwrap();
 
         let start = KeyframeValue::CornerRadii([0.0, 0.0, 0.0, 0.0]);
         let end = KeyframeValue::CornerRadii([100.0, 100.0, 100.0, 100.0]);
@@ -854,21 +747,6 @@ mod tests {
     }
 
     #[test]
-    fn test_legacy_parse() {
-        let encoded = general_purpose::STANDARD.encode("[110.0, 10.0, 10.0, 10.0]");
-        let legacy = format!("Linear|0.5,{},Linear", encoded);
-        let parsed = ParsedTimelineData::parse(&legacy).unwrap();
-        assert_eq!(parsed.target_easing, Easing::Linear);
-        assert_eq!(parsed.keyframes.len(), 1);
-        assert_eq!(parsed.keyframes[0].fraction, 0.5);
-        if let KeyframeValue::CornerRadii(r) = parsed.keyframes[0].value {
-            assert_eq!(r[0], 110.0);
-        } else {
-            panic!();
-        }
-    }
-
-    #[test]
     fn test_property_parsing() {
         assert_eq!("opacity".parse::<AnimatableProperty>().unwrap(), AnimatableProperty::Opacity);
         assert_eq!(
@@ -888,13 +766,13 @@ mod tests {
     #[test]
     fn test_property_lookup() {
         let mut map = HashMap::new();
-        map.insert("Node1-opacity".to_string(), "Linear|0.5,MQ==,Linear".to_string()); // 1.0 base64 is MQ==
+        map.insert("Node1-opacity".to_string(), r##"{"targetEasing":"Linear","keyframes":[{"fraction":0.5,"value":1.0,"easing":"Linear"}]}"##.to_string());
         let lookup = PropertyLookup::from_map(&map);
         let nt = lookup.get_for_node("Node1").unwrap();
         assert!(nt.opacity.is_some());
 
         let mut map2 = HashMap::new();
-        map2.insert("Node1-opacity-custom-id".to_string(), "Linear|0.5,MQ==,Linear".to_string());
+        map2.insert("Node1-opacity-custom-id".to_string(), r##"{"targetEasing":"Linear","keyframes":[{"fraction":0.5,"value":1.0,"easing":"Linear"}]}"##.to_string());
         let lookup2 = PropertyLookup::from_map(&map2);
         let nt2 = lookup2.get_for_node("Node1").unwrap();
         assert!(nt2.opacity.is_some());

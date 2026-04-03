@@ -35,27 +35,31 @@ The root object contains the animation specification for transitioning *to* the 
 }
 ```
 
-## Custom Keyframe Serialization
+To easily and safely persist complex keyframe sequences, `customKeyframeData` stores serialized property timelines strictly as robust, typed JSON objects mirroring the protobuf schema.
 
-To easily and safely persist complex keyframe sequences, `customKeyframeData` stores serialized property timelines primarily as standard escaped JSON arrays.
+### Standard Format (Typed JSON Schema)
 
-### Primary Format (JSON Array)
-
-Each custom timeline property entry points to a JSON string array containing all keyframes. 
+Each custom timeline property entry contains a strongly-typed JSON object array representing all keyframes, perfectly aligning with the Rust engine (`CustomTimeline`) and the Protobuf definitions.
 
 ```json
 {
   "customKeyframeData": {
-    "opacity": "[{\"fraction\":0.2,\"value\":0.4,\"easing\":\"Linear\"},{\"fraction\":0.5,\"value\":0.8,\"easing\":\"EaseIn\"}]"
+    "opacity": {
+      "keyframes": [
+        {
+          "fraction": 0.2,
+          "value": { "Scalar": 0.4 },
+          "easing": "Linear"
+        },
+        {
+          "fraction": 0.5,
+          "value": { "Scalar": 0.8 },
+          "easing": "EaseIn"
+        }
+      ]
+    }
   }
 }
 ```
 
-### Legacy Format (Pipe-Separated Strings)
-
-For backward compatibility, the engine still supports the older, compact pipe-separated payload format. It separates global target easing, Base64-encoded values, and segment easings utilizing delimiters like `|`, `;`, and `,` to avoid escape sequence overhead.
-
-**Legacy Payload Layout:**
-`TargetEasing|Fraction,Base64Value,Easing;...`
-
-*Note: New and updated custom keyframes will automatically upgrade and save using pure JSON to prevent string delimiter collision.*
+*Note: All custom timelines enforce this JSON structure natively, yielding superior parsing performance, explicit typing for multi-scalar values (like color or gradient arrays), and complete immunity to legacy string-delimiter collisions.*

@@ -124,4 +124,4 @@ The UI thread is responsible for the user interface and all the client-side anim
 
 - **Ping Main Thread:** A button in the UI triggers a round-trip message to the main thread. This also logs a raw JSON dump of the animation data for the selected component to the Figma console, which is useful for debugging and generating test data.
 - **Run Tests:** A button in the UI executes the embedded test suite, verifying both the UI components and the Figma sandbox interactions.
-- **Rust Parser:** The `rs/` directory contains Rust data structures (`Keyframe`, `Timeline`, `AnimationData`, etc.) matching the plugin's JSON format, intended for use in the DesignCompose Android library or other native tools.
+- **Rust Parser:** The `rs/` directory contains strongly-typed Rust data structures (`CustomTimeline`, `VariantAnimation`, etc.) perfectly matching the plugin's robust JSON format, yielding superior parsing performance and strict type safety for the DesignCompose native engine.

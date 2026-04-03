@@ -250,10 +250,7 @@
   box-shadow: 0 0 0 1px #000;
 }
 
-/* Missing AND Locked (Priority to Missing style generally, or Locked?
-   Usually missing implies locked in this system, so we want Missing style to prevail for visibility)
-   CSS specificity handles this via order, .missing is below .locked
-*/
+/* Missing AND Locked: Missing styles take precedence over Locked styles via source order. */
 
 .selection {
   position: absolute;

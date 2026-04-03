@@ -107,11 +107,7 @@ describe('Animation Logic End-to-End', () => {
     test('Custom Keyframe Insertion', () => {
         // Add custom KF at 0.5 (50% time, so 0.5s).
         // Value 80. Easing Linear (for next segment).
-        // Segment 1: 0 -> 0.5. Easing Inherit? 
-        // Wait, KF at 0 (start) has easing?
-        // KF at 0.5 defines easing for 0->0.5.
-        // No, kf2 defines easing.
-        // So KF at 0.5 defines easing for 0 -> 0.5.
+        // Segment 1: 0 -> 0.5 (easing defined by the custom keyframe at 0.5).
         
         xTimeline!.keyframes.push({
             id: 'custom-1',

@@ -143,8 +143,7 @@ class AnimationUI {
 
     // Global Events
     window.addEventListener("mouseup", () => {
-        // Need to access dragging state? TimelineEditor handles it mostly.
-        // Just generic cleanup if needed.
+
         document.body.classList.remove("no-select");
     });
 

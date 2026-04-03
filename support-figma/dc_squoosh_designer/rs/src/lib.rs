@@ -447,11 +447,10 @@ fn parse_keyframe_value(json_str: &str) -> KeyframeValue {
         });
     }
 
-    // Fallback: Color String
-    // The input string might be a raw hex string inside quotes (JSON string) or just raw chars?
-    // Base64 decoding gives us the raw bytes.
-    // If the original was JSON string `" #ffffff "`, serde_json from_str would strip quotes.
-    // If it fails, we assume it's a raw color hex.
+    // Fallback: Raw Color String
+    // Note: The primary persistence format is a pure escaped JSON string.
+    // Base64 encoding is only maintained for legacy pipe-separated payloads
+    // to prevent embedded delimiters from corrupting older exported files.
     let clean_str = json_str.trim().trim_matches('"');
     if clean_str.starts_with('#') {
         return KeyframeValue::Color(Rgba::from_hex(clean_str));
@@ -685,8 +684,6 @@ impl PropertyLookup {
 
     /// Retrieves the parsed timeline data for a specific node and property.
     pub fn get(&self, node: &str, prop: AnimatableProperty) -> Option<&ParsedTimelineData> {
-        // Find the node's NodeTimelines, then find the property within it.
-        // Needs a workaround since we return an Arc and want to return a reference to its contents. Wait, the old getter returned a reference. If we return a reference tied to `self`, that's fine.
         self.timelines.get(node).and_then(|nt| nt.get(&prop))
     }
 }

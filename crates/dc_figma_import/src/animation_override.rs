@@ -7,11 +7,13 @@ use crate::animation_spec_schema::{
     BezierCurve as BezierCurveJson, Duration, Easing as EasingJson, KeyFrame as KeyFrameJson,
     KeyFrameAnimation as KeyFrameAnimationJson, RepeatType as RepeatTypeJson,
     SmoothAnimation as SmoothAnimationJson, StopType as StopTypeJson,
+    CustomKeyframe as CustomKeyframeJson, CustomTimeline as CustomTimelineJson,
 };
 use dc_bundle::animationspec;
 use dc_bundle::animationspec::{
     animation_override, animations, easing, repeat_type, stop_type, AnimationSpec, Animations,
     BezierCurve, Easing, KeyFrame, KeyFrameAnimation, RepeatType, SmoothAnimation, StopType,
+    CustomKeyframe, CustomTimeline,
 };
 
 /// Converts from the JSON `AnimationOverrideJson` to the protobuf `AnimationOverride`.
@@ -50,6 +52,29 @@ impl From<&AnimationOverrideJson> for AnimationOverride {
     }
 }
 
+/// Converts from the JSON `CustomKeyframeJson` to the protobuf `CustomKeyframe`.
+impl From<CustomKeyframeJson> for CustomKeyframe {
+    fn from(json: CustomKeyframeJson) -> Self {
+        CustomKeyframe {
+            fraction: json.fraction,
+            value_json: json.value_json,
+            easing: Some(json.easing.into()).into(),
+            ..Default::default()
+        }
+    }
+}
+
+/// Converts from the JSON `CustomTimelineJson` to the protobuf `CustomTimeline`.
+impl From<CustomTimelineJson> for CustomTimeline {
+    fn from(json: CustomTimelineJson) -> Self {
+        CustomTimeline {
+            target_easing: Some(json.target_easing.into()).into(),
+            keyframes: json.keyframes.into_iter().map(|k| k.into()).collect(),
+            ..Default::default()
+        }
+    }
+}
+
 /// Converts from the JSON `AnimationSpecJson` to the protobuf `AnimationSpec`.
 impl From<AnimationSpecJson> for AnimationSpec {
     fn from(json: AnimationSpecJson) -> Self {
@@ -57,7 +82,7 @@ impl From<AnimationSpecJson> for AnimationSpec {
             initial_delay: Some(json.initial_delay.into()).into(),
             animation: Some(json.animation.into()).into(),
             interrupt_type: json.interrupt_type.map(|x| x.into()).into(),
-            custom_keyframe_data: json.custom_keyframe_data,
+            custom_keyframe_data: json.custom_keyframe_data.into_iter().map(|(k, v)| (k, v.into())).collect(),
             ..Default::default()
         }
     }

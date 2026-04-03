@@ -142,6 +142,21 @@ pub enum StopType {
     Stop,
 }
 
+/// A keyframe within a custom property timeline.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct CustomKeyframe {
+    pub fraction: f32,
+    pub value_json: String,
+    pub easing: Easing,
+}
+
+/// A sequence of keyframes for an arbitrary property.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct CustomTimeline {
+    pub target_easing: Easing,
+    pub keyframes: Vec<CustomKeyframe>,
+}
+
 /// The detailed specification for a custom animation, present when "Custom" is
 /// selected in the top-level "Animation" dropdown.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
@@ -155,7 +170,7 @@ pub struct AnimationSpec {
     pub interrupt_type: Option<StopType>,
     /// Optional dictionary containing Squoosh arbitrary layer property values to animate from
     /// strings directly written by the UI plugin format over into matching types in Compose
-    pub custom_keyframe_data: std::collections::HashMap<String, String>,
+    pub custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
 }
 
 /// This is the top-level structure that the plugin saves to a Figma node.
@@ -183,7 +198,7 @@ impl<'de> Deserialize<'de> for AnimationOverrideJson {
             override_type: String,
             spec: Option<AnimationSpec>,
             #[serde(rename = "customKeyframeData", default)]
-            custom_keyframe_data: std::collections::HashMap<String, String>,
+            custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
         }
 
         let tmp = Tmp::deserialize(deserializer)?;
@@ -263,7 +278,12 @@ mod tests {
                 "interrupt_type": "Complete"
             },
             "customKeyframeData": {
-                "Right-x": "Inherit|0.27500000000000013,MTIz,Linear"
+                "Right-x": {
+                    "target_easing": "Linear",
+                    "keyframes": [
+                        { "fraction": 0.275, "value_json": "123", "easing": "Linear" }
+                    ]
+                }
             }
         }"#;
         let spec: AnimationOverrideJson = serde_json::from_str(json).unwrap();
@@ -271,8 +291,8 @@ mod tests {
             assert_eq!(custom_spec.interrupt_type, Some(StopType::Complete));
             assert_eq!(custom_spec.custom_keyframe_data.len(), 1);
             assert_eq!(
-                custom_spec.custom_keyframe_data.get("Right-x").unwrap(),
-                "Inherit|0.27500000000000013,MTIz,Linear"
+                custom_spec.custom_keyframe_data.get("Right-x").unwrap().keyframes[0].fraction,
+                0.275
             );
         } else {
             panic!("Wrong spec type, expected Custom");
@@ -315,7 +335,10 @@ mod tests {
                 "interrupt_type": "None"
             },
             "customKeyframeData": {
-                "Right-x": "Inherit|0.27500000000000013,MTIz,Linear"
+                "Right-x": {
+                    "target_easing": "Linear",
+                    "keyframes": []
+                }
             }
         }"#;
         let anim = serde_json::from_str::<AnimationOverrideJson>(json_str);

@@ -37,40 +37,25 @@ The root object contains the animation specification for transitioning *to* the 
 
 ## Custom Keyframe Serialization
 
-To efficiently store complex keyframe sequences within the JSON structure, `customKeyframeData` uses a compact formatted string.
+To easily and safely persist complex keyframe sequences, `customKeyframeData` stores serialized property timelines primarily as standard escaped JSON arrays.
 
-**Format:**
-`TargetEasing|Keyframe1;Keyframe2;...`
+### Primary Format (JSON Array)
 
-*   **`TargetEasing`**: (String) The easing curve defined for the transition *from* the last custom keyframe to the next variant state (e.g., "Inherit", "Linear", "EaseIn"). "Inherit" means it uses the global animation easing.
-*   **`KeyframeN`**: A serialized string representing a single custom keyframe.
+Each custom timeline property entry points to a JSON string array containing all keyframes. 
 
-### Keyframe String Format
+```json
+{
+  "customKeyframeData": {
+    "opacity": "[{\"fraction\":0.2,\"value\":0.4,\"easing\":\"Linear\"},{\"fraction\":0.5,\"value\":0.8,\"easing\":\"EaseIn\"}]"
+  }
+}
+```
 
-Each keyframe entry is separated by a semicolon `;` and follows this internal structure:
+### Legacy Format (Pipe-Separated Strings)
 
-`Fraction,Value,Easing`
+For backward compatibility, the engine still supports the older, compact pipe-separated payload format. It separates global target easing, Base64-encoded values, and segment easings utilizing delimiters like `|`, `;`, and `,` to avoid escape sequence overhead.
 
-1.  **`Fraction`**: (Number) A value between 0 and 1 representing the time position of the keyframe within the transition.
-2.  **`Value`**: The value of the property at this keyframe. Stored as a **Base64 encoded string** (primitives are stringified, complex types like objects or arrays are JSON-stringified before encoding).
-3.  **`Easing`**: (String) The easing curve for the segment *following* this keyframe. (e.g., "Linear", "EaseIn", "Instant").
+**Legacy Payload Layout:**
+`TargetEasing|Fraction,Base64Value,Easing;...`
 
-### Examples
-
-**Simple Primitives (e.g., Opacity):**
-A transition that stays at 0.5 opacity halfway through, then eases out to the variant state.
-- TargetEasing: `EaseOut`
-- Keyframe 1: Fraction `0.5`, Value `0.5`, Easing `Linear`. (Base64 of `"0.5"` is `MC41`)
-
-Serialized string: `EaseOut|0.5,MC41,Linear`
-
-**Complex Data Types (e.g., Position and Object Types):**
-A transition involving an object like `{ "x": 10, "y": 20 }`.
-- TargetEasing: `EaseInOut`
-- Keyframe 1: Fraction `0`, Value `100`, Easing `Linear`. (Base64 of `"100"` is `MTAw`)
-- Keyframe 2: Fraction `0.5`, Value `{"x":10,"y":20}`, Easing `EaseIn`. (Base64 of `{"x":10,"y":20}` is `eyJ4IjoxMCwieSI6MjB9`)
-- Keyframe 3: Fraction `1`, Value `"test"`, Easing `EaseOut`. (Base64 of `"test"` is `dGVzdA==`)
-
-Serialized string: `EaseInOut|0,MTAw,Linear;0.5,eyJ4IjoxMCwieSI6MjB9,EaseIn;1,dGVzdA==,EaseOut`
-
-*Note: Properties like `id`, `locked`, `isMissing`, and internal `data` are part of the in-memory `Keyframe` interface used by the plugin and are not directly stored in this serialized string format. The `isCustom` flag for a `Timeline` is inferred by its presence in `customKeyframeData` during deserialization.*
+*Note: New and updated custom keyframes will automatically upgrade and save using pure JSON to prevent string delimiter collision.*

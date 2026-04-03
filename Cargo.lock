@@ -335,6 +335,8 @@ name = "dc_squoosh_parser"
 version = "0.38.2"
 dependencies = [
  "base64 0.21.7",
+ "env_logger",
+ "log",
  "serde",
  "serde_json",
 ]

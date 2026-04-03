@@ -26,7 +26,9 @@ dc_layout = { version = "0.38.2", path = "crates/dc_layout" }
 dc_figma_import = { version = "0.38.2", path = "crates/dc_figma_import" }
 android_logger = "0.13.1"
 anyhow = "1.0"
+base64 = "0.21"
 bytes = "1.6.0"
+env_logger = "0.10.0"
 clap = { version = "4.5", features = ["derive", "env"] }
 image = { version = "0.25", default-features = false, features = [
     "png",

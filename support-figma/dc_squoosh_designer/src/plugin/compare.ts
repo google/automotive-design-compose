@@ -23,16 +23,18 @@ export async function compareNodes(
     "opacity",
     "visible",
   ];
-  for (const prop of propsToCompare) {
+    for (const prop of propsToCompare) {
     if (prop in node1 && prop in node2) {
-      const val1: string | number | boolean | undefined =
-        node1[prop as keyof typeof node1];
-      const val2: string | number | boolean | undefined =
-        node2[prop as keyof typeof node2];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const val1: any = node1[prop as keyof typeof node1];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const val2: any = node2[prop as keyof typeof node2];
       if (typeof val1 === "number" && typeof val2 === "number") {
         if (Math.abs(val1 - val2) > EPSILON) {
+          console.log(`${currentPath}: ${prop} mismatch: ${val1} vs ${val2}`);
         }
       } else if (val1 !== val2) {
+        console.log(`${currentPath}: ${prop} mismatch: ${val1} vs ${val2}`);
       }
     }
   }
@@ -60,6 +62,7 @@ export async function compareNodes(
 
     for (let i = 0; i < flat1.length; i++) {
       if (Math.abs(flat1[i] - flat2[i]) > EPSILON) {
+        console.log(`${currentPath}: transform[${matrixProps[i]}] mismatch: ${flat1[i]} vs ${flat2[i]}`);
       }
     }
   }
@@ -80,7 +83,6 @@ export async function compareNodes(
       const child2 = children2Map.get(child1.name);
       if (child2) {
         await compareNodes(child1, child2, currentPath);
-      } else {
       }
     }
   }

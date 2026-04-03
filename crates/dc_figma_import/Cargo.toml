@@ -39,7 +39,7 @@ clap = { workspace = true, optional = true }
 
 # logging
 log.workspace = true
-env_logger = "0.10.0"
+env_logger.workspace = true
 serde_path_to_error = "0.1.20"
 
 [build-dependencies]

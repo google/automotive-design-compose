@@ -122,7 +122,7 @@ class AnimationUI {
             const segment = getAnimationSegment(time / totalTime, keyframeTimes, totalTime, this.currentVariants);
             if (segment) {
                 newFrameIndex = keyframeTimes[segment.endIndex].index;
-            } else if (time >= totalTime) {
+            } else if (time >= totalTime && keyframeTimes.length > 0) {
                 newFrameIndex = keyframeTimes[0].index;
             }
         }

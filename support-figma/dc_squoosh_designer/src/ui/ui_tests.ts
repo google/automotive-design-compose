@@ -440,7 +440,7 @@ export function registerUITests(
           timelineManager.editor.emit('timeline:add', targetNode.id, "New Property");
           let newData = timelineManager.editor.getData()!;
           let updatedNode = findNodeById(newData.nodes, targetNode.id);
-          let addedTimeline = updatedNode.timelines.find((t: any) => t.property === "New Property");
+          const addedTimeline = updatedNode.timelines.find((t: any) => t.property === "New Property");
           if (!addedTimeline) throw new Error('Failed to add initial timeline');
           
           // 3. Rename to target property -> Triggers population

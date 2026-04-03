@@ -971,7 +971,7 @@ impl Document {
                             }
                         }
                     } else {
-                        log::warn!("No designcomposeSquoosh plugin data: {:?}", vsw_data.keys());
+                        log::debug!("No designcomposeSquoosh plugin data: {:?}", vsw_data.keys());
                     }
                 }
             }

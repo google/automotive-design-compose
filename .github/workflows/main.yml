@@ -308,3 +308,9 @@ jobs:
       - uses: ./.github/actions/build-figma-resource
         with:
           resource: extended-layout-plugin
+      - uses: ./.github/actions/build-figma-resource
+        with:
+          resource: dc_squoosh_designer
+      - name: Test Squoosh Designer
+        working-directory: support-figma/dc_squoosh_designer
+        run: npm ci; npm run test

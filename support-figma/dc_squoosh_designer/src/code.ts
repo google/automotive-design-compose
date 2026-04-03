@@ -28,7 +28,7 @@ let windowSize = { width: PREFERRED_WIDTH, height: PREFERRED_HEIGHT };
 
 let animationNodeId: string | null = null;
 let isSelectingPreviewFrame = false;
-let isUpdatingPreview = false;
+const isUpdatingPreview = false;
 
 async function updateSelection() {
     if (isSelectingPreviewFrame) {
@@ -144,7 +144,7 @@ async function updateSelection() {
           "designcompose",
           "animations",
         );
-        let animationData = animationDataString ? JSON.parse(animationDataString) : null;
+        const animationData = animationDataString ? JSON.parse(animationDataString) : null;
         let upgraded = false;
 
         if (animationData && animationData.customKeyframeData) {

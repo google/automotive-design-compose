@@ -325,9 +325,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dc_squoosh_animation"
+version = "0.1.0"
+dependencies = [
+ "dc_bundle",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "dc_squoosh_parser"
 version = "0.38.2"
 dependencies = [
+ "dc_squoosh_animation",
  "env_logger",
  "log",
  "serde",

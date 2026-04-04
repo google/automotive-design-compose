@@ -18,7 +18,7 @@ fn main() {
                 }
             },
             "customKeyframeData": {
-                "Button-cornerRadius": "Linear|0.5,WzUwLjAsIDUwLjAsIDUwLjAsIDUwLjBd,Linear"
+                "Button-cornerRadius": "{\"targetEasing\":\"Linear\",\"keyframes\":[{\"fraction\":0.5,\"value\":[80.0,80.0,80.0,80.0],\"easing\":\"Linear\"}]}"
             }
         }
     }"#;
@@ -42,15 +42,19 @@ fn main() {
         let start_val = KeyframeValue::CornerRadii([0.0, 0.0, 0.0, 0.0]); // 0 radius
         let end_val = KeyframeValue::CornerRadii([100.0, 100.0, 100.0, 100.0]); // 100 radius
 
+        // Convert to animation types for interpolation
+        let start_val_anim: dc_squoosh_animation::KeyframeValue = start_val.clone().into();
+        let end_val_anim: dc_squoosh_animation::KeyframeValue = end_val.clone().into();
+
         log::info!("Interpolating from [0] to [100] with a keyframe of [50] at t=0.5");
 
         // 6. Interpolate at various time fractions
         for i in 0..=10 {
             let t = i as f32 / 10.0;
-            let result = timeline.interpolate(&start_val, &end_val, t);
+            let result = timeline.interpolate(&start_val_anim, &end_val_anim, t);
 
             match result {
-                KeyframeValue::CornerRadii(radii) => {
+                dc_squoosh_animation::KeyframeValue::CornerRadii(radii) => {
                     log::info!(
                         "t={:.1}: [{:.1}, {:.1}, {:.1}, {:.1}]",
                         t,

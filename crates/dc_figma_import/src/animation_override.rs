@@ -57,7 +57,8 @@ impl From<CustomKeyframeJson> for CustomKeyframe {
     fn from(json: CustomKeyframeJson) -> Self {
         let mut typed_value = animationspec::CustomKeyframeValue::default();
         if let Some(scalar) = json.value_json.as_f64() {
-            typed_value.value = Some(animationspec::custom_keyframe_value::Value::Scalar(scalar as f32));
+            typed_value.value =
+                Some(animationspec::custom_keyframe_value::Value::Scalar(scalar as f32));
         } else if let Some(s) = json.value_json.as_str() {
             if s.starts_with('#') {
                 let hex = &s[1..];
@@ -67,10 +68,10 @@ impl From<CustomKeyframeJson> for CustomKeyframe {
                         u32::from_str_radix(&hex[2..4], 16),
                         u32::from_str_radix(&hex[4..6], 16),
                     ) {
-                        typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(animationspec::RgbaValue {
-                            r, g, b, a: 255,
-                            ..Default::default()
-                        }));
+                        typed_value.value =
+                            Some(animationspec::custom_keyframe_value::Value::Color(
+                                animationspec::RgbaValue { r, g, b, a: 255, ..Default::default() },
+                            ));
                     }
                 } else if hex.len() == 8 {
                     if let (Ok(r), Ok(g), Ok(b), Ok(a)) = (
@@ -79,21 +80,25 @@ impl From<CustomKeyframeJson> for CustomKeyframe {
                         u32::from_str_radix(&hex[4..6], 16),
                         u32::from_str_radix(&hex[6..8], 16),
                     ) {
-                        typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(animationspec::RgbaValue {
-                            r, g, b, a,
-                            ..Default::default()
-                        }));
+                        typed_value.value =
+                            Some(animationspec::custom_keyframe_value::Value::Color(
+                                animationspec::RgbaValue { r, g, b, a, ..Default::default() },
+                            ));
                     }
                 }
             }
-        } else if let Ok(color) = serde_json::from_value::<crate::figma_schema::FigmaColor>(json.value_json.clone()) {
-            typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(animationspec::RgbaValue {
-                r: (color.r * 255.0) as u32,
-                g: (color.g * 255.0) as u32,
-                b: (color.b * 255.0) as u32,
-                a: (color.a * 255.0) as u32,
-                ..Default::default()
-            }));
+        } else if let Ok(color) =
+            serde_json::from_value::<crate::figma_schema::FigmaColor>(json.value_json.clone())
+        {
+            typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(
+                animationspec::RgbaValue {
+                    r: (color.r * 255.0) as u32,
+                    g: (color.g * 255.0) as u32,
+                    b: (color.b * 255.0) as u32,
+                    a: (color.a * 255.0) as u32,
+                    ..Default::default()
+                },
+            ));
         } else {
             println!("Failed to parse custom keyframe value JSON: {:?}", json.value_json);
         }

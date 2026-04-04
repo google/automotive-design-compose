@@ -88,6 +88,8 @@ The plugin is written in **TypeScript** and interacts with the Figma Plugin API 
 
 Animation data is stored as a JSON string within the shared plugin data of each component variant. The plugin uses the key `designcompose/animations` to store this data.
 
+*Note: During the import process, the DesignCompose compiler parses this structured JSON and converts it into strongly-typed Protobuf messages.*
+
 ### Node Serialization
 
 To manage the state of the components and their animations, the plugin includes logic to serialize Figma nodes into a JSON format. This serialized data includes properties such as position, size, rotation, colors, and more.

@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-use dc_bundle::definition_file::load_design_def;
 use dc_bundle::animationspec::animation_override;
+use dc_bundle::definition_file::load_design_def;
 
 #[test]
 fn test_keyframes_present() {
     let doc_path = "../../../../utils/gui-playground-app/data/ENJKMeYc2vE5pQfgN9aOrY";
     let (header, doc) = load_design_def(doc_path).expect("Failed to load doc");
-    
+
     println!("Loaded document: {}", header.id);
-    
+
     let mut found_keyframes = false;
-    
+
     for (name, view) in &doc.views {
         if let Some(style) = view.style.as_ref() {
             if let Some(node_style) = style.node_style.as_ref() {
@@ -36,7 +36,10 @@ fn test_keyframes_present() {
                                 for (prop, timeline) in &custom.custom_keyframe_data {
                                     println!("Found timeline for prop: {} in view: {}", prop, name);
                                     for kf in &timeline.keyframes {
-                                        println!("  Keyframe: fraction={}, value={:?}", kf.fraction, kf.value);
+                                        println!(
+                                            "  Keyframe: fraction={}, value={:?}",
+                                            kf.fraction, kf.value
+                                        );
                                         found_keyframes = true;
                                     }
                                 }
@@ -48,6 +51,6 @@ fn test_keyframes_present() {
             }
         }
     }
-    
+
     assert!(found_keyframes, "No keyframes found in the document!");
 }

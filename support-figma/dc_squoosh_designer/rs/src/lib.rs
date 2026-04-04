@@ -1,66 +1,6 @@
+use dc_squoosh_animation::Easing;
 use serde::{de, Deserialize, Serialize};
 use std::collections::HashMap;
-
-// --- High Level Runtime Types ---
-
-/// Supported easing functions for interpolation.
-#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
-pub enum Easing {
-    Inherit,
-    Linear,
-    Instant,
-    EaseIn,
-    EaseOut,
-    EaseInOut,
-    EaseInCubic,
-    EaseOutCubic,
-    EaseInOutCubic,
-}
-
-impl Default for Easing {
-    fn default() -> Self {
-        Easing::Inherit
-    }
-}
-
-impl Easing {
-    /// Applies the easing function to a linear progress value `t` (0.0 to 1.0).
-    pub fn apply(&self, t: f32) -> f32 {
-        match self {
-            Easing::Inherit => t,
-            Easing::Linear => t,
-            Easing::Instant => {
-                if t >= 1.0 {
-                    1.0
-                } else {
-                    0.0
-                }
-            }
-            Easing::EaseIn => t * t,
-            Easing::EaseOut => t * (2.0 - t),
-            Easing::EaseInOut => {
-                if t < 0.5 {
-                    2.0 * t * t
-                } else {
-                    -1.0 + (4.0 - 2.0 * t) * t
-                }
-            }
-            Easing::EaseInCubic => t * t * t,
-            Easing::EaseOutCubic => {
-                let t = t - 1.0;
-                t * t * t + 1.0
-            }
-            Easing::EaseInOutCubic => {
-                if t < 0.5 {
-                    4.0 * t * t * t
-                } else {
-                    let t = t - 1.0;
-                    4.0 * t * t * t + 1.0
-                }
-            } // Corrected math
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Copy, Serialize)]
 pub struct Rgba {
@@ -189,48 +129,6 @@ pub enum KeyframeValue {
     None, // Fallback
 }
 
-impl KeyframeValue {
-    /// Interpolates between this value and another value at fraction `t`.
-    pub fn interpolate(&self, other: &KeyframeValue, t: f32) -> KeyframeValue {
-        match (self, other) {
-            (KeyframeValue::Scalar(a), KeyframeValue::Scalar(b)) => {
-                KeyframeValue::Scalar(a + (b - a) * t)
-            }
-            (KeyframeValue::Color(a), KeyframeValue::Color(b)) => {
-                KeyframeValue::Color(a.lerp(b, t))
-            }
-            (KeyframeValue::CornerRadii(a), KeyframeValue::CornerRadii(b)) => {
-                KeyframeValue::CornerRadii([
-                    a[0] + (b[0] - a[0]) * t,
-                    a[1] + (b[1] - a[1]) * t,
-                    a[2] + (b[2] - a[2]) * t,
-                    a[3] + (b[3] - a[3]) * t,
-                ])
-            }
-            (KeyframeValue::Arc(a), KeyframeValue::Arc(b)) => KeyframeValue::Arc(ArcData {
-                starting_angle: a.starting_angle + (b.starting_angle - a.starting_angle) * t,
-                ending_angle: a.ending_angle + (b.ending_angle - a.ending_angle) * t,
-                inner_radius: a.inner_radius + (b.inner_radius - a.inner_radius) * t,
-            }),
-            (KeyframeValue::Gradient(a), KeyframeValue::Gradient(b)) => {
-                if a.len() != b.len() {
-                    return KeyframeValue::Gradient(a.clone());
-                }
-                let stops = a
-                    .iter()
-                    .zip(b.iter())
-                    .map(|(s1, s2)| GradientStop {
-                        position: s1.position + (s2.position - s1.position) * t,
-                        color: s1.color.lerp(&s2.color, t),
-                    })
-                    .collect();
-                KeyframeValue::Gradient(stops)
-            }
-            _ => self.clone(),
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ParsedKeyframe {
     pub fraction: f32,
@@ -252,105 +150,72 @@ pub struct ParsedTimelineData {
 impl ParsedTimelineData {
     /// Parses an escaped JSON payload describing a custom timeline.
     /// Legacy base64 and pipe-separated payload structures are no longer supported.
-    pub fn parse(encoded_data: &str) -> Result<Self, String> {
+    pub fn parse(encoded_data: &str) -> Result<dc_squoosh_animation::ParsedTimelineData, String> {
         if let Ok(mut parsed) = serde_json::from_str::<ParsedTimelineData>(encoded_data) {
             // Ensure keyframes are sorted sequentially
             parsed.keyframes.sort_by(|a, b| {
                 a.fraction.partial_cmp(&b.fraction).unwrap_or(std::cmp::Ordering::Equal)
             });
-            Ok(parsed)
+            Ok(parsed.into())
         } else {
             Err("Invalid JSON payload: custom timelines must be encoded as pure JSON".to_string())
         }
     }
+}
 
-    /// Finds the surrounding keyframes and the eased fraction between them.
-    /// This allows the caller to use their own interpolator on the keyframe values.
-    pub fn get_keyframe_segment<'a>(
-        &'a self,
-        start_value: &'a KeyframeValue,
-        end_value: &'a KeyframeValue,
-        fraction: f32,
-    ) -> (&'a KeyframeValue, &'a KeyframeValue, f32) {
-        if fraction <= 0.0 {
-            return (start_value, start_value, 0.0);
-        }
-        if fraction >= 1.0 {
-            return (end_value, end_value, 1.0);
-        }
-
-        let mut kf1_fraction = 0.0;
-        let mut kf1_value = start_value;
-        let mut kf2_fraction = 1.0;
-        let mut kf2_value = end_value;
-        let mut easing = self.target_easing;
-
-        // Optimized Linear Search (Small N)
-        // Check if before first custom keyframe
-        if let Some(first) = self.keyframes.first() {
-            if fraction < first.fraction {
-                kf2_fraction = first.fraction;
-                kf2_value = &first.value;
-                easing = first.easing;
-            } else {
-                // Check internal
-                let mut found = false;
-                // window over keyframes
-                for i in 0..self.keyframes.len() - 1 {
-                    if fraction >= self.keyframes[i].fraction
-                        && fraction < self.keyframes[i + 1].fraction
-                    {
-                        kf1_fraction = self.keyframes[i].fraction;
-                        kf1_value = &self.keyframes[i].value;
-                        kf2_fraction = self.keyframes[i + 1].fraction;
-                        kf2_value = &self.keyframes[i + 1].value;
-                        easing = self.keyframes[i + 1].easing;
-                        found = true;
-                        break;
-                    }
-                }
-
-                if !found {
-                    // Must be after last
-                    let last = self.keyframes.last().unwrap();
-                    kf1_fraction = last.fraction;
-                    kf1_value = &last.value;
-                    kf2_fraction = 1.0;
-                    kf2_value = end_value;
-                    easing = self.target_easing;
-                }
-            }
-        }
-
-        if easing == Easing::Instant {
-            if fraction < kf2_fraction {
-                return (kf1_value, kf1_value, 0.0);
-            } else {
-                return (kf2_value, kf2_value, 1.0);
-            }
-        }
-
-        let duration = kf2_fraction - kf1_fraction;
-        if duration <= 0.00001 {
-            return (kf2_value, kf2_value, 1.0);
-        }
-
-        let t = ((fraction - kf1_fraction) / duration).clamp(0.0, 1.0);
-        let eased_t = easing.apply(t);
-
-        (kf1_value, kf2_value, eased_t)
+impl From<Rgba> for dc_squoosh_animation::Rgba {
+    fn from(r: Rgba) -> Self {
+        dc_squoosh_animation::Rgba { r: r.r, g: r.g, b: r.b, a: r.a }
     }
+}
 
-    /// Interpolates between a start and end value at the given fraction (0.0 to 1.0),
-    /// respecting the custom keyframes and easings defined in this timeline.
-    pub fn interpolate(
-        &self,
-        start_value: &KeyframeValue,
-        end_value: &KeyframeValue,
-        fraction: f32,
-    ) -> KeyframeValue {
-        let (kf1, kf2, t) = self.get_keyframe_segment(start_value, end_value, fraction);
-        kf1.interpolate(kf2, t)
+impl From<GradientStop> for dc_squoosh_animation::GradientStop {
+    fn from(g: GradientStop) -> Self {
+        dc_squoosh_animation::GradientStop { position: g.position, color: g.color.into() }
+    }
+}
+
+impl From<ArcData> for dc_squoosh_animation::ArcData {
+    fn from(a: ArcData) -> Self {
+        dc_squoosh_animation::ArcData {
+            starting_angle: a.starting_angle,
+            ending_angle: a.ending_angle,
+            inner_radius: a.inner_radius,
+        }
+    }
+}
+
+impl From<KeyframeValue> for dc_squoosh_animation::KeyframeValue {
+    fn from(k: KeyframeValue) -> Self {
+        match k {
+            KeyframeValue::CornerRadii(v) => dc_squoosh_animation::KeyframeValue::CornerRadii(v),
+            KeyframeValue::Scalar(v) => dc_squoosh_animation::KeyframeValue::Scalar(v),
+            KeyframeValue::Color(v) => dc_squoosh_animation::KeyframeValue::Color(v.into()),
+            KeyframeValue::Gradient(v) => dc_squoosh_animation::KeyframeValue::Gradient(
+                v.into_iter().map(Into::into).collect(),
+            ),
+            KeyframeValue::Arc(v) => dc_squoosh_animation::KeyframeValue::Arc(v.into()),
+            KeyframeValue::None => dc_squoosh_animation::KeyframeValue::None,
+        }
+    }
+}
+
+impl From<ParsedKeyframe> for dc_squoosh_animation::ParsedKeyframe {
+    fn from(k: ParsedKeyframe) -> Self {
+        dc_squoosh_animation::ParsedKeyframe {
+            fraction: k.fraction,
+            value: k.value.into(),
+            easing: k.easing,
+        }
+    }
+}
+
+impl From<ParsedTimelineData> for dc_squoosh_animation::ParsedTimelineData {
+    fn from(t: ParsedTimelineData) -> Self {
+        dc_squoosh_animation::ParsedTimelineData {
+            target_easing: t.target_easing,
+            keyframes: t.keyframes.into_iter().map(Into::into).collect(),
+        }
     }
 }
 
@@ -370,174 +235,19 @@ pub struct Variant {
 
 // --- Property Lookup ---
 
-/// Represents properties that can be animated via custom timelines.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum AnimatableProperty {
-    Opacity,
-    X,
-    Y,
-    Width,
-    Height,
-    CornerRadius,
-    TopLeftRadius,
-    TopRightRadius,
-    BottomLeftRadius,
-    BottomRightRadius,
-    FillSolid(usize),
-    FillGradient(usize),
-    StrokeSolid(usize),
-    StrokeGradient(usize),
-    StrokeWeight,
-    ArcData,
-    Rotation,
-    Other(String),
-}
-
-impl std::str::FromStr for AnimatableProperty {
-    type Err = std::convert::Infallible;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "opacity" => Ok(AnimatableProperty::Opacity),
-            "x" => Ok(AnimatableProperty::X),
-            "y" => Ok(AnimatableProperty::Y),
-            "width" => Ok(AnimatableProperty::Width),
-            "height" => Ok(AnimatableProperty::Height),
-            "cornerRadius" => Ok(AnimatableProperty::CornerRadius),
-            "topLeftRadius" => Ok(AnimatableProperty::TopLeftRadius),
-            "topRightRadius" => Ok(AnimatableProperty::TopRightRadius),
-            "bottomLeftRadius" => Ok(AnimatableProperty::BottomLeftRadius),
-            "bottomRightRadius" => Ok(AnimatableProperty::BottomRightRadius),
-            "arcData" => Ok(AnimatableProperty::ArcData),
-            "strokeWeight" => Ok(AnimatableProperty::StrokeWeight),
-            "rotation" => Ok(AnimatableProperty::Rotation),
-            _ => {
-                if s.starts_with("fills.") {
-                    let parts: Vec<&str> = s.split('.').collect();
-                    if parts.len() == 3 {
-                        if let Ok(idx) = parts[1].parse::<usize>() {
-                            match parts[2] {
-                                "solid" => return Ok(AnimatableProperty::FillSolid(idx)),
-                                "gradient" => return Ok(AnimatableProperty::FillGradient(idx)),
-                                _ => {}
-                            }
-                        }
-                    }
-                } else if s.starts_with("strokes.") {
-                    let parts: Vec<&str> = s.split('.').collect();
-                    if parts.len() == 3 {
-                        if let Ok(idx) = parts[1].parse::<usize>() {
-                            match parts[2] {
-                                "solid" => return Ok(AnimatableProperty::StrokeSolid(idx)),
-                                "gradient" => return Ok(AnimatableProperty::StrokeGradient(idx)),
-                                _ => {}
-                            }
-                        }
-                    }
-                }
-                Ok(AnimatableProperty::Other(s.to_string()))
-            }
-        }
-    }
-}
-
-/// Represents all known timelines for a single node.
-#[derive(Clone, Debug, PartialEq, Default)]
-pub struct NodeTimelines {
-    pub opacity: Option<ParsedTimelineData>,
-    pub x: Option<ParsedTimelineData>,
-    pub y: Option<ParsedTimelineData>,
-    pub width: Option<ParsedTimelineData>,
-    pub height: Option<ParsedTimelineData>,
-    pub corner_radius: Option<ParsedTimelineData>,
-    pub top_left_radius: Option<ParsedTimelineData>,
-    pub top_right_radius: Option<ParsedTimelineData>,
-    pub bottom_left_radius: Option<ParsedTimelineData>,
-    pub bottom_right_radius: Option<ParsedTimelineData>,
-    pub fill_solid: HashMap<usize, ParsedTimelineData>,
-    pub fill_gradient: HashMap<usize, ParsedTimelineData>,
-    pub stroke_solid: HashMap<usize, ParsedTimelineData>,
-    pub stroke_gradient: HashMap<usize, ParsedTimelineData>,
-    pub stroke_weight: Option<ParsedTimelineData>,
-    pub arc_data: Option<ParsedTimelineData>,
-    pub rotation: Option<ParsedTimelineData>,
-    pub other: HashMap<String, ParsedTimelineData>,
-}
-
-impl NodeTimelines {
-    pub fn insert(&mut self, prop: AnimatableProperty, timeline: ParsedTimelineData) {
-        match prop {
-            AnimatableProperty::Opacity => self.opacity = Some(timeline),
-            AnimatableProperty::X => self.x = Some(timeline),
-            AnimatableProperty::Y => self.y = Some(timeline),
-            AnimatableProperty::Width => self.width = Some(timeline),
-            AnimatableProperty::Height => self.height = Some(timeline),
-            AnimatableProperty::CornerRadius => self.corner_radius = Some(timeline),
-            AnimatableProperty::TopLeftRadius => self.top_left_radius = Some(timeline),
-            AnimatableProperty::TopRightRadius => self.top_right_radius = Some(timeline),
-            AnimatableProperty::BottomLeftRadius => self.bottom_left_radius = Some(timeline),
-            AnimatableProperty::BottomRightRadius => self.bottom_right_radius = Some(timeline),
-            AnimatableProperty::FillSolid(idx) => {
-                self.fill_solid.insert(idx, timeline);
-            }
-            AnimatableProperty::FillGradient(idx) => {
-                self.fill_gradient.insert(idx, timeline);
-            }
-            AnimatableProperty::StrokeSolid(idx) => {
-                self.stroke_solid.insert(idx, timeline);
-            }
-            AnimatableProperty::StrokeGradient(idx) => {
-                self.stroke_gradient.insert(idx, timeline);
-            }
-            AnimatableProperty::StrokeWeight => self.stroke_weight = Some(timeline),
-            AnimatableProperty::ArcData => self.arc_data = Some(timeline),
-            AnimatableProperty::Rotation => self.rotation = Some(timeline),
-            AnimatableProperty::Other(name) => {
-                self.other.insert(name, timeline);
-            }
-        }
-    }
-
-    pub fn get(&self, prop: &AnimatableProperty) -> Option<&ParsedTimelineData> {
-        match prop {
-            AnimatableProperty::Opacity => self.opacity.as_ref(),
-            AnimatableProperty::X => self.x.as_ref(),
-            AnimatableProperty::Y => self.y.as_ref(),
-            AnimatableProperty::Width => self.width.as_ref(),
-            AnimatableProperty::Height => self.height.as_ref(),
-            AnimatableProperty::CornerRadius => self.corner_radius.as_ref(),
-            AnimatableProperty::TopLeftRadius => self.top_left_radius.as_ref(),
-            AnimatableProperty::TopRightRadius => self.top_right_radius.as_ref(),
-            AnimatableProperty::BottomLeftRadius => self.bottom_left_radius.as_ref(),
-            AnimatableProperty::BottomRightRadius => self.bottom_right_radius.as_ref(),
-            AnimatableProperty::FillSolid(idx) => self.fill_solid.get(idx),
-            AnimatableProperty::FillGradient(idx) => self.fill_gradient.get(idx),
-            AnimatableProperty::StrokeSolid(idx) => self.stroke_solid.get(idx),
-            AnimatableProperty::StrokeGradient(idx) => self.stroke_gradient.get(idx),
-            AnimatableProperty::StrokeWeight => self.stroke_weight.as_ref(),
-            AnimatableProperty::ArcData => self.arc_data.as_ref(),
-            AnimatableProperty::Rotation => self.rotation.as_ref(),
-            AnimatableProperty::Other(name) => self.other.get(name),
-        }
-    }
-}
+pub use dc_squoosh_animation::{AnimatableProperty, NodeTimelines};
 
 use std::sync::Arc;
 
-/// Efficient lookup for parsed timeline data.
+/// Wrapper around dc_squoosh_animation::PropertyLookup for parsing.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PropertyLookup {
-    /// Map of NodeName -> Arc<NodeTimelines>
-    pub timelines: HashMap<String, Arc<NodeTimelines>>,
-}
+pub struct PropertyLookup(pub dc_squoosh_animation::PropertyLookup);
 
 impl PropertyLookup {
     /// Creates a new lookup from a raw hashmap.
     pub fn from_map(data: &HashMap<String, String>) -> Self {
         let mut temp_timelines: HashMap<String, NodeTimelines> = HashMap::new();
         for (key, val) in data {
-            // Keys can be "NodeName-propertyName" or "NodeName-propertyName-custom-id"
-            // First, strip the "-custom-xyz" suffix if it exists.
             let mut clean_key = key.as_str();
             if let Some(custom_idx) = clean_key.find("-custom-") {
                 clean_key = &clean_key[0..custom_idx];
@@ -559,7 +269,7 @@ impl PropertyLookup {
             timelines.insert(k, Arc::new(v));
         }
 
-        PropertyLookup { timelines }
+        PropertyLookup(dc_squoosh_animation::PropertyLookup { timelines })
     }
 
     /// Creates a new lookup from a parsed Variant.
@@ -569,17 +279,26 @@ impl PropertyLookup {
                 return Self::from_map(data);
             }
         }
-        PropertyLookup { timelines: HashMap::new() }
+        PropertyLookup(dc_squoosh_animation::PropertyLookup { timelines: HashMap::new() })
     }
 
     /// Retrieves all parsed timeline data for a specific node.
     pub fn get_for_node(&self, node: &str) -> Option<Arc<NodeTimelines>> {
-        self.timelines.get(node).cloned()
+        self.0.timelines.get(node).cloned()
     }
 
     /// Retrieves the parsed timeline data for a specific node and property.
-    pub fn get(&self, node: &str, prop: AnimatableProperty) -> Option<&ParsedTimelineData> {
-        self.timelines.get(node).and_then(|nt| nt.get(&prop))
+    pub fn get(
+        &self,
+        node: &str,
+        prop: AnimatableProperty,
+    ) -> Option<&dc_squoosh_animation::ParsedTimelineData> {
+        self.0.timelines.get(node).and_then(|nt| nt.get(&prop))
+    }
+
+    /// Returns the inner clean struct.
+    pub fn into_inner(self) -> dc_squoosh_animation::PropertyLookup {
+        self.0
     }
 }
 
@@ -602,15 +321,15 @@ mod tests {
         let start = KeyframeValue::CornerRadii([0.0, 0.0, 0.0, 0.0]);
         let end = KeyframeValue::CornerRadii([100.0, 100.0, 100.0, 100.0]);
 
-        let val_25 = timeline.interpolate(&start, &end, 0.25);
-        if let KeyframeValue::CornerRadii(v) = val_25 {
+        let val_25 = timeline.interpolate(&start.clone().into(), &end.clone().into(), 0.25);
+        if let dc_squoosh_animation::KeyframeValue::CornerRadii(v) = val_25 {
             assert!((v[0] - 25.0).abs() < 0.1);
         } else {
             panic!("Wrong type");
         }
 
-        let val_75 = timeline.interpolate(&start, &end, 0.75);
-        if let KeyframeValue::CornerRadii(v) = val_75 {
+        let val_75 = timeline.interpolate(&start.into(), &end.into(), 0.75);
+        if let dc_squoosh_animation::KeyframeValue::CornerRadii(v) = val_75 {
             assert!((v[0] - 75.0).abs() < 0.1);
         } else {
             panic!("Wrong type");
@@ -674,95 +393,6 @@ mod tests {
     }
 
     #[test]
-    fn test_keyframe_value_interpolate() {
-        let s1 = KeyframeValue::Scalar(0.0);
-        let s2 = KeyframeValue::Scalar(10.0);
-        assert_eq!(s1.interpolate(&s2, 0.5), KeyframeValue::Scalar(5.0));
-
-        let c1 = KeyframeValue::Color(Rgba { r: 0, g: 0, b: 0, a: 255 });
-        let c2 = KeyframeValue::Color(Rgba { r: 255, g: 255, b: 255, a: 255 });
-        if let KeyframeValue::Color(c) = c1.interpolate(&c2, 0.5) {
-            assert_eq!(c.r, 127);
-        } else {
-            panic!();
-        }
-
-        let r1 = KeyframeValue::CornerRadii([0.0, 0.0, 0.0, 0.0]);
-        let r2 = KeyframeValue::CornerRadii([10.0, 20.0, 30.0, 40.0]);
-        assert_eq!(r1.interpolate(&r2, 0.5), KeyframeValue::CornerRadii([5.0, 10.0, 15.0, 20.0]));
-
-        let a1 = KeyframeValue::Arc(ArcData {
-            starting_angle: 0.0,
-            ending_angle: 0.0,
-            inner_radius: 0.0,
-        });
-        let a2 = KeyframeValue::Arc(ArcData {
-            starting_angle: 10.0,
-            ending_angle: 20.0,
-            inner_radius: 30.0,
-        });
-        assert_eq!(
-            a1.interpolate(&a2, 0.5),
-            KeyframeValue::Arc(ArcData {
-                starting_angle: 5.0,
-                ending_angle: 10.0,
-                inner_radius: 15.0
-            })
-        );
-
-        let g1 = KeyframeValue::Gradient(vec![GradientStop {
-            position: 0.0,
-            color: Rgba::from_hex("#000000"),
-        }]);
-        let g2 = KeyframeValue::Gradient(vec![GradientStop {
-            position: 1.0,
-            color: Rgba::from_hex("#ffffff"),
-        }]);
-        // They have same length (1), so they should interpolate!
-        assert_eq!(
-            g1.interpolate(&g2, 0.5),
-            KeyframeValue::Gradient(vec![GradientStop {
-                position: 0.5,
-                color: Rgba { r: 127, g: 127, b: 127, a: 255 }
-            }])
-        );
-
-        // Test length mismatch!
-        let g3 = KeyframeValue::Gradient(vec![GradientStop {
-            position: 0.0,
-            color: Rgba::from_hex("#000000"),
-        }]);
-        let g4 = KeyframeValue::Gradient(vec![
-            GradientStop { position: 0.0, color: Rgba::from_hex("#000000") },
-            GradientStop { position: 1.0, color: Rgba::from_hex("#ffffff") },
-        ]);
-        // Lengths are different (1 and 2), should return clone of g3!
-        assert_eq!(g3.interpolate(&g4, 0.5), g3);
-
-        // Test mismatched types returns clone of self!
-        let s = KeyframeValue::Scalar(1.0);
-        let c = KeyframeValue::Color(Rgba::from_hex("#000000"));
-        assert_eq!(s.interpolate(&c, 0.5), s);
-    }
-
-    #[test]
-    fn test_property_parsing() {
-        assert_eq!("opacity".parse::<AnimatableProperty>().unwrap(), AnimatableProperty::Opacity);
-        assert_eq!(
-            "fills.0.solid".parse::<AnimatableProperty>().unwrap(),
-            AnimatableProperty::FillSolid(0)
-        );
-        assert_eq!(
-            "strokes.1.gradient".parse::<AnimatableProperty>().unwrap(),
-            AnimatableProperty::StrokeGradient(1)
-        );
-        assert_eq!(
-            "unknown".parse::<AnimatableProperty>().unwrap(),
-            AnimatableProperty::Other("unknown".to_string())
-        );
-    }
-
-    #[test]
     fn test_property_lookup() {
         let mut map = HashMap::new();
         map.insert("Node1-opacity".to_string(), r##"{"targetEasing":"Linear","keyframes":[{"fraction":0.5,"value":1.0,"easing":"Linear"}]}"##.to_string());
@@ -775,39 +405,5 @@ mod tests {
         let lookup2 = PropertyLookup::from_map(&map2);
         let nt2 = lookup2.get_for_node("Node1").unwrap();
         assert!(nt2.opacity.is_some());
-    }
-
-    #[test]
-    fn test_get_keyframe_segment() {
-        let timeline = ParsedTimelineData {
-            target_easing: Easing::Linear,
-            keyframes: vec![
-                ParsedKeyframe {
-                    fraction: 0.2,
-                    value: KeyframeValue::Scalar(20.0),
-                    easing: Easing::Linear,
-                },
-                ParsedKeyframe {
-                    fraction: 0.8,
-                    value: KeyframeValue::Scalar(80.0),
-                    easing: Easing::Linear,
-                },
-            ],
-        };
-
-        let start = KeyframeValue::Scalar(0.0);
-        let end = KeyframeValue::Scalar(100.0);
-
-        let (k1, k2, _t) = timeline.get_keyframe_segment(&start, &end, 0.1);
-        assert_eq!(k1, &start);
-        assert_eq!(k2, &KeyframeValue::Scalar(20.0));
-
-        let (k1, k2, _t) = timeline.get_keyframe_segment(&start, &end, 0.5);
-        assert_eq!(k1, &KeyframeValue::Scalar(20.0));
-        assert_eq!(k2, &KeyframeValue::Scalar(80.0));
-
-        let (k1, k2, _t) = timeline.get_keyframe_segment(&start, &end, 0.9);
-        assert_eq!(k1, &KeyframeValue::Scalar(80.0));
-        assert_eq!(k2, &end);
     }
 }

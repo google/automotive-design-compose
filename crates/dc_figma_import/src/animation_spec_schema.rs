@@ -146,13 +146,15 @@ pub enum StopType {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CustomKeyframe {
     pub fraction: f32,
-    pub value_json: String,
+    #[serde(alias = "value")]
+    pub value_json: serde_json::Value,
     pub easing: Easing,
 }
 
 /// A sequence of keyframes for an arbitrary property.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CustomTimeline {
+    #[serde(alias = "targetEasing")]
     pub target_easing: Easing,
     pub keyframes: Vec<CustomKeyframe>,
 }
@@ -193,18 +195,38 @@ impl<'de> Deserialize<'de> for AnimationOverrideJson {
         // Tmp structure to deserialize the format from the API and handle cases hard to describe
         // with serde attributes.
         #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum CustomTimelineRaw {
+            Typed(CustomTimeline),
+            Stringified(String),
+        }
+
+        #[derive(Deserialize)]
         struct Tmp {
             #[serde(rename = "override", default)]
             override_type: String,
             spec: Option<AnimationSpec>,
             #[serde(rename = "customKeyframeData", default)]
-            custom_keyframe_data: std::collections::HashMap<String, CustomTimeline>,
+            custom_keyframe_data_raw: std::collections::HashMap<String, CustomTimelineRaw>,
         }
 
         let tmp = Tmp::deserialize(deserializer)?;
         if tmp.override_type == "Custom" || (tmp.override_type.is_empty() && tmp.spec.is_some()) {
             if let Some(mut spec) = tmp.spec {
-                spec.custom_keyframe_data = tmp.custom_keyframe_data;
+                let mut custom_keyframe_data = std::collections::HashMap::new();
+                for (k, v) in tmp.custom_keyframe_data_raw {
+                    match v {
+                        CustomTimelineRaw::Typed(ct) => {
+                            custom_keyframe_data.insert(k, ct);
+                        }
+                        CustomTimelineRaw::Stringified(s) => {
+                            if let Ok(ct) = serde_json::from_str::<CustomTimeline>(&s) {
+                                custom_keyframe_data.insert(k, ct);
+                            }
+                        }
+                    }
+                }
+                spec.custom_keyframe_data = custom_keyframe_data;
                 Ok(AnimationOverrideJson::Custom(spec))
             } else {
                 Err(de::Error::missing_field("spec"))

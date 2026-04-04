@@ -142,7 +142,7 @@ async function updateSelection() {
         const variantName = variantNode.name;
         const animationDataString = variantNode.getSharedPluginData(
           "designcompose",
-          "animations",
+          "squoosh",
         );
         const animationData = animationDataString ? JSON.parse(animationDataString) : null;
         let upgraded = false;
@@ -163,7 +163,7 @@ async function updateSelection() {
         if (upgraded) {
           variantNode.setSharedPluginData(
             "designcompose",
-            "animations",
+            "squoosh",
             JSON.stringify(animationData)
           );
           upgradedVariantsCount++;
@@ -256,7 +256,7 @@ async function updateSelection() {
                 if (componentSet) {
                     // Log the first child's data for sampling
                     const firstVariant = componentSet.children[0];
-                    const data = firstVariant.getSharedPluginData("designcompose", "animations");
+                    const data = firstVariant.getSharedPluginData("designcompose", "squoosh");
                     // Also dump timeline data if available
                     // We don't have easy access to the 'internal' AnimationData structure here as it's built in UI
                     // But we can dump the customKeyframeData which is part of the spec.
@@ -317,7 +317,7 @@ async function updateSelection() {
           }
 
           if (variant) {
-            variant.setSharedPluginData("designcompose", "animations", data);
+            variant.setSharedPluginData("designcompose", "squoosh", data);
           }
         })();
       }
@@ -343,7 +343,7 @@ async function updateSelection() {
             }
             const existingAnimationData = variant.getSharedPluginData(
               "designcompose",
-              "animations",
+              "squoosh",
             );
             const animationObject: AnimationObject = existingAnimationData
               ? (JSON.parse(existingAnimationData) as AnimationObject)
@@ -358,7 +358,7 @@ async function updateSelection() {
             const dataToSave = JSON.stringify(animationObject);
             variant.setSharedPluginData(
               "designcompose",
-              "animations",
+              "squoosh",
               dataToSave,
             );
           }
@@ -384,7 +384,7 @@ async function updateSelection() {
             if (variant.type !== "COMPONENT") continue;
             const existingAnimationData = variant.getSharedPluginData(
               "designcompose",
-              "animations",
+              "squoosh",
             );
             if (existingAnimationData) {
               interface AnimationObject {
@@ -402,7 +402,7 @@ async function updateSelection() {
                 const dataToSave = JSON.stringify(animationObject);
                 variant.setSharedPluginData(
                   "designcompose",
-                  "animations",
+                  "squoosh",
                   dataToSave,
                 );
               }
@@ -522,11 +522,13 @@ async function updateSelection() {
 
                       if (!targetChild) {
                           // Clone and add if missing
-                          targetChild = sourceChild.clone();
-                          tagOriginalNodeId(targetChild, sourceChild);
-                          // When we clone, we get the whole subtree of sourceChild.
-                          // We append it to target.
-                          target.appendChild(targetChild);
+                          if ("clone" in sourceChild) {
+                              targetChild = (sourceChild as any).clone();
+                              if (targetChild) {
+                                  tagOriginalNodeId(targetChild, sourceChild);
+                                  target.appendChild(targetChild);
+                              }
+                          }
                       }
 
                       // Recurse to ensure descendants from other variants are merged into this branch
@@ -640,7 +642,7 @@ async function updateSelection() {
               if (variant.type === "COMPONENT") {
                 variant.setSharedPluginData(
                   "designcompose",
-                  "animations",
+                  "squoosh",
                   JSON.stringify(defaultAnimation),
                 );
               }

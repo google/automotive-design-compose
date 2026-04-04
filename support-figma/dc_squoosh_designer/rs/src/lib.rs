@@ -354,7 +354,6 @@ impl ParsedTimelineData {
     }
 }
 
-
 // --- DTOs for reading the big JSON ---
 
 #[derive(Serialize, Deserialize, Debug)]

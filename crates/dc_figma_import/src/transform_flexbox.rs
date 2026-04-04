@@ -2059,12 +2059,25 @@ fn visit_node(
     );
     let mut parsed_plugin_override = None;
     if let Some(plugin_data) = node.shared_plugin_data.get("designcompose") {
-        if let Some(anim_str) = plugin_data.get("animations") {
-            if let Ok(anim) = serde_json::from_str::<AnimationOverrideJson>(anim_str) {
-                parsed_plugin_override = Some(anim);
-            } else {
-                log::error!("Failed to parse animations plugin data for node {}", node.id);
+        let anim_str_opt = plugin_data.get("squoosh");
+        if let Some(anim_str) = anim_str_opt {
+            log::info!(
+                "Figma Import: Found squoosh animation plugin data string on node {}: {}",
+                node.id,
+                anim_str
+            );
+            match serde_json::from_str::<AnimationOverrideJson>(anim_str) {
+                Ok(anim) => {
+                    log::info!("Figma Import: Successfully parsed squoosh animation format for node {}: {:?}", node.id, anim);
+                    parsed_plugin_override = Some(anim);
+                }
+                Err(e) => {
+                    log::error!("Figma Import: Failed to parse squoosh animation plugin data for node {}: {:?}", node.id, e);
+                    println!("Figma Import: Failed to parse squoosh animation plugin data for node {}: {:?}", node.id, e);
+                }
             }
+        } else {
+            log::debug!("Figma Import: No animation plugin data found for node {}", node.id);
         }
     }
 

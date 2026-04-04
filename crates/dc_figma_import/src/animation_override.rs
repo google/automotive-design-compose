@@ -4,16 +4,16 @@
 
 use crate::animation_spec_schema::{
     AnimationOverrideJson, AnimationSpec as AnimationSpecJson, Animations as AnimationsJson,
-    BezierCurve as BezierCurveJson, Duration, Easing as EasingJson, KeyFrame as KeyFrameJson,
+    BezierCurve as BezierCurveJson, CustomKeyframe as CustomKeyframeJson,
+    CustomTimeline as CustomTimelineJson, Duration, Easing as EasingJson, KeyFrame as KeyFrameJson,
     KeyFrameAnimation as KeyFrameAnimationJson, RepeatType as RepeatTypeJson,
     SmoothAnimation as SmoothAnimationJson, StopType as StopTypeJson,
-    CustomKeyframe as CustomKeyframeJson, CustomTimeline as CustomTimelineJson,
 };
 use dc_bundle::animationspec;
 use dc_bundle::animationspec::{
     animation_override, animations, easing, repeat_type, stop_type, AnimationSpec, Animations,
-    BezierCurve, Easing, KeyFrame, KeyFrameAnimation, RepeatType, SmoothAnimation, StopType,
-    CustomKeyframe, CustomTimeline,
+    BezierCurve, CustomKeyframe, CustomTimeline, Easing, KeyFrame, KeyFrameAnimation, RepeatType,
+    SmoothAnimation, StopType,
 };
 
 /// Converts from the JSON `AnimationOverrideJson` to the protobuf `AnimationOverride`.
@@ -55,9 +55,51 @@ impl From<&AnimationOverrideJson> for AnimationOverride {
 /// Converts from the JSON `CustomKeyframeJson` to the protobuf `CustomKeyframe`.
 impl From<CustomKeyframeJson> for CustomKeyframe {
     fn from(json: CustomKeyframeJson) -> Self {
+        let mut typed_value = animationspec::CustomKeyframeValue::default();
+        if let Some(scalar) = json.value_json.as_f64() {
+            typed_value.value = Some(animationspec::custom_keyframe_value::Value::Scalar(scalar as f32));
+        } else if let Some(s) = json.value_json.as_str() {
+            if s.starts_with('#') {
+                let hex = &s[1..];
+                if hex.len() == 6 {
+                    if let (Ok(r), Ok(g), Ok(b)) = (
+                        u32::from_str_radix(&hex[0..2], 16),
+                        u32::from_str_radix(&hex[2..4], 16),
+                        u32::from_str_radix(&hex[4..6], 16),
+                    ) {
+                        typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(animationspec::RgbaValue {
+                            r, g, b, a: 255,
+                            ..Default::default()
+                        }));
+                    }
+                } else if hex.len() == 8 {
+                    if let (Ok(r), Ok(g), Ok(b), Ok(a)) = (
+                        u32::from_str_radix(&hex[0..2], 16),
+                        u32::from_str_radix(&hex[2..4], 16),
+                        u32::from_str_radix(&hex[4..6], 16),
+                        u32::from_str_radix(&hex[6..8], 16),
+                    ) {
+                        typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(animationspec::RgbaValue {
+                            r, g, b, a,
+                            ..Default::default()
+                        }));
+                    }
+                }
+            }
+        } else if let Ok(color) = serde_json::from_value::<crate::figma_schema::FigmaColor>(json.value_json.clone()) {
+            typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(animationspec::RgbaValue {
+                r: (color.r * 255.0) as u32,
+                g: (color.g * 255.0) as u32,
+                b: (color.b * 255.0) as u32,
+                a: (color.a * 255.0) as u32,
+                ..Default::default()
+            }));
+        } else {
+            println!("Failed to parse custom keyframe value JSON: {:?}", json.value_json);
+        }
         CustomKeyframe {
             fraction: json.fraction,
-            value_json: json.value_json,
+            value: ::protobuf::MessageField::some(typed_value),
             easing: Some(json.easing.into()).into(),
             ..Default::default()
         }
@@ -82,7 +124,11 @@ impl From<AnimationSpecJson> for AnimationSpec {
             initial_delay: Some(json.initial_delay.into()).into(),
             animation: Some(json.animation.into()).into(),
             interrupt_type: json.interrupt_type.map(|x| x.into()).into(),
-            custom_keyframe_data: json.custom_keyframe_data.into_iter().map(|(k, v)| (k, v.into())).collect(),
+            custom_keyframe_data: json
+                .custom_keyframe_data
+                .into_iter()
+                .map(|(k, v)| (k, v.into()))
+                .collect(),
             ..Default::default()
         }
     }

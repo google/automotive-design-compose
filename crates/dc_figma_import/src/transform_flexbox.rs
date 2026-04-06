@@ -2317,7 +2317,7 @@ fn test_animation_override_plugin_data() {
             },
             "sharedPluginData": {
                 "designcompose": {
-                    "animations": "{\"override\":\"Custom\",\"spec\":{\"initial_delay\":{\"secs\":0,\"nanos\":0},\"animation\":{\"Smooth\":{\"duration\":{\"secs\":0,\"nanos\":1000000000},\"repeat_type\":\"NoRepeat\",\"easing\":\"Linear\"}},\"interrupt_type\":\"Complete\"}}"
+                    "squoosh": "{\"override\":\"Custom\",\"spec\":{\"initial_delay\":{\"secs\":0,\"nanos\":0},\"animation\":{\"Smooth\":{\"duration\":{\"secs\":0,\"nanos\":1000000000},\"repeat_type\":\"NoRepeat\",\"easing\":\"Linear\"}},\"interrupt_type\":\"Complete\"}}"
                 }
             }
         }"#;

@@ -326,7 +326,7 @@ dependencies = [
 
 [[package]]
 name = "dc_squoosh_animation"
-version = "0.1.0"
+version = "0.38.2"
 dependencies = [
  "dc_bundle",
  "serde",

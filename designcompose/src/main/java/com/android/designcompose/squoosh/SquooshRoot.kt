@@ -110,6 +110,7 @@ import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.getTapCallback
 import com.android.designcompose.layout_interface.Layout
 import com.android.designcompose.registerOpenLinkCallback
+import com.android.designcompose.rememberStateForDoc
 import com.android.designcompose.rootNode
 import com.android.designcompose.rootOverlays
 import com.android.designcompose.sDocRenderStatus
@@ -119,7 +120,6 @@ import com.android.designcompose.squooshAnimatedActions
 import com.android.designcompose.squooshCompleteAnimatedAction
 import com.android.designcompose.squooshFailedAnimatedAction
 import com.android.designcompose.squooshVariantMemory
-import com.android.designcompose.stateForDoc
 import com.android.designcompose.unregisterOpenLinkCallback
 import java.io.InputStream
 import kotlin.collections.component1
@@ -283,7 +283,7 @@ fun SquooshRoot(
         return
     }
 
-    val interactionState = InteractionStateManager.stateForDoc(docId)
+    val interactionState = InteractionStateManager.rememberStateForDoc(docId)
 
     // We're starting to support animated transitions
     interactionState.supportAnimations = true

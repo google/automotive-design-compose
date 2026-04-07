@@ -21,6 +21,17 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins { id("io.github.takahirom.roborazzi") }
 
+val isMac = System.getProperty("os.name").lowercase().contains("mac")
+if (isMac) {
+    project.afterEvaluate {
+        tasks.configureEach {
+            if (name.contains("roborazzi", ignoreCase = true)) {
+                enabled = false
+            }
+        }
+    }
+}
+
 project.pluginManager.withPlugin("com.android.base") {
     project.extensions.getByType(BaseExtension::class.java).apply {
         testOptions.unitTests {

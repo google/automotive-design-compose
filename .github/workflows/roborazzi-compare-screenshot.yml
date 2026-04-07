@@ -33,12 +33,12 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           submodules: 'recursive'
 
@@ -61,7 +61,7 @@ jobs:
         run: |
           ./gradlew compareRoborazziDebug --stacktrace
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
         if: ${{ always() }}
         with:
           name: diff-vs-base-branch
@@ -75,7 +75,7 @@ jobs:
         run: |
           mkdir -p ./pr
           echo ${{ github.event.number }} > ./pr/NR
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
         with:
           name: pr
           path: pr/
@@ -93,13 +93,13 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
 
       - name: Checkout base
         id: checkout-base
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           submodules: 'recursive'
           ref: ${{ github.event.pull_request.base.ref }}
@@ -115,7 +115,7 @@ jobs:
           git rm -rf .
 
       - name: Download diff
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: diff-vs-base-branch
           path: screenshot-diff
@@ -161,8 +161,9 @@ jobs:
         name: Generate diff reports
         env:
           BRANCH_NAME: roborazzi_companion_${{ github.event.pull_request.head.ref }}
-          GITHUB_EVENT_PULL_REQUEST_BASE_REF: ${{ github.event.pull_request.base.ref }}
-          STEPS_CHECK_IF_THERE_ARE_VALID_FILES_OUTPUTS_EXIST_VALID_FILES: ${{ steps.check-if-there-are-valid-files.outputs.exist_valid_files }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EXIST_VALID_FILES: ${{ steps.check-if-there-are-valid-files.outputs.exist_valid_files }}
         shell: bash
         run: |
           delimiter="$(openssl rand -hex 8)"
@@ -170,11 +171,11 @@ jobs:
             echo "reports<<${delimiter}"
 
             # Create markdown table header
-            echo "Snapshot diff report vs base branch: ${GITHUB_EVENT_PULL_REQUEST_BASE_REF}"
-            echo "Last updated: $(TZ='America/Los_Angeles' date), Sha: ${{ github.event.pull_request.head.sha }}"
+            echo "Snapshot diff report vs base branch: $BASE_REF"
+            echo "Last updated: $(TZ='America/Los_Angeles' date), Sha: $HEAD_SHA"
           } >> "$GITHUB_OUTPUT"
 
-          if [[ ${STEPS_CHECK_IF_THERE_ARE_VALID_FILES_OUTPUTS_EXIST_VALID_FILES} == 'true' ]]; then
+          if [[ "$EXIST_VALID_FILES" == 'true' ]]; then
             # Find all the files ending with _compare.png in roborazzi folder
             files=$(find . -type f -name "*_compare.png" | grep "roborazzi/" | grep -E "^[a-zA-Z0-9_./-]+$")
             {

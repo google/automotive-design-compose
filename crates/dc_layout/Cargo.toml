@@ -11,7 +11,7 @@ repository = "https://github.com/google/automotive-design-compose"
 readme = "README.md"
 
 [lib]
-crate-type = ["rlib", "cdylib"]
+crate-type = ["lib"]
 
 [dependencies]
 dc_bundle.workspace = true
@@ -21,6 +21,3 @@ serde.workspace = true
 taffy.workspace = true
 protobuf.workspace = true
 thiserror.workspace = true
-
-[dev-dependencies]
-lazy_static = "1.4.0"

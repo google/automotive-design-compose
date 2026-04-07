@@ -108,6 +108,11 @@ class VariantPropertyMap {
             }
         }
 
+        // Remove properties that are not part of the Figma component set.
+        val invalidProperties =
+            nodePropertyHash.keys.filter { !nodePropertyPossibleValues.containsKey(it) }
+        invalidProperties.forEach { nodePropertyHash.remove(it) }
+
         // First try to use the exact values from the node name and retrieve that view.
         val resolvedNameProperties: ArrayList<String> = ArrayList()
         nodePropertyHash.forEach {

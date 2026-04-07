@@ -19,7 +19,9 @@ package com.android.designcompose.testapp.helloworld
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.designcompose.DesignSettings
 import com.android.designcompose.annotation.Design
@@ -47,7 +49,13 @@ class MainActivity : ComponentActivity() {
                 null
             }
         DesignSettings.enableLiveUpdates(this)
-        setContent { HelloWorldDoc.mainFrame(name = "World!", dcfInputStream = inputStream) }
+        setContent {
+            HelloWorldDoc.mainFrame(
+                modifier = Modifier.systemBarsPadding(),
+                name = "World!",
+                dcfInputStream = inputStream,
+            )
+        }
     }
 }
 

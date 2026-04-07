@@ -93,7 +93,7 @@ function fetch_tutorial {
 function fetch_layout_tests {
     cargo run --bin fetch --features=fetch -- \
         --doc-id=OGUIhtwHL3z8wWZqnxYM9P \
-        --output="$GIT_ROOT/crates/figma_import/tests/layout-unit-tests.dcf" \
+        --output="$GIT_ROOT/crates/dc_figma_import/tests/layout-unit-tests.dcf" \
         --nodes='VerticalAutoLayout' \
         --nodes='ReplacementAutoLayout' \
         --nodes='ReplacementFixedLayout' \

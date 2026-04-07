@@ -19,6 +19,7 @@ package com.android.designcompose
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.google.common.truth.Truth.assertThat
+import java.io.File
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -44,8 +45,9 @@ class DocServerTest {
     @Test
     fun testSubscribe() {
         val docId = DesignDocId("doc1")
-        val docSubscription = LiveDocSubscription(docId.id, docId, {}, null)
-        DocServer.subscribe(docSubscription, DocumentServerParams(), null)
+        val docSubscription =
+            LiveDocSubscription(docId.id, docId, DocumentServerParams(), null, {}, null)
+        DocServer.subscribe(docSubscription)
         assertThat(DocServer.subscriptions).containsKey(docId)
         assertThat(DocServer.subscriptions[docId]?.subscribers).contains(docSubscription)
     }
@@ -53,8 +55,9 @@ class DocServerTest {
     @Test
     fun testUnsubscribe() {
         val docId = DesignDocId("doc1")
-        val docSubscription = LiveDocSubscription(docId.id, docId, {}, null)
-        DocServer.subscribe(docSubscription, DocumentServerParams(), null)
+        val docSubscription =
+            LiveDocSubscription(docId.id, docId, DocumentServerParams(), null, {}, null)
+        DocServer.subscribe(docSubscription)
         DocServer.unsubscribe(docSubscription)
         assertThat(DocServer.subscriptions).doesNotContainKey(docId)
     }
@@ -67,5 +70,28 @@ class DocServerTest {
         assertThat(proxyConfig.httpProxyConfig?.proxySpec).isEqualTo("proxy.example.com:8080")
         System.clearProperty("http.proxyHost")
         System.clearProperty("http.proxyPort")
+    }
+
+    @Test
+    fun testMergeSubscriptionParams() {
+        val docId = DesignDocId("doc1")
+        val queries1 = arrayListOf("query1")
+        val queries2 = arrayListOf("query2")
+        val ignoredImages1 = hashMapOf("node1" to arrayOf("img1"))
+        val ignoredImages2 = hashMapOf("node2" to arrayOf("img2"))
+
+        val param1 = DocumentServerParams(queries1, ignoredImages1)
+        val file1 = File("file1")
+        val sub1 = LiveDocSubscription(docId.id, docId, param1, file1, {}, null)
+
+        val param2 = DocumentServerParams(queries2, ignoredImages2)
+        val file2 = File("file2")
+        val sub2 = LiveDocSubscription(docId.id, docId, param2, file2, {}, null)
+
+        val subscriptions = listOf(sub1, sub2)
+        val mergedParams = DocServer.mergeSubscriptionParams(subscriptions)
+
+        assertThat(mergedParams.nodeQueries).containsExactly("query1", "query2")
+        assertThat(mergedParams.ignoredImages?.keys).containsExactly("node1", "node2")
     }
 }

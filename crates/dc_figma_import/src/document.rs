@@ -952,12 +952,12 @@ impl Document {
                     }
 
                     if let Some(data) = vsw_data.get("squoosh") {
-                        log::info!("Decoded squoosh animation!! {:?}", data);
+                        log::debug!("Decoded squoosh animation!! {:?}", data);
                         let animation_spec_json =
                             serde_json::from_str::<AnimationOverrideJson>(data.as_str());
                         match animation_spec_json {
                             Ok(animation_spec_json) => {
-                                log::info!(
+                                log::debug!(
                                     "Successfully {:?} got json data: {animation_spec_json:?}. from {}",
                                     node.name, data
                                 );

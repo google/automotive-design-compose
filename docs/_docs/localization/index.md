@@ -74,7 +74,7 @@ The first option excludes text nodes whose name starts with `#` which is a namin
 nodes designed for app customization.
 
 To use the second option, you will need to run the **Check/update keywords** plugin first to upload
-the generated json file under your android app's build folder. The keywords json file contains app
+the generated Customization Interface file under your android app's build folder. The keywords Customization Interface file contains app
 customizations for nodes so the localization plugin can exclude those text nodes from translation.
 It also uses the top level component names from the keywords file to locate frames that will be rendered
 on the client side and will only pull strings from the text nodes in those frames. By using the keywords

@@ -131,6 +131,23 @@ internal fun squooshComputeTextInfo(
     val fontFamily =
         DesignSettings.fontFamily(v.style.nodeStyle.takeIf { it.hasFontFamily() }?.fontFamily)
 
+    // Compose only supports a single outset shadow on text; we must use a canvas and perform
+    // manual text layout (and editing, and accessibility) to do fancier text.
+    val shadow =
+        v.style.nodeStyle.textShadowOrNull?.let { textShadow ->
+            Shadow(
+                // Ensure that blur radius is never zero, because Compose interprets that as no
+                // shadow (rather than as a hard-edged shadow).
+                blurRadius = textShadow.blurRadius * density.density * blurFudgeFactor + 0.1f,
+                offset =
+                    Offset(
+                        textShadow.offsetX * density.density,
+                        textShadow.offsetY * density.density,
+                    ),
+                color = textShadow.color.getValue(variableState) ?: Color.Transparent,
+            )
+        }
+
     val cachedText = textMeasureCache.get(layoutId)
     if (
         cachedText != null &&
@@ -181,6 +198,7 @@ internal fun squooshComputeTextInfo(
                             alpha = textBrushAndOpacity?.second ?: 1.0f,
                             fontSize = style.fontSizeOrNull!!.getValue(variableState).sp,
                             fontWeight = FontWeight(fontWeight.roundToInt()),
+                            shadow = shadow,
                             fontStyle =
                                 when (style.fontStyle) {
                                     com.android.designcompose.definition.element.FontStyle
@@ -256,22 +274,6 @@ internal fun squooshComputeTextInfo(
     val letterSpacing =
         customTextStyle?.letterSpacing
             ?: (v.style.nodeStyle.takeIf { it.hasLetterSpacing() }?.letterSpacing ?: 0f).sp
-    // Compose only supports a single outset shadow on text; we must use a canvas and perform
-    // manual text layout (and editing, and accessibility) to do fancier text.
-    val shadow =
-        v.style.nodeStyle.textShadowOrNull?.let { textShadow ->
-            Shadow(
-                // Ensure that blur radius is never zero, because Compose interprets that as no
-                // shadow (rather than as a hard-edged shadow).
-                blurRadius = textShadow.blurRadius * density.density * blurFudgeFactor + 0.1f,
-                offset =
-                    Offset(
-                        textShadow.offsetX * density.density,
-                        textShadow.offsetY * density.density,
-                    ),
-                color = textShadow.color.getValue(variableState) ?: Color.Transparent,
-            )
-        }
     val customBrush = customizations.getBrush(v.name)
     // Call this helper to get the font color since the proto field has changed over time
     val fontColor = protoVersionsFontColor(v.style)

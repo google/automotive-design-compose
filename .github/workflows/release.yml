@@ -28,18 +28,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v3.5.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           submodules: 'recursive'
 
       - name: Set version for Widget
         working-directory: support-figma/auto-content-preview-widget
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          BRANCH_NAME=$(echo "${GITHUB_REF_NAME}" | sed 's_/_\\/_g')
+          BRANCH_NAME="${REF_NAME//\//\\/}"
           sed -i -e "s/\(\"name\":.*\)\",/\1 ${BRANCH_NAME}\",/" manifest.json
 
       - uses: ./.github/actions/build-figma-resource
@@ -54,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
 
@@ -62,7 +64,7 @@ jobs:
         run: |
           echo "ORG_GRADLE_PROJECT_DesignComposeMavenRepo=$GITHUB_WORKSPACE/designcompose_m2repo" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v3.5.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           submodules: 'recursive'
       - name: Set up Build
@@ -73,10 +75,12 @@ jobs:
           setup-rust: true
 
       - name: Build Maven repo
-        run: ./gradlew -PdesignComposeReleaseVersion=${GITHUB_REF_NAME} publishAllPublicationsToLocalDirRepository
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: ./gradlew -PdesignComposeReleaseVersion="$REF_NAME" publishAllPublicationsToLocalDirRepository
 
       - name: Upload
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
         with:
           name: designcompose_m2repo
           path: designcompose_m2repo
@@ -90,11 +94,11 @@ jobs:
           - aarch64-unknown-linux-gnu
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v3.5.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           submodules: 'recursive'
 
@@ -108,8 +112,8 @@ jobs:
 
       - name: Build binaries
         run: |
-          cross build --release --target ${{ matrix.target }} --package figma_import --bin fetch --features="fetch"
-          cross build --release --target ${{ matrix.target }} --package figma_import --bin dcf_info --features="dcf_info"
+          cross build --release --target ${{ matrix.target }} --package dc_figma_import --bin fetch --features="fetch"
+          cross build --release --target ${{ matrix.target }} --package dc_figma_import --bin dcf_info --features="dcf_info"
 
       - name: Package binaries
         shell: bash
@@ -130,7 +134,7 @@ jobs:
           fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
         with:
           name: figma-tools-${{ matrix.target }}
           path: ${{ env.ASSET_PATH }}
@@ -143,28 +147,31 @@ jobs:
       - build-rust-cli
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v3.5.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           submodules: 'recursive'
       # Download all artifacts
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
 
       - name: Zip releases
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          zip -q -r designcompose_m2repo-${GITHUB_REF_NAME}.zip designcompose_m2repo/
-          zip -q -r extended-layout-plugin-${GITHUB_REF_NAME}.zip extended-layout-plugin/
-          zip -q -r auto-content-preview-widget-${GITHUB_REF_NAME}.zip auto-content-preview-widget/
+          zip -q -r "designcompose_m2repo-$REF_NAME.zip" designcompose_m2repo/
+          zip -q -r "extended-layout-plugin-$REF_NAME.zip" extended-layout-plugin/
+          zip -q -r "auto-content-preview-widget-$REF_NAME.zip" auto-content-preview-widget/
 
       - name: Upload release artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          gh release upload ${GITHUB_REF_NAME} \
-          extended-layout-plugin-${GITHUB_REF_NAME}.zip \
-          auto-content-preview-widget-${GITHUB_REF_NAME}.zip \
-          designcompose_m2repo-${GITHUB_REF_NAME}.zip \
+          gh release upload "$REF_NAME" \
+          "extended-layout-plugin-$REF_NAME.zip" \
+          "auto-content-preview-widget-$REF_NAME.zip" \
+          "designcompose_m2repo-$REF_NAME.zip" \
           figma-tools-*/*

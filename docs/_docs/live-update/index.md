@@ -50,10 +50,10 @@ required. This plugin provides these menu items:
 
 *   **Check document for errors** scans a document for errors and warnings in
     node names and then reports the results. This feature relies on a keyword
-    JSON file to be uploaded from the next plugin menu item.
+    Customization Interface file to be uploaded from the next plugin menu item.
 
-*   **Check and update keywords** uploads a keyword JSON file generated when a
-    developer writes a DesignCompose app. This JSON file contains data, such as
+*   **Check and update keywords** uploads a keyword Customization Interface file generated when a
+    developer writes a DesignCompose app. This Customization Interface file contains data, such as
     node names, that contain customizations. This item is used by the
    **Check document for errors** and **Live content format** plugin menu
     options.

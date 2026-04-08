@@ -338,7 +338,7 @@ function ListPreview() {
     let widgetContentNodeName = contentNodeNameOverride ? contentNodeNameOverride : contentNodeName
     let previewPageName = previewPageOverride ? previewPageOverride : previewPage;
     
-    // Load accompanying JSON file to get content data about the nodes 
+    // Load accompanying Customization Interface file to get content data about the nodes 
     let designSpec = loadDesignSpec();
     let nodeContentData = loadNodeContentData(designSpec);
 
@@ -838,7 +838,7 @@ function ListPreview() {
         initLayoutUI();
       }
       else if (msg.msg == 'clippy-file-selected') {
-        // Once a json file has been updated, reinitialize the popup UI and reload the options
+        // Once a Customization Interface file has been updated, reinitialize the popup UI and reload the options
         // used in the property menu
         figma.root.setSharedPluginData("designcompose", "clippy-json-file", msg.fileName);
         figma.root.setSharedPluginData("designcompose", "clippy-json", msg.contents);

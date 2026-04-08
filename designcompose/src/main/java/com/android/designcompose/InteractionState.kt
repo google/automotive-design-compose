@@ -355,7 +355,7 @@ internal fun InteractionState.changeTo(
     val varKey = getInstanceIdWithKey(instanceNodeId, key)
     val previousVariant = this.variantMemory.put(varKey, newVariantId)
     if (undoInstanceId != null) {
-        val undoKey = getInstanceIdWithKey(undoInstanceId, key)
+        val undoKey = getInstanceIdWithKey(undoInstanceId, key) + ":" + instanceNodeId
         this.undoMemory[undoKey] = DeferredAction.ChangeTo(previousVariant)
     }
     invalVariant(instanceNodeId)
@@ -468,7 +468,16 @@ internal fun InteractionState.undoDispatch(
     undoInstanceId: String,
     key: String?,
 ) {
-    val undoKey = getInstanceIdWithKey(undoInstanceId, key)
+    val undoKey =
+        if (
+            action.actionTypeCase == Action.ActionTypeCase.NODE &&
+                action.node.navigation == Action.Node.Navigation.NAVIGATION_CHANGE_TO &&
+                targetInstanceId != null
+        ) {
+            getInstanceIdWithKey(undoInstanceId, key) + ":" + targetInstanceId
+        } else {
+            getInstanceIdWithKey(undoInstanceId, key)
+        }
     val undoAction = undoMemory.remove(undoKey)
     undoAction?.apply(this, targetInstanceId, key)
 
@@ -829,8 +838,33 @@ internal fun InteractionState.getPressedTapCallback(nodeId: String): TapCallback
 /// of the view tree organization.
 internal object InteractionStateManager {
     val states: HashMap<DesignDocId, InteractionState> = HashMap()
+    internal val activeRoots: HashMap<DesignDocId, Int> = HashMap()
+
+    fun registerRoot(docId: DesignDocId) {
+        val current = activeRoots[docId] ?: 0
+        activeRoots[docId] = current + 1
+    }
+
+    fun unregisterRoot(docId: DesignDocId) {
+        val current = activeRoots[docId] ?: 0
+        if (current <= 1) {
+            activeRoots.remove(docId)
+            states.remove(docId)
+        } else {
+            activeRoots[docId] = current - 1
+        }
+    }
 }
 
 internal fun InteractionStateManager.stateForDoc(docId: DesignDocId): InteractionState {
     return states.getOrPut(docId) { InteractionState() }
+}
+
+@Composable
+internal fun InteractionStateManager.rememberStateForDoc(docId: DesignDocId): InteractionState {
+    DisposableEffect(docId) {
+        registerRoot(docId)
+        onDispose { unregisterRoot(docId) }
+    }
+    return stateForDoc(docId)
 }

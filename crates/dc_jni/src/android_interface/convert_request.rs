@@ -19,9 +19,9 @@ use dc_bundle::design_compose_definition::{
     DesignComposeDefinition, DesignComposeDefinitionHeader,
 };
 use dc_bundle::figma_doc::ServerFigmaDoc;
-use figma_import::HiddenNodePolicy;
-use figma_import::ImageContextSession;
-use figma_import::ProxyConfig;
+use dc_figma_import::HiddenNodePolicy;
+use dc_figma_import::ImageContextSession;
+use dc_figma_import::ProxyConfig;
 
 pub fn fetch_doc(
     id: &str,
@@ -39,7 +39,7 @@ pub fn fetch_doc(
         }
     };
 
-    if let Some(mut doc) = figma_import::Document::new_if_changed(
+    if let Some(mut doc) = dc_figma_import::Document::new_if_changed(
         &rq.figma_api_key,
         id.into(),
         requested_version_id.into(),

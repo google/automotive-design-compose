@@ -691,7 +691,6 @@ fun SquooshRoot(
     //
     // This is covered in the interaction test document's "Combos" screen; the purple button has no
     // interactions in its ON_PRESS variant.
-    val isPressed = remember { mutableStateOf(false) }
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
         androidx.compose.ui.layout.Layout(
             modifier =
@@ -799,8 +798,12 @@ fun SquooshRoot(
                             }
                         }
 
-                        if (hasPressClick || isPressed.value) {
+                        if (
+                            hasPressClick ||
+                                interactionState.isPressed.contains(child.node.unresolvedNodeId)
+                        ) {
                             val interactionSource = remember { MutableInteractionSource() }
+                            val placeholderIsPressed = remember { mutableStateOf(false) }
                             composableChildModifier =
                                 composableChildModifier.squooshInteraction(
                                     doc,
@@ -808,7 +811,7 @@ fun SquooshRoot(
                                     interactionScope,
                                     customizationContext,
                                     child,
-                                    isPressed,
+                                    placeholderIsPressed,
                                     interactionSource,
                                 )
                         } else if (child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) {

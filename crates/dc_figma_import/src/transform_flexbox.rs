@@ -62,7 +62,7 @@ use dc_bundle::reaction::Reaction;
 use dc_bundle::shadow::{BoxShadow, TextShadow};
 use dc_bundle::text::{TextAlign, TextAlignVertical, TextOverflow};
 use dc_bundle::view_shape::view_shape::RoundRect;
-use log::error;
+use log::{error, warn};
 
 use crate::scalableui_schema::ScalableUiDataJson;
 use crate::shader_schema::ShaderDataJson;
@@ -1044,7 +1044,7 @@ fn visit_node(
                             .map(|r| Into::<Option<Reaction>>::into(r))
                             .filter(|maybe_reaction| {
                                 if maybe_reaction.is_none() {
-                                    println!(
+                                    warn!(
                                         "Warning: reaction has empty action. Json: {}",
                                         reactions
                                     );
@@ -1060,7 +1060,7 @@ fn visit_node(
                         Some(reaction)
                     })
                     .unwrap_or_else(|e| {
-                        println!("Error parsing reaction: {}. Json: {}", e, reactions);
+                        warn!("Error parsing reaction: {}. Json: {}", e, reactions);
                         None
                     })
             } else {
@@ -1091,7 +1091,7 @@ fn visit_node(
         .and_then(|scalable_json| {
             let parse_result = serde_json::from_str::<ScalableUiDataJson>(scalable_json.as_str());
             if parse_result.is_err() {
-                println!(
+                warn!(
                     "Error parsing scalable ui data: node {} json {}: -> {:?}",
                     node.name, scalable_json, parse_result
                 );
@@ -1227,7 +1227,7 @@ fn visit_node(
                         variant_hash
                             .insert(variant_parts[0].to_string(), variant_parts[1].to_string());
                     } else {
-                        println!("Invalid grid span variant: {:?}", variant_parts);
+                        warn!("Invalid grid span variant: {:?}", variant_parts);
                     }
                 }
 
@@ -1477,7 +1477,7 @@ fn visit_node(
                         ..Default::default()
                     });
                 } else {
-                    println!("Unsupported OpenType flag: {}", flag)
+                    warn!("Unsupported OpenType flag: {}", flag)
                 }
             }
             font_features

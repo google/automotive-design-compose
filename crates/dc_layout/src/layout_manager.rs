@@ -484,7 +484,7 @@ impl LayoutManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dc_bundle::geometry::{DimensionProto, DimensionRect};
+    use dc_bundle::geometry::{DimensionProto, DimensionRect, Size as GeoSize};
     use dc_bundle::positioning::{
         item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, ItemSpacing,
         JustifyContent, PositionType,
@@ -846,5 +846,332 @@ mod tests {
         assert!(output[1].starts_with("  Layout {"));
         assert_eq!(output[2], "  Node child 2:");
         assert!(output[3].starts_with("    Layout {"));
+    }
+
+    // --- Layout behavior tests (Issue #405) ---
+
+    /// Helper: creates a layout style with a fixed size (width x height in points).
+    fn create_sized_style(width: f32, height: f32) -> LayoutStyle {
+        let mut style = create_valid_layout_style();
+        style.width = DimensionProto::new_points(width);
+        style.height = DimensionProto::new_points(height);
+        style.bounding_box = Some(GeoSize { width, height, ..Default::default() }).into();
+        style
+    }
+
+    /// Helper: creates a layout style with fixed size and a flex direction.
+    fn create_container_style(width: f32, height: f32, direction: FlexDirection) -> LayoutStyle {
+        let mut style = create_sized_style(width, height);
+        style.flex_direction = direction.into();
+        style
+    }
+
+    #[test]
+    fn test_horizontal_layout_children_side_by_side() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_container_style(200.0, 100.0, FlexDirection::FLEX_DIRECTION_ROW),
+            "parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        lm.add_style(2, 1, 0, create_sized_style(60.0, 40.0), "a".into(), false, None, None)
+            .unwrap();
+        lm.add_style(3, 1, 1, create_sized_style(80.0, 50.0), "b".into(), false, None, None)
+            .unwrap();
+        lm.compute_node_layout(1);
+        let la = lm.get_node_layout(2).unwrap();
+        let lb = lm.get_node_layout(3).unwrap();
+        assert_eq!(la.left, 0.0);
+        assert_eq!(la.width, 60.0);
+        assert_eq!(lb.left, 60.0);
+        assert_eq!(lb.width, 80.0);
+    }
+
+    #[test]
+    fn test_vertical_layout_children_stacked() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_container_style(100.0, 200.0, FlexDirection::FLEX_DIRECTION_COLUMN),
+            "parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        lm.add_style(2, 1, 0, create_sized_style(50.0, 30.0), "a".into(), false, None, None)
+            .unwrap();
+        lm.add_style(3, 1, 1, create_sized_style(60.0, 40.0), "b".into(), false, None, None)
+            .unwrap();
+        lm.compute_node_layout(1);
+        let la = lm.get_node_layout(2).unwrap();
+        let lb = lm.get_node_layout(3).unwrap();
+        assert_eq!(la.top, 0.0);
+        assert_eq!(la.height, 30.0);
+        assert_eq!(lb.top, 30.0);
+        assert_eq!(lb.height, 40.0);
+    }
+
+    #[test]
+    fn test_absolute_positioning() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_sized_style(200.0, 200.0),
+            "parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        let mut abs_style = create_sized_style(50.0, 50.0);
+        abs_style.position_type = PositionType::POSITION_TYPE_ABSOLUTE.into();
+        abs_style.left = DimensionProto::new_points(10.0);
+        abs_style.top = DimensionProto::new_points(20.0);
+        lm.add_style(2, 1, 0, abs_style, "abs_child".into(), false, None, None).unwrap();
+        lm.compute_node_layout(1);
+        let lc = lm.get_node_layout(2).unwrap();
+        assert_eq!(lc.left, 10.0);
+        assert_eq!(lc.top, 20.0);
+        assert_eq!(lc.width, 50.0);
+        assert_eq!(lc.height, 50.0);
+    }
+
+    #[test]
+    fn test_nested_layout() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_container_style(300.0, 300.0, FlexDirection::FLEX_DIRECTION_ROW),
+            "root".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        lm.add_style(
+            2,
+            1,
+            0,
+            create_container_style(150.0, 200.0, FlexDirection::FLEX_DIRECTION_COLUMN),
+            "col".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        lm.add_style(3, 2, 0, create_sized_style(100.0, 40.0), "gc_a".into(), false, None, None)
+            .unwrap();
+        lm.add_style(4, 2, 1, create_sized_style(100.0, 60.0), "gc_b".into(), false, None, None)
+            .unwrap();
+        lm.compute_node_layout(1);
+        let la = lm.get_node_layout(3).unwrap();
+        let lb = lm.get_node_layout(4).unwrap();
+        assert_eq!(la.top, 0.0);
+        assert_eq!(la.height, 40.0);
+        assert_eq!(lb.top, 40.0);
+        assert_eq!(lb.height, 60.0);
+    }
+
+    #[test]
+    fn test_padding_offsets_children() {
+        let mut lm = create_layout_manager();
+        let mut parent_style = create_sized_style(200.0, 200.0);
+        parent_style.padding = Some(DimensionRect {
+            start: DimensionProto::new_points(10.0),
+            end: DimensionProto::new_points(10.0),
+            top: DimensionProto::new_points(20.0),
+            bottom: DimensionProto::new_points(20.0),
+            ..Default::default()
+        })
+        .into();
+        lm.add_style(1, -1, 0, parent_style, "parent".into(), false, None, None).unwrap();
+        lm.add_style(2, 1, 0, create_sized_style(50.0, 50.0), "child".into(), false, None, None)
+            .unwrap();
+        lm.compute_node_layout(1);
+        let lc = lm.get_node_layout(2).unwrap();
+        assert_eq!(lc.left, 10.0);
+        assert_eq!(lc.top, 20.0);
+    }
+
+    #[test]
+    fn test_flex_grow_distributes_space() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_container_style(300.0, 100.0, FlexDirection::FLEX_DIRECTION_ROW),
+            "parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        let mut sa = create_valid_layout_style();
+        sa.height = DimensionProto::new_points(50.0);
+        sa.bounding_box = Some(GeoSize { width: 0.0, height: 50.0, ..Default::default() }).into();
+        sa.flex_grow = 1.0;
+        let mut sb = create_valid_layout_style();
+        sb.height = DimensionProto::new_points(50.0);
+        sb.bounding_box = Some(GeoSize { width: 0.0, height: 50.0, ..Default::default() }).into();
+        sb.flex_grow = 2.0;
+        lm.add_style(2, 1, 0, sa, "a".into(), false, None, None).unwrap();
+        lm.add_style(3, 1, 1, sb, "b".into(), false, None, None).unwrap();
+        lm.compute_node_layout(1);
+        assert_eq!(lm.get_node_layout(2).unwrap().width, 100.0);
+        assert_eq!(lm.get_node_layout(3).unwrap().width, 200.0);
+    }
+
+    #[test]
+    fn test_removal_relayouts_siblings() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_container_style(300.0, 100.0, FlexDirection::FLEX_DIRECTION_ROW),
+            "parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        lm.add_style(2, 1, 0, create_sized_style(50.0, 50.0), "a".into(), false, None, None)
+            .unwrap();
+        lm.add_style(3, 1, 1, create_sized_style(60.0, 50.0), "b".into(), false, None, None)
+            .unwrap();
+        lm.add_style(4, 1, 2, create_sized_style(70.0, 50.0), "c".into(), false, None, None)
+            .unwrap();
+        lm.compute_node_layout(1);
+        assert_eq!(lm.get_node_layout(4).unwrap().left, 110.0);
+        lm.remove_view(3, 1, true);
+        assert_eq!(lm.get_node_layout(4).unwrap().left, 50.0);
+    }
+
+    #[test]
+    fn test_fixed_size_overrides_style() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_sized_style(100.0, 100.0),
+            "node".into(),
+            false,
+            Some(200),
+            None,
+        )
+        .unwrap();
+        lm.compute_node_layout(1);
+        assert!(lm.get_node_layout(1).unwrap().width >= 200.0);
+    }
+
+    #[test]
+    fn test_percentage_sizing() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_sized_style(400.0, 300.0),
+            "parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        let mut pct = create_valid_layout_style();
+        pct.width = DimensionProto::new_percent(0.5);
+        pct.height = DimensionProto::new_percent(0.25);
+        lm.add_style(2, 1, 0, pct, "child".into(), false, None, None).unwrap();
+        lm.compute_node_layout(1);
+        let lc = lm.get_node_layout(2).unwrap();
+        assert_eq!(lc.width, 200.0);
+        assert_eq!(lc.height, 75.0);
+    }
+
+    #[test]
+    fn test_layout_state_increments() {
+        let mut lm = create_layout_manager();
+        lm.add_style(1, -1, 0, create_sized_style(100.0, 100.0), "node".into(), false, None, None)
+            .unwrap();
+        let s1 = lm.compute_node_layout(1).layout_state;
+        let s2 = lm.compute_node_layout(1).layout_state;
+        assert_eq!(s2, s1 + 1);
+    }
+
+    #[test]
+    fn test_child_ordering_in_column() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_container_style(200.0, 400.0, FlexDirection::FLEX_DIRECTION_COLUMN),
+            "parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        for i in 0..4 {
+            lm.add_style(
+                10 + i,
+                1,
+                i,
+                create_sized_style(100.0, 50.0),
+                format!("child_{}", i),
+                false,
+                None,
+                None,
+            )
+            .unwrap();
+        }
+        lm.compute_node_layout(1);
+        for i in 0..4 {
+            let l = lm.get_node_layout(10 + i).unwrap();
+            assert_eq!(l.top, (i as f32) * 50.0, "child {} top mismatch", i);
+            assert_eq!(l.height, 50.0, "child {} height mismatch", i);
+        }
+    }
+
+    #[test]
+    fn test_update_children_reorders_layout() {
+        let mut lm = create_layout_manager();
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_container_style(200.0, 100.0, FlexDirection::FLEX_DIRECTION_ROW),
+            "parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+        lm.add_style(2, 1, 0, create_sized_style(60.0, 50.0), "a".into(), false, None, None)
+            .unwrap();
+        lm.add_style(3, 1, 1, create_sized_style(80.0, 50.0), "b".into(), false, None, None)
+            .unwrap();
+        lm.compute_node_layout(1);
+        assert_eq!(lm.get_node_layout(2).unwrap().left, 0.0);
+        assert_eq!(lm.get_node_layout(3).unwrap().left, 60.0);
+        lm.update_children(1, &vec![3, 2]);
+        lm.compute_node_layout(1);
+        assert_eq!(lm.get_node_layout(3).unwrap().left, 0.0);
+        assert_eq!(lm.get_node_layout(2).unwrap().left, 80.0);
     }
 }

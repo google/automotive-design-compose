@@ -182,7 +182,9 @@ fn compute_layout(
             style.layout_style_mut().flex_direction = match frame.layout_mode {
                 figma_schema::LayoutMode::Horizontal => FlexDirection::FLEX_DIRECTION_ROW.into(),
                 figma_schema::LayoutMode::Vertical => FlexDirection::FLEX_DIRECTION_COLUMN.into(),
-                figma_schema::LayoutMode::None => FlexDirection::FLEX_DIRECTION_NONE.into(),
+                figma_schema::LayoutMode::None | figma_schema::LayoutMode::Unknown => {
+                    FlexDirection::FLEX_DIRECTION_NONE.into()
+                }
             };
         }
         style.layout_style_mut().padding = Some(DimensionRect {
@@ -313,7 +315,7 @@ fn compute_layout(
                 }
             }
 
-            if frame.layout_mode != figma_schema::LayoutMode::None {
+            if !frame.layout_mode.is_none() {
                 let width_points = bounds.width().ceil();
                 let height_points = bounds.height().ceil();
                 style.layout_style_mut().width = match frame.layout_sizing_horizontal {

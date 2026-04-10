@@ -17,6 +17,8 @@
 package com.android.designcompose.gradle
 
 import java.awt.SystemColor.text
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
@@ -73,9 +75,54 @@ fun Project.initializeExtension(extension: PluginExtension) {
             .environmentVariable("FIGMA_ACCESS_TOKEN")
             .orElse(providers.gradleProperty(tokenGradlePropertyName))
             .orElse(
-                providers.fileContents(extension.figmaTokenFile).asText.map { text -> text.trim() }
+                providers.fileContents(extension.figmaTokenFile).asText.map { text ->
+                    // Check file permissions when reading the token from a file (Issue #249).
+                    // Warn if the file is world-readable, as this could expose the Figma
+                    // access token to other users on shared systems.
+                    checkTokenFilePermissions(extension.figmaTokenFile)
+                    text.trim()
+                }
             )
     )
     // Avoid odd behavior by only allowing changes to be made to the token before it's read
     extension.figmaToken.finalizeValueOnRead()
 }
+
+/**
+ * Check that the Figma token file is not world-readable. On Unix/macOS systems, a world-readable
+ * token file could expose the Figma access token to other users. This function emits a warning
+ * if the file has overly permissive permissions.
+ *
+ * @param tokenFile The RegularFileProperty pointing to the token file
+ */
+private fun Project.checkTokenFilePermissions(tokenFile: RegularFileProperty) {
+    if (!Os.isFamily(Os.FAMILY_UNIX)) return
+
+    try {
+        val file = tokenFile.get().asFile
+        if (!file.exists()) return
+
+        val permissions = Files.getPosixFilePermissions(file.toPath())
+        val worldReadable = PosixFilePermission.OTHERS_READ in permissions
+        val worldWritable = PosixFilePermission.OTHERS_WRITE in permissions
+        val groupReadable = PosixFilePermission.GROUP_READ in permissions
+
+        if (worldReadable || worldWritable) {
+            logger.warn(
+                "WARNING: Figma access token file '${file.absolutePath}' is world-" +
+                    "${if (worldReadable && worldWritable) "readable and writable" else if (worldReadable) "readable" else "writable"}. " +
+                    "This could expose your Figma access token to other users. " +
+                    "Run 'chmod 600 ${file.absolutePath}' to restrict access to owner only."
+            )
+        } else if (groupReadable) {
+            logger.warn(
+                "WARNING: Figma access token file '${file.absolutePath}' is group-readable. " +
+                    "Consider running 'chmod 600 ${file.absolutePath}' to restrict access to owner only."
+            )
+        }
+    } catch (e: Exception) {
+        // Don't fail the build if we can't check permissions (e.g. on unsupported filesystems)
+        logger.debug("Could not check Figma token file permissions: ${e.message}")
+    }
+}
+

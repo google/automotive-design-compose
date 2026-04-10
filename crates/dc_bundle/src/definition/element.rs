@@ -78,10 +78,10 @@ impl Color {
     /// 0xAARRGGBB
     pub fn from_u32(c: u32) -> Color {
         Color {
-            r: ((c & 0x00FF_0000u32) >> 16) as u32,
-            g: ((c & 0x0000_FF00u32) >> 8) as u32,
-            b: (c & 0x0000_00FFu32) as u32,
-            a: ((c & 0xFF00_0000u32) >> 24) as u32,
+            r: (c & 0x00FF_0000u32) >> 16,
+            g: (c & 0x0000_FF00u32) >> 8,
+            b: c & 0x0000_00FFu32,
+            a: (c & 0xFF00_0000u32) >> 24,
             ..Default::default()
         }
     }
@@ -218,9 +218,9 @@ impl Color {
     }
 }
 
-impl Into<Color> for &FloatColor {
-    fn into(self) -> Color {
-        Color::from_f32s(self.r, self.g, self.b, self.a)
+impl From<&FloatColor> for Color {
+    fn from(val: &FloatColor) -> Self {
+        Color::from_f32s(val.r, val.g, val.b, val.a)
     }
 }
 
@@ -427,10 +427,7 @@ impl Background {
     }
     pub fn is_some(&self) -> bool {
         if let Some(bg) = &self.background_type {
-            match bg {
-                background::Background_type::None(_) => false,
-                _ => true,
-            }
+            !matches!(bg, background::Background_type::None(_))
         } else {
             false
         }

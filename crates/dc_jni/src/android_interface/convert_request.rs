@@ -33,15 +33,8 @@ pub fn fetch_doc(
 ) -> Result<ConvertResponse, Error> {
     let fetch_start = Instant::now();
 
-    let image_session: Option<ImageContextSession> = {
-        match &rq.image_session_json {
-            Some(json) => match serde_json::from_slice(json) {
-                Ok(session) => Some(session),
-                Err(_) => None,
-            },
-            None => None,
-        }
-    };
+    let image_session: Option<ImageContextSession> =
+        rq.image_session_json.as_ref().and_then(|json| serde_json::from_slice(json).ok());
 
     let start = Instant::now();
     if let Some(mut doc) = dc_figma_import::Document::new_if_changed(
@@ -49,8 +42,8 @@ pub fn fetch_doc(
         id.into(),
         requested_version_id.into(),
         proxy_config,
-        rq.last_modified.clone().unwrap_or(String::new()),
-        rq.version.clone().unwrap_or(String::new()),
+        rq.last_modified.clone().unwrap_or_default(),
+        rq.version.clone().unwrap_or_default(),
         image_session,
     )? {
         info!("fetch_doc({}): Figma API fetch took {:?}", id, start.elapsed());

@@ -19,7 +19,7 @@ use dc_bundle::definition_file::load_design_def;
 
 #[test]
 fn test_keyframes_present() {
-    let doc_path = "../../../../utils/gui-playground-app/data/ENJKMeYc2vE5pQfgN9aOrY";
+    let doc_path = "tests/ENJKMeYc2vE5pQfgN9aOrY";
     let (header, doc) = load_design_def(doc_path).expect("Failed to load doc");
 
     println!("Loaded document: {}", header.id);

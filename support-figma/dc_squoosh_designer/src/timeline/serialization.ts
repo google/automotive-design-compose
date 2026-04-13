@@ -1,7 +1,5 @@
 import { Keyframe, ArcData } from "./types";
 
-// Serialization format: "fraction,value,easing;fraction,value,easing;..."
-// Value will be JSON.stringify-ed if it's an object, and then base64 encoded.
 
 /**
  * Serializes an `ArcData` object into a comma-separated string.

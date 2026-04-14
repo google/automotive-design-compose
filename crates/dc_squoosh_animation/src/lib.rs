@@ -30,7 +30,14 @@ impl Easing {
         match self {
             Easing::Inherit => t,
             Easing::Linear => t,
-            Easing::CubicBezier(_, _, _, _) => t, // FIXME: Implement cubic bezier solver
+            Easing::CubicBezier(_, _, _, _) => {
+                static WARNED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+                if !WARNED.load(std::sync::atomic::Ordering::Relaxed) {
+                    log::warn!("CubicBezier easing is not implemented, falling back to linear.");
+                    WARNED.store(true, std::sync::atomic::Ordering::Relaxed);
+                }
+                t
+            }
             Easing::Instant => {
                 if t >= 1.0 {
                     1.0

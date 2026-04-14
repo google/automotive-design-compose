@@ -952,28 +952,7 @@ impl Document {
                         }
                     }
 
-                    if let Some(data) = vsw_data.get("squoosh") {
-                        log::debug!("Decoded squoosh animation!! {:?}", data);
-                        let animation_spec_json =
-                            serde_json::from_str::<AnimationOverrideJson>(data.as_str());
-                        match animation_spec_json {
-                            Ok(animation_spec_json) => {
-                                log::debug!(
-                                    "Successfully {:?} got json data: {animation_spec_json:?}. from {}",
-                                    node.name, data
-                                );
-                            }
-                            Err(err) => {
-                                log::error!(
-                                    "Error getting animation spec json: {:?} for {:?}",
-                                    err,
-                                    data.as_str()
-                                );
-                            }
-                        }
-                    } else {
-                        log::debug!("No designcomposeSquoosh plugin data: {:?}", vsw_data.keys());
-                    }
+
                 }
             }
 

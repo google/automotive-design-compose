@@ -137,6 +137,8 @@ impl KeyframeValue {
             }),
             (KeyframeValue::Gradient(a), KeyframeValue::Gradient(b)) => {
                 if a.len() != b.len() {
+                    // FIXME: If number of gradient stops changes between keyframes, we fallback to the
+                    // starting gradient to avoid glitches. Consider interpolating matching stops or padding.
                     return KeyframeValue::Gradient(a.clone());
                 }
                 let stops = a

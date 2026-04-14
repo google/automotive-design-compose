@@ -137,9 +137,8 @@ impl KeyframeValue {
             }),
             (KeyframeValue::Gradient(a), KeyframeValue::Gradient(b)) => {
                 if a.len() != b.len() {
-                    // FIXME: If number of gradient stops changes between keyframes, we fallback to the
-                    // starting gradient to avoid glitches. Consider interpolating matching stops or padding.
-                    return KeyframeValue::Gradient(a.clone());
+                    // Fallback to the ending gradient in case of mismatch to snap to target value instantly.
+                    return KeyframeValue::Gradient(b.clone());
                 }
                 let stops = a
                     .iter()
@@ -520,7 +519,7 @@ mod tests {
             GradientStop { position: 0.0, color: Rgba { r: 0, g: 0, b: 0, a: 255 } },
             GradientStop { position: 1.0, color: Rgba { r: 255, g: 255, b: 255, a: 255 } },
         ]);
-        assert_eq!(g3.interpolate(&g4, 0.5), g3);
+        assert_eq!(g3.interpolate(&g4, 0.5), g4);
 
         let s = KeyframeValue::Scalar(1.0);
         let c = KeyframeValue::Color(Rgba { r: 0, g: 0, b: 0, a: 255 });

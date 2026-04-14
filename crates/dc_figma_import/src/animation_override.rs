@@ -228,9 +228,64 @@ impl From<EasingJson> for Easing {
     fn from(json: EasingJson) -> Self {
         let mut easing = Easing::new();
         match json {
-            EasingJson::String(_) => {
-                easing.type_ =
-                    Some(easing::Type::Linear(::protobuf::well_known_types::empty::Empty::new()));
+            EasingJson::String(s) => {
+                // TODO: Do not use these predefined fallback templates. Create interactive UI Bezier graph inputs
+                // inside the standalone Squoosh editing panel to retrieve precise designer curve parameters directly.
+                let s_norm = s.to_lowercase().replace("_", "").replace("-", "");
+                if s_norm == "linear" {
+                    easing.type_ = Some(easing::Type::Linear(::protobuf::well_known_types::empty::Empty::new()));
+                } else if s_norm == "easein" {
+                    easing.type_ = Some(easing::Type::Bezier(Default::default()));
+                    if let Some(easing::Type::Bezier(ref mut b)) = easing.type_ {
+                        b.p0 = 0.42;
+                        b.p1 = 0.0;
+                        b.p2 = 1.0;
+                        b.p3 = 1.0;
+                    }
+                } else if s_norm == "easeout" {
+                    easing.type_ = Some(easing::Type::Bezier(Default::default()));
+                    if let Some(easing::Type::Bezier(ref mut b)) = easing.type_ {
+                        b.p0 = 0.0;
+                        b.p1 = 0.0;
+                        b.p2 = 0.58;
+                        b.p3 = 1.0;
+                    }
+                } else if s_norm == "easeinout" || s_norm == "easeinandout" {
+                    easing.type_ = Some(easing::Type::Bezier(Default::default()));
+                    if let Some(easing::Type::Bezier(ref mut b)) = easing.type_ {
+                        b.p0 = 0.42;
+                        b.p1 = 0.0;
+                        b.p2 = 0.58;
+                        b.p3 = 1.0;
+                    }
+                } else if s_norm == "easeincubic" {
+                    easing.type_ = Some(easing::Type::Bezier(Default::default()));
+                    if let Some(easing::Type::Bezier(ref mut b)) = easing.type_ {
+                        b.p0 = 0.32;
+                        b.p1 = 0.0;
+                        b.p2 = 0.67;
+                        b.p3 = 0.0;
+                    }
+                } else if s_norm == "easeoutcubic" {
+                    easing.type_ = Some(easing::Type::Bezier(Default::default()));
+                    if let Some(easing::Type::Bezier(ref mut b)) = easing.type_ {
+                        b.p0 = 0.33;
+                        b.p1 = 1.0;
+                        b.p2 = 0.68;
+                        b.p3 = 1.0;
+                    }
+                } else if s_norm == "easeinoutcubic" {
+                    easing.type_ = Some(easing::Type::Bezier(Default::default()));
+                    if let Some(easing::Type::Bezier(ref mut b)) = easing.type_ {
+                        b.p0 = 0.645;
+                        b.p1 = 0.045;
+                        b.p2 = 0.355;
+                        b.p3 = 1.0;
+                    }
+                } else {
+                    // Default to linear if entirely unknown Token
+                    easing.type_ = Some(easing::Type::Linear(::protobuf::well_known_types::empty::Empty::new()));
+                }
             }
             EasingJson::Bezier { bezier: b } => {
                 easing.type_ = Some(easing::Type::Bezier(b.into()));

@@ -31,6 +31,10 @@ impl Easing {
             Easing::Inherit => t,
             Easing::Linear => t,
             Easing::CubicBezier(x1, y1, x2, y2) => {
+                // A cubic Bezier curve is defined parametrically as (x(t), y(t)).
+                // We are given the time progress 't' (x_target) and need to find the corresponding 'y' value.
+                // Since we cannot solve x(t) = t for the parameter 't' in closed form, we use binary search
+                // to approximate 't' and then calculate y(t). This matches standard CSS/Figma cubic-bezier behavior.
                 let x_target = t;
                 if x_target <= 0.0 {
                     return 0.0;

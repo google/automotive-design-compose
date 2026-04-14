@@ -329,6 +329,7 @@ name = "dc_squoosh_animation"
 version = "0.38.2"
 dependencies = [
  "dc_bundle",
+ "log",
  "serde",
  "thiserror 1.0.69",
 ]

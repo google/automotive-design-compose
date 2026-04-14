@@ -736,27 +736,28 @@ impl Document {
                                 .as_ref()
                                 .and_then(|v| {
                                     v.node_style().animation_override.clone().into_option()
-                                })
-                                .or_else(|| {
-                                    template_view
-                                        .style()
-                                        .node_style()
-                                        .animation_override
-                                        .clone()
-                                        .into_option()
                                 });
+                            
+                            let template_anim_over = template_view
+                                .style()
+                                .node_style()
+                                .animation_override
+                                .clone()
+                                .into_option();
 
                             if let Some(anim_over) = anim_over {
-                                if override_view_style.is_none() {
-                                    let mut new_style = ViewStyle::new_default();
-                                    new_style.node_style_mut().animation_override =
-                                        Some(anim_over).into();
-                                    override_view_style = Some(new_style).into();
-                                } else {
-                                    override_view_style
-                                        .mut_or_insert_default()
-                                        .node_style_mut()
-                                        .animation_override = Some(anim_over).into();
+                                if Some(&anim_over) != template_anim_over.as_ref() {
+                                    if override_view_style.is_none() {
+                                        let mut new_style = ViewStyle::new_default();
+                                        new_style.node_style_mut().animation_override =
+                                            Some(anim_over).into();
+                                        override_view_style = Some(new_style).into();
+                                    } else {
+                                        override_view_style
+                                            .mut_or_insert_default()
+                                            .node_style_mut()
+                                            .animation_override = Some(anim_over).into();
+                                    }
                                 }
                             }
 

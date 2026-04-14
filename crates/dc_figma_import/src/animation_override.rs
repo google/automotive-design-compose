@@ -19,9 +19,9 @@ use dc_bundle::animationspec::{
 /// Converts from the JSON `AnimationOverrideJson` to the protobuf `AnimationOverride`.
 pub struct AnimationOverride(animationspec::AnimationOverride);
 
-impl Into<animationspec::AnimationOverride> for AnimationOverride {
-    fn into(self) -> animationspec::AnimationOverride {
-        self.0
+impl From<AnimationOverride> for animationspec::AnimationOverride {
+    fn from(val: AnimationOverride) -> Self {
+        val.0
     }
 }
 

@@ -69,15 +69,22 @@ impl Rgba {
     pub fn from_hex(hex: &str) -> Result<Self, String> {
         let cleaned = hex.trim_start_matches('#');
         if cleaned.len() == 6 {
-            let r = u8::from_str_radix(&cleaned[0..2], 16).map_err(|e| format!("Invalid Red channel: {}", e))?;
-            let g = u8::from_str_radix(&cleaned[2..4], 16).map_err(|e| format!("Invalid Green channel: {}", e))?;
-            let b = u8::from_str_radix(&cleaned[4..6], 16).map_err(|e| format!("Invalid Blue channel: {}", e))?;
+            let r = u8::from_str_radix(&cleaned[0..2], 16)
+                .map_err(|e| format!("Invalid Red channel: {}", e))?;
+            let g = u8::from_str_radix(&cleaned[2..4], 16)
+                .map_err(|e| format!("Invalid Green channel: {}", e))?;
+            let b = u8::from_str_radix(&cleaned[4..6], 16)
+                .map_err(|e| format!("Invalid Blue channel: {}", e))?;
             Ok(Rgba { r, g, b, a: 255 })
         } else if cleaned.len() == 8 {
-            let r = u8::from_str_radix(&cleaned[0..2], 16).map_err(|e| format!("Invalid Red channel: {}", e))?;
-            let g = u8::from_str_radix(&cleaned[2..4], 16).map_err(|e| format!("Invalid Green channel: {}", e))?;
-            let b = u8::from_str_radix(&cleaned[4..6], 16).map_err(|e| format!("Invalid Blue channel: {}", e))?;
-            let a = u8::from_str_radix(&cleaned[6..8], 16).map_err(|e| format!("Invalid Alpha channel: {}", e))?;
+            let r = u8::from_str_radix(&cleaned[0..2], 16)
+                .map_err(|e| format!("Invalid Red channel: {}", e))?;
+            let g = u8::from_str_radix(&cleaned[2..4], 16)
+                .map_err(|e| format!("Invalid Green channel: {}", e))?;
+            let b = u8::from_str_radix(&cleaned[4..6], 16)
+                .map_err(|e| format!("Invalid Blue channel: {}", e))?;
+            let a = u8::from_str_radix(&cleaned[6..8], 16)
+                .map_err(|e| format!("Invalid Alpha channel: {}", e))?;
             Ok(Rgba { r, g, b, a })
         } else {
             Err(format!("Invalid hex length: {}", hex))

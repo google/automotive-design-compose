@@ -127,8 +127,6 @@ export class DataMapper {
             // Default to 0 for numeric properties to ensure continuity (e.g. fade out).
             if (
                 propName.endsWith("opacity") ||
-                propName.endsWith("width") ||
-                propName.endsWith("height") ||
                 propName.endsWith("Radius") ||
                 propName.endsWith("Weight")
             ) {

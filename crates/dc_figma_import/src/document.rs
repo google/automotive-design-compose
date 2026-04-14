@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use crate::{
     component_context::ComponentContext,
     error::Error,
@@ -732,18 +731,13 @@ impl Document {
                                 MessageField::none()
                             };
 
-                            let anim_over = view_style
-                                .as_ref()
-                                .and_then(|v| {
-                                    v.node_style().animation_override.clone().into_option()
-                                });
+                            let anim_over = view_style.as_ref().and_then(|v| {
+                                v.node_style().animation_override.clone().into_option()
+                            });
 
-                            let template_anim_over = template_view
-                                .style
-                                .as_ref()
-                                .and_then(|s| {
-                                    s.node_style().animation_override.clone().into_option()
-                                });
+                            let template_anim_over = template_view.style.as_ref().and_then(|s| {
+                                s.node_style().animation_override.clone().into_option()
+                            });
 
                             if let Some(anim_over) = anim_over {
                                 if Some(&anim_over) != template_anim_over.as_ref() {
@@ -951,8 +945,6 @@ impl Document {
                             }
                         }
                     }
-
-
                 }
             }
 

@@ -324,9 +324,15 @@ impl std::str::FromStr for AnimatableProperty {
                     if let Ok(idx) = idx_str.parse::<usize>() {
                         match (*prefix, *type_str) {
                             ("fills", "solid") => return Ok(AnimatableProperty::FillSolid(idx)),
-                            ("fills", "gradient") => return Ok(AnimatableProperty::FillGradient(idx)),
-                            ("strokes", "solid") => return Ok(AnimatableProperty::StrokeSolid(idx)),
-                            ("strokes", "gradient") => return Ok(AnimatableProperty::StrokeGradient(idx)),
+                            ("fills", "gradient") => {
+                                return Ok(AnimatableProperty::FillGradient(idx))
+                            }
+                            ("strokes", "solid") => {
+                                return Ok(AnimatableProperty::StrokeSolid(idx))
+                            }
+                            ("strokes", "gradient") => {
+                                return Ok(AnimatableProperty::StrokeGradient(idx))
+                            }
                             _ => {}
                         }
                     }

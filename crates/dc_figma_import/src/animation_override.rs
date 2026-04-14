@@ -64,11 +64,13 @@ enum CustomKeyframeValueJson {
 impl From<CustomKeyframeJson> for CustomKeyframe {
     fn from(json: CustomKeyframeJson) -> Self {
         let mut typed_value = animationspec::CustomKeyframeValue::default();
-        
-        if let Ok(val) = serde_json::from_value::<CustomKeyframeValueJson>(json.value_json.clone()) {
+
+        if let Ok(val) = serde_json::from_value::<CustomKeyframeValueJson>(json.value_json.clone())
+        {
             match val {
                 CustomKeyframeValueJson::Scalar(scalar) => {
-                    typed_value.value = Some(animationspec::custom_keyframe_value::Value::Scalar(scalar as f32));
+                    typed_value.value =
+                        Some(animationspec::custom_keyframe_value::Value::Scalar(scalar as f32));
                 }
                 CustomKeyframeValueJson::String(s) => {
                     if s.starts_with('#') {
@@ -79,9 +81,16 @@ impl From<CustomKeyframeJson> for CustomKeyframe {
                                 u32::from_str_radix(&hex[2..4], 16),
                                 u32::from_str_radix(&hex[4..6], 16),
                             ) {
-                                typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(
-                                    animationspec::RgbaValue { r, g, b, a: 255, ..Default::default() },
-                                ));
+                                typed_value.value =
+                                    Some(animationspec::custom_keyframe_value::Value::Color(
+                                        animationspec::RgbaValue {
+                                            r,
+                                            g,
+                                            b,
+                                            a: 255,
+                                            ..Default::default()
+                                        },
+                                    ));
                             }
                         } else if hex.len() == 8 {
                             if let (Ok(r), Ok(g), Ok(b), Ok(a)) = (
@@ -90,9 +99,16 @@ impl From<CustomKeyframeJson> for CustomKeyframe {
                                 u32::from_str_radix(&hex[4..6], 16),
                                 u32::from_str_radix(&hex[6..8], 16),
                             ) {
-                                typed_value.value = Some(animationspec::custom_keyframe_value::Value::Color(
-                                    animationspec::RgbaValue { r, g, b, a, ..Default::default() },
-                                ));
+                                typed_value.value =
+                                    Some(animationspec::custom_keyframe_value::Value::Color(
+                                        animationspec::RgbaValue {
+                                            r,
+                                            g,
+                                            b,
+                                            a,
+                                            ..Default::default()
+                                        },
+                                    ));
                             }
                         }
                     }
@@ -110,7 +126,7 @@ impl From<CustomKeyframeJson> for CustomKeyframe {
                 }
             }
         }
-        
+
         if typed_value.value.is_none() {
             log::warn!("Failed to parse custom keyframe value JSON: {:?}", json.value_json);
         }
@@ -233,7 +249,9 @@ impl From<EasingJson> for Easing {
                 // inside the standalone Squoosh editing panel to retrieve precise designer curve parameters directly.
                 let s_norm = s.to_lowercase().replace("_", "").replace("-", "");
                 if s_norm == "linear" {
-                    easing.type_ = Some(easing::Type::Linear(::protobuf::well_known_types::empty::Empty::new()));
+                    easing.type_ = Some(easing::Type::Linear(
+                        ::protobuf::well_known_types::empty::Empty::new(),
+                    ));
                 } else if s_norm == "easein" {
                     easing.type_ = Some(easing::Type::Bezier(Default::default()));
                     if let Some(easing::Type::Bezier(ref mut b)) = easing.type_ {
@@ -284,7 +302,9 @@ impl From<EasingJson> for Easing {
                     }
                 } else {
                     // Default to linear if entirely unknown Token
-                    easing.type_ = Some(easing::Type::Linear(::protobuf::well_known_types::empty::Empty::new()));
+                    easing.type_ = Some(easing::Type::Linear(
+                        ::protobuf::well_known_types::empty::Empty::new(),
+                    ));
                 }
             }
             EasingJson::Bezier { bezier: b } => {

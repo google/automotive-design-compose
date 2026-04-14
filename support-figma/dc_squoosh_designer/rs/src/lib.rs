@@ -28,7 +28,7 @@ impl<'de> Deserialize<'de> for Rgba {
             where
                 E: de::Error,
             {
-                Ok(Rgba::from_hex(value))
+                Rgba::from_hex(value).map_err(E::custom)
             }
 
             fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
@@ -66,21 +66,21 @@ impl<'de> Deserialize<'de> for Rgba {
 }
 
 impl Rgba {
-    pub fn from_hex(hex: &str) -> Self {
-        let hex = hex.trim_start_matches('#');
-        if hex.len() == 6 {
-            let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(0);
-            let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(0);
-            let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(0);
-            Rgba { r, g, b, a: 255 }
-        } else if hex.len() == 8 {
-            let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(0);
-            let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(0);
-            let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(0);
-            let a = u8::from_str_radix(&hex[6..8], 16).unwrap_or(255);
-            Rgba { r, g, b, a }
+    pub fn from_hex(hex: &str) -> Result<Self, String> {
+        let cleaned = hex.trim_start_matches('#');
+        if cleaned.len() == 6 {
+            let r = u8::from_str_radix(&cleaned[0..2], 16).map_err(|e| format!("Invalid Red channel: {}", e))?;
+            let g = u8::from_str_radix(&cleaned[2..4], 16).map_err(|e| format!("Invalid Green channel: {}", e))?;
+            let b = u8::from_str_radix(&cleaned[4..6], 16).map_err(|e| format!("Invalid Blue channel: {}", e))?;
+            Ok(Rgba { r, g, b, a: 255 })
+        } else if cleaned.len() == 8 {
+            let r = u8::from_str_radix(&cleaned[0..2], 16).map_err(|e| format!("Invalid Red channel: {}", e))?;
+            let g = u8::from_str_radix(&cleaned[2..4], 16).map_err(|e| format!("Invalid Green channel: {}", e))?;
+            let b = u8::from_str_radix(&cleaned[4..6], 16).map_err(|e| format!("Invalid Blue channel: {}", e))?;
+            let a = u8::from_str_radix(&cleaned[6..8], 16).map_err(|e| format!("Invalid Alpha channel: {}", e))?;
+            Ok(Rgba { r, g, b, a })
         } else {
-            Rgba { r: 0, g: 0, b: 0, a: 255 }
+            Err(format!("Invalid hex length: {}", hex))
         }
     }
 
@@ -309,8 +309,8 @@ mod tests {
     #[test]
     fn test_optimized_interpolation() {
         // Test Color Interpolation (0-Alloc)
-        let c1 = Rgba::from_hex("#000000");
-        let c2 = Rgba::from_hex("#ffffff");
+        let c1 = Rgba::from_hex("#000000").unwrap();
+        let c2 = Rgba::from_hex("#ffffff").unwrap();
         let mid = c1.lerp(&c2, 0.5);
         assert_eq!(mid.r, 127); // Approx
 
@@ -367,13 +367,13 @@ mod tests {
 
     #[test]
     fn test_rgba_from_hex() {
-        let r1 = Rgba::from_hex("#FF0000");
+        let r1 = Rgba::from_hex("#FF0000").unwrap();
         assert_eq!(r1, Rgba { r: 255, g: 0, b: 0, a: 255 });
-        let r2 = Rgba::from_hex("#FF0000AA");
+        let r2 = Rgba::from_hex("#FF0000AA").unwrap();
         assert_eq!(r2, Rgba { r: 255, g: 0, b: 0, a: 170 });
         let r3 = Rgba::from_hex("invalid");
-        assert_eq!(r3, Rgba { r: 0, g: 0, b: 0, a: 255 });
-        let r4 = Rgba::from_hex("123456"); // No #
+        assert!(r3.is_err());
+        let r4 = Rgba::from_hex("123456").unwrap(); // No #
         assert_eq!(r4, Rgba { r: 18, g: 52, b: 86, a: 255 });
     }
 

@@ -294,26 +294,15 @@ impl std::str::FromStr for AnimatableProperty {
             "strokeWeight" => Ok(AnimatableProperty::StrokeWeight),
             "rotation" => Ok(AnimatableProperty::Rotation),
             _ => {
-                if s.starts_with("fills.") {
-                    let parts: Vec<&str> = s.split('.').collect();
-                    if parts.len() == 3 {
-                        if let Ok(idx) = parts[1].parse::<usize>() {
-                            match parts[2] {
-                                "solid" => return Ok(AnimatableProperty::FillSolid(idx)),
-                                "gradient" => return Ok(AnimatableProperty::FillGradient(idx)),
-                                _ => {}
-                            }
-                        }
-                    }
-                } else if s.starts_with("strokes.") {
-                    let parts: Vec<&str> = s.split('.').collect();
-                    if parts.len() == 3 {
-                        if let Ok(idx) = parts[1].parse::<usize>() {
-                            match parts[2] {
-                                "solid" => return Ok(AnimatableProperty::StrokeSolid(idx)),
-                                "gradient" => return Ok(AnimatableProperty::StrokeGradient(idx)),
-                                _ => {}
-                            }
+                let parts: Vec<&str> = s.split('.').collect();
+                if let [prefix, idx_str, type_str] = parts.as_slice() {
+                    if let Ok(idx) = idx_str.parse::<usize>() {
+                        match (*prefix, *type_str) {
+                            ("fills", "solid") => return Ok(AnimatableProperty::FillSolid(idx)),
+                            ("fills", "gradient") => return Ok(AnimatableProperty::FillGradient(idx)),
+                            ("strokes", "solid") => return Ok(AnimatableProperty::StrokeSolid(idx)),
+                            ("strokes", "gradient") => return Ok(AnimatableProperty::StrokeGradient(idx)),
+                            _ => {}
                         }
                     }
                 }

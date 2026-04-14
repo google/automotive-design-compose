@@ -30,13 +30,35 @@ impl Easing {
         match self {
             Easing::Inherit => t,
             Easing::Linear => t,
-            Easing::CubicBezier(_, _, _, _) => {
-                static WARNED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-                if !WARNED.load(std::sync::atomic::Ordering::Relaxed) {
-                    log::warn!("CubicBezier easing is not implemented, falling back to linear.");
-                    WARNED.store(true, std::sync::atomic::Ordering::Relaxed);
+            Easing::CubicBezier(x1, y1, x2, y2) => {
+                let x_target = t;
+                if x_target <= 0.0 {
+                    return 0.0;
                 }
-                t
+                if x_target >= 1.0 {
+                    return 1.0;
+                }
+
+                let mut low = 0.0;
+                let mut high = 1.0;
+                let mut t_guess = x_target;
+
+                for _ in 0..20 {
+                    let x = 3.0 * (1.0 - t_guess).powi(2) * t_guess * x1
+                        + 3.0 * (1.0 - t_guess) * t_guess.powi(2) * x2
+                        + t_guess.powi(3);
+
+                    if x < x_target {
+                        low = t_guess;
+                    } else {
+                        high = t_guess;
+                    }
+                    t_guess = (low + high) / 2.0;
+                }
+
+                3.0 * (1.0 - t_guess).powi(2) * t_guess * y1
+                    + 3.0 * (1.0 - t_guess) * t_guess.powi(2) * y2
+                    + t_guess.powi(3)
             }
             Easing::Instant => {
                 if t >= 1.0 {
@@ -575,5 +597,22 @@ mod tests {
         let (k1, k2, _t) = timeline.get_keyframe_segment(&start, &end, 0.9);
         assert_eq!(k1, &KeyframeValue::Scalar(80.0));
         assert_eq!(k2, &end);
+    }
+    #[test]
+    fn test_cubic_bezier() {
+        let linear = Easing::CubicBezier(0.0, 0.0, 1.0, 1.0);
+        assert!((linear.apply(0.0) - 0.0).abs() < 0.001);
+        assert!((linear.apply(0.5) - 0.5).abs() < 0.001);
+        assert!((linear.apply(1.0) - 1.0).abs() < 0.001);
+
+        // EaseIn-like (slow start, fast end)
+        let ease_in = Easing::CubicBezier(0.42, 0.0, 1.0, 1.0);
+        assert!(ease_in.apply(0.2) < 0.2);
+        assert!(ease_in.apply(0.8) < 0.8);
+
+        // EaseOut-like (fast start, slow end)
+        let ease_out = Easing::CubicBezier(0.0, 0.0, 0.58, 1.0);
+        assert!(ease_out.apply(0.2) > 0.2);
+        assert!(ease_out.apply(0.8) > 0.8);
     }
 }

@@ -398,12 +398,12 @@ mod tests {
         map.insert("Node1-opacity".to_string(), r##"{"targetEasing":"Linear","keyframes":[{"fraction":0.5,"value":1.0,"easing":"Linear"}]}"##.to_string());
         let lookup = PropertyLookup::from_map(&map);
         let nt = lookup.get_for_node("Node1").unwrap();
-        assert!(nt.opacity.is_some());
+        assert!(nt.get(&AnimatableProperty::Opacity).is_some());
 
         let mut map2 = HashMap::new();
         map2.insert("Node1-opacity-custom-id".to_string(), r##"{"targetEasing":"Linear","keyframes":[{"fraction":0.5,"value":1.0,"easing":"Linear"}]}"##.to_string());
         let lookup2 = PropertyLookup::from_map(&map2);
         let nt2 = lookup2.get_for_node("Node1").unwrap();
-        assert!(nt2.opacity.is_some());
+        assert!(nt2.get(&AnimatableProperty::Opacity).is_some());
     }
 }

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { AnimationData, Node, Timeline, Keyframe, SerializedNode, Variant, KeyframeTime, AnimatedNode, AnimationNode } from "./types";
 import { EventEmitter } from "./EventEmitter";
 import { InterpolationService } from "../utils/InterpolationService";

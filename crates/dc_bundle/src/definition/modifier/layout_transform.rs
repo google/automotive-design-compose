@@ -19,6 +19,7 @@ impl LayoutTransform {
     /// Beware: This library is written with the assumption that row vectors
     /// are being used. If your matrices use column vectors (i.e. transforming a vector
     /// is `T * v`), then please use `column_major`
+    #[allow(clippy::too_many_arguments)]
     pub fn row_major(
         m11: f32,
         m12: f32,

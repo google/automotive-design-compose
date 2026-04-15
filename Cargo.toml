@@ -32,7 +32,7 @@ image = { version = "0.25", default-features = false, features = [
     "png",
     "jpeg",
 ] }
-jni = "0.21.1"
+jni = "0.22.4"
 log = "0.4"
 phf = { version = "0.11", features = ["macros"] }
 protobuf = "3.2.0"

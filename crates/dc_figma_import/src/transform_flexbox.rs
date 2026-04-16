@@ -816,10 +816,10 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::AngularGradient(
                 background::AngularGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
-                    scale: scale,
+                    center_x,
+                    center_y,
+                    angle,
+                    scale,
                     color_stops: g_stops,
                     ..Default::default()
                 },
@@ -864,9 +864,9 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::RadialGradient(
                 background::RadialGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
+                    center_x,
+                    center_y,
+                    angle,
                     radius_x: radius.0,
                     radius_y: radius.1,
                     color_stops: g_stops,
@@ -912,9 +912,9 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::RadialGradient(
                 background::RadialGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
+                    center_x,
+                    center_y,
+                    angle,
                     radius_x: radius.0,
                     radius_y: radius.1,
                     color_stops: g_stops,
@@ -1628,7 +1628,7 @@ fn visit_node(
                     .into(),
                     font_family,
                     font_weight: Some(font_weight).into(),
-                    font_style: font_style, // Italic or Normal
+                    font_style, // Italic or Normal
                     font_stretch: style.node_style().font_stretch.clone(), // Not in SubTypeStyle.
                     letter_spacing: sub_style
                         .letter_spacing

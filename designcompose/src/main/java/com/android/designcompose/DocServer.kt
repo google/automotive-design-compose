@@ -124,6 +124,11 @@ object DesignSettings {
         liveUpdateSettings =
             LiveUpdateSettingsRepository(activity.applicationContext.liveUpdateSettings)
 
+        // Set live status optimistically to avoid the Design Switcher briefly flashing
+        // "Offline" while the token flow initializes. The collectLatest coroutine below
+        // will correct this to false if no token is found. (Issue #142)
+        isDocumentLive.value = true
+
         // Launch a coroutine that awaits updates to the Figma Token
         activity.lifecycleScope.launch {
             liveUpdateSettings!!.settingsUpdateFlow.collectLatest { newTokenValue ->

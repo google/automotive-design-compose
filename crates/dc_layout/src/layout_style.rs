@@ -18,6 +18,7 @@ use crate::into_taffy::TryIntoTaffy;
 
 impl TryIntoTaffy<taffy::prelude::Style> for &LayoutStyle {
     type Error = dc_bundle::Error;
+    #[allow(clippy::field_reassign_with_default)]
     fn try_into_taffy(self) -> Result<taffy::prelude::Style, Self::Error> {
         let mut tstyle = taffy::prelude::Style::default();
 

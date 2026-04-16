@@ -105,6 +105,7 @@ import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
+import com.android.designcompose.getModifier
 import com.android.designcompose.getOpenLinkCallback
 import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.getTapCallback
@@ -750,6 +751,13 @@ fun SquooshRoot(
                             }
                             .then(SquooshParentData(node = child.node))
                             .then(Modifier.testTag(child.node.view.name))
+
+                    // Apply any user-provided Modifier customization. This was lost during the
+                    // Squoosh migration — the setModifier/getModifier API existed but squoosh
+                    // never retrieved and applied the custom modifier. (Issue #2292)
+                    customizationContext.getModifier(child.node.view.name)?.let {
+                        composableChildModifier = composableChildModifier.then(it)
+                    }
 
                     if (child.scrollView != null) {
                         // Compose a scrollable view as a separate composable in order to detect

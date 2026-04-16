@@ -641,6 +641,8 @@ pub enum LayoutMode {
     None,
     Horizontal,
     Vertical,
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Default, Copy)]
@@ -654,7 +656,7 @@ pub enum LayoutWrap {
 impl LayoutMode {
     pub fn is_none(&self) -> bool {
         match self {
-            LayoutMode::None => true,
+            LayoutMode::None | LayoutMode::Unknown => true,
             _ => false,
         }
     }
@@ -1013,7 +1015,10 @@ pub enum NodeData {
         #[serde(rename = "componentId")]
         component_id: String,
     },
-    Section {},
+    Section {
+        #[serde(default, rename = "sectionContentsHidden")]
+        section_contents_hidden: bool,
+    },
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -1403,4 +1408,82 @@ pub struct VariablesResponse {
     pub error: bool,
     pub status: i32,
     pub meta: VariablesMeta,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_layout_mode_deserializes_known_values() {
+        let h: LayoutMode = serde_json::from_str("\"HORIZONTAL\"").unwrap();
+        assert_eq!(h, LayoutMode::Horizontal);
+        let v: LayoutMode = serde_json::from_str("\"VERTICAL\"").unwrap();
+        assert_eq!(v, LayoutMode::Vertical);
+        let n: LayoutMode = serde_json::from_str("\"NONE\"").unwrap();
+        assert_eq!(n, LayoutMode::None);
+    }
+
+    #[test]
+    fn test_layout_mode_deserializes_grid_as_unknown() {
+        // Issue #2305: "Auto-layout set to Grid" causes serialization error.
+        // GRID is a valid Figma layout mode but was not in our enum.
+        let grid: LayoutMode = serde_json::from_str("\"GRID\"").unwrap();
+        assert_eq!(grid, LayoutMode::Unknown);
+        assert!(grid.is_none()); // Unknown is treated as no-layout
+    }
+
+    #[test]
+    fn test_layout_mode_deserializes_future_values_as_unknown() {
+        // Any future Figma layout mode should not crash deserialization
+        let future: LayoutMode = serde_json::from_str("\"SOME_FUTURE_MODE\"").unwrap();
+        assert_eq!(future, LayoutMode::Unknown);
+    }
+
+    #[test]
+    fn test_section_node_deserializes() {
+        // Issue #2305: Sections used anywhere cause serialization error.
+        // Verify that a minimal Section node can be deserialized.
+        let json = r#"{
+            "id": "1:1",
+            "name": "My Section",
+            "type": "SECTION",
+            "visible": true,
+            "opacity": 1.0,
+            "fills": [],
+            "strokes": [],
+            "effects": [],
+            "children": [],
+            "sectionContentsHidden": true
+        }"#;
+        let node: Node = serde_json::from_str(json).unwrap();
+        assert_eq!(node.id, "1:1");
+        assert_eq!(node.name, "My Section");
+        match &node.data {
+            NodeData::Section { section_contents_hidden } => {
+                assert!(*section_contents_hidden);
+            }
+            _ => panic!("Expected Section variant"),
+        }
+    }
+
+    #[test]
+    fn test_section_node_with_unknown_fields() {
+        // Future Figma fields should not cause deserialization failure
+        let json = r#"{
+            "id": "1:2",
+            "name": "Section With Extras",
+            "type": "SECTION",
+            "visible": true,
+            "opacity": 1.0,
+            "fills": [],
+            "strokes": [],
+            "effects": [],
+            "children": [],
+            "sectionContentsHidden": false,
+            "devStatus": {"type": "READY_FOR_DEV"}
+        }"#;
+        let node: Node = serde_json::from_str(json).unwrap();
+        assert_eq!(node.name, "Section With Extras");
+    }
 }

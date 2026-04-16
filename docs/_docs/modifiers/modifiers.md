@@ -230,10 +230,26 @@ The generated `MainFrame` `Composable` function contains a single `Boolean`
 argument called `showText`, which controls the visibility of the Figma node
 called `#name`.
 
+**Note:** The parameter name (e.g. `showText`) can be any valid Kotlin
+identifier — it does not need to match the Figma node name. What matters is the
+`@Design(node = "#name")` annotation, which binds the parameter to the Figma
+node named `#name`. Any `Boolean` parameter with a `@Design` annotation is
+treated as a visibility toggle by the code generator. For example, this is
+equally valid:
+
+```kotlin
+@DesignComponent(node = "#MainFrame")
+fun MainFrame(
+    @Design(node = "#name") isNameVisible: Boolean,
+)
+
+HelloWorldDoc.MainFrame(isNameVisible = true)
+```
+
 Visibility can also be customized using a `State<Boolean>`. Using a `State` can
 have performance benefits because reading the `value` out of a `State` will only
 cause the closest `@Composable` function in the call stack to be recomposed,
-wherease the simpler `Boolean` customization will always recompose the function
+whereas the simpler `Boolean` customization will always recompose the function
 that uses the customization. The following example illustrates how to use a
 `State<Boolean>` as the visibility customization type:
 

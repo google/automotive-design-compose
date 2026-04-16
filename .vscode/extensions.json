@@ -2,7 +2,6 @@
     "recommendations": [
         "figma.figma-vscode-extension", // Figma!
         "GitHub.vscode-pull-request-github", // Pull requests, comments, etc
-        "arahata.linter-actionlint", // Github Action linting
         "xaver.clang-format", // Protobuf formatting
         "vadimcn.vscode-lldb", // Needed for Rust debugging
         "usernamehw.errorlens", // Not needed, very helpful

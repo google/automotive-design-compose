@@ -66,6 +66,7 @@ pub struct LayoutManager {
 
     // A "measure" function that the layout engine calls to consult on the
     // size of an item.
+    #[allow(clippy::type_complexity)]
     measure_func: Box<
         dyn FnMut(
                 Size<Option<f32>>,
@@ -89,8 +90,8 @@ impl LayoutManager {
                                         _style: &taffy::Style|
               -> Size<f32> {
             let layout_id = if let Some(&mut id) = layout_id { id } else { return Size::ZERO };
-            let width = if let Some(w) = size.width { w } else { 0.0 };
-            let height = if let Some(h) = size.height { h } else { 0.0 };
+            let width = size.width.unwrap_or(0.0);
+            let height = size.height.unwrap_or(0.0);
             let available_width = match available_size.width {
                 AvailableSpace::Definite(w) => w,
                 AvailableSpace::MaxContent => f32::MAX,
@@ -148,12 +149,14 @@ impl LayoutManager {
                 if layout_changed {
                     changed.insert(layout_id, layout.clone());
                     if parent_layout_id >= 0 {
-                        if !changed.contains_key(&parent_layout_id) {
+                        if let std::collections::hash_map::Entry::Vacant(e) =
+                            changed.entry(parent_layout_id)
+                        {
                             let parent_node = self.layout_id_to_taffy_node.get(&parent_layout_id);
                             if let Some(parent_node) = parent_node {
                                 let parent_layout = self.layouts.get(parent_node);
                                 if let Some(parent_layout) = parent_layout {
-                                    changed.insert(parent_layout_id, parent_layout.clone());
+                                    e.insert(parent_layout.clone());
                                 }
                             }
                         }
@@ -199,7 +202,7 @@ impl LayoutManager {
         None
     }
 
-    pub fn update_children(&mut self, parent_layout_id: i32, children: &Vec<i32>) {
+    pub fn update_children(&mut self, parent_layout_id: i32, children: &[i32]) {
         if let Some(parent_node) = self.layout_id_to_taffy_node.get(&parent_layout_id) {
             let child_nodes: Vec<_> = children
                 .iter()
@@ -211,6 +214,7 @@ impl LayoutManager {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_style(
         &mut self,
         layout_id: i32,
@@ -429,7 +433,7 @@ impl LayoutManager {
         }
 
         let changed_layouts = self.update_layout(layout_id);
-        self.layout_state = self.layout_state + 1;
+        self.layout_state += 1;
 
         LayoutChangedResponse {
             layout_state: self.layout_state,

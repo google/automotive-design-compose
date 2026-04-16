@@ -24,7 +24,11 @@ pub fn map_err_to_exception(
 ) -> Result<(), jni::errors::Error> {
     match err {
         crate::error::Error::FigmaImportError(NetworkError(network_error)) => {
-            error!("Network Error: {}, {}", err, err.source().unwrap());
+            error!(
+                "Network Error: {}, {}",
+                err,
+                err.source().map_or("unknown source".to_string(), |s| s.to_string())
+            );
 
             if let Some(status) = network_error.status() {
                 match status.as_u16() {
@@ -77,7 +81,11 @@ pub fn map_err_to_exception(
             }
         }
         _ => {
-            error!("Unhandled: {}, {}", err, err.source().unwrap());
+            error!(
+                "Unhandled: {}, {}",
+                err,
+                err.source().map_or("unknown source".to_string(), |s| s.to_string())
+            );
             env.throw(format!("{}", err))?;
         }
     };

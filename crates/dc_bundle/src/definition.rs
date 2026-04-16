@@ -309,8 +309,8 @@ impl EncodedImageMap {
     }
 }
 
-impl Into<HashMap<String, Vec<u8>>> for EncodedImageMap {
-    fn into(self) -> HashMap<String, Vec<u8>> {
-        self.0.iter().map(|(k, v)| (k.clone(), v.to_vec())).collect()
+impl From<EncodedImageMap> for HashMap<String, Vec<u8>> {
+    fn from(val: EncodedImageMap) -> Self {
+        val.0.iter().map(|(k, v)| (k.clone(), v.to_vec())).collect()
     }
 }

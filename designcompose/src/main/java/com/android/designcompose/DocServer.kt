@@ -240,6 +240,7 @@ internal object SpanCache {
 
 internal object DocServer {
     internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
+    internal const val MAX_FETCH_INTERVAL_MILLIS: Long = 60_000L
     internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
     internal val documents: HashMap<DesignDocId, DocContent> = HashMap()
     internal val subscriptions: HashMap<DesignDocId, LiveDocSubscriptions> = HashMap()
@@ -248,6 +249,14 @@ internal object DocServer {
     internal val mainHandler = Handler(Looper.getMainLooper())
     internal var firstFetch = true
     internal var pauseUpdates = false
+
+    // Adaptive polling: tracks the current fetch interval and the number of consecutive
+    // unchanged responses. The interval increases exponentially (5s -> 10s -> 20s -> 40s -> 60s)
+    // when no changes are detected, and resets to FETCH_INTERVAL_MILLIS when a document changes.
+    // This reduces Figma API calls and avoids rate limiting. (Issue #2282)
+    internal var currentFetchIntervalMillis: Long = FETCH_INTERVAL_MILLIS
+    internal var consecutiveUnchangedCount: Int = 0
+
     internal var periodicFetchRunnable: Runnable =
         Runnable() {
             thread {
@@ -302,6 +311,9 @@ internal fun DocServer.startLiveUpdates() {
     if (DesignSettings.liveUpdatesEnabled) {
         Log.i(TAG, "Starting Live Updates")
         pauseUpdates = false
+        // Reset to base interval when explicitly starting
+        currentFetchIntervalMillis = FETCH_INTERVAL_MILLIS
+        consecutiveUnchangedCount = 0
         scheduleLiveUpdate()
     }
 }
@@ -314,7 +326,7 @@ internal fun DocServer.scheduleLiveUpdate() {
     if (DesignSettings.liveUpdatesEnabled && !pauseUpdates) {
         // Stop any live updates that have already been scheduled.
         removeScheduledPeriodicFetchRunnables()
-        mainHandler.postDelayed(periodicFetchRunnable, FETCH_INTERVAL_MILLIS)
+        mainHandler.postDelayed(periodicFetchRunnable, currentFetchIntervalMillis)
     }
 }
 
@@ -402,11 +414,37 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     }
                 }
                 Feedback.documentUpdated(id, subs.size)
+
+                // Document changed — reset to base polling interval
+                if (currentFetchIntervalMillis != FETCH_INTERVAL_MILLIS) {
+                    Log.i(
+                        TAG,
+                        "Document changed, resetting poll interval to ${FETCH_INTERVAL_MILLIS}ms",
+                    )
+                }
+                currentFetchIntervalMillis = FETCH_INTERVAL_MILLIS
+                consecutiveUnchangedCount = 0
             } else {
                 synchronized(DesignSettings.fileFetchStatus) {
                     DesignSettings.fileFetchStatus[id]?.lastFetch = Instant.now()
                 }
                 Feedback.documentUnchanged(id)
+
+                // No changes — increase polling interval with exponential backoff
+                consecutiveUnchangedCount++
+                val newInterval =
+                    minOf(
+                        FETCH_INTERVAL_MILLIS * (1L shl consecutiveUnchangedCount.coerceAtMost(4)),
+                        MAX_FETCH_INTERVAL_MILLIS,
+                    )
+                if (newInterval != currentFetchIntervalMillis) {
+                    Log.i(
+                        TAG,
+                        "No changes detected ($consecutiveUnchangedCount consecutive), " +
+                            "increasing poll interval to ${newInterval}ms",
+                    )
+                    currentFetchIntervalMillis = newInterval
+                }
             }
         } catch (exception: Exception) {
             val msg =

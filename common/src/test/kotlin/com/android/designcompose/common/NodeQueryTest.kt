@@ -16,10 +16,14 @@
 
 package com.android.designcompose.common
 
+import kotlin.test.assertEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
 class NodeQueryTest {
 
     @Test
@@ -79,5 +83,22 @@ class NodeQueryTest {
     @Test
     fun testFromStringInvalid() {
         assertThrows(IndexOutOfBoundsException::class.java) { NodeQuery.decode("invalid_query") }
+    }
+
+    @Test
+    fun testEncodeDecode() {
+        val queries =
+            listOf(
+                NodeQuery.NodeId("id1"),
+                NodeQuery.NodeName("name1"),
+                NodeQuery.NodeVariant("variant1", "parent1"),
+                NodeQuery.NodeComponentSet("componentSet1"),
+            )
+
+        for (query in queries) {
+            val encoded = query.encode()
+            val decoded = NodeQuery.decode(encoded)
+            assertEquals(query, decoded)
+        }
     }
 }

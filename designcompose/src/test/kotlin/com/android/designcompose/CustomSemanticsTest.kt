@@ -16,9 +16,6 @@
 
 package com.android.designcompose
 
-import com.android.designcompose.squoosh.AnimationTransition
-import com.android.designcompose.squoosh.CustomVariantTransition
-import com.android.designcompose.squoosh.VariantTransitionContext
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,23 +24,20 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
-class DesignDocSettingsTest {
+class CustomSemanticsTest {
 
     @Test
-    fun testDesignDocSettings() {
-        val settings = DesignDocSettings()
-        assertThat(settings.customVariantTransition).isNull()
+    fun testDocClassSemantics() {
+        assertThat(docClassSemanticsKey.name).isEqualTo("DocClass")
     }
 
     @Test
-    fun testDesignDocSettingsWithTransition() {
-        val transition =
-            object : CustomVariantTransition {
-                override fun invoke(p1: VariantTransitionContext): AnimationTransition? {
-                    return null
-                }
-            }
-        val settings = DesignDocSettings(customVariantTransition = transition)
-        assertThat(settings.customVariantTransition).isEqualTo(transition)
+    fun testDocRenderStatusSemantics() {
+        assertThat(docRenderStatusSemanticsKey.name).isEqualTo("DocRenderStatus")
+    }
+
+    @Test
+    fun testDocRenderTextSemantics() {
+        assertThat(docRenderTextSemanticsKey.name).isEqualTo("DocRenderText")
     }
 }

@@ -320,7 +320,7 @@ dependencies = [
 
 [[package]]
 name = "dc_squoosh_animation"
-version = "0.38.2"
+version = "0.38.4"
 dependencies = [
  "dc_bundle",
  "log",
@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "dc_squoosh_parser"
-version = "0.38.2"
+version = "0.38.4"
 dependencies = [
  "dc_squoosh_animation",
  "env_logger",

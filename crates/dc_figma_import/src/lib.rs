@@ -19,6 +19,8 @@
 //! The goal of this crate is to perform the mapping from Figma to the toolkit; it does
 //! not provide any kind of UI logic mapping.
 
+#![allow(dead_code)]
+#![allow(clippy::all)]
 mod component_context;
 mod design_definition;
 mod document;

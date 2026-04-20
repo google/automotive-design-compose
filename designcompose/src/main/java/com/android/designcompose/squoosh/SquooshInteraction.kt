@@ -291,6 +291,7 @@ internal fun Modifier.squooshInteraction(
             detectTapGestures(
                 onPress = {
                     var pressInteraction: PressInteraction.Press? = null
+                    var success = false
 
                     try {
                         // 1. Show the "Pressed" state immediately.
@@ -320,7 +321,7 @@ internal fun Modifier.squooshInteraction(
                             }
 
                         // 2. Wait for the press to end.
-                        val success = tryAwaitRelease()
+                        success = tryAwaitRelease()
 
                         if (success) {
                             // This was a tap. Do the tap actions.
@@ -347,16 +348,18 @@ internal fun Modifier.squooshInteraction(
                                     ?: interactionState.getPressedTapCallback(node.unresolvedNodeId)
                             finalTapCallback?.invoke()
                         }
-
+                    } finally {
                         // 3. Clean up the "Pressed" visual state.
-                        interactionScope.launch {
-                            val endInteraction =
-                                if (success) {
-                                    PressInteraction.Release(pressInteraction!!)
-                                } else {
-                                    PressInteraction.Cancel(pressInteraction!!)
-                                }
-                            interactionSource.emit(endInteraction)
+                        if (pressInteraction != null) {
+                            interactionScope.launch {
+                                val endInteraction =
+                                    if (success) {
+                                        PressInteraction.Release(pressInteraction!!)
+                                    } else {
+                                        PressInteraction.Cancel(pressInteraction!!)
+                                    }
+                                interactionSource.emit(endInteraction)
+                            }
                         }
 
                         // Undo the "on press" reactions.
@@ -375,7 +378,7 @@ internal fun Modifier.squooshInteraction(
                                     customizations.getKey(),
                                 )
                             }
-                    } finally {
+
                         // 4. Ensure isPressed boolean is always reset.
                         isPressed.value = false
                         interactionState.removePressed(node.unresolvedNodeId)

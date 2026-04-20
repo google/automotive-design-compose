@@ -72,7 +72,7 @@ use dc_bundle::view::view::RenderMethod;
 use dc_bundle::view::{ComponentInfo, View};
 use dc_bundle::view_shape::view_shape::RoundRect;
 use dc_bundle::view_style::ViewStyle;
-use log::error;
+use log::{error, warn};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -183,7 +183,9 @@ fn compute_layout(
             style.layout_style_mut().flex_direction = match frame.layout_mode {
                 figma_schema::LayoutMode::Horizontal => FlexDirection::FLEX_DIRECTION_ROW.into(),
                 figma_schema::LayoutMode::Vertical => FlexDirection::FLEX_DIRECTION_COLUMN.into(),
-                figma_schema::LayoutMode::None => FlexDirection::FLEX_DIRECTION_NONE.into(),
+                figma_schema::LayoutMode::None | figma_schema::LayoutMode::Unknown => {
+                    FlexDirection::FLEX_DIRECTION_NONE.into()
+                }
             };
         }
         style.layout_style_mut().padding = Some(DimensionRect {
@@ -314,7 +316,7 @@ fn compute_layout(
                 }
             }
 
-            if frame.layout_mode != figma_schema::LayoutMode::None {
+            if !frame.layout_mode.is_none() {
                 let width_points = bounds.width().ceil();
                 let height_points = bounds.height().ceil();
                 style.layout_style_mut().width = match frame.layout_sizing_horizontal {
@@ -817,10 +819,10 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::AngularGradient(
                 background::AngularGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
-                    scale: scale,
+                    center_x,
+                    center_y,
+                    angle,
+                    scale,
                     color_stops: g_stops,
                     ..Default::default()
                 },
@@ -865,9 +867,9 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::RadialGradient(
                 background::RadialGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
+                    center_x,
+                    center_y,
+                    angle,
                     radius_x: radius.0,
                     radius_y: radius.1,
                     color_stops: g_stops,
@@ -913,9 +915,9 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::RadialGradient(
                 background::RadialGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
+                    center_x,
+                    center_y,
+                    angle,
                     radius_x: radius.0,
                     radius_y: radius.1,
                     color_stops: g_stops,
@@ -1043,7 +1045,7 @@ fn visit_node(
                             .map(|r| Into::<Option<Reaction>>::into(r))
                             .filter(|maybe_reaction| {
                                 if maybe_reaction.is_none() {
-                                    println!(
+                                    warn!(
                                         "Warning: reaction has empty action. Json: {}",
                                         reactions
                                     );
@@ -1059,7 +1061,7 @@ fn visit_node(
                         Some(reaction)
                     })
                     .unwrap_or_else(|e| {
-                        println!("Error parsing reaction: {}. Json: {}", e, reactions);
+                        warn!("Error parsing reaction: {}. Json: {}", e, reactions);
                         None
                     })
             } else {
@@ -1090,7 +1092,7 @@ fn visit_node(
         .and_then(|scalable_json| {
             let parse_result = serde_json::from_str::<ScalableUiDataJson>(scalable_json.as_str());
             if parse_result.is_err() {
-                println!(
+                warn!(
                     "Error parsing scalable ui data: node {} json {}: -> {:?}",
                     node.name, scalable_json, parse_result
                 );
@@ -1226,7 +1228,7 @@ fn visit_node(
                         variant_hash
                             .insert(variant_parts[0].to_string(), variant_parts[1].to_string());
                     } else {
-                        println!("Invalid grid span variant: {:?}", variant_parts);
+                        warn!("Invalid grid span variant: {:?}", variant_parts);
                     }
                 }
 
@@ -1476,7 +1478,7 @@ fn visit_node(
                         ..Default::default()
                     });
                 } else {
-                    println!("Unsupported OpenType flag: {}", flag)
+                    warn!("Unsupported OpenType flag: {}", flag)
                 }
             }
             font_features
@@ -1629,7 +1631,7 @@ fn visit_node(
                     .into(),
                     font_family,
                     font_weight: Some(font_weight).into(),
-                    font_style: font_style, // Italic or Normal
+                    font_style, // Italic or Normal
                     font_stretch: style.node_style().font_stretch.clone(), // Not in SubTypeStyle.
                     letter_spacing: sub_style
                         .letter_spacing

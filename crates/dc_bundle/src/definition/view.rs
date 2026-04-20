@@ -349,7 +349,7 @@ impl ViewData {
                 return Some(other.clone());
             }
         }
-        return None;
+        None
     }
 }
 
@@ -368,9 +368,10 @@ impl View {
         static COUNTER: AtomicU16 = AtomicU16::new(0);
         COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
     }
+    #[allow(clippy::too_many_arguments)]
     pub fn new_rect(
-        id: &String,
-        name: &String,
+        id: &str,
+        name: &str,
         shape: ViewShape,
         style: ViewStyle,
         component_info: Option<ComponentInfo>,
@@ -383,21 +384,19 @@ impl View {
     ) -> View {
         View {
             unique_id: View::next_unique_id() as u32,
-            id: id.clone(),
-            name: name.clone(),
+            id: id.to_owned(),
+            name: name.to_owned(),
             component_info: component_info.into(),
             reactions: reactions.unwrap_or_default(),
             style: Some(style).into(),
             frame_extras: frame_extras.into(),
             scroll_info: Some(scroll_info).into(),
             data: Some(ViewData {
-                view_data_type: Some(View_data_type::Container {
-                    0: Container {
-                        shape: Some(shape).into(),
-                        children: vec![],
-                        ..Default::default()
-                    },
-                }),
+                view_data_type: Some(View_data_type::Container(Container {
+                    shape: Some(shape).into(),
+                    children: vec![],
+                    ..Default::default()
+                })),
                 ..Default::default()
             })
             .into(),
@@ -407,9 +406,10 @@ impl View {
             ..Default::default()
         }
     }
+    #[allow(clippy::too_many_arguments)]
     pub fn new_text(
-        id: &String,
-        name: &String,
+        id: &str,
+        name: &str,
         style: ViewStyle,
         component_info: Option<ComponentInfo>,
         reactions: Option<Vec<Reaction>>,
@@ -421,17 +421,19 @@ impl View {
     ) -> View {
         View {
             unique_id: View::next_unique_id() as u32,
-            id: id.clone(),
-            name: name.clone(),
+            id: id.to_owned(),
+            name: name.to_owned(),
             component_info: component_info.into(),
             reactions: reactions.unwrap_or_default(),
             style: Some(style).into(),
             frame_extras: None.into(),
             scroll_info: Some(ScrollInfo::new_default()).into(),
             data: Some(ViewData {
-                view_data_type: Some(View_data_type::Text {
-                    0: Text { content: text.into(), res_name: text_res_name, ..Default::default() },
-                }),
+                view_data_type: Some(View_data_type::Text(Text {
+                    content: text.into(),
+                    res_name: text_res_name,
+                    ..Default::default()
+                })),
                 ..Default::default()
             })
             .into(),
@@ -441,9 +443,10 @@ impl View {
             ..Default::default()
         }
     }
+    #[allow(clippy::too_many_arguments)]
     pub fn new_styled_text(
-        id: &String,
-        name: &String,
+        id: &str,
+        name: &str,
         style: ViewStyle,
         component_info: Option<ComponentInfo>,
         reactions: Option<Vec<Reaction>>,
@@ -454,21 +457,19 @@ impl View {
     ) -> View {
         View {
             unique_id: View::next_unique_id() as u32,
-            id: id.clone(),
-            name: name.clone(),
+            id: id.to_owned(),
+            name: name.to_owned(),
             style: Some(style).into(),
             component_info: component_info.into(),
             reactions: reactions.unwrap_or_default(),
             frame_extras: None.into(),
             scroll_info: Some(ScrollInfo::new_default()).into(),
             data: Some(ViewData {
-                view_data_type: Some(View_data_type::StyledText {
-                    0: StyledTextRuns {
-                        styled_texts: text,
-                        res_name: text_res_name,
-                        ..Default::default()
-                    },
-                }),
+                view_data_type: Some(View_data_type::StyledText(StyledTextRuns {
+                    styled_texts: text,
+                    res_name: text_res_name,
+                    ..Default::default()
+                })),
                 ..Default::default()
             })
             .into(),
@@ -496,14 +497,14 @@ impl View {
     }
 
     /** This function is now only called by a view that is a COMPONENT. */
-    pub fn find_view_by_id(&self, view_id: &String) -> Option<&View> {
-        if view_id.as_str() == self.id {
-            return Some(&self);
-        } else if let Some(id) = view_id.split(";").last() {
+    pub fn find_view_by_id(&self, view_id: &str) -> Option<&View> {
+        if view_id == self.id {
+            return Some(self);
+        } else if let Some(id) = view_id.split(';').next_back() {
             // If this is a descendent node of an instance, the last section is the node id
             // of the view in the component. Example: I70:17;29:15
-            if self.id == id.to_string() {
-                return Some(&self);
+            if self.id == id {
+                return Some(self);
             }
         }
         if let Some(data) = &self.data.as_ref() {
@@ -511,14 +512,14 @@ impl View {
                 &data.view_data_type
             {
                 for child in children {
-                    let result = child.find_view_by_id(&view_id);
+                    let result = child.find_view_by_id(view_id);
                     if result.is_some() {
                         return result;
                     }
                 }
             }
         }
-        return None;
+        None
     }
 }
 

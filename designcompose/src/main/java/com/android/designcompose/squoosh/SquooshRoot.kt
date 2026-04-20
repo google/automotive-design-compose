@@ -105,6 +105,7 @@ import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
 import com.android.designcompose.getKey
+import com.android.designcompose.getModifier
 import com.android.designcompose.getOpenLinkCallback
 import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.getTapCallback
@@ -691,7 +692,6 @@ fun SquooshRoot(
     //
     // This is covered in the interaction test document's "Combos" screen; the purple button has no
     // interactions in its ON_PRESS variant.
-    val isPressed = remember { mutableStateOf(false) }
     CompositionLocalProvider(LocalSquooshIsRootContext provides SquooshIsRoot(false)) {
         androidx.compose.ui.layout.Layout(
             modifier =
@@ -752,6 +752,13 @@ fun SquooshRoot(
                             .then(SquooshParentData(node = child.node))
                             .then(Modifier.testTag(child.node.view.name))
 
+                    // Apply any user-provided Modifier customization. This was lost during the
+                    // Squoosh migration — the setModifier/getModifier API existed but squoosh
+                    // never retrieved and applied the custom modifier. (Issue #2292)
+                    customizationContext.getModifier(child.node.view.name)?.let {
+                        composableChildModifier = composableChildModifier.then(it)
+                    }
+
                     if (child.scrollView != null) {
                         // Compose a scrollable view as a separate composable in order to detect
                         // scroll input for it and translate its children. Construct a NodeQuery
@@ -799,8 +806,12 @@ fun SquooshRoot(
                             }
                         }
 
-                        if (hasPressClick || isPressed.value) {
+                        if (
+                            hasPressClick ||
+                                interactionState.isPressed.contains(child.node.unresolvedNodeId)
+                        ) {
                             val interactionSource = remember { MutableInteractionSource() }
+                            val placeholderIsPressed = remember { mutableStateOf(false) }
                             composableChildModifier =
                                 composableChildModifier.squooshInteraction(
                                     doc,
@@ -808,7 +819,7 @@ fun SquooshRoot(
                                     interactionScope,
                                     customizationContext,
                                     child,
-                                    isPressed,
+                                    placeholderIsPressed,
                                     interactionSource,
                                 )
                         } else if (child.node.textInfo?.hyperlinkOffsetMap?.isNotEmpty() == true) {

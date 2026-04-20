@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use jni::JNIEnv;
+use jni::Env;
 use thiserror::Error;
 #[derive(Error, Debug)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[error("Error: {0}")]
     GenericError(String),
@@ -33,7 +34,7 @@ pub enum Error {
 }
 
 #[allow(unused_qualifications)] // Linter thinks `std:` isn't needed but removing it fails the build
-pub fn throw_basic_exception(env: &mut JNIEnv, err: &dyn std::error::Error) {
+pub fn throw_basic_exception(env: &mut Env, err: &dyn std::error::Error) {
     // An error occurring while trying to throw an exception shouldn't happen,
     // but let's at least panic with a decent error message
     env.throw(err.to_string()).expect("Error while trying to throw Exception");

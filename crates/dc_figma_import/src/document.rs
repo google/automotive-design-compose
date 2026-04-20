@@ -30,7 +30,7 @@ use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
 use dc_bundle::view::view_data::{Container, View_data_type};
 use dc_bundle::view::{ComponentInfo, ComponentOverrides, View, ViewData};
 use dc_bundle::view_style::ViewStyle;
-use log::error;
+use log::{error, warn};
 use protobuf::MessageField;
 use std::time::Duration;
 use std::{
@@ -1160,8 +1160,8 @@ impl Document {
         // why an action isn't working.
         let missing_nodes = component_context.missing_nodes();
         if !missing_nodes.is_empty() {
-            println!("Figma: Unable to find nodes referenced by interactions: {:?}", missing_nodes);
-            println!("       These interactions won't work.");
+            warn!("Figma: Unable to find nodes referenced by interactions: {:?}", missing_nodes);
+            warn!("       These interactions won't work.");
         }
         Ok(views)
     }

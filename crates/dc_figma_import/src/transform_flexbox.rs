@@ -453,9 +453,9 @@ fn compute_layout(
                     (bounds.width().ceil(), bounds.height().ceil())
                 };
                 let left = (bounds.x() - parent_bounds.x()).round();
-                let right = parent_bounds.width().ceil() - (left + width); // px from our right edge to parent's right edge
+                let right = parent_bounds.width().ceil() - (left + bounds.width().ceil()); // px from our right edge to parent's right edge
                 let top = (bounds.y() - parent_bounds.y()).round();
-                let bottom = parent_bounds.height().ceil() - (top + height);
+                let bottom = parent_bounds.height().ceil() - (top + bounds.height().ceil());
 
                 match node.constraints().map(|c| c.horizontal) {
                     Some(figma_schema::HorizontalLayoutConstraintValue::Left) | None => {
@@ -595,6 +595,152 @@ fn compute_layout(
                         style.layout_style_mut().height = DimensionProto::new_auto();
                         if node.min_height.is_none() {
                             style.layout_style_mut().min_height = DimensionProto::new_auto();
+                        }
+                    }
+                }
+            }
+            // Handle nodes with constraints but no parent context (e.g. replacement
+            // content fetched as top-level nodes via NodeQuery::Name). We preserve the
+            // constraint type with zero-offset margins so the layout engine can apply
+            // them when this node is placed into its runtime parent. (Bug #341)
+            (Some(bounds), None) => {
+                let has_constraints = node.constraints().is_some();
+                if has_constraints {
+                    style.layout_style_mut().position_type =
+                        PositionType::POSITION_TYPE_ABSOLUTE.into();
+
+                    let (width, height) = if let Some(size) = &node.size {
+                        (size.x(), size.y())
+                    } else {
+                        (bounds.width().ceil(), bounds.height().ceil())
+                    };
+
+                    match node.constraints().map(|c| c.horizontal) {
+                        Some(figma_schema::HorizontalLayoutConstraintValue::Left) | None => {
+                            style.layout_style_mut().left = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().right = DimensionProto::new_auto();
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_start(Dimension::Points(0.0)));
+                            if !hug_width && !node.is_text() {
+                                style.layout_style_mut().width = DimensionProto::new_points(width);
+                            }
+                        }
+                        Some(figma_schema::HorizontalLayoutConstraintValue::Right) => {
+                            style.layout_style_mut().left = DimensionProto::new_auto();
+                            style.layout_style_mut().right = DimensionProto::new_percent(0.0);
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_end(Dimension::Points(0.0)));
+                            if !hug_width && !node.is_text() {
+                                style.layout_style_mut().width = DimensionProto::new_points(width);
+                            }
+                        }
+                        Some(figma_schema::HorizontalLayoutConstraintValue::LeftRight) => {
+                            style.layout_style_mut().left = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().right = DimensionProto::new_percent(0.0);
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_start(Dimension::Points(0.0)));
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_end(Dimension::Points(0.0)));
+                            style.layout_style_mut().width = DimensionProto::new_auto();
+                        }
+                        Some(figma_schema::HorizontalLayoutConstraintValue::Center) => {
+                            style.layout_style_mut().left = DimensionProto::new_percent(0.5);
+                            style.layout_style_mut().right = DimensionProto::new_auto();
+                            // Without parent size, use -width/2 to center
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_start(Dimension::Points(-width / 2.0)));
+                            if !hug_width && !node.is_text() {
+                                style.layout_style_mut().width = DimensionProto::new_points(width);
+                            }
+                        }
+                        Some(figma_schema::HorizontalLayoutConstraintValue::Scale) => {
+                            // Without parent context, scale behaves like stretch
+                            style.layout_style_mut().left = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().right = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().width = DimensionProto::new_auto();
+                            if node.min_width.is_none() {
+                                style.layout_style_mut().min_width = DimensionProto::new_auto();
+                            }
+                        }
+                    }
+
+                    match node.constraints().map(|c| c.vertical) {
+                        Some(figma_schema::VerticalLayoutConstraintValue::Top) | None => {
+                            style.layout_style_mut().top = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().bottom = DimensionProto::new_auto();
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_top(Dimension::Points(0.0)));
+                            if !hug_height && !node.is_text() {
+                                style.layout_style_mut().height =
+                                    DimensionProto::new_points(height);
+                            }
+                        }
+                        Some(figma_schema::VerticalLayoutConstraintValue::Bottom) => {
+                            style.layout_style_mut().top = DimensionProto::new_auto();
+                            style.layout_style_mut().bottom = DimensionProto::new_percent(0.0);
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_bottom(Dimension::Points(0.0)));
+                            if !hug_height && !node.is_text() {
+                                style.layout_style_mut().height =
+                                    DimensionProto::new_points(height);
+                            }
+                        }
+                        Some(figma_schema::VerticalLayoutConstraintValue::TopBottom) => {
+                            style.layout_style_mut().top = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().bottom = DimensionProto::new_percent(0.0);
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_top(Dimension::Points(0.0)));
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_bottom(Dimension::Points(0.0)));
+                            style.layout_style_mut().height = DimensionProto::new_auto();
+                        }
+                        Some(figma_schema::VerticalLayoutConstraintValue::Center) => {
+                            style.layout_style_mut().top = DimensionProto::new_percent(0.5);
+                            style.layout_style_mut().bottom = DimensionProto::new_auto();
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_top(Dimension::Points(-height / 2.0)));
+                            if !hug_height && !node.is_text() {
+                                style.layout_style_mut().height =
+                                    DimensionProto::new_points(height);
+                            }
+                        }
+                        Some(figma_schema::VerticalLayoutConstraintValue::Scale) => {
+                            style.layout_style_mut().top = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().bottom = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().height = DimensionProto::new_auto();
+                            if node.min_height.is_none() {
+                                style.layout_style_mut().min_height = DimensionProto::new_auto();
+                            }
                         }
                     }
                 }
@@ -2222,7 +2368,7 @@ mod tests {
 
     /// Test that a 90° rotated child node with Left-Right + Top-Bottom constraints
     /// computes correct right/bottom margins using node.size (pre-rotation) rather
-    /// than absoluteBoundingBox dimensions (post-rotation). Bug #244.
+    /// than absoluteBoundingBox dimensions (post-rotation).
     #[test]
     fn test_rotated_node_constraint_margins() {
         // A parent frame (200x200) containing a child frame (100x50) rotated 90°.
@@ -2352,6 +2498,156 @@ mod tests {
             bottom_margin,
             Some(100.0_f32).as_ref(),
             "Bottom margin should use pre-rotation node height (50), not rotated bbox height (100)"
+        );
+    }
+
+    /// Test that a node with Left-Right + Top-Bottom constraints preserves
+    /// its constraint anchoring even when fetched without a parent context
+    /// (i.e. as a replacement content node).
+    #[test]
+    fn test_constraints_preserved_without_parent() {
+        // A frame with Left-Right horizontal and Top-Bottom vertical constraints,
+        // fetched as a top-level node (no parent). This simulates how replacement
+        // content nodes like "#fill" are fetched via NodeQuery::Name.
+        let json = r##"{
+            "id": "fill-1",
+            "name": "#fill",
+            "type": "FRAME",
+            "constraints": {
+                "vertical": "TOP_BOTTOM",
+                "horizontal": "LEFT_RIGHT"
+            },
+            "absoluteBoundingBox": {
+                "x": 10, "y": 10, "width": 80, "height": 80
+            },
+            "size": {
+                "x": 80,
+                "y": 80
+            }
+        }"##;
+
+        let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+
+        let mut key_to_global_id_map = HashMap::new();
+        let mut component_context = ComponentContext::new(&vec![]);
+        let mut image_context = ImageContext::new(
+            HashMap::new(),
+            HashMap::new(),
+            &crate::proxy_config::ProxyConfig::None,
+        );
+
+        // Fetch as top-level (no parent) — this is how replacement content is fetched
+        let view = create_component_flexbox(
+            &node,
+            &HashMap::new(),
+            &HashMap::new(),
+            &mut component_context,
+            &mut image_context,
+            crate::document::HiddenNodePolicy::Keep,
+            &mut key_to_global_id_map,
+        )
+        .unwrap();
+
+        let style = view.style.unwrap();
+        let layout = style.layout_style.unwrap();
+
+        // The node should be positioned absolutely so constraints can work
+        assert_eq!(
+            layout.position_type,
+            PositionType::POSITION_TYPE_ABSOLUTE.into(),
+            "Replacement content with constraints should be absolutely positioned"
+        );
+
+        // Left-Right constraint: both left and right should be anchored (not auto)
+        // so the node stretches horizontally when placed in a parent
+        assert!(
+            layout.left != DimensionProto::new_auto(),
+            "Left should be anchored for LEFT_RIGHT constraint"
+        );
+        assert!(
+            layout.right != DimensionProto::new_auto(),
+            "Right should be anchored for LEFT_RIGHT constraint"
+        );
+        // Width should be auto (stretch to fill between left and right anchors)
+        assert_eq!(
+            layout.width,
+            DimensionProto::new_auto(),
+            "Width should be auto for LEFT_RIGHT constraint"
+        );
+
+        // Top-Bottom constraint: both top and bottom should be anchored
+        assert!(
+            layout.top != DimensionProto::new_auto(),
+            "Top should be anchored for TOP_BOTTOM constraint"
+        );
+        assert!(
+            layout.bottom != DimensionProto::new_auto(),
+            "Bottom should be anchored for TOP_BOTTOM constraint"
+        );
+        // Height should be auto (stretch to fill between top and bottom anchors)
+        assert_eq!(
+            layout.height,
+            DimensionProto::new_auto(),
+            "Height should be auto for TOP_BOTTOM constraint"
+        );
+    }
+
+    /// Test that Center constraints are preserved without parent context.
+    #[test]
+    fn test_center_constraints_preserved_without_parent() {
+        let json = r##"{
+            "id": "center-1",
+            "name": "#center",
+            "type": "FRAME",
+            "constraints": {
+                "vertical": "CENTER",
+                "horizontal": "CENTER"
+            },
+            "absoluteBoundingBox": {
+                "x": 25, "y": 25, "width": 50, "height": 50
+            },
+            "size": {
+                "x": 50,
+                "y": 50
+            }
+        }"##;
+
+        let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+
+        let mut key_to_global_id_map = HashMap::new();
+        let mut component_context = ComponentContext::new(&vec![]);
+        let mut image_context = ImageContext::new(
+            HashMap::new(),
+            HashMap::new(),
+            &crate::proxy_config::ProxyConfig::None,
+        );
+
+        let view = create_component_flexbox(
+            &node,
+            &HashMap::new(),
+            &HashMap::new(),
+            &mut component_context,
+            &mut image_context,
+            crate::document::HiddenNodePolicy::Keep,
+            &mut key_to_global_id_map,
+        )
+        .unwrap();
+
+        let style = view.style.unwrap();
+        let layout = style.layout_style.unwrap();
+
+        // Should be absolutely positioned
+        assert_eq!(
+            layout.position_type,
+            PositionType::POSITION_TYPE_ABSOLUTE.into(),
+            "Replacement content with CENTER constraints should be absolutely positioned"
+        );
+
+        // Center constraint: left should be 50%
+        assert_eq!(
+            layout.left,
+            DimensionProto::new_percent(0.5),
+            "Left should be 50% for CENTER constraint"
         );
     }
 }

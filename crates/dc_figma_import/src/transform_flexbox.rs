@@ -2292,8 +2292,9 @@ mod tests {
         // Get the child view via pattern matching
         let child_layout = if let Some(data) = parent_view.data.as_ref() {
             if let Some(dc_bundle::view::view_data::View_data_type::Container(
-                dc_bundle::view::view_data::Container { children, .. }
-            )) = &data.view_data_type {
+                dc_bundle::view::view_data::Container { children, .. },
+            )) = &data.view_data_type
+            {
                 assert_eq!(children.len(), 1, "Parent should have one child");
                 children[0].style().layout_style().clone()
             } else {
@@ -2313,7 +2314,9 @@ mod tests {
         // The right margin should be computed from the actual node width (100),
         // not the rotated bounding box width (50).
         // right = parent_width - (left + node_width) = 200 - (25 + 100) = 75
-        let right_margin = child_layout.margin.as_ref()
+        let right_margin = child_layout
+            .margin
+            .as_ref()
             .and_then(|m| m.end.as_ref())
             .and_then(|d| d.Dimension.as_ref())
             .and_then(|d| match d {
@@ -2321,7 +2324,8 @@ mod tests {
                 _ => None,
             });
         assert_eq!(
-            right_margin, Some(75.0_f32).as_ref(),
+            right_margin,
+            Some(75.0_f32).as_ref(),
             "Right margin should use pre-rotation node width (100), not rotated bbox width (50)"
         );
 
@@ -2335,7 +2339,9 @@ mod tests {
         // The bottom margin should be computed from the actual node height (50),
         // not the rotated bounding box height (100).
         // bottom = parent_height - (top + node_height) = 200 - (50 + 50) = 100
-        let bottom_margin = child_layout.margin.as_ref()
+        let bottom_margin = child_layout
+            .margin
+            .as_ref()
             .and_then(|m| m.bottom.as_ref())
             .and_then(|d| d.Dimension.as_ref())
             .and_then(|d| match d {
@@ -2343,7 +2349,8 @@ mod tests {
                 _ => None,
             });
         assert_eq!(
-            bottom_margin, Some(100.0_f32).as_ref(),
+            bottom_margin,
+            Some(100.0_f32).as_ref(),
             "Bottom margin should use pre-rotation node height (50), not rotated bbox height (100)"
         );
     }

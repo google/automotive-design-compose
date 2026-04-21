@@ -1073,7 +1073,7 @@ private fun squooshLayoutMeasurePolicy(
             // how Composable child nodes (used for input and hosting
             // external Composables) get placed.
             val placeables = squooshMeasure(measurables, constraints)
-            return squooshLayout(root, density, placeables, scrollOffset)
+            return squooshLayout(root, density, placeables, scrollOffset, constraints)
         }
 
         // These intrinsic calculations could be optimized to only copy out
@@ -1234,11 +1234,18 @@ private fun MeasureScope.squooshLayout(
     density: Float,
     placeables: List<Placeable>,
     scrollOffset: State<Offset>,
+    constraints: Constraints = Constraints(),
 ): MeasureResult {
-    return layout(
-        (root.computedLayout!!.width * density).roundToInt(),
-        (root.computedLayout!!.height * density).roundToInt(),
-    ) {
+    // Bug #279: Constrain the reported layout size to the parent's constraints.
+    // Without this, DesignDoc would report its full Figma design size (which may be
+    // full-screen), preventing sibling composables from receiving any space.
+    val layoutWidth =
+        (root.computedLayout!!.width * density).roundToInt()
+            .coerceIn(constraints.minWidth, constraints.maxWidth)
+    val layoutHeight =
+        (root.computedLayout!!.height * density).roundToInt()
+            .coerceIn(constraints.minHeight, constraints.maxHeight)
+    return layout(layoutWidth, layoutHeight) {
         // Place children in the parent layout
         placeables.forEach { placeable ->
             val squooshData = placeable.parentData as? SquooshParentData

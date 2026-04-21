@@ -88,15 +88,22 @@ class DesignDocStatus() {
 }
 
 object DesignSettings {
+    init {
+        Log.i(TAG, "DesignCompose Version: ${BuildConfig.DESIGNCOMPOSE_VERSION}")
+    }
+
     internal var liveUpdatesEnabled = false
     // Toast.makeText causes a crash in AAOS on secondary displays with a
     // "display must not be null" error.  This flag is used to disable
     // Toasts in affected apps till that issue is resolved.
     internal var toastsEnabled = true
-    private var parentActivity = WeakReference<ComponentActivity>(null)
+    internal var parentActivity = WeakReference<ComponentActivity>(null)
     internal var liveUpdateSettings: LiveUpdateSettingsRepository? = null
     internal var figmaToken = mutableStateOf<String?>(null)
+    internal var liveUpdateEnabled = mutableStateOf(true)
+    internal var adaptivePollingEnabled = mutableStateOf(true)
     internal var isDocumentLive = mutableStateOf(false)
+    internal var firstSuccessTime: Long? = null
     private var fontDb: HashMap<String, FontFamily> = HashMap()
     internal var fileFetchStatus: HashMap<DesignDocId, DesignDocStatus> = HashMap()
     internal var rawResourceId: HashMap<DesignDocId, Int> = HashMap()
@@ -134,28 +141,69 @@ object DesignSettings {
             liveUpdateSettings!!.settingsUpdateFlow.collectLatest { newTokenValue ->
                 // Store the new value locally
                 figmaToken.value = newTokenValue
+                // When the token is changed, reset the timer
+                firstSuccessTime = null
 
-                if (liveUpdatesEnabled) {
-                    if (figmaToken.value != null) {
-                        // If live update's enabled and the new token isn't null then start live
-                        // updates
-                        isDocumentLive.value = true
-                        DocServer.startLiveUpdates()
-                        return@collectLatest
-                    } else {
-                        showMessageInToast(
-                            "No Figma API Key Set - LiveUpdate Disabled",
-                            Toast.LENGTH_LONG,
-                        )
-                    }
+                updateLiveUpdateStatus()
+            }
+        }
+
+        // Launch a coroutine that awaits updates to the live update enabled state
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.liveUpdateEnabledFlow.collectLatest { enabled ->
+                liveUpdateEnabled.value = enabled
+                updateLiveUpdateStatus()
+            }
+        }
+
+        // Launch a coroutine that awaits updates to the adaptive polling enabled state
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.adaptivePollingEnabledFlow.collectLatest { enabled ->
+                adaptivePollingEnabled.value = enabled
+                if (!enabled) {
+                    DocServer.currentFetchIntervalMillis = DocServer.liveUpdateFetchMillis
+                    DocServer.consecutiveUnchangedCount = 0
                 }
-                // Otherwise stop them
-                isDocumentLive.value = false
-                DocServer.stopLiveUpdates()
+            }
+        }
+
+        // Launch a coroutine that awaits updates to the live update timeout
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.liveUpdateTimeoutFlow.collectLatest { timeout ->
+                DocServer.liveUpdatePauseTimeoutMs = timeout
+            }
+        }
+
+        // Launch a coroutine that awaits updates to the fetch interval
+        activity.lifecycleScope.launch {
+            liveUpdateSettings!!.liveUpdateFetchMillisFlow.collectLatest { interval ->
+                DocServer.liveUpdateFetchMillis = interval
+                // Also reset current fetch interval to the new base
+                DocServer.currentFetchIntervalMillis = interval
+                DocServer.consecutiveUnchangedCount = 0
             }
         }
 
         DocServer.initializeLiveUpdate()
+    }
+
+    private fun updateLiveUpdateStatus() {
+        if (liveUpdatesEnabled && liveUpdateEnabled.value) {
+            if (figmaToken.value != null) {
+                // If live update's enabled and the new token isn't null then start live
+                // updates
+                isDocumentLive.value = true
+                DocServer.startLiveUpdates()
+            } else {
+                isDocumentLive.value = false
+                DocServer.stopLiveUpdates()
+                showMessageInToast("No Figma API Key Set - LiveUpdate Disabled", Toast.LENGTH_LONG)
+            }
+        } else {
+            // Otherwise stop them
+            isDocumentLive.value = false
+            DocServer.stopLiveUpdates()
+        }
     }
 
     fun disableToasts() {
@@ -239,8 +287,11 @@ internal object SpanCache {
 }
 
 internal object DocServer {
-    internal const val FETCH_INTERVAL_MILLIS: Long = 5000L
+    internal const val DEFAULT_LIVE_UPDATE_FETCH_MILLIS: Long = 5000L
+    internal var liveUpdateFetchMillis: Long = DEFAULT_LIVE_UPDATE_FETCH_MILLIS
     internal const val MAX_FETCH_INTERVAL_MILLIS: Long = 60_000L
+    internal const val DEFAULT_LIVE_UPDATE_PAUSE_MILLIS: Long = 30 * 60 * 1000L
+    internal var liveUpdatePauseTimeoutMs: Long = DEFAULT_LIVE_UPDATE_PAUSE_MILLIS
     internal const val DEFAULT_HTTP_PROXY_PORT = "3128"
     internal val documents: HashMap<DesignDocId, DocContent> = HashMap()
     internal val subscriptions: HashMap<DesignDocId, LiveDocSubscriptions> = HashMap()
@@ -248,18 +299,30 @@ internal object DocServer {
         HashMap() // doc ID -> { docID -> docName }, branches always point to head of the figma doc
     internal val mainHandler = Handler(Looper.getMainLooper())
     internal var firstFetch = true
-    internal var pauseUpdates = false
+    internal var pauseUpdates = mutableStateOf(false)
 
     // Adaptive polling: tracks the current fetch interval and the number of consecutive
     // unchanged responses. The interval increases exponentially (5s -> 10s -> 20s -> 40s -> 60s)
-    // when no changes are detected, and resets to FETCH_INTERVAL_MILLIS when a document changes.
+    // when no changes are detected, and resets to liveUpdateFetchMillis when a document changes.
     // This reduces Figma API calls and avoids rate limiting. (Issue #2282)
-    internal var currentFetchIntervalMillis: Long = FETCH_INTERVAL_MILLIS
+    internal var currentFetchIntervalMillis: Long = DEFAULT_LIVE_UPDATE_FETCH_MILLIS
     internal var consecutiveUnchangedCount: Int = 0
 
     internal var periodicFetchRunnable: Runnable =
         Runnable() {
             thread {
+                // Check for Figma token timeout
+                DesignSettings.firstSuccessTime?.let {
+                    if (android.os.SystemClock.uptimeMillis() - it > liveUpdatePauseTimeoutMs) {
+                        Log.i(TAG, "LiveUpdate paused due to timeout")
+                        DesignSettings.firstSuccessTime = null
+                        val activity = DesignSettings.parentActivity.get()
+                        activity?.lifecycleScope?.launch {
+                            DesignSettings.liveUpdateSettings?.setFigmaApiKey("")
+                        }
+                    }
+                }
+
                 beginSection(DCTraces.FETCHDOCUMENTS)
                 if (!fetchDocuments(firstFetch)) {
                     endSection()
@@ -302,7 +365,7 @@ internal fun DocServer.initializeLiveUpdate() {
 internal fun DocServer.stopLiveUpdates() {
     if (DesignSettings.liveUpdatesEnabled) {
         Log.i(TAG, "Stopping Live Updates")
-        pauseUpdates = true
+        pauseUpdates.value = true
         removeScheduledPeriodicFetchRunnables()
     }
 }
@@ -310,9 +373,9 @@ internal fun DocServer.stopLiveUpdates() {
 internal fun DocServer.startLiveUpdates() {
     if (DesignSettings.liveUpdatesEnabled) {
         Log.i(TAG, "Starting Live Updates")
-        pauseUpdates = false
+        pauseUpdates.value = false
         // Reset to base interval when explicitly starting
-        currentFetchIntervalMillis = FETCH_INTERVAL_MILLIS
+        currentFetchIntervalMillis = liveUpdateFetchMillis
         consecutiveUnchangedCount = 0
         scheduleLiveUpdate()
     }
@@ -323,7 +386,7 @@ internal fun DocServer.removeScheduledPeriodicFetchRunnables() {
 }
 
 internal fun DocServer.scheduleLiveUpdate() {
-    if (DesignSettings.liveUpdatesEnabled && !pauseUpdates) {
+    if (DesignSettings.liveUpdatesEnabled && !pauseUpdates.value) {
         // Stop any live updates that have already been scheduled.
         removeScheduledPeriodicFetchRunnables()
         mainHandler.postDelayed(periodicFetchRunnable, currentFetchIntervalMillis)
@@ -380,6 +443,12 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
         try {
             val response = fetchDocument(figmaApiKey, params, previousDoc, id, proxyConfig)
 
+            // A successful call to fetchDocument (no exception) means we have a valid key.
+            // If this is the first success for this key, start the timer.
+            if (DesignSettings.firstSuccessTime == null) {
+                DesignSettings.firstSuccessTime = android.os.SystemClock.uptimeMillis()
+            }
+
             if (response.hasDocument()) {
                 val doc = decodeServerDoc(response.document, previousDoc, id, saveFiles, Feedback)
                 if (doc == null) {
@@ -416,13 +485,13 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                 Feedback.documentUpdated(id, subs.size)
 
                 // Document changed — reset to base polling interval
-                if (currentFetchIntervalMillis != FETCH_INTERVAL_MILLIS) {
+                if (currentFetchIntervalMillis != liveUpdateFetchMillis) {
                     Log.i(
                         TAG,
-                        "Document changed, resetting poll interval to ${FETCH_INTERVAL_MILLIS}ms",
+                        "Document changed, resetting poll interval to ${liveUpdateFetchMillis}ms",
                     )
                 }
-                currentFetchIntervalMillis = FETCH_INTERVAL_MILLIS
+                currentFetchIntervalMillis = liveUpdateFetchMillis
                 consecutiveUnchangedCount = 0
             } else {
                 synchronized(DesignSettings.fileFetchStatus) {
@@ -430,20 +499,26 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                 }
                 Feedback.documentUnchanged(id)
 
-                // No changes — increase polling interval with exponential backoff
+                // No changes — increase polling interval with exponential backoff if adaptive
+                // polling is enabled
                 consecutiveUnchangedCount++
-                val newInterval =
-                    minOf(
-                        FETCH_INTERVAL_MILLIS * (1L shl consecutiveUnchangedCount.coerceAtMost(4)),
-                        MAX_FETCH_INTERVAL_MILLIS,
-                    )
-                if (newInterval != currentFetchIntervalMillis) {
-                    Log.i(
-                        TAG,
-                        "No changes detected ($consecutiveUnchangedCount consecutive), " +
-                            "increasing poll interval to ${newInterval}ms",
-                    )
-                    currentFetchIntervalMillis = newInterval
+                if (DesignSettings.adaptivePollingEnabled.value) {
+                    val newInterval =
+                        minOf(
+                            liveUpdateFetchMillis *
+                                (1L shl consecutiveUnchangedCount.coerceAtMost(4)),
+                            MAX_FETCH_INTERVAL_MILLIS,
+                        )
+                    if (newInterval != currentFetchIntervalMillis) {
+                        Log.i(
+                            TAG,
+                            "No changes detected ($consecutiveUnchangedCount consecutive), " +
+                                "increasing poll interval to ${newInterval}ms",
+                        )
+                        currentFetchIntervalMillis = newInterval
+                    }
+                } else {
+                    currentFetchIntervalMillis = liveUpdateFetchMillis
                 }
             }
         } catch (exception: Exception) {

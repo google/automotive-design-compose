@@ -105,7 +105,7 @@ pub fn load_figma_token() -> Result<String, Error> {
                             "Could not read Figma token from ~/.config/figma_access_token: {}",
                             e
                         ),
-                    ))
+                    ));
                 }
             };
             Ok(token)

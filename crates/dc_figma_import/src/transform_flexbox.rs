@@ -39,8 +39,12 @@ use dc_bundle::variable::NumOrVar;
 use dc_bundle::view_shape;
 use dc_bundle::view_shape::ViewShape;
 
+use crate::animation_override::AnimationOverride;
+use crate::animation_spec_schema::AnimationOverrideJson;
 use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
+use crate::scalableui_schema::ScalableUiDataJson;
+use crate::shader_schema::ShaderDataJson;
 use dc_bundle::background::background;
 use dc_bundle::background::{background::Background_type, Background};
 use dc_bundle::blend::BlendMode;
@@ -53,25 +57,22 @@ use dc_bundle::meter_data::{
     ProgressMarkerMeterData, ProgressVectorMeterData, RotationMeterData,
 };
 use dc_bundle::node_style::Display;
+use dc_bundle::path::line_height::Line_height_type;
 use dc_bundle::path::{stroke_weight, StrokeAlign, StrokeWeight};
 use dc_bundle::positioning::{
     item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, ItemSpacing,
     JustifyContent, Overflow, OverflowDirection, PositionType, ScrollInfo,
 };
 use dc_bundle::reaction::Reaction;
+use dc_bundle::scalable::scalable_uidata;
 use dc_bundle::shadow::{BoxShadow, TextShadow};
 use dc_bundle::text::{TextAlign, TextAlignVertical, TextOverflow};
-use dc_bundle::view_shape::view_shape::RoundRect;
-use log::{error, warn};
-
-use crate::scalableui_schema::ScalableUiDataJson;
-use crate::shader_schema::ShaderDataJson;
-use dc_bundle::path::line_height::Line_height_type;
-use dc_bundle::scalable::scalable_uidata;
 use dc_bundle::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::view::view::RenderMethod;
 use dc_bundle::view::{ComponentInfo, View};
+use dc_bundle::view_shape::view_shape::RoundRect;
 use dc_bundle::view_style::ViewStyle;
+use log::{error, warn};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -2058,6 +2059,37 @@ fn visit_node(
         RenderMethod::RENDER_METHOD_NONE,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
     );
+    let mut parsed_plugin_override = None;
+    if let Some(plugin_data) = node.shared_plugin_data.get("designcompose") {
+        let anim_str_opt = plugin_data.get("squoosh");
+        if let Some(anim_str) = anim_str_opt {
+            log::info!(
+                "Figma Import: Found squoosh animation plugin data string on node {}: {}",
+                node.id,
+                anim_str
+            );
+            match serde_json::from_str::<AnimationOverrideJson>(anim_str) {
+                Ok(anim) => {
+                    log::info!("Figma Import: Successfully parsed squoosh animation format for node {}: {:?}", node.id, anim);
+                    parsed_plugin_override = Some(anim);
+                }
+                Err(e) => {
+                    log::error!("Figma Import: Failed to parse squoosh animation plugin data for node {}: {:?}", node.id, e);
+                    println!("Figma Import: Failed to parse squoosh animation plugin data for node {}: {:?}", node.id, e);
+                }
+            }
+        } else {
+            log::debug!("Figma Import: No animation plugin data found for node {}", node.id);
+        }
+    }
+
+    if let Some(anim) = parsed_plugin_override {
+        view.style_mut().node_style_mut().animation_override =
+            Some(AnimationOverride::from(&anim).into()).into();
+    } else if let Some(animation_override) = &node.animation_override {
+        view.style_mut().node_style_mut().animation_override =
+            Some(AnimationOverride::from(animation_override).into()).into();
+    }
 
     // Iterate over our visible children, but not vectors because they always
     // present their children's content themselves (e.g.: they are boolean products
@@ -2269,4 +2301,45 @@ fn test_layout_wrap_override() {
     .unwrap();
 
     assert_eq!(view.style.unwrap().node_style.unwrap().flex_wrap, FlexWrap::FLEX_WRAP_WRAP.into());
+}
+
+#[test]
+fn test_animation_override_plugin_data() {
+    let json = r#"{
+            "id": "4",
+            "name": "test_anim",
+            "type": "FRAME",
+            "layoutMode": "HORIZONTAL",
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "absoluteBoundingBox": {
+                "x": 0, "y": 0, "width": 100, "height": 100
+            },
+            "sharedPluginData": {
+                "designcompose": {
+                    "squoosh": "{\"override\":\"Custom\",\"spec\":{\"initial_delay\":{\"secs\":0,\"nanos\":0},\"animation\":{\"Smooth\":{\"duration\":{\"secs\":0,\"nanos\":1000000000},\"repeat_type\":\"NoRepeat\",\"easing\":\"Linear\"}},\"interrupt_type\":\"Complete\"}}"
+                }
+            }
+        }"#;
+
+    let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let view = create_component_flexbox(
+        &node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        crate::document::HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+
+    assert!(view.style.unwrap().node_style.unwrap().animation_override.is_some());
 }

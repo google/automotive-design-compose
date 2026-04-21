@@ -101,6 +101,8 @@ import com.android.designcompose.definition.plugin.colorOrNull
 import com.android.designcompose.definition.plugin.overlayBackgroundOrNull
 import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.scrollInfoOrNull
+import com.android.designcompose.definition.view.transformOrNull
+import com.android.designcompose.decompose
 import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
@@ -1242,15 +1244,7 @@ private fun MeasureScope.squooshLayout(
             if (node == null) {
                 placeable.placeRelative(x = 0, y = 0)
             } else {
-                // Ok, we can look up the position and transform by iterating over the
-                // parents. We don't support transforms here yet. Child composables will
-                // be rendered with transforms, but won't use them for input.
-                //
-                // We always take the offset from the root, but if there are layers of
-                // custom composables (containing each other) then this will give the
-                // wrong offset.
-                //
-                // XXX XXX: Create ticket to implement transformed input.
+                // Look up the position by iterating over the parents.
                 val offsetFromRoot = node.offsetFromAncestor()
 
                 var x = (offsetFromRoot.x * density).roundToInt()
@@ -1259,7 +1253,22 @@ private fun MeasureScope.squooshLayout(
                     x -= scrollOffset.value.x.roundToInt()
                     y -= scrollOffset.value.y.roundToInt()
                 }
-                placeable.placeRelative(x, y)
+
+                // Extract rotation from the node's transform matrix. If the node
+                // has a non-zero rotation, use placeRelativeWithLayer to apply it.
+                // This fixes Bug #1279 where rotated replacement content nodes
+                // were placed without their rotation being applied.
+                val decomposed =
+                    node.style.nodeStyle.transformOrNull.decompose(density)
+                val rotationAngle = decomposed.angle
+
+                if (rotationAngle != 0f) {
+                    placeable.placeRelativeWithLayer(x, y) {
+                        rotationZ = rotationAngle
+                    }
+                } else {
+                    placeable.placeRelative(x, y)
+                }
             }
         }
     }

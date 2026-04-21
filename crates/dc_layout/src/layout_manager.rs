@@ -1179,7 +1179,7 @@ mod tests {
         assert_eq!(lm.get_node_layout(2).unwrap().left, 80.0);
     }
 
-    /// Bug #175: Absolute-positioned child inside a flex (AutoLayout) parent should be
+    /// Absolute-positioned child inside a flex (AutoLayout) parent should be
     /// positioned using its insets (left/top), NOT placed in the flex sequence.
     #[test]
     fn test_absolute_position_in_autolayout() {
@@ -1199,20 +1199,37 @@ mod tests {
         .unwrap();
 
         // Normal flex child (participates in flow)
-        lm.add_style(2, 1, 0, create_sized_style(100.0, 50.0), "flex_child".into(), false, None, None)
-            .unwrap();
+        lm.add_style(
+            2,
+            1,
+            0,
+            create_sized_style(100.0, 50.0),
+            "flex_child".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
 
         // Absolute-positioned child (should NOT participate in flow)
         let mut abs_style = create_sized_style(80.0, 60.0);
         abs_style.position_type = PositionType::POSITION_TYPE_ABSOLUTE.into();
         abs_style.left = DimensionProto::new_points(150.0);
         abs_style.top = DimensionProto::new_points(100.0);
-        lm.add_style(3, 1, 1, abs_style, "abs_child".into(), false, None, None)
-            .unwrap();
+        lm.add_style(3, 1, 1, abs_style, "abs_child".into(), false, None, None).unwrap();
 
         // Another normal flex child
-        lm.add_style(4, 1, 2, create_sized_style(120.0, 50.0), "flex_child2".into(), false, None, None)
-            .unwrap();
+        lm.add_style(
+            4,
+            1,
+            2,
+            create_sized_style(120.0, 50.0),
+            "flex_child2".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
 
         lm.compute_node_layout(1);
 

@@ -1,0 +1,2259 @@
+[
+  {
+    "number": 2403,
+    "title": "Use the rust log API instead of print/eprint",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 95,
+    "note": "Replace print/eprint with Rust log crate. Straightforward code cleanup.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2403",
+    "labels": []
+  },
+  {
+    "number": 2401,
+    "title": "Support Figma OAuth 2.0 Token Authentication in Addition to Personal Access Tokens",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Add OAuth 2.0 support alongside PAT. Well-described feature request with Figma API docs linked.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2401",
+    "labels": []
+  },
+  {
+    "number": 2356,
+    "title": "\"Wrap\" feature of auto layout not supported",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Figma Auto Layout \"Wrap\" not supported in DC. Feature gap - need to add flex-wrap to layout engine.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2356",
+    "labels": []
+  },
+  {
+    "number": 2344,
+    "title": "Component get Stuck in Prototype Interaction State",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Button with 3 variant properties gets stuck in pressed state after interaction. Relates to prototype state machine handling.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2344",
+    "labels": []
+  },
+  {
+    "number": 2335,
+    "title": "NPE when creating 2 components from single Figma node",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "NPE when 2 @DesignComponent annotations reference same Figma node. Clear repro steps with code sample.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/2335",
+    "labels": []
+  },
+  {
+    "number": 2333,
+    "title": "Autolayout \"fill\" sometimes overflows its container",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Auto Layout fill child overflows when switching between parent frames. Timing/state issue in layout recalculation.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2333",
+    "labels": []
+  },
+  {
+    "number": 2332,
+    "title": "Component Instances are not render correctly until detached",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 60,
+    "note": "Rare rendering issue with component instances - inconsistent positioning. Hard to reproduce (\"rare cases\").",
+    "needs_more": "Yes",
+    "more_details": "Need specific Figma file and exact repro steps for the \"rare\" case",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2332",
+    "labels": []
+  },
+  {
+    "number": 2331,
+    "title": "Autolayout Spacing Option \"Auto\" is not distributing the Items correctly",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Auto Layout spacing \"Auto\" (space-between) not distributing items correctly, items pushed out of container.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2331",
+    "labels": []
+  },
+  {
+    "number": 2330,
+    "title": "Layers with opacity start flickering when placed on another layer with opacity",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Opacity flickering when layered elements both have layer opacity. Rendering compositing issue.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2330",
+    "labels": []
+  },
+  {
+    "number": 2328,
+    "title": "Variables with included Opacity are not rendered properly",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Figma variables with opacity (e.g. rgba) render at 100% opacity. Alpha channel lost during variable resolution.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2328",
+    "labels": []
+  },
+  {
+    "number": 2313,
+    "title": "Why System.err.println(\"childComposable is ...\")?",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 95,
+    "note": "Debug println left in production code (SquooshTreeBuilder.kt:434). Simple cleanup - remove or convert to proper logging.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2313",
+    "labels": []
+  },
+  {
+    "number": 2312,
+    "title": "ListContent/ListContentData Index is not correct.",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "ListContent click index is wrong - clicking item shows wrong index. Off-by-one or pagination issue in list handling.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2312",
+    "labels": []
+  },
+  {
+    "number": 2305,
+    "title": "Serialization errors caused by presence of various Figma features",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Serialization fails when Figma file contains layout guides, Dev Mode, or certain features. Need graceful handling/skip.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2305",
+    "labels": []
+  },
+  {
+    "number": 2302,
+    "title": "Instance Swap Resets to Default When Changing Variant via Code",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Instance swap resets to default when variant is changed via code. State management issue in component overrides.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2302",
+    "labels": []
+  },
+  {
+    "number": 2301,
+    "title": "Component Collapses When Switching Variants via Code",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Component collapses (0 size) when switching variant via code. Layout recalculation fails on variant change.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2301",
+    "labels": []
+  },
+  {
+    "number": 2300,
+    "title": "Line Height Mismatch Between Figma and Emulator Rendering",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Line height 100% in Figma renders differently on emulator. Text measurement mismatch between Figma and Compose.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2300",
+    "labels": []
+  },
+  {
+    "number": 2299,
+    "title": "Incorrect Variant State Triggering in Figma Prototypes with Multiple Properties",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "With multiple variant properties, prototype always triggers first pressed state regardless of which variant. State machine bug.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2299",
+    "labels": []
+  },
+  {
+    "number": 2292,
+    "title": "Modifier customization gone?",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Modifier customization (e.g. clickable) stopped working after Squoosh migration. Regression from v0.32 to v0.37.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/2292",
+    "labels": []
+  },
+  {
+    "number": 2282,
+    "title": "Allow auto pause and resume functionality for LiveUpdate.",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "LiveUpdate polls every 5s causing Figma rate limit errors. Request auto-pause/resume mechanism.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2282",
+    "labels": []
+  },
+  {
+    "number": 2278,
+    "title": "The Design Switcher fails to show no connectivity in battleship app",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Design Switcher doesnt show offline state in battleship app (no internet permission). Empty screen instead of error.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/2278",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 2272,
+    "title": "Update MediaCompose documentation to refer to the .fig files checked in",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Update MediaCompose docs to reference .fig files checked into repo. Documentation update.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2272",
+    "labels": []
+  },
+  {
+    "number": 2270,
+    "title": "add render test for flex direction",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 90,
+    "note": "Add render test for flex direction. Testing improvement - straightforward.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/2270",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 2261,
+    "title": "Same Figma node names do not execute smart animations.",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Smart animations dont execute when Figma nodes share the same name. Name-based matching issue in animation system.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2261",
+    "labels": []
+  },
+  {
+    "number": 2245,
+    "title": "Scope Figma Draw features",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 60,
+    "note": "Scope Figma Draw features. Vague investigation task - needs clarification on which draw features to support.",
+    "needs_more": "Yes",
+    "more_details": "Need list of specific Figma Draw features to scope",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2245",
+    "labels": []
+  },
+  {
+    "number": 2220,
+    "title": "investigate security report on DC repo",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 70,
+    "note": "Investigate security report on DC repo. Internal security matter - limited public info.",
+    "needs_more": "Yes",
+    "more_details": "Need access to the security report details",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2220",
+    "labels": []
+  },
+  {
+    "number": 2208,
+    "title": "font family variables support",
+    "category": "Feature",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Support font family as Figma variable. Currently font families can only be static, not variable-driven.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2208",
+    "labels": [
+      "Type: New Feature"
+    ]
+  },
+  {
+    "number": 2190,
+    "title": "Allow progress bar and indicator preview simultaneously",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Allow progress bar and indicator preview simultaneously in Figma plugin. Plugin enhancement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2190",
+    "labels": []
+  },
+  {
+    "number": 2189,
+    "title": "Add support for rounded corners in Scalable UI",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Add rounded corner support in Scalable UI plugin. Plugin feature gap.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2189",
+    "labels": []
+  },
+  {
+    "number": 2188,
+    "title": "Add support for insets in the Scalable UI plugin",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Add inset support in Scalable UI plugin. Plugin feature gap.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2188",
+    "labels": []
+  },
+  {
+    "number": 2183,
+    "title": "Investigate improvements for testing for nodes",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 70,
+    "note": "Investigate improvements for testing nodes. Vague exploration task.",
+    "needs_more": "Yes",
+    "more_details": "Need specific goals for testing improvements",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2183",
+    "labels": []
+  },
+  {
+    "number": 2181,
+    "title": "Customizations are not propagated to replacement component children",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Customizations not propagated to replacement component children. Customization inheritance issue.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2181",
+    "labels": []
+  },
+  {
+    "number": 2157,
+    "title": "Support #indicator as child of #progress for progress bars",
+    "category": "SystemUI",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Support #indicator as child of #progress for progress bars. SystemUI feature - specific naming convention.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2157",
+    "labels": [
+      "SystemUI"
+    ]
+  },
+  {
+    "number": 2156,
+    "title": "SystemUi investigation",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 55,
+    "note": "SystemUI investigation. Very vague - no details on what to investigate.",
+    "needs_more": "Yes",
+    "more_details": "Need scope and goals for the investigation",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2156",
+    "labels": []
+  },
+  {
+    "number": 2149,
+    "title": "Ripple(touch feedback)",
+    "category": "SystemUI",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Implement ripple/touch feedback effect. SystemUI feature - standard Android touch feedback.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/2149",
+    "labels": [
+      "SystemUI"
+    ]
+  },
+  {
+    "number": 2147,
+    "title": "Rotary",
+    "category": "SystemUI",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Rotary input support for automotive. SystemUI feature - rotary encoder navigation.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/2147",
+    "labels": [
+      "SystemUI"
+    ]
+  },
+  {
+    "number": 2145,
+    "title": "RTL support",
+    "category": "SystemUI",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "RTL (Right-to-Left) layout support. SystemUI feature - layout mirroring for RTL locales.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/2145",
+    "labels": [
+      "SystemUI"
+    ]
+  },
+  {
+    "number": 2138,
+    "title": "RB HVAC investigation",
+    "category": "SystemUI",
+    "priority": "Unset",
+    "confidence": 50,
+    "note": "RB HVAC investigation. Very domain-specific - HVAC reference build investigation.",
+    "needs_more": "Yes",
+    "more_details": "Need context on RB HVAC requirements and scope",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2138",
+    "labels": [
+      "SystemUI"
+    ]
+  },
+  {
+    "number": 2113,
+    "title": "Component overrides next",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 70,
+    "note": "Component overrides next iteration. Continuation of override system work.",
+    "needs_more": "Yes",
+    "more_details": "Need spec for what \"next\" overrides entail",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/2113",
+    "labels": []
+  },
+  {
+    "number": 2084,
+    "title": "Figma file is not available / deleted in Tutorial (creating a list)",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Figma file referenced in Tutorial (list creation) is deleted/unavailable. Need to update link.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/2084",
+    "labels": []
+  },
+  {
+    "number": 1994,
+    "title": "Make component library with DC",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Create component library with DC. Feature request for reusable component library.",
+    "needs_more": "Yes",
+    "more_details": "Need design spec for library architecture",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1994",
+    "labels": []
+  },
+  {
+    "number": 1963,
+    "title": "More tests for a component with override styles",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "More tests for components with override styles. Testing improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1963",
+    "labels": []
+  },
+  {
+    "number": 1814,
+    "title": "Better support for RRO",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 65,
+    "note": "Better support for Runtime Resource Overlays (RRO). Android-specific customization mechanism.",
+    "needs_more": "Yes",
+    "more_details": "Need specific RRO scenarios to support",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1814",
+    "labels": []
+  },
+  {
+    "number": 1798,
+    "title": "Improvements for DesignSwitcher",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Improvements for DesignSwitcher. Customer-reported - various UX improvements needed.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1798",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 1792,
+    "title": "Squoosh enabled cannot find variable for components imported from library",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Squoosh cannot find variables for library-imported components. Variable resolution fails across Figma libraries.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1792",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 1721,
+    "title": "Dropdown list,  Slider bar support",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Dropdown and slider bar support requested. Missing interactive component types in DC.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1721",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 1716,
+    "title": "Handle edge-to-edge mode in targetSdk 35",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Handle edge-to-edge mode for targetSdk 35. Android 15 display cutout / system bars handling.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1716",
+    "labels": [
+      "good first issue",
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 1690,
+    "title": "Figma Collections, Modes, Variables not available for query from design compose.",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Figma Collections, Modes, Variables not queryable from DC. API gap in variable system.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1690",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 1627,
+    "title": "Support API 35",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Support API 35 (Android 15). Compatibility update needed.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1627",
+    "labels": []
+  },
+  {
+    "number": 1605,
+    "title": "AndroidView in a component replacement can crash if recreated",
+    "category": "Squoosh",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "AndroidView in component replacement crashes if recreated. Lifecycle issue with native views in Squoosh.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1605",
+    "labels": [
+      "squoosh"
+    ]
+  },
+  {
+    "number": 1568,
+    "title": "Determine the plan for managing Rust dependencies",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Plan for managing Rust dependencies. Dependency governance - cargo audit, version pinning strategy.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1568",
+    "labels": []
+  },
+  {
+    "number": 1555,
+    "title": "More support for text stroke",
+    "category": "Feature",
+    "priority": "P3",
+    "confidence": 80,
+    "note": "More text stroke support. Currently limited stroke rendering on text elements.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1555",
+    "labels": [
+      "Type: New Feature",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 1549,
+    "title": "Stroke gradients do not take into account stroke thickness",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Stroke gradients ignore stroke thickness in rendering calculation. Gradient offset bug.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1549",
+    "labels": []
+  },
+  {
+    "number": 1544,
+    "title": "Improve error handling: propagate an error from Rust and show it in DesignSwitcher",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Propagate Rust errors to Kotlin and show in DesignSwitcher. Error handling improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1544",
+    "labels": []
+  },
+  {
+    "number": 1514,
+    "title": "Avoid double key events in animations",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Avoid double key events in animations. Duplicate input processing during animated transitions.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1514",
+    "labels": []
+  },
+  {
+    "number": 1450,
+    "title": "Begin tightly vetting Rust dependencies",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Begin tightly vetting Rust dependencies. Security/supply chain task.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1450",
+    "labels": []
+  },
+  {
+    "number": 1446,
+    "title": "Animate between design token values",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 70,
+    "note": "Animate between design token values. Smooth transitions when token/variable values change.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1446",
+    "labels": []
+  },
+  {
+    "number": 1419,
+    "title": "This would be a candidate for writing an `Into` implementation in figma_schema",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Implement Into trait for figma_schema types. Rust code improvement - type conversion boilerplate.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1419",
+    "labels": []
+  },
+  {
+    "number": 1373,
+    "title": "Create a better separation between toolkit_schema and figma_schema",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Separate toolkit_schema from figma_schema. Code architecture refactor in Rust crates.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1373",
+    "labels": []
+  },
+  {
+    "number": 1368,
+    "title": "More flexibility possible?",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 60,
+    "note": "More flexibility possible? Vague question about DC flexibility.",
+    "needs_more": "Yes",
+    "more_details": "Need specific use cases or flexibility requirements",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1368",
+    "labels": []
+  },
+  {
+    "number": 1350,
+    "title": "RHD RTL support",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 70,
+    "note": "RHD (Right-Hand Drive) RTL support for automotive. Specialized layout mirroring for driving side.",
+    "needs_more": "Yes",
+    "more_details": "Need RHD-specific layout requirements",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1350",
+    "labels": []
+  },
+  {
+    "number": 1331,
+    "title": "DesignVariant not working with figma component instances",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "DesignVariant not working with Figma component instances (only works with main components). Instance variant resolution bug.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1331",
+    "labels": []
+  },
+  {
+    "number": 1323,
+    "title": "Longpress callback support",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Longpress callback support requested. Missing interaction type in DC event handling.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1323",
+    "labels": []
+  },
+  {
+    "number": 1300,
+    "title": "Drag-Drop implementation",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Drag-and-drop implementation requested. Complex interaction feature.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1300",
+    "labels": []
+  },
+  {
+    "number": 1299,
+    "title": "Control Figma UI prototype state in code",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Control Figma prototype state programmatically. API to drive prototype interactions from code.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1299",
+    "labels": []
+  },
+  {
+    "number": 1295,
+    "title": "Localization plugin UI polish",
+    "category": "Plugin",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Localization plugin UI polish. Figma plugin UI improvements for i18n workflow.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1295",
+    "labels": [
+      "plugin",
+      "i18n"
+    ]
+  },
+  {
+    "number": 1279,
+    "title": "Handle rotated component replacement nodes in squoosh",
+    "category": "Bug",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Handle rotated component replacement nodes in Squoosh renderer. Rotation transform not applied to replacements.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1279",
+    "labels": [
+      "Type: Bug",
+      ":green_circle:  P2",
+      "squoosh"
+    ]
+  },
+  {
+    "number": 1206,
+    "title": "Look into the `combine-prs` GitHub action to combine all those dependabot pr's",
+    "category": "Infra",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Look into combine-prs GitHub action for dependabot PR batching. CI/CD improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1206",
+    "labels": [
+      "engProd",
+      "dependencies"
+    ]
+  },
+  {
+    "number": 1187,
+    "title": "Fill with image not showing on the emulator",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Fill with image not showing on emulator. Image fill rendering failure - customer reported.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1187",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 1170,
+    "title": "Scaling two separates instances of a component will always take the original size",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Scaling two instances of same component always uses original size. Scale factor not per-instance.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1170",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 1169,
+    "title": "Support duplicate variable names across multiple documents",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Support duplicate variable names across multiple Figma documents. Namespace collision in multi-doc scenarios.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1169",
+    "labels": []
+  },
+  {
+    "number": 1167,
+    "title": "How to scale the Figma objects in the emulator based on the screen DPI",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "How to scale Figma objects based on screen DPI. Customer question about density-independent rendering.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1167",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 1138,
+    "title": "Custom Design Modules must be in same directory as Generated Composable",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Custom Design Modules must be in same directory as generated composable. Path restriction in codegen.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1138",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 1136,
+    "title": "Reference apps incompatible with latest androidx-lifecycle update",
+    "category": "Bug",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Reference apps incompatible with latest androidx-lifecycle update. Dependency version conflict.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1136",
+    "labels": [
+      "Type: Bug"
+    ]
+  },
+  {
+    "number": 1118,
+    "title": "Provide additional test cases for external renderer comparison.",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 75,
+    "note": "Additional test cases for external renderer comparison. Testing improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1118",
+    "labels": []
+  },
+  {
+    "number": 1117,
+    "title": "ImageContext does not provide useful data when node constraints set to scale",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "ImageContext returns incorrect data when node constraints set to \"scale\". Data loss in constraint mode.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1117",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 1113,
+    "title": "Rename instances of \"the JSON file\" to \"Customization Interface\" file",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 95,
+    "note": "Rename \"the JSON file\" to \"Customization Interface\" throughout docs. Simple find-and-replace.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/1113",
+    "labels": []
+  },
+  {
+    "number": 1082,
+    "title": "Roborazzi screenshots are different on Mac vs Linux",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Roborazzi screenshots differ between Mac and Linux. Platform-dependent rendering in tests.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/1082",
+    "labels": []
+  },
+  {
+    "number": 1031,
+    "title": "Vectors in Serialized Documents Don't Provide all Colors",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Vectors in serialized documents dont expose all colors. Color data lost during Figma serialization.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/1031",
+    "labels": []
+  },
+  {
+    "number": 976,
+    "title": "Document how to keep animating timing function constants in sync",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Document how to keep animation timing constants in sync between Figma and code.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/976",
+    "labels": []
+  },
+  {
+    "number": 954,
+    "title": "Enable DesignModule usage across Gradle projects",
+    "category": "Feature",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Enable DesignModule usage across Gradle projects. Module boundaries prevent cross-project usage.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/954",
+    "labels": [
+      "Type: New Feature"
+    ]
+  },
+  {
+    "number": 926,
+    "title": "Enable CodeQL in the repo",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Enable CodeQL security scanning in the repository. GitHub security feature setup.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/926",
+    "labels": []
+  },
+  {
+    "number": 905,
+    "title": "Masks inside of variants do not render correctly",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Masks inside variants render incorrectly. Compositing issue with masked elements in variant states.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/905",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 904,
+    "title": "Update Figma REST API to use new URL format",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Update Figma REST API to use new URL format. API endpoint migration.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/904",
+    "labels": []
+  },
+  {
+    "number": 890,
+    "title": "Use version catalog for exoplayer test dependency",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Use version catalog for ExoPlayer test dependency. Build config cleanup.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/890",
+    "labels": []
+  },
+  {
+    "number": 883,
+    "title": "Consolidate JNI Library artifacts into a single Gradle module",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Consolidate JNI library artifacts into single Gradle module. Build architecture simplification.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/883",
+    "labels": []
+  },
+  {
+    "number": 880,
+    "title": "Integrate Roborazzi 1.11 configuration upgrades",
+    "category": "Infra",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Integrate Roborazzi 1.11 config upgrades. Testing tool version bump.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/880",
+    "labels": [
+      "engProd"
+    ]
+  },
+  {
+    "number": 840,
+    "title": "Variant prototype not working when the elements come from a library",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Variant prototype not working for library-imported elements. Cross-file component interaction broken. Warning: \"Unable to dispatch CHANGE_TO\".",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/840",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 739,
+    "title": "Design Component must be within the main document Figma interface",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "DesignComponent must be in main document interface. Cannot declare reusable components in separate interfaces.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/739",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 713,
+    "title": "Tutorial - consider alternative instructions for loading your Figma Doc ID",
+    "category": "Docs",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Tutorial instructions confusing for loading Figma Doc ID. UX improvement for onboarding.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/713",
+    "labels": [
+      "documentation",
+      "tutorial"
+    ]
+  },
+  {
+    "number": 712,
+    "title": "Documentation - Document compile-time optimizations",
+    "category": "Docs",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Document compile-time optimizations (separate DesignDoc interface declarations).",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/712",
+    "labels": [
+      "documentation"
+    ]
+  },
+  {
+    "number": 711,
+    "title": "Test library - Create examples of various tests",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Create test library with examples of various test types. Testing documentation/examples.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/711",
+    "labels": []
+  },
+  {
+    "number": 710,
+    "title": "Feature idea: Automatically add Compose test tags to all DesignCompose customizations",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Auto-add Compose test tags to all DC customizations. Would simplify UI testing.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/710",
+    "labels": [
+      "top-qol"
+    ]
+  },
+  {
+    "number": 709,
+    "title": "Enhance \"SetFigmaToken\" to target the actively running Android Device",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Enhance SetFigmaToken to target active Android device automatically. QOL improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/709",
+    "labels": [
+      "top-qol"
+    ]
+  },
+  {
+    "number": 708,
+    "title": "Modify Tutorial instructions to run \"setFigmaTokenDebug\" from Android Studio instead of the command line.",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Run setFigmaTokenDebug from Android Studio instead of CLI. Tutorial simplification.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/708",
+    "labels": [
+      "top-qol"
+    ]
+  },
+  {
+    "number": 707,
+    "title": "Add instructions for installing the correct JDK for command line Gradle builds",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Add JDK installation instructions for command line builds. Documentation gap.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/707",
+    "labels": [
+      "top-qol"
+    ]
+  },
+  {
+    "number": 690,
+    "title": "Improve handling of AAOS Unbundled Libraries in GitHub Actions",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Separate AAOS Unbundled library compilation in CI. Build time optimization.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/690",
+    "labels": []
+  },
+  {
+    "number": 688,
+    "title": "Nightly Experimental builds failing",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 80,
+    "note": "Nightly builds failing - runner out of disk space. CI resource issue.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/688",
+    "labels": []
+  },
+  {
+    "number": 684,
+    "title": "Configure Firebase Test Lab, add performance testing",
+    "category": "Infra",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Configure Firebase Test Lab for performance testing. New testing infrastructure.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/684",
+    "labels": [
+      "engProd",
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 673,
+    "title": "Support scale constraints with vectors",
+    "category": "Layout",
+    "priority": "P3",
+    "confidence": 80,
+    "note": "Support scale constraints with arbitrary vectors (not just rectangles). Layout feature gap.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/673",
+    "labels": [
+      ":blue_square:  P3",
+      "layout"
+    ]
+  },
+  {
+    "number": 670,
+    "title": "Clean up unwrap() calls",
+    "category": "Enhancement",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Clean up unwrap() calls in Rust - define error handling policy. Code quality improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/670",
+    "labels": []
+  },
+  {
+    "number": 661,
+    "title": "Improve documentation on finding and using the generated JSON file for Lists & Grids",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 85,
+    "note": "Improve docs on finding/using generated JSON for Lists & Grids. Documentation gap.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/661",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 660,
+    "title": "The visibility documentation is unclear",
+    "category": "Customer",
+    "priority": "Unset",
+    "confidence": 90,
+    "note": "Visibility documentation unclear - users think variable must be named \"showText\". Doc clarity issue.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/660",
+    "labels": [
+      "Type: Customer Issue"
+    ]
+  },
+  {
+    "number": 649,
+    "title": "Provide a means for users to access the Validation docs",
+    "category": "Enhancement",
+    "priority": "P3",
+    "confidence": 85,
+    "note": "Make Validation Figma designs publicly accessible (currently Google-only).",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/649",
+    "labels": [
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 635,
+    "title": "Allow `fetch` to get its nodes list from the JSON emitted by the KSP processor",
+    "category": "Feature",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Let fetch tool read nodes from KSP-generated JSON. Workflow improvement for offline fetching.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/635",
+    "labels": [
+      "Type: New Feature",
+      "qol",
+      "engProd",
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 628,
+    "title": "Galaxy design crashes emulators on APIs greater than 33",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 75,
+    "note": "Galaxy design crashes emulators on API > 33. Emulator-specific rendering crash.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/628",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 606,
+    "title": "Investigate transition to Kotlin 2.0 and KSP 2.0",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Investigate Kotlin 2.0 and KSP 2.0 migration. Build tooling upgrade research.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/606",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 604,
+    "title": "Add support for baseline alignment",
+    "category": "Layout",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Add baseline alignment support in layout engine. Figma feature gap.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/604",
+    "labels": [
+      ":green_circle:  P2",
+      "layout"
+    ]
+  },
+  {
+    "number": 573,
+    "title": "Make Brush function customization accept an `ImageContext`",
+    "category": "Feature",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Pass ImageContext to Brush function customization for designer-supplied colors in shaders.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/573",
+    "labels": [
+      "Type: New Feature",
+      ":green_circle:  P2",
+      "java"
+    ]
+  },
+  {
+    "number": 572,
+    "title": "Ensure updates of text brush function customization cause invalidations",
+    "category": "Bug",
+    "priority": "P3",
+    "confidence": 80,
+    "note": "Text brush customization updates dont trigger recomposition. Compose invalidation bug.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/572",
+    "labels": [
+      "Type: Bug",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 561,
+    "title": "Performance optimization for Rust layout implementation",
+    "category": "Layout",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Rust layout performance regressed, especially for list views. Needs profiling and optimization.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/561",
+    "labels": [
+      ":green_circle:  P2",
+      "layout"
+    ]
+  },
+  {
+    "number": 551,
+    "title": "DesignCompose does not download images larger than a certain size",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Large images not downloaded from Figma. Size limit or error handling issue.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/551",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 506,
+    "title": "[Question] Is Jetpack Compose- the future of developing Apps for Android Automotive?",
+    "category": "Question",
+    "priority": "Unset",
+    "confidence": 95,
+    "note": "Question: Is Jetpack Compose the future for AAOS apps? Not a bug - general question.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/506",
+    "labels": []
+  },
+  {
+    "number": 469,
+    "title": "Separate the JNI crate into Live Update and Layout",
+    "category": "Layout",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Separate JNI crate into Live Update and Layout for production builds without live update.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/469",
+    "labels": [
+      ":green_circle:  P2",
+      "layout"
+    ]
+  },
+  {
+    "number": 436,
+    "title": "Android Studio won't build/launch Tutorial's Release variant",
+    "category": "Bug",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Android Studio wont build Tutorial Release variant. Signing configuration issue.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/436",
+    "labels": [
+      "Type: Bug",
+      ":green_circle:  P2",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 435,
+    "title": "Create test to ensure that minifiied builds work properly.",
+    "category": "Infra",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Create test ensuring minified/proguarded builds work. Testing gap.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/435",
+    "labels": [
+      "engProd",
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 426,
+    "title": "Update readme for Figma import",
+    "category": "Docs",
+    "priority": "P3",
+    "confidence": 90,
+    "note": "Update Figma import README. Documentation update.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/426",
+    "labels": [
+      "documentation",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 405,
+    "title": "Add Rust layout unit tests",
+    "category": "Layout",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Add Rust layout unit tests for basic layouts. Testing improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/405",
+    "labels": [
+      ":green_circle:  P2",
+      "layout"
+    ]
+  },
+  {
+    "number": 398,
+    "title": "Text alignment with multiple lines is incorrect",
+    "category": "Layout",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Multi-line text alignment is incorrect. Text layout bug in Rust layout engine.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/398",
+    "labels": [
+      ":green_circle:  P2",
+      "layout"
+    ]
+  },
+  {
+    "number": 395,
+    "title": "Layout is broken on autolayout frames that are rotated",
+    "category": "Layout",
+    "priority": "P3",
+    "confidence": 85,
+    "note": "Layout broken on rotated auto-layout frames. Transform + layout interaction bug. Has screenshot.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/395",
+    "labels": [
+      ":blue_square:  P3",
+      "layout"
+    ]
+  },
+  {
+    "number": 341,
+    "title": "Constraints are not honored in frames that are used as replacement content",
+    "category": "Bug",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Constraints lost in replacement content frames. NodeQuery retrieval lacks parent context for constraint calc.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/341",
+    "labels": [
+      "Type: Bug",
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 291,
+    "title": "Progress markers are misaligned in instances",
+    "category": "Bug",
+    "priority": "P3",
+    "confidence": 80,
+    "note": "Progress markers misaligned in component instances. Offset from component origin incorrectly applied.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/291",
+    "labels": [
+      "Type: Bug",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 290,
+    "title": "Cleanup rectangle / bounding box setup",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Cleanup rectangle/bounding box setup in toolkit_schema.rs. Code cleanup to remove deprecated field.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/290",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 282,
+    "title": "Consider making an allowlist for recursive doc fetches",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Allowlist for recursive doc fetches to prevent accidental cross-file references from copy-paste.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/282",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 281,
+    "title": "Add logging of high-cost actions in the fetch process",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Add logging of expensive operations during fetch. Debug observability improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/281",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 279,
+    "title": "DesignDoc expands to full screen size even if not required",
+    "category": "Bug",
+    "priority": "P1",
+    "confidence": 90,
+    "note": "DesignDoc expands to full screen preventing sibling composables. Has clear repro on specific branch.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/279",
+    "labels": [
+      "Type: Bug",
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 278,
+    "title": "Document using DesignCompose to create a traditional Android View",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Document using DC to create individual Android Views (not full apps). Documentation gap for IME/system components.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/278",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 275,
+    "title": "Create figmaFileCommit and figmaFileFetch andCommit tasks, create developer script to update all serialized files in the repository.",
+    "category": "Enhancement",
+    "priority": "P1",
+    "confidence": 80,
+    "note": "Create Gradle tasks for fetching and committing serialized Figma files. Build tooling feature.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/275",
+    "labels": [
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 274,
+    "title": "Connect the figmaFileFetch task to the output of the Codegen task, add DSL, update documentation.",
+    "category": "Enhancement",
+    "priority": "P1",
+    "confidence": 80,
+    "note": "Connect figmaFileFetch to codegen output with DSL. Build pipeline integration.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/274",
+    "labels": [
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 273,
+    "title": "Create Gradle figmaFileFetch task, including bundling the Fetcher tool with the plugin.",
+    "category": "Enhancement",
+    "priority": "P1",
+    "confidence": 80,
+    "note": "Create Gradle figmaFileFetch task bundling fetcher tool. Build tooling feature.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/273",
+    "labels": [
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 272,
+    "title": "Incremental update support for Fetcher",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 75,
+    "note": "Incremental update support for Fetcher tool. Performance improvement for large files.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/272",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 271,
+    "title": "Update Kotlin and Rust to new Manifest schema",
+    "category": "Enhancement",
+    "priority": "P1",
+    "confidence": 75,
+    "note": "Update Kotlin and Rust to new Manifest schema. Schema migration task.",
+    "needs_more": "Yes",
+    "more_details": "Need new Manifest schema spec",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/271",
+    "labels": [
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 270,
+    "title": "Convert existing Kotlin JSON generation in Common and DesignCompose to use kotlinx.serialization",
+    "category": "Enhancement",
+    "priority": "P1",
+    "confidence": 80,
+    "note": "Convert Kotlin JSON generation to use kotlinx.serialization. Serialization framework migration.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/270",
+    "labels": [
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 269,
+    "title": "Manifest support for Fetcher",
+    "category": "Enhancement",
+    "priority": "P1",
+    "confidence": 75,
+    "note": "Manifest support for Fetcher tool. Feature addition to CLI tool.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/269",
+    "labels": [
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 268,
+    "title": "Add Fetcher support for figma token file",
+    "category": "Enhancement",
+    "priority": "P1",
+    "confidence": 85,
+    "note": "Add Figma token file support to Fetcher. Read token from ~/.config/figma_access_token.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/268",
+    "labels": [
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 250,
+    "title": "Replace all references to Figma \"documents\" with \"file\"in the source code / API",
+    "category": "Enhancement",
+    "priority": "P3",
+    "confidence": 95,
+    "note": "Replace \"document\" with \"file\" in source code/API to match Figma terminology. Find-and-replace.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/250",
+    "labels": [
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 249,
+    "title": "Add checks to Gradle to ensure that the Figma Token file is not world-readable",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Gradle check to ensure Figma token file is not world-readable. Security check.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/249",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 244,
+    "title": "Fix rendering of rotated nodes",
+    "category": "Bug",
+    "priority": "P1",
+    "confidence": 80,
+    "note": "Fix rendering of rotated nodes. Transform application bug. P1 bug.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/244",
+    "labels": [
+      "Type: Bug",
+      "Type: Customer Issue",
+      ":exclamation: P1",
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 225,
+    "title": "Live update stops working with frames containing large number of layers",
+    "category": "Customer",
+    "priority": "P1",
+    "confidence": 75,
+    "note": "Live update stops with large number of layers. Performance/memory issue with complex documents. P1.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/225",
+    "labels": [
+      "Type: Customer Issue",
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 177,
+    "title": "Implement lightweight theming using Variables",
+    "category": "Feature",
+    "priority": "P1",
+    "confidence": 80,
+    "note": "Implement lightweight theming via Figma Variables. Major feature - P1.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/177",
+    "labels": [
+      "Type: New Feature",
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 175,
+    "title": "Figma Absolute Position within AutoLayout is ignored and instead positioned in sequence of layering",
+    "category": "Bug",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Absolute position within AutoLayout is ignored - positioned in sequence instead. Clear Figma layout bug.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/175",
+    "labels": [
+      "Type: Bug",
+      "Type: Customer Issue",
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 163,
+    "title": "Document Android SDK support",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 90,
+    "note": "Document supported Android SDK versions. Simple documentation task.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/163",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 154,
+    "title": "Design switcher not visible",
+    "category": "Bug",
+    "priority": "P1",
+    "confidence": 80,
+    "note": "Design Switcher not visible in certain conditions. P1 customer issue.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/154",
+    "labels": [
+      "Type: Bug",
+      "help wanted",
+      "Type: Customer Issue",
+      ":exclamation: P1"
+    ]
+  },
+  {
+    "number": 142,
+    "title": "Design Switcher briefly shows \"Offline\" when switching documents",
+    "category": "Bug",
+    "priority": "P3",
+    "confidence": 85,
+    "note": "Design Switcher briefly shows \"Offline\" when switching documents. UI flicker bug.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/142",
+    "labels": [
+      "Type: Bug",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 136,
+    "title": "Impossible to fetch node under intersection/union",
+    "category": "Enhancement",
+    "priority": "P3",
+    "confidence": 75,
+    "note": "Cannot fetch nodes under intersection/union boolean operations. Figma node tree traversal limitation.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "No",
+    "url": "https://github.com/google/automotive-design-compose/issues/136",
+    "labels": [
+      "needs design",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 132,
+    "title": "Reorganize docs into a new set of categories",
+    "category": "Docs",
+    "priority": "P2",
+    "confidence": 90,
+    "note": "Reorganize documentation into new categories. Documentation restructuring.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/132",
+    "labels": [
+      "documentation",
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 131,
+    "title": "Add documentation covering Dials & Gauges for developers",
+    "category": "Enhancement",
+    "priority": "P2",
+    "confidence": 85,
+    "note": "Add Dials & Gauges developer documentation. Documentation gap.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/131",
+    "labels": [
+      ":green_circle:  P2"
+    ]
+  },
+  {
+    "number": 121,
+    "title": "Re-make doc page on Figma Interactions",
+    "category": "Docs",
+    "priority": "P3",
+    "confidence": 85,
+    "note": "Remake Figma Interactions documentation page.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/121",
+    "labels": [
+      "documentation",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 120,
+    "title": "Re-make doc page for Custom Fonts",
+    "category": "Docs",
+    "priority": "P3",
+    "confidence": 85,
+    "note": "Remake Custom Fonts documentation page.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/120",
+    "labels": [
+      "documentation",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 112,
+    "title": "\"Favorite docs\" - Add method for setting alternate Figma Files to load in the Design Switcher",
+    "category": "Customer",
+    "priority": "P3",
+    "confidence": 80,
+    "note": "\"Favorite docs\" - save alternate Figma files in Design Switcher. UX feature for multi-file workflows.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/112",
+    "labels": [
+      "needs design",
+      "Type: Customer Issue",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 103,
+    "title": "Allow for removal of Live Update code from production app",
+    "category": "Feature",
+    "priority": "P3",
+    "confidence": 80,
+    "note": "Allow removal of Live Update code from production app. Build configuration for stripping dev tooling.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/103",
+    "labels": [
+      "Type: New Feature",
+      "needs design",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 101,
+    "title": "Automatically stage Release Candidates to gMaven",
+    "category": "Infra",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Automatically stage Release Candidates to gMaven. CI/CD automation.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/101",
+    "labels": [
+      "engProd",
+      ":green_circle:  P2",
+      "Type: Task"
+    ]
+  },
+  {
+    "number": 97,
+    "title": "Create method for setting the Figma Token once per device",
+    "category": "Feature",
+    "priority": "P3",
+    "confidence": 85,
+    "note": "Set Figma Token once per device (persist across apps). Shared preference or system property approach.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/97",
+    "labels": [
+      "Type: New Feature",
+      "qol",
+      ":blue_square:  P3"
+    ]
+  },
+  {
+    "number": 95,
+    "title": "Add emulator tests to CI",
+    "category": "Infra",
+    "priority": "P1",
+    "confidence": 80,
+    "note": "Add emulator tests to CI. Infrastructure - GMD or FTL integration.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/95",
+    "labels": [
+      "needs design",
+      "engProd",
+      ":exclamation: P1",
+      "Type: Task"
+    ]
+  },
+  {
+    "number": 93,
+    "title": "Add method to input Figma Design Token via Design Switcher",
+    "category": "Feature",
+    "priority": "P3",
+    "confidence": 85,
+    "note": "Input Figma token via Design Switcher UI instead of adb command. UX improvement.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Emulator",
+    "url": "https://github.com/google/automotive-design-compose/issues/93",
+    "labels": [
+      "Type: New Feature",
+      "needs design",
+      "qol",
+      ":blue_square:  P3",
+      "top-qol"
+    ]
+  },
+  {
+    "number": 75,
+    "title": "Create method for fetching the serialized Figma files for an app via Gradle task",
+    "category": "Infra",
+    "priority": "P2",
+    "confidence": 80,
+    "note": "Gradle task for fetching serialized Figma files. Related to #273-275.",
+    "needs_more": "No",
+    "more_details": "",
+    "can_reproduce": "Code-only",
+    "url": "https://github.com/google/automotive-design-compose/issues/75",
+    "labels": [
+      "Type: Customer Issue",
+      "engProd",
+      ":green_circle:  P2"
+    ]
+  }
+]

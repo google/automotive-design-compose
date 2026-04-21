@@ -886,7 +886,6 @@ fun SquooshRoot(
                 }
             },
         )
-        designSwitcher()
 
         for (overlay in composableList.overlayNodes) {
             val contentAlignment: Alignment =
@@ -932,6 +931,10 @@ fun SquooshRoot(
                 )
             }
         }
+
+        // Render design switcher AFTER overlays so it's always
+        // the topmost z-order element and remains visible.
+        designSwitcher()
     }
 }
 

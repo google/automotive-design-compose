@@ -92,6 +92,7 @@ import com.android.designcompose.close
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
+import com.android.designcompose.decompose
 import com.android.designcompose.definition.element.dimensionProto
 import com.android.designcompose.definition.element.size
 import com.android.designcompose.definition.layout.copy
@@ -102,7 +103,6 @@ import com.android.designcompose.definition.plugin.overlayBackgroundOrNull
 import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.scrollInfoOrNull
 import com.android.designcompose.definition.view.transformOrNull
-import com.android.designcompose.decompose
 import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
@@ -1256,16 +1256,13 @@ private fun MeasureScope.squooshLayout(
 
                 // Extract rotation from the node's transform matrix. If the node
                 // has a non-zero rotation, use placeRelativeWithLayer to apply it.
-                // This fixes Bug #1279 where rotated replacement content nodes
-                // were placed without their rotation being applied.
-                val decomposed =
-                    node.style.nodeStyle.transformOrNull.decompose(density)
+                // This ensures that rotated replacement content nodes are
+                // always placed with their rotation being applied.
+                val decomposed = node.style.nodeStyle.transformOrNull.decompose(density)
                 val rotationAngle = decomposed.angle
 
                 if (rotationAngle != 0f) {
-                    placeable.placeRelativeWithLayer(x, y) {
-                        rotationZ = rotationAngle
-                    }
+                    placeable.placeRelativeWithLayer(x, y) { rotationZ = rotationAngle }
                 } else {
                     placeable.placeRelative(x, y)
                 }

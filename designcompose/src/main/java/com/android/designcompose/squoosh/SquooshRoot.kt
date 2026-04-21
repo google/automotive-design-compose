@@ -1240,10 +1240,12 @@ private fun MeasureScope.squooshLayout(
     // Without this, DesignDoc would report its full Figma design size (which may be
     // full-screen), preventing sibling composables from receiving any space.
     val layoutWidth =
-        (root.computedLayout!!.width * density).roundToInt()
+        (root.computedLayout!!.width * density)
+            .roundToInt()
             .coerceIn(constraints.minWidth, constraints.maxWidth)
     val layoutHeight =
-        (root.computedLayout!!.height * density).roundToInt()
+        (root.computedLayout!!.height * density)
+            .roundToInt()
             .coerceIn(constraints.minHeight, constraints.maxHeight)
     return layout(layoutWidth, layoutHeight) {
         // Place children in the parent layout

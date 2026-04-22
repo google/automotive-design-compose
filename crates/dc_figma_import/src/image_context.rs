@@ -24,6 +24,7 @@ use crate::figma_schema::{Paint, Transform};
 use crate::proxy_config::ProxyConfig;
 use dc_bundle::definition::EncodedImageMap;
 use image::DynamicImage;
+use log::warn;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
@@ -93,7 +94,7 @@ fn lookup_or_fetch(
                     return true;
                 }
                 Err(e) => {
-                    println!("Unable to fetch Figma Image URL {}: {:#?}", url, e);
+                    warn!("Unable to fetch Figma Image URL {}: {:#?}", url, e);
                 }
             }
         }

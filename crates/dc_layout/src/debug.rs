@@ -103,9 +103,9 @@ impl DumpAsCss for FlexWrap {
 impl DumpAsCss for taffy::Display {
     fn to_css_value(&self) -> String {
         match self {
-            //Display::Block => "block",
             Display::Flex => "flex",
             Display::None => "none",
+            _ => "unknown",
         }
         .to_string()
     }

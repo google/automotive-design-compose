@@ -34,6 +34,7 @@ pub mod reaction_schema;
 pub mod scalableui_schema;
 pub mod shader_schema;
 
+pub mod animation_spec_schema;
 pub mod tools;
 mod transform_flexbox;
 mod variable_utils;
@@ -54,3 +55,4 @@ pub use dc_bundle::definition::NodeQuery;
 pub use dc_bundle::definition_file::load_design_def;
 pub use dc_bundle::definition_file::save_design_def;
 pub use dc_bundle::view::{View, ViewData};
+pub mod animation_override;

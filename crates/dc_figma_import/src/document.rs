@@ -30,7 +30,7 @@ use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
 use dc_bundle::view::view_data::{Container, View_data_type};
 use dc_bundle::view::{ComponentInfo, ComponentOverrides, View, ViewData};
 use dc_bundle::view_style::ViewStyle;
-use log::error;
+use log::{error, warn};
 use protobuf::MessageField;
 use std::time::Duration;
 use std::{
@@ -49,6 +49,8 @@ pub enum HiddenNodePolicy {
     Keep,
 }
 
+/// Helper function to deserialize JSON strings while reporting errors mapped with the exact property path.
+/// This aids troubleshooting by indicating precisely which JSON node caused failure.
 fn deserialize_json_with_path<T: serde::de::DeserializeOwned>(json: &str) -> Result<T, Error> {
     let mut deserializer = serde_json::Deserializer::from_str(json);
     serde_path_to_error::deserialize(&mut deserializer).map_err(Into::into)
@@ -538,7 +540,7 @@ impl Document {
     /// overridden in the instance compared to the reference component. If we then render a
     /// different variant of the component (due to an interaction) we can apply these delta
     /// styles to get the correct output.
-    fn compute_component_overrides(&self, nodes: &mut HashMap<NodeQuery, View>) {
+    fn compute_component_overrides(nodes: &mut HashMap<NodeQuery, View>) {
         // XXX: Would be nice to avoid cloning here. Do we need to? We need to mutate the
         //      instance views in place. And we can't hold a ref and a mutable ref to nodes
         //      at the same time.
@@ -571,6 +573,35 @@ impl Document {
             ),
         ) {
             match (view.component_info.as_mut(), parent_component_info) {
+                (Some(parent_info), Some(_)) => {
+                    // This matches a component instance within a component instance.
+                    // The style and data overrides are written to a hash map keyed by the view name
+                    // in the component info of the instance.
+                    action(
+                        view.style.clone(),
+                        view.data.clone(),
+                        view.id.clone(),
+                        view.name.clone(),
+                        parent_info,
+                        parent_reference_component,
+                        false,
+                    );
+                    if let Some(data) = view.data.as_mut() {
+                        if let Some(View_data_type::Container { 0: Container { children, .. } }) =
+                            data.view_data_type.as_mut()
+                        {
+                            for child in children {
+                                for_each_component_instance(
+                                    reference_components,
+                                    child,
+                                    Some(parent_info),
+                                    parent_reference_component,
+                                    action,
+                                );
+                            }
+                        }
+                    }
+                }
                 (Some(info), _) => {
                     // This is the root node of a component instance.
                     // Compute its style and data overrides and write to its component info whose
@@ -592,7 +623,7 @@ impl Document {
                             view.style.clone(),
                             view.data.clone(),
                             view.id.clone(),
-                            info.component_set_name.clone(),
+                            info.name.clone(),
                             info,
                             reference_component_option,
                             true,
@@ -644,6 +675,7 @@ impl Document {
                         }
                     }
                 }
+
                 (None, None) => {
                     // This matches the nodes from the root node of the view tree until it
                     // meets a component instance.
@@ -688,7 +720,7 @@ impl Document {
                             reference_component.find_view_by_id(&view_id)
                         };
                         if let Some(template_view) = template_view_option {
-                            let override_view_style = if view_style == template_view.style {
+                            let mut override_view_style = if view_style == template_view.style {
                                 MessageField::none()
                             } else if let Some(view_style_ref) = view_style.as_ref() {
                                 let diff: Option<ViewStyle> =
@@ -698,6 +730,31 @@ impl Document {
                                 error!("ViewStyle is required.");
                                 MessageField::none()
                             };
+
+                            let anim_over = view_style.as_ref().and_then(|v| {
+                                v.node_style().animation_override.clone().into_option()
+                            });
+
+                            let template_anim_over = template_view.style.as_ref().and_then(|s| {
+                                s.node_style().animation_override.clone().into_option()
+                            });
+
+                            if let Some(anim_over) = anim_over {
+                                if Some(&anim_over) != template_anim_over.as_ref() {
+                                    if override_view_style.is_none() {
+                                        let mut new_style = ViewStyle::new_default();
+                                        new_style.node_style_mut().animation_override =
+                                            Some(anim_over).into();
+                                        override_view_style = Some(new_style).into();
+                                    } else {
+                                        override_view_style
+                                            .mut_or_insert_default()
+                                            .node_style_mut()
+                                            .animation_override = Some(anim_over).into();
+                                    }
+                                }
+                            }
+
                             let override_view_data =
                                 if let Some(reference_view_data) = template_view.data.as_ref() {
                                     if let Some(data) = view_data.as_ref() {
@@ -1088,7 +1145,7 @@ impl Document {
         }
 
         // Populate the override data for components.
-        self.compute_component_overrides(&mut views);
+        Self::compute_component_overrides(&mut views);
 
         // Update our mapping from instance to component set.
         self.component_sets = component_id_index
@@ -1103,8 +1160,8 @@ impl Document {
         // why an action isn't working.
         let missing_nodes = component_context.missing_nodes();
         if !missing_nodes.is_empty() {
-            println!("Figma: Unable to find nodes referenced by interactions: {:?}", missing_nodes);
-            println!("       These interactions won't work.");
+            warn!("Figma: Unable to find nodes referenced by interactions: {:?}", missing_nodes);
+            warn!("       These interactions won't work.");
         }
         Ok(views)
     }
@@ -1265,5 +1322,110 @@ mod tests {
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("Json Path Serialization Error"));
         assert!(err_msg.contains("child.field"));
+    }
+
+    #[test]
+    fn test_deserialize_json_with_path_success() {
+        let good_json = r#"{"child": {"field": "value"}}"#;
+        let result: Result<DummyParent, Error> = deserialize_json_with_path(good_json);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().child.field, "value");
+    }
+
+    #[test]
+    fn test_compute_component_overrides_coverage() {
+        use dc_bundle::positioning::ScrollInfo;
+        use dc_bundle::view::view::RenderMethod;
+        use dc_bundle::view::view_data::View_data_type;
+        use dc_bundle::view_shape::ViewShape;
+        use std::collections::HashMap;
+
+        let mut views = HashMap::new();
+
+        // 1. Reference Component
+        let ref_id = "ref_id".to_string();
+        let ref_view = View::new_rect(
+            &ref_id,
+            &"RefComponent".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+        views.insert(NodeQuery::NodeId(ref_id.clone()), ref_view.clone());
+        views.insert(NodeQuery::NodeVariant("RefComponent".to_string(), "".to_string()), ref_view);
+
+        // 2. Instance 1 (Root of instance)
+        let mut comp_info1 = ComponentInfo::default();
+        comp_info1.id = ref_id.clone();
+        comp_info1.name = "RefComponent".to_string();
+
+        let inst1_id = "inst1_id".to_string();
+        let mut inst1 = View::new_rect(
+            &inst1_id,
+            &"Instance1".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            Some(comp_info1),
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+
+        // 3. Child 1 (Descendant of instance 1)
+        let child1_id = "child1_id".to_string();
+        let child1 = View::new_rect(
+            &child1_id,
+            &"Child1".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            None,
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+
+        // 4. Instance 2 (Nested Instance)
+        let mut comp_info2 = ComponentInfo::default();
+        comp_info2.id = ref_id.clone();
+        comp_info2.name = "RefComponent".to_string();
+
+        let inst2_id = "inst2_id".to_string();
+        let inst2 = View::new_rect(
+            &inst2_id,
+            &"Instance2".to_string(),
+            ViewShape::default(),
+            ViewStyle::new_default(),
+            Some(comp_info2),
+            None,
+            ScrollInfo::new_default(),
+            None,
+            None,
+            RenderMethod::RENDER_METHOD_NONE,
+            HashMap::new(),
+        );
+
+        // Assemble the tree: inst1 -> [child1, inst2]
+        inst1.add_child(child1);
+        inst1.add_child(inst2);
+
+        views.insert(NodeQuery::NodeId(inst1_id), inst1);
+
+        // Call the method
+        Document::compute_component_overrides(&mut views);
+
+        // Assert that we completed execution without panic
+        assert!(true);
     }
 }

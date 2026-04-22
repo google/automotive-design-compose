@@ -29,6 +29,8 @@ object Feedback : FeedbackImpl() {
     private val lastMessage: MutableLiveData<String> = MutableLiveData("")
     val subscribers: HashMap<DesignDocId, (Int) -> Unit> = HashMap()
 
+    override fun getTimestamp(): Long = android.os.SystemClock.uptimeMillis()
+
     // Implementation-specific functions
     override fun logMessage(str: String, level: FeedbackLevel) {
         when (level) {

@@ -50,6 +50,9 @@ jobs:
       - uses: ./.github/actions/build-figma-resource
         with:
             resource: extended-layout-plugin
+      - uses: ./.github/actions/build-figma-resource
+        with:
+            resource: dc_squoosh_designer
 
 
   build-maven-repo:
@@ -164,6 +167,7 @@ jobs:
           zip -q -r "designcompose_m2repo-$REF_NAME.zip" designcompose_m2repo/
           zip -q -r "extended-layout-plugin-$REF_NAME.zip" extended-layout-plugin/
           zip -q -r "auto-content-preview-widget-$REF_NAME.zip" auto-content-preview-widget/
+          zip -q -r "dc_squoosh_designer-$REF_NAME.zip" dc_squoosh_designer/
 
       - name: Upload release artifacts
         env:
@@ -173,5 +177,89 @@ jobs:
           gh release upload "$REF_NAME" \
           "extended-layout-plugin-$REF_NAME.zip" \
           "auto-content-preview-widget-$REF_NAME.zip" \
+          "dc_squoosh_designer-$REF_NAME.zip" \
           "designcompose_m2repo-$REF_NAME.zip" \
           figma-tools-*/*
+
+  publish-crates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Build
+        uses: ./.github/actions/setup-build
+        with:
+          setup-rust: true
+
+      - name: Publish dc_bundle
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        working-directory: crates/dc_bundle
+        run: |
+          for _ in 1 2 3 4 5; do
+            cargo publish && exit 0
+            sleep 15
+          done
+          exit 1
+
+      - name: Publish dc_layout
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        working-directory: crates/dc_layout
+        run: |
+          for _ in 1 2 3 4 5; do
+            cargo publish && exit 0
+            sleep 15
+          done
+          exit 1
+
+      - name: Publish dc_figma_import
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        working-directory: crates/dc_figma_import
+        run: |
+          for _ in 1 2 3 4 5; do
+            cargo publish && exit 0
+            sleep 15
+          done
+          exit 1
+
+      - name: Publish dc_jni
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        working-directory: crates/dc_jni
+        run: |
+          for _ in 1 2 3 4 5; do
+            cargo publish && exit 0
+            sleep 15
+          done
+          exit 1
+
+      - name: Publish dc_squoosh_animation
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        working-directory: crates/dc_squoosh_animation
+        run: |
+          for _ in 1 2 3 4 5; do
+            cargo publish && exit 0
+            sleep 15
+          done
+          exit 1
+
+      - name: Publish dc_squoosh_parser
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        working-directory: support-figma/dc_squoosh_designer/rs
+        run: |
+          for _ in 1 2 3 4 5; do
+            cargo publish && exit 0
+            sleep 15
+          done
+          exit 1

@@ -2478,3 +2478,110 @@ fn test_animation_override_plugin_data() {
 
     assert!(view.style.unwrap().node_style.unwrap().animation_override.is_some());
 }
+
+/// Verify that a child frame with layout_positioning: ABSOLUTE inside
+/// an AutoLayout parent gets POSITION_TYPE_ABSOLUTE and proper insets.
+#[test]
+fn test_absolute_position_in_autolayout_import() {
+    use crate::figma_schema;
+    use dc_bundle::geometry::dimension_proto::Dimension;
+    use dc_bundle::positioning::PositionType;
+
+    // Create an AutoLayout parent (horizontal)
+    let parent_json = r##"{
+        "id": "1:1",
+        "name": "AutoLayoutParent",
+        "visible": true,
+        "type": "FRAME",
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 400, "height": 300 },
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisSizingMode": "FIXED",
+        "counterAxisSizingMode": "FIXED",
+        "layoutPositioning": "AUTO",
+        "children": [
+            {
+                "id": "2:1",
+                "name": "AbsoluteChild",
+                "visible": true,
+                "type": "FRAME",
+                "absoluteBoundingBox": { "x": 150, "y": 100, "width": 80, "height": 60 },
+                "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+                "layoutMode": "NONE",
+                "primaryAxisSizingMode": "FIXED",
+                "counterAxisSizingMode": "FIXED",
+                "layoutPositioning": "ABSOLUTE",
+                "children": [],
+                "fills": [],
+                "strokes": [],
+                "sharedPluginData": {}
+            }
+        ],
+        "fills": [],
+        "strokes": [],
+        "sharedPluginData": {}
+    }"##;
+
+    let node: figma_schema::Node = serde_json::from_str(parent_json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let parent_view = create_component_flexbox(
+        &node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        crate::document::HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+
+    // Get the child view
+    let child_layout = if let Some(data) = parent_view.data.as_ref() {
+        if let Some(dc_bundle::view::view_data::View_data_type::Container(
+            dc_bundle::view::view_data::Container { children, .. },
+        )) = &data.view_data_type
+        {
+            assert_eq!(children.len(), 1, "Parent should have one child");
+            children[0].style().layout_style().clone()
+        } else {
+            panic!("Parent should be a Container");
+        }
+    } else {
+        panic!("Parent should have data");
+    };
+
+    // The child should have POSITION_TYPE_ABSOLUTE
+    assert_eq!(
+        child_layout.position_type,
+        PositionType::POSITION_TYPE_ABSOLUTE.into(),
+        "Absolute-positioned child in AutoLayout should have POSITION_TYPE_ABSOLUTE"
+    );
+
+    // The left margin should be 150 (child x=150 - parent x=0)
+    let left_margin = child_layout
+        .margin
+        .as_ref()
+        .and_then(|m| m.start.as_ref())
+        .and_then(|d| d.Dimension.as_ref())
+        .and_then(|d| match d {
+            Dimension::Points(p) => Some(p),
+            _ => None,
+        });
+    assert_eq!(left_margin, Some(&150.0), "Left margin should be 150 (child_x - parent_x)");
+
+    // The top margin should be 100 (child y=100 - parent y=0)
+    let top_margin = child_layout
+        .margin
+        .as_ref()
+        .and_then(|m| m.top.as_ref())
+        .and_then(|d| d.Dimension.as_ref())
+        .and_then(|d| match d {
+            Dimension::Points(p) => Some(p),
+            _ => None,
+        });
+    assert_eq!(top_margin, Some(&100.0), "Top margin should be 100 (child_y - parent_y)");
+}

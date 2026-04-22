@@ -1236,17 +1236,15 @@ private fun MeasureScope.squooshLayout(
     scrollOffset: State<Offset>,
     constraints: Constraints = Constraints(),
 ): MeasureResult {
-    // Bug #279: Constrain the reported layout size to the parent's constraints.
+    // Constrain the reported layout size to the parent's max constraints.
     // Without this, DesignDoc would report its full Figma design size (which may be
     // full-screen), preventing sibling composables from receiving any space.
+    // We only cap to maxWidth/maxHeight — we do NOT force up to minWidth/minHeight
+    // because that could distort content (e.g. padding/margins).
     val layoutWidth =
-        (root.computedLayout!!.width * density)
-            .roundToInt()
-            .coerceIn(constraints.minWidth, constraints.maxWidth)
+        (root.computedLayout!!.width * density).roundToInt().coerceAtMost(constraints.maxWidth)
     val layoutHeight =
-        (root.computedLayout!!.height * density)
-            .roundToInt()
-            .coerceIn(constraints.minHeight, constraints.maxHeight)
+        (root.computedLayout!!.height * density).roundToInt().coerceAtMost(constraints.maxHeight)
     return layout(layoutWidth, layoutHeight) {
         // Place children in the parent layout
         placeables.forEach { placeable ->

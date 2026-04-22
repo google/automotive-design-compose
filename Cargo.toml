@@ -4,7 +4,7 @@ members = ["crates/dc_figma_import", "crates/dc_jni", "crates/dc_layout", "crate
 
 [workspace.package]
 # LINT.IfChange
-version = "0.39.0"
+version = "0.39.1"
 # LINT.ThenChange(gradle/libs.versions.toml)
 edition = "2021"
 authors = ["DesignCompose Team <aae-design-compose@google.com>"]
@@ -21,12 +21,12 @@ panic = 'abort'
 
 [workspace.dependencies]
 # dc_* crates specify a version because they are dependencies published on crates.io
-dc_bundle = { version = "0.39.0", path = "crates/dc_bundle" }
-dc_layout = { version = "0.39.0", path = "crates/dc_layout" }
-dc_figma_import = { version = "0.39.0", path = "crates/dc_figma_import" }
-dc_jni = { version = "0.39.0", path = "crates/dc_jni" }
-dc_squoosh_animation = { version = "0.39.0", path = "crates/dc_squoosh_animation" }
-dc_squoosh_parser = { version = "0.39.0", path = "support-figma/dc_squoosh_designer/rs" }
+dc_bundle = { version = "0.39.1", path = "crates/dc_bundle" }
+dc_layout = { version = "0.39.1", path = "crates/dc_layout" }
+dc_figma_import = { version = "0.39.1", path = "crates/dc_figma_import" }
+dc_jni = { version = "0.39.1", path = "crates/dc_jni" }
+dc_squoosh_animation = { version = "0.39.1", path = "crates/dc_squoosh_animation" }
+dc_squoosh_parser = { version = "0.39.1", path = "support-figma/dc_squoosh_designer/rs" }
 android_logger = "0.13.1"
 anyhow = "1.0"
 

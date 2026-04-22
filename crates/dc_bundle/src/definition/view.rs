@@ -91,6 +91,7 @@ impl NodeStyle {
             hyperlink: None.into(),
             shader_data: None.into(),
             scalable_data: None.into(),
+            animation_override: None.into(),
             ..Default::default()
         }
     }
@@ -317,6 +318,19 @@ impl ViewStyle {
         if self.node_style().meter_data != other.node_style().meter_data {
             delta.node_style_mut().meter_data = other.node_style().meter_data.clone();
         }
+        if self.node_style().horizontal_sizing != other.node_style().horizontal_sizing {
+            delta.node_style_mut().horizontal_sizing = other.node_style().horizontal_sizing;
+        }
+        if self.node_style().vertical_sizing != other.node_style().vertical_sizing {
+            delta.node_style_mut().vertical_sizing = other.node_style().vertical_sizing;
+        }
+        if self.node_style().scalable_data != other.node_style().scalable_data {
+            delta.node_style_mut().scalable_data = other.node_style().scalable_data.clone();
+        }
+        if self.node_style().animation_override != other.node_style().animation_override {
+            delta.node_style_mut().animation_override =
+                other.node_style().animation_override.clone();
+        }
         delta
     }
 }
@@ -541,11 +555,13 @@ mod tests {
         style2.node_style_mut().opacity = Some(0.5);
         style2.node_style_mut().letter_spacing = Some(1.2);
         style2.layout_style_mut().flex_grow = 1.0;
+        style2.node_style_mut().meter_data = Some(Default::default()).into();
 
         let diff = style1.difference(&style2);
         assert_eq!(diff.node_style().opacity, Some(0.5));
         assert_eq!(diff.node_style().letter_spacing, Some(1.2));
         assert_eq!(diff.layout_style().flex_grow, 1.0);
+        assert_eq!(diff.node_style().meter_data, Some(Default::default()).into());
 
         // Test no difference
         style1.node_style_mut().opacity = Some(0.5);
@@ -609,6 +625,11 @@ mod tests {
         assert_eq!(diff3.layout_style().flex_direction, style4.layout_style().flex_direction);
         assert_eq!(diff3.layout_style().align_items, style4.layout_style().align_items);
         assert_eq!(diff3.layout_style().margin, style4.layout_style().margin.clone());
+        assert_eq!(
+            diff3.node_style().animation_override,
+            style4.node_style().animation_override.clone()
+        );
+        assert_eq!(diff3.node_style().horizontal_sizing, style4.node_style().horizontal_sizing);
 
         // Test no difference with all properties set
         style3 = style4.clone();
@@ -644,6 +665,10 @@ mod tests {
             crate::positioning::AlignItems::ALIGN_ITEMS_STRETCH
         );
         assert_eq!(diff4.layout_style().margin, ViewStyle::new_default().layout_style().margin);
+        assert_eq!(
+            diff4.node_style().animation_override,
+            ViewStyle::new_default().node_style().animation_override
+        );
     }
 
     #[test]

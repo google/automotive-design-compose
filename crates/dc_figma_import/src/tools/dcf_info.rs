@@ -67,18 +67,18 @@ impl From<DcfError> for ParseError {
 #[derive(Parser, Debug)]
 pub struct Args {
     // Path to the .dcf file to deserialize
-    dcf_file: std::path::PathBuf,
+    pub dcf_file: std::path::PathBuf,
     // Optional string argument to dump file structure from a given node root.
     #[clap(long, short)]
-    node: Option<String>,
+    pub node: Option<String>,
     #[clap(long)]
-    varinfo: bool,
+    pub varinfo: bool,
     // Output format as JSON
     #[clap(long)]
-    json: bool,
+    pub json: bool,
     // Output file path
     #[clap(long, short)]
-    output: Option<std::path::PathBuf>,
+    pub output: Option<std::path::PathBuf>,
 }
 
 pub fn dcf_info(args: Args) -> Result<(), ParseError> {

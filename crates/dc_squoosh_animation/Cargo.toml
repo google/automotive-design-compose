@@ -1,0 +1,13 @@
+[package]
+name = "dc_squoosh_animation"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+dc_bundle.workspace = true
+thiserror = "1.0"
+log.workspace = true

@@ -329,18 +329,22 @@ internal fun resolveVariantsRecursively(
     view.reactionsList.forEach { r ->
         hasSupportedInteraction = hasSupportedInteraction || r.trigger.isSupportedInteraction()
         if (r.trigger.hasKeyDown()) {
-            // Register to be a listener for key reactions on this node
-            val keyTrigger = r.trigger.keyDown
-            val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.keyCodes.toList())
-            val keyAction =
-                KeyAction(
-                    interactionState,
-                    r.action,
-                    findTargetInstanceId(document, parentComps, r.action),
-                    customizations.getKey(),
-                    null,
-                )
-            keyTracker.addListener(keyEvent, keyAction)
+            // Only register key event listeners during the base phase to avoid
+            // processing key events twice during animated transitions (Issue #1514).
+            if (variantTransition.treeBuildPhase == TreeBuildPhase.BasePhase) {
+                // Register to be a listener for key reactions on this node
+                val keyTrigger = r.trigger.keyDown
+                val keyEvent = DesignKeyEvent.fromJsKeyCodes(keyTrigger.keyCodes.toList())
+                val keyAction =
+                    KeyAction(
+                        interactionState,
+                        r.action,
+                        findTargetInstanceId(document, parentComps, r.action),
+                        customizations.getKey(),
+                        null,
+                    )
+                keyTracker.addListener(keyEvent, keyAction)
+            }
         }
     }
     val tapCallback = customizations.getTapCallback(view)

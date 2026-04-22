@@ -12,7 +12,7 @@ repository.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 log.workspace = true
-dc_squoosh_animation = { path = "../../../crates/dc_squoosh_animation" }
+dc_squoosh_animation.workspace = true
 
 [dev-dependencies]
 env_logger.workspace = true

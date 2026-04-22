@@ -92,6 +92,7 @@ import com.android.designcompose.close
 import com.android.designcompose.common.DesignDocId
 import com.android.designcompose.common.DocumentServerParams
 import com.android.designcompose.common.NodeQuery
+import com.android.designcompose.decompose
 import com.android.designcompose.definition.element.dimensionProto
 import com.android.designcompose.definition.element.size
 import com.android.designcompose.definition.layout.copy
@@ -101,6 +102,7 @@ import com.android.designcompose.definition.plugin.colorOrNull
 import com.android.designcompose.definition.plugin.overlayBackgroundOrNull
 import com.android.designcompose.definition.view.copy
 import com.android.designcompose.definition.view.scrollInfoOrNull
+import com.android.designcompose.definition.view.transformOrNull
 import com.android.designcompose.dispatch
 import com.android.designcompose.doc
 import com.android.designcompose.getContent
@@ -886,7 +888,6 @@ fun SquooshRoot(
                 }
             },
         )
-        designSwitcher()
 
         for (overlay in composableList.overlayNodes) {
             val contentAlignment: Alignment =
@@ -932,6 +933,10 @@ fun SquooshRoot(
                 )
             }
         }
+
+        // Render design switcher AFTER overlays so it's always
+        // the topmost z-order element and remains visible.
+        designSwitcher()
     }
 }
 
@@ -1068,7 +1073,7 @@ private fun squooshLayoutMeasurePolicy(
             // how Composable child nodes (used for input and hosting
             // external Composables) get placed.
             val placeables = squooshMeasure(measurables, constraints)
-            return squooshLayout(root, density, placeables, scrollOffset)
+            return squooshLayout(root, density, placeables, scrollOffset, constraints)
         }
 
         // These intrinsic calculations could be optimized to only copy out
@@ -1229,11 +1234,18 @@ private fun MeasureScope.squooshLayout(
     density: Float,
     placeables: List<Placeable>,
     scrollOffset: State<Offset>,
+    constraints: Constraints = Constraints(),
 ): MeasureResult {
-    return layout(
-        (root.computedLayout!!.width * density).roundToInt(),
-        (root.computedLayout!!.height * density).roundToInt(),
-    ) {
+    // Constrain the reported layout size to the parent's max constraints.
+    // Without this, DesignDoc would report its full Figma design size (which may be
+    // full-screen), preventing sibling composables from receiving any space.
+    // We only cap to maxWidth/maxHeight — we do NOT force up to minWidth/minHeight
+    // because that could distort content (e.g. padding/margins).
+    val layoutWidth =
+        (root.computedLayout!!.width * density).roundToInt().coerceAtMost(constraints.maxWidth)
+    val layoutHeight =
+        (root.computedLayout!!.height * density).roundToInt().coerceAtMost(constraints.maxHeight)
+    return layout(layoutWidth, layoutHeight) {
         // Place children in the parent layout
         placeables.forEach { placeable ->
             val squooshData = placeable.parentData as? SquooshParentData
@@ -1242,15 +1254,7 @@ private fun MeasureScope.squooshLayout(
             if (node == null) {
                 placeable.placeRelative(x = 0, y = 0)
             } else {
-                // Ok, we can look up the position and transform by iterating over the
-                // parents. We don't support transforms here yet. Child composables will
-                // be rendered with transforms, but won't use them for input.
-                //
-                // We always take the offset from the root, but if there are layers of
-                // custom composables (containing each other) then this will give the
-                // wrong offset.
-                //
-                // XXX XXX: Create ticket to implement transformed input.
+                // Look up the position by iterating over the parents.
                 val offsetFromRoot = node.offsetFromAncestor()
 
                 var x = (offsetFromRoot.x * density).roundToInt()
@@ -1259,7 +1263,19 @@ private fun MeasureScope.squooshLayout(
                     x -= scrollOffset.value.x.roundToInt()
                     y -= scrollOffset.value.y.roundToInt()
                 }
-                placeable.placeRelative(x, y)
+
+                // Extract rotation from the node's transform matrix. If the node
+                // has a non-zero rotation, use placeRelativeWithLayer to apply it.
+                // This ensures that rotated replacement content nodes are
+                // always placed with their rotation being applied.
+                val decomposed = node.style.nodeStyle.transformOrNull.decompose(density)
+                val rotationAngle = decomposed.angle
+
+                if (rotationAngle != 0f) {
+                    placeable.placeRelativeWithLayer(x, y) { rotationZ = rotationAngle }
+                } else {
+                    placeable.placeRelative(x, y)
+                }
             }
         }
     }

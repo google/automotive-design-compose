@@ -1178,4 +1178,79 @@ mod tests {
         assert_eq!(lm.get_node_layout(3).unwrap().left, 0.0);
         assert_eq!(lm.get_node_layout(2).unwrap().left, 80.0);
     }
+
+    /// Absolute-positioned child inside a flex (AutoLayout) parent should be
+    /// positioned using its insets (left/top), NOT placed in the flex sequence.
+    #[test]
+    fn test_absolute_position_in_autolayout() {
+        let mut lm = create_layout_manager();
+
+        // Parent is a horizontal AutoLayout (flex row) container
+        lm.add_style(
+            1,
+            -1,
+            0,
+            create_container_style(400.0, 300.0, FlexDirection::FLEX_DIRECTION_ROW),
+            "autolayout_parent".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+
+        // Normal flex child (participates in flow)
+        lm.add_style(
+            2,
+            1,
+            0,
+            create_sized_style(100.0, 50.0),
+            "flex_child".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+
+        // Absolute-positioned child (should NOT participate in flow)
+        let mut abs_style = create_sized_style(80.0, 60.0);
+        abs_style.position_type = PositionType::POSITION_TYPE_ABSOLUTE.into();
+        abs_style.left = DimensionProto::new_points(150.0);
+        abs_style.top = DimensionProto::new_points(100.0);
+        lm.add_style(3, 1, 1, abs_style, "abs_child".into(), false, None, None).unwrap();
+
+        // Another normal flex child
+        lm.add_style(
+            4,
+            1,
+            2,
+            create_sized_style(120.0, 50.0),
+            "flex_child2".into(),
+            false,
+            None,
+            None,
+        )
+        .unwrap();
+
+        lm.compute_node_layout(1);
+
+        // The first flex child should be at left=0 (start of flow)
+        let l_flex1 = lm.get_node_layout(2).unwrap();
+        assert_eq!(l_flex1.left, 0.0, "First flex child should start at left=0");
+
+        // The absolute child should be at its specified inset position,
+        // NOT after the first flex child in the flow
+        let l_abs = lm.get_node_layout(3).unwrap();
+        assert_eq!(l_abs.left, 150.0, "Absolute child should use left inset");
+        assert_eq!(l_abs.top, 100.0, "Absolute child should use top inset");
+        assert_eq!(l_abs.width, 80.0);
+        assert_eq!(l_abs.height, 60.0);
+
+        // The second flex child should be placed right after the first flex child,
+        // as if the absolute child doesn't exist in the flow
+        let l_flex2 = lm.get_node_layout(4).unwrap();
+        assert_eq!(
+            l_flex2.left, 100.0,
+            "Second flex child should be placed after first (at 100.0), ignoring absolute child"
+        );
+    }
 }

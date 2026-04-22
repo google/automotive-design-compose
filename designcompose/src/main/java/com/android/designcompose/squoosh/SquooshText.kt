@@ -77,6 +77,7 @@ internal class TextMeasureCache {
         val data: TextMeasureData,
         val text: String?,
         val customStyle: TextStyle?,
+        val customBrush: androidx.compose.ui.graphics.Brush?,
         val annotatedText: String,
         val textStyle: TextStyle,
         // XXX: Do we need to use the annotated string? This impl might break localization.
@@ -148,11 +149,16 @@ internal fun squooshComputeTextInfo(
             )
         }
 
+    // Evaluate the custom brush BEFORE the cache check so that
+    // brush function changes (e.g., from State updates) invalidate the cache.
+    val customBrush = customizations.getBrush(v.name)
+
     val cachedText = textMeasureCache.get(layoutId)
     if (
         cachedText != null &&
             cachedText.text == customizedText &&
-            cachedText.customStyle == customTextStyle
+            cachedText.customStyle == customTextStyle &&
+            cachedText.customBrush == customBrush
     ) {
         textHash.add(cachedText.annotatedText)
         textMeasureCache.put(layoutId, cachedText)
@@ -274,7 +280,6 @@ internal fun squooshComputeTextInfo(
     val letterSpacing =
         customTextStyle?.letterSpacing
             ?: (v.style.nodeStyle.takeIf { it.hasLetterSpacing() }?.letterSpacing ?: 0f).sp
-    val customBrush = customizations.getBrush(v.name)
     // Call this helper to get the font color since the proto field has changed over time
     val fontColor = protoVersionsFontColor(v.style)
     val textBrushAndOpacity =
@@ -344,6 +349,7 @@ internal fun squooshComputeTextInfo(
             textMeasureData,
             customizedText,
             customTextStyle,
+            customBrush,
             annotatedText.text,
             textStyle,
         ),

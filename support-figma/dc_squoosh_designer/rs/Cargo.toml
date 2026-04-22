@@ -1,5 +1,6 @@
 [package]
 name = "dc_squoosh_parser"
+description = "Parser for DesignCompose Squoosh Figma plugin data"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

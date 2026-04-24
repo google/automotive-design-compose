@@ -197,8 +197,13 @@ fn compute_layout(
         })
         .into();
 
+        let item_spacing = if frame.primary_axis_align_items == figma_schema::LayoutAlignItems::SpaceBetween {
+            0
+        } else {
+            frame.item_spacing as i32
+        };
         style.layout_style_mut().item_spacing = Some(ItemSpacing {
-            ItemSpacingType: Some(item_spacing::ItemSpacingType::Fixed(frame.item_spacing as i32)),
+            ItemSpacingType: Some(item_spacing::ItemSpacingType::Fixed(item_spacing)),
             ..Default::default()
         })
         .into();
@@ -1401,6 +1406,11 @@ fn visit_node(
             if extended_auto_layout.auto_layout_data.space_between {
                 style.layout_style_mut().justify_content =
                     JustifyContent::JUSTIFY_CONTENT_SPACE_BETWEEN.into();
+                style.layout_style_mut().item_spacing = Some(ItemSpacing {
+                    ItemSpacingType: Some(item_spacing::ItemSpacingType::Fixed(0)),
+                    ..Default::default()
+                })
+                .into();
             }
             is_widget_list = true;
             size_policy = extended_auto_layout.auto_layout_data.size_policy;

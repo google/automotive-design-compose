@@ -1,3 +1,17 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 [versions]
 # DesignCompose
 # LINT.IfChange
@@ -57,6 +71,7 @@ ktfmt = "0.52"
 material = "1.12.0"
 mockk = "1.13.17"
 mockito = "5.12.0"
+okhttp = "4.12.0"
 junit5 = "5.11.4"
 truth = "1.4.4"
 spotless = "7.0.2"
@@ -139,6 +154,7 @@ mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 google-truth = { module = "com.google.truth:truth", version.ref = "truth" }
 junit-jupiter = {module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 
 robolectric = {module = "org.robolectric:robolectric", version.ref = "robolectric"}
 roborazzi = {module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi"}

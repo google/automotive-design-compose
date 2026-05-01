@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,18 +30,37 @@ use dc_bundle::variable::{Collection, Mode, Variable, VariableMap};
 use dc_bundle::view::view_data::{Container, View_data_type};
 use dc_bundle::view::{ComponentInfo, ComponentOverrides, View, ViewData};
 use dc_bundle::view_style::ViewStyle;
-use log::{error, warn};
+use log::{error, info, warn};
 use protobuf::MessageField;
-use std::time::Duration;
 use std::{
     collections::{HashMap, HashSet},
     iter::FromIterator,
+    sync::{LazyLock, Mutex},
 };
 
-const FIGMA_TOKEN_HEADER: &str = "X-Figma-Token";
 const BASE_FILE_URL: &str = "https://api.figma.com/v1/files/";
 const BASE_COMPONENT_URL: &str = "https://api.figma.com/v1/components/";
 const BASE_PROJECT_URL: &str = "https://api.figma.com/v1/projects/";
+
+/// Per-document cache for expensive data that doesn't change on text/color edits.
+/// Populated on the initial full fetch and reused on subsequent update cycles.
+#[derive(Clone)]
+struct SmartCacheEntry {
+    /// Cached /images API response (image hash → URL)
+    image_refs: HashMap<String, Option<String>>,
+    /// Cached /variables API response
+    variables_responses: HashMap<String, figma_schema::VariablesResponse>,
+    /// Cached remote component prefetch results (component key → JSON)
+    prefetched_components: HashMap<String, String>,
+    /// Cached variant nodes from remote libraries
+    variant_nodes: HashMap<String, figma_schema::Node>,
+    /// Component keys that previously failed (404, 429, etc.)
+    failed_component_keys: HashSet<String>,
+}
+
+/// Process-wide smart cache, keyed by Figma document ID.
+static SMART_CACHE: LazyLock<Mutex<HashMap<String, SmartCacheEntry>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum HiddenNodePolicy {
@@ -57,22 +76,7 @@ fn deserialize_json_with_path<T: serde::de::DeserializeOwned>(json: &str) -> Res
 }
 
 fn http_fetch(api_key: &str, url: String, proxy_config: &ProxyConfig) -> Result<String, Error> {
-    let mut client_builder = reqwest::blocking::Client::builder();
-    // Only HttpProxyConfig is supported.
-    if let ProxyConfig::HttpProxyConfig(spec) = proxy_config {
-        client_builder = client_builder.proxy(reqwest::Proxy::all(spec)?);
-    }
-
-    let body = client_builder
-        .timeout(Duration::from_secs(90))
-        .build()?
-        .get(url.as_str())
-        .header(FIGMA_TOKEN_HEADER, api_key)
-        .send()?
-        .error_for_status()?
-        .text()?;
-
-    Ok(body)
+    crate::http_client::http_fetch(api_key, url, proxy_config)
 }
 
 /// Document update requests return this value to indicate if an update was
@@ -134,6 +138,28 @@ pub struct Document {
     pub branches: Vec<FigmaDocInfo>,
     key_to_global_id_map: HashMap<String, String>,
     remote_node_responses: HashMap<(String, String), figma_schema::NodesResponse>,
+    /// Tracks remote document IDs whose image refs have already been fetched
+    /// to avoid redundant API calls within a single fetch cycle.
+    fetched_remote_images: HashSet<String>,
+    /// Cache of pre-fetched remote component key responses.
+    /// Populated by `prefetch_remote_components()` before the main tree walk.
+    /// Key: component key, Value: JSON response body.
+    prefetched_components: HashMap<String, String>,
+    /// Tracks top-level node structure for selective re-fetching.
+    node_tracker: crate::node_tracker::NodeTracker,
+    /// Content hashes of views from the last conversion, for incremental diffs.
+    last_view_hashes: HashMap<String, String>,
+    /// Cached mapping of query names (e.g., "#android-stage") to Figma node IDs
+    /// (e.g., "12093:22798"). Populated on first node-scoped fetch and reused on
+    /// subsequent update() calls to skip the expensive depth=2 structure fetch.
+    cached_node_ids: HashMap<String, String>,
+    /// Component keys that previously returned errors (404, 429, etc.).
+    /// Skipped on subsequent prefetch rounds to avoid wasting API calls.
+    failed_component_keys: HashSet<String>,
+    /// Whether this Document was created as an update (vs initial load).
+    /// On updates, remote component resolution is skipped since library
+    /// components don't change on text/color edits.
+    is_update: bool,
 }
 
 fn parse_document_id(document_id: &str) -> String {
@@ -160,6 +186,25 @@ fn parse_document_id(document_id: &str) -> String {
 impl Document {
     pub fn root_node(&self) -> &figma_schema::Node {
         &self.document_root.document
+    }
+
+    /// Discover all top-level frame/component nodes from the document's pages.
+    ///
+    /// Iterates document → pages → children and returns the names of all
+    /// visible top-level nodes. This enables dynamic root node discovery
+    /// without requiring compile-time `@DesignComponent` annotations.
+    pub fn discover_top_level_nodes(&self) -> Vec<String> {
+        let mut names = Vec::new();
+        // document.children = pages
+        for page in &self.document_root.document.children {
+            // page.children = top-level frames, components, etc.
+            for node in &page.children {
+                if node.visible && !node.name.is_empty() {
+                    names.push(node.name.clone());
+                }
+            }
+        }
+        names
     }
     /// Fetch a document from Figma and return a Document instance that can be used
     /// to extract toolkit nodes.
@@ -199,7 +244,20 @@ impl Document {
         let branches = get_branches(&document_root);
         let mut variables_responses = HashMap::new();
         match Self::fetch_variables(api_key, &document_id, proxy_config).map_err(Error::from) {
-            Ok(it) => {
+            Ok(mut it) => {
+                let mut resolver = crate::library_resolver::LibraryResolver::new(
+                    api_key.to_string(),
+                    proxy_config.clone(),
+                );
+                resolver.discover_component_dependencies(&document_id, &document_root.components);
+                resolver.discover_variable_dependencies(&document_id, &it);
+                let remote_vars = resolver.fetch_all_library_variables(&document_id);
+                for (_, remote_var_response) in remote_vars {
+                    it.meta.variables.extend(remote_var_response.meta.variables);
+                    it.meta
+                        .variable_collections
+                        .extend(remote_var_response.meta.variable_collections);
+                }
                 variables_responses.insert(document_id.clone(), it);
             }
             Err(err) => {
@@ -220,6 +278,13 @@ impl Document {
             branches,
             key_to_global_id_map: HashMap::new(),
             remote_node_responses: HashMap::new(),
+            fetched_remote_images: HashSet::new(),
+            prefetched_components: HashMap::new(),
+            node_tracker: crate::node_tracker::NodeTracker::new(),
+            last_view_hashes: HashMap::new(),
+            cached_node_ids: HashMap::new(),
+            failed_component_keys: HashSet::new(),
+            is_update: false,
         })
     }
 
@@ -264,9 +329,356 @@ impl Document {
             .map(Some)
     }
 
+    /// Resolve query names (e.g., "#android-stage") to Figma node IDs
+    /// by scanning the depth=2 document tree.
+    fn resolve_query_node_ids(
+        document: &figma_schema::Node,
+        query_names: &[String],
+    ) -> HashMap<String, String> {
+        let mut result = HashMap::new();
+        // Build a name → id map from the document tree (depth=2 has pages → top-level nodes)
+        fn scan_for_names(node: &figma_schema::Node, name_to_id: &mut HashMap<String, String>) {
+            if !node.name.is_empty() {
+                name_to_id.insert(node.name.clone(), node.id.clone());
+            }
+            for child in &node.children {
+                scan_for_names(child, name_to_id);
+            }
+        }
+
+        let mut name_to_id = HashMap::new();
+        scan_for_names(document, &mut name_to_id);
+
+        for name in query_names {
+            // Strip leading '#' if present (convention for DesignComponent node names)
+            let lookup = if name.starts_with('#') { name.as_str() } else { name };
+            if let Some(id) = name_to_id.get(lookup) {
+                result.insert(name.clone(), id.clone());
+            }
+        }
+        result
+    }
+
+    /// Inject fetched node subtrees into a shallow (depth=2) document tree.
+    /// Replaces the stub children of matching top-level nodes with the
+    /// fully-expanded subtree from the /nodes endpoint response.
+    fn inject_fetched_nodes(
+        document: &mut figma_schema::Node,
+        fetched: &figma_schema::NodesResponse,
+    ) -> usize {
+        let mut injected_count = 0;
+        for page in &mut document.children {
+            for top_node in &mut page.children {
+                if let Some(node_data) = fetched.nodes.get(&top_node.id) {
+                    *top_node = node_data.document.clone();
+                    injected_count += 1;
+                }
+            }
+        }
+        injected_count
+    }
+
+    /// Fetch a document from Figma using node-scoped fetching.
+    /// Instead of downloading the entire file (which can be 1+ GB for large docs),
+    /// this method:
+    /// 1. Fetches depth=2 to get the document structure and top-level node IDs
+    ///    (or uses pre_cached_node_ids to skip this step on updates)
+    /// 2. Resolves query names to Figma node IDs
+    /// 3. Fetches only the requested node subtrees via /nodes?ids=
+    /// 4. Injects the fetched subtrees into the depth=2 document
+    pub fn new_node_scoped(
+        api_key: &str,
+        document_id: String,
+        version_id: String,
+        proxy_config: &ProxyConfig,
+        image_session: Option<ImageContextSession>,
+        query_names: &[String],
+        pre_cached_node_ids: Option<HashMap<String, String>>,
+    ) -> Result<Document, Error> {
+        let document_id = parse_document_id(&document_id);
+        let is_update = pre_cached_node_ids.is_some();
+
+        // Step 1: Get name→ID mapping AND base document tree.
+        // depth=2 is needed for inject_fetched_nodes to find parent nodes.
+        // On updates with cached IDs, skip discovery but still need depth=2 for injection.
+        let (name_to_id, mut document_root) = if let Some(cached) =
+            pre_cached_node_ids.filter(|c| !c.is_empty())
+        {
+            info!(
+                "Node-scoped UPDATE: using {} pre-cached node IDs (depth=2 with ids= filter for fast response)",
+                cached.len()
+            );
+            // Fast path: depth=2 but with ids= parameter to filter the response.
+            // Figma returns ONLY the requested subtrees, dramatically reducing
+            // the response payload and server processing time (~2-5s vs 22-47s).
+            let ids_param: String =
+                cached.values().map(|s| s.as_str()).collect::<Vec<_>>().join(",");
+            let mut base_url = format!(
+                "{}{}?depth=2&ids={}&branch_data=true&plugin_data=shared&geometry=paths",
+                BASE_FILE_URL, document_id, ids_param,
+            );
+            if !version_id.is_empty() {
+                base_url.push_str("&version=");
+                base_url.push_str(&version_id);
+            }
+            let doc_root: figma_schema::FileResponse =
+                deserialize_json_with_path(http_fetch(api_key, base_url, proxy_config)?.as_str())?;
+            (cached, doc_root)
+        } else {
+            // Initial load OR update without cached IDs: fetch depth=2 for both
+            // discovery AND as base document.
+            let mut discovery_url =
+                format!("{}{}?depth=2&branch_data=true", BASE_FILE_URL, document_id,);
+            if !version_id.is_empty() {
+                discovery_url.push_str("&version=");
+                discovery_url.push_str(&version_id);
+            }
+            info!(
+                "Node-scoped {}: depth=2 for name→ID discovery + base ({})",
+                if is_update { "UPDATE" } else { "fetch" },
+                document_id
+            );
+            let discovery_root: figma_schema::FileResponse = deserialize_json_with_path(
+                http_fetch(api_key, discovery_url, proxy_config)?.as_str(),
+            )?;
+            let resolved = Self::resolve_query_node_ids(&discovery_root.document, query_names);
+            info!(
+                "Node-scoped fetch: resolved {}/{} query names to node IDs: {:?}",
+                resolved.len(),
+                query_names.len(),
+                resolved
+            );
+            (resolved, discovery_root)
+        };
+
+        if !name_to_id.is_empty() && !is_update {
+            // Step 3: Fetch the specific node subtrees (initial fetch only).
+            // On updates, the /files?ids= response already contains the full subtrees.
+            let node_ids: Vec<&str> = name_to_id.values().map(|s| s.as_str()).collect();
+            let ids_param = node_ids.join(",");
+            let nodes_url = format!(
+                "{}{}/nodes?ids={}&plugin_data=shared&geometry=paths",
+                BASE_FILE_URL, document_id, ids_param
+            );
+            info!(
+                "Node-scoped fetch: fetching {} nodes via /nodes?ids={}",
+                node_ids.len(),
+                ids_param
+            );
+            let nodes_response: figma_schema::NodesResponse =
+                deserialize_json_with_path(http_fetch(api_key, nodes_url, proxy_config)?.as_str())?;
+
+            // Merge components from nodes response into document_root
+            for (_node_id, node_data) in &nodes_response.nodes {
+                for (comp_id, comp) in &node_data.components {
+                    document_root.components.insert(comp_id.clone(), comp.clone());
+                }
+            }
+
+            // Step 4: Inject fetched subtrees into the shallow document
+            let injected = Self::inject_fetched_nodes(&mut document_root.document, &nodes_response);
+            info!("Node-scoped fetch: injected {} node subtrees into document", injected);
+        } else if is_update {
+            info!(
+                "Node-scoped UPDATE: skipping /nodes call (subtrees already in /files?ids= response)"
+            );
+        }
+
+        // Smart cache: on updates, reuse cached /images and /variables data.
+        // On initial load, fetch fresh and store in cache.
+        let (image_context, variables_responses) = if is_update {
+            let cached = SMART_CACHE.lock().ok().and_then(|c| c.get(&document_id).cloned());
+            if let Some(entry) = cached {
+                info!("Smart cache HIT: reusing cached /images ({} refs) and /variables ({} responses) for {}",
+                    entry.image_refs.len(), entry.variables_responses.len(), document_id);
+                let image_hash_to_res_map = load_image_hash_to_res_map(&document_root);
+                let mut ctx =
+                    ImageContext::new(entry.image_refs, image_hash_to_res_map, proxy_config);
+                if let Some(session) = image_session {
+                    ctx.add_session_info(session);
+                }
+                (ctx, entry.variables_responses)
+            } else {
+                info!("Smart cache MISS on update for {} — doing full fetch", document_id);
+                // Fallback to full fetch
+                let image_ref_url = format!("{}{}/images", BASE_FILE_URL, document_id);
+                let image_refs: figma_schema::ImageFillResponse = deserialize_json_with_path(
+                    http_fetch(api_key, image_ref_url, proxy_config)?.as_str(),
+                )?;
+                let image_hash_to_res_map = load_image_hash_to_res_map(&document_root);
+                let mut ctx =
+                    ImageContext::new(image_refs.meta.images, image_hash_to_res_map, proxy_config);
+                if let Some(session) = image_session {
+                    ctx.add_session_info(session);
+                }
+                let mut vars = HashMap::new();
+                match Self::fetch_variables(api_key, &document_id, proxy_config)
+                    .map_err(Error::from)
+                {
+                    Ok(mut it) => {
+                        let mut resolver = crate::library_resolver::LibraryResolver::new(
+                            api_key.to_string(),
+                            proxy_config.clone(),
+                        );
+                        resolver.discover_component_dependencies(
+                            &document_id,
+                            &document_root.components,
+                        );
+                        resolver.discover_variable_dependencies(&document_id, &it);
+                        let remote_vars = resolver.fetch_all_library_variables(&document_id);
+                        for (_, remote_var_response) in remote_vars {
+                            it.meta.variables.extend(remote_var_response.meta.variables);
+                            it.meta
+                                .variable_collections
+                                .extend(remote_var_response.meta.variable_collections);
+                        }
+                        vars.insert(document_id.clone(), it);
+                    }
+                    Err(err) => {
+                        error!("Failed to fetch variables for doc {} {:?}", document_id, err);
+                    }
+                };
+                (ctx, vars)
+            }
+        } else {
+            // Initial load: full fetch of images and variables
+            let image_ref_url = format!("{}{}/images", BASE_FILE_URL, document_id);
+            let image_refs: figma_schema::ImageFillResponse = deserialize_json_with_path(
+                http_fetch(api_key, image_ref_url, proxy_config)?.as_str(),
+            )?;
+
+            let image_hash_to_res_map = load_image_hash_to_res_map(&document_root);
+            let mut ctx = ImageContext::new(
+                image_refs.meta.images.clone(),
+                image_hash_to_res_map,
+                proxy_config,
+            );
+            if let Some(session) = image_session {
+                ctx.add_session_info(session);
+            }
+
+            let mut vars = HashMap::new();
+            match Self::fetch_variables(api_key, &document_id, proxy_config).map_err(Error::from) {
+                Ok(mut it) => {
+                    let mut resolver = crate::library_resolver::LibraryResolver::new(
+                        api_key.to_string(),
+                        proxy_config.clone(),
+                    );
+                    resolver
+                        .discover_component_dependencies(&document_id, &document_root.components);
+                    resolver.discover_variable_dependencies(&document_id, &it);
+                    let remote_vars = resolver.fetch_all_library_variables(&document_id);
+                    for (_, remote_var_response) in remote_vars {
+                        it.meta.variables.extend(remote_var_response.meta.variables);
+                        it.meta
+                            .variable_collections
+                            .extend(remote_var_response.meta.variable_collections);
+                    }
+                    vars.insert(document_id.clone(), it);
+                }
+                Err(err) => {
+                    error!("Failed to fetch variables for doc {} {:?}", document_id, err);
+                }
+            };
+
+            // Store in smart cache for future updates
+            if let Ok(mut cache) = SMART_CACHE.lock() {
+                cache.insert(
+                    document_id.clone(),
+                    SmartCacheEntry {
+                        image_refs: image_refs.meta.images,
+                        variables_responses: vars.clone(),
+                        prefetched_components: HashMap::new(), // populated later in nodes()
+                        variant_nodes: HashMap::new(),         // populated later in nodes()
+                        failed_component_keys: HashSet::new(), // populated later in nodes()
+                    },
+                );
+                info!("Smart cache: stored initial /images and /variables for {}", document_id);
+            }
+
+            (ctx, vars)
+        };
+
+        let branches = get_branches(&document_root);
+
+        Ok(Document {
+            api_key: api_key.to_string(),
+            document_id,
+            version_id,
+            proxy_config: proxy_config.clone(),
+            document_root,
+            variables_responses,
+            image_context,
+            variant_nodes: HashMap::new(),
+            component_sets: HashMap::new(),
+            branches,
+            key_to_global_id_map: HashMap::new(),
+            remote_node_responses: HashMap::new(),
+            fetched_remote_images: HashSet::new(),
+            prefetched_components: HashMap::new(),
+            node_tracker: crate::node_tracker::NodeTracker::new(),
+            last_view_hashes: HashMap::new(),
+            cached_node_ids: name_to_id,
+            failed_component_keys: HashSet::new(),
+            is_update,
+        })
+    }
+
+    /// Fetch a document from Figma only if it has changed since the given last
+    /// modified time. Uses node-scoped fetching when query_names are provided.
+    /// `cached_node_ids` enables the update fast-path: skips depth=2 discovery,
+    /// /images, /variables, and remote component resolution.
+    pub fn new_if_changed_scoped(
+        api_key: &str,
+        document_id: String,
+        requested_version_id: String,
+        proxy_config: &ProxyConfig,
+        last_modified: String,
+        last_version: String,
+        image_session: Option<ImageContextSession>,
+        query_names: &[String],
+        cached_node_ids: Option<HashMap<String, String>>,
+    ) -> Result<Option<Document>, Error> {
+        let parsed_id = parse_document_id(&document_id);
+        let mut document_head_url = format!("{}{}?depth=1", BASE_FILE_URL, parsed_id);
+        if !requested_version_id.is_empty() {
+            document_head_url.push_str("&version=");
+            document_head_url.push_str(&requested_version_id);
+        }
+        let document_head: figma_schema::FileHeadResponse = deserialize_json_with_path(
+            http_fetch(api_key, document_head_url, proxy_config)?.as_str(),
+        )?;
+
+        if document_head.last_modified == last_modified && document_head.version == last_version {
+            return Ok(None);
+        }
+
+        if query_names.is_empty() {
+            // No queries — fall back to full doc fetch
+            Document::new(api_key, document_id, requested_version_id, proxy_config, image_session)
+                .map(Some)
+        } else {
+            // Use node-scoped fetching for efficiency
+            Document::new_node_scoped(
+                api_key,
+                document_id,
+                requested_version_id,
+                proxy_config,
+                image_session,
+                query_names,
+                cached_node_ids,
+            )
+            .map(Some)
+        }
+    }
+
     /// Ask Figma if an updated document is available, and then fetch the updated document
-    /// if so.
-    pub fn update(&mut self, proxy_config: &ProxyConfig) -> Result<UpdateStatus, Error> {
+    /// if so. Uses node-scoped fetching when query_names are provided.
+    pub fn update(
+        &mut self,
+        proxy_config: &ProxyConfig,
+        query_names: Option<&[String]>,
+    ) -> Result<UpdateStatus, Error> {
         self.proxy_config = proxy_config.clone();
 
         // Fetch just the top level of the document. (depth=0 causes an internal server error).
@@ -280,16 +692,95 @@ impl Document {
         )?;
 
         // Now compare the version and modification times and bail out if they're the same.
-        // Figma docs include a "version" field, but that doesn't always change when the document
-        // changes (but the mtime always seems to change). The version does change (and mtime does
-        // not) when a branch is created.
         if document_head.last_modified == self.document_root.last_modified
             && document_head.version == self.document_root.version
         {
             return Ok(UpdateStatus::NotUpdated);
         }
 
-        // Fetch the updated document in its entirety and replace our document root...
+        // Decide between node-scoped and full-doc fetch
+        if let Some(names) = query_names {
+            if !names.is_empty() {
+                // Try to use cached node IDs from the initial fetch to skip depth=2
+                let name_to_id = if !self.cached_node_ids.is_empty() {
+                    info!(
+                        "Node-scoped update: using {} cached node IDs (skipping depth=2)",
+                        self.cached_node_ids.len()
+                    );
+                    self.cached_node_ids.clone()
+                } else {
+                    // First update or cache miss — do lightweight depth=2
+                    let mut discovery_url =
+                        format!("{}{}?depth=2", BASE_FILE_URL, self.document_id,);
+                    if !self.version_id.is_empty() {
+                        discovery_url.push_str("&version=");
+                        discovery_url.push_str(&self.version_id);
+                    }
+                    info!("Node-scoped update: lightweight depth=2 for name→ID discovery");
+                    let discovery_root: figma_schema::FileResponse = deserialize_json_with_path(
+                        http_fetch(self.api_key.as_str(), discovery_url, &self.proxy_config)?
+                            .as_str(),
+                    )?;
+                    let resolved = Self::resolve_query_node_ids(&discovery_root.document, names);
+                    self.cached_node_ids = resolved.clone();
+                    resolved
+                };
+
+                info!(
+                    "Node-scoped update: using {}/{} query→ID mappings",
+                    name_to_id.len(),
+                    names.len()
+                );
+
+                // Fetch a lightweight depth=1 structure as the base document_root
+                // (we need version/lastModified metadata but not the full tree)
+                let mut base_url =
+                    format!("{}{}?depth=1&branch_data=true", BASE_FILE_URL, self.document_id,);
+                if !self.version_id.is_empty() {
+                    base_url.push_str("&version=");
+                    base_url.push_str(&self.version_id);
+                }
+                let mut document_root: figma_schema::FileResponse = deserialize_json_with_path(
+                    http_fetch(self.api_key.as_str(), base_url, &self.proxy_config)?.as_str(),
+                )?;
+
+                if !name_to_id.is_empty() {
+                    let ids_param: String =
+                        name_to_id.values().map(|s| s.as_str()).collect::<Vec<_>>().join(",");
+                    let nodes_url = format!(
+                        "{}{}/nodes?ids={}&plugin_data=shared&geometry=paths",
+                        BASE_FILE_URL, self.document_id, ids_param
+                    );
+                    info!("Node-scoped update: fetching /nodes?ids={}", ids_param);
+                    let nodes_response: figma_schema::NodesResponse = deserialize_json_with_path(
+                        http_fetch(self.api_key.as_str(), nodes_url, &self.proxy_config)?.as_str(),
+                    )?;
+
+                    // Merge components
+                    for (_node_id, node_data) in &nodes_response.nodes {
+                        for (comp_id, comp) in &node_data.components {
+                            document_root.components.insert(comp_id.clone(), comp.clone());
+                        }
+                    }
+
+                    Self::inject_fetched_nodes(&mut document_root.document, &nodes_response);
+                }
+
+                // Fetch images
+                let image_ref_url = format!("{}{}/images", BASE_FILE_URL, self.document_id);
+                let image_refs: figma_schema::ImageFillResponse = deserialize_json_with_path(
+                    http_fetch(self.api_key.as_str(), image_ref_url, &self.proxy_config)?.as_str(),
+                )?;
+
+                self.branches = get_branches(&document_root);
+                self.document_root = document_root;
+                self.image_context.update_images(image_refs.meta.images);
+
+                return Ok(UpdateStatus::Updated);
+            }
+        }
+
+        // Fall back to full document fetch
         let mut document_url = format!(
             "{}{}?plugin_data=shared&geometry=paths&branch_data=true",
             BASE_FILE_URL, self.document_id,
@@ -319,6 +810,121 @@ impl Document {
     /// is changed (but the version number does not).
     pub fn last_modified(&self) -> &String {
         &self.document_root.last_modified
+    }
+
+    /// Return the cached node ID mapping (query name → Figma node ID).
+    /// Used by the JNI layer to persist across fetch cycles.
+    pub fn cached_node_ids(&self) -> &HashMap<String, String> {
+        &self.cached_node_ids
+    }
+
+    /// Pre-fetch all remote component metadata concurrently.
+    ///
+    /// Walks the entire node tree to discover component instances whose keys
+    /// refer to remote documents. Collects all unique component keys and
+    /// batch-fetches them in parallel using `http_fetch_batch`. The results
+    /// are stored in a HashMap that `fetch_component_variants` can consult
+    /// before making individual HTTP calls.
+    ///
+    /// This reduces remote component fetch time from O(N) sequential calls
+    /// to O(1) concurrent batches.
+    fn prefetch_remote_components(
+        &self,
+        root: &figma_schema::Node,
+        component_hash: &HashMap<String, figma_schema::Component>,
+        id_index: &HashMap<String, &figma_schema::Node>,
+    ) -> HashMap<String, String> {
+        use crate::http_client::{http_fetch_batch, BatchRequest};
+
+        // Phase 1: Discover all unique component keys that need fetching
+        let mut keys_to_fetch: HashSet<String> = HashSet::new();
+        Self::collect_remote_component_keys(root, component_hash, id_index, &mut keys_to_fetch);
+
+        // Phase 1.5: Skip keys we already have cached or that previously failed
+        let already_cached =
+            keys_to_fetch.iter().filter(|k| self.prefetched_components.contains_key(*k)).count();
+        let already_failed =
+            keys_to_fetch.iter().filter(|k| self.failed_component_keys.contains(*k)).count();
+        keys_to_fetch.retain(|k| {
+            !self.prefetched_components.contains_key(k) && !self.failed_component_keys.contains(k)
+        });
+
+        if keys_to_fetch.is_empty() {
+            if already_cached > 0 || already_failed > 0 {
+                log::info!(
+                    "prefetch_remote_components: all keys resolved from cache ({} cached, {} skipped-failed)",
+                    already_cached,
+                    already_failed
+                );
+            }
+            return HashMap::new();
+        }
+
+        log::info!(
+            "prefetch_remote_components: fetching {} new keys ({} cached, {} skipped-failed)",
+            keys_to_fetch.len(),
+            already_cached,
+            already_failed
+        );
+
+        // Phase 2: Build batch requests
+        let requests: Vec<BatchRequest> = keys_to_fetch
+            .iter()
+            .map(|key| BatchRequest {
+                id: key.clone(),
+                url: format!("{}{}", BASE_COMPONENT_URL, key),
+            })
+            .collect();
+
+        // Phase 3: Fetch all concurrently
+        let responses = http_fetch_batch(&self.api_key, requests, &self.proxy_config);
+
+        // Phase 4: Collect results into a cache
+        let mut cache: HashMap<String, String> = HashMap::new();
+        for response in responses {
+            match response.result {
+                Ok(body) => {
+                    cache.insert(response.id, body);
+                }
+                Err(e) => {
+                    log::warn!(
+                        "prefetch_remote_components: failed to fetch component key {}: {:?}",
+                        response.id,
+                        e
+                    );
+                    // Don't insert into cache — will be added to failed_component_keys by caller
+                }
+            }
+        }
+
+        log::info!(
+            "prefetch_remote_components: successfully pre-fetched {}/{} component keys",
+            cache.len(),
+            keys_to_fetch.len()
+        );
+
+        cache
+    }
+
+    /// Recursively collect all unique component keys from Instance nodes
+    /// that are not present in the local id_index (i.e., remote components).
+    fn collect_remote_component_keys(
+        node: &figma_schema::Node,
+        component_hash: &HashMap<String, figma_schema::Component>,
+        id_index: &HashMap<String, &figma_schema::Node>,
+        keys: &mut HashSet<String>,
+    ) {
+        if let figma_schema::NodeData::Instance { frame: _, component_id } = &node.data {
+            if !id_index.contains_key(component_id) {
+                if let Some(component) = component_hash.get(component_id) {
+                    keys.insert(component.key.clone());
+                }
+            }
+        }
+
+        for child in &node.children {
+            Self::collect_remote_component_keys(child, component_hash, id_index, keys);
+        }
     }
 
     /// Find all nodes whose data is of type NodeData::Instance, which means could be a
@@ -373,34 +979,44 @@ impl Document {
                         return Ok(());
                     }
                     let component_url = format!("{}{}", BASE_COMPONENT_URL, file_key);
-                    let component_http_response = match http_fetch(
-                        self.api_key.as_str(),
-                        component_url.clone(),
-                        &self.proxy_config,
-                    ) {
-                        Ok(str) => {
-                            completed_hash.insert(file_key);
-                            str
-                        }
-                        Err(e) => {
-                            let fetch_error = if let Error::NetworkError(reqwest_error) = &e {
-                                if let Some(code) = reqwest_error.status() {
-                                    format!("HTTP {} at {}", code, component_url)
+                    // Check the prefetch cache first (populated by prefetch_remote_components)
+                    let component_http_response = if let Some(cached) =
+                        self.prefetched_components.get(&file_key)
+                    {
+                        completed_hash.insert(file_key);
+                        cached.clone()
+                    } else {
+                        // Cache miss — fetch individually (handles components discovered
+                        // during recursive traversal of remote nodes)
+                        match http_fetch(
+                            self.api_key.as_str(),
+                            component_url.clone(),
+                            &self.proxy_config,
+                        ) {
+                            Ok(str) => {
+                                completed_hash.insert(file_key);
+                                str
+                            }
+                            Err(e) => {
+                                let fetch_error = if let Error::NetworkError(reqwest_error) = &e {
+                                    if let Some(code) = reqwest_error.status() {
+                                        format!("HTTP {} at {}", code, component_url)
+                                    } else {
+                                        reqwest_error.to_string()
+                                    }
                                 } else {
-                                    reqwest_error.to_string()
-                                }
-                            } else {
-                                e.to_string()
-                            };
-                            let error_string = format!(
-                                "Fetch component error {}: {} -> {}",
-                                fetch_error,
-                                parent_tree.join(" -> "),
-                                node.name
-                            );
-                            error_hash.insert(file_key);
-                            error_list.push(error_string);
-                            return Ok(());
+                                    e.to_string()
+                                };
+                                let error_string = format!(
+                                    "Fetch component error {}: {} -> {}",
+                                    fetch_error,
+                                    parent_tree.join(" -> "),
+                                    node.name
+                                );
+                                error_hash.insert(file_key);
+                                error_list.push(error_string);
+                                return Ok(());
+                            }
                         }
                     };
 
@@ -464,6 +1080,43 @@ impl Document {
                                 );
                                 response
                             };
+
+                            // Fetch image refs from the remote document so that
+                            // image fills in remote components can be resolved.
+                            if !self.fetched_remote_images.contains(&variant_document_id) {
+                                let remote_image_url =
+                                    format!("{}{}/images", BASE_FILE_URL, variant_document_id);
+                                match http_fetch(
+                                    self.api_key.as_str(),
+                                    remote_image_url,
+                                    &self.proxy_config,
+                                ) {
+                                    Ok(body) => {
+                                        match serde_json::from_str::<figma_schema::ImageFillResponse>(
+                                            body.as_str(),
+                                        ) {
+                                            Ok(remote_image_refs) => {
+                                                self.image_context.merge_remote_images(
+                                                    remote_image_refs.meta.images,
+                                                );
+                                            }
+                                            Err(e) => {
+                                                warn!(
+                                                    "Failed to parse image refs for remote doc {}: {:?}",
+                                                    variant_document_id, e
+                                                );
+                                            }
+                                        }
+                                    }
+                                    Err(e) => {
+                                        warn!(
+                                            "Failed to fetch images for remote doc {}: {:?}",
+                                            variant_document_id, e
+                                        );
+                                    }
+                                }
+                                self.fetched_remote_images.insert(variant_document_id.clone());
+                            }
 
                             // The response is a list of nodes, but we only requested one so this loop
                             // should only go through one time
@@ -994,32 +1647,153 @@ impl Document {
         let mut error_hash: HashSet<String> = HashSet::new();
         let mut completed_hash: HashSet<String> = HashSet::new();
         let components = self.document_root.components.clone();
-        self.fetch_component_variants(
-            &root_node,
-            &mut node_doc_hash,
-            &mut variant_nodes,
-            &id_index,
-            &components,
-            &mut parent_tree,
-            error_list,
-            &mut error_hash,
-            &mut completed_hash,
-            hidden_node_policy,
-        )?;
-        self.variant_nodes = variant_nodes;
 
-        // Index the variant nodes that we pulled from other documents
-        for (_, node) in &self.variant_nodes {
-            index_node(
-                node,
-                None, // TODO this is untested -- we may need to get the parent of node and pass it in here
-                &mut name_index,
-                &mut id_index,
-                &mut variant_index,
-                &mut component_set_name_index,
-                &mut component_id_index,
-                hidden_node_policy,
+        // Smart cache: on updates, inject cached remote component data instead of re-fetching.
+        // On initial load, do the full prefetch + variant resolution and store results.
+        if !self.is_update {
+            // INITIAL LOAD: Full remote component resolution
+            let new_components =
+                self.prefetch_remote_components(&root_node, &components, &id_index);
+
+            let mut all_discovered_keys: HashSet<String> = HashSet::new();
+            Self::collect_remote_component_keys(
+                &root_node,
+                &components,
+                &id_index,
+                &mut all_discovered_keys,
             );
+            for key in &all_discovered_keys {
+                if !new_components.contains_key(key)
+                    && !self.prefetched_components.contains_key(key)
+                {
+                    self.failed_component_keys.insert(key.clone());
+                }
+            }
+            for (k, v) in new_components {
+                self.prefetched_components.insert(k, v);
+            }
+
+            // Full variant resolution
+            self.fetch_component_variants(
+                &root_node,
+                &mut node_doc_hash,
+                &mut variant_nodes,
+                &id_index,
+                &components,
+                &mut parent_tree,
+                error_list,
+                &mut error_hash,
+                &mut completed_hash,
+                hidden_node_policy,
+            )?;
+            self.variant_nodes = variant_nodes;
+
+            // Index variant nodes
+            for (_, node) in &self.variant_nodes {
+                index_node(
+                    node,
+                    None,
+                    &mut name_index,
+                    &mut id_index,
+                    &mut variant_index,
+                    &mut component_set_name_index,
+                    &mut component_id_index,
+                    hidden_node_policy,
+                );
+            }
+
+            // Store in smart cache for future updates
+            if let Ok(mut cache) = SMART_CACHE.lock() {
+                if let Some(entry) = cache.get_mut(&self.document_id) {
+                    entry.prefetched_components = self.prefetched_components.clone();
+                    entry.variant_nodes = self.variant_nodes.clone();
+                    entry.failed_component_keys = self.failed_component_keys.clone();
+                    info!(
+                        "Smart cache: stored {} remote components and {} variant nodes for {}",
+                        entry.prefetched_components.len(),
+                        entry.variant_nodes.len(),
+                        self.document_id
+                    );
+                }
+            }
+        } else {
+            // UPDATE: Inject cached remote component data
+            let cached = SMART_CACHE.lock().ok().and_then(|c| c.get(&self.document_id).cloned());
+            if let Some(entry) = cached {
+                info!(
+                    "Smart cache HIT: injecting {} remote components and {} variant nodes for {}",
+                    entry.prefetched_components.len(),
+                    entry.variant_nodes.len(),
+                    self.document_id
+                );
+                self.prefetched_components = entry.prefetched_components;
+                self.failed_component_keys = entry.failed_component_keys;
+                self.variant_nodes = entry.variant_nodes;
+
+                // Re-index the cached variant nodes
+                for (_, node) in &self.variant_nodes {
+                    index_node(
+                        node,
+                        None,
+                        &mut name_index,
+                        &mut id_index,
+                        &mut variant_index,
+                        &mut component_set_name_index,
+                        &mut component_id_index,
+                        hidden_node_policy,
+                    );
+                }
+            } else {
+                info!(
+                    "Smart cache MISS on update for {} — doing full remote resolution",
+                    self.document_id
+                );
+                // Fallback: full resolution
+                let new_components =
+                    self.prefetch_remote_components(&root_node, &components, &id_index);
+                let mut all_discovered_keys: HashSet<String> = HashSet::new();
+                Self::collect_remote_component_keys(
+                    &root_node,
+                    &components,
+                    &id_index,
+                    &mut all_discovered_keys,
+                );
+                for key in &all_discovered_keys {
+                    if !new_components.contains_key(key)
+                        && !self.prefetched_components.contains_key(key)
+                    {
+                        self.failed_component_keys.insert(key.clone());
+                    }
+                }
+                for (k, v) in new_components {
+                    self.prefetched_components.insert(k, v);
+                }
+                self.fetch_component_variants(
+                    &root_node,
+                    &mut node_doc_hash,
+                    &mut variant_nodes,
+                    &id_index,
+                    &components,
+                    &mut parent_tree,
+                    error_list,
+                    &mut error_hash,
+                    &mut completed_hash,
+                    hidden_node_policy,
+                )?;
+                self.variant_nodes = variant_nodes;
+                for (_, node) in &self.variant_nodes {
+                    index_node(
+                        node,
+                        None,
+                        &mut name_index,
+                        &mut id_index,
+                        &mut variant_index,
+                        &mut component_set_name_index,
+                        &mut component_id_index,
+                        hidden_node_policy,
+                    );
+                }
+            }
         }
 
         // Convert node_names into a HashSet. Then, for any node names that are a component set,
@@ -1224,6 +1998,38 @@ impl Document {
             variable_name_id_maps_by_cid,
             ..Default::default()
         };
+
+        // Post-process: detect unresolved variable aliases.
+        // An alias is unresolved when its target variable ID is not present in the
+        // merged variable map. This typically happens when the alias target lives
+        // in a library doc that wasn't fetched through component dependencies.
+        let mut unresolved_count = 0;
+        for (var_id, var) in &var_map.variables_by_id {
+            if let Some(ref values_by_mode) = var.values_by_mode.as_ref() {
+                for (mode_id, value) in &values_by_mode.values_by_mode {
+                    if let Some(dc_bundle::variable::variable_value::Value::Alias(alias_id)) =
+                        &value.Value
+                    {
+                        if !var_map.variables_by_id.contains_key(alias_id) {
+                            warn!(
+                                "Unresolved variable alias: variable '{}' (id={}) in mode '{}' \
+                                 aliases '{}' which is not in the variable map. \
+                                 The aliased variable's library may not have been fetched.",
+                                var.name, var_id, mode_id, alias_id
+                            );
+                            unresolved_count += 1;
+                        }
+                    }
+                }
+            }
+        }
+        if unresolved_count > 0 {
+            warn!(
+                "build_variable_map: {} unresolved variable alias(es) detected. \
+                 These variables will fall back to default values at runtime.",
+                unresolved_count
+            );
+        }
 
         var_map
     }

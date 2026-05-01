@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,14 @@ var ACTION_SET_LIVE_UPDATE_FETCH_MILLIS = "setLiveUpdateFetchMillis"
 var EXTRA_LIVE_UPDATE_FETCH_MILLIS = "FetchIntervalMs"
 var ACTION_ENABLE_ADAPTIVE_POLLING = "enableAdaptivePolling"
 var EXTRA_ADAPTIVE_POLLING_ENABLED = "Enabled"
+var ACTION_SET_INCREMENTAL_THRESHOLD = "setIncrementalThreshold"
+var EXTRA_INCREMENTAL_THRESHOLD = "Threshold"
+var ACTION_SET_DISCOVER_ALL_NODES = "setDiscoverAllNodes"
+var EXTRA_DISCOVER_ALL_NODES = "Enabled"
+var ACTION_SET_WEBSOCKET = "setWebSocket"
+var EXTRA_USE_WEBSOCKET = "Enabled"
+var ACTION_SET_WEBSOCKET_URL = "setWebSocketUrl"
+var EXTRA_WEBSOCKET_URL = "Url"
 
 class ApiKeyService : Service() {
 
@@ -77,6 +85,13 @@ class ApiKeyService : Service() {
                     ", value: ${intent.getLongExtra(EXTRA_LIVE_UPDATE_FETCH_MILLIS, -1)}"
                 ACTION_ENABLE_ADAPTIVE_POLLING ->
                     ", value: ${intent.getBooleanExtra(EXTRA_ADAPTIVE_POLLING_ENABLED, true)}"
+                ACTION_SET_INCREMENTAL_THRESHOLD ->
+                    ", value: ${intent.getFloatExtra(EXTRA_INCREMENTAL_THRESHOLD, -1f)}"
+                ACTION_SET_DISCOVER_ALL_NODES ->
+                    ", value: ${intent.getBooleanExtra(EXTRA_DISCOVER_ALL_NODES, false)}"
+                ACTION_SET_WEBSOCKET ->
+                    ", value: ${intent.getBooleanExtra(EXTRA_USE_WEBSOCKET, false)}"
+                ACTION_SET_WEBSOCKET_URL -> ", value: ${intent.getStringExtra(EXTRA_WEBSOCKET_URL)}"
                 else -> ""
             }
         Log.i(TAG, "ApiKeyService received intent action: $action$valueString")
@@ -103,6 +118,20 @@ class ApiKeyService : Service() {
                 setAdaptivePollingEnabled(
                     intent.getBooleanExtra(EXTRA_ADAPTIVE_POLLING_ENABLED, true)
                 )
+            }
+            ACTION_SET_INCREMENTAL_THRESHOLD -> {
+                val threshold = intent.getFloatExtra(EXTRA_INCREMENTAL_THRESHOLD, -1f)
+                if (threshold in 0f..1f) setIncrementalThreshold(threshold)
+            }
+            ACTION_SET_DISCOVER_ALL_NODES -> {
+                setDiscoverAllNodes(intent.getBooleanExtra(EXTRA_DISCOVER_ALL_NODES, false))
+            }
+            ACTION_SET_WEBSOCKET -> {
+                setWebSocketEnabled(intent.getBooleanExtra(EXTRA_USE_WEBSOCKET, false))
+            }
+            ACTION_SET_WEBSOCKET_URL -> {
+                val url = intent.getStringExtra(EXTRA_WEBSOCKET_URL)
+                if (url != null) setWebSocketUrl(url)
             }
             else -> {
                 Log.w(TAG, "ApiKeyService received unknown intent action: $action")
@@ -151,5 +180,33 @@ class ApiKeyService : Service() {
         CoroutineScope(dispatcher).launch {
             DesignSettings.liveUpdateSettings?.setAdaptivePollingEnabled(enabled)
         }
+    }
+
+    fun setIncrementalThreshold(threshold: Float) {
+        Log.i(TAG, "Setting incremental threshold to ${(threshold * 100).toInt()}%")
+        DesignSettings.incrementalThreshold.value = threshold
+    }
+
+    fun setDiscoverAllNodes(enabled: Boolean) {
+        Log.i(TAG, "Setting discover all top-level nodes to $enabled")
+        DesignSettings.discoverAllTopLevelNodes.value = enabled
+    }
+
+    fun setWebSocketEnabled(enabled: Boolean) {
+        Log.i(
+            TAG,
+            "Setting WebSocket mode to $enabled (url=${DesignSettings.webSocketRelayUrl.value})",
+        )
+        DesignSettings.useWebSocket.value = enabled
+        // Restart live updates with the new mode
+        if (DesignSettings.liveUpdatesEnabled) {
+            DocServer.stopLiveUpdates()
+            DocServer.startLiveUpdates()
+        }
+    }
+
+    fun setWebSocketUrl(url: String) {
+        Log.i(TAG, "Setting WebSocket relay URL to $url")
+        DesignSettings.webSocketRelayUrl.value = url
     }
 }

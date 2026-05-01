@@ -144,3 +144,4 @@ test/test-native/bin/
 **/.kotlin/
 cobertura.xml
 tarpaulin-report.html
+.gemini/

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,5 +93,35 @@ class DocServerTest {
 
         assertThat(mergedParams.nodeQueries).containsExactly("query1", "query2")
         assertThat(mergedParams.ignoredImages?.keys).containsExactly("node1", "node2")
+    }
+
+    @Test
+    fun testIncrementalThresholdDefault() {
+        // Default threshold should be 0.5 (50%)
+        assertThat(DesignSettings.incrementalThreshold.value).isEqualTo(0.5f)
+    }
+
+    @Test
+    fun testIncrementalThresholdCanBeModified() {
+        val original = DesignSettings.incrementalThreshold.value
+        DesignSettings.incrementalThreshold.value = 0.8f
+        assertThat(DesignSettings.incrementalThreshold.value).isEqualTo(0.8f)
+        // Restore
+        DesignSettings.incrementalThreshold.value = original
+    }
+
+    @Test
+    fun testDiscoverAllTopLevelNodesDefault() {
+        // Default should be false (disabled)
+        assertThat(DesignSettings.discoverAllTopLevelNodes.value).isFalse()
+    }
+
+    @Test
+    fun testDiscoverAllTopLevelNodesCanBeToggled() {
+        val original = DesignSettings.discoverAllTopLevelNodes.value
+        DesignSettings.discoverAllTopLevelNodes.value = true
+        assertThat(DesignSettings.discoverAllTopLevelNodes.value).isTrue()
+        // Restore
+        DesignSettings.discoverAllTopLevelNodes.value = original
     }
 }

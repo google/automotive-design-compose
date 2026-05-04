@@ -751,6 +751,7 @@ fun SquooshRoot(
                             }
                             .then(SquooshParentData(node = child.node))
                             .then(Modifier.testTag(child.node.view.name))
+                            .then(child.customModifier ?: Modifier)
 
                     if (child.scrollView != null) {
                         // Compose a scrollable view as a separate composable in order to detect
@@ -1265,7 +1266,7 @@ private fun SquooshChildLayout(
         content = {
             child.component?.invoke(
                 object : ComponentReplacementContext {
-                    override val layoutModifier: Modifier = Modifier
+                    override val layoutModifier: Modifier = child.customModifier ?: Modifier
                     override val textStyle: TextStyle? = child.textStyle
                 }
             )

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timeline Editor Test</title>
+  <link rel="stylesheet" href="../dist/styles.css">
+  <style>
+    body.dragging {
+      cursor: grabbing;
+      user-select: none;
+    }
+    .node-tree .toggle-arrow {
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid #000;
+      margin-right: 5px;
+      transition: transform 0.2s;
+    }
+    .node-tree .has-children.collapsed > .node-name > .toggle-arrow {
+      transform: rotate(-90deg);
+    }
+    .node-tree .has-children.collapsed > ul {
+      display: none;
+    }
+    .node-tree .selected > .node-name {
+      background-color: #e0e8f0;
+    }
+    .timeline .selection {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background-color: rgba(0, 100, 255, 0.2);
+      border-left: 1px dashed #0064ff;
+      border-right: 1px dashed #0064ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="timeline-editor"></div>
+  <div id="data-output" style="white-space: pre; font-family: monospace;"></div>
+  <script src="../dist/timeline-editor.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const testData = {
+        duration: 10, // in seconds
+        nodes: [
+         {
+      "id": "node-1",
+      "name": "Rectangle",
+      "timelines": [
+        {
+          "id": "timeline-1",
+          "property": "x",
+          "keyframes": [
+            {
+              "id": "kf-1",
+              "position": 0,
+              "value": -200,
+              "locked": true
+            },
+            {
+              "id": "kf-2",
+              "position": 0.25,
+              "value": 60
+            },
+            {
+              "id": "kf-3",
+              "position": 0.35,
+              "value": 50,
+              "locked": true
+            },
+            {
+              "id": "kf-4",
+              "position": 1,
+              "value": 50,
+              "locked": true
+            }
+          ]
+        },
+        {
+          "id": "timeline-2",
+          "property": "y",
+          "keyframes": [
+            {
+              "id": "kf-5",
+              "position": 0,
+              "value": 50,
+              "locked": true
+            },
+            {
+              "id": "kf-6",
+              "position": 1,
+              "value": 50,
+              "locked": true,
+              "easing": "Inherit"
+            }
+          ]
+        },
+        {
+          "id": "timeline-opacity",
+          "property": "opacity",
+          "keyframes": [
+            {
+              "id": "kf-7",
+              "position": 0,
+              "value": 0,
+              "locked": true
+            },
+            {
+              "id": "kf-8",
+              "position": 0.1,
+              "value": 1
+            },
+            {
+              "id": "kf-9",
+              "position": 0.9,
+              "value": 1
+            },
+            {
+              "id": "kf-10",
+              "position": 1,
+              "value": 0,
+              "locked": true
+            }
+          ]
+        },
+        {
+          "id": "timeline-rotate",
+          "property": "rotation",
+          "keyframes": [
+            {
+              "id": "kf-11",
+              "position": 0,
+              "value": -15,
+              "locked": true
+            },
+            {
+              "id": "kf-12",
+              "position": 0.25,
+              "value": 0,
+              "locked": true
+            },
+            {
+              "id": "kf-13",
+              "position": 1,
+              "value": 0,
+              "locked": true
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "node-3",
+          "name": "Triangle",
+          "timelines": [
+            {
+              "id": "timeline-5",
+              "property": "scale",
+              "keyframes": [
+                {
+                  "id": "kf-14",
+                  "position": 0,
+                  "value": 1,
+                  "locked": true
+                },
+                {
+                  "id": "kf-15",
+                  "position": 0.35,
+                  "value": 1
+                },
+                {
+                  "id": "kf-16",
+                  "position": 0.45,
+                  "value": 1.5
+                },
+                {
+                  "id": "kf-17",
+                  "position": 0.55,
+                  "value": 0.9
+                },
+                {
+                  "id": "kf-18",
+                  "position": 0.65,
+                  "value": 1,
+                  "locked": true
+                },
+                {
+                  "id": "kf-19",
+                  "position": 1,
+                  "value": 1,
+                  "locked": true
+                }
+              ]
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "node-2",
+      "name": "Circle",
+      "timelines": [
+        {
+          "id": "timeline-3",
+          "property": "x",
+          "keyframes": [
+            {
+              "id": "kf-20",
+              "position": 0,
+              "value": 150,
+              "locked": true
+            },
+            {
+              "id": "kf-21",
+              "position": 1,
+              "value": 150,
+              "locked": true
+            }
+          ]
+        },
+        {
+          "id": "timeline-y-bounce",
+          "property": "y",
+          "keyframes": [
+            {
+              "id": "kf-22",
+              "position": 0,
+              "value": -100,
+              "locked": true
+            },
+            {
+              "id": "kf-23",
+              "position": 0.4,
+              "value": -100
+            },
+            {
+              "id": "kf-24",
+              "position": 0.6,
+              "value": 50
+            },
+            {
+              "id": "kf-25",
+              "position": 0.7,
+              "value": 20
+            },
+            {
+              "id": "kf-26",
+              "position": 0.8,
+              "value": 50
+            },
+            {
+              "id": "kf-27",
+              "position": 0.85,
+              "value": 40
+            },
+            {
+              "id": "kf-28",
+              "position": 0.9,
+              "value": 50,
+              "locked": true
+            },
+            {
+              "id": "kf-29",
+              "position": 1,
+              "value": 50,
+              "locked": true
+            }
+          ]
+        },
+        {
+          "id": "timeline-circle-opacity",
+          "property": "opacity",
+          "keyframes": [
+            {
+              "id": "kf-30",
+              "position": 0,
+              "value": 0,
+              "locked": true
+            },
+            {
+              "id": "kf-31",
+              "position": 0.35,
+              "value": 0
+            },
+            {
+              "id": "kf-32",
+              "position": 0.45,
+              "value": 1
+            },
+            {
+              "id": "kf-33",
+              "position": 0.9,
+              "value": 1
+            },
+            {
+              "id": "kf-34",
+              "position": 1,
+              "value": 0,
+              "locked": true
+            }
+          ]
+        }
+      ],
+      "children": []
+    }
+        ],
+      };
+
+      const container = document.getElementById('timeline-editor');
+      if (container) {
+        const editor = new TimelineEditor.TimelineEditor(container);
+        editor.setData(testData);
+      }
+    });
+  </script>
+</body>
+</html>

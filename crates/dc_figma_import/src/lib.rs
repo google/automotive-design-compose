@@ -19,6 +19,8 @@
 //! The goal of this crate is to perform the mapping from Figma to the toolkit; it does
 //! not provide any kind of UI logic mapping.
 
+#![allow(dead_code)]
+#![allow(clippy::all)]
 mod component_context;
 mod design_definition;
 mod document;
@@ -32,6 +34,7 @@ pub mod reaction_schema;
 pub mod scalableui_schema;
 pub mod shader_schema;
 
+pub mod animation_spec_schema;
 pub mod tools;
 mod transform_flexbox;
 mod variable_utils;
@@ -52,3 +55,4 @@ pub use dc_bundle::definition::NodeQuery;
 pub use dc_bundle::definition_file::load_design_def;
 pub use dc_bundle::definition_file::save_design_def;
 pub use dc_bundle::view::{View, ViewData};
+pub mod animation_override;

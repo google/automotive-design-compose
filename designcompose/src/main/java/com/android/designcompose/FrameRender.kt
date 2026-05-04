@@ -557,6 +557,13 @@ internal fun ContentDrawScope.squooshShapeRender(
                 }
             }
         }
+    // For stroke gradients, ensure the brush size accounts for stroke thickness.
+    // A horizontal line has 0 height, and a vertical line has 0 width. Without this,
+    // gradient coordinates that reference size.height or size.width collapse to 0,
+    // rendering the gradient as a solid color or black. (Issue #1549)
+    val strokeWeight = style.nodeStyle.stroke.strokeWeight.toUniform() * density
+    val strokeBrushSize =
+        Size(maxOf(brushSize.width, strokeWeight), maxOf(brushSize.height, strokeWeight))
     val strokeBrush =
         style.nodeStyle.stroke.shaderDataOrNull?.let { shaderData ->
             getShaderBrush(
@@ -576,7 +583,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                     progressVectorMeterData?.let {
                         calculateProgressVectorData(it, shapePaths, p, style, meterValue!!, density)
                     }
-                    brush.applyTo(brushSize, p, 1.0f)
+                    brush.applyTo(strokeBrushSize, p, 1.0f)
                     listOf(p)
                 }
         }
@@ -588,7 +595,7 @@ internal fun ContentDrawScope.squooshShapeRender(
                 val b = background.asBrush(appContext, document, density, variableState)
                 if (b != null) {
                     val (brush, strokeOpacity) = b
-                    brush.applyTo(brushSize, p, strokeOpacity)
+                    brush.applyTo(strokeBrushSize, p, strokeOpacity)
                     p
                 } else {
                     null

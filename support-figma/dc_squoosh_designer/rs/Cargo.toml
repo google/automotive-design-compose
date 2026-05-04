@@ -1,0 +1,19 @@
+[package]
+name = "dc_squoosh_parser"
+description = "Parser for DesignCompose Squoosh Figma plugin data"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+log.workspace = true
+dc_squoosh_animation.workspace = true
+
+[dev-dependencies]
+env_logger.workspace = true

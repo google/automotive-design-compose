@@ -18,9 +18,10 @@ use dc_figma_import::tools::fetch::Args;
 use std::process;
 
 fn main() {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     let args = Args::parse();
     if let Err(e) = fetch(args) {
-        eprintln!("Fetch failed: {:?}", e);
+        log::error!("Fetch failed: {:?}", e);
         std::process::exit(1);
     }
 }

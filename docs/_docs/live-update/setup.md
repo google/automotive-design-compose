@@ -89,6 +89,42 @@ Example for the tutorial app:
 adb shell am startservice -n "com.android.designcompose.tutorial/com.android.designcompose.ApiKeyService" -a setApiKey -e ApiKey $FIGMA_ACCESS_TOKEN
 ```
 
+### Advanced Live Update Configuration {#AdvancedLiveUpdateConfiguration}
+
+DesignCompose provides additional controls for Live Update behavior via `ApiKeyService`. You can enable or disable Live Update, change the fetch interval, and modify the pause timeout at runtime.
+
+**Enable or Disable Live Update:**
+
+Use the `enableLiveUpdate` action with a boolean extra `Enabled`.
+
+```shell
+adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a enableLiveUpdate --ez Enabled false
+```
+
+**Set Fetch Interval (in milliseconds):**
+
+Use the `setLiveUpdateFetchMillis` action with a long extra `FetchIntervalMs`. By default, this is 5000ms.
+
+```shell
+adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setLiveUpdateFetchMillis --el FetchIntervalMs 10000
+```
+
+**Enable or Disable Adaptive Polling:**
+
+Use the `enableAdaptivePolling` action with a boolean extra `Enabled`. Adaptive polling exponentially increases the fetch interval when no changes are detected, up to a maximum of 60 seconds. By default, this is true.
+
+```shell
+adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a enableAdaptivePolling --ez Enabled false
+```
+
+**Set Pause Timeout (in milliseconds):**
+
+Use the `setAutopauseTimeout` action with a long extra `TimeoutMs`. By default, this is 30 minutes (1800000ms).
+
+```shell
+adb shell am startservice -n "<YOUR_APP_ID>/com.android.designcompose.ApiKeyService" -a setAutopauseTimeout --el TimeoutMs 3600000
+```
+
 [1]: https://www.figma.com
 [2]: {%link _docs/variables.md %}
 [3]: <https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens>

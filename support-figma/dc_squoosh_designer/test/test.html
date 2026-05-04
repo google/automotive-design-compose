@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --size-4: 8px;
+      --size-6: 16px;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --resizer-size: 20px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      background-color: #2c2c2c;
+      color: #ffffff;
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .resize-handle {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      width: var(--resizer-size);
+      height: var(--resizer-size);
+      cursor: se-resize;
+      z-index: 1000;
+    }
+    #preview-container, #timeline-container, #controls, #editor {
+      flex-shrink: 0;
+      position: relative;
+      border-bottom: 1px solid #444;
+      padding: var(--size-4);
+    }
+    #timeline-container { padding: 0; }
+    #preview-canvas, #timeline-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    #editor {
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 8px;
+        align-items: center;
+    }
+    label { font-weight: bold; }
+    input, select {
+        width: 100%;
+        background-color: #383838;
+        color: #ffffff;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="preview-container" style="height: 200px; padding: 0;">
+    <canvas id="preview-canvas"></canvas>
+  </div>
+  <div id="controls">
+      <button id="play-button">Play</button>
+  </div>
+  <div id="timeline-container" style="height: 150px;">
+    <canvas id="timeline-canvas"></canvas>
+  </div>
+  <div id="editor">
+    <h3>Animation Properties</h3>
+    <div class="form-grid">
+        <label for="initial-delay">Initial Delay (s)</label>
+        <input type="number" id="initial-delay" step="0.1" value="0">
+
+        <label for="duration">Duration (s)</label>
+        <input type="number" id="duration" step="0.1" value="0.3">
+
+        <label for="repeat-type">Repeat</label>
+        <select id="repeat-type">
+            <option value="NoRepeat">No Repeat</option>
+            <option value="LoopForever">Loop Forever</option>
+        </select>
+
+        <label for="easing">Easing</label>
+        <select id="easing">
+            <option value="Linear">Linear</option>
+            <option value="EaseInOut">Ease In Out</option>
+            <option value="EaseIn">Ease In</option>
+            <option value="EaseOut">Ease Out</option>
+        </select>
+
+        <label for="interrupt-type">Interrupt</label>
+        <select id="interrupt-type">
+            <option value="None">None</option>
+            <option value="ResetToStart">Reset To Start</option>
+            <option value="Complete">Complete</option>
+            <option value="Stop">Stop</option>
+        </select>
+    </div>
+    <button id="save-button" style="margin-top: 16px;">Save Properties</button>
+  </div>
+  <div class="resize-handle" id="resizeHandle" tabindex="0"></div>
+
+  <script>
+    // Mock parent postMessage
+    const parent = {
+        postMessage: (message, target) => {
+            console.log('Message to parent:', message);
+        }
+    }
+
+    const previewCanvas = new fabric.Canvas('preview-canvas', { selection: false });
+    const timelineCanvas = new fabric.Canvas('timeline-canvas', { selection: false });
+    const previewContainer = document.getElementById('preview-container');
+    const timelineContainer = document.getElementById('timeline-container');
+    const playButton = document.getElementById('play-button');
+    const saveButton = document.getElementById('save-button');
+    
+    const initialDelayInput = document.getElementById('initial-delay');
+    const durationInput = document.getElementById('duration');
+    const repeatTypeSelect = document.getElementById('repeat-type');
+    const easingSelect = document.getElementById('easing');
+    const interruptTypeSelect = document.getElementById('interrupt-type');
+
+    let currentSerializedVariants = [];
+    let currentVariants = [];
+    let currentFrameIndex = 0;
+    let isPlaying = false;
+    let timelineProgressLine = null;
+
+    function getKeyframeTimes(variants) {
+        let currentTime = 0;
+        const keyframes = [];
+        variants.forEach((variant, index) => {
+            if (index === 0) {
+                const firstAnim = variants[0].animation;
+                if (firstAnim && firstAnim.spec && firstAnim.spec.initial_delay) {
+                    currentTime += (firstAnim.spec.initial_delay.secs || 0) + (firstAnim.spec.initial_delay.nanos || 0) / 1e9;
+                }
+            }
+            keyframes.push({ time: currentTime, name: variant.name, index: index });
+            const anim = variant.animation;
+            if (anim && anim.spec && anim.spec.animation && anim.spec.animation.Smooth) {
+                currentTime += (anim.spec.animation.Smooth.duration.secs || 0) + (anim.spec.animation.Smooth.duration.nanos || 0) / 1e9;
+            }
+        });
+        return { keyframes, totalDuration: currentTime > 0 ? currentTime : 1 };
+    }
+
+    new ResizeObserver(entries => {
+      const cr = entries[0].contentRect;
+      previewCanvas.setWidth(cr.width).setHeight(cr.height).renderAll();
+    }).observe(previewContainer);
+
+    new ResizeObserver(entries => {
+      const cr = entries[0].contentRect;
+      timelineCanvas.setWidth(cr.width).setHeight(cr.height).renderAll();
+      renderTimeline(currentVariants, currentSerializedVariants);
+    }).observe(timelineContainer);
+
+    function decomposeMatrix(matrix) {
+      const [a, c, e] = matrix[0];
+      const [b, d, f] = matrix[1];
+      const delta = a * d - b * c;
+      let translateX = e, translateY = f, angle = 0, scaleX = 1, scaleY = 1;
+      if (a !== 0 || b !== 0) {
+        const r = Math.sqrt(a * a + b * b);
+        angle = b > 0 ? Math.acos(a / r) : -Math.acos(a / r);
+        scaleX = r;
+        scaleY = delta / r;
+      } else if (c !== 0 || d !== 0) {
+        const s = Math.sqrt(c * c + d * d);
+        angle = Math.PI / 2 - (d > 0 ? Math.acos(-c / s) : -Math.acos(c / s));
+        scaleX = delta / s;
+        scaleY = s;
+      }
+      return { translateX, translateY, angle: angle * (180 / Math.PI), scaleX, scaleY };
+    }
+
+    function renderPreview(variantNode) {
+        previewCanvas.clear();
+        if (!variantNode) return;
+        const rootAbsTransform = decomposeMatrix(variantNode.absoluteTransform);
+        const objects = [];
+        function collectObjectsRecursive(node, isRoot = false) {
+            if (!node.absoluteTransform) return;
+            const nodeAbsTransform = decomposeMatrix(node.absoluteTransform);
+            const relativeLeft = nodeAbsTransform.translateX - rootAbsTransform.translateX;
+            const relativeTop = nodeAbsTransform.translateY - rootAbsTransform.translateY;
+            if (node.fills && node.fills.length > 0 && node.fills[0].type === 'SOLID' && node.fills[0].visible !== false) {
+                const fill = `rgba(${Math.round(node.fills[0].color.r * 255)}, ${Math.round(node.fills[0].color.g * 255)}, ${Math.round(node.fills[0].color.b * 255)}, ${node.fills[0].opacity === undefined ? 1 : node.fills[0].opacity})`;
+                const rect = new fabric.Rect({
+                    width: node.width, height: node.height, fill: fill,
+                    left: relativeLeft, top: relativeTop, angle: nodeAbsTransform.angle,
+                    scaleX: nodeAbsTransform.scaleX, scaleY: nodeAbsTransform.scaleY,
+                    originX: 'left', originY: 'top', nodeName: isRoot ? '__ROOT__' : node.name
+                });
+                objects.push(rect);
+            }
+            if (node.children) node.children.forEach(child => collectObjectsRecursive(child, false));
+        }
+        collectObjectsRecursive(variantNode, true);
+        previewCanvas.add(...objects);
+        const zoom = Math.min(previewCanvas.width / variantNode.width, previewCanvas.height / variantNode.height) * 0.9;
+        const offsetX = (previewCanvas.width - (variantNode.width * zoom)) / 2;
+        const offsetY = (previewCanvas.height - (variantNode.height * zoom)) / 2;
+        previewCanvas.setViewportTransform([zoom, 0, 0, zoom, offsetX, offsetY]);
+        previewCanvas.renderAll();
+    }
+    
+    function updateEditorUI(frameIndex) {
+        const variant = currentVariants[frameIndex];
+        if (!variant || !variant.animation || !variant.animation.spec) {
+            initialDelayInput.value = 0;
+            durationInput.value = 0.3;
+            repeatTypeSelect.value = 'NoRepeat';
+            easingSelect.value = 'Linear';
+            interruptTypeSelect.value = 'None';
+            return;
+        }
+        const spec = variant.animation.spec;
+        const delay = (spec.initial_delay.secs || 0) + (spec.initial_delay.nanos || 0) / 1e9;
+        initialDelayInput.value = delay.toFixed(2);
+        if (spec.animation && spec.animation.Smooth) {
+            const d = spec.animation.Smooth.duration;
+            const duration = (d.secs || 0) + (d.nanos || 0) / 1e9;
+            durationInput.value = duration.toFixed(2);
+            repeatTypeSelect.value = spec.animation.Smooth.repeat_type;
+            easingSelect.value = spec.animation.Smooth.easing;
+        }
+        interruptTypeSelect.value = spec.interrupt_type;
+    }
+
+    saveButton.onclick = () => {
+        const delay = parseFloat(initialDelayInput.value);
+        const duration = parseFloat(durationInput.value);
+        const newAnimationData = {
+            spec: {
+                initial_delay: { secs: Math.floor(delay), nanos: (delay % 1) * 1e9 },
+                animation: {
+                    Smooth: {
+                        duration: { secs: Math.floor(duration), nanos: (duration % 1) * 1e9 },
+                        repeat_type: repeatTypeSelect.value,
+                        easing: easingSelect.value
+                    }
+                },
+                interrupt_type: interruptTypeSelect.value
+            }
+        };
+        currentVariants[currentFrameIndex].animation = newAnimationData;
+        parent.postMessage({ pluginMessage: { 
+            type: 'save-data', 
+            frameName: currentVariants[currentFrameIndex].name,
+            data: JSON.stringify(newAnimationData)
+        }}, '*');
+        renderTimeline(currentVariants, currentSerializedVariants);
+    };
+
+    function playAnimation() {
+        if (isPlaying || currentVariants.length < 2) return;
+
+        const fromIndex = currentFrameIndex;
+        const toIndex = (currentFrameIndex + 1) % currentVariants.length;
+        const animData = currentVariants[fromIndex].animation;
+        let duration = 300, delay = 0, easing = fabric.util.ease.easeInOutQuad;
+
+        if (animData && animData.spec) {
+            if (fromIndex === 0 && animData.spec.initial_delay) delay = ((animData.spec.initial_delay.secs || 0) + (animData.spec.initial_delay.nanos || 0) / 1e9) * 1000;
+            if (animData.spec.animation && animData.spec.animation.Smooth) {
+                const d = animData.spec.animation.Smooth.duration;
+                duration = ((d.secs || 0) + (d.nanos || 0) / 1e9) * 1000;
+                const easingMap = { 'Linear': fabric.util.ease.linear, 'EaseIn': fabric.util.ease.easeInQuad, 'EaseOut': fabric.util.ease.easeOutQuad, 'EaseInOut': fabric.util.ease.easeInOutQuad };
+                easing = easingMap[animData.spec.animation.Smooth.easing] || easing;
+            }
+        }
+
+        isPlaying = true;
+        playButton.textContent = 'Pause';
+
+        setTimeout(() => {
+            const toVariant = currentSerializedVariants[toIndex];
+            const toRootTransform = decomposeMatrix(toVariant.absoluteTransform);
+            const toNodes = new Map();
+            function collectToNodes(node, isRoot = false) {
+                toNodes.set(isRoot ? '__ROOT__' : node.name, node);
+                if (node.children) node.children.forEach(child => collectToNodes(child, false));
+            }
+            collectToNodes(toVariant, true);
+
+            const animationTasks = [];
+            previewCanvas.getObjects().filter(obj => obj.nodeName).forEach(obj => {
+                const toNode = toNodes.get(obj.nodeName);
+                const task = { obj, start: {}, end: {} };
+                if (toNode) {
+                    const toNodeAbsTransform = decomposeMatrix(toNode.absoluteTransform);
+                    task.start = { left: obj.left, top: obj.top, angle: obj.angle, scaleX: obj.scaleX, scaleY: obj.scaleY, width: obj.width, height: obj.height, color: new fabric.Color(obj.fill).getSource() };
+                    const toFillRaw = toNode.fills[0].color;
+                    const toOpacity = toNode.fills[0].opacity === undefined ? 1 : toNode.fills[0].opacity;
+                    task.end = {
+                        left: toNodeAbsTransform.translateX - toRootTransform.translateX, top: toNodeAbsTransform.translateY - toRootTransform.translateY,
+                        angle: toNodeAbsTransform.angle, scaleX: toNodeAbsTransform.scaleX, scaleY: toNodeAbsTransform.scaleY,
+                        width: toNode.width, height: toNode.height,
+                        color: [Math.round(toFillRaw.r * 255), Math.round(toFillRaw.g * 255), Math.round(toFillRaw.b * 255), toOpacity]
+                    };
+                } else {
+                    task.start = { opacity: obj.opacity };
+                    task.end = { opacity: 0 };
+                }
+                animationTasks.push(task);
+            });
+
+            const PADDING = 20, LEFT_LABEL_WIDTH = 120;
+            const { keyframes, totalDuration } = getKeyframeTimes(currentVariants);
+            const timelineWidth = timelineCanvas.width - PADDING * 2 - LEFT_LABEL_WIDTH;
+            const timeToPx = timelineWidth / totalDuration;
+            const startX = PADDING + LEFT_LABEL_WIDTH + keyframes[fromIndex].time * timeToPx;
+            const endX = PADDING + LEFT_LABEL_WIDTH + keyframes[toIndex].time * timeToPx;
+
+            fabric.util.animate({
+                startValue: 0, endValue: 1, duration: duration, easing: easing,
+                onChange: (value) => {
+                    animationTasks.forEach(task => {
+                        for (const prop in task.end) {
+                            if (prop === 'color') {
+                                const r = Math.round(task.start.color[0] + (task.end.color[0] - task.start.color[0]) * value);
+                                const g = Math.round(task.start.color[1] + (task.end.color[1] - task.start.color[1]) * value);
+                                const b = Math.round(task.start.color[2] + (task.end.color[2] - task.start.color[2]) * value);
+                                const a = task.start.color[3] + (task.end.color[3] - task.start.color[3]) * value;
+                                task.obj.set('fill', `rgba(${r},${g},${b},${a})`);
+                            } else {
+                                task.obj.set(prop, task.start[prop] + (task.end[prop] - task.start[prop]) * value);
+                            }
+                        }
+                    });
+                    if (timelineProgressLine) {
+                        const newX = startX + (endX - startX) * value;
+                        timelineProgressLine.set({ x1: newX, x2: newX }).setCoords();
+                    }
+                    previewCanvas.renderAll();
+                    timelineCanvas.renderAll();
+                },
+                onComplete: () => {
+                    currentFrameIndex = toIndex;
+                    renderPreview(currentSerializedVariants[currentFrameIndex]);
+                    updateEditorUI(currentFrameIndex);
+                    isPlaying = false;
+                    playButton.textContent = 'Play';
+                    renderTimeline(currentVariants, currentSerializedVariants);
+                }
+            });
+        }, delay);
+    }
+    playButton.onclick = playAnimation;
+
+    function renderTimeline(variants, serializedVariants) {
+        timelineCanvas.clear();
+        if (!variants || variants.length === 0 || !serializedVariants || serializedVariants.length === 0) return;
+        const PADDING = 20, TRACK_HEIGHT = 30, LEFT_LABEL_WIDTH = 120, TOP_LABEL_HEIGHT = 20;
+        const timelineWidth = timelineCanvas.width - PADDING * 2 - LEFT_LABEL_WIDTH;
+        const nodeMap = new Map();
+        function collectNodes(node) {
+            if (!nodeMap.has(node.name)) nodeMap.set(node.name, { name: node.name, id: node.id });
+            if (node.children) node.children.forEach(collectNodes);
+        }
+        collectNodes(serializedVariants[0]);
+        const tracks = Array.from(nodeMap.values());
+        const { keyframes, totalDuration } = getKeyframeTimes(variants);
+        const timeToPx = timelineWidth / totalDuration;
+        tracks.forEach((track, i) => {
+            const y = PADDING + TOP_LABEL_HEIGHT + i * TRACK_HEIGHT;
+            timelineCanvas.add(new fabric.Line([PADDING + LEFT_LABEL_WIDTH, y + TRACK_HEIGHT / 2, PADDING + LEFT_LABEL_WIDTH + timelineWidth, y + TRACK_HEIGHT / 2], { stroke: 'grey', selectable: false, evented: false }));
+            timelineCanvas.add(new fabric.Text(track.name, { left: PADDING, top: y, fontSize: 12, fill: 'white', selectable: false, evented: false }));
+        });
+        keyframes.forEach(({ time, name, index }) => {
+            if (index === -1) return; // Don't draw the 'End' marker
+            const x = PADDING + LEFT_LABEL_WIDTH + time * timeToPx;
+            const label = new fabric.Text(name, {
+                left: x, top: PADDING, fontSize: 12, fill: 'white', originX: 'center',
+                selectable: true, hoverCursor: 'pointer', variantIndex: index,
+                hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true
+            });
+            timelineCanvas.add(label);
+            timelineCanvas.add(new fabric.Line([x, PADDING + TOP_LABEL_HEIGHT, x, timelineCanvas.height - PADDING], { stroke: 'lightblue', selectable: false, evented: false }));
+            tracks.forEach((track, i) => {
+                const y = PADDING + TOP_LABEL_HEIGHT + i * TRACK_HEIGHT + TRACK_HEIGHT / 2;
+                timelineCanvas.add(new fabric.Circle({ left: x, top: y, radius: 4, fill: 'lightblue', originX: 'center', originY: 'center', selectable: false, evented: false }));
+            });
+        });
+        
+        const currentKeyframeX = PADDING + LEFT_LABEL_WIDTH + keyframes[currentFrameIndex].time * timeToPx;
+        timelineProgressLine = new fabric.Line([currentKeyframeX, PADDING, currentKeyframeX, timelineCanvas.height - PADDING], { stroke: 'red', strokeWidth: 2, selectable: false, evented: false });
+        timelineCanvas.add(timelineProgressLine);
+
+        timelineCanvas.renderAll();
+    }
+
+    timelineCanvas.on('mouse:down', function(options) {
+        if (options.target && options.target.variantIndex !== undefined) {
+            currentFrameIndex = options.target.variantIndex;
+            renderPreview(currentSerializedVariants[currentFrameIndex]);
+            updateEditorUI(currentFrameIndex);
+            renderTimeline(currentVariants, currentSerializedVariants);
+        }
+    });
+
+    window.onmessage = (event) => {
+      const pluginMessage = event.data.pluginMessage;
+      if (!pluginMessage) return;
+      if (pluginMessage.type === 'clear') {
+        document.getElementById('editor').style.display = 'none';
+        currentSerializedVariants = []; currentVariants = []; currentFrameIndex = 0;
+        return;
+      }
+      if (pluginMessage.type === 'update') {
+        document.getElementById('editor').style.display = 'block';
+        const { variants, serializedVariants } = pluginMessage;
+        currentSerializedVariants = serializedVariants;
+        currentVariants = variants;
+        currentFrameIndex = 0;
+        renderPreview(serializedVariants ? serializedVariants[0] : null);
+        renderTimeline(variants, serializedVariants);
+        updateEditorUI(0);
+      }
+    };
+
+    const resizeHandle = document.getElementById('resizeHandle');
+    let isResizing = false, startX = 0, startY = 0;
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      isResizing = true; startX = e.clientX; startY = e.clientY;
+      resizeHandle.setPointerCapture(e.pointerId); e.preventDefault();
+      const onMove = (ev) => {
+        if (!isResizing) return;
+        const newWidth = window.innerWidth + (ev.clientX - startX);
+        const newHeight = window.innerHeight + (ev.clientY - startY);
+        parent.postMessage({ pluginMessage: { type: 'resize', width: newWidth, height: newHeight } }, '*');
+      };
+      const endResize = () => {
+        isResizing = false;
+        parent.postMessage({ pluginMessage: { type: 'persist-size', width: window.innerWidth, height: window.innerHeight } }, '*');
+        resizeHandle.releasePointerCapture(e.pointerId);
+        window.removeEventListener('pointermove', onMove);
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', endResize, { once: true });
+    });
+    window.addEventListener('load', () => parent.postMessage({ pluginMessage: { type: 'ready' } }, '*'));
+  </script>
+  <script>
+    window.addEventListener('load', () => {
+        const mockData = {
+            pluginMessage: {
+                type: 'update',
+                componentName: 'Test Component',
+                variants: [
+                    { name: 'Variant1', animation: { spec: { initial_delay: { secs: 0, nanos: 0 }, animation: { Smooth: { duration: { secs: 1, nanos: 0 }, repeat_type: 'NoRepeat', easing: 'Linear' } }, interrupt_type: 'None' } } },
+                    { name: 'Variant2', animation: null }
+                ],
+                serializedVariants: [
+                    { id: '1:3', name: 'Variant1', type: 'COMPONENT', x: 20, y: 20, absoluteTransform: [[1, 0, 20], [0, 1, 20]], width: 200, height: 100, fills: [{ type: 'SOLID', visible: true, opacity: 1, color: { r: 1, g: 0, b: 0 } }], children: [
+                        { id: '1:4', name: 'Child1', type: 'RECTANGLE', x: 10, y: 10, absoluteTransform: [[1, 0, 30], [0, 1, 30]], width: 50, height: 30, fills: [{ type: 'SOLID', visible: true, opacity: 1, color: { r: 0, g: 1, b: 0 } }] }
+                    ]},
+                    { id: '1:5', name: 'Variant2', type: 'COMPONENT', x: 20, y: 20, absoluteTransform: [[1, 0, 20], [0, 1, 20]], width: 200, height: 100, fills: [{ type: 'SOLID', visible: true, opacity: 1, color: { r: 0, g: 0, b: 1 } }], children: [
+                        { id: '1:6', name: 'Child1', type: 'RECTANGLE', x: 140, y: 60, absoluteTransform: [[1, 0, 160], [0, 1, 80]], width: 50, height: 30, fills: [{ type: 'SOLID', visible: true, opacity: 1, color: { r: 0, g: 1, b: 1 } }] }
+                    ]}
+                ]
+            }
+        };
+        window.postMessage(mockData, '*');
+    });
+  </script>
+</body>
+</html>

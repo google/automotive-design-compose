@@ -45,6 +45,8 @@ abstract class FeedbackImpl {
     // Implementation-specific functions
     abstract fun logMessage(str: String, level: FeedbackLevel)
 
+    open fun getTimestamp(): Long = System.nanoTime() / 1_000_000
+
     // Global public functions
     fun setLevel(lvl: FeedbackLevel) {
         logLevel = lvl
@@ -199,7 +201,7 @@ abstract class FeedbackImpl {
             ++messages.first().count
         } else {
             // Prepend new message and pop last if buffer is full
-            val msg = FeedbackMessage(str, 1, System.currentTimeMillis(), level)
+            val msg = FeedbackMessage(str, 1, getTimestamp(), level)
             if (messages.size == maxMessages) messages.removeLast()
             messages.addFirst(msg)
         }

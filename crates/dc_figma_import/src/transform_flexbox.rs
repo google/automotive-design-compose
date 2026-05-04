@@ -39,8 +39,12 @@ use dc_bundle::variable::NumOrVar;
 use dc_bundle::view_shape;
 use dc_bundle::view_shape::ViewShape;
 
+use crate::animation_override::AnimationOverride;
+use crate::animation_spec_schema::AnimationOverrideJson;
 use crate::figma_schema::LayoutPositioning;
 use crate::reaction_schema::{FrameExtrasJson, ReactionJson};
+use crate::scalableui_schema::ScalableUiDataJson;
+use crate::shader_schema::ShaderDataJson;
 use dc_bundle::background::background;
 use dc_bundle::background::{background::Background_type, Background};
 use dc_bundle::blend::BlendMode;
@@ -53,25 +57,22 @@ use dc_bundle::meter_data::{
     ProgressMarkerMeterData, ProgressVectorMeterData, RotationMeterData,
 };
 use dc_bundle::node_style::Display;
+use dc_bundle::path::line_height::Line_height_type;
 use dc_bundle::path::{stroke_weight, StrokeAlign, StrokeWeight};
 use dc_bundle::positioning::{
     item_spacing, AlignContent, AlignItems, AlignSelf, FlexDirection, FlexWrap, ItemSpacing,
     JustifyContent, Overflow, OverflowDirection, PositionType, ScrollInfo,
 };
 use dc_bundle::reaction::Reaction;
+use dc_bundle::scalable::scalable_uidata;
 use dc_bundle::shadow::{BoxShadow, TextShadow};
 use dc_bundle::text::{TextAlign, TextAlignVertical, TextOverflow};
-use dc_bundle::view_shape::view_shape::RoundRect;
-use log::error;
-
-use crate::scalableui_schema::ScalableUiDataJson;
-use crate::shader_schema::ShaderDataJson;
-use dc_bundle::path::line_height::Line_height_type;
-use dc_bundle::scalable::scalable_uidata;
 use dc_bundle::text_style::{StyledTextRun, TextStyle};
 use dc_bundle::view::view::RenderMethod;
 use dc_bundle::view::{ComponentInfo, View};
+use dc_bundle::view_shape::view_shape::RoundRect;
 use dc_bundle::view_style::ViewStyle;
+use log::{error, warn};
 use unicode_segmentation::UnicodeSegmentation;
 
 // If an Auto content preview widget specifies a "Hug contents" sizing policy, this
@@ -182,7 +183,9 @@ fn compute_layout(
             style.layout_style_mut().flex_direction = match frame.layout_mode {
                 figma_schema::LayoutMode::Horizontal => FlexDirection::FLEX_DIRECTION_ROW.into(),
                 figma_schema::LayoutMode::Vertical => FlexDirection::FLEX_DIRECTION_COLUMN.into(),
-                figma_schema::LayoutMode::None => FlexDirection::FLEX_DIRECTION_NONE.into(),
+                figma_schema::LayoutMode::None | figma_schema::LayoutMode::Unknown => {
+                    FlexDirection::FLEX_DIRECTION_NONE.into()
+                }
             };
         }
         style.layout_style_mut().padding = Some(DimensionRect {
@@ -313,7 +316,7 @@ fn compute_layout(
                 }
             }
 
-            if frame.layout_mode != figma_schema::LayoutMode::None {
+            if !frame.layout_mode.is_none() {
                 let width_points = bounds.width().ceil();
                 let height_points = bounds.height().ceil();
                 style.layout_style_mut().width = match frame.layout_sizing_horizontal {
@@ -596,6 +599,152 @@ fn compute_layout(
                     }
                 }
             }
+            // Handle nodes with constraints but no parent context (e.g. replacement
+            // content fetched as top-level nodes via NodeQuery::Name). We preserve the
+            // constraint type with zero-offset margins so the layout engine can apply
+            // them when this node is placed into its runtime parent.
+            (Some(bounds), None) => {
+                let has_constraints = node.constraints().is_some();
+                if has_constraints {
+                    style.layout_style_mut().position_type =
+                        PositionType::POSITION_TYPE_ABSOLUTE.into();
+
+                    let (width, height) = if let Some(size) = &node.size {
+                        (size.x(), size.y())
+                    } else {
+                        (bounds.width().ceil(), bounds.height().ceil())
+                    };
+
+                    match node.constraints().map(|c| c.horizontal) {
+                        Some(figma_schema::HorizontalLayoutConstraintValue::Left) | None => {
+                            style.layout_style_mut().left = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().right = DimensionProto::new_auto();
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_start(Dimension::Points(0.0)));
+                            if !hug_width && !node.is_text() {
+                                style.layout_style_mut().width = DimensionProto::new_points(width);
+                            }
+                        }
+                        Some(figma_schema::HorizontalLayoutConstraintValue::Right) => {
+                            style.layout_style_mut().left = DimensionProto::new_auto();
+                            style.layout_style_mut().right = DimensionProto::new_percent(0.0);
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_end(Dimension::Points(0.0)));
+                            if !hug_width && !node.is_text() {
+                                style.layout_style_mut().width = DimensionProto::new_points(width);
+                            }
+                        }
+                        Some(figma_schema::HorizontalLayoutConstraintValue::LeftRight) => {
+                            style.layout_style_mut().left = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().right = DimensionProto::new_percent(0.0);
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_start(Dimension::Points(0.0)));
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_end(Dimension::Points(0.0)));
+                            style.layout_style_mut().width = DimensionProto::new_auto();
+                        }
+                        Some(figma_schema::HorizontalLayoutConstraintValue::Center) => {
+                            style.layout_style_mut().left = DimensionProto::new_percent(0.5);
+                            style.layout_style_mut().right = DimensionProto::new_auto();
+                            // Without parent size, use -width/2 to center
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_start(Dimension::Points(-width / 2.0)));
+                            if !hug_width && !node.is_text() {
+                                style.layout_style_mut().width = DimensionProto::new_points(width);
+                            }
+                        }
+                        Some(figma_schema::HorizontalLayoutConstraintValue::Scale) => {
+                            // Without parent context, scale behaves like stretch
+                            style.layout_style_mut().left = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().right = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().width = DimensionProto::new_auto();
+                            if node.min_width.is_none() {
+                                style.layout_style_mut().min_width = DimensionProto::new_auto();
+                            }
+                        }
+                    }
+
+                    match node.constraints().map(|c| c.vertical) {
+                        Some(figma_schema::VerticalLayoutConstraintValue::Top) | None => {
+                            style.layout_style_mut().top = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().bottom = DimensionProto::new_auto();
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_top(Dimension::Points(0.0)));
+                            if !hug_height && !node.is_text() {
+                                style.layout_style_mut().height =
+                                    DimensionProto::new_points(height);
+                            }
+                        }
+                        Some(figma_schema::VerticalLayoutConstraintValue::Bottom) => {
+                            style.layout_style_mut().top = DimensionProto::new_auto();
+                            style.layout_style_mut().bottom = DimensionProto::new_percent(0.0);
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_bottom(Dimension::Points(0.0)));
+                            if !hug_height && !node.is_text() {
+                                style.layout_style_mut().height =
+                                    DimensionProto::new_points(height);
+                            }
+                        }
+                        Some(figma_schema::VerticalLayoutConstraintValue::TopBottom) => {
+                            style.layout_style_mut().top = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().bottom = DimensionProto::new_percent(0.0);
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_top(Dimension::Points(0.0)));
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_bottom(Dimension::Points(0.0)));
+                            style.layout_style_mut().height = DimensionProto::new_auto();
+                        }
+                        Some(figma_schema::VerticalLayoutConstraintValue::Center) => {
+                            style.layout_style_mut().top = DimensionProto::new_percent(0.5);
+                            style.layout_style_mut().bottom = DimensionProto::new_auto();
+                            style
+                                .layout_style_mut()
+                                .margin
+                                .as_mut()
+                                .map(|m| m.set_top(Dimension::Points(-height / 2.0)));
+                            if !hug_height && !node.is_text() {
+                                style.layout_style_mut().height =
+                                    DimensionProto::new_points(height);
+                            }
+                        }
+                        Some(figma_schema::VerticalLayoutConstraintValue::Scale) => {
+                            style.layout_style_mut().top = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().bottom = DimensionProto::new_percent(0.0);
+                            style.layout_style_mut().height = DimensionProto::new_auto();
+                            if node.min_height.is_none() {
+                                style.layout_style_mut().min_height = DimensionProto::new_auto();
+                            }
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -816,10 +965,10 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::AngularGradient(
                 background::AngularGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
-                    scale: scale,
+                    center_x,
+                    center_y,
+                    angle,
+                    scale,
                     color_stops: g_stops,
                     ..Default::default()
                 },
@@ -864,9 +1013,9 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::RadialGradient(
                 background::RadialGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
+                    center_x,
+                    center_y,
+                    angle,
                     radius_x: radius.0,
                     radius_y: radius.1,
                     color_stops: g_stops,
@@ -912,9 +1061,9 @@ fn compute_background(
 
             Background::new_with_background(background::Background_type::RadialGradient(
                 background::RadialGradient {
-                    center_x: center_x,
-                    center_y: center_y,
-                    angle: angle,
+                    center_x,
+                    center_y,
+                    angle,
                     radius_x: radius.0,
                     radius_y: radius.1,
                     color_stops: g_stops,
@@ -1042,7 +1191,7 @@ fn visit_node(
                             .map(|r| Into::<Option<Reaction>>::into(r))
                             .filter(|maybe_reaction| {
                                 if maybe_reaction.is_none() {
-                                    println!(
+                                    warn!(
                                         "Warning: reaction has empty action. Json: {}",
                                         reactions
                                     );
@@ -1058,7 +1207,7 @@ fn visit_node(
                         Some(reaction)
                     })
                     .unwrap_or_else(|e| {
-                        println!("Error parsing reaction: {}. Json: {}", e, reactions);
+                        warn!("Error parsing reaction: {}. Json: {}", e, reactions);
                         None
                     })
             } else {
@@ -1089,7 +1238,7 @@ fn visit_node(
         .and_then(|scalable_json| {
             let parse_result = serde_json::from_str::<ScalableUiDataJson>(scalable_json.as_str());
             if parse_result.is_err() {
-                println!(
+                warn!(
                     "Error parsing scalable ui data: node {} json {}: -> {:?}",
                     node.name, scalable_json, parse_result
                 );
@@ -1225,7 +1374,7 @@ fn visit_node(
                         variant_hash
                             .insert(variant_parts[0].to_string(), variant_parts[1].to_string());
                     } else {
-                        println!("Invalid grid span variant: {:?}", variant_parts);
+                        warn!("Invalid grid span variant: {:?}", variant_parts);
                     }
                 }
 
@@ -1475,7 +1624,7 @@ fn visit_node(
                         ..Default::default()
                     });
                 } else {
-                    println!("Unsupported OpenType flag: {}", flag)
+                    warn!("Unsupported OpenType flag: {}", flag)
                 }
             }
             font_features
@@ -1628,7 +1777,7 @@ fn visit_node(
                     .into(),
                     font_family,
                     font_weight: Some(font_weight).into(),
-                    font_style: font_style, // Italic or Normal
+                    font_style, // Italic or Normal
                     font_stretch: style.node_style().font_stretch.clone(), // Not in SubTypeStyle.
                     letter_spacing: sub_style
                         .letter_spacing
@@ -2056,6 +2205,37 @@ fn visit_node(
         RenderMethod::RENDER_METHOD_NONE,
         node.explicit_variable_modes.as_ref().unwrap_or(&HashMap::new()).clone(),
     );
+    let mut parsed_plugin_override = None;
+    if let Some(plugin_data) = node.shared_plugin_data.get("designcompose") {
+        let anim_str_opt = plugin_data.get("squoosh");
+        if let Some(anim_str) = anim_str_opt {
+            log::info!(
+                "Figma Import: Found squoosh animation plugin data string on node {}: {}",
+                node.id,
+                anim_str
+            );
+            match serde_json::from_str::<AnimationOverrideJson>(anim_str) {
+                Ok(anim) => {
+                    log::info!("Figma Import: Successfully parsed squoosh animation format for node {}: {:?}", node.id, anim);
+                    parsed_plugin_override = Some(anim);
+                }
+                Err(e) => {
+                    log::error!("Figma Import: Failed to parse squoosh animation plugin data for node {}: {:?}", node.id, e);
+                    println!("Figma Import: Failed to parse squoosh animation plugin data for node {}: {:?}", node.id, e);
+                }
+            }
+        } else {
+            log::debug!("Figma Import: No animation plugin data found for node {}", node.id);
+        }
+    }
+
+    if let Some(anim) = parsed_plugin_override {
+        view.style_mut().node_style_mut().animation_override =
+            Some(AnimationOverride::from(&anim).into()).into();
+    } else if let Some(animation_override) = &node.animation_override {
+        view.style_mut().node_style_mut().animation_override =
+            Some(AnimationOverride::from(animation_override).into()).into();
+    }
 
     // Iterate over our visible children, but not vectors because they always
     // present their children's content themselves (e.g.: they are boolean products
@@ -2185,6 +2365,156 @@ mod tests {
             FlexWrap::FLEX_WRAP_WRAP.into()
         );
     }
+
+    /// Test that a node with Left-Right + Top-Bottom constraints preserves
+    /// its constraint anchoring even when fetched without a parent context
+    /// (i.e. as a replacement content node).
+    #[test]
+    fn test_constraints_preserved_without_parent() {
+        // A frame with Left-Right horizontal and Top-Bottom vertical constraints,
+        // fetched as a top-level node (no parent). This simulates how replacement
+        // content nodes like "#fill" are fetched via NodeQuery::Name.
+        let json = r##"{
+            "id": "fill-1",
+            "name": "#fill",
+            "type": "FRAME",
+            "constraints": {
+                "vertical": "TOP_BOTTOM",
+                "horizontal": "LEFT_RIGHT"
+            },
+            "absoluteBoundingBox": {
+                "x": 10, "y": 10, "width": 80, "height": 80
+            },
+            "size": {
+                "x": 80,
+                "y": 80
+            }
+        }"##;
+
+        let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+
+        let mut key_to_global_id_map = HashMap::new();
+        let mut component_context = ComponentContext::new(&vec![]);
+        let mut image_context = ImageContext::new(
+            HashMap::new(),
+            HashMap::new(),
+            &crate::proxy_config::ProxyConfig::None,
+        );
+
+        // Fetch as top-level (no parent) — this is how replacement content is fetched
+        let view = create_component_flexbox(
+            &node,
+            &HashMap::new(),
+            &HashMap::new(),
+            &mut component_context,
+            &mut image_context,
+            crate::document::HiddenNodePolicy::Keep,
+            &mut key_to_global_id_map,
+        )
+        .unwrap();
+
+        let style = view.style.unwrap();
+        let layout = style.layout_style.unwrap();
+
+        // The node should be positioned absolutely so constraints can work
+        assert_eq!(
+            layout.position_type,
+            PositionType::POSITION_TYPE_ABSOLUTE.into(),
+            "Replacement content with constraints should be absolutely positioned"
+        );
+
+        // Left-Right constraint: both left and right should be anchored (not auto)
+        // so the node stretches horizontally when placed in a parent
+        assert!(
+            layout.left != DimensionProto::new_auto(),
+            "Left should be anchored for LEFT_RIGHT constraint"
+        );
+        assert!(
+            layout.right != DimensionProto::new_auto(),
+            "Right should be anchored for LEFT_RIGHT constraint"
+        );
+        // Width should be auto (stretch to fill between left and right anchors)
+        assert_eq!(
+            layout.width,
+            DimensionProto::new_auto(),
+            "Width should be auto for LEFT_RIGHT constraint"
+        );
+
+        // Top-Bottom constraint: both top and bottom should be anchored
+        assert!(
+            layout.top != DimensionProto::new_auto(),
+            "Top should be anchored for TOP_BOTTOM constraint"
+        );
+        assert!(
+            layout.bottom != DimensionProto::new_auto(),
+            "Bottom should be anchored for TOP_BOTTOM constraint"
+        );
+        // Height should be auto (stretch to fill between top and bottom anchors)
+        assert_eq!(
+            layout.height,
+            DimensionProto::new_auto(),
+            "Height should be auto for TOP_BOTTOM constraint"
+        );
+    }
+
+    /// Test that Center constraints are preserved without parent context.
+    #[test]
+    fn test_center_constraints_preserved_without_parent() {
+        let json = r##"{
+            "id": "center-1",
+            "name": "#center",
+            "type": "FRAME",
+            "constraints": {
+                "vertical": "CENTER",
+                "horizontal": "CENTER"
+            },
+            "absoluteBoundingBox": {
+                "x": 25, "y": 25, "width": 50, "height": 50
+            },
+            "size": {
+                "x": 50,
+                "y": 50
+            }
+        }"##;
+
+        let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+
+        let mut key_to_global_id_map = HashMap::new();
+        let mut component_context = ComponentContext::new(&vec![]);
+        let mut image_context = ImageContext::new(
+            HashMap::new(),
+            HashMap::new(),
+            &crate::proxy_config::ProxyConfig::None,
+        );
+
+        let view = create_component_flexbox(
+            &node,
+            &HashMap::new(),
+            &HashMap::new(),
+            &mut component_context,
+            &mut image_context,
+            crate::document::HiddenNodePolicy::Keep,
+            &mut key_to_global_id_map,
+        )
+        .unwrap();
+
+        let style = view.style.unwrap();
+        let layout = style.layout_style.unwrap();
+
+        // Should be absolutely positioned
+        assert_eq!(
+            layout.position_type,
+            PositionType::POSITION_TYPE_ABSOLUTE.into(),
+            "Replacement content with CENTER constraints should be absolutely positioned"
+        );
+
+        // Center constraint: left should be 50%
+        assert_eq!(
+            layout.left,
+            DimensionProto::new_percent(0.5),
+            "Left should be 50% for CENTER constraint"
+        );
+    }
 }
 
 #[test]
@@ -2267,4 +2597,152 @@ fn test_layout_wrap_override() {
     .unwrap();
 
     assert_eq!(view.style.unwrap().node_style.unwrap().flex_wrap, FlexWrap::FLEX_WRAP_WRAP.into());
+}
+
+#[test]
+fn test_animation_override_plugin_data() {
+    let json = r#"{
+            "id": "4",
+            "name": "test_anim",
+            "type": "FRAME",
+            "layoutMode": "HORIZONTAL",
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "absoluteBoundingBox": {
+                "x": 0, "y": 0, "width": 100, "height": 100
+            },
+            "sharedPluginData": {
+                "designcompose": {
+                    "squoosh": "{\"override\":\"Custom\",\"spec\":{\"initial_delay\":{\"secs\":0,\"nanos\":0},\"animation\":{\"Smooth\":{\"duration\":{\"secs\":0,\"nanos\":1000000000},\"repeat_type\":\"NoRepeat\",\"easing\":\"Linear\"}},\"interrupt_type\":\"Complete\"}}"
+                }
+            }
+        }"#;
+
+    let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let view = create_component_flexbox(
+        &node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        crate::document::HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+
+    assert!(view.style.unwrap().node_style.unwrap().animation_override.is_some());
+}
+
+/// Verify that a child frame with layout_positioning: ABSOLUTE inside
+/// an AutoLayout parent gets POSITION_TYPE_ABSOLUTE and proper insets.
+#[test]
+fn test_absolute_position_in_autolayout_import() {
+    use crate::figma_schema;
+    use dc_bundle::geometry::dimension_proto::Dimension;
+    use dc_bundle::positioning::PositionType;
+
+    // Create an AutoLayout parent (horizontal)
+    let parent_json = r##"{
+        "id": "1:1",
+        "name": "AutoLayoutParent",
+        "visible": true,
+        "type": "FRAME",
+        "absoluteBoundingBox": { "x": 0, "y": 0, "width": 400, "height": 300 },
+        "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisSizingMode": "FIXED",
+        "counterAxisSizingMode": "FIXED",
+        "layoutPositioning": "AUTO",
+        "children": [
+            {
+                "id": "2:1",
+                "name": "AbsoluteChild",
+                "visible": true,
+                "type": "FRAME",
+                "absoluteBoundingBox": { "x": 150, "y": 100, "width": 80, "height": 60 },
+                "constraints": { "vertical": "TOP", "horizontal": "LEFT" },
+                "layoutMode": "NONE",
+                "primaryAxisSizingMode": "FIXED",
+                "counterAxisSizingMode": "FIXED",
+                "layoutPositioning": "ABSOLUTE",
+                "children": [],
+                "fills": [],
+                "strokes": [],
+                "sharedPluginData": {}
+            }
+        ],
+        "fills": [],
+        "strokes": [],
+        "sharedPluginData": {}
+    }"##;
+
+    let node: figma_schema::Node = serde_json::from_str(parent_json).unwrap();
+    let mut key_to_global_id_map = HashMap::new();
+    let mut component_context = ComponentContext::new(&vec![]);
+    let mut image_context =
+        ImageContext::new(HashMap::new(), HashMap::new(), &crate::proxy_config::ProxyConfig::None);
+
+    let parent_view = create_component_flexbox(
+        &node,
+        &HashMap::new(),
+        &HashMap::new(),
+        &mut component_context,
+        &mut image_context,
+        crate::document::HiddenNodePolicy::Keep,
+        &mut key_to_global_id_map,
+    )
+    .unwrap();
+
+    // Get the child view
+    let child_layout = if let Some(data) = parent_view.data.as_ref() {
+        if let Some(dc_bundle::view::view_data::View_data_type::Container(
+            dc_bundle::view::view_data::Container { children, .. },
+        )) = &data.view_data_type
+        {
+            assert_eq!(children.len(), 1, "Parent should have one child");
+            children[0].style().layout_style().clone()
+        } else {
+            panic!("Parent should be a Container");
+        }
+    } else {
+        panic!("Parent should have data");
+    };
+
+    // The child should have POSITION_TYPE_ABSOLUTE
+    assert_eq!(
+        child_layout.position_type,
+        PositionType::POSITION_TYPE_ABSOLUTE.into(),
+        "Absolute-positioned child in AutoLayout should have POSITION_TYPE_ABSOLUTE"
+    );
+
+    // The left margin should be 150 (child x=150 - parent x=0)
+    let left_margin = child_layout
+        .margin
+        .as_ref()
+        .and_then(|m| m.start.as_ref())
+        .and_then(|d| d.Dimension.as_ref())
+        .and_then(|d| match d {
+            Dimension::Points(p) => Some(p),
+            _ => None,
+        });
+    assert_eq!(left_margin, Some(&150.0), "Left margin should be 150 (child_x - parent_x)");
+
+    // The top margin should be 100 (child y=100 - parent y=0)
+    let top_margin = child_layout
+        .margin
+        .as_ref()
+        .and_then(|m| m.top.as_ref())
+        .and_then(|d| d.Dimension.as_ref())
+        .and_then(|d| match d {
+            Dimension::Points(p) => Some(p),
+            _ => None,
+        });
+    assert_eq!(top_margin, Some(&100.0), "Top margin should be 100 (child_y - parent_y)");
 }

@@ -47,6 +47,7 @@ import com.android.designcompose.definition.layout.GridLayoutType
 import com.android.designcompose.definition.layout.GridSpan
 import com.android.designcompose.definition.view.ViewStyle
 import com.android.designcompose.getCustomComposable
+import com.android.designcompose.getModifier
 import com.android.designcompose.getScrollCallbacks
 import com.android.designcompose.itemSpacingAbs
 import com.android.designcompose.utils.pointsAsDp
@@ -105,6 +106,7 @@ private fun addRowColumnContent(
                 component = @Composable { childComponent() },
                 node = replacementChild,
                 parentComponents = parentComps,
+                customModifier = customizations.getModifier(replacementChild.view.name),
             )
         )
     }
@@ -394,6 +396,7 @@ private fun addGridContent(
             component = { ctx -> gridComposable() },
             node = resolvedView,
             parentComponents = parentComps,
+            customModifier = customizations.getModifier(resolvedView.view.name),
         )
     )
     resolvedView.needsChildRender = true

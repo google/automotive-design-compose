@@ -1292,7 +1292,7 @@ private fun SquooshChildLayout(
         content = {
             child.component?.invoke(
                 object : ComponentReplacementContext {
-                    override val layoutModifier: Modifier = Modifier
+                    override val layoutModifier: Modifier = child.customModifier ?: Modifier
                     override val textStyle: TextStyle? = child.textStyle
                 }
             )

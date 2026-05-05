@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ use crate::figma_schema::{Paint, Transform};
 use crate::proxy_config::ProxyConfig;
 use dc_bundle::definition::EncodedImageMap;
 use image::DynamicImage;
-use log::warn;
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
@@ -248,8 +248,18 @@ impl ImageContext {
 //
 // So this structure is the serialized ImageContext with no images, and can be
 // used to resurrect an ImageContext with the appropriate state.
+
+/// Current session format version. Bump this when the serialization format changes
+/// to ensure graceful fallback rather than silent data corruption.
+const SESSION_VERSION: u32 = 2;
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ImageContextSession {
+    /// Session format version for forward-compatibility detection.
+    /// If the deserialized version doesn't match SESSION_VERSION, the session
+    /// is discarded and images are re-fetched from scratch.
+    #[serde(default = "default_session_version")]
+    version: u32,
     // imageRef -> URL?
     images: HashMap<String, Option<String>>,
     // node ID
@@ -262,6 +272,11 @@ pub struct ImageContextSession {
     // Images that a remote client has, which we will not bother to fetch again. This is
     // only populated when we're running the web server configuration.
     client_images: HashSet<String>,
+}
+
+/// Default version for sessions serialized before the version field was added.
+fn default_session_version() -> u32 {
+    1
 }
 
 impl ImageContext {
@@ -282,6 +297,7 @@ impl ImageContext {
         }
 
         ImageContextSession {
+            version: SESSION_VERSION,
             images: self
                 .images
                 .clone()
@@ -306,6 +322,17 @@ impl ImageContext {
     }
 
     pub fn add_session_info(&mut self, session: ImageContextSession) {
+        // Validate session version — if the format has changed, discard the session
+        // and let images be re-fetched from scratch rather than risking data corruption.
+        if session.version != SESSION_VERSION {
+            warn!(
+                "ImageContextSession version mismatch: expected {}, got {}. \
+                 Discarding cached session; images will be re-fetched.",
+                SESSION_VERSION, session.version
+            );
+            return;
+        }
+
         for (k, v) in session.images {
             self.images.insert(k, v);
         }
@@ -320,6 +347,22 @@ impl ImageContext {
         }
         for k in session.client_images {
             self.client_images.insert(k);
+        }
+    }
+
+    /// Merge image references from a remote document into this context.
+    /// Used when fetching component variants from external documents so that
+    /// their image fills can be resolved. Existing entries are not overwritten.
+    pub fn merge_remote_images(&mut self, remote_images: HashMap<String, Option<String>>) {
+        let mut merged_count = 0;
+        for (image_ref, url) in remote_images {
+            if !self.images.contains_key(&image_ref) {
+                self.images.insert(image_ref, url);
+                merged_count += 1;
+            }
+        }
+        if merged_count > 0 {
+            info!("Merged {} image refs from remote document", merged_count);
         }
     }
 }

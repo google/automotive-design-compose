@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,21 +38,27 @@ interface HelloWorld {
     @DesignComponent(node = "#MainFrame") fun mainFrame(@Design(node = "#Name") name: String)
 }
 
+const val largeDocId = "CuF1b1eAIukB6YszX6B5OZ"
+
+@DesignDoc(id = largeDocId)
+interface LargeDoc {
+    @DesignComponent(node = "#android-stage") fun androidStage()
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val dir = filesDir.path
         val inputStream: InputStream? =
             try {
-                File(dir, "HelloWorldDoc_pxVlixodJqZL95zo2RzTHl.dcf").inputStream()
+                File(dir, "LargeDoc_${largeDocId}.dcf").inputStream()
             } catch (e: Exception) {
                 null
             }
         DesignSettings.enableLiveUpdates(this)
         setContent {
-            HelloWorldDoc.mainFrame(
+            LargeDocDoc.androidStage(
                 modifier = Modifier.systemBarsPadding(),
-                name = "World!",
                 dcfInputStream = inputStream,
             )
         }
@@ -62,5 +68,5 @@ class MainActivity : ComponentActivity() {
 @Preview(showBackground = true, widthDp = 700)
 @Composable
 fun ComposePreview() {
-    helloworldTheme { HelloWorldDoc.mainFrame(name = "Developer!") }
+    helloworldTheme { LargeDocDoc.androidStage() }
 }

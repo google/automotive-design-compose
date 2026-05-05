@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,15 @@ object DesignSettings {
     internal var liveUpdateEnabled = mutableStateOf(true)
     internal var adaptivePollingEnabled = mutableStateOf(true)
     internal var isDocumentLive = mutableStateOf(false)
+    // Incremental update threshold (0.0 to 1.0). If the ratio of changed views
+    // exceeds this, a full document is sent instead of incremental update.
+    internal var incrementalThreshold = mutableStateOf(0.5f)
+    // When true, discover all top-level frames from the Figma document
+    // without requiring @DesignComponent annotations.
+    var discoverAllTopLevelNodes = mutableStateOf(false)
+    // WebSocket real-time update settings
+    internal var useWebSocket = mutableStateOf(false)
+    internal var webSocketRelayUrl = mutableStateOf("ws://10.0.2.2:8765")
     internal var firstSuccessTime: Long? = null
     private var fontDb: HashMap<String, FontFamily> = HashMap()
     internal var fileFetchStatus: HashMap<DesignDocId, DesignDocStatus> = HashMap()
@@ -301,6 +310,10 @@ internal object DocServer {
     internal var firstFetch = true
     internal var pauseUpdates = mutableStateOf(false)
 
+    // WebSocket client for real-time push notifications
+    internal var wsClient: WebSocketUpdateClient? = null
+    internal var wsMode = false
+
     // Adaptive polling: tracks the current fetch interval and the number of consecutive
     // unchanged responses. The interval increases exponentially (5s -> 10s -> 20s -> 40s -> 60s)
     // when no changes are detected, and resets to liveUpdateFetchMillis when a document changes.
@@ -357,9 +370,13 @@ internal object DocServer {
 }
 
 internal fun DocServer.initializeLiveUpdate() {
-    Log.i(TAG, "Live Updates initialized")
-    // Kickstart periodic updates of documents
-    scheduleLiveUpdate()
+    Log.i(TAG, "Live Updates initialized (WebSocket=${DesignSettings.useWebSocket.value})")
+    if (DesignSettings.useWebSocket.value) {
+        startWebSocketMode()
+    } else {
+        // Kickstart periodic updates of documents
+        scheduleLiveUpdate()
+    }
 }
 
 internal fun DocServer.stopLiveUpdates() {
@@ -367,22 +384,86 @@ internal fun DocServer.stopLiveUpdates() {
         Log.i(TAG, "Stopping Live Updates")
         pauseUpdates.value = true
         removeScheduledPeriodicFetchRunnables()
-    }
-}
-
-internal fun DocServer.startLiveUpdates() {
-    if (DesignSettings.liveUpdatesEnabled) {
-        Log.i(TAG, "Starting Live Updates")
-        pauseUpdates.value = false
-        // Reset to base interval when explicitly starting
-        currentFetchIntervalMillis = liveUpdateFetchMillis
-        consecutiveUnchangedCount = 0
-        scheduleLiveUpdate()
+        stopWebSocketMode()
     }
 }
 
 internal fun DocServer.removeScheduledPeriodicFetchRunnables() {
     mainHandler.removeCallbacks(periodicFetchRunnable)
+}
+
+internal fun DocServer.startLiveUpdates() {
+    if (DesignSettings.liveUpdatesEnabled) {
+        Log.i(TAG, "Starting Live Updates (WebSocket=${DesignSettings.useWebSocket.value})")
+        pauseUpdates.value = false
+        if (DesignSettings.useWebSocket.value) {
+            startWebSocketMode()
+        } else {
+            // REST polling mode
+            currentFetchIntervalMillis = liveUpdateFetchMillis
+            consecutiveUnchangedCount = 0
+            scheduleLiveUpdate()
+        }
+    }
+}
+
+internal fun DocServer.startWebSocketMode() {
+    wsMode = true
+    val relayUrl = DesignSettings.webSocketRelayUrl.value
+    Log.i(TAG, "WebSocket mode: connecting to $relayUrl")
+
+    // Do an initial fetch first (full document discovery)
+    thread {
+        fetchDocuments(true)
+        firstFetch = false
+    }
+
+    // Keep a slow REST polling safety net running alongside WebSocket.
+    // This ensures changes are detected even without a registered Figma webhook.
+    // The WebSocket push will trigger immediate fetches when available,
+    // but polling acts as a safety net with a 15s interval.
+    currentFetchIntervalMillis = MAX_FETCH_INTERVAL_MILLIS
+    consecutiveUnchangedCount = 0
+    scheduleLiveUpdate()
+
+    // Create and connect WebSocket client
+    wsClient?.disconnect()
+    wsClient =
+        WebSocketUpdateClient(
+            relayUrl = relayUrl,
+            onDocumentChanged = { docId, _ ->
+                Log.i(
+                    TAG,
+                    "WebSocket: Received change notification for $docId, triggering immediate fetch",
+                )
+                // Cancel the next polling cycle since we're fetching now
+                removeScheduledPeriodicFetchRunnables()
+                thread {
+                    fetchDocuments(false)
+                    // Re-schedule the safety net poll after fetch completes
+                    mainHandler.post { scheduleLiveUpdate() }
+                }
+            },
+            onConnectionStateChanged = { connected ->
+                if (connected) {
+                    Log.i(
+                        TAG,
+                        "WebSocket: Connected — real-time updates active (REST safety net still running)",
+                    )
+                    // Subscribe to all tracked documents
+                    documents.keys.forEach { docKey -> wsClient?.subscribeToDocument(docKey.id) }
+                } else {
+                    Log.w(TAG, "WebSocket: Disconnected — REST polling safety net continues")
+                }
+            },
+        )
+    wsClient?.connect()
+}
+
+internal fun DocServer.stopWebSocketMode() {
+    wsMode = false
+    wsClient?.disconnect()
+    wsClient = null
 }
 
 internal fun DocServer.scheduleLiveUpdate() {
@@ -479,6 +560,7 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                     SpanCache.clear()
                     for (subscriber in subs) {
                         subscriber.onUpdate(doc)
+                        Log.i(TAG, "DocServer: invoking docUpdateCallback for subscribed docId $id")
                         subscriber.docUpdateCallback?.invoke(id, doc.c.toSerializedBytes(Feedback))
                     }
                 }
@@ -535,6 +617,10 @@ internal fun DocServer.fetchDocuments(firstFetch: Boolean): Boolean {
                         "Unhandled ${exception.javaClass}"
                     }
                 }
+            if (exception is RateLimitedException) {
+                currentFetchIntervalMillis = MAX_FETCH_INTERVAL_MILLIS
+                Log.w(TAG, "Rate limited by Figma. Backing off to ${currentFetchIntervalMillis}ms")
+            }
             if (DocumentSwitcher.isNotOriginalDocId(id)) {
                 Feedback.documentUpdateErrorRevert(id, msg)
                 DocumentSwitcher.revertToOriginal(id)
@@ -570,6 +656,9 @@ internal fun fetchDocument(
         previousDoc?.c?.header?.responseVersion?.let { this.version = it }
         previousDoc?.c?.imageSession?.let { this.imageSessionJson = it }
             ?: this.clearImageSessionJson()
+        // Propagate dynamic configuration flags down to the Native JNI fetch layer.
+        this.discoverAllTopLevelNodes = DesignSettings.discoverAllTopLevelNodes.value
+        this.incrementalThreshold = DesignSettings.incrementalThreshold.value
     }
 
     val serializedResponse: ByteArray =
@@ -682,6 +771,7 @@ internal fun DocServer.doc(
                 targetDoc
             }
         targetDoc?.let { VariableManager.init(it.c.docId, it.c.document.variableMap) }
+        Log.i(TAG, "DocServer: invoking docUpdateCallback for docId $docId")
         docUpdateCallback?.invoke(docId, targetDoc?.c?.toSerializedBytes(Feedback))
         setLiveDoc(targetDoc)
 
@@ -706,6 +796,7 @@ internal fun DocServer.doc(
     if (liveDoc != null && liveDoc.c.docId == docId) return liveDoc
     if (preloadedDoc != null && preloadedDoc.c.docId == docId) {
         VariableManager.init(preloadedDoc.c.docId, preloadedDoc.c.document.variableMap)
+        Log.i(TAG, "DocServer: invoking docUpdateCallback for preloaded docId $docId")
         docUpdateCallback?.invoke(docId, preloadedDoc.c.toSerializedBytes(Feedback))
         endSection()
         return preloadedDoc
@@ -739,6 +830,7 @@ internal fun DocServer.doc(
                 DesignSettings.fileFetchStatus[docId]?.lastLoadFromDisk = Instant.now()
             }
             VariableManager.init(decodedDoc.c.docId, decodedDoc.c.document.variableMap)
+            Log.i(TAG, "DocServer: invoking docUpdateCallback for updated docId $docId")
             docUpdateCallback?.invoke(docId, decodedDoc.c.toSerializedBytes(Feedback))
             endSection()
             return decodedDoc

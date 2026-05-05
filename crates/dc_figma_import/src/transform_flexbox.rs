@@ -216,7 +216,7 @@ fn compute_layout(
             figma_schema::LayoutAlignItems::SpaceBetween => {
                 AlignItems::ALIGN_ITEMS_FLEX_START.into()
             } // XXX
-            figma_schema::LayoutAlignItems::Baseline => AlignItems::ALIGN_ITEMS_FLEX_START.into(),
+            figma_schema::LayoutAlignItems::Baseline => AlignItems::ALIGN_ITEMS_BASELINE.into(),
         };
         style.layout_style_mut().justify_content = match frame.primary_axis_align_items {
             figma_schema::LayoutAlignItems::Center => JustifyContent::JUSTIFY_CONTENT_CENTER.into(),
@@ -2363,6 +2363,50 @@ mod tests {
         assert_eq!(
             view.style.unwrap().node_style.unwrap().flex_wrap,
             FlexWrap::FLEX_WRAP_WRAP.into()
+        );
+    }
+
+    #[test]
+    fn test_layout_baseline() {
+        let json = r#"{
+            "id": "1",
+            "name": "test",
+            "type": "FRAME",
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "BASELINE",
+            "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+            },
+            "absoluteBoundingBox": {
+                "x": 0, "y": 0, "width": 100, "height": 100
+            }
+        }"#;
+
+        let node: figma_schema::Node = serde_json::from_str(json).unwrap();
+
+        let mut key_to_global_id_map = HashMap::new();
+        let mut component_context = ComponentContext::new(&vec![]);
+        let mut image_context = ImageContext::new(
+            HashMap::new(),
+            HashMap::new(),
+            &crate::proxy_config::ProxyConfig::None,
+        );
+
+        let view = create_component_flexbox(
+            &node,
+            &HashMap::new(),
+            &HashMap::new(),
+            &mut component_context,
+            &mut image_context,
+            crate::document::HiddenNodePolicy::Keep,
+            &mut key_to_global_id_map,
+        )
+        .unwrap();
+
+        assert_eq!(
+            view.style.unwrap().layout_style.unwrap().align_items,
+            AlignItems::ALIGN_ITEMS_BASELINE.into()
         );
     }
 

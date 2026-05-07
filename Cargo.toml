@@ -18,6 +18,10 @@ opt-level = 'z'
 lto = true
 codegen-units = 1
 panic = 'abort'
+strip = true
+
+[profile.dev]
+strip = "debuginfo"
 
 [workspace.dependencies]
 # dc_* crates specify a version because they are dependencies published on crates.io

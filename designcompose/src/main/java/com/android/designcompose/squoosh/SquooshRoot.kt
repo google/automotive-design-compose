@@ -220,9 +220,16 @@ class RootRecurseParams(
 
     // Hash of text nodes seen in entire tree of nodes, for testing purposes
     val textHash: HashSet<String> = HashSet(),
+
+    // true if SquooshRoot() called as a sub-renderer for a modifier-wrap subtree
+    val isModifierWrapComponent: Boolean = false,
 ) {
     fun withScrolling(): RootRecurseParams {
-        return RootRecurseParams(true, textHash)
+        return RootRecurseParams(true, textHash, isModifierWrapComponent)
+    }
+
+    fun withModifierWrapping(): RootRecurseParams {
+        return RootRecurseParams(isScrollComponent, textHash, true)
     }
 }
 
@@ -390,6 +397,7 @@ fun SquooshRoot(
             rootRecurseParams.textHash,
             overlays,
             rootRecurseParams.isScrollComponent,
+            isModifierWrapComponent = rootRecurseParams.isModifierWrapComponent,
         ) ?: return
     val rootRemovalNodes = layoutIdAllocator.removalNodes()
 
@@ -444,6 +452,7 @@ fun SquooshRoot(
                 rootRecurseParams.textHash,
                 overlays,
                 rootRecurseParams.isScrollComponent,
+                isModifierWrapComponent = rootRecurseParams.isModifierWrapComponent,
             )
         transitionRootRemovalNodes = layoutIdAllocator.removalNodes()
     }
@@ -779,6 +788,26 @@ fun SquooshRoot(
                                 liveUpdateMode,
                                 designComposeCallbacks,
                                 rootRecurseParams.withScrolling(), // Is scroll component
+                            )
+                        }
+                    } else if (child.renderSubtree) {
+                        // This child has a CustomizationContext.setModifier registered. Render
+                        // it via a sub-SquooshRoot so the user's Modifier (already applied to
+                        // composableChildModifier above) wraps the rendered pixels.
+                        val subtreeNodeQuery = NodeQuery.NodeId(child.node.view.id)
+                        child.component = {
+                            SquooshRoot(
+                                docName,
+                                incomingDocId,
+                                subtreeNodeQuery,
+                                Modifier,
+                                customizationContext,
+                                serverParams,
+                                setDocId,
+                                designSwitcherPolicy = DesignSwitcherPolicy.HIDE,
+                                liveUpdateMode,
+                                designComposeCallbacks,
+                                rootRecurseParams.withModifierWrapping(),
                             )
                         }
                     } else if (child.component == null) {

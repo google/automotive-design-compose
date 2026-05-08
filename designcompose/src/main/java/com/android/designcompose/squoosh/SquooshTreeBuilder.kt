@@ -140,6 +140,11 @@ internal class SquooshChildComposable(
     // it is applied to this node's wrapping composable Layout in SquooshRoot, and exposed to
     // component replacements as ComponentReplacementContext.layoutModifier.
     val customModifier: Modifier? = null,
+
+    // True when this child should render its own subtree via a sub-SquooshRoot (used to apply
+    // a customModifier as a Compose modifier wrapping the rendered subtree, so modifiers like
+    // graphicsLayer/alpha/animateFloatAsState actually affect the pixels of nested components).
+    val renderSubtree: Boolean = false,
 )
 
 internal class SquooshOverlayComposable(val nodeId: String, val extras: FrameExtras)
@@ -211,6 +216,9 @@ internal fun resolveVariantsRecursively(
     overlays: List<View>? = null,
     isScrollComponent: Boolean = false,
     componentLayoutId: Int = 0,
+    // True when this call is the entry of a sub-SquooshRoot spawned for modifier-wrap rendering.
+    // Suppresses the modifier-wrap branch at the root so we don't recursively wrap forever.
+    isModifierWrapComponent: Boolean = false,
 ): SquooshResolvedNode? {
     if (!customizations.getVisible(viewFromTree.name)) return null
     customizations.getVisibleState(viewFromTree.name)?.let { if (!it.value) return null }
@@ -443,6 +451,21 @@ internal fun resolveVariantsRecursively(
             composableList,
         )
         skipChildren = true
+    } else if (customModifier != null && !isModifierWrapComponent) {
+        // Render this subtree via a sub-SquooshRoot so the registered Modifier wraps the
+        // rendered pixels (alpha, graphicsLayer, animateFloatAsState etc.). Without this,
+        // a Modifier on a nested component has nowhere to apply because the visuals are
+        // drawn by the parent's draw block, not inside any Compose Layout for this node.
+        composableList?.addChild(
+            SquooshChildComposable(
+                renderSubtree = true,
+                node = resolvedView,
+                parentComponents = parentComps,
+                customModifier = customModifier,
+            )
+        )
+        resolvedView.needsChildRender = true
+        skipComposableList = true
     } else if (hasSupportedInteraction) {
         // Add a SquooshChildComposable to handle the interaction.
         composableList?.addChild(

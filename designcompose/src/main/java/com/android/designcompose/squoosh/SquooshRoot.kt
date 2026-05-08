@@ -762,7 +762,6 @@ fun SquooshRoot(
                             }
                             .then(SquooshParentData(node = child.node))
                             .then(Modifier.testTag(child.node.view.name))
-                            .then(child.customModifier ?: Modifier)
 
                     // Apply any user-provided Modifier customization. This was lost during the
                     // Squoosh migration — the setModifier/getModifier API existed but squoosh

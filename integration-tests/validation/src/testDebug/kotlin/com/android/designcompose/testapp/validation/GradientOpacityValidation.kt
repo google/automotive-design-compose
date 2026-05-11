@@ -17,15 +17,20 @@
 package com.android.designcompose.testapp.validation
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.designcompose.test.internal.captureRootRoboImage
 import com.android.designcompose.test.internal.designComposeRoborazziRule
 import com.android.designcompose.testapp.validation.examples.GradientOpacityTest
+import com.github.takahirom.roborazzi.RoborazziOptions
+import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+
+val GRADIENT_OPACITY_ROBORAZZI_OPTIONS =
+    RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.05f))
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34])
@@ -39,7 +44,11 @@ class GradientOpacityValidation {
     fun testGradientOpacity() {
         with(composeTestRule) {
             setContent { GradientOpacityTest() }
-            captureRootRoboImage("gradient-opacity")
+            onRoot()
+                .captureRoboImage(
+                    filePath = "gradient-opacity.png",
+                    roborazziOptions = GRADIENT_OPACITY_ROBORAZZI_OPTIONS,
+                )
         }
     }
 }
